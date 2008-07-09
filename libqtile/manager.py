@@ -1,5 +1,6 @@
 import sys
 import Xlib
+import Xlib.display
 import Xlib.protocol.event as event
 import Xlib.ext.xinerama as xinerama
 import Xlib.X as X
@@ -115,13 +116,16 @@ class QTile:
     def loop(self):
         while 1:
             self.server.receive()
-            n = self.display.pending_events()
+            try:
+                n = self.display.pending_events()
+            except Xlib.error.ConnectionClosedError:
+                return
             while n > 0:
                 n -= 1
                 e = self.display.next_event()
                 if e.type == X.MapRequest:
                     self.mapRequest(e)
-                if e.type == X.DestroyNotify:
+                elif e.type == X.DestroyNotify:
                     self.destroyNotify(e)
                 elif e.type == X.CreateNotify:
                     pass
@@ -132,6 +136,7 @@ class QTile:
         c = Client(e.window)
         self.clientMap[e.window] = c
         self.currentScreen.group.add(c)
+        e.window.map()
 
     def destroyNotify(self, e):
         c = self.clientMap.get(e.window)
@@ -164,10 +169,7 @@ class QTile:
         """
             Return number of clients in all groups.
         """
-        num = 0
-        for i in self.groups:
-            num += len(i.clients)
-        return num
+        return len(self.clientMap)
 
     def cmd_groupmap(self):
         """
