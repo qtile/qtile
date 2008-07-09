@@ -1,0 +1,19 @@
+#!/usr/bin/env python
+
+import os, os.path
+import libqtile
+
+
+def main():
+    d = os.environ["DISPLAY"]
+    fname = os.path.join("~", ".qtilesocket.%s"%d)
+    fname = os.path.expanduser(fname)
+    if os.path.exists(fname):
+        os.unlink(fname)
+    q = libqtile.QTile(d, fname)
+    q.loop()
+
+
+if __name__ == "__main__":
+    main()
+
