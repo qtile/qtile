@@ -30,7 +30,8 @@ class Client:
         window.change_attributes(
             event_mask = X.StructureNotifyMask |\
                          X.PropertyChangeMask |\
-                         X.EnterWindowMask
+                         X.EnterWindowMask |\
+                         X.FocusChangeMask
         )
 
 

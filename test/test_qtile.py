@@ -49,10 +49,20 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             time.sleep(0.1)
 
     def testWindow(self, name):
+        c = libqtile.ipc.Client(self["fname"])
+        groups = c.call("clientmap")
+        start = sum([len(i) for i in groups.values()])
         if os.fork() == 0:
             os.execv("scripts/window", ["scripts/window", self["display"], name])
-        time.sleep(0.1)
-
+        for i in range(20):
+            groups = c.call("clientmap")
+            new = sum([len(i) for i in groups.values()])
+            if new > start:
+                break
+            time.sleep(0.1)
+        else:
+            raise AssertionError("Window never appeared...")
+            
     def tearDown(self):
         libpry.TmpDirMixin.tearDown(self)
         os.kill(self.qtilepid, 9)
