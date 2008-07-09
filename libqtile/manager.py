@@ -1,6 +1,7 @@
 import Xlib
 import Xlib.protocol.event as event
 import Xlib.X as X
+import ipc
 
 
 class Screen:
@@ -17,8 +18,9 @@ class Client:
 
 
 class QTile:
-    def __init__(self, display):
+    def __init__(self, display, fname):
         self.display = Xlib.display.Display(display)
+        self.fname = fname
         scrn = self.display.screen(
                     self.display.get_default_screen()
                )
@@ -33,12 +35,23 @@ class QTile:
             event_mask = X.SubstructureNotifyMask
         )
         self.display.set_error_handler(self.errorHandler)
+        self.server = ipc.Server(self.fname, self.command)
+
+    def loop(self):
+        while 1:
+            self.server.receive()
 
     def errorHandler(self, *args, **kwargs):
         print args, kwargs
 
+    def command(self, data):
+        command, args = data
+        parts = command.split(".")
+        print parts
+        return "OK"
 
-
-
+    def cmd_status(self):
+        return "OK"
+        pass
 
 

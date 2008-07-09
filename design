@@ -1,0 +1,28 @@
+
+IPC
+
+Commands are serialised into tuples, as follows:
+    
+    (command, argdict)
+
+
+Command is a period-delimited specifier:
+
+    qtile.command                            - command on the window manager.
+    group.name.command                       - command on the named group.
+    group.name.command                       - command on the named group.
+    group.current.command                    - command on the named group.
+    screen.num.command                       - command on screen num.
+    screen.current.command                   - command on current screen.
+    focused.command                          - command on focused window.
+    layout.command                           - command on current layout.
+    layout.command                           - command on current layout.
+    screen.current.statusbar.command         - command on .
+
+
+
+Commands:
+
+    qtile.status                            - Just returns "OK"
+
+

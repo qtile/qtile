@@ -21,12 +21,18 @@ class Client:
         sock.connect(self.fname)
         data = marshal.dumps(msg)
         sock.sendall(data)
-        sock.close()
+        sock.setblocking(0)
+        while 1:
+            fds, _, _ = select.select([sock], [], [], 0)
+            if fds:
+                data, _ = sock.recvfrom(BUFSIZE)
+                sock.close()
+                return marshal.loads(data)
 
 
 class Server:
-    def __init__(self, fname):
-        self.fname = fname
+    def __init__(self, fname, handler):
+        self.fname, self.handler = fname, handler
         self.sock = socket.socket(
             socket.AF_UNIX,
             socket.SOCK_STREAM,
@@ -44,7 +50,6 @@ class Server:
         if fds:
             conn, _ = self.sock.accept()
             data, _ = conn.recvfrom(BUFSIZE)
+            ret = self.handler(marshal.loads(data))
+            conn.sendall(marshal.dumps(ret))
             conn.close()
-            return marshal.loads(data)
-        else:
-            return None
