@@ -4,7 +4,7 @@
     run the same Python version, and that clients must be trusted (as
     un-marshalling untrusted data can result in arbitrary code execution).
 """
-import marshal, socket, select
+import marshal, socket, select, os.path
 
 BUFSIZE = 1024 * 1024
 

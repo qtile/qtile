@@ -1,4 +1,4 @@
-import subprocess, os, time, sys
+import subprocess, os, time, sys, socket, traceback
 import Xlib.display, Xlib.X
 import libpry
 import libqtile
@@ -7,13 +7,14 @@ class XNest(libpry.TestContainer):
     def __init__(self, xinerama, display):
         libpry.TestContainer.__init__(self)
         self.xinerama = xinerama
+        if xinerama:
+            self.name = "XNestXinerama"
         self["display"] = display
 
     def setUp(self):
         args = [ "Xnest", "-geometry", "800x600", self["display"], "-ac", "-sync"]
         if self.xinerama:
             args.extend(["+xinerama", "-scrns", "2"])
-
         self.sub = subprocess.Popen(
                         args,
                         stdout = subprocess.PIPE,
@@ -37,35 +38,54 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
         else:
             raise AssertionError, "Could not connect to display."
         d.close()
+        del d
         
         # Now start for real
         self["fname"] = os.path.join(self["tmpdir"], "qtilesocket")
         pid = os.fork()
         if pid == 0:
-            q = libqtile.QTile(self["display"], self["fname"])
-            q.loop()
+            # Run this in a sandbox...
+            try:
+                q = libqtile.QTile(self["display"], self["fname"])
+                q.loop()
+            except Exception, e:
+                traceback.print_exc(file=sys.stderr)
+            sys.exit(0)
         else:
             self.qtilepid = pid
-            time.sleep(0.1)
+            c = libqtile.ipc.Client(self["fname"])
+            # Wait until qtile is up before continuing
+            for i in range(20):
+                try:
+                    if c.call("status") == "OK":
+                        break
+                except socket.error:
+                    pass
+                time.sleep(0.1)
+            else:
+                raise AssertionError, "Timeout waiting for Qtile"
 
     def testWindow(self, name):
         c = libqtile.ipc.Client(self["fname"])
-        groups = c.call("clientmap")
-        start = sum([len(i) for i in groups.values()])
-        if os.fork() == 0:
+        start = c.call("clientcount")
+        pid = os.fork()
+        if pid == 0:
             os.execv("scripts/window", ["scripts/window", self["display"], name])
         for i in range(20):
-            groups = c.call("clientmap")
-            new = sum([len(i) for i in groups.values()])
-            if new > start:
+            if c.call("clientcount") > start:
                 break
             time.sleep(0.1)
         else:
             raise AssertionError("Window never appeared...")
+        return pid
             
     def tearDown(self):
         libpry.TmpDirMixin.tearDown(self)
-        os.kill(self.qtilepid, 9)
+        try:
+            os.kill(self.qtilepid, 9)
+        except OSError:
+            # The process may have died due to some other error
+            pass
 
 
 class uQTile(_QTileTruss):
@@ -73,11 +93,27 @@ class uQTile(_QTileTruss):
         c = libqtile.ipc.Client(self["fname"])
         assert c.call("status") == "OK"
 
-    def test_window(self):
+    def test_mapRequest(self):
         c = libqtile.ipc.Client(self["fname"])
         self.testWindow("one")
-        groups = c.call("clientmap")
+        groups = c.call("groupmap")
         assert "one" in groups["a"]
+        self.testWindow("two")
+
+        groups = c.call("groupmap")
+        assert "two" in groups["a"]
+
+    def test_unmap(self):
+        c = libqtile.ipc.Client(self["fname"])
+        pid = self.testWindow("one")
+        assert c.call("clientcount") == 1
+        os.kill(pid, 9)
+        for i in range(20):
+            if c.call("clientcount") == 0:
+                break
+            time.sleep(0.1)
+        else:
+            raise AssertionError, "Could not kill client."
 
 
 tests = [
