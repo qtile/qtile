@@ -8,8 +8,7 @@ Commands are serialised into tuples, as follows:
 
 Command is a period-delimited specifier:
 
-    qtile.command                            - command on the window manager.
-    group.name.command                       - command on the named group.
+    command                                  - command on the window manager.
     group.name.command                       - command on the named group.
     group.current.command                    - command on the named group.
     screen.num.command                       - command on screen num.
@@ -23,6 +22,6 @@ Command is a period-delimited specifier:
 
 Commands:
 
-    qtile.status                            - Just returns "OK"
+    status                                   - Just returns "OK"
 
 

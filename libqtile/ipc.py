@@ -29,6 +29,9 @@ class Client:
                 sock.close()
                 return marshal.loads(data)
 
+    def call(self, func, *args, **kwargs):
+        return self.send((func, args, kwargs))
+
 
 class Server:
     def __init__(self, fname, handler):
