@@ -52,7 +52,10 @@ class Server:
         fds, _, _ = select.select([self.sock], [], [], 0)
         if fds:
             conn, _ = self.sock.accept()
-            data, _ = conn.recvfrom(BUFSIZE)
+            try:
+                data, _ = conn.recvfrom(BUFSIZE)
+            except socket.error:
+                return
             ret = self.handler(marshal.loads(data))
             conn.sendall(marshal.dumps(ret))
             conn.close()

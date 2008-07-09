@@ -9,9 +9,18 @@ import ipc
 class CommandError(Exception): pass
 
 
-class _Layout:
-    def __call__(self, screen):
-        pass
+class Max:
+    def __init__(self, group):
+        self.group = group
+
+    def __call__(self):
+        for i in self.group.clients:
+            i.place(
+                self.group.screen.x,
+                self.group.screen.y,
+                self.group.screen.width,
+                self.group.screen.height,
+            )
 
 
 class Screen:
@@ -20,6 +29,8 @@ class Screen:
         self.width, self.height = width, height
 
         # A bit bodgy, but we have to have a group set to call setGroup...
+        # Doing the interface this way guarantees that each Screen always has a
+        # group.
         self.group = group
         self.setGroup(group)
 
@@ -30,18 +41,26 @@ class Screen:
 
 
 class Group:
-    def __init__(self, name):
+    def __init__(self, name, layouts):
         self.name = name
         self.screen = None
         self.clients = []
+        self.layouts = [i(self) for i in layouts]
+        self.currentLayout = 0
+
+    @property
+    def layout(self):
+        return self.layouts[self.currentLayout]
 
     def add(self, client):
         self.clients.append(client)
         client.group = self
+        self.layout()
 
     def delete(self, client):
         self.clients.remove(client)
         client.group = None
+        self.layout()
 
 
 class Client:
@@ -62,12 +81,21 @@ class Client:
         except Xlib.error.BadWindow:
             return "<nonexistent>"
 
+    def place(self, x, y, width, height):
+        self.window.configure(
+            x=x,
+            y=y,
+            width=width,
+            height=height
+        )
+
     def __repr__(self):
         return "Client(%s)"%self.name
 
 
 class QTile:
     _groupConf = ["a", "b", "c", "d"]
+    _layoutConf = [Max]
     def __init__(self, display, fname):
         self.display = Xlib.display.Display(display)
         self.fname = fname
@@ -78,7 +106,7 @@ class QTile:
 
         self.groups = []
         for i in self._groupConf:
-            self.groups.append(Group(i))
+            self.groups.append(Group(i, self._layoutConf))
 
         self.screens = []
         if self.display.has_extension("XINERAMA"):
@@ -113,6 +141,16 @@ class QTile:
         self.display.set_error_handler(self.errorHandler)
         self.server = ipc.Server(self.fname, self.commandHandler)
 
+        nop = lambda e: None
+        self.handlers = {
+            X.MapRequest:       self.mapRequest,
+            X.DestroyNotify:    self.unmanage,
+            X.UnmapNotify:      self.unmanage,
+
+            X.CreateNotify:     nop,
+            X.MapNotify:        nop,
+        }
+
     def loop(self):
         while 1:
             self.server.receive()
@@ -123,12 +161,9 @@ class QTile:
             while n > 0:
                 n -= 1
                 e = self.display.next_event()
-                if e.type == X.MapRequest:
-                    self.mapRequest(e)
-                elif e.type == X.DestroyNotify:
-                    self.destroyNotify(e)
-                elif e.type == X.CreateNotify:
-                    pass
+                h = self.handlers.get(e.type)
+                if h:
+                    h(e)
                 else:
                     print >> sys.stderr, e
 
@@ -138,7 +173,7 @@ class QTile:
         self.currentScreen.group.add(c)
         e.window.map()
 
-    def destroyNotify(self, e):
+    def unmanage(self, e):
         c = self.clientMap.get(e.window)
         if c:
             c.group.delete(c)

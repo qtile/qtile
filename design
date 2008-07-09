@@ -19,9 +19,69 @@ Command is a period-delimited specifier:
     screen.current.statusbar.command         - command on .
 
 
-
 Commands:
 
-    status                                   - Just returns "OK"
+    status                      - Just returns "OK".
+
+    groupmap                    - A dictionary, where keys are group names, and
+                                  values are lists of clients.
+
+    clientcount                 - Total number of clients.
+
+
+
+Groups
+    
+    Groups track the following information:
+        - An ordered list of clients.
+        - A pointer to the client that currently has focus.
+
+Layouts 
+
+    Operate on groups.
+
+        max
+        
+            The window that has focus occupies the full screen. All other
+            windows are hidden.
+
+        float
+        
+            All windows are floating.
+
+        twopane
+
+            Windows are laid out in two panes, with one window being a
+            nominated master. The master is always displayed, other windows are
+            in a "stack" in the other pane.
+            
+            Operations:
+                
+                other: Focus the other pane.
+                stackup: Next window in the stack.
+                stackdown: Previous window in the stack.
+                swap: Swap location of master and stack.
+                promote: Promote the currently focused window to master.
+
+        tile
+
+            Windows are tiled into X colums, each with Y rows. 
+
+            Operations:
+
+                xset: Set number of columns.
+                yset: Set number of rows.
+                xinc: Increment columns.
+                xdec: Decrement columns.
+                yinc: Increment rows.
+                ydec: Decrement rows.
+
+
+
+
+
+
+
+
 
 
