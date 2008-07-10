@@ -21,7 +21,6 @@ class Client:
         sock.connect(self.fname)
         data = marshal.dumps(msg)
         sock.sendall(data)
-        sock.setblocking(0)
         while 1:
             fds, _, _ = select.select([sock], [], [], 0)
             if fds:
@@ -41,7 +40,6 @@ class Server:
             socket.SOCK_STREAM,
             0
         )
-        self.sock.setblocking(0)
         self.sock.bind(self.fname)
         self.sock.listen(5)
 

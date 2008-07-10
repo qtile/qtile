@@ -23,5 +23,8 @@ window = root.create_window(100, 100, 100, 100, 1,
                             event_mask = X.StructureNotifyMask | X.ExposureMask)
 window.set_wm_name(sys.argv[2])
 window.map()
-while 1:
-    event = d.next_event()
+try:
+    while 1:
+        event = d.next_event()
+except error.ConnectionClosedError:
+    pass
