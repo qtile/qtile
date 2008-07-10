@@ -137,6 +137,8 @@ class uQTile(_QTileTruss):
 
         assert c.call("clientcount") == 2
         self.kill(pid)
+
+        return
         assert c.call("clientcount") == 1
 
         info = c.call("groupinfo", "a")

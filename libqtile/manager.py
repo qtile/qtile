@@ -22,6 +22,8 @@ class Max:
                 self.group.screen.width,
                 self.group.screen.height,
             )
+        if self.group.focusClient:
+            self.group.focusClient.focus()
 
 
 class Screen:
@@ -45,7 +47,7 @@ class Group:
         self.clients = []
         self.layouts = [i(self) for i in layouts]
         self.currentLayout = 0
-        self.focus = None
+        self.focusClient = None
 
     @property
     def layout(self):
@@ -54,15 +56,14 @@ class Group:
     def add(self, client):
         self.clients.append(client)
         client.group = self
-        self.focus = client
-        self.layout()
+        self.focus(client)
 
     def delete(self, client):
-        if self.focus is client:
+        if self.focusClient is client:
             if len(self.clients) > 1:
-                self.focus = self.nextClient(client)
+                self.focus(self.nextClient(client))
             else:
-                self.focus = None
+                self.focus(None)
         self.clients.remove(client)
         client.group = None
         self.layout()
@@ -76,12 +77,14 @@ class Group:
         return self.clients[idx]
 
     def focus(self, client):
-        self.focus = client
+        if self.focusClient != client:
+            self.focusClient = client
+            self.layout()
 
     def info(self):
         return dict(
             name = self.name,
-            focus = self.focus.name if self.focus else None,
+            focus = self.focusClient.name if self.focusClient else None,
             clients = [i.name for i in self.clients],
             layout = self.layout.name
         )
@@ -111,6 +114,12 @@ class Client:
             y=y,
             width=width,
             height=height
+        )
+
+    def focus(self):
+        self.window.set_input_focus(
+            X.RevertToPointerRoot,
+            X.CurrentTime
         )
 
     def __repr__(self):
@@ -177,6 +186,7 @@ class QTile:
             X.ConfigureNotify:  nop,
             X.MapNotify:        nop,
             X.LeaveNotify:      nop,
+            X.FocusOut:         nop,
         }
 
     def loop(self):
@@ -197,9 +207,9 @@ class QTile:
 
     def mapRequest(self, e):
         c = Client(e.window)
+        e.window.map()
         self.clientMap[e.window] = c
         self.currentScreen.group.add(c)
-        e.window.map()
 
     def unmanage(self, e):
         c = self.clientMap.get(e.window)
@@ -207,8 +217,12 @@ class QTile:
             c.group.delete(c)
             del self.clientMap[e.window]
 
-    def errorHandler(self, *args, **kwargs):
-        print >> sys.stderr, "Error:", args, kwargs
+    _ignoreErrors = set([
+        Xlib.error.BadWindow
+    ])
+    def errorHandler(self, e, v):
+        if e.__class__ not in self._ignoreErrors:
+            print >> sys.stderr, "Error:", (e, v)
 
     def commandHandler(self, data):
         path, args, kwargs = data
@@ -244,3 +258,8 @@ class QTile:
         else:
             return None
 
+    def cmd_focusnext(self):
+        return "OK"
+
+    def cmd_focusprevious(self):
+        return "OK"
