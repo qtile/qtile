@@ -82,22 +82,33 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
         self.testwindows.append(pid)
         return pid
 
-    def kill(self, pid):
+    def _kill(self, pid):
         os.kill(pid, 9)
         os.waitpid(pid, 0)
         if pid in self.testwindows:
             self.testwindows.remove(pid)
-            
+
     def tearDown(self):
         libpry.TmpDirMixin.tearDown(self)
         try:
-            self.kill(self.qtilepid)
+            self._kill(self.qtilepid)
         except OSError:
             # The process may have died due to some other error
             pass
         for pid in self.testwindows[:]:
-            self.kill(pid)
+            self._kill(pid)
         self.testwindows = []
+
+    def kill(self, pid):
+        c = libqtile.ipc.Client(self["fname"])
+        start = c.call("clientcount")
+        self._kill(pid)
+        for i in range(20):
+            if c.call("clientcount") < start:
+                break
+            time.sleep(0.1)
+        else:
+            raise AssertionError("Window could not be killed...") 
 
 
 class uQTile(_QTileTruss):
@@ -108,24 +119,28 @@ class uQTile(_QTileTruss):
     def test_mapRequest(self):
         c = libqtile.ipc.Client(self["fname"])
         self.testWindow("one")
-        groups = c.call("groupmap")
-        assert "one" in groups["a"]
-        self.testWindow("two")
+        info = c.call("groupinfo", "a")
+        assert "one" in info["clients"]
+        assert info["focus"] == "one"
 
-        groups = c.call("groupmap")
-        assert "two" in groups["a"]
+        self.testWindow("two")
+        info = c.call("groupinfo", "a")
+        assert "two" in info["clients"]
+        assert info["focus"] == "two"
 
     def test_unmap(self):
         c = libqtile.ipc.Client(self["fname"])
-        pid = self.testWindow("one")
-        assert c.call("clientcount") == 1
+        self.testWindow("one")
+        pid = self.testWindow("two")
+        info = c.call("groupinfo", "a")
+        assert info["focus"] == "two"
+
+        assert c.call("clientcount") == 2
         self.kill(pid)
-        for i in range(20):
-            if c.call("clientcount") == 0:
-                break
-            time.sleep(0.1)
-        else:
-            raise AssertionError, "Could not kill client."
+        assert c.call("clientcount") == 1
+
+        info = c.call("groupinfo", "a")
+        assert info["focus"] == "one"
 
 
 tests = [

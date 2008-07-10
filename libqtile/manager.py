@@ -10,6 +10,7 @@ class CommandError(Exception): pass
 
 
 class Max:
+    name = "max"
     def __init__(self, group):
         self.group = group
 
@@ -44,6 +45,7 @@ class Group:
         self.clients = []
         self.layouts = [i(self) for i in layouts]
         self.currentLayout = 0
+        self.focus = None
 
     @property
     def layout(self):
@@ -52,12 +54,37 @@ class Group:
     def add(self, client):
         self.clients.append(client)
         client.group = self
+        self.focus = client
         self.layout()
 
     def delete(self, client):
+        if self.focus is client:
+            if len(self.clients) > 1:
+                self.focus = self.nextClient(client)
+            else:
+                self.focus = None
         self.clients.remove(client)
         client.group = None
         self.layout()
+
+    def nextClient(self, client):
+        idx = (self.clients.index(client) + 1) % len(self.clients)
+        return self.clients[idx]
+
+    def previousClient(self, client):
+        idx = (self.clients.index(client) - 1) % len(self.clients)
+        return self.clients[idx]
+
+    def focus(self, client):
+        self.focus = client
+
+    def info(self):
+        return dict(
+            name = self.name,
+            focus = self.focus.name if self.focus else None,
+            clients = [i.name for i in self.clients],
+            layout = self.layout.name
+        )
 
 
 class Client:
@@ -145,7 +172,11 @@ class QTile:
             X.UnmapNotify:      self.unmanage,
 
             X.CreateNotify:     nop,
+            # DWM catches this for changes to the root window, and updates
+            # screen geometry...
+            X.ConfigureNotify:  nop,
             X.MapNotify:        nop,
+            X.LeaveNotify:      nop,
         }
 
     def loop(self):
@@ -203,15 +234,13 @@ class QTile:
         """
         return len(self.clientMap)
 
-    def cmd_groupmap(self):
+    def cmd_groupinfo(self, name):
         """
-            Return a dictionary, where keys are group names, and values are
-            lists of clients.
+            Return group information.
         """
-        groups = {}
         for i in self.groups:
-            clst = []
-            for c in i.clients:
-                clst.append(c.name)
-            groups[i.name] = clst
-        return groups
+            if i.name == name:
+                return i.info()
+        else:
+            return None
+
