@@ -109,7 +109,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
                 break
             time.sleep(0.1)
         else:
-            raise AssertionError("Window could not be killed...") 
+            raise AssertionError("Window could not be killed...")
 
 
 class uQTile(_QTileTruss):
@@ -174,6 +174,15 @@ class uQTile(_QTileTruss):
         assert self.c.call("groupinfo", "b")["screen"] == 0
         self.c.call("pullgroup", "c")
         assert self.c.call("groupinfo", "c")["screen"] == 0
+
+    def test_unmap_noscreen(self):
+        self.testWindow("one")
+        pid = self.testWindow("two")
+        print self.c.call("clientcount"),
+        self.c.call("pullgroup", "c")
+        print self.c.call("clientcount")
+        #self.kill(pid)
+        #print self.c.call("groupinfo", "a")
 
 
 tests = [
