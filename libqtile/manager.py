@@ -61,20 +61,20 @@ class Group:
     def delete(self, client):
         if self.focusClient is client:
             if len(self.clients) > 1:
-                self.focus(self.nextClient(client))
+                self.focusNext()
             else:
                 self.focus(None)
         self.clients.remove(client)
         client.group = None
         self.layout()
 
-    def nextClient(self, client):
-        idx = (self.clients.index(client) + 1) % len(self.clients)
-        return self.clients[idx]
+    def focusNext(self):
+        idx = (self.clients.index(self.focusClient) + 1) % len(self.clients)
+        self.focus(self.clients[idx])
 
-    def previousClient(self, client):
-        idx = (self.clients.index(client) - 1) % len(self.clients)
-        return self.clients[idx]
+    def focusPrevious(self):
+        idx = (self.clients.index(self.focusClient) - 1) % len(self.clients)
+        self.focus(self.clients[idx])
 
     def focus(self, client):
         if self.focusClient != client:

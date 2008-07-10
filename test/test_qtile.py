@@ -130,19 +130,22 @@ class uQTile(_QTileTruss):
 
     def test_unmap(self):
         c = libqtile.ipc.Client(self["fname"])
-        self.testWindow("one")
-        pid = self.testWindow("two")
+        one = self.testWindow("one")
+        two = self.testWindow("two")
         info = c.call("groupinfo", "a")
         assert info["focus"] == "two"
 
         assert c.call("clientcount") == 2
-        self.kill(pid)
+        self.kill(two)
 
-        return
         assert c.call("clientcount") == 1
-
         info = c.call("groupinfo", "a")
         assert info["focus"] == "one"
+
+        self.kill(one)
+        assert c.call("clientcount") == 0
+        info = c.call("groupinfo", "a")
+        assert info["focus"] == None
 
 
 tests = [
