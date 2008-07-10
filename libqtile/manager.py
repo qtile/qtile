@@ -15,29 +15,30 @@ class Max:
         self.group = group
 
     def __call__(self):
-        for i in self.group.clients:
-            i.place(
-                self.group.screen.x,
-                self.group.screen.y,
-                self.group.screen.width,
-                self.group.screen.height,
-            )
-        if self.group.focusClient:
-            self.group.focusClient.focus()
+        if self.group.screen:
+            for i in self.group.clients:
+                i.place(
+                    self.group.screen.x,
+                    self.group.screen.y,
+                    self.group.screen.width,
+                    self.group.screen.height,
+                )
+            if self.group.focusClient:
+                self.group.focusClient.focus()
 
 
 class Screen:
     group = None
-    def __init__(self, x, y, width, height, group):
-        self.x, self.y = x, y
+    def __init__(self, index, x, y, width, height, group):
+        self.index, self.x, self.y = index, x, y
         self.width, self.height = width, height
         self.setGroup(group)
 
     def setGroup(self, g):
-        if self.group:
-            self.group.screen = None
+        if self.group and self.group != g:
+            self.group.hide()
         self.group = g
-        g.screen = self
+        self.group.toScreen(self)
 
 
 class Group:
@@ -52,6 +53,17 @@ class Group:
     @property
     def layout(self):
         return self.layouts[self.currentLayout]
+
+    def toScreen(self, screen):
+        if self.screen:
+            self.screen.group = None
+        self.screen = screen
+        self.layout()
+
+    def hide(self):
+        self.screen = None
+        for i in self.clients:
+            i.hide()
 
     def add(self, client):
         self.clients.append(client)
@@ -86,7 +98,8 @@ class Group:
             name = self.name,
             focus = self.focusClient.name if self.focusClient else None,
             clients = [i.name for i in self.clients],
-            layout = self.layout.name
+            layout = self.layout.name,
+            screen = self.screen.index if self.screen else None
         )
 
 
@@ -108,6 +121,9 @@ class Client:
         except Xlib.error.BadWindow:
             return "<nonexistent>"
 
+    def hide(self):
+        self.window.unmap()
+
     def place(self, x, y, width, height):
         self.window.configure(
             x=x,
@@ -115,6 +131,7 @@ class Client:
             width=width,
             height=height
         )
+        self.window.map()
 
     def focus(self):
         self.window.set_input_focus(
@@ -129,6 +146,7 @@ class Client:
 class QTile:
     _groupConf = ["a", "b", "c", "d"]
     _layoutConf = [Max]
+
     def __init__(self, display, fname):
         self.display = Xlib.display.Display(display)
         self.fname = fname
@@ -138,13 +156,17 @@ class QTile:
         self.root = defaultScreen.root
 
         self.groups = []
+        self.groupMap = {}
         for i in self._groupConf:
-            self.groups.append(Group(i, self._layoutConf))
+            g = Group(i, self._layoutConf)
+            self.groups.append(g)
+            self.groupMap[g.name] = g
 
         self.screens = []
         if self.display.has_extension("XINERAMA"):
             for i, s in enumerate(self.display.xinerama_query_screens().screens):
                 scr = Screen(
+                        i,
                         s["x"],
                         s["y"],
                         s["width"],
@@ -154,7 +176,7 @@ class QTile:
                 self.screens.append(scr)
         else:
             s = Screen(
-                    0, 0,
+                    0, 0, 0,
                     defaultScreen.width_in_pixels,
                     defaultScreen.height_in_pixels,
                     self.groups[0]
@@ -226,9 +248,6 @@ class QTile:
 
     def mapRequest(self, e):
         c = Client(e.window)
-        # A slight inelegance here is that the client is mapped before the
-        # layout occurs... 
-        e.window.map()
         self.clientMap[e.window] = c
         self.currentScreen.group.add(c)
 
@@ -284,3 +303,22 @@ class QTile:
 
     def cmd_focusprevious(self):
         self.currentScreen.group.focusPrevious()
+
+    def cmd_screencount(self):
+        return len(self.screens)
+
+    def cmd_pullgroup(self, group, screen=None):
+        if not screen:
+            screen = self.currentScreen
+        group = self.groupMap.get(group)
+        if not group:
+            return "No such group"
+        elif group.screen == screen:
+            return
+        elif group.screen:
+            g = screen.group
+            s = group.screen
+            s.setGroup(g)
+            screen.setGroup(group)
+        else:
+            screen.setGroup(group)

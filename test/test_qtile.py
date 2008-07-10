@@ -66,6 +66,18 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             else:
                 raise AssertionError, "Timeout waiting for Qtile"
         self.testwindows = []
+        self.c = libqtile.ipc.Client(self["fname"])
+
+    def tearDown(self):
+        libpry.TmpDirMixin.tearDown(self)
+        try:
+            self._kill(self.qtilepid)
+        except OSError:
+            # The process may have died due to some other error
+            pass
+        for pid in self.testwindows[:]:
+            self._kill(pid)
+        self.testwindows = []
 
     def testWindow(self, name):
         c = libqtile.ipc.Client(self["fname"])
@@ -88,17 +100,6 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
         if pid in self.testwindows:
             self.testwindows.remove(pid)
 
-    def tearDown(self):
-        libpry.TmpDirMixin.tearDown(self)
-        try:
-            self._kill(self.qtilepid)
-        except OSError:
-            # The process may have died due to some other error
-            pass
-        for pid in self.testwindows[:]:
-            self._kill(pid)
-        self.testwindows = []
-
     def kill(self, pid):
         c = libqtile.ipc.Client(self["fname"])
         start = c.call("clientcount")
@@ -113,61 +114,66 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
 
 class uQTile(_QTileTruss):
     def test_events(self):
-        c = libqtile.ipc.Client(self["fname"])
-        assert c.call("status") == "OK"
+        assert self.c.call("status") == "OK"
 
     def test_mapRequest(self):
-        c = libqtile.ipc.Client(self["fname"])
         self.testWindow("one")
-        info = c.call("groupinfo", "a")
+        info = self.c.call("groupinfo", "a")
         assert "one" in info["clients"]
         assert info["focus"] == "one"
 
         self.testWindow("two")
-        info = c.call("groupinfo", "a")
+        info = self.c.call("groupinfo", "a")
         assert "two" in info["clients"]
         assert info["focus"] == "two"
 
     def test_unmap(self):
-        c = libqtile.ipc.Client(self["fname"])
         one = self.testWindow("one")
         two = self.testWindow("two")
-        info = c.call("groupinfo", "a")
+        info = self.c.call("groupinfo", "a")
         assert info["focus"] == "two"
 
-        assert c.call("clientcount") == 2
+        assert self.c.call("clientcount") == 2
         self.kill(two)
 
-        assert c.call("clientcount") == 1
-        info = c.call("groupinfo", "a")
+        assert self.c.call("clientcount") == 1
+        info = self.c.call("groupinfo", "a")
         assert info["focus"] == "one"
 
         self.kill(one)
-        assert c.call("clientcount") == 0
-        info = c.call("groupinfo", "a")
+        assert self.c.call("clientcount") == 0
+        info = self.c.call("groupinfo", "a")
         assert info["focus"] == None
 
     def test_focus(self):
-        c = libqtile.ipc.Client(self["fname"])
         self.testWindow("one")
         self.testWindow("two")
         self.testWindow("three")
 
-        info = c.call("groupinfo", "a")
+        info = self.c.call("groupinfo", "a")
         assert info["focus"] == "three"
-        c.call("focusnext")
-        info = c.call("groupinfo", "a")
+        self.c.call("focusnext")
+        info = self.c.call("groupinfo", "a")
         assert info["focus"] == "one"
-        c.call("focusnext")
-        info = c.call("groupinfo", "a")
+        self.c.call("focusnext")
+        info = self.c.call("groupinfo", "a")
         assert info["focus"] == "two"
 
-        c.call("focusprevious")
-        info = c.call("groupinfo", "a")
+        self.c.call("focusprevious")
+        info = self.c.call("groupinfo", "a")
         assert info["focus"] == "one"
 
-
-
+    def test_setgroup(self):
+        self.testWindow("one")
+        assert self.c.call("pullgroup", "nonexistent") == "No such group"
+        self.c.call("pullgroup", "b")
+        if self.c.call("screencount") == 1:
+            assert self.c.call("groupinfo", "a")["screen"] == None
+        else:
+            assert self.c.call("groupinfo", "a")["screen"] == 1
+        assert self.c.call("groupinfo", "b")["screen"] == 0
+        self.c.call("pullgroup", "c")
+        assert self.c.call("groupinfo", "c")["screen"] == 0
 
 
 tests = [
