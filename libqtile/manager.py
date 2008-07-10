@@ -161,7 +161,6 @@ class QTile:
                 )
             self.screens.append(s)
 
-        self.currentScreen = self.screens[0]
         self.clientMap = {}
 
         self.root.change_attributes(
@@ -179,6 +178,7 @@ class QTile:
             X.MapRequest:       self.mapRequest,
             X.DestroyNotify:    self.unmanage,
             X.UnmapNotify:      self.unmanage,
+            X.EnterNotify:      self.enterNotify,
 
             X.CreateNotify:     nop,
             # DWM catches this for changes to the root window, and updates
@@ -188,6 +188,14 @@ class QTile:
             X.LeaveNotify:      nop,
             X.FocusOut:         nop,
         }
+
+    @property
+    def currentScreen(self):
+        v = self.root.query_pointer()
+        for i in self.screens:
+            if (v.win_x < i.x + i.width) and (v.win_y < i.y + i.height):
+                return i
+        return self.screens[0]
 
     def loop(self):
         while 1:
@@ -205,8 +213,14 @@ class QTile:
                 else:
                     print >> sys.stderr, e
 
+    def enterNotify(self, e):
+        c = self.clientMap.get(e.window)
+        self.currentScreen.group.focus(c)
+
     def mapRequest(self, e):
         c = Client(e.window)
+        # A slight inelegance here is that the client is mapped before the
+        # layout occurs... 
         e.window.map()
         self.clientMap[e.window] = c
         self.currentScreen.group.add(c)
