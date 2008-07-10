@@ -24,18 +24,15 @@ class Max:
 
 
 class Screen:
+    group = None
     def __init__(self, x, y, width, height, group):
         self.x, self.y = x, y
         self.width, self.height = width, height
-
-        # A bit bodgy, but we have to have a group set to call setGroup...
-        # Doing the interface this way guarantees that each Screen always has a
-        # group.
-        self.group = group
         self.setGroup(group)
 
     def setGroup(self, g):
-        self.group.screen = None
+        if self.group:
+            self.group.screen = None
         self.group = g
         g.screen = self
 

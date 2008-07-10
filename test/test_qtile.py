@@ -4,7 +4,7 @@ import libpry
 import libqtile
 
 class XNest(libpry.TestContainer):
-    def __init__(self, xinerama, display):
+    def __init__(self, xinerama, display=":1"):
         libpry.TestContainer.__init__(self)
         self.xinerama = xinerama
         if xinerama:
@@ -23,6 +23,7 @@ class XNest(libpry.TestContainer):
 
     def tearDown(self):
         os.kill(self.sub.pid, 9)
+        os.waitpid(self.sub.pid, 0)
                 
 
 class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
@@ -128,10 +129,10 @@ class uQTile(_QTileTruss):
 
 
 tests = [
-    XNest(xinerama=True, display=":1"), [
+    XNest(xinerama=True), [
         uQTile()
     ],
-    XNest(xinerama=False, display=":2"), [
+    XNest(xinerama=False), [
         uQTile()
     ]
 ]
