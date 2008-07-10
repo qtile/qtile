@@ -184,6 +184,8 @@ class QTile:
             # DWM catches this for changes to the root window, and updates
             # screen geometry...
             X.ConfigureNotify:  nop,
+            # DWM handles this to help "broken focusing clients".
+            X.FocusIn:          nop,
             X.MapNotify:        nop,
             X.LeaveNotify:      nop,
             X.FocusOut:         nop,
@@ -232,7 +234,7 @@ class QTile:
             del self.clientMap[e.window]
 
     _ignoreErrors = set([
-        Xlib.error.BadWindow
+        Xlib.error.BadWindow,
     ])
     def errorHandler(self, e, v):
         if e.__class__ not in self._ignoreErrors:
