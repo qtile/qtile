@@ -64,6 +64,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
                 time.sleep(0.1)
             else:
                 raise AssertionError, "Timeout waiting for Qtile"
+        self.testwindows = []
 
     def testWindow(self, name):
         c = libqtile.ipc.Client(self["fname"])
@@ -77,15 +78,25 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             time.sleep(0.1)
         else:
             raise AssertionError("Window never appeared...")
+        self.testwindows.append(pid)
         return pid
+
+    def kill(self, pid):
+        os.kill(pid, 9)
+        os.waitpid(pid, 0)
+        if pid in self.testwindows:
+            self.testwindows.remove(pid)
             
     def tearDown(self):
         libpry.TmpDirMixin.tearDown(self)
         try:
-            os.kill(self.qtilepid, 9)
+            self.kill(self.qtilepid)
         except OSError:
             # The process may have died due to some other error
             pass
+        for pid in self.testwindows[:]:
+            self.kill(pid)
+        self.testwindows = []
 
 
 class uQTile(_QTileTruss):
@@ -107,7 +118,7 @@ class uQTile(_QTileTruss):
         c = libqtile.ipc.Client(self["fname"])
         pid = self.testWindow("one")
         assert c.call("clientcount") == 1
-        os.kill(pid, 9)
+        self.kill(pid)
         for i in range(20):
             if c.call("clientcount") == 0:
                 break
