@@ -280,7 +280,7 @@ class QTile:
             return None
 
     def cmd_focusnext(self):
-        return "OK"
+        self.currentScreen.group.focusNext()
 
     def cmd_focusprevious(self):
-        return "OK"
+        self.currentScreen.group.focusPrevious()

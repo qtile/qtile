@@ -147,6 +147,28 @@ class uQTile(_QTileTruss):
         info = c.call("groupinfo", "a")
         assert info["focus"] == None
 
+    def test_focus(self):
+        c = libqtile.ipc.Client(self["fname"])
+        self.testWindow("one")
+        self.testWindow("two")
+        self.testWindow("three")
+
+        info = c.call("groupinfo", "a")
+        assert info["focus"] == "three"
+        c.call("focusnext")
+        info = c.call("groupinfo", "a")
+        assert info["focus"] == "one"
+        c.call("focusnext")
+        info = c.call("groupinfo", "a")
+        assert info["focus"] == "two"
+
+        c.call("focusprevious")
+        info = c.call("groupinfo", "a")
+        assert info["focus"] == "one"
+
+
+
+
 
 tests = [
     XNest(xinerama=True), [
