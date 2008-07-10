@@ -179,6 +179,7 @@ class QTile:
             X.DestroyNotify:    self.unmanage,
             X.UnmapNotify:      self.unmanage,
             X.EnterNotify:      self.enterNotify,
+            X.MappingNotify:    self.mappingNotify,
 
             X.CreateNotify:     nop,
             # DWM catches this for changes to the root window, and updates
@@ -214,6 +215,10 @@ class QTile:
                     h(e)
                 else:
                     print >> sys.stderr, e
+
+    def mappingNotify(self, e):
+        self.display.refresh_keyboard_mapping(e)
+        # FIXME: Grab our keybindings here
 
     def enterNotify(self, e):
         c = self.clientMap.get(e.window)
