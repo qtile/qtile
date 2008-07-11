@@ -3,6 +3,7 @@ import Xlib.display, Xlib.X
 import libpry
 import libqtile
 
+
 class XNest(libpry.TestContainer):
     def __init__(self, xinerama, display=":1"):
         libpry.TestContainer.__init__(self)
@@ -12,7 +13,7 @@ class XNest(libpry.TestContainer):
         self["display"] = display
 
     def setUp(self):
-        args = [ "Xnest", "-geometry", "800x600", self["display"], "-ac", "-sync"]
+        args = [ "Xnest", "+kb", "-geometry", "800x600", self["display"], "-ac", "-sync"]
         if self.xinerama:
             args.extend(["+xinerama", "-scrns", "2"])
         self.sub = subprocess.Popen(
@@ -185,6 +186,30 @@ class uQTile(_QTileTruss):
         assert self.c.call("clientcount") == 1
         assert self.c.call("groupinfo", "a")["focus"] == "one"
 
+    def test_keypress(self):
+        self.testWindow("one")
+        self.testWindow("two")
+        v = self.c.call("simulate_keypress", ["unknown"], "j")
+        assert v.startswith("Unknown modifier")
+        assert self.c.call("groupinfo", "a")["focus"] == "two"
+        self.c.call("simulate_keypress", ["control"], "j")
+        assert self.c.call("groupinfo", "a")["focus"] == "one"
+
+
+class uKey(libpry.AutoTree):
+    def test_init(self):
+        libpry.raises(
+            "unknown key",
+            libqtile.Key,
+            [], "unknown", None
+        )
+        libpry.raises(
+            "unknown modifier",
+            libqtile.Key,
+            ["unknown"], "x", None
+        )
+
+
 
 tests = [
     XNest(xinerama=True), [
@@ -192,5 +217,6 @@ tests = [
     ],
     XNest(xinerama=False), [
         uQTile()
-    ]
+    ],
+    uKey()
 ]

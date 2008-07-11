@@ -35,6 +35,8 @@ class Client:
 class Server:
     def __init__(self, fname, handler):
         self.fname, self.handler = fname, handler
+        if os.path.exists(fname):
+            os.unlink(fname)
         self.sock = socket.socket(
             socket.AF_UNIX,
             socket.SOCK_STREAM,

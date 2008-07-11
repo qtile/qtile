@@ -1,12 +1,47 @@
-import sys
+import sys, operator
 import Xlib
 import Xlib.display
 import Xlib.protocol.event as event
 import Xlib.ext.xinerama as xinerama
 import Xlib.X as X
+import Xlib.protocol.event as event
+import Xlib.XK as XK
 import ipc
 
-class CommandError(Exception): pass
+class ConfigError(Exception): pass
+
+_modmasks = {
+    "shift":    X.ShiftMask,
+    "lock":     X.LockMask,
+    "control":  X.ControlMask,
+    "mod1":     X.Mod1Mask,
+    "mod2":     X.Mod2Mask,
+    "mod3":     X.Mod3Mask,
+    "mod4":     X.Mod4Mask,
+    "mod5":     X.Mod5Mask,
+}
+
+def _translateMasks(modifiers):
+    masks = []
+    for i in modifiers:
+        try:
+            masks.append(_modmasks[i])
+        except KeyError:
+            raise ConfigError("Unknown modifier: %s"%i)
+    return reduce(operator.or_, masks)
+
+
+class Key:
+    def __init__(self, modifiers, key, action, *args, **kwargs):
+        self.modifiers, self.key = modifiers, key
+        self.action, self.args, self.kwargs = action, args, kwargs
+        self.keysym = XK.string_to_keysym(key)
+        if self.keysym == 0:
+            raise ConfigError("Unknown key: %s"%key)
+        self.modmask = _translateMasks(self.modifiers)
+    
+    def __repr__(self):
+        return "Key(%s, %s)"%(self.modifiers, self.key)
 
 
 class Max:
@@ -150,6 +185,10 @@ class Client:
 class QTile:
     _groupConf = ["a", "b", "c", "d"]
     _layoutConf = [Max]
+    _keyconf = [
+        Key(["control"], "k", "focusnext"),
+        Key(["control"], "j", "focusprevious"),
+    ]
     debug = False
     def __init__(self, display, fname):
         self.display = Xlib.display.Display(display)
@@ -206,7 +245,9 @@ class QTile:
             X.UnmapNotify:      self.unmapNotify,
             X.EnterNotify:      self.enterNotify,
             X.MappingNotify:    self.mappingNotify,
+            X.KeyPress:         self.keyPress,
 
+            X.KeyRelease:       nop,
             X.CreateNotify:     nop,
             # DWM catches this for changes to the root window, and updates
             # screen geometry...
@@ -217,6 +258,21 @@ class QTile:
             X.LeaveNotify:      nop,
             X.FocusOut:         nop,
         }
+        self.keyMap = {}
+        for i in self._keyconf:
+            self.keyMap[(i.keysym, i.modmask)] = i
+        self.grabKeys()
+
+    def grabKeys(self):
+        for i in self.keyMap.values():
+            code = self.display.keysym_to_keycode(i.keysym)
+            self.root.grab_key(
+                code,
+                i.modmask,
+                True,
+                X.GrabModeAsync,
+                X.GrabModeAsync
+            )
 
     @property
     def currentScreen(self):
@@ -242,11 +298,21 @@ class QTile:
                         print >> sys.stderr, "Handling:", e
                     h(e)
                 else:
-                    print >> "Unknown:", sys.stderr, e
+                    print >> sys.stderr, "Unknown:", e
+
+    def keyPress(self, e):
+        keysym =  self.display.keycode_to_keysym(e.detail, 0)
+        k = self.keyMap.get((keysym, e.state))
+        if not k:
+            print >> sys.stderr, "Ignoring unknown keysym: %s"%keysym
+        ret = self.call(k.action, *k.args, **k.kwargs)
+        if ret:
+            print >> sys.stderr, "KB command %s: %s"%(k.action, ret)
 
     def mappingNotify(self, e):
         self.display.refresh_keyboard_mapping(e)
-        # FIXME: Grab our keybindings here
+        if e.request == X.MappingKeyboard:
+            self.grabKeys()
 
     def enterNotify(self, e):
         c = self.clientMap.get(e.window)
@@ -281,8 +347,10 @@ class QTile:
 
     def commandHandler(self, data):
         path, args, kwargs = data
-        parts = path.split(".")
+        return self.call(path, *args, **kwargs)
 
+    def call(self, path, *args, **kwargs):
+        parts = path.split(".")
         obj = self
         funcName = parts[0]
         cmd = getattr(obj, "cmd_" + funcName, None)
@@ -337,3 +405,43 @@ class QTile:
             screen.setGroup(group)
         else:
             screen.setGroup(group)
+
+    def cmd_simulate_keypress(self, modifiers, key):
+        """
+            Simulates a keypress on the focused window.
+        """
+        keysym = XK.string_to_keysym(key)
+        if keysym == 0:
+            return "Unknown key: %s"%key
+        keycode = self.display.keysym_to_keycode(keysym)
+        try:
+            mask = _translateMasks(modifiers)
+        except ConfigError, v:
+            return str(v)
+        if self.currentScreen.group.focusClient:
+            win = self.currentScreen.group.focusClient.window
+        else:
+            win = self.root
+        e = event.KeyPress(
+                type = X.KeyPress,
+                state = mask,
+                detail = keycode,
+
+                root = self.root,
+                window = win,
+                child = X.NONE,
+
+                time = X.CurrentTime,
+                root_x = 1,
+                root_y = 1,
+                event_x = 1,
+                event_y = 1,
+                same_screen = 1,
+        )
+        win.send_event(e, X.KeyPressMask|X.SubstructureNotifyMask, propagate=True)
+        # I guess we could abstract this out into a cmd_sync command to
+        # facilitate testing...
+        self.display.sync()
+
+
+
