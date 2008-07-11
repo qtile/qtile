@@ -178,11 +178,12 @@ class uQTile(_QTileTruss):
     def test_unmap_noscreen(self):
         self.testWindow("one")
         pid = self.testWindow("two")
-        print self.c.call("clientcount"),
+        assert self.c.call("clientcount") == 2
         self.c.call("pullgroup", "c")
-        print self.c.call("clientcount")
-        #self.kill(pid)
-        #print self.c.call("groupinfo", "a")
+        assert self.c.call("clientcount") == 2
+        self.kill(pid)
+        assert self.c.call("clientcount") == 1
+        assert self.c.call("groupinfo", "a")["focus"] == "one"
 
 
 tests = [

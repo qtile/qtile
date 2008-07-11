@@ -104,15 +104,14 @@ class Group:
 
 
 class Client:
-    def __init__(self, window):
-        self.window = window
+    _windowMask = X.StructureNotifyMask |\
+                 X.PropertyChangeMask |\
+                 X.EnterWindowMask |\
+                 X.FocusChangeMask
+    def __init__(self, window, qtile):
+        self.window, self.qtile = window, qtile
         self.group = None
-        window.change_attributes(
-            event_mask = X.StructureNotifyMask |\
-                         X.PropertyChangeMask |\
-                         X.EnterWindowMask |\
-                         X.FocusChangeMask
-        )
+        window.change_attributes(event_mask=self._windowMask)
 
     @property
     def name(self):
@@ -122,7 +121,12 @@ class Client:
             return "<nonexistent>"
 
     def hide(self):
+        # We don't want to get the UnmapNotify for this unmap
+        self.window.change_attributes(
+            event_mask=self._windowMask&(~X.StructureNotifyMask)
+        )
         self.window.unmap()
+        self.window.change_attributes(event_mask=self._windowMask)
 
     def place(self, x, y, width, height):
         self.window.configure(
@@ -146,7 +150,7 @@ class Client:
 class QTile:
     _groupConf = ["a", "b", "c", "d"]
     _layoutConf = [Max]
-
+    debug = False
     def __init__(self, display, fname):
         self.display = Xlib.display.Display(display)
         self.fname = fname
@@ -198,8 +202,8 @@ class QTile:
         nop = lambda e: None
         self.handlers = {
             X.MapRequest:       self.mapRequest,
-            X.DestroyNotify:    self.unmanage,
-            X.UnmapNotify:      self.unmanage,
+            X.DestroyNotify:    self.destroyNotify,
+            X.UnmapNotify:      self.unmapNotify,
             X.EnterNotify:      self.enterNotify,
             X.MappingNotify:    self.mappingNotify,
 
@@ -234,9 +238,11 @@ class QTile:
                 e = self.display.next_event()
                 h = self.handlers.get(e.type)
                 if h:
+                    if self.debug:
+                        print >> sys.stderr, "Handling:", e
                     h(e)
                 else:
-                    print >> sys.stderr, e
+                    print >> "Unknown:", sys.stderr, e
 
     def mappingNotify(self, e):
         self.display.refresh_keyboard_mapping(e)
@@ -247,15 +253,24 @@ class QTile:
         self.currentScreen.group.focus(c)
 
     def mapRequest(self, e):
-        c = Client(e.window)
+        c = Client(e.window, self)
         self.clientMap[e.window] = c
         self.currentScreen.group.add(c)
 
-    def unmanage(self, e):
-        c = self.clientMap.get(e.window)
+    def unmanage(self, window):
+        c = self.clientMap.get(window)
         if c:
             c.group.delete(c)
-            del self.clientMap[e.window]
+            del self.clientMap[window]
+
+    def destroyNotify(self, e):
+        self.unmanage(e.window)
+
+    def unmapNotify(self, e):
+        # Ignore SubstructureNotify unmap events
+        if  (e.event != e.window) and e.send_event == False:
+            return
+        self.unmanage(e.window)
 
     _ignoreErrors = set([
         Xlib.error.BadWindow,
