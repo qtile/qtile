@@ -8,26 +8,20 @@ Commands are serialised into tuples, as follows:
 
 Command is a period-delimited specifier:
 
-    command                                  - command on the window manager.
-    group.name.command                       - command on the named group.
-    group.current.command                    - command on the named group.
-    screen.num.command                       - command on screen num.
-    screen.current.command                   - command on current screen.
-    focused.command                          - command on focused window.
-    layout.command                           - command on current layout.
-    layout.command                           - command on current layout.
-    screen.current.statusbar.command         - command on .
+    command
+    group.COMMAND                            - command on the named group
+    group.NAME.COMMAND                       - command on the named group
+    screen.COMMAND                           - command on current screen
+    screen.NUM.COMMAND                       - command on screen NUM
+    statusbar.COMMAND                        - command on current statusbar
+    statusbar.NUM.COMMAND                    - command on current statusbar on screen NUM
+    layout.COMMAND                           - command on current layout
+    layout.NUM.COMMAND                       - command on layout on screen NUM
+    focus.COMMAND                            - command on focused window
 
-
-Commands:
-
-    status                      - Just returns "OK".
-
-    groupmap                    - A dictionary, where keys are group names, and
-                                  values are lists of clients.
-
-    clientcount                 - Total number of clients.
-
+    Key(["control"], "k", "focusnext")
+    Key(["control"], "k", "layout.current.fooo")
+    Key(["control"], "k", "screen.current.statusbar.moo", 1, 3=foo)
 
 
 Groups

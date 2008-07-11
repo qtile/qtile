@@ -446,5 +446,3 @@ class QTile:
         # facilitate testing...
         self.display.sync()
 
-
-
