@@ -177,6 +177,9 @@ class Client:
             X.RevertToPointerRoot,
             X.CurrentTime
         )
+        self.window.configure(
+            stack_mode = X.Above
+        )
 
     def __repr__(self):
         return "Client(%s)"%self.name
