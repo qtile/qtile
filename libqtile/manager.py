@@ -1,35 +1,13 @@
 import sys, operator
 import Xlib
 import Xlib.display
-import Xlib.protocol.event as event
 import Xlib.ext.xinerama as xinerama
 import Xlib.X as X
 import Xlib.protocol.event as event
 import Xlib.XK as XK
-import ipc
+import command, utils
 
-class ConfigError(Exception): pass
-
-_modmasks = {
-    "shift":    X.ShiftMask,
-    "lock":     X.LockMask,
-    "control":  X.ControlMask,
-    "mod1":     X.Mod1Mask,
-    "mod2":     X.Mod2Mask,
-    "mod3":     X.Mod3Mask,
-    "mod4":     X.Mod4Mask,
-    "mod5":     X.Mod5Mask,
-}
-
-def _translateMasks(modifiers):
-    masks = []
-    for i in modifiers:
-        try:
-            masks.append(_modmasks[i])
-        except KeyError:
-            raise ConfigError("Unknown modifier: %s"%i)
-    return reduce(operator.or_, masks)
-
+class QTileError(Exception): pass
 
 class Key:
     def __init__(self, modifiers, key, action, *args, **kwargs):
@@ -37,8 +15,8 @@ class Key:
         self.action, self.args, self.kwargs = action, args, kwargs
         self.keysym = XK.string_to_keysym(key)
         if self.keysym == 0:
-            raise ConfigError("Unknown key: %s"%key)
-        self.modmask = _translateMasks(self.modifiers)
+            raise QTileError("Unknown key: %s"%key)
+        self.modmask = utils.translateMasks(self.modifiers)
     
     def __repr__(self):
         return "Key(%s, %s)"%(self.modifiers, self.key)
@@ -239,7 +217,7 @@ class QTile:
                          X.StructureNotifyMask
         )
         self.display.set_error_handler(self.errorHandler)
-        self.server = ipc.Server(self.fname, self.commandHandler)
+        self.server = command.Command(self.fname, self)
 
         nop = lambda e: None
         self.handlers = {
@@ -308,7 +286,7 @@ class QTile:
         k = self.keyMap.get((keysym, e.state))
         if not k:
             print >> sys.stderr, "Ignoring unknown keysym: %s"%keysym
-        ret = self.call(k.action, *k.args, **k.kwargs)
+        ret = self.server.call((k.action, k.args, k.kwargs))
         if ret:
             print >> sys.stderr, "KB command %s: %s"%(k.action, ret)
 
@@ -347,102 +325,4 @@ class QTile:
     def errorHandler(self, e, v):
         if e.__class__ not in self._ignoreErrors:
             print >> sys.stderr, "Error:", (e, v)
-
-    def commandHandler(self, data):
-        path, args, kwargs = data
-        return self.call(path, *args, **kwargs)
-
-    def call(self, path, *args, **kwargs):
-        parts = path.split(".")
-        obj = self
-        funcName = parts[0]
-        cmd = getattr(obj, "cmd_" + funcName, None)
-        if cmd:
-            return cmd(*args, **kwargs)
-        else:
-            return "Unknown command: %s"%cmd
-
-    def cmd_status(self):
-        """
-            Return "OK" if Qtile is running.
-        """
-        return "OK"
-
-    def cmd_clientcount(self):
-        """
-            Return number of clients in all groups.
-        """
-        return len(self.clientMap)
-
-    def cmd_groupinfo(self, name):
-        """
-            Return group information.
-        """
-        for i in self.groups:
-            if i.name == name:
-                return i.info()
-        else:
-            return None
-
-    def cmd_focusnext(self):
-        self.currentScreen.group.focusNext()
-
-    def cmd_focusprevious(self):
-        self.currentScreen.group.focusPrevious()
-
-    def cmd_screencount(self):
-        return len(self.screens)
-
-    def cmd_pullgroup(self, group, screen=None):
-        if not screen:
-            screen = self.currentScreen
-        group = self.groupMap.get(group)
-        if not group:
-            return "No such group"
-        elif group.screen == screen:
-            return
-        elif group.screen:
-            g = screen.group
-            s = group.screen
-            s.setGroup(g)
-            screen.setGroup(group)
-        else:
-            screen.setGroup(group)
-
-    def cmd_simulate_keypress(self, modifiers, key):
-        """
-            Simulates a keypress on the focused window.
-        """
-        keysym = XK.string_to_keysym(key)
-        if keysym == 0:
-            return "Unknown key: %s"%key
-        keycode = self.display.keysym_to_keycode(keysym)
-        try:
-            mask = _translateMasks(modifiers)
-        except ConfigError, v:
-            return str(v)
-        if self.currentScreen.group.focusClient:
-            win = self.currentScreen.group.focusClient.window
-        else:
-            win = self.root
-        e = event.KeyPress(
-                type = X.KeyPress,
-                state = mask,
-                detail = keycode,
-
-                root = self.root,
-                window = win,
-                child = X.NONE,
-
-                time = X.CurrentTime,
-                root_x = 1,
-                root_y = 1,
-                event_x = 1,
-                event_y = 1,
-                same_screen = 1,
-        )
-        win.send_event(e, X.KeyPressMask|X.SubstructureNotifyMask, propagate=True)
-        # I guess we could abstract this out into a cmd_sync command to
-        # facilitate testing...
-        self.display.sync()
 

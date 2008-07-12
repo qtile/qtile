@@ -55,11 +55,11 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             sys.exit(0)
         else:
             self.qtilepid = pid
-            c = libqtile.ipc.Client(self["fname"])
+            c = libqtile.command.Client(self["fname"], libqtile.command.Command)
             # Wait until qtile is up before continuing
             for i in range(20):
                 try:
-                    if c.call("status") == "OK":
+                    if c.status() == "OK":
                         break
                 except socket.error:
                     pass
@@ -67,7 +67,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             else:
                 raise AssertionError, "Timeout waiting for Qtile"
         self.testwindows = []
-        self.c = libqtile.ipc.Client(self["fname"])
+        self.c = libqtile.command.Client(self["fname"], libqtile.command.Command)
 
     def tearDown(self):
         libpry.TmpDirMixin.tearDown(self)
@@ -81,13 +81,13 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
         self.testwindows = []
 
     def testWindow(self, name):
-        c = libqtile.ipc.Client(self["fname"])
-        start = c.call("clientcount")
+        c = libqtile.command.Client(self["fname"], libqtile.command.Command)
+        start = c.clientcount()
         pid = os.fork()
         if pid == 0:
             os.execv("scripts/window", ["scripts/window", self["display"], name])
         for i in range(20):
-            if c.call("clientcount") > start:
+            if c.clientcount() > start:
                 break
             time.sleep(0.1)
         else:
@@ -102,11 +102,11 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             self.testwindows.remove(pid)
 
     def kill(self, pid):
-        c = libqtile.ipc.Client(self["fname"])
-        start = c.call("clientcount")
+        c = libqtile.command.Client(self["fname"], libqtile.command.Command)
+        start = c.clientcount()
         self._kill(pid)
         for i in range(20):
-            if c.call("clientcount") < start:
+            if c.clientcount() < start:
                 break
             time.sleep(0.1)
         else:
@@ -115,35 +115,35 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
 
 class uQTile(_QTileTruss):
     def test_events(self):
-        assert self.c.call("status") == "OK"
+        assert self.c.status() == "OK"
 
     def test_mapRequest(self):
         self.testWindow("one")
-        info = self.c.call("groupinfo", "a")
+        info = self.c.groupinfo("a")
         assert "one" in info["clients"]
         assert info["focus"] == "one"
 
         self.testWindow("two")
-        info = self.c.call("groupinfo", "a")
+        info = self.c.groupinfo("a")
         assert "two" in info["clients"]
         assert info["focus"] == "two"
 
     def test_unmap(self):
         one = self.testWindow("one")
         two = self.testWindow("two")
-        info = self.c.call("groupinfo", "a")
+        info = self.c.groupinfo("a")
         assert info["focus"] == "two"
 
-        assert self.c.call("clientcount") == 2
+        assert self.c.clientcount() == 2
         self.kill(two)
 
-        assert self.c.call("clientcount") == 1
-        info = self.c.call("groupinfo", "a")
+        assert self.c.clientcount() == 1
+        info = self.c.groupinfo("a")
         assert info["focus"] == "one"
 
         self.kill(one)
-        assert self.c.call("clientcount") == 0
-        info = self.c.call("groupinfo", "a")
+        assert self.c.clientcount() == 0
+        info = self.c.groupinfo("a")
         assert info["focus"] == None
 
     def test_focus(self):
@@ -151,49 +151,49 @@ class uQTile(_QTileTruss):
         self.testWindow("two")
         self.testWindow("three")
 
-        info = self.c.call("groupinfo", "a")
+        info = self.c.groupinfo("a")
         assert info["focus"] == "three"
-        self.c.call("focusnext")
-        info = self.c.call("groupinfo", "a")
+        self.c.focusnext()
+        info = self.c.groupinfo("a")
         assert info["focus"] == "one"
-        self.c.call("focusnext")
-        info = self.c.call("groupinfo", "a")
+        self.c.focusnext()
+        info = self.c.groupinfo("a")
         assert info["focus"] == "two"
 
-        self.c.call("focusprevious")
-        info = self.c.call("groupinfo", "a")
+        self.c.focusprevious()
+        info = self.c.groupinfo("a")
         assert info["focus"] == "one"
 
     def test_setgroup(self):
         self.testWindow("one")
-        assert self.c.call("pullgroup", "nonexistent") == "No such group"
-        self.c.call("pullgroup", "b")
-        if self.c.call("screencount") == 1:
-            assert self.c.call("groupinfo", "a")["screen"] == None
+        assert self.c.pullgroup("nonexistent") == "No such group"
+        self.c.pullgroup("b")
+        if self.c.screencount() == 1:
+            assert self.c.groupinfo("a")["screen"] == None
         else:
-            assert self.c.call("groupinfo", "a")["screen"] == 1
-        assert self.c.call("groupinfo", "b")["screen"] == 0
-        self.c.call("pullgroup", "c")
-        assert self.c.call("groupinfo", "c")["screen"] == 0
+            assert self.c.groupinfo("a")["screen"] == 1
+        assert self.c.groupinfo("b")["screen"] == 0
+        self.c.pullgroup("c")
+        assert self.c.groupinfo("c")["screen"] == 0
 
     def test_unmap_noscreen(self):
         self.testWindow("one")
         pid = self.testWindow("two")
-        assert self.c.call("clientcount") == 2
-        self.c.call("pullgroup", "c")
-        assert self.c.call("clientcount") == 2
+        assert self.c.clientcount() == 2
+        self.c.pullgroup("c")
+        assert self.c.clientcount() == 2
         self.kill(pid)
-        assert self.c.call("clientcount") == 1
-        assert self.c.call("groupinfo", "a")["focus"] == "one"
+        assert self.c.clientcount() == 1
+        assert self.c.groupinfo("a")["focus"] == "one"
 
     def test_keypress(self):
         self.testWindow("one")
         self.testWindow("two")
-        v = self.c.call("simulate_keypress", ["unknown"], "j")
+        v = self.c.simulate_keypress(["unknown"], "j")
         assert v.startswith("Unknown modifier")
-        assert self.c.call("groupinfo", "a")["focus"] == "two"
-        self.c.call("simulate_keypress", ["control"], "j")
-        assert self.c.call("groupinfo", "a")["focus"] == "one"
+        assert self.c.groupinfo("a")["focus"] == "two"
+        self.c.simulate_keypress(["control"], "j")
+        assert self.c.groupinfo("a")["focus"] == "one"
 
 
 class uKey(libpry.AutoTree):
