@@ -9,6 +9,7 @@ import command, utils
 
 class QTileError(Exception): pass
 
+
 class Key:
     def __init__(self, modifiers, key, action, *args, **kwargs):
         self.modifiers, self.key = modifiers, key
@@ -27,17 +28,18 @@ class Max:
     def __init__(self, group):
         self.group = group
 
-    def __call__(self):
-        if self.group.screen:
-            for i in self.group.clients:
-                i.place(
-                    self.group.screen.x,
-                    self.group.screen.y,
-                    self.group.screen.width,
-                    self.group.screen.height,
-                )
-            if self.group.focusClient:
-                self.group.focusClient.focus()
+    def configure(self, c):
+        """
+            Retrieve the layout for a specified client.
+        """
+        c.place(
+            self.group.screen.x,
+            self.group.screen.y,
+            self.group.screen.width,
+            self.group.screen.height,
+        )
+        if c is self.group.focusClient:
+            c.focus()
 
 
 class Screen:
@@ -67,11 +69,16 @@ class Group:
     def layout(self):
         return self.layouts[self.currentLayout]
 
+    def layoutAll(self):
+        if self.screen:
+            for i in self.clients:
+                self.layout.configure(i)
+
     def toScreen(self, screen):
         if self.screen:
             self.screen.group = None
         self.screen = screen
-        self.layout()
+        self.layoutAll()
 
     def hide(self):
         self.screen = None
@@ -91,7 +98,7 @@ class Group:
                 self.focus(None)
         self.clients.remove(client)
         client.group = None
-        self.layout()
+        self.layoutAll()
 
     def focusNext(self):
         idx = (self.clients.index(self.focusClient) + 1) % len(self.clients)
@@ -104,7 +111,7 @@ class Group:
     def focus(self, client):
         if self.focusClient != client:
             self.focusClient = client
-            self.layout()
+            self.layoutAll()
 
     def info(self):
         return dict(
@@ -221,23 +228,24 @@ class QTile:
 
         nop = lambda e: None
         self.handlers = {
-            X.MapRequest:       self.mapRequest,
-            X.DestroyNotify:    self.destroyNotify,
-            X.UnmapNotify:      self.unmapNotify,
-            X.EnterNotify:      self.enterNotify,
-            X.MappingNotify:    self.mappingNotify,
-            X.KeyPress:         self.keyPress,
+            X.MapRequest:           self.mapRequest,
+            X.DestroyNotify:        self.destroyNotify,
+            X.UnmapNotify:          self.unmapNotify,
+            X.EnterNotify:          self.enterNotify,
+            X.MappingNotify:        self.mappingNotify,
+            X.KeyPress:             self.keyPress,
+            X.ConfigureRequest:     self.configureRequest,
 
-            X.KeyRelease:       nop,
-            X.CreateNotify:     nop,
+            X.KeyRelease:           nop,
+            X.CreateNotify:         nop,
             # DWM catches this for changes to the root window, and updates
             # screen geometry...
-            X.ConfigureNotify:  nop,
+            X.ConfigureNotify:      nop,
             # DWM handles this to help "broken focusing clients".
-            X.FocusIn:          nop,
-            X.MapNotify:        nop,
-            X.LeaveNotify:      nop,
-            X.FocusOut:         nop,
+            X.FocusIn:              nop,
+            X.MapNotify:            nop,
+            X.LeaveNotify:          nop,
+            X.FocusOut:             nop,
         }
         self.keyMap = {}
         for i in self._keyconf:
@@ -289,6 +297,27 @@ class QTile:
         ret = self.server.call((k.action, k.args, k.kwargs))
         if ret:
             print >> sys.stderr, "KB command %s: %s"%(k.action, ret)
+
+    def configureRequest(self, e):
+        c = self.clientMap.get(e.window)
+        if c and c.group.screen:
+            c.group.layout.configure(c)
+        else:
+            # It's not managed, or not mapped, so we just obey it.
+            args = {}
+            if e.value_mask & X.CWX:
+                args["x"] = e.x
+            if e.value_mask & X.CWY:
+                args["y"] = e.y
+            if e.value_mask & X.CWHeight:
+                args["height"] = e.height
+            if e.value_mask & X.CWWidth:
+                args["width"] = e.width
+            if e.value_mask & X.CWBorderWidth:
+                args["border_width"] = e.border_width
+            e.window.configure(
+                **args
+            )
 
     def mappingNotify(self, e):
         self.display.refresh_keyboard_mapping(e)

@@ -21,8 +21,27 @@ window = root.create_window(100, 100, 100, 100, 1,
                             X.CopyFromParent,
                             background_pixel = background,
                             event_mask = X.StructureNotifyMask | X.ExposureMask)
+# Trigger a configure request before mapping
+window.configure(
+    width=100,
+    height=100,
+    x=0,
+    y=0,
+    border_width=1,
+)
 window.set_wm_name(sys.argv[2])
 window.map()
+
+d.sync()
+# Trigger a configure request after mapping
+window.configure(
+    width=100,
+    height=100,
+    x=0,
+    y=0,
+    border_width=1,
+)
+window.configure(width=100)
 
 try:
     while 1:
