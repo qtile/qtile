@@ -1,6 +1,19 @@
 #!/usr/bin/env python
+"""
+    This program is carefully crafted to exercise a number of corner-cases in
+    QTile.
+"""
 import sys, time
-from Xlib import display, error, X, XK
+from Xlib import display, error, X
+
+def configure(window):
+    window.configure(
+        width=100,
+        height=100,
+        x=0,
+        y=0,
+        border_width=1,
+    )
 
 for i in range(20):
     try:
@@ -21,27 +34,12 @@ window = root.create_window(100, 100, 100, 100, 1,
                             X.CopyFromParent,
                             background_pixel = background,
                             event_mask = X.StructureNotifyMask | X.ExposureMask)
-# Trigger a configure request before mapping
-window.configure(
-    width=100,
-    height=100,
-    x=0,
-    y=0,
-    border_width=1,
-)
 window.set_wm_name(sys.argv[2])
-window.map()
 
+configure(window)
+window.map()
 d.sync()
-# Trigger a configure request after mapping
-window.configure(
-    width=100,
-    height=100,
-    x=0,
-    y=0,
-    border_width=1,
-)
-window.configure(width=100)
+configure(window)
 
 try:
     while 1:
