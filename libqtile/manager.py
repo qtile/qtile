@@ -85,7 +85,7 @@ class Group:
             i.hide()
 
     def add(self, client):
-        self.clients.append(client)
+        self.clients.insert(0, client)
         client.group = self
         self.focus(client)
 

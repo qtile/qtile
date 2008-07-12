@@ -145,12 +145,18 @@ class uQTile(_QTileTruss):
     def test_unmap(self):
         one = self.testWindow("one")
         two = self.testWindow("two")
+        three = self.testWindow("three")
+        info = self.c.groupinfo("a")
+        assert info["focus"] == "three"
+
+        assert self.c.clientcount() == 3
+        self.kill(three)
+
+        assert self.c.clientcount() == 2
         info = self.c.groupinfo("a")
         assert info["focus"] == "two"
 
-        assert self.c.clientcount() == 2
         self.kill(two)
-
         assert self.c.clientcount() == 1
         info = self.c.groupinfo("a")
         assert info["focus"] == "one"
@@ -169,14 +175,14 @@ class uQTile(_QTileTruss):
         assert info["focus"] == "three"
         self.c.focusnext()
         info = self.c.groupinfo("a")
-        assert info["focus"] == "one"
+        assert info["focus"] == "two"
         self.c.focusnext()
         info = self.c.groupinfo("a")
-        assert info["focus"] == "two"
-
-        self.c.focusprevious()
-        info = self.c.groupinfo("a")
         assert info["focus"] == "one"
+
+        self.c.focusnext()
+        info = self.c.groupinfo("a")
+        assert info["focus"] == "three"
 
     def test_setgroup(self):
         self.testWindow("one")
