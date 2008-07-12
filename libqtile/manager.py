@@ -2,9 +2,9 @@ import sys, operator
 import Xlib
 import Xlib.display
 import Xlib.ext.xinerama as xinerama
-import Xlib.X as X
+from Xlib import X, XK, Xatom
 import Xlib.protocol.event as event
-import Xlib.XK as XK
+
 import command, utils
 
 class QTileError(Exception): pass
@@ -235,8 +235,10 @@ class QTile:
             X.MappingNotify:        self.mappingNotify,
             X.KeyPress:             self.keyPress,
             X.ConfigureRequest:     self.configureRequest,
+            X.PropertyNotify:       self.propertyNotify,
 
             X.KeyRelease:           nop,
+            X.ReparentNotify:       nop,
             X.CreateNotify:         nop,
             # DWM catches this for changes to the root window, and updates
             # screen geometry...
@@ -294,6 +296,7 @@ class QTile:
         k = self.keyMap.get((keysym, e.state))
         if not k:
             print >> sys.stderr, "Ignoring unknown keysym: %s"%keysym
+            return
         ret = self.server.call((k.action, k.args, k.kwargs))
         if ret:
             print >> sys.stderr, "KB command %s: %s"%(k.action, ret)
@@ -318,6 +321,20 @@ class QTile:
             e.window.configure(
                 **args
             )
+
+    def propertyNotify(self, e):
+        c = self.clientMap.get(e.window)
+        if c:
+            if e.atom == Xatom.WM_TRANSIENT_FOR:
+                print >> sys.stderr, "transient"
+            elif e.atom == Xatom.WM_HINTS:
+                print >> sys.stderr, "hints"
+            elif e.atom == Xatom.WM_NORMAL_HINTS:
+                print >> sys.stderr, "normal_hints"
+            elif e.atom == Xatom.WM_NAME:
+                print >> sys.stderr, "name"
+            else:
+                print >> sys.stderr, e
 
     def mappingNotify(self, e):
         self.display.refresh_keyboard_mapping(e)
