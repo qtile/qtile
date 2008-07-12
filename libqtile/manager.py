@@ -178,6 +178,7 @@ class QTile:
         Key(["control"], "j", "focusprevious"),
     ]
     debug = False
+    exit = False
     def __init__(self, display, fname):
         self.display = Xlib.display.Display(display)
         self.fname = fname
@@ -216,6 +217,7 @@ class QTile:
 
         self.clientMap = {}
 
+        self.display.set_error_handler(self.errorHandler)
         self.root.change_attributes(
             event_mask = X.SubstructureNotifyMask |\
                          X.SubstructureRedirectMask |\
@@ -223,7 +225,11 @@ class QTile:
                          X.LeaveWindowMask |\
                          X.StructureNotifyMask
         )
-        self.display.set_error_handler(self.errorHandler)
+        self.display.sync()
+        # Another WM is running...
+        if self.exit:
+            sys.exit(1)
+
         self.server = command.Command(self.fname, self)
 
         nop = lambda e: None
@@ -292,6 +298,8 @@ class QTile:
 
     def loop(self):
         while 1:
+            if self.exit:
+                sys.exit(1)
             self.server.receive()
             try:
                 n = self.display.pending_events()
@@ -378,6 +386,11 @@ class QTile:
         Xlib.error.BadWindow,
     ])
     def errorHandler(self, e, v):
-        if e.__class__ not in self._ignoreErrors:
+        if e.__class__ in self._ignoreErrors:
+            return
+        if e.__class__ == Xlib.error.BadAccess:
+            print >> sys.stderr, "Access denied: Another window manager running?"
+        else:
             print >> sys.stderr, "Error:", (e, v)
+        self.exit = True
 
