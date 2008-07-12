@@ -29,17 +29,15 @@ class Max:
         self.group = group
 
     def configure(self, c):
-        """
-            Retrieve the layout for a specified client.
-        """
-        c.place(
-            self.group.screen.x,
-            self.group.screen.y,
-            self.group.screen.width,
-            self.group.screen.height,
-        )
-        if c is self.group.focusClient:
-            c.focus()
+        if c == self.group.focusClient:
+            c.place(
+                self.group.screen.x,
+                self.group.screen.y,
+                self.group.screen.width,
+                self.group.screen.height,
+            )
+        else:
+            c.hide()
 
 
 class Screen:
@@ -70,9 +68,10 @@ class Group:
         return self.layouts[self.currentLayout]
 
     def layoutAll(self):
-        if self.screen:
+        if self.screen and self.clients:
             for i in self.clients:
                 self.layout.configure(i)
+            self.focusClient.focus()
 
     def toScreen(self, screen):
         if self.screen:
@@ -109,9 +108,13 @@ class Group:
         self.focus(self.clients[idx])
 
     def focus(self, client):
-        if self.focusClient != client:
+        if not client:
+            self.focusClient = None
+        elif self.focusClient != client:
             self.focusClient = client
-            self.layoutAll()
+            if self.screen:
+                self.layout.configure(client)
+                self.layoutAll()
 
     def info(self):
         return dict(
@@ -153,7 +156,7 @@ class Client:
             x=x,
             y=y,
             width=width,
-            height=height
+            height=height,
         )
         self.window.map()
 
@@ -177,6 +180,7 @@ class QTile:
         Key(["control"], "k", "focusnext"),
         Key(["control"], "j", "focusprevious"),
     ]
+    testing = False
     debug = False
     exit = False
     def __init__(self, display, fname):
@@ -250,10 +254,10 @@ class QTile:
             # screen geometry...
             X.ConfigureNotify:      nop,
             # DWM handles this to help "broken focusing clients".
-            X.FocusIn:              nop,
             X.MapNotify:            nop,
             X.LeaveNotify:          nop,
             X.FocusOut:             nop,
+            X.FocusIn:              nop,
         }
         self.keyMap = {}
         for i in self._keyconf:
@@ -368,7 +372,8 @@ class QTile:
 
     def enterNotify(self, e):
         c = self.clientMap.get(e.window)
-        self.currentScreen.group.focus(c)
+        if c:
+            self.currentScreen.group.focus(c)
 
     def mapRequest(self, e):
         self.manage(e.window)

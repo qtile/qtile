@@ -33,6 +33,8 @@ class Command(ipc.Server):
             return cmd(self.qtile, *args, **kwargs)
         else:
             return "Unknown command: %s"%cmd
+        if self.qtile.testing:
+            self.qtile.display.sync()
 
     def cmd_status(self, qtile):
         """

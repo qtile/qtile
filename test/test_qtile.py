@@ -56,6 +56,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             # Run this in a sandbox...
             try:
                 q = libqtile.QTile(self["display"], self["fname"])
+                q.testing = True
                 q.loop()
             except Exception, e:
                 traceback.print_exc(file=sys.stderr)
