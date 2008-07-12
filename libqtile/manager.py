@@ -253,6 +253,23 @@ class QTile:
         for i in self._keyconf:
             self.keyMap[(i.keysym, i.modmask)] = i
         self.grabKeys()
+        self.scan()
+
+    def scan(self):
+        r = self.root.query_tree()
+        for i in r.children:
+            self.manage(i)
+
+    def unmanage(self, window):
+        c = self.clientMap.get(window)
+        if c:
+            c.group.delete(c)
+            del self.clientMap[window]
+
+    def manage(self, w):
+        c = Client(w, self)
+        self.clientMap[w] = c
+        self.currentScreen.group.add(c)
 
     def grabKeys(self):
         for i in self.keyMap.values():
@@ -346,15 +363,7 @@ class QTile:
         self.currentScreen.group.focus(c)
 
     def mapRequest(self, e):
-        c = Client(e.window, self)
-        self.clientMap[e.window] = c
-        self.currentScreen.group.add(c)
-
-    def unmanage(self, window):
-        c = self.clientMap.get(window)
-        if c:
-            c.group.delete(c)
-            del self.clientMap[window]
+        self.manage(e.window)
 
     def destroyNotify(self, e):
         self.unmanage(e.window)

@@ -3,7 +3,6 @@
 import os, os.path
 import libqtile
 
-
 def main():
     d = os.environ["DISPLAY"]
     fname = os.path.join("~", ".qtilesocket.%s"%d)

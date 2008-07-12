@@ -28,8 +28,15 @@ class XNest(libpry.TestContainer):
                 
 
 class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
+    qtilepid = None
     def setUp(self):
         libpry.TmpDirMixin.setUp(self)
+        self.testwindows = []
+
+    def tearDown(self):
+        libpry.TmpDirMixin.tearDown(self)
+
+    def startQtile(self):
         # Try until XNest is up
         for i in range(20):
             try:
@@ -66,19 +73,17 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
                 time.sleep(0.1)
             else:
                 raise AssertionError, "Timeout waiting for Qtile"
-        self.testwindows = []
         self.c = libqtile.command.Client(self["fname"], libqtile.command.Command)
 
-    def tearDown(self):
-        libpry.TmpDirMixin.tearDown(self)
-        try:
-            self._kill(self.qtilepid)
-        except OSError:
-            # The process may have died due to some other error
-            pass
+    def stopQtile(self):
+        if self.qtilepid:
+            try:
+                self._kill(self.qtilepid)
+            except OSError:
+                # The process may have died due to some other error
+                pass
         for pid in self.testwindows[:]:
             self._kill(pid)
-        self.testwindows = []
 
     def testWindow(self, name):
         c = libqtile.command.Client(self["fname"], libqtile.command.Command)
@@ -114,6 +119,14 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
 
 
 class uQTile(_QTileTruss):
+    def setUp(self):
+        _QTileTruss.setUp(self)
+        self.startQtile()
+
+    def tearDown(self):
+        _QTileTruss.tearDown(self)
+        self.stopQtile()
+
     def test_events(self):
         assert self.c.status() == "OK"
 
@@ -209,11 +222,25 @@ class uKey(libpry.AutoTree):
             ["unknown"], "x", None
         )
 
+class uQTileScan(_QTileTruss):
+    def test_events(self):
+        for i in range(2):
+            pid = os.fork()
+            if pid == 0:
+                os.execv("scripts/window", ["scripts/window", self["display"], str(i)])
+            time.sleep(0.1)
+        self.startQtile()
+        assert self.c.clientcount() == 2
+
+    def tearDown(self):
+        _QTileTruss.tearDown(self)
+        self.stopQtile()
 
 
 tests = [
     XNest(xinerama=True), [
-        uQTile()
+        uQTile(),
+        uQTileScan(),
     ],
     XNest(xinerama=False), [
         uQTile()
