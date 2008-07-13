@@ -3,6 +3,16 @@ import Xlib.display, Xlib.X
 import libpry
 import libqtile
 
+class TestConfig:
+    groups = ["a", "b", "c", "d"]
+    layouts = [libqtile.Max]
+    keys = [
+        libqtile.Key(["control"], "k", "focusnext"),
+        libqtile.Key(["control"], "j", "focusprevious"),
+    ]
+    commands = []
+    screens = []
+
 
 class XNest(libpry.TestContainer):
     def __init__(self, xinerama, display=":1"):
@@ -55,7 +65,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
         if pid == 0:
             # Run this in a sandbox...
             try:
-                q = libqtile.QTile(self["display"], self["fname"])
+                q = libqtile.QTile(TestConfig(), self["display"], self["fname"])
                 q.testing = True
                 q.loop()
             except Exception, e:

@@ -1,17 +1,11 @@
 import manager
 
 class Config:
-    def __init__(self):
-        pass
-
-    def load(self, fname):
-        pass
-
-    def final(self):
-        return dict(
-            keys,
-            layoutClasses,
-            layouts,
-            commands,
-            screens
-        )
+    groups = ["a", "b", "c", "d"]
+    layouts = [manager.Max]
+    keys = [
+        manager.Key(["control"], "k", "focusnext"),
+        manager.Key(["control"], "j", "focusprevious"),
+    ]
+    commands = []
+    screens = []

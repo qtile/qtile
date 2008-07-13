@@ -174,18 +174,12 @@ class Client:
 
 
 class QTile:
-    _groupConf = ["a", "b", "c", "d"]
-    _layoutConf = [Max]
-    _keyconf = [
-        Key(["control"], "k", "focusnext"),
-        Key(["control"], "j", "focusprevious"),
-    ]
     testing = False
     debug = False
-    exit = False
-    def __init__(self, display, fname):
+    _exit = False
+    def __init__(self, config, display, fname):
         self.display = Xlib.display.Display(display)
-        self.fname = fname
+        self.config, self.fname = config, fname
         defaultScreen = self.display.screen(
                     self.display.get_default_screen()
                )
@@ -193,8 +187,8 @@ class QTile:
 
         self.groups = []
         self.groupMap = {}
-        for i in self._groupConf:
-            g = Group(i, self._layoutConf)
+        for i in self.config.groups:
+            g = Group(i, self.config.layouts)
             self.groups.append(g)
             self.groupMap[g.name] = g
 
@@ -231,8 +225,8 @@ class QTile:
         )
         self.display.sync()
         # Another WM is running...
-        if self.exit:
-            sys.exit(1)
+        if self._exit:
+            sys._exit(1)
 
         self.server = command.Command(self.fname, self)
 
@@ -260,7 +254,7 @@ class QTile:
             X.FocusIn:              nop,
         }
         self.keyMap = {}
-        for i in self._keyconf:
+        for i in self.config.keys:
             self.keyMap[(i.keysym, i.modmask)] = i
         self.grabKeys()
         self.scan()
@@ -302,8 +296,8 @@ class QTile:
 
     def loop(self):
         while 1:
-            if self.exit:
-                sys.exit(1)
+            if self._exit:
+                sys._exit(1)
             self.server.receive()
             try:
                 n = self.display.pending_events()
@@ -397,5 +391,5 @@ class QTile:
             print >> sys.stderr, "Access denied: Another window manager running?"
         else:
             print >> sys.stderr, "Error:", (e, v)
-        self.exit = True
+        self._exit = True
 
