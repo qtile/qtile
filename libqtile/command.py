@@ -117,5 +117,4 @@ class Command(ipc.Server):
         )
         win.send_event(e, X.KeyPressMask|X.SubstructureNotifyMask, propagate=True)
         # I guess we could abstract this out into a cmd_sync command to
-        # facilitate testing...
         qtile.display.sync()

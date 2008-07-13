@@ -1,6 +1,21 @@
-IPC
+w
 
-Key(["control"], "k", "function", 1, 3=foo)
+Configuration
+
+    We have two types of configuration files - the actual config file (of which
+    there is only one) and modules (of which there can be many).
+
+    Modules can expose the following types:
+
+        - Layout classes
+        - Command classes
+        - Statusbar widget classes
+
+    The configuration file instantiates the classes that constitute the actual
+    configuration.
+
+
+    Key(["control"], "k", "function", 1, 3=foo)
 
 
 Groups
