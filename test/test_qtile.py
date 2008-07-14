@@ -229,6 +229,18 @@ class uQTile(_QTileTruss):
         assert self.c.spawn("true") == 0
         assert self.c.spawn("false bar") == 1
 
+    def test_kill(self):
+        self.testWindow("one")
+        self.testwindows = []
+        self.c.kill()
+        self.c.sync()
+        for i in range(20):
+            if self.c.clientcount() == 0:
+                break
+            time.sleep(0.1)
+        else:
+            raise AssertionError("Window did not die...")
+
 
 class uKey(libpry.AutoTree):
     def test_init(self):
@@ -242,6 +254,7 @@ class uKey(libpry.AutoTree):
             libqtile.Key,
             ["unknown"], "x", None
         )
+
 
 class uQTileScan(_QTileTruss):
     def test_events(self):

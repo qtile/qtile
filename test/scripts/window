@@ -4,7 +4,7 @@
     QTile.
 """
 import sys, time
-from Xlib import display, error, X
+from Xlib import display, error, X, protocol
 
 def configure(window):
     window.configure(
@@ -35,6 +35,7 @@ window = root.create_window(100, 100, 100, 100, 1,
                             background_pixel = background,
                             event_mask = X.StructureNotifyMask | X.ExposureMask)
 window.set_wm_name(sys.argv[2])
+window.set_wm_protocols([d.intern_atom("WM_DELETE_WINDOW")])
 
 configure(window)
 window.map()
@@ -44,5 +45,8 @@ configure(window)
 try:
     while 1:
         event = d.next_event()
+        if event.__class__ == protocol.event.ClientMessage:
+            if d.get_atom_name(event.data[1][0]) == "WM_DELETE":
+                sys.exit(1)
 except error.ConnectionClosedError:
     pass

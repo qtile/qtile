@@ -128,6 +128,15 @@ class Command(ipc.Server):
         """
         return subprocess.call(cmd, shell=True)
 
+    def cmd_kill(self, qtile):
+        """
+            Kill the window that currently has focus.
+        """
+        client = qtile.currentScreen.group.focusClient
+        if client:
+            client.kill()
 
+    def cmd_sync(self, qtile):
+        qtile.display.sync()
 
 

@@ -156,6 +156,28 @@ class Client:
         except Xlib.error.BadWindow:
             return "<nonexistent>"
 
+    def kill(self):
+        if self.hasProtocol("WM_DELETE_WINDOW"):
+            e = event.ClientMessage(
+                    window = self.window,
+                    client_type = self.qtile.display.intern_atom("WM_PROTOCOLS"),
+                    data = [
+                        # Use 32-bit format:
+                        32,
+                        # Must be exactly 20 bytes long:
+                        [
+                            self.qtile.display.intern_atom("WM_DELETE"),
+                            X.CurrentTime,
+                            0,
+                            0,
+                            0
+                        ]
+                    ]
+            )
+            self.window.send_event(e)
+        else:
+            self.window.kill_client()
+
     def hide(self):
         # We don't want to get the UnmapNotify for this unmap
         self.disableMask(X.StructureNotifyMask)
@@ -189,6 +211,13 @@ class Client:
         self.window.configure(
             stack_mode = X.Above
         )
+
+    def hasProtocol(self, name):
+        s = set()
+        d = self.qtile.display
+        for i in self.window.get_wm_protocols():
+            s.add(d.get_atom_name(i))
+        return name in s
 
     def __repr__(self):
         return "Client(%s)"%self.name
