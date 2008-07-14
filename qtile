@@ -24,7 +24,9 @@ def main():
     except config.ConfigError, v:
         parser.error(v.message)
 
-    d = os.environ["DISPLAY"]
+    d = os.environ.get("DISPLAY")
+    if not d:
+        parser.error("No DISPLAY set.")
     fname = os.path.join("~", ".qtilesocket.%s"%d)
     fname = os.path.expanduser(fname)
     if os.path.exists(fname):
