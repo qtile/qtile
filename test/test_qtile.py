@@ -5,7 +5,7 @@ import libqtile
 
 class TestConfig:
     groups = ["a", "b", "c", "d"]
-    layouts = [libqtile.Max]
+    layouts = [libqtile.Max()]
     keys = [
         libqtile.Key(["control"], "k", "focusnext"),
         libqtile.Key(["control"], "j", "focusprevious"),

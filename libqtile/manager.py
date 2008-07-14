@@ -1,10 +1,9 @@
-import sys, operator
+import sys, operator, copy
 import Xlib
 import Xlib.display
 import Xlib.ext.xinerama as xinerama
 from Xlib import X, XK, Xatom
 import Xlib.protocol.event as event
-
 import command, utils
 
 class QTileError(Exception): pass
@@ -23,14 +22,15 @@ class Key:
         return "Key(%s, %s)"%(self.modifiers, self.key)
 
 
-class _Layout: pass
+class _Layout:
+    def clone(self, group):
+        c = copy.copy(self)
+        c.group = group
+        return c
 
 
 class Max(_Layout):
     name = "max"
-    def __init__(self, group):
-        self.group = group
-
     def configure(self, c):
         if c == self.group.focusClient:
             c.place(
@@ -62,7 +62,7 @@ class Group:
         self.name = name
         self.screen = None
         self.clients = []
-        self.layouts = [i(self) for i in layouts]
+        self.layouts = [i.clone(self) for i in layouts]
         self.currentLayout = 0
         self.focusClient = None
 
@@ -279,6 +279,7 @@ class QTile:
         self.currentScreen.group.add(c)
 
     def grabKeys(self):
+        self.root.ungrab_key(X.AnyKey, X.AnyModifier)
         for i in self.keyMap.values():
             code = self.display.keysym_to_keycode(i.keysym)
             self.root.grab_key(

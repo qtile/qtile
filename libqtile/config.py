@@ -21,4 +21,3 @@ class File:
         self.commands = globs.get("commands")
 
 
-
