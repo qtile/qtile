@@ -110,14 +110,24 @@ class Group:
         idx = (self.clients.index(self.focusClient) - 1) % len(self.clients)
         self.focus(self.clients[idx])
 
+    def disableMask(self, mask):
+        for i in self.clients:
+            i.disableMask(mask)
+
+    def resetMask(self):
+        for i in self.clients:
+            i.resetMask()
+
     def focus(self, client):
         if not client:
             self.focusClient = None
         elif self.focusClient != client:
+            self.disableMask(X.EnterWindowMask)
             self.focusClient = client
             if self.screen:
                 self.layout.configure(client)
                 self.layoutAll()
+            self.resetMask()
 
     def info(self):
         return dict(
@@ -148,11 +158,19 @@ class Client:
 
     def hide(self):
         # We don't want to get the UnmapNotify for this unmap
-        self.window.change_attributes(
-            event_mask=self._windowMask&(~X.StructureNotifyMask)
-        )
+        self.disableMask(X.StructureNotifyMask)
         self.window.unmap()
-        self.window.change_attributes(event_mask=self._windowMask)
+        self.resetMask()
+
+    def disableMask(self, mask):
+        self.window.change_attributes(
+            event_mask=self._windowMask&(~mask)
+        )
+
+    def resetMask(self):
+        self.window.change_attributes(
+            event_mask=self._windowMask
+        )
 
     def place(self, x, y, width, height):
         self.window.configure(
