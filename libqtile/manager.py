@@ -301,7 +301,7 @@ class QTile:
     def loop(self):
         while 1:
             if self._exit:
-                sys._exit(1)
+                sys.exit(1)
             self.server.receive()
             try:
                 n = self.display.pending_events()
