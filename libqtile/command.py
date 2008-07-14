@@ -1,4 +1,4 @@
-import inspect
+import inspect, subprocess
 import ipc, utils, manager
 from Xlib import XK
 from Xlib import X
@@ -118,3 +118,16 @@ class Command(ipc.Server):
         win.send_event(e, X.KeyPressMask|X.SubstructureNotifyMask, propagate=True)
         # I guess we could abstract this out into a cmd_sync command to
         qtile.display.sync()
+
+    def cmd_screencount(self, qtile):
+        return len(qtile.screens)
+
+    def cmd_spawn(self, qtile, cmd):
+        """
+            Run cmd in a shell. Returns the process return code.
+        """
+        return subprocess.call(cmd, shell=True)
+
+
+
+

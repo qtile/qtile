@@ -225,6 +225,10 @@ class uQTile(_QTileTruss):
         self.c.simulate_keypress(["control"], "j")
         assert self.c.groupinfo("a")["focus"] == "one"
 
+    def test_spawn(self):
+        assert self.c.spawn("true") == 0
+        assert self.c.spawn("false bar") == 1
+
 
 class uKey(libpry.AutoTree):
     def test_init(self):
