@@ -226,8 +226,7 @@ class uQTile(_QTileTruss):
         assert self.c.groupinfo("a")["focus"] == "one"
 
     def test_spawn(self):
-        assert self.c.spawn("true") == 0
-        assert self.c.spawn("false bar") == 1
+        assert self.c.spawn("true") == None
 
     def test_kill(self):
         self.testWindow("one")

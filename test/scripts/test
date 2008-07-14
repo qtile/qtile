@@ -1,1 +1,1 @@
-Xnest -geometry 800x600 :1 -ac & env DISPLAY=:1 ./qtile & env DISPLAY=:1 xterm
+Xnest -geometry 800x600 :1 -ac & env DISPLAY=:1 ./qtile -d & env DISPLAY=:1 xterm

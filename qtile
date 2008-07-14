@@ -13,6 +13,12 @@ def main():
                         dest="configfile",
                         help='Use specified configuration file.'
                     )
+    parser.add_option(
+                        "-d", "--debug",
+                        action="store_true", default=False,
+                        dest="debug",
+                        help='Print lots of debugging output.'
+                    )
     options, args = parser.parse_args()
 
     configfile = options.configfile
@@ -32,6 +38,7 @@ def main():
     if os.path.exists(fname):
         os.unlink(fname)
     q = libqtile.QTile(c, d, fname)
+    q.debug = options.debug
     q.loop()
 
 

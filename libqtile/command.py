@@ -126,7 +126,10 @@ class Command(ipc.Server):
         """
             Run cmd in a shell. Returns the process return code.
         """
-        return subprocess.call(cmd, shell=True)
+        try:
+            subprocess.Popen([cmd], shell=True)
+        except Exception, v:
+            print type(v), v
 
     def cmd_kill(self, qtile):
         """
