@@ -23,7 +23,10 @@ class Key:
         return "Key(%s, %s)"%(self.modifiers, self.key)
 
 
-class Max:
+class _Layout: pass
+
+
+class Max(_Layout):
     name = "max"
     def __init__(self, group):
         self.group = group
@@ -226,7 +229,7 @@ class QTile:
         self.display.sync()
         # Another WM is running...
         if self._exit:
-            sys._exit(1)
+            sys.exit(1)
 
         self.server = command.Command(self.fname, self)
 

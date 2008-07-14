@@ -1,3 +1,5 @@
-import libqtile
+from libqtile import *
 
-keys = "foo"
+keys = [
+    Key(["control"], "k", "focusnext")
+]
