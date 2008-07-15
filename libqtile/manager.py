@@ -88,7 +88,11 @@ class Group:
             i.hide()
 
     def add(self, client):
-        self.clients.insert(0, client)
+        if self.focusClient:
+            offset = self.clients.index(self.focusClient)
+        else:
+            offset = 0
+        self.clients.insert(offset, client)
         client.group = self
         self.focus(client)
 
