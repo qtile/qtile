@@ -125,7 +125,6 @@ class Group:
             self.disableMask(X.EnterWindowMask)
             self.focusClient = client
             if self.screen:
-                self.layout.configure(client)
                 self.layoutAll()
             self.resetMask()
 
