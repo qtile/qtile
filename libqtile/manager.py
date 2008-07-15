@@ -43,11 +43,11 @@ class Screen:
         self.group.toScreen(self)
 
 
-class Group:
+class Group(list):
     def __init__(self, name, layouts):
+        list.__init__(self)
         self.name = name
         self.screen = None
-        self.clients = []
         self.layouts = [i.clone(self) for i in layouts]
         self.currentLayout = 0
         self.focusClient = None
@@ -57,8 +57,8 @@ class Group:
         return self.layouts[self.currentLayout]
 
     def layoutAll(self):
-        if self.screen and self.clients:
-            for i in self.clients:
+        if self.screen and len(self):
+            for i in self:
                 self.layout.configure(i)
             self.focusClient.focus()
 
@@ -70,42 +70,42 @@ class Group:
 
     def hide(self):
         self.screen = None
-        for i in self.clients:
+        for i in self:
             i.hide()
 
     def add(self, client):
         if self.focusClient:
-            offset = self.clients.index(self.focusClient)
+            offset = self.index(self.focusClient)
         else:
             offset = 0
-        self.clients.insert(offset, client)
+        self.insert(offset, client)
         client.group = self
         self.focus(client)
 
     def remove(self, client):
         if self.focusClient is client:
-            if len(self.clients) > 1:
+            if len(self) > 1:
                 self.focusNext()
             else:
                 self.focus(None)
-        self.clients.remove(client)
+        list.remove(self, client)
         client.group = None
         self.layoutAll()
 
     def focusNext(self):
-        idx = (self.clients.index(self.focusClient) + 1) % len(self.clients)
-        self.focus(self.clients[idx])
+        idx = (self.index(self.focusClient) + 1) % len(self)
+        self.focus(self[idx])
 
     def focusPrevious(self):
-        idx = (self.clients.index(self.focusClient) - 1) % len(self.clients)
-        self.focus(self.clients[idx])
+        idx = (self.index(self.focusClient) - 1) % len(self)
+        self.focus(self[idx])
 
     def disableMask(self, mask):
-        for i in self.clients:
+        for i in self:
             i.disableMask(mask)
 
     def resetMask(self):
-        for i in self.clients:
+        for i in self:
             i.resetMask()
 
     def focus(self, client):
@@ -122,7 +122,7 @@ class Group:
         return dict(
             name = self.name,
             focus = self.focusClient.name if self.focusClient else None,
-            clients = [i.name for i in self.clients],
+            clients = [i.name for i in self],
             layout = self.layout.name,
             screen = self.screen.index if self.screen else None
         )

@@ -13,13 +13,13 @@ class Max(_Layout):
     class commands:
         @staticmethod
         def cmd_max_next(qtile, noskip=False):
-            idx = (qtile.group.clients.index(qtile.group.focusClient) + 1) % len(qtile.group.clients)
-            qtile.group.focus(qtile.group.clients[idx])
+            idx = (qtile.group.index(qtile.group.focusClient) + 1) % len(qtile.group)
+            qtile.group.focus(qtile.group[idx])
 
         @staticmethod
         def cmd_max_previous(qtile, noskip=False):
-            idx = (qtile.group.clients.index(qtile.group.focusClient) - 1) % len(qtile.group.clients)
-            qtile.group.focus(qtile.group.clients[idx])
+            idx = (qtile.group.index(qtile.group.focusClient) - 1) % len(qtile.group)
+            qtile.group.focus(qtile.group[idx])
 
     def configure(self, c):
         if c == self.group.focusClient:

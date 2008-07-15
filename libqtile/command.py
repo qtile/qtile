@@ -65,7 +65,7 @@ class BaseCommand:
         if not screen:
             screen = qtile.currentScreen
         group = qtile.groupMap.get(group)
-        if not group:
+        if group is None:
             return "No such group"
         elif group.screen == screen:
             return
