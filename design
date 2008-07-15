@@ -8,6 +8,8 @@ Configuration
     This file usually imports libqtile, and then instantiates various objects.
 
     Key(["control"], "k", "function", 1, 3=foo)
+    Key(["control"], "k", "function2", 1, 3=foo)
+    Key(["control"], "k", "function3", 1, 3=foo)
 
 
 Groups

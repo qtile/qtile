@@ -4,37 +4,28 @@ from Xlib import XK
 from Xlib import X
 import Xlib.protocol.event as event
 
-class Client(ipc.Client):
-    def __init__(self, fname, command):
-        ipc.Client.__init__(self, fname)
-        self.command = command
-
-    def __getattr__(self, name):
-        funcName = "cmd_" + name
-        cmd = getattr(self.command, funcName, None)
-        if not cmd:
-            raise AttributeError("No such command: %s"%name)
-        def callClosure(*args, **kwargs):
-            # FIXME: Check arguments here
-            # Use inspect.getargspec(v), and craft checks by hand.
-            return self.call(name, *args, **kwargs)
-        return callClosure
-
-
-class Command(ipc.Server):
-    def __init__(self, fname, qtile):
+class Server(ipc.Server):
+    def __init__(self, fname, qtile, config):
         ipc.Server.__init__(self, fname, self.call)
-        self.qtile = qtile
+        self.qtile, self.commands = qtile, config.commands()
 
     def call(self, data):
         name, args, kwargs = data
-        cmd = getattr(self, "cmd_" + name, None)
+        cmd = getattr(self.commands, "cmd_" + name, None)
         if cmd:
             return cmd(self.qtile, *args, **kwargs)
         else:
             return "Unknown command: %s"%cmd
         if self.qtile.testing:
             self.qtile.display.sync()
+
+
+class BaseCommand:
+    def add(self, obj):
+        """
+            Adds all cmd_* methods from the specified object.
+        """
+        pass
 
     def cmd_status(self, qtile):
         """
@@ -142,4 +133,20 @@ class Command(ipc.Server):
     def cmd_sync(self, qtile):
         qtile.display.sync()
 
+
+class Client(ipc.Client):
+    def __init__(self, fname, config):
+        ipc.Client.__init__(self, fname)
+        self.commands = config.commands()
+
+    def __getattr__(self, name):
+        funcName = "cmd_" + name
+        cmd = getattr(self.commands, funcName, None)
+        if not cmd:
+            raise AttributeError("No such command: %s"%name)
+        def callClosure(*args, **kwargs):
+            # FIXME: Check arguments here
+            # Use inspect.getargspec(v), and craft checks by hand.
+            return self.call(name, *args, **kwargs)
+        return callClosure
 

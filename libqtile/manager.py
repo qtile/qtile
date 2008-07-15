@@ -42,6 +42,38 @@ class Max(_Layout):
         else:
             c.hide()
 
+    def cmd_max_next(self, qtile, noskip=False):
+        pass
+
+    def cmd_max_previous(self, qtile, noskip=False):
+        pass
+
+
+class Stack(_Layout):
+    name = "stack"
+    def configure(self, c):
+        if c == self.group.focusClient:
+            c.place(
+                self.group.screen.x,
+                self.group.screen.y,
+                self.group.screen.width,
+                self.group.screen.height,
+            )
+        else:
+            c.hide()
+
+    def cmd_stack_down(self, qtile, noskip=False):
+        pass
+
+    def cmd_stack_up(self, qtile, noskip=False):
+        pass
+
+    def cmd_stack_swap(self, qtile, noskip=False):
+        pass
+
+    def cmd_stack_move(self, qtile, noskip=False):
+        pass
+
 
 class Screen:
     group = None
@@ -96,7 +128,7 @@ class Group:
         client.group = self
         self.focus(client)
 
-    def delete(self, client):
+    def remove(self, client):
         if self.focusClient is client:
             if len(self.clients) > 1:
                 self.focusNext()
@@ -281,7 +313,7 @@ class QTile:
         if self._exit:
             sys.exit(1)
 
-        self.server = command.Command(self.fname, self)
+        self.server = command.Server(self.fname, self, config)
 
         nop = lambda e: None
         self.handlers = {
@@ -320,7 +352,7 @@ class QTile:
     def unmanage(self, window):
         c = self.clientMap.get(window)
         if c:
-            c.group.delete(c)
+            c.group.remove(c)
             del self.clientMap[window]
 
     def manage(self, w):

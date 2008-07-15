@@ -2,15 +2,15 @@ import subprocess, os, time, sys, socket, traceback
 import Xlib.display, Xlib.X
 import libpry
 import libqtile
+import libqtile.config
 
-class TestConfig:
+class TestConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
     layouts = [libqtile.Max()]
     keys = [
         libqtile.Key(["control"], "k", "focusnext"),
         libqtile.Key(["control"], "j", "focusprevious"),
     ]
-    commands = []
     screens = []
 
 
@@ -73,7 +73,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             sys.exit(0)
         else:
             self.qtilepid = pid
-            c = libqtile.command.Client(self["fname"], libqtile.command.Command)
+            c = libqtile.command.Client(self["fname"], TestConfig())
             # Wait until qtile is up before continuing
             for i in range(20):
                 try:
@@ -84,7 +84,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
                 time.sleep(0.1)
             else:
                 raise AssertionError, "Timeout waiting for Qtile"
-        self.c = libqtile.command.Client(self["fname"], libqtile.command.Command)
+        self.c = libqtile.command.Client(self["fname"], TestConfig())
 
     def stopQtile(self):
         if self.qtilepid:
@@ -97,7 +97,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             self._kill(pid)
 
     def testWindow(self, name):
-        c = libqtile.command.Client(self["fname"], libqtile.command.Command)
+        c = libqtile.command.Client(self["fname"], TestConfig())
         start = c.clientcount()
         pid = os.fork()
         if pid == 0:
@@ -118,7 +118,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             self.testwindows.remove(pid)
 
     def kill(self, pid):
-        c = libqtile.command.Client(self["fname"], libqtile.command.Command)
+        c = libqtile.command.Client(self["fname"], TestConfig())
         start = c.clientcount()
         self._kill(pid)
         for i in range(20):
