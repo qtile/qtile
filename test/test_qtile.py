@@ -8,8 +8,8 @@ class TestConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
     layouts = [libqtile.Max()]
     keys = [
-        libqtile.Key(["control"], "k", "focusnext"),
-        libqtile.Key(["control"], "j", "focusprevious"),
+        libqtile.Key(["control"], "k", libqtile.Call("focusnext")),
+        libqtile.Key(["control"], "j", libqtile.Call("focusprevious")),
     ]
     screens = []
 

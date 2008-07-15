@@ -149,4 +149,3 @@ class Client(ipc.Client):
             # Use inspect.getargspec(v), and craft checks by hand.
             return self.call(name, *args, **kwargs)
         return callClosure
-

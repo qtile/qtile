@@ -9,10 +9,17 @@ import command, utils
 class QTileError(Exception): pass
 
 
+class SkipCommand(Exception): pass
+
+
+class Call:
+    def __init__(self, command, *args, **kwargs):
+        self.command, self.args, self.kwargs = command, args, kwargs
+
+
 class Key:
-    def __init__(self, modifiers, key, action, *args, **kwargs):
-        self.modifiers, self.key = modifiers, key
-        self.action, self.args, self.kwargs = action, args, kwargs
+    def __init__(self, modifiers, key, *commands):
+        self.modifiers, self.key, self.commands = modifiers, key, commands
         self.keysym = XK.string_to_keysym(key)
         if self.keysym == 0:
             raise QTileError("Unknown key: %s"%key)
@@ -406,9 +413,14 @@ class QTile:
         if not k:
             print >> sys.stderr, "Ignoring unknown keysym: %s"%keysym
             return
-        ret = self.server.call((k.action, k.args, k.kwargs))
+        for i in k.commands:
+            try:
+                ret = self.server.call((i.command, i.args, i.kwargs))
+                break
+            except SkipCommand:
+                pass
         if ret:
-            print >> sys.stderr, "KB command %s: %s"%(k.action, ret)
+            print >> sys.stderr, "KB command %s: %s"%(i.command, ret)
 
     def configureRequest(self, e):
         c = self.clientMap.get(e.window)
