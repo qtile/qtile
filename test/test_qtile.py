@@ -73,18 +73,17 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             sys.exit(0)
         else:
             self.qtilepid = pid
-            c = libqtile.command.Client(self["fname"], TestConfig())
+            self.c = libqtile.command.Client(self["fname"], TestConfig())
             # Wait until qtile is up before continuing
             for i in range(20):
                 try:
-                    if c.status() == "OK":
+                    if self.c.status() == "OK":
                         break
                 except socket.error:
                     pass
                 time.sleep(0.1)
             else:
                 raise AssertionError, "Timeout waiting for Qtile"
-        self.c = libqtile.command.Client(self["fname"], TestConfig())
 
     def stopQtile(self):
         if self.qtilepid:
@@ -97,13 +96,12 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             self._kill(pid)
 
     def testWindow(self, name):
-        c = libqtile.command.Client(self["fname"], TestConfig())
-        start = c.clientcount()
+        start = self.c.clientcount()
         pid = os.fork()
         if pid == 0:
             os.execv("scripts/window", ["scripts/window", self["display"], name])
         for i in range(20):
-            if c.clientcount() > start:
+            if self.c.clientcount() > start:
                 break
             time.sleep(0.1)
         else:
@@ -118,11 +116,10 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             self.testwindows.remove(pid)
 
     def kill(self, pid):
-        c = libqtile.command.Client(self["fname"], TestConfig())
-        start = c.clientcount()
+        start = self.c.clientcount()
         self._kill(pid)
         for i in range(20):
-            if c.clientcount() < start:
+            if self.c.clientcount() < start:
                 break
             time.sleep(0.1)
         else:
@@ -246,12 +243,12 @@ class uKey(libpry.AutoTree):
         libpry.raises(
             "unknown key",
             libqtile.Key,
-            [], "unknown", None
+            [], "unknown", libqtile.Call("foo")
         )
         libpry.raises(
             "unknown modifier",
             libqtile.Key,
-            ["unknown"], "x", None
+            ["unknown"], "x", libqtile.Call("foo")
         )
 
 

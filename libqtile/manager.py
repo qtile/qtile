@@ -58,6 +58,9 @@ class Max(_Layout):
 
 class Stack(_Layout):
     name = "stack"
+    def __init__(self, columns=2):
+        self.columns = columns
+
     def configure(self, c):
         if c == self.group.focusClient:
             c.place(
