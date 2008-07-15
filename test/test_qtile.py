@@ -8,8 +8,8 @@ class TestConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
     layouts = [libqtile.Max()]
     keys = [
-        libqtile.Key(["control"], "k", libqtile.Call("focusnext")),
-        libqtile.Key(["control"], "j", libqtile.Call("focusprevious")),
+        libqtile.Key(["control"], "k", libqtile.Call("max_next")),
+        libqtile.Key(["control"], "j", libqtile.Call("max_previous")),
     ]
     screens = []
 
@@ -173,23 +173,25 @@ class uQTile(_QTileTruss):
         info = self.c.groupinfo("a")
         assert info["focus"] == None
 
-    def test_focus(self):
+    def test_max_commands(self):
         self.testWindow("one")
         self.testWindow("two")
         self.testWindow("three")
 
         info = self.c.groupinfo("a")
         assert info["focus"] == "three"
-        self.c.focusnext()
+        self.c.max_next()
         info = self.c.groupinfo("a")
         assert info["focus"] == "two"
-        self.c.focusnext()
+        self.c.max_next()
         info = self.c.groupinfo("a")
         assert info["focus"] == "one"
-
-        self.c.focusnext()
+        self.c.max_next()
         info = self.c.groupinfo("a")
         assert info["focus"] == "three"
+        self.c.max_previous()
+        info = self.c.groupinfo("a")
+        assert info["focus"] == "one"
 
     def test_setgroup(self):
         self.testWindow("one")

@@ -25,7 +25,10 @@ class BaseCommand:
         """
             Adds all cmd_* methods from the specified object.
         """
-        pass
+        for i in dir(obj):
+            if i.startswith("cmd_"):
+                attr = getattr(obj, i)
+                setattr(self, i, attr)
 
     def cmd_status(self, qtile):
         """

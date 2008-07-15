@@ -1,4 +1,4 @@
-import sys, operator, copy
+import sys, operator
 import Xlib
 import Xlib.display
 import Xlib.ext.xinerama as xinerama
@@ -27,62 +27,6 @@ class Key:
     
     def __repr__(self):
         return "Key(%s, %s)"%(self.modifiers, self.key)
-
-
-class _Layout:
-    def clone(self, group):
-        c = copy.copy(self)
-        c.group = group
-        return c
-
-
-class Max(_Layout):
-    name = "max"
-    def configure(self, c):
-        if c == self.group.focusClient:
-            c.place(
-                self.group.screen.x,
-                self.group.screen.y,
-                self.group.screen.width,
-                self.group.screen.height,
-            )
-        else:
-            c.hide()
-
-    def cmd_max_next(self, qtile, noskip=False):
-        pass
-
-    def cmd_max_previous(self, qtile, noskip=False):
-        pass
-
-
-class Stack(_Layout):
-    name = "stack"
-    def __init__(self, columns=2):
-        self.columns = columns
-
-    def configure(self, c):
-        if c == self.group.focusClient:
-            c.place(
-                self.group.screen.x,
-                self.group.screen.y,
-                self.group.screen.width,
-                self.group.screen.height,
-            )
-        else:
-            c.hide()
-
-    def cmd_stack_down(self, qtile, noskip=False):
-        pass
-
-    def cmd_stack_up(self, qtile, noskip=False):
-        pass
-
-    def cmd_stack_swap(self, qtile, noskip=False):
-        pass
-
-    def cmd_stack_move(self, qtile, noskip=False):
-        pass
 
 
 class Screen:
@@ -353,6 +297,14 @@ class QTile:
             self.keyMap[(i.keysym, i.modmask)] = i
         self.grabKeys()
         self.scan()
+
+    @property
+    def group(self):
+        return self.currentScreen.group
+
+    @property
+    def focus(self):
+        return self.currentScreen.group.focusClient
 
     def scan(self):
         r = self.root.query_tree()
