@@ -30,41 +30,48 @@ class BaseCommand:
                 attr = getattr(obj, i)
                 setattr(self, i, attr)
 
-    def cmd_status(self, qtile):
+    @staticmethod
+    def cmd_status(q):
         """
             Return "OK" if Qtile is running.
         """
         return "OK"
 
-    def cmd_clientcount(self, qtile):
+    @staticmethod
+    def cmd_clientcount(q):
         """
             Return number of clients in all groups.
         """
-        return len(qtile.clientMap)
+        return len(q.clientMap)
 
-    def cmd_groupinfo(self, qtile, name):
+    @staticmethod
+    def cmd_groupinfo(q, name):
         """
             Return group information.
         """
-        for i in qtile.groups:
+        for i in q.groups:
             if i.name == name:
                 return i.info()
         else:
             return None
 
-    def cmd_focusnext(self, qtile):
-        qtile.currentScreen.group.focusNext()
+    @staticmethod
+    def cmd_focusnext(q):
+        q.currentScreen.group.focusNext()
 
-    def cmd_focusprevious(self, qtile):
-        qtile.currentScreen.group.focusPrevious()
+    @staticmethod
+    def cmd_focusprevious(q):
+        q.currentScreen.group.focusPrevious()
 
-    def cmd_screencount(self, qtile):
-        return len(qtile.screens)
+    @staticmethod
+    def cmd_screencount(q):
+        return len(q.screens)
 
-    def cmd_pullgroup(self, qtile, group, screen=None):
+    @staticmethod
+    def cmd_pullgroup(q, group, screen=None):
         if not screen:
-            screen = qtile.currentScreen
-        group = qtile.groupMap.get(group)
+            screen = q.currentScreen
+        group = q.groupMap.get(group)
         if group is None:
             return "No such group"
         elif group.screen == screen:
@@ -77,28 +84,29 @@ class BaseCommand:
         else:
             screen.setGroup(group)
 
-    def cmd_simulate_keypress(self, qtile, modifiers, key):
+    @staticmethod
+    def cmd_simulate_keypress(q, modifiers, key):
         """
             Simulates a keypress on the focused window.
         """
         keysym = XK.string_to_keysym(key)
         if keysym == 0:
             return "Unknown key: %s"%key
-        keycode = qtile.display.keysym_to_keycode(keysym)
+        keycode = q.display.keysym_to_keycode(keysym)
         try:
             mask = utils.translateMasks(modifiers)
         except manager.QTileError, v:
             return str(v)
-        if qtile.currentScreen.group.focusClient:
-            win = qtile.currentScreen.group.focusClient.window
+        if q.currentScreen.group.focusClient:
+            win = q.currentScreen.group.focusClient.window
         else:
-            win = qtile.root
+            win = q.root
         e = event.KeyPress(
                 type = X.KeyPress,
                 state = mask,
                 detail = keycode,
 
-                root = qtile.root,
+                root = q.root,
                 window = win,
                 child = X.NONE,
 
@@ -111,12 +119,14 @@ class BaseCommand:
         )
         win.send_event(e, X.KeyPressMask|X.SubstructureNotifyMask, propagate=True)
         # I guess we could abstract this out into a cmd_sync command to
-        qtile.display.sync()
+        q.display.sync()
 
-    def cmd_screencount(self, qtile):
-        return len(qtile.screens)
+    @staticmethod
+    def cmd_screencount(q):
+        return len(q.screens)
 
-    def cmd_spawn(self, qtile, cmd):
+    @staticmethod
+    def cmd_spawn(q, cmd):
         """
             Run cmd in a shell. Returns the process return code.
         """
@@ -125,16 +135,18 @@ class BaseCommand:
         except Exception, v:
             print type(v), v
 
-    def cmd_kill(self, qtile):
+    @staticmethod
+    def cmd_kill(q):
         """
             Kill the window that currently has focus.
         """
-        client = qtile.currentScreen.group.focusClient
+        client = q.currentScreen.group.focusClient
         if client:
             client.kill()
 
-    def cmd_sync(self, qtile):
-        qtile.display.sync()
+    @staticmethod
+    def cmd_sync(q):
+        q.display.sync()
 
 
 class Client(ipc.Client):

@@ -1,4 +1,5 @@
 import copy
+import manager
 
 class _Layout:
     commands = None
@@ -12,14 +13,18 @@ class Max(_Layout):
     name = "max"
     class commands:
         @staticmethod
-        def cmd_max_next(qtile, noskip=False):
-            idx = (qtile.group.index(qtile.group.focusClient) + 1) % len(qtile.group)
-            qtile.group.focus(qtile.group[idx])
+        def cmd_max_next(q, noskip=False):
+            if q.currentLayout.name != "max":
+                raise manager.SkipCommand
+            idx = (q.currentGroup.index(q.currentFocus) + 1) % len(q.currentGroup)
+            q.currentGroup.focus(q.currentGroup[idx])
 
         @staticmethod
-        def cmd_max_previous(qtile, noskip=False):
-            idx = (qtile.group.index(qtile.group.focusClient) - 1) % len(qtile.group)
-            qtile.group.focus(qtile.group[idx])
+        def cmd_max_previous(q, noskip=False):
+            if q.currentLayout.name != "max":
+                raise manager.SkipCommand
+            idx = (q.currentGroup.index(q.currentFocus) - 1) % len(q.currentGroup)
+            q.currentGroup.focus(q.currentGroup[idx])
 
     def configure(self, c):
         if c == self.group.focusClient:

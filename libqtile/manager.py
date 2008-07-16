@@ -299,12 +299,24 @@ class QTile:
         self.scan()
 
     @property
-    def group(self):
+    def currentLayout(self):
+        return self.currentGroup.layout
+
+    @property
+    def currentGroup(self):
         return self.currentScreen.group
 
     @property
-    def focus(self):
+    def currentFocus(self):
         return self.currentScreen.group.focusClient
+
+    @property
+    def currentScreen(self):
+        v = self.root.query_pointer()
+        for i in self.screens:
+            if (v.win_x < i.x + i.width) and (v.win_y < i.y + i.height):
+                return i
+        return self.screens[0]
 
     def scan(self):
         r = self.root.query_tree()
@@ -333,14 +345,6 @@ class QTile:
                 X.GrabModeAsync,
                 X.GrabModeAsync
             )
-
-    @property
-    def currentScreen(self):
-        v = self.root.query_pointer()
-        for i in self.screens:
-            if (v.win_x < i.x + i.width) and (v.win_y < i.y + i.height):
-                return i
-        return self.screens[0]
 
     def loop(self):
         while 1:
