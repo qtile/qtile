@@ -11,14 +11,19 @@ class _Layout:
     def add(self, c):
         """
             Called whenever a client is added to the group, whether the layout
-            is current or not.
+            is current or not. The layout should:
+                
+                - Configure the window (which may include calling its own
+                  configure method on this or maybe all clients).
+                - Map it
         """
         pass
 
     def remove(self, c):
         """
             Called whenever a client is removed from the group, whether the
-            layout is current or not.
+            layout is current or not. The layout should just de-register the
+            client, and then adjust its layout. It need not unmap the window.
         """
         pass
 
@@ -30,20 +35,19 @@ class _Layout:
         raise NotImplementedError
 
 
-
 class Max(_Layout):
     name = "max"
     class commands:
         @staticmethod
         def cmd_max_next(q, noskip=False):
-            if q.currentLayout.name != "max":
+            if q.currentLayout.name != self.name:
                 raise manager.SkipCommand
             idx = (q.currentGroup.index(q.currentFocus) + 1) % len(q.currentGroup)
             q.currentGroup.focus(q.currentGroup[idx])
 
         @staticmethod
         def cmd_max_previous(q, noskip=False):
-            if q.currentLayout.name != "max":
+            if q.currentLayout.name != self.name:
                 raise manager.SkipCommand
             idx = (q.currentGroup.index(q.currentFocus) - 1) % len(q.currentGroup)
             q.currentGroup.focus(q.currentGroup[idx])

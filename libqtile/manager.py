@@ -77,25 +77,6 @@ class Group(list):
         for i in self:
             i.hide()
 
-    def add(self, client):
-        if self.focusClient:
-            offset = self.index(self.focusClient)
-        else:
-            offset = 0
-        self.insert(offset, client)
-        client.group = self
-        self.focus(client)
-
-    def remove(self, client):
-        if self.focusClient is client:
-            if len(self) > 1:
-                self.focusNext()
-            else:
-                self.focus(None)
-        list.remove(self, client)
-        client.group = None
-        self.layoutAll()
-
     def focusNext(self):
         idx = (self.index(self.focusClient) + 1) % len(self)
         self.focus(self[idx])
@@ -130,6 +111,30 @@ class Group(list):
             layout = self.layout.name,
             screen = self.screen.index if self.screen else None
         )
+
+    # List-like operations
+    def add(self, client):
+        if self.focusClient:
+            offset = self.index(self.focusClient)
+        else:
+            offset = 0
+        self.insert(offset, client)
+        client.group = self
+        for i in self.layouts:
+            i.add(client)
+        self.focus(client)
+
+    def remove(self, client):
+        if self.focusClient is client:
+            if len(self) > 1:
+                self.focusNext()
+            else:
+                self.focus(None)
+        list.remove(self, client)
+        client.group = None
+        for i in self.layouts:
+            i.remove(client)
+        self.layoutAll()
 
 
 class Client:
@@ -218,7 +223,7 @@ class Client:
 
 class QTile:
     testing = False
-    debug = False
+    debug = True
     _exit = False
     def __init__(self, config, display, fname):
         self.display = Xlib.display.Display(display)
@@ -284,18 +289,20 @@ class QTile:
             X.ConfigureRequest:     self.configureRequest,
             X.PropertyNotify:       self.propertyNotify,
 
-            X.KeyRelease:           nop,
-            X.ReparentNotify:       nop,
-            X.CreateNotify:         nop,
+        }
+        self.ignoreEvents = set([
+            X.KeyRelease,
+            X.ReparentNotify,
+            X.CreateNotify,
             # DWM catches this for changes to the root window, and updates
             # screen geometry...
-            X.ConfigureNotify:      nop,
+            X.ConfigureNotify,
             # DWM handles this to help "broken focusing clients".
-            X.MapNotify:            nop,
-            X.LeaveNotify:          nop,
-            X.FocusOut:             nop,
-            X.FocusIn:              nop,
-        }
+            X.MapNotify,
+            X.LeaveNotify,
+            X.FocusOut,
+            X.FocusIn,
+        ])
         self.keyMap = {}
         for i in self.config.keys:
             self.keyMap[(i.keysym, i.modmask)] = i
@@ -367,6 +374,8 @@ class QTile:
                     if self.debug:
                         print >> sys.stderr, "Handling:", e
                     h(e)
+                elif h in self.ignoreEvents:
+                    pass
                 else:
                     print >> sys.stderr, "Unknown:", e
 

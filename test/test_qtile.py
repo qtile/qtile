@@ -4,12 +4,22 @@ import libpry
 import libqtile
 import libqtile.config
 
-class TestConfig(libqtile.config.Config):
+class MaxConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
     layouts = [libqtile.Max()]
     keys = [
         libqtile.Key(["control"], "k", libqtile.Command("max_next")),
         libqtile.Key(["control"], "j", libqtile.Command("max_previous")),
+    ]
+    screens = []
+
+
+class StackConfig(libqtile.config.Config):
+    groups = ["a", "b", "c", "d"]
+    layouts = [libqtile.Stack()]
+    keys = [
+        #libqtile.Key(["control"], "k", libqtile.Command("max_next")),
+        #libqtile.Key(["control"], "j", libqtile.Command("max_previous")),
     ]
     screens = []
 
@@ -46,7 +56,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
     def tearDown(self):
         libpry.TmpDirMixin.tearDown(self)
 
-    def startQtile(self):
+    def startQtile(self, config):
         # Try until XNest is up
         for i in range(20):
             try:
@@ -65,7 +75,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
         if pid == 0:
             # Run this in a sandbox...
             try:
-                q = libqtile.QTile(TestConfig(), self["display"], self["fname"])
+                q = libqtile.QTile(config, self["display"], self["fname"])
                 q.testing = True
                 q.loop()
             except Exception, e:
@@ -73,7 +83,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             sys.exit(0)
         else:
             self.qtilepid = pid
-            self.c = libqtile.command.Client(self["fname"], TestConfig())
+            self.c = libqtile.command.Client(self["fname"], config)
             # Wait until qtile is up before continuing
             for i in range(20):
                 try:
@@ -126,18 +136,80 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             raise AssertionError("Window could not be killed...")
 
 
-class uQTile(_QTileTruss):
+class QTileTests(_QTileTruss):
     def setUp(self):
         _QTileTruss.setUp(self)
-        self.startQtile()
+        self.startQtile(self.config)
 
     def tearDown(self):
         _QTileTruss.tearDown(self)
         self.stopQtile()
 
+
+class uCommon(QTileTests):
+    """
+        We don't care if these tests run in a Xinerama or non-Xinerama X.
+    """
+    config = MaxConfig()
     def test_events(self):
         assert self.c.status() == "OK"
 
+    def test_keypress(self):
+        self.testWindow("one")
+        self.testWindow("two")
+        v = self.c.simulate_keypress(["unknown"], "j")
+        assert v.startswith("Unknown modifier")
+        assert self.c.groupinfo("a")["focus"] == "two"
+        self.c.simulate_keypress(["control"], "j")
+        assert self.c.groupinfo("a")["focus"] == "one"
+
+    def test_spawn(self):
+        assert self.c.spawn("true") == None
+
+    def test_kill(self):
+        self.testWindow("one")
+        self.testwindows = []
+        self.c.kill()
+        self.c.sync()
+        for i in range(20):
+            if self.c.clientcount() == 0:
+                break
+            time.sleep(0.1)
+        else:
+            raise AssertionError("Window did not die...")
+
+
+class uMax(QTileTests):
+    config = MaxConfig()
+    def test_max_commands(self):
+        self.testWindow("one")
+        self.testWindow("two")
+        self.testWindow("three")
+
+        info = self.c.groupinfo("a")
+        assert info["focus"] == "three"
+        self.c.max_next()
+        info = self.c.groupinfo("a")
+        assert info["focus"] == "two"
+        self.c.max_next()
+        info = self.c.groupinfo("a")
+        assert info["focus"] == "one"
+        self.c.max_next()
+        info = self.c.groupinfo("a")
+        assert info["focus"] == "three"
+        self.c.max_previous()
+        info = self.c.groupinfo("a")
+        assert info["focus"] == "one"
+
+
+class uStack(QTileTests):
+    config = StackConfig()
+    def test_stack_commands(self):
+        self.testWindow("one")
+
+
+class uQTile(QTileTests):
+    config = MaxConfig()
     def test_mapRequest(self):
         self.testWindow("one")
         info = self.c.groupinfo("a")
@@ -173,26 +245,6 @@ class uQTile(_QTileTruss):
         info = self.c.groupinfo("a")
         assert info["focus"] == None
 
-    def test_max_commands(self):
-        self.testWindow("one")
-        self.testWindow("two")
-        self.testWindow("three")
-
-        info = self.c.groupinfo("a")
-        assert info["focus"] == "three"
-        self.c.max_next()
-        info = self.c.groupinfo("a")
-        assert info["focus"] == "two"
-        self.c.max_next()
-        info = self.c.groupinfo("a")
-        assert info["focus"] == "one"
-        self.c.max_next()
-        info = self.c.groupinfo("a")
-        assert info["focus"] == "three"
-        self.c.max_previous()
-        info = self.c.groupinfo("a")
-        assert info["focus"] == "one"
-
     def test_setgroup(self):
         self.testWindow("one")
         assert self.c.pullgroup("nonexistent") == "No such group"
@@ -215,29 +267,6 @@ class uQTile(_QTileTruss):
         assert self.c.clientcount() == 1
         assert self.c.groupinfo("a")["focus"] == "one"
 
-    def test_keypress(self):
-        self.testWindow("one")
-        self.testWindow("two")
-        v = self.c.simulate_keypress(["unknown"], "j")
-        assert v.startswith("Unknown modifier")
-        assert self.c.groupinfo("a")["focus"] == "two"
-        self.c.simulate_keypress(["control"], "j")
-        assert self.c.groupinfo("a")["focus"] == "one"
-
-    def test_spawn(self):
-        assert self.c.spawn("true") == None
-
-    def test_kill(self):
-        self.testWindow("one")
-        self.testwindows = []
-        self.c.kill()
-        self.c.sync()
-        for i in range(20):
-            if self.c.clientcount() == 0:
-                break
-            time.sleep(0.1)
-        else:
-            raise AssertionError("Window did not die...")
 
 
 class uKey(libpry.AutoTree):
@@ -255,13 +284,14 @@ class uKey(libpry.AutoTree):
 
 
 class uQTileScan(_QTileTruss):
+    config = MaxConfig()
     def test_events(self):
         for i in range(2):
             pid = os.fork()
             if pid == 0:
                 os.execv("scripts/window", ["scripts/window", self["display"], str(i)])
             time.sleep(0.1)
-        self.startQtile()
+        self.startQtile(self.config)
         assert self.c.clientcount() == 2
 
     def tearDown(self):
@@ -275,6 +305,9 @@ tests = [
         uQTileScan(),
     ],
     XNest(xinerama=False), [
+        uCommon(),
+        uMax(),
+        uStack(),
         uQTile()
     ],
     uKey()
