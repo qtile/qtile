@@ -8,14 +8,19 @@ class _Layout:
         c.group = group
         return c
 
+    def focus(self, c):
+        """
+            Called whenever a client is added to the group, whether the layout
+            is current or not. The layout should just add the window to its
+            internal datastructures, without mapping or configuring.
+        """
+        pass
+
     def add(self, c):
         """
             Called whenever a client is added to the group, whether the layout
-            is current or not. The layout should:
-                
-                - Configure the window (which may include calling its own
-                  configure method on this or maybe all clients).
-                - Map it
+            is current or not. The layout should just add the window to its
+            internal datastructures, without mapping or configuring.
         """
         pass
 
@@ -23,14 +28,16 @@ class _Layout:
         """
             Called whenever a client is removed from the group, whether the
             layout is current or not. The layout should just de-register the
-            client, and then adjust its layout. It need not unmap the window.
+            client from its data structures, without unmapping the window.
         """
         pass
 
     def configure(self, c):
         """
-            Called to configure the dimensions of a client. This method is only
-            called when the layout is the current layout.
+            This method should:
+                
+                - Configure the dimensions of a client.
+                - Call either .hide or .unhide on the client.
         """
         raise NotImplementedError
 
@@ -53,13 +60,14 @@ class Max(_Layout):
             q.currentGroup.focus(q.currentGroup[idx])
 
     def configure(self, c):
-        if c == self.group.focusClient:
+        if c == self.group.currentClient:
             c.place(
                 self.group.screen.x,
                 self.group.screen.y,
                 self.group.screen.width,
                 self.group.screen.height,
             )
+            c.unhide()
         else:
             c.hide()
 
@@ -100,5 +108,6 @@ class Stack(_Layout):
                 self.group.screen.width,
                 self.group.screen.height,
             )
+            c.unhide()
         else:
             c.hide()

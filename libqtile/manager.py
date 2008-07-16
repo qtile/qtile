@@ -48,23 +48,25 @@ class Screen:
 
 
 class Group(list):
-    def __init__(self, name, layouts):
+    def __init__(self, name, layouts, qtile):
         list.__init__(self)
-        self.name = name
+        self.name, self.qtile = name, qtile
         self.screen = None
         self.layouts = [i.clone(self) for i in layouts]
         self.currentLayout = 0
-        self.focusClient = None
+        self.currentClient = None
 
     @property
     def layout(self):
         return self.layouts[self.currentLayout]
 
     def layoutAll(self):
+        self.disableMask(X.EnterWindowMask)
         if self.screen and len(self):
             for i in self:
                 self.layout.configure(i)
-            self.focusClient.focus()
+            self.currentClient.focus()
+        self.resetMask()
 
     def toScreen(self, screen):
         if self.screen:
@@ -78,11 +80,11 @@ class Group(list):
             i.hide()
 
     def focusNext(self):
-        idx = (self.index(self.focusClient) + 1) % len(self)
+        idx = (self.index(self.currentClient) + 1) % len(self)
         self.focus(self[idx])
 
     def focusPrevious(self):
-        idx = (self.index(self.focusClient) - 1) % len(self)
+        idx = (self.index(self.currentClient) - 1) % len(self)
         self.focus(self[idx])
 
     def disableMask(self, mask):
@@ -95,18 +97,15 @@ class Group(list):
 
     def focus(self, client):
         if not client:
-            self.focusClient = None
-        elif self.focusClient != client:
-            self.disableMask(X.EnterWindowMask)
-            self.focusClient = client
-            if self.screen:
-                self.layoutAll()
-            self.resetMask()
+            self.currentClient = None
+        elif self.currentClient != client:
+            self.currentClient = client
+        self.layoutAll()
 
     def info(self):
         return dict(
             name = self.name,
-            focus = self.focusClient.name if self.focusClient else None,
+            focus = self.currentClient.name if self.currentClient else None,
             clients = [i.name for i in self],
             layout = self.layout.name,
             screen = self.screen.index if self.screen else None
@@ -114,18 +113,19 @@ class Group(list):
 
     # List-like operations
     def add(self, client):
-        if self.focusClient:
-            offset = self.index(self.focusClient)
+        if self.currentClient:
+            offset = self.index(self.currentClient)
         else:
             offset = 0
         self.insert(offset, client)
         client.group = self
         for i in self.layouts:
             i.add(client)
+        client.window.map()
         self.focus(client)
 
     def remove(self, client):
-        if self.focusClient is client:
+        if self.currentClient is client:
             if len(self) > 1:
                 self.focusNext()
             else:
@@ -182,6 +182,9 @@ class Client:
         self.window.unmap()
         self.resetMask()
 
+    def unhide(self):
+        self.window.map()
+
     def disableMask(self, mask):
         self.window.change_attributes(
             event_mask=self._windowMask&(~mask)
@@ -193,13 +196,15 @@ class Client:
         )
 
     def place(self, x, y, width, height):
+        """
+            Places the window at the specified location with the given size.
+        """
         self.window.configure(
             x=x,
             y=y,
             width=width,
             height=height,
         )
-        self.window.map()
 
     def focus(self):
         self.window.set_input_focus(
@@ -236,7 +241,7 @@ class QTile:
         self.groups = []
         self.groupMap = {}
         for i in self.config.groups:
-            g = Group(i, self.config.layouts)
+            g = Group(i, self.config.layouts, self)
             self.groups.append(g)
             self.groupMap[g.name] = g
 
@@ -317,7 +322,7 @@ class QTile:
 
     @property
     def currentFocus(self):
-        return self.currentScreen.group.focusClient
+        return self.currentScreen.group.currentClient
 
     @property
     def currentScreen(self):
