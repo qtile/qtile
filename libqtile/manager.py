@@ -223,7 +223,7 @@ class Client:
 
 class QTile:
     testing = False
-    debug = True
+    debug = False
     _exit = False
     def __init__(self, config, display, fname):
         self.display = Xlib.display.Display(display)
@@ -278,7 +278,6 @@ class QTile:
 
         self.server = command.Server(self.fname, self, config)
 
-        nop = lambda e: None
         self.handlers = {
             X.MapRequest:           self.mapRequest,
             X.DestroyNotify:        self.destroyNotify,
@@ -288,7 +287,6 @@ class QTile:
             X.KeyPress:             self.keyPress,
             X.ConfigureRequest:     self.configureRequest,
             X.PropertyNotify:       self.propertyNotify,
-
         }
         self.ignoreEvents = set([
             X.KeyRelease,
@@ -374,7 +372,7 @@ class QTile:
                     if self.debug:
                         print >> sys.stderr, "Handling:", e
                     h(e)
-                elif h in self.ignoreEvents:
+                elif e.type in self.ignoreEvents:
                     pass
                 else:
                     print >> sys.stderr, "Unknown:", e

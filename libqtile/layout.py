@@ -40,14 +40,14 @@ class Max(_Layout):
     class commands:
         @staticmethod
         def cmd_max_next(q, noskip=False):
-            if q.currentLayout.name != self.name:
+            if q.currentLayout.name != "max":
                 raise manager.SkipCommand
             idx = (q.currentGroup.index(q.currentFocus) + 1) % len(q.currentGroup)
             q.currentGroup.focus(q.currentGroup[idx])
 
         @staticmethod
         def cmd_max_previous(q, noskip=False):
-            if q.currentLayout.name != self.name:
+            if q.currentLayout.name != "max":
                 raise manager.SkipCommand
             idx = (q.currentGroup.index(q.currentFocus) - 1) % len(q.currentGroup)
             q.currentGroup.focus(q.currentGroup[idx])
