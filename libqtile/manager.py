@@ -12,13 +12,17 @@ class QTileError(Exception): pass
 class SkipCommand(Exception): pass
 
 
-class Call:
+class Command:
     def __init__(self, command, *args, **kwargs):
         self.command, self.args, self.kwargs = command, args, kwargs
 
 
 class Key:
     def __init__(self, modifiers, key, *commands):
+        """
+            If multiple commands are specified, they are tried in sequence
+            until one does not raise SkipCommand.
+        """
         self.modifiers, self.key, self.commands = modifiers, key, commands
         self.keysym = XK.string_to_keysym(key)
         if self.keysym == 0:

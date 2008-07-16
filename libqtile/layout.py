@@ -8,6 +8,28 @@ class _Layout:
         c.group = group
         return c
 
+    def add(self, c):
+        """
+            Called whenever a client is added to the group, whether the layout
+            is current or not.
+        """
+        pass
+
+    def remove(self, c):
+        """
+            Called whenever a client is removed from the group, whether the
+            layout is current or not.
+        """
+        pass
+
+    def configure(self, c):
+        """
+            Called to configure the dimensions of a client. This method is only
+            called when the layout is the current layout.
+        """
+        raise NotImplementedError
+
+
 
 class Max(_Layout):
     name = "max"
@@ -40,11 +62,34 @@ class Max(_Layout):
 
 class Stack(_Layout):
     name = "stack"
-    def __init__(self, columns=2):
-        self.columns = columns
+    class commands:
+        @staticmethod
+        def cmd_stack_down(q, noskip=False):
+            pass
+
+        @staticmethod
+        def cmd_stack_up(q, noskip=False):
+            pass
+
+        @staticmethod
+        def cmd_stack_swap(q, noskip=False):
+            pass
+
+        @staticmethod
+        def cmd_stack_move(q, noskip=False):
+            pass
+
+    def __init__(self, stacks=2):
+        self.stacks = [None]*stacks
+
+    def add(self, c):
+        pass
+
+    def remove(self, c):
+        pass
 
     def configure(self, c):
-        if c == self.group.focusClient:
+        if c in self.stacks:
             c.place(
                 self.group.screen.x,
                 self.group.screen.y,
@@ -53,15 +98,3 @@ class Stack(_Layout):
             )
         else:
             c.hide()
-
-    def cmd_stack_down(self, qtile, noskip=False):
-        pass
-
-    def cmd_stack_up(self, qtile, noskip=False):
-        pass
-
-    def cmd_stack_swap(self, qtile, noskip=False):
-        pass
-
-    def cmd_stack_move(self, qtile, noskip=False):
-        pass

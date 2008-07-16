@@ -8,8 +8,8 @@ class TestConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
     layouts = [libqtile.Max()]
     keys = [
-        libqtile.Key(["control"], "k", libqtile.Call("max_next")),
-        libqtile.Key(["control"], "j", libqtile.Call("max_previous")),
+        libqtile.Key(["control"], "k", libqtile.Command("max_next")),
+        libqtile.Key(["control"], "j", libqtile.Command("max_previous")),
     ]
     screens = []
 
@@ -245,12 +245,12 @@ class uKey(libpry.AutoTree):
         libpry.raises(
             "unknown key",
             libqtile.Key,
-            [], "unknown", libqtile.Call("foo")
+            [], "unknown", libqtile.Command("foo")
         )
         libpry.raises(
             "unknown modifier",
             libqtile.Key,
-            ["unknown"], "x", libqtile.Call("foo")
+            ["unknown"], "x", libqtile.Command("foo")
         )
 
 
