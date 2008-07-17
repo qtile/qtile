@@ -101,10 +101,6 @@ class Stack(_Layout):
     def add(self, c):
         if self.group.currentClient:
             for i in self.stacks:
-                if not i:
-                    i.append(c)
-                    return
-            for i in self.stacks:
                 if self.group.currentClient in i:
                     idx = i.index(self.group.currentClient)
                     i.insert(idx, c)
