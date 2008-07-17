@@ -97,8 +97,8 @@ class BaseCommand:
             mask = utils.translateMasks(modifiers)
         except manager.QTileError, v:
             return str(v)
-        if q.currentScreen.group.focusClient:
-            win = q.currentScreen.group.focusClient.window
+        if q.currentScreen.group.currentClient:
+            win = q.currentScreen.group.currentClient.window
         else:
             win = q.root
         e = event.KeyPress(
@@ -140,7 +140,7 @@ class BaseCommand:
         """
             Kill the window that currently has focus.
         """
-        client = q.currentScreen.group.focusClient
+        client = q.currentScreen.group.currentClient
         if client:
             client.kill()
 

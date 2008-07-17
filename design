@@ -1,36 +1,9 @@
 
-Configuration
-
-    The default location of the qtile config file is:
-        
-        ~/.qtile/config.py
-
-    This file usually imports libqtile, and then instantiates various objects.
-
-
-keys = [
-    Key(["control"], "k", "function", 1, 3=foo)
-    Key(["control"], "k", "function2", 1, 3=foo)
-    Key(["control"], "k", "function3", 1, 3=foo)
-]
-
-
-keys = [
-    Key(["control"], "a", Call("function", 1, 3=foo))
-    Key(
-        ["control"], "k", 
-        Call("function", 1, 3=foo),
-        Call("function2", 1, 3=foo),
-        Call("function3", 1, 3=foo),
-    )
-]
-
-
 Groups
     
     Groups track the following information:
         - An ordered list of clients.
-        - A pointer to the client that currently has focus.
+        - A reference to the client that currently has focus.
 
 
 Layouts 
@@ -72,13 +45,3 @@ Layouts
                 xdec: Decrement columns.
                 yinc: Increment rows.
                 ydec: Decrement rows.
-
-
-
-
-
-
-
-
-
-

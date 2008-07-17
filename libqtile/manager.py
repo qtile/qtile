@@ -65,7 +65,8 @@ class Group(list):
         if self.screen and len(self):
             for i in self:
                 self.layout.configure(i)
-            self.currentClient.focus()
+            if self.currentClient:
+                self.currentClient.focus()
         self.resetMask()
 
     def toScreen(self, screen):
@@ -145,6 +146,7 @@ class Client:
     def __init__(self, window, qtile):
         self.window, self.qtile = window, qtile
         self.group = None
+        self.hidden = True
         window.change_attributes(event_mask=self._windowMask)
 
     @property
@@ -181,9 +183,11 @@ class Client:
         self.disableMask(X.StructureNotifyMask)
         self.window.unmap()
         self.resetMask()
+        self.hidden = True
 
     def unhide(self):
         self.window.map()
+        self.hidden = False
 
     def disableMask(self, mask):
         self.window.change_attributes(
@@ -207,13 +211,14 @@ class Client:
         )
 
     def focus(self):
-        self.window.set_input_focus(
-            X.RevertToPointerRoot,
-            X.CurrentTime
-        )
-        self.window.configure(
-            stack_mode = X.Above
-        )
+        if not self.hidden:
+            self.window.set_input_focus(
+                X.RevertToPointerRoot,
+                X.CurrentTime
+            )
+            self.window.configure(
+                stack_mode = X.Above
+            )
 
     def hasProtocol(self, name):
         s = set()

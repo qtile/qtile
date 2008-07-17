@@ -206,6 +206,10 @@ class uStack(QTileTests):
     config = StackConfig()
     def test_stack_commands(self):
         self.testWindow("one")
+        assert self.c.stack_get() == [["one"], []]
+        self.testWindow("two")
+        assert self.c.stack_get() == [["one"], ["two"]]
+
 
 
 class uQTile(QTileTests):

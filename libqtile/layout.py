@@ -8,14 +8,6 @@ class _Layout:
         c.group = group
         return c
 
-    def focus(self, c):
-        """
-            Called whenever a client is added to the group, whether the layout
-            is current or not. The layout should just add the window to its
-            internal datastructures, without mapping or configuring.
-        """
-        pass
-
     def add(self, c):
         """
             Called whenever a client is added to the group, whether the layout
@@ -91,14 +83,39 @@ class Stack(_Layout):
         def cmd_stack_move(q, noskip=False):
             pass
 
+        @staticmethod
+        def cmd_stack_get(q, noskip=False):
+            if q.currentLayout.name != "stack":
+                raise manager.SkipCommand
+            lst = []
+            for i in q.currentLayout.stacks:
+                s = []
+                for j in i:
+                    s.append(j.name)
+                lst.append(s)
+            return lst
+
     def __init__(self, stacks=2):
-        self.stacks = [None]*stacks
+        self.stacks = [[] for i in range(stacks)]
 
     def add(self, c):
-        pass
+        if self.group.currentClient:
+            for i in self.stacks:
+                if not i:
+                    i.append(c)
+                    return
+            for i in self.stacks:
+                if self.group.currentClient in i:
+                    idx = i.index(self.group.currentClient)
+                    i.insert(idx, c)
+                    return
+        else:
+            self.stacks[0].insert(0, c)
 
     def remove(self, c):
-        pass
+        for i in self.stacks:
+            if c in i:
+                i.remove(c)
 
     def configure(self, c):
         if c in self.stacks:
