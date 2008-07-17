@@ -84,10 +84,6 @@ class Group(list):
         idx = (self.index(self.currentClient) + 1) % len(self)
         self.focus(self[idx])
 
-    def focusPrevious(self):
-        idx = (self.index(self.currentClient) - 1) % len(self)
-        self.focus(self[idx])
-
     def disableMask(self, mask):
         for i in self:
             i.disableMask(mask)
@@ -138,14 +134,13 @@ class Group(list):
         self.layoutAll()
 
 
-class Client:
+class _Window:
     _windowMask = X.StructureNotifyMask |\
                  X.PropertyChangeMask |\
                  X.EnterWindowMask |\
                  X.FocusChangeMask
     def __init__(self, window, qtile):
         self.window, self.qtile = window, qtile
-        self.group = None
         self.hidden = True
         window.change_attributes(event_mask=self._windowMask)
 
@@ -231,12 +226,19 @@ class Client:
         return "Client(%s)"%self.name
 
 
+class Client(_Window):
+    group = None
+
+
 class QTile:
     testing = False
     debug = False
     _exit = False
-    def __init__(self, config, display, fname):
-        self.display = Xlib.display.Display(display)
+
+    # Atoms
+    atom_qtilewindow = None
+    def __init__(self, config, displayName, fname):
+        self.display = Xlib.display.Display(displayName)
         self.config, self.fname = config, fname
         defaultScreen = self.display.screen(
                     self.display.get_default_screen()
@@ -286,6 +288,8 @@ class QTile:
         if self._exit:
             sys.exit(1)
 
+        self.atom_qtilewindow = self.display.intern_atom("QTILE_WINDOW")
+
         self.server = command.Server(self.fname, self, config)
 
         self.handlers = {
@@ -326,7 +330,7 @@ class QTile:
         return self.currentScreen.group
 
     @property
-    def currentFocus(self):
+    def currentClient(self):
         return self.currentScreen.group.currentClient
 
     @property
@@ -466,6 +470,7 @@ class QTile:
         if e.__class__ in self._ignoreErrors:
             return
         if e.__class__ == Xlib.error.BadAccess:
+            # FIXME: This error should be pulled out into the startup process
             print >> sys.stderr, "Access denied: Another window manager running?"
         else:
             print >> sys.stderr, "Error:", (e, v)
