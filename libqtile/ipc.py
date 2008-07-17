@@ -45,6 +45,9 @@ class Server:
         self.sock.bind(self.fname)
         self.sock.listen(5)
 
+    def close(self):
+        self.sock.close()
+
     def receive(self):
         """
             Returns either None, or a single message.

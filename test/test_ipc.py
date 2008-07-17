@@ -53,6 +53,11 @@ class uIPC(libpry.TmpDirMixin, libpry.AutoTree):
         s = TestServer(fname)
         assert s.receive() == None
 
+    def test_close(self):
+        fname = os.path.join(self["tmpdir"], "testpath")
+        s = TestServer(fname)
+        s.close()
+
 
 tests = [
     uIPC()

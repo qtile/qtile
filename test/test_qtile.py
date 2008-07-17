@@ -105,6 +105,12 @@ class uQTile(utils.QTileTests):
         assert self.c.clientcount() == 1
         assert self.c.groupinfo("a")["focus"] == "one"
 
+    def test_restart(self):
+        self.testWindow("one")
+        self.testWindow("two")
+        self.c.restart()
+
+        #assert self.c.clientcount() == 2
 
 
 class uKey(libpry.AutoTree):
@@ -121,26 +127,9 @@ class uKey(libpry.AutoTree):
         )
 
 
-class uQTileScan(utils._QTileTruss):
-    config = MaxConfig()
-    def test_events(self):
-        for i in range(2):
-            pid = os.fork()
-            if pid == 0:
-                os.execv("scripts/window", ["scripts/window", self["display"], str(i)])
-            time.sleep(0.1)
-        self.startQtile(self.config)
-        assert self.c.clientcount() == 2
-
-    def tearDown(self):
-        utils._QTileTruss.tearDown(self)
-        self.stopQtile()
-
-
 tests = [
     utils.XNest(xinerama=True), [
         uQTile(),
-        uQTileScan(),
     ],
     utils.XNest(xinerama=False), [
         uCommon(),

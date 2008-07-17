@@ -1,4 +1,4 @@
-import inspect, subprocess
+import inspect, subprocess, sys
 import ipc, utils, manager
 from Xlib import XK
 from Xlib import X
@@ -54,14 +54,6 @@ class BaseCommand:
                 return i.info()
         else:
             return None
-
-    @staticmethod
-    def cmd_focusnext(q):
-        q.currentScreen.group.focusNext()
-
-    @staticmethod
-    def cmd_focusprevious(q):
-        q.currentScreen.group.focusPrevious()
 
     @staticmethod
     def cmd_screencount(q):
@@ -147,6 +139,12 @@ class BaseCommand:
     @staticmethod
     def cmd_sync(q):
         q.display.sync()
+
+    @staticmethod
+    def cmd_restart(q):
+        #q.display.sync()
+        print sys.argv[0]
+        pass
 
 
 class Client(ipc.Client):

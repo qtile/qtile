@@ -41,7 +41,7 @@ class Screen:
         self.setGroup(group)
 
     def setGroup(self, g):
-        if self.group and self.group != g:
+        if not (self.group is None) and self.group != g:
             self.group.hide()
         self.group = g
         self.group.toScreen(self)
@@ -237,9 +237,12 @@ class QTile:
 
     # Atoms
     atom_qtilewindow = None
+
+    _debugLogLength = 20
     def __init__(self, config, displayName, fname):
         self.display = Xlib.display.Display(displayName)
         self.config, self.fname = config, fname
+        self.debuglog = []
         defaultScreen = self.display.screen(
                     self.display.get_default_screen()
                )
@@ -381,6 +384,9 @@ class QTile:
             while n > 0:
                 n -= 1
                 e = self.display.next_event()
+                self.debuglog.insert(0, e)
+                if len(self.debuglog) > self._debugLogLength:
+                    self.debuglog.pop()
                 h = self.handlers.get(e.type)
                 if h:
                     if self.debug:
