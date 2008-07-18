@@ -27,3 +27,15 @@ def translateMasks(modifiers):
     return reduce(operator.or_, masks) if masks else 0
 
 
+def shuffleUp(lst):
+    if len(lst) > 1:
+        c = lst[-1]
+        lst.remove(c)
+        lst.insert(0, c)
+
+
+def shuffleDown(lst):
+    if len(lst) > 1:
+        c = lst[0]
+        lst.remove(c)
+        lst.append(c)

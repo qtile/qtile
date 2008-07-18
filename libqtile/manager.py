@@ -94,10 +94,13 @@ class Group(list):
             i.resetMask()
 
     def focus(self, client):
+        if client == self.currentClient:
+            return
         if not client:
             self.currentClient = None
-        elif self.currentClient != client:
+        else:
             self.currentClient = client
+        self.layout.focus(client)
         self.layoutAll()
 
     def info(self):

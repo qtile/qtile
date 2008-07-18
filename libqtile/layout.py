@@ -1,5 +1,5 @@
 import copy
-import manager
+import manager, utils
 
 class _Layout:
     commands = None
@@ -7,6 +7,12 @@ class _Layout:
         c = copy.copy(self)
         c.group = group
         return c
+
+    def focus(self, c):
+        """
+            Called whenever the focus changes.
+        """
+        pass
 
     def add(self, c):
         """
@@ -69,19 +75,60 @@ class Stack(_Layout):
     class commands:
         @staticmethod
         def cmd_stack_down(q, noskip=False):
-            pass
+            s = q.currentLayout.currentStack
+            if s:
+                utils.shuffleDown(s)
+                q.currentGroup.layoutAll()
 
         @staticmethod
         def cmd_stack_up(q, noskip=False):
+            s = q.currentLayout.currentStack
+            if s:
+                utils.shuffleUp(s)
+                q.currentGroup.layoutAll()
+
+        @staticmethod
+        def cmd_stack_delete(q, noskip=False):
+            if len(q.currentLayout.stacks) > 1:
+                off = q.currentLayout.currentStackOffset or 0
+                s = q.currentLayout.stacks[off]
+                q.currentLayout.stacks.remove(s)
+                off = min(off, len(q.currentLayout.stacks)-1)
+                q.currentLayout.stacks[off].extend(s)
+                if q.currentLayout.stacks[off]:
+                    q.currentGroup.focus(
+                        q.currentLayout.stacks[off][0]
+                    )
+
+        @staticmethod
+        def cmd_stack_add(q, noskip=False):
+            q.currentLayout.stacks.append([])
+            q.currentGroup.layoutAll()
+
+        @staticmethod
+        def cmd_stack_rotate(q, noskip=False):
+            utils.shuffleUp(q.currentLayout.stacks)
+
+        @staticmethod
+        def cmd_stack_next(q, noskip=False):
+            l = q.currentLayout
+            for i in l.stacks[l.currentStackOffset:]:
+                if i:
+                    break
+            else:
+                for i in l.stacks[:l.currentStackOffset]:
+                    if i:
+                        break
+            if i:
+                q.currentGroup.focus(i[0])
+
+        @staticmethod
+        def cmd_stack_previous(q, noskip=False):
             pass
 
         @staticmethod
-        def cmd_stack_swap(q, noskip=False):
-            pass
-
-        @staticmethod
-        def cmd_stack_move(q, noskip=False):
-            pass
+        def cmd_stack_current(q, noskip=False):
+            return q.currentLayout.currentStackOffset
 
         @staticmethod
         def cmd_stack_get(q, noskip=False):
@@ -98,8 +145,28 @@ class Stack(_Layout):
     def __init__(self, stacks=2):
         self.stacks = [[] for i in range(stacks)]
 
+    @property
+    def currentStack(self):
+        return self.stacks[self.currentStackOffset]
+
+    @property
+    def currentStackOffset(self):
+        for i, s in enumerate(self.stacks):
+            if self.group.currentClient in s:
+                return i
+
+    def focus(self, c):
+        for i in self.stacks:
+            if c in i:
+                i.remove(c)
+                i.insert(0, c)
+
     def add(self, c):
         if self.group.currentClient:
+            for i in self.stacks:
+                if not i:
+                    i.append(c)
+                    return
             for i in self.stacks:
                 if self.group.currentClient in i:
                     idx = i.index(self.group.currentClient)
@@ -114,13 +181,17 @@ class Stack(_Layout):
                 i.remove(c)
 
     def configure(self, c):
-        if c in self.stacks:
-            c.place(
-                self.group.screen.x,
-                self.group.screen.y,
-                self.group.screen.width,
-                self.group.screen.height,
-            )
-            c.unhide()
+        column = int(self.group.screen.width/float(len(self.stacks)))
+        for i, s in enumerate(self.stacks):
+            if s and c == s[0]:
+                xoffset = i * column
+                c.place(
+                    xoffset,
+                    self.group.screen.y,
+                    column,
+                    self.group.screen.height,
+                )
+                c.unhide()
+                return
         else:
             c.hide()
