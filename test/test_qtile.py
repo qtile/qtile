@@ -21,6 +21,11 @@ class uCommon(utils.QTileTests):
     def test_events(self):
         assert self.c.status() == "OK"
 
+    def test_report(self):
+        p = os.path.join(self["tmpdir"], "crashreport")
+        self.c.report("msg", p)
+        assert os.path.isfile(p)
+
     def test_keypress(self):
         self.testWindow("one")
         self.testWindow("two")

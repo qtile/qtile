@@ -1,4 +1,5 @@
-import sys, operator
+import datetime
+import sys, operator, os
 import Xlib
 import Xlib.display
 import Xlib.ext.xinerama as xinerama
@@ -231,9 +232,9 @@ class Client(_Window):
 
 
 class QTile:
-    testing = False
     debug = False
     _exit = False
+    _testing = False
 
     # Atoms
     atom_qtilewindow = None
@@ -242,7 +243,7 @@ class QTile:
     def __init__(self, config, displayName, fname):
         self.display = Xlib.display.Display(displayName)
         self.config, self.fname = config, fname
-        self.debuglog = []
+        self.debugLog = []
         defaultScreen = self.display.screen(
                     self.display.get_default_screen()
                )
@@ -384,9 +385,9 @@ class QTile:
             while n > 0:
                 n -= 1
                 e = self.display.next_event()
-                self.debuglog.insert(0, e)
-                if len(self.debuglog) > self._debugLogLength:
-                    self.debuglog.pop()
+                self.debugLog.insert(0, e)
+                if len(self.debugLog) > self._debugLogLength:
+                    self.debugLog.pop()
                 h = self.handlers.get(e.type)
                 if h:
                     if self.debug:
@@ -469,12 +470,24 @@ class QTile:
             return
         self.unmanage(e.window)
 
+    def writeReport(self, m, path="~/qtile_crashreport"):
+        p = os.path.expanduser(path)
+        f = open(p, "a+")
+        print >> f, "*** QTILE REPORT", datetime.datetime.now()
+        print >> f, "Message:", m
+        print >> f, "Last %s events:"%self._debugLogLength
+        for i in self.debugLog:
+            print >> f, "\t", str(i)
+        f.close()
+
     _ignoreErrors = set([
         Xlib.error.BadWindow,
     ])
     def errorHandler(self, e, v):
         if e.__class__ in self._ignoreErrors:
             return
+        if not self._testing:
+            self.writeReport((e, v))
         if e.__class__ == Xlib.error.BadAccess:
             # FIXME: This error should be pulled out into the startup process
             print >> sys.stderr, "Access denied: Another window manager running?"

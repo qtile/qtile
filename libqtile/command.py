@@ -16,7 +16,7 @@ class Server(ipc.Server):
             return cmd(self.qtile, *args, **kwargs)
         else:
             return "Unknown command: %s"%cmd
-        if self.qtile.testing:
+        if self.qtile._testing:
             self.qtile.display.sync()
 
 
@@ -143,8 +143,11 @@ class BaseCommand:
     @staticmethod
     def cmd_restart(q):
         #q.display.sync()
-        print sys.argv[0]
         pass
+
+    @staticmethod
+    def cmd_report(q, msg="None", path="~/qtile_crashreport"):
+        q.writeReport(msg, path)
 
 
 class Client(ipc.Client):
