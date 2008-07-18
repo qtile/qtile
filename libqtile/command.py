@@ -13,9 +13,11 @@ class Server(ipc.Server):
         name, args, kwargs = data
         cmd = getattr(self.commands, "cmd_" + name, None)
         if cmd:
+            self.qtile.log.add("%s(%s, %s)"%(name, args, kwargs))
             return cmd(self.qtile, *args, **kwargs)
         else:
-            return "Unknown command: %s"%cmd
+            self.qtile.log.add("Unknown command"%name)
+            return "Unknown command: %s"%name
         if self.qtile._testing:
             self.qtile.display.sync()
 

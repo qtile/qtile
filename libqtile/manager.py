@@ -231,6 +231,26 @@ class Client(_Window):
     group = None
 
 
+class Log:
+    """
+        A circular log.
+    """
+    def __init__(self, length, outfile):
+        self.length, self.outfile = length, outfile
+        self.log = []
+
+    def add(self, itm):
+        if self.outfile:
+            print >> self.outfile, itm
+        self.log.append(itm)
+        if len(self.log) > self.length:
+            self.log.pop(0)
+
+    def write(self, fp, initial):
+        for i in self.log:
+            print >> fp, initial, i
+
+
 class QTile:
     debug = False
     _exit = False
@@ -238,12 +258,14 @@ class QTile:
 
     # Atoms
     atom_qtilewindow = None
-
-    _debugLogLength = 20
+    _debugLogLength = 50
     def __init__(self, config, displayName, fname):
         self.display = Xlib.display.Display(displayName)
         self.config, self.fname = config, fname
-        self.debugLog = []
+        self.log = Log(
+            self._debugLogLength,
+            sys.stderr if self.debug else None
+        )
         defaultScreen = self.display.screen(
                     self.display.get_default_screen()
                )
@@ -385,18 +407,14 @@ class QTile:
             while n > 0:
                 n -= 1
                 e = self.display.next_event()
-                self.debugLog.insert(0, e)
-                if len(self.debugLog) > self._debugLogLength:
-                    self.debugLog.pop()
                 h = self.handlers.get(e.type)
                 if h:
-                    if self.debug:
-                        print >> sys.stderr, "Handling:", e
+                    self.log.add("Handling: %s"%e)
                     h(e)
                 elif e.type in self.ignoreEvents:
                     pass
                 else:
-                    print >> sys.stderr, "Unknown:", e
+                    self.log.add("Unknown event: %s"%e)
 
     def keyPress(self, e):
         keysym =  self.display.keycode_to_keysym(e.detail, 0)
@@ -416,7 +434,7 @@ class QTile:
     def configureRequest(self, e):
         c = self.clientMap.get(e.window)
         if c and c.group.screen:
-            c.group.layout.configure(c)
+            c.group.focus(c)
         else:
             # It's not managed, or not mapped, so we just obey it.
             args = {}
@@ -475,9 +493,8 @@ class QTile:
         f = open(p, "a+")
         print >> f, "*** QTILE REPORT", datetime.datetime.now()
         print >> f, "Message:", m
-        print >> f, "Last %s events:"%self._debugLogLength
-        for i in self.debugLog:
-            print >> f, "\t", str(i)
+        print >> f, "Last %s events:"%self.log.length
+        self.log.write(f, "\t")
         f.close()
 
     _ignoreErrors = set([
@@ -494,4 +511,3 @@ class QTile:
         else:
             print >> sys.stderr, "Error:", (e, v)
         self._exit = True
-

@@ -1,4 +1,4 @@
-import os, time
+import os, time, cStringIO
 import libpry
 import libqtile, libqtile.config
 import utils
@@ -132,6 +132,21 @@ class uKey(libpry.AutoTree):
         )
 
 
+class uLog(libpry.AutoTree):
+    def test_all(self):
+        io = cStringIO.StringIO()
+
+        l = libqtile.Log(5, io)
+        for i in range(10):
+            l.add(i)
+        assert len(l.log) == 5
+        assert l.log[0] == 5
+        assert l.log[4] == 9
+
+        l.write(io, "\t")
+        assert "\t5" in io.getvalue()
+
+
 tests = [
     utils.XNest(xinerama=True), [
         uQTile(),
@@ -140,5 +155,6 @@ tests = [
         uCommon(),
         uQTile()
     ],
-    uKey()
+    uKey(),
+    uLog(),
 ]
