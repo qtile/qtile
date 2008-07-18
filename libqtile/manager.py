@@ -477,7 +477,9 @@ class QTile:
             self.currentScreen.group.focus(c)
 
     def mapRequest(self, e):
-        self.manage(e.window)
+        c = self.clientMap.get(e.window)
+        if not c:
+            self.manage(e.window)
 
     def destroyNotify(self, e):
         self.unmanage(e.window)
