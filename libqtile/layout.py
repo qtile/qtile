@@ -1,5 +1,5 @@
 import copy
-import manager, utils
+import manager, utils, command
 
 class _Layout:
     commands = None
@@ -40,23 +40,23 @@ class _Layout:
         raise NotImplementedError
 
 
+class MaxCommands(command.Commands):
+    def cmd_max_next(self, q, noskip=False):
+        if q.currentLayout.name != "max":
+            raise manager.SkipCommand
+        idx = (q.currentGroup.index(q.currentClient) + 1) % len(q.currentGroup)
+        q.currentGroup.focus(q.currentGroup[idx])
+
+    def cmd_max_previous(self, q, noskip=False):
+        if q.currentLayout.name != "max":
+            raise manager.SkipCommand
+        idx = (q.currentGroup.index(q.currentClient) - 1) % len(q.currentGroup)
+        q.currentGroup.focus(q.currentGroup[idx])
+
+
 class Max(_Layout):
     name = "max"
-    class commands:
-        @staticmethod
-        def cmd_max_next(q, noskip=False):
-            if q.currentLayout.name != "max":
-                raise manager.SkipCommand
-            idx = (q.currentGroup.index(q.currentClient) + 1) % len(q.currentGroup)
-            q.currentGroup.focus(q.currentGroup[idx])
-
-        @staticmethod
-        def cmd_max_previous(q, noskip=False):
-            if q.currentLayout.name != "max":
-                raise manager.SkipCommand
-            idx = (q.currentGroup.index(q.currentClient) - 1) % len(q.currentGroup)
-            q.currentGroup.focus(q.currentGroup[idx])
-
+    commands = MaxCommands()
     def configure(self, c):
         if c == self.group.currentClient:
             c.place(
@@ -70,7 +70,7 @@ class Max(_Layout):
             c.hide()
 
 
-class _StackCommands:
+class StackCommands(command.Commands):
     def cmd_stack_down(self, q, noskip=False):
         s = q.currentLayout.currentStack
         if s:
@@ -116,7 +116,7 @@ class _StackCommands:
 
 class Stack(_Layout):
     name = "stack"
-    commands = _StackCommands()
+    commands = StackCommands()
     def __init__(self, stacks=2):
         self.stacks = [[] for i in range(stacks)]
 

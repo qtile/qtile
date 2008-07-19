@@ -4,7 +4,7 @@ import utils
 
 class MaxConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
-    layouts = [libqtile.Max()]
+    layouts = [libqtile.layout.Max()]
     keys = [
         libqtile.Key(["control"], "k", libqtile.command.Call("max_next")),
         libqtile.Key(["control"], "j", libqtile.command.Call("max_previous")),
@@ -14,7 +14,7 @@ class MaxConfig(libqtile.config.Config):
 
 class StackConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
-    layouts = [libqtile.Stack()]
+    layouts = [libqtile.layout.Stack()]
     keys = []
     screens = []
 

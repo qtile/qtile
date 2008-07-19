@@ -508,16 +508,7 @@ class QTile:
         self._exit = True
 
 
-class _BaseCommands:
-    def add(self, obj):
-        """
-            Adds all cmd_* methods from the specified object.
-        """
-        for i in dir(obj):
-            if i.startswith("cmd_"):
-                attr = getattr(obj, i)
-                setattr(self, i, attr)
-
+class _BaseCommands(command.Commands):
     @staticmethod
     def cmd_status(q):
         """

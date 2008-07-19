@@ -9,7 +9,7 @@ class Config:
     def commands(self):
         c = manager._BaseCommands()
         for i in self.layouts:
-            c.add(i.commands)
+            c.update(i.commands)
         return c
         
 

@@ -1,4 +1,4 @@
-import inspect
+import inspect, UserDict
 import ipc
 
 class _Server(ipc.Server):
@@ -8,7 +8,7 @@ class _Server(ipc.Server):
 
     def call(self, data):
         name, args, kwargs = data
-        cmd = getattr(self.commands, "cmd_" + name, None)
+        cmd = self.commands.get(name)
         if cmd:
             self.qtile.log.add("%s(%s, %s)"%(name, args, kwargs))
             return cmd(self.qtile, *args, **kwargs)
@@ -22,6 +22,30 @@ class _Server(ipc.Server):
 class Call:
     def __init__(self, command, *args, **kwargs):
         self.command, self.args, self.kwargs = command, args, kwargs
+
+
+class Commands(UserDict.DictMixin):
+    """
+        A convenience class for collecting together sets of commands. Command
+        collections should inherit from this class, and each command should be
+        a method named cmd_X, where X is the command name. The class emulates a
+        dictionary exposing the commands.
+    """
+    def __getitem__(self, itm):
+        cmd = getattr(self, "cmd_" + itm, None)
+        if not cmd:
+            raise KeyError, "No such key: %s"%itm
+        return cmd
+
+    def __setitem__(self, itm, value):
+        setattr(self, "cmd_" + itm, value)
+
+    def keys(self):
+        lst = []
+        for i in dir(self):
+            if i.startswith("cmd_"):
+                lst.append(i[4:])
+        return lst
 
 
 class Client(ipc.Client):
