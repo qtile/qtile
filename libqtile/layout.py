@@ -70,78 +70,53 @@ class Max(_Layout):
             c.hide()
 
 
-class Stack(_Layout):
-    name = "stack"
-    class commands:
-        @staticmethod
-        def cmd_stack_down(q, noskip=False):
-            s = q.currentLayout.currentStack
-            if s:
-                utils.shuffleDown(s)
-                q.currentGroup.layoutAll()
-
-        @staticmethod
-        def cmd_stack_up(q, noskip=False):
-            s = q.currentLayout.currentStack
-            if s:
-                utils.shuffleUp(s)
-                q.currentGroup.layoutAll()
-
-        @staticmethod
-        def cmd_stack_delete(q, noskip=False):
-            if len(q.currentLayout.stacks) > 1:
-                off = q.currentLayout.currentStackOffset or 0
-                s = q.currentLayout.stacks[off]
-                q.currentLayout.stacks.remove(s)
-                off = min(off, len(q.currentLayout.stacks)-1)
-                q.currentLayout.stacks[off].extend(s)
-                if q.currentLayout.stacks[off]:
-                    q.currentGroup.focus(
-                        q.currentLayout.stacks[off][0]
-                    )
-
-        @staticmethod
-        def cmd_stack_add(q, noskip=False):
-            q.currentLayout.stacks.append([])
+class _StackCommands:
+    def cmd_stack_down(self, q, noskip=False):
+        s = q.currentLayout.currentStack
+        if s:
+            utils.shuffleDown(s)
             q.currentGroup.layoutAll()
 
-        @staticmethod
-        def cmd_stack_rotate(q, noskip=False):
-            utils.shuffleUp(q.currentLayout.stacks)
+    def cmd_stack_up(self, q, noskip=False):
+        s = q.currentLayout.currentStack
+        if s:
+            utils.shuffleUp(s)
+            q.currentGroup.layoutAll()
 
-        @staticmethod
-        def cmd_stack_next(q, noskip=False):
-            l = q.currentLayout
-            for i in l.stacks[l.currentStackOffset:]:
-                if i:
-                    break
-            else:
-                for i in l.stacks[:l.currentStackOffset]:
-                    if i:
-                        break
-            if i:
-                q.currentGroup.focus(i[0])
+    def cmd_stack_delete(self, q, noskip=False):
+        q.currentLayout.deleteCurrentStack()
 
-        @staticmethod
-        def cmd_stack_previous(q, noskip=False):
-            pass
+    def cmd_stack_add(self, q, noskip=False):
+        q.currentLayout.stacks.append([])
+        q.currentGroup.layoutAll()
 
-        @staticmethod
-        def cmd_stack_current(q, noskip=False):
-            return q.currentLayout.currentStackOffset
+    def cmd_stack_rotate(self, q, noskip=False):
+        utils.shuffleUp(q.currentLayout.stacks)
 
-        @staticmethod
-        def cmd_stack_get(q, noskip=False):
-            if q.currentLayout.name != "stack":
-                raise manager.SkipCommand
-            lst = []
-            for i in q.currentLayout.stacks:
-                s = []
-                for j in i:
-                    s.append(j.name)
-                lst.append(s)
-            return lst
+    def cmd_stack_next(self, q, noskip=False):
+        return q.currentLayout.nextStack()
 
+    def cmd_stack_previous(self, q, noskip=False):
+        return q.currentLayout.previousStack()
+
+    def cmd_stack_current(self, q, noskip=False):
+        return q.currentLayout.currentStackOffset
+
+    def cmd_stack_get(self, q, noskip=False):
+        if q.currentLayout.name != "stack":
+            raise manager.SkipCommand
+        lst = []
+        for i in q.currentLayout.stacks:
+            s = []
+            for j in i:
+                s.append(j.name)
+            lst.append(s)
+        return lst
+
+
+class Stack(_Layout):
+    name = "stack"
+    commands = _StackCommands()
     def __init__(self, stacks=2):
         self.stacks = [[] for i in range(stacks)]
 
@@ -154,6 +129,47 @@ class Stack(_Layout):
         for i, s in enumerate(self.stacks):
             if self.group.currentClient in s:
                 return i
+
+    def _findNext(self, lst, offset):
+        for i in lst[offset+1:]:
+            if i:
+                return i
+        else:
+            for i in lst[:offset]:
+                if i:
+                    return i
+
+    def deleteCurrentStack(self):
+        if len(self.stacks) > 1:
+            off = self.currentStackOffset or 0
+            s = self.stacks[off]
+            self.stacks.remove(s)
+            off = min(off, len(self.stacks)-1)
+            self.stacks[off].extend(s)
+            if self.stacks[off]:
+                self.group.focus(
+                    self.stacks[off][0]
+                )
+
+    def nextStack(self):
+        if self.currentStackOffset is None:
+            return
+        n = self._findNext(
+                self.stacks,
+                self.currentStackOffset
+            )
+        if n:
+            self.group.focus(n[0])
+
+    def previousStack(self):
+        if self.currentStackOffset is None:
+            return
+        n = self._findNext(
+                list(reversed(self.stacks)),
+                len(self.stacks) - self.currentStackOffset - 1
+            )
+        if n:
+            self.group.focus(n[0])
 
     def focus(self, c):
         for i in self.stacks:
@@ -179,6 +195,7 @@ class Stack(_Layout):
         for i in self.stacks:
             if c in i:
                 i.remove(c)
+                return
 
     def configure(self, c):
         column = int(self.group.screen.width/float(len(self.stacks)))

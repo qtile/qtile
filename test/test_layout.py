@@ -85,18 +85,39 @@ class uStack(utils.QTileTests):
         
     def test_nextprev(self):
         self.c.stack_add()
-        self.testWindow("one")
-        self.testWindow("two")
-        self.testWindow("three")
+        one = self.testWindow("one")
+        two = self.testWindow("two")
+        three = self.testWindow("three")
 
-        info = self.c.groupinfo("a")
-        assert info["focus"] == "three"
+        assert self.c.groupinfo("a")["focus"] == "three"
+        self.c.stack_next()
+        assert self.c.groupinfo("a")["focus"] == "one"
+
+        self.c.stack_previous()
+        assert self.c.groupinfo("a")["focus"] == "three"
+        self.c.stack_previous()
+        assert self.c.groupinfo("a")["focus"] == "two"
 
         self.c.stack_next()
-        info = self.c.groupinfo("a")
-        assert info["focus"] == "one"
+        self.c.stack_next()
+        self.c.stack_next()
+        assert self.c.groupinfo("a")["focus"] == "two"
 
+        self.kill(three)
+        self.c.stack_next()
+        assert self.c.groupinfo("a")["focus"] == "one"
+        self.c.stack_previous()
+        assert self.c.groupinfo("a")["focus"] == "two"
+        self.c.stack_next()
+        self.kill(two)
+        self.c.stack_next()
+        assert self.c.groupinfo("a")["focus"] == "one"
 
+        self.kill(one)
+        self.c.stack_next()
+        assert self.c.groupinfo("a")["focus"] == None
+        self.c.stack_previous()
+        assert self.c.groupinfo("a")["focus"] == None
 
 
 tests = [
