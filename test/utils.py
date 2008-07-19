@@ -1,7 +1,7 @@
 import subprocess, os, time, sys, socket, traceback
 import Xlib.display, Xlib.X
 import libpry
-import libqtile
+import libqtile, libqtile.ipc
 
 WIDTH = 800
 HEIGHT = 600
@@ -109,7 +109,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
                 try:
                     if self.c.status() == "OK":
                         break
-                except socket.error:
+                except libqtile.ipc.IPCError:
                     pass
                 time.sleep(0.1)
             else:

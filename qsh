@@ -2,7 +2,8 @@
 
 import os, os.path
 import libqtile
-import libqtile.config as config
+import libqtile
+import libqtile.sh as sh
 
 def main():
     from optparse import OptionParser, OptionGroup
@@ -14,30 +15,24 @@ def main():
                         dest="configfile",
                         help='Use specified configuration file.'
                     )
-    parser.add_option(
-                        "-d", "--debug",
-                        action="store_true", default=False,
-                        dest="debug",
-                        help='Print lots of debugging output.'
-                    )
     options, args = parser.parse_args()
+
     try:
-        c = config.File(options.configfile)
-    except config.ConfigError, v:
+        c = libqtile.config.File(options.configfile)
+    except libqtile.config.ConfigError, v:
         parser.error(v.message)
     d = os.environ.get("DISPLAY")
-    if not "." in d:
-        d = d + ".0"
     if not d:
         parser.error("No DISPLAY set.")
-    fname = os.path.join("~", ".qtilesocket.%s"%d)
-    fname = os.path.expanduser(fname)
-    if os.path.exists(fname):
-        os.unlink(fname)
-    q = libqtile.QTile(c, d, fname)
-    q.debug = options.debug
-    q.loop()
+    socketname = os.path.join("~", ".qtilesocket.%s"%d)
+    socketname = os.path.expanduser(socketname)
+
+    client = libqtile.command.Client(socketname, c)
+    cmd = sh.Cmd(client)
+    cmd.cmdloop()
 
 
 if __name__ == "__main__":
     main()
+
+

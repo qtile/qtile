@@ -4,9 +4,11 @@
     run the same Python version, and that clients must be trusted (as
     un-marshalling untrusted data can result in arbitrary code execution).
 """
-import marshal, socket, select, os.path
+import marshal, socket, select, os.path, socket
 
 BUFSIZE = 1024 * 1024
+
+class IPCError(Exception): pass
 
 class Client:
     def __init__(self, fname):
@@ -18,7 +20,11 @@ class Client:
             socket.SOCK_STREAM,
             0
         )
-        sock.connect(self.fname)
+        try:
+            sock.connect(self.fname)
+        except socket.error:
+            raise IPCError("Could not open %s"%self.fname)
+
         data = marshal.dumps(msg)
         sock.sendall(data)
         while 1:

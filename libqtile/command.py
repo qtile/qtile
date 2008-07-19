@@ -47,6 +47,9 @@ class Commands(UserDict.DictMixin):
                 lst.append(i[4:])
         return lst
 
+    def __repr__(self):
+        return "%s()"%self.__class__.__name__
+
 
 class Client(ipc.Client):
     def __init__(self, fname, config):

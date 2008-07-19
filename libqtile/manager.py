@@ -1,4 +1,4 @@
-import datetime, subprocess, sys, operator, os
+import datetime, subprocess, sys, operator, os, traceback
 import Xlib
 import Xlib.display
 import Xlib.ext.xinerama as xinerama
@@ -387,25 +387,28 @@ class QTile:
             )
 
     def loop(self):
-        while 1:
-            if self._exit:
-                sys.exit(1)
-            self.server.receive()
-            try:
-                n = self.display.pending_events()
-            except Xlib.error.ConnectionClosedError:
-                return
-            while n > 0:
-                n -= 1
-                e = self.display.next_event()
-                h = self.handlers.get(e.type)
-                if h:
-                    self.log.add("Handling: %s"%e)
-                    h(e)
-                elif e.type in self.ignoreEvents:
-                    pass
-                else:
-                    self.log.add("Unknown event: %s"%e)
+        try:
+            while 1:
+                if self._exit:
+                    sys.exit(1)
+                self.server.receive()
+                try:
+                    n = self.display.pending_events()
+                except Xlib.error.ConnectionClosedError:
+                    return
+                while n > 0:
+                    n -= 1
+                    e = self.display.next_event()
+                    h = self.handlers.get(e.type)
+                    if h:
+                        self.log.add("Handling: %s"%e)
+                        h(e)
+                    elif e.type in self.ignoreEvents:
+                        pass
+                    else:
+                        self.log.add("Unknown event: %s"%e)
+        except:
+            self.writeReport(traceback.format_exc())
 
     def keyPress(self, e):
         keysym =  self.display.keycode_to_keysym(e.detail, 0)
