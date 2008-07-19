@@ -40,6 +40,20 @@ class BaseCommand:
         return "OK"
 
     @staticmethod
+    def cmd_to_screen(q, n):
+        """
+            Warp to screen n.
+        """
+        return q.toScreen(n)
+
+    @staticmethod
+    def cmd_current_screen(q):
+        """
+            Return current screen number.
+        """
+        return q.screens.index(q.currentScreen)
+
+    @staticmethod
     def cmd_clientcount(q):
         """
             Return number of clients in all groups.

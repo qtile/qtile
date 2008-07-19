@@ -3,6 +3,9 @@ import Xlib.display, Xlib.X
 import libpry
 import libqtile
 
+WIDTH = 800
+HEIGHT = 600
+
 class XNest(libpry.TestContainer):
     def __init__(self, xinerama, display=":1"):
         libpry.TestContainer.__init__(self)
@@ -10,9 +13,14 @@ class XNest(libpry.TestContainer):
         if xinerama:
             self.name = "XNestXinerama"
         self["display"] = display
+        self["xinerama"] = xinerama
 
     def setUp(self):
-        args = [ "Xnest", "+kb", "-geometry", "800x600", self["display"], "-ac", "-sync"]
+        args = [
+            "Xnest", "+kb",
+            "-geometry", "%sx%s"%(WIDTH, HEIGHT),
+            self["display"], "-ac", "-sync"
+        ]
         if self.xinerama:
             args.extend(["+xinerama", "-scrns", "2"])
         self.sub = subprocess.Popen(
@@ -25,6 +33,35 @@ class XNest(libpry.TestContainer):
         os.kill(self.sub.pid, 9)
         os.waitpid(self.sub.pid, 0)
                 
+
+class Xephyr(libpry.TestContainer):
+    def __init__(self, xinerama, display=":1"):
+        libpry.TestContainer.__init__(self)
+        self.xinerama = xinerama
+        if xinerama:
+            self.name = "XephyrXinerama"
+        self["display"] = display
+        self["xinerama"] = xinerama
+
+    def setUp(self):
+        args = [
+            "Xephyr", "+kb",
+            "-screen", "%sx%s"%(WIDTH, HEIGHT),
+            "-screen", "%sx%s+800+0"%(WIDTH, HEIGHT),
+            self["display"], "-ac"
+        ]
+        if self.xinerama:
+            args.extend(["+xinerama"])
+        self.sub = subprocess.Popen(
+                        args,
+                        stdout = subprocess.PIPE,
+                        stderr = subprocess.PIPE,
+                    )
+
+    def tearDown(self):
+        os.kill(self.sub.pid, 9)
+        os.waitpid(self.sub.pid, 0)
+
 
 class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
     qtilepid = None
@@ -56,6 +93,10 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             try:
                 q = libqtile.QTile(config, self["display"], self["fname"])
                 q.testing = True
+                # BEWARE: Xnest somehow stuffs up geometry detection for
+                # multiple screens in xinerama. We poke into qtile to fix this.
+                if self["xinerama"]:
+                    q.screens[1].x = WIDTH
                 q.loop()
             except Exception, e:
                 traceback.print_exc(file=sys.stderr)
@@ -124,5 +165,3 @@ class QTileTests(_QTileTruss):
     def tearDown(self):
         _QTileTruss.tearDown(self)
         self.stopQtile()
-
-

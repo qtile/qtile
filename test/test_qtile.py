@@ -13,6 +13,14 @@ class MaxConfig(libqtile.config.Config):
     screens = []
 
 
+class uMultiScreen(utils.QTileTests):
+    config = MaxConfig()
+    def test_to_screen(self):
+        assert self.c.current_screen() == 0
+        self.c.to_screen(1)
+        assert self.c.current_screen() == 1
+
+
 class uCommon(utils.QTileTests):
     """
         We don't care if these tests run in a Xinerama or non-Xinerama X.
@@ -52,6 +60,9 @@ class uCommon(utils.QTileTests):
 
 
 class uQTile(utils.QTileTests):
+    """
+        These tests should run in both Xinerama and non-Xinerama modes.
+    """
     config = MaxConfig()
     def test_mapRequest(self):
         self.testWindow("one")
@@ -150,6 +161,7 @@ class uLog(libpry.AutoTree):
 tests = [
     utils.XNest(xinerama=True), [
         uQTile(),
+        uMultiScreen()
     ],
     utils.XNest(xinerama=False), [
         uCommon(),

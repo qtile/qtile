@@ -218,6 +218,7 @@ class _Window:
             self.window.configure(
                 stack_mode = X.Above
             )
+            self.window.warp_pointer(0, 0)
 
     def hasProtocol(self, name):
         s = set()
@@ -284,6 +285,7 @@ class QTile:
         self.screens = []
         if self.display.has_extension("XINERAMA"):
             for i, s in enumerate(self.display.xinerama_query_screens().screens):
+                print s
                 scr = Screen(
                         i,
                         s["x"],
@@ -492,6 +494,15 @@ class QTile:
         if  (e.event != e.window) and e.send_event == False:
             return
         self.unmanage(e.window)
+
+    def toScreen(self, n):
+        if len(self.screens) < n-1:
+            return
+        s = self.screens[n]
+        if s.group.currentClient:
+            s.group.focus(s.group.currentClient)
+        else:
+            self.root.warp_pointer(s.x+2, s.y + 2)
 
     def writeReport(self, m, path="~/qtile_crashreport"):
         p = os.path.expanduser(path)
