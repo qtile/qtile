@@ -315,8 +315,8 @@ class QTile:
                          X.StructureNotifyMask
         )
         self.display.sync()
-        # Another WM is running...
         if self._exit:
+            print >> sys.stderr, "Access denied: Another window manager running?"
             sys.exit(1)
 
         self.atom_qtilewindow = self.display.intern_atom("QTILE_WINDOW")
@@ -507,11 +507,8 @@ class QTile:
     def errorHandler(self, e, v):
         if e.__class__ in self._ignoreErrors:
             return
-        if not self._testing:
-            self.writeReport((e, v))
-        if e.__class__ == Xlib.error.BadAccess:
-            # FIXME: This error should be pulled out into the startup process
-            print >> sys.stderr, "Access denied: Another window manager running?"
-        else:
+        if self._testing:
             print >> sys.stderr, "Error:", (e, v)
+        else:
+            self.writeReport((e, v))
         self._exit = True
