@@ -7,14 +7,17 @@ class ConfigError(Exception): pass
 
 class Config:
     def commands(self):
-        c = command.BaseCommand()
+        c = manager._BaseCommands()
         for i in self.layouts:
             c.add(i.commands)
         return c
         
 
 class File(Config):
-    def __init__(self, fname):
+    def __init__(self, fname=None):
+        if not fname:
+            fname = os.path.join("~", ".qtile", "config.py")
+            fname = os.path.expanduser(configfile)
         self.fname = fname
         globs = {}
         if not os.path.isfile(fname):

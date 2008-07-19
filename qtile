@@ -10,6 +10,7 @@ def main():
     parser.add_option(
                         "-c", "--config",
                         action="store", type="string",
+                        default=None,
                         dest="configfile",
                         help='Use specified configuration file.'
                     )
@@ -21,15 +22,10 @@ def main():
                     )
     options, args = parser.parse_args()
 
-    configfile = options.configfile
-    if not configfile:
-        configfile = os.path.join("~", ".qtile", "config.py")
-        configfile = os.path.expanduser(configfile)
     try:
-        c = config.File(configfile)
+        c = config.File(options.configfile)
     except config.ConfigError, v:
         parser.error(v.message)
-
     d = os.environ.get("DISPLAY")
     if not d:
         parser.error("No DISPLAY set.")
