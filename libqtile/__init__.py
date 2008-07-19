@@ -1,3 +1,2 @@
 from manager import *
-from layout import *
-import config, command, ipc
+import config, command, ipc, layout

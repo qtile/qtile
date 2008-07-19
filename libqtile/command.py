@@ -1,8 +1,5 @@
-import inspect, subprocess, sys
-import ipc, utils, manager
-from Xlib import XK
-from Xlib import X
-import Xlib.protocol.event as event
+import inspect
+import ipc
 
 class _Server(ipc.Server):
     def __init__(self, fname, qtile, config):
