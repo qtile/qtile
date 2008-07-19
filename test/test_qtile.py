@@ -1,14 +1,14 @@
 import os, time, cStringIO
 import libpry
-import libqtile, libqtile.config
+import libqtile
 import utils
 
 class MaxConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
     layouts = [libqtile.Max()]
     keys = [
-        libqtile.Key(["control"], "k", libqtile.Command("max_next")),
-        libqtile.Key(["control"], "j", libqtile.Command("max_previous")),
+        libqtile.Key(["control"], "k", libqtile.command.Call("max_next")),
+        libqtile.Key(["control"], "j", libqtile.command.Call("max_previous")),
     ]
     screens = []
 
@@ -143,12 +143,12 @@ class uKey(libpry.AutoTree):
         libpry.raises(
             "unknown key",
             libqtile.Key,
-            [], "unknown", libqtile.Command("foo")
+            [], "unknown", libqtile.command.Call("foo")
         )
         libpry.raises(
             "unknown modifier",
             libqtile.Key,
-            ["unknown"], "x", libqtile.Command("foo")
+            ["unknown"], "x", libqtile.command.Call("foo")
         )
 
 

@@ -6,8 +6,8 @@ class MaxConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
     layouts = [libqtile.Max()]
     keys = [
-        libqtile.Key(["control"], "k", libqtile.Command("max_next")),
-        libqtile.Key(["control"], "j", libqtile.Command("max_previous")),
+        libqtile.Key(["control"], "k", libqtile.command.Call("max_next")),
+        libqtile.Key(["control"], "j", libqtile.command.Call("max_previous")),
     ]
     screens = []
 

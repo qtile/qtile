@@ -4,7 +4,7 @@ from Xlib import XK
 from Xlib import X
 import Xlib.protocol.event as event
 
-class Server(ipc.Server):
+class _Server(ipc.Server):
     def __init__(self, fname, qtile, config):
         ipc.Server.__init__(self, fname, self.call)
         self.qtile, self.commands = qtile, config.commands()
@@ -20,6 +20,11 @@ class Server(ipc.Server):
             return "Unknown command: %s"%name
         if self.qtile._testing:
             self.qtile.display.sync()
+
+
+class Call:
+    def __init__(self, command, *args, **kwargs):
+        self.command, self.args, self.kwargs = command, args, kwargs
 
 
 class BaseCommand:

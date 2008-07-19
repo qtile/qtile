@@ -13,11 +13,6 @@ class QTileError(Exception): pass
 class SkipCommand(Exception): pass
 
 
-class Command:
-    def __init__(self, command, *args, **kwargs):
-        self.command, self.args, self.kwargs = command, args, kwargs
-
-
 class Key:
     def __init__(self, modifiers, key, *commands):
         """
@@ -321,7 +316,7 @@ class QTile:
 
         self.atom_qtilewindow = self.display.intern_atom("QTILE_WINDOW")
 
-        self.server = command.Server(self.fname, self, config)
+        self.server = command._Server(self.fname, self, config)
 
         self.handlers = {
             X.MapRequest:           self.mapRequest,
