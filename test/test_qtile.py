@@ -19,6 +19,15 @@ class uMultiScreen(utils.QTileTests):
         assert self.c.current_screen() == 0
         self.c.to_screen(1)
         assert self.c.current_screen() == 1
+        self.testWindow("one")
+        self.c.to_screen(0)
+        self.testWindow("two")
+
+        ga = self.c.groupinfo("a")
+        assert ga["clients"] == ["two"]
+
+        gb = self.c.groupinfo("b")
+        assert gb["clients"] == ["one"]
 
 
 class uCommon(utils.QTileTests):

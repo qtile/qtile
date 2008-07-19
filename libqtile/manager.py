@@ -285,7 +285,6 @@ class QTile:
         self.screens = []
         if self.display.has_extension("XINERAMA"):
             for i, s in enumerate(self.display.xinerama_query_screens().screens):
-                print s
                 scr = Screen(
                         i,
                         s["x"],
@@ -303,6 +302,7 @@ class QTile:
                     self.groups[0]
                 )
             self.screens.append(s)
+        self.currentScreen = self.screens[0]
 
         self.clientMap = {}
 
@@ -363,14 +363,6 @@ class QTile:
     @property
     def currentClient(self):
         return self.currentScreen.group.currentClient
-
-    @property
-    def currentScreen(self):
-        v = self.root.query_pointer()
-        for i in self.screens:
-            if (v.win_x < i.x + i.width) and (v.win_y < i.y + i.height):
-                return i
-        return self.screens[0]
 
     def scan(self):
         r = self.root.query_tree()
@@ -498,11 +490,7 @@ class QTile:
     def toScreen(self, n):
         if len(self.screens) < n-1:
             return
-        s = self.screens[n]
-        if s.group.currentClient:
-            s.group.focus(s.group.currentClient)
-        else:
-            self.root.warp_pointer(s.x+2, s.y + 2)
+        self.currentScreen = self.screens[n]
 
     def writeReport(self, m, path="~/qtile_crashreport"):
         p = os.path.expanduser(path)

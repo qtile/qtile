@@ -126,7 +126,6 @@ class BaseCommand:
                 same_screen = 1,
         )
         win.send_event(e, X.KeyPressMask|X.SubstructureNotifyMask, propagate=True)
-        # I guess we could abstract this out into a cmd_sync command to
         q.display.sync()
 
     @staticmethod
