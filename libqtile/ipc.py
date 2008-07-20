@@ -6,11 +6,61 @@
 """
 import marshal, socket, select, os.path, socket
 
+HDRLEN = 3
 BUFSIZE = 1024 * 1024
 
 class IPCError(Exception): pass
 
-class Client:
+
+def multiord(x):
+    """
+        Like ord(), but takes multiple characters. I.e. calculate the
+        base10 equivalent of a string considered as a set of base-256 digits.
+    """
+    num = 0
+    scale = 1
+    for i in range(len(x)-1, -1, -1):
+        num = num + (ord(x[i])*scale)
+        scale = scale*256
+    return num
+
+
+def multichar(a, width):
+    """
+        Like chr(), but takes a large integer that could fill many bytes,
+        and returns a string. I.e. calculate the base256 equivalent string,
+        from a given base10 integer.
+
+        The return string will be padded to the left to ensure that it is of
+        length "width".
+    """
+    a = int(a)
+    chars = []
+    while (a != 0):
+        chars.insert(0, chr(a%256))
+        a = a/256
+    if len(chars) > width:
+        raise ValueError, "Number too wide for width."
+    ret = ["\0"]*(width-len(chars)) + chars
+    return "".join(ret)
+
+
+class _IPC:
+    def _read(self, sock):
+        size = multiord(sock.recv(HDRLEN))
+        data = ""
+        while len(data) < size:
+            data += sock.recv(BUFSIZE)
+        return marshal.loads(data)
+
+    def _write(self, sock, msg):
+        msg = marshal.dumps(msg)
+        size = multichar(len(msg), HDRLEN)
+        sock.sendall(size)
+        sock.sendall(msg)
+
+
+class Client(_IPC):
     def __init__(self, fname):
         self.fname = fname
 
@@ -25,20 +75,20 @@ class Client:
         except socket.error:
             raise IPCError("Could not open %s"%self.fname)
 
-        data = marshal.dumps(msg)
-        sock.sendall(data)
+        self._write(sock, msg)
+
         while 1:
             fds, _, _ = select.select([sock], [], [], 0)
             if fds:
-                data, _ = sock.recvfrom(BUFSIZE)
+                data = self._read(sock)
                 sock.close()
-                return marshal.loads(data)
+                return data
 
     def call(self, func, *args, **kwargs):
         return self.send((func, args, kwargs))
 
 
-class Server:
+class Server(_IPC):
     def __init__(self, fname, handler):
         self.fname, self.handler = fname, handler
         if os.path.exists(fname):
@@ -62,12 +112,12 @@ class Server:
         if fds:
             conn, _ = self.sock.accept()
             try:
-                data, _ = conn.recvfrom(BUFSIZE)
+                data = self._read(conn)
             except socket.error:
                 return
-            ret = self.handler(marshal.loads(data))
             try:
-                conn.sendall(marshal.dumps(ret))
+                ret = self.handler(data)
+                self._write(conn, ret)
                 conn.close()
             except socket.error:
                 return

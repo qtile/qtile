@@ -12,6 +12,19 @@ class TestServer(ipc.Server):
         self.last = data
         return "OK"
 
+class uMultiord(libpry.AutoTree):
+    def test_convert(self):
+        assert ipc.multiord("\x11") == 0x11
+        assert ipc.multiord("\x11\x11") == (256 * 0x11) + 0x11
+        assert ipc.multiord("") == 0
+        assert ipc.multiord("\x00") == 0
+        assert ipc.multiord("\x01") == 1
+
+
+class uMultichar(libpry.AutoTree):
+    def test_convert(self):
+        libpry.raises("too wide", ipc.multichar, 999999999, 2)
+
 
 class uIPC(libpry.TmpDirMixin, libpry.AutoTree):
     def send(self, fname, data, q):
@@ -48,6 +61,14 @@ class uIPC(libpry.TmpDirMixin, libpry.AutoTree):
         }
         assert self.response(server, expected) == (expected, "OK")
 
+    def test_big(self):
+        fname = os.path.join(self["tmpdir"], "testpath")
+        server = TestServer(fname)
+        expected = {
+            "one": [1, 2, 3] * 1024  * 5
+        }
+        assert self.response(server, expected) == (expected, "OK")
+
     def test_read_nodata(self):
         fname = os.path.join(self["tmpdir"], "testpath")
         s = TestServer(fname)
@@ -60,5 +81,7 @@ class uIPC(libpry.TmpDirMixin, libpry.AutoTree):
 
 
 tests = [
-    uIPC()
+    uIPC(),
+    uMultiord(),
+    uMultichar(),
 ]
