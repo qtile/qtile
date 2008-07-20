@@ -1,4 +1,4 @@
-import inspect, UserDict, traceback
+import inspect, UserDict, traceback, textwrap
 import ipc
 
 class CommandError(Exception): pass
@@ -81,6 +81,10 @@ class Commands(UserDict.DictMixin):
             if i.startswith("cmd_"):
                 lst.append(i[4:])
         return lst
+
+    def doc(self, name):
+        v = self[name].__doc__ or ""
+        return textwrap.dedent(v)
 
     def __repr__(self):
         return "%s()"%self.__class__.__name__

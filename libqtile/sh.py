@@ -1,7 +1,7 @@
 """
     A command shell for Qtile.
 """
-import cmd, readline, sys, pprint
+import cmd, readline, sys, pprint, textwrap
 import command
 
 
@@ -11,11 +11,10 @@ class Cmd(cmd.Cmd):
         self.client = client
         for i in client.commands.keys():
             def _closure():
-                htext = i.__doc__
+                htext = client.commands.doc(i)
                 commandName = i
-                moo = client
                 def help(self):
-                    return i.__doc__
+                    print htext
                 def do(self, arg):
                     if not arg:
                         arg = "()"
@@ -48,5 +47,11 @@ class Cmd(cmd.Cmd):
 
     def help_quit(self):
         return "Exit the program."
-        
 
+    def do_helpall(self, arg):
+        for i in self.client.commands.keys():
+            print
+            print i
+            print "="*len(i)
+            print self.client.commands.doc(i)
+        

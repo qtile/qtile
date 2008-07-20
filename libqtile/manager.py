@@ -522,7 +522,11 @@ class _BaseCommands(command.Commands):
     @staticmethod
     def cmd_to_screen(q, n):
         """
-            Warp to screen n.
+            Warp to screen n, where n is a 0-based screen number.
+
+            Example:
+
+                to_screen(0)
         """
         return q.toScreen(n)
 
@@ -543,7 +547,11 @@ class _BaseCommands(command.Commands):
     @staticmethod
     def cmd_groupinfo(q, name):
         """
-            Return group information.
+            Return group information for a specified group.
+
+            Example:
+                
+                groupinfo("a")
         """
         for i in q.groups:
             if i.name == name:
@@ -553,10 +561,26 @@ class _BaseCommands(command.Commands):
 
     @staticmethod
     def cmd_screencount(q):
+        """
+            Return the number of physical screens.
+        """
         return len(q.screens)
 
     @staticmethod
     def cmd_pullgroup(q, group, screen=None):
+        """
+            Pull a group to a specified screen.
+
+            Examples:
+
+            Pull group "a" to the current screen:
+                
+                pullgroup("a")
+
+            Pull group "a" to screen 0:
+        
+                pullgroup("a", 0)
+        """
         if not screen:
             screen = q.currentScreen
         group = q.groupMap.get(group)
@@ -575,7 +599,14 @@ class _BaseCommands(command.Commands):
     @staticmethod
     def cmd_simulate_keypress(q, modifiers, key):
         """
-            Simulates a keypress on the focused window.
+            Simulates a keypress on the focused window. The first argument is a
+            list of modifier specification strings, the second argument is a
+            key specification.  Modifiers can be one of "shift", "lock",
+            "control" and "mod1" through "mod5".
+
+            Examples:
+
+                simulate_keypress(["control", "mod2"], "k")
         """
         keysym = XK.string_to_keysym(key)
         if keysym == 0:
@@ -609,13 +640,13 @@ class _BaseCommands(command.Commands):
         q.display.sync()
 
     @staticmethod
-    def cmd_screencount(q):
-        return len(q.screens)
-
-    @staticmethod
     def cmd_spawn(q, cmd):
         """
-            Run cmd in a shell. Returns the process return code.
+            Run cmd in a shell.
+
+            Example:
+
+                spawn("firefox")
         """
         try:
             subprocess.Popen([cmd], shell=True)
@@ -633,6 +664,9 @@ class _BaseCommands(command.Commands):
 
     @staticmethod
     def cmd_sync(q):
+        """
+            Sync the X display. Should only be used for development.
+        """
         q.display.sync()
 
     @staticmethod
@@ -642,5 +676,15 @@ class _BaseCommands(command.Commands):
 
     @staticmethod
     def cmd_report(q, msg="None", path="~/qtile_crashreport"):
+        """
+            Write a qtile crash report. Optional arguments are the message that
+            should head the report, and the path of the file to write to.
+
+            Examples:
+                
+                report()
+                report(msg="My messasge")
+                report(msg="My message", path="~/myreport")
+        """
         q.writeReport(msg, path)
 
