@@ -1,2 +1,2 @@
 from manager import *
-import config, command, ipc, layout
+import config, command, ipc, layout, bar

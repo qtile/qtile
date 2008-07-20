@@ -6,6 +6,10 @@ class ConfigError(Exception): pass
 
 
 class Config:
+    keys = None
+    groups = None
+    layouts = None
+    bars = None
     def commands(self):
         c = manager._BaseCommands()
         for i in self.layouts:
@@ -29,3 +33,4 @@ class File(Config):
         self.keys = globs.get("keys")
         self.groups = globs.get("groups")
         self.layouts = globs.get("layouts")
+        self.bars = globs.get("bars")

@@ -28,12 +28,43 @@ class Key:
         return "Key(%s, %s)"%(self.modifiers, self.key)
 
 
+class Gap:
+    def __init__(self, width):
+        self.width = width
+
+
 class Screen:
     group = None
-    def __init__(self, index, x, y, width, height, group):
-        self.index, self.x, self.y = index, x, y
+    def __init__(self, top=None, bottom=None, left=None, right=None):
+        self.top, self.bottom = top, bottom
+        self.left, self.right = left, right
+
+    def _configure(self, index, x, y, width, height, group):
+        self.index, self.x, self.y = index, x, y,
         self.width, self.height = width, height
         self.setGroup(group)
+
+    @property
+    def dx(self):
+        return self.x + self.left.width if self.left else 0
+
+    @property
+    def dwidth(self):
+        val = self.width - self.dx
+        if self.right:
+            val -= self.right.width
+        return val
+
+    @property
+    def dy(self):
+        return self.y + self.top.width if self.top else 0
+
+    @property
+    def dheight(self):
+        val = self.height - self.dy
+        if self.bottom:
+            val -= self.bottom.width
+        return val
 
     def setGroup(self, g):
         if not (self.group is None) and self.group is not g:
@@ -279,22 +310,24 @@ class QTile:
         self.screens = []
         if self.display.has_extension("XINERAMA"):
             for i, s in enumerate(self.display.xinerama_query_screens().screens):
-                scr = Screen(
-                        i,
-                        s["x"],
-                        s["y"],
-                        s["width"],
-                        s["height"],
-                        self.groups[i]
-                    )
+                scr = Screen()
+                scr._configure(
+                    i,
+                    s["x"],
+                    s["y"],
+                    s["width"],
+                    s["height"],
+                    self.groups[i]
+                )
                 self.screens.append(scr)
         else:
-            s = Screen(
-                    0, 0, 0,
-                    defaultScreen.width_in_pixels,
-                    defaultScreen.height_in_pixels,
-                    self.groups[0]
-                )
+            s = Screen()
+            s._configure(
+                0, 0, 0,
+                defaultScreen.width_in_pixels,
+                defaultScreen.height_in_pixels,
+                self.groups[0]
+            )
             self.screens.append(s)
         self.currentScreen = self.screens[0]
 

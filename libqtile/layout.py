@@ -60,10 +60,10 @@ class Max(_Layout):
     def configure(self, c):
         if c == self.group.currentClient:
             c.place(
-                self.group.screen.x,
-                self.group.screen.y,
-                self.group.screen.width,
-                self.group.screen.height,
+                self.group.screen.dx,
+                self.group.screen.dy,
+                self.group.screen.dwidth,
+                self.group.screen.dheight,
             )
             c.unhide()
         else:
@@ -198,15 +198,15 @@ class Stack(_Layout):
                 return
 
     def configure(self, c):
-        column = int(self.group.screen.width/float(len(self.stacks)))
+        column = int(self.group.screen.dwidth/float(len(self.stacks)))
         for i, s in enumerate(self.stacks):
             if s and c == s[0]:
-                xoffset = i * column
+                xoffset = self.group.screen.dx + i * column
                 c.place(
                     xoffset,
-                    self.group.screen.y,
+                    self.group.screen.dy,
                     column,
-                    self.group.screen.height,
+                    self.group.screen.dheight,
                 )
                 c.unhide()
                 return
