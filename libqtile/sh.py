@@ -44,6 +44,7 @@ class Cmd(cmd.Cmd):
         sys.exit(0)
     do_exit = do_quit
     do_q = do_quit
+    do_EOF = do_quit
 
     def help_quit(self):
         return "Exit the program."
@@ -54,4 +55,3 @@ class Cmd(cmd.Cmd):
             print i
             print "="*len(i)
             print self.client.commands.doc(i)
-        
