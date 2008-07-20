@@ -17,11 +17,11 @@ class _Server(ipc.Server):
         name, args, kwargs = data
         cmd = self.commands.get(name)
         if cmd:
-            self.qtile.log.add("%s(%s, %s)"%(name, args, kwargs))
+            self.qtile.log.add("Command: %s(%s, %s)"%(name, args, kwargs))
             try:
                 return SUCCESS, cmd(self.qtile, *args, **kwargs)
             except CommandError, v:
-                return ERROR, v.msg
+                return ERROR, v.message
             except Exception, v:
                 return EXCEPTION, traceback.format_exc()
         else:

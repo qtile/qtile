@@ -110,7 +110,7 @@ class uQTile(utils.QTileTests):
 
     def test_setgroup(self):
         self.testWindow("one")
-        assert self.c.pullgroup("nonexistent") == "No such group"
+        libpry.raises("No such group", self.c.pullgroup, "nonexistent")
         self.c.pullgroup("b")
         if self.c.screencount() == 1:
             assert self.c.groupinfo("a")["screen"] == None

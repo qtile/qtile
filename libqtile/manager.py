@@ -567,7 +567,7 @@ class _BaseCommands(command.Commands):
         return len(q.screens)
 
     @staticmethod
-    def cmd_pullgroup(q, group, screen=None):
+    def cmd_pullgroup(q, groupName, screen=None):
         """
             Pull a group to a specified screen.
 
@@ -583,9 +583,9 @@ class _BaseCommands(command.Commands):
         """
         if not screen:
             screen = q.currentScreen
-        group = q.groupMap.get(group)
+        group = q.groupMap.get(groupName)
         if group is None:
-            return "No such group"
+            raise command.CommandError("No such group: %s"%groupName)
         elif group.screen == screen:
             return
         elif group.screen:
@@ -610,7 +610,7 @@ class _BaseCommands(command.Commands):
         """
         keysym = XK.string_to_keysym(key)
         if keysym == 0:
-            return "Unknown key: %s"%key
+            raise command.CommandError("Unknown key: %s"%key)
         keycode = q.display.keysym_to_keycode(keysym)
         try:
             mask = utils.translateMasks(modifiers)
@@ -675,6 +675,34 @@ class _BaseCommands(command.Commands):
         pass
 
     @staticmethod
+    def cmd_debug(q):
+        """
+            Toggle qtile debug logging. Returns "on" or "off" to indicate the
+            resulting debug status.
+        """
+        if q.debug:
+            q.debug = False
+            return "off"
+        else:
+            q.debug = True
+            return "on"
+
+    @staticmethod
+    def cmd_log(q, n=None):
+        """
+            Return the last n log records, where n is all by default.
+
+            Examples:
+                
+                log(5)
+                log()
+        """
+        if n and len(q.log.log) > n:
+            return q.log.log[-n:]
+        else:
+            return q.log.log
+
+    @staticmethod
     def cmd_report(q, msg="None", path="~/qtile_crashreport"):
         """
             Write a qtile crash report. Optional arguments are the message that
@@ -687,4 +715,3 @@ class _BaseCommands(command.Commands):
                 report(msg="My message", path="~/myreport")
         """
         q.writeReport(msg, path)
-
