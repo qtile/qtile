@@ -67,6 +67,10 @@ class uCommon(utils.QTileTests):
         else:
             raise AssertionError("Window did not die...")
 
+    def test_regression_groupswitch(self):
+        self.c.pullgroup("c")
+        self.c.pullgroup("d")
+        assert self.c.groupinfo("c")["screen"] == None
 
 class uQTile(utils.QTileTests):
     """

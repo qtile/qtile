@@ -36,7 +36,7 @@ class Screen:
         self.setGroup(group)
 
     def setGroup(self, g):
-        if not (self.group is None) and self.group != g:
+        if not (self.group is None) and self.group is not g:
             self.group.hide()
         self.group = g
         self.group.toScreen(self)
@@ -616,12 +616,11 @@ class _BaseCommands(command.Commands):
             mask = utils.translateMasks(modifiers)
         except QTileError, v:
             return str(v)
-        if q.currentScreen.group.currentClient:
-            win = q.currentScreen.group.currentClient.window
+        if q.currentClient:
+            win = q.currentClient.window
         else:
             win = q.root
         e = event.KeyPress(
-                type = X.KeyPress,
                 state = mask,
                 detail = keycode,
 
