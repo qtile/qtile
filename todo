@@ -1,4 +1,8 @@
 
 
+- Obey window size hints, to the extent where we don't make windows larger than
+  the requested size. We must, however, make windows smaller if needs be, to
+  fit in with the layout.
+
 
 
