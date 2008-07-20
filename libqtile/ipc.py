@@ -66,5 +66,8 @@ class Server:
             except socket.error:
                 return
             ret = self.handler(marshal.loads(data))
-            conn.sendall(marshal.dumps(ret))
-            conn.close()
+            try:
+                conn.sendall(marshal.dumps(ret))
+                conn.close()
+            except socket.error:
+                return
