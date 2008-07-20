@@ -1,5 +1,12 @@
-import inspect, UserDict
+import inspect, UserDict, traceback
 import ipc
+
+class CommandError(Exception): pass
+class CommandException(Exception): pass
+
+SUCCESS = 0
+ERROR = 1
+EXCEPTION = 2
 
 class _Server(ipc.Server):
     def __init__(self, fname, qtile, config):
@@ -11,7 +18,12 @@ class _Server(ipc.Server):
         cmd = self.commands.get(name)
         if cmd:
             self.qtile.log.add("%s(%s, %s)"%(name, args, kwargs))
-            return cmd(self.qtile, *args, **kwargs)
+            try:
+                return SUCCESS, cmd(self.qtile, *args, **kwargs)
+            except CommandError, v:
+                return ERROR, v.msg
+            except Exception, v:
+                return EXCEPTION, traceback.format_exc()
         else:
             self.qtile.log.add("Unknown command"%name)
             return "Unknown command: %s"%name
@@ -22,6 +34,29 @@ class _Server(ipc.Server):
 class Call:
     def __init__(self, command, *args, **kwargs):
         self.command, self.args, self.kwargs = command, args, kwargs
+
+
+class Client(ipc.Client):
+    def __init__(self, fname, config):
+        ipc.Client.__init__(self, fname)
+        self.commands = config.commands()
+
+    def __getattr__(self, name):
+        funcName = "cmd_" + name
+        cmd = getattr(self.commands, funcName, None)
+        if not cmd:
+            raise AttributeError("No such command: %s"%name)
+        def callClosure(*args, **kwargs):
+            # FIXME: Check arguments here
+            # Use inspect.getargspec(v), and craft checks by hand.
+            state, val = self.call(name, *args, **kwargs)
+            if state == SUCCESS:
+                return val
+            elif state == ERROR:
+                raise CommandError(val)
+            else:
+                raise CommandException(val)
+        return callClosure
 
 
 class Commands(UserDict.DictMixin):
@@ -51,18 +86,3 @@ class Commands(UserDict.DictMixin):
         return "%s()"%self.__class__.__name__
 
 
-class Client(ipc.Client):
-    def __init__(self, fname, config):
-        ipc.Client.__init__(self, fname)
-        self.commands = config.commands()
-
-    def __getattr__(self, name):
-        funcName = "cmd_" + name
-        cmd = getattr(self.commands, funcName, None)
-        if not cmd:
-            raise AttributeError("No such command: %s"%name)
-        def callClosure(*args, **kwargs):
-            # FIXME: Check arguments here
-            # Use inspect.getargspec(v), and craft checks by hand.
-            return self.call(name, *args, **kwargs)
-        return callClosure

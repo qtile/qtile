@@ -418,12 +418,12 @@ class QTile:
             return
         for i in k.commands:
             try:
-                ret = self.server.call((i.command, i.args, i.kwargs))
+                status, val = self.server.call((i.command, i.args, i.kwargs))
                 break
             except SkipCommand:
                 pass
-        if ret:
-            print >> sys.stderr, "KB command %s: %s"%(i.command, ret)
+        if status in (command.ERROR, command.EXCEPTION):
+            print >> sys.stderr, "KB command error %s: %s"%(i.command, val)
 
     def configureRequest(self, e):
         c = self.clientMap.get(e.window)

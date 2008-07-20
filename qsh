@@ -15,6 +15,13 @@ def main():
                         dest="configfile",
                         help='Use specified configuration file.'
                     )
+    parser.add_option(
+                        "-s", "--socket",
+                        action="store", type="string",
+                        default=None,
+                        dest="socket",
+                        help='Use specified communication socket.'
+                    )
     options, args = parser.parse_args()
 
     try:
@@ -24,8 +31,11 @@ def main():
     d = os.environ.get("DISPLAY")
     if not d:
         parser.error("No DISPLAY set.")
-    socketname = os.path.join("~", ".qtilesocket.%s"%d)
-    socketname = os.path.expanduser(socketname)
+    if options.socket:
+        socketname = options.socket
+    else:
+        socketname = os.path.join("~", ".qtilesocket.%s"%d)
+        socketname = os.path.expanduser(socketname)
 
     client = libqtile.command.Client(socketname, c)
     cmd = sh.Cmd(client)

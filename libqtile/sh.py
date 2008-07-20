@@ -2,6 +2,7 @@
     A command shell for Qtile.
 """
 import cmd, readline, sys, pprint
+import command
 
 
 class Cmd(cmd.Cmd):
@@ -11,19 +12,30 @@ class Cmd(cmd.Cmd):
         for i in client.commands.keys():
             def _closure():
                 htext = i.__doc__
-                command = i
+                commandName = i
                 moo = client
                 def help(self):
                     return i.__doc__
                 def do(self, arg):
                     if not arg:
                         arg = "()"
-                    ret = eval(
-                            "client.%s%s"%(command, arg),
-                            {},
-                            dict(client=client, command=command)
-                          )
-                    print ret
+                    try:
+                        val = eval(
+                                    "client.%s%s"%(commandName, arg),
+                                    {},
+                                    dict(client=client, commandName=commandName)
+                              )
+                    except Exception, val:
+                        print "Invalid command:"
+                        print val
+                    except command.CommandError:
+                        print "Error: %s"%val
+                    except command.CommandException:
+                        print "Exception:"
+                        pprint.pprint(val)
+                    else:
+                        if val:
+                            pprint.pprint(val)
                 setattr(Cmd, "do_"+i, do)
                 setattr(Cmd, "help_"+i, help)
             _closure()
