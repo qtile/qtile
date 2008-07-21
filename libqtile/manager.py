@@ -593,11 +593,21 @@ class _BaseCommands(command.Commands):
             return None
 
     @staticmethod
-    def cmd_screencount(q):
+    def cmd_screens(q):
         """
-            Return the number of physical screens.
+            Return screen information.
         """
-        return len(q.screens)
+        lst = []
+        for i in q.screens:
+            lst.append(dict(
+                index = i.index,
+                group = i.group.name if i.group is not None else None,
+                x = i.x,
+                y = i.y,
+                width = i.width,
+                height = i.height
+            ))
+        return lst
 
     @staticmethod
     def cmd_pullgroup(q, groupName, screen=None):

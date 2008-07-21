@@ -116,7 +116,7 @@ class uQTile(utils.QTileTests):
         self.testWindow("one")
         libpry.raises("No such group", self.c.pullgroup, "nonexistent")
         self.c.pullgroup("b")
-        if self.c.screencount() == 1:
+        if len(self.c.screens()) == 1:
             assert self.c.groupinfo("a")["screen"] == None
         else:
             assert self.c.groupinfo("a")["screen"] == 1
