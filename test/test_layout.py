@@ -22,6 +22,9 @@ class StackConfig(libqtile.config.Config):
 class uMax(utils.QTileTests):
     config = MaxConfig()
     def test_max_commands(self):
+        self.c.max_next()
+        self.c.max_previous()
+
         self.testWindow("one")
         self.testWindow("two")
         self.testWindow("three")

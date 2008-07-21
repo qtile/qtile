@@ -30,6 +30,7 @@ class uMultiScreen(utils.QTileTests):
         assert gb["clients"] == ["one"]
 
 
+
 class uCommon(utils.QTileTests):
     """
         We don't care if these tests run in a Xinerama or non-Xinerama X.

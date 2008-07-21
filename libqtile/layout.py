@@ -44,12 +44,16 @@ class MaxCommands(command.Commands):
     def cmd_max_next(self, q, noskip=False):
         if q.currentLayout.name != "max":
             raise manager.SkipCommand
+        if not q.currentClient:
+            return
         idx = (q.currentGroup.index(q.currentClient) + 1) % len(q.currentGroup)
         q.currentGroup.focus(q.currentGroup[idx])
 
     def cmd_max_previous(self, q, noskip=False):
         if q.currentLayout.name != "max":
             raise manager.SkipCommand
+        if not q.currentClient:
+            return
         idx = (q.currentGroup.index(q.currentClient) - 1) % len(q.currentGroup)
         q.currentGroup.focus(q.currentGroup[idx])
 
