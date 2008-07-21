@@ -86,6 +86,10 @@ class Group(list):
     def layout(self):
         return self.layouts[self.currentLayout]
 
+    def nextLayout(self):
+        self.currentLayout = (self.currentLayout + 1)%(len(self.layouts))
+        self.layoutAll()
+
     def layoutAll(self):
         self.disableMask(X.EnterWindowMask)
         if self.screen and len(self):
@@ -181,7 +185,7 @@ class _Window:
             y = self.y,
             width = self.width,
             height = self.height,
-            id = self.window.id
+            id = str(hex(self.window.id))
         )
 
     @property
@@ -591,6 +595,17 @@ class _BaseCommands(command.Commands):
             Return number of clients in all groups.
         """
         return [i.info() for i in q.clientMap.values()]
+
+    @staticmethod
+    def cmd_nextlayout(q, group=None):
+        """
+            Switch to the next layout.
+        """
+        if group:
+            group = q.groupMap.get(groupName)
+        else:
+            group = q.currentGroup
+        group.nextLayout()
 
     @staticmethod
     def cmd_groupinfo(q, name):

@@ -3,9 +3,12 @@ import libpry
 import libqtile
 import utils
 
-class MaxConfig(libqtile.config.Config):
+class TestConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
-    layouts = [libqtile.layout.Max()]
+    layouts = [
+                libqtile.layout.Max(),
+                libqtile.layout.Stack(2)
+            ]
     keys = [
         libqtile.Key(["control"], "k", libqtile.command.Call("max_next")),
         libqtile.Key(["control"], "j", libqtile.command.Call("max_previous")),
@@ -13,8 +16,9 @@ class MaxConfig(libqtile.config.Config):
     screens = []
 
 
+
 class uMultiScreen(utils.QTileTests):
-    config = MaxConfig()
+    config = TestConfig()
     def test_to_screen(self):
         assert self.c.current_screen() == 0
         self.c.to_screen(1)
@@ -34,7 +38,7 @@ class uCommon(utils.QTileTests):
     """
         We don't care if these tests run in a Xinerama or non-Xinerama X.
     """
-    config = MaxConfig()
+    config = TestConfig()
     def test_events(self):
         assert self.c.status() == "OK"
 
@@ -72,12 +76,21 @@ class uCommon(utils.QTileTests):
         self.c.pullgroup("d")
         assert self.c.groupinfo("c")["screen"] == None
 
+    def test_nextlayout(self):
+        self.testWindow("one")
+        self.testWindow("two")
+        assert self.c.groupinfo("a")["layout"] == "max"
+        self.c.nextlayout()
+        assert self.c.groupinfo("a")["layout"] == "stack"
+        self.c.nextlayout()
+        assert self.c.groupinfo("a")["layout"] == "max"
+
 
 class uQTile(utils.QTileTests):
     """
         These tests should run in both Xinerama and non-Xinerama modes.
     """
-    config = MaxConfig()
+    config = TestConfig()
     def test_mapRequest(self):
         self.testWindow("one")
         info = self.c.groupinfo("a")
