@@ -456,7 +456,9 @@ class QTile:
             except SkipCommand:
                 pass
         if status in (command.ERROR, command.EXCEPTION):
-            print >> sys.stderr, "KB command error %s: %s"%(i.command, val)
+            s = "KB command error %s: %s"%(i.command, val)
+            q.log.add(s)
+            print >> sys.stderr, s
 
     def configureRequest(self, e):
         c = self.clientMap.get(e.window)
