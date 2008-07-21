@@ -92,7 +92,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             # Run this in a sandbox...
             try:
                 q = libqtile.QTile(config, self["display"], self["fname"])
-                q.testing = True
+                q._testing = True
                 # BEWARE: Xnest somehow stuffs up geometry detection for
                 # multiple screens in xinerama. We poke into qtile to fix this.
                 if self["xinerama"]:

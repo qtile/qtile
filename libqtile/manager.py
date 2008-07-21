@@ -477,11 +477,11 @@ class QTile:
             print >> sys.stderr, "Ignoring unknown keysym: %s"%keysym
             return
         for i in k.commands:
-            try:
+            if i.check(self):
                 status, val = self.server.call((i.command, i.args, i.kwargs))
                 break
-            except SkipCommand:
-                pass
+        else:
+            return
         if status in (command.ERROR, command.EXCEPTION):
             s = "KB command error %s: %s"%(i.command, val)
             q.log.add(s)
@@ -551,7 +551,10 @@ class QTile:
             return
         self.currentScreen = self.screens[n]
 
-    def writeReport(self, m, path="~/qtile_crashreport"):
+    def writeReport(self, m, path="~/qtile_crashreport", _force=False):
+        if self._testing and not _force:
+            print >> sys.stderr, "Server Error:", m
+            return
         p = os.path.expanduser(path)
         f = open(p, "a+")
         print >> f, "*** QTILE REPORT", datetime.datetime.now()
@@ -567,7 +570,7 @@ class QTile:
         if e.__class__ in self._ignoreErrors:
             return
         if self._testing:
-            print >> sys.stderr, "Error:", (e, v)
+            print >> sys.stderr, "Server Error:", (e, v)
         else:
             self.writeReport((e, v))
         self._exit = True
@@ -796,4 +799,4 @@ class _BaseCommands(command.Commands):
                 report(msg="My messasge")
                 report(msg="My message", path="~/myreport")
         """
-        q.writeReport(msg, path)
+        q.writeReport(msg, path, True)

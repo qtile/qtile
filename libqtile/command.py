@@ -34,6 +34,17 @@ class _Server(ipc.Server):
 class Call:
     def __init__(self, command, *args, **kwargs):
         self.command, self.args, self.kwargs = command, args, kwargs
+        # Conditionals
+        self.layout = None
+
+    def when(self, layout=None):
+        self.layout = layout
+        return self
+
+    def check(self, q):
+        if self.layout and q.currentLayout.name != self.layout:
+                return False
+        return True
 
 
 class Client(ipc.Client):
