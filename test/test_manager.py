@@ -147,6 +147,15 @@ class uQTile(utils.QTileTests):
         assert len(self.c.clients()) == 1
         assert self.c.groupinfo("a")["focus"] == "one"
 
+    def test_layoutinfo(self):
+        self.testWindow("one")
+        self.testWindow("two")
+        assert self.c.layoutinfo()["group"] == "a"
+        d = self.c.layoutinfo("b", 0)
+        assert d["group"] == "b"
+        libpry.raises("invalid layout", self.c.layoutinfo, "b", 99)
+        libpry.raises("no such group", self.c.layoutinfo, "nonexistent", 0)
+
     def test_restart(self):
         self.testWindow("one")
         self.testWindow("two")

@@ -14,7 +14,10 @@ class MaxConfig(libqtile.config.Config):
 
 class StackConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
-    layouts = [libqtile.layout.Stack()]
+    layouts = [
+        libqtile.layout.Stack(),
+        libqtile.layout.Max()
+    ]
     keys = []
     screens = []
 
@@ -121,6 +124,10 @@ class uStack(utils.QTileTests):
         assert self.c.groupinfo("a")["focus"] == None
         self.c.stack_previous()
         assert self.c.groupinfo("a")["focus"] == None
+
+    def test_info(self):
+        one = self.testWindow("one")
+        assert self.c.layoutinfo()["stacks"]
 
 
 tests = [

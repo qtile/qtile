@@ -39,6 +39,12 @@ class _Layout:
         """
         raise NotImplementedError
 
+    def info(self):
+        return dict(
+            name = self.name,
+            group = self.group.name
+        )
+
 
 class MaxCommands(command.Commands):
     def cmd_max_next(self, q, noskip=False):
@@ -210,3 +216,11 @@ class Stack(_Layout):
                 return
         else:
             c.hide()
+
+    def info(self):
+        d = _Layout.info(self)
+        lst = []
+        for i in self.stacks:
+            lst.append([j.name for j in i])
+        d["stacks"] = lst
+        return d

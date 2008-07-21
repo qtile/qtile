@@ -796,3 +796,31 @@ class _BaseCommands(command.Commands):
                 report(msg="My message", path="~/myreport")
         """
         q.writeReport(msg, path, True)
+
+    @staticmethod
+    def cmd_layoutinfo(q, group=None, layout=None):
+        """
+
+            Return layout info. The optional group argument is a group name.
+            The optional layout argument is an integer layout offset.If
+            neither are specified the current group and layout is used.
+
+            Examples:
+                
+                layoutinfo()
+                layoutinfo("a", 1)
+        """
+        if group:
+            group = q.groupMap.get(group)
+            if group is None:
+                raise command.CommandError("No such group: %s"%groupName)
+        else:
+            group = q.currentGroup
+        if layout:
+            if layout > (len(group.layouts) - 1):
+                raise command.CommandError("Invalid layout offset: %s."%layout)
+            layout = group.layouts[layout]
+        else:
+            layout = group.layout
+        return layout.info()
+                
