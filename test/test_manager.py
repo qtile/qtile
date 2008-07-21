@@ -61,7 +61,7 @@ class uCommon(utils.QTileTests):
         self.c.kill()
         self.c.sync()
         for i in range(20):
-            if self.c.clientcount() == 0:
+            if len(self.c.clients()) == 0:
                 break
             time.sleep(0.1)
         else:
@@ -96,20 +96,20 @@ class uQTile(utils.QTileTests):
         info = self.c.groupinfo("a")
         assert info["focus"] == "three"
 
-        assert self.c.clientcount() == 3
+        assert len(self.c.clients()) == 3
         self.kill(three)
 
-        assert self.c.clientcount() == 2
+        assert len(self.c.clients()) == 2
         info = self.c.groupinfo("a")
         assert info["focus"] == "two"
 
         self.kill(two)
-        assert self.c.clientcount() == 1
+        assert len(self.c.clients()) == 1
         info = self.c.groupinfo("a")
         assert info["focus"] == "one"
 
         self.kill(one)
-        assert self.c.clientcount() == 0
+        assert len(self.c.clients()) == 0
         info = self.c.groupinfo("a")
         assert info["focus"] == None
 
@@ -128,11 +128,11 @@ class uQTile(utils.QTileTests):
     def test_unmap_noscreen(self):
         self.testWindow("one")
         pid = self.testWindow("two")
-        assert self.c.clientcount() == 2
+        assert len(self.c.clients()) == 2
         self.c.pullgroup("c")
-        assert self.c.clientcount() == 2
+        assert len(self.c.clients()) == 2
         self.kill(pid)
-        assert self.c.clientcount() == 1
+        assert len(self.c.clients()) == 1
         assert self.c.groupinfo("a")["focus"] == "one"
 
     def test_restart(self):
@@ -140,7 +140,7 @@ class uQTile(utils.QTileTests):
         self.testWindow("two")
         self.c.restart()
 
-        #assert self.c.clientcount() == 2
+        #assert len(self.c.clients()) == 2
 
 
 class uKey(libpry.AutoTree):

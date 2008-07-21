@@ -172,6 +172,17 @@ class _Window:
         self.window, self.qtile = window, qtile
         self.hidden = True
         window.change_attributes(event_mask=self._windowMask)
+        self.x, self.y, self.width, self.height = None, None, None, None
+
+    def info(self):
+        return dict(
+            name = self.name,
+            x = self.x,
+            y = self.y,
+            width = self.width,
+            height = self.height,
+            id = self.window.id
+        )
 
     @property
     def name(self):
@@ -204,6 +215,7 @@ class _Window:
 
     def hide(self):
         # We don't want to get the UnmapNotify for this unmap
+        self.x, self.y, self.width, self.height = None, None, None, None
         self.disableMask(X.StructureNotifyMask)
         self.window.unmap()
         self.resetMask()
@@ -227,6 +239,7 @@ class _Window:
         """
             Places the window at the specified location with the given size.
         """
+        self.x, self.y, self.width, self.height = x, y, width, height
         self.window.configure(
             x=x,
             y=y,
@@ -573,11 +586,11 @@ class _BaseCommands(command.Commands):
         return q.screens.index(q.currentScreen)
 
     @staticmethod
-    def cmd_clientcount(q):
+    def cmd_clients(q):
         """
             Return number of clients in all groups.
         """
-        return len(q.clientMap)
+        return [i.info() for i in q.clientMap.values()]
 
     @staticmethod
     def cmd_groupinfo(q, name):
