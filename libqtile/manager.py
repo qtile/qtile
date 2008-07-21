@@ -9,14 +9,10 @@ import command, utils
 class QTileError(Exception): pass
 
 
-class SkipCommand(Exception): pass
-
-
 class Key:
     def __init__(self, modifiers, key, *commands):
         """
-            If multiple commands are specified, they are tried in sequence
-            until one does not raise SkipCommand.
+            If multiple Call objects are specified, they are tried in sequence.
         """
         self.modifiers, self.key, self.commands = modifiers, key, commands
         self.keysym = XK.string_to_keysym(key)
