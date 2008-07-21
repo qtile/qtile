@@ -30,7 +30,6 @@ class uMultiScreen(utils.QTileTests):
         assert gb["clients"] == ["one"]
 
 
-
 class uCommon(utils.QTileTests):
     """
         We don't care if these tests run in a Xinerama or non-Xinerama X.
@@ -72,6 +71,7 @@ class uCommon(utils.QTileTests):
         self.c.pullgroup("c")
         self.c.pullgroup("d")
         assert self.c.groupinfo("c")["screen"] == None
+
 
 class uQTile(utils.QTileTests):
     """
