@@ -10,6 +10,7 @@ class Config:
     groups = None
     layouts = None
     bars = None
+    screens = ()
     def commands(self):
         c = manager._BaseCommands()
         for i in self.layouts:

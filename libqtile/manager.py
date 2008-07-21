@@ -269,12 +269,16 @@ class _Window:
             s.add(d.get_atom_name(i))
         return name in s
 
+
+class Internal(_Window):
     def __repr__(self):
-        return "Client(%s)"%self.name
+        return "Internal(%s)"%self.name
 
 
 class Client(_Window):
     group = None
+    def __repr__(self):
+        return "Client(%s)"%self.name
 
 
 class Log:
