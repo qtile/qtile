@@ -13,8 +13,7 @@ class TestConfig(libqtile.config.Config):
         libqtile.Key(["control"], "k", libqtile.command.Call("max_next")),
         libqtile.Key(["control"], "j", libqtile.command.Call("max_previous")),
     ]
-    screens = []
-
+    screens = [libqtile.Screen()]
 
 
 class uMultiScreen(utils.QTileTests):

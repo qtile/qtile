@@ -327,7 +327,10 @@ class QTile:
         self.screens = []
         if self.display.has_extension("XINERAMA"):
             for i, s in enumerate(self.display.xinerama_query_screens().screens):
-                scr = Screen()
+                if i+1 > len(config.screens):
+                    scr = Screen()
+                else:
+                    scr = config.screens[i]
                 scr._configure(
                     i,
                     s["x"],
@@ -338,7 +341,10 @@ class QTile:
                 )
                 self.screens.append(scr)
         else:
-            s = Screen()
+            if config.screens:
+                s = config.screens[0]
+            else:
+                s = Screen()
             s._configure(
                 0, 0, 0,
                 defaultScreen.width_in_pixels,
