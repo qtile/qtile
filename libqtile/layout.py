@@ -81,13 +81,13 @@ class StackCommands(command.Commands):
         s = q.currentLayout.currentStack
         if s:
             utils.shuffleDown(s)
-            q.currentGroup.layoutAll()
+            q.currentGroup.focus(s[0])
 
     def cmd_stack_up(self, q, noskip=False):
         s = q.currentLayout.currentStack
         if s:
             utils.shuffleUp(s)
-            q.currentGroup.layoutAll()
+            q.currentGroup.focus(s[0])
 
     def cmd_stack_delete(self, q, noskip=False):
         q.currentLayout.deleteCurrentStack()
