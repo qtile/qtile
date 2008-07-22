@@ -51,13 +51,13 @@ class MaxCommands(command.Commands):
         if not q.currentClient:
             return
         idx = (q.currentGroup.index(q.currentClient) + 1) % len(q.currentGroup)
-        q.currentGroup.focus(q.currentGroup[idx])
+        q.currentGroup.focus(q.currentGroup[idx], False)
 
     def cmd_max_previous(self, q, noskip=False):
         if not q.currentClient:
             return
         idx = (q.currentGroup.index(q.currentClient) - 1) % len(q.currentGroup)
-        q.currentGroup.focus(q.currentGroup[idx])
+        q.currentGroup.focus(q.currentGroup[idx], False)
 
 
 class Max(_Layout):
@@ -81,13 +81,13 @@ class StackCommands(command.Commands):
         s = q.currentLayout.currentStack
         if s:
             utils.shuffleDown(s)
-            q.currentGroup.focus(s[0])
+            q.currentGroup.focus(s[0], False)
 
     def cmd_stack_up(self, q, noskip=False):
         s = q.currentLayout.currentStack
         if s:
             utils.shuffleUp(s)
-            q.currentGroup.focus(s[0])
+            q.currentGroup.focus(s[0], False)
 
     def cmd_stack_delete(self, q, noskip=False):
         q.currentLayout.deleteCurrentStack()
@@ -158,7 +158,8 @@ class Stack(_Layout):
             self.stacks[off].extend(s)
             if self.stacks[off]:
                 self.group.focus(
-                    self.stacks[off][0]
+                    self.stacks[off][0],
+                    False
                 )
 
     def nextStack(self):
@@ -169,7 +170,7 @@ class Stack(_Layout):
                 self.currentStackOffset
             )
         if n:
-            self.group.focus(n[0])
+            self.group.focus(n[0], True)
 
     def previousStack(self):
         if self.currentStackOffset is None:
@@ -179,7 +180,7 @@ class Stack(_Layout):
                 len(self.stacks) - self.currentStackOffset - 1
             )
         if n:
-            self.group.focus(n[0])
+            self.group.focus(n[0], True)
 
     def focus(self, c):
         for i in self.stacks:

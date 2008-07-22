@@ -1,5 +1,10 @@
 
 
+BUGS
+
+- simulate_keypress doesn't seem to work from qsh at the moment.
+
+
 FEATURES
 
 - Obey window size hints, to the extent where we don't make windows larger than
@@ -14,12 +19,5 @@ FEATURES
 - A nice way to navigate groups and screens in qsh.
 - A way to send qsh output to a pager (maybe pipe to shell functionality, so
   the user can go "log | less"?).
-
-
-
-BUGS
-
-- simulate_keypress doesn't seem to work from qsh at the moment.
-
 
 

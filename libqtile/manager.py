@@ -96,7 +96,7 @@ class Group(list):
             for i in self:
                 self.layout.configure(i)
             if self.currentClient:
-                self.currentClient.focus()
+                self.currentClient.focus(False)
         self.resetMask()
 
     def toScreen(self, screen):
@@ -112,7 +112,7 @@ class Group(list):
 
     def focusNext(self):
         idx = (self.index(self.currentClient) + 1) % len(self)
-        self.focus(self[idx])
+        self.focus(self[idx], False)
 
     def disableMask(self, mask):
         for i in self:
@@ -122,7 +122,7 @@ class Group(list):
         for i in self:
             i.resetMask()
 
-    def focus(self, client):
+    def focus(self, client, warp):
         if client and not client in self:
             return
         if not client:
@@ -152,14 +152,14 @@ class Group(list):
         for i in self.layouts:
             i.add(client)
         client.window.map()
-        self.focus(client)
+        self.focus(client, True)
 
     def remove(self, client):
         if self.currentClient is client:
             if len(self) > 1:
                 self.focusNext()
             else:
-                self.focus(None)
+                self.focus(None, False)
         list.remove(self, client)
         client.group = None
         for i in self.layouts:
@@ -251,7 +251,7 @@ class _Window:
             height=height,
         )
 
-    def focus(self):
+    def focus(self, warp):
         if not self.hidden:
             self.window.set_input_focus(
                 X.RevertToPointerRoot,
@@ -260,7 +260,8 @@ class _Window:
             self.window.configure(
                 stack_mode = X.Above
             )
-            self.window.warp_pointer(0, 0)
+            if warp:
+                self.window.warp_pointer(0, 0)
 
     def hasProtocol(self, name):
         s = set()
@@ -490,7 +491,7 @@ class QTile:
     def configureRequest(self, e):
         c = self.clientMap.get(e.window)
         if c and c.group.screen:
-            c.group.focus(c)
+            c.group.focus(c, False)
         else:
             # It's not managed, or not mapped, so we just obey it.
             args = {}
@@ -530,7 +531,9 @@ class QTile:
     def enterNotify(self, e):
         c = self.clientMap.get(e.window)
         if c:
-            self.currentScreen.group.focus(c)
+            self.currentScreen.group.focus(c, False)
+            if self.currentScreen != c.group.screen:
+                self.toScreen(c.group.screen.index)
 
     def mapRequest(self, e):
         c = self.clientMap.get(e.window)
@@ -551,7 +554,8 @@ class QTile:
             return
         self.currentScreen = self.screens[n]
         self.currentGroup.focus(
-            self.currentClient
+            self.currentClient,
+            True
         )
 
     def writeReport(self, m, path="~/qtile_crashreport", _force=False):
