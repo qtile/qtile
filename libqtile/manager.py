@@ -45,19 +45,23 @@ class Screen:
         return self.x + self.left.width if self.left else self.x
 
     @property
+    def dy(self):
+        return self.y + self.top.width if self.top else self.y
+
+    @property
     def dwidth(self):
-        val = self.width - self.dx
+        val = self.width
+        if self.left:
+            val -= self.left.width
         if self.right:
             val -= self.right.width
         return val
 
     @property
-    def dy(self):
-        return self.y + self.top.width if self.top else self.y
-
-    @property
     def dheight(self):
-        val = self.height - self.dy
+        val = self.height
+        if self.top:
+            val -= self.top.width
         if self.bottom:
             val -= self.bottom.width
         return val
