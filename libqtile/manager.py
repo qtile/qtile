@@ -301,6 +301,14 @@ class Log:
         for i in self.log:
             print >> fp, initial, i
 
+    def setLength(self, l):
+        self.length = l
+        if len(self.log) > l:
+            self.log = self.log[-l:]
+
+    def clear(self):
+        self.log = []
+
 
 class QTile:
     debug = False
@@ -792,6 +800,39 @@ class _BaseCommands(command.Commands):
             return q.log.log[-n:]
         else:
             return q.log.log
+
+    @staticmethod
+    def cmd_log_clear(q):
+        """
+            Clears the internal log.
+
+            Examples:
+                
+                log_clear()
+        """
+        q.log.clear()
+
+    @staticmethod
+    def cmd_log_setlength(q, n):
+        """
+            Sets the configured size of the internal log.
+
+            Examples:
+                
+                log_setlength(10)
+        """
+        return q.log.setLength(n)
+
+    @staticmethod
+    def cmd_log_getlength(q):
+        """
+            Clears the configured size of the internal log.
+
+            Examples:
+                
+                log_getlength()
+        """
+        return q.log.length
 
     @staticmethod
     def cmd_report(q, msg="None", path="~/qtile_crashreport"):

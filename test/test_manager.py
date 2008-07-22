@@ -33,9 +33,10 @@ class uMultiScreen(utils.QTileTests):
         assert gb["clients"] == ["one"]
 
 
-class uCommon(utils.QTileTests):
+class uSingle(utils.QTileTests):
     """
-        We don't care if these tests run in a Xinerama or non-Xinerama X.
+        We don't care if these tests run in a Xinerama or non-Xinerama X, and
+        they only have to run under one of the two.
     """
     config = TestConfig()
     def test_events(self):
@@ -83,6 +84,16 @@ class uCommon(utils.QTileTests):
         assert self.c.groups()["a"]["layout"] == "stack"
         self.c.nextlayout()
         assert self.c.groups()["a"]["layout"] == "max"
+
+    def test_log_clear(self):
+        self.testWindow("one")
+        self.c.log_clear()
+        assert len(self.c.log()) == 1
+
+    def test_log_length(self):
+        self.c.log_setlength(5)
+        assert self.c.log_getlength() == 5
+
 
 
 class uQTile(utils.QTileTests):
@@ -181,7 +192,6 @@ class uKey(libpry.AutoTree):
 class uLog(libpry.AutoTree):
     def test_all(self):
         io = cStringIO.StringIO()
-
         l = libqtile.Log(5, io)
         for i in range(10):
             l.add(i)
@@ -191,6 +201,24 @@ class uLog(libpry.AutoTree):
 
         l.write(io, "\t")
         assert "\t5" in io.getvalue()
+        l.clear()
+        assert not l.log
+
+        l.setLength(5)
+        assert l.length == 5
+
+    def test_setLength(self):
+        io = cStringIO.StringIO()
+        l = libqtile.Log(10, io)
+        for i in range(10):
+            l.add(i)
+        assert l.length == 10
+        assert len(l.log) == 10
+        l.setLength(5)
+        assert l.length == 5
+        assert len(l.log) == 5
+        assert l.log[-1] == 9
+        
 
 
 class TScreen(libqtile.Screen):
@@ -229,7 +257,7 @@ tests = [
         uMultiScreen()
     ],
     utils.XNest(xinerama=False), [
-        uCommon(),
+        uSingle(),
         uQTile()
     ],
     uKey(),
