@@ -203,7 +203,7 @@ class _Window:
                         32,
                         # Must be exactly 20 bytes long:
                         [
-                            self.qtile.display.intern_atom("WM_DELETE"),
+                            self.qtile.display.intern_atom("WM_DELETE_WINDOW"),
                             X.CurrentTime,
                             0,
                             0,
