@@ -1,4 +1,4 @@
-import copy
+import copy, sys
 import manager, utils, command
 
 class _Layout:
@@ -134,6 +134,12 @@ class Stack(_Layout):
             if self.group.currentClient in s:
                 return i
 
+    def clone(self, group):
+        c = _Layout.clone(self, group)
+        # These are mutable
+        c.stacks = [[] for i in self.stacks]
+        return c
+
     def _findNext(self, lst, offset):
         for i in lst[offset+1:]:
             if i:
@@ -223,4 +229,5 @@ class Stack(_Layout):
         for i in self.stacks:
             lst.append([j.name for j in i])
         d["stacks"] = lst
+        d["current_stack"] = self.currentStackOffset
         return d
