@@ -15,9 +15,10 @@ FEATURES
   will be used to sanity-check config before a manager restart is triggered.
 - We need a mechanism for saving WM running state to window properties, and
   re-reading this on restart.
-- A nice way if inspecting detailed window configuration from qsh.
-- A nice way to navigate groups and screens in qsh.
+- A nice way to navigate groups and screens in qsh. Essentially, a porcelain
+  layer on top of our base command set.
 - A way to send qsh output to a pager (maybe pipe to shell functionality, so
   the user can go "log | less"?).
+- Split and unsplit a Stack layout stack vertically.
 
 
