@@ -439,6 +439,9 @@ class QTile:
             del self.clientMap[window]
 
     def manage(self, w):
+        attrs = w.get_attributes()
+        if attrs and attrs.override_redirect:
+            return
         c = Client(w, self)
         self.clientMap[w] = c
         self.currentScreen.group.add(c)
