@@ -126,12 +126,12 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             self._kill(pid)
 
     def testWindow(self, name):
-        start = len(self.c.clients())
+        start = len(self.c.windows())
         pid = os.fork()
         if pid == 0:
             os.execv("scripts/window", ["scripts/window", self["display"], name])
         for i in range(20):
-            if len(self.c.clients()) > start:
+            if len(self.c.windows()) > start:
                 break
             time.sleep(0.1)
         else:
@@ -146,10 +146,10 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             self.testwindows.remove(pid)
 
     def kill(self, pid):
-        start = len(self.c.clients())
+        start = len(self.c.windows())
         self._kill(pid)
         for i in range(20):
-            if len(self.c.clients()) < start:
+            if len(self.c.windows()) < start:
                 break
             time.sleep(0.1)
         else:

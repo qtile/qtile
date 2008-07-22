@@ -16,7 +16,7 @@ class _Layout:
 
     def add(self, c):
         """
-            Called whenever a client is added to the group, whether the layout
+            Called whenever a window is added to the group, whether the layout
             is current or not. The layout should just add the window to its
             internal datastructures, without mapping or configuring.
         """
@@ -24,9 +24,9 @@ class _Layout:
 
     def remove(self, c):
         """
-            Called whenever a client is removed from the group, whether the
+            Called whenever a window is removed from the group, whether the
             layout is current or not. The layout should just de-register the
-            client from its data structures, without unmapping the window.
+            window from its data structures, without unmapping the window.
         """
         pass
 
@@ -34,8 +34,8 @@ class _Layout:
         """
             This method should:
                 
-                - Configure the dimensions of a client.
-                - Call either .hide or .unhide on the client.
+                - Configure the dimensions of a window.
+                - Call either .hide or .unhide on the window.
         """
         raise NotImplementedError
 
@@ -48,15 +48,15 @@ class _Layout:
 
 class MaxCommands(command.Commands):
     def cmd_max_next(self, q, noskip=False):
-        if not q.currentClient:
+        if not q.currentWindow:
             return
-        idx = (q.currentGroup.index(q.currentClient) + 1) % len(q.currentGroup)
+        idx = (q.currentGroup.index(q.currentWindow) + 1) % len(q.currentGroup)
         q.currentGroup.focus(q.currentGroup[idx], False)
 
     def cmd_max_previous(self, q, noskip=False):
-        if not q.currentClient:
+        if not q.currentWindow:
             return
-        idx = (q.currentGroup.index(q.currentClient) - 1) % len(q.currentGroup)
+        idx = (q.currentGroup.index(q.currentWindow) - 1) % len(q.currentGroup)
         q.currentGroup.focus(q.currentGroup[idx], False)
 
 
@@ -64,7 +64,7 @@ class Max(_Layout):
     name = "max"
     commands = MaxCommands()
     def configure(self, c):
-        if c == self.group.currentClient:
+        if c == self.group.currentWindow:
             c.place(
                 self.group.screen.dx,
                 self.group.screen.dy,
@@ -132,7 +132,7 @@ class Stack(_Layout):
     @property
     def currentStackOffset(self):
         for i, s in enumerate(self.stacks):
-            if self.group.currentClient in s:
+            if self.group.currentWindow in s:
                 return i
 
     def clone(self, group):
@@ -190,14 +190,14 @@ class Stack(_Layout):
                 i.insert(0, c)
 
     def add(self, c):
-        if self.group.currentClient:
+        if self.group.currentWindow:
             for i in self.stacks:
                 if not i:
                     i.append(c)
                     return
             for i in self.stacks:
-                if self.group.currentClient in i:
-                    idx = i.index(self.group.currentClient)
+                if self.group.currentWindow in i:
+                    idx = i.index(self.group.currentWindow)
                     i.insert(idx, c)
                     return
         else:

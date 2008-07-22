@@ -27,10 +27,10 @@ class uMultiScreen(utils.QTileTests):
         self.testWindow("two")
 
         ga = self.c.groups()["a"]
-        assert ga["clients"] == ["two"]
+        assert ga["windows"] == ["two"]
 
         gb = self.c.groups()["b"]
-        assert gb["clients"] == ["one"]
+        assert gb["windows"] == ["one"]
 
 
 class uSingle(utils.QTileTests):
@@ -65,7 +65,7 @@ class uSingle(utils.QTileTests):
         self.c.kill()
         self.c.sync()
         for i in range(20):
-            if len(self.c.clients()) == 0:
+            if len(self.c.windows()) == 0:
                 break
             time.sleep(0.1)
         else:
@@ -107,12 +107,12 @@ class uQTile(utils.QTileTests):
     def test_mapRequest(self):
         self.testWindow("one")
         info = self.c.groups()["a"]
-        assert "one" in info["clients"]
+        assert "one" in info["windows"]
         assert info["focus"] == "one"
 
         self.testWindow("two")
         info = self.c.groups()["a"]
-        assert "two" in info["clients"]
+        assert "two" in info["windows"]
         assert info["focus"] == "two"
 
     def test_unmap(self):
@@ -122,20 +122,20 @@ class uQTile(utils.QTileTests):
         info = self.c.groups()["a"]
         assert info["focus"] == "three"
 
-        assert len(self.c.clients()) == 3
+        assert len(self.c.windows()) == 3
         self.kill(three)
 
-        assert len(self.c.clients()) == 2
+        assert len(self.c.windows()) == 2
         info = self.c.groups()["a"]
         assert info["focus"] == "two"
 
         self.kill(two)
-        assert len(self.c.clients()) == 1
+        assert len(self.c.windows()) == 1
         info = self.c.groups()["a"]
         assert info["focus"] == "one"
 
         self.kill(one)
-        assert len(self.c.clients()) == 0
+        assert len(self.c.windows()) == 0
         info = self.c.groups()["a"]
         assert info["focus"] == None
 
@@ -154,11 +154,11 @@ class uQTile(utils.QTileTests):
     def test_unmap_noscreen(self):
         self.testWindow("one")
         pid = self.testWindow("two")
-        assert len(self.c.clients()) == 2
+        assert len(self.c.windows()) == 2
         self.c.pullgroup("c")
-        assert len(self.c.clients()) == 2
+        assert len(self.c.windows()) == 2
         self.kill(pid)
-        assert len(self.c.clients()) == 1
+        assert len(self.c.windows()) == 1
         assert self.c.groups()["a"]["focus"] == "one"
 
     def test_layoutinfo(self):
@@ -175,7 +175,7 @@ class uQTile(utils.QTileTests):
         self.testWindow("two")
         self.c.restart()
 
-        #assert len(self.c.clients()) == 2
+        #assert len(self.c.windows()) == 2
 
 
 class uKey(libpry.AutoTree):

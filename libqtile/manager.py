@@ -80,7 +80,7 @@ class Group(list):
         self.screen = None
         self.layouts = [i.clone(self) for i in layouts]
         self.currentLayout = 0
-        self.currentClient = None
+        self.currentWindow = None
 
     @property
     def layout(self):
@@ -95,8 +95,8 @@ class Group(list):
         if self.screen and len(self):
             for i in self:
                 self.layout.configure(i)
-            if self.currentClient:
-                self.currentClient.focus(False)
+            if self.currentWindow:
+                self.currentWindow.focus(False)
         self.resetMask()
 
     def toScreen(self, screen):
@@ -111,7 +111,7 @@ class Group(list):
             i.hide()
 
     def focusNext(self):
-        idx = (self.index(self.currentClient) + 1) % len(self)
+        idx = (self.index(self.currentWindow) + 1) % len(self)
         self.focus(self[idx], False)
 
     def disableMask(self, mask):
@@ -122,47 +122,47 @@ class Group(list):
         for i in self:
             i.resetMask()
 
-    def focus(self, client, warp):
-        if client and not client in self:
+    def focus(self, window, warp):
+        if window and not window in self:
             return
-        if not client:
-            self.currentClient = None
+        if not window:
+            self.currentWindow = None
         else:
-            self.currentClient = client
-        self.layout.focus(client)
+            self.currentWindow = window
+        self.layout.focus(window)
         self.layoutAll()
 
     def info(self):
         return dict(
             name = self.name,
-            focus = self.currentClient.name if self.currentClient else None,
-            clients = [i.name for i in self],
+            focus = self.currentWindow.name if self.currentWindow else None,
+            windows = [i.name for i in self],
             layout = self.layout.name,
             screen = self.screen.index if self.screen else None
         )
 
     # List-like operations
-    def add(self, client):
-        if self.currentClient:
-            offset = self.index(self.currentClient)
+    def add(self, window):
+        if self.currentWindow:
+            offset = self.index(self.currentWindow)
         else:
             offset = 0
-        self.insert(offset, client)
-        client.group = self
+        self.insert(offset, window)
+        window.group = self
         for i in self.layouts:
-            i.add(client)
-        self.focus(client, True)
+            i.add(window)
+        self.focus(window, True)
 
-    def remove(self, client):
-        if self.currentClient is client:
+    def remove(self, window):
+        if self.currentWindow is window:
             if len(self) > 1:
                 self.focusNext()
             else:
                 self.focus(None, False)
-        list.remove(self, client)
-        client.group = None
+        list.remove(self, window)
+        window.group = None
         for i in self.layouts:
-            i.remove(client)
+            i.remove(window)
         self.layoutAll()
 
 
@@ -275,10 +275,10 @@ class Internal(_Window):
         return "Internal(%s)"%self.name
 
 
-class Client(_Window):
+class Window(_Window):
     group = None
     def __repr__(self):
-        return "Client(%s)"%self.name
+        return "Window(%s)"%self.name
 
 
 class Log:
@@ -314,7 +314,6 @@ class QTile:
     _exit = False
     _testing = False
 
-    # Atoms
     atom_qtilewindow = None
     _logLength = 100 
     def __init__(self, config, displayName, fname):
@@ -366,7 +365,7 @@ class QTile:
             self.screens.append(s)
         self.currentScreen = self.screens[0]
 
-        self.clientMap = {}
+        self.windowMap = {}
 
         self.display.set_error_handler(self.errorHandler)
         self.root.change_attributes(
@@ -402,7 +401,7 @@ class QTile:
             # DWM catches this for changes to the root window, and updates
             # screen geometry...
             X.ConfigureNotify,
-            # DWM handles this to help "broken focusing clients".
+            # DWM handles this to help "broken focusing windows".
             X.MapNotify,
             X.LeaveNotify,
             X.FocusOut,
@@ -423,8 +422,8 @@ class QTile:
         return self.currentScreen.group
 
     @property
-    def currentClient(self):
-        return self.currentScreen.group.currentClient
+    def currentWindow(self):
+        return self.currentScreen.group.currentWindow
 
     def scan(self):
         r = self.root.query_tree()
@@ -434,17 +433,17 @@ class QTile:
                 self.manage(i)
 
     def unmanage(self, window):
-        c = self.clientMap.get(window)
+        c = self.windowMap.get(window)
         if c:
             c.group.remove(c)
-            del self.clientMap[window]
+            del self.windowMap[window]
 
     def manage(self, w):
         attrs = w.get_attributes()
         if attrs and attrs.override_redirect:
             return
-        c = Client(w, self)
-        self.clientMap[w] = c
+        c = Window(w, self)
+        self.windowMap[w] = c
         self.currentScreen.group.add(c)
 
     def grabKeys(self):
@@ -501,7 +500,7 @@ class QTile:
             print >> sys.stderr, s
 
     def configureRequest(self, e):
-        c = self.clientMap.get(e.window)
+        c = self.windowMap.get(e.window)
         if c and c.group.screen:
             c.group.focus(c, False)
         else:
@@ -522,7 +521,7 @@ class QTile:
             )
 
     def propertyNotify(self, e):
-        c = self.clientMap.get(e.window)
+        c = self.windowMap.get(e.window)
         if c:
             if e.atom == Xatom.WM_TRANSIENT_FOR:
                 print >> sys.stderr, "transient"
@@ -541,14 +540,14 @@ class QTile:
             self.grabKeys()
 
     def enterNotify(self, e):
-        c = self.clientMap.get(e.window)
+        c = self.windowMap.get(e.window)
         if c:
             self.currentScreen.group.focus(c, False)
             if self.currentScreen != c.group.screen:
                 self.toScreen(c.group.screen.index)
 
     def mapRequest(self, e):
-        c = self.clientMap.get(e.window)
+        c = self.windowMap.get(e.window)
         if not c:
             self.manage(e.window)
 
@@ -564,7 +563,7 @@ class QTile:
             return
         self.currentScreen = self.screens[n]
         self.currentGroup.focus(
-            self.currentClient,
+            self.currentWindow,
             True
         )
 
@@ -620,11 +619,11 @@ class _BaseCommands(command.Commands):
         return q.screens.index(q.currentScreen)
 
     @staticmethod
-    def cmd_clients(q):
+    def cmd_windows(q):
         """
-            Return number of clients in all groups.
+            Return number of windows in all groups.
         """
-        return [i.info() for i in q.clientMap.values()]
+        return [i.info() for i in q.windowMap.values()]
 
     @staticmethod
     def cmd_nextlayout(q, group=None):
@@ -718,8 +717,8 @@ class _BaseCommands(command.Commands):
             mask = utils.translateMasks(modifiers)
         except QTileError, v:
             return str(v)
-        if q.currentClient:
-            win = q.currentClient.window
+        if q.currentWindow:
+            win = q.currentWindow.window
         else:
             win = q.root
         e = event.KeyPress(
@@ -759,9 +758,9 @@ class _BaseCommands(command.Commands):
         """
             Kill the window that currently has focus.
         """
-        client = q.currentScreen.group.currentClient
-        if client:
-            client.kill()
+        window = q.currentScreen.group.currentWindow
+        if window:
+            window.kill()
 
     @staticmethod
     def cmd_sync(q):
@@ -853,7 +852,7 @@ class _BaseCommands(command.Commands):
     @staticmethod
     def cmd_inspect(q, windowID=None):
         """
-            Tells you more than you ever wanted to know about a client window.
+            Tells you more than you ever wanted to know about a window window.
             If windowID is specified, it should be the integer X window
             identifier. The current focus is inspected by default.
 
@@ -861,14 +860,14 @@ class _BaseCommands(command.Commands):
                 inspect(0x600005)
         """
         if windowID:
-            for i in q.clientMap.values():
+            for i in q.windowMap.values():
                 if i.window.id == windowID:
                     c = i
                     break
             else:
                 raise command.CommandError("No such window: %s"%windowID)
         else:
-            c = q.currentClient
+            c = q.currentWindow
             if not c:
                 raise command.CommandError("No current focus.")
 
