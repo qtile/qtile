@@ -125,8 +125,6 @@ class Group(list):
     def focus(self, client):
         if client and not client in self:
             return
-        if client == self.currentClient:
-            return
         if not client:
             self.currentClient = None
         else:
@@ -552,6 +550,9 @@ class QTile:
         if len(self.screens) < n-1:
             return
         self.currentScreen = self.screens[n]
+        self.currentGroup.focus(
+            self.currentClient
+        )
 
     def writeReport(self, m, path="~/qtile_crashreport", _force=False):
         if self._testing and not _force:
