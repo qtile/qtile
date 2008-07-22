@@ -555,10 +555,10 @@ class QTile:
         self.unmanage(e.window)
 
     def unmapNotify(self, e):
-        # Ignore SubstructureNotify unmap events
-        if  (e.event != e.window) and e.send_event == False:
-            return
-        self.unmanage(e.window)
+        if e.event == self.root and e.send_event:
+            self.unmanage(e.window)
+        else:
+            print >> sys.stderr, "IGNORING", e, e.send_event
 
     def toScreen(self, n):
         if len(self.screens) < n-1:
@@ -933,10 +933,10 @@ class _BaseCommands(command.Commands):
             properties=props,
             name = c.window.get_wm_name(),
             wm_class = c.window.get_wm_class(),
-            transient_for = c.window.get_wm_transient_for(),
-            protocols = c.window.get_wm_protocols(),
-            icon_name = c.window.get_wm_icon_name(),
-            client_machine = c.window.get_wm_client_machine(),
+            wm_transient_for = c.window.get_wm_transient_for(),
+            protocols = [q.display.get_atom_name(x) for x in c.window.get_wm_protocols()],
+            wm_icon_name = c.window.get_wm_icon_name(),
+            wm_client_machine = c.window.get_wm_client_machine(),
             normalhints = normalhints,
             hints = hints,
             state = state
