@@ -151,7 +151,6 @@ class Group(list):
         client.group = self
         for i in self.layouts:
             i.add(client)
-        client.window.map()
         self.focus(client, True)
 
     def remove(self, client):
