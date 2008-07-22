@@ -317,12 +317,12 @@ class QTile:
 
     # Atoms
     atom_qtilewindow = None
-    _debugLogLength = 50
+    _logLength = 100 
     def __init__(self, config, displayName, fname):
         self.display = Xlib.display.Display(displayName)
         self.config, self.fname = config, fname
         self.log = Log(
-            self._debugLogLength,
+            self._logLength,
             sys.stderr if self.debug else None
         )
         defaultScreen = self.display.screen(
@@ -847,6 +847,97 @@ class _BaseCommands(command.Commands):
                 report(msg="My message", path="~/myreport")
         """
         q.writeReport(msg, path, True)
+
+    @staticmethod
+    def cmd_inspect(q, windowID=None):
+        """
+            Tells you more than you ever wanted to know about a client window.
+            If windowID is specified, it should be the integer X window
+            identifier. The current focus is inspected by default.
+
+                inspect()
+                inspect(0x600005)
+        """
+        if windowID:
+            for i in q.clientMap.values():
+                if i.window.id == windowID:
+                    c = i
+                    break
+            else:
+                raise command.CommandError("No such window: %s"%windowID)
+        else:
+            c = q.currentClient
+            if not c:
+                raise command.CommandError("No current focus.")
+
+        a = c.window.get_attributes()
+        attrs = {
+            "backing_store": a.backing_store,
+            "visual": a.visual,
+            "class": a.win_class,
+            "bit_gravity": a.bit_gravity,
+            "win_gravity": a.win_gravity,
+            "backing_bit_planes": a.backing_bit_planes,
+            "backing_pixel": a.backing_pixel,
+            "save_under": a.save_under,
+            "map_is_installed": a.map_is_installed,
+            "map_state": a.map_state,
+            "override_redirect": a.override_redirect,
+            #"colormap": a.colormap,
+            "all_event_masks": a.all_event_masks,
+            "your_event_mask": a.your_event_mask,
+            "do_not_propagate_mask": a.do_not_propagate_mask
+        }
+        props = [q.display.get_atom_name(x) for x in c.window.list_properties()]
+        
+        h = c.window.get_wm_normal_hints()
+        if h:
+            normalhints = dict(
+                flags = h.flags,
+                min_width = h.min_width,
+                min_height = h.min_height,
+                max_width = h.max_width,
+                max_height = h.max_height,
+                width_inc = h.width_inc,
+                height_inc = h.height_inc,
+                min_aspect = dict(num=h.min_aspect["num"], denum=h.min_aspect["denum"]),
+                max_aspect = dict(num=h.max_aspect["num"], denum=h.max_aspect["denum"]),
+                base_width = h.base_width,
+                base_height = h.base_height,
+                win_gravity = h.win_gravity
+            )
+        else:
+            normalhints = None
+        
+        h = c.window.get_wm_hints()
+        if h:
+            hints = dict(
+                flags = h.flags,
+                input = h.input,
+                initial_state = h.initial_state,
+                icon_window = h.icon_window.id,
+                icon_x = h.icon_x,
+                icon_y = h.icon_y,
+                window_group = h.window_group.id
+            )
+        else:
+            hints = None
+
+        state = c.window.get_wm_state()
+
+        return dict(
+            attributes=attrs,
+            properties=props,
+            name = c.window.get_wm_name(),
+            wm_class = c.window.get_wm_class(),
+            transient_for = c.window.get_wm_transient_for(),
+            protocols = c.window.get_wm_protocols(),
+            icon_name = c.window.get_wm_icon_name(),
+            client_machine = c.window.get_wm_client_machine(),
+            normalhints = normalhints,
+            hints = hints,
+            state = state
+        )
 
     @staticmethod
     def cmd_layoutinfo(q, group=None, layout=None):

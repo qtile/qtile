@@ -31,6 +31,7 @@ class Cmd(cmd.Cmd):
                         pprint.pprint(val)
                     except Exception, val:
                         print "Invalid command:"
+                        pprint.pprint(val)
                     else:
                         if val:
                             pprint.pprint(val)

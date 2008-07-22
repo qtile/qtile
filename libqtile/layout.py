@@ -98,6 +98,7 @@ class StackCommands(command.Commands):
 
     def cmd_stack_rotate(self, q, noskip=False):
         utils.shuffleUp(q.currentLayout.stacks)
+        q.currentGroup.layoutAll()
 
     def cmd_stack_next(self, q, noskip=False):
         return q.currentLayout.nextStack()

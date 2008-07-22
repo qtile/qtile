@@ -1,4 +1,4 @@
-import os, time, cStringIO
+import os, time, cStringIO, pprint
 import libpry
 import libqtile
 import utils
@@ -94,6 +94,9 @@ class uSingle(utils.QTileTests):
         self.c.log_setlength(5)
         assert self.c.log_getlength() == 5
 
+    def test_inspect(self):
+        self.testWindow("one")
+        pprint.pprint(self.c.inspect())
 
 
 class uQTile(utils.QTileTests):
