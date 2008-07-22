@@ -480,7 +480,7 @@ class QTile:
             return
         if status in (command.ERROR, command.EXCEPTION):
             s = "KB command error %s: %s"%(i.command, val)
-            q.log.add(s)
+            self.log.add(s)
             print >> sys.stderr, s
 
     def configureRequest(self, e):
@@ -628,8 +628,7 @@ class _BaseCommands(command.Commands):
         for i in q.groups:
             if i.name == name:
                 return i.info()
-        else:
-            return None
+        raise command.CommandError("No such group: %s"%name)
 
     @staticmethod
     def cmd_screens(q):

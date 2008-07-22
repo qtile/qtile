@@ -24,14 +24,13 @@ class Cmd(cmd.Cmd):
                                     {},
                                     dict(client=client, commandName=commandName)
                               )
-                    except Exception, val:
-                        print "Invalid command:"
-                        print val
-                    except command.CommandError:
+                    except command.CommandError, val:
                         print "Error: %s"%val
-                    except command.CommandException:
+                    except command.CommandException, val:
                         print "Exception:"
                         pprint.pprint(val)
+                    except Exception, val:
+                        print "Invalid command:"
                     else:
                         if val:
                             pprint.pprint(val)

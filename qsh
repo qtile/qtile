@@ -28,12 +28,12 @@ def main():
         c = libqtile.config.File(options.configfile)
     except libqtile.config.ConfigError, v:
         parser.error(v.message)
-    d = os.environ.get("DISPLAY")
-    if not d:
-        parser.error("No DISPLAY set.")
     if options.socket:
         socketname = options.socket
     else:
+        d = os.environ.get("DISPLAY")
+        if not d:
+            parser.error("No DISPLAY set.")
         socketname = os.path.join("~", ".qtilesocket.%s"%d)
         socketname = os.path.expanduser(socketname)
 
