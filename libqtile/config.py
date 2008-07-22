@@ -6,7 +6,7 @@ class ConfigError(Exception): pass
 
 
 class Config:
-    keys = None
+    keys = ()
     groups = None
     layouts = None
     bars = None

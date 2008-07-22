@@ -27,6 +27,24 @@ class Key:
 class Gap:
     def __init__(self, width):
         self.width = width
+        self.qtile, self.screen = None, None
+
+    def _configure(self, qtile, screen):
+        self.qtile, self.screen = qtile, screen
+
+    def geometry(self):
+        """
+            Returns (x, y, width, height)
+        """
+        s = self.screen
+        if s.top is self:
+            return s.x, s.y, s.width, self.width
+        elif s.bottom is self:
+            return s.x, s.dy + s.dheight, s.width, self.width
+        elif s.left is self:
+            return s.x, s.dy, self.width, s.dheight
+        elif s.right is self:
+            return s.dx + s.dwidth, s.y + s.dy, self.width, s.dheight
 
 
 class Screen:
@@ -35,10 +53,14 @@ class Screen:
         self.top, self.bottom = top, bottom
         self.left, self.right = left, right
 
-    def _configure(self, index, x, y, width, height, group):
+    def _configure(self, qtile, index, x, y, width, height, group):
+        self.qtile = qtile
         self.index, self.x, self.y = index, x, y,
         self.width, self.height = width, height
         self.setGroup(group)
+        for i in [self.top, self.bottom, self.left, self.right]:
+            if i:
+                i._configure(qtile, self)
 
     @property
     def dx(self):
@@ -271,6 +293,22 @@ class _Window:
 
 
 class Internal(_Window):
+    """
+        An internal window, that should not be managed by qtile.
+    """
+    @classmethod
+    def create(klass, qtile, x, y, width, height):
+        colormap = qtile.display.screen().default_colormap
+        background = colormap.alloc_named_color("black").pixel
+        win = qtile.root.create_window(
+                    x, y, width, height, 1,
+                    X.CopyFromParent, X.InputOutput,
+                    X.CopyFromParent,
+                    background_pixel = background,
+                    event_mask = X.StructureNotifyMask | X.ExposureMask
+               )
+        return Internal(win, qtile)
+
     def __repr__(self):
         return "Internal(%s)"%self.name
 
@@ -313,9 +351,12 @@ class QTile:
     debug = False
     _exit = False
     _testing = False
-
-    atom_qtilewindow = None
     _logLength = 100 
+
+    # Atoms
+    atom_qtileinternal = None
+    atom_qtile_marshal = None
+
     def __init__(self, config, displayName, fname):
         self.display = Xlib.display.Display(displayName)
         self.config, self.fname = config, fname
@@ -343,6 +384,7 @@ class QTile:
                 else:
                     scr = config.screens[i]
                 scr._configure(
+                    self,
                     i,
                     s["x"],
                     s["y"],
@@ -357,6 +399,7 @@ class QTile:
             else:
                 s = Screen()
             s._configure(
+                self,
                 0, 0, 0,
                 defaultScreen.width_in_pixels,
                 defaultScreen.height_in_pixels,
@@ -380,7 +423,8 @@ class QTile:
             print >> sys.stderr, "Access denied: Another window manager running?"
             sys.exit(1)
 
-        self.atom_qtilewindow = self.display.intern_atom("QTILE_WINDOW")
+        self.atom_qtileinternal = self.display.intern_atom("QTILE_INTERNAL")
+        self.atom_qtilemarshal = self.display.intern_atom("QTILE_MARSHAL")
 
         self.server = command._Server(self.fname, self, config)
 
@@ -663,7 +707,13 @@ class _BaseCommands(command.Commands):
                 x = i.x,
                 y = i.y,
                 width = i.width,
-                height = i.height
+                height = i.height,
+                gaps = dict(
+                    top = i.top.geometry() if i.top else None,
+                    bottom = i.bottom.geometry() if i.bottom else None,
+                    left = i.left.geometry() if i.left else None,
+                    right = i.right.geometry() if i.right else None,
+                )
             ))
         return lst
 

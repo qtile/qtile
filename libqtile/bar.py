@@ -1,7 +1,17 @@
 import manager
 
-class Bar:
-    def __init__(self, screen, widgets, height=20):
-        self.screen, self.widgets = screen, widgets,
-        self.height =  height
+class Bar(manager.Gap):
+    def __init__(self, widgets, width):
+        manager.Gap.__init__(self, width)
+        self.widgets = widgets
+
+    def _configure(self, qtile, screen):
+        manager.Gap._configure(self, qtile, screen)
+        self.window = manager.Internal.create(
+                            self.qtile,
+                            *self.geometry()
+                      )
+        self.window.place(*self.geometry())
+        self.window.unhide()
+
 
