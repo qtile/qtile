@@ -42,7 +42,7 @@ class Screen:
 
     @property
     def dx(self):
-        return self.x + self.left.width if self.left else 0
+        return self.x + self.left.width if self.left else self.x
 
     @property
     def dwidth(self):
@@ -53,7 +53,7 @@ class Screen:
 
     @property
     def dy(self):
-        return self.y + self.top.width if self.top else 0
+        return self.y + self.top.width if self.top else self.y
 
     @property
     def dheight(self):
@@ -119,6 +119,8 @@ class Group(list):
             i.resetMask()
 
     def focus(self, client):
+        if not client in self:
+            return
         if client == self.currentClient:
             return
         if not client:
