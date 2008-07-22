@@ -430,7 +430,9 @@ class QTile:
     def scan(self):
         r = self.root.query_tree()
         for i in r.children:
-            self.manage(i)
+            a = i.get_attributes()
+            if a.map_state == Xlib.X.IsViewable:
+                self.manage(i)
 
     def unmanage(self, window):
         c = self.clientMap.get(window)
