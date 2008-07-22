@@ -617,18 +617,18 @@ class _BaseCommands(command.Commands):
         group.nextLayout()
 
     @staticmethod
-    def cmd_groupinfo(q, name):
+    def cmd_groups(q):
         """
-            Return group information for a specified group.
+            Return a dictionary containing information for all groups.
 
             Example:
                 
-                groupinfo("a")
+                groups()
         """
+        d = {}
         for i in q.groups:
-            if i.name == name:
-                return i.info()
-        raise command.CommandError("No such group: %s"%name)
+            d[i.name] = i.info()
+        return d
 
     @staticmethod
     def cmd_screens(q):

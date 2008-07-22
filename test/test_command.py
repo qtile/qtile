@@ -26,11 +26,11 @@ class uCall(utils.QTileTests):
     def test_layout_filter(self):
         self.testWindow("one")
         self.testWindow("two")
-        assert self.c.groupinfo("a")["focus"] == "two"
+        assert self.c.groups()["a"]["focus"] == "two"
         self.c.simulate_keypress(["control"], "j")
-        assert self.c.groupinfo("a")["focus"] == "two"
+        assert self.c.groups()["a"]["focus"] == "two"
         self.c.simulate_keypress(["control"], "k")
-        assert self.c.groupinfo("a")["focus"] == "one"
+        assert self.c.groups()["a"]["focus"] == "one"
         
 
 tests = [

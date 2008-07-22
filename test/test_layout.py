@@ -32,19 +32,19 @@ class uMax(utils.QTileTests):
         self.testWindow("two")
         self.testWindow("three")
 
-        info = self.c.groupinfo("a")
+        info = self.c.groups()["a"]
         assert info["focus"] == "three"
         self.c.max_next()
-        info = self.c.groupinfo("a")
+        info = self.c.groups()["a"]
         assert info["focus"] == "two"
         self.c.max_next()
-        info = self.c.groupinfo("a")
+        info = self.c.groups()["a"]
         assert info["focus"] == "one"
         self.c.max_next()
-        info = self.c.groupinfo("a")
+        info = self.c.groups()["a"]
         assert info["focus"] == "three"
         self.c.max_previous()
-        info = self.c.groupinfo("a")
+        info = self.c.groups()["a"]
         assert info["focus"] == "one"
 
 
@@ -64,7 +64,7 @@ class uStack(utils.QTileTests):
 
         self.c.stack_delete()
         assert self.c.stack_get() == [["one", "three", "two"]]
-        info = self.c.groupinfo("a")
+        info = self.c.groups()["a"]
         assert info["focus"] == "one"
         self.c.stack_delete()
         assert len(self.c.stack_get()) == 1
@@ -95,35 +95,35 @@ class uStack(utils.QTileTests):
         two = self.testWindow("two")
         three = self.testWindow("three")
 
-        assert self.c.groupinfo("a")["focus"] == "three"
+        assert self.c.groups()["a"]["focus"] == "three"
         self.c.stack_next()
-        assert self.c.groupinfo("a")["focus"] == "one"
+        assert self.c.groups()["a"]["focus"] == "one"
 
         self.c.stack_previous()
-        assert self.c.groupinfo("a")["focus"] == "three"
+        assert self.c.groups()["a"]["focus"] == "three"
         self.c.stack_previous()
-        assert self.c.groupinfo("a")["focus"] == "two"
+        assert self.c.groups()["a"]["focus"] == "two"
 
         self.c.stack_next()
         self.c.stack_next()
         self.c.stack_next()
-        assert self.c.groupinfo("a")["focus"] == "two"
+        assert self.c.groups()["a"]["focus"] == "two"
 
         self.kill(three)
         self.c.stack_next()
-        assert self.c.groupinfo("a")["focus"] == "one"
+        assert self.c.groups()["a"]["focus"] == "one"
         self.c.stack_previous()
-        assert self.c.groupinfo("a")["focus"] == "two"
+        assert self.c.groups()["a"]["focus"] == "two"
         self.c.stack_next()
         self.kill(two)
         self.c.stack_next()
-        assert self.c.groupinfo("a")["focus"] == "one"
+        assert self.c.groups()["a"]["focus"] == "one"
 
         self.kill(one)
         self.c.stack_next()
-        assert self.c.groupinfo("a")["focus"] == None
+        assert self.c.groups()["a"]["focus"] == None
         self.c.stack_previous()
-        assert self.c.groupinfo("a")["focus"] == None
+        assert self.c.groups()["a"]["focus"] == None
 
     def test_info(self):
         one = self.testWindow("one")

@@ -26,10 +26,10 @@ class uMultiScreen(utils.QTileTests):
         self.c.to_screen(0)
         self.testWindow("two")
 
-        ga = self.c.groupinfo("a")
+        ga = self.c.groups()["a"]
         assert ga["clients"] == ["two"]
 
-        gb = self.c.groupinfo("b")
+        gb = self.c.groups()["b"]
         assert gb["clients"] == ["one"]
 
 
@@ -51,9 +51,9 @@ class uCommon(utils.QTileTests):
         self.testWindow("two")
         v = self.c.simulate_keypress(["unknown"], "j")
         assert v.startswith("Unknown modifier")
-        assert self.c.groupinfo("a")["focus"] == "two"
+        assert self.c.groups()["a"]["focus"] == "two"
         self.c.simulate_keypress(["control"], "j")
-        assert self.c.groupinfo("a")["focus"] == "one"
+        assert self.c.groups()["a"]["focus"] == "one"
 
     def test_spawn(self):
         assert self.c.spawn("true") == None
@@ -73,16 +73,16 @@ class uCommon(utils.QTileTests):
     def test_regression_groupswitch(self):
         self.c.pullgroup("c")
         self.c.pullgroup("d")
-        assert self.c.groupinfo("c")["screen"] == None
+        assert self.c.groups()["c"]["screen"] == None
 
     def test_nextlayout(self):
         self.testWindow("one")
         self.testWindow("two")
-        assert self.c.groupinfo("a")["layout"] == "max"
+        assert self.c.groups()["a"]["layout"] == "max"
         self.c.nextlayout()
-        assert self.c.groupinfo("a")["layout"] == "stack"
+        assert self.c.groups()["a"]["layout"] == "stack"
         self.c.nextlayout()
-        assert self.c.groupinfo("a")["layout"] == "max"
+        assert self.c.groups()["a"]["layout"] == "max"
 
 
 class uQTile(utils.QTileTests):
@@ -92,12 +92,12 @@ class uQTile(utils.QTileTests):
     config = TestConfig()
     def test_mapRequest(self):
         self.testWindow("one")
-        info = self.c.groupinfo("a")
+        info = self.c.groups()["a"]
         assert "one" in info["clients"]
         assert info["focus"] == "one"
 
         self.testWindow("two")
-        info = self.c.groupinfo("a")
+        info = self.c.groups()["a"]
         assert "two" in info["clients"]
         assert info["focus"] == "two"
 
@@ -105,24 +105,24 @@ class uQTile(utils.QTileTests):
         one = self.testWindow("one")
         two = self.testWindow("two")
         three = self.testWindow("three")
-        info = self.c.groupinfo("a")
+        info = self.c.groups()["a"]
         assert info["focus"] == "three"
 
         assert len(self.c.clients()) == 3
         self.kill(three)
 
         assert len(self.c.clients()) == 2
-        info = self.c.groupinfo("a")
+        info = self.c.groups()["a"]
         assert info["focus"] == "two"
 
         self.kill(two)
         assert len(self.c.clients()) == 1
-        info = self.c.groupinfo("a")
+        info = self.c.groups()["a"]
         assert info["focus"] == "one"
 
         self.kill(one)
         assert len(self.c.clients()) == 0
-        info = self.c.groupinfo("a")
+        info = self.c.groups()["a"]
         assert info["focus"] == None
 
     def test_setgroup(self):
@@ -130,12 +130,12 @@ class uQTile(utils.QTileTests):
         libpry.raises("No such group", self.c.pullgroup, "nonexistent")
         self.c.pullgroup("b")
         if len(self.c.screens()) == 1:
-            assert self.c.groupinfo("a")["screen"] == None
+            assert self.c.groups()["a"]["screen"] == None
         else:
-            assert self.c.groupinfo("a")["screen"] == 1
-        assert self.c.groupinfo("b")["screen"] == 0
+            assert self.c.groups()["a"]["screen"] == 1
+        assert self.c.groups()["b"]["screen"] == 0
         self.c.pullgroup("c")
-        assert self.c.groupinfo("c")["screen"] == 0
+        assert self.c.groups()["c"]["screen"] == 0
 
     def test_unmap_noscreen(self):
         self.testWindow("one")
@@ -145,7 +145,7 @@ class uQTile(utils.QTileTests):
         assert len(self.c.clients()) == 2
         self.kill(pid)
         assert len(self.c.clients()) == 1
-        assert self.c.groupinfo("a")["focus"] == "one"
+        assert self.c.groups()["a"]["focus"] == "one"
 
     def test_layoutinfo(self):
         self.testWindow("one")
