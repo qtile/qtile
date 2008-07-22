@@ -46,7 +46,7 @@ try:
     while 1:
         event = d.next_event()
         if event.__class__ == protocol.event.ClientMessage:
-            if d.get_atom_name(event.data[1][0]) == "WM_DELETE":
+            if d.get_atom_name(event.data[1][0]) == "WM_DELETE_WINDOW":
                 sys.exit(1)
 except error.ConnectionClosedError:
     pass

@@ -123,7 +123,7 @@ class Group(list):
             i.resetMask()
 
     def focus(self, client):
-        if not client in self:
+        if client and not client in self:
             return
         if client == self.currentClient:
             return
