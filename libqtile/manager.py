@@ -557,8 +557,6 @@ class QTile:
     def unmapNotify(self, e):
         if e.event == self.root and e.send_event:
             self.unmanage(e.window)
-        else:
-            print >> sys.stderr, "IGNORING", e, e.send_event
 
     def toScreen(self, n):
         if len(self.screens) < n-1:
