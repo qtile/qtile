@@ -1,4 +1,4 @@
-import manager, window
+import manager, window, config
 
 class Gap:
     def __init__(self, width):
@@ -29,6 +29,8 @@ class Bar(Gap):
         self.widgets = widgets
 
     def _configure(self, qtile, screen):
+        if not self in [screen.top, screen.bottom]:
+            raise config.ConfigError("Bars must be at the top or the bottom of the screen.")
         Gap._configure(self, qtile, screen)
         self.window = window.Internal.create(
                             self.qtile,

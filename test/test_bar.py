@@ -7,8 +7,8 @@ class MaxAll(libqtile.config.Config):
     layouts = [libqtile.layout.Max()]
     screens = [
         libqtile.Screen(
-            left=libqtile.bar.Bar([], 10),
-            right=libqtile.bar.Bar([], 10),
+            left=libqtile.bar.Gap(10),
+            right=libqtile.bar.Gap(10),
             top=libqtile.bar.Bar([], 10),
             bottom=libqtile.bar.Bar([], 10),
         )
@@ -32,10 +32,8 @@ class uBarGeometry(utils.QTileTests):
         assert geom["height"] == 580
 
         internal = self.c.internal()
-        assert len(internal) == 4
+        assert len(internal) == 2
         assert self.c.inspect(int(internal[0]["id"], 16))
-
-
 
 
 tests = [
