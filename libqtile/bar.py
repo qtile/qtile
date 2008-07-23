@@ -1,4 +1,4 @@
-import manager
+import manager, window
 
 class Bar(manager.Gap):
     def __init__(self, widgets, width):
@@ -7,7 +7,7 @@ class Bar(manager.Gap):
 
     def _configure(self, qtile, screen):
         manager.Gap._configure(self, qtile, screen)
-        self.window = manager.Internal.create(
+        self.window = window.Internal.create(
                             self.qtile,
                             *self.geometry()
                       )
