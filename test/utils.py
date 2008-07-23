@@ -72,7 +72,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
     def tearDown(self):
         libpry.TmpDirMixin.tearDown(self)
 
-    def startQtile(self, config):
+    def _waitForXNest(self):
         # Try until XNest is up
         for i in range(20):
             try:
@@ -84,12 +84,28 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             raise AssertionError, "Could not connect to display."
         d.close()
         del d
-        
-        # Now start for real
+
+    def _waitForQtile(self):
+        for i in range(20):
+            try:
+                if self.c.status() == "OK":
+                    break
+            except libqtile.ipc.IPCError:
+                pass
+            time.sleep(0.1)
+        else:
+            raise AssertionError, "Timeout waiting for Qtile"
+
+    def qtileRaises(self, exc, config):
+        self._waitForXNest()
+        self["fname"] = os.path.join(self["tmpdir"], "qtilesocket")
+        libpry.raises(exc, libqtile.QTile, config, self["display"], self["fname"])
+
+    def startQtile(self, config):
+        self._waitForXNest()
         self["fname"] = os.path.join(self["tmpdir"], "qtilesocket")
         pid = os.fork()
         if pid == 0:
-            # Run this in a sandbox...
             try:
                 q = libqtile.QTile(config, self["display"], self["fname"])
                 q._testing = True
@@ -104,16 +120,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
         else:
             self.qtilepid = pid
             self.c = libqtile.command.Client(self["fname"], config)
-            # Wait until qtile is up before continuing
-            for i in range(20):
-                try:
-                    if self.c.status() == "OK":
-                        break
-                except libqtile.ipc.IPCError:
-                    pass
-                time.sleep(0.1)
-            else:
-                raise AssertionError, "Timeout waiting for Qtile"
+            self._waitForQtile()
 
     def stopQtile(self):
         if self.qtilepid:

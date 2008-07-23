@@ -23,7 +23,7 @@ class uGroupBox(utils.QTileTests):
         time.sleep(1)
     
 
-class MaxAll(libqtile.config.Config):
+class GeomConf(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
     layouts = [libqtile.layout.Max()]
     screens = [
@@ -35,9 +35,8 @@ class MaxAll(libqtile.config.Config):
         )
     ]
 
-
 class uBarGeometry(utils.QTileTests):
-    config = MaxAll()
+    config = GeomConf()
     def test_geometry(self):
         self.testWindow("one")
         g = self.c.screens()[0]["gaps"]
@@ -57,9 +56,22 @@ class uBarGeometry(utils.QTileTests):
         assert self.c.inspect(int(internal[0]["id"], 16))
 
 
+class ErrConf(GeomConf):
+    screens = [
+        libqtile.Screen(left=libqtile.bar.Bar([], 10))
+    ]
+
+
+class uBarErr(utils._QTileTruss):
+    def test_err(self):
+        config = ErrConf()
+        self.qtileRaises("top or the bottom of the screen", config)
+
+
 tests = [
     utils.XNest(xinerama=False), [
         uBarGeometry(),
-        uGroupBox()
+        uGroupBox(),
+        uBarErr(),
     ]
 ]
