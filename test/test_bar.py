@@ -1,6 +1,27 @@
-import libpry
+import libpry, time
 import libqtile, libqtile.config
 import utils
+
+class GBConfig(libqtile.config.Config):
+    groups = ["a", "b", "c", "d"]
+    layouts = [libqtile.layout.Max()]
+    screens = [
+        libqtile.Screen(
+            bottom=libqtile.bar.Bar(
+                        [
+                            libqtile.bar.GroupBox()
+                        ],
+                        20
+                    ),
+        )
+    ]
+
+
+class uGroupBox(utils.QTileTests):
+    config = GBConfig()
+    def test_one(self):
+        time.sleep(1)
+    
 
 class MaxAll(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
@@ -38,6 +59,7 @@ class uBarGeometry(utils.QTileTests):
 
 tests = [
     utils.XNest(xinerama=False), [
-        uBarGeometry()
+        uBarGeometry(),
+        uGroupBox()
     ]
 ]

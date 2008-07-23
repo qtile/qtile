@@ -1,4 +1,5 @@
 import manager, window, config
+import Xlib.X
 
 class Gap:
     def __init__(self, width):
@@ -23,6 +24,27 @@ class Gap:
             return s.dx + s.dwidth, s.y + s.dy, self.width, s.dheight
 
 
+class _Widget:
+    def __init__(self, stretch=False):
+        self.stretch = stretch
+
+    @property
+    def q(self):
+        return self.bar.screen.qtile
+
+    def _configure(self, bar):
+        self.bar = bar
+
+
+class GroupBox(_Widget):
+    def __init__(self):
+        _Widget.__init__(self)
+
+    def _configure(self, bar):
+        _Widget._configure(self, bar)
+
+
+
 class Bar(Gap):
     def __init__(self, widgets, width):
         Gap.__init__(self, width)
@@ -36,7 +58,19 @@ class Bar(Gap):
                             self.qtile,
                             *self.geometry()
                       )
+        for i in self.widgets:
+            i._configure(self)
         qtile.internalMap[self.window.window] = self.window
         self.window.unhide()
+
+        w = self.window.window
+        colormap = qtile.display.screen().default_colormap
+        foreground = colormap.alloc_named_color("blue").pixel
+        g = w.create_gc(
+                foreground = foreground,
+            )
+        w.fill_rectangle(g, 100, 1, 10, 10)
+        qtile.display.flush()
+
 
 
