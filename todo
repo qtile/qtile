@@ -22,3 +22,15 @@ FEATURES
 - Split and unsplit a Stack layout stack vertically.
 
 
+FUTURE
+
+- Move to a safer object serialisation protocol. Despite the ominous warning
+  against un-marshalling untrusted data in the Python docs, I believe that the
+  worst an attacker could do is cause the interpreter to crash. None the less,
+  since we're using marshalled data pretty much everywhere, we should find an
+  obviously safe protocol. One option:
+    
+    http://barnesc.blogspot.com/2006/01/rencode-reduced-length-encodings.html
+    http://www.connellybarnes.com/code/python/rencode
+    
+
