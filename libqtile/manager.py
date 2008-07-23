@@ -24,29 +24,6 @@ class Key:
         return "Key(%s, %s)"%(self.modifiers, self.key)
 
 
-class Gap:
-    def __init__(self, width):
-        self.width = width
-        self.qtile, self.screen = None, None
-
-    def _configure(self, qtile, screen):
-        self.qtile, self.screen = qtile, screen
-
-    def geometry(self):
-        """
-            Returns (x, y, width, height)
-        """
-        s = self.screen
-        if s.top is self:
-            return s.x, s.y, s.width, self.width
-        elif s.bottom is self:
-            return s.x, s.dy + s.dheight, s.width, self.width
-        elif s.left is self:
-            return s.x, s.dy, self.width, s.dheight
-        elif s.right is self:
-            return s.dx + s.dwidth, s.y + s.dy, self.width, s.dheight
-
-
 class Screen:
     group = None
     def __init__(self, top=None, bottom=None, left=None, right=None):
@@ -222,10 +199,6 @@ class QTile:
     _testing = False
     _logLength = 100 
 
-    # Atoms
-    atom_qinternal = None
-    atom_qpython = None
-
     def __init__(self, config, displayName, fname):
         self.display = Xlib.display.Display(displayName)
         self.config, self.fname = config, fname
@@ -237,6 +210,13 @@ class QTile:
                     self.display.get_default_screen()
                )
         self.root = defaultScreen.root
+
+        self.atoms = dict(
+            internal = self.display.intern_atom("QTILE_INTERNAL"),
+            python = self.display.intern_atom("QTILE_PYTHON")
+        )
+        self.windowMap = {}
+        self.internalMap = {}
 
         self.groups = []
         self.groupMap = {}
@@ -277,8 +257,6 @@ class QTile:
             self.screens.append(s)
         self.currentScreen = self.screens[0]
 
-        self.windowMap = {}
-
         self.display.set_error_handler(self.errorHandler)
         self.root.change_attributes(
             event_mask = X.SubstructureNotifyMask |\
@@ -291,9 +269,6 @@ class QTile:
         if self._exit:
             print >> sys.stderr, "Access denied: Another window manager running?"
             sys.exit(1)
-
-        self.atom_qinternal = self.display.intern_atom("QTILE_INTERNAL")
-        self.atom_qpython = self.display.intern_atom("QTILE_MARSHAL")
 
         self.server = command._Server(self.fname, self, config)
 
@@ -355,9 +330,15 @@ class QTile:
         attrs = w.get_attributes()
         if attrs and attrs.override_redirect:
             return
-        c = window.Window(w, self)
-        self.windowMap[w] = c
-        self.currentScreen.group.add(c)
+        if w.get_full_property(self.atoms["internal"], self.atoms["python"]):
+            if not w in self.internalMap:
+                c = window.Internal(w, self)
+                self.internalMap[w] = c
+        else:
+            if not w in self.windowMap:
+                c = window.Window(w, self)
+                self.windowMap[w] = c
+                self.currentScreen.group.add(c)
 
     def grabKeys(self):
         self.root.ungrab_key(X.AnyKey, X.AnyModifier)
@@ -460,9 +441,7 @@ class QTile:
                 self.toScreen(c.group.screen.index)
 
     def mapRequest(self, e):
-        c = self.windowMap.get(e.window)
-        if not c:
-            self.manage(e.window)
+        self.manage(e.window)
 
     def destroyNotify(self, e):
         self.unmanage(e.window)
@@ -534,9 +513,16 @@ class _BaseCommands(command.Commands):
     @staticmethod
     def cmd_windows(q):
         """
-            Return number of windows in all groups.
+            Return info for each client window.
         """
         return [i.info() for i in q.windowMap.values()]
+
+    @staticmethod
+    def cmd_internal(q):
+        """
+            Return info for each internal window.
+        """
+        return [i.info() for i in q.internalMap.values()]
 
     @staticmethod
     def cmd_nextlayout(q, group=None):
@@ -779,7 +765,8 @@ class _BaseCommands(command.Commands):
                 inspect(0x600005)
         """
         if windowID:
-            for i in q.windowMap.values():
+            all = q.windowMap.values() + q.internalMap.values()
+            for i in all:
                 if i.window.id == windowID:
                     c = i
                     break

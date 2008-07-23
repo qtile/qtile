@@ -1,3 +1,4 @@
+import marshal
 import Xlib
 from Xlib import X
 import Xlib.protocol.event as event
@@ -105,6 +106,14 @@ class _Window:
             s.add(d.get_atom_name(i))
         return name in s
 
+    def setProp(self, name, data):
+        self.window.change_property(
+            self.qtile.atoms[name],
+            self.qtile.atoms["python"],
+            8,
+            marshal.dumps(data)
+        )
+
 
 class Internal(_Window):
     """
@@ -121,7 +130,10 @@ class Internal(_Window):
                     background_pixel = background,
                     event_mask = X.StructureNotifyMask | X.ExposureMask
                )
-        return Internal(win, qtile)
+        i = Internal(win, qtile)
+        i.place(x, y, width, height)
+        i.setProp("internal", True)
+        return i
 
     def __repr__(self):
         return "Internal(%s)"%self.name

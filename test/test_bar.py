@@ -1,4 +1,3 @@
-import time
 import libpry
 import libqtile, libqtile.config
 import utils
@@ -26,6 +25,17 @@ class uBarGeometry(utils.QTileTests):
         assert g["left"] == (0, 10, 10, 580)
         assert g["right"] == (790, 10, 10, 580)
         assert len(self.c.windows()) == 1
+        geom = self.c.windows()[0]
+        assert geom["x"] == 10
+        assert geom["y"] == 10
+        assert geom["width"] == 780
+        assert geom["height"] == 580
+
+        internal = self.c.internal()
+        assert len(internal) == 4
+        assert self.c.inspect(int(internal[0]["id"], 16))
+
+
 
 
 tests = [

@@ -230,27 +230,27 @@ class TScreen(libqtile.Screen):
 
 class uScreenDimensions(libpry.AutoTree):
     def test_dx(self):
-        s = TScreen(left = libqtile.Gap(10))
+        s = TScreen(left = libqtile.bar.Gap(10))
         s._configure(None, 0, 0, 0, 100, 100, None)
         assert s.dx == 10
 
     def test_dwidth(self):
-        s = TScreen(left = libqtile.Gap(10))
+        s = TScreen(left = libqtile.bar.Gap(10))
         s._configure(None, 0, 0, 0, 100, 100, None)
         assert s.dwidth == 90
-        s.right = libqtile.Gap(10)
+        s.right = libqtile.bar.Gap(10)
         assert s.dwidth == 80
 
     def test_dy(self):
-        s = TScreen(top = libqtile.Gap(10))
+        s = TScreen(top = libqtile.bar.Gap(10))
         s._configure(None, 0, 0, 0, 100, 100, None)
         assert s.dy == 10
 
     def test_dheight(self):
-        s = TScreen(top = libqtile.Gap(10))
+        s = TScreen(top = libqtile.bar.Gap(10))
         s._configure(None, 0, 0, 0, 100, 100, None)
         assert s.dheight == 90
-        s.bottom = libqtile.Gap(10)
+        s.bottom = libqtile.bar.Gap(10)
         assert s.dheight == 80
 
 
