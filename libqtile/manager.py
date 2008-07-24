@@ -225,6 +225,7 @@ class QTile:
             self.groups.append(g)
             self.groupMap[g.name] = g
 
+        self.currentScreen = None
         self.screens = []
         if self.display.has_extension("XINERAMA"):
             for i, s in enumerate(self.display.xinerama_query_screens().screens):
@@ -232,6 +233,8 @@ class QTile:
                     scr = Screen()
                 else:
                     scr = config.screens[i]
+                if not self.currentScreen:
+                    self.currentScreen = scr
                 scr._configure(
                     self,
                     i,
@@ -247,6 +250,7 @@ class QTile:
                 s = config.screens[0]
             else:
                 s = Screen()
+            self.currentScreen = s
             s._configure(
                 self,
                 0, 0, 0,

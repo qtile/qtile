@@ -120,14 +120,12 @@ class Internal(_Window):
         An internal window, that should not be managed by qtile.
     """
     @classmethod
-    def create(klass, qtile, x, y, width, height):
-        colormap = qtile.display.screen().default_colormap
-        background = colormap.alloc_named_color("black").pixel
+    def create(klass, qtile, background_pixel, x, y, width, height):
         win = qtile.root.create_window(
-                    x, y, width, height, 1,
+                    x, y, width, height, 0,
                     X.CopyFromParent, X.InputOutput,
                     X.CopyFromParent,
-                    background_pixel = background,
+                    background_pixel = background_pixel,
                     event_mask = X.StructureNotifyMask | X.ExposureMask
                )
         i = Internal(win, qtile)

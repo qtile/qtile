@@ -9,6 +9,7 @@ class GBConfig(libqtile.config.Config):
         libqtile.Screen(
             bottom=libqtile.bar.Bar(
                         [
+                            libqtile.bar.GroupBox(),
                             libqtile.bar.GroupBox()
                         ],
                         20
