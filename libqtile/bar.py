@@ -26,7 +26,6 @@ class Gap:
 
 STRETCH = -1
 
-
 class _Widget:
     fontName = "-*-fixed-bold-r-normal-*-18-*-*-*-c-*-*-*"
     fontName = "-*-freemono-bold-r-normal-*-18-*-*-*-m-*-*-*"
@@ -38,7 +37,7 @@ class _Widget:
     def colormap(self):
         return self.qtile.display.screen().default_colormap
 
-    def configure(self, qtile, bar):
+    def _configure(self, qtile, bar):
         self.qtile, self.bar = qtile, bar
         self.gc = self.win.create_gc()
         self.font = qtile.display.open_font(self.fontName)
@@ -48,8 +47,8 @@ class GroupBox(_Widget):
     BOXPADDING_SIDE = 8
     BOXPADDING_TOP = 3
     PADDING = 3
-    def configure(self, qtile, bar):
-        _Widget.configure(self, qtile, bar)
+    def _configure(self, qtile, bar):
+        _Widget._configure(self, qtile, bar)
         self.foreground = self.colormap.alloc_named_color("white").pixel
         self.background = self.colormap.alloc_named_color("#5866cf").pixel
         self.gc.change(foreground=self.foreground)
@@ -101,14 +100,13 @@ class Bar(Gap):
         self.background = colormap.alloc_named_color("black").pixel
         self.window = window.Internal.create(self.qtile, self.background, *self.geometry())
         for i in self.widgets:
-            i.configure(qtile, self)
+            i._configure(qtile, self)
         qtile.internalMap[self.window.window] = self.window
         self.window.unhide()
         self.draw()
 
     def draw(self):
+        offset = 0
         for i in self.widgets:
-            i.draw(0, 11)
-
-
-
+            i.draw(offset, 11)
+            offset += i.width

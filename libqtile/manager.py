@@ -9,6 +9,16 @@ import command, utils, window
 class QTileError(Exception): pass
 
 
+class Event:
+    def __init__(self, )
+    def subscribe(self, event, func):
+        pass
+
+    def __getattr__(self, attr):
+        pass
+
+
+
 class Key:
     def __init__(self, modifiers, key, *commands):
         """
