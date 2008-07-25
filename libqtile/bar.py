@@ -2,33 +2,119 @@ import manager, window, config
 import Xlib.X
 
 class Gap:
-    def __init__(self, width):
-        self.width = width
+    def __init__(self, size):
+        self.size = size
         self.qtile, self.screen = None, None
 
     def _configure(self, qtile, screen, event):
         self.qtile, self.screen, self.event = qtile, screen, event
 
-    def geometry(self):
-        """
-            Returns (x, y, width, height)
-        """
+    @property
+    def x(self):
+        s = self.screen
+        if s.right is self:
+            return s.dx + s.dwidth
+        else:
+            return s.x
+
+    @property
+    def y(self):
         s = self.screen
         if s.top is self:
-            return s.x, s.y, s.width, self.width
+            return s.y
         elif s.bottom is self:
-            return s.x, s.dy + s.dheight, s.width, self.width
+            return s.dy + s.dheight
         elif s.left is self:
-            return s.x, s.dy, self.width, s.dheight
+            return s.dy
         elif s.right is self:
-            return s.dx + s.dwidth, s.y + s.dy, self.width, s.dheight
+            return s.y + s.dy
+
+    @property
+    def width(self):
+        s = self.screen
+        if self in [s.top, s.bottom]:
+            return s.width
+        else:
+            return self.size
+
+    @property
+    def height(self):
+        s = self.screen
+        if self in [s.top, s.bottom]:
+            return self.size
+        else:
+            return s.dheight
+
+    def geometry(self):
+        return self.x, self.y, self.width, self.height
 
 
 STRETCH = -1
 
+class Bar(Gap):
+    background = None
+    widgets = None
+    window = None
+    def __init__(self, widgets, size):
+        Gap.__init__(self, size)
+        self.widgets = widgets
+
+    def _configure(self, qtile, screen, event):
+        if not self in [screen.top, screen.bottom]:
+            raise config.ConfigError("Bars must be at the top or the bottom of the screen.")
+        Gap._configure(self, qtile, screen, event)
+        colormap = qtile.display.screen().default_colormap
+        self.background = colormap.alloc_named_color("black").pixel
+        self.window = window.Internal.create(
+                        self.qtile,
+                        self.background,
+                        self.x, self.y, self.width, self.height
+                     )
+        qtile.internalMap[self.window.window] = self.window
+        self.window.unhide()
+
+        for i in self.widgets:
+            i._configure(qtile, self, event)
+
+        offset, total = 0, 0
+        stretchWidget = None
+        for i in self.widgets:
+            i.offset = offset
+            if i.width == STRETCH:
+                stretchWidget = i
+                break
+            offset += i.width
+        offset = self.width
+        if stretchWidget:
+            for i in reversed(self.widgets):
+                if i.width == STRETCH:
+                    break
+                offset -= i.width
+                total += i.width
+                i.offset = offset
+            stretchWidget.width = self.width - total
+        self.draw()
+
+    def draw(self):
+        for i in self.widgets:
+            i.draw()
+
+
 class _Widget:
-    fontName = "-*-fixed-bold-r-normal-*-18-*-*-*-c-*-*-*"
+    """
+
+        Each widget must set its own width attribute when the _configure method
+        is called. If this is set to the special value STRETCH, the bar itself
+        will set the width to the maximum remaining space, after all other
+        widgets have been configured. Only ONE widget per bar can have the
+        STRETCH width set.
+
+        The offset attribute is set by the Bar after all widgets have been
+        configured.
+    """
     fontName = "-*-freemono-bold-r-normal-*-18-*-*-*-m-*-*-*"
+    width = None
+    offset = None
     @property
     def win(self):
         return self.bar.window.window
@@ -64,15 +150,15 @@ class GroupBox(_Widget):
         self.boxwidth = self.BOXPADDING_SIDE*2 + self.textwidth
         self.width = self.boxwidth * len(qtile.groups) + 2 * self.PADDING
 
-    def draw(self, offset, width):
-        y = self.textheight + (self.bar.width - self.textheight)/2
-        x = offset + self.PADDING
+    def draw(self):
+        y = self.textheight + (self.bar.size - self.textheight)/2
+        x = self.offset + self.PADDING
         for i in self.qtile.groups:
             if self.qtile.currentGroup.name == i.name:
                 self.gc.change(foreground=self.background)
                 self.win.fill_rectangle(
                     self.gc, x, 0,
-                    self.boxwidth, self.bar.width
+                    self.boxwidth, self.bar.size
                 )
                 self.gc.change(foreground=self.foreground)
             self.win.draw_text(
@@ -83,30 +169,3 @@ class GroupBox(_Widget):
             )
             x += self.boxwidth
 
-
-class Bar(Gap):
-    background = None
-    widgets = None
-    window = None
-    def __init__(self, widgets, width):
-        Gap.__init__(self, width)
-        self.widgets = widgets
-
-    def _configure(self, qtile, screen, event):
-        if not self in [screen.top, screen.bottom]:
-            raise config.ConfigError("Bars must be at the top or the bottom of the screen.")
-        Gap._configure(self, qtile, screen, event)
-        colormap = qtile.display.screen().default_colormap
-        self.background = colormap.alloc_named_color("black").pixel
-        self.window = window.Internal.create(self.qtile, self.background, *self.geometry())
-        for i in self.widgets:
-            i._configure(qtile, self, event)
-        qtile.internalMap[self.window.window] = self.window
-        self.window.unhide()
-        self.draw()
-
-    def draw(self):
-        offset = 0
-        for i in self.widgets:
-            i.draw(offset, 11)
-            offset += i.width

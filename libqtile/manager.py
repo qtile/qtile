@@ -56,28 +56,28 @@ class Screen:
 
     @property
     def dx(self):
-        return self.x + self.left.width if self.left else self.x
+        return self.x + self.left.size if self.left else self.x
 
     @property
     def dy(self):
-        return self.y + self.top.width if self.top else self.y
+        return self.y + self.top.size if self.top else self.y
 
     @property
     def dwidth(self):
         val = self.width
         if self.left:
-            val -= self.left.width
+            val -= self.left.size
         if self.right:
-            val -= self.right.width
+            val -= self.right.size
         return val
 
     @property
     def dheight(self):
         val = self.height
         if self.top:
-            val -= self.top.width
+            val -= self.top.size
         if self.bottom:
-            val -= self.bottom.width
+            val -= self.bottom.size
         return val
 
     def setGroup(self, g):
