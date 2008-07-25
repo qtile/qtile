@@ -595,6 +595,19 @@ class _BaseCommands(command.Commands):
         return lst
 
     @staticmethod
+    def cmd_barinfo(q, screen=None):
+        if not screen:
+            screen = q.currentScreen
+        else:
+            screen = self.screens[screen]
+        return dict(
+            top = screen.top.info() if screen.top else None,
+            bottom = screen.bottom.info() if screen.bottom else None,
+            left = screen.left.info() if screen.left else None,
+            right = screen.right.info() if screen.right else None,
+        )
+
+    @staticmethod
     def cmd_pullgroup(q, groupName, screen=None):
         """
             Pull a group to a specified screen.
@@ -611,6 +624,8 @@ class _BaseCommands(command.Commands):
         """
         if not screen:
             screen = q.currentScreen
+        else:
+            screen = self.screens[screen]
         group = q.groupMap.get(groupName)
         if group is None:
             raise command.CommandError("No such group: %s"%groupName)

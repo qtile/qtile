@@ -35,6 +35,7 @@ class GeomConf(libqtile.config.Config):
         )
     ]
 
+
 class uBarGeometry(utils.QTileTests):
     config = GeomConf()
     def test_geometry(self):
@@ -68,10 +69,97 @@ class uBarErr(utils._QTileTruss):
         self.qtileRaises("top or the bottom of the screen", config)
 
 
+class TestWidget(libqtile.bar._Widget):
+    def _configure(self, qtile, bar, event):
+        libqtile.bar._Widget._configure(self, qtile, bar, event)
+        self.width = 10
+
+    def draw(self): pass
+
+
+class OffsetConf(GeomConf):
+    screens = [
+        libqtile.Screen(
+            bottom=libqtile.bar.Bar(
+                [
+                    TestWidget(),
+                    libqtile.bar.Spacer(),
+                    TestWidget()
+                ],
+                10
+            )
+        )
+    ]
+
+
+class uOffsetCalculation(utils._QTileTruss):
+    def setUp(self):
+        utils._QTileTruss.setUp(self)
+        self.conf = GeomConf()
+
+    def tearDown(self):
+        utils._QTileTruss.tearDown(self)
+        self.stopQtile()
+
+    def test_basic(self):
+        self.conf.screens = [
+            libqtile.Screen(
+                bottom=libqtile.bar.Bar(
+                    [
+                        TestWidget(),
+                        libqtile.bar.Spacer(),
+                        TestWidget()
+                    ],
+                    10
+                )
+            )
+        ]
+        self.startQtile(self.conf)
+        i = self.c.barinfo()["bottom"]
+        assert i[0]["offset"] == 0
+        assert i[1]["offset"] == 10
+        assert i[1]["width"] == 780
+        assert i[2]["offset"] == 790
+
+    def test_singlespacer(self):
+        self.conf.screens = [
+            libqtile.Screen(
+                bottom=libqtile.bar.Bar(
+                    [
+                        libqtile.bar.Spacer(),
+                    ],
+                    10
+                )
+            )
+        ]
+        self.startQtile(self.conf)
+        i = self.c.barinfo()["bottom"]
+        assert i[0]["offset"] == 0
+        assert i[0]["width"] == 800
+
+    def test_nospacer(self):
+        self.conf.screens = [
+            libqtile.Screen(
+                bottom=libqtile.bar.Bar(
+                    [
+                        TestWidget(),
+                        TestWidget()
+                    ],
+                    10
+                )
+            )
+        ]
+        self.startQtile(self.conf)
+        i = self.c.barinfo()["bottom"]
+        assert i[0]["offset"] == 0
+        assert i[1]["offset"] == 10
+
+
 tests = [
     utils.XNest(xinerama=False), [
         uBarGeometry(),
         uGroupBox(),
         uBarErr(),
+        uOffsetCalculation()
     ]
 ]

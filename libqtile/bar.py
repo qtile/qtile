@@ -76,7 +76,7 @@ class Bar(Gap):
         for i in self.widgets:
             i._configure(qtile, self, event)
 
-        offset, total = 0, 0
+        offset = 0
         stretchWidget = None
         for i in self.widgets:
             i.offset = offset
@@ -84,6 +84,8 @@ class Bar(Gap):
                 stretchWidget = i
                 break
             offset += i.width
+
+        total = offset
         offset = self.width
         if stretchWidget:
             for i in reversed(self.widgets):
@@ -98,6 +100,9 @@ class Bar(Gap):
     def draw(self):
         for i in self.widgets:
             i.draw()
+
+    def info(self):
+        return [i.info() for i in self.widgets]
 
 
 class _Widget:
@@ -127,6 +132,22 @@ class _Widget:
         self.qtile, self.bar, self.event = qtile, bar, event
         self.gc = self.win.create_gc()
         self.font = qtile.display.open_font(self.fontName)
+
+    def info(self):
+        return dict(
+            name = self.__class__.__name__,
+            offset = self.offset,
+            width = self.width,
+        )
+
+
+class Spacer(_Widget):
+    def _configure(self, qtile, bar, event):
+        _Widget._configure(self, qtile, bar, event)
+        self.width = STRETCH
+
+    def draw(self):
+        pass
 
 
 class GroupBox(_Widget):
