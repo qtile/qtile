@@ -10,13 +10,17 @@ class QTileError(Exception): pass
 
 
 class Event:
-    def __init__(self, )
+    def __init__(self):
+        self.events = {}
+
     def subscribe(self, event, func):
-        pass
+        lst = self.events.setdefault(event, [])
+        if not func in lst:
+            lst.append(func)
 
-    def __getattr__(self, attr):
-        pass
-
+    def fire(self, event, *args, **kwargs):
+        for i in self.events.get(event, []):
+            i(*args, **kwargs)
 
 
 class Key:
@@ -40,14 +44,15 @@ class Screen:
         self.top, self.bottom = top, bottom
         self.left, self.right = left, right
 
-    def _configure(self, qtile, index, x, y, width, height, group):
+    def _configure(self, qtile, index, x, y, width, height, group, event):
         self.qtile = qtile
         self.index, self.x, self.y = index, x, y,
         self.width, self.height = width, height
         self.setGroup(group)
+        self.event = event
         for i in [self.top, self.bottom, self.left, self.right]:
             if i:
-                i._configure(qtile, self)
+                i._configure(qtile, self, event)
 
     @property
     def dx(self):
@@ -220,6 +225,7 @@ class QTile:
                     self.display.get_default_screen()
                )
         self.root = defaultScreen.root
+        self.event = Event()
 
         self.atoms = dict(
             internal = self.display.intern_atom("QTILE_INTERNAL"),
@@ -252,7 +258,8 @@ class QTile:
                     s["y"],
                     s["width"],
                     s["height"],
-                    self.groups[i]
+                    self.groups[i],
+                    self.event
                 )
                 self.screens.append(scr)
         else:
@@ -266,7 +273,8 @@ class QTile:
                 0, 0, 0,
                 defaultScreen.width_in_pixels,
                 defaultScreen.height_in_pixels,
-                self.groups[0]
+                self.groups[0],
+                self.event
             )
             self.screens.append(s)
         self.currentScreen = self.screens[0]

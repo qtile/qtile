@@ -6,8 +6,8 @@ class Gap:
         self.width = width
         self.qtile, self.screen = None, None
 
-    def _configure(self, qtile, screen):
-        self.qtile, self.screen = qtile, screen
+    def _configure(self, qtile, screen, event):
+        self.qtile, self.screen, self.event = qtile, screen, event
 
     def geometry(self):
         """
@@ -37,8 +37,8 @@ class _Widget:
     def colormap(self):
         return self.qtile.display.screen().default_colormap
 
-    def _configure(self, qtile, bar):
-        self.qtile, self.bar = qtile, bar
+    def _configure(self, qtile, bar, event):
+        self.qtile, self.bar, self.event = qtile, bar, event
         self.gc = self.win.create_gc()
         self.font = qtile.display.open_font(self.fontName)
 
@@ -47,8 +47,8 @@ class GroupBox(_Widget):
     BOXPADDING_SIDE = 8
     BOXPADDING_TOP = 3
     PADDING = 3
-    def _configure(self, qtile, bar):
-        _Widget._configure(self, qtile, bar)
+    def _configure(self, qtile, bar, event):
+        _Widget._configure(self, qtile, bar, event)
         self.foreground = self.colormap.alloc_named_color("white").pixel
         self.background = self.colormap.alloc_named_color("#5866cf").pixel
         self.gc.change(foreground=self.foreground)
@@ -92,15 +92,15 @@ class Bar(Gap):
         Gap.__init__(self, width)
         self.widgets = widgets
 
-    def _configure(self, qtile, screen):
+    def _configure(self, qtile, screen, event):
         if not self in [screen.top, screen.bottom]:
             raise config.ConfigError("Bars must be at the top or the bottom of the screen.")
-        Gap._configure(self, qtile, screen)
+        Gap._configure(self, qtile, screen, event)
         colormap = qtile.display.screen().default_colormap
         self.background = colormap.alloc_named_color("black").pixel
         self.window = window.Internal.create(self.qtile, self.background, *self.geometry())
         for i in self.widgets:
-            i._configure(qtile, self)
+            i._configure(qtile, self, event)
         qtile.internalMap[self.window.window] = self.window
         self.window.unhide()
         self.draw()
