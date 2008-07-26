@@ -157,6 +157,7 @@ class Group(list):
         else:
             self.currentWindow = window
         self.layout.focus(window)
+        self.qtile.event.fire("focus_change")
         self.layoutAll()
 
     def info(self):

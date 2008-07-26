@@ -16,8 +16,13 @@ class _Window:
         self.updateName()
 
     def updateName(self):
-        self.name = self.window.get_wm_name()
-        self.qtile.event.fire("window_name_change")
+        try:
+            self.name = self.window.get_wm_name()
+            self.qtile.event.fire("window_name_change")
+        except Xlib.error.BadWindow():
+            # This usually means the window has just been deleted, and a new
+            # focus will be acquired shortly. We don't raise an event for this.
+            pass
 
     def info(self):
         return dict(

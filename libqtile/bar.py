@@ -199,3 +199,35 @@ class GroupBox(_Widget):
             )
             x += self.boxwidth
 
+
+class WindowName(_Widget):
+    PADDING = 5
+    def __init__(self, width=STRETCH):
+        self.width = width
+
+    def _configure(self, qtile, bar, event):
+        _Widget._configure(self, qtile, bar, event)
+        self.foreground = self.colormap.alloc_named_color("white").pixel
+        self.background = self.colormap.alloc_named_color("#5866cf").pixel
+        data = self.font.query_text_extents("Ag")
+        self.textheight = data.overall_ascent
+        self.y = self.textheight + (self.bar.size - self.textheight)/2
+        self.event.subscribe("window_name_change", self.draw)
+        self.event.subscribe("focus_change", self.draw)
+
+    def draw(self):
+        w = self.bar.screen.group.currentWindow
+        if w:
+            self.clear()
+            self.gc.change(
+                foreground=self.foreground,
+                background=self.background,
+            )
+            self.win.draw_text(
+                self.gc,
+                self.offset + self.PADDING,
+                self.y,
+                w.name
+            )
+
+

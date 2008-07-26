@@ -10,6 +10,7 @@ class GBConfig(libqtile.config.Config):
             bottom=libqtile.bar.Bar(
                         [
                             libqtile.bar.GroupBox(),
+                            libqtile.bar.WindowName(),
                         ],
                         20
                     ),
@@ -17,9 +18,10 @@ class GBConfig(libqtile.config.Config):
     ]
 
 
-class uGroupBox(utils.QTileTests):
+class uWidgets(utils.QTileTests):
     config = GBConfig()
     def test_draw(self):
+        self.testWindow("one")
         b = self.c.barinfo()["bottom"]
         assert b[0]["name"] == "GroupBox"
 
@@ -163,7 +165,7 @@ class uOffsetCalculation(utils._QTileTruss):
 tests = [
     utils.XNest(xinerama=False), [
         uBarGeometry(),
-        uGroupBox(),
+        uWidgets(),
         uBarErr(),
         uOffsetCalculation()
     ]
