@@ -132,6 +132,13 @@ class _Widget:
         self.gc = self.win.create_gc()
         self.font = qtile.display.open_font(self.fontName)
 
+    def clear(self):
+        self.gc.change(foreground=self.bar.background)
+        self.win.fill_rectangle(
+            self.gc, self.offset, 0,
+            self.width, self.bar.size
+        )
+
     def info(self):
         return dict(
             name = self.__class__.__name__,
@@ -172,10 +179,12 @@ class GroupBox(_Widget):
         self.event.subscribe("setgroup", self.draw)
 
     def draw(self):
+        self.clear()
         y = self.textheight + (self.bar.size - self.textheight)/2
         x = self.offset + self.PADDING
+        self.gc.change(foreground=self.foreground)
         for i in self.qtile.groups:
-            if self.qtile.currentGroup.name == i.name:
+            if self.bar.screen.group.name == i.name:
                 self.gc.change(foreground=self.background)
                 self.win.fill_rectangle(
                     self.gc, x, 0,

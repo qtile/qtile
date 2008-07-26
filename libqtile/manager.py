@@ -98,6 +98,7 @@ class Screen:
             group._setScreen(self)
         self.event.fire("setgroup")
 
+
 class Group(list):
     def __init__(self, name, layouts, qtile):
         list.__init__(self)
