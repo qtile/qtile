@@ -107,7 +107,6 @@ class Bar(Gap):
 
 class _Widget:
     """
-
         Each widget must set its own width attribute when the _configure method
         is called. If this is set to the special value STRETCH, the bar itself
         will set the width to the maximum remaining space, after all other
@@ -170,6 +169,7 @@ class GroupBox(_Widget):
                 self.textwidth = fw
         self.boxwidth = self.BOXPADDING_SIDE*2 + self.textwidth
         self.width = self.boxwidth * len(qtile.groups) + 2 * self.PADDING
+        self.event.subscribe("setgroup", self.draw)
 
     def draw(self):
         y = self.textheight + (self.bar.size - self.textheight)/2

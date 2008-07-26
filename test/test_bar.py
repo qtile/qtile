@@ -19,8 +19,13 @@ class GBConfig(libqtile.config.Config):
 
 class uGroupBox(utils.QTileTests):
     config = GBConfig()
-    def test_one(self):
-        time.sleep(1)
+    def test_draw(self):
+        b = self.c.barinfo()["bottom"]
+        assert b[0]["name"] == "GroupBox"
+
+    def test_event(self):
+        self.c.pullgroup("b")
+        self.c.log()
     
 
 class GeomConf(libqtile.config.Config):

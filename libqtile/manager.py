@@ -10,7 +10,8 @@ class QTileError(Exception): pass
 
 
 class Event:
-    def __init__(self):
+    def __init__(self, qtile):
+        self.qtile = qtile
         self.events = {}
 
     def subscribe(self, event, func):
@@ -19,6 +20,7 @@ class Event:
             lst.append(func)
 
     def fire(self, event, *args, **kwargs):
+        self.qtile.log.add("Internal event: %s(%s, %s)"%(event, args, kwargs))
         for i in self.events.get(event, []):
             i(*args, **kwargs)
 
@@ -45,11 +47,10 @@ class Screen:
         self.left, self.right = left, right
 
     def _configure(self, qtile, index, x, y, width, height, group, event):
-        self.qtile = qtile
+        self.qtile, self.event = qtile, event
         self.index, self.x, self.y = index, x, y,
         self.width, self.height = width, height
         self.setGroup(group)
-        self.event = event
         for i in [self.top, self.bottom, self.left, self.right]:
             if i:
                 i._configure(qtile, self, event)
@@ -80,12 +81,22 @@ class Screen:
             val -= self.bottom.size
         return val
 
-    def setGroup(self, g):
-        if not (self.group is None) and self.group is not g:
-            self.group.hide()
-        self.group = g
-        self.group.toScreen(self)
-
+    def setGroup(self, group):
+        if group.screen == self:
+            return
+        elif group.screen:
+            tmpg = self.group
+            tmps = group.screen
+            tmps.group = tmpg
+            tmpg._setScreen(tmps)
+            self.group = group
+            group._setScreen(self)
+        else:
+            if self.group is not None:
+                self.group._setScreen(None)
+            self.group = group
+            group._setScreen(self)
+        self.event.fire("setgroup")
 
 class Group(list):
     def __init__(self, name, layouts, qtile):
@@ -113,11 +124,10 @@ class Group(list):
                 self.currentWindow.focus(False)
         self.resetMask()
 
-    def toScreen(self, screen):
-        if self.screen:
-            self.screen.group = None
+    def _setScreen(self, screen):
         self.screen = screen
-        self.layoutAll()
+        if self.screen:
+            self.layoutAll()
 
     def hide(self):
         self.screen = None
@@ -225,7 +235,7 @@ class QTile:
                     self.display.get_default_screen()
                )
         self.root = defaultScreen.root
-        self.event = Event()
+        self.event = Event(self)
 
         self.atoms = dict(
             internal = self.display.intern_atom("QTILE_INTERNAL"),
@@ -629,15 +639,7 @@ class _BaseCommands(command.Commands):
         group = q.groupMap.get(groupName)
         if group is None:
             raise command.CommandError("No such group: %s"%groupName)
-        elif group.screen == screen:
-            return
-        elif group.screen:
-            g = screen.group
-            s = group.screen
-            s.setGroup(g)
-            screen.setGroup(group)
-        else:
-            screen.setGroup(group)
+        screen.setGroup(group)
 
     @staticmethod
     def cmd_simulate_keypress(q, modifiers, key):

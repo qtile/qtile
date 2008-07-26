@@ -13,7 +13,14 @@ class TestConfig(libqtile.config.Config):
         libqtile.Key(["control"], "k", libqtile.command.Call("max_next")),
         libqtile.Key(["control"], "j", libqtile.command.Call("max_previous")),
     ]
-    screens = [libqtile.Screen()]
+    screens = [libqtile.Screen(
+            bottom=libqtile.bar.Bar(
+                        [
+                            libqtile.bar.GroupBox(),
+                        ],
+                        20
+                    ),
+    )]
 
 
 class uMultiScreen(utils.QTileTests):
@@ -143,12 +150,14 @@ class uQTile(utils.QTileTests):
         self.testWindow("one")
         libpry.raises("No such group", self.c.pullgroup, "nonexistent")
         self.c.pullgroup("b")
+        self._groupconsistency()
         if len(self.c.screens()) == 1:
             assert self.c.groups()["a"]["screen"] == None
         else:
             assert self.c.groups()["a"]["screen"] == 1
         assert self.c.groups()["b"]["screen"] == 0
         self.c.pullgroup("c")
+        self._groupconsistency()
         assert self.c.groups()["c"]["screen"] == 0
 
     def test_unmap_noscreen(self):
@@ -156,6 +165,7 @@ class uQTile(utils.QTileTests):
         pid = self.testWindow("two")
         assert len(self.c.windows()) == 2
         self.c.pullgroup("c")
+        self._groupconsistency()
         assert len(self.c.windows()) == 2
         self.kill(pid)
         assert len(self.c.windows()) == 1
@@ -259,7 +269,11 @@ class uEvent(libpry.AutoTree):
         self.testVal = None
         def test(x):
             self.testVal = x
-        e = libqtile.Event()
+        class Dummy: pass
+        dummy = Dummy()
+        io = cStringIO.StringIO()
+        dummy.log = libqtile.Log(5, io)
+        e = libqtile.Event(dummy)
         e.subscribe("testing", test)
         e.fire("testing", 1)
         assert self.testVal == 1

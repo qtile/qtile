@@ -172,3 +172,16 @@ class QTileTests(_QTileTruss):
     def tearDown(self):
         _QTileTruss.tearDown(self)
         self.stopQtile()
+
+    def _groupconsistency(self):
+        groups = self.c.groups()
+        screens = self.c.screens()
+        seen = set()
+        for g in groups.values():
+            scrn = g["screen"]
+            if scrn is not None:
+                if scrn in seen:
+                    raise AssertionError, "Screen referenced from more than one group."
+                seen.add(scrn)
+                assert screens[scrn]["group"] == g["name"]
+        assert len(seen) == len(screens), "Not all screens had an attached group."

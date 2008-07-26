@@ -34,4 +34,4 @@ class File(Config):
         self.keys = globs.get("keys")
         self.groups = globs.get("groups")
         self.layouts = globs.get("layouts")
-        self.bars = globs.get("bars")
+        self.screens = globs.get("screens")
