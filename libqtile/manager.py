@@ -387,6 +387,15 @@ class QTile:
                 X.GrabModeAsync
             )
 
+    def _eventStr(self, e):
+        """
+            Returns a somewhat less verbose descriptive event string.
+        """
+        s = str(e)
+        s = s.replace("Xlib.protocol.event.", "")
+        s = s.replace("Xlib.display.", "")
+        return s
+
     def loop(self):
         try:
             while 1:
@@ -402,12 +411,12 @@ class QTile:
                     e = self.display.next_event()
                     h = self.handlers.get(e.type)
                     if h:
-                        self.log.add("Handling: %s"%e)
+                        self.log.add("Handling: %s"%self._eventStr(e))
                         h(e)
                     elif e.type in self.ignoreEvents:
                         pass
                     else:
-                        self.log.add("Unknown event: %s"%e)
+                        self.log.add("Unknown event: %s"%self._eventStr(e))
         except:
             self.writeReport(traceback.format_exc())
 
@@ -459,7 +468,7 @@ class QTile:
             elif e.atom == Xatom.WM_NORMAL_HINTS:
                 print >> sys.stderr, "normal_hints"
             elif e.atom == Xatom.WM_NAME:
-                print >> sys.stderr, "name"
+                c.updateName()
             else:
                 print >> sys.stderr, e
 

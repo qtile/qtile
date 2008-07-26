@@ -13,6 +13,11 @@ class _Window:
         self.hidden = True
         window.change_attributes(event_mask=self._windowMask)
         self.x, self.y, self.width, self.height = None, None, None, None
+        self.updateName()
+
+    def updateName(self):
+        self.name = self.window.get_wm_name()
+        self.qtile.event.fire("window_name_change")
 
     def info(self):
         return dict(
@@ -23,13 +28,6 @@ class _Window:
             height = self.height,
             id = str(hex(self.window.id))
         )
-
-    @property
-    def name(self):
-        try:
-            return self.window.get_wm_name()
-        except Xlib.error.BadWindow:
-            return "<nonexistent>"
 
     def kill(self):
         if self.hasProtocol("WM_DELETE_WINDOW"):
