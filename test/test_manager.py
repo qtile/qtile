@@ -53,6 +53,8 @@ class uSingle(utils.QTileTests):
         p = os.path.join(self["tmpdir"], "crashreport")
         self.c.report("msg", p)
         assert os.path.isfile(p)
+        self.c.report("msg", p)
+        assert os.path.isfile(p + ".0")
 
     def test_keypress(self):
         self.testWindow("one")

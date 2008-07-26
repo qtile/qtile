@@ -498,7 +498,13 @@ class QTile:
         if self._testing and not _force:
             print >> sys.stderr, "Server Error:", m
             return
-        p = os.path.expanduser(path)
+        suffix = 0
+        base = p = os.path.expanduser(path)
+        while 1:
+            if not os.path.exists(p):
+                break
+            p = base + ".%s"%suffix
+            suffix += 1
         f = open(p, "a+")
         print >> f, "*** QTILE REPORT", datetime.datetime.now()
         print >> f, "Message:", m
