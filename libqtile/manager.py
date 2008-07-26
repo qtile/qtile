@@ -129,6 +129,8 @@ class Group(list):
         self.screen = screen
         if self.screen:
             self.layoutAll()
+        else:
+            self.hide()
 
     def hide(self):
         self.screen = None
