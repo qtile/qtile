@@ -105,6 +105,78 @@ class Bar(Gap):
         return [i.info() for i in self.widgets]
 
 
+
+class _Graph:
+    """
+        A helper class for drawing and text layout.
+    """
+    _fallbackFont = "-*-luxi mono-*-r-*-*-15-*-*-*-*-*-*-*"
+    def __init__(self, qtile, window):
+        self.qtile, self.window = qtile, window
+        self.win = window.window
+        self.gc = self.win.create_gc()
+        self.colormap = qtile.display.screen().default_colormap
+        self.colors = {}
+        
+    def color(self, color):
+        if isinstance(color, int):
+            return color
+        if self.colors.has_key(color):
+            return self.colors[color]
+        else:
+            c = self.colormap.alloc_named_color(color).pixel
+            self.colors[color] = c
+            return c
+
+    def setFont(self, font):
+        f = self.qtile.display.open_font(font)
+        if not f:
+            print >> sys.stderr, "Could not open font %s, falling back."%font
+            f = self.qtile.display.open_font(self._fallbackFont)
+        self.font = f
+
+    def textsize(self, *text):
+        """
+            Return a textheight, textwidth tuple, for a box large enough to
+            enclose any of the passed strings.
+        """
+        textheight, textwidth = 0, 0
+        for i in text:
+            data = self.font.query_text_extents(i)
+            if  data.overall_ascent > textheight:
+                textheight = data.overall_ascent
+            if data.overall_width > textwidth:
+                textwidth = data.overall_width
+        return textheight, textwidth
+
+    def change(self, **kwargs):
+        if kwargs.has_key("background"):
+            kwargs["background"] = self.color(kwargs["background"])
+        if kwargs.has_key("foreground"):
+            kwargs["foreground"] = self.color(kwargs["foreground"])
+        self.gc.change(**kwargs)
+
+    def textbox(self, text, x, y, width, height, padding = 0, background=None, **attrs):
+        """
+            Draw text in the specified box using the current font. Text is
+            centered vertically, and left-aligned. 
+            
+            :background Fill box with the specified color first.
+            :padding  Padding to the left of the text.
+        """
+        if background:
+            self.rectangle(x, y, width, height, background)
+        if attrs:
+            self.change(**attrs)
+        textheight, textwidth = self.textsize(text)
+        y = y + textheight + (height - textheight)/2
+        self.win.draw_text(self.gc, x + padding, y, text)
+
+    def rectangle(self, x, y, width, height, color):
+        self.change(foreground=color)
+        self.win.fill_rectangle(self.gc, x, 0, width, height)
+
+
 class _Widget:
     """
         Each widget must set its own width attribute when the _configure method
@@ -116,7 +188,7 @@ class _Widget:
         The offset attribute is set by the Bar after all widgets have been
         configured.
     """
-    fontName = "-*-freemono-bold-r-normal-*-18-*-*-*-m-*-*-*"
+    fontName = "-*-luxi mono-*-r-*-*-15-*-*-*-*-*-*-*"
     width = None
     offset = None
     @property
@@ -131,12 +203,13 @@ class _Widget:
         self.qtile, self.bar, self.event = qtile, bar, event
         self.gc = self.win.create_gc()
         self.font = qtile.display.open_font(self.fontName)
+        self.graph = _Graph(qtile, self.bar.window)
+        self.graph.setFont(self.fontName)
 
     def clear(self):
-        self.gc.change(foreground=self.bar.background)
-        self.win.fill_rectangle(
-            self.gc, self.offset, 0,
-            self.width, self.bar.size
+        self.graph.rectangle(
+            self.offset, 0, self.width, self.bar.size,
+            self.bar.background
         )
 
     def info(self):
@@ -158,76 +231,51 @@ class Spacer(_Widget):
 
 class GroupBox(_Widget):
     BOXPADDING_SIDE = 8
-    BOXPADDING_TOP = 3
     PADDING = 3
+    foreground = "white"
+    background = "#5866cf"
     def _configure(self, qtile, bar, event):
         _Widget._configure(self, qtile, bar, event)
-        self.foreground = self.colormap.alloc_named_color("white").pixel
-        self.background = self.colormap.alloc_named_color("#5866cf").pixel
-        self.gc.change(foreground=self.foreground)
-        self.textheight, self.textwidth = 0, 0
-        for i in qtile.groups:
-            data = self.font.query_text_extents(i.name)
-            th = data.overall_ascent
-            fw = data.overall_width
-            if th > self.textheight:
-                self.textheight = th
-            if fw > self.textwidth:
-                self.textwidth = fw
+        self.textheight, self.textwidth = self.graph.textsize(*[i.name for i in qtile.groups])
         self.boxwidth = self.BOXPADDING_SIDE*2 + self.textwidth
         self.width = self.boxwidth * len(qtile.groups) + 2 * self.PADDING
         self.event.subscribe("setgroup", self.draw)
 
     def draw(self):
         self.clear()
-        y = self.textheight + (self.bar.size - self.textheight)/2
         x = self.offset + self.PADDING
-        self.gc.change(foreground=self.foreground)
         for i in self.qtile.groups:
+            background = None
             if self.bar.screen.group.name == i.name:
-                self.gc.change(foreground=self.background)
-                self.win.fill_rectangle(
-                    self.gc, x, 0,
-                    self.boxwidth, self.bar.size
-                )
-                self.gc.change(foreground=self.foreground)
-            self.win.draw_text(
-                self.gc,
-                x + self.BOXPADDING_SIDE,
-                y,
-                i.name
+                background = self.background
+            self.graph.textbox(
+                i.name,
+                x, 0, self.boxwidth, self.bar.size,
+                padding = self.BOXPADDING_SIDE,
+                foreground = self.foreground,
+                background = background
             )
             x += self.boxwidth
 
 
 class WindowName(_Widget):
     PADDING = 5
+    foreground = "white"
+    background = "#5866cf"
     def __init__(self, width=STRETCH):
         self.width = width
 
     def _configure(self, qtile, bar, event):
         _Widget._configure(self, qtile, bar, event)
-        self.foreground = self.colormap.alloc_named_color("white").pixel
-        self.background = self.colormap.alloc_named_color("#5866cf").pixel
-        data = self.font.query_text_extents("Ag")
-        self.textheight = data.overall_ascent
-        self.y = self.textheight + (self.bar.size - self.textheight)/2
         self.event.subscribe("window_name_change", self.draw)
         self.event.subscribe("focus_change", self.draw)
 
     def draw(self):
         w = self.bar.screen.group.currentWindow
         if w:
-            self.clear()
-            self.gc.change(
+            self.graph.textbox(
+                w.name,
+                self.offset + self.PADDING, 0, self.width, self.bar.size,
                 foreground=self.foreground,
                 background=self.background,
             )
-            self.win.draw_text(
-                self.gc,
-                self.offset + self.PADDING,
-                self.y,
-                w.name
-            )
-
-
