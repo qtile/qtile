@@ -441,7 +441,8 @@ class QTile:
     def configureRequest(self, e):
         c = self.windowMap.get(e.window)
         if c and c.group.screen:
-            c.group.focus(c, False)
+            c.group.layout.configure(c)
+            c.notify()
         else:
             # It's not managed, or not mapped, so we just obey it.
             args = {}
@@ -745,9 +746,11 @@ class _BaseCommands(command.Commands):
         """
         if q.debug:
             q.debug = False
+            q.log.debug = None
             return "off"
         else:
             q.debug = True
+            q.log.debug = sys.stderr
             return "on"
 
     @staticmethod

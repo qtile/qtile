@@ -13,6 +13,7 @@ class _Window:
         self.hidden = True
         window.change_attributes(event_mask=self._windowMask)
         self.x, self.y, self.width, self.height = None, None, None, None
+        self.borderwidth = 0
         self.updateName()
 
     def updateName(self):
@@ -33,6 +34,20 @@ class _Window:
             height = self.height,
             id = str(hex(self.window.id))
         )
+
+    def notify(self):
+        e = event.ConfigureNotify(
+                window = self.window,
+                event = self.window,
+                x = self.x,
+                y = self.y,
+                width = self.width,
+                height = self.height,
+                border_width = self.borderwidth,
+                override = False,
+                above_sibling = X.NONE
+        )
+        self.window.send_event(e)
 
     def kill(self):
         if self.hasProtocol("WM_DELETE_WINDOW"):
