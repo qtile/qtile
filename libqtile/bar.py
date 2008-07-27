@@ -1,3 +1,4 @@
+import sys
 import manager, window, config
 import Xlib.X
 
@@ -110,7 +111,7 @@ class _Graph:
     """
         A helper class for drawing and text layout.
     """
-    _fallbackFont = "-*-luxi mono-*-r-*-*-15-*-*-*-*-*-*-*"
+    _fallbackFont = "-*-fixed-bold-r-normal-*-15-*-*-*-c-*-*-*"
     def __init__(self, qtile, window):
         self.qtile, self.window = qtile, window
         self.win = window.window
@@ -131,7 +132,7 @@ class _Graph:
     def setFont(self, font):
         f = self.qtile.display.open_font(font)
         if not f:
-            print >> sys.stderr, "Could not open font %s, falling back."%font
+            self.qtile.log.add("Could not open font %s, falling back."%font)
             f = self.qtile.display.open_font(self._fallbackFont)
         self.font = f
         self.gc.change(font=f)
