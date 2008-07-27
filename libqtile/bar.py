@@ -106,7 +106,6 @@ class Bar(Gap):
         return [i.info() for i in self.widgets]
 
 
-
 class _Graph:
     """
         A helper class for drawing and text layout.
@@ -274,10 +273,13 @@ class WindowName(_Widget):
     def draw(self):
         w = self.bar.screen.group.currentWindow
         if w:
-            self.graph.textbox(
-                w.name,
-                self.offset, 0, self.width, self.bar.size,
-                padding = self.PADDING,
-                foreground=self.foreground,
-                background=self.background,
-            )
+            name = w.name
+        else:
+            name = ""
+        self.graph.textbox(
+            name,
+            self.offset, 0, self.width, self.bar.size,
+            padding = self.PADDING,
+            foreground=self.foreground,
+            background=self.background,
+        )

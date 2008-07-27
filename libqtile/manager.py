@@ -97,6 +97,7 @@ class Screen:
             self.group = group
             group._setScreen(self)
         self.event.fire("setgroup")
+        self.qtile.event.fire("focus_change")
 
 
 class Group(list):
