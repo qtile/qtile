@@ -133,6 +133,7 @@ class _Graph:
             self.qtile.log.add("Could not open font %s, falling back."%font)
             f = self.qtile.display.open_font(self._fallbackFont)
         self.font = f
+        _, self.font_ascent = self.textsize("A")
         self.gc.change(font=f)
 
     def textsize(self, *text):
@@ -168,8 +169,7 @@ class _Graph:
             self.rectangle(x, y, width, height, background)
         if attrs:
             self.change(**attrs)
-        textheight, textwidth = self.textsize(text)
-        y = y + textheight + (height - textheight)/2
+        y = y + self.font_ascent + (height - self.font_ascent)/2
         self.win.draw_text(self.gc, x + padding, y, text)
 
     def rectangle(self, x, y, width, height, color):
