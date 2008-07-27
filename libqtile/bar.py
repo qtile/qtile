@@ -53,7 +53,7 @@ class Gap:
 STRETCH = -1
 
 class Bar(Gap):
-    background = None
+    background = "black"
     widgets = None
     window = None
     def __init__(self, widgets, size):
@@ -65,10 +65,10 @@ class Bar(Gap):
             raise config.ConfigError("Bars must be at the top or the bottom of the screen.")
         Gap._configure(self, qtile, screen, event)
         colormap = qtile.display.screen().default_colormap
-        self.background = colormap.alloc_named_color("black").pixel
+        c = colormap.alloc_named_color(self.background).pixel
         self.window = window.Internal.create(
                         self.qtile,
-                        self.background,
+                        c,
                         self.x, self.y, self.width, self.height
                      )
         qtile.internalMap[self.window.window] = self.window
@@ -120,8 +120,6 @@ class _Graph:
         self.colors = {}
         
     def color(self, color):
-        if isinstance(color, int):
-            return color
         if self.colors.has_key(color):
             return self.colors[color]
         else:
