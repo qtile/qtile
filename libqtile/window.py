@@ -1,4 +1,4 @@
-import marshal
+import marshal, sys
 import Xlib
 from Xlib import X
 import Xlib.protocol.event as event
@@ -19,7 +19,7 @@ class _Window:
         try:
             self.name = self.window.get_wm_name()
             self.qtile.event.fire("window_name_change")
-        except Xlib.error.BadWindow():
+        except Xlib.error.BadWindow:
             # This usually means the window has just been deleted, and a new
             # focus will be acquired shortly. We don't raise an event for this.
             pass
