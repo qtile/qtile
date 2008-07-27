@@ -134,6 +134,7 @@ class _Graph:
             print >> sys.stderr, "Could not open font %s, falling back."%font
             f = self.qtile.display.open_font(self._fallbackFont)
         self.font = f
+        self.gc.change(font=f)
 
     def textsize(self, *text):
         """
@@ -143,8 +144,8 @@ class _Graph:
         textheight, textwidth = 0, 0
         for i in text:
             data = self.font.query_text_extents(i)
-            if  data.overall_ascent > textheight:
-                textheight = data.overall_ascent
+            if  data.font_ascent > textheight:
+                textheight = data.font_ascent
             if data.overall_width > textwidth:
                 textwidth = data.overall_width
         return textheight, textwidth
@@ -188,7 +189,7 @@ class _Widget:
         The offset attribute is set by the Bar after all widgets have been
         configured.
     """
-    fontName = "-*-luxi mono-*-r-*-*-15-*-*-*-*-*-*-*"
+    font = "-*-luxi mono-*-r-*-*-12-*-*-*-*-*-*-*"
     width = None
     offset = None
     @property
@@ -201,10 +202,8 @@ class _Widget:
 
     def _configure(self, qtile, bar, event):
         self.qtile, self.bar, self.event = qtile, bar, event
-        self.gc = self.win.create_gc()
-        self.font = qtile.display.open_font(self.fontName)
         self.graph = _Graph(qtile, self.bar.window)
-        self.graph.setFont(self.fontName)
+        self.graph.setFont(self.font)
 
     def clear(self):
         self.graph.rectangle(
@@ -232,8 +231,11 @@ class Spacer(_Widget):
 class GroupBox(_Widget):
     BOXPADDING_SIDE = 8
     PADDING = 3
-    foreground = "white"
-    background = "#5866cf"
+    def __init__(self, foreground="white", background="#5866cf", font=None):
+        self.foreground, self.background = foreground, background
+        if font:
+            self.font = font
+
     def _configure(self, qtile, bar, event):
         _Widget._configure(self, qtile, bar, event)
         self.textheight, self.textwidth = self.graph.textsize(*[i.name for i in qtile.groups])
@@ -260,10 +262,10 @@ class GroupBox(_Widget):
 
 class WindowName(_Widget):
     PADDING = 5
-    foreground = "white"
-    background = "#5866cf"
-    def __init__(self, width=STRETCH):
-        self.width = width
+    def __init__(self, width=STRETCH, foreground="white", background="#5866cf", font=None):
+        self.width, self.foreground, self.background = width, foreground, background
+        if font:
+            self.font = font
 
     def _configure(self, qtile, bar, event):
         _Widget._configure(self, qtile, bar, event)
@@ -275,7 +277,8 @@ class WindowName(_Widget):
         if w:
             self.graph.textbox(
                 w.name,
-                self.offset + self.PADDING, 0, self.width, self.bar.size,
+                self.offset, 0, self.width, self.bar.size,
+                padding = self.PADDING,
                 foreground=self.foreground,
                 background=self.background,
             )
