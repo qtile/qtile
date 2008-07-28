@@ -1,4 +1,4 @@
-import inspect, UserDict, traceback, textwrap
+import inspect, UserDict, traceback, textwrap, os
 import ipc
 
 class CommandError(Exception): pass
@@ -8,8 +8,12 @@ SUCCESS = 0
 ERROR = 1
 EXCEPTION = 2
 
+SOCKBASE = ".qtilesocket.%s"
+
 class _Server(ipc.Server):
     def __init__(self, fname, qtile, config):
+        if os.path.exists(fname):
+            os.unlink(fname)
         ipc.Server.__init__(self, fname, self.call)
         self.qtile, self.commands = qtile, config.commands()
 
@@ -49,6 +53,12 @@ class Call:
 
 class Client(ipc.Client):
     def __init__(self, fname, config):
+        if not fname:
+            d = os.environ.get("DISPLAY")
+            if not d:
+                d = ":0.0"
+            fname = os.path.join("~", SOCKBASE%d)
+            fname = os.path.expanduser(fname)
         ipc.Client.__init__(self, fname)
         self.commands = config.commands()
 

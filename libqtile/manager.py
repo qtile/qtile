@@ -235,7 +235,16 @@ class QTile:
     _exit = False
     _testing = False
     _logLength = 100 
-    def __init__(self, config, displayName, fname):
+    def __init__(self, config, displayName=None, fname=None):
+        if not displayName:
+            displayName = os.environ.get("DISPLAY")
+            if not displayName:
+                raise QTileError("No DISPLAY set.")
+        if not fname:
+            if not "." in displayName:
+                displayName = displayName + ".0"
+            fname = os.path.join("~", command.SOCKBASE%displayName)
+            fname = os.path.expanduser(fname)
         self.display = Xlib.display.Display(displayName)
         self.config, self.fname = config, fname
         self.log = Log(

@@ -25,16 +25,7 @@ def main():
         c = config.File(options.configfile)
     except config.ConfigError, v:
         parser.error(v.message)
-    d = os.environ.get("DISPLAY")
-    if not "." in d:
-        d = d + ".0"
-    if not d:
-        parser.error("No DISPLAY set.")
-    fname = os.path.join("~", ".qtilesocket.%s"%d)
-    fname = os.path.expanduser(fname)
-    if os.path.exists(fname):
-        os.unlink(fname)
-    q = libqtile.QTile(c, d, fname)
+    q = libqtile.QTile(c)
     q.debug = options.debug
     q.loop()
 
