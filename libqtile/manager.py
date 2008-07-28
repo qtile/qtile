@@ -4,7 +4,7 @@ import Xlib.display
 import Xlib.ext.xinerama as xinerama
 from Xlib import X, XK, Xatom
 import Xlib.protocol.event as event
-import command, utils, window
+import command, utils, window, config
 
 class QTileError(Exception): pass
 
@@ -51,9 +51,16 @@ class Screen:
         self.index, self.x, self.y = index, x, y,
         self.width, self.height = width, height
         self.setGroup(group)
+        for i in self.gaps:
+            i._configure(qtile, self, event)
+
+    @property
+    def gaps(self):
+        lst = []
         for i in [self.top, self.bottom, self.left, self.right]:
             if i:
-                i._configure(qtile, self, event)
+                lst.append(i)
+        return lst
 
     @property
     def dx(self):
@@ -228,7 +235,6 @@ class QTile:
     _exit = False
     _testing = False
     _logLength = 100 
-
     def __init__(self, config, displayName, fname):
         self.display = Xlib.display.Display(displayName)
         self.config, self.fname = config, fname
@@ -248,9 +254,10 @@ class QTile:
         )
         self.windowMap = {}
         self.internalMap = {}
+        self.widgetMap = {}
+        self.groupMap = {}
 
         self.groups = []
-        self.groupMap = {}
         for i in self.config.groups:
             g = Group(i, self.config.layouts, self)
             self.groups.append(g)
@@ -337,6 +344,16 @@ class QTile:
             self.keyMap[(i.keysym, i.modmask)] = i
         self.grabKeys()
         self.scan()
+
+    def registerWidget(self, w):
+        """
+            Register a bar widget. If a widget with the same name already
+            exists, this raises a ConfigError.
+        """
+        if w.name:
+            if self.widgetMap.has_key(w.name):
+                raise config.ConfigError("Duplicate widget name: %s"%w.name)
+            self.widgetMap[w.name] = w
 
     @property
     def currentLayout(self):

@@ -1,5 +1,5 @@
 import sys
-import manager, window, config
+import manager, window, config, command
 import Xlib.X
 
 class Gap:
@@ -75,6 +75,7 @@ class Bar(Gap):
         self.window.unhide()
 
         for i in self.widgets:
+            qtile.registerWidget(i)
             i._configure(qtile, self, event)
 
         offset = 0
@@ -190,6 +191,9 @@ class _Widget:
     font = "-*-luxi mono-*-r-*-*-12-*-*-*-*-*-*-*"
     width = None
     offset = None
+    name = None
+    commands = None
+
     @property
     def win(self):
         return self.bar.window.window
@@ -258,28 +262,52 @@ class GroupBox(_Widget):
             x += self.boxwidth
 
 
-class WindowName(_Widget):
+class _TextBox(_Widget):
     PADDING = 5
-    def __init__(self, width=STRETCH, foreground="white", background="#5866cf", font=None):
+    def __init__(self, text="", width=STRETCH, foreground="white", background="#5866cf", font=None):
         self.width, self.foreground, self.background = width, foreground, background
+        self.text = text
         if font:
             self.font = font
 
-    def _configure(self, qtile, bar, event):
-        _Widget._configure(self, qtile, bar, event)
-        self.event.subscribe("window_name_change", self.draw)
-        self.event.subscribe("focus_change", self.draw)
-
     def draw(self):
-        w = self.bar.screen.group.currentWindow
-        if w:
-            name = w.name
-        else:
-            name = ""
         self.graph.textbox(
-            name,
+            self.text,
             self.offset, 0, self.width, self.bar.size,
             padding = self.PADDING,
             foreground=self.foreground,
             background=self.background,
         )
+
+
+class WindowName(_TextBox):
+    def _configure(self, qtile, bar, event):
+        _Widget._configure(self, qtile, bar, event)
+        self.event.subscribe("window_name_change", self.update)
+        self.event.subscribe("focus_change", self.update)
+
+    def update(self):
+        w = self.bar.screen.group.currentWindow
+        self.text = w.name if w else ""
+        self.draw()
+
+
+class _TextBoxCommands(command.Commands):
+    def cmd_textbox_update(self, q, name, text):
+        w = q.widgetMap.get(name)
+        if not w:
+            q.log.add("No such widget: %s"%name)
+            return
+        w.update(text)
+
+
+class TextBox(_TextBox):
+    commands = _TextBoxCommands()
+    def __init__(self, name, text="", width=STRETCH,
+                 foreground="white", background="#5866cf", font=None):
+        self.name = name
+        _TextBox.__init__(self, text, width, foreground, background, font)
+
+    def update(self, text):
+        self.text = text
+        self.draw()

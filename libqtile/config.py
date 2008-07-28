@@ -9,12 +9,16 @@ class Config:
     keys = ()
     groups = None
     layouts = None
-    bars = None
     screens = ()
     def commands(self):
         c = manager._BaseCommands()
         for i in self.layouts:
             c.update(i.commands)
+        for i in self.screens:
+            for b in i.gaps:
+                if hasattr(b, "widgets"):
+                    for w in b.widgets:
+                        c.update(w.commands)
         return c
         
 

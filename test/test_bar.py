@@ -11,6 +11,7 @@ class GBConfig(libqtile.config.Config):
                         [
                             libqtile.bar.GroupBox(),
                             libqtile.bar.WindowName(),
+                            libqtile.bar.TextBox("text", text="default", width=100),
                         ],
                         20
                     ),
@@ -28,6 +29,9 @@ class uWidgets(utils.QTileTests):
     def test_event(self):
         self.c.pullgroup("b")
         self.c.log()
+
+    def test_textbox_update(self):
+        self.c.textbox_update("text", "testing...")
     
 
 class GeomConf(libqtile.config.Config):
