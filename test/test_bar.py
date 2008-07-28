@@ -36,6 +36,12 @@ class uWidgets(utils.QTileTests):
         assert self.c.textbox_get("text") == "testing"
         libpry.raises("No such widget", self.c.textbox_get, "nonexistent")
 
+    def test_groupbox_click(self):
+        self.c.pullgroup("b")
+        assert self.c.groups()["a"]["screen"] == None
+        self.c.bar_fake_click(0, "bottom", 10, 10)
+        assert self.c.groups()["a"]["screen"] == 0
+        
 
 class GeomConf(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]

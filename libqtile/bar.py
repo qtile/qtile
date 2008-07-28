@@ -3,6 +3,7 @@ import manager, window, config, command
 import Xlib.X
 
 class Gap:
+    commands = None
     def __init__(self, size):
         self.size = size
         self.qtile, self.screen = None, None
@@ -50,12 +51,38 @@ class Gap:
         return self.x, self.y, self.width, self.height
 
 
-STRETCH = -1
+class _BarCommands(command.Commands):
+    def _get(self, q, screen, position):
+        if len(q.screens) - 1 > screen:
+            raise command.CommandError("No such screen: %s"%screen)
+        s = q.screens[screen]
+        b = getattr(s, position)
+        if not b:
+            raise command.CommandError("No such bar: %s:%s"%(screen, position))
+        return b
 
+    def cmd_bar_fake_click(self, q, screen, position, x, y):
+        """
+            Fake a mouse-click on the bar. Co-ordinates are relative 
+            to the top-left corner of the bar.
+
+            :screen The integer screen offset
+            :position One of "top", "bottom", "left", or "right"
+        """
+        b = self._get(q, screen, position)
+        class _fake: pass
+        fake = _fake()
+        fake.event_x = x
+        fake.event_y = y
+        b.handle_ButtonPress(fake)
+
+
+STRETCH = -1
 class Bar(Gap):
     background = "black"
     widgets = None
     window = None
+    commands = _BarCommands()
     def __init__(self, widgets, size):
         Gap.__init__(self, size)
         self.widgets = widgets
@@ -72,6 +99,7 @@ class Bar(Gap):
                         self.x, self.y, self.width, self.height
                      )
         self.window.handle_Expose = self.handle_Expose
+        self.window.handle_ButtonPress = self.handle_ButtonPress
         qtile.internalMap[self.window.window] = self.window
         self.window.unhide()
 
@@ -101,6 +129,12 @@ class Bar(Gap):
 
     def handle_Expose(self, e):
         self.draw()
+
+    def handle_ButtonPress(self, e):
+        for i in self.widgets:
+            if e.event_x < i.offset + i.width:
+                i.click(e.event_x - i.offset, e.event_y)
+                break
 
     def draw(self):
         for i in self.widgets:
@@ -223,6 +257,9 @@ class _Widget:
             width = self.width,
         )
 
+    def click(self, x, y):
+        pass
+
 
 class Spacer(_Widget):
     def _configure(self, qtile, bar, event):
@@ -240,6 +277,10 @@ class GroupBox(_Widget):
         self.foreground, self.background = foreground, background
         if font:
             self.font = font
+
+    def click(self, x, y):
+        groupOffset = x/self.boxwidth
+        self.bar.screen.setGroup(self.qtile.groups[groupOffset])
 
     def _configure(self, qtile, bar, event):
         _Widget._configure(self, qtile, bar, event)

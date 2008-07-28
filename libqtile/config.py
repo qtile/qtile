@@ -16,6 +16,7 @@ class Config:
             c.update(i.commands)
         for i in self.screens:
             for b in i.gaps:
+                c.update(b.commands)
                 if hasattr(b, "widgets"):
                     for w in b.widgets:
                         c.update(w.commands)
