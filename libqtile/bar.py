@@ -293,13 +293,26 @@ class WindowName(_TextBox):
 
 
 class _TextBoxCommands(command.Commands):
-    def cmd_textbox_update(self, q, name, text):
+    def _get(self, q, name):
         w = q.widgetMap.get(name)
         if not w:
-            q.log.add("No such widget: %s"%name)
-            return
+            raise command.CommandError("No such widget: %s"%name)
+        return w
+
+    def cmd_textbox_update(self, q, name, text):
+        """
+            Update the text in a TextBox widget.
+        """
+        w = self._get(q, name)
         w.update(text)
 
+    def cmd_textbox_get(self, q, name):
+        """
+            Retrieve the text in a TextBox widget.
+        """
+        w = self._get(q, name)
+        return w.text
+                
 
 class TextBox(_TextBox):
     commands = _TextBoxCommands()

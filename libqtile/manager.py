@@ -952,3 +952,10 @@ class _BaseCommands(command.Commands):
             layout = group.layout
         return layout.info()
                 
+    @staticmethod
+    def cmd_list_widgets(q):
+        """
+            List all addressible widgets.
+        """
+        return q.widgetMap.keys()
+

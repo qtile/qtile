@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+"""
+    Command-line interaction with QTile TextBox widgets.
+"""
+import os, sys
+from optparse import OptionParser, OptionGroup
+import libqtile
+
+def main():
+    parser = OptionParser(
+                usage="%prog [options] name text",
+                version="%prog 0.1",
+            )
+    parser.add_option("-l", "--list",
+                      action="store_true", dest="list",
+                      help="List addressible widgets.")
+    parser.add_option(
+                        "-c", "--config",
+                        action="store", type="string",
+                        default=None,
+                        dest="configfile",
+                        help='Use specified configuration file.'
+                    )
+    parser.add_option(
+                        "-s", "--socket",
+                        action="store", type="string",
+                        default=None,
+                        dest="socket",
+                        help='Use specified communication socket.'
+                    )
+    (options, args) = parser.parse_args()
+    try:
+        c = libqtile.config.File(options.configfile)
+    except libqtile.config.ConfigError, v:
+        parser.error(v.message)
+    if options.socket:
+        socketname = options.socket
+    else:
+        d = os.environ.get("DISPLAY")
+        if not d:
+            parser.error("No DISPLAY set.")
+        socketname = os.path.join("~", ".qtilesocket.%s"%d)
+        socketname = os.path.expanduser(socketname)
+    client = libqtile.command.Client(socketname, c)
+
+    if options.list:
+        for i in client.list_widgets():
+            print i
+    else:
+        if len(args) < 2:
+            parser.error("Please specify widget name and argument.")
+        try:
+            client.textbox_update(args[0], " ".join(args[1:]))
+        except libqtile.command.CommandError, v:
+            print >> sys.stderr, v
+            sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

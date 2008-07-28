@@ -30,9 +30,12 @@ class uWidgets(utils.QTileTests):
         self.c.pullgroup("b")
         self.c.log()
 
-    def test_textbox_update(self):
-        self.c.textbox_update("text", "testing...")
-    
+    def test_textbox(self):
+        assert "text" in self.c.list_widgets()
+        self.c.textbox_update("text", "testing")
+        assert self.c.textbox_get("text") == "testing"
+        libpry.raises("No such widget", self.c.textbox_get, "nonexistent")
+
 
 class GeomConf(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
