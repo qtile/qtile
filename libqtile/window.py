@@ -1,6 +1,6 @@
 import marshal, sys
 import Xlib
-from Xlib import X
+from Xlib import X, Xatom
 import Xlib.protocol.event as event
 
 class _Window:
@@ -164,7 +164,28 @@ class Window(_Window):
                  X.EnterWindowMask |\
                  X.FocusChangeMask
     group = None
+    def handle_EnterNotify(self, e):
+        self.group.focus(self, False)
+        if self.qtile.currentScreen != self.group.screen:
+            self.qtile.toScreen(self.group.screen.index)
+
+    def handle_ConfigureRequest(self, e):
+        if self.group.screen:
+            self.group.layout.configure(self)
+            self.notify()
+
+    def handle_PropertyNotify(self, e):
+        if e.atom == Xatom.WM_TRANSIENT_FOR:
+            print >> sys.stderr, "transient"
+        elif e.atom == Xatom.WM_HINTS:
+            print >> sys.stderr, "hints"
+        elif e.atom == Xatom.WM_NORMAL_HINTS:
+            print >> sys.stderr, "normal_hints"
+        elif e.atom == Xatom.WM_NAME:
+            self.updateName()
+        else:
+            print >> sys.stderr, e
+
     def __repr__(self):
         return "Window(%s)"%self.name
-
 

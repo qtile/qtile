@@ -2,7 +2,7 @@ import datetime, subprocess, sys, operator, os, traceback
 import Xlib
 import Xlib.display
 import Xlib.ext.xinerama as xinerama
-from Xlib import X, XK, Xatom
+from Xlib import X, XK
 import Xlib.protocol.event as event
 import command, utils, window, config
 
@@ -324,17 +324,6 @@ class QTile:
             sys.exit(1)
 
         self.server = command._Server(self.fname, self, config)
-
-        self.handlers = {
-            X.MapRequest:           self.handle_MapRequest,
-            X.DestroyNotify:        self.handle_DestroyNotify,
-            X.UnmapNotify:          self.handle_UnmapNotify,
-            X.EnterNotify:          self.handle_EnterNotify,
-            X.MappingNotify:        self.handle_MappingNotify,
-            X.KeyPress:             self.handle_KeyPress,
-            X.ConfigureRequest:     self.handle_ConfigureRequest,
-            X.PropertyNotify:       self.handle_PropertyNotify,
-        }
         self.ignoreEvents = set([
             X.KeyRelease,
             X.ReparentNotify,
@@ -437,7 +426,15 @@ class QTile:
                 while n > 0:
                     n -= 1
                     e = self.display.next_event()
-                    h = self.handlers.get(e.type)
+                    ename = e.__class__.__name__
+
+                    c = None
+                    if hasattr(e, "window"):
+                        c = self.windowMap.get(e.window) or self.internalMap.get(e.window)
+                    if c and hasattr(c, "handle_%s"%ename):
+                        h = getattr(c, "handle_%s"%ename)
+                    else:
+                        h = getattr(self, "handle_%s"%ename, None)
                     if h:
                         self.log.add("Handling: %s"%self._eventStr(e))
                         h(e)
@@ -466,52 +463,26 @@ class QTile:
             print >> sys.stderr, s
 
     def handle_ConfigureRequest(self, e):
-        c = self.windowMap.get(e.window)
-        if c and c.group.screen:
-            c.group.layout.configure(c)
-            c.notify()
-        else:
-            # It's not managed, or not mapped, so we just obey it.
-            args = {}
-            if e.value_mask & X.CWX:
-                args["x"] = e.x
-            if e.value_mask & X.CWY:
-                args["y"] = e.y
-            if e.value_mask & X.CWHeight:
-                args["height"] = e.height
-            if e.value_mask & X.CWWidth:
-                args["width"] = e.width
-            if e.value_mask & X.CWBorderWidth:
-                args["border_width"] = e.border_width
-            e.window.configure(
-                **args
-            )
-
-    def handle_PropertyNotify(self, e):
-        c = self.windowMap.get(e.window)
-        if c:
-            if e.atom == Xatom.WM_TRANSIENT_FOR:
-                print >> sys.stderr, "transient"
-            elif e.atom == Xatom.WM_HINTS:
-                print >> sys.stderr, "hints"
-            elif e.atom == Xatom.WM_NORMAL_HINTS:
-                print >> sys.stderr, "normal_hints"
-            elif e.atom == Xatom.WM_NAME:
-                c.updateName()
-            else:
-                print >> sys.stderr, e
+        # It's not managed, or not mapped, so we just obey it.
+        args = {}
+        if e.value_mask & X.CWX:
+            args["x"] = e.x
+        if e.value_mask & X.CWY:
+            args["y"] = e.y
+        if e.value_mask & X.CWHeight:
+            args["height"] = e.height
+        if e.value_mask & X.CWWidth:
+            args["width"] = e.width
+        if e.value_mask & X.CWBorderWidth:
+            args["border_width"] = e.border_width
+        e.window.configure(
+            **args
+        )
 
     def handle_MappingNotify(self, e):
         self.display.refresh_keyboard_mapping(e)
         if e.request == X.MappingKeyboard:
             self.grabKeys()
-
-    def handle_EnterNotify(self, e):
-        c = self.windowMap.get(e.window)
-        if c:
-            self.currentScreen.group.focus(c, False)
-            if self.currentScreen != c.group.screen:
-                self.toScreen(c.group.screen.index)
 
     def handle_MapRequest(self, e):
         self.manage(e.window)
