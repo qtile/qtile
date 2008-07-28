@@ -294,7 +294,8 @@ class GroupBox(_Widget):
 
     def click(self, x, y):
         groupOffset = x/self.boxwidth
-        self.bar.screen.setGroup(self.qtile.groups[groupOffset])
+        if len(self.qtile.groups) - 1 >= groupOffset:
+            self.bar.screen.setGroup(self.qtile.groups[groupOffset])
 
     def _configure(self, qtile, bar, event):
         _Widget._configure(self, qtile, bar, event)
