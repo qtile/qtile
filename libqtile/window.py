@@ -69,7 +69,6 @@ class _Window:
 
     def hide(self):
         # We don't want to get the UnmapNotify for this unmap
-        self.x, self.y, self.width, self.height = None, None, None, None
         self.disableMask(X.StructureNotifyMask)
         self.window.unmap()
         self.resetMask()
