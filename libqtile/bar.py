@@ -1,5 +1,5 @@
 import sys
-import manager, window, config, command
+import manager, window, config, command, utils
 import Xlib.X
 
 class Gap:
@@ -143,7 +143,8 @@ class Bar(Gap):
     def info(self):
         return [i.info() for i in self.widgets]
 
-
+LEFT = object()
+CENTER = object()
 class _Graph:
     """
         A helper class for drawing and text layout.
@@ -170,17 +171,20 @@ class _Graph:
             self.qtile.log.add("Could not open font %s, falling back."%font)
             f = self.qtile.display.open_font(self._fallbackFont)
         self.font = f
-        _, self.font_ascent = self.textsize("A")
         self.gc.change(font=f)
 
-    def textsize(self, *text):
+    @utils.LRUCache(100)
+    def text_extents(self, font, i):
+        return font.query_text_extents(i)
+
+    def textsize(self, font, *text):
         """
             Return a textheight, textwidth tuple, for a box large enough to
             enclose any of the passed strings.
         """
         textheight, textwidth = 0, 0
         for i in text:
-            data = self.font.query_text_extents(i)
+            data = self.text_extents(font, i)
             if  data.font_ascent > textheight:
                 textheight = data.font_ascent
             if data.overall_width > textwidth:
@@ -194,7 +198,7 @@ class _Graph:
             kwargs["foreground"] = self.color(kwargs["foreground"])
         self.gc.change(**kwargs)
 
-    def textbox(self, text, x, y, width, height, padding = 0, background=None, **attrs):
+    def textbox(self, text, x, y, width, height, padding = 0, alignment=LEFT, background=None, **attrs):
         """
             Draw text in the specified box using the current font. Text is
             centered vertically, and left-aligned. 
@@ -206,8 +210,13 @@ class _Graph:
             self.rectangle(x, y, width, height, background)
         if attrs:
             self.change(**attrs)
-        y = y + self.font_ascent + (height - self.font_ascent)/2
-        self.win.draw_text(self.gc, x + padding, y, text)
+        textheight, textwidth = self.textsize(self.font, text)
+        y = y + textheight + (height - textheight)/2
+        if alignment == LEFT:
+            x = x + padding
+        else:
+            x = x + (width - textwidth)/2
+        self.win.draw_text(self.gc, x, y, text)
 
     def rectangle(self, x, y, width, height, color):
         self.change(foreground=color)
@@ -284,7 +293,10 @@ class GroupBox(_Widget):
 
     def _configure(self, qtile, bar, event):
         _Widget._configure(self, qtile, bar, event)
-        self.textheight, self.textwidth = self.graph.textsize(*[i.name for i in qtile.groups])
+        self.textheight, self.textwidth = self.graph.textsize(
+                                                self.graph.font,
+                                                *[i.name for i in qtile.groups]
+                                            )
         self.boxwidth = self.BOXPADDING_SIDE*2 + self.textwidth
         self.width = self.boxwidth * len(qtile.groups) + 2 * self.PADDING
         self.event.subscribe("setgroup", self.draw)
@@ -301,14 +313,15 @@ class GroupBox(_Widget):
                 x, 0, self.boxwidth, self.bar.size,
                 padding = self.BOXPADDING_SIDE,
                 foreground = self.foreground,
-                background = background
+                background = background,
+                alignment = CENTER,
             )
             x += self.boxwidth
 
 
 class _TextBox(_Widget):
     PADDING = 5
-    def __init__(self, text="", width=STRETCH, foreground="white", background="#5866cf", font=None):
+    def __init__(self, text=" ", width=STRETCH, foreground="white", background="#5866cf", font=None):
         self.width, self.foreground, self.background = width, foreground, background
         self.text = text
         if font:
@@ -332,7 +345,7 @@ class WindowName(_TextBox):
 
     def update(self):
         w = self.bar.screen.group.currentWindow
-        self.text = w.name if w else ""
+        self.text = w.name if w else " "
         self.draw()
 
 
@@ -360,7 +373,7 @@ class _TextBoxCommands(command.Commands):
 
 class TextBox(_TextBox):
     commands = _TextBoxCommands()
-    def __init__(self, name, text="", width=STRETCH,
+    def __init__(self, name, text=" ", width=STRETCH,
                  foreground="white", background="#5866cf", font=None):
         self.name = name
         _TextBox.__init__(self, text, width, foreground, background, font)
