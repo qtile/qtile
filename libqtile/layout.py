@@ -70,6 +70,7 @@ class Max(_Layout):
                 self.group.screen.dy,
                 self.group.screen.dwidth,
                 self.group.screen.dheight,
+                0
             )
             c.unhide()
         else:
@@ -219,6 +220,7 @@ class Stack(_Layout):
                     self.group.screen.dy,
                     column,
                     self.group.screen.dheight,
+                    0
                 )
                 c.unhide()
                 return
