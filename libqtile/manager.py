@@ -326,14 +326,14 @@ class QTile:
         self.server = command._Server(self.fname, self, config)
 
         self.handlers = {
-            X.MapRequest:           self.mapRequest,
-            X.DestroyNotify:        self.destroyNotify,
-            X.UnmapNotify:          self.unmapNotify,
-            X.EnterNotify:          self.enterNotify,
-            X.MappingNotify:        self.mappingNotify,
-            X.KeyPress:             self.keyPress,
-            X.ConfigureRequest:     self.configureRequest,
-            X.PropertyNotify:       self.propertyNotify,
+            X.MapRequest:           self.handle_MapRequest,
+            X.DestroyNotify:        self.handle_DestroyNotify,
+            X.UnmapNotify:          self.handle_UnmapNotify,
+            X.EnterNotify:          self.handle_EnterNotify,
+            X.MappingNotify:        self.handle_MappingNotify,
+            X.KeyPress:             self.handle_KeyPress,
+            X.ConfigureRequest:     self.handle_ConfigureRequest,
+            X.PropertyNotify:       self.handle_PropertyNotify,
         }
         self.ignoreEvents = set([
             X.KeyRelease,
@@ -448,7 +448,7 @@ class QTile:
         except:
             self.writeReport(traceback.format_exc())
 
-    def keyPress(self, e):
+    def handle_KeyPress(self, e):
         keysym =  self.display.keycode_to_keysym(e.detail, 0)
         k = self.keyMap.get((keysym, e.state))
         if not k:
@@ -465,7 +465,7 @@ class QTile:
             self.log.add(s)
             print >> sys.stderr, s
 
-    def configureRequest(self, e):
+    def handle_ConfigureRequest(self, e):
         c = self.windowMap.get(e.window)
         if c and c.group.screen:
             c.group.layout.configure(c)
@@ -487,7 +487,7 @@ class QTile:
                 **args
             )
 
-    def propertyNotify(self, e):
+    def handle_PropertyNotify(self, e):
         c = self.windowMap.get(e.window)
         if c:
             if e.atom == Xatom.WM_TRANSIENT_FOR:
@@ -501,25 +501,25 @@ class QTile:
             else:
                 print >> sys.stderr, e
 
-    def mappingNotify(self, e):
+    def handle_MappingNotify(self, e):
         self.display.refresh_keyboard_mapping(e)
         if e.request == X.MappingKeyboard:
             self.grabKeys()
 
-    def enterNotify(self, e):
+    def handle_EnterNotify(self, e):
         c = self.windowMap.get(e.window)
         if c:
             self.currentScreen.group.focus(c, False)
             if self.currentScreen != c.group.screen:
                 self.toScreen(c.group.screen.index)
 
-    def mapRequest(self, e):
+    def handle_MapRequest(self, e):
         self.manage(e.window)
 
-    def destroyNotify(self, e):
+    def handle_DestroyNotify(self, e):
         self.unmanage(e.window)
 
-    def unmapNotify(self, e):
+    def handle_UnmapNotify(self, e):
         if e.event == self.root and e.send_event:
             self.unmanage(e.window)
 

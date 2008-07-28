@@ -4,10 +4,6 @@ from Xlib import X
 import Xlib.protocol.event as event
 
 class _Window:
-    _windowMask = X.StructureNotifyMask |\
-                 X.PropertyChangeMask |\
-                 X.EnterWindowMask |\
-                 X.FocusChangeMask
     def __init__(self, window, qtile):
         self.window, self.qtile = window, qtile
         self.hidden = True
@@ -138,6 +134,12 @@ class Internal(_Window):
     """
         An internal window, that should not be managed by qtile.
     """
+    _windowMask = X.StructureNotifyMask |\
+                 X.PropertyChangeMask |\
+                 X.EnterWindowMask |\
+                 X.FocusChangeMask |\
+                 X.ExposureMask |\
+                 X.ButtonPressMask
     @classmethod
     def create(klass, qtile, background_pixel, x, y, width, height):
         win = qtile.root.create_window(
@@ -157,6 +159,10 @@ class Internal(_Window):
 
 
 class Window(_Window):
+    _windowMask = X.StructureNotifyMask |\
+                 X.PropertyChangeMask |\
+                 X.EnterWindowMask |\
+                 X.FocusChangeMask
     group = None
     def __repr__(self):
         return "Window(%s)"%self.name
