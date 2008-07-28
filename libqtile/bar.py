@@ -210,6 +210,7 @@ class _Graph:
         """
         if background:
             self.rectangle(x, y, width, height, background)
+            attrs["background"] = background
         if attrs:
             self.change(**attrs)
         textheight, textwidth = self.textsize(self.font, text)
@@ -284,8 +285,10 @@ class Spacer(_Widget):
 class GroupBox(_Widget):
     BOXPADDING_SIDE = 8
     PADDING = 3
-    def __init__(self, foreground="white", background="#5866cf", font=None):
-        self.foreground, self.background = foreground, background
+    def __init__(self, currentFG="white", currentBG="#5866cf", font=None,
+                 activeFG="white", inactiveFG="#666666"):
+        self.currentFG, self.currentBG = currentFG, currentBG
+        self.activeFG, self.inactiveFG = activeFG, inactiveFG
         if font:
             self.font = font
 
@@ -307,14 +310,21 @@ class GroupBox(_Widget):
         self.clear()
         x = self.offset + self.PADDING
         for i in self.qtile.groups:
-            background = None
+            foureground, background = None, None
             if self.bar.screen.group.name == i.name:
-                background = self.background
+                background = self.currentBG
+                foreground = self.currentFG
+            elif len(i):
+                foreground = self.activeFG
+                background = self.bar.background
+            else:
+                foreground = self.inactiveFG
+                background = self.bar.background
             self.graph.textbox(
                 i.name,
                 x, 0, self.boxwidth, self.bar.size,
                 padding = self.BOXPADDING_SIDE,
-                foreground = self.foreground,
+                foreground = foreground,
                 background = background,
                 alignment = CENTER,
             )
