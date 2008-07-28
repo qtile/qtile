@@ -71,6 +71,7 @@ class Bar(Gap):
                         c,
                         self.x, self.y, self.width, self.height
                      )
+        self.window.handle_Expose = self.handle_Expose
         qtile.internalMap[self.window.window] = self.window
         self.window.unhide()
 
@@ -97,6 +98,8 @@ class Bar(Gap):
                 total += i.width
                 i.offset = offset
             stretchWidget.width = self.width - total
+
+    def handle_Expose(self, e):
         self.draw()
 
     def draw(self):
