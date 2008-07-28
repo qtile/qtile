@@ -155,15 +155,11 @@ class _Graph:
         self.win = window.window
         self.gc = self.win.create_gc()
         self.colormap = qtile.display.screen().default_colormap
-        self.colors = {}
+        self.background, self.foreground = None, None
         
+    @utils.LRUCache(100)
     def color(self, color):
-        if self.colors.has_key(color):
-            return self.colors[color]
-        else:
-            c = self.colormap.alloc_named_color(color).pixel
-            self.colors[color] = c
-            return c
+        return self.colormap.alloc_named_color(color).pixel
 
     def setFont(self, font):
         f = self.qtile.display.open_font(font)
@@ -192,11 +188,17 @@ class _Graph:
         return textheight, textwidth
 
     def change(self, **kwargs):
-        if kwargs.has_key("background"):
-            kwargs["background"] = self.color(kwargs["background"])
-        if kwargs.has_key("foreground"):
-            kwargs["foreground"] = self.color(kwargs["foreground"])
-        self.gc.change(**kwargs)
+        newargs = kwargs.copy()
+        newargs.pop("background", None)
+        newargs.pop("foreground", None)
+        if kwargs.has_key("background") and self.background != kwargs["background"]:
+            self.background = kwargs["background"]
+            newargs["background"] = self.color(kwargs["background"])
+        if kwargs.has_key("foreground") and self.background != kwargs["foreground"]:
+            self.background = kwargs["foreground"]
+            newargs["foreground"] = self.color(kwargs["foreground"])
+        if newargs:
+            self.gc.change(**newargs)
 
     def textbox(self, text, x, y, width, height, padding = 0, alignment=LEFT, background=None, **attrs):
         """
