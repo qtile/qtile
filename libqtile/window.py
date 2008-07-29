@@ -88,7 +88,7 @@ class _Window:
             event_mask=self._windowMask
         )
 
-    def place(self, x, y, width, height, border):
+    def place(self, x, y, width, height, border, borderColor):
         """
             Places the window at the specified location with the given size.
         """
@@ -100,6 +100,10 @@ class _Window:
             height=height,
             border_width=border
         )
+        if borderColor is not None:
+            self.window.change_attributes(
+                border_pixel = borderColor
+            )
 
     def focus(self, warp):
         if not self.hidden:
@@ -149,7 +153,7 @@ class Internal(_Window):
                     event_mask = X.StructureNotifyMask | X.ExposureMask
                )
         i = Internal(win, qtile)
-        i.place(x, y, width, height, 0)
+        i.place(x, y, width, height, 0, None)
         i.setProp("internal", True)
         return i
 

@@ -1,4 +1,4 @@
-import libpry
+import libpry, time
 import libqtile, libqtile.config
 import utils
 
@@ -15,7 +15,7 @@ class MaxConfig(libqtile.config.Config):
 class StackConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
     layouts = [
-        libqtile.layout.Stack(),
+        libqtile.layout.Stack(borderWidth=10),
         libqtile.layout.Max()
     ]
     keys = []

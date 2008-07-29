@@ -70,7 +70,8 @@ class Max(_Layout):
                 self.group.screen.dy,
                 self.group.screen.dwidth,
                 self.group.screen.dheight,
-                0
+                0,
+                None
             )
             c.unhide()
         else:
@@ -123,7 +124,15 @@ class StackCommands(command.Commands):
 class Stack(_Layout):
     name = "stack"
     commands = StackCommands()
-    def __init__(self, stacks=2):
+    def __init__(self, stacks=2, borderWidth=1, active="#00009A", inactive="black"):
+        """
+            stacks: Number of stacks to start with.
+            borderWidth: Width of window borders.
+            active: Color of the active window border.
+            inactive: Color of the inactive window border.
+        """
+        self.borderWidth, self.active, self.inactive = borderWidth, active, inactive
+        self.activePixel, self.inactivePixel = None, None
         self.stacks = [[] for i in range(stacks)]
 
     @property
@@ -137,6 +146,10 @@ class Stack(_Layout):
                 return i
 
     def clone(self, group):
+        if not self.activePixel:
+            colormap = group.qtile.display.screen().default_colormap
+            self.activePixel = colormap.alloc_named_color(self.active).pixel
+            self.inactivePixel = colormap.alloc_named_color(self.inactive).pixel
         c = _Layout.clone(self, group)
         # These are mutable
         c.stacks = [[] for i in self.stacks]
@@ -214,13 +227,20 @@ class Stack(_Layout):
         column = int(self.group.screen.dwidth/float(len(self.stacks)))
         for i, s in enumerate(self.stacks):
             if s and c == s[0]:
-                xoffset = self.group.screen.dx + i * column
+                xoffset = self.group.screen.dx + i*column
+                if i == self.currentStackOffset:
+                    print "active", self.activePixel
+                    px = self.activePixel
+                else:
+                    px = self.inactivePixel
+                    print "inactive", self.inactivePixel
                 c.place(
                     xoffset,
                     self.group.screen.dy,
-                    column,
-                    self.group.screen.dheight,
-                    0
+                    column - 2*self.borderWidth,
+                    self.group.screen.dheight - 2*self.borderWidth,
+                    self.borderWidth,
+                    px
                 )
                 c.unhide()
                 return
