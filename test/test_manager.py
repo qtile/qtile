@@ -39,6 +39,20 @@ class uMultiScreen(utils.QTileTests):
         gb = self.c.groups()["b"]
         assert gb["windows"] == ["one"]
 
+    def test_window_to_group(self):
+        self.testWindow("one")
+        libpry.raises("no such group", self.c.window_to_group, "nonexistent")
+        assert self.c.groups()["a"]["focus"] == "one"
+        self.c.window_to_group("a")
+        assert self.c.groups()["a"]["focus"] == "one"
+        self.c.window_to_group("b")
+        assert self.c.groups()["b"]["focus"] == "one"
+        assert self.c.groups()["a"]["focus"] == None
+
+        self.c.to_screen(1)
+        self.c.window_to_group("c")
+        assert self.c.groups()["c"]["focus"] == "one"
+
 
 class uSingle(utils.QTileTests):
     """

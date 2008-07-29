@@ -660,6 +660,23 @@ class _BaseCommands(command.Commands):
         screen.setGroup(group)
 
     @staticmethod
+    def cmd_window_to_group(q, groupName):
+        """
+            Move focused window to a specified group.
+
+            Examples:
+
+                window_to_group("a")
+        """
+        group = q.groupMap.get(groupName)
+        if group is None:
+            raise command.CommandError("No such group: %s"%groupName)
+        if q.currentWindow and q.currentWindow.group is not group:
+            w = q.currentWindow
+            q.currentWindow.group.remove(w)
+            group.add(w)
+
+    @staticmethod
     def cmd_simulate_keypress(q, modifiers, key):
         """
             Simulates a keypress on the focused window. The first argument is a
@@ -733,7 +750,7 @@ class _BaseCommands(command.Commands):
 
     @staticmethod
     def cmd_restart(q):
-        #q.display.sync()
+        # FIXME
         pass
 
     @staticmethod
@@ -890,7 +907,6 @@ class _BaseCommands(command.Commands):
             hints = None
 
         state = c.window.get_wm_state()
-
         return dict(
             attributes=attrs,
             properties=props,
