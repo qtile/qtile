@@ -1,0 +1,5 @@
+
+syntax.css generated with the following commands:
+
+ pygmentize -S default -f html -a ".highlight" > syntax.css
+ pygmentize -S default -f html -a ".grokdoc" >> syntax.css
