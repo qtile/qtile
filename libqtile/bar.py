@@ -208,6 +208,7 @@ class _Graph:
             :background Fill box with the specified color first.
             :padding  Padding to the left of the text.
         """
+        text = text or " "
         if background:
             self.rectangle(x, y, width, height, background)
             attrs["background"] = background
