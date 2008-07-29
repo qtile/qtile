@@ -229,11 +229,9 @@ class Stack(_Layout):
             if s and c == s[0]:
                 xoffset = self.group.screen.dx + i*column
                 if i == self.currentStackOffset:
-                    print "active", self.activePixel
                     px = self.activePixel
                 else:
                     px = self.inactivePixel
-                    print "inactive", self.inactivePixel
                 c.place(
                     xoffset,
                     self.group.screen.dy,
