@@ -4,7 +4,7 @@ import utils
 
 class GBConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
-    layouts = [libqtile.layout.Max()]
+    layouts = [libqtile.layout.Stack(stacks=1)]
     screens = [
         libqtile.Screen(
             bottom=libqtile.bar.Bar(
@@ -45,7 +45,7 @@ class uWidgets(utils.QTileTests):
 
 class GeomConf(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
-    layouts = [libqtile.layout.Max()]
+    layouts = [libqtile.layout.Stack(stacks=1, borderWidth=10)]
     screens = [
         libqtile.Screen(
             left=libqtile.bar.Gap(10),
@@ -69,8 +69,8 @@ class uBarGeometry(utils.QTileTests):
         geom = self.c.windows()[0]
         assert geom["x"] == 10
         assert geom["y"] == 10
-        assert geom["width"] == 780
-        assert geom["height"] == 580
+        assert geom["width"] == 760
+        assert geom["height"] == 560
 
         internal = self.c.internal()
         assert len(internal) == 2

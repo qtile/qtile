@@ -2,50 +2,14 @@ import libpry, time
 import libqtile, libqtile.config
 import utils
 
-class MaxConfig(libqtile.config.Config):
-    groups = ["a", "b", "c", "d"]
-    layouts = [libqtile.layout.Max()]
-    keys = [
-        libqtile.Key(["control"], "k", libqtile.command.Call("max_next")),
-        libqtile.Key(["control"], "j", libqtile.command.Call("max_previous")),
-    ]
-    screens = []
-
-
 class StackConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
     layouts = [
-        libqtile.layout.Stack(borderWidth=10),
-        libqtile.layout.Max()
+        libqtile.layout.Stack(stacks=2, borderWidth=10),
+        libqtile.layout.Stack(stacks=1, borderWidth=10),
     ]
     keys = []
     screens = []
-
-
-class uMax(utils.QTileTests):
-    config = MaxConfig()
-    def test_max_commands(self):
-        self.c.max_next()
-        self.c.max_previous()
-
-        self.testWindow("one")
-        self.testWindow("two")
-        self.testWindow("three")
-
-        info = self.c.groups()["a"]
-        assert info["focus"] == "three"
-        self.c.max_next()
-        info = self.c.groups()["a"]
-        assert info["focus"] == "two"
-        self.c.max_next()
-        info = self.c.groups()["a"]
-        assert info["focus"] == "one"
-        self.c.max_next()
-        info = self.c.groups()["a"]
-        assert info["focus"] == "three"
-        self.c.max_previous()
-        info = self.c.groups()["a"]
-        assert info["focus"] == "one"
 
 
 class uStack(utils.QTileTests):
@@ -132,7 +96,6 @@ class uStack(utils.QTileTests):
 
 tests = [
     utils.XNest(xinerama=False), [
-        uMax(),
         uStack(),
     ],
 ]

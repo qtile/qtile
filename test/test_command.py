@@ -10,14 +10,13 @@ class CallConfig(libqtile.config.Config):
         ),
         libqtile.Key(
             ["control"], "k",
-            libqtile.command.Call("max_previous").when(layout="stack"),
-            libqtile.command.Call("max_next").when(layout="max")
+            libqtile.command.Call("stack_previous"),
         ),
     ]
     groups = ["a"]
     layouts = [
-        libqtile.layout.Max(),
-        libqtile.layout.Stack(),
+        libqtile.layout.Stack(stacks=1),
+        libqtile.layout.Stack(stacks=2),
     ]
 
 
