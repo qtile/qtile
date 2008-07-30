@@ -6,12 +6,12 @@ import utils
 class TestConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
     layouts = [
-                libqtile.layout.Max(),
-                libqtile.layout.Stack(2)
+                libqtile.layout.Stack(stacks=1, borderWidth=10),
+                libqtile.layout.Stack(2, borderWidth=10)
             ]
     keys = [
-        libqtile.Key(["control"], "k", libqtile.command.Call("max_next")),
-        libqtile.Key(["control"], "j", libqtile.command.Call("max_previous")),
+        libqtile.Key(["control"], "k", libqtile.command.Call("stack_up")),
+        libqtile.Key(["control"], "j", libqtile.command.Call("stack_down")),
     ]
     screens = [libqtile.Screen(
             bottom=libqtile.bar.Bar(
@@ -102,11 +102,11 @@ class uSingle(utils.QTileTests):
     def test_nextlayout(self):
         self.testWindow("one")
         self.testWindow("two")
-        assert self.c.groups()["a"]["layout"] == "max"
+        assert len(self.c.layoutinfo()["stacks"]) == 1
         self.c.nextlayout()
-        assert self.c.groups()["a"]["layout"] == "stack"
+        assert len(self.c.layoutinfo()["stacks"]) == 2
         self.c.nextlayout()
-        assert self.c.groups()["a"]["layout"] == "max"
+        assert len(self.c.layoutinfo()["stacks"]) == 1
 
     def test_log_clear(self):
         self.testWindow("one")

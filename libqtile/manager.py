@@ -454,13 +454,12 @@ class QTile:
         for i in k.commands:
             if i.check(self):
                 status, val = self.server.call((i.command, i.args, i.kwargs))
-                break
+                if status in (command.ERROR, command.EXCEPTION):
+                    s = "KB command error %s: %s"%(i.command, val)
+                    self.log.add(s)
+                    print >> sys.stderr, s
         else:
             return
-        if status in (command.ERROR, command.EXCEPTION):
-            s = "KB command error %s: %s"%(i.command, val)
-            self.log.add(s)
-            print >> sys.stderr, s
 
     def handle_ConfigureRequest(self, e):
         # It's not managed, or not mapped, so we just obey it.

@@ -46,38 +46,6 @@ class _Layout:
         )
 
 
-class MaxCommands(command.Commands):
-    def cmd_max_next(self, q, noskip=False):
-        if not q.currentWindow:
-            return
-        idx = (q.currentGroup.index(q.currentWindow) + 1) % len(q.currentGroup)
-        q.currentGroup.focus(q.currentGroup[idx], False)
-
-    def cmd_max_previous(self, q, noskip=False):
-        if not q.currentWindow:
-            return
-        idx = (q.currentGroup.index(q.currentWindow) - 1) % len(q.currentGroup)
-        q.currentGroup.focus(q.currentGroup[idx], False)
-
-
-class Max(_Layout):
-    name = "max"
-    commands = MaxCommands()
-    def configure(self, c):
-        if c == self.group.currentWindow:
-            c.place(
-                self.group.screen.dx,
-                self.group.screen.dy,
-                self.group.screen.dwidth,
-                self.group.screen.dheight,
-                0,
-                None
-            )
-            c.unhide()
-        else:
-            c.hide()
-
-
 class StackCommands(command.Commands):
     def cmd_stack_down(self, q, noskip=False):
         s = q.currentLayout.currentStack

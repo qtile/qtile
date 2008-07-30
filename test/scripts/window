@@ -28,7 +28,7 @@ else:
 
 root = d.screen().root
 colormap = d.screen().default_colormap
-background = colormap.alloc_named_color("blue").pixel
+background = colormap.alloc_named_color("#2883CE").pixel
 window = root.create_window(100, 100, 100, 100, 1,
                             X.CopyFromParent, X.InputOutput,
                             X.CopyFromParent,

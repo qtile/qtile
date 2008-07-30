@@ -4,7 +4,7 @@ import utils
 
 class GBConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
-    layouts = [libqtile.layout.Stack(stacks=1)]
+    layouts = [libqtile.layout.Stack(stacks=1, borderWidth=10)]
     screens = [
         libqtile.Screen(
             bottom=libqtile.bar.Bar(

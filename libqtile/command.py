@@ -30,7 +30,7 @@ class _Server(ipc.Server):
                 return EXCEPTION, traceback.format_exc()
         else:
             self.qtile.log.add("Unknown command %s"%name)
-            return "Unknown command: %s"%name
+            return ERROR, "Unknown command: %s"%name
         if self.qtile._testing:
             self.qtile.display.sync()
 
