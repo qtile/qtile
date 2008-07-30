@@ -2,6 +2,9 @@ import sys
 import manager, window, config, command, utils
 import Xlib.X
 
+_HIGHLIGHT = "#48677E"
+_FOREGROUND = "#dddddd"
+
 class Gap:
     commands = None
     def __init__(self, size):
@@ -200,7 +203,8 @@ class _Graph:
         if newargs:
             self.gc.change(**newargs)
 
-    def textbox(self, text, x, y, width, height, padding = 0, alignment=LEFT, background=None, **attrs):
+    def textbox(self, text, x, y, width, height, padding = 0,
+                alignment=LEFT, background=None, **attrs):
         """
             Draw text in the specified box using the current font. Text is
             centered vertically, and left-aligned. 
@@ -286,7 +290,7 @@ class Spacer(_Widget):
 class GroupBox(_Widget):
     BOXPADDING_SIDE = 8
     PADDING = 3
-    def __init__(self, currentFG="white", currentBG="#5866cf", font=None,
+    def __init__(self, currentFG="white", currentBG=_HIGHLIGHT, font=None,
                  activeFG="white", inactiveFG="#666666"):
         self.currentFG, self.currentBG = currentFG, currentBG
         self.activeFG, self.inactiveFG = activeFG, inactiveFG
@@ -335,7 +339,8 @@ class GroupBox(_Widget):
 
 class _TextBox(_Widget):
     PADDING = 5
-    def __init__(self, text=" ", width=STRETCH, foreground="white", background="#5866cf", font=None):
+    def __init__(self, text=" ", width=STRETCH, foreground="white",
+                 background=_HIGHLIGHT, font=None):
         self.width, self.foreground, self.background = width, foreground, background
         self.text = text
         if font:
@@ -388,7 +393,7 @@ class _TextBoxCommands(command.Commands):
 class TextBox(_TextBox):
     commands = _TextBoxCommands()
     def __init__(self, name, text=" ", width=STRETCH,
-                 foreground="white", background="#5866cf", font=None):
+                 foreground="white", background=_HIGHLIGHT, font=None):
         self.name = name
         _TextBox.__init__(self, text, width, foreground, background, font)
 

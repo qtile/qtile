@@ -10,7 +10,6 @@ FEATURES
 - Obey window size hints, to the extent where we don't make windows larger than
   the requested size. We must, however, make windows smaller if needs be, to
   fit in with the layout.
-- Stack layout windows need borders to indicate the current window.
 - We need a function that checks a configuration file for obvious errors. This
   will be used to sanity-check config before a manager restart is triggered.
 - We need a mechanism for saving WM running state to window properties, and
