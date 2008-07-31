@@ -107,9 +107,8 @@ class Screen:
         self.qtile.event.fire("focus_change")
 
 
-class Group(list):
+class Group:
     def __init__(self, name, layouts, qtile):
-        list.__init__(self)
         self.name, self.qtile = name, qtile
         self.screen = None
         self.layouts = [i.clone(self) for i in layouts]

@@ -320,7 +320,7 @@ class GroupBox(_Widget):
             if self.bar.screen.group.name == i.name:
                 background = self.currentBG
                 foreground = self.currentFG
-            elif len(i):
+            elif i.windows:
                 foreground = self.activeFG
                 background = self.bar.background
             else:
