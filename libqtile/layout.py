@@ -27,6 +27,9 @@ class _Layout:
             Called whenever a window is removed from the group, whether the
             layout is current or not. The layout should just de-register the
             window from its data structures, without unmapping the window.
+
+            It should also set the group focus to the appropriate "next"
+            window, as interpreted by the layout.
         """
         pass
 
@@ -189,6 +192,8 @@ class Stack(_Layout):
         for i in self.stacks:
             if c in i:
                 i.remove(c)
+                if len(i):
+                    self.group.focus(i[0], True)
                 return
 
     def configure(self, c):

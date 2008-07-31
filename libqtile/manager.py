@@ -115,6 +115,7 @@ class Group(list):
         self.layouts = [i.clone(self) for i in layouts]
         self.currentLayout = 0
         self.currentWindow = None
+        self.windows = set()
 
     @property
     def layout(self):
@@ -127,7 +128,7 @@ class Group(list):
     def layoutAll(self):
         self.disableMask(X.EnterWindowMask)
         if self.screen and len(self):
-            for i in self:
+            for i in self.windows:
                 self.layout.configure(i)
             if self.currentWindow:
                 self.currentWindow.focus(False)
@@ -142,23 +143,19 @@ class Group(list):
 
     def hide(self):
         self.screen = None
-        for i in self:
+        for i in self.windows:
             i.hide()
 
-    def focusNext(self):
-        idx = (self.index(self.currentWindow) + 1) % len(self)
-        self.focus(self[idx], False)
-
     def disableMask(self, mask):
-        for i in self:
+        for i in self.windows:
             i.disableMask(mask)
 
     def resetMask(self):
-        for i in self:
+        for i in self.windows:
             i.resetMask()
 
     def focus(self, window, warp):
-        if window and not window in self:
+        if window and not window in self.windows:
             return
         if not window:
             self.currentWindow = None
@@ -172,33 +169,26 @@ class Group(list):
         return dict(
             name = self.name,
             focus = self.currentWindow.name if self.currentWindow else None,
-            windows = [i.name for i in self],
+            windows = [i.name for i in self.windows],
             layout = self.layout.name,
             screen = self.screen.index if self.screen else None
         )
 
     # List-like operations
     def add(self, window):
-        if self.currentWindow:
-            offset = self.index(self.currentWindow)
-        else:
-            offset = 0
-        self.insert(offset, window)
+        self.windows.add(window)
         window.group = self
         for i in self.layouts:
             i.add(window)
         self.focus(window, True)
 
     def remove(self, window):
-        if self.currentWindow is window:
-            if len(self) > 1:
-                self.focusNext()
-            else:
-                self.focus(None, False)
-        list.remove(self, window)
+        self.windows.remove(window)
         window.group = None
         for i in self.layouts:
             i.remove(window)
+        if self.currentWindow is window:
+            self.focus(None, False)
         self.layoutAll()
 
 
