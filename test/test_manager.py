@@ -182,8 +182,7 @@ class uQTile(utils.QTileTests):
         assert len(self.c.windows()) == 2
         self.c.pullgroup("c")
         self._groupconsistency()
-
-        return
+        self.c.status()
         assert len(self.c.windows()) == 2
         self.kill(pid)
         assert len(self.c.windows()) == 1

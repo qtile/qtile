@@ -127,7 +127,7 @@ class Group(list):
 
     def layoutAll(self):
         self.disableMask(X.EnterWindowMask)
-        if self.screen and len(self):
+        if self.screen and len(self.windows):
             for i in self.windows:
                 self.layout.configure(i)
             if self.currentWindow:
