@@ -1,4 +1,4 @@
-import os, time, cStringIO, pprint
+import os, time, cStringIO
 import libpry
 import libqtile
 import utils
