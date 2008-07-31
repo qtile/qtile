@@ -368,13 +368,15 @@ class WindowName(_TextBox):
         self.draw()
 
 
-class _TextBoxCommands(command.Commands):
+class _WidgetCommands(command.Commands):
     def _get(self, q, name):
         w = q.widgetMap.get(name)
         if not w:
             raise command.CommandError("No such widget: %s"%name)
         return w
 
+
+class _TextBoxCommands(_WidgetCommands):
     def cmd_textbox_update(self, q, name, text):
         """
             Update the text in a TextBox widget.
@@ -400,3 +402,41 @@ class TextBox(_TextBox):
     def update(self, text):
         self.text = text
         self.draw()
+
+
+class _MeasureBoxCommands(_WidgetCommands):
+    def cmd_measurebox_update(self, q, name, percentage):
+        """
+            Update the percentage in a MeasureBox widget.
+        """
+        w = self._get(q, name)
+        if percentage > 100 or percentage < 0:
+            raise command.CommandError("Percentage out of range: %s"%percentage)
+        w.update(percentage)
+
+
+class MeasureBox(_Widget):
+    commands = _MeasureBoxCommands()
+    colors = ["red", "yellow", "orange", "green"]
+    def __init__(self, name, width):
+        self.name, self.width = name, width
+        self.percentage = 0
+
+    def update(self, percentage):
+        self.percentage = percentage
+        self.draw()
+
+    def draw(self):
+        self.clear()
+        step = 100/float(len(self.colors))
+        idx = int(self.percentage/step)
+        idx = idx - 1 if self.percentage == 100 else idx
+        color = self.colors[idx]
+        self.graph.rectangle(
+            self.offset,
+            0,
+            int(float(self.width)/100*self.percentage),
+            self.bar.size,
+            color
+        )
+        

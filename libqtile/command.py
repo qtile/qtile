@@ -1,5 +1,5 @@
 import inspect, UserDict, traceback, textwrap, os
-import ipc
+import ipc, config
 
 class CommandError(Exception): pass
 class CommandException(Exception): pass
@@ -11,11 +11,11 @@ EXCEPTION = 2
 SOCKBASE = ".qtilesocket.%s"
 
 class _Server(ipc.Server):
-    def __init__(self, fname, qtile, config):
+    def __init__(self, fname, qtile, conf):
         if os.path.exists(fname):
             os.unlink(fname)
         ipc.Server.__init__(self, fname, self.call)
-        self.qtile, self.commands = qtile, config.commands()
+        self.qtile, self.commands = qtile, conf.commands()
 
     def call(self, data):
         name, args, kwargs = data
@@ -52,7 +52,7 @@ class Call:
 
 
 class Client(ipc.Client):
-    def __init__(self, fname, config):
+    def __init__(self, fname=None, conf=None):
         if not fname:
             d = os.environ.get("DISPLAY")
             if not d:
@@ -60,7 +60,9 @@ class Client(ipc.Client):
             fname = os.path.join("~", SOCKBASE%d)
             fname = os.path.expanduser(fname)
         ipc.Client.__init__(self, fname)
-        self.commands = config.commands()
+        if not conf:
+            conf = config.File()
+        self.commands = conf.commands()
 
     def __getattr__(self, name):
         funcName = "cmd_" + name
@@ -109,5 +111,3 @@ class Commands(UserDict.DictMixin):
 
     def __repr__(self):
         return "%s()"%self.__class__.__name__
-
-

@@ -12,6 +12,7 @@ class GBConfig(libqtile.config.Config):
                             libqtile.bar.GroupBox(),
                             libqtile.bar.WindowName(),
                             libqtile.bar.TextBox("text", text="default", width=100),
+                            libqtile.bar.MeasureBox("measure", width=100),
                         ],
                         20
                     ),
@@ -41,6 +42,16 @@ class uWidgets(utils.QTileTests):
         assert self.c.groups()["a"]["screen"] == None
         self.c.bar_fake_click(0, "bottom", 10, 10)
         assert self.c.groups()["a"]["screen"] == 0
+
+    def test_measurebox(self):
+        libpry.raises("out of range", self.c.measurebox_update, "measure", 200)
+        libpry.raises("out of range", self.c.measurebox_update, "measure", -1)
+        self.c.measurebox_update("measure", 0)
+        self.c.measurebox_update("measure", 10)
+        self.c.measurebox_update("measure", 30)
+        self.c.measurebox_update("measure", 50)
+        self.c.measurebox_update("measure", 80)
+        self.c.measurebox_update("measure", 100)
         
 
 class GeomConf(libqtile.config.Config):
