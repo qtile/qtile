@@ -311,6 +311,7 @@ class GroupBox(_Widget):
         self.boxwidth = self.BOXPADDING_SIDE*2 + self.textwidth
         self.width = self.boxwidth * len(qtile.groups) + 2 * self.PADDING
         self.event.subscribe("setgroup", self.draw)
+        self.event.subscribe("window_add", self.draw)
 
     def draw(self):
         self.clear()
@@ -439,4 +440,3 @@ class MeasureBox(_Widget):
             self.bar.size,
             color
         )
-        

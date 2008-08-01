@@ -175,6 +175,7 @@ class Group:
 
     # List-like operations
     def add(self, window):
+        self.qtile.event.fire("window_add")
         self.windows.add(window)
         window.group = self
         for i in self.layouts:
