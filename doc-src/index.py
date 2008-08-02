@@ -19,6 +19,7 @@ pages = [
     Page("index.html", "Introduction"),
     Page("configuration.html", "Configuration"),
     Page("ipc.html", "Remote Commandset"),
+    Page("qsh.html", "qsh - The Qtile Shell"),
     Page("faq.html", "FAQ"),
     Page("api.html", "API"),
     Page("admin.html", "Administrivia")

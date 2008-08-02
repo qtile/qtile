@@ -89,12 +89,22 @@ class uStack(utils.QTileTests):
         self.c.stack_previous()
         assert self.c.groups()["a"]["focus"] == None
 
-    def test_windowkill(self):
+    def test_window_removal(self):
         self.c.nextlayout()
         one = self.testWindow("one")
         two = self.testWindow("two")
         self.c.stack_down()
         self.kill(one)
+
+    def test_split(self):
+        one = self.testWindow("one")
+        two = self.testWindow("two")
+        two = self.testWindow("three")
+        stacks = self.c.layoutinfo()["stacks"]
+        assert not stacks[1]["split"]
+        self.c.stack_toggle_split()
+        stacks = self.c.layoutinfo()["stacks"]
+        assert stacks[1]["split"]
 
     def test_info(self):
         one = self.testWindow("one")

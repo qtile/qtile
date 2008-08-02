@@ -37,7 +37,8 @@ class _Layout:
         """
             This method should:
                 
-                - Configure the dimensions of a window.
+                - Configure the dimensions and borders of a window using the
+                  .place() method.
                 - Call either .hide or .unhide on the window.
         """
         raise NotImplementedError
@@ -50,6 +51,12 @@ class _Layout:
 
 
 class StackCommands(command.Commands):
+    def cmd_stack_toggle_split(self, q, noskip=False):
+        s = q.currentLayout.currentStack
+        if s:
+            s.toggleSplit()
+        q.currentGroup.layoutAll()
+
     def cmd_stack_down(self, q, noskip=False):
         s = q.currentLayout.currentStack
         if s:
@@ -139,6 +146,9 @@ class _WinStack(object):
             # property definition.
             self.current = self.current
 
+    def index(self, c):
+        return self.lst.index(c)
+
     def __len__(self):
         return len(self.lst)
 
@@ -150,6 +160,13 @@ class _WinStack(object):
 
     def __repr__(self):
         return "_WinStack(%s, %s)"%(self.current, str([i.name for i in self]))
+
+    def info(self):
+        return dict(
+            windows = [i.name for i in self],
+            split = self.split,
+            current = self.current,
+        )
 
 
 class Stack(_Layout):
@@ -255,32 +272,50 @@ class Stack(_Layout):
                 return
 
     def configure(self, c):
-        column = int(self.group.screen.dwidth/float(len(self.stacks)))
         for i, s in enumerate(self.stacks):
-            if s and c == s.cw:
-                xoffset = self.group.screen.dx + i*column
-                if i == self.currentStackOffset:
-                    px = self.activePixel
-                else:
-                    px = self.inactivePixel
+            if c in s:
+                break
+        else:
+            c.hide()
+
+        if c is self.group.currentWindow:
+            px = self.activePixel
+        else:
+            px = self.inactivePixel
+
+        columnWidth = int(self.group.screen.dwidth/float(len(self.stacks)))
+        xoffset = self.group.screen.dx + i*columnWidth
+        winWidth = columnWidth - 2*self.borderWidth
+
+        if s.split:
+            columnHeight = int(self.group.screen.dheight/float(len(s)))
+            winHeight = columnHeight - 2*self.borderWidth
+            yoffset = self.group.screen.dy + s.index(c)*columnHeight
+            c.place(
+                xoffset,
+                yoffset,
+                winWidth,
+                winHeight,
+                self.borderWidth,
+                px
+            )
+            c.unhide()
+        else:
+            if c == s.cw:
                 c.place(
                     xoffset,
                     self.group.screen.dy,
-                    column - 2*self.borderWidth,
+                    winWidth,
                     self.group.screen.dheight - 2*self.borderWidth,
                     self.borderWidth,
                     px
                 )
                 c.unhide()
-                return
-        else:
-            c.hide()
+            else:
+                c.hide()
 
     def info(self):
         d = _Layout.info(self)
-        lst = []
-        for i in self.stacks:
-            lst.append([j.name for j in i])
-        d["stacks"] = lst
+        d["stacks"] = [i.info() for i in self.stacks]
         d["current_stack"] = self.currentStackOffset
         return d
