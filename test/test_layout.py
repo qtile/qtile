@@ -1,4 +1,4 @@
-import libpry, time
+import libpry, time, pprint
 import libqtile, libqtile.config
 import utils
 
@@ -88,6 +88,13 @@ class uStack(utils.QTileTests):
         assert self.c.groups()["a"]["focus"] == None
         self.c.stack_previous()
         assert self.c.groups()["a"]["focus"] == None
+
+    def test_windowkill(self):
+        self.c.nextlayout()
+        one = self.testWindow("one")
+        two = self.testWindow("two")
+        self.c.stack_down()
+        self.kill(one)
 
     def test_info(self):
         one = self.testWindow("one")

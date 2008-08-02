@@ -134,6 +134,10 @@ class _WinStack(object):
         self.lst.remove(w)
         if idx > self.current:
             self.current -= 1
+        else:
+            # This apparently nonsensical assignment caps the value using the
+            # property definition.
+            self.current = self.current
 
     def __len__(self):
         return len(self.lst)

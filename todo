@@ -7,6 +7,7 @@ BUGS
 
 FEATURES
 
+- Split and unsplit a Stack layout stack vertically.
 - Obey window size hints, to the extent where we don't make windows larger than
   the requested size. We must, however, make windows smaller if needs be, to
   fit in with the layout.
@@ -18,7 +19,10 @@ FEATURES
   layer on top of our base command set.
 - A way to send qsh output to a pager (maybe pipe to shell functionality, so
   the user can go "log | less"?).
-- Split and unsplit a Stack layout stack vertically.
+- Make qsh help nicer:
+    - Provide a cleaned-up function signature for each built-in function.
+    - Divide porcelain and non-porcelain functions into different help sections.
+
 
 
 FUTURE
