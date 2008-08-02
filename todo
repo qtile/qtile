@@ -7,21 +7,27 @@ BUGS
 
 FEATURES
 
-- Split and unsplit a Stack layout stack vertically.
-- Obey window size hints, to the extent where we don't make windows larger than
-  the requested size. We must, however, make windows smaller if needs be, to
-  fit in with the layout.
-- We need a function that checks a configuration file for obvious errors. This
-  will be used to sanity-check config before a manager restart is triggered.
-- We need a mechanism for saving WM running state to window properties, and
-  re-reading this on restart.
-- A nice way to navigate groups and screens in qsh. Essentially, a porcelain
-  layer on top of our base command set.
-- A way to send qsh output to a pager (maybe pipe to shell functionality, so
-  the user can go "log | less"?).
 - Make qsh help nicer:
     - Provide a cleaned-up function signature for each built-in function.
     - Divide porcelain and non-porcelain functions into different help sections.
+- Extend the GroupBox widget to:
+    - Indicate an urgent request if the urgent flag is passed to PropertyNotify.
+    - Indicate groups present on other screens.
+- A system tray widget.
+- A graph widget for showing percentages over time.
+- Obey window size hints, to the extent where we don't make windows larger than
+  the requested size. We must, however, make windows smaller if needs be, to
+  fit in with the layout.
+- A way to send qsh output to a pager (maybe pipe to shell functionality, so
+  the user can go "log | less"?).
+- We need a function that checks a configuration file for obvious errors. This
+  will be used to sanity-check config before a manager restart is triggered.
+- A nice way to navigate groups and screens in qsh. Essentially, a porcelain
+  layer on top of our base command set.
+- We need a mechanism for saving WM running state to window properties, and
+  re-reading this on restart.
+- Column resizing for the Stack layout.
+- A modal interface.
 
 
 
