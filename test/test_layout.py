@@ -99,12 +99,29 @@ class uStack(utils.QTileTests):
     def test_split(self):
         one = self.testWindow("one")
         two = self.testWindow("two")
-        two = self.testWindow("three")
+        three = self.testWindow("three")
         stacks = self.c.layoutinfo()["stacks"]
         assert not stacks[1]["split"]
         self.c.stack_toggle_split()
         stacks = self.c.layoutinfo()["stacks"]
         assert stacks[1]["split"]
+
+    def test_shuffle(self):
+        self.c.nextlayout()
+        one = self.testWindow("one")
+        two = self.testWindow("two")
+        three = self.testWindow("three")
+
+        stack = self.c.layoutinfo()["stacks"][0]
+        assert stack["windows"][stack["current"]] == "three"
+        for i in range(5):
+            self.c.stack_shuffle_up()
+            stack = self.c.layoutinfo()["stacks"][0]
+            assert stack["windows"][stack["current"]] == "three"
+        for i in range(5):
+            self.c.stack_shuffle_down()
+            stack = self.c.layoutinfo()["stacks"][0]
+            assert stack["windows"][stack["current"]] == "three"
 
     def test_info(self):
         one = self.testWindow("one")

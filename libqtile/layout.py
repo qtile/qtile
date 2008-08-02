@@ -52,41 +52,88 @@ class _Layout:
 
 class StackCommands(command.Commands):
     def cmd_stack_toggle_split(self, q, noskip=False):
+        """
+            Toggle vertical split on the current layout.
+        """
         s = q.currentLayout.currentStack
         if s:
             s.toggleSplit()
         q.currentGroup.layoutAll()
 
     def cmd_stack_down(self, q, noskip=False):
-        s = q.currentLayout.currentStack
-        if s:
-            s.current += 1
-            q.currentGroup.focus(s.cw, False)
-
-    def cmd_stack_up(self, q, noskip=False):
+        """
+            Switch to the next window in this stack.
+        """
         s = q.currentLayout.currentStack
         if s:
             s.current -= 1
             q.currentGroup.focus(s.cw, False)
 
+    def cmd_stack_up(self, q, noskip=False):
+        """
+            Switch to the previous window in this stack.
+        """
+        s = q.currentLayout.currentStack
+        if s:
+            s.current += 1
+            q.currentGroup.focus(s.cw, False)
+
+    def cmd_stack_shuffle_up(self, q, noskip=False):
+        """
+            Shuffle the order of this stack up.
+        """
+        s = q.currentLayout.currentStack
+        if s:
+            utils.shuffleUp(s.lst)
+            s.current += 1
+        q.currentGroup.layoutAll()
+
+    def cmd_stack_shuffle_down(self, q, noskip=False):
+        """
+            Shuffle the order of this stack down.
+        """
+        s = q.currentLayout.currentStack
+        if s:
+            utils.shuffleDown(s.lst)
+            s.current -= 1
+        q.currentGroup.layoutAll()
+
     def cmd_stack_delete(self, q, noskip=False):
+        """
+            Delete the current stack from the layout.
+        """
         q.currentLayout.deleteCurrentStack()
 
     def cmd_stack_add(self, q, noskip=False):
+        """
+            Add a stack to the layout.
+        """
         q.currentLayout.stacks.append(_WinStack())
         q.currentGroup.layoutAll()
 
     def cmd_stack_rotate(self, q, noskip=False):
+        """
+            Rotate order of the stacks.
+        """
         utils.shuffleUp(q.currentLayout.stacks)
         q.currentGroup.layoutAll()
 
     def cmd_stack_next(self, q, noskip=False):
+        """
+            Focus next stack.
+        """
         return q.currentLayout.nextStack()
 
     def cmd_stack_previous(self, q, noskip=False):
+        """
+            Focus previous stack.
+        """
         return q.currentLayout.previousStack()
 
     def cmd_stack_current(self, q, noskip=False):
+        """
+            Return the offset of the current stack.
+        """
         return q.currentLayout.currentStackOffset
 
     def cmd_stack_get(self, q, noskip=False):
