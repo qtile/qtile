@@ -46,12 +46,12 @@ class uStack(utils.QTileTests):
         self.testWindow("three")
         assert self.c.stack_get() == [["three", "two", "one"]]
         self.c.stack_down()
-        assert self.c.stack_get() == [["two", "one", "three"]]
+        assert self.c.stack_get() == [["one", "three", "two"]]
         self.c.stack_up()
         assert self.c.stack_get() == [["three", "two", "one"]]
         self.c.stack_down()
         self.c.stack_down()
-        assert self.c.stack_get() == [["one", "three", "two"]]
+        assert self.c.stack_get() == [["two", "one", "three"]]
         
     def test_nextprev(self):
         self.c.stack_add()
