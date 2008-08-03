@@ -1,7 +1,7 @@
 """
     A command shell for Qtile.
 """
-import cmd, readline, sys, pprint, textwrap
+import cmd, readline, sys, pprint, textwrap, traceback
 import command
 
 
@@ -29,11 +29,9 @@ class Cmd(cmd.Cmd):
                     except command.CommandError, val:
                         print "Error: %s"%val
                     except command.CommandException, val:
-                        print "Exception:"
-                        pprint.pprint(val)
+                        print val
                     except Exception, val:
-                        print "Invalid command:"
-                        pprint.pprint(val)
+                        print val
                     else:
                         if val:
                             pprint.pprint(val)
@@ -54,3 +52,4 @@ class Cmd(cmd.Cmd):
     def do_helpall(self, arg):
         for i in self.client.commands.keys():
             print self.client.commands.doc(i)
+            print

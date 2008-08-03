@@ -111,8 +111,9 @@ class Commands(UserDict.DictMixin):
             args = args[1:]
         args = args[1:]
         spec = name + inspect.formatargspec(args, varargs, varkw, defaults)
-        spec += "\n" + "-"*len(spec) + "\n"
-        return spec + textwrap.dedent(self[name].__doc__ or "")
+        htext = textwrap.dedent(self[name].__doc__ or "")
+        htext = "\n".join(["\t" + i for i in htext.splitlines()])
+        return spec + htext
 
     def __repr__(self):
         return "%s()"%self.__class__.__name__
