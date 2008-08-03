@@ -1,5 +1,4 @@
 
-
 BUGS
 
 - simulate_keypress doesn't seem to work from qsh at the moment.
@@ -7,8 +6,6 @@ BUGS
 
 FEATURES
 
-- Make qsh help nicer:
-    - Divide porcelain and non-porcelain functions into different help sections.
 - Extend the GroupBox widget to:
     - Indicate an urgent request if the urgent flag is passed to PropertyNotify.
     - Indicate groups present on other screens.
@@ -23,11 +20,11 @@ FEATURES
   will be used to sanity-check config before a manager restart is triggered.
 - A nice way to navigate groups and screens in qsh. Essentially, a porcelain
   layer on top of our base command set.
+    - Divide porcelain and non-porcelain functions into different help sections.
 - We need a mechanism for saving WM running state to window properties, and
   re-reading this on restart.
 - Column resizing for the Stack layout.
 - A modal interface.
-
 
 
 FUTURE
@@ -41,4 +38,3 @@ FUTURE
     http://barnesc.blogspot.com/2006/01/rencode-reduced-length-encodings.html
     http://www.connellybarnes.com/code/python/rencode
     
-

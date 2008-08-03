@@ -148,7 +148,7 @@ class Bar(Gap):
 
 LEFT = object()
 CENTER = object()
-class _Graph:
+class _Drawer:
     """
         A helper class for drawing and text layout.
     """
@@ -258,11 +258,11 @@ class _Widget:
 
     def _configure(self, qtile, bar, event):
         self.qtile, self.bar, self.event = qtile, bar, event
-        self.graph = _Graph(qtile, self.bar.window)
-        self.graph.setFont(self.font)
+        self._drawer = _Drawer(qtile, self.bar.window)
+        self._drawer.setFont(self.font)
 
     def clear(self):
-        self.graph.rectangle(
+        self._drawer.rectangle(
             self.offset, 0, self.width, self.bar.size,
             self.bar.background
         )
@@ -304,8 +304,8 @@ class GroupBox(_Widget):
 
     def _configure(self, qtile, bar, event):
         _Widget._configure(self, qtile, bar, event)
-        self.textheight, self.textwidth = self.graph.textsize(
-                                                self.graph.font,
+        self.textheight, self.textwidth = self._drawer.textsize(
+                                                self._drawer.font,
                                                 *[i.name for i in qtile.groups]
                                             )
         self.boxwidth = self.BOXPADDING_SIDE*2 + self.textwidth
@@ -327,7 +327,7 @@ class GroupBox(_Widget):
             else:
                 foreground = self.inactiveFG
                 background = self.bar.background
-            self.graph.textbox(
+            self._drawer.textbox(
                 i.name,
                 x, 0, self.boxwidth, self.bar.size,
                 padding = self.BOXPADDING_SIDE,
@@ -348,7 +348,7 @@ class _TextBox(_Widget):
             self.font = font
 
     def draw(self):
-        self.graph.textbox(
+        self._drawer.textbox(
             self.text,
             self.offset, 0, self.width, self.bar.size,
             padding = self.PADDING,
@@ -433,7 +433,7 @@ class MeasureBox(_Widget):
         idx = int(self.percentage/step)
         idx = idx - 1 if self.percentage == 100 else idx
         color = self.colors[idx]
-        self.graph.rectangle(
+        self._drawer.rectangle(
             self.offset,
             0,
             int(float(self.width)/100*self.percentage),
