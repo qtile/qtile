@@ -30,10 +30,28 @@ class uCall(utils.QTileTests):
         assert self.c.groups()["a"]["focus"] == "one"
         self.c.simulate_keypress(["control"], "k")
         assert self.c.groups()["a"]["focus"] == "two"
+
+
+class TestCommands(libqtile.command.Commands):
+    @staticmethod
+    def cmd_one(q): pass
+    def cmd_one_self(self, q): pass
+    def cmd_two(self, q, a): pass
+    def cmd_three(self, q, a, b=99): pass
+
+
+class uDoc(libpry.AutoTree):
+    def test_signatures(self):
+        c = TestCommands()
+        assert "one()" in c.doc("one")
+        assert "one_self()" in c.doc("one_self")
+        assert "two(a)" in c.doc("two")
+        assert "three(a, b=99)" in c.doc("three")
         
 
 tests = [
     utils.XNest(xinerama=False), [
-        uCall()
+        uCall(),
+        uDoc()
     ]
 ]

@@ -9,7 +9,9 @@ class Cmd(cmd.Cmd):
     prompt = "qsh> "
     def __init__(self, client):
         self.client = client
+        self.builtins = []
         for i in client.commands.keys():
+            self.builtins.append(i)
             def _closure():
                 htext = client.commands.doc(i)
                 commandName = i
@@ -51,7 +53,4 @@ class Cmd(cmd.Cmd):
 
     def do_helpall(self, arg):
         for i in self.client.commands.keys():
-            print
-            print i
-            print "="*len(i)
             print self.client.commands.doc(i)

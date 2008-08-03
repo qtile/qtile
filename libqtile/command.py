@@ -1,4 +1,4 @@
-import inspect, UserDict, traceback, textwrap, os
+import inspect, UserDict, traceback, textwrap, os, inspect
 import ipc, config
 
 class CommandError(Exception): pass
@@ -106,8 +106,13 @@ class Commands(UserDict.DictMixin):
         return lst
 
     def doc(self, name):
-        v = self[name].__doc__ or ""
-        return textwrap.dedent(v)
+        args, varargs, varkw, defaults = inspect.getargspec(self[name])
+        if args[0] == "self":
+            args = args[1:]
+        args = args[1:]
+        spec = name + inspect.formatargspec(args, varargs, varkw, defaults)
+        spec += "\n" + "-"*len(spec) + "\n"
+        return spec + textwrap.dedent(self[name].__doc__ or "")
 
     def __repr__(self):
         return "%s()"%self.__class__.__name__
