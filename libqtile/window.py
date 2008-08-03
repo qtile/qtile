@@ -10,6 +10,7 @@ class _Window:
         window.change_attributes(event_mask=self._windowMask)
         self.x, self.y, self.width, self.height = None, None, None, None
         self.borderwidth = 0
+        self.name = "<no name>"
         self.updateName()
 
     def updateName(self):
