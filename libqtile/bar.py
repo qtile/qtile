@@ -110,6 +110,9 @@ class Bar(Gap):
             qtile.registerWidget(i)
             i._configure(qtile, self, event)
 
+        self.resize()
+
+    def resize(self):
         offset = 0
         stretchWidget = None
         for i in self.widgets:
@@ -118,7 +121,6 @@ class Bar(Gap):
                 stretchWidget = i
                 break
             offset += i.width
-
         total = offset
         offset = self.width
         if stretchWidget:
@@ -145,6 +147,7 @@ class Bar(Gap):
 
     def info(self):
         return [i.info() for i in self.widgets]
+
 
 LEFT = object()
 CENTER = object()
@@ -226,9 +229,16 @@ class _Drawer:
             x = x + (width - textwidth)/2
         self.win.draw_text(self.gc, x, y, text)
 
-    def rectangle(self, x, y, width, height, color):
-        self.change(foreground=color)
-        self.win.fill_rectangle(self.gc, x, 0, width, height)
+    def rectangle(self, x, y, width, height, fillColor=None, borderColor=None, borderWidth=1):
+        if fillColor:
+            self.change(foreground=fillColor)
+            self.win.fill_rectangle(self.gc, x, 0, width, height)
+        if borderColor:
+            self.change(
+                foreground=borderColor,
+                line_width=borderWidth
+            )
+            self.win.rectangle(self.gc, x, 0, width, height)
 
 
 class _Widget:
@@ -290,10 +300,12 @@ class Spacer(_Widget):
 class GroupBox(_Widget):
     BOXPADDING_SIDE = 8
     PADDING = 3
+    BORDERWIDTH = 1
     def __init__(self, currentFG="white", currentBG=_HIGHLIGHT, font=None,
-                 activeFG="white", inactiveFG="#666666"):
+                 activeFG="white", inactiveFG="#666666", border="#666666"):
         self.currentFG, self.currentBG = currentFG, currentBG
         self.activeFG, self.inactiveFG = activeFG, inactiveFG
+        self.border = border
         if font:
             self.font = font
 
@@ -317,10 +329,15 @@ class GroupBox(_Widget):
         self.clear()
         x = self.offset + self.PADDING
         for i in self.qtile.groups:
-            foureground, background = None, None
-            if self.bar.screen.group.name == i.name:
-                background = self.currentBG
-                foreground = self.currentFG
+            foreground, background, border = None, None, None
+            if i.screen:
+                if self.bar.screen.group.name == i.name:
+                    background = self.currentBG
+                    foreground = self.currentFG
+                else:
+                    background = self.bar.background
+                    foreground = self.currentFG
+                    border = True
             elif i.windows:
                 foreground = self.activeFG
                 background = self.bar.background
@@ -335,6 +352,14 @@ class GroupBox(_Widget):
                 background = background,
                 alignment = CENTER,
             )
+            if border:
+                self._drawer.rectangle(
+                    x, 0,
+                    self.boxwidth - self.BORDERWIDTH,
+                    self.bar.size - self.BORDERWIDTH,
+                    borderWidth = self.BORDERWIDTH,
+                    borderColor = self.border
+                )
             x += self.boxwidth
 
 
