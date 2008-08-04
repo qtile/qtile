@@ -10,18 +10,30 @@ class QTileError(Exception): pass
 
 
 class Event:
+    events = set(
+        [
+            "setgroup",
+            "focus_change",
+            "window_add",
+            "window_name_change",
+        ]
+    )
     def __init__(self, qtile):
         self.qtile = qtile
-        self.events = {}
+        self.subscriptions = {}
 
     def subscribe(self, event, func):
-        lst = self.events.setdefault(event, [])
+        if event not in self.events:
+            raise QTileError("Unknown event: %s"%event)
+        lst = self.subscriptions.setdefault(event, [])
         if not func in lst:
             lst.append(func)
 
     def fire(self, event, *args, **kwargs):
+        if event not in self.events:
+            raise QTileError("Unknown event: %s"%event)
         self.qtile.log.add("Internal event: %s(%s, %s)"%(event, args, kwargs))
-        for i in self.events.get(event, []):
+        for i in self.subscriptions.get(event, []):
             i(*args, **kwargs)
 
 

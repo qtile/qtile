@@ -291,8 +291,10 @@ class uEvent(libpry.AutoTree):
         io = cStringIO.StringIO()
         dummy.log = libqtile.Log(5, io)
         e = libqtile.Event(dummy)
-        e.subscribe("testing", test)
-        e.fire("testing", 1)
+        libpry.raises("unknown event", e.subscribe, "unkown", test)
+        libpry.raises("unknown event", e.fire, "unkown")
+        e.subscribe("window_add", test)
+        e.fire("window_add", 1)
         assert self.testVal == 1
 
 
