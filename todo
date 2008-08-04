@@ -8,7 +8,6 @@ FEATURES
 
 - Extend the GroupBox widget to:
     - Indicate an urgent request if the urgent flag is passed to PropertyNotify.
-    - Indicate groups present on other screens.
 - A system tray widget.
 - A graph widget for showing percentages over time.
 - Obey window size hints, to the extent where we don't make windows larger than
@@ -37,4 +36,3 @@ FUTURE
     
     http://barnesc.blogspot.com/2006/01/rencode-reduced-length-encodings.html
     http://www.connellybarnes.com/code/python/rencode
-    

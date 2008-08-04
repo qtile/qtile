@@ -56,7 +56,7 @@ class Gap:
 
 class _BarCommands(command.Commands):
     def _get(self, q, screen, position):
-        if len(q.screens) - 1 > screen:
+        if len(q.screens) - 1 < screen:
             raise command.CommandError("No such screen: %s"%screen)
         s = q.screens[screen]
         b = getattr(s, position)
