@@ -1,4 +1,5 @@
 import datetime, subprocess, sys, operator, os, traceback
+import select
 import Xlib
 import Xlib.display
 import Xlib.ext.xinerama as xinerama
@@ -418,6 +419,10 @@ class QTile:
     def loop(self):
         try:
             while 1:
+                fds, _, _ = select.select(
+                                [self.server.sock, self.display.fileno()],
+                                [], [], 0.1
+                            )
                 if self._exit:
                     sys.exit(1)
                 self.server.receive()

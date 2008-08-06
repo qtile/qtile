@@ -26,7 +26,6 @@ class uWidgets(utils.QTileTests):
         self.testWindow("one")
         b = self.c.barinfo()["bottom"]
         assert b[0]["name"] == "GroupBox"
-        time.sleep(2)
 
     def test_event(self):
         self.c.pullgroup("b")
