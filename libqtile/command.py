@@ -105,13 +105,19 @@ class Commands(UserDict.DictMixin):
                 lst.append(i[4:])
         return lst
 
-    def doc(self, name):
+    def docSig(self, name):
         args, varargs, varkw, defaults = inspect.getargspec(self[name])
         if args[0] == "self":
             args = args[1:]
         args = args[1:]
-        spec = name + inspect.formatargspec(args, varargs, varkw, defaults)
-        htext = textwrap.dedent(self[name].__doc__ or "")
+        return name + inspect.formatargspec(args, varargs, varkw, defaults)
+
+    def docText(self, name):
+        return textwrap.dedent(self[name].__doc__ or "")
+
+    def doc(self, name):
+        spec = self.docSig(name)
+        htext = self.docText(name)
         htext = "\n".join(["\t" + i for i in htext.splitlines()])
         return spec + htext
 

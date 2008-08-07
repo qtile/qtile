@@ -1,8 +1,36 @@
-
+import sys
+sys.path.insert(0, "..")
 import countershape.widgets
 import countershape.layout
 import countershape.grok
 from countershape.doc import *
+from libqtile import manager, layout, bar
+
+
+def formatCommands(cmd):
+    lst = []
+    for i in cmd.keys():
+        lst.append(
+            countershape.html.rawstr(
+                countershape.template.pySyntax(
+                    cmd.docSig(i)
+                )
+            )
+        )
+        lst.append(
+            countershape.html.rawstr(
+                countershape.textish.Textish(cmd.docText(i))
+            )
+        )
+    return countershape.html.Group(*lst)
+
+
+ns.formatCommands = formatCommands
+ns.commands_base = manager._BaseCommands()
+ns.commands_stack = layout.StackCommands()
+ns.commands_bar = bar._BarCommands()
+ns.commands_textbox = bar._TextBoxCommands()
+ns.commands_measurebox = bar._MeasureBoxCommands()
 
 ns.docTitle = "Qtile"
 ns.docMaintainer = "Aldo Cortesi"
