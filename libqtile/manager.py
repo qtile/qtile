@@ -542,94 +542,14 @@ class QTile:
 
 class _BaseCommands(command.Commands):
     @staticmethod
-    def cmd_status(q):
-        """
-            Return "OK" if Qtile is running.
-        """
-        return "OK"
-
-    @staticmethod
-    def cmd_to_screen(q, n):
-        """
-            Warp to screen n, where n is a 0-based screen number.
-
-            Example:
-
-                to_screen(0)
-        """
-        return q.toScreen(n)
-
-    @staticmethod
-    def cmd_current_screen(q):
-        """
-            Return current screen number.
-        """
-        return q.screens.index(q.currentScreen)
-
-    @staticmethod
-    def cmd_windows(q):
-        """
-            Return info for each client window.
-        """
-        return [i.info() for i in q.windowMap.values()]
-
-    @staticmethod
-    def cmd_internal(q):
-        """
-            Return info for each internal window.
-        """
-        return [i.info() for i in q.internalMap.values()]
-
-    @staticmethod
-    def cmd_nextlayout(q, group=None):
-        """
-            Switch to the next layout.
-        """
-        if group:
-            group = q.groupMap.get(groupName)
-        else:
-            group = q.currentGroup
-        group.nextLayout()
-
-    @staticmethod
-    def cmd_groups(q):
-        """
-            Return a dictionary containing information for all groups.
-
-            Example:
-                
-                groups()
-        """
-        d = {}
-        for i in q.groups:
-            d[i.name] = i.info()
-        return d
-
-    @staticmethod
-    def cmd_screens(q):
-        """
-            Return screen information.
-        """
-        lst = []
-        for i in q.screens:
-            lst.append(dict(
-                index = i.index,
-                group = i.group.name if i.group is not None else None,
-                x = i.x,
-                y = i.y,
-                width = i.width,
-                height = i.height,
-                gaps = dict(
-                    top = i.top.geometry() if i.top else None,
-                    bottom = i.bottom.geometry() if i.bottom else None,
-                    left = i.left.geometry() if i.left else None,
-                    right = i.right.geometry() if i.right else None,
-                )
-            ))
-        return lst
-
-    @staticmethod
     def cmd_barinfo(q, screen=None):
+        """
+            Returns a dictionary of information regarding the bar on the
+            specified screen.
+
+            :screen Screen integer offset. If none is specified, the current
+            screen is assumed.
+        """
         if not screen:
             screen = q.currentScreen
         else:
@@ -642,122 +562,11 @@ class _BaseCommands(command.Commands):
         )
 
     @staticmethod
-    def cmd_pullgroup(q, groupName, screen=None):
+    def cmd_current_screen(q):
         """
-            Pull a group to a specified screen.
-
-            Examples:
-
-            Pull group "a" to the current screen:
-                
-                pullgroup("a")
-
-            Pull group "a" to screen 0:
-        
-                pullgroup("a", 0)
+            Return current screen number.
         """
-        if not screen:
-            screen = q.currentScreen
-        else:
-            screen = self.screens[screen]
-        group = q.groupMap.get(groupName)
-        if group is None:
-            raise command.CommandError("No such group: %s"%groupName)
-        screen.setGroup(group)
-
-    @staticmethod
-    def cmd_window_to_group(q, groupName):
-        """
-            Move focused window to a specified group.
-
-            Examples:
-
-                window_to_group("a")
-        """
-        group = q.groupMap.get(groupName)
-        if group is None:
-            raise command.CommandError("No such group: %s"%groupName)
-        if q.currentWindow and q.currentWindow.group is not group:
-            w = q.currentWindow
-            q.currentWindow.group.remove(w)
-            group.add(w)
-
-    @staticmethod
-    def cmd_simulate_keypress(q, modifiers, key):
-        """
-            Simulates a keypress on the focused window. The first argument is a
-            list of modifier specification strings, the second argument is a
-            key specification.  Modifiers can be one of "shift", "lock",
-            "control" and "mod1" through "mod5".
-
-            Examples:
-
-                simulate_keypress(["control", "mod2"], "k")
-        """
-        keysym = XK.string_to_keysym(key)
-        if keysym == 0:
-            raise command.CommandError("Unknown key: %s"%key)
-        keycode = q.display.keysym_to_keycode(keysym)
-        try:
-            mask = utils.translateMasks(modifiers)
-        except QTileError, v:
-            return str(v)
-        if q.currentWindow:
-            win = q.currentWindow.window
-        else:
-            win = q.root
-        e = event.KeyPress(
-                state = mask,
-                detail = keycode,
-
-                root = q.root,
-                window = win,
-                child = X.NONE,
-
-                time = X.CurrentTime,
-                root_x = 1,
-                root_y = 1,
-                event_x = 1,
-                event_y = 1,
-                same_screen = 1,
-        )
-        win.send_event(e, X.KeyPressMask|X.SubstructureNotifyMask, propagate=True)
-        q.display.sync()
-
-    @staticmethod
-    def cmd_spawn(q, cmd):
-        """
-            Run cmd in a shell.
-
-            Example:
-
-                spawn("firefox")
-        """
-        try:
-            subprocess.Popen([cmd], shell=True)
-        except Exception, v:
-            print type(v), v
-
-    @staticmethod
-    def cmd_kill(q):
-        """
-            Kill the window that currently has focus.
-        """
-        window = q.currentScreen.group.currentWindow
-        if window:
-            window.kill()
-
-    @staticmethod
-    def cmd_sync(q):
-        """
-            Sync the X display. Should only be used for development.
-        """
-        q.display.sync()
-
-    @staticmethod
-    def cmd_restart(q):
-        # FIXME
-        pass
+        return q.screens.index(q.currentScreen)
 
     @staticmethod
     def cmd_debug(q):
@@ -775,66 +584,18 @@ class _BaseCommands(command.Commands):
             return "on"
 
     @staticmethod
-    def cmd_log(q, n=None):
+    def cmd_groups(q):
         """
-            Return the last n log records, where n is all by default.
+            Return a dictionary containing information for all groups.
 
-            Examples:
+            Example:
                 
-                log(5)
-                log()
+                groups()
         """
-        if n and len(q.log.log) > n:
-            return q.log.log[-n:]
-        else:
-            return q.log.log
-
-    @staticmethod
-    def cmd_log_clear(q):
-        """
-            Clears the internal log.
-
-            Examples:
-                
-                log_clear()
-        """
-        q.log.clear()
-
-    @staticmethod
-    def cmd_log_setlength(q, n):
-        """
-            Sets the configured size of the internal log.
-
-            Examples:
-                
-                log_setlength(10)
-        """
-        return q.log.setLength(n)
-
-    @staticmethod
-    def cmd_log_getlength(q):
-        """
-            Clears the configured size of the internal log.
-
-            Examples:
-                
-                log_getlength()
-        """
-        return q.log.length
-
-    @staticmethod
-    def cmd_report(q, msg="None", path="~/qtile_crashreport"):
-        """
-            Write a qtile crash report. Optional arguments are the message that
-            should head the report, and the path of the file to write to.
-
-            Examples:
-                
-                report()
-                report(msg="My messasge")
-                report(msg="My message", path="~/myreport")
-        """
-        q.writeReport(msg, path, True)
+        d = {}
+        for i in q.groups:
+            d[i.name] = i.info()
+        return d
 
     @staticmethod
     def cmd_inspect(q, windowID=None):
@@ -843,7 +604,10 @@ class _BaseCommands(command.Commands):
             If windowID is specified, it should be the integer X window
             identifier. The current focus is inspected by default.
 
+            Example:
+
                 inspect()
+
                 inspect(0x600005)
         """
         if windowID:
@@ -928,16 +692,35 @@ class _BaseCommands(command.Commands):
         )
 
     @staticmethod
+    def cmd_internal(q):
+        """
+            Return info for each internal window (bars, for example).
+        """
+        return [i.info() for i in q.internalMap.values()]
+
+    @staticmethod
+    def cmd_kill(q):
+        """
+            Kill the window that currently has focus.
+        """
+        window = q.currentScreen.group.currentWindow
+        if window:
+            window.kill()
+
+    @staticmethod
     def cmd_layoutinfo(q, group=None, layout=None):
         """
+            Return layout info. 
+            
+            :group Group name.
+            :layout Integer layout offset.
 
-            Return layout info. The optional group argument is a group name.
-            The optional layout argument is an integer layout offset.If
-            neither are specified the current group and layout is used.
+            If neither are specified the current group and layout is used.
 
             Examples:
                 
                 layoutinfo()
+
                 layoutinfo("a", 1)
         """
         if group:
@@ -953,11 +736,234 @@ class _BaseCommands(command.Commands):
         else:
             layout = group.layout
         return layout.info()
-                
+
     @staticmethod
     def cmd_list_widgets(q):
         """
-            List all addressible widgets.
+            List of all addressible widget names.
         """
         return q.widgetMap.keys()
 
+    @staticmethod
+    def cmd_log(q, n=None):
+        """
+            Return the last n log records, where n is all by default.
+
+            Examples:
+                
+                log(5)
+
+                log()
+        """
+        if n and len(q.log.log) > n:
+            return q.log.log[-n:]
+        else:
+            return q.log.log
+
+    @staticmethod
+    def cmd_log_clear(q):
+        """
+            Clears the internal log.
+        """
+        q.log.clear()
+
+    @staticmethod
+    def cmd_log_getlength(q):
+        """
+            Returns the configured size of the internal log.
+        """
+        return q.log.length
+
+    @staticmethod
+    def cmd_log_setlength(q, n):
+        """
+            Sets the configured size of the internal log.
+        """
+        return q.log.setLength(n)
+
+    @staticmethod
+    def cmd_nextlayout(q, group=None):
+        """
+            Switch to the next layout.
+
+            :group Group name. If not specified, the current group is assumed.
+        """
+        if group:
+            group = q.groupMap.get(group)
+        else:
+            group = q.currentGroup
+        group.nextLayout()
+
+    @staticmethod
+    def cmd_pullgroup(q, group, screen=None):
+        """
+            Pull a group to a specified screen.
+
+            :group Group name.
+            :screen Screen offset. If not specified, we assume the current screen.
+
+            Examples:
+
+            Pull group "a" to the current screen:
+                
+                pullgroup("a")
+
+            Pull group "a" to screen 0:
+        
+                pullgroup("a", 0)
+        """
+        if not screen:
+            screen = q.currentScreen
+        else:
+            screen = self.screens[screen]
+        group = q.groupMap.get(group)
+        if group is None:
+            raise command.CommandError("No such group: %s"%group)
+        screen.setGroup(group)
+
+    @staticmethod
+    def cmd_report(q, msg="None", path="~/qtile_crashreport"):
+        """
+            Write a qtile crash report. 
+            
+            :msg Message that should head the report
+            :path Path of the file to write to
+
+            Examples:
+                
+                report()
+
+                report(msg="My messasge")
+
+                report(msg="My message", path="~/myreport")
+        """
+        q.writeReport(msg, path, True)
+
+    @staticmethod
+    def cmd_screens(q):
+        """
+            Return a list of dictionaries providing information on all screens.
+        """
+        lst = []
+        for i in q.screens:
+            lst.append(dict(
+                index = i.index,
+                group = i.group.name if i.group is not None else None,
+                x = i.x,
+                y = i.y,
+                width = i.width,
+                height = i.height,
+                gaps = dict(
+                    top = i.top.geometry() if i.top else None,
+                    bottom = i.bottom.geometry() if i.bottom else None,
+                    left = i.left.geometry() if i.left else None,
+                    right = i.right.geometry() if i.right else None,
+                )
+            ))
+        return lst
+
+    @staticmethod
+    def cmd_simulate_keypress(q, modifiers, key):
+        """
+            Simulates a keypress on the focused window. 
+            
+            :modifiers A list of modifier specification strings. Modifiers can
+            be one of "shift", "lock", "control" and "mod1" - "mod5".
+            :key Key specification.  
+
+            Examples:
+
+                simulate_keypress(["control", "mod2"], "k")
+        """
+        keysym = XK.string_to_keysym(key)
+        if keysym == 0:
+            raise command.CommandError("Unknown key: %s"%key)
+        keycode = q.display.keysym_to_keycode(keysym)
+        try:
+            mask = utils.translateMasks(modifiers)
+        except QTileError, v:
+            return str(v)
+        if q.currentWindow:
+            win = q.currentWindow.window
+        else:
+            win = q.root
+        e = event.KeyPress(
+                state = mask,
+                detail = keycode,
+
+                root = q.root,
+                window = win,
+                child = X.NONE,
+
+                time = X.CurrentTime,
+                root_x = 1,
+                root_y = 1,
+                event_x = 1,
+                event_y = 1,
+                same_screen = 1,
+        )
+        win.send_event(e, X.KeyPressMask|X.SubstructureNotifyMask, propagate=True)
+        q.display.sync()
+
+    @staticmethod
+    def cmd_spawn(q, cmd):
+        """
+            Run cmd in a shell.
+
+            Example:
+
+                spawn("firefox")
+        """
+        try:
+            subprocess.Popen([cmd], shell=True)
+        except Exception, v:
+            print type(v), v
+
+    @staticmethod
+    def cmd_status(q):
+        """
+            Return "OK" if Qtile is running.
+        """
+        return "OK"
+
+    @staticmethod
+    def cmd_sync(q):
+        """
+            Sync the X display. Should only be used for development.
+        """
+        q.display.sync()
+
+    @staticmethod
+    def cmd_to_screen(q, n):
+        """
+            Warp to screen n, where n is a 0-based screen number.
+
+            Example:
+
+                to_screen(0)
+        """
+        return q.toScreen(n)
+
+    @staticmethod
+    def cmd_window_to_group(q, groupName):
+        """
+            Move focused window to a specified group.
+
+            Examples:
+
+                window_to_group("a")
+        """
+        group = q.groupMap.get(groupName)
+        if group is None:
+            raise command.CommandError("No such group: %s"%groupName)
+        if q.currentWindow and q.currentWindow.group is not group:
+            w = q.currentWindow
+            q.currentWindow.group.remove(w)
+            group.add(w)
+
+    @staticmethod
+    def cmd_windows(q):
+        """
+            Return info for each client window.
+        """
+        return [i.info() for i in q.windowMap.values()]

@@ -67,6 +67,11 @@ body {
     font-size:  0.8em;
 }
 
+.commanddoc {
+    margin: 10px;
+    margin-bottom: 15px;
+}
+
 dl {
     margin: 0px;
     margin-top: 5px;

@@ -11,15 +11,18 @@ def formatCommands(cmd):
     lst = []
     for i in cmd.keys():
         lst.append(
-            countershape.html.rawstr(
-                countershape.template.pySyntax(
-                    cmd.docSig(i)
-                )
-            )
-        )
-        lst.append(
-            countershape.html.rawstr(
-                countershape.textish.Textish(cmd.docText(i))
+            countershape.html.DIV(
+                countershape.html.Group(
+                    countershape.html.rawstr(
+                        countershape.template.pySyntax(
+                            cmd.docSig(i)
+                        )
+                    ),
+                    countershape.html.rawstr(
+                        countershape.textish.Textish(cmd.docText(i))
+                    )
+                ),
+                _class = "commanddoc"
             )
         )
     return countershape.html.Group(*lst)
