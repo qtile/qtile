@@ -256,6 +256,7 @@ class Log:
 class QTile:
     debug = False
     _exit = False
+    _suppressReport = True
     _testing = False
     _logLength = 100 
     def __init__(self, config, displayName=None, fname=None):
@@ -345,6 +346,8 @@ class QTile:
         if self._exit:
             print >> sys.stderr, "Access denied: Another window manager running?"
             sys.exit(1)
+        # From this point on, we write a crash report on error
+        self._suppressReport = False
 
         self.server = command._Server(self.fname, self, config)
         self.ignoreEvents = set([
@@ -470,7 +473,9 @@ class QTile:
                     else:
                         self.log.add("Unknown event: %s"%self._eventStr(e))
         except:
-            self.writeReport(traceback.format_exc())
+            # We've already written a report.
+            if not self._exit:
+                self.writeReport(traceback.format_exc())
 
     def handle_KeyPress(self, e):
         keysym =  self.display.keycode_to_keysym(e.detail, 0)
@@ -556,7 +561,8 @@ class QTile:
         if self._testing:
             print >> sys.stderr, "Server Error:", (e, v)
         else:
-            self.writeReport((e, v))
+            if not self._suppressReport:
+                self.writeReport((e, v))
         self._exit = True
 
 
