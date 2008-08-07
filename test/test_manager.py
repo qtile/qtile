@@ -197,13 +197,6 @@ class uQTile(utils.QTileTests):
         libpry.raises("invalid layout", self.c.layoutinfo, "b", 99)
         libpry.raises("no such group", self.c.layoutinfo, "nonexistent", 0)
 
-    def test_restart(self):
-        self.testWindow("one")
-        self.testWindow("two")
-        self.c.restart()
-
-        #assert len(self.c.windows()) == 2
-
 
 class uKey(libpry.AutoTree):
     def test_init(self):

@@ -1,3 +1,23 @@
+# Copyright (c) 2008, Aldo Cortesi. All rights reserved.
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import copy, sys
 import manager, utils, command
 
@@ -51,7 +71,7 @@ class _Layout:
 
 
 class StackCommands(command.Commands):
-    def cmd_stack_toggle_split(self, q, noskip=False):
+    def cmd_stack_toggle_split(self, q):
         """
             Toggle vertical split on the current layout.
         """
@@ -60,7 +80,7 @@ class StackCommands(command.Commands):
             s.toggleSplit()
         q.currentGroup.layoutAll()
 
-    def cmd_stack_down(self, q, noskip=False):
+    def cmd_stack_down(self, q):
         """
             Switch to the next window in this stack.
         """
@@ -69,7 +89,7 @@ class StackCommands(command.Commands):
             s.current -= 1
             q.currentGroup.focus(s.cw, False)
 
-    def cmd_stack_up(self, q, noskip=False):
+    def cmd_stack_up(self, q):
         """
             Switch to the previous window in this stack.
         """
@@ -78,7 +98,7 @@ class StackCommands(command.Commands):
             s.current += 1
             q.currentGroup.focus(s.cw, False)
 
-    def cmd_stack_shuffle_up(self, q, noskip=False):
+    def cmd_stack_shuffle_up(self, q):
         """
             Shuffle the order of this stack up.
         """
@@ -88,7 +108,7 @@ class StackCommands(command.Commands):
             s.current += 1
         q.currentGroup.layoutAll()
 
-    def cmd_stack_shuffle_down(self, q, noskip=False):
+    def cmd_stack_shuffle_down(self, q):
         """
             Shuffle the order of this stack down.
         """
@@ -98,45 +118,45 @@ class StackCommands(command.Commands):
             s.current -= 1
         q.currentGroup.layoutAll()
 
-    def cmd_stack_delete(self, q, noskip=False):
+    def cmd_stack_delete(self, q):
         """
             Delete the current stack from the layout.
         """
         q.currentLayout.deleteCurrentStack()
 
-    def cmd_stack_add(self, q, noskip=False):
+    def cmd_stack_add(self, q):
         """
             Add a stack to the layout.
         """
         q.currentLayout.stacks.append(_WinStack())
         q.currentGroup.layoutAll()
 
-    def cmd_stack_rotate(self, q, noskip=False):
+    def cmd_stack_rotate(self, q):
         """
             Rotate order of the stacks.
         """
         utils.shuffleUp(q.currentLayout.stacks)
         q.currentGroup.layoutAll()
 
-    def cmd_stack_next(self, q, noskip=False):
+    def cmd_stack_next(self, q):
         """
             Focus next stack.
         """
         return q.currentLayout.nextStack()
 
-    def cmd_stack_previous(self, q, noskip=False):
+    def cmd_stack_previous(self, q):
         """
             Focus previous stack.
         """
         return q.currentLayout.previousStack()
 
-    def cmd_stack_current(self, q, noskip=False):
+    def cmd_stack_current(self, q):
         """
             Return the offset of the current stack.
         """
         return q.currentLayout.currentStackOffset
 
-    def cmd_stack_get(self, q, noskip=False):
+    def cmd_stack_get(self, q):
         """
             Retrieve the current stacks, returning lists of window names in
             order, starting with the current window of each stack.
