@@ -256,7 +256,6 @@ class Log:
 class QTile:
     debug = False
     _exit = False
-    _suppressReport = True
     _testing = False
     _logLength = 100 
     def __init__(self, config, displayName=None, fname=None):
@@ -334,7 +333,7 @@ class QTile:
             self.screens.append(s)
         self.currentScreen = self.screens[0]
 
-        self.display.set_error_handler(self.errorHandler)
+        self.display.set_error_handler(self.initialErrorHandler)
         self.root.change_attributes(
             event_mask = X.SubstructureNotifyMask |\
                          X.SubstructureRedirectMask |\
@@ -346,8 +345,8 @@ class QTile:
         if self._exit:
             print >> sys.stderr, "Access denied: Another window manager running?"
             sys.exit(1)
-        # From this point on, we write a crash report on error
-        self._suppressReport = False
+        # Now install the real error handler
+        self.display.set_error_handler(self.errorHandler)
 
         self.server = command._Server(self.fname, self, config)
         self.ignoreEvents = set([
@@ -552,8 +551,12 @@ class QTile:
         self.log.write(f, "\t")
         f.close()
 
+    def initialErrorHandler(self, e, v):
+        self._exit = True
+
     _ignoreErrors = set([
         Xlib.error.BadWindow,
+        Xlib.error.BadAccess
     ])
     def errorHandler(self, e, v):
         if e.__class__ in self._ignoreErrors:
@@ -561,8 +564,7 @@ class QTile:
         if self._testing:
             print >> sys.stderr, "Server Error:", (e, v)
         else:
-            if not self._suppressReport:
-                self.writeReport((e, v))
+            self.writeReport((e, v))
         self._exit = True
 
 
