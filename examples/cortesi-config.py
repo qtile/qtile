@@ -3,21 +3,31 @@ import libqtile
 keys = [
     libqtile.Key(
         ["mod1"], "k",
-        libqtile.command.Call("max_next").when(layout="max"),
-        libqtile.command.Call("stack_down").when(layout="stack"),
+        libqtile.command.Call("stack_down"),
     ),
     libqtile.Key(
         ["mod1"], "j",
-        libqtile.command.Call("max_previous").when(layout="max"),
-        libqtile.command.Call("stack_up").when(layout="stack"),
+        libqtile.command.Call("stack_up"),
+    ),
+    libqtile.Key(
+        ["mod1", "control"], "k",
+        libqtile.command.Call("stack_shuffle_down"),
+    ),
+    libqtile.Key(
+        ["mod1", "control"], "j",
+        libqtile.command.Call("stack_shuffle_up"),
     ),
     libqtile.Key(
         ["mod1"], "space",
-        libqtile.command.Call("stack_next").when(layout="stack")
+        libqtile.command.Call("stack_next")
     ),
     libqtile.Key(
         ["mod1", "shift"], "space",
-        libqtile.command.Call("stack_rotate").when(layout="stack")
+        libqtile.command.Call("stack_rotate")
+    ),
+    libqtile.Key(
+        ["mod1", "shift"], "Return",
+        libqtile.command.Call("stack_toggle_split")
     ),
     libqtile.Key(["mod1"], "n",      libqtile.command.Call("spawn", "firefox")),
     libqtile.Key(["mod1"], "h",      libqtile.command.Call("to_screen", 0)),
@@ -52,8 +62,8 @@ for i in groups:
         libqtile.Key(["mod1"], i, libqtile.command.Call("pullgroup", i))
     )
 layouts = [
-    libqtile.layout.Max(),
-    libqtile.layout.Stack()
+    libqtile.layout.Stack(stacks=1, borderWidth=0),
+    libqtile.layout.Stack(stacks=2, borderWidth=2)
 ]
 commands = []
 screens = [
