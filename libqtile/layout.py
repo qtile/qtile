@@ -241,10 +241,10 @@ class Stack(_Layout):
     commands = StackCommands()
     def __init__(self, stacks=2, borderWidth=1, active="#00009A", inactive="black"):
         """
-            stacks: Number of stacks to start with.
-            borderWidth: Width of window borders.
-            active: Color of the active window border.
-            inactive: Color of the inactive window border.
+            :stacks Number of stacks to start with.
+            :borderWidth Width of window borders.
+            :active Color of the active window border.
+            :inactive Color of the inactive window border.
         """
         self.borderWidth, self.active, self.inactive = borderWidth, active, inactive
         self.activePixel, self.inactivePixel = None, None

@@ -57,6 +57,11 @@ class _Server(ipc.Server):
 
 class Call:
     def __init__(self, command, *args, **kwargs):
+        """
+            :command A string command name specification
+            :*args Arguments to be passed to the specified command
+            :*kwargs Arguments to be passed to the specified command
+        """
         self.command, self.args, self.kwargs = command, args, kwargs
         # Conditionals
         self.layout = None

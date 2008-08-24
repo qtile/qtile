@@ -1,35 +1,43 @@
 
-
 Qtile is configured in Python. A script is evaluated (~/.qtile/config.py by
 default), and a set of configuration variables is pulled from its global
 namespace. 
 
 
-Configuration Variables
-=======================
-
-
 keys
-----
+====
 
-    A list of libqtile.Key objects.
+    A list of __libqtile.Key__ objects:
 
+    $!qtgrok("manager.Key").signatureDoc()!$
+
+    The signature for __Call__ objects is as follows:
+    
+    $!qtgrok("command.Call").signatureDoc()!$
+
+    A complete list of commands can be found in the @!linkTo("ipc.html")!@
+    section of this manual.
+      
 
 groups
-------
+======
 
     A list of group name strings.
 
 
 layouts
--------
+=======
 
-    A list of Qtile layout objects.
+    A list of Qtile layout objects. For now, Qtile only has a single (quite
+    powerful) layout called __Stack__, but this will change soon:
+
+    $!qtgrok("layout.Stack").signatureDoc()!$
 
 
 screens
--------
+=======
 
-    A list of libqtile.Screen objects.
+    A list of libqtile.Screen objects:
 
+    $!qtgrok("manager.Screen").signatureDoc()!$
 
