@@ -33,7 +33,7 @@ def formatCommands(cmd):
                         )
                     ),
                     countershape.html.rawstr(
-                        countershape.textish.Textish(cmd.docText(i))
+                        counters
                     )
                 ),
                 _class = "commanddoc"
@@ -68,6 +68,5 @@ pages = [
     Page("ipc.html", "Remote Commandset"),
     Page("qsh.html", "qsh - The Qtile Shell"),
     Page("faq.html", "FAQ"),
-    Page("api.html", "API"),
     Page("admin.html", "Administrivia")
 ]
