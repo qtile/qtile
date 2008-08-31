@@ -67,8 +67,9 @@ pages = [
     Page("index.html", "Introduction"),
     Page("configuration.html", "Configuration"),
     Directory("configuration"),
-    Page("commands.html", "Commands"),
+    Page("scripting.html", "Scripting Qtile"),
     Page("qsh.html", "qsh - The Qtile Shell"),
+    Page("commands.html", "Command Index"),
     Page("faq.html", "FAQ"),
     Page("admin.html", "Administrivia")
 ]

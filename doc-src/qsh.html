@@ -1,5 +1,37 @@
 
+The Qtile command shell is a command-line shell interface that provides access
+to the full complement of Qtile command functions. The shell features command
+name completion, and full command documentation can be accessed from the shell
+itself. The shell uses GNU Readline when it's available, so the interface can
+be configured to, for example, obey VI keybindings with an appropriate .inputrc
+file. See the GNU Readline documentation for more information.
 
+In future, __qsh__ will grow a porcelain layer built on top of the raw
+scripting command-set.
+
+
+<pre>
+<!--(block | htmlescape)-->
+qsh> help
+
+Documented commands (type help <topic>):
+========================================
+bar_fake_click  log                spawn               stack_shuffle_up  
+barinfo         log_clear          stack_add           stack_toggle_split
+current_screen  log_getlength      stack_current       stack_up          
+debug           log_setlength      stack_delete        status            
+groups          nextlayout         stack_down          sync              
+inspect         pullgroup          stack_get           to_screen         
+internal        quit               stack_next          window_to_group   
+kill            report             stack_previous      windows           
+layoutinfo      screens            stack_rotate      
+list_widgets    simulate_keypress  stack_shuffle_down
+
+Undocumented commands:
+======================
+EOF  exit  help  helpall  q
+<!--(end)-->
+</pre>
 
 
 
