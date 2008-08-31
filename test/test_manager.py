@@ -283,7 +283,7 @@ class uEvent(libpry.AutoTree):
         dummy = Dummy()
         io = cStringIO.StringIO()
         dummy.log = libqtile.manager.Log(5, io)
-        e = libqtile.Event(dummy)
+        e = libqtile.manager.Event(dummy)
         libpry.raises("unknown event", e.subscribe, "unkown", test)
         libpry.raises("unknown event", e.fire, "unkown")
         e.subscribe("window_add", test)

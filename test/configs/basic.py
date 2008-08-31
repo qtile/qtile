@@ -1,5 +1,5 @@
 from libqtile import *
 
 keys = [
-    Key(["control"], "k", "focusnext")
+    manager.Key(["control"], "k", "focusnext")
 ]
