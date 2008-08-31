@@ -21,7 +21,7 @@ Qtile depends on the Python X Library (http://python-xlib.sourceforge.net/).
 
 
 setup(
-        name = "Qtile",
+        name = "qtile",
         version = "0.1",
         description="A pure-Python tiling window manager.",
         author="Aldo Cortesi",
