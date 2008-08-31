@@ -69,8 +69,18 @@ body {
 }
 
 .commanddoc {
-    margin: 10px;
-    margin-bottom: 15px;
+    margin:             10px;
+    background:         #e8e8e8 none repeat scroll 0% 0%;
+    padding:            5px;
+}
+
+.commanddoc .highlight pre {
+    background:         #d8d8d8 none repeat scroll 0% 0%;
+    border-bottom:      1px solid #CCCCCC;
+    border-top:         1px solid #CCCCCC;
+    padding:            10px;
+    margin-bottom:      10px;
+    overflow:           auto;
 }
 
 dl {

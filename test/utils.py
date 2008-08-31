@@ -99,7 +99,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
     def qtileRaises(self, exc, config):
         self._waitForXNest()
         self["fname"] = os.path.join(self["tmpdir"], "qtilesocket")
-        libpry.raises(exc, libqtile.QTile, config, self["display"], self["fname"])
+        libpry.raises(exc, libqtile.manager.QTile, config, self["display"], self["fname"])
 
     def startQtile(self, config):
         self._waitForXNest()
@@ -107,7 +107,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
         pid = os.fork()
         if pid == 0:
             try:
-                q = libqtile.QTile(config, self["display"], self["fname"])
+                q = libqtile.manager.QTile(config, self["display"], self["fname"])
                 q._testing = True
                 # BEWARE: Xnest somehow stuffs up geometry detection for
                 # multiple screens in xinerama. We poke into qtile to fix this.

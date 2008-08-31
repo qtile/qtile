@@ -10,10 +10,10 @@ class TestConfig(libqtile.config.Config):
                 libqtile.layout.Stack(2, borderWidth=10)
             ]
     keys = [
-        libqtile.Key(["control"], "k", libqtile.command.Call("stack_up")),
-        libqtile.Key(["control"], "j", libqtile.command.Call("stack_down")),
+        libqtile.manager.Key(["control"], "k", libqtile.command.Call("stack_up")),
+        libqtile.manager.Key(["control"], "j", libqtile.command.Call("stack_down")),
     ]
-    screens = [libqtile.Screen(
+    screens = [libqtile.manager.Screen(
             bottom=libqtile.bar.Bar(
                         [
                             libqtile.bar.GroupBox(),
@@ -202,12 +202,12 @@ class uKey(libpry.AutoTree):
     def test_init(self):
         libpry.raises(
             "unknown key",
-            libqtile.Key,
+            libqtile.manager.Key,
             [], "unknown", libqtile.command.Call("foo")
         )
         libpry.raises(
             "unknown modifier",
-            libqtile.Key,
+            libqtile.manager.Key,
             ["unknown"], "x", libqtile.command.Call("foo")
         )
 
@@ -215,7 +215,7 @@ class uKey(libpry.AutoTree):
 class uLog(libpry.AutoTree):
     def test_all(self):
         io = cStringIO.StringIO()
-        l = libqtile.Log(5, io)
+        l = libqtile.manager.Log(5, io)
         for i in range(10):
             l.add(i)
         assert len(l.log) == 5
@@ -232,7 +232,7 @@ class uLog(libpry.AutoTree):
 
     def test_setLength(self):
         io = cStringIO.StringIO()
-        l = libqtile.Log(10, io)
+        l = libqtile.manager.Log(10, io)
         for i in range(10):
             l.add(i)
         assert l.length == 10
@@ -244,7 +244,7 @@ class uLog(libpry.AutoTree):
         
 
 
-class TScreen(libqtile.Screen):
+class TScreen(libqtile.manager.Screen):
     def setGroup(self, x): pass
 
 
@@ -282,7 +282,7 @@ class uEvent(libpry.AutoTree):
         class Dummy: pass
         dummy = Dummy()
         io = cStringIO.StringIO()
-        dummy.log = libqtile.Log(5, io)
+        dummy.log = libqtile.manager.Log(5, io)
         e = libqtile.Event(dummy)
         libpry.raises("unknown event", e.subscribe, "unkown", test)
         libpry.raises("unknown event", e.fire, "unkown")

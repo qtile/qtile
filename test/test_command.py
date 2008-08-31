@@ -4,11 +4,11 @@ import utils
 
 class CallConfig(libqtile.config.Config):
     keys = [
-        libqtile.Key(
+        libqtile.manager.Key(
             ["control"], "j",
             libqtile.command.Call("stack_down")
         ),
-        libqtile.Key(
+        libqtile.manager.Key(
             ["control"], "k",
             libqtile.command.Call("stack_up"),
         ),

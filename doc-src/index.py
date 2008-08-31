@@ -34,7 +34,7 @@ def formatCommands(cmd):
                     ),
                     countershape.html.rawstr(
                         countershape.textish.Textish(
-                            cmd.doc(i)
+                            cmd.docText(i)
                         )
                     )
                 ),

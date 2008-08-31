@@ -82,7 +82,10 @@ class Screen:
     group = None
     def __init__(self, top=None, bottom=None, left=None, right=None):
         """
-
+            :top An instance of bar.Gap or bar.Bar or None.
+            :bottom An instance of bar.Gap or bar.Bar or None.
+            :left An instance of bar.Gap or None.
+            :right An instance of bar.Gap or None.
         """
         self.top, self.bottom = top, bottom
         self.left, self.right = left, right

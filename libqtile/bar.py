@@ -28,6 +28,9 @@ _FOREGROUND = "#dddddd"
 class Gap:
     commands = None
     def __init__(self, size):
+        """
+            :size The width of the gap.
+        """
         self.size = size
         self.qtile, self.screen = None, None
 
@@ -107,6 +110,12 @@ class Bar(Gap):
     window = None
     commands = _BarCommands()
     def __init__(self, widgets, size):
+        """
+            Note that bars can only be at the top or the bottom of the screen.
+            
+            widgets: A list of widget objects.
+            size: The width of the bar.
+        """
         Gap.__init__(self, size)
         self.widgets = widgets
 

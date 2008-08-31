@@ -1,17 +1,21 @@
 
-Qtile is configured in Python. A script is evaluated (~/.qtile/config.py by
-default), and a set of configuration variables is pulled from its global
-namespace. 
+Qtile is configured in Python. A script (~/.qtile/config.py by default) is
+evaluated, and a small set of configuration variables - __keys__, __groups__,
+__layouts__ and __screens__ - are pulled from its global namespace. Each of
+these variables are described below, and a full configuration example can be
+found @!aLink("configuration/example.html", "here")!@. There are also a number
+of example configurations in the __examples__ directory of the source
+distribution.
 
 
 keys
 ====
 
-    A list of __libqtile.Key__ objects:
+    A list of __libqtile.manager.Key__ objects.
 
     $!qtgrok("manager.Key").signatureDoc()!$
 
-    The signature for __Call__ objects is as follows:
+    The signature for __libqtile.command.Call__ objects is as follows:
     
     $!qtgrok("command.Call").signatureDoc()!$
 
@@ -22,14 +26,14 @@ keys
 groups
 ======
 
-    A list of group name strings.
+    A list of strings specifying group names.
 
 
 layouts
 =======
 
-    A list of Qtile layout objects. For now, Qtile only has a single (quite
-    powerful) layout called __Stack__, but this will change soon:
+    A list of layout objects. For now, Qtile only has a single (quite powerful)
+    layout - __libqtile.layout.Stack__ - but this will change soon.
 
     $!qtgrok("layout.Stack").signatureDoc()!$
 
@@ -37,7 +41,7 @@ layouts
 screens
 =======
 
-    A list of libqtile.Screen objects:
+    A list of __libqtile.manager.Screen__ objects.
 
     $!qtgrok("manager.Screen").signatureDoc()!$
 

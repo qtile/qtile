@@ -6,7 +6,7 @@ class GBConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
     layouts = [libqtile.layout.Stack(stacks=1, borderWidth=10)]
     screens = [
-        libqtile.Screen(
+        libqtile.manager.Screen(
             bottom=libqtile.bar.Bar(
                         [
                             libqtile.bar.GroupBox(),
@@ -58,7 +58,7 @@ class GeomConf(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
     layouts = [libqtile.layout.Stack(stacks=1, borderWidth=10)]
     screens = [
-        libqtile.Screen(
+        libqtile.manager.Screen(
             left=libqtile.bar.Gap(10),
             right=libqtile.bar.Gap(10),
             top=libqtile.bar.Bar([], 10),
@@ -90,7 +90,7 @@ class uBarGeometry(utils.QTileTests):
 
 class ErrConf(GeomConf):
     screens = [
-        libqtile.Screen(left=libqtile.bar.Bar([], 10))
+        libqtile.manager.Screen(left=libqtile.bar.Bar([], 10))
     ]
 
 
@@ -110,7 +110,7 @@ class TestWidget(libqtile.bar._Widget):
 
 class OffsetConf(GeomConf):
     screens = [
-        libqtile.Screen(
+        libqtile.manager.Screen(
             bottom=libqtile.bar.Bar(
                 [
                     TestWidget(),
@@ -134,7 +134,7 @@ class uOffsetCalculation(utils._QTileTruss):
 
     def test_basic(self):
         self.conf.screens = [
-            libqtile.Screen(
+            libqtile.manager.Screen(
                 bottom=libqtile.bar.Bar(
                     [
                         TestWidget(),
@@ -154,7 +154,7 @@ class uOffsetCalculation(utils._QTileTruss):
 
     def test_singlespacer(self):
         self.conf.screens = [
-            libqtile.Screen(
+            libqtile.manager.Screen(
                 bottom=libqtile.bar.Bar(
                     [
                         libqtile.bar.Spacer(),
@@ -170,7 +170,7 @@ class uOffsetCalculation(utils._QTileTruss):
 
     def test_nospacer(self):
         self.conf.screens = [
-            libqtile.Screen(
+            libqtile.manager.Screen(
                 bottom=libqtile.bar.Bar(
                     [
                         TestWidget(),
