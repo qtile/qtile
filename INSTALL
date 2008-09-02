@@ -1,0 +1,30 @@
+
+Dependencies
+------------
+
+Qtile requires a recent version of Python Xlib:
+
+http://python-xlib.sourceforge.net/
+
+
+Installation
+------------
+
+1 - Install the Qtile library and executables:
+
+        python setup.py install
+
+2 - Create a Qtile configuration directory and create a configuration file. It
+    is probably easiest to start with one of the configuration files in th
+    examples/config directory of the Qtile distribution:
+
+        mkdir ~/.qtile
+
+        cp examples/config/cortesi-config.py ~/.qtile/config.py
+
+3 - Make Qtile run. On my system, this meant creating an .xsession file
+    containing the following:
+
+#!/bin/sh
+exec /usr/bin/qtile
+
