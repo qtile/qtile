@@ -1,0 +1,30 @@
+
+Dependencies
+============
+
+    - Pry unit testing framework, downloadable from:
+
+            http://dev.nullcube.com
+
+    - The Xnest nested X server.
+
+
+
+Running Tests
+=============
+
+    After installing the dependencies, do the following (from the top level of
+    the qtile tree):
+        
+        > cd tests
+        > pry
+
+    An Xnest instance hosting a test instance of Qtile will appear. Please
+    ignore any flickering and flashing windows inside Xnest - this is simply
+    the test suite running.
+
+    Note that Pry's coverage analysis will NOT work for the Qtile test suite.
+    The test Qtile instance runs as a different process, and Pry does not
+    support cross-process coverage analysis (yet).
+
+
