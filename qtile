@@ -45,7 +45,7 @@ def main():
         c = config.File(options.configfile)
     except config.ConfigError, v:
         parser.error(v.message)
-    q = libqtile.QTile(c)
+    q = libqtile.manager.QTile(c)
     q.debug = options.debug
     q.loop()
 
