@@ -17,60 +17,10 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from base import Layout
+from .. import command, utils
 
-import copy, sys
-import manager, utils, command
-
-class _Layout:
-    commands = None
-    def clone(self, group):
-        c = copy.copy(self)
-        c.group = group
-        return c
-
-    def focus(self, c):
-        """
-            Called whenever the focus changes.
-        """
-        pass
-
-    def add(self, c):
-        """
-            Called whenever a window is added to the group, whether the layout
-            is current or not. The layout should just add the window to its
-            internal datastructures, without mapping or configuring.
-        """
-        pass
-
-    def remove(self, c):
-        """
-            Called whenever a window is removed from the group, whether the
-            layout is current or not. The layout should just de-register the
-            window from its data structures, without unmapping the window.
-
-            It should also set the group focus to the appropriate "next"
-            window, as interpreted by the layout.
-        """
-        pass
-
-    def configure(self, c):
-        """
-            This method should:
-                
-                - Configure the dimensions and borders of a window using the
-                  .place() method.
-                - Call either .hide or .unhide on the window.
-        """
-        raise NotImplementedError
-
-    def info(self):
-        return dict(
-            name = self.name,
-            group = self.group.name
-        )
-
-
-class StackCommands(command.Commands):
+class _StackCommands(command.Commands):
     def cmd_stack_toggle_split(self, q):
         """
             Toggle vertical split on the current layout.
@@ -236,9 +186,9 @@ class _WinStack(object):
         )
 
 
-class Stack(_Layout):
+class Stack(Layout):
     name = "stack"
-    commands = StackCommands()
+    commands = _StackCommands()
     def __init__(self, stacks=2, borderWidth=1, active="#00009A", inactive="black"):
         """
             :stacks Number of stacks to start with.
@@ -265,7 +215,7 @@ class Stack(_Layout):
             colormap = group.qtile.display.screen().default_colormap
             self.activePixel = colormap.alloc_named_color(self.active).pixel
             self.inactivePixel = colormap.alloc_named_color(self.inactive).pixel
-        c = _Layout.clone(self, group)
+        c = Layout.clone(self, group)
         # These are mutable
         c.stacks = [_WinStack() for i in self.stacks]
         return c
@@ -382,7 +332,7 @@ class Stack(_Layout):
                 c.hide()
 
     def info(self):
-        d = _Layout.info(self)
+        d = Layout.info(self)
         d["stacks"] = [i.info() for i in self.stacks]
         d["current_stack"] = self.currentStackOffset
         return d
