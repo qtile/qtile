@@ -217,7 +217,6 @@ class Group:
             screen = self.screen.index if self.screen else None
         )
 
-    # List-like operations
     def add(self, window):
         self.qtile.event.fire("window_add")
         self.windows.add(window)

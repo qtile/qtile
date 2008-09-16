@@ -46,7 +46,7 @@ def formatCommands(cmd):
 
 ns.formatCommands = formatCommands
 ns.commands_base = manager._BaseCommands()
-ns.commands_stack = layout.StackCommands()
+ns.commands_stack = layout.stack._StackCommands()
 ns.commands_bar = bar._BarCommands()
 ns.commands_textbox = bar._TextBoxCommands()
 ns.commands_measurebox = bar._MeasureBoxCommands()

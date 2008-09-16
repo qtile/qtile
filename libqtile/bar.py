@@ -78,7 +78,7 @@ class Gap:
 
 
 class _BarCommands(command.Commands):
-    def _get(self, q, screen, position):
+    def get(self, q, screen, position):
         if len(q.screens) - 1 < screen:
             raise command.CommandError("No such screen: %s"%screen)
         s = q.screens[screen]
@@ -95,7 +95,7 @@ class _BarCommands(command.Commands):
             :screen The integer screen offset
             :position One of "top", "bottom", "left", or "right"
         """
-        b = self._get(q, screen, position)
+        b = self.get(q, screen, position)
         class _fake: pass
         fake = _fake()
         fake.event_x = x
@@ -138,7 +138,6 @@ class Bar(Gap):
         for i in self.widgets:
             qtile.registerWidget(i)
             i._configure(qtile, self, event)
-
         self.resize()
 
     def resize(self):
@@ -424,7 +423,10 @@ class WindowName(_TextBox):
 
 
 class _WidgetCommands(command.Commands):
-    def _get(self, q, name):
+    def get(self, q, name):
+        """
+            Utility function for quick retrieval of a widget by name.
+        """
         w = q.widgetMap.get(name)
         if not w:
             raise command.CommandError("No such widget: %s"%name)
@@ -436,14 +438,14 @@ class _TextBoxCommands(_WidgetCommands):
         """
             Update the text in a TextBox widget.
         """
-        w = self._get(q, name)
+        w = self.get(q, name)
         w.update(text)
 
     def cmd_textbox_get(self, q, name):
         """
             Retrieve the text in a TextBox widget.
         """
-        w = self._get(q, name)
+        w = self.get(q, name)
         return w.text
                 
 
@@ -464,7 +466,7 @@ class _MeasureBoxCommands(_WidgetCommands):
         """
             Update the percentage in a MeasureBox widget.
         """
-        w = self._get(q, name)
+        w = self.get(q, name)
         if percentage > 100 or percentage < 0:
             raise command.CommandError("Percentage out of range: %s"%percentage)
         w.update(percentage)
