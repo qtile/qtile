@@ -20,6 +20,23 @@ class uMax(utils.QTileTests):
         self.testWindow("two")
         assert self.c.max_get() == ["two", "one"]
 
+    def test_updown(self):
+        self.testWindow("one")
+        self.testWindow("two")
+        self.testWindow("three")
+        assert self.c.max_get() == ["three", "two", "one"]
+        self.c.max_down()
+        assert self.c.max_get() == ["two", "one","three"]
+        self.c.max_up()
+        assert self.c.max_get() == ["three", "two", "one"]
+
+    def test_remove(self):
+        self.testWindow("one")
+        two = self.testWindow("two")
+        assert self.c.max_get() == ["two", "one"]
+        self.kill(two)
+        assert self.c.max_get() == ["one"]
+
 
 class StackConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]

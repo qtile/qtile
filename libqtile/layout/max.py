@@ -23,13 +23,15 @@ from .. import command, utils
 class _MaxCommands(command.Commands):
     def cmd_max_down(self, q):
         """
-            Switch to next window.
+            Switch down in the window list.
         """
+        q.currentLayout.down()
 
     def cmd_max_up(self, q):
         """
-            Switch to next previous window.
+            Switch up in the window list.
         """
+        q.currentLayout.up()
 
     def cmd_max_get(self, q):
         """
@@ -46,6 +48,18 @@ class Max(Layout):
         Layout.__init__(self)
         clients = []
 
+    def up(self):
+        if self.clients:
+            utils.shuffleUp(self.clients)
+            self.group.layoutAll()
+            self.group.focus(self.clients[0], False)
+
+    def down(self):
+        if self.clients:
+            utils.shuffleDown(self.clients)
+            self.group.layoutAll()
+            self.group.focus(self.clients[0], False)
+
     def clone(self, group):
         c = Layout.clone(self, group)
         c.clients = []
@@ -53,9 +67,11 @@ class Max(Layout):
 
     def add(self, c):
         self.clients.insert(0, c)
+        self.group.focus(self.clients[0] if self.clients else None, False)
 
     def remove(self, c):
         self.clients.remove(c)
+        self.group.focus(self.clients[0] if self.clients else None, False)
 
     def configure(self, c):
         if self.clients and c is self.clients[0]:
