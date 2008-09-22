@@ -20,7 +20,7 @@
 
 import copy, sys
 
-class Layout:
+class Layout(object):
     """
         This class defines the API that should be exposed by all layouts.
     """

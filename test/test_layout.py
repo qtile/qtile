@@ -2,6 +2,25 @@ import libpry, time, pprint
 import libqtile, libqtile.config
 import utils
 
+
+class MaxConfig(libqtile.config.Config):
+    groups = ["a", "b", "c", "d"]
+    layouts = [
+        libqtile.layout.Max()
+    ]
+    keys = []
+    screens = []
+
+
+class uMax(utils.QTileTests):
+    config = MaxConfig()
+    def test_simple(self):
+        self.testWindow("one")
+        assert self.c.max_get() == ["one"]
+        self.testWindow("two")
+        assert self.c.max_get() == ["two", "one"]
+
+
 class StackConfig(libqtile.config.Config):
     groups = ["a", "b", "c", "d"]
     layouts = [
@@ -130,6 +149,7 @@ class uStack(utils.QTileTests):
 
 tests = [
     utils.XNest(xinerama=False), [
+        uMax(),
         uStack(),
     ],
 ]
