@@ -13,10 +13,21 @@ class CallConfig(libqtile.config.Config):
             libqtile.command.Call("stack_up"),
         ),
     ]
-    groups = ["a"]
+    groups = ["a", "b"]
     layouts = [
         libqtile.layout.Stack(stacks=1, borderWidth=10),
-        libqtile.layout.Stack(stacks=2, borderWidth=10),
+        libqtile.layout.Max(),
+    ]
+    screens = [
+        libqtile.manager.Screen(
+            bottom=libqtile.bar.Bar(
+                        [
+                            libqtile.bar.TextBox("text"),
+                            libqtile.bar.MeasureBox("measure", width=100),
+                        ],
+                        20
+                    ),
+        )
     ]
 
 
@@ -49,9 +60,29 @@ class uDoc(libpry.AutoTree):
         assert "three(a, b=99)" in c.doc("three")
         
 
+
+class TestCmdRoot(libqtile.command._CommandRoot):
+    def call(self, *args):
+        return args
+
+
+class u_CommandTree(libpry.AutoTree):
+    def test_simple(self):
+        c = TestCmdRoot(CallConfig())
+        assert c.layout.stack_next()
+        assert c.layout["b"].stack_next()
+        assert c.layout["b"].max_up()
+        assert c.layout["b"][0].stack_next()
+        assert c.layout["b"][1].max_up()
+        libpry.raises(AttributeError, getattr, c.layout["b"][1], "stack_next")
+        assert c.widget["text"]
+
+
+
 tests = [
     utils.XNest(xinerama=False), [
         uCall(),
-        uDoc()
+        uDoc(),
+        u_CommandTree()
     ]
 ]

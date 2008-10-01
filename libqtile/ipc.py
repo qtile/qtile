@@ -104,8 +104,8 @@ class Client(_IPC):
                 sock.close()
                 return data
 
-    def call(self, func, *args, **kwargs):
-        return self.send((func, args, kwargs))
+    def call(self, data):
+        return self.send(data)
 
 
 class Server(_IPC):

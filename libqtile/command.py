@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 import inspect, UserDict, traceback, textwrap, os, inspect
-import ipc, config
+import ipc, config, manager
 
 class CommandError(Exception): pass
 class CommandException(Exception): pass
@@ -35,11 +35,21 @@ class _Server(ipc.Server):
         if os.path.exists(fname):
             os.unlink(fname)
         ipc.Server.__init__(self, fname, self.call)
-        self.qtile, self.commands = qtile, conf.commands()
+        self.qtile = qtile
+        self.baseCmds = manager._BaseCommands()
 
     def call(self, data):
-        name, args, kwargs = data
-        cmd = self.commands.get(name)
+        klass, selector, name, args, kwargs = data
+        if klass == "base":
+            cmd = self.baseCmds.get(name)
+        elif klass == "layout":
+            if not selector:
+                cmd = self.qtile.currentLayout.commands.get(name)
+            else:
+                if selector[0]:
+                    pass
+        elif klass == "widget":
+            cmd = None
         if cmd:
             self.qtile.log.add("Command: %s(%s, %s)"%(name, args, kwargs))
             try:
@@ -72,22 +82,28 @@ class Call:
 
     def check(self, q):
         if self.layout and q.currentLayout.name != self.layout:
-                return False
+            return False
         return True
 
 
-class Client(ipc.Client):
-    def __init__(self, fname=None, conf=None):
-        if not fname:
-            d = os.environ.get("DISPLAY")
-            if not d:
-                d = ":0.0"
-            fname = os.path.join("~", SOCKBASE%d)
-            fname = os.path.expanduser(fname)
-        ipc.Client.__init__(self, fname)
-        if not conf:
-            conf = config.File()
-        self.commands = conf.commands()
+class _CommandTree(object):
+    """
+        A CommandTree is just what it sounds like - a collection of commands.
+        CommandTree objects act as containers, allowing them to be nested. The
+        commands themselves appear on the object as callable attributes.
+
+    """
+    def __init__(self, commands, klass, selector, call = None):
+        self.commands, self.klass, self.selector = commands, klass, selector
+        if call:
+            self.call = call
+        self.items = {}
+
+    def __getitem__(self, name):
+        return self.items[name]
+
+    def __setitem__(self, name, itm):
+        self.items[name] = itm
 
     def __getattr__(self, name):
         funcName = "cmd_" + name
@@ -95,16 +111,69 @@ class Client(ipc.Client):
         if not cmd:
             raise AttributeError("No such command: %s"%name)
         def callClosure(*args, **kwargs):
-            # FIXME: Check arguments here
-            # Use inspect.getargspec(v), and craft checks by hand.
-            state, val = self.call(name, *args, **kwargs)
-            if state == SUCCESS:
-                return val
-            elif state == ERROR:
-                raise CommandError(val)
-            else:
-                raise CommandException(val)
+            return self.call(self.klass, None, name, *args, **kwargs)
         return callClosure
+
+    def call(self, klass, selector, name, *args, **kwargs):
+        """
+            This method is called for issued commands.
+                
+                :klass  "widget", "layout" or "base".
+                :selector A string  name for widgets, or a (group, offset)
+                tuple for layouts. Here, "offset" can be None, indicating the
+                current layout for the specified group.
+                :name Command name.
+        """
+        pass
+
+
+class _CommandRoot(_CommandTree):
+    def __init__(self, conf):
+        """
+            This method constructs the entire hierarchy of callable commands
+            from a conf object.
+        """
+        _CommandTree.__init__(self, manager._BaseCommands(), "base", None)
+        layoutCommands = Commands()
+        for i in conf.layouts:
+            layoutCommands.update(i.commands)
+        self.layout = _CommandTree(layoutCommands, "layout", None, self.call)
+        for i in conf.groups:
+            g = _CommandTree(self.layout.commands, "layout", (i, None), self.call)
+            for x, l in enumerate(conf.layouts):
+                g[x] = _CommandTree(l.commands, "layout", (i, x), self.call)
+            self.layout[i] = g
+        self.widget = _CommandTree(None, None, None, None)
+        for i in conf.screens:
+            for j in i.gaps:
+                if hasattr(j, "widgets"):
+                    for w in j.widgets:
+                        self.widget[w.name] = _CommandTree(w.commands, "widget", w.name, self.call)
+
+
+class Client(_CommandRoot):
+    def __init__(self, fname=None, conf=None):
+        if not fname:
+            d = os.environ.get("DISPLAY")
+            if not d:
+                d = ":0.0"
+            fname = os.path.join("~", SOCKBASE%d)
+            fname = os.path.expanduser(fname)
+        self.client = ipc.Client(fname)
+        if not conf:
+            conf = config.File()
+        _CommandRoot.__init__(self, conf)
+
+    def call(self, klass, selector, name, *args, **kwargs):
+        # FIXME: Check arguments here
+        # Use inspect.getargspec(v), and craft checks by hand.
+        state, val = self.client.call((klass, selector, name, args, kwargs))
+        if state == SUCCESS:
+            return val
+        elif state == ERROR:
+            raise CommandError(val)
+        else:
+            raise CommandException(val)
 
 
 class Commands(UserDict.DictMixin):
