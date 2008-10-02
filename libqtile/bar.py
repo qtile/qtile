@@ -25,8 +25,7 @@ import Xlib.X
 _HIGHLIGHT = "#48677E"
 _FOREGROUND = "#dddddd"
 
-class Gap:
-    commands = None
+class Gap(command.CommandObject):
     def __init__(self, size):
         """
             :size The width of the gap.
@@ -77,38 +76,11 @@ class Gap:
         return self.x, self.y, self.width, self.height
 
 
-class _BarCommands(command.Commands):
-    def get(self, q, screen, position):
-        if len(q.screens) - 1 < screen:
-            raise command.CommandError("No such screen: %s"%screen)
-        s = q.screens[screen]
-        b = getattr(s, position)
-        if not b:
-            raise command.CommandError("No such bar: %s:%s"%(screen, position))
-        return b
-
-    def cmd_bar_fake_click(self, q, screen, position, x, y):
-        """
-            Fake a mouse-click on the bar. Co-ordinates are relative 
-            to the top-left corner of the bar.
-
-            :screen The integer screen offset
-            :position One of "top", "bottom", "left", or "right"
-        """
-        b = self.get(q, screen, position)
-        class _fake: pass
-        fake = _fake()
-        fake.event_x = x
-        fake.event_y = y
-        b.handle_ButtonPress(fake)
-
-
 STRETCH = -1
 class Bar(Gap):
     background = "black"
     widgets = None
     window = None
-    commands = _BarCommands()
     def __init__(self, widgets, size):
         """
             Note that bars can only be at the top or the bottom of the screen.
@@ -175,6 +147,30 @@ class Bar(Gap):
 
     def info(self):
         return [i.info() for i in self.widgets]
+
+    def get(self, q, screen, position):
+        if len(q.screens) - 1 < screen:
+            raise command.CommandError("No such screen: %s"%screen)
+        s = q.screens[screen]
+        b = getattr(s, position)
+        if not b:
+            raise command.CommandError("No such bar: %s:%s"%(screen, position))
+        return b
+
+    def cmd_bar_fake_click(self, q, screen, position, x, y):
+        """
+            Fake a mouse-click on the bar. Co-ordinates are relative 
+            to the top-left corner of the bar.
+
+            :screen The integer screen offset
+            :position One of "top", "bottom", "left", or "right"
+        """
+        b = self.get(q, screen, position)
+        class _fake: pass
+        fake = _fake()
+        fake.event_x = x
+        fake.event_y = y
+        b.handle_ButtonPress(fake)
 
 
 LEFT = object()
@@ -284,7 +280,6 @@ class _Widget:
     width = None
     offset = None
     name = None
-    commands = None
 
     @property
     def win(self):
@@ -314,6 +309,15 @@ class _Widget:
 
     def click(self, x, y):
         pass
+
+    def get(self, q, name):
+        """
+            Utility function for quick retrieval of a widget by name.
+        """
+        w = q.widgetMap.get(name)
+        if not w:
+            raise command.CommandError("No such widget: %s"%name)
+        return w
 
 
 class Spacer(_Widget):
@@ -422,18 +426,16 @@ class WindowName(_TextBox):
         self.draw()
 
 
-class _WidgetCommands(command.Commands):
-    def get(self, q, name):
-        """
-            Utility function for quick retrieval of a widget by name.
-        """
-        w = q.widgetMap.get(name)
-        if not w:
-            raise command.CommandError("No such widget: %s"%name)
-        return w
+class TextBox(_TextBox):
+    def __init__(self, name, text=" ", width=STRETCH,
+                 foreground="white", background=_HIGHLIGHT, font=None):
+        self.name = name
+        _TextBox.__init__(self, text, width, foreground, background, font)
 
+    def update(self, text):
+        self.text = text
+        self.draw()
 
-class _TextBoxCommands(_WidgetCommands):
     def cmd_textbox_update(self, q, name, text):
         """
             Update the text in a TextBox widget.
@@ -447,33 +449,9 @@ class _TextBoxCommands(_WidgetCommands):
         """
         w = self.get(q, name)
         return w.text
-                
-
-class TextBox(_TextBox):
-    commands = _TextBoxCommands()
-    def __init__(self, name, text=" ", width=STRETCH,
-                 foreground="white", background=_HIGHLIGHT, font=None):
-        self.name = name
-        _TextBox.__init__(self, text, width, foreground, background, font)
-
-    def update(self, text):
-        self.text = text
-        self.draw()
-
-
-class _MeasureBoxCommands(_WidgetCommands):
-    def cmd_measurebox_update(self, q, name, percentage):
-        """
-            Update the percentage in a MeasureBox widget.
-        """
-        w = self.get(q, name)
-        if percentage > 100 or percentage < 0:
-            raise command.CommandError("Percentage out of range: %s"%percentage)
-        w.update(percentage)
 
 
 class MeasureBox(_Widget):
-    commands = _MeasureBoxCommands()
     colors = ["red", "yellow", "orange", "green"]
     def __init__(self, name, width):
         self.name, self.width = name, width
@@ -496,3 +474,13 @@ class MeasureBox(_Widget):
             self.bar.size,
             color
         )
+
+    def cmd_measurebox_update(self, q, name, percentage):
+        """
+            Update the percentage in a MeasureBox widget.
+        """
+        w = self.get(q, name)
+        if percentage > 100 or percentage < 0:
+            raise command.CommandError("Percentage out of range: %s"%percentage)
+        w.update(percentage)
+

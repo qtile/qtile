@@ -43,7 +43,7 @@ class uCall(utils.QTileTests):
         assert self.c.groups()["a"]["focus"] == "two"
 
 
-class TestCommands(libqtile.command.Commands):
+class TestCommands(libqtile.command.CommandObject):
     @staticmethod
     def cmd_one(q): pass
     def cmd_one_self(self, q): pass
@@ -51,14 +51,22 @@ class TestCommands(libqtile.command.Commands):
     def cmd_three(self, q, a, b=99): pass
 
 
-class uDoc(libpry.AutoTree):
-    def test_signatures(self):
+class uCommandObject(libpry.AutoTree):
+    def test_doc(self):
         c = TestCommands()
         assert "one()" in c.doc("one")
         assert "one_self()" in c.doc("one_self")
         assert "two(a)" in c.doc("two")
         assert "three(a, b=99)" in c.doc("three")
-        
+
+    def test_commands(self):
+        c = TestCommands()
+        assert len(c.commands()) == 4
+
+    def test_command(self):
+        c = TestCommands()
+        assert c.command("one")
+        assert not c.command("nonexistent")
 
 
 class TestCmdRoot(libqtile.command._CommandRoot):
@@ -80,9 +88,9 @@ class u_CommandTree(libpry.AutoTree):
 
 
 tests = [
+    uCommandObject(),
     utils.XNest(xinerama=False), [
         uCall(),
-        uDoc(),
         u_CommandTree()
     ]
 ]

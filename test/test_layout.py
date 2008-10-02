@@ -64,7 +64,7 @@ class uStack(utils.QTileTests):
 
         self.c.layout.stack_delete()
         assert self.c.layout.stack_get() == [["one", "three", "two"]]
-        info = self.c.layout.groups()["a"]
+        info = self.c.groups()["a"]
         assert info["focus"] == "one"
         self.c.layout.stack_delete()
         assert len(self.c.layout.stack_get()) == 1
@@ -95,35 +95,35 @@ class uStack(utils.QTileTests):
         two = self.testWindow("two")
         three = self.testWindow("three")
 
-        assert self.c.layout.groups()["a"]["focus"] == "three"
+        assert self.c.groups()["a"]["focus"] == "three"
         self.c.layout.stack_next()
-        assert self.c.layout.groups()["a"]["focus"] == "one"
+        assert self.c.groups()["a"]["focus"] == "one"
 
         self.c.layout.stack_previous()
-        assert self.c.layout.groups()["a"]["focus"] == "three"
+        assert self.c.groups()["a"]["focus"] == "three"
         self.c.layout.stack_previous()
-        assert self.c.layout.groups()["a"]["focus"] == "two"
+        assert self.c.groups()["a"]["focus"] == "two"
 
         self.c.layout.stack_next()
         self.c.layout.stack_next()
         self.c.layout.stack_next()
-        assert self.c.layout.groups()["a"]["focus"] == "two"
+        assert self.c.groups()["a"]["focus"] == "two"
 
         self.kill(three)
         self.c.layout.stack_next()
-        assert self.c.layout.groups()["a"]["focus"] == "one"
+        assert self.c.groups()["a"]["focus"] == "one"
         self.c.layout.stack_previous()
-        assert self.c.layout.groups()["a"]["focus"] == "two"
+        assert self.c.groups()["a"]["focus"] == "two"
         self.c.layout.stack_next()
         self.kill(two)
         self.c.layout.stack_next()
-        assert self.c.layout.groups()["a"]["focus"] == "one"
+        assert self.c.groups()["a"]["focus"] == "one"
 
         self.kill(one)
         self.c.layout.stack_next()
-        assert self.c.layout.groups()["a"]["focus"] == None
+        assert self.c.groups()["a"]["focus"] == None
         self.c.layout.stack_previous()
-        assert self.c.layout.groups()["a"]["focus"] == None
+        assert self.c.groups()["a"]["focus"] == None
 
     def test_window_removal(self):
         self.c.nextlayout()

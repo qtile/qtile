@@ -19,8 +19,9 @@
 # SOFTWARE.
 
 import copy, sys
+from .. import command
 
-class Layout(object):
+class Layout(command.CommandObject):
     """
         This class defines the API that should be exposed by all layouts.
     """

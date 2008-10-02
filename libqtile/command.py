@@ -41,10 +41,10 @@ class _Server(ipc.Server):
     def call(self, data):
         klass, selector, name, args, kwargs = data
         if klass == "base":
-            cmd = self.baseCmds.get(name)
+            cmd = self.baseCmds.command(name)
         elif klass == "layout":
             if not selector:
-                cmd = self.qtile.currentLayout.commands.get(name)
+                cmd = self.qtile.currentLayout.command(name)
             else:
                 if selector[0]:
                     pass
@@ -88,13 +88,12 @@ class Call:
 
 class _CommandTree(object):
     """
-        A CommandTree is just what it sounds like - a collection of commands.
+        A CommandTree a hierarchical collection of command objects.
         CommandTree objects act as containers, allowing them to be nested. The
         commands themselves appear on the object as callable attributes.
-
     """
-    def __init__(self, commands, klass, selector, call = None):
-        self.commands, self.klass, self.selector = commands, klass, selector
+    def __init__(self, objs, klass, selector, call = None):
+        self.objs, self.klass, self.selector = objs, klass, selector
         if call:
             self.call = call
         self.items = {}
@@ -107,7 +106,11 @@ class _CommandTree(object):
 
     def __getattr__(self, name):
         funcName = "cmd_" + name
-        cmd = getattr(self.commands, funcName, None)
+        cmd = None
+        for i in self.objs:
+            cmd = getattr(i, funcName, None)
+            if cmd:
+                break
         if not cmd:
             raise AttributeError("No such command: %s"%name)
         def callClosure(*args, **kwargs):
@@ -133,22 +136,19 @@ class _CommandRoot(_CommandTree):
             This method constructs the entire hierarchy of callable commands
             from a conf object.
         """
-        _CommandTree.__init__(self, manager._BaseCommands(), "base", None)
-        layoutCommands = Commands()
-        for i in conf.layouts:
-            layoutCommands.update(i.commands)
-        self.layout = _CommandTree(layoutCommands, "layout", None, self.call)
+        _CommandTree.__init__(self, [manager._BaseCommands()], "base", None)
+        self.layout = _CommandTree(conf.layouts, "layout", None, self.call)
         for i in conf.groups:
-            g = _CommandTree(self.layout.commands, "layout", (i, None), self.call)
+            g = _CommandTree(conf.layouts, "layout", (i, None), self.call)
             for x, l in enumerate(conf.layouts):
-                g[x] = _CommandTree(l.commands, "layout", (i, x), self.call)
+                g[x] = _CommandTree([l], "layout", (i, x), self.call)
             self.layout[i] = g
-        self.widget = _CommandTree(None, None, None, None)
+        self.widget = _CommandTree([], None, None, None)
         for i in conf.screens:
             for j in i.gaps:
                 if hasattr(j, "widgets"):
                     for w in j.widgets:
-                        self.widget[w.name] = _CommandTree(w.commands, "widget", w.name, self.call)
+                        self.widget[w.name] = _CommandTree([w], "widget", w.name, self.call)
 
 
 class Client(_CommandRoot):
@@ -176,23 +176,16 @@ class Client(_CommandRoot):
             raise CommandException(val)
 
 
-class Commands(UserDict.DictMixin):
+class CommandObject(object):
     """
         A convenience class for collecting together sets of commands. Command
         collections should inherit from this class, and each command should be
-        a method named cmd_X, where X is the command name. The class emulates a
-        dictionary exposing the commands.
+        a method named cmd_X, where X is the command name. 
     """
-    def __getitem__(self, itm):
-        cmd = getattr(self, "cmd_" + itm, None)
-        if not cmd:
-            raise KeyError, "No such key: %s"%itm
-        return cmd
+    def command(self, name):
+        return getattr(self, "cmd_" + name, None)
 
-    def __setitem__(self, itm, value):
-        setattr(self, "cmd_" + itm, value)
-
-    def keys(self):
+    def commands(self):
         lst = []
         for i in dir(self):
             if i.startswith("cmd_"):
@@ -200,20 +193,17 @@ class Commands(UserDict.DictMixin):
         return lst
 
     def docSig(self, name):
-        args, varargs, varkw, defaults = inspect.getargspec(self[name])
+        args, varargs, varkw, defaults = inspect.getargspec(self.command(name))
         if args[0] == "self":
             args = args[1:]
         args = args[1:]
         return name + inspect.formatargspec(args, varargs, varkw, defaults)
 
     def docText(self, name):
-        return textwrap.dedent(self[name].__doc__ or "")
+        return textwrap.dedent(self.command(name).__doc__ or "")
 
     def doc(self, name):
         spec = self.docSig(name)
         htext = self.docText(name)
         htext = "\n".join(["\t" + i for i in htext.splitlines()])
         return spec + htext
-
-    def __repr__(self):
-        return "%s()"%self.__class__.__name__

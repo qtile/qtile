@@ -578,7 +578,7 @@ class QTile:
         self._exit = True
 
 
-class _BaseCommands(command.Commands):
+class _BaseCommands(command.CommandObject):
     @staticmethod
     def cmd_barinfo(q, screen=None):
         """
