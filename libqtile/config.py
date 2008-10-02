@@ -30,18 +30,7 @@ class Config:
     groups = None
     layouts = None
     screens = ()
-    def commands(self):
-        c = manager._BaseCommands()
-        for i in self.layouts:
-            c.update(i.commands)
-        for i in self.screens:
-            for b in i.gaps:
-                c.update(b.commands)
-                if hasattr(b, "widgets"):
-                    for w in b.widgets:
-                        c.update(w.commands)
-        return c
-        
+
 
 class File(Config):
     def __init__(self, fname=None):

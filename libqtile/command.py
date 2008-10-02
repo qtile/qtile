@@ -36,10 +36,19 @@ class _Server(ipc.Server):
             os.unlink(fname)
         ipc.Server.__init__(self, fname, self.call)
         self.qtile = qtile
-        self.baseCmds = manager._BaseCommands()
+        self.baseCmds = manager._BaseCommands(qtile)
+
+        self.widgets = {}
+        for i in conf.screens:
+            for j in i.gaps:
+                if hasattr(j, "widgets"):
+                    for w in j.widgets:
+                        if w.name:
+                            self.widgets[w.name] = w
 
     def call(self, data):
         klass, selector, name, args, kwargs = data
+        cmd = None
         if klass == "base":
             cmd = self.baseCmds.command(name)
         elif klass == "layout":
@@ -49,11 +58,12 @@ class _Server(ipc.Server):
                 if selector[0]:
                     pass
         elif klass == "widget":
-            cmd = None
+            if selector in self.widgets:
+                cmd = self.widgets[selector].command(name)
         if cmd:
             self.qtile.log.add("Command: %s(%s, %s)"%(name, args, kwargs))
             try:
-                return SUCCESS, cmd(self.qtile, *args, **kwargs)
+                return SUCCESS, cmd(*args, **kwargs)
             except CommandError, v:
                 return ERROR, v.message
             except Exception, v:
@@ -114,7 +124,7 @@ class _CommandTree(object):
         if not cmd:
             raise AttributeError("No such command: %s"%name)
         def callClosure(*args, **kwargs):
-            return self.call(self.klass, None, name, *args, **kwargs)
+            return self.call(self.klass, self.selector, name, *args, **kwargs)
         return callClosure
 
     def call(self, klass, selector, name, *args, **kwargs):
@@ -136,7 +146,7 @@ class _CommandRoot(_CommandTree):
             This method constructs the entire hierarchy of callable commands
             from a conf object.
         """
-        _CommandTree.__init__(self, [manager._BaseCommands()], "base", None)
+        _CommandTree.__init__(self, [manager._BaseCommands(None)], "base", None)
         self.layout = _CommandTree(conf.layouts, "layout", None, self.call)
         for i in conf.groups:
             g = _CommandTree(conf.layouts, "layout", (i, None), self.call)
@@ -148,7 +158,8 @@ class _CommandRoot(_CommandTree):
             for j in i.gaps:
                 if hasattr(j, "widgets"):
                     for w in j.widgets:
-                        self.widget[w.name] = _CommandTree([w], "widget", w.name, self.call)
+                        if w.name:
+                            self.widget[w.name] = _CommandTree([w], "widget", w.name, self.call)
 
 
 class Client(_CommandRoot):
@@ -196,7 +207,6 @@ class CommandObject(object):
         args, varargs, varkw, defaults = inspect.getargspec(self.command(name))
         if args[0] == "self":
             args = args[1:]
-        args = args[1:]
         return name + inspect.formatargspec(args, varargs, varkw, defaults)
 
     def docText(self, name):

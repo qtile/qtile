@@ -69,21 +69,21 @@ class Max(Layout):
     def info(self):
         return [i.name for i in self.clients]
 
-    def cmd_max_down(self, q):
+    def cmd_max_down(self):
         """
             Switch down in the window list.
         """
-        q.currentLayout.down()
+        self.down()
 
-    def cmd_max_up(self, q):
+    def cmd_max_up(self):
         """
             Switch up in the window list.
         """
-        q.currentLayout.up()
+        self.up()
 
-    def cmd_max_get(self, q):
+    def cmd_max_get(self):
         """
             Return list of window names in order, starting with the current
             window.
         """
-        return q.currentLayout.info()
+        return self.info()

@@ -157,7 +157,7 @@ class Bar(Gap):
             raise command.CommandError("No such bar: %s:%s"%(screen, position))
         return b
 
-    def cmd_bar_fake_click(self, q, screen, position, x, y):
+    def cmd_bar_fake_click(self, screen, position, x, y):
         """
             Fake a mouse-click on the bar. Co-ordinates are relative 
             to the top-left corner of the bar.
@@ -165,12 +165,11 @@ class Bar(Gap):
             :screen The integer screen offset
             :position One of "top", "bottom", "left", or "right"
         """
-        b = self.get(q, screen, position)
         class _fake: pass
         fake = _fake()
         fake.event_x = x
         fake.event_y = y
-        b.handle_ButtonPress(fake)
+        self.handle_ButtonPress(fake)
 
 
 LEFT = object()
@@ -265,7 +264,7 @@ class _Drawer:
             self.win.rectangle(self.gc, x, 0, width, height)
 
 
-class _Widget:
+class _Widget(command.CommandObject):
     """
         Each widget must set its own width attribute when the _configure method
         is called. If this is set to the special value STRETCH, the bar itself
@@ -436,19 +435,17 @@ class TextBox(_TextBox):
         self.text = text
         self.draw()
 
-    def cmd_textbox_update(self, q, name, text):
+    def cmd_textbox_update(self, text):
         """
             Update the text in a TextBox widget.
         """
-        w = self.get(q, name)
-        w.update(text)
+        self.update(text)
 
-    def cmd_textbox_get(self, q, name):
+    def cmd_textbox_get(self):
         """
             Retrieve the text in a TextBox widget.
         """
-        w = self.get(q, name)
-        return w.text
+        return self.text
 
 
 class MeasureBox(_Widget):
@@ -475,12 +472,11 @@ class MeasureBox(_Widget):
             color
         )
 
-    def cmd_measurebox_update(self, q, name, percentage):
+    def cmd_measurebox_update(self, percentage):
         """
             Update the percentage in a MeasureBox widget.
         """
-        w = self.get(q, name)
         if percentage > 100 or percentage < 0:
             raise command.CommandError("Percentage out of range: %s"%percentage)
-        w.update(percentage)
+        self.update(percentage)
 

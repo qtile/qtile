@@ -240,98 +240,88 @@ class Stack(Layout):
         d["current_stack"] = self.currentStackOffset
         return d
 
-    def cmd_stack_toggle_split(self, q):
+    def cmd_stack_toggle_split(self):
         """
             Toggle vertical split on the current layout.
         """
-        s = q.currentLayout.currentStack
-        if s:
-            s.toggleSplit()
-        q.currentGroup.layoutAll()
+        self.currentStack.toggleSplit()
+        self.group.layoutAll()
 
-    def cmd_stack_down(self, q):
+    def cmd_stack_down(self):
         """
             Switch to the next window in this stack.
         """
-        s = q.currentLayout.currentStack
-        if s:
-            s.current -= 1
-            q.currentGroup.focus(s.cw, False)
+        self.currentStack.current -= 1
+        self.group.focus(self.currentStack.cw, False)
 
-    def cmd_stack_up(self, q):
+    def cmd_stack_up(self):
         """
             Switch to the previous window in this stack.
         """
-        s = q.currentLayout.currentStack
-        if s:
-            s.current += 1
-            q.currentGroup.focus(s.cw, False)
+        self.currentStack.current += 1
+        self.group.focus(self.currentStack.cw, False)
 
-    def cmd_stack_shuffle_up(self, q):
+    def cmd_stack_shuffle_up(self):
         """
             Shuffle the order of this stack up.
         """
-        s = q.currentLayout.currentStack
-        if s:
-            utils.shuffleUp(s.lst)
-            s.current += 1
-        q.currentGroup.layoutAll()
+        utils.shuffleUp(self.currentStack.lst)
+        self.currentStack.current += 1
+        self.group.layoutAll()
 
-    def cmd_stack_shuffle_down(self, q):
+    def cmd_stack_shuffle_down(self):
         """
             Shuffle the order of this stack down.
         """
-        s = q.currentLayout.currentStack
-        if s:
-            utils.shuffleDown(s.lst)
-            s.current -= 1
-        q.currentGroup.layoutAll()
+        utils.shuffleDown(self.currentStack.lst)
+        self.currentStack.current -= 1
+        self.group.layoutAll()
 
-    def cmd_stack_delete(self, q):
+    def cmd_stack_delete(self):
         """
             Delete the current stack from the layout.
         """
-        q.currentLayout.deleteCurrentStack()
+        self.deleteCurrentStack()
 
-    def cmd_stack_add(self, q):
+    def cmd_stack_add(self):
         """
             Add a stack to the layout.
         """
-        q.currentLayout.stacks.append(_WinStack())
-        q.currentGroup.layoutAll()
+        self.stacks.append(_WinStack())
+        self.group.layoutAll()
 
-    def cmd_stack_rotate(self, q):
+    def cmd_stack_rotate(self):
         """
             Rotate order of the stacks.
         """
-        utils.shuffleUp(q.currentLayout.stacks)
-        q.currentGroup.layoutAll()
+        utils.shuffleUp(self.stacks)
+        self.group.layoutAll()
 
-    def cmd_stack_next(self, q):
+    def cmd_stack_next(self):
         """
             Focus next stack.
         """
-        return q.currentLayout.nextStack()
+        return self.nextStack()
 
-    def cmd_stack_previous(self, q):
+    def cmd_stack_previous(self):
         """
             Focus previous stack.
         """
-        return q.currentLayout.previousStack()
+        return self.previousStack()
 
-    def cmd_stack_current(self, q):
+    def cmd_stack_current(self):
         """
             Return the offset of the current stack.
         """
-        return q.currentLayout.currentStackOffset
+        return self.currentStackOffset
 
-    def cmd_stack_get(self, q):
+    def cmd_stack_get(self):
         """
             Retrieve the current stacks, returning lists of window names in
             order, starting with the current window of each stack.
         """
         lst = []
-        for i in q.currentLayout.stacks:
+        for i in self.stacks:
             s = i[i.current:] + i[:i.current]
             lst.append([i.name for i in s])
         return lst
