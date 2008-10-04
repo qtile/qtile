@@ -494,7 +494,7 @@ class QTile:
             return
         for i in k.commands:
             if i.check(self):
-                status, val = self.server.call((i.command, i.args, i.kwargs))
+                status, val = self.server.call((i.klass, i.selectors, i.name, i.args, i.kwargs))
                 if status in (command.ERROR, command.EXCEPTION):
                     s = "KB command error %s: %s"%(i.command, val)
                     self.log.add(s)

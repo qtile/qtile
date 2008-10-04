@@ -6,11 +6,11 @@ class CallConfig(libqtile.config.Config):
     keys = [
         libqtile.manager.Key(
             ["control"], "j",
-            libqtile.command.Call("stack_down")
+            libqtile.command._Call("layout", None, "stack_down")
         ),
         libqtile.manager.Key(
             ["control"], "k",
-            libqtile.command.Call("stack_up"),
+            libqtile.command._Call("layout", None, "stack_up"),
         ),
     ]
     groups = ["a", "b"]
@@ -45,10 +45,10 @@ class uCall(utils.QTileTests):
 
 class TestCommands(libqtile.command.CommandObject):
     @staticmethod
-    def cmd_one(q): pass
-    def cmd_one_self(self, q): pass
-    def cmd_two(self, q, a): pass
-    def cmd_three(self, q, a, b=99): pass
+    def cmd_one(): pass
+    def cmd_one_self(self): pass
+    def cmd_two(self, a): pass
+    def cmd_three(self, a, b=99): pass
 
 
 class uCommandObject(libpry.AutoTree):
@@ -76,21 +76,76 @@ class TestCmdRoot(libqtile.command._CommandRoot):
 
 class u_CommandTree(libpry.AutoTree):
     def test_simple(self):
-        c = TestCmdRoot(CallConfig())
-        assert c.layout.stack_next()
-        assert c.layout["b"].stack_next()
-        assert c.layout["b"].max_up()
-        assert c.layout["b"][0].stack_next()
-        assert c.layout["b"][1].max_up()
-        libpry.raises(AttributeError, getattr, c.layout["b"][1], "stack_next")
-        assert c.widget["text"]
+        c = libqtile.command._CommandTree(lambda x: x, "base", [])
+        x = c["one"]["two"]
+        assert x.selectors == ["one", "two"]
+        assert x.klass == "base"
+        cmd = x.foo
 
 
+class ServerConfig(libqtile.config.Config):
+    keys = []
+    groups = ["a", "b", "c"]
+    layouts = [
+        libqtile.layout.Stack(stacks=1),
+        libqtile.layout.Stack(stacks=2),
+        libqtile.layout.Stack(stacks=3),
+    ]
+    screens = [
+        libqtile.manager.Screen(
+            bottom=libqtile.bar.Bar(
+                        [
+                            libqtile.bar.TextBox("one"),
+                            libqtile.bar.MeasureBox("two", width=100),
+                        ],
+                        20
+                    ),
+        ),
+        libqtile.manager.Screen(
+            bottom=libqtile.bar.Bar(
+                        [
+                            libqtile.bar.TextBox("three"),
+                            libqtile.bar.MeasureBox("four", width=100),
+                        ],
+                        20
+                    ),
+        )
+    ]
+
+
+class u_Server(utils.QTileTests):
+    config = ServerConfig()
+    def test_call_unknown(self):
+        libpry.raises("unknown command", self.c.nonexistent)
+        libpry.raises("unknown command", self.c.layout.nonexistent)
+
+    def test_call_layouts(self):
+        assert self.c.layout.info()["group"] == "a"
+        assert self.c.layout["a"].info()["group"] == "a"
+        assert self.c.layout["b"].info()["group"] == "b"
+        assert self.c.layout["c"].info()["group"] == "c"
+        libpry.raises("no such group", self.c.layout["nonexistent"].info)
+        
+        l = self.c.layout["a"][0].info()
+        assert len(l["stacks"]) == 1
+        assert l["group"] == "a"
+
+        l = self.c.layout["a"][2].info()
+        assert len(l["stacks"]) == 3
+        assert l["group"] == "a"
+
+        l = self.c.layout["c"][2].info()
+        assert len(l["stacks"]) == 3
+        assert l["group"] == "c"
+
+        libpry.raises("invalid layout offset", self.c.layout["c"]["foo"].info)
+        libpry.raises("invalid layout offset", self.c.layout["c"][22].info)
 
 tests = [
     uCommandObject(),
-    utils.XNest(xinerama=False), [
+    utils.XNest(xinerama=True), [
         uCall(),
-        u_CommandTree()
-    ]
+        u_Server(),
+    ],
+    u_CommandTree(),
 ]

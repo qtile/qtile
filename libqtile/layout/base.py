@@ -81,3 +81,6 @@ class Layout(command.CommandObject):
             name = self.name,
             group = self.group.name
         )
+
+    def cmd_info(self):
+        return self.info()
