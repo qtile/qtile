@@ -78,6 +78,10 @@ class TestCmdRoot(libqtile.command._CommandRoot):
 class u_CommandTree(libpry.AutoTree):
     def test_selectors(self):
         c = libqtile.command._CommandRoot()
+
+        s = c.layout.screen.info
+        assert s.selectors == [('layout', None), ('screen', None)]
+
         assert isinstance(c.info, libqtile.command._Command)
 
         g = c.group
@@ -198,8 +202,18 @@ class u_Server(utils.QTileTests):
     def test_select_bar(self):
         assert self.c.screen[1].bar["bottom"].screen.info()["offset"] == 1
         b = self.c.bar
-        assert b.screen.info()["offset"] == 0
+        assert b["bottom"].screen.info()["offset"] == 0
         libpry.raises("no object", b.screen[2].info)
+
+    def test_select_layout(self):
+        assert self.c.layout.screen.info()["offset"] == 0
+        assert self.c.layout.screen[0].info()["offset"] == 0
+        libpry.raises("no object", self.c.layout.screen[1].info)
+
+        assert self.c.layout.group.info()["name"] == "a"
+        assert self.c.layout.group["a"].info()["name"] == "a"
+        libpry.raises("no object", self.c.layout.group["b"].info)
+       
 
     
 tests = [

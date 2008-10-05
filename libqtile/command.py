@@ -120,10 +120,7 @@ class _CommandTree(object):
         if self.name:
             nextSelector.append((self.name, self.myselector))
         if name in self._contains:
-            c = _TreeMap[name](self.call, nextSelector)
-            for i in c._contains:
-                setattr(c, i, _TreeMap[i](self.call, nextSelector))
-            return c
+            return _TreeMap[name](self.call, nextSelector)
         else:
             return _Command(self.call, nextSelector, name)
 
