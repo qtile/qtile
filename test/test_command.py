@@ -140,14 +140,14 @@ class u_Server(utils.QTileTests):
         assert self.c.layout.info()["group"] == "a"
         assert len(self.c.layout.info()["stacks"]) == 1
         assert len(self.c.layout[2].info()["stacks"]) == 3
-        libpry.raises("no such object", self.c.layout[99].info)
+        libpry.raises("no object", self.c.layout[99].info)
 
         assert self.c.group.info()["name"] == "a"
         assert self.c.group["c"].info()["name"] == "c"
-        libpry.raises("no such object", self.c.group["nonexistent"].info)
+        libpry.raises("no object", self.c.group["nonexistent"].info)
 
         assert self.c.widget["one"].info()["name"] == "one"
-        libpry.raises("no such object", self.c.widget.info)
+        libpry.raises("no object", self.c.widget.info)
 
         assert self.c.bar["bottom"].info()["position"] == "bottom"
         
@@ -157,8 +157,8 @@ class u_Server(utils.QTileTests):
 
         assert self.c.screen.info()["offset"] == 0
         assert self.c.screen[1].info()["offset"] == 1
-        libpry.raises("no such object", self.c.screen[22].info)
-        libpry.raises("no such object", self.c.screen["foo"].info)
+        libpry.raises("no object", self.c.screen[22].info)
+        libpry.raises("no object", self.c.screen["foo"].info)
 
     def test_select_group(self):
         g = self.c.group
@@ -166,17 +166,17 @@ class u_Server(utils.QTileTests):
         assert len(g.layout.info()["stacks"]) == 1
         assert len(g.layout[2].info()["stacks"]) == 3
 
-        libpry.raises("no such object", self.c.group.window.info)
+        libpry.raises("no object", self.c.group.window.info)
         win = self.testWindow("test")
         wid = self.c.window.info()["id"]
 
         assert g.window.info()["id"] == wid
         assert g.window[wid].info()["id"] == wid
-        libpry.raises("no such object", g.window["foo"].info)
+        libpry.raises("no object", g.window["foo"].info)
 
         assert g.screen.info()["offset"] == 0
         assert g["b"].screen.info()["offset"] == 1
-        libpry.raises("no such object", g["b"].screen[0].info)
+        libpry.raises("no object", g["b"].screen[0].info)
 
     def test_select_screen(self):
         s = self.c.screen
@@ -184,21 +184,22 @@ class u_Server(utils.QTileTests):
         assert len(s.layout.info()["stacks"]) == 1
         assert len(s.layout[2].info()["stacks"]) == 3
 
-        libpry.raises("no such object", self.c.window.info)
-        libpry.raises("no such object", self.c.window[2].info)
+        libpry.raises("no object", self.c.window.info)
+        libpry.raises("no object", self.c.window[2].info)
         win = self.testWindow("test")
         wid = self.c.window.info()["id"]
         assert s.window.info()["id"] == wid
         assert s.window[wid].info()["id"] == wid
 
-        libpry.raises("no such object", s.bar.info)
-        libpry.raises("no such object", s.bar["top"].info)
+        libpry.raises("no object", s.bar.info)
+        libpry.raises("no object", s.bar["top"].info)
         assert s.bar["bottom"].info()["position"] == "bottom"
 
     def test_select_bar(self):
-        print self.c.screen[1].bar["bottom"].info()
+        assert self.c.screen[1].bar["bottom"].screen.info()["offset"] == 1
         b = self.c.bar
         assert b.screen.info()["offset"] == 0
+        libpry.raises("no object", b.screen[2].info)
 
     
 tests = [

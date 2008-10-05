@@ -165,9 +165,9 @@ class Screen(command.CommandObject):
                         return i
         elif name == "bar":
             if sel not in ["top", "bottom", "left", "right"]:
-                obj = None
+                return None
             else:
-                obj = getattr(self, sel)
+                return getattr(self, sel)
 
     def cmd_info(self):
         return dict(

@@ -79,11 +79,10 @@ class Gap(command.CommandObject):
         if name == "screen":
             if sel is None:
                 return self.screen
+            elif self.screen.index == sel:
+                return self.screen
             else:
-                if self.screen.index == sel:
-                    return self.screen
-                else:
-                    return None
+                return None
 
     def cmd_info(self):
         for i in ["top", "bottom", "left", "right"]:
