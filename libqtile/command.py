@@ -24,6 +24,12 @@ import ipc, config, manager
 class CommandError(Exception): pass
 class CommandException(Exception): pass
 
+class _SelectError(Exception):
+    def __init__(self, name, sel):
+        Exception.__init__(self)
+        self.name, self.sel = name, sel
+
+
 SUCCESS = 0
 ERROR = 1
 EXCEPTION = 2
@@ -44,11 +50,28 @@ class _Server(ipc.Server):
                         if w.name:
                             self.widgets[w.name] = w
 
+    def _fmtExpression(self, lst):
+        """
+            Takes a list of (name, sel) tuples, and returns a formatted
+            selector expression.
+        """
+        expr = []
+        for i in lst:
+            if expr:
+                expr.append(".")
+            expr.append(i[0])
+            if i[1]:
+                expr.append("[%s]"%repr(i[1]))
+        return "".join(expr)
+
     def call(self, data):
         selectors, name, args, kwargs = data
-        obj = self.qtile.select(selectors)
-        if not obj:
-            return ERROR, "No such object."
+        try:
+            obj = self.qtile.select(selectors)
+        except _SelectError, v:
+            e = self._fmtExpression([(v.name, v.sel)])
+            s = self._fmtExpression(selectors)
+            return ERROR, "No object %s in %s"%(e, s)
         cmd = obj.command(name)
         if not cmd:
             return ERROR, "No such command."
@@ -234,7 +257,7 @@ class CommandObject(object):
         if obj:
             return obj.select(selectors)
         else:
-            return obj
+            raise _SelectError(name, sel)
 
     def _select(self, name, sel, selectors):
         raise NotImplementedError

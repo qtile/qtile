@@ -195,6 +195,11 @@ class u_Server(utils.QTileTests):
         libpry.raises("no such object", s.bar["top"].info)
         assert s.bar["bottom"].info()["position"] == "bottom"
 
+    def test_select_bar(self):
+        print self.c.screen[1].bar["bottom"].info()
+        b = self.c.bar
+        assert b.screen.info()["offset"] == 0
+
     
 tests = [
     uCommandObject(),
