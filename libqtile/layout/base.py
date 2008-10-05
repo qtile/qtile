@@ -82,5 +82,10 @@ class Layout(command.CommandObject):
             group = self.group.name
         )
 
+    def select(self, selectors):
+        if not selectors:
+            return self
+
     def cmd_info(self):
         return self.info()
+

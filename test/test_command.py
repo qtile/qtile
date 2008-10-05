@@ -1,3 +1,4 @@
+import time
 import libpry
 import libqtile
 import utils
@@ -75,12 +76,27 @@ class TestCmdRoot(libqtile.command._CommandRoot):
 
 
 class u_CommandTree(libpry.AutoTree):
-    def test_simple(self):
-        c = libqtile.command._CommandTree(lambda x: x, "base", [])
-        x = c["one"]["two"]
-        assert x.selectors == ["one", "two"]
-        assert x.klass == "base"
-        cmd = x.foo
+    def test_selectors(self):
+        c = libqtile.command._CommandRoot()
+        assert isinstance(c.info, libqtile.command._Command)
+
+        g = c.group
+        assert isinstance(g, libqtile.command._TGroup)
+        assert g.myselector == None
+
+        g = c.group["one"]
+        assert isinstance(g, libqtile.command._TGroup)
+        assert g.myselector == "one"
+
+        cmd = c.group["one"].foo
+        assert cmd.name == "foo"
+        assert cmd.selectors == [('group', 'one')]
+
+        g = c.group["two"].layout["three"].screen
+        assert g.selectors == [('group', 'two'), ('layout', 'three')]
+
+        g = c.one
+        assert g.selectors == []
 
 
 class ServerConfig(libqtile.config.Config):
@@ -116,30 +132,52 @@ class ServerConfig(libqtile.config.Config):
 class u_Server(utils.QTileTests):
     config = ServerConfig()
     def test_call_unknown(self):
-        libpry.raises("unknown command", self.c.nonexistent)
-        libpry.raises("unknown command", self.c.layout.nonexistent)
+        libpry.raises("no such command", self.c.nonexistent)
+        libpry.raises("no such command", self.c.layout.nonexistent)
 
-    def test_call_layouts(self):
+    def test_select_qtile(self):
+        assert self.c.foo.selectors == []
         assert self.c.layout.info()["group"] == "a"
-        assert self.c.layout["a"].info()["group"] == "a"
-        assert self.c.layout["b"].info()["group"] == "b"
-        assert self.c.layout["c"].info()["group"] == "c"
-        libpry.raises("no such group", self.c.layout["nonexistent"].info)
+        assert len(self.c.layout.info()["stacks"]) == 1
+        assert len(self.c.layout[2].info()["stacks"]) == 3
+        libpry.raises("no such object", self.c.layout[99].info)
+
+        assert self.c.group.info()["name"] == "a"
+        assert self.c.group["c"].info()["name"] == "c"
+        libpry.raises("no such object", self.c.group["nonexistent"].info)
+
+        assert self.c.widget["one"].info()["name"] == "one"
+        libpry.raises("no such object", self.c.widget.info)
+
+        assert self.c.bar["bottom"].info()["position"] == "bottom"
         
-        l = self.c.layout["a"][0].info()
-        assert len(l["stacks"]) == 1
-        assert l["group"] == "a"
+        win = self.testWindow("one")
+        wid = self.c.window.info()["id"]
+        assert self.c.window[wid].info()["id"] == wid
 
-        l = self.c.layout["a"][2].info()
-        assert len(l["stacks"]) == 3
-        assert l["group"] == "a"
+        assert self.c.screen.info()["offset"] == 0
+        assert self.c.screen[1].info()["offset"] == 1
+        libpry.raises("no such object", self.c.screen[22].info)
+        libpry.raises("no such object", self.c.screen["foo"].info)
 
-        l = self.c.layout["c"][2].info()
-        assert len(l["stacks"]) == 3
-        assert l["group"] == "c"
+    def test_select_group(self):
+        g = self.c.group
+        assert g.layout.info()["group"] == "a"
+        assert len(g.layout.info()["stacks"]) == 1
+        assert len(g.layout[2].info()["stacks"]) == 3
 
-        libpry.raises("invalid layout offset", self.c.layout["c"]["foo"].info)
-        libpry.raises("invalid layout offset", self.c.layout["c"][22].info)
+        libpry.raises("no such object", self.c.group.window.info)
+        win = self.testWindow("test")
+        wid = self.c.window.info()["id"]
+
+        assert g.window.info()["id"] == wid
+        assert g.window[wid].info()["id"] == wid
+        libpry.raises("no such object", g.window["foo"].info)
+
+        assert g.screen.info()["offset"] == 0
+        assert g["b"].screen.info()["offset"] == 1
+        libpry.raises("no such object", g["b"].screen[0].info)
+
 
 tests = [
     uCommandObject(),

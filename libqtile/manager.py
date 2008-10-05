@@ -78,7 +78,7 @@ class Key:
         return "Key(%s, %s)"%(self.modifiers, self.key)
 
 
-class Screen:
+class Screen(command.CommandObject):
     group = None
     def __init__(self, top=None, bottom=None, left=None, right=None):
         """
@@ -150,8 +150,17 @@ class Screen:
         self.event.fire("setgroup")
         self.qtile.event.fire("focus_change")
 
+    def select(self, selectors):
+        if not selectors:
+            return self
 
-class Group:
+    def cmd_info(self):
+        return dict(
+            offset=self.qtile.screens.index(self)
+        )
+
+
+class Group(command.CommandObject):
     def __init__(self, name, layouts, qtile):
         self.name, self.qtile = name, qtile
         self.screen = None
@@ -234,6 +243,32 @@ class Group:
             self.focus(None, False)
         self.layoutAll()
 
+    def select(self, selectors):
+        if not selectors:
+            return self
+        name, sel = selectors[0]
+        selectors = selectors[1:]
+        if name == "layout":
+            if sel is None:
+                return self.layout
+            else:
+                return utils.lget(self.layouts, sel)
+        elif name == "window":
+            if sel is None:
+                return self.currentWindow
+            else:
+                for i in self.windows:
+                    if i.window.id == sel:
+                        return i
+        elif name == "screen":
+            if sel is not None:
+                return None
+            else:
+                return self.screen
+
+    def cmd_info(self):
+        return dict(name=self.name)
+
 
 class Log:
     """
@@ -263,7 +298,7 @@ class Log:
         self.log = []
 
 
-class QTile:
+class QTile(command.CommandObject):
     debug = False
     _exit = False
     _testing = False
@@ -577,13 +612,52 @@ class QTile:
             self.writeReport((e, v))
         self._exit = True
 
+    def select(self, selectors):
+        if not selectors:
+            return self
+        name, sel = selectors[0]
+        selectors = selectors[1:]
+        if name == "group":
+            if sel is not None:
+                obj = self.groupMap.get(sel)
+            else:
+                obj = self.currentGroup
+        elif name == "layout":
+            if sel is not None:
+                obj = utils.lget(self.currentGroup.layouts, sel)
+            else:
+                obj = self.currentGroup.layout
+        elif name == "widget":
+            obj = self.widgetMap.get(sel)
+        elif name == "bar":
+            if sel not in ["top", "bottom", "left", "right"]:
+                obj = None
+            else:
+                obj = getattr(self.currentScreen, sel)
+        elif name == "window":
+            if sel is not None:
+                obj = self.clientFromWID(sel)
+            else:
+                obj = self.currentWindow
+        elif name == "screen":
+            if sel is not None:
+                obj = utils.lget(self.screens, sel)
+            else:
+                obj = self.currentScreen
+        else:
+            obj = None
 
-class _BaseCommands(command.CommandObject):
-    def __init__(self, qtile):
-        """
-            qtile: Qtile instance, or None.
-        """
-        self.q = qtile
+        if obj:
+            return obj.select(selectors)
+        else:
+            return obj
+
+    def clientFromWID(self, wid):
+        all = self.windowMap.values() + self.internalMap.values()
+        for i in all:
+            if i.window.id == wid:
+                return i
+        return None
 
     def cmd_barinfo(self, screen=None):
         """
@@ -594,7 +668,7 @@ class _BaseCommands(command.CommandObject):
             screen is assumed.
         """
         if not screen:
-            screen = self.q.currentScreen
+            screen = self.currentScreen
         else:
             screen = self.screens[screen]
         return dict(
@@ -608,20 +682,20 @@ class _BaseCommands(command.CommandObject):
         """
             Return current screen number.
         """
-        return self.q.screens.index(self.q.currentScreen)
+        return self.screens.index(self.currentScreen)
 
     def cmd_debug(self):
         """
             Toggle qtile debug logging. Returns "on" or "off" to indicate the
             resulting debug status.
         """
-        if self.q.debug:
-            self.q.debug = False
-            self.q.log.debug = None
+        if self.debug:
+            self.debug = False
+            self.log.debug = None
             return "off"
         else:
-            self.q.debug = True
-            self.q.log.debug = sys.stderr
+            self.debug = True
+            self.log.debug = sys.stderr
             return "on"
 
     def cmd_groups(self):
@@ -633,7 +707,7 @@ class _BaseCommands(command.CommandObject):
                 groups()
         """
         d = {}
-        for i in self.q.groups:
+        for i in self.groups:
             d[i.name] = i.info()
         return d
 
@@ -650,7 +724,7 @@ class _BaseCommands(command.CommandObject):
                 inspect(0x600005)
         """
         if windowID:
-            all = self.q.windowMap.values() + self.q.internalMap.values()
+            all = self.windowMap.values() + self.internalMap.values()
             for i in all:
                 if i.window.id == windowID:
                     c = i
@@ -658,7 +732,7 @@ class _BaseCommands(command.CommandObject):
             else:
                 raise command.CommandError("No such window: %s"%windowID)
         else:
-            c = self.q.currentWindow
+            c = self.currentWindow
             if not c:
                 raise command.CommandError("No current focus.")
 
@@ -680,7 +754,7 @@ class _BaseCommands(command.CommandObject):
             "your_event_mask": a.your_event_mask,
             "do_not_propagate_mask": a.do_not_propagate_mask
         }
-        props = [self.q.display.get_atom_name(x) for x in c.window.list_properties()]
+        props = [self.display.get_atom_name(x) for x in c.window.list_properties()]
         
         h = c.window.get_wm_normal_hints()
         if h:
@@ -722,7 +796,7 @@ class _BaseCommands(command.CommandObject):
             name = c.window.get_wm_name(),
             wm_class = c.window.get_wm_class(),
             wm_transient_for = c.window.get_wm_transient_for(),
-            protocols = [self.q.display.get_atom_name(x) for x in c.window.get_wm_protocols()],
+            protocols = [self.display.get_atom_name(x) for x in c.window.get_wm_protocols()],
             wm_icon_name = c.window.get_wm_icon_name(),
             wm_client_machine = c.window.get_wm_client_machine(),
             normalhints = normalhints,
@@ -734,13 +808,13 @@ class _BaseCommands(command.CommandObject):
         """
             Return info for each internal window (bars, for example).
         """
-        return [i.info() for i in self.q.internalMap.values()]
+        return [i.info() for i in self.internalMap.values()]
 
     def cmd_kill(self):
         """
             Kill the window that currently has focus.
         """
-        window = self.q.currentScreen.group.currentWindow
+        window = self.currentScreen.group.currentWindow
         if window:
             window.kill()
 
@@ -760,11 +834,11 @@ class _BaseCommands(command.CommandObject):
                 layoutinfo("a", 1)
         """
         if group:
-            group = self.q.groupMap.get(group)
+            group = self.groupMap.get(group)
             if group is None:
                 raise command.CommandError("No such group: %s"%groupName)
         else:
-            group = self.q.currentGroup
+            group = self.currentGroup
         if layout:
             if layout > (len(group.layouts) - 1):
                 raise command.CommandError("Invalid layout offset: %s."%layout)
@@ -777,7 +851,7 @@ class _BaseCommands(command.CommandObject):
         """
             List of all addressible widget names.
         """
-        return self.q.widgetMap.keys()
+        return self.widgetMap.keys()
 
     def cmd_log(self, n=None):
         """
@@ -789,28 +863,28 @@ class _BaseCommands(command.CommandObject):
 
                 log()
         """
-        if n and len(self.q.log.log) > n:
-            return self.q.log.log[-n:]
+        if n and len(self.log.log) > n:
+            return self.log.log[-n:]
         else:
-            return self.q.log.log
+            return self.log.log
 
     def cmd_log_clear(self):
         """
             Clears the internal log.
         """
-        self.q.log.clear()
+        self.log.clear()
 
     def cmd_log_getlength(self):
         """
             Returns the configured size of the internal log.
         """
-        return self.q.log.length
+        return self.log.length
 
     def cmd_log_setlength(self, n):
         """
             Sets the configured size of the internal log.
         """
-        return self.q.log.setLength(n)
+        return self.log.setLength(n)
 
     def cmd_nextlayout(self, group=None):
         """
@@ -819,9 +893,9 @@ class _BaseCommands(command.CommandObject):
             :group Group name. If not specified, the current group is assumed.
         """
         if group:
-            group = self.q.groupMap.get(group)
+            group = self.groupMap.get(group)
         else:
-            group = self.q.currentGroup
+            group = self.currentGroup
         group.nextLayout()
 
     def cmd_pullgroup(self, group, screen=None):
@@ -842,10 +916,10 @@ class _BaseCommands(command.CommandObject):
                 pullgroup("a", 0)
         """
         if not screen:
-            screen = self.q.currentScreen
+            screen = self.currentScreen
         else:
             screen = self.screens[screen]
-        group = self.q.groupMap.get(group)
+        group = self.groupMap.get(group)
         if group is None:
             raise command.CommandError("No such group: %s"%group)
         screen.setGroup(group)
@@ -865,14 +939,14 @@ class _BaseCommands(command.CommandObject):
 
                 report(msg="My message", path="~/myreport")
         """
-        self.q.writeReport(msg, path, True)
+        self.writeReport(msg, path, True)
 
     def cmd_screens(self):
         """
             Return a list of dictionaries providing information on all screens.
         """
         lst = []
-        for i in self.q.screens:
+        for i in self.screens:
             lst.append(dict(
                 index = i.index,
                 group = i.group.name if i.group is not None else None,
@@ -904,20 +978,20 @@ class _BaseCommands(command.CommandObject):
         keysym = XK.string_to_keysym(key)
         if keysym == 0:
             raise command.CommandError("Unknown key: %s"%key)
-        keycode = self.q.display.keysym_to_keycode(keysym)
+        keycode = self.display.keysym_to_keycode(keysym)
         try:
             mask = utils.translateMasks(modifiers)
         except QTileError, v:
             return str(v)
-        if self.q.currentWindow:
-            win = self.q.currentWindow.window
+        if self.currentWindow:
+            win = self.currentWindow.window
         else:
-            win = self.q.root
+            win = self.root
         e = event.KeyPress(
                 state = mask,
                 detail = keycode,
 
-                root = self.q.root,
+                root = self.root,
                 window = win,
                 child = X.NONE,
 
@@ -929,7 +1003,7 @@ class _BaseCommands(command.CommandObject):
                 same_screen = 1,
         )
         win.send_event(e, X.KeyPressMask|X.SubstructureNotifyMask, propagate=True)
-        self.q.display.sync()
+        self.display.sync()
 
     def cmd_spawn(self, cmd):
         """
@@ -954,7 +1028,7 @@ class _BaseCommands(command.CommandObject):
         """
             Sync the X display. Should only be used for development.
         """
-        self.q.display.sync()
+        self.display.sync()
 
     def cmd_to_screen(self, n):
         """
@@ -964,7 +1038,7 @@ class _BaseCommands(command.CommandObject):
 
                 to_screen(0)
         """
-        return self.q.toScreen(n)
+        return self.toScreen(n)
 
     def cmd_window_to_group(self, groupName):
         """
@@ -974,16 +1048,16 @@ class _BaseCommands(command.CommandObject):
 
                 window_to_group("a")
         """
-        group = self.q.groupMap.get(groupName)
+        group = self.groupMap.get(groupName)
         if group is None:
             raise command.CommandError("No such group: %s"%groupName)
-        if self.q.currentWindow and self.q.currentWindow.group is not group:
-            w = self.q.currentWindow
-            self.q.currentWindow.group.remove(w)
+        if self.currentWindow and self.currentWindow.group is not group:
+            w = self.currentWindow
+            self.currentWindow.group.remove(w)
             group.add(w)
 
     def cmd_windows(self):
         """
             Return info for each client window.
         """
-        return [i.info() for i in self.q.windowMap.values()]
+        return [i.info() for i in self.windowMap.values()]

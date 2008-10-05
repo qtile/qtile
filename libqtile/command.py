@@ -36,8 +36,6 @@ class _Server(ipc.Server):
             os.unlink(fname)
         ipc.Server.__init__(self, fname, self.call)
         self.qtile = qtile
-        self.baseCmds = manager._BaseCommands(qtile)
-
         self.widgets = {}
         for i in conf.screens:
             for j in i.gaps:
@@ -47,45 +45,14 @@ class _Server(ipc.Server):
                             self.widgets[w.name] = w
 
     def call(self, data):
-        klass, selectors, name, args, kwargs = data
-        cmd = None
-        if klass == "base":
-            cmd = self.baseCmds.command(name)
-        elif klass == "layout":
-            if not selectors:
-                cmd = self.qtile.currentLayout.command(name)
-            elif len(selectors) == 1:
-                group = self.qtile.groupMap.get(selectors[0])
-                if not group:
-                    return ERROR, "No such group."
-                cmd = group.layout.command(name)
-            elif len(selectors) == 2:
-                if not selectors[0]:
-                    group = self.qtile.currentGroup
-                else:
-                    group = self.qtile.groupMap.get(selectors[0])
-                    if not group:
-                        return ERROR, "No such group."
-                try:
-                    l = group.layouts[selectors[1]]
-                except (TypeError, IndexError):
-                    return ERROR, "Invalid layout offset: %s."%selectors[1]
-                cmd = group.layouts[selectors[1]].command(name)
-            else:
-                return ERROR, "Bad layout specification."
-        elif klass == "widget":
-            if not len(selectors) == 1:
-                return ERROR, "Bad widget specification."
-            wname = selectors[0]
-            if wname in self.widgets:
-                cmd = self.widgets[wname].command(name)
-            else:
-                return ERROR, "No such widget: %s"%wname
+        selectors, name, args, kwargs = data
+        obj = self.qtile.select(selectors)
+        if not obj:
+            return ERROR, "No such object."
+        cmd = obj.command(name)
         if not cmd:
-            self.qtile.log.add("Unknown command %s"%name)
-            return ERROR, "Unknown command: %s"%name
+            return ERROR, "No such command."
         self.qtile.log.add("Command: %s(%s, %s)"%(name, args, kwargs))
-
         try:
             return SUCCESS, cmd(*args, **kwargs)
         except CommandError, v:
@@ -97,17 +64,17 @@ class _Server(ipc.Server):
 
 
 class _Command:
-    def __init__(self, call, klass, selectors, name):
+    def __init__(self, call, selectors, name):
         """
             :command A string command name specification
             :*args Arguments to be passed to the specified command
             :*kwargs Arguments to be passed to the specified command
         """
-        self.klass, self.selectors, self.name = klass, selectors, name
+        self.selectors, self.name = selectors, name
         self.call = call
 
     def __call__(self, *args, **kwargs):
-        return self.call(self.klass, self.selectors, self.name, *args, **kwargs)
+        return self.call(self.selectors, self.name, *args, **kwargs)
 
 
 class _CommandTree(object):
@@ -116,38 +83,86 @@ class _CommandTree(object):
         CommandTree objects act as containers, allowing them to be nested. The
         commands themselves appear on the object as callable attributes.
     """
-    def __init__(self, call, klass, selectors):
-        self.klass, self.selectors = klass, selectors
-        self.call = call
-        self.items = {}
+    def __init__(self, call, selectors, myselector=None):
+        self.call, self.selectors, self.myselector = call, selectors, myselector
 
     def __getitem__(self, select):
-        s = self.selectors[:]
-        s.append(select)
-        return _CommandTree(self.call, self.klass, s)
+        if self.myselector:
+            raise KeyError, "No such key: %s"%select
+        c = self.__class__(self.call, self.selectors, select)
+        return c
 
     def __getattr__(self, name):
-        return _Command(self.call, self.klass, self.selectors, name)
+        nextSelector = self.selectors[:]
+        if self.name:
+            nextSelector.append((self.name, self.myselector))
+        if name in self._contains:
+            c = _TreeMap[name](self.call, nextSelector)
+            for i in c._contains:
+                setattr(c, i, _TreeMap[i](self.call, nextSelector))
+            return c
+        else:
+            return _Command(self.call, nextSelector, name)
+
+
+class _TLayout(_CommandTree):
+    name = "layout"
+    _contains = ["group", "window", "screen"]
+
+
+class _TWidget(_CommandTree):
+    name = "widget"
+    _contains = ["bar", "screen", "group"]
+
+
+class _TBar(_CommandTree):
+    name = "bar"
+    _contains = ["screen", "group", "widget"]
+
+
+class _TWindow(_CommandTree):
+    name = "window"
+    _contains = ["group", "screen", "layout"]
+
+
+class _TScreen(_CommandTree):
+    name = "screen"
+    _contains = ["layout", "window", "bar"]
+
+
+class _TGroup(_CommandTree):
+    name = "group"
+    _contains = ["layout", "window", "screen"]
+
+
+_TreeMap = {
+    "layout":   _TLayout,
+    "widget":   _TWidget,
+    "bar":      _TBar,
+    "window":   _TWindow,
+    "screen":   _TScreen,
+    "group":    _TGroup,
+}
 
 
 class _CommandRoot(_CommandTree):
+    name = None
+    _contains = ["layout", "widget", "screen", "bar", "window", "group"]
     def __init__(self):
         """
             This method constructs the entire hierarchy of callable commands
             from a conf object.
         """
-        _CommandTree.__init__(self, self.call, "base", [])
-        self.layout = _CommandTree(self.call, "layout", [])
-        self.widget = _CommandTree(self.call, "widget", [])
+        _CommandTree.__init__(self, self.call, [])
 
-    def call(self, klass, selectors, name, *args, **kwargs):
+    def __getitem__(self, select):
+        raise KeyError, "No such key: %s"%select
+
+    def call(self, selectors, name, *args, **kwargs):
         """
             This method is called for issued commands.
                 
-                :klass  "widget", "layout" or "base".
-                :selectors A string  name for widgets, or a (group, offset)
-                tuple for layouts. Here, "offset" can be None, indicating the
-                current layout for the specified group.
+                :selectors A list of (name, selector) tuples. 
                 :name Command name.
         """
         pass
@@ -168,10 +183,8 @@ class Client(_CommandRoot):
         self.client = ipc.Client(fname)
         _CommandRoot.__init__(self)
 
-    def call(self, klass, selectors, name, *args, **kwargs):
-        # FIXME: Check arguments here
-        # Use inspect.getargspec(v), and craft checks by hand.
-        state, val = self.client.call((klass, selectors, name, args, kwargs))
+    def call(self, selectors, name, *args, **kwargs):
+        state, val = self.client.call((selectors, name, args, kwargs))
         if state == SUCCESS:
             return val
         elif state == ERROR:
@@ -212,6 +225,9 @@ class CommandObject(object):
         Base class for objects that expose commands. Each command should be a
         method named cmd_X, where X is the command name. 
     """
+    def select(self, selectors):
+        raise NotImplementedError
+
     def command(self, name):
         return getattr(self, "cmd_" + name, None)
 

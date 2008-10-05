@@ -22,8 +22,9 @@ import marshal, sys
 import Xlib
 from Xlib import X, Xatom
 import Xlib.protocol.event as event
+import command
 
-class _Window:
+class _Window(command.CommandObject):
     def __init__(self, window, qtile):
         self.window, self.qtile = window, qtile
         self.hidden = True
@@ -152,6 +153,16 @@ class _Window:
             8,
             marshal.dumps(data)
         )
+
+    def select(self, selectors):
+        if not selectors:
+            return self
+
+    def cmd_info(self):
+        return dict(
+            id = self.window.id
+        )
+
 
 
 class Internal(_Window):

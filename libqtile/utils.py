@@ -33,6 +33,14 @@ _modmasks = {
     "mod5":     X.Mod5Mask,
 }
 
+
+def lget(o, v):
+    try:
+        return o[v]
+    except (IndexError, TypeError):
+        return None
+
+
 def translateMasks(modifiers):
     """
         Translate a modifier mask specified as a list of strings into an or-ed 

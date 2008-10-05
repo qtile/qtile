@@ -75,6 +75,18 @@ class Gap(command.CommandObject):
     def geometry(self):
         return self.x, self.y, self.width, self.height
 
+    def select(self, selectors):
+        if not selectors:
+            return self
+
+    def cmd_info(self):
+        for i in ["top", "bottom", "left", "right"]:
+            if getattr(self.screen, i) is self:
+                pos = i
+                break
+        return dict(
+            position=pos
+        )
 
 STRETCH = -1
 class Bar(Gap):
@@ -317,6 +329,13 @@ class _Widget(command.CommandObject):
         if not w:
             raise command.CommandError("No such widget: %s"%name)
         return w
+
+    def select(self, selectors):
+        if not selectors:
+            return self
+
+    def cmd_info(self):
+        return dict(name=self.name)
 
 
 class Spacer(_Widget):
