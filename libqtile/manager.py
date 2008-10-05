@@ -150,13 +150,28 @@ class Screen(command.CommandObject):
         self.event.fire("setgroup")
         self.qtile.event.fire("focus_change")
 
-    def select(self, selectors):
-        if not selectors:
-            return self
+    def _select(self, name, sel):
+        if name == "layout":
+            if sel is None:
+                return self.group.layout
+            else:
+                return utils.lget(self.group.layouts, sel)
+        elif name == "window":
+            if sel is None:
+                return self.group.currentWindow
+            else:
+                for i in self.group.windows:
+                    if i.window.id == sel:
+                        return i
+        elif name == "bar":
+            if sel not in ["top", "bottom", "left", "right"]:
+                obj = None
+            else:
+                obj = getattr(self, sel)
 
     def cmd_info(self):
         return dict(
-            offset=self.qtile.screens.index(self)
+            offset=self.index
         )
 
 
@@ -243,11 +258,7 @@ class Group(command.CommandObject):
             self.focus(None, False)
         self.layoutAll()
 
-    def select(self, selectors):
-        if not selectors:
-            return self
-        name, sel = selectors[0]
-        selectors = selectors[1:]
+    def _select(self, name, sel):
         if name == "layout":
             if sel is None:
                 return self.layout
@@ -612,11 +623,7 @@ class QTile(command.CommandObject):
             self.writeReport((e, v))
         self._exit = True
 
-    def select(self, selectors):
-        if not selectors:
-            return self
-        name, sel = selectors[0]
-        selectors = selectors[1:]
+    def _select(self, name, sel):
         if name == "group":
             if sel is not None:
                 obj = self.groupMap.get(sel)
@@ -646,11 +653,7 @@ class QTile(command.CommandObject):
                 obj = self.currentScreen
         else:
             obj = None
-
-        if obj:
-            return obj.select(selectors)
-        else:
-            return obj
+        return obj
 
     def clientFromWID(self, wid):
         all = self.windowMap.values() + self.internalMap.values()
@@ -682,7 +685,7 @@ class QTile(command.CommandObject):
         """
             Return current screen number.
         """
-        return self.screens.index(self.currentScreen)
+        return self.currentScreen.index
 
     def cmd_debug(self):
         """

@@ -226,6 +226,17 @@ class CommandObject(object):
         method named cmd_X, where X is the command name. 
     """
     def select(self, selectors):
+        if not selectors:
+            return self
+        name, sel = selectors[0]
+        selectors = selectors[1:]
+        obj = self._select(name, sel)
+        if obj:
+            return obj.select(selectors)
+        else:
+            return obj
+
+    def _select(self, name, sel, selectors):
         raise NotImplementedError
 
     def command(self, name):

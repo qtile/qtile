@@ -154,9 +154,8 @@ class _Window(command.CommandObject):
             marshal.dumps(data)
         )
 
-    def select(self, selectors):
-        if not selectors:
-            return self
+    def _select(self, name, sel):
+        pass
 
     def cmd_info(self):
         return dict(

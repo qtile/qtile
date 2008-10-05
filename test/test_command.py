@@ -178,7 +178,24 @@ class u_Server(utils.QTileTests):
         assert g["b"].screen.info()["offset"] == 1
         libpry.raises("no such object", g["b"].screen[0].info)
 
+    def test_select_screen(self):
+        s = self.c.screen
+        assert s.layout.info()["group"] == "a"
+        assert len(s.layout.info()["stacks"]) == 1
+        assert len(s.layout[2].info()["stacks"]) == 3
 
+        libpry.raises("no such object", self.c.window.info)
+        libpry.raises("no such object", self.c.window[2].info)
+        win = self.testWindow("test")
+        wid = self.c.window.info()["id"]
+        assert s.window.info()["id"] == wid
+        assert s.window[wid].info()["id"] == wid
+
+        libpry.raises("no such object", s.bar.info)
+        libpry.raises("no such object", s.bar["top"].info)
+        assert s.bar["bottom"].info()["position"] == "bottom"
+
+    
 tests = [
     uCommandObject(),
     utils.XNest(xinerama=True), [

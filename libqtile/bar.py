@@ -75,9 +75,12 @@ class Gap(command.CommandObject):
     def geometry(self):
         return self.x, self.y, self.width, self.height
 
-    def select(self, selectors):
-        if not selectors:
-            return self
+    def _select(self, name, sel):
+        if name == "screen":
+            if sel is None:
+                return self.screen
+            else:
+                return None
 
     def cmd_info(self):
         for i in ["top", "bottom", "left", "right"]:
@@ -330,9 +333,8 @@ class _Widget(command.CommandObject):
             raise command.CommandError("No such widget: %s"%name)
         return w
 
-    def select(self, selectors):
-        if not selectors:
-            return self
+    def _select(self, name, sel):
+        pass
 
     def cmd_info(self):
         return dict(name=self.name)
