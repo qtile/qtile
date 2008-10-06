@@ -695,35 +695,6 @@ class QTile(command.CommandObject):
         """
         return [i.info() for i in self.internalMap.values()]
 
-    def cmd_layoutinfo(self, group=None, layout=None):
-        """
-            Return layout info. 
-            
-            :group Group name.
-            :layout Integer layout offset.
-
-            If neither are specified the current group and layout is used.
-
-            Examples:
-                
-                layoutinfo()
-
-                layoutinfo("a", 1)
-        """
-        if group:
-            group = self.groupMap.get(group)
-            if group is None:
-                raise command.CommandError("No such group: %s"%groupName)
-        else:
-            group = self.currentGroup
-        if layout:
-            if layout > (len(group.layouts) - 1):
-                raise command.CommandError("Invalid layout offset: %s."%layout)
-            layout = group.layouts[layout]
-        else:
-            layout = group.layout
-        return layout.info()
-
     def cmd_list_widgets(self):
         """
             List of all addressible widget names.

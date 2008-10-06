@@ -110,11 +110,11 @@ class uSingle(utils.QTileTests):
     def test_nextlayout(self):
         self.testWindow("one")
         self.testWindow("two")
-        assert len(self.c.layoutinfo()["stacks"]) == 1
+        assert len(self.c.layout.info()["stacks"]) == 1
         self.c.nextlayout()
-        assert len(self.c.layoutinfo()["stacks"]) == 2
+        assert len(self.c.layout.info()["stacks"]) == 2
         self.c.nextlayout()
-        assert len(self.c.layoutinfo()["stacks"]) == 1
+        assert len(self.c.layout.info()["stacks"]) == 1
 
     def test_log_clear(self):
         self.testWindow("one")
@@ -195,15 +195,6 @@ class uQTile(utils.QTileTests):
         self.kill(pid)
         assert len(self.c.windows()) == 1
         assert self.c.groups()["a"]["focus"] == "one"
-
-    def test_layoutinfo(self):
-        self.testWindow("one")
-        self.testWindow("two")
-        assert self.c.layoutinfo()["group"] == "a"
-        d = self.c.layoutinfo("b", 0)
-        assert d["group"] == "b"
-        libpry.raises("invalid layout", self.c.layoutinfo, "b", 99)
-        libpry.raises("no such group", self.c.layoutinfo, "nonexistent", 0)
 
 
 class uKey(libpry.AutoTree):

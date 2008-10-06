@@ -136,10 +136,10 @@ class uStack(utils.QTileTests):
         one = self.testWindow("one")
         two = self.testWindow("two")
         three = self.testWindow("three")
-        stacks = self.c.layoutinfo()["stacks"]
+        stacks = self.c.layout.info()["stacks"]
         assert not stacks[1]["split"]
         self.c.layout.stack_toggle_split()
-        stacks = self.c.layoutinfo()["stacks"]
+        stacks = self.c.layout.info()["stacks"]
         assert stacks[1]["split"]
 
     def test_shuffle(self):
@@ -148,20 +148,20 @@ class uStack(utils.QTileTests):
         two = self.testWindow("two")
         three = self.testWindow("three")
 
-        stack = self.c.layoutinfo()["stacks"][0]
+        stack = self.c.layout.info()["stacks"][0]
         assert stack["windows"][stack["current"]] == "three"
         for i in range(5):
             self.c.layout.stack_shuffle_up()
-            stack = self.c.layoutinfo()["stacks"][0]
+            stack = self.c.layout.info()["stacks"][0]
             assert stack["windows"][stack["current"]] == "three"
         for i in range(5):
             self.c.layout.stack_shuffle_down()
-            stack = self.c.layoutinfo()["stacks"][0]
+            stack = self.c.layout.info()["stacks"][0]
             assert stack["windows"][stack["current"]] == "three"
 
     def test_info(self):
         one = self.testWindow("one")
-        assert self.c.layoutinfo()["stacks"]
+        assert self.c.layout.info()["stacks"]
 
 
 class SelectorConfig(libqtile.config.Config):
