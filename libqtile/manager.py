@@ -540,9 +540,9 @@ class QTile(command.CommandObject):
             return
         for i in k.commands:
             if i.check(self):
-                status, val = self.server.call((i.klass, i.selectors, i.name, i.args, i.kwargs))
+                status, val = self.server.call((i.selectors, i.name, i.args, i.kwargs))
                 if status in (command.ERROR, command.EXCEPTION):
-                    s = "KB command error %s: %s"%(i.command, val)
+                    s = "KB command error %s: %s"%(i.name, val)
                     self.log.add(s)
                     print >> sys.stderr, s
         else:

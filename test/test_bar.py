@@ -39,7 +39,7 @@ class uWidgets(utils.QTileTests):
     def test_groupbox_click(self):
         self.c.pullgroup("c")
         assert self.c.groups()["a"]["screen"] == None
-        self.c.bar_fake_click(0, "bottom", 10, 10)
+        self.c.bar["bottom"].bar_fake_click(0, "bottom", 10, 10)
         assert self.c.groups()["a"]["screen"] == 0
 
     def test_measurebox(self):

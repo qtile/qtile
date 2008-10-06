@@ -10,8 +10,16 @@ class TestConfig(libqtile.config.Config):
                 libqtile.layout.Stack(2, borderWidth=10)
             ]
     keys = [
-        libqtile.manager.Key(["control"], "k", libqtile.command._Call("layout", None, "stack_up")),
-        libqtile.manager.Key(["control"], "j", libqtile.command._Call("layout", None, "stack_down")),
+        libqtile.manager.Key(
+            ["control"],
+            "k",
+            libqtile.command._Call([("layout", None)], "stack_up")
+        ),
+        libqtile.manager.Key(
+            ["control"],
+            "j",
+            libqtile.command._Call([("layout", None)], "stack_down")
+        ),
     ]
     screens = [libqtile.manager.Screen(
             bottom=libqtile.bar.Bar(

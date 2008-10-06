@@ -214,13 +214,13 @@ class Client(_CommandRoot):
 
 
 class _Call:
-    def __init__(self, klass, selectors, name, *args, **kwargs):
+    def __init__(self, selectors, name, *args, **kwargs):
         """
             :command A string command name specification
             :*args Arguments to be passed to the specified command
             :*kwargs Arguments to be passed to the specified command
         """
-        self.klass, self.selectors, self.name = klass, selectors, name
+        self.selectors, self.name = selectors, name
         self.args, self.kwargs = args, kwargs
         # Conditionals
         self.layout = None
@@ -236,8 +236,8 @@ class _Call:
 
 
 class Commander(_CommandRoot):
-    def call(self, klass, selectors, name, *args, **kwargs):
-        return _Call(klass, selectors, name, *args, **kwargs)
+    def call(self, selectors, name, *args, **kwargs):
+        return _Call(selectors, name, *args, **kwargs)
 
 
 class CommandObject(object):
