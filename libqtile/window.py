@@ -220,14 +220,19 @@ class _Window(command.CommandObject):
         else:
             hints = None
 
+        protocols = []
+        for i in self.window.get_wm_protocols():
+            protocols.append(self.qtile.display.get_atom_name(i))
+
         state = self.window.get_wm_state()
+
         return dict(
             attributes=attrs,
             properties=props,
             name = self.window.get_wm_name(),
             wm_class = self.window.get_wm_class(),
             wm_transient_for = self.window.get_wm_transient_for(),
-            protocols = [self.qtile.display.get_atom_name(x) for x in self.window.get_wm_protocols()],
+            protocols = protocols,
             wm_icon_name = self.window.get_wm_icon_name(),
             wm_client_machine = self.window.get_wm_client_machine(),
             normalhints = normalhints,
@@ -307,4 +312,7 @@ class Window(_Window):
 
     def __repr__(self):
         return "Window(%s)"%self.name
+
+    def cmd_kill(self):
+        self.kill()
 

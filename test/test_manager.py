@@ -93,7 +93,7 @@ class uSingle(utils.QTileTests):
     def test_kill(self):
         self.testWindow("one")
         self.testwindows = []
-        self.c.kill()
+        self.c.window[self.c.window.info()["id"]].kill()
         self.c.sync()
         for i in range(20):
             if len(self.c.windows()) == 0:

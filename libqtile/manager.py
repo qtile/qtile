@@ -689,20 +689,11 @@ class QTile(command.CommandObject):
             d[i.name] = i.info()
         return d
 
-
     def cmd_internal(self):
         """
             Return info for each internal window (bars, for example).
         """
         return [i.info() for i in self.internalMap.values()]
-
-    def cmd_kill(self):
-        """
-            Kill the window that currently has focus.
-        """
-        window = self.currentScreen.group.currentWindow
-        if window:
-            window.kill()
 
     def cmd_layoutinfo(self, group=None, layout=None):
         """
