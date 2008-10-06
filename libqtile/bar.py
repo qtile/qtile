@@ -90,10 +90,13 @@ class Gap(command.CommandObject):
             if getattr(self.screen, i) is self:
                 return i
 
-    def cmd_info(self):
+    def info(self):
         return dict(
             position=self.position
         )
+
+    def cmd_info(self):
+        return self.info()
 
 STRETCH = -1
 class Bar(Gap):
@@ -165,7 +168,10 @@ class Bar(Gap):
             i.draw()
 
     def info(self):
-        return [i.info() for i in self.widgets]
+        return dict(
+            position = self.position,
+            widgets = [i.info() for i in self.widgets]
+        )
 
     def get(self, q, screen, position):
         if len(q.screens) - 1 < screen:

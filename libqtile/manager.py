@@ -662,25 +662,6 @@ class QTile(command.CommandObject):
                 return i
         return None
 
-    def cmd_barinfo(self, screen=None):
-        """
-            Returns a dictionary of information regarding the bar on the
-            specified screen.
-
-            :screen Screen integer offset. If none is specified, the current
-            screen is assumed.
-        """
-        if not screen:
-            screen = self.currentScreen
-        else:
-            screen = self.screens[screen]
-        return dict(
-            top = screen.top.info() if screen.top else None,
-            bottom = screen.bottom.info() if screen.bottom else None,
-            left = screen.left.info() if screen.left else None,
-            right = screen.right.info() if screen.right else None,
-        )
-
     def cmd_current_screen(self):
         """
             Return current screen number.

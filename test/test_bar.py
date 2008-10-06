@@ -24,8 +24,8 @@ class uWidgets(utils.QTileTests):
     config = GBConfig()
     def test_draw(self):
         self.testWindow("one")
-        b = self.c.barinfo()["bottom"]
-        assert b[0]["name"] == "GroupBox"
+        b = self.c.bar["bottom"].info()
+        assert b["widgets"][0]["name"] == "GroupBox"
 
     def test_event(self):
         self.c.pullgroup("b")
@@ -145,11 +145,11 @@ class uOffsetCalculation(utils._QTileTruss):
             )
         ]
         self.startQtile(self.conf)
-        i = self.c.barinfo()["bottom"]
-        assert i[0]["offset"] == 0
-        assert i[1]["offset"] == 10
-        assert i[1]["width"] == 780
-        assert i[2]["offset"] == 790
+        i = self.c.bar["bottom"].info()
+        assert i["widgets"][0]["offset"] == 0
+        assert i["widgets"][1]["offset"] == 10
+        assert i["widgets"][1]["width"] == 780
+        assert i["widgets"][2]["offset"] == 790
 
     def test_singlespacer(self):
         self.conf.screens = [
@@ -163,9 +163,9 @@ class uOffsetCalculation(utils._QTileTruss):
             )
         ]
         self.startQtile(self.conf)
-        i = self.c.barinfo()["bottom"]
-        assert i[0]["offset"] == 0
-        assert i[0]["width"] == 800
+        i = self.c.bar["bottom"].info()
+        assert i["widgets"][0]["offset"] == 0
+        assert i["widgets"][0]["width"] == 800
 
     def test_nospacer(self):
         self.conf.screens = [
@@ -180,9 +180,9 @@ class uOffsetCalculation(utils._QTileTruss):
             )
         ]
         self.startQtile(self.conf)
-        i = self.c.barinfo()["bottom"]
-        assert i[0]["offset"] == 0
-        assert i[1]["offset"] == 10
+        i = self.c.bar["bottom"].info()
+        assert i["widgets"][0]["offset"] == 0
+        assert i["widgets"][1]["offset"] == 10
 
 
 tests = [
