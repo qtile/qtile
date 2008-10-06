@@ -84,13 +84,15 @@ class Gap(command.CommandObject):
             else:
                 return None
 
-    def cmd_info(self):
+    @property
+    def position(self):
         for i in ["top", "bottom", "left", "right"]:
             if getattr(self.screen, i) is self:
-                pos = i
-                break
+                return i
+
+    def cmd_info(self):
         return dict(
-            position=pos
+            position=self.position
         )
 
 STRETCH = -1
@@ -336,7 +338,9 @@ class _Widget(command.CommandObject):
         return w
 
     def _select(self, name, sel):
-        pass
+        if name == "bar":
+            if not sel or sel == self.bar.position:
+                return self.bar
 
     def cmd_info(self):
         return dict(name=self.name)
