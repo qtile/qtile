@@ -13,12 +13,12 @@ class TestConfig(libqtile.config.Config):
         libqtile.manager.Key(
             ["control"],
             "k",
-            libqtile.command._Call([("layout", None)], "stack_up")
+            libqtile.command._Call([("layout", None)], "up")
         ),
         libqtile.manager.Key(
             ["control"],
             "j",
-            libqtile.command._Call([("layout", None)], "stack_down")
+            libqtile.command._Call([("layout", None)], "down")
         ),
     ]
     screens = [libqtile.manager.Screen(

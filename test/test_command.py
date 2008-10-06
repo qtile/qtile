@@ -7,11 +7,11 @@ class CallConfig(libqtile.config.Config):
     keys = [
         libqtile.manager.Key(
             ["control"], "j",
-            libqtile.command._Call([("layout", None)], "stack_down")
+            libqtile.command._Call([("layout", None)], "down")
         ),
         libqtile.manager.Key(
             ["control"], "k",
-            libqtile.command._Call([("layout", None)], "stack_up"),
+            libqtile.command._Call([("layout", None)], "up"),
         ),
     ]
     groups = ["a", "b"]

@@ -240,28 +240,28 @@ class Stack(Layout):
         d["current_stack"] = self.currentStackOffset
         return d
 
-    def cmd_stack_toggle_split(self):
+    def cmd_toggle_split(self):
         """
             Toggle vertical split on the current layout.
         """
         self.currentStack.toggleSplit()
         self.group.layoutAll()
 
-    def cmd_stack_down(self):
+    def cmd_down(self):
         """
             Switch to the next window in this stack.
         """
         self.currentStack.current -= 1
         self.group.focus(self.currentStack.cw, False)
 
-    def cmd_stack_up(self):
+    def cmd_up(self):
         """
             Switch to the previous window in this stack.
         """
         self.currentStack.current += 1
         self.group.focus(self.currentStack.cw, False)
 
-    def cmd_stack_shuffle_up(self):
+    def cmd_shuffle_up(self):
         """
             Shuffle the order of this stack up.
         """
@@ -269,7 +269,7 @@ class Stack(Layout):
         self.currentStack.current += 1
         self.group.layoutAll()
 
-    def cmd_stack_shuffle_down(self):
+    def cmd_shuffle_down(self):
         """
             Shuffle the order of this stack down.
         """
@@ -277,45 +277,45 @@ class Stack(Layout):
         self.currentStack.current -= 1
         self.group.layoutAll()
 
-    def cmd_stack_delete(self):
+    def cmd_delete(self):
         """
             Delete the current stack from the layout.
         """
         self.deleteCurrentStack()
 
-    def cmd_stack_add(self):
+    def cmd_add(self):
         """
             Add a stack to the layout.
         """
         self.stacks.append(_WinStack())
         self.group.layoutAll()
 
-    def cmd_stack_rotate(self):
+    def cmd_rotate(self):
         """
             Rotate order of the stacks.
         """
         utils.shuffleUp(self.stacks)
         self.group.layoutAll()
 
-    def cmd_stack_next(self):
+    def cmd_next(self):
         """
             Focus next stack.
         """
         return self.nextStack()
 
-    def cmd_stack_previous(self):
+    def cmd_previous(self):
         """
             Focus previous stack.
         """
         return self.previousStack()
 
-    def cmd_stack_current(self):
+    def cmd_current(self):
         """
             Return the offset of the current stack.
         """
         return self.currentStackOffset
 
-    def cmd_stack_get(self):
+    def cmd_get(self):
         """
             Retrieve the current stacks, returning lists of window names in
             order, starting with the current window of each stack.

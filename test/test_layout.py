@@ -51,85 +51,85 @@ class StackConfig(libqtile.config.Config):
 class uStack(utils.QTileTests):
     config = StackConfig()
     def test_stack_commands(self):
-        assert self.c.layout.stack_current() == None
+        assert self.c.layout.current() == None
         self.testWindow("one")
-        assert self.c.layout.stack_get() == [["one"], []]
-        assert self.c.layout.stack_current() == 0
+        assert self.c.layout.get() == [["one"], []]
+        assert self.c.layout.current() == 0
         self.testWindow("two")
-        assert self.c.layout.stack_get() == [["one"], ["two"]]
-        assert self.c.layout.stack_current() == 1
+        assert self.c.layout.get() == [["one"], ["two"]]
+        assert self.c.layout.current() == 1
         self.testWindow("three")
-        assert self.c.layout.stack_get() == [["one"], ["three", "two"]]
-        assert self.c.layout.stack_current() == 1
+        assert self.c.layout.get() == [["one"], ["three", "two"]]
+        assert self.c.layout.current() == 1
 
-        self.c.layout.stack_delete()
-        assert self.c.layout.stack_get() == [["one", "three", "two"]]
+        self.c.layout.delete()
+        assert self.c.layout.get() == [["one", "three", "two"]]
         info = self.c.groups()["a"]
         assert info["focus"] == "one"
-        self.c.layout.stack_delete()
-        assert len(self.c.layout.stack_get()) == 1
+        self.c.layout.delete()
+        assert len(self.c.layout.get()) == 1
 
-        self.c.layout.stack_add()
-        assert self.c.layout.stack_get() == [["one", "three", "two"], []]
+        self.c.layout.add()
+        assert self.c.layout.get() == [["one", "three", "two"], []]
 
-        self.c.layout.stack_rotate()
-        assert self.c.layout.stack_get() == [[], ["one", "three", "two"]]
+        self.c.layout.rotate()
+        assert self.c.layout.get() == [[], ["one", "three", "two"]]
 
     def test_rotation(self):
-        self.c.layout.stack_delete()
+        self.c.layout.delete()
         self.testWindow("one")
         self.testWindow("two")
         self.testWindow("three")
-        assert self.c.layout.stack_get() == [["three", "two", "one"]]
-        self.c.layout.stack_down()
-        assert self.c.layout.stack_get() == [["one", "three", "two"]]
-        self.c.layout.stack_up()
-        assert self.c.layout.stack_get() == [["three", "two", "one"]]
-        self.c.layout.stack_down()
-        self.c.layout.stack_down()
-        assert self.c.layout.stack_get() == [["two", "one", "three"]]
+        assert self.c.layout.get() == [["three", "two", "one"]]
+        self.c.layout.down()
+        assert self.c.layout.get() == [["one", "three", "two"]]
+        self.c.layout.up()
+        assert self.c.layout.get() == [["three", "two", "one"]]
+        self.c.layout.down()
+        self.c.layout.down()
+        assert self.c.layout.get() == [["two", "one", "three"]]
         
     def test_nextprev(self):
-        self.c.layout.stack_add()
+        self.c.layout.add()
         one = self.testWindow("one")
         two = self.testWindow("two")
         three = self.testWindow("three")
 
         assert self.c.groups()["a"]["focus"] == "three"
-        self.c.layout.stack_next()
+        self.c.layout.next()
         assert self.c.groups()["a"]["focus"] == "one"
 
-        self.c.layout.stack_previous()
+        self.c.layout.previous()
         assert self.c.groups()["a"]["focus"] == "three"
-        self.c.layout.stack_previous()
+        self.c.layout.previous()
         assert self.c.groups()["a"]["focus"] == "two"
 
-        self.c.layout.stack_next()
-        self.c.layout.stack_next()
-        self.c.layout.stack_next()
+        self.c.layout.next()
+        self.c.layout.next()
+        self.c.layout.next()
         assert self.c.groups()["a"]["focus"] == "two"
 
         self.kill(three)
-        self.c.layout.stack_next()
+        self.c.layout.next()
         assert self.c.groups()["a"]["focus"] == "one"
-        self.c.layout.stack_previous()
+        self.c.layout.previous()
         assert self.c.groups()["a"]["focus"] == "two"
-        self.c.layout.stack_next()
+        self.c.layout.next()
         self.kill(two)
-        self.c.layout.stack_next()
+        self.c.layout.next()
         assert self.c.groups()["a"]["focus"] == "one"
 
         self.kill(one)
-        self.c.layout.stack_next()
+        self.c.layout.next()
         assert self.c.groups()["a"]["focus"] == None
-        self.c.layout.stack_previous()
+        self.c.layout.previous()
         assert self.c.groups()["a"]["focus"] == None
 
     def test_window_removal(self):
         self.c.nextlayout()
         one = self.testWindow("one")
         two = self.testWindow("two")
-        self.c.layout.stack_down()
+        self.c.layout.down()
         self.kill(one)
 
     def test_split(self):
@@ -138,7 +138,7 @@ class uStack(utils.QTileTests):
         three = self.testWindow("three")
         stacks = self.c.layout.info()["stacks"]
         assert not stacks[1]["split"]
-        self.c.layout.stack_toggle_split()
+        self.c.layout.toggle_split()
         stacks = self.c.layout.info()["stacks"]
         assert stacks[1]["split"]
 
@@ -151,11 +151,11 @@ class uStack(utils.QTileTests):
         stack = self.c.layout.info()["stacks"][0]
         assert stack["windows"][stack["current"]] == "three"
         for i in range(5):
-            self.c.layout.stack_shuffle_up()
+            self.c.layout.shuffle_up()
             stack = self.c.layout.info()["stacks"][0]
             assert stack["windows"][stack["current"]] == "three"
         for i in range(5):
-            self.c.layout.stack_shuffle_down()
+            self.c.layout.shuffle_down()
             stack = self.c.layout.info()["stacks"][0]
             assert stack["windows"][stack["current"]] == "three"
 
