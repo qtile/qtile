@@ -183,7 +183,7 @@ class Bar(Gap):
             raise command.CommandError("No such bar: %s:%s"%(screen, position))
         return b
 
-    def cmd_bar_fake_click(self, screen, position, x, y):
+    def cmd_fake_click(self, screen, position, x, y):
         """
             Fake a mouse-click on the bar. Co-ordinates are relative 
             to the top-left corner of the bar.
@@ -469,13 +469,13 @@ class TextBox(_TextBox):
         self.text = text
         self.draw()
 
-    def cmd_textbox_update(self, text):
+    def cmd_update(self, text):
         """
             Update the text in a TextBox widget.
         """
         self.update(text)
 
-    def cmd_textbox_get(self):
+    def cmd_get(self):
         """
             Retrieve the text in a TextBox widget.
         """
@@ -506,7 +506,7 @@ class MeasureBox(_Widget):
             color
         )
 
-    def cmd_measurebox_update(self, percentage):
+    def cmd_update(self, percentage):
         """
             Update the percentage in a MeasureBox widget.
         """

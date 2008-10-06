@@ -33,24 +33,24 @@ class uWidgets(utils.QTileTests):
 
     def test_textbox(self):
         assert "text" in self.c.list_widgets()
-        self.c.widget["text"].textbox_update("testing")
-        assert self.c.widget["text"].textbox_get() == "testing"
+        self.c.widget["text"].update("testing")
+        assert self.c.widget["text"].get() == "testing"
 
     def test_groupbox_click(self):
         self.c.group["c"].toscreen()
         assert self.c.groups()["a"]["screen"] == None
-        self.c.bar["bottom"].bar_fake_click(0, "bottom", 10, 10)
+        self.c.bar["bottom"].fake_click(0, "bottom", 10, 10)
         assert self.c.groups()["a"]["screen"] == 0
 
     def test_measurebox(self):
-        libpry.raises("out of range", self.c.widget["measure"].measurebox_update, 200)
-        libpry.raises("out of range", self.c.widget["measure"].measurebox_update, -1)
-        self.c.widget["measure"].measurebox_update(0)
-        self.c.widget["measure"].measurebox_update(10)
-        self.c.widget["measure"].measurebox_update(30)
-        self.c.widget["measure"].measurebox_update(50)
-        self.c.widget["measure"].measurebox_update(80)
-        self.c.widget["measure"].measurebox_update(100)
+        libpry.raises("out of range", self.c.widget["measure"].update, 200)
+        libpry.raises("out of range", self.c.widget["measure"].update, -1)
+        self.c.widget["measure"].update(0)
+        self.c.widget["measure"].update(10)
+        self.c.widget["measure"].update(30)
+        self.c.widget["measure"].update(50)
+        self.c.widget["measure"].update(80)
+        self.c.widget["measure"].update(100)
         
 
 class GeomConf(libqtile.config.Config):
