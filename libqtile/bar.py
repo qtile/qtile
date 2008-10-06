@@ -170,7 +170,8 @@ class Bar(Gap):
     def info(self):
         return dict(
             position = self.position,
-            widgets = [i.info() for i in self.widgets]
+            widgets = [i.info() for i in self.widgets],
+            window = self.window.window.id
         )
 
     def get(self, q, screen, position):

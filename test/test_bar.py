@@ -84,7 +84,9 @@ class uBarGeometry(utils.QTileTests):
 
         internal = self.c.internal()
         assert len(internal) == 2
-        assert self.c.inspect(int(internal[0]["id"], 16))
+
+        wid = self.c.bar["bottom"].info()["window"]
+        assert self.c.window[wid].inspect()
 
 
 class ErrConf(GeomConf):

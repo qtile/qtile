@@ -127,7 +127,7 @@ class uSingle(utils.QTileTests):
 
     def test_inspect(self):
         self.testWindow("one")
-        assert self.c.inspect()
+        assert self.c.window.inspect()
 
 
 class uQTile(utils.QTileTests):
