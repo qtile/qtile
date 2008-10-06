@@ -22,7 +22,7 @@ import marshal, sys
 import Xlib
 from Xlib import X, Xatom
 import Xlib.protocol.event as event
-import command
+import command, utils
 
 class _Window(command.CommandObject):
     def __init__(self, window, qtile):
@@ -155,7 +155,7 @@ class _Window(command.CommandObject):
         )
 
     def _select(self, name, sel):
-        pass
+        return None
 
     def cmd_info(self):
         return dict(
@@ -219,6 +219,19 @@ class Window(_Window):
             self.updateName()
         else:
             print >> sys.stderr, e
+
+    def _select(self, name, sel):
+        if name == "group":
+            if sel is None or sel == self.group.name:
+                return self.group
+        elif name == "layout":
+            if sel is None:
+                return self.group.layout
+            else:
+                return utils.lget(self.group.layouts, sel)
+        elif name == "screen":
+            if sel is None or (self.group.screen and sel == self.group.screen.index):
+                return self.group.screen
 
     def __repr__(self):
         return "Window(%s)"%self.name

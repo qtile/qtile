@@ -213,7 +213,21 @@ class u_Server(utils.QTileTests):
         assert self.c.layout.group.info()["name"] == "a"
         assert self.c.layout.group["a"].info()["name"] == "a"
         libpry.raises("no object", self.c.layout.group["b"].info)
-       
+
+    def test_select_window(self):
+        win = self.testWindow("test")
+        wid = self.c.window.info()["id"]
+
+        assert self.c.window.group.info()["name"] == "a"
+        assert self.c.window.group["a"].info()["name"] == "a"
+        libpry.raises("no object", self.c.window.group["b"].info)
+
+        assert len(self.c.window.layout.info()["stacks"]) == 1
+        assert len(self.c.window.layout[1].info()["stacks"]) == 2
+
+        assert self.c.window.screen.info()["offset"] == 0
+        assert self.c.window.screen[0].info()["offset"] == 0
+        libpry.raises("no object", self.c.window.screen[1].info)
 
     
 tests = [
