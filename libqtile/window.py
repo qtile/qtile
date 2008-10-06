@@ -316,3 +316,18 @@ class Window(_Window):
     def cmd_kill(self):
         self.kill()
 
+    def cmd_togroup(self, groupName):
+        """
+            Move window to a specified group.
+
+            Examples:
+
+                togroup("a")
+        """
+        group = self.qtile.groupMap.get(groupName)
+        if group is None:
+            raise command.CommandError("No such group: %s"%groupName)
+        if self.group is not group:
+            self.group.remove(self)
+            group.add(self)
+

@@ -884,22 +884,6 @@ class QTile(command.CommandObject):
         """
         return self.toScreen(n)
 
-    def cmd_window_to_group(self, groupName):
-        """
-            Move focused window to a specified group.
-
-            Examples:
-
-                window_to_group("a")
-        """
-        group = self.groupMap.get(groupName)
-        if group is None:
-            raise command.CommandError("No such group: %s"%groupName)
-        if self.currentWindow and self.currentWindow.group is not group:
-            w = self.currentWindow
-            self.currentWindow.group.remove(w)
-            group.add(w)
-
     def cmd_windows(self):
         """
             Return info for each client window.
