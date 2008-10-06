@@ -171,7 +171,7 @@ class Screen(command.CommandObject):
 
     def cmd_info(self):
         return dict(
-            offset=self.index
+            index=self.index
         )
 
 
@@ -661,12 +661,6 @@ class QTile(command.CommandObject):
             if i.window.id == wid:
                 return i
         return None
-
-    def cmd_current_screen(self):
-        """
-            Return current screen number.
-        """
-        return self.currentScreen.index
 
     def cmd_debug(self):
         """

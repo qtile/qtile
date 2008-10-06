@@ -159,8 +159,8 @@ class u_Server(utils.QTileTests):
         wid = self.c.window.info()["id"]
         assert self.c.window[wid].info()["id"] == wid
 
-        assert self.c.screen.info()["offset"] == 0
-        assert self.c.screen[1].info()["offset"] == 1
+        assert self.c.screen.info()["index"] == 0
+        assert self.c.screen[1].info()["index"] == 1
         libpry.raises("no object", self.c.screen[22].info)
         libpry.raises("no object", self.c.screen["foo"].info)
 
@@ -178,8 +178,8 @@ class u_Server(utils.QTileTests):
         assert g.window[wid].info()["id"] == wid
         libpry.raises("no object", g.window["foo"].info)
 
-        assert g.screen.info()["offset"] == 0
-        assert g["b"].screen.info()["offset"] == 1
+        assert g.screen.info()["index"] == 0
+        assert g["b"].screen.info()["index"] == 1
         libpry.raises("no object", g["b"].screen[0].info)
 
     def test_select_screen(self):
@@ -200,14 +200,14 @@ class u_Server(utils.QTileTests):
         assert s.bar["bottom"].info()["position"] == "bottom"
 
     def test_select_bar(self):
-        assert self.c.screen[1].bar["bottom"].screen.info()["offset"] == 1
+        assert self.c.screen[1].bar["bottom"].screen.info()["index"] == 1
         b = self.c.bar
-        assert b["bottom"].screen.info()["offset"] == 0
+        assert b["bottom"].screen.info()["index"] == 0
         libpry.raises("no object", b.screen[2].info)
 
     def test_select_layout(self):
-        assert self.c.layout.screen.info()["offset"] == 0
-        assert self.c.layout.screen[0].info()["offset"] == 0
+        assert self.c.layout.screen.info()["index"] == 0
+        assert self.c.layout.screen[0].info()["index"] == 0
         libpry.raises("no object", self.c.layout.screen[1].info)
 
         assert self.c.layout.group.info()["name"] == "a"
@@ -225,8 +225,8 @@ class u_Server(utils.QTileTests):
         assert len(self.c.window.layout.info()["stacks"]) == 1
         assert len(self.c.window.layout[1].info()["stacks"]) == 2
 
-        assert self.c.window.screen.info()["offset"] == 0
-        assert self.c.window.screen[0].info()["offset"] == 0
+        assert self.c.window.screen.info()["index"] == 0
+        assert self.c.window.screen[0].info()["index"] == 0
         libpry.raises("no object", self.c.window.screen[1].info)
 
     def test_select_widget(self):

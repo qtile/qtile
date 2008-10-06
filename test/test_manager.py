@@ -34,9 +34,9 @@ class TestConfig(libqtile.config.Config):
 class uMultiScreen(utils.QTileTests):
     config = TestConfig()
     def test_to_screen(self):
-        assert self.c.current_screen() == 0
+        assert self.c.screen.info()["index"] == 0
         self.c.to_screen(1)
-        assert self.c.current_screen() == 1
+        assert self.c.screen.info()["index"] == 1
         self.testWindow("one")
         self.c.to_screen(0)
         self.testWindow("two")
