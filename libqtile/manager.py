@@ -280,6 +280,28 @@ class Group(command.CommandObject):
     def cmd_info(self):
         return dict(name=self.name)
 
+    def cmd_toscreen(self, screen=None):
+        """
+            Pull a group to a specified screen.
+
+            :screen Screen offset. If not specified, we assume the current screen.
+
+            Examples:
+
+            Pull group to the current screen:
+                
+                toscreen()
+
+            Pull group to screen 0:
+        
+                toscreen(0)
+        """
+        if not screen:
+            screen = self.qtile.currentScreen
+        else:
+            screen = self.screens[screen]
+        screen.setGroup(self)
+
 
 class Log:
     """
@@ -745,32 +767,6 @@ class QTile(command.CommandObject):
         else:
             group = self.currentGroup
         group.nextLayout()
-
-    def cmd_pullgroup(self, group, screen=None):
-        """
-            Pull a group to a specified screen.
-
-            :group Group name.
-            :screen Screen offset. If not specified, we assume the current screen.
-
-            Examples:
-
-            Pull group "a" to the current screen:
-                
-                pullgroup("a")
-
-            Pull group "a" to screen 0:
-        
-                pullgroup("a", 0)
-        """
-        if not screen:
-            screen = self.currentScreen
-        else:
-            screen = self.screens[screen]
-        group = self.groupMap.get(group)
-        if group is None:
-            raise command.CommandError("No such group: %s"%group)
-        screen.setGroup(group)
 
     def cmd_report(self, msg="None", path="~/qtile_crashreport"):
         """

@@ -103,8 +103,8 @@ class uSingle(utils.QTileTests):
             raise AssertionError("Window did not die...")
 
     def test_regression_groupswitch(self):
-        self.c.pullgroup("c")
-        self.c.pullgroup("d")
+        self.c.group["c"].toscreen()
+        self.c.group["d"].toscreen()
         assert self.c.groups()["c"]["screen"] == None
 
     def test_nextlayout(self):
@@ -172,15 +172,14 @@ class uQTile(utils.QTileTests):
 
     def test_setgroup(self):
         self.testWindow("one")
-        libpry.raises("No such group", self.c.pullgroup, "nonexistent")
-        self.c.pullgroup("b")
+        self.c.group["b"].toscreen()
         self._groupconsistency()
         if len(self.c.screens()) == 1:
             assert self.c.groups()["a"]["screen"] == None
         else:
             assert self.c.groups()["a"]["screen"] == 1
         assert self.c.groups()["b"]["screen"] == 0
-        self.c.pullgroup("c")
+        self.c.group["c"].toscreen()
         self._groupconsistency()
         assert self.c.groups()["c"]["screen"] == 0
 
@@ -188,7 +187,7 @@ class uQTile(utils.QTileTests):
         self.testWindow("one")
         pid = self.testWindow("two")
         assert len(self.c.windows()) == 2
-        self.c.pullgroup("c")
+        self.c.group["c"].toscreen()
         self._groupconsistency()
         self.c.status()
         assert len(self.c.windows()) == 2

@@ -28,7 +28,7 @@ class uWidgets(utils.QTileTests):
         assert b["widgets"][0]["name"] == "GroupBox"
 
     def test_event(self):
-        self.c.pullgroup("b")
+        self.c.group["b"].toscreen()
         self.c.log()
 
     def test_textbox(self):
@@ -37,7 +37,7 @@ class uWidgets(utils.QTileTests):
         assert self.c.widget["text"].textbox_get() == "testing"
 
     def test_groupbox_click(self):
-        self.c.pullgroup("c")
+        self.c.group["c"].toscreen()
         assert self.c.groups()["a"]["screen"] == None
         self.c.bar["bottom"].bar_fake_click(0, "bottom", 10, 10)
         assert self.c.groups()["a"]["screen"] == 0
