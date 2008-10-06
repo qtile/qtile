@@ -16,26 +16,26 @@ class uMax(utils.QTileTests):
     config = MaxConfig()
     def test_simple(self):
         self.testWindow("one")
-        assert self.c.layout.max_get() == ["one"]
+        assert self.c.layout.get() == ["one"]
         self.testWindow("two")
-        assert self.c.layout.max_get() == ["two", "one"]
+        assert self.c.layout.get() == ["two", "one"]
 
     def test_updown(self):
         self.testWindow("one")
         self.testWindow("two")
         self.testWindow("three")
-        assert self.c.layout.max_get() == ["three", "two", "one"]
-        self.c.layout.max_down()
-        assert self.c.layout.max_get() == ["two", "one","three"]
-        self.c.layout.max_up()
-        assert self.c.layout.max_get() == ["three", "two", "one"]
+        assert self.c.layout.get() == ["three", "two", "one"]
+        self.c.layout.down()
+        assert self.c.layout.get() == ["two", "one","three"]
+        self.c.layout.up()
+        assert self.c.layout.get() == ["three", "two", "one"]
 
     def test_remove(self):
         self.testWindow("one")
         two = self.testWindow("two")
-        assert self.c.layout.max_get() == ["two", "one"]
+        assert self.c.layout.get() == ["two", "one"]
         self.kill(two)
-        assert self.c.layout.max_get() == ["one"]
+        assert self.c.layout.get() == ["one"]
 
 
 class StackConfig(libqtile.config.Config):
