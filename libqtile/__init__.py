@@ -1,1 +1,3 @@
-import config, command, ipc, layout, bar, manager
+
+import manager, bar, layout, command
+

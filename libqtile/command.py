@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 import inspect, UserDict, traceback, textwrap, os, inspect
-import ipc, config, manager
+import ipc, manager
 
 class CommandError(Exception): pass
 class CommandException(Exception): pass
@@ -235,9 +235,11 @@ class _Call:
         return True
 
 
-class Commander(_CommandRoot):
+class _LazyTree(_CommandRoot):
     def call(self, selectors, name, *args, **kwargs):
         return _Call(selectors, name, *args, **kwargs)
+
+lazy = _LazyTree()
 
 
 class CommandObject(object):

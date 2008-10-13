@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 import sys
-import manager, window, config, command, utils
+import manager, window, confreader, command, utils
 import Xlib.X
 
 _HIGHLIGHT = "#48677E"
@@ -115,7 +115,7 @@ class Bar(Gap):
 
     def _configure(self, qtile, screen, event):
         if not self in [screen.top, screen.bottom]:
-            raise config.ConfigError("Bars must be at the top or the bottom of the screen.")
+            raise confreader.ConfigError("Bars must be at the top or the bottom of the screen.")
         Gap._configure(self, qtile, screen, event)
         colormap = qtile.display.screen().default_colormap
         c = colormap.alloc_named_color(self.background).pixel

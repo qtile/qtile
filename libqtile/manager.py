@@ -25,7 +25,7 @@ import Xlib.display
 import Xlib.ext.xinerama as xinerama
 from Xlib import X, XK
 import Xlib.protocol.event as event
-import command, utils, window, config
+import command, utils, window, confreader
 
 class QTileError(Exception): pass
 
@@ -65,7 +65,7 @@ class Key:
             specifications are one of: "shift", "lock", "control", "mod1",
             "mod2", "mod3", "mod4", "mod5".
             :key A key specification, e.g. "a", "Tab", "Return", "space".
-            :*commands A list of __libqtile.command.Call__ objects. If multiple
+            :*commands A list of __libqtile.command._Call__ objects. If multiple
             Call objects are specified, they are tried in sequence.
         """
         self.modifiers, self.key, self.commands = modifiers, key, commands
@@ -453,7 +453,7 @@ class QTile(command.CommandObject):
         """
         if w.name:
             if self.widgetMap.has_key(w.name):
-                raise config.ConfigError("Duplicate widget name: %s"%w.name)
+                raise confreader.ConfigError("Duplicate widget name: %s"%w.name)
             self.widgetMap[w.name] = w
 
     @property

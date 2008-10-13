@@ -22,7 +22,7 @@
 
 import os, os.path
 import libqtile
-import libqtile.config as config
+import libqtile.confreader as confreader
 
 def main():
     from optparse import OptionParser, OptionGroup
@@ -42,8 +42,8 @@ def main():
                     )
     options, args = parser.parse_args()
     try:
-        c = config.File(options.configfile)
-    except config.ConfigError, v:
+        c = confreader.File(options.configfile)
+    except confreader.ConfigError, v:
         parser.error(v.message)
     q = libqtile.manager.QTile(c)
     q.debug = options.debug

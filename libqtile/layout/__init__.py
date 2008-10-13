@@ -1,4 +1,3 @@
-
-from stack import *
-from max import *
+from stack import Stack
+from max import Max
 

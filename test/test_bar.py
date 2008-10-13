@@ -1,5 +1,5 @@
 import libpry, time
-import libqtile, libqtile.config
+import libqtile.config, libqtile.layout, libqtile.bar
 import utils
 
 class GBConfig(libqtile.config.Config):
