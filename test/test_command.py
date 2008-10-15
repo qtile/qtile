@@ -3,7 +3,7 @@ import libpry
 import libqtile
 import utils
 
-class CallConfig(libqtile.config.Config):
+class CallConfig(libqtile.confreader.Config):
     keys = [
         libqtile.manager.Key(
             ["control"], "j",
@@ -62,7 +62,7 @@ class uCommandObject(libpry.AutoTree):
 
     def test_commands(self):
         c = TestCommands()
-        assert len(c.commands()) == 4
+        assert len(c.commands()) == 5
 
     def test_command(self):
         c = TestCommands()
@@ -103,7 +103,7 @@ class u_CommandTree(libpry.AutoTree):
         assert g.selectors == []
 
 
-class ServerConfig(libqtile.config.Config):
+class ServerConfig(libqtile.confreader.Config):
     keys = []
     groups = ["a", "b", "c"]
     layouts = [
@@ -135,6 +135,11 @@ class ServerConfig(libqtile.config.Config):
 
 class u_Server(utils.QTileTests):
     config = ServerConfig()
+    def test_cmd_commands(self):
+        assert self.c.commands()
+        assert self.c.layout.commands()
+        assert self.c.screen.bar["bottom"].commands()
+
     def test_call_unknown(self):
         libpry.raises("no such command", self.c.nonexistent)
         libpry.raises("no such command", self.c.layout.nonexistent)

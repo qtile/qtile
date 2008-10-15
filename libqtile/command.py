@@ -71,7 +71,7 @@ class _Server(ipc.Server):
         except _SelectError, v:
             e = self._fmtExpression([(v.name, v.sel)])
             s = self._fmtExpression(selectors)
-            return ERROR, "No object %s in %s"%(e, s)
+            return ERROR, "No object %s in path '%s'"%(e, s)
         cmd = obj.command(name)
         if not cmd:
             return ERROR, "No such command."
@@ -270,6 +270,9 @@ class CommandObject(object):
             if i.startswith("cmd_"):
                 lst.append(i[4:])
         return lst
+
+    def cmd_commands(self):
+        return self.commands()
 
     def docSig(self, name):
         args, varargs, varkw, defaults = inspect.getargspec(self.command(name))

@@ -25,8 +25,6 @@ class Layout(command.CommandObject):
     """
         This class defines the API that should be exposed by all layouts.
     """
-    # An instance of command.Commands
-    commands = None
     def clone(self, group):
         """
             :group Group to attach new layout instance to.
