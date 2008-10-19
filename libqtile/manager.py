@@ -266,6 +266,14 @@ class Group(command.CommandObject):
             self.focus(None, False)
         self.layoutAll()
 
+    def _items(self, name):
+        if name == "layout":
+            return range(len(self.layouts))
+        elif name == "window":
+            return [i.window.id for i in self.windows]
+        elif name == "screen":
+            return []
+
     def _select(self, name, sel):
         if name == "layout":
             if sel is None:

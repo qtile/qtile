@@ -180,6 +180,16 @@ class u_Server(utils.QTileTests):
         libpry.raises("no object", self.c.screen[22].info)
         libpry.raises("no object", self.c.screen["foo"].info)
 
+    def test_items_group(self):
+        g = self.c.group
+        assert g.items("layout") == [0, 1, 2]
+
+        win = self.testWindow("test")
+        wid = self.c.window.info()["id"]
+        assert g.items("window") == [wid]
+
+        assert g.items("screen") == []
+
     def test_select_group(self):
         g = self.c.group
         assert g.layout.info()["group"] == "a"
@@ -207,7 +217,6 @@ class u_Server(utils.QTileTests):
         assert s.items("window") == [wid]
 
         assert s.items("bar") == ["bottom"]
-        
 
     def test_select_screen(self):
         s = self.c.screen
