@@ -154,6 +154,9 @@ class _Window(command.CommandObject):
             marshal.dumps(data)
         )
 
+    def _items(self, name, sel):
+        return None
+
     def _select(self, name, sel):
         return None
 
@@ -297,9 +300,19 @@ class Window(_Window):
         else:
             print >> sys.stderr, e
 
+    def _items(self, name):
+        if name == "group":
+            return []
+        elif name == "layout":
+            return range(len(self.group.layouts))
+        elif name == "screen":
+            return []
+
     def _select(self, name, sel):
         if name == "group":
-            if sel is None or sel == self.group.name:
+            if sel is not None:
+                return None
+            else:
                 return self.group
         elif name == "layout":
             if sel is None:
@@ -307,7 +320,9 @@ class Window(_Window):
             else:
                 return utils.lget(self.group.layouts, sel)
         elif name == "screen":
-            if sel is None or (self.group.screen and sel == self.group.screen.index):
+            if sel is not None:
+                return None
+            else:
                 return self.group.screen
 
     def __repr__(self):
