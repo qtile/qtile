@@ -244,14 +244,16 @@ class u_Server(utils.QTileTests):
         assert b["bottom"].screen.info()["index"] == 0
         libpry.raises("no object", b.screen[1].info)
 
+    def test_items_layout(self):
+        assert self.c.layout.items("screen") == []
+        assert self.c.layout.items("group") == []
+
     def test_select_layout(self):
         assert self.c.layout.screen.info()["index"] == 0
-        assert self.c.layout.screen[0].info()["index"] == 0
-        libpry.raises("no object", self.c.layout.screen[1].info)
+        libpry.raises("no object", self.c.layout.screen[0].info)
 
         assert self.c.layout.group.info()["name"] == "a"
-        assert self.c.layout.group["a"].info()["name"] == "a"
-        libpry.raises("no object", self.c.layout.group["b"].info)
+        libpry.raises("no object", self.c.layout.group["a"].info)
 
     def test_items_window(self):
         win = self.testWindow("test")

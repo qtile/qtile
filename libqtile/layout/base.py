@@ -80,15 +80,19 @@ class Layout(command.CommandObject):
             group = self.group.name
         )
 
-    def _select(self, name, sel):
+    def _items(self, name):
         if name == "screen":
-            if sel is None:
-                return self.group.screen
-            elif self.group.screen and self.group.screen.index == sel:
-                return self.group.screen
+            return []
         elif name == "group":
-            if (sel is None) or sel == self.group.name:
-                return self.group
+            return []
+
+    def _select(self, name, sel):
+        if sel is not None:
+            return None
+        if name == "screen":
+            return self.group.screen
+        elif name == "group":
+            return self.group
 
     def cmd_info(self):
         return self.info()
