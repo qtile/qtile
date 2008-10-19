@@ -150,6 +150,14 @@ class Screen(command.CommandObject):
         self.event.fire("setgroup")
         self.qtile.event.fire("focus_change")
 
+    def _items(self, name):
+        if name == "layout":
+            return range(len(self.group.layouts))
+        elif name == "window":
+            return [i.window.id for i in self.group.windows]
+        elif name == "bar":
+            return [x.position for x in self.gaps]
+
     def _select(self, name, sel):
         if name == "layout":
             if sel is None:
@@ -653,11 +661,7 @@ class QTile(command.CommandObject):
         elif name == "widget":
             return self.widgetMap.keys()
         elif name == "bar":
-            lst = []
-            for i in ["top", "bottom", "left", "right"]:
-                if getattr(self.currentScreen, i):
-                    lst.append(i)
-            return lst
+            return [x.position for x in self.currentScreen.gaps]
         elif name == "window":
             return self.listWID()
         elif name == "screen":
