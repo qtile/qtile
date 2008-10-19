@@ -75,14 +75,14 @@ class Gap(command.CommandObject):
     def geometry(self):
         return self.x, self.y, self.width, self.height
 
+    def _items(self, name):
+        if name == "screen":
+            return []
+
     def _select(self, name, sel):
         if name == "screen":
             if sel is None:
                 return self.screen
-            elif self.screen.index == sel:
-                return self.screen
-            else:
-                return None
 
     @property
     def position(self):

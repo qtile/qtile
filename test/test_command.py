@@ -62,7 +62,7 @@ class uCommandObject(libpry.AutoTree):
 
     def test_commands(self):
         c = TestCommands()
-        assert len(c.commands()) == 5
+        assert len(c.commands()) == 6
 
     def test_command(self):
         c = TestCommands()
@@ -235,11 +235,14 @@ class u_Server(utils.QTileTests):
         libpry.raises("no object", s.bar["top"].info)
         assert s.bar["bottom"].info()["position"] == "bottom"
 
+    def test_items_bar(self):
+        assert self.c.bar["bottom"].items("screen") == []
+
     def test_select_bar(self):
         assert self.c.screen[1].bar["bottom"].screen.info()["index"] == 1
         b = self.c.bar
         assert b["bottom"].screen.info()["index"] == 0
-        libpry.raises("no object", b.screen[2].info)
+        libpry.raises("no object", b.screen[1].info)
 
     def test_select_layout(self):
         assert self.c.layout.screen.info()["index"] == 0
