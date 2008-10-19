@@ -268,11 +268,13 @@ class u_Server(utils.QTileTests):
         assert self.c.window.screen[0].info()["index"] == 0
         libpry.raises("no object", self.c.window.screen[1].info)
 
+    def test_items_widget(self):
+        assert self.c.widget["one"].items("bar") == []
+
     def test_select_widget(self):
         w = self.c.widget["one"]
         assert w.bar.info()["position"] == "bottom"
-        assert w.bar["bottom"].info()["position"] == "bottom"
-        libpry.raises("no object", w.bar["foo"].info)
+        libpry.raises("no object", w.bar["bottom"].info)
 
     
 tests = [

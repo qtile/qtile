@@ -344,10 +344,15 @@ class _Widget(command.CommandObject):
             raise command.CommandError("No such widget: %s"%name)
         return w
 
-    def _select(self, name, sel):
+    def _items(self, name):
         if name == "bar":
-            if not sel or sel == self.bar.position:
-                return self.bar
+            return []
+
+    def _select(self, name, sel):
+        if sel:
+            return None
+        if name == "bar":
+            return self.bar
 
     def cmd_info(self):
         return dict(name=self.name)
