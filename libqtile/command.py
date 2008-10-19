@@ -258,7 +258,27 @@ class CommandObject(object):
         else:
             raise _SelectError(name, sel)
 
+    def items(self, name):
+        """
+            Returns a list of contained items for this name.
+        """
+        ret = self._items(name)
+        if ret is None:
+            raise command.CommandError("Unknown item class: %s"%name)
+        return ret
+
+    def _items(self, name):
+        """
+            Return items for the specified item class. Return an empty list if
+            there are no items, but the item class is valid. Return None if the
+            item class name isn't valid.
+        """
+        raise NotImplementedError
+
     def _select(self, name, sel, selectors):
+        """
+            Return a selected object, or None if no such object exists.
+        """
         raise NotImplementedError
 
     def command(self, name):
@@ -273,6 +293,9 @@ class CommandObject(object):
 
     def cmd_commands(self):
         return self.commands()
+
+    def cmd_items(self, name):
+        return self.items(name)
 
     def docSig(self, name):
         args, varargs, varkw, defaults = inspect.getargspec(self.command(name))

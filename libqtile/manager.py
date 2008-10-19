@@ -645,6 +645,24 @@ class QTile(command.CommandObject):
             self.writeReport((e, v))
         self._exit = True
 
+    def _items(self, name):
+        if name == "group":
+            return self.groupMap.keys()
+        elif name == "layout":
+            return range(len(self.currentGroup.layouts))
+        elif name == "widget":
+            return self.widgetMap.keys()
+        elif name == "bar":
+            lst = []
+            for i in ["top", "bottom", "left", "right"]:
+                if getattr(self.currentScreen, i):
+                    lst.append(i)
+            return lst
+        elif name == "window":
+            return self.listWID()
+        elif name == "screen":
+            return range(len(self.screens))
+
     def _select(self, name, sel):
         if name == "group":
             if sel is not None:
@@ -676,6 +694,9 @@ class QTile(command.CommandObject):
         else:
             obj = None
         return obj
+
+    def listWID(self):
+        return [i.window.id for i in self.windowMap.values() + self.internalMap.values()]
 
     def clientFromWID(self, wid):
         all = self.windowMap.values() + self.internalMap.values()

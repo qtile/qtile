@@ -144,6 +144,17 @@ class u_Server(utils.QTileTests):
         libpry.raises("no such command", self.c.nonexistent)
         libpry.raises("no such command", self.c.layout.nonexistent)
 
+    def test_items_qtile(self):
+        assert sorted(self.c.items("group")) == ["a", "b", "c"]
+        assert self.c.items("layout") == [0, 1, 2]
+        assert sorted(self.c.items("widget")) == ['four', 'one', 'three', 'two']
+        assert self.c.items("bar") == ["bottom"]
+        lst = self.c.items("window")
+        assert len(lst) == 2
+        assert self.c.window[lst[0]]
+        assert self.c.items("screen") == [0, 1]
+        libpry.raises("unknown item class", self.c.items, "wibble")
+
     def test_select_qtile(self):
         assert self.c.foo.selectors == []
         assert self.c.layout.info()["group"] == "a"
