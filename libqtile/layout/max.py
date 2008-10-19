@@ -25,7 +25,7 @@ class Max(Layout):
     name = "max"
     def __init__(self):
         Layout.__init__(self)
-        clients = []
+        self.clients = []
 
     def up(self):
         if self.clients:

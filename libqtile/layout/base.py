@@ -90,6 +90,5 @@ class Layout(command.CommandObject):
             if (sel is None) or sel == self.group.name:
                 return self.group
 
-
     def cmd_info(self):
         return self.info()
