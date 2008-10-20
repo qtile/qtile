@@ -48,8 +48,8 @@ def main():
     except libqtile.confreader.ConfigError, v:
         parser.error(v.message)
     client = libqtile.command.Client(options.socket, c)
-    cmd = sh.Cmd(client)
-    cmd.cmdloop()
+    qsh = sh.QSh(client)
+    qsh.loop()
 
 
 if __name__ == "__main__":

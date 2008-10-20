@@ -36,6 +36,22 @@ EXCEPTION = 2
 
 SOCKBASE = ".qtilesocket.%s"
 
+
+def formatSelector(lst):
+    """
+        Takes a list of (name, sel) tuples, and returns a formatted
+        selector expression.
+    """
+    expr = []
+    for i in lst:
+        if expr:
+            expr.append(".")
+        expr.append(i[0])
+        if i[1]:
+            expr.append("[%s]"%repr(i[1]))
+    return "".join(expr)
+
+
 class _Server(ipc.Server):
     def __init__(self, fname, qtile, conf):
         if os.path.exists(fname):
@@ -50,27 +66,13 @@ class _Server(ipc.Server):
                         if w.name:
                             self.widgets[w.name] = w
 
-    def _fmtExpression(self, lst):
-        """
-            Takes a list of (name, sel) tuples, and returns a formatted
-            selector expression.
-        """
-        expr = []
-        for i in lst:
-            if expr:
-                expr.append(".")
-            expr.append(i[0])
-            if i[1]:
-                expr.append("[%s]"%repr(i[1]))
-        return "".join(expr)
-
     def call(self, data):
         selectors, name, args, kwargs = data
         try:
             obj = self.qtile.select(selectors)
         except _SelectError, v:
-            e = self._fmtExpression([(v.name, v.sel)])
-            s = self._fmtExpression(selectors)
+            e = formatSelector([(v.name, v.sel)])
+            s = formatSelector(selectors)
             return ERROR, "No object %s in path '%s'"%(e, s)
         cmd = obj.command(name)
         if not cmd:

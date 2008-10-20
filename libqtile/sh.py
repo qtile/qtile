@@ -17,59 +17,70 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 """
     A command shell for Qtile.
 """
-import cmd, readline, sys, pprint, textwrap, traceback
+import readline, sys, pprint, shlex
+import fcntl, termios, struct
 import command
 
 
-class Cmd(cmd.Cmd):
-    prompt = "qsh> "
+def terminalWidth():
+    width = None
+    try:
+        cr = struct.unpack('hh', fcntl.ioctl(0, termios.TIOCGWINSZ, '1234'))
+        width = int(cr[1])
+    except (IOError, ImportError):
+        pass
+    return width or 80
+
+
+class QSh:
+    fd = sys.stdout
     def __init__(self, client):
-        self.client = client
-        self.builtins = []
-        for i in client.commands.keys():
-            self.builtins.append(i)
-            def _closure():
-                htext = client.commands.doc(i)
-                commandName = i
-                def help(self):
-                    print htext
-                def do(self, arg):
-                    if not arg:
-                        arg = "()"
-                    try:
-                        val = eval(
-                                    "client.%s%s"%(commandName, arg),
-                                    {},
-                                    dict(client=client, commandName=commandName)
-                              )
-                    except command.CommandError, val:
-                        print "Error: %s"%val
-                    except command.CommandException, val:
-                        print val
-                    except Exception, val:
-                        print val
-                    else:
-                        if val:
-                            pprint.pprint(val)
-                setattr(Cmd, "do_"+i, do)
-                setattr(Cmd, "help_"+i, help)
-            _closure()
-        cmd.Cmd.__init__(self)
+        self.clientroot, self.current = client, client
+        self.termwidth = terminalWidth()
 
-    def do_quit(self, arg):
-        sys.exit(0)
-    do_exit = do_quit
-    do_q = do_quit
-    do_EOF = do_quit
+    @property
+    def prompt(self):
+        print self.current.myname
+        return "%s> "%command.formatSelector(self.current.selectors)
 
-    def help_quit(self):
-        return "Exit the program."
+    def printColumns(self, lst):
+        mx = max([len(i) for i in lst])
+        cols = self.termwidth / (mx+2)
+        if not cols:
+            cols = 1
+        for i in range(len(lst)/cols):
+            sl = lst[i*cols:(i+1)*cols]
+            sl = [x + " "*(mx-len(x)) for x in sl]
+            print >> self.fd, "  ".join(sl)
+        if len(lst)%cols:
+            sl = lst[-(len(lst)%cols):]
+            sl = [x + " "*(mx-len(x)) for x in sl]
+            print >> self.fd, "  ".join(sl)
 
-    def do_helpall(self, arg):
-        for i in self.client.commands.keys():
-            print self.client.commands.doc(i)
-            print
+    def do_cd(self, arg):
+        pass
+
+    def do_ls(self):
+        self.printColumns(self.current._contains)
+
+    def do_help(self, arg):
+        pass
+
+    def loop(self):
+        while True:
+            line = raw_input(self.prompt)
+            if not line:
+                continue
+            parts = shlex.split(line)
+
+            builtin = getattr(self, "do_"+parts[0], None)
+            if builtin:
+                builtin(parts[1:])
+            else:
+                pass
+
+
+
