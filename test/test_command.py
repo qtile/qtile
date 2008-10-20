@@ -250,7 +250,7 @@ class u_Server(utils.QTileTests):
         assert self.c.screen[1].bar["bottom"].screen.info()["index"] == 1
         b = self.c.bar
         assert b["bottom"].screen.info()["index"] == 0
-        libpry.raises("no object", b.screen[1].info)
+        libpry.raises("no object", b.screen.info)
 
     def test_items_layout(self):
         assert self.c.layout.items("screen") == (True, None)

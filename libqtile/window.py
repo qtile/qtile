@@ -310,20 +310,14 @@ class Window(_Window):
 
     def _select(self, name, sel):
         if name == "group":
-            if sel is not None:
-                return None
-            else:
-                return self.group
+            return self.group
         elif name == "layout":
             if sel is None:
                 return self.group.layout
             else:
                 return utils.lget(self.group.layouts, sel)
         elif name == "screen":
-            if sel is not None:
-                return None
-            else:
-                return self.group.screen
+            return self.group.screen
 
     def __repr__(self):
         return "Window(%s)"%self.name

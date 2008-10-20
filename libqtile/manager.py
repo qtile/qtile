@@ -172,10 +172,7 @@ class Screen(command.CommandObject):
                     if i.window.id == sel:
                         return i
         elif name == "bar":
-            if sel not in ["top", "bottom", "left", "right"]:
-                return None
-            else:
-                return getattr(self, sel)
+            return getattr(self, sel)
 
     def cmd_info(self):
         return dict(
@@ -288,10 +285,7 @@ class Group(command.CommandObject):
                     if i.window.id == sel:
                         return i
         elif name == "screen":
-            if sel is not None:
-                return None
-            else:
-                return self.screen
+            return self.screen
 
     def cmd_info(self):
         return dict(name=self.name)
@@ -677,35 +671,29 @@ class QTile(command.CommandObject):
 
     def _select(self, name, sel):
         if name == "group":
-            if sel is not None:
-                obj = self.groupMap.get(sel)
+            if sel is None:
+                return self.currentGroup
             else:
-                obj = self.currentGroup
+                return self.groupMap.get(sel)
         elif name == "layout":
-            if sel is not None:
-                obj = utils.lget(self.currentGroup.layouts, sel)
+            if sel is None:
+                return self.currentGroup.layout
             else:
-                obj = self.currentGroup.layout
+                return utils.lget(self.currentGroup.layouts, sel)
         elif name == "widget":
-            obj = self.widgetMap.get(sel)
+            return self.widgetMap.get(sel)
         elif name == "bar":
-            if sel not in ["top", "bottom", "left", "right"]:
-                obj = None
-            else:
-                obj = getattr(self.currentScreen, sel)
+            return getattr(self.currentScreen, sel)
         elif name == "window":
-            if sel is not None:
-                obj = self.clientFromWID(sel)
+            if sel is None:
+                return self.currentWindow
             else:
-                obj = self.currentWindow
+                return self.clientFromWID(sel)
         elif name == "screen":
-            if sel is not None:
-                obj = utils.lget(self.screens, sel)
+            if sel is None:
+                return self.currentScreen
             else:
-                obj = self.currentScreen
-        else:
-            obj = None
-        return obj
+                return utils.lget(self.screens, sel)
 
     def listWID(self):
         return [i.window.id for i in self.windowMap.values() + self.internalMap.values()]

@@ -81,8 +81,7 @@ class Gap(command.CommandObject):
 
     def _select(self, name, sel):
         if name == "screen":
-            if sel is None:
-                return self.screen
+            return self.screen
 
     @property
     def position(self):
@@ -349,8 +348,6 @@ class _Widget(command.CommandObject):
             return True, None
 
     def _select(self, name, sel):
-        if sel:
-            return None
         if name == "bar":
             return self.bar
 

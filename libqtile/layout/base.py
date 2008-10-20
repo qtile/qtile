@@ -87,8 +87,6 @@ class Layout(command.CommandObject):
             return True, None
 
     def _select(self, name, sel):
-        if sel is not None:
-            return None
         if name == "screen":
             return self.group.screen
         elif name == "group":

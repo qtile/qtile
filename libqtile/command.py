@@ -252,11 +252,18 @@ class CommandObject(object):
             return self
         name, sel = selectors[0]
         selectors = selectors[1:]
-        obj = self._select(name, sel)
-        if obj:
-            return obj.select(selectors)
-        else:
+
+        r = self.items(name)
+        if (r is None) or\
+            (r[1] is None and sel is not None) or\
+                (r[1] is not None and sel and sel not in r[1]) or\
+                    (r[0] is False and sel is None):
             raise _SelectError(name, sel)
+
+        obj = self._select(name, sel)
+        if obj is None:
+            raise _SelectError(name, sel)
+        return obj.select(selectors)
 
     def items(self, name):
         """
@@ -285,6 +292,13 @@ class CommandObject(object):
     def _select(self, name, sel, selectors):
         """
             Return a selected object, or None if no such object exists.
+
+            This method is called with the following guarantees:
+                - name is a valid selector class for this item
+                - sel is a valid selector for this item
+                - the name, sel tuple is not an "impossible" combination (e.g.
+                  a selector is specified when this is not a containment
+                  object).
         """
         raise NotImplementedError
 
