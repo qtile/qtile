@@ -145,14 +145,22 @@ class u_Server(utils.QTileTests):
         libpry.raises("no such command", self.c.layout.nonexistent)
 
     def test_items_qtile(self):
-        assert sorted(self.c.items("group")) == ["a", "b", "c"]
-        assert self.c.items("layout") == [0, 1, 2]
-        assert sorted(self.c.items("widget")) == ['four', 'one', 'three', 'two']
-        assert self.c.items("bar") == ["bottom"]
-        lst = self.c.items("window")
+        v = self.c.items("group")
+        assert v[0]
+        assert sorted(v[1]) == ["a", "b", "c"]
+
+        assert self.c.items("layout") == (True, [0, 1, 2])
+
+        v = self.c.items("widget")
+        assert not v[0]
+        assert sorted(v[1]) == ['four', 'one', 'three', 'two']
+
+        assert self.c.items("bar") == (False, ["bottom"])
+        t, lst = self.c.items("window")
+        assert t
         assert len(lst) == 2
         assert self.c.window[lst[0]]
-        assert self.c.items("screen") == [0, 1]
+        assert self.c.items("screen") == (True, [0, 1])
         libpry.raises("unknown item class", self.c.items, "wibble")
 
     def test_select_qtile(self):
@@ -182,13 +190,13 @@ class u_Server(utils.QTileTests):
 
     def test_items_group(self):
         g = self.c.group
-        assert g.items("layout") == [0, 1, 2]
+        assert g.items("layout") == (True, [0, 1, 2])
 
         win = self.testWindow("test")
         wid = self.c.window.info()["id"]
-        assert g.items("window") == [wid]
+        assert g.items("window") == (True, [wid])
 
-        assert g.items("screen") == []
+        assert g.items("screen") == (True, None)
 
     def test_select_group(self):
         g = self.c.group
@@ -210,13 +218,13 @@ class u_Server(utils.QTileTests):
 
     def test_items_screen(self):
         s = self.c.screen
-        assert s.items("layout") == [0, 1, 2]
+        assert s.items("layout") == (True, [0, 1, 2])
 
         win = self.testWindow("test")
         wid = self.c.window.info()["id"]
-        assert s.items("window") == [wid]
+        assert s.items("window") == (True, [wid])
 
-        assert s.items("bar") == ["bottom"]
+        assert s.items("bar") == (False, ["bottom"])
 
     def test_select_screen(self):
         s = self.c.screen
@@ -236,7 +244,7 @@ class u_Server(utils.QTileTests):
         assert s.bar["bottom"].info()["position"] == "bottom"
 
     def test_items_bar(self):
-        assert self.c.bar["bottom"].items("screen") == []
+        assert self.c.bar["bottom"].items("screen") == (True, None)
 
     def test_select_bar(self):
         assert self.c.screen[1].bar["bottom"].screen.info()["index"] == 1
@@ -245,8 +253,8 @@ class u_Server(utils.QTileTests):
         libpry.raises("no object", b.screen[1].info)
 
     def test_items_layout(self):
-        assert self.c.layout.items("screen") == []
-        assert self.c.layout.items("group") == []
+        assert self.c.layout.items("screen") == (True, None)
+        assert self.c.layout.items("group") == (True, None)
 
     def test_select_layout(self):
         assert self.c.layout.screen.info()["index"] == 0
@@ -259,8 +267,9 @@ class u_Server(utils.QTileTests):
         win = self.testWindow("test")
         wid = self.c.window.info()["id"]
 
-        assert self.c.window.items("group") == []
-        assert self.c.window.items("layout") == [0, 1, 2]
+        assert self.c.window.items("group") == (True, None)
+        assert self.c.window.items("layout") == (True, [0, 1, 2])
+        assert self.c.window.items("screen") == (True, None)
 
     def test_select_window(self):
         win = self.testWindow("test")
@@ -276,7 +285,7 @@ class u_Server(utils.QTileTests):
         libpry.raises("no object", self.c.window.screen[0].info)
 
     def test_items_widget(self):
-        assert self.c.widget["one"].items("bar") == []
+        assert self.c.widget["one"].items("bar") == (True, None)
 
     def test_select_widget(self):
         w = self.c.widget["one"]

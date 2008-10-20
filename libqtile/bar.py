@@ -77,7 +77,7 @@ class Gap(command.CommandObject):
 
     def _items(self, name):
         if name == "screen":
-            return []
+            return True, None
 
     def _select(self, name, sel):
         if name == "screen":
@@ -346,7 +346,7 @@ class _Widget(command.CommandObject):
 
     def _items(self, name):
         if name == "bar":
-            return []
+            return True, None
 
     def _select(self, name, sel):
         if sel:

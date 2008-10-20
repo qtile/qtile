@@ -152,11 +152,11 @@ class Screen(command.CommandObject):
 
     def _items(self, name):
         if name == "layout":
-            return range(len(self.group.layouts))
+            return True, range(len(self.group.layouts))
         elif name == "window":
-            return [i.window.id for i in self.group.windows]
+            return True, [i.window.id for i in self.group.windows]
         elif name == "bar":
-            return [x.position for x in self.gaps]
+            return False, [x.position for x in self.gaps]
 
     def _select(self, name, sel):
         if name == "layout":
@@ -268,11 +268,11 @@ class Group(command.CommandObject):
 
     def _items(self, name):
         if name == "layout":
-            return range(len(self.layouts))
+            return True, range(len(self.layouts))
         elif name == "window":
-            return [i.window.id for i in self.windows]
+            return True, [i.window.id for i in self.windows]
         elif name == "screen":
-            return []
+            return True, None
 
     def _select(self, name, sel):
         if name == "layout":
@@ -663,17 +663,17 @@ class QTile(command.CommandObject):
 
     def _items(self, name):
         if name == "group":
-            return self.groupMap.keys()
+            return True, self.groupMap.keys()
         elif name == "layout":
-            return range(len(self.currentGroup.layouts))
+            return True, range(len(self.currentGroup.layouts))
         elif name == "widget":
-            return self.widgetMap.keys()
+            return False, self.widgetMap.keys()
         elif name == "bar":
-            return [x.position for x in self.currentScreen.gaps]
+            return False, [x.position for x in self.currentScreen.gaps]
         elif name == "window":
-            return self.listWID()
+            return True, self.listWID()
         elif name == "screen":
-            return range(len(self.screens))
+            return True, range(len(self.screens))
 
     def _select(self, name, sel):
         if name == "group":

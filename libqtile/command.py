@@ -269,9 +269,16 @@ class CommandObject(object):
 
     def _items(self, name):
         """
-            Return items for the specified item class. Return an empty list if
-            there are no items, but the item class is valid. Return None if the
-            item class name isn't valid.
+            Return (root, items) tuple for the specified item class, with: 
+            
+                root: True if this class accepts a "naked" specification
+                without an item specification (i.e. "layout"), and False if it
+                does not. 
+                
+                items is a list of contained items, or None if this object is
+                not a valid container.
+
+            Return None if name is not a valid item class.
         """
         raise NotImplementedError
 

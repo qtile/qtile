@@ -302,11 +302,11 @@ class Window(_Window):
 
     def _items(self, name):
         if name == "group":
-            return []
+            return True, None
         elif name == "layout":
-            return range(len(self.group.layouts))
+            return True, range(len(self.group.layouts))
         elif name == "screen":
-            return []
+            return True, None
 
     def _select(self, name, sel):
         if name == "group":

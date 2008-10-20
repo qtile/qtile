@@ -82,9 +82,9 @@ class Layout(command.CommandObject):
 
     def _items(self, name):
         if name == "screen":
-            return []
+            return True, None
         elif name == "group":
-            return []
+            return True, None
 
     def _select(self, name, sel):
         if sel is not None:
