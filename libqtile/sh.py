@@ -20,7 +20,7 @@
 """
     A command shell for Qtile.
 """
-import readline, sys, pprint, shlex
+import readline, sys, pprint, re
 import fcntl, termios, struct
 import command
 
@@ -69,8 +69,7 @@ class QSh:
         """
         if obj.parent and obj.myselector is None:
             t, itms = obj.parent.items(obj.name)
-            if t:
-                attrs = obj._contains
+            attrs = obj._contains if t else None
             return attrs, itms
         else:
             return obj._contains, None
@@ -91,7 +90,7 @@ class QSh:
                 return
         print >> self.fd, "No such item:", arg
 
-    def do_ls(self):
+    def do_ls(self, arg):
         attrs, itms = self.smartLs(self.current)
         if attrs:
             self.printColumns(attrs)
@@ -100,13 +99,37 @@ class QSh:
                 print >> self.fd
             self.printColumns(itms)
 
-    def do_help(self, arg=None):
+    def do_help(self, arg):
         self.printColumns(self.current.commands())
 
-    def do_exit(self):
+    def do_exit(self, args):
         sys.exit(0)
     do_quit = do_exit
     do_q = do_exit
+
+    def _call(self, cmd, args):
+        cmds = self.current.commands()
+        if cmd not in cmds:
+            print >> self.fd, "No such command: %s"%cmd
+            return None
+
+        cmd = getattr(self.current, cmd)
+        if args:
+            args = "".join(args)
+        else:
+            args = "()"
+        try:
+            val = eval(
+                    "cmd%s"%"".join(args),
+                    {},
+                    dict(cmd=cmd)
+                )
+            return val
+        except SyntaxError, v:
+            print >> self.fd, "Syntax error in expression: %s"%v.text
+            return None
+        except command.CommandException, val:
+            print >> self.fd, "Command exception:\n", val
 
     def loop(self):
         while True:
@@ -116,10 +139,20 @@ class QSh:
                 return
             if not line:
                 continue
-            parts = shlex.split(line)
-            builtin = getattr(self, "do_"+parts[0], None)
-            if builtin:
-                builtin(*parts[1:])
+
+            match = re.search(r"\W", line)
+            if match:
+                cmd, args = line[:match.start()].strip(), line[match.start():].strip()
             else:
-                pass
+                cmd, args = line, ""
+
+            builtin = getattr(self, "do_"+cmd, None)
+            if builtin:
+                builtin(args)
+            else:
+                val = self._call(cmd, args)
+                if val:
+                    pprint.pprint(val)
+
+
 

@@ -47,7 +47,7 @@ def formatSelector(lst):
         if expr:
             expr.append(".")
         expr.append(i[0])
-        if i[1]:
+        if i[1] is not None:
             expr.append("[%s]"%repr(i[1]))
     return "".join(expr)
 

@@ -46,6 +46,24 @@ class uQSh(utils.QTileTests):
         self.sh.do_cd("0")
         self.sh.do_ls()
 
+    def _call(self, cmd, args):
+        v = self.sh._call(cmd, args)
+        t = self.sh.fd.getvalue()
+        self.sh.fd = cStringIO.StringIO()
+        return v, t
+
+    def test_call(self):
+        assert self._call("status", []) == ("OK", "")
+        
+        v, t = self._call("nonexistent", "")
+        assert "No such command" in t
+
+        v, t = self._call("status", "(((")
+        assert "Syntax error" in t
+
+        v, t = self._call("status", "(1)")
+        assert "Command exception" in t
+
 
 tests = [
     utils.XNest(xinerama=True), [
