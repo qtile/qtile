@@ -49,6 +49,7 @@ class QSh:
         return "%s> "%command.formatSelector(s)
 
     def printColumns(self, lst):
+        lst = [str(i) for i in lst]
         mx = max([len(i) for i in lst])
         cols = self.termwidth / (mx+2)
         if not cols:
@@ -62,23 +63,45 @@ class QSh:
             sl = [x + " "*(mx-len(x)) for x in sl]
             print >> self.fd, "  ".join(sl)
 
-    def do_cd(self, arg):
-        if arg in self.current._contains:
-            self.current = getattr(self.current, arg)
+    def smartLs(self, obj):
+        """
+            Returns an (attrs, keys) tuple.
+        """
+        if obj.parent and obj.myselector is None:
+            t, itms = obj.parent.items(obj.name)
+            if t:
+                attrs = obj._contains
+            return attrs, itms
         else:
-            _, itms = self.current.parent.items(self.current.name)
-            self.current = self.current[arg]
+            return obj._contains, None
+        sub = obj.parent
+
+    def do_cd(self, arg):
+        attrs, itms = self.smartLs(self.current)
+        for trans in [str, int]:
+            try:
+                targ = trans(arg)
+            except ValueError:
+                continue
+            if attrs and targ in attrs:
+                self.current = getattr(self.current, targ)
+                return
+            elif itms and targ in itms:
+                self.current = self.current[targ]
+                return
+        print >> self.fd, "No such item:", arg
 
     def do_ls(self):
-        self.printColumns(self.current._contains)
-        if self.current.parent:
-            _, itms  = self.current.parent.items(self.current.name)
-            if itms:
+        attrs, itms = self.smartLs(self.current)
+        if attrs:
+            self.printColumns(attrs)
+        if itms:
+            if attrs:
                 print >> self.fd
-                print >> self.printColumns(itms)
+            self.printColumns(itms)
 
-    def do_help(self, arg):
-        pass
+    def do_help(self, arg=None):
+        self.printColumns(self.current.commands())
 
     def do_exit(self):
         sys.exit(0)

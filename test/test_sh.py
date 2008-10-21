@@ -35,12 +35,16 @@ class uQSh(utils.QTileTests):
         assert self.sh.fd.getvalue() == 'one    two  \nthree  four \nfive \n'
 
     def test_ls(self):
+        self.sh.do_cd("layout")
         self.sh.do_ls()
 
     def test_cd(self):
         self.sh.do_cd("layout")
         assert self.sh.current.name == "layout"
         assert self.sh.current.parent
+
+        self.sh.do_cd("0")
+        self.sh.do_ls()
 
 
 tests = [
