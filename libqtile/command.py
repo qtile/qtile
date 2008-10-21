@@ -108,13 +108,14 @@ class _CommandTree(object):
         CommandTree objects act as containers, allowing them to be nested. The
         commands themselves appear on the object as callable attributes.
     """
-    def __init__(self, call, selectors, myselector=None):
+    def __init__(self, call, selectors, myselector, parent):
         self.call, self.selectors, self.myselector = call, selectors, myselector
+        self.parent = parent
 
     def __getitem__(self, select):
         if self.myselector:
             raise KeyError, "No such key: %s"%select
-        c = self.__class__(self.call, self.selectors, select)
+        c = self.__class__(self.call, self.selectors, select, self)
         return c
 
     def __getattr__(self, name):
@@ -122,7 +123,7 @@ class _CommandTree(object):
         if self.name:
             nextSelector.append((self.name, self.myselector))
         if name in self._contains:
-            return _TreeMap[name](self.call, nextSelector)
+            return _TreeMap[name](self.call, nextSelector, None, self)
         else:
             return _Command(self.call, nextSelector, name)
 
@@ -175,7 +176,7 @@ class _CommandRoot(_CommandTree):
             This method constructs the entire hierarchy of callable commands
             from a conf object.
         """
-        _CommandTree.__init__(self, self.call, [])
+        _CommandTree.__init__(self, self.call, [], None, None)
 
     def __getitem__(self, select):
         raise KeyError, "No such key: %s"%select
@@ -273,7 +274,7 @@ class CommandObject(object):
         """
         ret = self._items(name)
         if ret is None:
-            raise command.CommandError("Unknown item class: %s"%name)
+            raise CommandError("Unknown item class: %s"%name)
         return ret
 
     def _items(self, name):

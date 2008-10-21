@@ -43,8 +43,10 @@ class QSh:
 
     @property
     def prompt(self):
-        print self.current.myname
-        return "%s> "%command.formatSelector(self.current.selectors)
+        s = self.current.selectors[:]
+        if self.current.name:
+            s += [(self.current.name, self.current.myselector)]
+        return "%s> "%command.formatSelector(s)
 
     def printColumns(self, lst):
         mx = max([len(i) for i in lst])
@@ -61,10 +63,19 @@ class QSh:
             print >> self.fd, "  ".join(sl)
 
     def do_cd(self, arg):
-        pass
+        if arg in self.current._contains:
+            self.current = getattr(self.current, arg)
+        else:
+            _, itms = self.current.parent.items(self.current.name)
+            self.current = self.current[arg]
 
     def do_ls(self):
         self.printColumns(self.current._contains)
+        if self.current.parent:
+            _, itms  = self.current.parent.items(self.current.name)
+            if itms:
+                print >> self.fd
+                print >> self.printColumns(itms)
 
     def do_help(self, arg):
         pass
@@ -78,9 +89,7 @@ class QSh:
 
             builtin = getattr(self, "do_"+parts[0], None)
             if builtin:
-                builtin(parts[1:])
+                builtin(*parts[1:])
             else:
                 pass
-
-
 
