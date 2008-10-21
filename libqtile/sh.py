@@ -108,12 +108,13 @@ class QSh:
 
     def do_ls(self, arg):
         attrs, itms = self.smartLs(self.current)
+        all = []
         if attrs:
-            self.printColumns(attrs)
+            all.extend(attrs)
         if itms:
-            if attrs:
-                print >> self.fd
-            self.printColumns(itms)
+            all.extend(itms)
+        all = ["%s/"%i for i in all]
+        self.printColumns(all)
 
     def do_help(self, arg):
         self.printColumns(self.current.commands())
