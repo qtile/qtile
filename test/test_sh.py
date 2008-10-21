@@ -36,15 +36,28 @@ class uQSh(utils.QTileTests):
 
     def test_ls(self):
         self.sh.do_cd("layout")
-        self.sh.do_ls()
+        self.sh.do_ls("")
 
     def test_cd(self):
-        self.sh.do_cd("layout")
-        assert self.sh.current.name == "layout"
+        self.sh._cd("layout")
+        assert self.sh.prompt == "layout> "
         assert self.sh.current.parent
 
-        self.sh.do_cd("0")
-        self.sh.do_ls()
+        self.sh._cd("0")
+        assert self.sh.prompt == "layout[0]> "
+        self.sh.do_ls("")
+        self.sh._cd("..")
+        assert self.sh.prompt == "layout> "
+        self.sh._cd("0", "..")
+        assert self.sh.prompt == "layout> "
+
+        assert self.sh._cd("wibble")
+
+        self.sh.do_cd("0/wibble")
+        assert self.sh.prompt == "layout> "
+        self.sh.do_cd("0/")
+        assert self.sh.prompt == "layout[0]> "
+
 
     def _call(self, cmd, args):
         v = self.sh._call(cmd, args)

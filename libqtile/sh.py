@@ -75,20 +75,36 @@ class QSh:
             return obj._contains, None
         sub = obj.parent
 
-    def do_cd(self, arg):
+    def _cd(self, *arg):
         attrs, itms = self.smartLs(self.current)
-        for trans in [str, int]:
-            try:
-                targ = trans(arg)
-            except ValueError:
-                continue
-            if attrs and targ in attrs:
-                self.current = getattr(self.current, targ)
+        next = None
+        if arg[0] == "..":
+            next = self.current.parent or self.current
+        else:
+            for trans in [str, int]:
+                try:
+                    targ = trans(arg[0])
+                except ValueError:
+                    continue
+                if attrs and targ in attrs:
+                    next = getattr(self.current, targ)
+                elif itms and targ in itms:
+                    next = self.current[targ]
+        if next:
+            self.current = next
+            if arg[1:]:
+                return self._cd(*arg[1:])
+            else:
                 return
-            elif itms and targ in itms:
-                self.current = self.current[targ]
-                return
-        print >> self.fd, "No such item:", arg
+        else:
+            return "No such item: %s"%arg
+
+    def do_cd(self, arg):
+        check = self.current
+        v = self._cd(*[i for i in arg.split("/") if i])
+        if v:
+            self.current = check
+            print >> self.fd, v
 
     def do_ls(self, arg):
         attrs, itms = self.smartLs(self.current)
