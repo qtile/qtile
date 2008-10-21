@@ -124,7 +124,10 @@ class QSh:
     do_q = do_exit
 
     def _call(self, cmd, args):
-        cmds = self.current.commands()
+        try:
+            cmds = self.current.commands()
+        except command.CommandError:
+            cmds = []
         if cmd not in cmds:
             print >> self.fd, "No such command: %s"%cmd
             return None
