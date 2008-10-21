@@ -80,13 +80,20 @@ class QSh:
     def do_help(self, arg):
         pass
 
+    def do_exit(self):
+        sys.exit(0)
+    do_quit = do_exit
+    do_q = do_exit
+
     def loop(self):
         while True:
-            line = raw_input(self.prompt)
+            try:
+                line = raw_input(self.prompt)
+            except (EOFError, KeyboardInterrupt):
+                return
             if not line:
                 continue
             parts = shlex.split(line)
-
             builtin = getattr(self, "do_"+parts[0], None)
             if builtin:
                 builtin(*parts[1:])
