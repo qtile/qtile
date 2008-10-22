@@ -1,4 +1,3 @@
-import cStringIO
 import libpry
 import libqtile, libqtile.sh
 import utils
@@ -18,16 +17,13 @@ class uQSh(utils.QTileTests):
     def setUp(self):
         utils.QTileTests.setUp(self)
         self.sh = libqtile.sh.QSh(self.c)
-        self.sh.fd = cStringIO.StringIO()
 
     def test_columnize(self):
         assert self.sh.columnize(["one", "two"]) == "one  two\n"
         
-        self.sh.fd = cStringIO.StringIO()
         self.sh.termwidth = 1
         assert self.sh.columnize(["one", "two"]) == "one\ntwo\n"
 
-        self.sh.fd = cStringIO.StringIO()
         self.sh.termwidth = 15
         v = self.sh.columnize(["one", "two", "three", "four", "five"])
         assert v == 'one    two  \nthree  four \nfive \n'
@@ -56,24 +52,17 @@ class uQSh(utils.QTileTests):
         self.sh.do_cd("0/")
         assert self.sh.prompt == "layout[0]> "
 
-
-    def _call(self, cmd, args):
-        v = self.sh._call(cmd, args)
-        t = self.sh.fd.getvalue()
-        self.sh.fd = cStringIO.StringIO()
-        return v, t
-
     def test_call(self):
-        assert self._call("status", []) == ("OK", "")
+        assert self.sh._call("status", []) == "OK"
         
-        v, t = self._call("nonexistent", "")
-        assert "No such command" in t
+        v = self.sh._call("nonexistent", "")
+        assert "No such command" in v
 
-        v, t = self._call("status", "(((")
-        assert "Syntax error" in t
+        v = self.sh._call("status", "(((")
+        assert "Syntax error" in v
 
-        v, t = self._call("status", "(1)")
-        assert "Command exception" in t
+        v = self.sh._call("status", "(1)")
+        assert "Command exception" in v
 
 
 tests = [

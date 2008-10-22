@@ -36,7 +36,6 @@ def terminalWidth():
 
 
 class QSh:
-    fd = sys.stdout
     def __init__(self, client):
         self.clientroot, self.current = client, client
         self.termwidth = terminalWidth()
@@ -107,7 +106,7 @@ class QSh:
         v = self._cd(*[i for i in arg.split("/") if i])
         if v:
             self.current = check
-            print >> self.fd, v
+            return v
 
     def do_ls(self, arg):
         attrs, itms = self.smartLs(self.current)
@@ -117,10 +116,10 @@ class QSh:
         if itms:
             all.extend(itms)
         all = ["%s/"%i for i in all]
-        print >> self.fd, self.columnize(all)
+        return self.columnize(all)
 
     def do_help(self, arg):
-        print >> self.fd, self.columnize(self.current.commands())
+        return self.columnize(self.current.commands())
 
     def do_exit(self, args):
         sys.exit(0)
@@ -133,8 +132,7 @@ class QSh:
         except command.CommandError:
             cmds = []
         if cmd not in cmds:
-            print >> self.fd, "No such command: %s"%cmd
-            return None
+            return "No such command: %s"%cmd
 
         cmd = getattr(self.current, cmd)
         if args:
@@ -149,10 +147,9 @@ class QSh:
                 )
             return val
         except SyntaxError, v:
-            print >> self.fd, "Syntax error in expression: %s"%v.text
-            return None
+            return "Syntax error in expression: %s"%v.text
         except command.CommandException, val:
-            print >> self.fd, "Command exception:\n", val
+            return "Command exception: %s\n"%val
 
     def loop(self):
         while True:
@@ -171,7 +168,9 @@ class QSh:
 
             builtin = getattr(self, "do_"+cmd, None)
             if builtin:
-                builtin(args)
+                val = builtin(args)
+                if val:
+                    print val
             else:
                 val = self._call(cmd, args)
                 if val:
