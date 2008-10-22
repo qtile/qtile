@@ -58,12 +58,12 @@ class QSh:
             for i in range(len(lst)/cols):
                 sl = lst[i*cols:(i+1)*cols]
                 sl = [x + " "*(mx-len(x)) for x in sl]
-                ret.append("  ".join(sl) + "\n")
+                ret.append("  ".join(sl))
             if len(lst)%cols:
                 sl = lst[-(len(lst)%cols):]
                 sl = [x + " "*(mx-len(x)) for x in sl]
-                ret.append("  ".join(sl) + "\n")
-        return "".join(ret)
+                ret.append("  ".join(sl))
+        return "\n".join(ret)
 
     def smartLs(self, obj):
         """
@@ -169,12 +169,10 @@ class QSh:
             builtin = getattr(self, "do_"+cmd, None)
             if builtin:
                 val = builtin(args)
-                if val:
-                    print val
             else:
                 val = self._call(cmd, args)
-                if val:
-                    pprint.pprint(val)
-
-
+            if isinstance(val, basestring):
+                print val
+            elif val:
+                pprint.pprint(val)
 

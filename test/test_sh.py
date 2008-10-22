@@ -19,14 +19,14 @@ class uQSh(utils.QTileTests):
         self.sh = libqtile.sh.QSh(self.c)
 
     def test_columnize(self):
-        assert self.sh.columnize(["one", "two"]) == "one  two\n"
+        assert self.sh.columnize(["one", "two"]) == "one  two"
         
         self.sh.termwidth = 1
-        assert self.sh.columnize(["one", "two"]) == "one\ntwo\n"
+        assert self.sh.columnize(["one", "two"]) == "one\ntwo"
 
         self.sh.termwidth = 15
         v = self.sh.columnize(["one", "two", "three", "four", "five"])
-        assert v == 'one    two  \nthree  four \nfive \n'
+        assert v == 'one    two  \nthree  four \nfive '
 
     def test_ls(self):
         self.sh.do_cd("layout")
