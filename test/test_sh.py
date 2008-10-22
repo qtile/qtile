@@ -20,19 +20,17 @@ class uQSh(utils.QTileTests):
         self.sh = libqtile.sh.QSh(self.c)
         self.sh.fd = cStringIO.StringIO()
 
-    def test_printColumns(self):
-        self.sh.printColumns(["one", "two"])
-        assert self.sh.fd.getvalue() == "one  two\n"
+    def test_columnize(self):
+        assert self.sh.columnize(["one", "two"]) == "one  two\n"
         
         self.sh.fd = cStringIO.StringIO()
         self.sh.termwidth = 1
-        self.sh.printColumns(["one", "two"])
-        assert self.sh.fd.getvalue() == "one\ntwo\n"
+        assert self.sh.columnize(["one", "two"]) == "one\ntwo\n"
 
         self.sh.fd = cStringIO.StringIO()
         self.sh.termwidth = 15
-        self.sh.printColumns(["one", "two", "three", "four", "five"])
-        assert self.sh.fd.getvalue() == 'one    two  \nthree  four \nfive \n'
+        v = self.sh.columnize(["one", "two", "three", "four", "five"])
+        assert v == 'one    two  \nthree  four \nfive \n'
 
     def test_ls(self):
         self.sh.do_cd("layout")

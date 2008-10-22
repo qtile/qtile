@@ -48,7 +48,8 @@ class QSh:
             s += [(self.current.name, self.current.myselector)]
         return "%s> "%command.formatSelector(s)
 
-    def printColumns(self, lst):
+    def columnize(self, lst):
+        ret = []
         if lst:
             lst = [str(i) for i in lst]
             mx = max([len(i) for i in lst])
@@ -58,11 +59,12 @@ class QSh:
             for i in range(len(lst)/cols):
                 sl = lst[i*cols:(i+1)*cols]
                 sl = [x + " "*(mx-len(x)) for x in sl]
-                print >> self.fd, "  ".join(sl)
+                ret.append("  ".join(sl) + "\n")
             if len(lst)%cols:
                 sl = lst[-(len(lst)%cols):]
                 sl = [x + " "*(mx-len(x)) for x in sl]
-                print >> self.fd, "  ".join(sl)
+                ret.append("  ".join(sl) + "\n")
+        return "".join(ret)
 
     def smartLs(self, obj):
         """
@@ -115,10 +117,10 @@ class QSh:
         if itms:
             all.extend(itms)
         all = ["%s/"%i for i in all]
-        self.printColumns(all)
+        print >> self.fd, self.columnize(all)
 
     def do_help(self, arg):
-        self.printColumns(self.current.commands())
+        print >> self.fd, self.columnize(self.current.commands())
 
     def do_exit(self, args):
         sys.exit(0)
