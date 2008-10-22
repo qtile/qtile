@@ -49,19 +49,20 @@ class QSh:
         return "%s> "%command.formatSelector(s)
 
     def printColumns(self, lst):
-        lst = [str(i) for i in lst]
-        mx = max([len(i) for i in lst])
-        cols = self.termwidth / (mx+2)
-        if not cols:
-            cols = 1
-        for i in range(len(lst)/cols):
-            sl = lst[i*cols:(i+1)*cols]
-            sl = [x + " "*(mx-len(x)) for x in sl]
-            print >> self.fd, "  ".join(sl)
-        if len(lst)%cols:
-            sl = lst[-(len(lst)%cols):]
-            sl = [x + " "*(mx-len(x)) for x in sl]
-            print >> self.fd, "  ".join(sl)
+        if lst:
+            lst = [str(i) for i in lst]
+            mx = max([len(i) for i in lst])
+            cols = self.termwidth / (mx+2)
+            if not cols:
+                cols = 1
+            for i in range(len(lst)/cols):
+                sl = lst[i*cols:(i+1)*cols]
+                sl = [x + " "*(mx-len(x)) for x in sl]
+                print >> self.fd, "  ".join(sl)
+            if len(lst)%cols:
+                sl = lst[-(len(lst)%cols):]
+                sl = [x + " "*(mx-len(x)) for x in sl]
+                print >> self.fd, "  ".join(sl)
 
     def smartLs(self, obj):
         """
