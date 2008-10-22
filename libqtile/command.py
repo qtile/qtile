@@ -140,7 +140,7 @@ class _TWidget(_CommandTree):
 
 class _TBar(_CommandTree):
     name = "bar"
-    _contains = ["screen", "group", "widget"]
+    _contains = ["screen"]
 
 
 class _TWindow(_CommandTree):
