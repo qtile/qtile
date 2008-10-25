@@ -12,6 +12,7 @@ class ShConfig(libqtile.confreader.Config):
         libqtile.manager.Screen()
     ]
 
+
 class uQSh(utils.QTileTests):
     config = ShConfig()
     def setUp(self):
@@ -77,8 +78,11 @@ class uQSh(utils.QTileTests):
         assert self.sh._complete("cd l", "l", 0) == "layout"
         assert self.sh._complete("cd layout/", "layout/", 0) == "layout/group"
         assert self.sh._complete("cd layout/", "layout/g", 0) == "layout/group"
-        
 
+    def test_help(self):
+        assert self.sh.do_help("log")
+        assert self.sh.do_help("nonexistent").startswith("No such command")
+        
 
 tests = [
     utils.XNest(xinerama=True), [

@@ -46,7 +46,7 @@ class QSh:
         self.builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
 
     def _complete(self, buf, arg, state):
-        if not re.search(r" |\(", buf):
+        if (not re.search(r" |\(", buf)) or buf.startswith("help "):
             options = self.builtins + self.current.commands()
             lst = [i for i in options if i.startswith(arg)]
             return lst[state] if lst and state < len(lst) else None
@@ -156,7 +156,13 @@ class QSh:
         return self.columnize(l)
 
     def do_help(self, arg):
-        return self.columnize(self.current.commands())
+        if not arg:
+            return self.columnize(self.current.commands())
+        else:
+            if arg in self.current.commands():
+                return self._call("doc", "(\"%s\")"%arg)
+            else:
+                return "No such command: %s"%arg
 
     def do_exit(self, args):
         sys.exit(0)
@@ -178,7 +184,7 @@ class QSh:
             args = "()"
         try:
             val = eval(
-                    "cmd%s"%"".join(args),
+                    "cmd%s"%args,
                     {},
                     dict(cmd=cmd)
                 )

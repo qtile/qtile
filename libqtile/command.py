@@ -342,3 +342,10 @@ class CommandObject(object):
         htext = self.docText(name)
         htext = "\n".join(["\t" + i for i in htext.splitlines()])
         return spec + htext
+
+    def cmd_doc(self, name):
+        if name in self.commands():
+            return self.doc(name)
+        else:
+            raise CommandError("No such command: %s"%name)
+
