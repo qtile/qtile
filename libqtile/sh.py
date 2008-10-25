@@ -42,10 +42,17 @@ class QSh:
         self.termwidth = terminalWidth()
         readline.set_completer(self.complete)
         readline.parse_and_bind(self.completekey+": complete")
+        self.builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
 
     def complete(self, a, state):
-        if state < 10:
-            return a + "foo" + str(state)
+        if not " " in a:
+            options = self.builtins + self.current.commands()
+            lst = [i for i in options if i.startswith(a)]
+            return lst[state] if lst and state < len(lst) else None
+        else:
+            options = self._ls(self.current)
+            lst = [i for i in options if i.startswith(a)]
+            return lst[state] if lst else None
 
     @property
     def prompt(self):
@@ -69,7 +76,7 @@ class QSh:
                 ret.append("  ".join(sl))
         return "\n".join(ret)
 
-    def smartLs(self, obj):
+    def _inspect(self, obj):
         """
             Returns an (attrs, keys) tuple.
         """
@@ -78,14 +85,22 @@ class QSh:
             attrs = obj._contains if t else None
             return attrs, itms
         else:
-            return obj._contains, None
-        sub = obj.parent
+            return obj._contains, []
+
+    def _ls(self, obj):
+        attrs, itms = self._inspect(obj)
+        all = []
+        if attrs:
+            all.extend(attrs)
+        if itms:
+            all.extend(itms)
+        return all
 
     def _findNode(self, src, *path):
         """
             Returns a node, or None if no such node exists.
         """
-        attrs, itms = self.smartLs(src)
+        attrs, itms = self._inspect(src)
         next = None
         if path[0] == "..":
             next = src.parent or src
@@ -115,14 +130,9 @@ class QSh:
             return "No such path."
 
     def do_ls(self, arg):
-        attrs, itms = self.smartLs(self.current)
-        all = []
-        if attrs:
-            all.extend(attrs)
-        if itms:
-            all.extend(itms)
-        all = ["%s/"%i for i in all]
-        return self.columnize(all)
+        l = self._ls(self.current)
+        l = ["%s/"%i for i in l]
+        return self.columnize(l)
 
     def do_help(self, arg):
         return self.columnize(self.current.commands())

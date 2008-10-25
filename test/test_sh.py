@@ -69,6 +69,12 @@ class uQSh(utils.QTileTests):
         v = self.sh._call("status", "(1)")
         assert "Command exception" in v
 
+    def test_complete(self):
+        assert self.sh.complete("c", 0) == "cd"
+        assert self.sh.complete("c", 1) == "commands"
+        assert self.sh.complete("c", 2) is None
+        
+
 
 tests = [
     utils.XNest(xinerama=True), [
