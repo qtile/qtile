@@ -36,16 +36,20 @@ def terminalWidth():
 
 
 class QSh:
-    def __init__(self, client):
+    def __init__(self, client, completekey = "tab"):
         self.clientroot, self.current = client, client
+        self.completekey = completekey
         self.termwidth = terminalWidth()
+        readline.set_completer(self.complete)
+        readline.parse_and_bind(self.completekey+": complete")
+
+    def complete(self, a, state):
+        if state < 10:
+            return a + "foo" + str(state)
 
     @property
     def prompt(self):
-        s = self.current.selectors[:]
-        if self.current.name:
-            s += [(self.current.name, self.current.myselector)]
-        return "%s> "%command.formatSelector(s)
+        return "%s> "%self.current.path
 
     def columnize(self, lst):
         ret = []
@@ -77,36 +81,38 @@ class QSh:
             return obj._contains, None
         sub = obj.parent
 
-    def _cd(self, *arg):
-        attrs, itms = self.smartLs(self.current)
+    def _findNode(self, src, *path):
+        """
+            Returns a node, or None if no such node exists.
+        """
+        attrs, itms = self.smartLs(src)
         next = None
-        if arg[0] == "..":
-            next = self.current.parent or self.current
+        if path[0] == "..":
+            next = src.parent or src
         else:
             for trans in [str, int]:
                 try:
-                    targ = trans(arg[0])
+                    tpath = trans(path[0])
                 except ValueError:
                     continue
-                if attrs and targ in attrs:
-                    next = getattr(self.current, targ)
-                elif itms and targ in itms:
-                    next = self.current[targ]
+                if attrs and tpath in attrs:
+                    next = getattr(src, tpath)
+                elif itms and tpath in itms:
+                    next = src[tpath]
         if next:
-            self.current = next
-            if arg[1:]:
-                return self._cd(*arg[1:])
+            if path[1:]:
+                return self._findNode(next, *path[1:])
             else:
-                return
+                return next
         else:
-            return "No such item: %s"%arg
+            return None
 
     def do_cd(self, arg):
-        check = self.current
-        v = self._cd(*[i for i in arg.split("/") if i])
-        if v:
-            self.current = check
-            return v
+        next = self._findNode(self.current, *[i for i in arg.split("/") if i])
+        if next:
+            self.current = next
+        else:
+            return "No such path."
 
     def do_ls(self, arg):
         attrs, itms = self.smartLs(self.current)

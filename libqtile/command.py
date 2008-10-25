@@ -112,6 +112,13 @@ class _CommandTree(object):
         self.call, self.selectors, self.myselector = call, selectors, myselector
         self.parent = parent
 
+    @property
+    def path(self):
+        s = self.selectors[:]
+        if self.name:
+            s += [(self.name, self.myselector)]
+        return formatSelector(s)
+
     def __getitem__(self, select):
         if self.myselector:
             raise KeyError, "No such key: %s"%select

@@ -32,25 +32,30 @@ class uQSh(utils.QTileTests):
         self.sh.do_cd("layout")
         self.sh.do_ls("")
 
-    def test_cd(self):
-        self.sh._cd("layout")
-        assert self.sh.prompt == "layout> "
-        assert self.sh.current.parent
+    def test_findNode(self):
+        n = self.sh._findNode(self.sh.current, "layout")
+        assert n.path == "layout"
+        assert n.parent
 
-        self.sh._cd("0")
-        assert self.sh.prompt == "layout[0]> "
-        self.sh.do_ls("")
-        self.sh._cd("..")
-        assert self.sh.prompt == "layout> "
-        self.sh._cd("0", "..")
-        assert self.sh.prompt == "layout> "
+        n = self.sh._findNode(n, "0")
+        assert n.path == "layout[0]"
+        
+        n = self.sh._findNode(n, "..")
+        assert n.path == "layout"
 
-        assert self.sh._cd("wibble")
+        n = self.sh._findNode(n, "0", "..")
+        assert n.path == "layout"
 
-        self.sh.do_cd("0/wibble")
-        assert self.sh.prompt == "layout> "
-        self.sh.do_cd("0/")
-        assert self.sh.prompt == "layout[0]> "
+        n = self.sh._findNode(n, "..", "layout", 0)
+        assert n.path == "layout[0]"
+
+        assert not self.sh._findNode(n, "wibble")
+        assert not self.sh._findNode(n, "..", "0", "wibble")
+
+    def test_do_cd(self):
+        assert not self.sh.do_cd("layout")
+        assert self.sh.do_cd("0/wibble")
+        assert not self.sh.do_cd("0/")
 
     def test_call(self):
         assert self.sh._call("status", []) == "OK"
