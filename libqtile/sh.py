@@ -42,17 +42,35 @@ class QSh:
         self.termwidth = terminalWidth()
         readline.set_completer(self.complete)
         readline.parse_and_bind(self.completekey+": complete")
+        readline.set_completer_delims(" ()|")
         self.builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
 
-    def complete(self, a, state):
-        if not " " in a:
+    def _complete(self, buf, arg, state):
+        if not re.search(r" |\(", buf):
             options = self.builtins + self.current.commands()
-            lst = [i for i in options if i.startswith(a)]
+            lst = [i for i in options if i.startswith(arg)]
             return lst[state] if lst and state < len(lst) else None
-        else:
-            options = self._ls(self.current)
-            lst = [i for i in options if i.startswith(a)]
-            return lst[state] if lst else None
+        elif buf.startswith("cd ") or buf.startswith("ls "):
+            path = [i for i in arg.split("/") if i]
+            if arg.endswith("/"):
+                last = ""
+            else:
+                path, last = path[:-1], path[-1]
+            node = self._findNode(self.current, *path)
+            options = [str(i) for i in self._ls(node)]
+            lst = []
+            path = "/".join(path)
+            if path:
+                path += "/"
+            for i in options:
+                if i.startswith(last):
+                    lst.append(path + i)
+            if lst and state < len(lst):
+                return lst[state]
+
+    def complete(self, arg, state):
+        buf = readline.get_line_buffer()
+        return self._complete(buf, arg, state)
 
     @property
     def prompt(self):
@@ -100,6 +118,9 @@ class QSh:
         """
             Returns a node, or None if no such node exists.
         """
+        if not path:
+            return src
+
         attrs, itms = self._inspect(src)
         next = None
         if path[0] == "..":

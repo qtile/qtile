@@ -70,9 +70,13 @@ class uQSh(utils.QTileTests):
         assert "Command exception" in v
 
     def test_complete(self):
-        assert self.sh.complete("c", 0) == "cd"
-        assert self.sh.complete("c", 1) == "commands"
-        assert self.sh.complete("c", 2) is None
+        assert self.sh._complete("c", "c", 0) == "cd"
+        assert self.sh._complete("c", "c", 1) == "commands"
+        assert self.sh._complete("c", "c", 2) is None
+
+        assert self.sh._complete("cd l", "l", 0) == "layout"
+        assert self.sh._complete("cd layout/", "layout/", 0) == "layout/group"
+        assert self.sh._complete("cd layout/", "layout/g", 0) == "layout/group"
         
 
 
