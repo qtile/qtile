@@ -20,37 +20,6 @@ class Examples:
     def py(self, path, **kwargs):
         return self._wrap(ns.pySyntax.withConf(**kwargs), path)
 
-
-def formatCommands(cmd):
-    return "foo"
-    lst = []
-    for i in cmd.keys():
-        lst.append(
-            countershape.html.DIV(
-                countershape.html.Group(
-                    countershape.html.rawstr(
-                        countershape.template.pySyntax(
-                            cmd.docSig(i)
-                        )
-                    ),
-                    countershape.html.rawstr(
-                        countershape.textish.Textish(
-                            cmd.docText(i)
-                        )
-                    )
-                ),
-                _class = "commanddoc"
-            )
-        )
-    return countershape.html.Group(*lst)
-
-
-ns.formatCommands = formatCommands
-ns.commands_qtile = manager.QTile
-ns.commands_stack = layout.stack.Stack
-ns.commands_bar = bar.Bar
-ns.commands_textbox = bar.TextBox
-ns.commands_measurebox = bar.MeasureBox
 ns.examples = Examples("..")
 
 ns.docTitle = "Qtile 0.1"
@@ -66,11 +35,12 @@ ns.qtgrok = countershape.grok.grok("../libqtile")
 
 pages = [
     Page("index.html", "Introduction"),
+    Page("objects.html", "Object Hierarchy"),
+    Directory("objects"),
     Page("configuration.html", "Configuration"),
     Directory("configuration"),
-    Page("scripting.html", "Scripting Qtile"),
+    Page("scripting.html", "Scripting"),
     Page("qsh.html", "qsh - The Qtile Shell"),
-    Page("commands.html", "Command Index"),
     Page("faq.html", "FAQ"),
     Page("admin.html", "Administrivia")
 ]

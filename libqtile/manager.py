@@ -65,8 +65,9 @@ class Key:
             specifications are one of: "shift", "lock", "control", "mod1",
             "mod2", "mod3", "mod4", "mod5".
             :key A key specification, e.g. "a", "Tab", "Return", "space".
-            :*commands A list of __libqtile.command._Call__ objects. If multiple
-            Call objects are specified, they are tried in sequence.
+            :*commands A list of lazy command objects generated with the
+            command.lazy helper. If multiple Call objects are specified, they
+            are run in sequence.
         """
         self.modifiers, self.key, self.commands = modifiers, key, commands
         self.keysym = XK.string_to_keysym(key)

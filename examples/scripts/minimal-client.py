@@ -1,3 +1,3 @@
-import libqtile
-c = libqtile.command.Client()
-print c.current_screen()
+from libqtile.command import Client
+c = Client()
+print c.screen.info()["index"]

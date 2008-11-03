@@ -1,0 +1,157 @@
+
+Qtile's public API consists of a hierarchy of nodes, each with a set of
+associated commands. The same API serves a number of different purposes:
+
+    - Commands can be bound to keys in the Qtile configuration file. 
+    - Commands can be called manually through __qsh__, the Qtile shell.
+    - Commands can be called to interact with Qtile from a script. 
+
+Please explore the API using __qsh__ - command lists and detailed documentation
+can be accessed from its built-in help command, and are not documented here.
+
+
+Object Hierarchy
+================
+
+    Qtile's object hierarchy consists of seven node types: __layout__,
+    __window__, __group__, __bar__, __widget__, __screen__, and a special root
+    node that lies at the top of the tree. Each node has a set of associated
+    commands, a set of children, and a set of keys.  This is what the hierarchy
+    looks like at a high level:
+
+<pre>
+root
+    bar
+        screen
+    group
+        layout
+        screen
+        window
+    layout
+        group
+        screen
+        window
+    screen
+        bar
+        layout
+        window
+    widget
+        bar
+        group
+        screen
+    window
+        group
+        screen
+        layout
+</pre>
+
+    Lets start with a simple example. The following script runs the __status__
+    command on the root node of the command tree (which, in this case, is the
+    Client object):
+
+<!--(block | pySyntax)-->
+from libqtile.command import Client
+c = Client()
+print c.status()
+<!--(end)-->
+
+    Children are exposed as attributes on each node, so we can access the
+    "info" command on the group child node like so:
+
+<!--(block | pySyntax)-->
+c.group.info()
+<!--(end)-->
+
+    In the example above, __c.group__ specifies the _current_ group. To access
+    a specific group, regardless of whether or not it is current, we use the
+    Python containment syntax:
+
+<!--(block | pySyntax)-->
+c.group["b"].info()
+<!--(end)-->
+
+    The current __group__, __layout__, __screen__ and __window__ can be
+    accessed by simply leaving the key specifier out. The key specifier is
+    mandatory for __widget__ and __bar__ nodes. 
+
+    We can now drill down deeper in the hierarchy. To access the screen
+    currently displaying group "b", we can do this:
+
+<!--(block | pySyntax)-->
+c.group["b"].screen.info()
+<!--(end)-->
+   
+    Be aware, however, that group "b" might not currently be displayed. In that
+    case, it has no associated screen, the path resolves to a non-existent
+    node, and we get an exeption:
+
+<!--(block | pySyntax)-->
+libqtile.command.CommandError: No object screen in path 'group['b'].screen'
+<!--(end)-->
+
+    The hierarchy is not a tree, since it can contain cycles. This path
+    (redundantly) specifies the group belonging to the screen that belongs to
+    group "b":
+
+<!--(block | pySyntax)-->
+c.group["b"].screen.group()
+<!--(end)-->
+
+Keys 
+====
+
+The key specifier for the various object types are as follows:
+
+
+<table>
+
+    <th> Object </th>
+    <th> Key </th>
+    <th> Optional? </th>
+    <th> Example </th>
+
+    <tr> 
+        <td> bar </td>
+        <td> One of "top", "bottom", "left", "right" </td>
+        <td> No </td>
+        <td> c.screen.bar["bottom"] </td>
+    </tr>
+
+    <tr> 
+        <td> group </td>
+        <td> Name string </td>
+        <td> Yes </td>
+        <td> c.group["one"] </td>
+    </tr>
+
+    <tr> 
+        <td> layout </td>
+        <td> Integer offset </td>
+        <td> Yes </td>
+        <td> c.layout[2] </td>
+    </tr>
+
+    <tr> 
+        <td> screen </td>
+        <td> Integer offset </td>
+        <td> Yes </td>
+        <td> c.screen[1] </td>
+    </tr>
+
+    <tr> 
+        <td> widget </td>
+        <td> Widget name </td>
+        <td> No </td>
+        <td> c.widget["textbox"] </td>
+    </tr>
+
+    <tr> 
+        <td> window </td>
+        <td> Integer window ID </td>
+        <td> Yes </td>
+        <td> c.window[123456] </td>
+    </tr>
+
+</table>
+
+

@@ -1,4 +1,6 @@
-from libqtile.conf import *
+from libqtile.manager import Key, Screen
+from libqtile.command import lazy
+from libqtile import layout, bar
 
 # The bindings below are for use with a Kinesis keyboard, and may
 # not make sense for standard keyboards.

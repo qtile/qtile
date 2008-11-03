@@ -109,8 +109,8 @@ class Bar(Gap):
         """
             Note that bars can only be at the top or the bottom of the screen.
             
-            widgets: A list of widget objects.
-            size: The width of the bar.
+            :widgets A list of widget objects.
+            :size The width of the bar.
         """
         Gap.__init__(self, size)
         self.widgets = widgets
@@ -376,6 +376,14 @@ class GroupBox(_Widget):
     BORDERWIDTH = 1
     def __init__(self, currentFG="white", currentBG=_HIGHLIGHT, font=None,
                  activeFG="white", inactiveFG="#666666", border="#666666"):
+        """
+            :currentFG Foreground color of the current group.
+            :currentBG Background color of the current group.
+            :font Group box font.
+            :activeFG Foreground for groups that contain windows.
+            :inactiveFG Foreground for groups that do not contain windows.
+            :border Border color
+        """
         self.currentFG, self.currentBG = currentFG, currentBG
         self.activeFG, self.inactiveFG = activeFG, inactiveFG
         self.border = border
@@ -470,6 +478,14 @@ class WindowName(_TextBox):
 class TextBox(_TextBox):
     def __init__(self, name, text=" ", width=STRETCH,
                  foreground="white", background=_HIGHLIGHT, font=None):
+        """
+            :name Name for this widget.
+            :text Initial widget text.
+            :width Either an integer width, or the STRETCH constant.
+            :foreground Foreground color.
+            :background Background color.
+            :font Font specification.
+        """
         self.name = name
         _TextBox.__init__(self, text, width, foreground, background, font)
 
@@ -493,6 +509,10 @@ class TextBox(_TextBox):
 class MeasureBox(_Widget):
     colors = ["red", "yellow", "orange", "green"]
     def __init__(self, name, width):
+        """
+            :name Widget name.
+            :width A fixed integer width.
+        """
         self.name, self.width = name, width
         self.percentage = 0
 
@@ -517,6 +537,8 @@ class MeasureBox(_Widget):
     def cmd_update(self, percentage):
         """
             Update the percentage in a MeasureBox widget.
+
+            :percentage An integer between 0 and 100.
         """
         if percentage > 100 or percentage < 0:
             raise command.CommandError("Percentage out of range: %s"%percentage)
