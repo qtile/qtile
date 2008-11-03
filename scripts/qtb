@@ -4,12 +4,12 @@
 """
 import os, sys
 from optparse import OptionParser, OptionGroup
-import libqtile
+from libqtile import confreader, command
 
 def main():
     parser = OptionParser(
                 usage="%prog [options] name text",
-                version="%prog 0.1",
+                version="%prog 0.2",
             )
     parser.add_option("-l", "--list",
                       action="store_true", dest="list",
@@ -30,11 +30,11 @@ def main():
                     )
     (options, args) = parser.parse_args()
     try:
-        c = libqtile.config.File(options.configfile)
-    except libqtile.config.ConfigError, v:
+        c = confreader.File(options.configfile)
+    except confreader.ConfigError, v:
         parser.error(v.message)
 
-    client = libqtile.command.Client(options.socket, c)
+    client = command.Client(options.socket, c)
 
     if options.list:
         for i in client.list_widgets():
@@ -43,8 +43,8 @@ def main():
         if len(args) < 2:
             parser.error("Please specify widget name and argument.")
         try:
-            client.textbox_update(args[0], " ".join(args[1:]))
-        except libqtile.command.CommandError, v:
+            client.widget.__getitem__(args[0]).update(" ".join(args[1:]))
+        except command.CommandError, v:
             print >> sys.stderr, v
             sys.exit(1)
 
