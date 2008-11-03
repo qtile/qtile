@@ -19,7 +19,6 @@
 # SOFTWARE.
 
 import os.path
-import manager, command
 
 
 class ConfigError(Exception): pass

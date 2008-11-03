@@ -21,8 +21,7 @@
 # SOFTWARE.
 
 import os, os.path
-import libqtile
-import libqtile.sh as sh
+from libqtile import confreader, sh, command
 
 def main():
     from optparse import OptionParser, OptionGroup
@@ -44,10 +43,10 @@ def main():
     options, args = parser.parse_args()
 
     try:
-        c = libqtile.confreader.File(options.configfile)
-    except libqtile.confreader.ConfigError, v:
+        c = confreader.File(options.configfile)
+    except confreader.ConfigError, v:
         parser.error(v.message)
-    client = libqtile.command.Client(options.socket, c)
+    client = command.Client(options.socket, c)
     qsh = sh.QSh(client)
     qsh.loop()
 

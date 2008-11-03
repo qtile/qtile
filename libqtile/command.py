@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 import inspect, UserDict, traceback, textwrap, os, inspect
-import ipc, manager
+import ipc
 
 class CommandError(Exception): pass
 class CommandException(Exception): pass
