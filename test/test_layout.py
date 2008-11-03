@@ -12,7 +12,7 @@ class MaxConfig:
     screens = []
 
 
-class uMax(utils.QTileTests):
+class uMax(utils.QtileTests):
     config = MaxConfig()
     def test_simple(self):
         self.testWindow("one")
@@ -48,7 +48,7 @@ class StackConfig:
     screens = []
 
 
-class uStack(utils.QTileTests):
+class uStack(utils.QtileTests):
     config = StackConfig()
     def test_stack_commands(self):
         assert self.c.layout.current() == None
@@ -174,7 +174,7 @@ class SelectorConfig:
     screens = []
 
 
-class uSelectors(utils.QTileTests):
+class uSelectors(utils.QtileTests):
     config = StackConfig()
     def test_simple(self):
         pass

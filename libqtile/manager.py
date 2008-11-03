@@ -27,7 +27,7 @@ from Xlib import X, XK
 import Xlib.protocol.event as event
 import command, utils, window, confreader
 
-class QTileError(Exception): pass
+class QtileError(Exception): pass
 
 
 class Event:
@@ -45,14 +45,14 @@ class Event:
 
     def subscribe(self, event, func):
         if event not in self.events:
-            raise QTileError("Unknown event: %s"%event)
+            raise QtileError("Unknown event: %s"%event)
         lst = self.subscriptions.setdefault(event, [])
         if not func in lst:
             lst.append(func)
 
     def fire(self, event, *args, **kwargs):
         if event not in self.events:
-            raise QTileError("Unknown event: %s"%event)
+            raise QtileError("Unknown event: %s"%event)
         self.qtile.log.add("Internal event: %s(%s, %s)"%(event, args, kwargs))
         for i in self.subscriptions.get(event, []):
             i(*args, **kwargs)
@@ -72,7 +72,7 @@ class Key:
         self.modifiers, self.key, self.commands = modifiers, key, commands
         self.keysym = XK.string_to_keysym(key)
         if self.keysym == 0:
-            raise QTileError("Unknown key: %s"%key)
+            raise QtileError("Unknown key: %s"%key)
         self.modmask = utils.translateMasks(self.modifiers)
     
     def __repr__(self):
@@ -348,7 +348,7 @@ class Log:
         self.log = []
 
 
-class QTile(command.CommandObject):
+class Qtile(command.CommandObject):
     debug = False
     _exit = False
     _testing = False
@@ -357,7 +357,7 @@ class QTile(command.CommandObject):
         if not displayName:
             displayName = os.environ.get("DISPLAY")
             if not displayName:
-                raise QTileError("No DISPLAY set.")
+                raise QtileError("No DISPLAY set.")
         if not fname:
             if not "." in displayName:
                 displayName = displayName + ".0"
@@ -853,7 +853,7 @@ class QTile(command.CommandObject):
         keycode = self.display.keysym_to_keycode(keysym)
         try:
             mask = utils.translateMasks(modifiers)
-        except QTileError, v:
+        except QtileError, v:
             return str(v)
         if self.currentWindow:
             win = self.currentWindow.window

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-    Command-line interaction with QTile TextBox widgets.
+    Command-line interaction with Qtile TextBox widgets.
 """
 import os, sys
 from optparse import OptionParser, OptionGroup

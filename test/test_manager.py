@@ -31,7 +31,7 @@ class TestConfig:
     )]
 
 
-class uMultiScreen(utils.QTileTests):
+class uMultiScreen(utils.QtileTests):
     config = TestConfig()
     def test_to_screen(self):
         assert self.c.screen.info()["index"] == 0
@@ -61,7 +61,7 @@ class uMultiScreen(utils.QTileTests):
         assert self.c.groups()["c"]["focus"] == "one"
 
 
-class uSingle(utils.QTileTests):
+class uSingle(utils.QtileTests):
     """
         We don't care if these tests run in a Xinerama or non-Xinerama X, and
         they only have to run under one of the two.
@@ -129,7 +129,7 @@ class uSingle(utils.QTileTests):
         assert self.c.window.inspect()
 
 
-class uQTile(utils.QTileTests):
+class uQtile(utils.QtileTests):
     """
         These tests should run in both Xinerama and non-Xinerama modes.
     """
@@ -290,12 +290,12 @@ class uEvent(libpry.AutoTree):
 
 tests = [
     utils.XNest(xinerama=True), [
-        uQTile(),
+        uQtile(),
         uMultiScreen()
     ],
     utils.XNest(xinerama=False), [
         uSingle(),
-        uQTile()
+        uQtile()
     ],
     uKey(),
     uLog(),

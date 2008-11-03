@@ -51,7 +51,7 @@ def translateMasks(modifiers):
         try:
             masks.append(_modmasks[i])
         except KeyError:
-            raise manager.QTileError("Unknown modifier: %s"%i)
+            raise manager.QtileError("Unknown modifier: %s"%i)
     return reduce(operator.or_, masks) if masks else 0
 
 

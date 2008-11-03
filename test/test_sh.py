@@ -13,10 +13,10 @@ class ShConfig(libqtile.confreader.Config):
     ]
 
 
-class uQSh(utils.QTileTests):
+class uQSh(utils.QtileTests):
     config = ShConfig()
     def setUp(self):
-        utils.QTileTests.setUp(self)
+        utils.QtileTests.setUp(self)
         self.sh = libqtile.sh.QSh(self.c)
 
     def test_columnize(self):

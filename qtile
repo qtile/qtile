@@ -44,7 +44,7 @@ def main():
         c = confreader.File(options.configfile)
     except confreader.ConfigError, v:
         parser.error(v.message)
-    q = manager.QTile(c)
+    q = manager.Qtile(c)
     q.debug = options.debug
     q.loop()
 

@@ -21,7 +21,7 @@ class GBConfig:
     ]
 
 
-class uWidgets(utils.QTileTests):
+class uWidgets(utils.QtileTests):
     config = GBConfig()
     def test_draw(self):
         self.testWindow("one")
@@ -68,7 +68,7 @@ class GeomConf:
     ]
 
 
-class uBarGeometry(utils.QTileTests):
+class uBarGeometry(utils.QtileTests):
     config = GeomConf()
     def test_geometry(self):
         self.testWindow("one")
@@ -97,7 +97,7 @@ class ErrConf(GeomConf):
     ]
 
 
-class uBarErr(utils._QTileTruss):
+class uBarErr(utils._QtileTruss):
     def test_err(self):
         config = ErrConf()
         self.qtileRaises("top or the bottom of the screen", config)
@@ -126,13 +126,13 @@ class OffsetConf(GeomConf):
     ]
 
 
-class uOffsetCalculation(utils._QTileTruss):
+class uOffsetCalculation(utils._QtileTruss):
     def setUp(self):
-        utils._QTileTruss.setUp(self)
+        utils._QtileTruss.setUp(self)
         self.conf = GeomConf()
 
     def tearDown(self):
-        utils._QTileTruss.tearDown(self)
+        utils._QtileTruss.tearDown(self)
         self.stopQtile()
 
     def test_basic(self):

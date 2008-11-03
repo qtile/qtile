@@ -17,13 +17,19 @@ builtin "cd" and "ls" commmands act like their familiar shell counterparts:
 <!--(block | htmlescape)-->
 > ls
 layout/  widget/  screen/  bar/     window/  group/ 
+
 > cd bar
+
 bar> ls
 bottom/
+
 bar> cd bottom
+
 bar['bottom']> ls
 screen/
+
 bar['bottom']> cd ../..
+
 > ls
 layout/  widget/  screen/  bar/     window/  group/ 
 <!--(end)-->
@@ -56,6 +62,7 @@ The shell help provides the canonical documentation for the Qtile API:
 <pre>
 <!--(block | htmlescape)-->
 > cd layout/1
+
 layout[1]> help
 help command   -- Help for a specific command.
 
@@ -68,6 +75,7 @@ Commands for this object:
 add           commands      current       delete        doc           down          get         
 info          items         next          previous      rotate        shuffle_down  shuffle_up  
 toggle_split  up          
+
 layout[1]> help previous
 previous()
 Focus previous stack.

@@ -85,9 +85,9 @@ c.group["b"].screen.info()
     case, it has no associated screen, the path resolves to a non-existent
     node, and we get an exeption:
 
-<!--(block | pySyntax)-->
+<pre>
 libqtile.command.CommandError: No object screen in path 'group['b'].screen'
-<!--(end)-->
+</pre>
 
     The hierarchy is not a tree, since it can contain cycles. This path
     (redundantly) specifies the group belonging to the screen that belongs to

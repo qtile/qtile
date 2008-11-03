@@ -32,7 +32,7 @@ class CallConfig(libqtile.confreader.Config):
     ]
 
 
-class uCall(utils.QTileTests):
+class uCall(utils.QtileTests):
     config = CallConfig()
     def test_layout_filter(self):
         self.testWindow("one")
@@ -133,7 +133,7 @@ class ServerConfig(libqtile.confreader.Config):
     ]
 
 
-class u_Server(utils.QTileTests):
+class u_Server(utils.QtileTests):
     config = ServerConfig()
     def test_cmd_commands(self):
         assert self.c.commands()

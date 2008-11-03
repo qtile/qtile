@@ -63,7 +63,7 @@ class Xephyr(libpry.TestContainer):
         os.waitpid(self.sub.pid, 0)
 
 
-class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
+class _QtileTruss(libpry.TmpDirMixin, libpry.AutoTree):
     qtilepid = None
     def setUp(self):
         libpry.TmpDirMixin.setUp(self)
@@ -99,7 +99,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
     def qtileRaises(self, exc, config):
         self._waitForXNest()
         self["fname"] = os.path.join(self["tmpdir"], "qtilesocket")
-        libpry.raises(exc, libqtile.manager.QTile, config, self["display"], self["fname"])
+        libpry.raises(exc, libqtile.manager.Qtile, config, self["display"], self["fname"])
 
     def startQtile(self, config):
         self._waitForXNest()
@@ -107,7 +107,7 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
         pid = os.fork()
         if pid == 0:
             try:
-                q = libqtile.manager.QTile(config, self["display"], self["fname"])
+                q = libqtile.manager.Qtile(config, self["display"], self["fname"])
                 q._testing = True
                 # BEWARE: Xnest somehow stuffs up geometry detection for
                 # multiple screens in xinerama. We poke into qtile to fix this.
@@ -163,14 +163,14 @@ class _QTileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             raise AssertionError("Window could not be killed...")
 
 
-class QTileTests(_QTileTruss):
+class QtileTests(_QtileTruss):
     config = None
     def setUp(self):
-        _QTileTruss.setUp(self)
+        _QtileTruss.setUp(self)
         self.startQtile(self.config)
 
     def tearDown(self):
-        _QTileTruss.tearDown(self)
+        _QtileTruss.tearDown(self)
         self.stopQtile()
 
     def _groupconsistency(self):
