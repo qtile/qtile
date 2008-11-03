@@ -47,7 +47,7 @@ class QSh:
 
     def _complete(self, buf, arg, state):
         if (not re.search(r" |\(", buf)) or buf.startswith("help "):
-            options = self.builtins + self.current.commands()
+            options = self.builtins + self._commands()
             lst = [i for i in options if i.startswith(arg)]
             return lst[state] if lst and state < len(lst) else None
         elif buf.startswith("cd ") or buf.startswith("ls "):
@@ -113,6 +113,12 @@ class QSh:
         if itms:
             all.extend(itms)
         return all
+
+    def _commands(self):
+        try:
+            return self.current.commands()
+        except command.CommandError:
+            return []
 
     def _findNode(self, src, *path):
         """
@@ -184,6 +190,7 @@ class QSh:
                 
                 help command
         """
+        cmds = self._commands()
         if not arg:
             lst = [
                     "help command   -- Help for a specific command.",
@@ -191,13 +198,16 @@ class QSh:
                     "Builtins:",
                     "=========",
                     self.columnize(self.builtins),
+                  ]
+            if cmds:
+                lst += [
                     "",
                     "Commands for this object:",
                     "=========================",
-                    self.columnize(self.current.commands()),
+                    self.columnize(cmds),
                   ]
             return "\n".join(lst)
-        elif arg in self.current.commands():
+        elif arg in cmds:
             return self._call("doc", "(\"%s\")"%arg)
         elif arg in self.builtins:
             c = getattr(self, "do_"+arg)
@@ -214,10 +224,7 @@ class QSh:
     do_q = do_exit
 
     def _call(self, cmd, args):
-        try:
-            cmds = self.current.commands()
-        except command.CommandError:
-            cmds = []
+        cmds = self._commands()
         if cmd not in cmds:
             return "No such command: %s"%cmd
 
