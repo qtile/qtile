@@ -1,13 +1,13 @@
 import os, time, cStringIO
 import libpry
-import libqtile
+import libqtile, libqtile.layout, libqtile.bar
 import utils
 
-class TestConfig(libqtile.config.Config):
+class TestConfig:
     groups = ["a", "b", "c", "d"]
     layouts = [
-                libqtile.layout.Stack(stacks=1, borderWidth=10),
-                libqtile.layout.Stack(2, borderWidth=10)
+                libqtile.layout.stack.Stack(stacks=1, borderWidth=10),
+                libqtile.layout.stack.Stack(2, borderWidth=10)
             ]
     keys = [
         libqtile.manager.Key(

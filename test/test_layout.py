@@ -1,9 +1,9 @@
 import libpry, time, pprint
-import libqtile, libqtile.config
+import libqtile
 import utils
 
 
-class MaxConfig(libqtile.config.Config):
+class MaxConfig:
     groups = ["a", "b", "c", "d"]
     layouts = [
         libqtile.layout.Max()
@@ -38,7 +38,7 @@ class uMax(utils.QTileTests):
         assert self.c.layout.get() == ["one"]
 
 
-class StackConfig(libqtile.config.Config):
+class StackConfig:
     groups = ["a", "b", "c", "d"]
     layouts = [
         libqtile.layout.Stack(stacks=2, borderWidth=10),
@@ -164,7 +164,7 @@ class uStack(utils.QTileTests):
         assert self.c.layout.info()["stacks"]
 
 
-class SelectorConfig(libqtile.config.Config):
+class SelectorConfig:
     groups = ["a", "b", "c"]
     layouts = [
         libqtile.layout.Max(),

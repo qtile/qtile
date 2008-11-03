@@ -1,10 +1,11 @@
 import libpry, time
-import libqtile.config, libqtile.layout, libqtile.bar
+import libqtile.layout, libqtile.bar
 import utils
 
-class GBConfig(libqtile.config.Config):
+class GBConfig:
+    keys = []
     groups = ["a", "b", "c", "d"]
-    layouts = [libqtile.layout.Stack(stacks=1, borderWidth=10)]
+    layouts = [libqtile.layout.stack.Stack(stacks=1, borderWidth=10)]
     screens = [
         libqtile.manager.Screen(
             bottom=libqtile.bar.Bar(
@@ -53,9 +54,10 @@ class uWidgets(utils.QTileTests):
         self.c.widget["measure"].update(100)
         
 
-class GeomConf(libqtile.config.Config):
+class GeomConf:
+    keys = []
     groups = ["a", "b", "c", "d"]
-    layouts = [libqtile.layout.Stack(stacks=1, borderWidth=10)]
+    layouts = [libqtile.layout.stack.Stack(stacks=1, borderWidth=10)]
     screens = [
         libqtile.manager.Screen(
             left=libqtile.bar.Gap(10),
