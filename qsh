@@ -25,7 +25,7 @@ from libqtile import confreader, sh, command
 
 def main():
     from optparse import OptionParser, OptionGroup
-    parser = OptionParser(version="%prog 0.1")
+    parser = OptionParser(version="%prog 0.2")
     parser.add_option(
                         "-c", "--config",
                         action="store", type="string",

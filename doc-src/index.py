@@ -22,14 +22,14 @@ class Examples:
 
 ns.examples = Examples("..")
 
-ns.docTitle = "Qtile 0.1"
+ns.docTitle = "Qtile 0.2"
 ns.docMaintainer = "Aldo Cortesi"
 ns.docMaintainerEmail = "aldo@nullcube.com"
 ns.foot = "Copyright Aldo Cortesi 2008"
 ns.head = readFrom("_header.html")
 ns.sidebar = countershape.widgets.SiblingPageIndex('/index.html')
 this.layout = countershape.layout.TwoPane("yui-t2", "doc3")
-this.titlePrefix = "Qtile 0.1 - "
+this.titlePrefix = "Qtile 0.2 - "
 
 ns.qtgrok = countershape.grok.grok("../libqtile")
 
