@@ -93,4 +93,7 @@ class Layout(command.CommandObject):
             return self.group
 
     def cmd_info(self):
+        """
+            Return a dictionary of info for this object.
+        """
         return self.info()

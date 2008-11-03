@@ -95,6 +95,9 @@ class Gap(command.CommandObject):
         )
 
     def cmd_info(self):
+        """
+            Info for this object.
+        """
         return self.info()
 
 STRETCH = -1
@@ -352,6 +355,9 @@ class _Widget(command.CommandObject):
             return self.bar
 
     def cmd_info(self):
+        """
+            Info for this object.
+        """
         return dict(name=self.name)
 
 

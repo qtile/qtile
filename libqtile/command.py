@@ -323,9 +323,15 @@ class CommandObject(object):
         return lst
 
     def cmd_commands(self):
+        """
+            Returns a list of possible commands for this object.
+        """
         return self.commands()
 
     def cmd_items(self, name):
+        """
+            Returns a list of items contained in this object.
+        """
         return self.items(name)
 
     def docSig(self, name):
@@ -340,10 +346,13 @@ class CommandObject(object):
     def doc(self, name):
         spec = self.docSig(name)
         htext = self.docText(name)
-        htext = "\n".join(["\t" + i for i in htext.splitlines()])
+        htext = "\n".join([i for i in htext.splitlines()])
         return spec + htext
 
     def cmd_doc(self, name):
+        """
+            Returns the documentation for a specified command name.
+        """
         if name in self.commands():
             return self.doc(name)
         else:

@@ -62,7 +62,7 @@ class uCommandObject(libpry.AutoTree):
 
     def test_commands(self):
         c = TestCommands()
-        assert len(c.commands()) == 6
+        assert len(c.commands()) == 7
 
     def test_command(self):
         c = TestCommands()

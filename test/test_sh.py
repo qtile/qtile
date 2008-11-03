@@ -82,6 +82,7 @@ class uQSh(utils.QTileTests):
     def test_help(self):
         assert self.sh.do_help("log")
         assert self.sh.do_help("nonexistent").startswith("No such command")
+        assert self.sh.do_help("help")
         
 
 tests = [

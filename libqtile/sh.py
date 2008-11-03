@@ -20,7 +20,7 @@
 """
     A command shell for Qtile.
 """
-import readline, sys, pprint, re
+import readline, sys, pprint, re, textwrap
 import fcntl, termios, struct
 import command
 
@@ -144,6 +144,15 @@ class QSh:
             return None
 
     def do_cd(self, arg):
+        """
+            Change to another path.
+                
+            Examples:
+
+                cd layout/0
+
+                cd ../layout
+        """
         next = self._findNode(self.current, *[i for i in arg.split("/") if i])
         if next:
             self.current = next
@@ -151,20 +160,55 @@ class QSh:
             return "No such path."
 
     def do_ls(self, arg):
+        """
+            List contained items on a node.
+
+            Examples:
+
+                ls
+
+                ls ../layout
+        """
         l = self._ls(self.current)
         l = ["%s/"%i for i in l]
         return self.columnize(l)
 
     def do_help(self, arg):
+        """
+            Provide an overview of all commands or detailed
+            help on a specific command or builtin.
+
+            Examples:
+                
+                help
+                
+                help command
+        """
         if not arg:
-            return self.columnize(self.current.commands())
+            lst = [
+                    "help command   -- Help for a specific command.",
+                    "",
+                    "Builtins:",
+                    "=========",
+                    self.columnize(self.builtins),
+                    "",
+                    "Commands for this object:",
+                    "=========================",
+                    self.columnize(self.current.commands()),
+                  ]
+            return "\n".join(lst)
+        elif arg in self.current.commands():
+            return self._call("doc", "(\"%s\")"%arg)
+        elif arg in self.builtins:
+            c = getattr(self, "do_"+arg)
+            return textwrap.dedent(c.__doc__).lstrip()
         else:
-            if arg in self.current.commands():
-                return self._call("doc", "(\"%s\")"%arg)
-            else:
-                return "No such command: %s"%arg
+            return "No such command: %s"%arg
 
     def do_exit(self, args):
+        """
+            Exit qsh.
+        """
         sys.exit(0)
     do_quit = do_exit
     do_q = do_exit

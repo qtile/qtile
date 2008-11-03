@@ -175,6 +175,9 @@ class Screen(command.CommandObject):
             return getattr(self, sel)
 
     def cmd_info(self):
+        """
+            Returns a dictionary of info for this object.
+        """
         return dict(
             index=self.index
         )
@@ -288,6 +291,9 @@ class Group(command.CommandObject):
             return self.screen
 
     def cmd_info(self):
+        """
+            Returns a dictionary of info for this object.
+        """
         return dict(name=self.name)
 
     def cmd_toscreen(self, screen=None):

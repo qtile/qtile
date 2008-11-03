@@ -161,6 +161,9 @@ class _Window(command.CommandObject):
         return None
 
     def cmd_info(self):
+        """
+            Returns a dictionary of info for this object.
+        """
         return dict(
             id = self.window.id
         )
@@ -323,6 +326,10 @@ class Window(_Window):
         return "Window(%s)"%self.name
 
     def cmd_kill(self):
+        """
+            Kill this window. Try to do this politely if the client support
+            this, otherwise be brutal.
+        """
         self.kill()
 
     def cmd_togroup(self, groupName):
