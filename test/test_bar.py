@@ -1,5 +1,5 @@
 import libpry, time
-import libqtile.layout, libqtile.bar
+import libqtile.layout, libqtile.bar, libqtile.widget
 import utils
 
 class GBConfig:
@@ -10,10 +10,10 @@ class GBConfig:
         libqtile.manager.Screen(
             bottom=libqtile.bar.Bar(
                         [
-                            libqtile.bar.GroupBox(),
-                            libqtile.bar.WindowName(),
-                            libqtile.bar.TextBox("text", text="default", width=100),
-                            libqtile.bar.MeasureBox("measure", width=100),
+                            libqtile.widget.GroupBox(),
+                            libqtile.widget.WindowName(),
+                            libqtile.widget.TextBox("text", text="default", width=100),
+                            libqtile.widget.MeasureBox("measure", width=100),
                         ],
                         20
                     ),
@@ -103,9 +103,9 @@ class uBarErr(utils._QtileTruss):
         self.qtileRaises("top or the bottom of the screen", config)
 
 
-class TestWidget(libqtile.bar._Widget):
+class TestWidget(libqtile.widget.base._Widget):
     def _configure(self, qtile, bar, event):
-        libqtile.bar._Widget._configure(self, qtile, bar, event)
+        libqtile.widget.base._Widget._configure(self, qtile, bar, event)
         self.width = 10
 
     def draw(self): pass
@@ -117,7 +117,7 @@ class OffsetConf(GeomConf):
             bottom=libqtile.bar.Bar(
                 [
                     TestWidget(),
-                    libqtile.bar.Spacer(),
+                    libqtile.widget.Spacer(),
                     TestWidget()
                 ],
                 10
@@ -141,7 +141,7 @@ class uOffsetCalculation(utils._QtileTruss):
                 bottom=libqtile.bar.Bar(
                     [
                         TestWidget(),
-                        libqtile.bar.Spacer(),
+                        libqtile.widget.Spacer(),
                         TestWidget()
                     ],
                     10
@@ -160,7 +160,7 @@ class uOffsetCalculation(utils._QtileTruss):
             libqtile.manager.Screen(
                 bottom=libqtile.bar.Bar(
                     [
-                        libqtile.bar.Spacer(),
+                        libqtile.widget.Spacer(),
                     ],
                     10
                 )

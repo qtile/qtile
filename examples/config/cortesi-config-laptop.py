@@ -1,6 +1,6 @@
 from libqtile.manager import Key, Screen
 from libqtile.command import lazy
-from libqtile import layout, bar
+from libqtile import layout, bar, widget
 
 keys = [
     Key(
@@ -75,8 +75,8 @@ screens = [
     Screen(
         bottom = bar.Bar(
                     [
-                        bar.GroupBox(),
-                        bar.WindowName()
+                        widget.GroupBox(),
+                        widget.WindowName()
                     ],
                     30,
                 ),

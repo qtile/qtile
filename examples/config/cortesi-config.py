@@ -1,6 +1,6 @@
 from libqtile.manager import Key, Screen
 from libqtile.command import lazy
-from libqtile import layout, bar
+from libqtile import layout, bar, widget
 
 # The bindings below are for use with a Kinesis keyboard, and may
 # not make sense for standard keyboards.
@@ -90,8 +90,8 @@ screens = [
     Screen(
         bottom = bar.Bar(
                     [
-                        bar.GroupBox(),
-                        bar.WindowName()
+                        widget.GroupBox(),
+                        widget.WindowName()
                     ],
                     30,
                 ),
@@ -99,8 +99,8 @@ screens = [
     Screen(
         bottom = bar.Bar(
                     [
-                        bar.GroupBox(),
-                        bar.WindowName()
+                        widget.GroupBox(),
+                        widget.WindowName()
                     ],
                     30,
                 ),

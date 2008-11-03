@@ -23,8 +23,8 @@ class CallConfig(libqtile.confreader.Config):
         libqtile.manager.Screen(
             bottom=libqtile.bar.Bar(
                         [
-                            libqtile.bar.TextBox("text"),
-                            libqtile.bar.MeasureBox("measure", width=100),
+                            libqtile.widget.TextBox("text"),
+                            libqtile.widget.MeasureBox("measure", width=100),
                         ],
                         20
                     ),
@@ -115,8 +115,8 @@ class ServerConfig(libqtile.confreader.Config):
         libqtile.manager.Screen(
             bottom=libqtile.bar.Bar(
                         [
-                            libqtile.bar.TextBox("one"),
-                            libqtile.bar.MeasureBox("two", width=100),
+                            libqtile.widget.TextBox("one"),
+                            libqtile.widget.MeasureBox("two", width=100),
                         ],
                         20
                     ),
@@ -124,8 +124,8 @@ class ServerConfig(libqtile.confreader.Config):
         libqtile.manager.Screen(
             bottom=libqtile.bar.Bar(
                         [
-                            libqtile.bar.TextBox("three"),
-                            libqtile.bar.MeasureBox("four", width=100),
+                            libqtile.widget.TextBox("three"),
+                            libqtile.widget.MeasureBox("four", width=100),
                         ],
                         20
                     ),

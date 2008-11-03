@@ -24,7 +24,7 @@ class TestConfig:
     screens = [libqtile.manager.Screen(
             bottom=libqtile.bar.Bar(
                         [
-                            libqtile.bar.GroupBox(),
+                            libqtile.widget.GroupBox(),
                         ],
                         20
                     ),
