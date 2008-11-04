@@ -21,7 +21,6 @@ from base import Layout
 from .. import command, utils
 
 
-
 class _WinStack(object):
     split = False
     _current = 0
@@ -112,6 +111,7 @@ class Stack(Layout):
         for i, s in enumerate(self.stacks):
             if self.group.currentWindow in s:
                 return i
+        return 0
 
     def clone(self, group):
         if not self.activePixel:
@@ -146,8 +146,6 @@ class Stack(Layout):
                 )
 
     def nextStack(self):
-        if self.currentStackOffset is None:
-            return
         n = self._findNext(
                 self.stacks,
                 self.currentStackOffset
@@ -156,8 +154,6 @@ class Stack(Layout):
             self.group.focus(n.cw, True)
 
     def previousStack(self):
-        if self.currentStackOffset is None:
-            return
         n = self._findNext(
                 list(reversed(self.stacks)),
                 len(self.stacks) - self.currentStackOffset - 1
@@ -309,19 +305,29 @@ class Stack(Layout):
         """
         return self.previousStack()
 
-    def cmd_current(self):
+    def cmd_client_to_next(self):
         """
-            Return the offset of the current stack.
+            Send the current client to the next stack.
         """
-        return self.currentStackOffset
+        return self.cmd_client_to_stack(self.currentStackOffset + 1)
 
-    def cmd_get(self):
+    def cmd_client_to_previous(self):
         """
-            Retrieve the current stacks, returning lists of window names in
-            order, starting with the current window of each stack.
+            Send the current client to the previous stack.
         """
-        lst = []
-        for i in self.stacks:
-            s = i[i.current:] + i[:i.current]
-            lst.append([i.name for i in s])
-        return lst
+        return self.cmd_client_to_stack(self.currentStackOffset - 1)
+
+    def cmd_client_to_stack(self, n):
+        """
+            Send the current client to stack n, where n is an integer offset.
+            If is too large or less than 0, it is wrapped modulo the number of
+            stacks.
+        """
+        if not self.currentStack:
+            return
+        next = n%len(self.stacks)
+        win = self.currentStack.cw
+        self.currentStack.remove(win)
+        self.stacks[next].add(win)
+        self.stacks[next].focus(win)
+
