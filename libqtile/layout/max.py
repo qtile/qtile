@@ -80,10 +80,3 @@ class Max(Layout):
             Switch up in the window list.
         """
         self.up()
-
-    def cmd_get(self):
-        """
-            Return list of window names in order, starting with the current
-            window.
-        """
-        return self.info()

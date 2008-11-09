@@ -16,26 +16,26 @@ class uMax(utils.QtileTests):
     config = MaxConfig()
     def test_simple(self):
         self.testWindow("one")
-        assert self.c.layout.get() == ["one"]
+        assert self.c.layout.info() == ["one"]
         self.testWindow("two")
-        assert self.c.layout.get() == ["two", "one"]
+        assert self.c.layout.info() == ["two", "one"]
 
     def test_updown(self):
         self.testWindow("one")
         self.testWindow("two")
         self.testWindow("three")
-        assert self.c.layout.get() == ["three", "two", "one"]
+        assert self.c.layout.info() == ["three", "two", "one"]
         self.c.layout.down()
-        assert self.c.layout.get() == ["two", "one","three"]
+        assert self.c.layout.info() == ["two", "one","three"]
         self.c.layout.up()
-        assert self.c.layout.get() == ["three", "two", "one"]
+        assert self.c.layout.info() == ["three", "two", "one"]
 
     def test_remove(self):
         self.testWindow("one")
         two = self.testWindow("two")
-        assert self.c.layout.get() == ["two", "one"]
+        assert self.c.layout.info() == ["two", "one"]
         self.kill(two)
-        assert self.c.layout.get() == ["one"]
+        assert self.c.layout.info() == ["one"]
 
 
 class StackConfig:
@@ -82,6 +82,9 @@ class uStack(utils.QtileTests):
 
         self.c.layout.rotate()
         assert self._stacks() == [[], ["one", "three", "two"]]
+
+    def test_cmd_down(self):
+        self.c.layout.down()
 
     def test_rotation(self):
         self.c.layout.delete()
@@ -134,11 +137,11 @@ class uStack(utils.QtileTests):
         assert self.c.groups()["a"]["focus"] == None
 
     def test_window_removal(self):
-        self.c.nextlayout()
+        self.c.layout.next()
         one = self.testWindow("one")
         two = self.testWindow("two")
         self.c.layout.down()
-        self.kill(one)
+        self.kill(two)
 
     def test_split(self):
         one = self.testWindow("one")

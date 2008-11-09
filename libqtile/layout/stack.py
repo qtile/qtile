@@ -37,6 +37,8 @@ class _WinStack(object):
 
     @property
     def cw(self):
+        if not self.lst:
+            return None
         return self.lst[self.current]
 
     def __init__(self):
