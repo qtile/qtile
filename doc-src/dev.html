@@ -1,0 +1,39 @@
+
+Using Xnest and the test suite
+==============================
+
+The easiest way to hack on Qtile in comfort, is to use a nested X server like
+XNest or Xephyr. The Qtile repo includes a tiny helper script to let you
+quickly pull up a nested instance instance of Qtile in Xnest, using your
+current configuration. Run it from the top-level of the repository, like this:
+
+<pre>
+    ./test/scripts/xnest                      
+</pre>
+
+During development, however, the Xnest instance is usually started up by the
+Qtile test suite. Qtile is designed expressly to have enough scriptability to
+allow a complete set of unit tests to be written. In practice, the development
+cyclce looks something like this:
+
+<ol>
+
+    <li> make minor code change                         
+    <li> run appropriate test: <strong>pry ./test_module.uMySuite</strong>
+    <li> GOTO 1, until hackage is complete
+    <li> run entire test suite: <strong>pry</strong> 
+    <li> commit                                  
+
+</ol>
+
+
+Resources
+=========
+
+Here are a number of resources that may come in handy:
+
+
+- <a href="http://tronche.com/gui/x/icccm/">Inter-Client Conventions Manual</a>
+- <a href="http://standards.freedesktop.org/wm-spec/wm-spec-latest.html">Extended Window Manager Hints</a>
+- <a href="http://tronche.com/gui/x/xlib/">A reasonable basic Xlib Manual</a>
+
