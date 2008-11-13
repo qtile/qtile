@@ -411,7 +411,8 @@ class Qtile(command.CommandObject):
                     self.event
                 )
                 self.screens.append(scr)
-        else:
+
+        if not self.screens:
             if config.screens:
                 s = config.screens[0]
             else:
