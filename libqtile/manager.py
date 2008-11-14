@@ -175,6 +175,20 @@ class Screen(command.CommandObject):
         elif name == "bar":
             return getattr(self, sel)
 
+    def resize(self, x=None, y=None, w=None, h=None):
+        x = x or self.x
+        y = y or self.y
+        w = w or self.width
+        h = h or self.height
+        self._configure(self.qtile, self.index, x, y, w, h, self.group, self.event)
+        # update bars
+        for bar in [self.top, self.bottom, self.left, self.right]:
+            if bar:
+                # not sure this is correct
+                bar.resize()
+
+        self.group.layoutAll()
+
     def cmd_info(self):
         """
             Returns a dictionary of info for this object.
@@ -182,6 +196,12 @@ class Screen(command.CommandObject):
         return dict(
             index=self.index
         )
+
+    def cmd_resize(self, x=None, y=None, w=None, h=None):
+        """
+            Resize the screen.
+        """
+        self.resize(x, y, w, h)
 
 
 class Group(command.CommandObject):
@@ -366,12 +386,12 @@ class Qtile(command.CommandObject):
         self.display = Xlib.display.Display(displayName)
         self.config, self.fname = config, fname
         self.log = Log(
-            self._logLength,
-            sys.stderr if self.debug else None
-        )
+                self._logLength,
+                sys.stderr if self.debug else None
+            )
         defaultScreen = self.display.screen(
-                    self.display.get_default_screen()
-               )
+                self.display.get_default_screen()
+            )
         self.root = defaultScreen.root
         self.event = Event(self)
 
@@ -449,9 +469,6 @@ class Qtile(command.CommandObject):
             X.KeyRelease,
             X.ReparentNotify,
             X.CreateNotify,
-            # DWM catches this for changes to the root window, and updates
-            # screen geometry...
-            X.ConfigureNotify,
             # DWM handles this to help "broken focusing windows".
             X.MapNotify,
             X.LeaveNotify,
@@ -588,6 +605,14 @@ class Qtile(command.CommandObject):
         else:
             return
 
+    def handle_ConfigureNotify(self, e):
+        """
+            Handle xrandr events.
+        """
+        screen = self.currentScreen
+        if e.window == self.root and e.width != screen.width and e.height != screen.height:
+            screen.resize(0, 0, e.width, e.height)
+            
     def handle_ConfigureRequest(self, e):
         # It's not managed, or not mapped, so we just obey it.
         args = {}
