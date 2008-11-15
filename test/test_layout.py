@@ -204,7 +204,7 @@ class uSelectors(utils.QtileTests):
 
 
 tests = [
-    utils.XNest(xinerama=False), [
+    utils.xfactory(xinerama=False), [
         uMax(),
         uStack(),
         uSelectors(),

@@ -6,7 +6,7 @@ Dependencies
 
             http://dev.nullcube.com
 
-    - The Xnest nested X server.
+    - Xephyr (preferred) or Xnest nested X server.
 
 
 

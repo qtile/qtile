@@ -1,6 +1,6 @@
-import os, time, cStringIO
+import os, time, cStringIO, subprocess
 import libpry
-import libqtile, libqtile.layout, libqtile.bar
+import libqtile, libqtile.layout, libqtile.bar, libqtile.widget
 import utils
 
 class TestConfig:
@@ -60,6 +60,12 @@ class uMultiScreen(utils.QtileTests):
         self.c.window.togroup("c")
         assert self.c.groups()["c"]["focus"] == "one"
 
+    def test_resize(self):
+        self.c.screen[0].resize(x=10, y=10, w=100, h=100)
+        d = self.c.screen[0].info()
+        assert d["width"] == d["height"] == 100
+        assert d["x"] == d["y"] == 10
+        
 
 class uSingle(utils.QtileTests):
     """
@@ -127,6 +133,22 @@ class uSingle(utils.QtileTests):
     def test_inspect(self):
         self.testWindow("one")
         assert self.c.window.inspect()
+
+    def test_randr(self):
+        # Xnest doesn't support randr
+        if self.findAttr("nestx") == "xnest":
+            return
+        self.testWindow("one")
+        subprocess.call(
+            [
+                "xrandr",
+                "-s", "480x640",
+                "-display", utils.DISPLAY
+            ]
+        )
+        d = self.c.screen.info()
+        assert d["width"] == 480
+        assert d["height"] == 640
 
 
 class uQtile(utils.QtileTests):
@@ -238,7 +260,6 @@ class uLog(libpry.AutoTree):
         assert l.length == 5
         assert len(l.log) == 5
         assert l.log[-1] == 9
-        
 
 
 class TScreen(libqtile.manager.Screen):
@@ -289,11 +310,11 @@ class uEvent(libpry.AutoTree):
 
 
 tests = [
-    utils.XNest(xinerama=True), [
+    utils.xfactory(xinerama=True), [
         uQtile(),
         uMultiScreen()
     ],
-    utils.XNest(xinerama=False), [
+    utils.xfactory(xinerama=False), [
         uSingle(),
         uQtile()
     ],

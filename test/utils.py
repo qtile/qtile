@@ -5,14 +5,15 @@ import libqtile, libqtile.ipc
 
 WIDTH = 800
 HEIGHT = 600
+DISPLAY = ":1"
+
 
 class XNest(libpry.TestContainer):
-    def __init__(self, xinerama, display=":1"):
+    nestx = "xnest"
+    def __init__(self, xinerama):
         libpry.TestContainer.__init__(self)
         self.xinerama = xinerama
-        if xinerama:
-            self.name = "XNestXinerama"
-        self["display"] = display
+        self["display"] = DISPLAY
         self["xinerama"] = xinerama
 
     def setUp(self):
@@ -35,12 +36,11 @@ class XNest(libpry.TestContainer):
                 
 
 class Xephyr(libpry.TestContainer):
-    def __init__(self, xinerama, display=":1"):
+    nestx = "xephyr"
+    def __init__(self, xinerama):
         libpry.TestContainer.__init__(self)
         self.xinerama = xinerama
-        if xinerama:
-            self.name = "XephyrXinerama"
-        self["display"] = display
+        self["display"] = DISPLAY
         self["xinerama"] = xinerama
 
     def setUp(self):
@@ -63,6 +63,13 @@ class Xephyr(libpry.TestContainer):
         os.waitpid(self.sub.pid, 0)
 
 
+def xfactory(*args, **kwargs):
+    if subprocess.call(["which", "Xephyr"], stdout=subprocess.PIPE):
+        return XNest(*args, **kwargs)
+    else:
+        return Xephyr(*args, **kwargs)
+
+
 class _QtileTruss(libpry.TmpDirMixin, libpry.AutoTree):
     qtilepid = None
     def setUp(self):
@@ -78,7 +85,7 @@ class _QtileTruss(libpry.TmpDirMixin, libpry.AutoTree):
             try:
                 d = Xlib.display.Display(self["display"])
                 break
-            except (Xlib.error.DisplayConnectionError, Xlib.error.ConnectionClosedError):
+            except (Xlib.error.DisplayConnectionError, Xlib.error.ConnectionClosedError), v:
                 time.sleep(0.1)
         else:
             raise AssertionError, "Could not connect to display."

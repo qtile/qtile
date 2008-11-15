@@ -181,12 +181,9 @@ class Screen(command.CommandObject):
         w = w or self.width
         h = h or self.height
         self._configure(self.qtile, self.index, x, y, w, h, self.group, self.event)
-        # update bars
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
-                # not sure this is correct
                 bar.resize()
-
         self.group.layoutAll()
 
     def cmd_info(self):
@@ -194,7 +191,11 @@ class Screen(command.CommandObject):
             Returns a dictionary of info for this object.
         """
         return dict(
-            index=self.index
+            index=self.index,
+            width=self.width,
+            height=self.height,
+            x = self.x,
+            y = self.y
         )
 
     def cmd_resize(self, x=None, y=None, w=None, h=None):

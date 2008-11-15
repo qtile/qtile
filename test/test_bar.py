@@ -190,7 +190,7 @@ class uOffsetCalculation(utils._QtileTruss):
 
 
 tests = [
-    utils.XNest(xinerama=True), [
+    utils.xfactory(xinerama=True), [
         uBarGeometry(),
         uWidgets(),
         uBarErr(),

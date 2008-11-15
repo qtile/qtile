@@ -295,7 +295,7 @@ class u_Server(utils.QtileTests):
     
 tests = [
     uCommandObject(),
-    utils.XNest(xinerama=True), [
+    utils.xfactory(xinerama=True), [
         uCall(),
         u_Server(),
     ],

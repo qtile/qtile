@@ -86,7 +86,7 @@ class uQSh(utils.QtileTests):
         
 
 tests = [
-    utils.XNest(xinerama=True), [
+    utils.xfactory(xinerama=True), [
         uQSh(),
     ],
 ]
