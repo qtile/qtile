@@ -1,0 +1,34 @@
+
+digraph G {
+    root = "root";
+    splines = true;
+
+    root -> bar;
+    root -> group;
+    root -> layout;
+    root -> screen;
+    root -> widget;
+    root -> window;
+
+    bar -> screen;
+
+    group -> layout;
+    group -> screen;
+    group -> window;
+
+    layout -> group;
+    layout -> screen;
+    layout -> window;
+
+    screen -> bar;
+    screen -> layout;
+    screen -> window;
+
+    widget -> bar;
+    widget -> group;
+    widget -> screen;
+
+    window -> group;
+    window -> screen;
+    window -> layout;
+}

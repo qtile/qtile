@@ -1,6 +1,6 @@
 
-Qtile's public API consists of a hierarchy of nodes, each with a set of
-associated commands. The same API serves a number of different purposes:
+Qtile's public API consists of a graph of nodes, each with a set of associated
+commands. The same API serves a number of different purposes:
 
     - Commands can be bound to keys in the Qtile configuration file. 
     - Commands can be called manually through __qsh__, the Qtile shell.
@@ -10,43 +10,26 @@ Please explore the API using __qsh__ - command lists and detailed documentation
 can be accessed from its built-in help command, and are not documented here.
 
 
-Object Hierarchy
-================
+Object Graph
+============
 
-    Qtile's object hierarchy consists of seven node types: __layout__,
-    __window__, __group__, __bar__, __widget__, __screen__, and a special root
-    node that lies at the top of the tree. Each node has a set of associated
-    commands, a set of children, and a set of keys.  This is what the hierarchy
-    looks like at a high level:
+    Qtile's object graph consists of seven node types: __layout__, __window__,
+    __group__, __bar__, __widget__, __screen__, and a special __root__ node.
+    Individual nodes are addressed by a path specification that starts at the
+    root node, and follows the edges of the graph. Each node has a set of
+    associated commands, a set of children, and a set of keys.  This is what
+    the graph looks like:
 
-<pre>
-root
-    bar
-        screen
-    group
-        layout
-        screen
-        window
-    layout
-        group
-        screen
-        window
-    screen
-        bar
-        layout
-        window
-    widget
-        bar
-        group
-        screen
-    window
-        group
-        screen
-        layout
-</pre>
+<center>
+<img src="objgraph.png">
+</center>
+    
+    Each arrow can be read as "holds a reference to". So, we would say that a
+    __widget__ object _holds a reference to_ objects of type __bar__,
+    __screen__ and __group__, exposed as attributes with the same names.
 
     Lets start with a simple example. The following script runs the __status__
-    command on the root node of the command tree (which, in this case, is the
+    command on the root node of the command graph (which, in this case, is the
     Client object):
 
 <!--(block | pySyntax)-->
@@ -55,16 +38,16 @@ c = Client()
 print c.status()
 <!--(end)-->
 
-    Children are exposed as attributes on each node, so we can access the
-    "info" command on the group child node like so:
+    From the graph, we can see that the root node holds a reference to
+    __group__ nodes. We can access the "info" command on the current group like
+    so:
 
 <!--(block | pySyntax)-->
 c.group.info()
 <!--(end)-->
 
-    In the example above, __c.group__ specifies the _current_ group. To access
-    a specific group, regardless of whether or not it is current, we use the
-    Python containment syntax:
+    To access a specific group, regardless of whether or not it is current, we
+    use the Python containment syntax:
 
 <!--(block | pySyntax)-->
 c.group["b"].info()
@@ -74,7 +57,7 @@ c.group["b"].info()
     accessed by simply leaving the key specifier out. The key specifier is
     mandatory for __widget__ and __bar__ nodes. 
 
-    We can now drill down deeper in the hierarchy. To access the screen
+    We can now drill down deeper in the graph. To access the screen
     currently displaying group "b", we can do this:
 
 <!--(block | pySyntax)-->
@@ -89,7 +72,7 @@ c.group["b"].screen.info()
 libqtile.command.CommandError: No object screen in path 'group['b'].screen'
 </pre>
 
-    The hierarchy is not a tree, since it can contain cycles. This path
+    The graph is not a tree, since it can contain cycles. This path
     (redundantly) specifies the group belonging to the screen that belongs to
     group "b":
 

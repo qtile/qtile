@@ -1,0 +1,7 @@
+
+
+objgraph.dot 
+    
+    The Qtile object graph, in graphviz dot format. Render like so:
+    
+        circo -Tpng objgraph.dot > objgraph.png
