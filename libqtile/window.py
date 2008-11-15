@@ -346,3 +346,5 @@ class Window(_Window):
         if self.group is not group:
             self.group.remove(self)
             group.add(self)
+            self.group.layoutAll()
+            group.layoutAll()
