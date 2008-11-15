@@ -57,6 +57,7 @@ class Xephyr(libpry.TestContainer):
                         stdout = subprocess.PIPE,
                         stderr = subprocess.PIPE,
                     )
+        time.sleep(0.05)
 
     def tearDown(self):
         os.kill(self.sub.pid, 9)

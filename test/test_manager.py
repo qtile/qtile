@@ -134,6 +134,9 @@ class uSingle(utils.QtileTests):
         self.testWindow("one")
         assert self.c.window.inspect()
 
+
+class uRandr(utils.QtileTests):
+    config = TestConfig()
     def test_randr(self):
         # Xnest doesn't support randr
         if self.findAttr("nestx") == "xnest":
@@ -317,6 +320,9 @@ tests = [
     utils.xfactory(xinerama=False), [
         uSingle(),
         uQtile()
+    ],
+    utils.xfactory(xinerama=False), [
+        uRandr(),
     ],
     uKey(),
     uLog(),
