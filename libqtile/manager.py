@@ -518,7 +518,10 @@ class Qtile(command.CommandObject):
             del self.windowMap[window]
 
     def manage(self, w):
-        attrs = w.get_attributes()
+        try:
+            attrs = w.get_attributes()
+        except Xlib.error.BadWindow:
+            return
         if attrs and attrs.override_redirect:
             return
         if w.get_full_property(self.atoms["internal"], self.atoms["python"]):
