@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import sys
 from base import Layout
 from .. import command, utils
 
@@ -169,25 +170,27 @@ class Stack(Layout):
                 i.focus(c)
 
     def add(self, c):
-        if self.group.currentWindow:
-            for i in self.stacks:
-                if not i:
-                    i.add(c)
-                    return
-            for i in self.stacks:
-                if self.group.currentWindow in i:
-                    i.add(c)
-                    return
-        else:
-            self.stacks[0].add(c)
+        for i in self.stacks:
+            if not i:
+                i.add(c)
+                return
+        self.currentStack.add(c)
 
     def remove(self, c):
+        currentOffset = self.currentStackOffset
         for i in self.stacks:
             if c in i:
                 i.remove(c)
-                if len(i) and self.group.layout is self:
-                    self.group.focus(i.cw, True)
-                return
+                break
+        if self.stacks[currentOffset].cw:
+            return self.stacks[currentOffset].cw
+        else:
+            n = self._findNext(
+                    list(reversed(self.stacks)),
+                    len(self.stacks) - currentOffset - 1
+                )
+            if n:
+                return n.cw
 
     def configure(self, c):
         for i, s in enumerate(self.stacks):

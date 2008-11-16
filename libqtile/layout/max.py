@@ -46,11 +46,11 @@ class Max(Layout):
 
     def add(self, c):
         self.clients.insert(0, c)
-        self.group.focus(self.clients[0] if self.clients else None, False)
 
     def remove(self, c):
         self.clients.remove(c)
-        self.group.focus(self.clients[0] if self.clients else None, False)
+        if self.clients:
+            return self.clients[0]
 
     def configure(self, c):
         if self.clients and c is self.clients[0]:
