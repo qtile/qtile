@@ -1,5 +1,6 @@
 # Python object files
 *.py[cd]
+*.py~
 *.so
 *.o
 MANIFEST
