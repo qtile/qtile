@@ -1,4 +1,5 @@
 from .. import command, utils, bar
+from ..theme import Theme
 
 LEFT = object()
 CENTER = object()
@@ -162,12 +163,13 @@ class _Widget(command.CommandObject):
 
 class _TextBox(_Widget):
     PADDING = 5
-    def __init__(self, text=" ", width=bar.STRETCH, foreground="white",
-                 background=bar._HIGHLIGHT, font=None):
-        self.width, self.foreground, self.background = width, foreground, background
+    def __init__(self, text=" ", width=bar.STRETCH, theme=Theme({})):
+        self.width = width
+        self.foreground = theme['fg_normal']
+        self.background = theme['bg_normal']
         self.text = text
-        if font:
-            self.font = font
+        if theme['font']:
+            self.font = theme['font']
 
     def draw(self):
         self._drawer.textbox(

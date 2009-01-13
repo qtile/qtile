@@ -5,21 +5,16 @@ class GroupBox(base._Widget):
     BOXPADDING_SIDE = 8
     PADDING = 3
     BORDERWIDTH = 1
-    def __init__(self, currentFG="white", currentBG=bar._HIGHLIGHT, font=None,
-                 activeFG="white", inactiveFG="#666666", border="#666666"):
+    def __init__(self, theme, border="#666666"):
         """
-            :currentFG Foreground color of the current group.
-            :currentBG Background color of the current group.
-            :font Group box font.
-            :activeFG Foreground for groups that contain windows.
-            :inactiveFG Foreground for groups that do not contain windows.
+            :theme The theme you want to use
             :border Border color
         """
-        self.currentFG, self.currentBG = currentFG, currentBG
-        self.activeFG, self.inactiveFG = activeFG, inactiveFG
+        self.currentFG, self.currentBG = theme['fg_focus'], theme['bg_focus']
+        self.activeFG, self.inactiveFG = theme['fg_active'], theme['fg_normal']
         self.border = border
-        if font:
-            self.font = font
+        if theme["font"]:
+            self.font = theme["font"]
 
     def click(self, x, y):
         groupOffset = x/self.boxwidth

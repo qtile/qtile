@@ -1,5 +1,6 @@
 from .. import bar
 import base
+from ..theme import Theme
 
 class Spacer(base._Widget):
     def _configure(self, qtile, barobj, event):

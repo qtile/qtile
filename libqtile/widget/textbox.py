@@ -1,19 +1,18 @@
 from .. import bar
 import base
+from ..theme import Theme
 
 class TextBox(base._TextBox):
     def __init__(self, name, text=" ", width=bar.STRETCH,
-                 foreground="white", background=bar._HIGHLIGHT, font=None):
+                 theme=Theme({})):
         """
             :name Name for this widget.
             :text Initial widget text.
             :width Either an integer width, or the STRETCH constant.
-            :foreground Foreground color.
-            :background Background color.
-            :font Font specification.
+            :theme The theme to use.
         """
         self.name = name
-        base._TextBox.__init__(self, text, width, foreground, background, font)
+        base._TextBox.__init__(self, text, width, theme)
 
     def update(self, text):
         self.text = text
