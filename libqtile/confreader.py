@@ -34,7 +34,7 @@ class Config:
 class File(Config):
     def __init__(self, fname=None):
         if not fname:
-            fname = os.path.join("~", ".qtile", "config.py")
+            fname = os.path.join("~", ".config/qtile", "config.py")
             fname = os.path.expanduser(fname)
         self.fname = fname
         globs = {}
