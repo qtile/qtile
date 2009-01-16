@@ -10,11 +10,11 @@ class GroupBox(base._Widget):
             :theme The theme you want to use
             :border Border color
         """
-        self.currentFG, self.currentBG = theme['fg_focus'], theme['bg_focus']
-        self.activeFG, self.inactiveFG = theme['fg_active'], theme['fg_normal']
+        self.currentFG, self.currentBG = theme['groupbox_fg_focus'], theme['groupbox_bg_focus']
+        self.activeFG, self.inactiveFG = theme['groupbox_fg_active'], theme['groupbox_fg_normal']
         self.border = border
-        if theme["font"]:
-            self.font = theme["font"]
+        if theme["groupbox_font"]:
+            self.font = theme["groupbox_font"]
 
     def click(self, x, y):
         groupOffset = x/self.boxwidth

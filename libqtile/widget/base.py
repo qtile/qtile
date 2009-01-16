@@ -165,8 +165,8 @@ class _TextBox(_Widget):
     PADDING = 5
     def __init__(self, text=" ", width=bar.STRETCH, theme=Theme({})):
         self.width = width
-        self.foreground = theme['fg_normal']
-        self.background = theme['bg_normal']
+        self.foreground = theme['textbox_fg_normal']
+        self.background = theme['textbox_bg_normal']
         self.text = text
         if theme['font']:
             self.font = theme['font']
