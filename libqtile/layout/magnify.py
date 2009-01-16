@@ -24,6 +24,13 @@ class Magnify(Layout):
         c.clients = []
         return c
 
+    def focus(self, c):
+        if c in self.clients:
+            pos = self.clients.index(c)
+            self.clients[0], self.clients[pos] = \
+                self.clients[pos], self.clients[0]
+            self.group.layoutAll()
+
     def add(self, c):
         self.clients.insert(0, c)
 
