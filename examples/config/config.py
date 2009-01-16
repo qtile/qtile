@@ -18,21 +18,18 @@ keys = [
     Key([modkey], "p", lazy.spawn("exe=`dmenu_path | dmenu` && eval \"exec $exe\"")),
     Key([modkey], "Return", lazy.spawn("urxvt")),
     Key([modkey], "Tab", lazy.nextlayout()),
-    Key([modkey, "shift"], "c", lazy.window.kill())
+    Key([modkey, "shift"], "c", lazy.window.kill()),
+    Key(["mod1"],"F4", lazy.window.kill()), 
+    Key(["control"], "grave", lazy.spawn("urxvt")),
+    Key(["mod1"], "grave", lazy.spawn("exe=`dmenu_path | dmenu` && eval \"exec $exe\"")),
 ]
 
-groups = [str(i) for i in xrange(1, 10)]
+groups = ["zero", "one", "two", "three", "four", "five", "six"]
 
-for i in groups:
-    keys.append(Key([modkey], i, lazy.group[i].toscreen()))
-    keys.append(Key([modkey, "shift"], i, lazy.window.togroup(i)))
+for i in range(len(groups)):
+    keys.append(Key([modkey], str(i), lazy.group[groups[i]].toscreen()))
+    keys.append(Key([modkey, "shift"], str(i), lazy.window.togroup(groups[i])))
  
-layouts = [
-    layout.Stack(stacks=1, borderWidth=1),
-    layout.Stack(stacks=2, borderWidth=1),
-    layout.Stack(stacks=3, borderWidth=1),
-]
-
 theme = Theme(
     {'fg_normal': '#989898',
      'fg_focus': '#8fea26',
@@ -40,10 +37,19 @@ theme = Theme(
      'bg_normal': '#181818',
      'bg_focus': '#252525',
      'bg_active': '#181818',
-     'border': '#8fea26',
+     'border_normal': '#181818',
+     'border_focus': '#8fea26',
+     'border_width': 2,
+     'font': '-*-nimbus sans l-*-r-*-*-*-*-*-*-*-*-*-*',
      }
     )
  
+layouts = [
+    layout.Magnify(theme),
+    layout.Magnify(theme, gap=150),
+]
+
+
 screens = [
     Screen(
         top=bar.Bar(
@@ -51,11 +57,10 @@ screens = [
                 widget.GroupBox(theme),
                 widget.WindowName()
                 ],
-            15),
+            15, theme=theme),
         bottom=bar.Bar(
             [widget.WindowName(), ],
-            15
-            )
-    )
-]
+            15, theme=theme  )
+        )
+    ]
  
