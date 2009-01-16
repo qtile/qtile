@@ -22,6 +22,8 @@ import sys
 import manager, window, confreader, command, utils
 import Xlib.X
 
+from theme import Theme
+
 _HIGHLIGHT = "#48677E"
 _FOREGROUND = "#dddddd"
 
@@ -106,7 +108,7 @@ class Bar(Gap):
     background = "black"
     widgets = None
     window = None
-    def __init__(self, widgets, size):
+    def __init__(self, widgets, size, theme=Theme({})):
         """
             Note that bars can only be at the top or the bottom of the screen.
             
@@ -115,6 +117,7 @@ class Bar(Gap):
         """
         Gap.__init__(self, size)
         self.widgets = widgets
+        self.background = theme["bar_bg_normal"]
 
     def _configure(self, qtile, screen, event):
         if not self in [screen.top, screen.bottom]:
