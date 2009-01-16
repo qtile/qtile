@@ -5,14 +5,14 @@ class GroupBox(base._Widget):
     BOXPADDING_SIDE = 8
     PADDING = 3
     BORDERWIDTH = 1
-    def __init__(self, theme, border="#666666"):
+    def __init__(self, theme):
         """
             :theme The theme you want to use
             :border Border color
         """
         self.currentFG, self.currentBG = theme['groupbox_fg_focus'], theme['groupbox_bg_focus']
         self.activeFG, self.inactiveFG = theme['groupbox_fg_active'], theme['groupbox_fg_normal']
-        self.border = border
+        self.border = theme['groupbox_border_normal']
         if theme["groupbox_font"]:
             self.font = theme["groupbox_font"]
 

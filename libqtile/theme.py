@@ -14,7 +14,10 @@ class Theme(object):
         'bg_normal': '#000000',
         'bg_focus': '#ffffff',
         'bg_active': '#888888',
-        'border': '#0000ff',
+        'border_normal': '#00ff00',
+        'border_focus': '#0000ff',
+        'border_active': '#ff0000',
+        'border_width': 1,
         'font': None,
         }
     specials = {}
