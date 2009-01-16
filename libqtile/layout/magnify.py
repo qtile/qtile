@@ -4,7 +4,7 @@ from ..theme import Theme
 
 class Magnify(Layout):
     name = "layout"
-    def __init__(self, theme, gap=50):
+    def __init__(self, theme=Theme({}), gap=50):
         Layout.__init__(self)
         self.clients = []
         self.gap = gap
