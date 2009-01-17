@@ -11,6 +11,9 @@ class Tile(Layout):
         self.ratio = ratio
         self.master = masterWindows
         self.focused = None
+        # border colors get set in clone
+        self.focusedBorder = None
+        self.normalBorder = None
 
     def up(self):
         self.shuffle(utils.shuffleUp)
@@ -24,6 +27,14 @@ class Tile(Layout):
             self.group.layoutAll()
     
     def clone(self, group):
+        if not self.focusedBorder:
+            colormap = group.qtile.display.screen().default_colormap
+            self.focusedBorder = colormap.alloc_named_color(
+                self.theme["tile_border_focus"],
+                ).pixel
+            self.normalBorder = colormap.alloc_named_color(
+                self.theme["tile_border_normal"],
+                ).pixel
         c = Layout.clone(self, group)
         c.clients = []
         return c
@@ -59,11 +70,9 @@ class Tile(Layout):
                 x = self.group.screen.dx + int(screenWidth*self.ratio)
                 y = self.group.screen.dy + self.clients[self.master:].index(c)*h
             if c is self.focused:
-                borderColor = self.theme["tile_border_focused"]
+                bc = self.focusedBorder
             else:
-                borderColor = self.theme["tile_border_normal"]
-            colormap = self.group.qtile.display.screen().default_colormap
-            bc = colormap.alloc_named_color(borderColor).pixel
+                bc = self.normalBorder
             c.place(
                 x,
                 y,
