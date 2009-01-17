@@ -22,7 +22,7 @@ class Magnify(Layout):
             self.group.layoutAll()
             self.group.focus(self.clients[0], False)
 
-    def close(self, group):
+    def clone(self, group):
         c = Layout.clone(self, group)
         c.clients = []
         return c
