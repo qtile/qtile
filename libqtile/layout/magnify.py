@@ -9,7 +9,8 @@ class Magnify(Layout):
         self.clients = []
         self.gap = gap
         self.theme = theme
-
+        self.focusedBorder = None
+        self.normalBorder = None
     def up(self):
         self.shuffle(utils.shuffleUp)
 
@@ -23,6 +24,14 @@ class Magnify(Layout):
             self.group.focus(self.clients[0], False)
 
     def clone(self, group):
+        if not self.focusedBorder:
+            colormap = group.qtile.display.screen().default_colormap
+            self.focusedBorder = colormap.alloc_named_color(
+                self.theme["magnify_border_focus"],
+                ).pixel
+            self.normalBorder = colormap.alloc_named_color(
+                self.theme["magnify_border_normal"],
+                ).pixel
         c = Layout.clone(self, group)
         c.clients = []
         return c
@@ -56,14 +65,14 @@ class Magnify(Layout):
         screenHeight = self.group.screen.dheight
         gap = self.gap
         x = y = w = h = 0
-        borderWidth = self.theme["border_width"]
+        borderWidth = self.theme["magnify_border_width"]
         if self.clients and c in self.clients:
             if c is self.clients[0]:
                 x = self.group.screen.dx + gap
                 y = self.group.screen.dy + gap
                 w = screenWidth - 2*gap
                 h = screenHeight - 2*gap
-                borderColor = self.theme["border_focus"]
+                bc = self.focusedBorder
             else:
                 clis = self.clients[1:]
                 position = clis.index(c)
@@ -71,9 +80,7 @@ class Magnify(Layout):
                 h = screenHeight/len(clis) #TODO: CAST TO INT?
                 x = self.group.screen.dx
                 y = self.group.screen.dy + position*h
-                borderColor = self.theme["border_normal"]
-            colormap = self.group.qtile.display.screen().default_colormap
-            bc = colormap.alloc_named_color(borderColor).pixel
+                bc = self.normalBorder
             c.place(
                 x,
                 y,
