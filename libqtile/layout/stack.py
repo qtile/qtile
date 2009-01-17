@@ -20,6 +20,7 @@
 import sys
 from base import Layout
 from .. import command, utils
+from ..theme import Theme
 
 
 class _WinStack(object):
@@ -94,14 +95,15 @@ class _WinStack(object):
 
 class Stack(Layout):
     name = "stack"
-    def __init__(self, stacks=2, borderWidth=1, active="#00009A", inactive="black"):
+    def __init__(self, stacks=2, theme=Theme({})):
         """
             :stacks Number of stacks to start with.
-            :borderWidth Width of window borders.
-            :active Color of the active window border.
-            :inactive Color of the inactive window border.
+            :theme  The theme to use with this layout
         """
-        self.borderWidth, self.active, self.inactive = borderWidth, active, inactive
+        self.borderWidth = theme["stack_border_width"]
+        self.active = theme["stack_border_focus"]
+        self.inactive = theme["stack_border_normal"]
+
         self.activePixel, self.inactivePixel = None, None
         self.stacks = [_WinStack() for i in range(stacks)]
 
