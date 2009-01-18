@@ -56,8 +56,7 @@ class Layout(command.CommandObject):
             layout is current or not. The layout should just de-register the
             window from its data structures, without unmapping the window.
 
-            It should also set the group focus to the appropriate "next"
-            window, as interpreted by the layout.
+            Returns the "next" window that should gain focus or None.
         """
         pass
 

@@ -282,10 +282,14 @@ class Group(command.CommandObject):
     def remove(self, window):
         self.windows.remove(window)
         window.group = None
+        nextfocus = None
         for i in self.layouts:
-            i.remove(window)
-        if self.currentWindow is window:
-            self.focus(None, False)
+            if i is self.layout:
+                nextfocus = i.remove(window)
+                print >> sys.stderr, "NEXT", nextfocus
+            else:
+                i.remove(window)
+        self.focus(nextfocus, True)
         self.layoutAll()
 
     def _items(self, name):

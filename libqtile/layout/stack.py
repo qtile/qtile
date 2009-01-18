@@ -1,4 +1,4 @@
-# Copyright (c) 2008, Aldo Cortesi. All rights reserved.
+    # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -169,25 +169,27 @@ class Stack(Layout):
                 i.focus(c)
 
     def add(self, c):
-        if self.group.currentWindow:
-            for i in self.stacks:
-                if not i:
-                    i.add(c)
-                    return
-            for i in self.stacks:
-                if self.group.currentWindow in i:
-                    i.add(c)
-                    return
-        else:
-            self.stacks[0].add(c)
+        for i in self.stacks:
+            if not i:
+                i.add(c)
+                return
+        self.currentStack.add(c)
 
     def remove(self, c):
+        currentOffset = self.currentStackOffset
         for i in self.stacks:
             if c in i:
                 i.remove(c)
-                if len(i) and self.group.layout is self:
-                    self.group.focus(i.cw, True)
-                return
+                break
+        if self.stacks[currentOffset].cw:
+            return self.stacks[currentOffset].cw
+        else:
+            n = self._findNext(
+                    list(reversed(self.stacks)),
+                    len(self.stacks) - self.currentStackOffset - 1
+                )
+            if n:
+                return n.cw
 
     def configure(self, c):
         for i, s in enumerate(self.stacks):

@@ -86,6 +86,24 @@ class uStack(utils.QtileTests):
     def test_cmd_down(self):
         self.c.layout.down()
 
+    def test_addremove(self):
+        one = self.testWindow("one")
+        self.c.layout.next()
+        two = self.testWindow("two")
+        three = self.testWindow("three")
+        assert self._stacks() == [['one'], ['three', 'two']]
+        assert self.c.layout.info()["current_stack"] == 1
+        self.kill(three)
+        assert self.c.layout.info()["current_stack"] == 1
+        self.kill(two)
+        assert self.c.layout.info()["current_stack"] == 0
+        self.c.layout.next()
+        two = self.testWindow("two")
+        self.c.layout.next()
+        assert self.c.layout.info()["current_stack"] == 0
+        self.kill(one)
+        assert self.c.layout.info()["current_stack"] == 1
+
     def test_rotation(self):
         self.c.layout.delete()
         self.testWindow("one")
