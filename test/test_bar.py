@@ -1,16 +1,18 @@
 import libpry, time
-import libqtile.layout, libqtile.bar, libqtile.widget
+import libqtile.layout, libqtile.bar, libqtile.widget, libqtile.theme
 import utils
+
+theme = libqtile.theme.Theme({}, specials={'stack': {'border_width': 10}})
 
 class GBConfig:
     keys = []
     groups = ["a", "b", "c", "d"]
-    layouts = [libqtile.layout.stack.Stack(stacks=1, borderWidth=10)]
+    layouts = [libqtile.layout.stack.Stack(stacks=1, theme=theme)]
     screens = [
         libqtile.manager.Screen(
             bottom=libqtile.bar.Bar(
                         [
-                            libqtile.widget.GroupBox(),
+                            libqtile.widget.GroupBox(theme),
                             libqtile.widget.WindowName(),
                             libqtile.widget.TextBox("text", text="default", width=100),
                             libqtile.widget.MeasureBox("measure", width=100),
@@ -57,7 +59,7 @@ class uWidgets(utils.QtileTests):
 class GeomConf:
     keys = []
     groups = ["a", "b", "c", "d"]
-    layouts = [libqtile.layout.stack.Stack(stacks=1, borderWidth=10)]
+    layouts = [libqtile.layout.stack.Stack(stacks=1, theme=theme)]
     screens = [
         libqtile.manager.Screen(
             left=libqtile.bar.Gap(10),

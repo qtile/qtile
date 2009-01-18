@@ -3,6 +3,10 @@ import libpry
 import libqtile
 import utils
 
+import libqtile.theme
+
+theme = libqtile.theme.Theme({}, specials={'stack': {'border_width': 10}})
+
 class CallConfig(libqtile.confreader.Config):
     keys = [
         libqtile.manager.Key(
@@ -16,7 +20,7 @@ class CallConfig(libqtile.confreader.Config):
     ]
     groups = ["a", "b"]
     layouts = [
-        libqtile.layout.Stack(stacks=1, borderWidth=10),
+        libqtile.layout.Stack(stacks=1, theme=theme),
         libqtile.layout.Max(),
     ]
     screens = [

@@ -1,13 +1,15 @@
 import os, time, cStringIO, subprocess
 import libpry
-import libqtile, libqtile.layout, libqtile.bar, libqtile.widget
+import libqtile, libqtile.layout, libqtile.bar, libqtile.widget, libqtile.theme
 import utils
+
+theme = libqtile.theme.Theme({}, specials={'stack': {'border_width': 10}})
 
 class TestConfig:
     groups = ["a", "b", "c", "d"]
     layouts = [
-                libqtile.layout.stack.Stack(stacks=1, borderWidth=10),
-                libqtile.layout.stack.Stack(2, borderWidth=10)
+                libqtile.layout.stack.Stack(stacks=1, theme=theme),
+                libqtile.layout.stack.Stack(2, theme=theme)
             ]
     keys = [
         libqtile.manager.Key(
@@ -24,7 +26,7 @@ class TestConfig:
     screens = [libqtile.manager.Screen(
             bottom=libqtile.bar.Bar(
                         [
-                            libqtile.widget.GroupBox(),
+                            libqtile.widget.GroupBox(theme),
                         ],
                         20
                     ),

@@ -1,7 +1,9 @@
 import libpry, time, pprint
 from libqtile import layout
+import libqtile.theme
 import utils
 
+theme = libqtile.theme.Theme({}, specials={'stack': {'border_width': 10}})
 
 class MaxConfig:
     groups = ["a", "b", "c", "d"]
@@ -41,8 +43,8 @@ class uMax(utils.QtileTests):
 class StackConfig:
     groups = ["a", "b", "c", "d"]
     layouts = [
-        layout.Stack(stacks=2, borderWidth=10),
-        layout.Stack(stacks=1, borderWidth=10),
+        layout.Stack(stacks=2, theme=theme),
+        layout.Stack(stacks=1, theme=theme),
     ]
     keys = []
     screens = []
