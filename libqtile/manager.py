@@ -342,11 +342,17 @@ class Group(command.CommandObject):
         else:
             screen = self.screens[screen]
         screen.setGroup(self)
+    
+    def move_groups(self, direction):
+        currentgroup = self.qtile.groups.index(self)
+        nextgroup = (currentgroup + direction) % len(self.qtile.groups)
+        self.qtile.currentScreen.setGroup(self.qtile.groups[nextgroup])
 
     def cmd_nextgroup(self):
-        currentgroup = self.qtile.groups.index(self)
-        nextgroup = (currentgroup + 1) % len(self.qtile.groups)
-        self.qtile.currentScreen.setGroup(self.qtile.groups[nextgroup])
+        self.move_groups(1)
+
+    def cmd_prevgroup(self):
+        self.move_groups(-1)
 
 class Log:
     """
