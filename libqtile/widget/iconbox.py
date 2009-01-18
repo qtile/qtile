@@ -22,7 +22,7 @@ class IconBox(base._Widget):
             iconsize = self.icon.size
             scale = float(self.bar.size)/iconsize[1]
             new_size = tuple([int(scale * d) for d in iconsize])
-            self.icon = self.icon.resize(new_size)
+            self.icon = self.icon.resize(new_size, Image.ANTIALIAS)
             self.width = self.icon.size[0]
 
     def draw(self):
