@@ -1,4 +1,6 @@
 import base
+from .. import command
+
 
 import Image #PYTHON IMAGING LIBRARY - new dependency
 
@@ -22,6 +24,7 @@ class IconBox(base._Widget):
             self.icon.thumbnail(new_size, Image.ANTIALIAS)
             self.width = self.icon.size[0]
         self.icon = self.icon.convert('RGB') #convert here instead, after resize
+
     def draw(self):
         self.clear()
         self._drawer.win.put_pil_image(self._drawer.gc,
@@ -29,3 +32,21 @@ class IconBox(base._Widget):
                                        0,
                                        self.icon
                                        )
+
+class ClickableIcon(IconBox):
+    def __init__(self, name, icon, onClick, resize=True):
+        IconBox.__init__(self, name, icon, resize=resize)
+        self.onClick = onClick
+
+    def click(self, x, y):
+        c = self.onClick
+        if c.check(self):
+            status, val = self.qtile.server.call(
+                (c.selectors, c.name, c.args, c.kwargs)
+                )
+            if status in (command.ERROR, command.EXCEPTION):
+                s = "OnClick command error %s: %s" % (c.name, val)
+                self.log.add(s)
+
+        else:
+            return
