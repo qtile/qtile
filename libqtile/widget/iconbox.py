@@ -46,7 +46,7 @@ class ClickableIcon(IconBox):
                 )
             if status in (command.ERROR, command.EXCEPTION):
                 s = "OnClick command error %s: %s" % (c.name, val)
-                self.log.add(s)
+                print s
 
         else:
             return
