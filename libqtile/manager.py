@@ -286,7 +286,6 @@ class Group(command.CommandObject):
         for i in self.layouts:
             if i is self.layout:
                 nextfocus = i.remove(window)
-                print >> sys.stderr, "NEXT", nextfocus
             else:
                 i.remove(window)
         self.focus(nextfocus, True)

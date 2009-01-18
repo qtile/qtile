@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import sys
 from base import Layout
 from .. import command, utils
 
@@ -186,7 +187,7 @@ class Stack(Layout):
         else:
             n = self._findNext(
                     list(reversed(self.stacks)),
-                    len(self.stacks) - self.currentStackOffset - 1
+                    len(self.stacks) - currentOffset - 1
                 )
             if n:
                 return n.cw
