@@ -7,9 +7,6 @@ class IconBox(base._Widget):
         self.name = name
         if type(icon) is str:
             self.icon = Image.open(icon)
-            self.icon = self.icon.convert('RGB') #should be rgb for put_pil_image
-            #though need to be sure of this - would be funky to have 
-            #alpha drawing
         else:
             self.icon = icon #should be a pil image
         self.resize = resize
@@ -24,7 +21,7 @@ class IconBox(base._Widget):
             new_size = tuple([int(scale * d) for d in iconsize])
             self.icon.thumbnail(new_size, Image.ANTIALIAS)
             self.width = self.icon.size[0]
-
+        self.icon = self.icon.convert('RGB') #convert here instead, after resize
     def draw(self):
         self.clear()
         self._drawer.win.put_pil_image(self._drawer.gc,
