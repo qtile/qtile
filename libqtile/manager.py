@@ -343,6 +343,10 @@ class Group(command.CommandObject):
             screen = self.screens[screen]
         screen.setGroup(self)
 
+    def cmd_nextgroup(self):
+        currentgroup = self.qtile.groups.index(self)
+        nextgroup = (currentgroup + 1) % len(self.qtile.groups)
+        self.qtile.currentScreen.setGroup(self.qtile.groups[nextgroup])
 
 class Log:
     """
