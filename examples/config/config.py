@@ -22,6 +22,8 @@ keys = [
     Key(["mod1"],"F4", lazy.window.kill()), 
     Key(["control"], "grave", lazy.spawn("urxvt")),
     Key(["mod1"], "grave", lazy.spawn("exe=`dmenu_path | dmenu` && eval \"exec $exe\"")),
+    Key([modkey], "Right", lazy.group.nextgroup()),
+    Key([modkey], "Left", lazy.group.prevgroup()),
 ]
 
 groups = ["zero", "one", "two", "three", "four", "five", "six"]
@@ -32,35 +34,51 @@ for i in range(len(groups)):
  
 theme = Theme(
     {'fg_normal': '#989898',
-     'fg_focus': '#8fea26',
+     'fg_focus': '#00d691',
      'fg_active': '#ffffff',
      'bg_normal': '#181818',
      'bg_focus': '#252525',
      'bg_active': '#181818',
      'border_normal': '#181818',
-     'border_focus': '#8fea26',
+     'border_focus': '#0096d1',
      'border_width': 2,
-     'font': '-*-nimbus sans l-*-r-*-*-*-*-*-*-*-*-*-*',
-     }
+     'font': '-*-zekton-*-r-normal-*-14-*-*-*-*-0-*-*',
+     },
+    specials = {'magnify': 
+                {'border_width': 5,
+                 }
+                },
     )
  
 layouts = [
+    layout.Tile(theme),
+    layout.Tile(theme, masterWindows=2),
     layout.Magnify(theme),
     layout.Magnify(theme, gap=150),
+    layout.Stack(stacks=2, theme=theme),
+    layout.Max(),
 ]
 
+
+import Image
 
 screens = [
     Screen(
         top=bar.Bar(
             [
+                widget.IconBox("archicon", "/home/ben/Pictures/archicon.png"),
                 widget.GroupBox(theme),
-                widget.WindowName()
+                widget.ClickableIcon("irssi", 
+                                     "/home/ben/Pictures/irssi_white.png",
+                                     lazy.spawn("~/Scripts/irssi.sh"),
+                                     ),
+                widget.ClickableIcon("browser",
+                                     "/usr/share/icons/HighContrastLargePrintInverse/48x48/apps/mozilla-icon.png",
+                                     lazy.spawn("conkeror"),
+                                     ),
+                widget.WindowName(),
                 ],
-            15, theme=theme),
-        bottom=bar.Bar(
-            [widget.WindowName(), ],
-            15, theme=theme  )
-        )
+            20, theme=theme),
+        ),
     ]
  
