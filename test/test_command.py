@@ -3,7 +3,7 @@ import libpry
 import libqtile
 import utils
 
-import libqtile.theme
+import libqtile.theme, libqtile.confreader, libqtile.manager, libqtile.layout, libqtile.bar, libqtile.widget
 
 theme = libqtile.theme.Theme({}, specials={'stack': {'border_width': 10}})
 

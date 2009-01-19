@@ -1,5 +1,5 @@
 import libpry
-from libqtile import confreader
+from libqtile import confreader, manager
 
 
 class uConfig(libpry.AutoTree):
