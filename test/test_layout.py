@@ -222,11 +222,48 @@ class uSelectors(utils.QtileTests):
     def test_simple(self):
         pass
 
+class TileConfig:
+    groups = ["a", "b", "c", "d"]
+    layouts = [
+        layout.Tile(theme)
+        ]
+    keys = []
+    screens = []
+
+class uTile(utils.QtileTests):
+    config = TileConfig()
+    #TODO: write some tests :D
+
+class MagnifyConfig:
+    groups = ["a", "b", "c", "d"]
+    layouts = [
+        layout.Magnify(theme)
+        ]
+    keys = []
+    screens = []
+
+class uMagnify(utils.QtileTests):
+    config = MagnifyConfig()
+    def test_focus(self):
+        one = self.testWindow("one")
+        two = self.testWindow("two")
+        three = self.testWindow("three")
+        
+        assert self.c.groups()["a"]["focus"] == "three"
+        self.c.layout.down()
+        assert self.c.groups()["a"]["focus"] == "two"
+        self.c.layout.down()
+        assert self.c.groups()["a"]["focus"] == "one"
+        
+        self.kill(one)
+        assert self.c.groups()["a"]["focus"] == "two"
 
 tests = [
     utils.xfactory(xinerama=False), [
         uMax(),
         uStack(),
+        uTile(),
+        uMagnify(),
         uSelectors(),
     ],
 ]

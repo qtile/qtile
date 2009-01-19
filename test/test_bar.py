@@ -1,5 +1,6 @@
 import libpry, time
 import libqtile.layout, libqtile.bar, libqtile.widget, libqtile.theme
+from libqtile.command import lazy
 import utils
 
 theme = libqtile.theme.Theme({}, specials={'stack': {'border_width': 10}})
@@ -10,6 +11,15 @@ class GBConfig:
     layouts = [libqtile.layout.stack.Stack(stacks=1, theme=theme)]
     screens = [
         libqtile.manager.Screen(
+            top = libqtile.bar.Bar(
+                [
+                    libqtile.widget.ClickableIcon("myicon",
+                                                  "/usr/share/pixmaps/xterm_32x32.xpm",
+                                                  lazy.layout.spawn("xterm"),
+                                                  )
+                    ],
+                20,
+                ),
             bottom=libqtile.bar.Bar(
                         [
                             libqtile.widget.GroupBox(theme),
@@ -44,6 +54,12 @@ class uWidgets(utils.QtileTests):
         assert self.c.groups()["a"]["screen"] == None
         self.c.bar["bottom"].fake_click(0, "bottom", 10, 10)
         assert self.c.groups()["a"]["screen"] == 0
+
+    def test_clickableicon(self):
+        self.c.group["a"].toscreen()
+        assert self.c.groups()["d"]["screen"] == None
+        self.c.bar["top"].fake_click(0, "top", 10, 10)
+        assert self.c.groups()["d"]["screen"] == 0
 
     def test_measurebox(self):
         libpry.raises("out of range", self.c.widget["measure"].update, 200)
