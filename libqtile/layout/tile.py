@@ -94,7 +94,11 @@ class Tile(Layout):
             c.hide()
              
     def info(self):
-        return [c.name for c in self.clients]
+        return dict(
+            all = [c.name for c in self.clients],
+            master = [c.name for c in self.master_windows],
+            slave = [c.name for c in self.slave_windows],
+            )
 
     def cmd_down(self):
         self.down()

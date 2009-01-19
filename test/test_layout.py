@@ -225,14 +225,50 @@ class uSelectors(utils.QtileTests):
 class TileConfig:
     groups = ["a", "b", "c", "d"]
     layouts = [
-        layout.Tile(theme)
+        layout.Tile(theme),
+        layout.Tile(theme, masterWindows=2)
         ]
     keys = []
     screens = []
 
 class uTile(utils.QtileTests):
     config = TileConfig()
-    #TODO: write some tests :D
+
+    def test_updown(self):
+        self.testWindow("one")
+        self.testWindow("two")
+        self.testWindow("three")
+        assert self.c.layout.info()["all"] == ["three", "two", "one"]
+        self.c.layout.down()
+        assert self.c.layout.info()["all"] == ["two", "one","three"]
+        self.c.layout.up()
+        assert self.c.layout.info()["all"] == ["three", "two", "one"]
+    
+    def test_master_and_slave(self):
+        self.testWindow("one")
+        self.testWindow("two")
+        self.testWindow("three")
+        
+        assert self.c.layout.info()["master"] == ["three"]
+        assert self.c.layout.info()["slave"] == ["two", "one"]
+
+        self.c.nextlayout()
+        assert self.c.layout.info()["master"] == ["three", "two"]
+        assert self.c.layout.info()["slave"] == ["one"]
+
+    def test_remove(self):
+        one = self.testWindow("one")
+        self.testWindow("two")
+        three = self.testWindow("three")
+        
+        assert self.c.layout.info()["master"] == ["three"]
+        self.kill(one)
+        assert self.c.layout.info()["master"] == ["three"]
+        self.kill(three)
+        assert self.c.layout.info()["master"] == ["two"]
+        
+        
+
 
 class MagnifyConfig:
     groups = ["a", "b", "c", "d"]
