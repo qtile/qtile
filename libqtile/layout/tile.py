@@ -84,7 +84,9 @@ class Tile(Layout):
             c.unhide()
         else:
             c.hide()
-                
+             
+    def info(self):
+        return [c.name for c in self.clients]
 
     def cmd_down(self):
         self.down()
