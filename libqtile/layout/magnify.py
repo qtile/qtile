@@ -93,6 +93,9 @@ class Magnify(Layout):
         else:
             c.hide()
 
+    def info(self):
+        return [i.name for i in self.clients]
+
     def cmd_down(self):
         """
            Switch down in the window list
