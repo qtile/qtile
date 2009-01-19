@@ -256,6 +256,8 @@ class uMagnify(utils.QtileTests):
         assert self.c.groups()["a"]["focus"] == "one"
         
         self.kill(one)
+        assert self.c.groups()["a"]["focus"] == "three"
+        self.kill(two)
         assert self.c.groups()["a"]["focus"] == "two"
 
 tests = [
