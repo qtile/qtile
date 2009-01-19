@@ -15,6 +15,14 @@ class Tile(Layout):
         self.focusedBorder = None
         self.normalBorder = None
 
+    @property
+    def master_windows(self):
+        return self.clients[:self.master]
+
+    @property
+    def slave_windows(self):
+        return self.clients[self.master:]
+
     def up(self):
         self.shuffle(utils.shuffleUp)
 
