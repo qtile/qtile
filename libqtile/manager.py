@@ -523,11 +523,12 @@ class Qtile(command.CommandObject):
     def manage(self, w):
         try:
             attrs = w.get_attributes()
+            internal = w.get_full_property(self.atoms["internal"], self.atoms["python"])
         except Xlib.error.BadWindow:
             return
         if attrs and attrs.override_redirect:
             return
-        if w.get_full_property(self.atoms["internal"], self.atoms["python"]):
+        if internal:
             if not w in self.internalMap:
                 c = window.Internal(w, self)
                 self.internalMap[w] = c

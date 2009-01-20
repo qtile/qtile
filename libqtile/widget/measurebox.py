@@ -1,4 +1,5 @@
 import base
+from .. import command
 
 class MeasureBox(base._Widget):
     colors = ["red", "yellow", "orange", "green"]
