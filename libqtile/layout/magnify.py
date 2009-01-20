@@ -37,11 +37,14 @@ class Magnify(Layout):
         return c
 
     def focus(self, c):
-        if c in self.clients:
-            pos = self.clients.index(c)
-            self.clients[0], self.clients[pos] = \
-                self.clients[pos], self.clients[0]
-            self.group.layoutAll()
+        '''
+        Don't allow anything apart from the chosen one (self.clients[0]) get any focus
+        '''
+        if c in self.clients and c is self.clients[0]:
+            return
+        else:
+            self.group.focus(self.clients[0], False)
+        #no need to call layoutAll, focus already does that
 
     def add(self, c):
         self.clients.insert(0, c)
