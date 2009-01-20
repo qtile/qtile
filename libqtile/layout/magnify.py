@@ -21,7 +21,7 @@ class Magnify(Layout):
         if self.clients:
             function(self.clients)
             self.group.layoutAll()
-            self.group.focus(self.clients[0], False)
+            self.group.focus(self.clients[0], True)
 
     def clone(self, group):
         if not self.focusedBorder:
