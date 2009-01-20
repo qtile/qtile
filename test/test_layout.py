@@ -307,12 +307,6 @@ class uMagnify(utils.QtileTests):
         self.c.layout.up()
         assert self.c.layout.info() == ["three", "two", "one"]
 
-    def test_focus_change(self):
-        one = self.testWindow("one")
-        two = self.testWindow("two")
-        three = self.testWindow("three")
-        #now somehow focus a window, don't know how ahhh
-        #but should focus a window, and ensure it gets swapped with the currently focused window
 
 tests = [
     utils.xfactory(xinerama=False), [
