@@ -119,7 +119,7 @@ class _QtileTruss(libpry.TmpDirMixin, libpry.AutoTree):
                 q._testing = True
                 # BEWARE: Xnest somehow stuffs up geometry detection for
                 # multiple screens in xinerama. We poke into qtile to fix this.
-                if self["xinerama"]:
+                if self["xinerama"] and len(q.screens) > 1:
                     q.screens[1].x = WIDTH
                 q.loop()
             except Exception, e:

@@ -1,6 +1,6 @@
 import libpry, time
 import libqtile.layout, libqtile.bar, libqtile.widget, libqtile.theme
-from libqtile.command import lazy
+from libqtile.command import _Call
 import utils
 
 theme = libqtile.theme.Theme({}, specials={'stack': {'border_width': 10}})
@@ -15,7 +15,7 @@ class GBConfig:
                 [
                     libqtile.widget.ClickableIcon("myicon",
                                                   "/usr/share/pixmaps/xterm_32x32.xpm",
-                                                  lazy.layout.spawn("xterm"),
+                                                  _Call([('group', 'd')], 'toscreen')
                                                   )
                     ],
                 20,
