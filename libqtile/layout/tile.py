@@ -4,16 +4,18 @@ from ..theme import Theme
 
 class Tile(Layout):
     name="tile"
-    def __init__(self, theme=Theme({}), ratio=0.618, masterWindows = 1):
+    def __init__(self, theme=Theme({}), ratio=0.618, masterWindows = 1, expand=True):
         Layout.__init__(self)
         self.clients = []
         self.theme = theme
         self.ratio = ratio
         self.master = masterWindows
         self.focused = None
+        self.expand = expand
         # border colors get set in clone
         self.focusedBorder = None
         self.normalBorder = None
+        
 
     @property
     def master_windows(self):
@@ -67,14 +69,16 @@ class Tile(Layout):
         borderWidth = self.theme["tile_border_width"]
         if self.clients and c in self.clients:
             pos = self.clients.index(c)
-            if c in self.clients[:self.master]:
-                w = int(screenWidth*self.ratio)
+            if c in self.master_windows:
+                w = (int(screenWidth*self.ratio) \
+                         if len(self.slave_windows) or not self.expand \
+                         else screenWidth)
                 h = screenHeight/self.master
                 x = self.group.screen.dx
                 y = self.group.screen.dy + pos*h
             else:
                 w = int(screenWidth*(1-self.ratio))
-                h = screenHeight/(len(self.clients[self.master:]))
+                h = screenHeight/(len(self.slave_windows))
                 x = self.group.screen.dx + int(screenWidth*self.ratio)
                 y = self.group.screen.dy + self.clients[self.master:].index(c)*h
             if c is self.focused:
