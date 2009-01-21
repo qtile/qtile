@@ -20,11 +20,17 @@
 
 import copy, sys
 from .. import command
+from ..theme import Theme
 
 class Layout(command.CommandObject):
     """
         This class defines the API that should be exposed by all layouts.
     """
+    
+    def layout(self, windows):
+        for i in windows:
+            self.configure(i)
+
     def clone(self, group):
         """
             :group Group to attach new layout instance to.
@@ -96,3 +102,64 @@ class Layout(command.CommandObject):
             Return a dictionary of info for this object.
         """
         return self.info()
+
+
+class Rect:
+    def __init__(self, x, y, w, h):
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+
+class SubLayout:
+    
+    def __init__(self, clientStack, theme=Theme({})):
+        self.clientStack = clientStack
+        self.clients = []
+        self.sublayouts = []
+
+    def filter(self, client):
+        raise NotImplementedError
+
+    def add(self, client):
+        """
+            Receives a client that this SubLayout may be interested in.
+        """
+        self.clients.append(client) #keep a copy regardless
+        if self.sublayouts:
+            for sl in self.sublayouts:
+                sl.add(client)
+
+
+    def focus(self, client):
+        """
+           Some client in the ClientStack got focus, no clue if it concerns us
+        """
+
+    def remove(self, client):
+        if client in self.clients:
+            self.clients.remove(client)
+
+    def layout(self, rectangle, windows):
+        """
+           Layout the list of windows in the specified rectangle
+           This should be overriden by any SubLayout that has SubLayouts of its own
+           - don't send all sublayouts the same rectangle
+        """
+        if self.sublayouts:
+            for sl in self.sublayouts:
+                sl.layout(rectangle, [c for c in windows if c in sl.clients])
+                #TODO: override the 'in' function for sublayouts
+        else:
+            #TODO: refactor this - the list of windows should be filtered elsewhere
+            for c in windows:
+                if c in self.clients: #safety check
+                    if self.filter(c):
+                        self.configure(rectangle, c)
+                
+    def configure(self, client):
+        """
+            Place a window
+        """
+        raise NotImplementedError
+        

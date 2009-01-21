@@ -225,8 +225,7 @@ class Group(command.CommandObject):
     def layoutAll(self):
         self.disableMask(X.EnterWindowMask)
         if self.screen and len(self.windows):
-            for i in self.windows:
-                self.layout.configure(i)
+            self.layout.layout(self.windows)
             if self.currentWindow:
                 self.currentWindow.focus(False)
         self.resetMask()
