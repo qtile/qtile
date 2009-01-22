@@ -114,11 +114,11 @@ class ClientStack(Layout):
         return self.clients.index(client)
 
     def change_focus(self, offset):
-        if self.focus['current'] in self.clients:
-            current_focus_index = self.clients.index(self.focus['current'])
+        if self.focus_history[0] in self.clients:
+            current_focus_index = self.clients.index(self.focus_history[0])
         else:
             current_focus_index = 0
-        current_focus_index += offset
+        current_focus_index = (current_focus_index + offset) % len(self.clients)
         self.group.focus(self.clients[current_focus_index], self.mouse_warp)
 
     def cmd_up(self):
