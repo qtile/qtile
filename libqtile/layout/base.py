@@ -140,6 +140,13 @@ class SubLayout:
         if client in self.clients:
             self.clients.remove(client)
 
+    def layout_sublayouts(self, sublayouts_and_rects, windows):
+        for sl, rect in sublayouts_and_rects:
+            filtered_windows = [w for w in windows if sl.filter(w)]
+            sl.layout(rect, filtered_windows)
+            windows = [w for w in windows if w not in filtered_windows]
+            
+
     def layout(self, rectangle, windows):
         """
            Layout the list of windows in the specified rectangle
@@ -147,9 +154,8 @@ class SubLayout:
            - don't send all sublayouts the same rectangle
         """
         if self.sublayouts:
-            for sl in self.sublayouts:
-                sl.layout(rectangle, [c for c in windows if c in sl.clients])
-                #TODO: override the 'in' function for sublayouts
+            sls_and_rects = [(sl, rect) for sl in self.sublayouts]
+            self.layout_sublayouts(sls_and_rects, windows)
         else:
             #TODO: refactor this - the list of windows should be filtered elsewhere
             for c in windows:

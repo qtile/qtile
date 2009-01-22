@@ -74,8 +74,7 @@ class TileTwo(SubLayout):
         print r.h
         master = Rect(r.x, r.y, int(r.w * self.ratio), r.h)
         slave = Rect(r.x+int(r.w*self.ratio), r.y, int(r.w * (1 - self.ratio)), r.h)
-        self.sublayouts[0].layout(master, windows)
-        self.sublayouts[1].layout(slave, windows)
+        self.layout_sublayouts([(self.sublayouts[0], master), (self.sublayouts[1], slave)], windows)
             
         
         
