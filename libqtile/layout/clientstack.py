@@ -9,7 +9,7 @@ class ClientStack(Layout):
     FOCUS_TO_TOP, FOCUS_TO_BOTTOM, \
     FOCUS_TO_NEXT, FOCUS_TO_PREVIOUS, \
     FOCUS_TO_LAST_FOCUSED = \
-        (1, 2, 3, 4, 5)
+        (5, 6, 7, 8, 9)
     def __init__(self, SubLayouts, theme=Theme({}), add_mode=ADD_TO_TOP,
                  focus_mode=FOCUS_TO_TOP,
                  focus_history_length=10, mouse_warp = False):
@@ -36,11 +36,10 @@ class ClientStack(Layout):
                     self.group.screen.dwidth,
                     self.group.screen.dheight,
                     )
-        sl.layout(rect, [c for c in windows if c in sl.clients])
+        sl.layout(rect, self.clients) #screw the group list of windows
+        #we think we know best...
                 
     def clone(self, group):
-        print "CLONING, group is" , group
-        print "SCREEN IS", group.screen
         if not self.active_border:
             def color(color):
                 colormap = group.qtile.display.screen().default_colormap
@@ -53,7 +52,6 @@ class ClientStack(Layout):
         c.focus_history = []
         c.sublayouts = []
         for SL, kwargs in self.SubLayouts:
-            print "creating sublayouts id is", id(c)
             c.sublayouts.append(SL(c, #pass the new clientstack!!!!!
                                    self.theme,
                                    **kwargs
@@ -85,10 +83,7 @@ class ClientStack(Layout):
                 self.clients.insert(0, c)
         else:
             raise NotImplementedError, "This mode is not catered for"
-        print "done adding, self.clients is", self.clients
-        print "id is in addclientstack", id(self)
         for sl in self.sublayouts:
-            print "attempting to add it to the sublayout %s" % sl.__class__.__name__
             sl.add(c)
 
     def remove(self, c):
@@ -116,8 +111,6 @@ class ClientStack(Layout):
             return None
 
     def index_of(self, client):
-        print "indexing", client
-        print "self.clients is ", self.clients
         return self.clients.index(client)
 
     def change_focus(self, offset):

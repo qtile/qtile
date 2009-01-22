@@ -110,13 +110,16 @@ class Rect:
         self.y = y
         self.w = w
         self.h = h
+    #TODO:
+        # functions for splitting
+        # functions for bordering??
 
 class SubLayout:
-    
     def __init__(self, clientStack, theme=Theme({})):
         self.clientStack = clientStack
         self.clients = []
         self.sublayouts = []
+        self.theme = theme
 
     def filter(self, client):
         raise NotImplementedError
