@@ -29,6 +29,7 @@ class Config:
     groups = None
     layouts = None
     screens = ()
+    theme = None
 
 
 class File(Config):

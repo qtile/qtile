@@ -1,4 +1,4 @@
-    # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
+# Copyright (c) 2008, Aldo Cortesi. All rights reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,6 @@
 import sys
 from base import Layout
 from .. import command, utils
-from ..theme import Theme
 
 
 class _WinStack(object):
@@ -95,15 +94,10 @@ class _WinStack(object):
 
 class Stack(Layout):
     name = "stack"
-    def __init__(self, stacks=2, theme=Theme({})):
+    def __init__(self, stacks=2):
         """
             :stacks Number of stacks to start with.
-            :theme  The theme to use with this layout
         """
-        self.borderWidth = theme["stack_border_width"]
-        self.active = theme["stack_border_focus"]
-        self.inactive = theme["stack_border_normal"]
-
         self.activePixel, self.inactivePixel = None, None
         self.stacks = [_WinStack() for i in range(stacks)]
 
@@ -118,14 +112,17 @@ class Stack(Layout):
                 return i
         return 0
 
-    def clone(self, group):
+    def clone(self, group, theme):
         if not self.activePixel:
             colormap = group.qtile.display.screen().default_colormap
-            self.activePixel = colormap.alloc_named_color(self.active).pixel
-            self.inactivePixel = colormap.alloc_named_color(self.inactive).pixel
-        c = Layout.clone(self, group)
+            self.activePixel = colormap.alloc_named_color(theme["stack_border_focus"]).pixel
+            self.inactivePixel = colormap.alloc_named_color(theme["stack_border_normal"]).pixel
+        c = Layout.clone(self, group, theme)
         # These are mutable
         c.stacks = [_WinStack() for i in self.stacks]
+        c.borderWidth = theme["stack_border_width"]
+        c.active = theme["stack_border_focus"]
+        c.inactive = theme["stack_border_normal"]
         return c
 
     def _findNext(self, lst, offset):

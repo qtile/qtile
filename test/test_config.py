@@ -1,5 +1,5 @@
 import libpry
-from libqtile import confreader, manager, theme
+from libqtile import confreader, manager
 
 
 class uConfig(libpry.AutoTree):
@@ -10,7 +10,7 @@ class uConfig(libpry.AutoTree):
         f = confreader.File("configs/basic.py")
         
     def test_theme(self):
-        the = theme.Theme(
+        the = manager.Theme(
             {'bg_normal': 'BG_NORMAL_TEST',
              'fg_active': 'FG_ACTIVE_TEST',
              'fallback_test': 'FALLBACK_TEST',
@@ -33,7 +33,7 @@ class uConfig(libpry.AutoTree):
 
         assert the["foobar_fallback_test"] == 'FALLBACK_TEST'
 
-        assert the["bg_focus"] == theme.Theme.normal['bg_focus'] #test for defaults
+        assert the["bg_focus"] == manager.Theme.defaults['bg_focus'] #test for defaults
         
         
 

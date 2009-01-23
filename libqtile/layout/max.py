@@ -39,8 +39,8 @@ class Max(Layout):
             self.group.layoutAll()
             self.group.focus(self.clients[0], False)
 
-    def clone(self, group):
-        c = Layout.clone(self, group)
+    def clone(self, group, theme):
+        c = Layout.clone(self, group, theme)
         c.clients = []
         return c
 
