@@ -20,7 +20,6 @@
 
 import copy, sys
 from .. import command
-from ..theme import Theme
 
 class Layout(command.CommandObject):
     """
