@@ -1,13 +1,11 @@
 from base import Layout
 from .. import command, utils
-from ..theme import Theme
 
 class Tile(Layout):
     name="tile"
-    def __init__(self, theme=Theme({}), ratio=0.618, masterWindows = 1, expand=True):
+    def __init__(self, ratio=0.618, masterWindows = 1, expand=True):
         Layout.__init__(self)
         self.clients = []
-        self.theme = theme
         self.ratio = ratio
         self.master = masterWindows
         self.focused = None
@@ -36,16 +34,16 @@ class Tile(Layout):
             function(self.clients)
             self.group.layoutAll()
     
-    def clone(self, group):
+    def clone(self, group, theme):
         if not self.focusedBorder:
             colormap = group.qtile.display.screen().default_colormap
             self.focusedBorder = colormap.alloc_named_color(
-                self.theme["tile_border_focus"],
+                theme["tile_border_focus"],
                 ).pixel
             self.normalBorder = colormap.alloc_named_color(
-                self.theme["tile_border_normal"],
+                theme["tile_border_normal"],
                 ).pixel
-        c = Layout.clone(self, group)
+        c = Layout.clone(self, group, theme)
         c.clients = []
         return c
 

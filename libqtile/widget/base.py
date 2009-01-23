@@ -1,5 +1,4 @@
 from .. import command, utils, bar
-from ..theme import Theme
 
 LEFT = object()
 CENTER = object()
@@ -117,8 +116,8 @@ class _Widget(command.CommandObject):
     def colormap(self):
         return self.qtile.display.screen().default_colormap
 
-    def _configure(self, qtile, bar, event):
-        self.qtile, self.bar, self.event = qtile, bar, event
+    def _configure(self, qtile, bar, event, theme):
+        self.qtile, self.bar, self.event, self.theme = qtile, bar, event, theme
         self._drawer = _Drawer(qtile, self.bar.window)
         self._drawer.setFont(self.font)
 
@@ -161,13 +160,15 @@ class _Widget(command.CommandObject):
         """
         return dict(name=self.name)
 
+
 class _TextBox(_Widget):
     PADDING = 5
-    def __init__(self, text=" ", width=bar.STRETCH, theme=Theme({})):
+    def __init__(self, text=" ", width=bar.STRETCH):
         self.width = width
-        self.foreground = theme['textbox_fg_normal']
-        self.background = theme['textbox_bg_normal']
         self.text = text
+
+    def _configure(self, qtile, bar, event, theme):
+        _Widget._configure(self, qtile, bar, event, theme)
         if theme['font']:
             self.font = theme['font']
 
@@ -176,7 +177,7 @@ class _TextBox(_Widget):
             self.text,
             self.offset, 0, self.width, self.bar.size,
             padding = self.PADDING,
-            foreground=self.foreground,
-            background=self.background,
+            foreground=self.theme['textbox_fg_normal'],
+            background=self.theme['textbox_bg_normal'],
         )
 

@@ -91,13 +91,13 @@ class Screen(command.CommandObject):
         self.top, self.bottom = top, bottom
         self.left, self.right = left, right
 
-    def _configure(self, qtile, index, x, y, width, height, group, event):
-        self.qtile, self.event = qtile, event
+    def _configure(self, qtile, theme, index, x, y, width, height, group, event):
+        self.qtile, self.theme, self.event = qtile, theme, event
         self.index, self.x, self.y = index, x, y,
         self.width, self.height = width, height
         self.setGroup(group)
         for i in self.gaps:
-            i._configure(qtile, self, event)
+            i._configure(qtile, self, event, theme)
 
     @property
     def gaps(self):
@@ -180,7 +180,7 @@ class Screen(command.CommandObject):
         y = y or self.y
         w = w or self.width
         h = h or self.height
-        self._configure(self.qtile, self.index, x, y, w, h, self.group, self.event)
+        self._configure(self.qtile, self.theme, self.index, x, y, w, h, self.group, self.event)
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
                 bar.resize()
@@ -209,7 +209,7 @@ class Group(command.CommandObject):
     def __init__(self, name, layouts, qtile):
         self.name, self.qtile = name, qtile
         self.screen = None
-        self.layouts = [i.clone(self) for i in layouts]
+        self.layouts = [i.clone(self, qtile.theme) for i in layouts]
         self.currentLayout = 0
         self.currentWindow = None
         self.windows = set()
@@ -353,6 +353,7 @@ class Group(command.CommandObject):
     def cmd_prevgroup(self):
         self.move_groups(-1)
 
+
 class Log:
     """
         A circular log.
@@ -380,6 +381,45 @@ class Log:
     def clear(self):
         self.log = []
 
+
+class Theme:
+    defaults = {
+        'fg_normal': '#ffffff',
+        'fg_focus': '#ff0000',
+        'fg_active': '#990000',
+        'bg_normal': '#000000',
+        'bg_focus': '#ffffff',
+        'bg_active': '#888888',
+        'border_normal': '#00ff00',
+        'border_focus': '#0000ff',
+        'border_active': '#ff0000',
+        'border_width': 1,
+        'font': None,
+        }
+    specials = {}
+    def __init__(self, values=None, specials=None):
+        self.normal = self.defaults.copy()
+        if values:
+            for key, value in values.items():
+                self.normal[key] = value
+        if specials:
+            for key, value in specials.items():
+                self.specials[key] = value
+
+    def __getitem__(self, key):
+        if key in self.normal:
+            return self.normal[key]
+        else:
+            parts = key.split("_")
+            special = parts[0]
+            key = '_'.join(parts[1:])
+            if special in self.specials and key in self.specials[special]:
+                return self.specials[special][key]
+            elif key in self.normal:
+                return self.normal[key]
+            else:
+                return None
+    
 
 class Qtile(command.CommandObject):
     debug = False
@@ -417,6 +457,11 @@ class Qtile(command.CommandObject):
         self.widgetMap = {}
         self.groupMap = {}
 
+        if config.theme:
+            self.theme = theme
+        else:
+            self.theme = Theme()
+
         self.groups = []
         for i in self.config.groups:
             g = Group(i, self.config.layouts, self)
@@ -435,6 +480,7 @@ class Qtile(command.CommandObject):
                     self.currentScreen = scr
                 scr._configure(
                     self,
+                    self.theme,
                     i,
                     s["x"],
                     s["y"],
@@ -452,7 +498,7 @@ class Qtile(command.CommandObject):
                 s = Screen()
             self.currentScreen = s
             s._configure(
-                self,
+                self, self.theme,
                 0, 0, 0,
                 defaultScreen.width_in_pixels,
                 defaultScreen.height_in_pixels,

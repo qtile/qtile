@@ -1,14 +1,12 @@
 from base import Layout
 from .. import command, utils
-from ..theme import Theme
 
 class Magnify(Layout):
     name = "layout"
-    def __init__(self, theme=Theme({}), gap=50):
+    def __init__(self, gap=50):
         Layout.__init__(self)
         self.clients = []
         self.gap = gap
-        self.theme = theme
         self.focusedBorder = None
         self.normalBorder = None
     def up(self):
@@ -23,16 +21,16 @@ class Magnify(Layout):
             self.group.layoutAll()
             self.group.focus(self.clients[0], True)
 
-    def clone(self, group):
+    def clone(self, group, theme):
         if not self.focusedBorder:
             colormap = group.qtile.display.screen().default_colormap
             self.focusedBorder = colormap.alloc_named_color(
-                self.theme["magnify_border_focus"],
+                theme["magnify_border_focus"],
                 ).pixel
             self.normalBorder = colormap.alloc_named_color(
-                self.theme["magnify_border_normal"],
+                theme["magnify_border_normal"],
                 ).pixel
-        c = Layout.clone(self, group)
+        c = Layout.clone(self, group, theme)
         c.clients = []
         return c
 

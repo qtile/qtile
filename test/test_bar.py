@@ -1,14 +1,14 @@
 import libpry, time
-import libqtile.layout, libqtile.bar, libqtile.widget, libqtile.theme
+import libqtile.layout, libqtile.bar, libqtile.widget, libqtile.manager
 from libqtile.command import _Call
 import utils
 
-theme = libqtile.theme.Theme({}, specials={'stack': {'border_width': 10}})
+theme = libqtile.manager.Theme({}, specials={'stack': {'border_width': 10}})
 
 class GBConfig:
     keys = []
     groups = ["a", "b", "c", "d"]
-    layouts = [libqtile.layout.stack.Stack(stacks=1, theme=theme)]
+    layouts = [libqtile.layout.stack.Stack(stacks=1)]
     screens = [
         libqtile.manager.Screen(
             top = libqtile.bar.Bar(
@@ -22,7 +22,7 @@ class GBConfig:
                 ),
             bottom=libqtile.bar.Bar(
                         [
-                            libqtile.widget.GroupBox(theme),
+                            libqtile.widget.GroupBox(),
                             libqtile.widget.WindowName(),
                             libqtile.widget.TextBox("text", text="default", width=100),
                             libqtile.widget.MeasureBox("measure", width=100),
@@ -31,6 +31,7 @@ class GBConfig:
                     ),
         )
     ]
+    theme = None
 
 
 class uWidgets(utils.QtileTests):
@@ -75,7 +76,7 @@ class uWidgets(utils.QtileTests):
 class GeomConf:
     keys = []
     groups = ["a", "b", "c", "d"]
-    layouts = [libqtile.layout.stack.Stack(stacks=1, theme=theme)]
+    layouts = [libqtile.layout.stack.Stack(stacks=1)]
     screens = [
         libqtile.manager.Screen(
             left=libqtile.bar.Gap(10),
@@ -84,6 +85,7 @@ class GeomConf:
             bottom=libqtile.bar.Bar([], 10),
         )
     ]
+    theme = None
 
 
 class uBarGeometry(utils.QtileTests):
@@ -122,8 +124,8 @@ class uBarErr(utils._QtileTruss):
 
 
 class TestWidget(libqtile.widget.base._Widget):
-    def _configure(self, qtile, bar, event):
-        libqtile.widget.base._Widget._configure(self, qtile, bar, event)
+    def _configure(self, qtile, bar, event, theme):
+        libqtile.widget.base._Widget._configure(self, qtile, bar, event, theme)
         self.width = 10
 
     def draw(self): pass

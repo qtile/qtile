@@ -26,12 +26,11 @@ class Layout(command.CommandObject):
     """
         This class defines the API that should be exposed by all layouts.
     """
-    
     def layout(self, windows):
         for i in windows:
             self.configure(i)
 
-    def clone(self, group):
+    def clone(self, group, theme):
         """
             :group Group to attach new layout instance to.
 
@@ -40,6 +39,7 @@ class Layout(command.CommandObject):
         """
         c = copy.copy(self)
         c.group = group
+        c.theme = theme
         return c
 
     def focus(self, c):

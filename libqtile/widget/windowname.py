@@ -1,8 +1,8 @@
 import base
 
 class WindowName(base._TextBox):
-    def _configure(self, qtile, bar, event):
-        base._Widget._configure(self, qtile, bar, event)
+    def _configure(self, qtile, bar, event, theme):
+        base._Widget._configure(self, qtile, bar, event, theme)
         self.event.subscribe("window_name_change", self.update)
         self.event.subscribe("focus_change", self.update)
 

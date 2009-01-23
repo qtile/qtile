@@ -13,8 +13,8 @@ class IconBox(base._Widget):
             self.icon = icon #should be a pil image
         self.resize = resize
 
-    def _configure(self, qtile, bar, event):
-        base._Widget._configure(self, qtile, bar, event)
+    def _configure(self, qtile, bar, event, theme):
+        base._Widget._configure(self, qtile, bar, event, theme)
         if not self.resize:
             self.width = self.icon.size[0]
         else:

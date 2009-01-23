@@ -1,9 +1,9 @@
 import libpry, time, pprint
 from libqtile import layout
-import libqtile.theme
+import libqtile.manager
 import utils
 
-theme = libqtile.theme.Theme({}, specials={'stack': {'border_width': 10}})
+theme = libqtile.manager.Theme({}, specials={'stack': {'border_width': 10}})
 
 class MaxConfig:
     groups = ["a", "b", "c", "d"]
@@ -12,6 +12,7 @@ class MaxConfig:
     ]
     keys = []
     screens = []
+    theme = None
 
 
 class uMax(utils.QtileTests):
@@ -43,11 +44,12 @@ class uMax(utils.QtileTests):
 class StackConfig:
     groups = ["a", "b", "c", "d"]
     layouts = [
-        layout.Stack(stacks=2, theme=theme),
-        layout.Stack(stacks=1, theme=theme),
+        layout.Stack(stacks=2),
+        layout.Stack(stacks=1),
     ]
     keys = []
     screens = []
+    theme = None
 
 
 class uStack(utils.QtileTests):
@@ -215,6 +217,7 @@ class SelectorConfig:
     ]
     keys = []
     screens = []
+    theme = None
 
 
 class uSelectors(utils.QtileTests):
@@ -222,18 +225,20 @@ class uSelectors(utils.QtileTests):
     def test_simple(self):
         pass
 
+
 class TileConfig:
     groups = ["a", "b", "c", "d"]
     layouts = [
-        layout.Tile(theme),
-        layout.Tile(theme, masterWindows=2)
+        layout.Tile(),
+        layout.Tile(masterWindows=2)
         ]
     keys = []
+    theme = None
     screens = []
+
 
 class uTile(utils.QtileTests):
     config = TileConfig()
-
     def test_updown(self):
         self.testWindow("one")
         self.testWindow("two")
@@ -268,15 +273,15 @@ class uTile(utils.QtileTests):
         assert self.c.layout.info()["master"] == ["two"]
         
         
-
-
 class MagnifyConfig:
     groups = ["a", "b", "c", "d"]
     layouts = [
-        layout.Magnify(theme)
+        layout.Magnify()
         ]
     keys = []
     screens = []
+    theme = None
+
 
 class uMagnify(utils.QtileTests):
     config = MagnifyConfig()

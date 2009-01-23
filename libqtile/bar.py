@@ -22,8 +22,6 @@ import sys
 import manager, window, confreader, command, utils
 import Xlib.X
 
-from theme import Theme
-
 _HIGHLIGHT = "#48677E"
 _FOREGROUND = "#dddddd"
 
@@ -35,8 +33,8 @@ class Gap(command.CommandObject):
         self.size = size
         self.qtile, self.screen = None, None
 
-    def _configure(self, qtile, screen, event):
-        self.qtile, self.screen, self.event = qtile, screen, event
+    def _configure(self, qtile, screen, event, theme):
+        self.qtile, self.screen, self.event, self.theme = qtile, screen, event, theme
 
     @property
     def x(self):
@@ -108,7 +106,7 @@ class Bar(Gap):
     background = "black"
     widgets = None
     window = None
-    def __init__(self, widgets, size, theme=Theme({})):
+    def __init__(self, widgets, size):
         """
             Note that bars can only be at the top or the bottom of the screen.
             
@@ -117,12 +115,12 @@ class Bar(Gap):
         """
         Gap.__init__(self, size)
         self.widgets = widgets
-        self.background = theme["bar_bg_normal"]
 
-    def _configure(self, qtile, screen, event):
+    def _configure(self, qtile, screen, event, theme):
         if not self in [screen.top, screen.bottom]:
             raise confreader.ConfigError("Bars must be at the top or the bottom of the screen.")
-        Gap._configure(self, qtile, screen, event)
+        Gap._configure(self, qtile, screen, event, theme)
+        self.background = theme["bar_bg_normal"]
         colormap = qtile.display.screen().default_colormap
         c = colormap.alloc_named_color(self.background).pixel
         self.window = window.Internal.create(
@@ -137,7 +135,7 @@ class Bar(Gap):
 
         for i in self.widgets:
             qtile.registerWidget(i)
-            i._configure(qtile, self, event)
+            i._configure(qtile, self, event, theme)
         self.resize()
 
     def resize(self):

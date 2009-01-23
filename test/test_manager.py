@@ -1,15 +1,15 @@
 import os, time, cStringIO, subprocess
 import libpry
-import libqtile, libqtile.layout, libqtile.bar, libqtile.widget, libqtile.theme
+import libqtile, libqtile.layout, libqtile.bar, libqtile.widget, libqtile.manager
 import utils
 
-theme = libqtile.theme.Theme({}, specials={'stack': {'border_width': 10}})
+theme = libqtile.manager.Theme({}, specials={'stack': {'border_width': 10}})
 
 class TestConfig:
     groups = ["a", "b", "c", "d"]
     layouts = [
-                libqtile.layout.stack.Stack(stacks=1, theme=theme),
-                libqtile.layout.stack.Stack(2, theme=theme)
+                libqtile.layout.stack.Stack(stacks=1),
+                libqtile.layout.stack.Stack(2)
             ]
     keys = [
         libqtile.manager.Key(
@@ -26,11 +26,12 @@ class TestConfig:
     screens = [libqtile.manager.Screen(
             bottom=libqtile.bar.Bar(
                         [
-                            libqtile.widget.GroupBox(theme),
+                            libqtile.widget.GroupBox(),
                         ],
                         20
                     ),
     )]
+    theme = None
 
 
 class uMultiScreen(utils.QtileTests):
@@ -274,24 +275,24 @@ class TScreen(libqtile.manager.Screen):
 class uScreenDimensions(libpry.AutoTree):
     def test_dx(self):
         s = TScreen(left = libqtile.bar.Gap(10))
-        s._configure(None, 0, 0, 0, 100, 100, None, None)
+        s._configure(None, libqtile.manager.Theme(), 0, 0, 0, 100, 100, None, None)
         assert s.dx == 10
 
     def test_dwidth(self):
         s = TScreen(left = libqtile.bar.Gap(10))
-        s._configure(None, 0, 0, 0, 100, 100, None, None)
+        s._configure(None, libqtile.manager.Theme(), 0, 0, 0, 100, 100, None, None)
         assert s.dwidth == 90
         s.right = libqtile.bar.Gap(10)
         assert s.dwidth == 80
 
     def test_dy(self):
         s = TScreen(top = libqtile.bar.Gap(10))
-        s._configure(None, 0, 0, 0, 100, 100, None, None)
+        s._configure(None, libqtile.manager.Theme(), 0, 0, 0, 100, 100, None, None)
         assert s.dy == 10
 
     def test_dheight(self):
         s = TScreen(top = libqtile.bar.Gap(10))
-        s._configure(None, 0, 0, 0, 100, 100, None, None)
+        s._configure(None, libqtile.manager.Theme(), 0, 0, 0, 100, 100, None, None)
         assert s.dheight == 90
         s.bottom = libqtile.bar.Gap(10)
         assert s.dheight == 80
