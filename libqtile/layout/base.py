@@ -114,7 +114,7 @@ class Rect:
         # functions for bordering??
 
 class SubLayout:
-    def __init__(self, clientStack, theme=Theme({})):
+    def __init__(self, clientStack, theme):
         self.clientStack = clientStack
         self.clients = []
         self.sublayouts = []
