@@ -4,39 +4,66 @@ from sublayouts import VerticalStack
 
 
 class TileTwo(SubLayout):
-    def __init__(self, clientStack, theme, master_windows=1, ratio=0.618, expand=True):
-        SubLayout.__init__(self, clientStack, theme)
+    def __init__(self, clientStack, theme, parent=None, autohide=True, master_windows=1, ratio=0.618, expand=True):
         self.master_windows = master_windows
         self.ratio = ratio
         self.expand = expand
-        self.sublayouts = []
+        SubLayout.__init__(self, clientStack, theme, parent, autohide)
 
+    def _init_sublayouts(self):
+        # these classes may want some variables
+        ratio = self.ratio
+        expand = self.expand
+        master_windows = self.master_windows
+        
         class MasterWindows(VerticalStack):
             def filter(self, client):
-                return self.clientStack.index_of(client) < master_windows
+                return self.index_of(client) < master_windows
+            def request_rectangle(self, r, windows):
+                #just take the lot, since this is called AFTER slave windows
+                # - let the slaves take what they want, we'll have the rest
+                return (r, Rect(0,0,0,0))
 
         class SlaveWindows(VerticalStack):
             def filter(self, client):
-                return self.clientStack.index_of(client) >= master_windows
+                return self.index_of(client) >= master_windows
+            def request_rectangle(self, r, windows):
+                if self.autohide and len(windows) == 0:
+                    return (Rect(0,0,0,0), r)
+                else:
+                    master_width = int(ratio * r.w)
+                    return (Rect(r.x + master_width,
+                                 r.y,
+                                 r.w - master_width,
+                                 r.h
+                                 ),
+                            Rect(r.x,
+                                 r.y,
+                                 master_width,
+                                 r.h
+                                 )
+                            )
             
-        for SL in [MasterWindows, SlaveWindows]:
-            self.sublayouts.append(SL(clientStack,
-                                      theme,
-                                      ))
+        self.sublayouts.append(SlaveWindows(self.clientStack,
+                                            self.theme,
+                                            parent=self,
+                                            autohide=self.expand,
+                                            )
+                               )
+        self.sublayouts.append(MasterWindows(self.clientStack,
+                                             self.theme,
+                                             parent=self,
+                                             autohide=False
+                                             )
+                               )
+                   
     def filter(self, client):
         return True #TAKE THEM ALL
 
-    def layout(self, r, windows):
-        master_windows = [w for w in windows if self.sublayouts[0].filter(w)]
-        slave_windows = [w for w in windows if w not in master_windows]
-        # rectangles 
-        master = Rect(r.x, 
-                      r.y, 
-                      (int(r.w * self.ratio) if len(slave_windows) or not self.expand else r.w), 
-                      r.h)
-        slave = Rect(r.x+int(r.w*self.ratio), r.y, int(r.w * (1 - self.ratio)), r.h)
-        self.sublayouts[0].layout(master, master_windows)
-        self.sublayouts[1].layout(slave, slave_windows)
+    def request_rectangle(self, rectangle, windows):
+        #        rectangle I want           rectangle left = NOTHING!!
+        return (rectangle, Rect(0, 0, 0, 0))
+        
             
         
         

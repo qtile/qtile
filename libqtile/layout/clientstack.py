@@ -36,6 +36,10 @@ class ClientStack(Layout):
                     )
         sl.layout(rect, self.clients) #screw the group list of windows
         #we think we know best...
+
+    def configure(self, window):
+        # Oh dear, this shouldn't be happening, oh dear what can the matter be, oh dear help help help
+        self.group.layoutAll()
                 
     def clone(self, group, theme):
         c = Layout.clone(self, group, theme)

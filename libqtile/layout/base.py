@@ -109,16 +109,35 @@ class Rect:
         self.y = y
         self.w = w
         self.h = h
+
+    def __repr__(self):
+        return "(%s, %s, %s, %s)" % (self.x, self.y, self.w, self.h)
     #TODO:
         # functions for splitting
         # functions for bordering??
 
 class SubLayout:
-    def __init__(self, clientStack, theme):
+    def __init__(self, clientStack, theme, parent=None, autohide=True):
+        """
+           autohide - does it hide itself if there are no clients
+        """
         self.clientStack = clientStack
         self.clients = []
         self.sublayouts = []
         self.theme = theme
+        self.parent = parent
+        self.autohide = autohide
+        self.windows = []
+        self._init_sublayouts()
+
+    def _init_sublayouts(self):
+        """
+           Define sublayouts here, and so, only override init if you really must
+        """
+        pass
+
+    def filter_windows(self, windows):
+        return [w for w in windows if self.filter(w)]
 
     def filter(self, client):
         raise NotImplementedError
@@ -142,32 +161,46 @@ class SubLayout:
         if client in self.clients:
             self.clients.remove(client)
 
-    def layout_sublayouts(self, sublayouts_and_rects, windows):
-        for sl, rect in sublayouts_and_rects:
-            filtered_windows = [w for w in windows if sl.filter(w)]
-            sl.layout(rect, filtered_windows)
-            windows = [w for w in windows if w not in filtered_windows]
-            
+    def request_rectangle(self, rectangle, windows):
+        """
+            Define what rectangle this sublayout 'wants'. Don't be greedy.. well.. if you have to
+            :rectangle - the total rectangle available. DON'T BE GREEDY!
+            :windows - the windows that will be layed out with this - so you can know if you're gonna not have anything to lay out
+            The last sublayout to lay out won't get a choice - they'll get whatever's left
+            Return a tuple containing the rectangle you want, and the rectangle that's left.
+        """
+        raise NotImplementedError
 
     def layout(self, rectangle, windows):
         """
            Layout the list of windows in the specified rectangle
-           This should be overriden by any SubLayout that has SubLayouts of its own
-           - don't send all sublayouts the same rectangle
         """
+        self.windows = windows
         if self.sublayouts:
-            sls_and_rects = [(sl, rect) for sl in self.sublayouts]
-            self.layout_sublayouts(sls_and_rects, windows)
+            sls = []
+            for sl in self.sublayouts:
+                filtered = sl.filter_windows(windows)
+                rect, rect_remaining = sl.request_rectangle(rectangle, 
+                                                              filtered)
+                sls.append((sl, rect, filtered))
+                rectangle = rect_remaining
+                windows = [w for w in windows if w not in filtered]
+            for sl, rect, clients in sls:
+                sl.layout(rect, clients)
+            
         else:
-            #TODO: refactor this - the list of windows should be filtered elsewhere
-            for c in windows:
-                if c in self.clients: #safety check
-                    if self.filter(c):
-                        self.configure(rectangle, c)
-                
-    def configure(self, client):
+            for c in self.windows:
+                self.configure(rectangle, c)
+
+    def index_of(self, client):
+        if self.parent:
+            return self.parent.windows.index(client)
+        else:
+            return self.clientStack.index_of(client)
+
+    def configure(self, rectangle, client):
         """
             Place a window
         """
-        raise NotImplementedError
+        raise NotImplementedError, "this is %s" % self.__class__.__name__
         

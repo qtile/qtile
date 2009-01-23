@@ -1,9 +1,6 @@
 from base import SubLayout, Rect
 
 class VerticalStack(SubLayout):
-    def filter(self, client):
-        raise NotImplementedError
-
     def layout(self, rectangle, windows):
         def color(color):
                 colormap = self.clientStack.group.qtile.display.screen().default_colormap
@@ -12,9 +9,7 @@ class VerticalStack(SubLayout):
         self.focused_border = color(self.theme["verticalstack_border_active"])
         self.normal_border = color(self.theme["verticalstack_border_normal"])
         self.border_width = self.theme["verticalstack_border_width"]
-        self.windows = windows
-        for c in self.windows:
-            self.configure(rectangle, c)
+        SubLayout.layout(self, rectangle, windows)
 
     def configure(self, r, client):
         position = self.windows.index(client)
