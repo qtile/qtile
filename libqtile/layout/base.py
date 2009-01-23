@@ -129,6 +129,17 @@ class SubLayout:
         self.autohide = autohide
         self.windows = []
         self._init_sublayouts()
+        self.active_border = None
+    
+    def _init_bordercolors(self):
+        colormap = self.clientStack.group.qtile.display.screen().default_colormap
+        color = lambda color: colormap.alloc_named_color(color).pixel
+        name = self.__class__.__name__.lower()
+        theme = self.theme
+        self.active_border = color(theme["%s_border_active" % name])
+        self.focused_border = color(theme["%s_border_focus" % name])
+        self.normal_border = color(theme["%s_border_normal" % name])
+            
 
     def _init_sublayouts(self):
         """
@@ -176,6 +187,10 @@ class SubLayout:
            Layout the list of windows in the specified rectangle
         """
         self.windows = windows
+        # setup colors
+        if not self.active_border:
+            self._init_bordercolors()
+        # done
         if self.sublayouts:
             sls = []
             for sl in self.sublayouts:
@@ -203,4 +218,3 @@ class SubLayout:
             Place a window
         """
         raise NotImplementedError, "this is %s" % self.__class__.__name__
-        
