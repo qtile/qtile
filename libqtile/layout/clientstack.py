@@ -1,6 +1,5 @@
 from base import Layout, SubLayout, Rect
 from .. import command, utils
-from .. theme import Theme
 
 class ClientStack(Layout):
     name="tile"
@@ -10,12 +9,11 @@ class ClientStack(Layout):
     FOCUS_TO_NEXT, FOCUS_TO_PREVIOUS, \
     FOCUS_TO_LAST_FOCUSED = \
         (5, 6, 7, 8, 9)
-    def __init__(self, SubLayouts, theme=Theme({}), add_mode=ADD_TO_TOP,
+    def __init__(self, SubLayouts, add_mode=ADD_TO_TOP,
                  focus_mode=FOCUS_TO_TOP,
                  focus_history_length=10, mouse_warp = False):
         Layout.__init__(self)
         # store constructor values #
-        self.theme = theme
         self.add_mode = add_mode
         self.focus_mode = focus_mode
         self.focus_history_length = focus_history_length
@@ -39,21 +37,21 @@ class ClientStack(Layout):
         sl.layout(rect, self.clients) #screw the group list of windows
         #we think we know best...
                 
-    def clone(self, group):
+    def clone(self, group, theme):
+        c = Layout.clone(self, group, theme)
         if not self.active_border:
             def color(color):
                 colormap = group.qtile.display.screen().default_colormap
                 return colormap.alloc_named_color(color).pixel
-            self.active_border = color(self.theme["clientstack_border_active"])
-            self.focused_border = color(self.theme["clientstack_border_focus"])
-            self.normal_border = color(self.theme["clientstack_border_normal"])
-        c = Layout.clone(self, group)
+            c.active_border = color(theme["clientstack_border_active"])
+            c.focused_border = color(theme["clientstack_border_focus"])
+            c.normal_border = color(theme["clientstack_border_normal"])
         c.clients = []
         c.focus_history = []
         c.sublayouts = []
         for SL, kwargs in self.SubLayouts:
             c.sublayouts.append(SL(c, #pass the new clientstack!!!!!
-                                   self.theme,
+                                   theme,
                                    **kwargs
                                    ))
         c.current_sublayout = 0
