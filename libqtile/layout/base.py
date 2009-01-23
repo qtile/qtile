@@ -139,6 +139,7 @@ class SubLayout:
         self.active_border = color(theme["%s_border_active" % name])
         self.focused_border = color(theme["%s_border_focus" % name])
         self.normal_border = color(theme["%s_border_normal" % name])
+        self.border_width = theme["%s_border_width" % name]
             
 
     def _init_sublayouts(self):
@@ -218,3 +219,18 @@ class SubLayout:
             Place a window
         """
         raise NotImplementedError, "this is %s" % self.__class__.__name__
+
+    def place(self, client, x, y, w, h):
+        bc = (self.focused_border \
+                  if self.clientStack.focus_history \
+                  and self.clientStack.focus_history[0] is client \
+                  else self.normal_border
+              )
+        client.place(x + self.border_width,
+                     y + self.border_width,
+                     w - 2*self.border_width,
+                     h - 2*self.border_width,
+                     self.border_width,
+                     bc
+                     )
+        client.unhide()

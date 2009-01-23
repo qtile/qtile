@@ -14,12 +14,10 @@ class VerticalStack(SubLayout):
     def configure(self, r, client):
         position = self.windows.index(client)
         cliheight = int(r.h / len(self.windows)) #inc border
-        client.place(r.x + self.border_width,
-                     r.y + cliheight * position + self.border_width,
-                     r.w - 2*self.border_width,
-                     cliheight - 2*self.border_width,
-                     self.border_width,
-                     self.normal_border, #TODO: make this change for focus
-                     )
-        client.unhide()
+        self.place(client,
+                   r.x,
+                   r.y + cliheight*position,
+                   r.w,
+                   cliheight,
+                   )
                      
