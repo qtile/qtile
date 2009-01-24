@@ -1,4 +1,5 @@
 from base import SubLayout, Rect
+from Xlib import Xatom
 
 class VerticalStack(SubLayout):
     def layout(self, rectangle, windows):
@@ -21,3 +22,34 @@ class VerticalStack(SubLayout):
                    cliheight,
                    )
                      
+
+class Floating(SubLayout):
+    def filter(self, client):
+        window = client.window
+        d = client.qtile.display
+        floating = d.intern_atom('_NET_WM_WINDOW_TYPE_DIALOG')
+        try:
+            win_type = window.get_full_property(
+                d.intern_atom('_NET_WM_WINDOW_TYPE'), 
+                Xatom.ATOM
+                )
+        except:
+            #bad window, no floating for you
+            return False
+        if not win_type:
+            # window is without a type
+            return False
+        elif win_type.value[0] == floating:
+            #yup, we want it
+            return True
+        else:
+            # noop, it has a type, but not what we're after
+            # TODO: handle dock windows??
+            return False
+
+    def request_rectangle(self, r, windows):
+        return (Rect(0,0,0,0), r) #we want nothing
+
+    def configure(self, r, client):
+        client.unhide() #let it be where it wants
+

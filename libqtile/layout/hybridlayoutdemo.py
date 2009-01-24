@@ -1,5 +1,5 @@
 from base import SubLayout, Rect
-from sublayouts import VerticalStack
+from sublayouts import VerticalStack, Floating
 from tiletwo import TileTwo
 
 class HybridLayoutDemo(SubLayout):
@@ -26,7 +26,11 @@ class HybridLayoutDemo(SubLayout):
                 else:
                     return (Rect(0,0,0,0), r)
 
-        
+        self.sublayouts.append(Floating(self.clientStack,
+                                        self.theme,
+                                        parent=self,
+                                        )
+                               )
         self.sublayouts.append(TopWindow(self.clientStack,
                                          self.theme,
                                          parent=self,
