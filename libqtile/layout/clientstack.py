@@ -24,7 +24,7 @@ class ClientStack(Layout):
         self.normal_border, self.active_border, self.focused_border = \
             None, None, None
         self.sublayouts = []
-        self.current_sublayout = -1
+        self.current_sublayout = 0
         self.SubLayouts = SubLayouts
 
     def layout(self, windows):
@@ -135,3 +135,6 @@ class ClientStack(Layout):
         """
         self.change_focus(1)
         
+    def cmd_nextsublayout(self):
+        self.current_sublayout = (self.current_sublayout + 1) % len(self.sublayouts)
+        self.group.layoutAll()
