@@ -344,6 +344,7 @@ class Window(_Window):
         if group is None:
             raise command.CommandError("No such group: %s"%groupName)
         if self.group is not group:
+            self.hide()
             self.group.remove(self)
             group.add(self)
             self.group.layoutAll()
