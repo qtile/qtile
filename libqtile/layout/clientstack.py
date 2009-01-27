@@ -116,6 +116,12 @@ class ClientStack(Layout):
         return self.clients.index(client)
 
     def change_focus(self, offset):
+        if not self.focus_history:
+            if self.group.currentWindow \
+                    and self.group.currentWindow in self.clients:
+                self.focus_history.insert(0, self.group.currentWindow)
+            else:
+                return
         if self.focus_history[0] in self.clients:
             current_focus_index = self.clients.index(self.focus_history[0])
         else:
