@@ -144,3 +144,10 @@ class ClientStack(Layout):
     def cmd_nextsublayout(self):
         self.current_sublayout = (self.current_sublayout + 1) % len(self.sublayouts)
         self.group.layoutAll()
+
+    def info(self):
+        return dict(
+            clients = [c.name for c in self.clients],
+            focus_history = [c.name for c in self.focus_history],
+            )
+
