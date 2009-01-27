@@ -74,8 +74,9 @@ class ClientStack(Layout):
             self.clients.append(c)
         elif self.add_mode in (ClientStack.ADD_TO_NEXT, 
                                ClientStack.ADD_TO_PREVIOUS):
-            if self.focus['current'] in self.clients:
-                pos = self.clients.index(self.focus['current'])
+            if self.focus_history and \
+                    self.focus_history[0] in self.clients:
+                pos = self.clients.index(self.focus_history[0])
                 offset = (1 if self.add_mode == ClientStack.ADD_TO_NEXT \
                               else 0)
                 self.clients.insert(pos+offset, c)
