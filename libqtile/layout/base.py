@@ -226,8 +226,8 @@ class SubLayout:
                   and self.clientStack.focus_history[0] is client \
                   else self.normal_border
               )
-        client.place(x + self.border_width,
-                     y + self.border_width,
+        client.place(x,
+                     y,
                      w - 2*self.border_width,
                      h - 2*self.border_width,
                      self.border_width,
