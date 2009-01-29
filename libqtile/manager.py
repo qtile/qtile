@@ -458,7 +458,7 @@ class Qtile(command.CommandObject):
         self.groupMap = {}
 
         if config.theme:
-            self.theme = theme
+            self.theme = config.theme
         else:
             self.theme = Theme()
 
