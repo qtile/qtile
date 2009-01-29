@@ -1,5 +1,6 @@
 from base import Layout, SubLayout, Rect
 from .. import command, utils
+from sublayouts import TopLevelSubLayout
 
 class ClientStack(Layout):
     name="tile"
@@ -54,10 +55,11 @@ class ClientStack(Layout):
         c.focus_history = []
         c.sublayouts = []
         for SL, kwargs in self.SubLayouts:
-            c.sublayouts.append(SL(c, #pass the new clientstack!!!!!
-                                   theme,
-                                   **kwargs
-                                   ))
+            c.sublayouts.append(TopLevelSubLayout((SL, kwargs),
+                                                  c,
+                                                  theme,
+                                                  )
+                                )
         c.current_sublayout = 0
         return c
 

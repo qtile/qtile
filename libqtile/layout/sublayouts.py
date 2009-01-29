@@ -1,6 +1,25 @@
 from base import SubLayout, Rect
 from Xlib import Xatom
 
+class TopLevelSubLayout(SubLayout):
+    '''
+       This class effectively wraps a sublayout, and automatically adds a floating sublayout,
+    '''
+    def __init__(self, sublayout_data, clientStack, theme):
+        WrappedSubLayout, args = sublayout_data
+        SubLayout.__init__(self, clientStack, theme)
+        self.sublayouts.append(Floating(clientStack,
+                                        theme,
+                                        parent=self
+                                        )
+                               )
+        self.sublayouts.append(WrappedSubLayout(clientStack,
+                                         theme,
+                                         parent=self,
+                                         **args
+                                         )
+                               )
+
 class VerticalStack(SubLayout):
     def layout(self, rectangle, windows):
         def color(color):
