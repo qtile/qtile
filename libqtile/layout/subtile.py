@@ -3,7 +3,7 @@ from base import SubLayout, Rect
 from sublayouts import VerticalStack
 
 
-class TileTwo(SubLayout):
+class SubTile(SubLayout):
     def __init__(self, clientStack, theme, parent=None, autohide=True, master_windows=1, ratio=0.618, expand=True):
         self.master_windows = master_windows
         self.ratio = ratio

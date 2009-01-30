@@ -1,6 +1,6 @@
 from base import SubLayout, Rect
 from sublayouts import VerticalStack, Floating
-from tiletwo import TileTwo
+from subtile import SubTile
 
 class HybridLayoutDemo(SubLayout):
 
@@ -37,7 +37,7 @@ class HybridLayoutDemo(SubLayout):
                                          autohide=True,
                                          )
                                )
-        self.sublayouts.append(TileTwo(self.clientStack,
+        self.sublayouts.append(SubTile(self.clientStack,
                                        self.theme,
                                        parent=self,
                                        master_windows = 2,
