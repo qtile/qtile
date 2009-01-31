@@ -82,6 +82,36 @@ class _Window(command.CommandObject):
             id = str(hex(self.window.id))
         )
 
+    @property
+    def opacity(self):
+        opacity = self.window.get_property(
+            self.qtile.display.get_atom('_NET_WM_WINDOW_OPACITY'),
+            Xatom.CARDINAL,
+            0,
+            32
+            )
+        if not opacity:
+            return 1.0
+        else:
+            value = opacity.value[0]
+            as_float = round(
+                (float(value)/0xffffffff), 
+                2  #2 decimal places
+                )
+            return as_float
+
+    def setOpacity(self, opacity):
+        if 0.0 <= opacity <= 1.0:
+            real_opacity = int(opacity * 0xffffffff)
+            self.window.change_property(
+                self.qtile.display.get_atom('_NET_WM_WINDOW_OPACITY'),
+                Xatom.CARDINAL,
+                32,
+                [real_opacity,],
+                )
+        else:
+            return
+            
     def notify(self):
         e = event.ConfigureNotify(
                 window = self.window,
@@ -406,4 +436,9 @@ class Window(_Window):
     def cmd_toggle_floating(self):
         self.floating = not self.floating
         self.group.layoutAll()
-    
+
+    def cmd_semitransparent(self):
+        self.setOpacity(0.5)
+
+    def cmd_opacity(self, opacity):
+        self.setOpacity(opacity)
