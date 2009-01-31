@@ -317,7 +317,7 @@ class Internal(_Window):
                  X.ExposureMask |\
                  X.ButtonPressMask
     @classmethod
-    def create(klass, qtile, background_pixel, x, y, width, height):
+    def create(klass, qtile, background_pixel, x, y, width, height, opacity=1.0):
         win = qtile.root.create_window(
                     x, y, width, height, 0,
                     X.CopyFromParent, X.InputOutput,
@@ -328,6 +328,7 @@ class Internal(_Window):
         i = Internal(win, qtile)
         i.place(x, y, width, height, 0, None)
         i.setProp("internal", True)
+        i.setOpacity(opacity)
         return i
 
     def __repr__(self):

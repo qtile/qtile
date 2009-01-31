@@ -123,10 +123,12 @@ class Bar(Gap):
         self.background = theme["bar_bg_normal"]
         colormap = qtile.display.screen().default_colormap
         c = colormap.alloc_named_color(self.background).pixel
+        opacity = theme["bar_opacity"]
         self.window = window.Internal.create(
                         self.qtile,
                         c,
-                        self.x, self.y, self.width, self.height
+                        self.x, self.y, self.width, self.height,
+                        opacity
                      )
         self.window.handle_Expose = self.handle_Expose
         self.window.handle_ButtonPress = self.handle_ButtonPress
