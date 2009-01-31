@@ -395,6 +395,7 @@ class Theme:
         'border_active': '#ff0000',
         'border_width': 1,
         'font': None,
+        'opacity': 1.0,
         }
     specials = {}
     def __init__(self, values=None, specials=None):
