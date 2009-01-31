@@ -249,10 +249,10 @@ class SubLayout:
         raise NotImplementedError, "this is %s" % self.__class__.__name__
 
     def place(self, client, x, y, w, h):
-        bc = (self.focused_border \
+        bc, opacity = ((self.focused_border, 1.0) \
                   if self.clientStack.focus_history \
                   and self.clientStack.focus_history[0] is client \
-                  else self.normal_border
+                  else (self.normal_border, 0.5)
               )
         client.place(x,
                      y,
@@ -262,3 +262,4 @@ class SubLayout:
                      bc
                      )
         client.unhide()
+        client.setOpacity(opacity)
