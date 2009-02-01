@@ -33,8 +33,9 @@ class _Window(command.CommandObject):
         self.borderwidth = 0
         self.name = "<no name>"
         self.floating = False
+        self.floatDimensions = {'x': 0, 'y': 0, 'w': 0, 'h': 0}
         self.updateName()
-        self.updateFloating()
+        self.updateFloating()            
 
     def updateName(self):
         try:
@@ -50,7 +51,7 @@ class _Window(command.CommandObject):
         d = self.qtile.display
         dialog_atom = d.intern_atom('_NET_WM_WINDOW_TYPE_DIALOG')
         try:
-            win_type = window.get_full_property(
+            win_type = win.get_full_property(
                 d.intern_atom('_NET_WM_WINDOW_TYPE'),
                 Xatom.ATOM,
                 )
@@ -63,6 +64,16 @@ class _Window(command.CommandObject):
             self.floating = True
         else:
             self.floating = False
+
+        if self.floating:
+            g = win.get_geometry()
+            self.floatDimensions = {
+                'x': g.x,
+                'y': g.y,
+                'w': g.width,
+                'h': g.height,
+                }
+            self.x, self.y, self.width, self.height = g.x, g.y, g.width, g.height
 
     def info(self):
         return dict(
