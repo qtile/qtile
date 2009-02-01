@@ -43,5 +43,6 @@ class Floating(SubLayout):
         return (Rect(0,0,0,0), r) #we want nothing
 
     def configure(self, r, client):
-        client.unhide() #let it be where it wants
+        d = client.floatDimensions
+        self.place(client, **d)
 
