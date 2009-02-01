@@ -1,6 +1,6 @@
 import libpry, time, pprint
 from libqtile import layout
-from libqtile.layout import sublayouts
+from libqtile.layout import sublayouts, Rect
 import libqtile.manager
 import utils
 
@@ -229,21 +229,26 @@ class uSelectors(utils.QtileTests):
 
 class ClientStackConfig:
     groups = ["a", "b", "c", "d"]
+    class VertStack(sublayouts.VerticalStack):
+        def filter(self, c):
+            return True
+        def request_rectangle(self, r, windows):
+            return (r, Rect(0,0,0,0))
     layouts = [
         layout.ClientStack(
             SubLayouts=[
-                (sublayouts.VerticalStack, {}),
+                (VertStack, {}),
                 ],),
         layout.ClientStack(
             SubLayouts=[
-                (sublayouts.VerticalStack, {}),
+                (VertStack, {}),
                  ],
             focus_mode = layout.ClientStack.FOCUS_TO_BOTTOM,
             add_mode = layout.ClientStack.ADD_TO_BOTTOM,
             ),
         layout.ClientStack(
             SubLayouts=[
-                (sublayouts.VerticalStack, {}),
+                (VertStack, {}),
                 ],
             focus_mode = layout.ClientStack.FOCUS_TO_LAST_FOCUSED,
             add_mode = layout.ClientStack.ADD_TO_PREVIOUS,
