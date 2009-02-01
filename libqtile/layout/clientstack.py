@@ -118,15 +118,21 @@ class ClientStack(Layout):
     def index_of(self, client):
         return self.clients.index(client)
 
-    def change_focus(self, offset):
+    @property
+    def focused(self):
         if not self.focus_history:
             if self.group.currentWindow \
                     and self.group.currentWindow in self.clients:
                 self.focus_history.insert(0, self.group.currentWindow)
             else:
-                return
-        if self.focus_history[0] in self.clients:
-            current_focus_index = self.clients.index(self.focus_history[0])
+                return None
+        return self.focus_history[0]
+
+    def change_focus(self, offset):
+        if not self.clients:
+            return
+        if self.focused in self.clients:
+            current_focus_index = self.clients.index(self.focused)
         else:
             current_focus_index = 0
         current_focus_index = (current_focus_index + offset) % len(self.clients)
@@ -143,6 +149,17 @@ class ClientStack(Layout):
             Switch focus to the next window in the stack
         """
         self.change_focus(1)
+
+    def cmd_shuffle_up(self):
+        """
+            Shuffle the order of the stack up
+        """
+        utils.shuffleUp(self.clients)
+        self.group.layoutAll()
+
+    def cmd_shuffle_down(self):
+        utils.shuffleDown(self.clients)
+        self.group.layoutAll()
         
     def cmd_nextsublayout(self):
         self.current_sublayout = (self.current_sublayout + 1) % len(self.sublayouts)
