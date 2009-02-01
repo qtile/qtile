@@ -32,7 +32,9 @@ class _Window(command.CommandObject):
         self.x, self.y, self.width, self.height = None, None, None, None
         self.borderwidth = 0
         self.name = "<no name>"
+        self.floating = False
         self.updateName()
+        self.updateFloating()
 
     def updateName(self):
         try:
@@ -42,6 +44,25 @@ class _Window(command.CommandObject):
             # This usually means the window has just been deleted, and a new
             # focus will be acquired shortly. We don't raise an event for this.
             pass
+
+    def updateFloating(self):
+        win = self.window
+        d = self.qtile.display
+        dialog_atom = d.intern_atom('_NET_WM_WINDOW_TYPE_DIALOG')
+        try:
+            win_type = window.get_full_property(
+                d.intern_atom('_NET_WM_WINDOW_TYPE'),
+                Xatom.ATOM,
+                )
+        except:
+            self.floating = False
+            return
+        if win_type and \
+                win_type.value and \
+                win_type.value[0] == dialog_atom:
+            self.floating = True
+        else:
+            self.floating = False
 
     def info(self):
         return dict(
