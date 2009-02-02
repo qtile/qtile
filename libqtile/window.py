@@ -381,3 +381,9 @@ class Window(_Window):
             group.add(self)
             self.group.layoutAll()
             group.layoutAll()
+
+    def cmd_move_floating(self, x, y):
+        self.floatDimensions['x'] += x
+        self.floatDimensions['y'] += y
+        self.group.layoutAll()
+
