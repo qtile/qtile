@@ -57,23 +57,20 @@ class _Window(command.CommandObject):
                 )
         except:
             self.floating = False
-            return
         if win_type and \
                 win_type.value and \
                 win_type.value[0] == dialog_atom:
             self.floating = True
         else:
             self.floating = False
-
-        if self.floating:
-            g = win.get_geometry()
-            self.floatDimensions = {
-                'x': g.x,
-                'y': g.y,
-                'w': g.width,
-                'h': g.height,
-                }
-            self.x, self.y, self.width, self.height = g.x, g.y, g.width, g.height
+        g = win.get_geometry()
+        self.floatDimensions = {
+            'x': g.x,
+            'y': g.y,
+            'w': g.width,
+            'h': g.height,
+            }
+        self.x, self.y, self.width, self.height = g.x, g.y, g.width, g.height
 
     def info(self):
         return dict(
