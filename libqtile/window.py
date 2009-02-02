@@ -384,6 +384,11 @@ class Window(_Window):
         self.floatDimensions['y'] += y
         self.group.layoutAll()
 
+    def cmd_resize_floating(self, xinc, yinc):
+        self.floatDimensions['w'] += xinc
+        self.floatDimensions['h'] += yinc
+        self.group.layoutAll()
+
     def cmd_toggle_floating(self):
         self.floating = not self.floating
         self.group.layoutAll()
