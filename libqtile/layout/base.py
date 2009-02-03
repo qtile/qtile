@@ -110,11 +110,39 @@ class Rect:
         self.w = w
         self.h = h
 
+    def split_vertical(self, ratio=0.5, width=None):
+        if not width:
+            width = int(ratio*self.w)
+        if width > self.w:
+            raise Exception, "You're trying to take too much of the rectangle"
+        return (Rect(self.x,
+                     self.y,
+                     width,
+                     self.h),
+                Rect(self.x + width,
+                     self.y,
+                     self.w - width,
+                     self.h)
+                )
+    
+    def split_horizontal(self, ratio=0.5, height=None):
+        if not height:
+            height = int(ratio*self.h)
+        if height > self.h:
+            raise Exception, "You're trying to take too much of this rectange"
+        return (Rect(self.x,
+                     self.y,
+                     self.w,
+                     height),
+                Rect(self.x,
+                     self.y + height,
+                     self.w,
+                     self.h - height)
+                )
+    
+
     def __repr__(self):
         return "(%s, %s, %s, %s)" % (self.x, self.y, self.w, self.h)
-    #TODO:
-        # functions for splitting
-        # functions for bordering??
 
 class SubLayout:
     def __init__(self, clientStack, theme, parent=None, autohide=True):
