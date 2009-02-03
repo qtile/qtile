@@ -209,7 +209,7 @@ class SubLayout:
             The last sublayout to lay out won't get a choice - they'll get whatever's left
             Return a tuple containing the rectangle you want, and the rectangle that's left.
         """
-        raise NotImplementedError
+        raise NotImplementedError, "The Sublayout %s needs to implement request_rectangle" % self.__class__.__name__
 
     def layout(self, rectangle, windows):
         """
