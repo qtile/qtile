@@ -20,6 +20,7 @@ class TopLevelSubLayout(SubLayout):
                                          )
                                )
 
+
 class VerticalStack(SubLayout):
     def layout(self, rectangle, windows):
         SubLayout.layout(self, rectangle, windows)
@@ -33,7 +34,19 @@ class VerticalStack(SubLayout):
                    r.w,
                    cliheight,
                    )
-                     
+      
+               
+class HorizontalStack(SubLayout):
+    def configure(self, r, client):
+        position = self.windows.index(client)
+        cliwidth = int(r.w / len(self.windows))
+        self.place(client,
+                   r.x + cliwidth*position,
+                   r.y,
+                   cliwidth,
+                   r.h
+                   )
+
 
 class Floating(SubLayout):
     def filter(self, client):
