@@ -31,18 +31,8 @@ class SubTile(SubLayout):
                 if self.autohide and len(windows) == 0:
                     return (Rect(0,0,0,0), r)
                 else:
-                    master_width = int(ratio * r.w)
-                    return (Rect(r.x + master_width,
-                                 r.y,
-                                 r.w - master_width,
-                                 r.h
-                                 ),
-                            Rect(r.x,
-                                 r.y,
-                                 master_width,
-                                 r.h
-                                 )
-                            )
+                    rmaster, rslave = r.split_vertical(ratio=ratio)
+                    return (rslave, rmaster)
             
         self.sublayouts.append(SlaveWindows(self.clientStack,
                                             self.theme,

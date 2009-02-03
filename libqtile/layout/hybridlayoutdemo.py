@@ -11,18 +11,7 @@ class HybridLayoutDemo(SubLayout):
                 return ([windows[0],] if len(windows) else [])
             def request_rectangle(self, r, windows):
                 if windows:
-                    rects = (Rect(r.x,
-                                  r.y,
-                                  r.w,
-                                  300,
-                                  ),
-                             Rect(r.x,
-                                  r.y + 300,
-                                  r.w,
-                                  r.h - 300,
-                                  ),
-                             )
-                    return rects
+                    return r.split_horizontal(height=300)
                 else:
                     return (Rect(0,0,0,0), r)
 
