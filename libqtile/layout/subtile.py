@@ -4,9 +4,11 @@ from sublayouts import VerticalStack
 
 
 class SubTile(SubLayout):
-    def __init__(self, clientStack, theme, parent=None, autohide=True, master_windows=1, ratio=0.618, expand=True):
+    arrangements = ["left", "right"]
+    def __init__(self, clientStack, theme, parent=None, autohide=True, master_windows=1, ratio=0.618, arrangement="left", expand=True):
         self.master_windows = master_windows
         self.ratio = ratio
+        self.arrangement = (arrangement if arrangement in self.arrangements else "left")
         self.expand = expand
         SubLayout.__init__(self, clientStack, theme, parent, autohide)
 
@@ -15,7 +17,8 @@ class SubTile(SubLayout):
         ratio = self.ratio
         expand = self.expand
         master_windows = self.master_windows
-        
+        arrangement = self.arrangement
+
         class MasterWindows(VerticalStack):
             def filter(self, client):
                 return self.index_of(client) < master_windows
@@ -31,7 +34,10 @@ class SubTile(SubLayout):
                 if self.autohide and len(windows) == 0:
                     return (Rect(), r)
                 else:
-                    rmaster, rslave = r.split_vertical(ratio=ratio)
+                    if arrangement == "left":
+                        rmaster, rslave = r.split_vertical(ratio=ratio)
+                    else:
+                        rslave, rmaster = r.split_vertical(ratio=(1-ratio))
                     return (rslave, rmaster)
             
         self.sublayouts.append(SlaveWindows(self.clientStack,
