@@ -35,3 +35,6 @@ class HybridLayoutDemo(SubLayout):
     
     def filter(self, client):
         return True
+
+    def request_rectangle(self, r, windows):
+        return (r, Rect())
