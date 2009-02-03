@@ -8,7 +8,7 @@ class SubTile(SubLayout):
     def __init__(self, clientStack, theme, parent=None, autohide=True, master_windows=1, ratio=0.618, arrangement="left", expand=True):
         self.master_windows = master_windows
         self.ratio = ratio
-        self.arrangement = (arrangement if arrangement in self.arrangements else "left")
+        self.arrangement = (arrangement if arrangement in self.arrangements else self.arrangements[0])
         self.expand = expand
         SubLayout.__init__(self, clientStack, theme, parent, autohide)
 
