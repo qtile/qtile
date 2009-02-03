@@ -13,7 +13,7 @@ class HybridLayoutDemo(SubLayout):
                 if windows:
                     return r.split_horizontal(height=300)
                 else:
-                    return (Rect(0,0,0,0), r)
+                    return (Rect(), r)
 
         self.sublayouts.append(Floating(self.clientStack,
                                         self.theme,

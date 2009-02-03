@@ -22,14 +22,14 @@ class SubTile(SubLayout):
             def request_rectangle(self, r, windows):
                 #just take the lot, since this is called AFTER slave windows
                 # - let the slaves take what they want, we'll have the rest
-                return (r, Rect(0,0,0,0))
+                return (r, Rect())
 
         class SlaveWindows(VerticalStack):
             def filter(self, client):
                 return self.index_of(client) >= master_windows
             def request_rectangle(self, r, windows):
                 if self.autohide and len(windows) == 0:
-                    return (Rect(0,0,0,0), r)
+                    return (Rect(), r)
                 else:
                     rmaster, rslave = r.split_vertical(ratio=ratio)
                     return (rslave, rmaster)
@@ -52,7 +52,7 @@ class SubTile(SubLayout):
 
     def request_rectangle(self, rectangle, windows):
         #        rectangle I want           rectangle left = NOTHING!!
-        return (rectangle, Rect(0, 0, 0, 0))
+        return (rectangle, Rect())
         
             
         

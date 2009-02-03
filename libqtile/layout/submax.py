@@ -20,4 +20,4 @@ class SubMax(VerticalStack): #just a vertical stack with one item
 
     def request_rectangle(self, r, windows):
         # take what you can, give nothing back
-        return (r, Rect(0,0,0,0))
+        return (r, Rect())

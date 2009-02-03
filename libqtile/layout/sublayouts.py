@@ -40,7 +40,7 @@ class Floating(SubLayout):
         return client.floating
 
     def request_rectangle(self, r, windows):
-        return (Rect(0,0,0,0), r) #we want nothing
+        return (Rect(), r) #we want nothing
 
     def configure(self, r, client):
         d = client.floatDimensions
