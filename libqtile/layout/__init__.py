@@ -8,6 +8,7 @@ from base import Rect
 
 # sublayouts
 from subtile import SubTile
+from subverttile import SubVertTile
 from submax import SubMax
 from subfloating import SubFloating
 from hybridlayoutdemo import HybridLayoutDemo
