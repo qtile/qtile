@@ -13,15 +13,9 @@ class SubTile(SubLayout):
         SubLayout.__init__(self, clientStack, theme, parent, autohide)
 
     def _init_sublayouts(self):
-        # these classes may want some variables
-        ratio = self.ratio
-        expand = self.expand
-        master_windows = self.master_windows
-        arrangement = self.arrangement
-
         class MasterWindows(VerticalStack):
             def filter(self, client):
-                return self.index_of(client) < master_windows
+                return self.index_of(client) < self.parent.master_windows
             def request_rectangle(self, r, windows):
                 #just take the lot, since this is called AFTER slave windows
                 # - let the slaves take what they want, we'll have the rest
@@ -29,15 +23,15 @@ class SubTile(SubLayout):
 
         class SlaveWindows(VerticalStack):
             def filter(self, client):
-                return self.index_of(client) >= master_windows
+                return self.index_of(client) >= self.parent.master_windows
             def request_rectangle(self, r, windows):
                 if self.autohide and len(windows) == 0:
                     return (Rect(), r)
                 else:
-                    if arrangement == "left":
-                        rmaster, rslave = r.split_vertical(ratio=ratio)
+                    if self.parent.arrangement == "left":
+                        rmaster, rslave = r.split_vertical(ratio=self.parent.ratio)
                     else:
-                        rslave, rmaster = r.split_vertical(ratio=(1-ratio))
+                        rslave, rmaster = r.split_vertical(ratio=(1-self.parent.ratio))
                     return (rslave, rmaster)
             
         self.sublayouts.append(SlaveWindows(self.clientStack,
