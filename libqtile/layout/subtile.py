@@ -53,6 +53,17 @@ class SubTile(SubLayout):
     def request_rectangle(self, rectangle, windows):
         #        rectangle I want           rectangle left = NOTHING!!
         return (rectangle, Rect())
+
+    def command(self, mask, command, *args, **kwargs):
+        if command == 'ratio':
+            if 'ratio' in kwargs:
+                self.ratio = kwargs['ratio']
+            elif args:
+                self.ratio = args[0]
+            else:
+                print "error - no argument to set the ratio to"
+            self.clientStack.group.layoutAll()
+        SubLayout.command(self, mask, command, *args, **kwargs)
         
             
         
