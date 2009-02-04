@@ -263,3 +263,27 @@ class SubLayout:
                      )
         client.unhide()
         client.setOpacity(opacity)
+
+    def command(self, mask, command, *args, **kwargs):
+
+        def split_command(command):
+            parts = command.split('_')
+            if len(parts) > 1:
+                mask = parts[0]
+                com = '_'.join(parts[1:])
+            else:
+                mask = '*'
+                com = '_'.join(parts)
+            return (mask, com)
+            
+        for sl in self.sublayouts:
+            if mask == '*':
+                sl.command(mask, command, *args, **kwargs)
+            elif mask == '?':
+                ma, com = split_command(command)
+                self.command(ma, com, *args, **kwargs)
+            elif mask == sl.__class__.__name__:
+                ma, com = split_command(command)
+                self.comand(ma, com, *args, **kwargs)
+            else:
+                print "command ('%s' '%s') not passed on" % (mask, command)

@@ -165,6 +165,9 @@ class ClientStack(Layout):
         self.current_sublayout = (self.current_sublayout + 1) % len(self.sublayouts)
         self.group.layoutAll()
 
+    def cmd_command_sublayout(self, mask, command, *args, **kwargs):
+        self.sublayouts[self.current_sublayout].command(mask, command, *args, **kwargs)
+        
     def info(self):
         return dict(
             clients = [c.name for c in self.clients],
