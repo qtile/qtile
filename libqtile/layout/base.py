@@ -264,7 +264,21 @@ class SubLayout:
         client.unhide()
         client.setOpacity(opacity)
 
+    def command_get_arg(self, args, kwargs, name, default):
+        if name in kwargs:
+            return kwargs['name']
+        elif args:
+            if name < len(args):
+                return args[name]
+            else:
+                return args[0]
+        else:
+            return default
+        
+
     def command(self, mask, command, *args, **kwargs):
+
+        print "dealing with command %s %s in %s" % (mask, command, self.__class__.__name__)
 
         def split_command(command):
             parts = command.split('_')

@@ -56,12 +56,14 @@ class SubTile(SubLayout):
 
     def command(self, mask, command, *args, **kwargs):
         if command == 'ratio':
-            if 'ratio' in kwargs:
-                self.ratio = kwargs['ratio']
-            elif args:
-                self.ratio = args[0]
-            else:
-                print "error - no argument to set the ratio to"
+            ratio = self.command_get_arg(args, kwargs, 'ratio', self.ratio)
+            self.ratio = ratio
+            self.clientStack.group.layoutAll()
+        if command == 'incratio':
+            incr = self.command_get_arg(args, kwargs, 'incr', 0.1)
+            self.ratio += incr
+            if self.ratio < 0: self.ratio = 0
+            if self.ratio > 1: self.ratio = 1.0
             self.clientStack.group.layoutAll()
         SubLayout.command(self, mask, command, *args, **kwargs)
         
