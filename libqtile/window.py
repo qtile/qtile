@@ -384,6 +384,20 @@ class Window(_Window):
         self.floatDimensions['y'] += y
         self.group.layoutAll()
 
+    def cmd_move_to_screen_edge(self, edge):
+        if edge == 'Left':
+            self.floatDimensions['x'] = 0
+        elif edge == 'Up':
+            self.floatDimensions['y'] = 0
+        elif edge == 'Right':
+            self.floatDimensions['x'] = \
+                self.group.screen.dwidth - self.floatDimensions['w']
+        elif edge == 'Down':
+            self.floatDimensions['y'] = \
+                self.group.screen.dheight - self.floatDimensions['h']
+        self.group.layoutAll()
+        
+
     def cmd_resize_floating(self, xinc, yinc):
         self.floatDimensions['w'] += xinc
         self.floatDimensions['h'] += yinc
@@ -392,3 +406,4 @@ class Window(_Window):
     def cmd_toggle_floating(self):
         self.floating = not self.floating
         self.group.layoutAll()
+    
