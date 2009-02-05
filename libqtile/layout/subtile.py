@@ -71,6 +71,9 @@ class SubTile(SubLayout):
             if self.master_windows < 1:
                 self.master_windows = 1 #don't let it drop below one - not set up to cope with this yet
             self.clientStack.group.layoutAll()
+        elif command == 'nextarrangement':
+            self.arrangement = self.arrangements[(self.arrangements.index(self.arrangement) + 1) % len(self.arrangements)]
+            self.clientStack.group.layoutAll()
         SubLayout.command(self, mask, command, *args, **kwargs)
         
             
