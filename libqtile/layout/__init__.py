@@ -11,4 +11,5 @@ from subtile import SubTile
 from subverttile import SubVertTile
 from submax import SubMax
 from subfloating import SubFloating
+from submagnify import SubMagnify
 from hybridlayoutdemo import HybridLayoutDemo
