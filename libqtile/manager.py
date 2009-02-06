@@ -519,7 +519,7 @@ class Qtile(command.CommandObject):
         )
         self.display.sync()
         if self._exit:
-            print >> sys.stderr, "Access denied: Another window manager running?"
+            utils.outputToStderr("Access denied: Another window manager running?")
             sys.exit(1)
         # Now install the real error handler
         self.display.set_error_handler(self.errorHandler)
@@ -657,7 +657,7 @@ class Qtile(command.CommandObject):
         keysym =  self.display.keycode_to_keysym(e.detail, 0)
         k = self.keyMap.get((keysym, e.state))
         if not k:
-            print >> sys.stderr, "Ignoring unknown keysym: %s"%keysym
+            utils.outputToStderr("Ignoring unknown keysym: %s"%keysym)
             return
         for i in k.commands:
             if i.check(self):
@@ -665,7 +665,7 @@ class Qtile(command.CommandObject):
                 if status in (command.ERROR, command.EXCEPTION):
                     s = "KB command error %s: %s"%(i.name, val)
                     self.log.add(s)
-                    print >> sys.stderr, s
+                    utils.outputToStderr(s)
         else:
             return
 
@@ -720,7 +720,7 @@ class Qtile(command.CommandObject):
 
     def writeReport(self, m, path="~/qtile_crashreport", _force=False):
         if self._testing and not _force:
-            print >> sys.stderr, "Server Error:", m
+            utils.outputToStderr("Server Error:", m)
             return
         suffix = 0
         base = p = os.path.expanduser(path)
@@ -747,7 +747,7 @@ class Qtile(command.CommandObject):
         if e.__class__ in self._ignoreErrors:
             return
         if self._testing:
-            print >> sys.stderr, "Server Error:", (e, v)
+            utils.outputToStderr("Server Error:", (e, v))
         else:
             self.writeReport((e, v))
         self._exit = True

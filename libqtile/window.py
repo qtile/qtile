@@ -353,15 +353,15 @@ class Window(_Window):
 
     def handle_PropertyNotify(self, e):
         if e.atom == Xatom.WM_TRANSIENT_FOR:
-            print >> sys.stderr, "transient"
+            utils.outputToStderr("transient")
         elif e.atom == Xatom.WM_HINTS:
-            print >> sys.stderr, "hints"
+            utils.outputToStderr("hints")
         elif e.atom == Xatom.WM_NORMAL_HINTS:
-            print >> sys.stderr, "normal_hints"
+            utils.outputToStderr("normal_hints")
         elif e.atom == Xatom.WM_NAME:
             self.updateName()
         else:
-            print >> sys.stderr, e
+            utils.outputToStderr(e)
 
     def _items(self, name):
         if name == "group":
