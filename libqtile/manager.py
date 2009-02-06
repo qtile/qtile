@@ -453,8 +453,17 @@ class Hooks(object):
                     f(cls.__datadict, cls.__qtile, *args, **kwargs)
                 except:
                     print "something went wrong when calling the hook"
+                    print sys.exc_info()
         else:
             print "no hooks defined"
+
+    @classmethod
+    def setitem(cls, key, value):
+        cls.__datadict[key] = value
+
+    @classmethod
+    def getitem(cls, key):
+        return cls.__datadict[key]
 
 
 class Qtile(command.CommandObject):
