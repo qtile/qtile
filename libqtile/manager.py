@@ -423,7 +423,38 @@ class Theme:
                 return self.normal[key]
             else:
                 return None
-    
+
+class Hooks(object):
+    __hooks = {}
+    __qtile = None
+    def __init__(self, hook_name):
+        self.hook_name = hook_name
+
+    def __call__(self, f):
+        if self.hook_name in self.__hooks:
+            Hooks.__hooks[self.hook_name].append(f)
+        else:
+            Hooks.__hooks[self.hook_name] = [f,]
+        return f
+
+    @classmethod
+    def set_qtile(cls, qtile):
+        cls.__qtile = qtile
+
+    @classmethod
+    def call_hook(cls, hook_name, *args, **kwargs):
+        if cls.__qtile is None:
+            print "Qtile is none, returning"
+            return
+        if hook_name in cls.__hooks:
+            for f in cls.__hooks[hook_name]:
+                try:
+                    f(cls.__qtile, *args, **kwargs)
+                except:
+                    print "something went wrong when calling the hook"
+        else:
+            print "no hooks defined"
+
 
 class Qtile(command.CommandObject):
     debug = False
