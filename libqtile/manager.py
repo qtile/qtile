@@ -462,6 +462,9 @@ class Qtile(command.CommandObject):
     _testing = False
     _logLength = 100 
     def __init__(self, config, displayName=None, fname=None):
+        
+        Hooks.set_qtile(self) #tell Hooks about us
+
         if not displayName:
             displayName = os.environ.get("DISPLAY")
             if not displayName:
