@@ -427,6 +427,7 @@ class Theme:
 class Hooks(object):
     __hooks = {}
     __qtile = None
+    __datadict = {}
     def __init__(self, hook_name):
         self.hook_name = hook_name
 
@@ -449,7 +450,7 @@ class Hooks(object):
         if hook_name in cls.__hooks:
             for f in cls.__hooks[hook_name]:
                 try:
-                    f(cls.__qtile, *args, **kwargs)
+                    f(cls.__datadict, cls.__qtile, *args, **kwargs)
                 except:
                     print "something went wrong when calling the hook"
         else:
