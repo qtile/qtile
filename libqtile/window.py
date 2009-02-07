@@ -86,6 +86,8 @@ class _Window(command.CommandObject):
             self.urgent = True
         else:
             self.urgent = False
+        manager.Hooks.call_hook("client-urgent-hint-changed", self)
+
 
     def info(self):
         return dict(
