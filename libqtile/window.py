@@ -79,6 +79,7 @@ class _Window(command.CommandObject):
         if h is None:
             return
         flags = h.flags
+
         if flags & 256: # 256 is UrgencyHint, but for some reason, Xutil doesn't seem to have it
                         # no clue why not :(
             self.urgent = True
