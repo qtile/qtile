@@ -34,8 +34,10 @@ class _Window(command.CommandObject):
         self.name = "<no name>"
         self.floating = False
         self.floatDimensions = {'x': 0, 'y': 0, 'w': 0, 'h': 0}
+        self.urgent = False
         self.updateName()
         self.updateFloating()            
+        self.updateUrgency()
 
     def updateName(self):
         try:
@@ -71,6 +73,17 @@ class _Window(command.CommandObject):
             'h': g.height,
             }
         self.x, self.y, self.width, self.height = g.x, g.y, g.width, g.height
+
+    def updateUrgency(self):
+        h = self.window.get_wm_hints()
+        if h is None:
+            return
+        flags = h.flags
+        if flags & 256: # 256 is UrgencyHint, but for some reason, Xutil doesn't seem to have it
+                        # no clue why not :(
+            self.urgent = True
+        else:
+            self.urgent = False
 
     def info(self):
         return dict(
@@ -355,6 +368,7 @@ class Window(_Window):
         if e.atom == Xatom.WM_TRANSIENT_FOR:
             utils.outputToStderr("transient")
         elif e.atom == Xatom.WM_HINTS:
+            self.updateUrgency()
             utils.outputToStderr("hints")
         elif e.atom == Xatom.WM_NORMAL_HINTS:
             utils.outputToStderr("normal_hints")
