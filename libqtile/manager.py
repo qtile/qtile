@@ -668,7 +668,7 @@ class Qtile(command.CommandObject):
             while 1:
                 fds, _, _ = select.select(
                                 [self.server.sock, self.display.fileno()],
-                                [], [], 0.1
+                                [], [], 0.01
                             )
                 if self._exit:
                     sys.exit(1)
