@@ -76,6 +76,7 @@ class _Window(command.CommandObject):
         self.x, self.y, self.width, self.height = g.x, g.y, g.width, g.height
 
     def updateUrgency(self):
+        old_value = self.urgent
         h = self.window.get_wm_hints()
         if h is None:
             return
@@ -86,7 +87,8 @@ class _Window(command.CommandObject):
             self.urgent = True
         else:
             self.urgent = False
-        manager.Hooks.call_hook("client-urgent-hint-changed", self)
+        if self.urgent != old_value:
+            manager.Hooks.call_hook("client-urgent-hint-changed", self)
 
 
     def info(self):
