@@ -146,7 +146,6 @@ class _Window(command.CommandObject):
         self.window.send_event(e)
 
     def kill(self):
-        manager.Hooks.call_hook("client-killed", self)
         if self.hasProtocol("WM_DELETE_WINDOW"):
             e = event.ClientMessage(
                     window = self.window,

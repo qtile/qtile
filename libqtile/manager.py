@@ -620,8 +620,10 @@ class Qtile(command.CommandObject):
     def unmanage(self, window):
         c = self.windowMap.get(window)
         if c:
+            Hooks.call_hook("client-being-killed", c)
             c.group.remove(c)
             del self.windowMap[window]
+            Hooks.call_hook("client-killed")
 
     def manage(self, w):
         try:
