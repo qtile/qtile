@@ -432,6 +432,7 @@ class Hooks(object):
         self.hook_name = hook_name
 
     def __call__(self, f):
+        print "Defining hook %s" % self.hook_name
         if self.hook_name in self.__hooks:
             Hooks.__hooks[self.hook_name].append(f)
         else:
@@ -444,6 +445,7 @@ class Hooks(object):
 
     @classmethod
     def call_hook(cls, hook_name, *args, **kwargs):
+        print "Calling hook %s" % hook_name
         if cls.__qtile is None:
             print "Qtile is none, returning"
             return
@@ -456,7 +458,7 @@ class Hooks(object):
                     print "the function was", f
                     print sys.exc_info()
         else:
-            print "no hooks defined"
+            pass
 
     @classmethod
     def setitem(cls, key, value):
