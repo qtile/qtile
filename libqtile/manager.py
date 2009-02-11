@@ -452,7 +452,8 @@ class Hooks(object):
                 try:
                     f(cls.__datadict, cls.__qtile, *args, **kwargs)
                 except:
-                    print "something went wrong when calling the hook"
+                    print "error when calling the hook '%s'" % hook_name
+                    print "the function was", f
                     print sys.exc_info()
         else:
             print "no hooks defined"
