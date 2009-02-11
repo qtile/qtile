@@ -445,7 +445,6 @@ class Hooks(object):
 
     @classmethod
     def call_hook(cls, hook_name, *args, **kwargs):
-        print "Calling hook %s" % hook_name
         if cls.__qtile is None:
             print "Qtile is none, returning"
             return
