@@ -439,7 +439,7 @@ class Window(_Window):
                 self.group.screen.dwidth - self.floatDimensions['w']
         elif edge == 'Down':
             self.floatDimensions['y'] = \
-                self.group.screen.dheight - self.floatDimensions['h']
+                self.group.screen.dheight + self.group.screen.dy - self.floatDimensions['h']
         self.group.layoutAll()
         
 
