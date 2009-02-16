@@ -423,7 +423,50 @@ class Theme:
                 return self.normal[key]
             else:
                 return None
-    
+
+class Hooks(object):
+    __hooks = {}
+    __qtile = None
+    __datadict = {}
+    def __init__(self, hook_name):
+        self.hook_name = hook_name
+
+    def __call__(self, f):
+        print "Defining hook %s" % self.hook_name
+        if self.hook_name in self.__hooks:
+            Hooks.__hooks[self.hook_name].append(f)
+        else:
+            Hooks.__hooks[self.hook_name] = [f,]
+        return f
+
+    @classmethod
+    def set_qtile(cls, qtile):
+        cls.__qtile = qtile
+
+    @classmethod
+    def call_hook(cls, hook_name, *args, **kwargs):
+        if cls.__qtile is None:
+            print "Qtile is none, returning"
+            return
+        if hook_name in cls.__hooks:
+            for f in cls.__hooks[hook_name]:
+                try:
+                    f(cls.__datadict, cls.__qtile, *args, **kwargs)
+                except:
+                    print "error when calling the hook '%s'" % hook_name
+                    print "the function was", f
+                    print sys.exc_info()
+        else:
+            pass
+
+    @classmethod
+    def setitem(cls, key, value):
+        cls.__datadict[key] = value
+
+    @classmethod
+    def getitem(cls, key):
+        return cls.__datadict[key]
+
 
 class Qtile(command.CommandObject):
     debug = False
@@ -431,6 +474,9 @@ class Qtile(command.CommandObject):
     _testing = False
     _logLength = 100 
     def __init__(self, config, displayName=None, fname=None):
+        
+        Hooks.set_qtile(self) #tell Hooks about us
+
         if not displayName:
             displayName = os.environ.get("DISPLAY")
             if not displayName:
@@ -576,8 +622,10 @@ class Qtile(command.CommandObject):
     def unmanage(self, window):
         c = self.windowMap.get(window)
         if c:
+            Hooks.call_hook("client-being-killed", c)
             c.group.remove(c)
             del self.windowMap[window]
+            Hooks.call_hook("client-killed")
 
     def manage(self, w):
         try:
@@ -596,6 +644,7 @@ class Qtile(command.CommandObject):
                 c = window.Window(w, self)
                 self.windowMap[w] = c
                 self.currentScreen.group.add(c)
+                Hooks.call_hook("client-new", c)
 
     def grabKeys(self):
         self.root.ungrab_key(X.AnyKey, X.AnyModifier)
@@ -623,7 +672,7 @@ class Qtile(command.CommandObject):
             while 1:
                 fds, _, _ = select.select(
                                 [self.server.sock, self.display.fileno()],
-                                [], [], 0.1
+                                [], [], 0.01
                             )
                 if self._exit:
                     sys.exit(1)
@@ -651,6 +700,7 @@ class Qtile(command.CommandObject):
                         pass
                     else:
                         self.log.add("Unknown event: %s"%self._eventStr(e))
+                Hooks.call_hook("mainloop-tick")
         except:
             # We've already written a report.
             if not self._exit:

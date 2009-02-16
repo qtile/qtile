@@ -1,4 +1,5 @@
 from .. import bar
+from ..manager import Hooks
 import base
 
 class GroupBox(base._Widget):
@@ -28,6 +29,7 @@ class GroupBox(base._Widget):
         self.width = self.boxwidth * len(qtile.groups) + 2 * self.PADDING
         self.event.subscribe("setgroup", self.draw)
         self.event.subscribe("window_add", self.draw)
+        self.setup_hooks()
 
     def group_has_urgent(self, group):
         return len([w for w in group.windows if w.urgent]) > 0
@@ -72,3 +74,11 @@ class GroupBox(base._Widget):
                 )
             x += self.boxwidth
 
+    def setup_hooks(self):
+        draw = self.draw
+        @Hooks("client-new")
+        @Hooks("client-urgent-hint-changed")
+        @Hooks("client-killed")
+        def hook_response(datadict, qtile, *args):
+            self.draw()
+            

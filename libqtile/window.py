@@ -23,6 +23,7 @@ import Xlib
 from Xlib import X, Xatom
 import Xlib.protocol.event as event
 import command, utils
+import manager
 
 class _Window(command.CommandObject):
     def __init__(self, window, qtile):
@@ -75,15 +76,20 @@ class _Window(command.CommandObject):
         self.x, self.y, self.width, self.height = g.x, g.y, g.width, g.height
 
     def updateUrgency(self):
+        old_value = self.urgent
         h = self.window.get_wm_hints()
         if h is None:
             return
         flags = h.flags
+
         if flags & 256: # 256 is UrgencyHint, but for some reason, Xutil doesn't seem to have it
                         # no clue why not :(
             self.urgent = True
         else:
             self.urgent = False
+        if self.urgent != old_value:
+            manager.Hooks.call_hook("client-urgent-hint-changed", self)
+
 
     def info(self):
         return dict(
@@ -210,6 +216,7 @@ class _Window(command.CommandObject):
             )
             if warp:
                 self.window.warp_pointer(0, 0)
+        manager.Hooks.call_hook("client-focus", self)
 
     def hasProtocol(self, name):
         s = set()
@@ -355,6 +362,7 @@ class Window(_Window):
                  X.FocusChangeMask
     group = None
     def handle_EnterNotify(self, e):
+        manager.Hooks.call_hook("client-mouse-enter", self)
         self.group.focus(self, False)
         if self.group.screen and self.qtile.currentScreen != self.group.screen:
             self.qtile.toScreen(self.group.screen.index)
@@ -374,6 +382,7 @@ class Window(_Window):
             utils.outputToStderr("normal_hints")
         elif e.atom == Xatom.WM_NAME:
             self.updateName()
+            manager.Hooks.call_hook("client-name-updated", self)
         else:
             utils.outputToStderr(e)
 
