@@ -136,6 +136,9 @@ class ClientStack(Layout):
         else:
             current_focus_index = 0
         current_focus_index = (current_focus_index + offset) % len(self.clients)
+        while self.clients[current_focus_index].minimised and \
+                self.clients[current_focus_index] is not self.focused:
+                    current_focus_index = (current_focus_index + offset) % len(self.clients)
         self.group.focus(self.clients[current_focus_index], self.mouse_warp)
 
     def cmd_up(self):
