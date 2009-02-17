@@ -8,6 +8,11 @@ class TopLevelSubLayout(SubLayout):
     def __init__(self, sublayout_data, clientStack, theme):
         WrappedSubLayout, args = sublayout_data
         SubLayout.__init__(self, clientStack, theme)
+        self.sublayouts.append(Minimised(clientStack,
+                                         theme,
+                                         parent=self
+                                         )
+                               )
         self.sublayouts.append(Floating(clientStack,
                                         theme,
                                         parent=self
@@ -59,3 +64,12 @@ class Floating(SubLayout):
         d = client.floatDimensions
         self.place(client, **d)
 
+class Minimised(SubLayout):
+    def filter(self, client):
+        return client.minimised
+
+    def request_rectangle(self, r, windows):
+        return (Rect(), r) #we want nothing
+    
+    def configure(self, r, client):
+        client.hide()

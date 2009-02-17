@@ -34,6 +34,7 @@ class _Window(command.CommandObject):
         self.borderwidth = 0
         self.name = "<no name>"
         self.floating = False
+        self.minimised = False
         self.floatDimensions = {'x': 0, 'y': 0, 'w': 0, 'h': 0}
         self.urgent = False
         self.updateName()
@@ -466,3 +467,11 @@ class Window(_Window):
 
     def cmd_opacity(self, opacity):
         self.setOpacity(opacity)
+
+    def cmd_minimise(self):
+        self.minimised = True
+        self.group.layoutAll()
+
+    def cmd_unminimise(self):
+        self.minimised = False
+        self.group.layoutAll()
