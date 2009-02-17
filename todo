@@ -2,14 +2,17 @@
 Comparison with awesome
  # seamless restart
  # move by direction
- # prompt
+ # prompt DONE
  # fullscreen
  # minimise  
 
 
-
-
 --------------
+
+
+Other ideas
+
+ # layout modifiers - instead of layouts actually placing each window, they just set some internal dict of coords. All window coordinates are then passed to layoutmodifiers or something, which i.e. mirror the coords and other fun things.
 
 
 
