@@ -353,6 +353,11 @@ class Group(command.CommandObject):
     def cmd_prevgroup(self):
         self.move_groups(-1)
 
+    def cmd_unminimise_all(self):
+        for w in self.windows:
+            w.minimised = False
+        self.layoutAll()
+
 
 class Log:
     """
