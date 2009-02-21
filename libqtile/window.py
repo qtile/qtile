@@ -22,6 +22,7 @@ import marshal, sys
 import Xlib
 from Xlib import X, Xatom
 import Xlib.protocol.event as event
+import Xlib.error
 import command, utils
 import manager
 
@@ -78,7 +79,10 @@ class _Window(command.CommandObject):
 
     def updateUrgency(self):
         old_value = self.urgent
-        h = self.window.get_wm_hints()
+        try:
+            h = self.window.get_wm_hints()
+        except (Xlib.error.BadWindow, Xlib.error.BadValue):
+            return
         if h is None:
             return
         flags = h.flags
