@@ -20,7 +20,7 @@
 
 import marshal, sys
 import Xlib
-from Xlib import X, Xatom
+from Xlib import X, Xatom, Xutil
 import Xlib.protocol.event as event
 import Xlib.error
 import command, utils
@@ -38,9 +38,11 @@ class _Window(command.CommandObject):
         self.minimised = False
         self.floatDimensions = {'x': 0, 'y': 0, 'w': 0, 'h': 0}
         self.urgent = False
+        self.nofocus = False
         self.updateName()
         self.updateFloating()            
         self.updateUrgency()
+        self.updateFocus()
 
     def updateName(self):
         try:
@@ -95,6 +97,17 @@ class _Window(command.CommandObject):
         if self.urgent != old_value:
             manager.Hooks.call_hook("client-urgent-hint-changed", self)
 
+    def updateFocus(self):
+        try:
+            h = self.window.get_wm_hints()
+        except:
+            return
+        if h is None:
+            return
+        if not (h.flags & Xutil.InputHint):
+            self.nofocus = True
+        else:
+            self.nofocus = not h.input
 
     def info(self):
         return dict(
@@ -211,7 +224,7 @@ class _Window(command.CommandObject):
             )
 
     def focus(self, warp):
-        if not self.hidden:
+        if not self.hidden and not self.nofocus:
             self.window.set_input_focus(
                 X.RevertToPointerRoot,
                 X.CurrentTime
