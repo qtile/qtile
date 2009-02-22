@@ -1,4 +1,5 @@
 from .. import bar
+from ..manager import Hooks
 import base
 
 class GroupBox(base._Widget):
@@ -19,6 +20,7 @@ class GroupBox(base._Widget):
 
         self.currentFG, self.currentBG = theme['groupbox_fg_focus'], theme['groupbox_bg_focus']
         self.activeFG, self.inactiveFG = theme['groupbox_fg_active'], theme['groupbox_fg_normal']
+        self.urgentFG, self.urgentBG = theme['groupbox_fg_urgent'], theme['groupbox_bg_urgent']
         self.border = theme['groupbox_border_normal']
         if theme["groupbox_font"]:
             self.font = theme["groupbox_font"]
@@ -27,6 +29,10 @@ class GroupBox(base._Widget):
         self.width = self.boxwidth * len(qtile.groups) + 2 * self.PADDING
         self.event.subscribe("setgroup", self.draw)
         self.event.subscribe("window_add", self.draw)
+        self.setup_hooks()
+
+    def group_has_urgent(self, group):
+        return len([w for w in group.windows if w.urgent]) > 0
 
     def draw(self):
         self.clear()
@@ -41,6 +47,9 @@ class GroupBox(base._Widget):
                     background = self.bar.background
                     foreground = self.currentFG
                     border = True
+            elif self.group_has_urgent(i):
+                foreground = self.urgentFG
+                background = self.urgentBG
             elif i.windows:
                 foreground = self.activeFG
                 background = self.bar.background
@@ -65,3 +74,11 @@ class GroupBox(base._Widget):
                 )
             x += self.boxwidth
 
+    def setup_hooks(self):
+        draw = self.draw
+        @Hooks("client-new")
+        @Hooks("client-urgent-hint-changed")
+        @Hooks("client-killed")
+        def hook_response(datadict, qtile, *args):
+            self.draw()
+            

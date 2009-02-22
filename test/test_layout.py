@@ -1,5 +1,6 @@
 import libpry, time, pprint
 from libqtile import layout
+from libqtile.layout import sublayouts, Rect
 import libqtile.manager
 import utils
 
@@ -226,6 +227,91 @@ class uSelectors(utils.QtileTests):
         pass
 
 
+class ClientStackConfig:
+    groups = ["a", "b", "c", "d"]
+    class VertStack(sublayouts.VerticalStack):
+        def filter(self, c):
+            return True
+        def request_rectangle(self, r, windows):
+            return (r, Rect(0,0,0,0))
+    layouts = [
+        layout.ClientStack(
+            SubLayouts=[
+                (VertStack, {}),
+                ],),
+        layout.ClientStack(
+            SubLayouts=[
+                (VertStack, {}),
+                 ],
+            focus_mode = layout.ClientStack.FOCUS_TO_BOTTOM,
+            add_mode = layout.ClientStack.ADD_TO_BOTTOM,
+            ),
+        layout.ClientStack(
+            SubLayouts=[
+                (VertStack, {}),
+                ],
+            focus_mode = layout.ClientStack.FOCUS_TO_LAST_FOCUSED,
+            add_mode = layout.ClientStack.ADD_TO_PREVIOUS,
+            ),
+        ]
+    keys = []
+    theme = None
+    screens = []
+
+class uClientStack(utils.QtileTests):
+    config = ClientStackConfig()
+    
+    def test_add_remove(self):
+        one = self.testWindow("one")
+        two = self.testWindow("two")
+        three = self.testWindow("three")
+        assert self.c.layout.info()['clients'] == ["three",
+                                                  "two",
+                                                  "one"
+                                                  ]
+        assert self.c.layout.info()['focus_history'] == ["three", "two", "one"]
+
+        self.kill(three)
+        #focus goes to the 'top' of the stack, so two is added to top whilst three is removed
+        assert self.c.layout.info()['focus_history'] == ["two", "two", "one"]
+        self.c.nextlayout()
+        #this layout instead adds new clients to the bottom and focuses to the bottom too
+        assert self.c.layout.info()['clients'] == ["one", "two"]
+        assert self.c.layout.info()['focus_history'] == []
+        #as it stood, window two had focus, so by doing next, window one gains it
+        self.c.layout.down()
+        assert self.c.layout.info()['focus_history'] == ["one", "two"]
+        
+        three = self.testWindow("three")
+        #new window three gains focus - top of focus_history
+        assert self.c.layout.info()['clients'] == ["one", "two", "three"]
+        assert self.c.layout.info()['focus_history'] == ["three", "one", "two"]
+
+        self.kill(three)
+        assert self.c.layout.info()['focus_history'] == ["two", "one", "two"]
+
+    def test_focus_and_add_to_previous(self):
+        self.c.nextlayout()
+        self.c.nextlayout()
+
+        one = self.testWindow("one")
+        two = self.testWindow("two")
+        three = self.testWindow("three")
+        assert self.c.layout.info()['clients'] == ["three", "two", "one"]
+        assert self.c.layout.info()['focus_history'] == ["three", "two", "one"]
+        
+        self.c.layout.down()
+        assert self.c.layout.info()['focus_history'] == ["two", "three", "two", "one"]
+
+        four = self.testWindow("four")
+        assert self.c.layout.info()['clients'] == ["three", "four", "two", "one"]
+        assert self.c.layout.info()['focus_history'] == ["four", "two", "three", "two", "one"]
+
+        self.kill(four)
+        assert self.c.layout.info()['focus_history'] == ["two", "two", "three", "two", "one"]
+        
+
+
 class TileConfig:
     groups = ["a", "b", "c", "d"]
     layouts = [
@@ -320,5 +406,6 @@ tests = [
         uTile(),
         uMagnify(),
         uSelectors(),
+        uClientStack(),
     ],
 ]

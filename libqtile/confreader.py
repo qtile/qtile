@@ -51,3 +51,4 @@ class File(Config):
         self.groups = globs.get("groups")
         self.layouts = globs.get("layouts")
         self.screens = globs.get("screens")
+        self.theme = globs.get("theme")

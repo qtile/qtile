@@ -22,6 +22,8 @@ import operator, functools
 from Xlib import X
 import manager
 
+import sys
+
 _modmasks = {
     "shift":    X.ShiftMask,
     "lock":     X.LockMask,
@@ -68,6 +70,11 @@ def shuffleDown(lst):
         lst.remove(c)
         lst.append(c)
 
+def outputToStderr(*args):
+    try:
+        print >> sys.stderr, args
+    except:
+        print "SOMETHING WENT WRONG WHEN PRINTING TO STDERR"
 
 class LRUCache:
     """

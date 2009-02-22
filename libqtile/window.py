@@ -23,6 +23,7 @@ import Xlib
 from Xlib import X, Xatom
 import Xlib.protocol.event as event
 import command, utils
+import manager
 
 class _Window(command.CommandObject):
     def __init__(self, window, qtile):
@@ -32,7 +33,13 @@ class _Window(command.CommandObject):
         self.x, self.y, self.width, self.height = None, None, None, None
         self.borderwidth = 0
         self.name = "<no name>"
+        self.floating = False
+        self.minimised = False
+        self.floatDimensions = {'x': 0, 'y': 0, 'w': 0, 'h': 0}
+        self.urgent = False
         self.updateName()
+        self.updateFloating()            
+        self.updateUrgency()
 
     def updateName(self):
         try:
@@ -42,6 +49,48 @@ class _Window(command.CommandObject):
             # This usually means the window has just been deleted, and a new
             # focus will be acquired shortly. We don't raise an event for this.
             pass
+
+    def updateFloating(self):
+        win = self.window
+        d = self.qtile.display
+        dialog_atom = d.intern_atom('_NET_WM_WINDOW_TYPE_DIALOG')
+        try:
+            win_type = win.get_full_property(
+                d.intern_atom('_NET_WM_WINDOW_TYPE'),
+                Xatom.ATOM,
+                )
+        except:
+            self.floating = False
+        if win_type and \
+                win_type.value and \
+                win_type.value[0] == dialog_atom:
+            self.floating = True
+        else:
+            self.floating = False
+        g = win.get_geometry()
+        self.floatDimensions = {
+            'x': g.x,
+            'y': g.y,
+            'w': g.width,
+            'h': g.height,
+            }
+        self.x, self.y, self.width, self.height = g.x, g.y, g.width, g.height
+
+    def updateUrgency(self):
+        old_value = self.urgent
+        h = self.window.get_wm_hints()
+        if h is None:
+            return
+        flags = h.flags
+
+        if flags & 256: # 256 is UrgencyHint, but for some reason, Xutil doesn't seem to have it
+                        # no clue why not :(
+            self.urgent = True
+        else:
+            self.urgent = False
+        if self.urgent != old_value:
+            manager.Hooks.call_hook("client-urgent-hint-changed", self)
+
 
     def info(self):
         return dict(
@@ -53,6 +102,36 @@ class _Window(command.CommandObject):
             id = str(hex(self.window.id))
         )
 
+    @property
+    def opacity(self):
+        opacity = self.window.get_property(
+            self.qtile.display.get_atom('_NET_WM_WINDOW_OPACITY'),
+            Xatom.CARDINAL,
+            0,
+            32
+            )
+        if not opacity:
+            return 1.0
+        else:
+            value = opacity.value[0]
+            as_float = round(
+                (float(value)/0xffffffff), 
+                2  #2 decimal places
+                )
+            return as_float
+
+    def setOpacity(self, opacity):
+        if 0.0 <= opacity <= 1.0:
+            real_opacity = int(opacity * 0xffffffff)
+            self.window.change_property(
+                self.qtile.display.get_atom('_NET_WM_WINDOW_OPACITY'),
+                Xatom.CARDINAL,
+                32,
+                [real_opacity,],
+                )
+        else:
+            return
+            
     def notify(self):
         e = event.ConfigureNotify(
                 window = self.window,
@@ -138,6 +217,7 @@ class _Window(command.CommandObject):
             )
             if warp:
                 self.window.warp_pointer(0, 0)
+        manager.Hooks.call_hook("client-focus", self)
 
     def hasProtocol(self, name):
         s = set()
@@ -258,7 +338,7 @@ class Internal(_Window):
                  X.ExposureMask |\
                  X.ButtonPressMask
     @classmethod
-    def create(klass, qtile, background_pixel, x, y, width, height):
+    def create(klass, qtile, background_pixel, x, y, width, height, opacity=1.0):
         win = qtile.root.create_window(
                     x, y, width, height, 0,
                     X.CopyFromParent, X.InputOutput,
@@ -269,6 +349,7 @@ class Internal(_Window):
         i = Internal(win, qtile)
         i.place(x, y, width, height, 0, None)
         i.setProp("internal", True)
+        i.setOpacity(opacity)
         return i
 
     def __repr__(self):
@@ -282,6 +363,7 @@ class Window(_Window):
                  X.FocusChangeMask
     group = None
     def handle_EnterNotify(self, e):
+        manager.Hooks.call_hook("client-mouse-enter", self)
         self.group.focus(self, False)
         if self.group.screen and self.qtile.currentScreen != self.group.screen:
             self.qtile.toScreen(self.group.screen.index)
@@ -293,15 +375,17 @@ class Window(_Window):
 
     def handle_PropertyNotify(self, e):
         if e.atom == Xatom.WM_TRANSIENT_FOR:
-            print >> sys.stderr, "transient"
+            utils.outputToStderr("transient")
         elif e.atom == Xatom.WM_HINTS:
-            print >> sys.stderr, "hints"
+            self.updateUrgency()
+            utils.outputToStderr("hints")
         elif e.atom == Xatom.WM_NORMAL_HINTS:
-            print >> sys.stderr, "normal_hints"
+            utils.outputToStderr("normal_hints")
         elif e.atom == Xatom.WM_NAME:
             self.updateName()
+            manager.Hooks.call_hook("client-name-updated", self)
         else:
-            print >> sys.stderr, e
+            utils.outputToStderr(e)
 
     def _items(self, name):
         if name == "group":
@@ -349,3 +433,45 @@ class Window(_Window):
             group.add(self)
             self.group.layoutAll()
             group.layoutAll()
+
+    def cmd_move_floating(self, x, y):
+        self.floatDimensions['x'] += x
+        self.floatDimensions['y'] += y
+        self.group.layoutAll()
+
+    def cmd_move_to_screen_edge(self, edge):
+        if edge == 'Left':
+            self.floatDimensions['x'] = 0
+        elif edge == 'Up':
+            self.floatDimensions['y'] = 0
+        elif edge == 'Right':
+            self.floatDimensions['x'] = \
+                self.group.screen.dwidth - self.floatDimensions['w']
+        elif edge == 'Down':
+            self.floatDimensions['y'] = \
+                self.group.screen.dheight + self.group.screen.dy - self.floatDimensions['h']
+        self.group.layoutAll()
+        
+
+    def cmd_resize_floating(self, xinc, yinc):
+        self.floatDimensions['w'] += xinc
+        self.floatDimensions['h'] += yinc
+        self.group.layoutAll()
+
+    def cmd_toggle_floating(self):
+        self.floating = not self.floating
+        self.group.layoutAll()
+
+    def cmd_semitransparent(self):
+        self.setOpacity(0.5)
+
+    def cmd_opacity(self, opacity):
+        self.setOpacity(opacity)
+
+    def cmd_minimise(self):
+        self.minimised = True
+        self.group.layoutAll()
+
+    def cmd_unminimise(self):
+        self.minimised = False
+        self.group.layoutAll()
