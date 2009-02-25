@@ -1,6 +1,5 @@
 from clientstack import ClientStack
-from base import SubLayout, Rect
-from sublayouts import VerticalStack
+from sublayout import VerticalStack, SubLayout, Rect
 
 
 class SubTile(SubLayout):

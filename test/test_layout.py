@@ -1,6 +1,6 @@
 import libpry, time, pprint
 from libqtile import layout
-from libqtile.layout import sublayouts, Rect
+from libqtile.layout.sublayout.sublayout import Rect, VerticalStack
 import libqtile.manager
 import utils
 
@@ -229,7 +229,7 @@ class uSelectors(utils.QtileTests):
 
 class ClientStackConfig:
     groups = ["a", "b", "c", "d"]
-    class VertStack(sublayouts.VerticalStack):
+    class VertStack(VerticalStack):
         def filter(self, c):
             return True
         def request_rectangle(self, r, windows):

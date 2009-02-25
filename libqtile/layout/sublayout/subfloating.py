@@ -1,4 +1,4 @@
-from sublayouts import Floating
+from sublayout import Floating
 
 class SubFloating(Floating):
     def filter(self, client):

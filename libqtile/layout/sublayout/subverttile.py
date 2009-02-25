@@ -1,5 +1,4 @@
-from base import SubLayout, Rect
-from sublayouts import HorizontalStack
+from sublayout import HorizontalStack, SubLayout, Rect
 from subtile import SubTile
 
 class SubVertTile(SubTile):

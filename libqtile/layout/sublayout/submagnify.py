@@ -1,5 +1,4 @@
-from base import SubLayout, Rect
-from sublayouts import VerticalStack
+from sublayout import VerticalStack, SubLayout, Rect
 
 class SubMagnify(SubLayout):
     def __init__(self, clientStack, theme, parent=None, ratio=0.7):

@@ -1,6 +1,6 @@
-from base import Layout, SubLayout, Rect
-from .. import command, utils
-from sublayouts import TopLevelSubLayout
+from ..base import Layout
+from sublayout import SubLayout, Rect, TopLevelSubLayout
+from ... import command, utils
 
 class ClientStack(Layout):
     name="tile"
