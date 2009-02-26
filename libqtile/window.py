@@ -37,12 +37,22 @@ class _Window(command.CommandObject):
         self.floating = False
         self.minimised = False
         self.floatDimensions = {'x': 0, 'y': 0, 'w': 0, 'h': 0}
-        self.urgent = False
-        self.nofocus = False
+
+        self.hints = {
+            'input': True,
+            'state': Xutil.NormalState, #Normal state
+            'icon_pixmap': None,
+            'icon_window': None,
+            'icon_x': 0,
+            'icon_y': 0,
+            'icon_mask': 0,
+            'window_group': None,
+            'urgent': False,
+            }
+                 
         self.updateName()
         self.updateFloating()            
-        self.updateUrgency()
-        self.updateFocus()
+        self.updateHints()
 
     def updateName(self):
         try:
@@ -79,35 +89,51 @@ class _Window(command.CommandObject):
             }
         self.x, self.y, self.width, self.height = g.x, g.y, g.width, g.height
 
-    def updateUrgency(self):
-        old_value = self.urgent
+
+    def updateHints(self):
+        ''' 
+          update the local copy of the window's WM_HINTS
+          http://tronche.com/gui/x/icccm/sec-4.html#WM_HINTS
+        '''
+        
+        def update_hint(hint, value, hook=True):
+            if self.hints[hint] != value:
+                self.hints[hint] = value
+                if hook:
+                    manager.Hooks.call_hook(
+                        "client-%s-hint-changed" % hint, 
+                        self)
         try:
             h = self.window.get_wm_hints()
         except (Xlib.error.BadWindow, Xlib.error.BadValue):
             return
         if h is None:
             return
+
         flags = h.flags
-
-        if flags & 256: # 256 is UrgencyHint, but for some reason, Xutil doesn't seem to have it
-                        # no clue why not :(
-            self.urgent = True
+        if flags & Xutil.InputHint:
+            update_hint('input', h.input)
+        if flags & Xutil.StateHint:
+            update_hint('state', h.initial_state)
+        if flags & Xutil.IconPixmapHint:
+            update_hint('icon_pixmap', h.icon_pixmap)
+        if flags & Xutil.IconWindowHint:
+            update_hint('icon_window', h.icon_window)
+        if flags & Xutil.IconPositionHint:
+            update_hint('icon_x', h.icon_x, hook=False)
+            update_hint('icon_y', h.icon_y, hook=False)
+        if flags & Xutil.IconMaskHint:
+            update_hint('icon_mask', h.icon_mask)
+        if flags & Xutil.WindowGroupHint:
+            update_hint('window_group', h.window_group)
+        if flags & 256: #urgency_hint
+            update_hint('urgent', True)
         else:
-            self.urgent = False
-        if self.urgent != old_value:
-            manager.Hooks.call_hook("client-urgent-hint-changed", self)
+            update_hint('urgent', False)
 
-    def updateFocus(self):
-        try:
-            h = self.window.get_wm_hints()
-        except:
-            return
-        if h is None:
-            return
-        if not (h.flags & Xutil.InputHint):
-            self.nofocus = True
-        else:
-            self.nofocus = not h.input
+    @property
+    def urgent(self):
+        return self.hints['urgent']
 
     def info(self):
         return dict(
@@ -224,7 +250,7 @@ class _Window(command.CommandObject):
             )
 
     def focus(self, warp):
-        if not self.hidden and not self.nofocus:
+        if not self.hidden and self.hints['input']:
             self.window.set_input_focus(
                 X.RevertToPointerRoot,
                 X.CurrentTime
@@ -394,7 +420,7 @@ class Window(_Window):
         if e.atom == Xatom.WM_TRANSIENT_FOR:
             utils.outputToStderr("transient")
         elif e.atom == Xatom.WM_HINTS:
-            self.updateUrgency()
+            self.updateHints()
             utils.outputToStderr("hints")
         elif e.atom == Xatom.WM_NORMAL_HINTS:
             utils.outputToStderr("normal_hints")
