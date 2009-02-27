@@ -417,18 +417,21 @@ class Window(_Window):
             self.notify()
 
     def handle_PropertyNotify(self, e):
-        if e.atom == Xatom.WM_TRANSIENT_FOR:
-            utils.outputToStderr("transient")
-        elif e.atom == Xatom.WM_HINTS:
+        name = self.qtile.display.get_atom_name(e.atom)
+        if name == "WM_TRANSIENT_FOR":
+            print >> sys.stderr, "transient"
+        elif name == "WM_HINTS":
             self.updateHints()
-            utils.outputToStderr("hints")
-        elif e.atom == Xatom.WM_NORMAL_HINTS:
-            utils.outputToStderr("normal_hints")
-        elif e.atom == Xatom.WM_NAME:
+            print >> sys.stderr, "hints"
+        elif name == "WM_NORMAL_HINTS":
+            print >> sys.stderr, "normal_hints"
+        elif name == "WM_NAME":
             self.updateName()
             manager.Hooks.call_hook("client-name-updated", self)
+        elif name == "_NET_WM_WINDOW_OPACITY":
+            pass
         else:
-            utils.outputToStderr(e)
+            print >> sys.stderr, "Unknown window property: ", name
 
     def _items(self, name):
         if name == "group":

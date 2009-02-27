@@ -2,14 +2,11 @@ from stack import Stack
 from max import Max
 from magnify import Magnify
 from tile import Tile
-from clientstack import ClientStack
-
-from base import Rect
 
 # sublayouts
-from subtile import SubTile
-from subverttile import SubVertTile
-from submax import SubMax
-from subfloating import SubFloating
-from submagnify import SubMagnify
-from hybridlayoutdemo import HybridLayoutDemo
+from sublayout.clientstack import ClientStack
+from sublayout.subtile import SubTile
+from sublayout.subverttile import SubVertTile
+from sublayout.submax import SubMax
+from sublayout.subfloating import SubFloating
+from sublayout.submagnify import SubMagnify

@@ -70,11 +70,6 @@ def shuffleDown(lst):
         lst.remove(c)
         lst.append(c)
 
-def outputToStderr(*args):
-    try:
-        print >> sys.stderr, args
-    except:
-        print "SOMETHING WENT WRONG WHEN PRINTING TO STDERR"
 
 class LRUCache:
     """
