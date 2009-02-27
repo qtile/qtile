@@ -162,8 +162,9 @@ class _Window(command.CommandObject):
                 2  #2 decimal places
                 )
             return as_float
-
-    def setOpacity(self, opacity):
+    
+    @opacity.setter
+    def opacity(self, opacity):
         if 0.0 <= opacity <= 1.0:
             real_opacity = int(opacity * 0xffffffff)
             self.window.change_property(
@@ -392,7 +393,7 @@ class Internal(_Window):
         i = Internal(win, qtile)
         i.place(x, y, width, height, 0, None)
         i.setProp("internal", True)
-        i.setOpacity(opacity)
+        i.opacity = opacity
         return i
 
     def __repr__(self):
@@ -509,10 +510,10 @@ class Window(_Window):
         self.group.layoutAll()
 
     def cmd_semitransparent(self):
-        self.setOpacity(0.5)
+        self.opacity = 0.5
 
     def cmd_opacity(self, opacity):
-        self.setOpacity(opacity)
+        self.opacity = opacity
 
     def cmd_minimise(self):
         self.minimised = True

@@ -163,7 +163,7 @@ class SubLayout:
                      bc
                      )
         client.unhide()
-        client.setOpacity(opacity)
+        client.opacity = opacity
 
     def command_get_arg(self, args, kwargs, name, default):
         if name in kwargs:
