@@ -37,7 +37,6 @@ class _Window(command.CommandObject):
         self.floating = False
         self.minimised = False
         self.floatDimensions = {'x': 0, 'y': 0, 'w': 0, 'h': 0}
-
         self.hints = {
             'input': True,
             'state': Xutil.NormalState, #Normal state
@@ -49,9 +48,8 @@ class _Window(command.CommandObject):
             'window_group': None,
             'urgent': False,
             }
-                 
         self.updateName()
-        self.updateFloating()            
+        self.updateFloating()
         self.updateHints()
 
     def updateName(self):
@@ -145,8 +143,19 @@ class _Window(command.CommandObject):
             id = str(hex(self.window.id))
         )
 
-    @property
-    def opacity(self):
+    def setOpacity(self, opacity):
+        if 0.0 <= opacity <= 1.0:
+            real_opacity = int(opacity * 0xffffffff)
+            self.window.change_property(
+                self.qtile.display.get_atom('_NET_WM_WINDOW_OPACITY'),
+                Xatom.CARDINAL,
+                32,
+                [real_opacity,],
+                )
+        else:
+            return
+
+    def getOpacity(self):
         opacity = self.window.get_property(
             self.qtile.display.get_atom('_NET_WM_WINDOW_OPACITY'),
             Xatom.CARDINAL,
@@ -158,23 +167,12 @@ class _Window(command.CommandObject):
         else:
             value = opacity.value[0]
             as_float = round(
-                (float(value)/0xffffffff), 
+                (float(value)/0xffffffff),
                 2  #2 decimal places
                 )
             return as_float
-    
-    @opacity.setter
-    def opacity(self, opacity):
-        if 0.0 <= opacity <= 1.0:
-            real_opacity = int(opacity * 0xffffffff)
-            self.window.change_property(
-                self.qtile.display.get_atom('_NET_WM_WINDOW_OPACITY'),
-                Xatom.CARDINAL,
-                32,
-                [real_opacity,],
-                )
-        else:
-            return
+
+    opacity = property(getOpacity, setOpacity)
             
     def notify(self):
         e = event.ConfigureNotify(
