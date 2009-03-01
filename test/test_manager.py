@@ -348,14 +348,14 @@ class uTheme(libpry.AutoTree):
 
     def test_get(self):
         t = self._sub()
-        assert t.get("sub.sub").opacity == 0.5
-        assert t.get("sub").border_width == 3
-        assert t.get(None).border_width == 2
+        assert t["sub.sub"].opacity == 0.5
+        assert t["sub"].border_width == 3
+        assert t[None].border_width == 2
 
     def test_path(self):
         t = self._sub()
-        assert t.get("sub.sub").path == "sub.sub"
-        assert t.get(None).path == None
+        assert t["sub.sub"].path == "sub.sub"
+        assert t[None].path == None
 
     def test_preOrder(self):
         t = self._sub()

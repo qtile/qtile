@@ -443,7 +443,7 @@ class Theme(object):
         value.path = key if not self.path else self.path + "." + key
 
     def __getitem__(self, key):
-        return self.children[key]
+        return self.get(key)
 
     def __repr__(self):
         return "Theme: %s"%(self.path or "default")
@@ -464,7 +464,7 @@ class Theme(object):
         try:
             return self._get(parts)
         except KeyError:
-            raise ValueError("No such path: %s"%path)
+            raise KeyError("No such path: %s"%path)
 
     def addSection(self, path, d):
         parts = path.split()
