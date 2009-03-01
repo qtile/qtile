@@ -169,15 +169,15 @@ class _TextBox(_Widget):
 
     def _configure(self, qtile, bar, event, theme):
         _Widget._configure(self, qtile, bar, event, theme)
-        if theme['font']:
-            self.font = theme['font']
+        if theme.font:
+            self.font = theme.font
 
     def draw(self):
         self._drawer.textbox(
             self.text,
             self.offset, 0, self.width, self.bar.size,
             padding = self.PADDING,
-            foreground=self.theme['textbox_fg_normal'],
-            background=self.theme['textbox_bg_normal'],
+            foreground=self.theme.fg_normal,
+            background=self.theme.bg_normal,
         )
 

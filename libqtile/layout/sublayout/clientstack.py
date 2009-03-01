@@ -48,9 +48,9 @@ class ClientStack(Layout):
             def color(color):
                 colormap = group.qtile.display.screen().default_colormap
                 return colormap.alloc_named_color(color).pixel
-            c.active_border = color(theme["clientstack_border_active"])
-            c.focused_border = color(theme["clientstack_border_focus"])
-            c.normal_border = color(theme["clientstack_border_normal"])
+            c.active_border = color(theme.border_active)
+            c.focused_border = color(theme.border_focus)
+            c.normal_border = color(theme.border_normal)
         c.clients = []
         c.focus_history = []
         c.sublayouts = []

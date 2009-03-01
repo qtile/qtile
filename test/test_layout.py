@@ -4,7 +4,7 @@ from libqtile.layout.sublayout.sublayout import Rect, VerticalStack
 import libqtile.manager
 import utils
 
-theme = libqtile.manager.Theme({}, specials={'stack': {'border_width': 10}})
+theme = libqtile.manager.Theme()
 
 class MaxConfig:
     groups = ["a", "b", "c", "d"]

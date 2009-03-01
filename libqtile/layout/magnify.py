@@ -25,10 +25,10 @@ class Magnify(Layout):
         if not self.focusedBorder:
             colormap = group.qtile.display.screen().default_colormap
             self.focusedBorder = colormap.alloc_named_color(
-                theme["magnify_border_focus"],
+                theme.border_focus,
                 ).pixel
             self.normalBorder = colormap.alloc_named_color(
-                theme["magnify_border_normal"],
+                theme.border_normal,
                 ).pixel
         c = Layout.clone(self, group, theme)
         c.clients = []
@@ -66,7 +66,7 @@ class Magnify(Layout):
         screenHeight = self.group.screen.dheight
         gap = self.gap
         x = y = w = h = 0
-        borderWidth = self.theme["magnify_border_width"]
+        borderWidth = self.theme.border_width
         if self.clients and c in self.clients:
             if c is self.clients[0]:
                 x = self.group.screen.dx + gap
