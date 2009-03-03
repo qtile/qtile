@@ -406,7 +406,8 @@ class Window(_Window):
     group = None
     def handle_EnterNotify(self, e):
         manager.Hooks.call_hook("client-mouse-enter", self)
-        self.group.focus(self, False)
+        if self.group.currentWindow != self:
+            self.group.focus(self, False)
         if self.group.screen and self.qtile.currentScreen != self.group.screen:
             self.qtile.toScreen(self.group.screen.index)
 
