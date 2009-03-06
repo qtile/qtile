@@ -589,3 +589,19 @@ class Window(_Window):
     def cmd_unminimise(self):
         self.minimised = False
         self.group.layoutAll()
+
+    def cmd_maximise(self):
+        self.maximised = True
+        self.group.layoutAll()
+    
+    def cmd_unmaximise(self):
+        self.maximised = False
+        self.group.layoutAll()
+
+    def cmd_fullscreen(self):
+        self.fullscreen = True
+        self.group.layoutAll()
+
+    def cmd_unfullscreen(self):
+        self.fullscreen = True
+        self.group.layoutAll()
