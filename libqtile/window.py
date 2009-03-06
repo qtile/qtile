@@ -27,7 +27,7 @@ import command, utils
 import manager
 
 class _Window(command.CommandObject):
-    possible_states = ["normal", "minimised", "floating"]
+    possible_states = ["normal", "minimised", "floating", "maximised", "fullscreen"]
     def __init__(self, window, qtile):
         self.window, self.qtile = window, qtile
         self.hidden = True
@@ -89,6 +89,18 @@ class _Window(command.CommandObject):
     def setFloating(self, val):
         self.setState("floating", val)
     floating = property(getFloating, setFloating)
+
+    def getMaximised(self):
+        return self.getState("maximised")
+    def setMaximised(self, val):
+        self.setState("maximised", val)
+    maximised = property(getMaximised, setMaximised)
+
+    def getFullscreen(self):
+        return self.getState("fullscreen")
+    def setFullscreen(self, val):
+        self.setState("fullscreen", val)
+    fullscreen = property(getFullscreen, setFullscreen)
 
     def updateName(self):
         try:
