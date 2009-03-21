@@ -586,7 +586,7 @@ class Window(_Window):
 
     def cmd_toggle_floating(self):
         self.floating = not self.floating
-        if not self.floating and self.window_type in ("dialog", ): #maybe add more here
+        if not self.floating and self.window_type in ("dialog", "utility"): #maybe add more here
             self.window_type = "pseudo-normal"
         elif self.window_type == "pseudo-normal":
             self.updateWindowType()
