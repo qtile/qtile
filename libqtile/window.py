@@ -124,7 +124,11 @@ class _Window(command.CommandObject):
     window_type = property(getWindowType, setWindowType)
 
     def updateWindowType(self):
-        '''http://standards.freedesktop.org/wm-spec/wm-spec-latest.html#id2551529'''
+        '''
+        http://standards.freedesktop.org/wm-spec/wm-spec-latest.html#id2551529
+        Also a type "pseudo-normal" is used to indicicate a window that wants 
+        to be treated as if it were normal, but isn't actually.
+        '''
         types = {
             '_NET_WM_WINDOW_TYPE_DESKTOP': "desktop",
             '_NET_WM_WINDOW_TYPE_DOCK': "dock",
@@ -582,6 +586,10 @@ class Window(_Window):
 
     def cmd_toggle_floating(self):
         self.floating = not self.floating
+        if not self.floating and self.window_type in ("dialog", ): #maybe add more here
+            self.window_type = "pseudo-normal"
+        elif self.window_type == "pseudo-normal":
+            self.updateWindowType()
         self.group.layoutAll()
 
     def cmd_semitransparent(self):
