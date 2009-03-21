@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 import os.path
-
+import sys
 
 class ConfigError(Exception): pass
 
@@ -44,6 +44,7 @@ class File(Config):
         if not os.path.isfile(fname):
             raise ConfigError("Config file does not exist: %s"%fname)
         try:
+            sys.path.append(os.path.dirname(self.fname)) #to allow 'import'ing from the config dir
             execfile(self.fname, {}, globs)
         except Exception, v:
             raise ConfigError(str(v))
