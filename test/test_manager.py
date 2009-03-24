@@ -32,7 +32,7 @@ class TestConfig:
                     ),
     )]
     theme = None
-    themesdir = "themes"
+    themedir = "themes"
 
 
 class uMultiScreen(utils.QtileTests):

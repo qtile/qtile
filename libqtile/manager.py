@@ -988,20 +988,20 @@ class Qtile(command.CommandObject):
         return None
 
     def listThemes(self):
-        names = os.listdir(self.config.themesdir)
+        names = os.listdir(self.config.themedir)
         ret = []
         for i in names:
-            path = os.path.join(self.config.themesdir, i)
+            path = os.path.join(self.config.themedir, i)
             if os.path.isfile(path):
                 ret.append(i)
         return sorted(ret)
 
     def loadTheme(self, name):
-        themes = os.listdir(self.config.themesdir)
+        themes = os.listdir(self.config.themedir)
         if not name in themes:
             raise QtileError("No such theme: %s"%name)
         self.config.theme = name
-        self.theme = Theme.fromFile(os.path.join(self.config.themesdir, name))
+        self.theme = Theme.fromFile(os.path.join(self.config.themedir, name))
         # FIXME: Redraw layouts and bars here
 
     def cmd_themes(self):
