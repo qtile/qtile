@@ -407,7 +407,7 @@ class uTheme(libpry.AutoTree):
         libpry.raises("must be of type float", s, "default { opacity = foo }")
 
     def test_fromFile(self):
-        t = libqtile.manager.Theme.fromFile("themes/one")
+        t = libqtile.manager.Theme.fromFile("themes/a")
         assert t
         
 
