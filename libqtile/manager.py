@@ -548,11 +548,13 @@ class Theme(object):
             root.addSection(i, sections[i])
         return root
 
+    @classmethod
     def fromFile(klass, fname):
         """
             Construct a Theme tree from a file.
         """
-        pass
+        s = open(fname).read()
+        return klass.parse(s)
 
 
 class Hooks(object):
@@ -984,6 +986,41 @@ class Qtile(command.CommandObject):
             if i.window.id == wid:
                 return i
         return None
+
+    def listThemes(self):
+        names = os.listdir(self.config.themesdir)
+        ret = []
+        for i in names:
+            path = os.path.join(self.config.themesdir, i)
+            if os.path.isfile(path):
+                ret.append(i)
+        return sorted(ret)
+
+    def loadTheme(self, name):
+        themes = os.listdir(self.config.themesdir)
+        if not name in themes:
+            raise QtileError("No such theme: %s"%name)
+        self.config.theme = name
+        self.theme = Theme.fromFile(os.path.join(self.config.themesdir, name))
+        # FIXME: Redraw layouts and bars here
+
+    def cmd_themes(self):
+        """
+            Returns a list of available theme names.
+        """
+        return self.listThemes()
+
+    def cmd_theme_load(self, name):
+        """
+            Loads a theme. Must be one of the list of available themes.
+        """
+        return self.loadTheme(name)
+
+    def cmd_theme_current(self):
+        """
+            Returns the current theme name.
+        """ 
+        return self.config.theme
 
     def cmd_debug(self):
         """

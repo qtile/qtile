@@ -32,6 +32,7 @@ class TestConfig:
                     ),
     )]
     theme = None
+    themesdir = "themes"
 
 
 class uMultiScreen(utils.QtileTests):
@@ -78,6 +79,13 @@ class uSingle(utils.QtileTests):
     config = TestConfig()
     def test_events(self):
         assert self.c.status() == "OK"
+
+    def test_themes(self):
+        assert self.c.themes() == ["one", "two"]
+        assert not self.c.theme_current()
+        self.c.theme_load("one")
+        assert self.c.theme_current() == "one"
+
 
     def test_report(self):
         p = os.path.join(self["tmpdir"], "crashreport")
@@ -375,6 +383,11 @@ class uTheme(libpry.AutoTree):
         libpry.raises("not a valid theme element", s, "default { invalid = 0.1 }")
         libpry.raises("must be of type integer", s, "default { border_width = 0.1 }")
         libpry.raises("must be of type float", s, "default { opacity = foo }")
+
+    def test_fromFile(self):
+        t = libqtile.manager.Theme.fromFile("themes/one")
+        assert t
+        
 
 
 tests = [

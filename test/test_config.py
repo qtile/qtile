@@ -8,7 +8,10 @@ class uConfig(libpry.AutoTree):
 
     def test_basic(self):
         f = confreader.File("configs/basic.py")
+        assert f.keys
+        assert f.themedir == "configs/themes"
         
+
 tests = [
     uConfig()
 ]
