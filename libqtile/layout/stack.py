@@ -112,17 +112,17 @@ class Stack(Layout):
                 return i
         return 0
 
-    def clone(self, group, theme):
+    def clone(self, group):
+        c = Layout.clone(self, group)
         if not self.activePixel:
             colormap = group.qtile.display.screen().default_colormap
-            self.activePixel = colormap.alloc_named_color(theme.border_focus).pixel
-            self.inactivePixel = colormap.alloc_named_color(theme.border_normal).pixel
-        c = Layout.clone(self, group, theme)
+            self.activePixel = colormap.alloc_named_color(c.theme.border_focus).pixel
+            self.inactivePixel = colormap.alloc_named_color(c.theme.border_normal).pixel
         # These are mutable
         c.stacks = [_WinStack() for i in self.stacks]
-        c.borderWidth = theme.border_width
-        c.active = theme.border_focus
-        c.inactive = theme.border_normal
+        c.borderWidth = c.theme.border_width
+        c.active = c.theme.border_focus
+        c.inactive = c.theme.border_normal
         return c
 
     def _findNext(self, lst, offset):

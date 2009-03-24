@@ -21,16 +21,16 @@ class Magnify(Layout):
             self.group.layoutAll()
             self.group.focus(self.clients[0], True)
 
-    def clone(self, group, theme):
+    def clone(self, group):
+        c = Layout.clone(self, group)
         if not self.focusedBorder:
             colormap = group.qtile.display.screen().default_colormap
             self.focusedBorder = colormap.alloc_named_color(
-                theme.border_focus,
+                c.theme.border_focus,
                 ).pixel
             self.normalBorder = colormap.alloc_named_color(
-                theme.border_normal,
+                c.theme.border_normal,
                 ).pixel
-        c = Layout.clone(self, group, theme)
         c.clients = []
         return c
 

@@ -42,22 +42,22 @@ class ClientStack(Layout):
         # Oh dear, this shouldn't be happening, oh dear what can the matter be, oh dear help help help
         self.group.layoutAll()
                 
-    def clone(self, group, theme):
-        c = Layout.clone(self, group, theme)
+    def clone(self, group):
+        c = Layout.clone(self, group)
         if not self.active_border:
             def color(color):
                 colormap = group.qtile.display.screen().default_colormap
                 return colormap.alloc_named_color(color).pixel
-            c.active_border = color(theme.border_active)
-            c.focused_border = color(theme.border_focus)
-            c.normal_border = color(theme.border_normal)
+            c.active_border = color(c.theme.border_active)
+            c.focused_border = color(c.theme.border_focus)
+            c.normal_border = color(c.theme.border_normal)
         c.clients = []
         c.focus_history = []
         c.sublayouts = []
         for SL, kwargs in self.SubLayouts:
             c.sublayouts.append(TopLevelSubLayout((SL, kwargs),
                                                   c,
-                                                  theme,
+                                                  c.theme,
                                                   )
                                 )
         c.current_sublayout = 0

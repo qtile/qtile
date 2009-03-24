@@ -210,7 +210,7 @@ class Group(command.CommandObject):
     def __init__(self, name, layouts, qtile):
         self.name, self.qtile = name, qtile
         self.screen = None
-        self.layouts = [i.clone(self, qtile.theme) for i in layouts]
+        self.layouts = [i.clone(self) for i in layouts]
         self.currentLayout = 0
         self.currentWindow = None
         self.windows = set()
