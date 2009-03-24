@@ -81,11 +81,33 @@ class uSingle(utils.QtileTests):
         assert self.c.status() == "OK"
 
     def test_themes(self):
-        assert self.c.themes() == ["one", "two"]
+        assert self.c.themes() == ["a", "b", "c"]
         assert not self.c.theme_current()
-        self.c.theme_load("one")
-        assert self.c.theme_current() == "one"
+        self.c.theme_load("a")
+        assert self.c.theme_current() == "a"
+        self.c.theme_next()
 
+    def test_theme_next(self):
+        assert not self.c.theme_current()
+        self.c.theme_next()
+        assert self.c.theme_current() == "a"
+        self.c.theme_next()
+        assert self.c.theme_current() == "b"
+        self.c.theme_next()
+        assert self.c.theme_current() == "c"
+        self.c.theme_next()
+        assert self.c.theme_current() == "a"
+
+    def test_theme_prev(self):
+        assert not self.c.theme_current()
+        self.c.theme_prev()
+        assert self.c.theme_current() == "c"
+        self.c.theme_prev()
+        assert self.c.theme_current() == "b"
+        self.c.theme_prev()
+        assert self.c.theme_current() == "a"
+        self.c.theme_prev()
+        assert self.c.theme_current() == "c"
 
     def test_report(self):
         p = os.path.join(self["tmpdir"], "crashreport")

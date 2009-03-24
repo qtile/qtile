@@ -1016,6 +1016,30 @@ class Qtile(command.CommandObject):
         """
         return self.loadTheme(name)
 
+    def cmd_theme_next(self):
+        """
+            Load next theme.
+        """
+        themes = self.listThemes()
+        if themes:
+            if not self.config.theme:
+                self.loadTheme(themes[0])
+            elif self.config.theme in themes:
+                offset = (themes.index(self.config.theme)+1)%len(themes)
+                self.loadTheme(themes[offset])
+
+    def cmd_theme_prev(self):
+        """
+            Load next theme.
+        """
+        themes = self.listThemes()
+        if themes:
+            if not self.config.theme:
+                self.loadTheme(themes[-1])
+            elif self.config.theme in themes:
+                offset = (themes.index(self.config.theme)-1)%len(themes)
+                self.loadTheme(themes[offset])
+
     def cmd_theme_current(self):
         """
             Returns the current theme name.
