@@ -215,7 +215,9 @@ class _Window(command.CommandObject):
             y = self.y,
             width = self.width,
             height = self.height,
-            id = str(hex(self.window.id))
+            id = str(hex(self.window.id)),
+            floatDimensions = self.floatDimensions,
+            next_placement = self.next_placement,
         )
 
     def setOpacity(self, opacity):
@@ -358,9 +360,7 @@ class _Window(command.CommandObject):
         """
             Returns a dictionary of info for this object.
         """
-        return dict(
-            id = self.window.id
-        )
+        return self.info()
 
 
     def cmd_inspect(self):
