@@ -98,7 +98,6 @@ class Stack(Layout):
         """
             :stacks Number of stacks to start with.
         """
-        self.activePixel, self.inactivePixel = None, None
         self.stacks = [_WinStack() for i in range(stacks)]
 
     @property
@@ -114,15 +113,8 @@ class Stack(Layout):
 
     def clone(self, group):
         c = Layout.clone(self, group)
-        if not self.activePixel:
-            colormap = group.qtile.display.screen().default_colormap
-            self.activePixel = colormap.alloc_named_color(c.theme.border_focus).pixel
-            self.inactivePixel = colormap.alloc_named_color(c.theme.border_normal).pixel
         # These are mutable
         c.stacks = [_WinStack() for i in self.stacks]
-        c.borderWidth = c.theme.border_width
-        c.active = c.theme.border_focus
-        c.inactive = c.theme.border_normal
         return c
 
     def _findNext(self, lst, offset):
@@ -199,24 +191,24 @@ class Stack(Layout):
             c.hide()
 
         if c is self.group.currentWindow:
-            px = self.activePixel
+            px = self.group.qtile.colorPixel(self.theme.border_focus)
         else:
-            px = self.inactivePixel
+            px = self.group.qtile.colorPixel(self.theme.border_normal)
 
         columnWidth = int(self.group.screen.dwidth/float(len(self.stacks)))
         xoffset = self.group.screen.dx + i*columnWidth
-        winWidth = columnWidth - 2*self.borderWidth
+        winWidth = columnWidth - 2*self.theme.border_width
 
         if s.split:
             columnHeight = int(self.group.screen.dheight/float(len(s)))
-            winHeight = columnHeight - 2*self.borderWidth
+            winHeight = columnHeight - 2*self.theme.border_width
             yoffset = self.group.screen.dy + s.index(c)*columnHeight
             c.place(
                 xoffset,
                 yoffset,
                 winWidth,
                 winHeight,
-                self.borderWidth,
+                self.theme.border_width,
                 px
             )
             c.unhide()
@@ -226,8 +218,8 @@ class Stack(Layout):
                     xoffset,
                     self.group.screen.dy,
                     winWidth,
-                    self.group.screen.dheight - 2*self.borderWidth,
-                    self.borderWidth,
+                    self.group.screen.dheight - 2*self.theme.border_width,
+                    self.theme.border_width,
                     px
                 )
                 c.unhide()

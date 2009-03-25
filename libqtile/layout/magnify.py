@@ -7,8 +7,7 @@ class Magnify(Layout):
         Layout.__init__(self)
         self.clients = []
         self.gap = gap
-        self.focusedBorder = None
-        self.normalBorder = None
+
     def up(self):
         self.shuffle(utils.shuffleUp)
 
@@ -23,14 +22,6 @@ class Magnify(Layout):
 
     def clone(self, group):
         c = Layout.clone(self, group)
-        if not self.focusedBorder:
-            colormap = group.qtile.display.screen().default_colormap
-            self.focusedBorder = colormap.alloc_named_color(
-                c.theme.border_focus,
-                ).pixel
-            self.normalBorder = colormap.alloc_named_color(
-                c.theme.border_normal,
-                ).pixel
         c.clients = []
         return c
 
@@ -73,7 +64,7 @@ class Magnify(Layout):
                 y = self.group.screen.dy + gap
                 w = screenWidth - 2*gap
                 h = screenHeight - 2*gap
-                bc = self.focusedBorder
+                bc = self.group.qtile.colorPixel(self.theme.border_focus)
             else:
                 clis = self.clients[1:]
                 position = clis.index(c)
@@ -81,7 +72,7 @@ class Magnify(Layout):
                 h = screenHeight/len(clis) #TODO: CAST TO INT?
                 x = self.group.screen.dx
                 y = self.group.screen.dy + position*h
-                bc = self.normalBorder
+                bc = self.group.qtile.colorPixel(self.theme.border_normal)
             c.place(
                 x,
                 y,

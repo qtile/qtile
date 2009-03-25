@@ -17,7 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 import datetime, subprocess, sys, operator, os, traceback, shlex
 import select
 import Xlib
@@ -74,7 +73,10 @@ class Key:
         self.keysym = XK.string_to_keysym(key)
         if self.keysym == 0:
             raise QtileError("Unknown key: %s"%key)
-        self.modmask = utils.translateMasks(self.modifiers)
+        try:
+            self.modmask = utils.translateMasks(self.modifiers)
+        except KeyError, v:
+            raise QtileError(v)
     
     def __repr__(self):
         return "Key(%s, %s)"%(self.modifiers, self.key)
@@ -634,6 +636,7 @@ class Qtile(command.CommandObject):
             internal = self.display.intern_atom("QTILE_INTERNAL"),
             python = self.display.intern_atom("QTILE_PYTHON")
         )
+
         self.windowMap = {}
         self.internalMap = {}
         self.widgetMap = {}
@@ -731,6 +734,11 @@ class Qtile(command.CommandObject):
             if self.widgetMap.has_key(w.name):
                 raise confreader.ConfigError("Duplicate widget name: %s"%w.name)
             self.widgetMap[w.name] = w
+
+    @utils.LRUCache(200)
+    def colorPixel(self, name):
+        colormap = self.display.screen().default_colormap
+        return colormap.alloc_named_color(name).pixel
 
     @property
     def currentLayout(self):
@@ -1187,8 +1195,8 @@ class Qtile(command.CommandObject):
         keycode = self.display.keysym_to_keycode(keysym)
         try:
             mask = utils.translateMasks(modifiers)
-        except QtileError, v:
-            return str(v)
+        except KeyError, v:
+            return v.message
         if self.currentWindow:
             win = self.currentWindow.window
         else:
