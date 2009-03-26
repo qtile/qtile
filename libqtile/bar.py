@@ -118,12 +118,14 @@ class Bar(Gap):
 
     def _configure(self, qtile, screen, event, theme):
         if not self in [screen.top, screen.bottom]:
-            raise confreader.ConfigError("Bars must be at the top or the bottom of the screen.")
+            raise confreader.ConfigError(
+                    "Bars must be at the top or the bottom of the screen."
+                  )
         Gap._configure(self, qtile, screen, event, theme)
-        self.background = theme["bar_bg_normal"]
+        self.background = theme.bg_normal
         colormap = qtile.display.screen().default_colormap
         c = colormap.alloc_named_color(self.background).pixel
-        opacity = theme["bar_opacity"]
+        opacity = theme.opacity
         self.window = window.Internal.create(
                         self.qtile,
                         c,

@@ -3,7 +3,7 @@ import libqtile.layout, libqtile.bar, libqtile.widget, libqtile.manager
 from libqtile.command import _Call
 import utils
 
-theme = libqtile.manager.Theme({}, specials={'stack': {'border_width': 10}})
+theme = libqtile.manager.Theme()
 
 class GBConfig:
     keys = []
@@ -101,8 +101,8 @@ class uBarGeometry(utils.QtileTests):
         geom = self.c.windows()[0]
         assert geom["x"] == 10
         assert geom["y"] == 10
-        assert geom["width"] == 760
-        assert geom["height"] == 560
+        assert geom["width"] == 778
+        assert geom["height"] == 578
 
         internal = self.c.internal()
         assert len(internal) == 2

@@ -18,12 +18,12 @@ class GroupBox(base._Widget):
                                                 *[i.name for i in qtile.groups]
                                             )
 
-        self.currentFG, self.currentBG = theme['groupbox_fg_focus'], theme['groupbox_bg_focus']
-        self.activeFG, self.inactiveFG = theme['groupbox_fg_active'], theme['groupbox_fg_normal']
-        self.urgentFG, self.urgentBG = theme['groupbox_fg_urgent'], theme['groupbox_bg_urgent']
-        self.border = theme['groupbox_border_normal']
-        if theme["groupbox_font"]:
-            self.font = theme["groupbox_font"]
+        self.currentFG, self.currentBG = theme.fg_focus, theme.bg_focus
+        self.activeFG, self.inactiveFG = theme.fg_active, theme.fg_normal
+        self.urgentFG, self.urgentBG = theme.fg_urgent, theme.bg_urgent
+        self.border = theme.border_normal
+        if theme.font:
+            self.font = theme.font
 
         self.boxwidth = self.BOXPADDING_SIDE*2 + self.textwidth
         self.width = self.boxwidth * len(qtile.groups) + 2 * self.PADDING

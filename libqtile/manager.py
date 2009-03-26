@@ -17,8 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-import datetime, subprocess, sys, operator, os, traceback
+import datetime, subprocess, sys, operator, os, traceback, shlex
 import select
 import Xlib
 import Xlib.display
@@ -28,6 +27,7 @@ import Xlib.protocol.event as event
 import command, utils, window, confreader
 
 class QtileError(Exception): pass
+class ThemeSyntaxError(Exception): pass
 
 
 class Event:
@@ -73,7 +73,10 @@ class Key:
         self.keysym = XK.string_to_keysym(key)
         if self.keysym == 0:
             raise QtileError("Unknown key: %s"%key)
-        self.modmask = utils.translateMasks(self.modifiers)
+        try:
+            self.modmask = utils.translateMasks(self.modifiers)
+        except KeyError, v:
+            raise QtileError(v)
     
     def __repr__(self):
         return "Key(%s, %s)"%(self.modifiers, self.key)
@@ -209,7 +212,7 @@ class Group(command.CommandObject):
     def __init__(self, name, layouts, qtile):
         self.name, self.qtile = name, qtile
         self.screen = None
-        self.layouts = [i.clone(self, qtile.theme) for i in layouts]
+        self.layouts = [i.clone(self) for i in layouts]
         self.currentLayout = 0
         self.currentWindow = None
         self.windows = set()
@@ -387,47 +390,174 @@ class Log:
         self.log = []
 
 
-class Theme:
-    defaults = {
-        'fg_normal': '#ffffff',
-        'fg_focus': '#ff0000',
-        'fg_active': '#990000',
-        'fg_urgent': '#000000',
-        'bg_normal': '#000000',
-        'bg_focus': '#ffffff',
-        'bg_active': '#888888',
-        'bg_urgent': '#ffff00',
-        'border_normal': '#00ff00',
-        'border_focus': '#0000ff',
-        'border_active': '#ff0000',
-        'border_urgent': '#ffff00',
-        'border_width': 1,
-        'font': None,
-        'opacity': 1.0,
-        }
-    specials = {}
-    def __init__(self, values=None, specials=None):
-        self.normal = self.defaults.copy()
-        if values:
-            for key, value in values.items():
-                self.normal[key] = value
-        if specials:
-            for key, value in specials.items():
-                self.specials[key] = value
+class Theme(object):
+    """
+        Themes are a way to collect generic, commonly used graphical hints
+        together in one place. 
+    """
+    # The type specification should be extended to contain types like "colour".
+    _elements = {
+        'fg_normal':            ('#ffffff', "string"),
+        'fg_focus':             ('#ff0000', "string"),
+        'fg_active':            ('#990000', "string"),
+        'fg_urgent':            ('#000000', "string"),
+        'bg_normal':            ('#000000', "string"),
+        'bg_focus':             ('#ffffff', "string"),
+        'bg_active':            ('#888888', "string"),
+        'bg_urgent':            ('#ffff00', "string"),
+        'border_normal':        ('#000000', "string"),
+        'border_focus':         ('#0000ff', "string"),
+        'border_active':        ('#ff0000', "string"),
+        'border_urgent':        ('#ffff00', "string"),
+        'border_width':         (1, "integer"),
+        'font':                 ("none", "integer"),
+        'opacity':              (1.0, "float"),
+    }
+    def __init__(self, parent=None, **kwargs):
+        self.parent = parent
+        self.children = {}
+        self.values = {}
+        self.path = None
+        for k, v in kwargs.items():
+            if k not in self._elements:
+                raise ValueError("Unknown theme element: %s"%k)
+            setattr(self, k, v)
+
+    def __getattr__(self, key):
+        if key in self._elements:
+            if key in self.values:
+                return self.values[key]
+            elif self.parent:
+                return self.parent.__getattr__(key)
+            else:
+                return self._elements[key][0]
+        raise AttributeError("No such element: %s"%key)
+
+    def __setattr__(self, key, value):
+        if key in self._elements:
+            self.values[key] = self._convert(key, value)
+        else:
+            object.__setattr__(self, key, value)
+
+    def __setitem__(self, key, value):
+        self.children[key] = value
+        value.parent = self
+        value.path = key if not self.path else self.path + "." + key
 
     def __getitem__(self, key):
-        if key in self.normal:
-            return self.normal[key]
+        return self.get(key)
+
+    def __repr__(self):
+        return "Theme: %s"%(self.path or "default")
+
+    def _get(self, parts):
+        if not parts:
+            return self
         else:
-            parts = key.split("_")
-            special = parts[0]
-            key = '_'.join(parts[1:])
-            if special in self.specials and key in self.specials[special]:
-                return self.specials[special][key]
-            elif key in self.normal:
-                return self.normal[key]
+            return self.children[parts[0]]._get(parts[1:])
+
+    def get(self, path):
+        """
+            Get a theme object matching a given path.
+        """
+        if not path:
+            return self
+        parts = path.split(".")
+        try:
+            return self._get(parts)
+        except KeyError:
+            raise KeyError("No such path: %s"%path)
+
+    def addSection(self, path, d):
+        parts = path.split()
+        parent = self.get(".".join(parts[:-1]))
+        parent[parts[-1]] = Theme(**d)
+
+    def preOrder(self):
+        """
+            Traverse the tree in pre-order.
+        """
+        yield self
+        for k, v in sorted(self.children.items()):
+            for j in v.preOrder():
+                yield j
+
+    def dump(self):
+        """
+            Dump a parseable version of the theme. Include non-overridden
+            defaults as comments.
+        """
+        s = []
+        for e in self.preOrder():
+            s.append("%s {"%(e.path or "default"))
+            if not e.parent:
+                for k in sorted(e._elements.keys()):
+                    if k in e.values:
+                        s.append("\t%s = %s"%(k, e.values[k]))
+                    else:
+                        s.append("\t#%s = %s"%(k, e._elements[k][0]))
             else:
-                return None
+                for k, v in sorted(e.values.items()):
+                    s.append("\t%s = %s"%(k, v))
+            s.append("}")
+        return "\n".join(s)
+
+    def __eq__(self, other):
+        return self.dump() == other.dump()
+
+    @classmethod
+    def _convert(klass, name, value):
+        if name not in klass._elements:
+            raise ThemeSyntaxError("Not a valid theme element: %s"%name)
+        t = klass._elements[name][1]
+        try:
+            if t == "integer":  return int(value)
+            elif t == "float":  return float(value)
+            elif t == "string": return str(value)
+        except ValueError:
+            raise ThemeSyntaxError("Theme element %s must be of type %s."%(name, t))
+
+    @classmethod
+    def parse(klass, s):
+        """
+            Parse a Theme specification string.
+        """
+        sections = {}
+        lst = shlex.split(s, True)
+        lst.reverse()
+        while lst:
+            name = lst.pop()
+            elements = {}
+            if not lst or lst.pop() != "{":
+                raise ThemeSyntaxError("Syntax error in section: %s"%name)
+            while True:
+                if not lst:
+                    raise ThemeSyntaxError("Syntax error in section: %s"%name)
+                e = lst.pop()
+                if e == "}":
+                    break
+                if not lst or lst.pop() != "=":
+                    raise ThemeSyntaxError("Syntax error near: %s"%e)
+                if not lst:
+                    raise ThemeSyntaxError("Syntax error near: %s"%e)
+                v = lst.pop()
+                elements[e] = klass._convert(e, v)
+            sections[name] = elements
+        root = Theme(**sections.get("default", {}))
+        for i in sorted(sections.keys()):
+            if i == "default":
+                continue
+            root.addSection(i, sections[i])
+        return root
+
+    @classmethod
+    def fromFile(klass, fname):
+        """
+            Construct a Theme tree from a file.
+        """
+        s = open(fname).read()
+        return klass.parse(s)
+
 
 class Hooks(object):
     __hooks = {}
@@ -506,6 +636,7 @@ class Qtile(command.CommandObject):
             internal = self.display.intern_atom("QTILE_INTERNAL"),
             python = self.display.intern_atom("QTILE_PYTHON")
         )
+
         self.windowMap = {}
         self.internalMap = {}
         self.widgetMap = {}
@@ -603,6 +734,11 @@ class Qtile(command.CommandObject):
             if self.widgetMap.has_key(w.name):
                 raise confreader.ConfigError("Duplicate widget name: %s"%w.name)
             self.widgetMap[w.name] = w
+
+    @utils.LRUCache(200)
+    def colorPixel(self, name):
+        colormap = self.display.screen().default_colormap
+        return colormap.alloc_named_color(name).pixel
 
     @property
     def currentLayout(self):
@@ -859,6 +995,65 @@ class Qtile(command.CommandObject):
                 return i
         return None
 
+    def listThemes(self):
+        names = os.listdir(self.config.themedir)
+        ret = []
+        for i in names:
+            path = os.path.join(self.config.themedir, i)
+            if os.path.isfile(path):
+                ret.append(i)
+        return sorted(ret)
+
+    def loadTheme(self, name):
+        themes = os.listdir(self.config.themedir)
+        if not name in themes:
+            raise QtileError("No such theme: %s"%name)
+        self.config.theme = name
+        self.theme = Theme.fromFile(os.path.join(self.config.themedir, name))
+        # FIXME: Redraw layouts and bars here
+
+    def cmd_themes(self):
+        """
+            Returns a list of available theme names.
+        """
+        return self.listThemes()
+
+    def cmd_theme_load(self, name):
+        """
+            Loads a theme. Must be one of the list of available themes.
+        """
+        return self.loadTheme(name)
+
+    def cmd_theme_next(self):
+        """
+            Load next theme.
+        """
+        themes = self.listThemes()
+        if themes:
+            if not self.config.theme:
+                self.loadTheme(themes[0])
+            elif self.config.theme in themes:
+                offset = (themes.index(self.config.theme)+1)%len(themes)
+                self.loadTheme(themes[offset])
+
+    def cmd_theme_prev(self):
+        """
+            Load next theme.
+        """
+        themes = self.listThemes()
+        if themes:
+            if not self.config.theme:
+                self.loadTheme(themes[-1])
+            elif self.config.theme in themes:
+                offset = (themes.index(self.config.theme)-1)%len(themes)
+                self.loadTheme(themes[offset])
+
+    def cmd_theme_current(self):
+        """
+            Returns the current theme name.
+        """ 
+        return self.config.theme
+
     def cmd_debug(self):
         """
             Toggle qtile debug logging. Returns "on" or "off" to indicate the
@@ -1000,8 +1195,8 @@ class Qtile(command.CommandObject):
         keycode = self.display.keysym_to_keycode(keysym)
         try:
             mask = utils.translateMasks(modifiers)
-        except QtileError, v:
-            return str(v)
+        except KeyError, v:
+            return v.message
         if self.currentWindow:
             win = self.currentWindow.window
         else:

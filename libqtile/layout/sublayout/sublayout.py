@@ -62,11 +62,10 @@ class SubLayout:
         color = lambda color: colormap.alloc_named_color(color).pixel
         name = self.__class__.__name__.lower()
         theme = self.theme
-        self.active_border = color(theme["%s_border_active" % name])
-        self.focused_border = color(theme["%s_border_focus" % name])
-        self.normal_border = color(theme["%s_border_normal" % name])
-        self.border_width = theme["%s_border_width" % name]
-            
+        self.active_border = color(theme.border_active)
+        self.focused_border = color(theme.border_focus)
+        self.normal_border = color(theme.border_normal)
+        self.border_width = theme.border_width
 
     def _init_sublayouts(self):
         """

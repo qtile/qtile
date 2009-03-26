@@ -10,9 +10,6 @@ class Tile(Layout):
         self.master = masterWindows
         self.focused = None
         self.expand = expand
-        # border colors get set in clone
-        self.focusedBorder = None
-        self.normalBorder = None
         
 
     @property
@@ -34,16 +31,8 @@ class Tile(Layout):
             function(self.clients)
             self.group.layoutAll()
     
-    def clone(self, group, theme):
-        if not self.focusedBorder:
-            colormap = group.qtile.display.screen().default_colormap
-            self.focusedBorder = colormap.alloc_named_color(
-                theme["tile_border_focus"],
-                ).pixel
-            self.normalBorder = colormap.alloc_named_color(
-                theme["tile_border_normal"],
-                ).pixel
-        c = Layout.clone(self, group, theme)
+    def clone(self, group):
+        c = Layout.clone(self, group)
         c.clients = []
         return c
 
@@ -64,7 +53,7 @@ class Tile(Layout):
         screenWidth = self.group.screen.dwidth
         screenHeight = self.group.screen.dheight
         x = y = w = h = 0
-        borderWidth = self.theme["tile_border_width"]
+        borderWidth = self.theme.border_width
         if self.clients and c in self.clients:
             pos = self.clients.index(c)
             if c in self.master_windows:
@@ -80,9 +69,9 @@ class Tile(Layout):
                 x = self.group.screen.dx + int(screenWidth*self.ratio)
                 y = self.group.screen.dy + self.clients[self.master:].index(c)*h
             if c is self.focused:
-                bc = self.focusedBorder
+                bc = self.group.qtile.colorPixel(self.theme.border_focus)
             else:
-                bc = self.normalBorder
+                bc = self.group.qtile.colorPixel(self.theme.border_normal)
             c.place(
                 x,
                 y,
