@@ -215,9 +215,8 @@ class _Window(command.CommandObject):
             y = self.y,
             width = self.width,
             height = self.height,
-            id = str(hex(self.window.id)),
+            id = self.window.id,
             floatDimensions = self.floatDimensions,
-            next_placement = self.next_placement,
         )
 
     def setOpacity(self, opacity):
