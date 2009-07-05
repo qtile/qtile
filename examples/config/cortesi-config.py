@@ -2,8 +2,8 @@ from libqtile.manager import Key, Screen
 from libqtile.command import lazy
 from libqtile import layout, bar, widget
 
-# The bindings below are for use with a Kinesis keyboard, and may
-# not make sense for standard keyboards.
+# The bindings below are for use with a Kinesis keyboard, and may not make
+# sense for standard keyboards.
 keys = [
     # First, a set of bindings to control the layouts
     Key(
@@ -36,8 +36,8 @@ keys = [
     ),
 
     Key(["mod1"], "n",      lazy.spawn("firefox")),
-    Key(["mod1"], "h",      lazy.to_screen(0)),
-    Key(["mod1"], "l",      lazy.to_screen(1)),
+    Key(["mod1"], "h",      lazy.to_screen(1)),
+    Key(["mod1"], "l",      lazy.to_screen(0)),
     # ~/bin/x starts a terminal program
     Key(["mod1"], "Return", lazy.spawn("~/bin/x")),
     Key(["mod1"], "Tab",    lazy.nextlayout()),
@@ -54,15 +54,15 @@ keys = [
     ),
     Key(
         ["mod1", "shift"], "n",
-        lazy.spawn("amarok -t")
+        lazy.spawn("rhythmbox-client --play-pause")
     ),
     Key(
         ["mod1", "shift"], "l",
-        lazy.spawn("amarok -f")
+        lazy.spawn("rhythmbox-client --next")
     ),
     Key(
         ["mod1", "shift"], "h",
-        lazy.spawn("amarok -r")
+        lazy.spawn("rhythmbox-client --previous")
     ),
 ]
 
@@ -73,14 +73,16 @@ for i in groups:
     keys.append(
         Key(["mod1"], i, lazy.group[i].toscreen())
     )
+    keys.append(
+        Key(["mod1", "shift"], i, lazy.window.togroup(i))
+    )
 
 
 # Two simple layout instances:
 layouts = [
-    # A layout instance with a single stack (filling the screen), and no border.
-    layout.Stack(stacks=1, borderWidth=0),
-    # A 2-stack layout instance
-    layout.Stack(stacks=2, borderWidth=2)
+    layout.Max(),
+    #layout.Stack(stacks=2, borderWidth=2)
+    layout.Stack(stacks=2)
 ]
 
 
