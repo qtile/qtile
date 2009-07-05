@@ -81,7 +81,7 @@ class _Server(ipc.Server):
         try:
             return SUCCESS, cmd(*args, **kwargs)
         except CommandError, v:
-            return ERROR, v.message
+            return ERROR, v.args[0]
         except Exception, v:
             return EXCEPTION, traceback.format_exc()
         if self.qtile._testing:

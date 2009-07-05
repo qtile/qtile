@@ -1196,7 +1196,7 @@ class Qtile(command.CommandObject):
         try:
             mask = utils.translateMasks(modifiers)
         except KeyError, v:
-            return v.message
+            return v.args[0]
         if self.currentWindow:
             win = self.currentWindow.window
         else:
