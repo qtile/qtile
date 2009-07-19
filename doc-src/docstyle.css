@@ -23,16 +23,11 @@ body {
     margin-bottom:  15px;
 }
 
-#bd h1 {
-    background-color: #999999;
-    padding: 5px;
-}
-
 .highlight pre {
     border-bottom:      1px solid #CCCCCC;
     border-top:         1px solid #CCCCCC;
     padding:            10px;
-    background:         #e8e8e8 none repeat scroll 0% 0%;
+    background:         #F8F8F8 none repeat scroll 0% 0%;
     margin-bottom:      10px;
     overflow:           auto;
 }
@@ -55,8 +50,7 @@ body {
 }
 
 .grokdoc_class {
-    background:         #e8e8e8;
-    padding:            5px;
+    background:         #F8F8F8;
 }
 
 .output {
@@ -71,21 +65,6 @@ body {
 #ft {
     padding:    10px 15px 17px 10px;
     font-size:  0.8em;
-}
-
-.commanddoc {
-    margin:             10px;
-    background:         #e8e8e8 none repeat scroll 0% 0%;
-    padding:            5px;
-}
-
-.commanddoc .highlight pre {
-    background:         #d8d8d8 none repeat scroll 0% 0%;
-    border-bottom:      1px solid #CCCCCC;
-    border-top:         1px solid #CCCCCC;
-    padding:            10px;
-    margin-bottom:      10px;
-    overflow:           auto;
 }
 
 dl {

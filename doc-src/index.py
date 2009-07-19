@@ -4,7 +4,6 @@ import countershape.widgets
 import countershape.layout
 import countershape.grok
 from countershape.doc import *
-from libqtile import manager, layout, bar
 
 class Examples:
     def __init__(self, d):
@@ -26,12 +25,13 @@ ns.docTitle = "Qtile 0.2"
 ns.docMaintainer = "Aldo Cortesi"
 ns.docMaintainerEmail = "aldo@nullcube.com"
 ns.foot = "Copyright Aldo Cortesi 2008"
-ns.head = readFrom("_header.html")
+ns.version = "0.2"
 ns.sidebar = countershape.widgets.SiblingPageIndex('/index.html')
-this.layout = countershape.layout.TwoPane("yui-t2", "doc3")
-this.titlePrefix = "Qtile 0.2 - "
+ns.copyright = "Copyright (c) 2009 Aldo Cortesi"
+this.layout = countershape.Layout("_layout.html")
+this.titlePrefix = "Qtile %s - "%ns.version
 
-ns.qtgrok = countershape.grok.grok("../libqtile")
+ns.qtgrok = countershape.grok.parse("../libqtile")
 
 pages = [
     Page("index.html", "Introduction"),
