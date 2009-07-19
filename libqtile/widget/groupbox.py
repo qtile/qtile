@@ -1,5 +1,4 @@
-from .. import bar
-from ..manager import Hooks
+from .. import bar, hook
 import base
 
 class GroupBox(base._Widget):
@@ -11,8 +10,8 @@ class GroupBox(base._Widget):
         if len(self.qtile.groups) - 1 >= groupOffset:
             self.bar.screen.setGroup(self.qtile.groups[groupOffset])
 
-    def _configure(self, qtile, bar, event, theme):
-        base._Widget._configure(self, qtile, bar, event, theme)
+    def _configure(self, qtile, bar, theme):
+        base._Widget._configure(self, qtile, bar, theme)
         self.textheight, self.textwidth = self._drawer.textsize(
                                                 self._drawer.font,
                                                 *[i.name for i in qtile.groups]
@@ -27,8 +26,8 @@ class GroupBox(base._Widget):
 
         self.boxwidth = self.BOXPADDING_SIDE*2 + self.textwidth
         self.width = self.boxwidth * len(qtile.groups) + 2 * self.PADDING
-        self.event.subscribe("setgroup", self.draw)
-        self.event.subscribe("window_add", self.draw)
+        hook.subscribe("setgroup", self.draw)
+        hook.subscribe("window_add", self.draw)
         self.setup_hooks()
 
     def group_has_urgent(self, group):
@@ -76,9 +75,9 @@ class GroupBox(base._Widget):
 
     def setup_hooks(self):
         draw = self.draw
-        @Hooks("client-new")
-        @Hooks("client-urgent-hint-changed")
-        @Hooks("client-killed")
-        def hook_response(datadict, qtile, *args):
+        def hook_response(*args, **kwargs):
             self.draw()
-            
+        hook.subscribe("client_new", hook_response)
+        hook.subscribe("client_urgent_hint_changed", hook_response)
+        hook.subscribe("client_killed", hook_response)
+

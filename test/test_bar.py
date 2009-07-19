@@ -124,8 +124,8 @@ class uBarErr(utils._QtileTruss):
 
 
 class TestWidget(libqtile.widget.base._Widget):
-    def _configure(self, qtile, bar, event, theme):
-        libqtile.widget.base._Widget._configure(self, qtile, bar, event, theme)
+    def _configure(self, qtile, bar, theme):
+        libqtile.widget.base._Widget._configure(self, qtile, bar, theme)
         self.width = 10
 
     def draw(self): pass

@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 import sys
-import manager, window, confreader, command, utils
+import manager, window, confreader, command, utils, hook
 import Xlib.X
 
 _HIGHLIGHT = "#48677E"
@@ -33,8 +33,8 @@ class Gap(command.CommandObject):
         self.size = size
         self.qtile, self.screen = None, None
 
-    def _configure(self, qtile, screen, event, theme):
-        self.qtile, self.screen, self.event, self.theme = qtile, screen, event, theme
+    def _configure(self, qtile, screen, theme):
+        self.qtile, self.screen, self.theme = qtile, screen, theme
 
     @property
     def x(self):
@@ -116,12 +116,12 @@ class Bar(Gap):
         Gap.__init__(self, size)
         self.widgets = widgets
 
-    def _configure(self, qtile, screen, event, theme):
+    def _configure(self, qtile, screen, theme):
         if not self in [screen.top, screen.bottom]:
             raise confreader.ConfigError(
                     "Bars must be at the top or the bottom of the screen."
                   )
-        Gap._configure(self, qtile, screen, event, theme)
+        Gap._configure(self, qtile, screen, theme)
         self.background = theme.bg_normal
         colormap = qtile.display.screen().default_colormap
         c = colormap.alloc_named_color(self.background).pixel
@@ -139,7 +139,7 @@ class Bar(Gap):
 
         for i in self.widgets:
             qtile.registerWidget(i)
-            i._configure(qtile, self, event, theme)
+            i._configure(qtile, self, theme)
         self.resize()
 
     def resize(self):

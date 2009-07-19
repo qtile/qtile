@@ -116,8 +116,8 @@ class _Widget(command.CommandObject):
     def colormap(self):
         return self.qtile.display.screen().default_colormap
 
-    def _configure(self, qtile, bar, event, theme):
-        self.qtile, self.bar, self.event, self.theme = qtile, bar, event, theme
+    def _configure(self, qtile, bar, theme):
+        self.qtile, self.bar, self.theme = qtile, bar, theme
         self._drawer = _Drawer(qtile, self.bar.window)
         self._drawer.setFont(self.font)
 
@@ -167,8 +167,8 @@ class _TextBox(_Widget):
         self.width = width
         self.text = text
 
-    def _configure(self, qtile, bar, event, theme):
-        _Widget._configure(self, qtile, bar, event, theme)
+    def _configure(self, qtile, bar, theme):
+        _Widget._configure(self, qtile, bar, theme)
         if theme.font:
             self.font = theme.font
 

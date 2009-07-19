@@ -24,39 +24,10 @@ import Xlib.display
 import Xlib.ext.xinerama as xinerama
 from Xlib import X, XK
 import Xlib.protocol.event as event
-import command, utils, window, confreader
+import command, utils, window, confreader, hook
 
 class QtileError(Exception): pass
 class ThemeSyntaxError(Exception): pass
-
-
-class Event:
-    events = set(
-        [
-            "setgroup",
-            "focus_change",
-            "window_add",
-            "window_name_change",
-        ]
-    )
-    def __init__(self, qtile):
-        self.qtile = qtile
-        self.subscriptions = {}
-
-    def subscribe(self, event, func):
-        if event not in self.events:
-            raise QtileError("Unknown event: %s"%event)
-        lst = self.subscriptions.setdefault(event, [])
-        if not func in lst:
-            lst.append(func)
-
-    def fire(self, event, *args, **kwargs):
-        if event not in self.events:
-            raise QtileError("Unknown event: %s"%event)
-        self.qtile.log.add("Internal event: %s(%s, %s)"%(event, args, kwargs))
-        for i in self.subscriptions.get(event, []):
-            i(*args, **kwargs)
-
 
 class Key:
     def __init__(self, modifiers, key, *commands):
@@ -94,13 +65,13 @@ class Screen(command.CommandObject):
         self.top, self.bottom = top, bottom
         self.left, self.right = left, right
 
-    def _configure(self, qtile, theme, index, x, y, width, height, group, event):
-        self.qtile, self.theme, self.event = qtile, theme, event
+    def _configure(self, qtile, theme, index, x, y, width, height, group):
+        self.qtile, self.theme = qtile, theme
         self.index, self.x, self.y = index, x, y,
         self.width, self.height = width, height
         self.setGroup(group)
         for i in self.gaps:
-            i._configure(qtile, self, event, theme)
+            i._configure(qtile, self, theme)
 
     @property
     def gaps(self):
@@ -151,8 +122,8 @@ class Screen(command.CommandObject):
                 self.group._setScreen(None)
             self.group = group
             group._setScreen(self)
-        self.event.fire("setgroup")
-        self.qtile.event.fire("focus_change")
+        hook.fire("setgroup")
+        hook.fire("focus_change")
 
     def _items(self, name):
         if name == "layout":
@@ -183,7 +154,7 @@ class Screen(command.CommandObject):
         y = y or self.y
         w = w or self.width
         h = h or self.height
-        self._configure(self.qtile, self.theme, self.index, x, y, w, h, self.group, self.event)
+        self._configure(self.qtile, self.theme, self.index, x, y, w, h, self.group)
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
                 bar.resize()
@@ -261,7 +232,7 @@ class Group(command.CommandObject):
         else:
             self.currentWindow = window
         self.layout.focus(window)
-        self.qtile.event.fire("focus_change")
+        hook.fire("focus_change")
         self.layoutAll()
 
     def info(self):
@@ -274,7 +245,7 @@ class Group(command.CommandObject):
         )
 
     def add(self, window):
-        self.qtile.event.fire("window_add")
+        hook.fire("window_add")
         self.windows.add(window)
         window.group = self
         for i in self.layouts:
@@ -559,58 +530,12 @@ class Theme(object):
         return klass.parse(s)
 
 
-class Hooks(object):
-    __hooks = {}
-    __qtile = None
-    __datadict = {}
-    def __init__(self, hook_name):
-        self.hook_name = hook_name
-
-    def __call__(self, f):
-        if self.hook_name in self.__hooks:
-            Hooks.__hooks[self.hook_name].append(f)
-        else:
-            Hooks.__hooks[self.hook_name] = [f,]
-        return f
-
-    @classmethod
-    def set_qtile(cls, qtile):
-        cls.__qtile = qtile
-
-    @classmethod
-    def call_hook(cls, hook_name, *args, **kwargs):
-        if cls.__qtile is None:
-            print "Qtile is none, returning"
-            return
-        if hook_name in cls.__hooks:
-            for f in cls.__hooks[hook_name]:
-                try:
-                    f(cls.__datadict, cls.__qtile, *args, **kwargs)
-                except:
-                    print "error when calling the hook '%s'" % hook_name
-                    print "the function was", f
-                    print sys.exc_info()
-        else:
-            pass
-
-    @classmethod
-    def setitem(cls, key, value):
-        cls.__datadict[key] = value
-
-    @classmethod
-    def getitem(cls, key):
-        return cls.__datadict[key]
-
-
 class Qtile(command.CommandObject):
     debug = False
     _exit = False
     _testing = False
     _logLength = 100 
     def __init__(self, config, displayName=None, fname=None):
-        
-        Hooks.set_qtile(self) #tell Hooks about us
-
         if not displayName:
             displayName = os.environ.get("DISPLAY")
             if not displayName:
@@ -630,7 +555,7 @@ class Qtile(command.CommandObject):
                 self.display.get_default_screen()
             )
         self.root = defaultScreen.root
-        self.event = Event(self)
+        hook.init(self)
 
         self.atoms = dict(
             internal = self.display.intern_atom("QTILE_INTERNAL"),
@@ -672,7 +597,6 @@ class Qtile(command.CommandObject):
                     s["width"],
                     s["height"],
                     self.groups[i],
-                    self.event
                 )
                 self.screens.append(scr)
 
@@ -688,7 +612,6 @@ class Qtile(command.CommandObject):
                 defaultScreen.width_in_pixels,
                 defaultScreen.height_in_pixels,
                 self.groups[0],
-                self.event
             )
             self.screens.append(s)
         self.currentScreen = self.screens[0]
@@ -762,10 +685,9 @@ class Qtile(command.CommandObject):
     def unmanage(self, window):
         c = self.windowMap.get(window)
         if c:
-            Hooks.call_hook("client-being-killed", c)
             c.group.remove(c)
             del self.windowMap[window]
-            Hooks.call_hook("client-killed")
+            hook.fire("client_killed", c)
 
     def manage(self, w):
         try:
@@ -784,7 +706,7 @@ class Qtile(command.CommandObject):
                 c = window.Window(w, self)
                 self.windowMap[w] = c
                 self.currentScreen.group.add(c)
-                Hooks.call_hook("client-new", c)
+                hook.fire("client_new", c)
 
     def grabKeys(self):
         self.root.ungrab_key(X.AnyKey, X.AnyModifier)
@@ -840,7 +762,7 @@ class Qtile(command.CommandObject):
                         pass
                     else:
                         self.log.add("Unknown event: %s"%self._eventStr(e))
-                Hooks.call_hook("mainloop-tick")
+                hook.fire("mainloop_tick")
         except:
             # We've already written a report.
             if not self._exit:

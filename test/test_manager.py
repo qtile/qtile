@@ -306,44 +306,27 @@ class TScreen(libqtile.manager.Screen):
 class uScreenDimensions(libpry.AutoTree):
     def test_dx(self):
         s = TScreen(left = libqtile.bar.Gap(10))
-        s._configure(None, libqtile.manager.Theme(), 0, 0, 0, 100, 100, None, None)
+        s._configure(None, libqtile.manager.Theme(), 0, 0, 0, 100, 100, None)
         assert s.dx == 10
 
     def test_dwidth(self):
         s = TScreen(left = libqtile.bar.Gap(10))
-        s._configure(None, libqtile.manager.Theme(), 0, 0, 0, 100, 100, None, None)
+        s._configure(None, libqtile.manager.Theme(), 0, 0, 0, 100, 100, None)
         assert s.dwidth == 90
         s.right = libqtile.bar.Gap(10)
         assert s.dwidth == 80
 
     def test_dy(self):
         s = TScreen(top = libqtile.bar.Gap(10))
-        s._configure(None, libqtile.manager.Theme(), 0, 0, 0, 100, 100, None, None)
+        s._configure(None, libqtile.manager.Theme(), 0, 0, 0, 100, 100, None)
         assert s.dy == 10
 
     def test_dheight(self):
         s = TScreen(top = libqtile.bar.Gap(10))
-        s._configure(None, libqtile.manager.Theme(), 0, 0, 0, 100, 100, None, None)
+        s._configure(None, libqtile.manager.Theme(), 0, 0, 0, 100, 100, None)
         assert s.dheight == 90
         s.bottom = libqtile.bar.Gap(10)
         assert s.dheight == 80
-
-
-class uEvent(libpry.AutoTree):
-    def test_subscribe(self):
-        self.testVal = None
-        def test(x):
-            self.testVal = x
-        class Dummy: pass
-        dummy = Dummy()
-        io = cStringIO.StringIO()
-        dummy.log = libqtile.manager.Log(5, io)
-        e = libqtile.manager.Event(dummy)
-        libpry.raises("unknown event", e.subscribe, "unkown", test)
-        libpry.raises("unknown event", e.fire, "unkown")
-        e.subscribe("window_add", test)
-        e.fire("window_add", 1)
-        assert self.testVal == 1
 
 
 class uTheme(libpry.AutoTree):
@@ -429,7 +412,6 @@ tests = [
     uKey(),
     uLog(),
     uScreenDimensions(),
-    uEvent(),
     uTheme(),
 ]
 

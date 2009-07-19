@@ -24,7 +24,7 @@ from Xlib import X, Xatom, Xutil
 import Xlib.protocol.event as event
 import Xlib.error
 import command, utils
-import manager
+import manager, hook
 
 class _Window(command.CommandObject):
     possible_states = ["normal", "minimised", "floating", "maximised", "fullscreen"]
@@ -39,8 +39,8 @@ class _Window(command.CommandObject):
         self.window_type = "normal"
         g = self.window.get_geometry()
         self.floatDimensions = {
-            'x': g.x, 'y': g.y, 
-            'w': g.width, 'h': g.height
+                'x': g.x, 'y': g.y,
+                'w': g.width, 'h': g.height
             }
         self.hints = {
             'input': True,
@@ -71,7 +71,7 @@ class _Window(command.CommandObject):
             if not self.states:
                 self.states = ["normal"]
         if oldstate != self.states[0]:
-            manager.Hooks.call_hook("client-state-changed", state, self)
+            hook.fire("client_state_changed", state, self)
     def getState(self, state):
         if self.states[0] == state:
             return True
@@ -105,7 +105,7 @@ class _Window(command.CommandObject):
     def updateName(self):
         try:
             self.name = self.window.get_wm_name()
-            self.qtile.event.fire("window_name_change")
+            hook.fire("window_name_change")
         except (Xlib.error.BadWindow, Xlib.error.BadValue):
             # This usually means the window has just been deleted, and a new
             # focus will be acquired shortly. We don't raise an event for this.
@@ -118,7 +118,7 @@ class _Window(command.CommandObject):
             oldtype = None
         self._type = window_type
         if self._type != oldtype:
-            manager.Hooks.call_hook("client-type-changed", self)
+            hook.fire("client_type_changed", self)
     def getWindowType(self):
         return self._type
     window_type = property(getWindowType, setWindowType)
@@ -172,10 +172,6 @@ class _Window(command.CommandObject):
         def update_hint(hint, value, hook=True):
             if self.hints[hint] != value:
                 self.hints[hint] = value
-                if hook:
-                    manager.Hooks.call_hook(
-                        "client-%s-hint-changed" % hint, 
-                        self)
         try:
             h = self.window.get_wm_hints()
         except (Xlib.error.BadWindow, Xlib.error.BadValue):
@@ -332,7 +328,7 @@ class _Window(command.CommandObject):
             )
             if warp:
                 self.window.warp_pointer(0, 0)
-        manager.Hooks.call_hook("client-focus", self)
+        hook.fire("client_focus", self)
 
     def hasProtocol(self, name):
         s = set()
@@ -476,7 +472,7 @@ class Window(_Window):
                  X.FocusChangeMask
     group = None
     def handle_EnterNotify(self, e):
-        manager.Hooks.call_hook("client-mouse-enter", self)
+        hook.fire("client_mouse_enter", self)
         if self.group.currentWindow != self:
             self.group.focus(self, False)
         if self.group.screen and self.qtile.currentScreen != self.group.screen:
@@ -506,7 +502,7 @@ class Window(_Window):
             print >> sys.stderr, "normal_hints"
         elif name == "WM_NAME":
             self.updateName()
-            manager.Hooks.call_hook("client-name-updated", self)
+            hook.fire("client_name_updated", self)
         elif name == "_NET_WM_WINDOW_OPACITY":
             pass
         else:
