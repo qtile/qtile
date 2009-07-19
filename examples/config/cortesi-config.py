@@ -46,23 +46,23 @@ keys = [
     # The bindings below control Amarok, and my sound volume.
     Key(
         ["mod1", "shift"], "k",
-        lazy.spawn("amixer -qc 0 set PCM 2dB+")
+        lazy.spawn("amixer -qc 1 set PCM 2dB+")
     ),
     Key(
         ["mod1", "shift"], "j",
-        lazy.spawn("amixer -qc 0 set PCM 2dB-")
+        lazy.spawn("amixer -qc 1 set PCM 2dB-")
     ),
     Key(
         ["mod1", "shift"], "n",
-        lazy.spawn("rhythmbox-client --play-pause")
+        lazy.spawn("mocp -G")
     ),
     Key(
         ["mod1", "shift"], "l",
-        lazy.spawn("rhythmbox-client --next")
+        lazy.spawn("mocp -f")
     ),
     Key(
         ["mod1", "shift"], "h",
-        lazy.spawn("rhythmbox-client --previous")
+        lazy.spawn("mocp -r")
     ),
 ]
 

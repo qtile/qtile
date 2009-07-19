@@ -35,7 +35,7 @@ ns.qtgrok = countershape.grok.parse("../libqtile")
 
 pages = [
     Page("index.html", "Introduction"),
-    Page("objects.html", "Object Graph"),
+    Page("objects.html", "Base Objects"),
     Directory("objects"),
     Page("configuration.html", "Configuration"),
     Directory("configuration"),
