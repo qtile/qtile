@@ -762,7 +762,6 @@ class Qtile(command.CommandObject):
                         pass
                     else:
                         self.log.add("Unknown event: %s"%self._eventStr(e))
-                hook.fire("mainloop_tick")
         except:
             # We've already written a report.
             if not self._exit:
