@@ -26,7 +26,7 @@ class uMultichar(libpry.AutoTree):
         libpry.raises("too wide", ipc.multichar, 999999999, 2)
 
 
-class uIPC(libpry.TmpDirMixin, libpry.AutoTree):
+class uIPC(libpry.AutoTree):
     def send(self, fname, data, q):
         c = ipc.Client(fname)
         while 1:
@@ -52,7 +52,7 @@ class uIPC(libpry.TmpDirMixin, libpry.AutoTree):
         return ret, q.get()
 
     def test_basic(self):
-        fname = os.path.join(self["tmpdir"], "testpath")
+        fname = os.path.join(self.tmpdir(), "testpath")
         server = TestServer(fname)
         assert self.response(server, "foo") == ("foo", "OK")
 
@@ -62,7 +62,7 @@ class uIPC(libpry.TmpDirMixin, libpry.AutoTree):
         assert self.response(server, expected) == (expected, "OK")
 
     def test_big(self):
-        fname = os.path.join(self["tmpdir"], "testpath")
+        fname = os.path.join(self.tmpdir(), "testpath")
         server = TestServer(fname)
         expected = {
             "one": [1, 2, 3] * 1024  * 5
@@ -70,12 +70,12 @@ class uIPC(libpry.TmpDirMixin, libpry.AutoTree):
         assert self.response(server, expected) == (expected, "OK")
 
     def test_read_nodata(self):
-        fname = os.path.join(self["tmpdir"], "testpath")
+        fname = os.path.join(self.tmpdir(), "testpath")
         s = TestServer(fname)
         assert s.receive() == None
 
     def test_close(self):
-        fname = os.path.join(self["tmpdir"], "testpath")
+        fname = os.path.join(self.tmpdir(), "testpath")
         s = TestServer(fname)
         s.close()
 

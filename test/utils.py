@@ -71,14 +71,10 @@ def xfactory(*args, **kwargs):
         return Xephyr(*args, **kwargs)
 
 
-class _QtileTruss(libpry.TmpDirMixin, libpry.AutoTree):
+class _QtileTruss(libpry.AutoTree):
     qtilepid = None
     def setUp(self):
-        libpry.TmpDirMixin.setUp(self)
         self.testwindows = []
-
-    def tearDown(self):
-        libpry.TmpDirMixin.tearDown(self)
 
     def _waitForXNest(self):
         # Try until XNest is up
@@ -106,12 +102,12 @@ class _QtileTruss(libpry.TmpDirMixin, libpry.AutoTree):
 
     def qtileRaises(self, exc, config):
         self._waitForXNest()
-        self["fname"] = os.path.join(self["tmpdir"], "qtilesocket")
+        self["fname"] = os.path.join(self.tmpdir(), "qtilesocket")
         libpry.raises(exc, libqtile.manager.Qtile, config, self["display"], self["fname"])
 
     def startQtile(self, config):
         self._waitForXNest()
-        self["fname"] = os.path.join(self["tmpdir"], "qtilesocket")
+        self["fname"] = os.path.join(self.tmpdir(), "qtilesocket")
         pid = os.fork()
         if pid == 0:
             try:

@@ -67,7 +67,9 @@ class Max(Layout):
             c.hide()
 
     def info(self):
-        return [i.name for i in self.clients]
+        d = Layout.info(self)
+        d["clients"] = [i.name for i in self.clients]
+        return d
 
     def cmd_down(self):
         """
