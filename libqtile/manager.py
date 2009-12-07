@@ -645,6 +645,27 @@ class Qtile(command.CommandObject):
         self.keyMap = {}
         for i in self.config.keys:
             self.keyMap[(i.keysym, i.modmask)] = i
+        
+        # Find the modifier mask for the numlock key, if there is one:
+        maskmap = {
+            X.ControlMapIndex: X.ControlMask,
+            X.LockMapIndex: X.LockMask,
+            X.Mod1MapIndex: X.Mod1Mask,
+            X.Mod2MapIndex: X.Mod2Mask,
+            X.Mod3MapIndex: X.Mod3Mask,
+            X.Mod4MapIndex: X.Mod4Mask,
+            X.Mod5MapIndex: X.Mod5Mask,
+            X.ShiftMapIndex: X.ShiftMask,
+        }
+        nc = self.display.keysym_to_keycode(
+                XK.string_to_keysym("Num_Lock")
+            )
+        self.numlockMask = None
+        for i, l in enumerate(self.display.get_modifier_mapping()):
+            for j in l:
+                if j == nc:
+                    self.numlockMask = maskmap[i]
+
         self.grabKeys()
         self.scan()
 
@@ -719,7 +740,22 @@ class Qtile(command.CommandObject):
                 X.GrabModeAsync,
                 X.GrabModeAsync
             )
-
+            if self.numlockMask:
+                self.root.grab_key(
+                    code,
+                    i.modmask | self.numlockMask,
+                    True,
+                    X.GrabModeAsync,
+                    X.GrabModeAsync
+                )
+                self.root.grab_key(
+                    code,
+                    i.modmask | self.numlockMask | X.LockMask,
+                    True,
+                    X.GrabModeAsync,
+                    X.GrabModeAsync
+                )
+                
     def _eventStr(self, e):
         """
             Returns a somewhat less verbose descriptive event string.
