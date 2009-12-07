@@ -642,10 +642,7 @@ class Qtile(command.CommandObject):
             X.FocusOut,
             X.FocusIn,
         ])
-        self.keyMap = {}
-        for i in self.config.keys:
-            self.keyMap[(i.keysym, i.modmask)] = i
-        
+
         # Find the modifier mask for the numlock key, if there is one:
         maskmap = {
             X.ControlMapIndex: X.ControlMask,
@@ -665,6 +662,13 @@ class Qtile(command.CommandObject):
             for j in l:
                 if j == nc:
                     self.numlockMask = maskmap[i]
+        self.validMask = ~(self.numlockMask | X.LockMask)
+
+
+        self.keyMap = {}
+        for i in self.config.keys:
+            self.keyMap[(i.keysym, i.modmask&self.validMask)] = i
+        
 
         self.grabKeys()
         self.scan()
@@ -805,7 +809,10 @@ class Qtile(command.CommandObject):
 
     def handle_KeyPress(self, e):
         keysym =  self.display.keycode_to_keysym(e.detail, 0)
-        k = self.keyMap.get((keysym, e.state))
+        state = e.state
+        if self.numlockMask:
+            state = e.state | self.numlockMask
+        k = self.keyMap.get((keysym, state&self.validMask))
         if not k:
             print >> sys.stderr, "Ignoring unknown keysym: %s"%keysym
             return

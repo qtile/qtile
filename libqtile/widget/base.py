@@ -1,3 +1,4 @@
+import sys
 from .. import command, utils, bar
 
 LEFT = object()
