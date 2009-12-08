@@ -447,12 +447,12 @@ class Internal(_Window):
                  X.ExposureMask |\
                  X.ButtonPressMask
     @classmethod
-    def create(klass, qtile, background_pixel, x, y, width, height, opacity=1.0):
+    def create(klass, qtile, background, x, y, width, height, opacity=1.0):
         win = qtile.root.create_window(
                     x, y, width, height, 0,
                     X.CopyFromParent, X.InputOutput,
                     X.CopyFromParent,
-                    background_pixel = background_pixel,
+                    background = background,
                     event_mask = X.StructureNotifyMask | X.ExposureMask
                )
         i = Internal(win, qtile)

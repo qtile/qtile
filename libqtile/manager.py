@@ -19,7 +19,8 @@
 # SOFTWARE.
 import datetime, subprocess, sys, operator, os, traceback, shlex
 import select
-import xcb.xproto
+import xcbq
+import xcb.xproto, xcb.xinerama
 import xcb
 
 import Xlib
@@ -32,6 +33,22 @@ import command, utils, window, confreader, hook
 class QtileError(Exception): pass
 class ThemeSyntaxError(Exception): pass
 
+
+class Core:
+    def __init__(self):
+        pass
+
+
+class AtomCache:
+    def __init__(self, conn, **atoms):
+        self.atoms = {}
+        for name, value in atoms.items():
+            self.atoms[name] = conn.internAtomUnchecked(value)
+
+    def __getitem___(self, key):
+        return self.atoms[key]
+
+    
 class Key:
     def __init__(self, modifiers, key, *commands):
         """
@@ -549,12 +566,9 @@ class Qtile(command.CommandObject):
             fname = os.path.join("~", command.SOCKBASE%displayName)
             fname = os.path.expanduser(fname)
 
-        self.conn = xcb.xcb.connect(display=displayName)
-        self.conn.core.GrabServer()
+        self.conn = xcbq.Connection(displayName)
+        self.conn.grab_server()
         self.conn.flush()
-        setup = self.conn.get_setup()
-        defaultScreen = setup.roots[self.conn.pref_screen]
-        self.root = defaultScreen.root
 
         self.config, self.fname = config, fname
         self.log = Log(
@@ -563,10 +577,12 @@ class Qtile(command.CommandObject):
             )
         hook.init(self)
 
-        self.atoms = dict(
-            internal = self.display.intern_atom("QTILE_INTERNAL"),
-            python = self.display.intern_atom("QTILE_PYTHON")
+        self.atoms = AtomCache(
+            self.conn,
+            internal = "QTILE_INTERNAL",
+            python = "QTILE_PYTHON"
         )
+
 
         self.windowMap = {}
         self.internalMap = {}
@@ -586,8 +602,10 @@ class Qtile(command.CommandObject):
 
         self.currentScreen = None
         self.screens = []
-        if self.display.has_extension("XINERAMA"):
-            for i, s in enumerate(self.display.xinerama_query_screens().screens):
+
+        extensions = self.conn.extensions()
+        if "xinerama" in extensions:
+            for i, s in enumerate(self.conn.xinerama.query_screens()):
                 if i+1 > len(config.screens):
                     scr = Screen()
                 else:
@@ -598,10 +616,10 @@ class Qtile(command.CommandObject):
                     self,
                     self.theme,
                     i,
-                    s["x"],
-                    s["y"],
-                    s["width"],
-                    s["height"],
+                    s.x_org,
+                    s.y_org,
+                    s.width,
+                    s.height,
                     self.groups[i],
                 )
                 self.screens.append(scr)
@@ -615,8 +633,8 @@ class Qtile(command.CommandObject):
             s._configure(
                 self, self.theme,
                 0, 0, 0,
-                defaultScreen.width_in_pixels,
-                defaultScreen.height_in_pixels,
+                self.conn.default_screen.width_in_pixels,
+                self.conn.default_screen.height_in_pixels,
                 self.groups[0],
             )
             self.screens.append(s)

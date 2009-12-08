@@ -123,8 +123,9 @@ class Bar(Gap):
                   )
         Gap._configure(self, qtile, screen, theme)
         self.background = theme.bg_normal
-        colormap = qtile.display.screen().default_colormap
-        c = colormap.alloc_named_color(self.background).pixel
+        c = qtile.conn.default_screen.default_colormap.alloc_color(
+                self.background
+            )
         opacity = theme.opacity
         self.window = window.Internal.create(
                         self.qtile,
