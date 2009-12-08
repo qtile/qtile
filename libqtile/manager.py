@@ -19,6 +19,9 @@
 # SOFTWARE.
 import datetime, subprocess, sys, operator, os, traceback, shlex
 import select
+import xcb.xproto
+import xcb
+
 import Xlib
 import Xlib.display
 import Xlib.ext.xinerama as xinerama
@@ -545,16 +548,19 @@ class Qtile(command.CommandObject):
                 displayName = displayName + ".0"
             fname = os.path.join("~", command.SOCKBASE%displayName)
             fname = os.path.expanduser(fname)
-        self.display = Xlib.display.Display(displayName)
+
+        self.conn = xcb.xcb.connect(display=displayName)
+        self.conn.core.GrabServer()
+        self.conn.flush()
+        setup = self.conn.get_setup()
+        defaultScreen = setup.roots[self.conn.pref_screen]
+        self.root = defaultScreen.root
+
         self.config, self.fname = config, fname
         self.log = Log(
                 self._logLength,
                 sys.stderr if self.debug else None
             )
-        defaultScreen = self.display.screen(
-                self.display.get_default_screen()
-            )
-        self.root = defaultScreen.root
         hook.init(self)
 
         self.atoms = dict(
