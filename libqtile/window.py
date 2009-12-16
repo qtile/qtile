@@ -19,6 +19,10 @@
 # SOFTWARE.
 
 import marshal, sys
+import xcbq
+from xcb.xproto import EventMask
+
+
 import Xlib
 from Xlib import X, Xatom, Xutil
 import Xlib.protocol.event as event
@@ -31,7 +35,7 @@ class _Window(command.CommandObject):
     def __init__(self, window, qtile):
         self.window, self.qtile = window, qtile
         self.hidden = True
-        window.change_attributes(event_mask=self._windowMask)
+        window.set_event_mask(self._windowMask)
         self.x, self.y, self.width, self.height = None, None, None, None
         self.borderwidth = 0
         self.name = "<no name>"
@@ -104,7 +108,8 @@ class _Window(command.CommandObject):
 
     def updateName(self):
         try:
-            self.name = self.window.get_wm_name()
+            self.name = self.window.get_name()
+            print self.name
             hook.fire("window_name_change")
         except (Xlib.error.BadWindow, Xlib.error.BadValue):
             # This usually means the window has just been deleted, and a new
@@ -132,7 +137,7 @@ class _Window(command.CommandObject):
         types = {
             '_NET_WM_WINDOW_TYPE_DESKTOP': "desktop",
             '_NET_WM_WINDOW_TYPE_DOCK': "dock",
-            '_NET_WM_WINDOW_TYPE_TOOLBAR': "toolbar", 
+            '_NET_WM_WINDOW_TYPE_TOOLBAR': "toolbar",
             '_NET_WM_WINDOW_TYPE_MENU': "menu",
             '_NET_WM_WINDOW_TYPE_UTILITY': "utility",
             '_NET_WM_WINDOW_TYPE_SPLASH': "splash",
@@ -173,6 +178,7 @@ class _Window(command.CommandObject):
             if self.hints[hint] != value:
                 self.hints[hint] = value
         try:
+            print self.window.get_hints()
             h = self.window.get_wm_hints()
         except (Xlib.error.BadWindow, Xlib.error.BadValue):
             return
@@ -357,7 +363,6 @@ class _Window(command.CommandObject):
         """
         return self.info()
 
-
     def cmd_inspect(self):
         """
             Tells you more than you ever wanted to know about a window.
@@ -440,25 +445,19 @@ class Internal(_Window):
     """
         An internal window, that should not be managed by qtile.
     """
-    _windowMask = X.StructureNotifyMask |\
-                 X.PropertyChangeMask |\
-                 X.EnterWindowMask |\
-                 X.FocusChangeMask |\
-                 X.ExposureMask |\
-                 X.ButtonPressMask
+    _windowMask = [
+                    EventMask.StructureNotify,
+                    EventMask.PropertyChange,
+                    EventMask.EnterWindow,
+                    EventMask.FocusChange,
+                    EventMask.Exposure,
+                    EventMask.ButtonPress
+                ]
     @classmethod
     def create(klass, qtile, background, x, y, width, height, opacity=1.0):
         win = qtile.conn.create_window(
-                    x, y, width, height, 0
+                    x, y, width, height
               )
-        
-        #win = qtile.root.create_window(
-        #            x, y, width, height, 0,
-        #            X.CopyFromParent, X.InputOutput,
-        #            X.CopyFromParent,
-        #            background = background,
-        #            event_mask = X.StructureNotifyMask | X.ExposureMask
-        #       )
         i = Internal(win, qtile)
         i.place(x, y, width, height, 0, None)
         i.setProp("internal", True)
@@ -470,10 +469,12 @@ class Internal(_Window):
 
 
 class Window(_Window):
-    _windowMask = X.StructureNotifyMask |\
-                 X.PropertyChangeMask |\
-                 X.EnterWindowMask |\
-                 X.FocusChangeMask
+    _windowMask = [
+                    EventMask.StructureNotify,
+                    EventMask.PropertyChange,
+                    EventMask.EnterWindow,
+                    EventMask.FocusChange,
+                  ]
     group = None
     def handle_EnterNotify(self, e):
         hook.fire("client_mouse_enter", self)
@@ -576,7 +577,6 @@ class Window(_Window):
             self.floatDimensions['y'] = \
                 self.group.screen.dheight + self.group.screen.dy - self.floatDimensions['h']
         self.group.layoutAll()
-        
 
     def cmd_resize_floating(self, xinc, yinc):
         self.floatDimensions['w'] += xinc
