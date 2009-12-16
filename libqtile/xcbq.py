@@ -1,6 +1,7 @@
-
 import xcb.xproto, xcb.xinerama
+from xcb.xproto import CW, EventMask, WindowClass
 import xcb
+
 
 def toStr(s):
     return "".join([chr(i) for i in s.name])
@@ -48,6 +49,11 @@ class Xinerama:
         return r.screen_info
 
 
+class Window:
+    def __init__(self, wid):
+        self.wid = wid
+
+
 class Connection:
     _extmap = {
         "xinerama": Xinerama,
@@ -77,4 +83,23 @@ class Connection:
     def internAtomUnchecked(self, name, only_if_exists=False):
         c = self.conn.core.InternAtomUnchecked(False, len(name), name)
         return c.reply().atom
+
+    def create_window(self, x, y, width, height, border):
+        wid = self.conn.generate_id()
+        self.conn.core.CreateWindow(
+            self.default_screen.root_depth, wid, self.default_screen.root,
+            x, y, width, height, border,
+            self.default_screen.root_visual,
+            WindowClass.CopyFromParent,
+            CW.BackPixel|CW.EventMask,
+            [
+                self.default_screen.black_pixel,
+                EventMask.StructureNotify|EventMask.Exposure
+            ]
+        )
+        return wid
+
+
+
+
 

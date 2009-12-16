@@ -448,13 +448,17 @@ class Internal(_Window):
                  X.ButtonPressMask
     @classmethod
     def create(klass, qtile, background, x, y, width, height, opacity=1.0):
-        win = qtile.root.create_window(
-                    x, y, width, height, 0,
-                    X.CopyFromParent, X.InputOutput,
-                    X.CopyFromParent,
-                    background = background,
-                    event_mask = X.StructureNotifyMask | X.ExposureMask
-               )
+        win = qtile.conn.create_window(
+                    x, y, width, height, 0
+              )
+        
+        #win = qtile.root.create_window(
+        #            x, y, width, height, 0,
+        #            X.CopyFromParent, X.InputOutput,
+        #            X.CopyFromParent,
+        #            background = background,
+        #            event_mask = X.StructureNotifyMask | X.ExposureMask
+        #       )
         i = Internal(win, qtile)
         i.place(x, y, width, height, 0, None)
         i.setProp("internal", True)

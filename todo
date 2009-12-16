@@ -12,10 +12,6 @@ Comparison with awesome
 
 Other ideas
 
- # layout modifiers - instead of layouts actually placing each window, they just set some internal dict of coords. All window coordinates are then passed to layoutmodifiers or something, which i.e. mirror the coords and other fun things.
-
-
-
 BUGS
 
 - simulate_keypress doesn't seem to work from qsh at the moment.
