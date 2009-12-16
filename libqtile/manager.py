@@ -39,16 +39,6 @@ class Core:
         pass
 
 
-class AtomCache:
-    def __init__(self, conn, **atoms):
-        self.atoms = {}
-        for name, value in atoms.items():
-            self.atoms[name] = conn.internAtomUnchecked(value)
-
-    def __getitem___(self, key):
-        return self.atoms[key]
-
-    
 class Key:
     def __init__(self, modifiers, key, *commands):
         """
@@ -576,13 +566,6 @@ class Qtile(command.CommandObject):
                 sys.stderr if self.debug else None
             )
         hook.init(self)
-
-        self.atoms = AtomCache(
-            self.conn,
-            internal = "QTILE_INTERNAL",
-            python = "QTILE_PYTHON"
-        )
-
 
         self.windowMap = {}
         self.internalMap = {}

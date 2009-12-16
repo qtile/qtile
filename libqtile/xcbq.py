@@ -4,11 +4,70 @@
 """
 import sys
 import xcb.xproto, xcb.xinerama
-from xcb.xproto import CW, WindowClass, EventMask
+from xcb.xproto import CW, WindowClass, EventMask, ConfigWindow
 
+WindowTypes = {
+    '_NET_WM_WINDOW_TYPE_DESKTOP': "desktop",
+    '_NET_WM_WINDOW_TYPE_DOCK': "dock",
+    '_NET_WM_WINDOW_TYPE_TOOLBAR': "toolbar",
+    '_NET_WM_WINDOW_TYPE_MENU': "menu",
+    '_NET_WM_WINDOW_TYPE_UTILITY': "utility",
+    '_NET_WM_WINDOW_TYPE_SPLASH': "splash",
+    '_NET_WM_WINDOW_TYPE_DIALOG': "dialog",
+    '_NET_WM_WINDOW_TYPE_DROPDOWN_MENU': "dropdown",
+    '_NET_WM_WINDOW_TYPE_POPUP_MENU': "menu",
+    '_NET_WM_WINDOW_TYPE_TOOLTIP': "tooltip",
+    '_NET_WM_WINDOW_TYPE_NOTIFICATION': "notification",
+    '_NET_WM_WINDOW_TYPE_COMBO': "combo",
+    '_NET_WM_WINDOW_TYPE_DND': "dnd",
+    '_NET_WM_WINDOW_TYPE_NORMAL': "normal",
+}
 
 def toStr(s):
     return "".join([chr(i) for i in s.name])
+
+
+def maskmap(mmap, **kwargs):
+    """
+        mmap: a list of (name, maskvalue) tuples.
+        kwargs: keys should be in the mmap name set
+
+        Returns a (mask, values) tuple.
+    """
+    mask = 0
+    values = []
+    for s, m in mmap:
+        val = kwargs.get(s)
+        if val is not None:
+            mask &= m
+            values.append(val)
+            del kwargs[s]
+    if kwargs:
+        raise ValueError("Unknown mask names: %s"%kwargs.keys())
+    return mask, values
+
+
+class AtomCache:
+    defaults = [
+        '_NET_WM_WINDOW_TYPE'
+    ]
+    def __init__(self, conn):
+        self.conn = conn
+        self.atoms = {}
+        # We can change the pre-loads not to wait for a return
+        for name in WindowTypes.keys():
+            self.atoms[name] = self.internAtomUnchecked(name)
+        for name in self.defaults:
+            self.atoms[name] = self.internAtomUnchecked(name)
+
+    def internAtomUnchecked(self, name, only_if_exists=False):
+        c = self.conn.conn.core.InternAtomUnchecked(False, len(name), name)
+        return c.reply().atom
+
+    def __getitem__(self, key):
+        if key not in self.atoms:
+            self.atoms[key] = self.internAtomUnchecked(key)
+        return self.atoms[key]
 
 
 class _Wrapper:
@@ -54,11 +113,37 @@ class Xinerama:
 
 
 class Window:
+    ConfigureMasks = (
+        ("x", ConfigWindow.X),
+        ("y", ConfigWindow.Y),
+        ("width", ConfigWindow.Width),
+        ("height", ConfigWindow.Height),
+        ("border_width", ConfigWindow.BorderWidth),
+        ("sibling", ConfigWindow.Sibling),
+        ("stackmode", ConfigWindow.StackMode),
+    )
+    PropertyMasks = (
+        ("backpixmap", CW.BackPixmap),
+        ("backpixel", CW.BackPixel),
+        ("borderpixmap", CW.BorderPixmap),
+        ("borderpixel", CW.BorderPixel),
+        ("bitgravity", CW.BitGravity),
+        ("wingravity", CW.WinGravity),
+        ("backingstore", CW.BackingStore),
+        ("backingplanes", CW.BackingPlanes),
+        ("backingpixel", CW.BackingPixel),
+        ("overrideredirect", CW.OverrideRedirect),
+        ("saveunder", CW.SaveUnder),
+        ("eventmask", CW.EventMask),
+        ("dontpropagate", CW.DontPropagate),
+        ("colormap", CW.Colormap),
+        ("cursor", CW.Cursor),
+    )
     def __init__(self, conn, wid):
         self.conn, self.wid = conn, wid
 
-    def _get_property(self, xa, type):
-        q = self.conn.core.GetProperty(
+    def _get_property(self, xa):
+        q = self.conn.conn.core.GetProperty(
                 False,
                 self.wid,
                 xa,
@@ -70,7 +155,6 @@ class Window:
     def get_name(self):
         r = self._get_property(
                 xcb.xcb.XA_WM_NAME,
-                xcb.xproto.GetPropertyType.Any,
             )
         if r.value_len == 0:
             return None
@@ -79,38 +163,51 @@ class Window:
             return toString(r.value[0])
 
     def get_hints(self):
-        r = self._get_property(xcb.xcb.XA_WM_HINTS)
-        print r.type
-        print dir(r)
+        r = self._get_property(
+                xcb.xcb.XA_WM_HINTS
+            )
+        return list(r.value)
 
     def get_geometry(self):
-        q = self.conn.core.GetGeometry(self.wid)
+        q = self.conn.conn.core.GetGeometry(self.wid)
         return q.reply()
 
-    def _change_attributes(self, mask, lst):
-        self.conn.core.ChangeWindowAttributesChecked(
-            self.wid,
-            mask,
-            lst
+    def get_wm_type(self):
+        """
+            http://standards.freedesktop.org/wm-spec/wm-spec-latest.html#id2551529
+        """
+        r = self._get_property(
+                self.conn.atoms['_NET_WM_WINDOW_TYPE']
         )
+        if r.value_len == 0:
+            return None
+        else:
+            # look up wm_type
+            raise NotImplementedError
 
-    def set_event_mask(self, x):
-        return self._change_attributes(CW.EventMask, x)
+    def configure(self, **kwargs):
+        """
+            Arguments can be: x, y, width, height, border, sibling, stackmode
+        """
+        mask, values = maskmap(self.ConfigureMasks, **kwargs)
+        return self.conn.conn.core.ConfigureWindow(self.wid, mask, values)
 
-    def set_back_pixmap(self, x): raise NotImplementedError
-    def set_back_pixel(self, x): raise NotImplementedError
-    def set_border_pixel(self, x): raise NotImplementedError
-    def set_border_pixmap(self, x): raise NotImplementedError
-    def set_bit_gravity(self, x): raise NotImplementedError
-    def set_win_gravity(self, x): raise NotImplementedError
-    def set_backing_storej(self, x): raise NotImplementedError
-    def set_backing_planes(self, x): raise NotImplementedError
-    def set_backing_pixel(self, x): raise NotImplementedError
-    def set_override_redirect(self, x): raise NotImplementedError
-    def set_save_under(self, x): raise NotImplementedError
-    def set_dont_propagate(self, x): raise NotImplementedError
-    def set_colormap(self, x): raise NotImplementedError
-    def set_cursor(self, x): raise NotImplementedError
+    def set_attribute(self, **kwargs):
+        mask, values = maskmap(self.PropertyMasks, **kwargs)
+        self.conn.conn.core.ChangeWindowAttributesChecked(self.wid, mask, values)
+
+    def set_property(self, name, type, value):
+        self.conn.conn.core.ChangePropertyChecked(
+            self.wid
+            
+            
+        )
+        self.window.change_property(
+            self.qtile.atoms[name],
+            self.qtile.atoms["python"],
+            8,
+            marshal.dumps(data)
+        )
 
 
 class Connection:
@@ -126,6 +223,7 @@ class Connection:
                 setattr(self, i, self._extmap[i](self))
         self.screens = [Screen(self, i) for i in self.setup.roots]
         self.default_screen = self.screens[self.conn.pref_screen]
+        self.atoms = AtomCache(self)
 
     def create_window(self, x, y, width, height):
         wid = self.conn.generate_id()
@@ -142,7 +240,7 @@ class Connection:
                     EventMask.StructureNotify|EventMask.Exposure
                 ]
         )
-        return Window(self.conn, wid)
+        return Window(self, wid)
 
     def flush(self):
         return self.conn.flush()
@@ -156,6 +254,3 @@ class Connection:
     def extensions(self):
         return set([toStr(i).lower() for i in self.conn.core.ListExtensions().reply().names])
 
-    def internAtomUnchecked(self, name, only_if_exists=False):
-        c = self.conn.core.InternAtomUnchecked(False, len(name), name)
-        return c.reply().atom

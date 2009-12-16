@@ -35,7 +35,7 @@ class _Window(command.CommandObject):
     def __init__(self, window, qtile):
         self.window, self.qtile = window, qtile
         self.hidden = True
-        window.set_event_mask(self._windowMask)
+        window.set_attribute(eventmask=self._windowMask)
         self.x, self.y, self.width, self.height = None, None, None, None
         self.borderwidth = 0
         self.name = "<no name>"
@@ -129,44 +129,11 @@ class _Window(command.CommandObject):
     window_type = property(getWindowType, setWindowType)
 
     def updateWindowType(self):
-        '''
-        http://standards.freedesktop.org/wm-spec/wm-spec-latest.html#id2551529
-        Also a type "pseudo-normal" is used to indicicate a window that wants 
-        to be treated as if it were normal, but isn't actually.
-        '''
-        types = {
-            '_NET_WM_WINDOW_TYPE_DESKTOP': "desktop",
-            '_NET_WM_WINDOW_TYPE_DOCK': "dock",
-            '_NET_WM_WINDOW_TYPE_TOOLBAR': "toolbar",
-            '_NET_WM_WINDOW_TYPE_MENU': "menu",
-            '_NET_WM_WINDOW_TYPE_UTILITY': "utility",
-            '_NET_WM_WINDOW_TYPE_SPLASH': "splash",
-            '_NET_WM_WINDOW_TYPE_DIALOG': "dialog",
-            '_NET_WM_WINDOW_TYPE_DROPDOWN_MENU': "dropdown",
-            '_NET_WM_WINDOW_TYPE_POPUP_MENU': "menu",
-            '_NET_WM_WINDOW_TYPE_TOOLTIP': "tooltip",
-            '_NET_WM_WINDOW_TYPE_NOTIFICATION': "notification",
-            '_NET_WM_WINDOW_TYPE_COMBO': "combo",
-            '_NET_WM_WINDOW_TYPE_DND': "dnd",
-            '_NET_WM_WINDOW_TYPE_NORMAL': "normal",
-        }
-        d = self.qtile.display
-        try:
-            win_type = self.window.get_full_property(
-                d.intern_atom('_NET_WM_WINDOW_TYPE'),
-                Xatom.ATOM,
-                )
-        except:
-            return
-        if win_type is None:
+        win_type = self.window.get_wm_type()
+        if not win_type:
             self.window_type = "normal"
-            return
-        type_atom = win_type.value[0]
-        try:
-            atom_name = d.get_atom_name(type_atom)
-        except AttributeError:
-            return
-        self.window_type = types[atom_name]
+        else:
+            self.window_type = win_type
 
     def updateHints(self):
         ''' 
@@ -178,11 +145,10 @@ class _Window(command.CommandObject):
             if self.hints[hint] != value:
                 self.hints[hint] = value
         try:
-            print self.window.get_hints()
-            h = self.window.get_wm_hints()
+            h = self.window.get_hints()
         except (Xlib.error.BadWindow, Xlib.error.BadValue):
             return
-        if h is None:
+        if not h:
             return
 
         flags = h.flags
@@ -445,14 +411,12 @@ class Internal(_Window):
     """
         An internal window, that should not be managed by qtile.
     """
-    _windowMask = [
-                    EventMask.StructureNotify,
-                    EventMask.PropertyChange,
-                    EventMask.EnterWindow,
-                    EventMask.FocusChange,
-                    EventMask.Exposure,
-                    EventMask.ButtonPress
-                ]
+    _windowMask = EventMask.StructureNotify |\
+                  EventMask.PropertyChange |\
+                  EventMask.EnterWindow |\
+                  EventMask.FocusChange |\
+                  EventMask.Exposure |\
+                  EventMask.ButtonPress
     @classmethod
     def create(klass, qtile, background, x, y, width, height, opacity=1.0):
         win = qtile.conn.create_window(
@@ -469,12 +433,10 @@ class Internal(_Window):
 
 
 class Window(_Window):
-    _windowMask = [
-                    EventMask.StructureNotify,
-                    EventMask.PropertyChange,
-                    EventMask.EnterWindow,
-                    EventMask.FocusChange,
-                  ]
+    _windowMask = EventMask.StructureNotify |\
+                  EventMask.PropertyChange |\
+                  EventMask.EnterWindow |\
+                  EventMask.FocusChange
     group = None
     def handle_EnterNotify(self, e):
         hook.fire("client_mouse_enter", self)
