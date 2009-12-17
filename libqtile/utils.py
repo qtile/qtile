@@ -106,3 +106,48 @@ class LRUCache:
                     cache.pop(d)
                 return ret
         return wrap
+
+
+def multichar(a, width):
+    """
+        Like chr(), but takes a large integer that could fill many bytes,
+        and returns a string. I.e. calculate the base256 equivalent string,
+        from a given base10 integer.
+
+        The return string will be padded to the left to ensure that it is of
+        length "width".
+    """
+    a = int(a)
+    chars = []
+    while (a != 0):
+        chars.insert(0, chr(a%256))
+        a = a/256
+    if len(chars) > width:
+        raise ValueError, "Number too wide for width."
+    ret = ["\0"]*(width-len(chars)) + chars
+    return "".join(ret)
+
+
+def isStringLike(anobj):
+    try:
+        # Avoid succeeding expensively if anobj is large.
+        anobj[:0]+''
+    except:
+        return 0
+    else:
+        return 1
+
+
+def isSequenceLike(anobj):
+    """
+        Is anobj a non-string sequence type (list, tuple, iterator, or
+        similar)?  Crude, but mostly effective.
+    """
+    if not hasattr(anobj, "next"):
+        if isStringLike(anobj):
+            return 0
+        try:
+            anobj[:0]
+        except:
+            return 0
+    return 1

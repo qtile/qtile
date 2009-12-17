@@ -1,10 +1,11 @@
 """
-    A minimal OO layer over xpyb. This is NOT intended to be complete - it only
-    implements the subset of functionalty needed by qtile.
+    A minimal EWMH-aware OO layer over xpyb. This is NOT intended to be
+    complete - it only implements the subset of functionalty needed by qtile.
 """
 import sys
-import xcb.xproto, xcb.xinerama
+import xcb.xproto, xcb.xinerama, xcb.xcb
 from xcb.xproto import CW, WindowClass, EventMask, ConfigWindow
+import utils
 
 WindowTypes = {
     '_NET_WM_WINDOW_TYPE_DESKTOP': "desktop",
@@ -21,6 +22,30 @@ WindowTypes = {
     '_NET_WM_WINDOW_TYPE_COMBO': "combo",
     '_NET_WM_WINDOW_TYPE_DND': "dnd",
     '_NET_WM_WINDOW_TYPE_NORMAL': "normal",
+}
+
+# Maps property names to types and formats.
+PropertyMap = {
+    # ewmh properties
+    "_NET_DESKTOP_GEOMETRY": ("CARDINAL", 32),
+    "_NET_SUPPORTED": ("ATOM", 32),
+    "_NET_SUPPORTING_WM_CHECK": ("WINDOW", 32),
+    "_NET_WM_NAME": ("UTF8_STRING", 8),
+    "_NET_WM_PID": ("CARDINAL", 32),
+    "_NET_CLIENT_LIST": ("WINDOW", 32),
+    "_NET_CLIENT_LIST_STACKING": ("WINDOW", 32),
+    "_NET_NUMBER_OF_DESKTOPS": ("CARDINAL", 32),
+    "_NET_CURRENT_DESKTOP": ("CARDINAL", 32),
+    "_NET_DESKTOP_NAMES": ("UTF8_STRING", 8),
+    "_NET_WORKAREA": ("CARDINAL", 32),
+    "_NET_ACTIVE_WINDOW": ("WINDOW", 32),
+    "_NET_WM_STATE": ("ATOM", 32),
+    "_NET_WM_DESKTOP": ("CARDINAL", 32),
+    "_NET_WM_STRUT_PARTIAL": ("CARDINAL", 32),
+    "_NET_WM_WINDOW_OPACITY": ("CARDINAL", 32),
+    "_NET_WM_WINDOW_TYPE": ("CARDINAL", 32),
+    # Qtile-specific properties
+    "QTILE_INTERNAL": ("CARDINAL", 32)
 }
 
 def toStr(s):
@@ -48,17 +73,17 @@ def maskmap(mmap, **kwargs):
 
 
 class AtomCache:
-    defaults = [
-        '_NET_WM_WINDOW_TYPE'
-    ]
     def __init__(self, conn):
         self.conn = conn
         self.atoms = {}
         # We can change the pre-loads not to wait for a return
         for name in WindowTypes.keys():
             self.atoms[name] = self.internAtomUnchecked(name)
-        for name in self.defaults:
+        for name in PropertyMap.keys():
             self.atoms[name] = self.internAtomUnchecked(name)
+        for i in dir(xcb.xcb):
+            if i.startswith("XA_"):
+                self.atoms[i[3:]] = getattr(xcb.xcb, i)
 
     def internAtomUnchecked(self, name, only_if_exists=False):
         c = self.conn.conn.core.InternAtomUnchecked(False, len(name), name)
@@ -122,7 +147,7 @@ class Window:
         ("sibling", ConfigWindow.Sibling),
         ("stackmode", ConfigWindow.StackMode),
     )
-    PropertyMasks = (
+    AttributeMasks = (
         ("backpixmap", CW.BackPixmap),
         ("backpixel", CW.BackPixel),
         ("borderpixmap", CW.BorderPixmap),
@@ -193,21 +218,59 @@ class Window:
         return self.conn.conn.core.ConfigureWindow(self.wid, mask, values)
 
     def set_attribute(self, **kwargs):
-        mask, values = maskmap(self.PropertyMasks, **kwargs)
+        mask, values = maskmap(self.AttributeMasks, **kwargs)
         self.conn.conn.core.ChangeWindowAttributesChecked(self.wid, mask, values)
 
-    def set_property(self, name, type, value):
+    def set_property(self, name, value, type=None, format=None):
+        """
+            name: String Atom name
+            type: String Atom name
+            format: 8, 16, 32
+        """
+        if name in PropertyMap:
+            if type or format:
+                raise ValueError, "Over-riding default type or format for property."
+            type, format = PropertyMap[name]
+        else:
+            if None in (type, format):
+                raise ValueError, "Must specify type and format for unknown property."
+
+        if not utils.isSequenceLike(value):
+            value = [value]
+
+        buf = []
+        for i in value:
+            # We'll expand these conversions as we need them
+            if format == 32:
+                buf.append(utils.multichar(i, 4))
+            elif format == 16:
+                buf.append(utils.multichar(i, 2))
+            elif format == 8:
+                if utils.isStringLike(i):
+                    # FIXME: Unicode -> bytes conversion needed here
+                    buf.append(i)
+                else:
+                    buf.append(utils.multichar(i, 1))
+        buf = "".join(buf)
+
+        length = len(buf)/(format/8)
+
+        # This is a real balls-up interface-wise. As I understand it, each type
+        # can have a different associated size. 
+        #  - value is a string of bytes. 
+        #  - length is the length of the data in terms of the specified format.
         self.conn.conn.core.ChangePropertyChecked(
-            self.wid
-            
-            
+            xcb.xproto.PropMode.Replace,
+            self.wid,
+            self.conn.atoms[name],
+            self.conn.atoms[type],
+            format,  # Format - 8, 16, 32
+            length,
+            buf
         )
-        self.window.change_property(
-            self.qtile.atoms[name],
-            self.qtile.atoms["python"],
-            8,
-            marshal.dumps(data)
-        )
+
+    def map(self):
+        self.conn.conn.core.MapWindow(self.wid)
 
 
 class Connection:

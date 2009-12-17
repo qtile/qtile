@@ -20,6 +20,7 @@
 
 import marshal, sys
 import xcbq
+import xcb.xcb
 from xcb.xproto import EventMask
 
 
@@ -190,12 +191,7 @@ class _Window(command.CommandObject):
     def setOpacity(self, opacity):
         if 0.0 <= opacity <= 1.0:
             real_opacity = int(opacity * 0xffffffff)
-            self.window.change_property(
-                self.qtile.display.get_atom('_NET_WM_WINDOW_OPACITY'),
-                Xatom.CARDINAL,
-                32,
-                [real_opacity,],
-                )
+            self.window.set_property('_NET_WM_WINDOW_OPACITY', real_opacity)
         else:
             return
 
@@ -309,14 +305,6 @@ class _Window(command.CommandObject):
             s.add(d.get_atom_name(i))
         return name in s
 
-    def setProp(self, name, data):
-        self.window.change_property(
-            self.qtile.atoms[name],
-            self.qtile.atoms["python"],
-            8,
-            marshal.dumps(data)
-        )
-
     def _items(self, name, sel):
         return None
 
@@ -422,9 +410,9 @@ class Internal(_Window):
         win = qtile.conn.create_window(
                     x, y, width, height
               )
+        win.set_property("QTILE_INTERNAL", 1)
         i = Internal(win, qtile)
         i.place(x, y, width, height, 0, None)
-        i.setProp("internal", True)
         i.opacity = opacity
         return i
 
