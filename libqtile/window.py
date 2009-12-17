@@ -281,7 +281,7 @@ class _Window(command.CommandObject):
             y=y,
             width=width,
             height=height,
-            border_width=border
+            borderwidth=border
         )
         if borderColor is not None:
             self.window.change_attributes(

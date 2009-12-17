@@ -12,7 +12,7 @@ class _Drawer:
         self.qtile, self.window = qtile, window
         self.win = window.window
         self.gc = self.win.create_gc()
-        self.colormap = qtile.display.screen().default_colormap
+        self.colormap = qtile.conn.default_screen.default_colormap
         self.background, self.foreground = None, None
         
     @utils.LRUCache(100)
@@ -20,10 +20,10 @@ class _Drawer:
         return self.colormap.alloc_named_color(color).pixel
 
     def setFont(self, font):
-        f = self.qtile.display.open_font(font)
+        f = self.qtile.conn.open_font(font)
         if not f:
             self.qtile.log.add("Could not open font %s, falling back."%font)
-            f = self.qtile.display.open_font(self._fallbackFont)
+            f = self.qtile.conn.open_font(self._fallbackFont)
         self.font = f
         self.gc.change(font=f)
 

@@ -4,7 +4,7 @@
 """
 import sys
 import xcb.xproto, xcb.xinerama, xcb.xcb
-from xcb.xproto import CW, WindowClass, EventMask, ConfigWindow
+from xcb.xproto import CW, WindowClass, EventMask
 import utils
 
 WindowTypes = {
@@ -72,6 +72,17 @@ def maskmap(mmap, **kwargs):
     return mask, values
 
 
+def makemap(obj):
+    """
+        Make a map suitable for masmap, from an xpyb-style values class.
+    """
+    m = []
+    for i in dir(obj):
+        if not i.startswith("_"):
+            m.append((i.lower(), getattr(obj, i)))
+    return m
+
+
 class AtomCache:
     def __init__(self, conn):
         self.conn = conn
@@ -137,33 +148,15 @@ class Xinerama:
         return r.screen_info
 
 
+class GC:
+    def __init__(self, gid):
+        self.gid = gid
+
+
 class Window:
-    ConfigureMasks = (
-        ("x", ConfigWindow.X),
-        ("y", ConfigWindow.Y),
-        ("width", ConfigWindow.Width),
-        ("height", ConfigWindow.Height),
-        ("border_width", ConfigWindow.BorderWidth),
-        ("sibling", ConfigWindow.Sibling),
-        ("stackmode", ConfigWindow.StackMode),
-    )
-    AttributeMasks = (
-        ("backpixmap", CW.BackPixmap),
-        ("backpixel", CW.BackPixel),
-        ("borderpixmap", CW.BorderPixmap),
-        ("borderpixel", CW.BorderPixel),
-        ("bitgravity", CW.BitGravity),
-        ("wingravity", CW.WinGravity),
-        ("backingstore", CW.BackingStore),
-        ("backingplanes", CW.BackingPlanes),
-        ("backingpixel", CW.BackingPixel),
-        ("overrideredirect", CW.OverrideRedirect),
-        ("saveunder", CW.SaveUnder),
-        ("eventmask", CW.EventMask),
-        ("dontpropagate", CW.DontPropagate),
-        ("colormap", CW.Colormap),
-        ("cursor", CW.Cursor),
-    )
+    ConfigureMasks = makemap(xcb.xproto.ConfigWindow)
+    AttributeMasks = makemap(CW)
+    GCMasks = makemap(xcb.xproto.GC)
     def __init__(self, conn, wid):
         self.conn, self.wid = conn, wid
 
@@ -272,6 +265,17 @@ class Window:
     def map(self):
         self.conn.conn.core.MapWindow(self.wid)
 
+    def create_gc(self, **kwargs):
+        gid = self.conn.conn.generate_id()
+        mask, values = maskmap(self.GCMasks, **kwargs)
+        self.conn.conn.core.CreateGCChecked(gid, self.wid, mask, values)
+        return GC(gid)
+
+
+class Font:
+    def __init__(self, fid):
+        self.fid = fid
+
 
 class Connection:
     _extmap = {
@@ -313,6 +317,11 @@ class Connection:
 
     def get_setup(self):
         return self.conn.get_setup()
+
+    def open_font(self, name):
+        fid = self.conn.generate_id()
+        self.conn.core.OpenFontChecked(fid, len(name), name)
+        return Font(fid)
 
     def extensions(self):
         return set([toStr(i).lower() for i in self.conn.core.ListExtensions().reply().names])
