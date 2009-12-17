@@ -52,35 +52,31 @@ def toStr(s):
     return "".join([chr(i) for i in s.name])
 
 
-def maskmap(mmap, **kwargs):
-    """
-        mmap: a list of (name, maskvalue) tuples.
-        kwargs: keys should be in the mmap name set
+class MaskMap:
+    def __init__(self, obj):
+        self.mmap = []
+        for i in dir(obj):
+            if not i.startswith("_"):
+                self.mmap.append((i.lower(), getattr(obj, i)))
 
-        Returns a (mask, values) tuple.
-    """
-    mask = 0
-    values = []
-    for s, m in mmap:
-        val = kwargs.get(s)
-        if val is not None:
-            mask &= m
-            values.append(val)
-            del kwargs[s]
-    if kwargs:
-        raise ValueError("Unknown mask names: %s"%kwargs.keys())
-    return mask, values
+    def __call__(self, **kwargs):
+        """
+            mmap: a list of (name, maskvalue) tuples.
+            kwargs: keys should be in the mmap name set
 
-
-def makemap(obj):
-    """
-        Make a map suitable for masmap, from an xpyb-style values class.
-    """
-    m = []
-    for i in dir(obj):
-        if not i.startswith("_"):
-            m.append((i.lower(), getattr(obj, i)))
-    return m
+            Returns a (mask, values) tuple.
+        """
+        mask = 0
+        values = []
+        for s, m in self.mmap:
+            val = kwargs.get(s)
+            if val is not None:
+                mask &= m
+                values.append(val)
+                del kwargs[s]
+        if kwargs:
+            raise ValueError("Unknown mask names: %s"%kwargs.keys())
+        return mask, values
 
 
 class AtomCache:
@@ -154,9 +150,9 @@ class GC:
 
 
 class Window:
-    ConfigureMasks = makemap(xcb.xproto.ConfigWindow)
-    AttributeMasks = makemap(CW)
-    GCMasks = makemap(xcb.xproto.GC)
+    configureMasks = MaskMap(xcb.xproto.ConfigWindow)
+    attributeMasks = MaskMap(CW)
+    gcMasks = MaskMap(xcb.xproto.GC)
     def __init__(self, conn, wid):
         self.conn, self.wid = conn, wid
 
@@ -207,11 +203,11 @@ class Window:
         """
             Arguments can be: x, y, width, height, border, sibling, stackmode
         """
-        mask, values = maskmap(self.ConfigureMasks, **kwargs)
+        mask, values = self.configureMasks(**kwargs)
         return self.conn.conn.core.ConfigureWindow(self.wid, mask, values)
 
     def set_attribute(self, **kwargs):
-        mask, values = maskmap(self.AttributeMasks, **kwargs)
+        mask, values = self.attributeMasks(**kwargs)
         self.conn.conn.core.ChangeWindowAttributesChecked(self.wid, mask, values)
 
     def set_property(self, name, value, type=None, format=None):
@@ -267,7 +263,7 @@ class Window:
 
     def create_gc(self, **kwargs):
         gid = self.conn.conn.generate_id()
-        mask, values = maskmap(self.GCMasks, **kwargs)
+        mask, values = self.gcMasks(**kwargs)
         self.conn.conn.core.CreateGCChecked(gid, self.wid, mask, values)
         return GC(gid)
 
