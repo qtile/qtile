@@ -45,7 +45,7 @@ class Xephyr(libpry.TestContainer):
 
     def setUp(self):
         args = [
-            "Xephyr", "+kb", "-keybd", "evdev",
+            "Xephyr", "-keybd", "evdev",
             "-screen", "%sx%s"%(WIDTH, HEIGHT),
             "-screen", "%sx%s+800+0"%(WIDTH, HEIGHT),
             self["display"], "-ac"

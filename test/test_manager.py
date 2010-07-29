@@ -35,6 +35,30 @@ class TestConfig:
     themedir = "themes"
 
 
+class BareConfig:
+    groups = ["a", "b", "c", "d"]
+    layouts = [
+                libqtile.layout.stack.Stack(stacks=1),
+                libqtile.layout.stack.Stack(2)
+            ]
+    keys = [
+        libqtile.manager.Key(
+            ["control"],
+            "k",
+            libqtile.command._Call([("layout", None)], "up")
+        ),
+        libqtile.manager.Key(
+            ["control"],
+            "j",
+            libqtile.command._Call([("layout", None)], "down")
+        ),
+    ]
+    screens = [libqtile.manager.Screen()]
+    theme = None
+    themedir = "themes"
+
+
+
 class uMultiScreen(utils.QtileTests):
     config = TestConfig()
     def test_to_screen(self):
@@ -70,6 +94,12 @@ class uMultiScreen(utils.QtileTests):
         assert d["width"] == d["height"] == 100
         assert d["x"] == d["y"] == 10
         
+
+class uMinimal(utils.QtileTests):
+    config = BareConfig()
+    def test_bare(self):
+        assert self.c.status() == "OK"
+
 
 class uSingle(utils.QtileTests):
     """
@@ -404,7 +434,8 @@ tests = [
     ],
     utils.xfactory(xinerama=False), [
         uSingle(),
-        uQtile()
+        uQtile(),
+        uMinimal()
     ],
     utils.xfactory(xinerama=False), [
         uRandr(),

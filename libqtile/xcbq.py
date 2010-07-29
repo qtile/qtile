@@ -123,6 +123,7 @@ class Screen(_Wrapper):
     def __init__(self, conn, screen):
         _Wrapper.__init__(self, screen)
         self.default_colormap = Colormap(conn, screen.default_colormap)
+        self.root = Window(conn, self.root)
 
 
 class Colormap:
