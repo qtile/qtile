@@ -53,6 +53,12 @@ def toStr(s):
 
 
 class MaskMap:
+    """
+        A general utility class that encapsulates the way the mask/value idiom
+        works in xpyb. It understands a special attribute _maskvalue on
+        objects, which will be used instead of the object value if present.
+        This lets us passin a Font object, rather than Font.fid, for example.
+    """
     def __init__(self, obj):
         self.mmap = []
         for i in dir(obj):
@@ -72,12 +78,15 @@ class MaskMap:
             val = kwargs.get(s)
             if val is not None:
                 mask &= m
-                values.append(val)
+                values.append(getattr(val, "_maskvalue", val))
                 del kwargs[s]
         if kwargs:
             raise ValueError("Unknown mask names: %s"%kwargs.keys())
         return mask, values
 
+ConfigureMasks = MaskMap(xcb.xproto.ConfigWindow)
+AttributeMasks = MaskMap(CW)
+GCMasks = MaskMap(xcb.xproto.GC)
 
 class AtomCache:
     def __init__(self, conn):
@@ -145,14 +154,15 @@ class Xinerama:
 
 
 class GC:
-    def __init__(self, gid):
-        self.gid = gid
+    def __init__(self, conn, gid):
+        self.conn, self.gid = conn, gid
+
+    def change(self, **kwargs):
+        mask, values = GCMasks(**kwargs)
+        self.conn.conn.core.ChangeGCChecked(self.gid, mask, values)
 
 
 class Window:
-    configureMasks = MaskMap(xcb.xproto.ConfigWindow)
-    attributeMasks = MaskMap(CW)
-    gcMasks = MaskMap(xcb.xproto.GC)
     def __init__(self, conn, wid):
         self.conn, self.wid = conn, wid
 
@@ -203,11 +213,11 @@ class Window:
         """
             Arguments can be: x, y, width, height, border, sibling, stackmode
         """
-        mask, values = self.configureMasks(**kwargs)
+        mask, values = ConfigureMasks(**kwargs)
         return self.conn.conn.core.ConfigureWindow(self.wid, mask, values)
 
     def set_attribute(self, **kwargs):
-        mask, values = self.attributeMasks(**kwargs)
+        mask, values = AttributeMasks(**kwargs)
         self.conn.conn.core.ChangeWindowAttributesChecked(self.wid, mask, values)
 
     def set_property(self, name, value, type=None, format=None):
@@ -263,14 +273,27 @@ class Window:
 
     def create_gc(self, **kwargs):
         gid = self.conn.conn.generate_id()
-        mask, values = self.gcMasks(**kwargs)
+        mask, values = GCMasks(**kwargs)
         self.conn.conn.core.CreateGCChecked(gid, self.wid, mask, values)
-        return GC(gid)
+        return GC(self.conn, gid)
 
 
 class Font:
-    def __init__(self, fid):
-        self.fid = fid
+    def __init__(self, conn, fid):
+        self.conn, self.fid = conn, fid
+
+    @property
+    def _maskvalue(self):
+        return self.fid
+
+    def text_extents(self, s):
+        print "CONN"
+        x = self.conn.conn.core.QueryTextExtents(self.fid, len(s), s)
+        print "PREREPLY"
+        x = x.reply()
+        print "POSTREPLY"
+        print x
+        return x
 
 
 class Connection:
@@ -317,7 +340,7 @@ class Connection:
     def open_font(self, name):
         fid = self.conn.generate_id()
         self.conn.core.OpenFontChecked(fid, len(name), name)
-        return Font(fid)
+        return Font(self, fid)
 
     def extensions(self):
         return set([toStr(i).lower() for i in self.conn.core.ListExtensions().reply().names])
