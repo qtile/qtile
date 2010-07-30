@@ -29,7 +29,7 @@ class _Drawer:
 
     @utils.LRUCache(100)
     def text_extents(self, font, i):
-        return font.query_text_extents(i)
+        return font.text_extents(i)
 
     def textsize(self, font, *text):
         """
