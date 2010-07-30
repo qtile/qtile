@@ -22,13 +22,14 @@ import select
 import xcbq
 import xcb.xproto, xcb.xinerama
 import xcb
+from xcb.xproto import EventMask
+import command, utils, window, confreader, hook, xk
 
 import Xlib
 import Xlib.display
 import Xlib.ext.xinerama as xinerama
-from Xlib import X, XK
+from Xlib import X
 import Xlib.protocol.event as event
-import command, utils, window, confreader, hook
 
 class QtileError(Exception): pass
 class ThemeSyntaxError(Exception): pass
@@ -51,7 +52,7 @@ class Key:
             are run in sequence.
         """
         self.modifiers, self.key, self.commands = modifiers, key, commands
-        self.keysym = XK.string_to_keysym(key)
+        self.keysym = xk.string_to_keysym(key)
         if self.keysym == 0:
             raise QtileError("Unknown key: %s"%key)
         try:
@@ -623,31 +624,31 @@ class Qtile(command.CommandObject):
             self.screens.append(s)
         self.currentScreen = self.screens[0]
 
-        self.display.set_error_handler(self.initialErrorHandler)
-        self.root.change_attributes(
-            event_mask = X.SubstructureNotifyMask |\
-                         X.SubstructureRedirectMask |\
-                         X.EnterWindowMask |\
-                         X.LeaveWindowMask |\
-                         X.StructureNotifyMask
+        #self.display.set_error_handler(self.initialErrorHandler)
+        self.conn.screens[0].root.set_attribute(
+            eventmask = EventMask.StructureNotify |\
+                        EventMask.SubstructureNotify |\
+                        EventMask.SubstructureRedirect |\
+                        EventMask.EnterWindow |\
+                        EventMask.LeaveWindow
         )
-        self.display.sync()
+        self.conn.flush()
         if self._exit:
             print >> sys.stderr, "Access denied: Another window manager running?"
             sys.exit(1)
         # Now install the real error handler
-        self.display.set_error_handler(self.errorHandler)
+        #self.display.set_error_handler(self.errorHandler)
 
         self.server = command._Server(self.fname, self, config)
         self.ignoreEvents = set([
-            X.KeyRelease,
-            X.ReparentNotify,
-            X.CreateNotify,
+            xcb.xproto.KeyReleaseEvent,
+            xcb.xproto.ReparentNotifyEvent,
+            xcb.xproto.CreateNotifyEvent,
             # DWM handles this to help "broken focusing windows".
-            X.MapNotify,
-            X.LeaveNotify,
-            X.FocusOut,
-            X.FocusIn,
+            xcb.xproto.MapNotifyEvent,
+            xcb.xproto.LeaveNotifyEvent,
+            xcb.xproto.FocusOutEvent,
+            xcb.xproto.FocusInEvent,
         ])
 
         # Find the modifier mask for the numlock key, if there is one:
@@ -662,7 +663,7 @@ class Qtile(command.CommandObject):
             X.ShiftMapIndex: X.ShiftMask,
         }
         nc = self.display.keysym_to_keycode(
-                XK.string_to_keysym("Num_Lock")
+                xk.string_to_keysym("Num_Lock")
             )
         self.numlockMask = None
         for i, l in enumerate(self.display.get_modifier_mapping()):
@@ -1160,7 +1161,7 @@ class Qtile(command.CommandObject):
 
                 simulate_keypress(["control", "mod2"], "k")
         """
-        keysym = XK.string_to_keysym(key)
+        keysym = xk.string_to_keysym(key)
         if keysym == 0:
             raise command.CommandError("Unknown key: %s"%key)
         keycode = self.display.keysym_to_keycode(keysym)

@@ -289,6 +289,15 @@ class Connection:
         self.default_screen = self.screens[self.conn.pref_screen]
         self.atoms = AtomCache(self)
 
+        q = self.conn.core.GetKeyboardMapping(
+                self.setup.min_keycode,
+                self.setup.max_keycode-self.setup.min_keycode+1
+            ).reply()
+        print dir(q)
+        print q.keysyms_per_keycode
+        print list(q.keysyms)
+
+
     def create_window(self, x, y, width, height):
         wid = self.conn.generate_id()
         q = self.conn.core.CreateWindowChecked(
