@@ -11,6 +11,10 @@ DISPLAY = ":1"
 class XNest(libpry.TestContainer):
     nestx = "xnest"
     def __init__(self, xinerama):
+        if xinerama:
+            self.name = self.nestx + "_xinerama"
+        else:
+            self.name = self.nestx
         libpry.TestContainer.__init__(self)
         self.xinerama = xinerama
         self["display"] = DISPLAY
@@ -38,6 +42,10 @@ class XNest(libpry.TestContainer):
 class Xephyr(libpry.TestContainer):
     nestx = "xephyr"
     def __init__(self, xinerama):
+        if xinerama:
+            self.name = self.nestx + "_xinerama"
+        else:
+            self.name = self.nestx
         libpry.TestContainer.__init__(self)
         self.xinerama = xinerama
         self["display"] = DISPLAY

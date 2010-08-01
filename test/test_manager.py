@@ -97,7 +97,7 @@ class uMultiScreen(utils.QtileTests):
 
 class uMinimal(utils.QtileTests):
     config = BareConfig()
-    def test_bare(self):
+    def test_minimal(self):
         assert self.c.status() == "OK"
 
 
@@ -222,7 +222,11 @@ class uQtile(utils.QtileTests):
     """
         These tests should run in both Xinerama and non-Xinerama modes.
     """
-    config = TestConfig()
+    def __init__(self, name, config):
+        self.name = name
+        self.config = config
+        utils.QtileTests.__init__(self)
+
     def test_mapRequest(self):
         self.testWindow("one")
         info = self.c.groups()["a"]
@@ -429,12 +433,14 @@ class uTheme(libpry.AutoTree):
 
 tests = [
     utils.xfactory(xinerama=True), [
-        uQtile(),
+        uQtile("bare", BareConfig),
+        uQtile("complex", TestConfig),
         uMultiScreen()
     ],
     utils.xfactory(xinerama=False), [
         uSingle(),
-        uQtile(),
+        uQtile("bare", BareConfig),
+        uQtile("complex", TestConfig),
         uMinimal()
     ],
     utils.xfactory(xinerama=False), [
