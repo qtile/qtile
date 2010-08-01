@@ -696,8 +696,9 @@ class Qtile(command.CommandObject):
         return self.currentScreen.group.currentWindow
 
     def scan(self):
-        r = self.root.query_tree()
-        for i in r.children:
+        _, _, children = self.root.query_tree()
+        for i in children:
+            # FIXME
             a = i.get_attributes()
             if a.map_state == Xlib.X.IsViewable:
                 self.manage(i)

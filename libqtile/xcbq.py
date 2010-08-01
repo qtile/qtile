@@ -314,6 +314,15 @@ class Window:
             keyboard_mode
         )
 
+    def query_tree(self):
+        q = self.conn.conn.core.QueryTree(self.wid).reply()
+        root, parent = None, None
+        if q.root:
+            root = Window(self.conn, q.root)
+        if q.parent:
+            parent = Window(self.conn, q.root)
+        return root, parent, [Window(self.conn, i) for i in q.children]
+
 
 class Font:
     def __init__(self, conn, fid):
