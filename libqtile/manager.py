@@ -624,9 +624,6 @@ class Qtile(command.CommandObject):
             self.screens.append(s)
         self.currentScreen = self.screens[0]
 
-        # FIXME
-        #self.display.set_error_handler(self.initialErrorHandler)
-
         # Because we only do Xinerama multi-screening, we can assume that the first
         # screen's root is _the_ root.
         self.root = self.conn.screens[0].root
@@ -641,8 +638,6 @@ class Qtile(command.CommandObject):
         if self._exit:
             print >> sys.stderr, "Access denied: Another window manager running?"
             sys.exit(1)
-        # Now install the real error handler FIXME
-        # self.display.set_error_handler(self.errorHandler)
 
         self.server = command._Server(self.fname, self, config)
         self.ignoreEvents = set([
@@ -734,9 +729,9 @@ class Qtile(command.CommandObject):
         for i in self.keyMap.values():
             code = self.conn.keysym_to_keycode(i.keysym)
             self.root.grab_key(
-                True,
                 code,
                 i.modmask,
+                True,
                 xcb.xproto.GrabMode.Async,
                 xcb.xproto.GrabMode.Async,
             )
@@ -769,21 +764,20 @@ class Qtile(command.CommandObject):
         try:
             while 1:
                 fds, _, _ = select.select(
-                                [self.server.sock, self.display.fileno()],
+                                [self.server.sock, self.conn.conn.get_file_descriptor()],
                                 [], [], 0.01
                             )
                 if self._exit:
                     sys.exit(1)
                 self.server.receive()
-                try:
-                    n = self.display.pending_events()
-                except Xlib.error.ConnectionClosedError:
-                    return
-                while n > 0:
-                    n -= 1
-                    e = self.display.next_event()
+                while True:
+                    try:
+                        e = self.conn.conn.poll_for_event()
+                    except Exception, v:
+                        self.errorHandler(v)
+                    if not e:
+                        break
                     ename = e.__class__.__name__
-
                     c = None
                     if hasattr(e, "window"):
                         c = self.windowMap.get(e.window) or self.internalMap.get(e.window)
@@ -889,20 +883,20 @@ class Qtile(command.CommandObject):
         self.log.write(f, "\t")
         f.close()
 
-    def initialErrorHandler(self, e, v):
-        self._exit = True
-
     _ignoreErrors = set([
-        Xlib.error.BadWindow,
-        Xlib.error.BadAccess
+        xcb.xproto.BadWindow,
+        xcb.xproto.BadAccess
     ])
-    def errorHandler(self, e, v):
+    def errorHandler(self, e):
         if e.__class__ in self._ignoreErrors:
             return
         if self._testing:
-            print >> sys.stderr, "Server Error:", (e, v)
+            print >> sys.stderr, "Server Error:", e.__class__.__name__
+            print >> sys.stderr, "\tbad_value", e.args[0].bad_value
+            print >> sys.stderr, "\tmajor_opcode", e.args[0].major_opcode
+            print >> sys.stderr, "\tminor_opcode", e.args[0].minor_opcode
         else:
-            self.writeReport((e, v))
+            self.writeReport(e)
         self._exit = True
 
     def _items(self, name):
