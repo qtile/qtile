@@ -652,31 +652,13 @@ class Qtile(command.CommandObject):
         ])
 
         # Find the modifier mask for the numlock key, if there is one:
-        maskmap = {
-            X.ControlMapIndex: X.ControlMask,
-            X.LockMapIndex: X.LockMask,
-            X.Mod1MapIndex: X.Mod1Mask,
-            X.Mod2MapIndex: X.Mod2Mask,
-            X.Mod3MapIndex: X.Mod3Mask,
-            X.Mod4MapIndex: X.Mod4Mask,
-            X.Mod5MapIndex: X.Mod5Mask,
-            X.ShiftMapIndex: X.ShiftMask,
-        }
-        nc = self.conn.keysym_to_keycode(
-                xcbq.keysyms["Num_Lock"]
-            )
-        self.numlockMask = None
-        for i, l in enumerate(self.display.get_modifier_mapping()):
-            for j in l:
-                if j == nc:
-                    self.numlockMask = maskmap[i]
+        nc = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
+        self.numlockMask = xcbq.ModMasks[self.conn.get_modifier(nc)]
         self.validMask = ~(self.numlockMask | X.LockMask)
-
 
         self.keyMap = {}
         for i in self.config.keys:
             self.keyMap[(i.keysym, i.modmask&self.validMask)] = i
-        
 
         self.grabKeys()
         self.scan()

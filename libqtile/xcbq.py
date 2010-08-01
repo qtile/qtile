@@ -5,10 +5,23 @@
 import sys
 import xcb.xproto, xcb.xinerama, xcb.xcb
 from xcb.xproto import CW, WindowClass, EventMask
-
 import utils, xkeysyms
 
 keysyms = xkeysyms.keysyms
+
+# These should be in xpyb:
+ModMasks = {
+    "shift": 1<<0,
+    "mask":  1<<1,
+    "control": 1<<2,
+    "mod1": 1<<3,
+    "mod2": 1<<4,
+    "mod3": 1<<5,
+    "mod4": 1<<6,
+    "mod5": 1<<7,
+}
+ModMapOrder = ["shift", "lock", "control", "mod1", "mod2", "mod3", "mod4", "mod5"]
+
 
 WindowTypes = {
     '_NET_WM_WINDOW_TYPE_DESKTOP': "desktop",
@@ -315,8 +328,12 @@ class Connection:
         self.default_screen = self.screens[self.conn.pref_screen]
         self.atoms = AtomCache(self)
 
-        self._code_to_sym = {}
+        self.code_to_syms = {}
+        self.first_sym_to_code = None
         self.refresh_keymap()
+
+        self.modmap = None
+        self.refresh_modmap()
 
     def refresh_keymap(self, first=None, count=None):
         if first is None:
@@ -324,26 +341,41 @@ class Connection:
             count = self.setup.max_keycode - self.setup.min_keycode + 1
         q = self.conn.core.GetKeyboardMapping(first, count).reply()
 
-        code_to_syms = {}
         l = []
         sym = None
         for i, v in enumerate(q.keysyms):
             if not i%q.keysyms_per_keycode:
                 if l:
-                    code_to_syms[(i/q.keysyms_per_keycode) + first - 1] = l
+                    self.code_to_syms[(i/q.keysyms_per_keycode) + first - 1] = l
                 l = []
                 l.append(v)
             else:
                 l.append(v)
         assert len(l) == q.keysyms_per_keycode
-        code_to_syms[first + count - 1] = l
+        self.code_to_syms[first + count - 1] = l
 
         first_sym_to_code = {}
-        for k, s in code_to_syms.items():
+        for k, s in self.code_to_syms.items():
             first_sym_to_code[s[0]] = k
 
-        self.code_to_syms = code_to_syms
         self.first_sym_to_code = first_sym_to_code
+    
+    def refresh_modmap(self):
+        q = self.conn.core.GetModifierMapping().reply()
+        modmap = {}
+        for i, k in enumerate(q.keycodes): 
+            l = modmap.setdefault(ModMapOrder[i/q.keycodes_per_modifier], [])
+            l.append(k)
+        self.modmap = modmap
+
+    def get_modifier(self, keycode):
+        """
+            Return the modifier matching keycode.
+        """
+        for n, l in self.modmap.items():
+            if keycode in l:
+                return n
+        return None
 
     def keysym_to_keycode(self, keysym):
         return self.first_sym_to_code[keysym]
