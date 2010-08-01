@@ -701,7 +701,7 @@ class Qtile(command.CommandObject):
         internal = w.get_property("internal", "python")
         if attrs and attrs.override_redirect:
             return
-        if internal:
+        if internal.value:
             if not w in self.internalMap:
                 c = window.Internal(w, self)
                 self.internalMap[w] = c
@@ -837,7 +837,9 @@ class Qtile(command.CommandObject):
             self.grabKeys()
 
     def handle_MapRequest(self, e):
-        self.manage(xcbq.Window(self.conn, e.window))
+        w = xcbq.Window(self.conn, e.window)
+        self.manage(w)
+        w.map()
 
     def handle_DestroyNotify(self, e):
         self.unmanage(e.window)

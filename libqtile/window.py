@@ -262,13 +262,13 @@ class _Window(command.CommandObject):
         self.hidden = False
 
     def disableMask(self, mask):
-        self.window.change_attributes(
-            event_mask=self._windowMask&(~mask)
+        self.window.set_attribute(
+            eventmask=self._windowMask&(~mask)
         )
 
     def resetMask(self):
-        self.window.change_attributes(
-            event_mask=self._windowMask
+        self.window.set_attribute(
+            eventmask=self._windowMask
         )
 
     def place(self, x, y, width, height, border, borderColor):
@@ -284,8 +284,8 @@ class _Window(command.CommandObject):
             borderwidth=border
         )
         if borderColor is not None:
-            self.window.change_attributes(
-                border_pixel = borderColor
+            self.window.set_attribute(
+                borderpixel = borderColor
             )
 
     def focus(self, warp):
