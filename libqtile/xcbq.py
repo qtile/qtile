@@ -108,22 +108,37 @@ class AtomCache:
     def __init__(self, conn):
         self.conn = conn
         self.atoms = {}
+        self.reverse = {}
+
         # We can change the pre-loads not to wait for a return
         for name in WindowTypes.keys():
-            self.atoms[name] = self.internAtom(name)
+            self.insert(name=name)
         for name in PropertyMap.keys():
-            self.atoms[name] = self.internAtom(name)
+            self.insert(name=name)
         for i in dir(xcb.xcb):
             if i.startswith("XA_"):
-                self.atoms[i[3:]] = getattr(xcb.xcb, i)
+                self.insert(name=i[3:], atom=getattr(xcb.xcb, i))
 
-    def internAtom(self, name, only_if_exists=False):
-        c = self.conn.conn.core.InternAtom(False, len(name), name)
-        return c.reply().atom
+    def insert(self, name = None, atom = None):
+        assert name or atom
+        if atom is None:
+            c = self.conn.conn.core.InternAtom(False, len(name), name)
+            atom = c.reply().atom
+        if name is None:
+            c = self.conn.conn.core.GetAtomName(atom)
+            name = str(c.reply().name)
+            print name
+        self.atoms[name] = atom
+        self.reverse[atom] = name
+
+    def get_name(self, atom):
+        if atom not in self.reverse:
+            self.insert(atom=atom)
+        return self.reverse[atom]
 
     def __getitem__(self, key):
         if key not in self.atoms:
-            self.atoms[key] = self.internAtom(key)
+            self.insert(name=key)
         return self.atoms[key]
 
 
@@ -362,8 +377,10 @@ class Font:
         return self.fid
 
     def text_extents(self, s):
-        x = self.conn.conn.core.QueryTextExtents(self.fid, len(s), s)
-        x = x.reply()
+        s = s + "aaa"
+        print s
+        x = self.conn.conn.core.QueryTextExtents(self.fid, len(s), s).reply()
+        print x
         return x
 
 
@@ -439,7 +456,7 @@ class Connection:
         q = self.conn.core.CreateWindow(
                 self.default_screen.root_depth,
                 wid,
-                self.default_screen.root,
+                self.default_screen.root.wid,
                 x, y, width, height, 0,
                 WindowClass.InputOutput,
                 self.default_screen.root_visual,

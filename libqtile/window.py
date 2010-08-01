@@ -510,7 +510,7 @@ class Window(_Window):
             self.notify()
 
     def handle_PropertyNotify(self, e):
-        name = self.qtile.display.get_atom_name(e.atom)
+        name = self.qtile.conn.atoms.get_name(e.atom)
         if name == "WM_TRANSIENT_FOR":
             print >> sys.stderr, "transient"
         elif name == "WM_HINTS":

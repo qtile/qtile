@@ -9,55 +9,8 @@ class _Drawer:
     """
     _fallbackFont = "-*-fixed-bold-r-normal-*-15-*-*-*-c-*-*-*"
     def __init__(self, qtile, window):
-        self.qtile, self.window = qtile, window
-        self.win = window.window
-        self.gc = self.win.create_gc()
-        self.colormap = qtile.conn.default_screen.default_colormap
-        self.background, self.foreground = None, None
+        pass
         
-    @utils.LRUCache(100)
-    def color(self, color):
-        return self.colormap.alloc_named_color(color).pixel
-
-    def setFont(self, font):
-        f = self.qtile.conn.open_font(font)
-        if not f:
-            self.qtile.log.add("Could not open font %s, falling back."%font)
-            f = self.qtile.conn.open_font(self._fallbackFont)
-        self.font = f
-        self.gc.change(font=f)
-
-    @utils.LRUCache(100)
-    def text_extents(self, font, i):
-        return font.text_extents(i)
-
-    def textsize(self, font, *text):
-        """
-            Return a textheight, textwidth tuple, for a box large enough to
-            enclose any of the passed strings.
-        """
-        textheight, textwidth = 0, 0
-        for i in text:
-            data = self.text_extents(font, i)
-            if  data.font_ascent > textheight:
-                textheight = data.font_ascent
-            if data.overall_width > textwidth:
-                textwidth = data.overall_width
-        return textheight, textwidth
-
-    def change(self, **kwargs):
-        newargs = kwargs.copy()
-        newargs.pop("background", None)
-        newargs.pop("foreground", None)
-        if kwargs.has_key("background") and self.background != kwargs["background"]:
-            self.background = kwargs["background"]
-            newargs["background"] = self.color(kwargs["background"])
-        if kwargs.has_key("foreground") and self.background != kwargs["foreground"]:
-            self.background = kwargs["foreground"]
-            newargs["foreground"] = self.color(kwargs["foreground"])
-        if newargs:
-            self.gc.change(**newargs)
-
     def textbox(self, text, x, y, width, height, padding = 0,
                 alignment=LEFT, background=None, **attrs):
         """
@@ -67,30 +20,10 @@ class _Drawer:
             :background Fill box with the specified color first.
             :padding  Padding to the left of the text.
         """
-        text = text or " "
-        if background:
-            self.rectangle(x, y, width, height, background)
-            attrs["background"] = background
-        if attrs:
-            self.change(**attrs)
-        textheight, textwidth = self.textsize(self.font, text)
-        y = y + textheight + (height - textheight)/2
-        if alignment == LEFT:
-            x = x + padding
-        else:
-            x = x + (width - textwidth)/2
-        self.win.draw_text(self.gc, x, y, text)
+        pass
 
     def rectangle(self, x, y, width, height, fillColor=None, borderColor=None, borderWidth=1):
-        if fillColor:
-            self.change(foreground=fillColor)
-            self.win.fill_rectangle(self.gc, x, 0, width, height)
-        if borderColor:
-            self.change(
-                foreground=borderColor,
-                line_width=borderWidth
-            )
-            self.win.rectangle(self.gc, x, 0, width, height)
+        pass
 
 
 class _Widget(command.CommandObject):
@@ -120,7 +53,6 @@ class _Widget(command.CommandObject):
     def _configure(self, qtile, bar, theme):
         self.qtile, self.bar, self.theme = qtile, bar, theme
         self._drawer = _Drawer(qtile, self.bar.window)
-        self._drawer.setFont(self.font)
 
     def clear(self):
         self._drawer.rectangle(

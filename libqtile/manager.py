@@ -685,7 +685,7 @@ class Qtile(command.CommandObject):
         for i in children:
             # FIXME
             a = i.get_attributes()
-            if a.map_state == Xlib.X.IsViewable:
+            if a.map_state == xcb.xproto.MapState.Viewable:
                 self.manage(i)
 
     def unmanage(self, window):
