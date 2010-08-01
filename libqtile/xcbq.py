@@ -12,7 +12,7 @@ keysyms = xkeysyms.keysyms
 # These should be in xpyb:
 ModMasks = {
     "shift": 1<<0,
-    "mask":  1<<1,
+    "lock":  1<<1,
     "control": 1<<2,
     "mod1": 1<<3,
     "mod2": 1<<4,
@@ -83,7 +83,6 @@ class MaskMap:
 
     def __call__(self, **kwargs):
         """
-            mmap: a list of (name, maskvalue) tuples.
             kwargs: keys should be in the mmap name set
 
             Returns a (mask, values) tuple.
@@ -93,7 +92,7 @@ class MaskMap:
         for s, m in self.mmap:
             val = kwargs.get(s)
             if val is not None:
-                mask &= m
+                mask |= m
                 values.append(getattr(val, "_maskvalue", val))
                 del kwargs[s]
         if kwargs:
@@ -176,7 +175,7 @@ class GC:
 
     def change(self, **kwargs):
         mask, values = GCMasks(**kwargs)
-        self.conn.conn.core.ChangeGCChecked(self.gid, mask, values)
+        self.conn.conn.core.ChangeGC(self.gid, mask, values)
 
 
 class Window:
@@ -235,7 +234,7 @@ class Window:
 
     def set_attribute(self, **kwargs):
         mask, values = AttributeMasks(**kwargs)
-        self.conn.conn.core.ChangeWindowAttributesChecked(self.wid, mask, values)
+        self.conn.conn.core.ChangeWindowAttributes(self.wid, mask, values)
 
     def set_property(self, name, value, type=None, format=None):
         """
@@ -275,7 +274,7 @@ class Window:
         # can have a different associated size. 
         #  - value is a string of bytes. 
         #  - length is the length of the data in terms of the specified format.
-        self.conn.conn.core.ChangePropertyChecked(
+        self.conn.conn.core.ChangeProperty(
             xcb.xproto.PropMode.Replace,
             self.wid,
             self.conn.atoms[name],
@@ -291,7 +290,7 @@ class Window:
     def create_gc(self, **kwargs):
         gid = self.conn.conn.generate_id()
         mask, values = GCMasks(**kwargs)
-        self.conn.conn.core.CreateGCChecked(gid, self.wid, mask, values)
+        self.conn.conn.core.CreateGC(gid, self.wid, mask, values)
         return GC(self.conn, gid)
 
     def ungrab_key(self, key, modifiers):
@@ -411,7 +410,7 @@ class Connection:
 
     def create_window(self, x, y, width, height):
         wid = self.conn.generate_id()
-        q = self.conn.core.CreateWindowChecked(
+        q = self.conn.core.CreateWindow(
                 self.default_screen.root_depth,
                 wid,
                 self.default_screen.root,
@@ -437,7 +436,7 @@ class Connection:
 
     def open_font(self, name):
         fid = self.conn.generate_id()
-        self.conn.core.OpenFontChecked(fid, len(name), name)
+        self.conn.core.OpenFont(fid, len(name), name)
         return Font(self, fid)
 
     def extensions(self):

@@ -21,10 +21,14 @@ for i in range(20):
     except error.DisplayConnectionError:
         time.sleep(0.1)
         continue
+    except Exception, v:
+        print >> sys.stderr, "Error opening test window: ", type(v), v
+        sys.exit(1)
     break
 else:
     print >> sys.stderr, "Could not open window on display %s"%(sys.argv[1])
     sys.exit(1)
+
 
 root = d.screen().root
 colormap = d.screen().default_colormap
@@ -41,6 +45,7 @@ configure(window)
 window.map()
 d.sync()
 configure(window)
+
 
 try:
     while 1:

@@ -25,11 +25,6 @@ import xcb
 from xcb.xproto import EventMask
 import command, utils, window, confreader, hook
 
-import Xlib
-import Xlib.display
-import Xlib.ext.xinerama as xinerama
-from Xlib import X
-import Xlib.protocol.event as event
 
 class QtileError(Exception): pass
 class ThemeSyntaxError(Exception): pass
@@ -208,7 +203,7 @@ class Group(command.CommandObject):
         self.layoutAll()
 
     def layoutAll(self):
-        self.disableMask(X.EnterWindowMask)
+        self.disableMask(xcb.xproto.EventMask.EnterWindow)
         if self.screen and len(self.windows):
             self.layout.layout(self.windows)
             if self.currentWindow:
@@ -558,9 +553,6 @@ class Qtile(command.CommandObject):
             fname = os.path.expanduser(fname)
 
         self.conn = xcbq.Connection(displayName)
-        self.conn.grab_server()
-        self.conn.flush()
-
         self.config, self.fname = config, fname
         self.log = Log(
                 self._logLength,
@@ -626,7 +618,7 @@ class Qtile(command.CommandObject):
 
         # Because we only do Xinerama multi-screening, we can assume that the first
         # screen's root is _the_ root.
-        self.root = self.conn.screens[0].root
+        self.root = self.conn.default_screen.root
         self.root.set_attribute(
             eventmask = EventMask.StructureNotify |\
                         EventMask.SubstructureNotify |\
@@ -634,7 +626,6 @@ class Qtile(command.CommandObject):
                         EventMask.EnterWindow |\
                         EventMask.LeaveWindow
         )
-        self.conn.flush()
         if self._exit:
             print >> sys.stderr, "Access denied: Another window manager running?"
             sys.exit(1)
@@ -654,7 +645,7 @@ class Qtile(command.CommandObject):
         # Find the modifier mask for the numlock key, if there is one:
         nc = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
         self.numlockMask = xcbq.ModMasks[self.conn.get_modifier(nc)]
-        self.validMask = ~(self.numlockMask | X.LockMask)
+        self.validMask = ~(self.numlockMask | xcbq.ModMasks["lock"])
 
         self.keyMap = {}
         for i in self.config.keys:
@@ -745,7 +736,7 @@ class Qtile(command.CommandObject):
                 )
                 self.root.grab_key(
                     code,
-                    i.modmask | self.numlockMask | X.LockMask,
+                    i.modmask | self.numlockMask | xcbq.ModMasks["lock"],
                     True,
                     xcb.xproto.GrabMode.Async,
                     xcb.xproto.GrabMode.Async,
