@@ -697,11 +697,8 @@ class Qtile(command.CommandObject):
             hook.fire("client_killed", c)
 
     def manage(self, w):
-        try:
-            attrs = w.get_attributes()
-            internal = w.get_full_property(self.atoms["internal"], self.atoms["python"])
-        except Xlib.error.BadWindow:
-            return
+        attrs = w.get_attributes()
+        internal = w.get_property("internal", "python")
         if attrs and attrs.override_redirect:
             return
         if internal:
@@ -769,6 +766,8 @@ class Qtile(command.CommandObject):
                     if not e:
                         break
                     ename = e.__class__.__name__
+                    if ename.endswith("Event"):
+                        ename = ename[:-5]
                     c = None
                     if hasattr(e, "window"):
                         c = self.windowMap.get(e.window) or self.internalMap.get(e.window)
@@ -779,7 +778,7 @@ class Qtile(command.CommandObject):
                     if h:
                         self.log.add("Handling: %s"%self._eventStr(e))
                         h(e)
-                    elif e.type in self.ignoreEvents:
+                    elif e.__class__ in self.ignoreEvents:
                         pass
                     else:
                         self.log.add("Unknown event: %s"%self._eventStr(e))
@@ -817,20 +816,20 @@ class Qtile(command.CommandObject):
             
     def handle_ConfigureRequest(self, e):
         # It's not managed, or not mapped, so we just obey it.
+        cw = xcb.xproto.ConfigWindow
         args = {}
-        if e.value_mask & X.CWX:
+        if e.value_mask & cw.X:
             args["x"] = e.x
-        if e.value_mask & X.CWY:
+        if e.value_mask & cw.Y:
             args["y"] = e.y
-        if e.value_mask & X.CWHeight:
+        if e.value_mask & cw.Height:
             args["height"] = e.height
-        if e.value_mask & X.CWWidth:
+        if e.value_mask & cw.Width:
             args["width"] = e.width
-        if e.value_mask & X.CWBorderWidth:
-            args["border_width"] = e.border_width
-        e.window.configure(
-            **args
-        )
+        if e.value_mask & cw.BorderWidth:
+            args["borderwidth"] = e.border_width
+        w = xcbq.Window(self.conn, e.window)
+        w.configure(**args)
 
     def handle_MappingNotify(self, e):
         self.display.refresh_keyboard_mapping(e)
@@ -838,7 +837,7 @@ class Qtile(command.CommandObject):
             self.grabKeys()
 
     def handle_MapRequest(self, e):
-        self.manage(e.window)
+        self.manage(xcbq.Window(self.conn, e.window))
 
     def handle_DestroyNotify(self, e):
         self.unmanage(e.window)

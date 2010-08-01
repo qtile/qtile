@@ -79,7 +79,8 @@ class MaskMap:
         self.mmap = []
         for i in dir(obj):
             if not i.startswith("_"):
-                self.mmap.append((i.lower(), getattr(obj, i)))
+                self.mmap.append((getattr(obj, i), i.lower()))
+        self.mmap.sort()
 
     def __call__(self, **kwargs):
         """
@@ -89,7 +90,7 @@ class MaskMap:
         """
         mask = 0
         values = []
-        for s, m in self.mmap:
+        for m, s in self.mmap:
             val = kwargs.get(s)
             if val is not None:
                 mask |= m
@@ -109,20 +110,20 @@ class AtomCache:
         self.atoms = {}
         # We can change the pre-loads not to wait for a return
         for name in WindowTypes.keys():
-            self.atoms[name] = self.internAtomUnchecked(name)
+            self.atoms[name] = self.internAtom(name)
         for name in PropertyMap.keys():
-            self.atoms[name] = self.internAtomUnchecked(name)
+            self.atoms[name] = self.internAtom(name)
         for i in dir(xcb.xcb):
             if i.startswith("XA_"):
                 self.atoms[i[3:]] = getattr(xcb.xcb, i)
 
-    def internAtomUnchecked(self, name, only_if_exists=False):
-        c = self.conn.conn.core.InternAtomUnchecked(False, len(name), name)
+    def internAtom(self, name, only_if_exists=False):
+        c = self.conn.conn.core.InternAtom(False, len(name), name)
         return c.reply().atom
 
     def __getitem__(self, key):
         if key not in self.atoms:
-            self.atoms[key] = self.internAtomUnchecked(key)
+            self.atoms[key] = self.internAtom(key)
         return self.atoms[key]
 
 
@@ -182,29 +183,26 @@ class Window:
     def __init__(self, conn, wid):
         self.conn, self.wid = conn, wid
 
-    def _get_property(self, xa):
-        q = self.conn.conn.core.GetProperty(
-                False,
-                self.wid,
-                xa,
-                xcb.xproto.GetPropertyType.Any,
-                0, (2**32)-1
-            )
-        return q.reply()
-            
+    def _propertyString(self, r):
+        """
+            Extract a string from a window property reply message.
+        """
+        return "".join(chr(i) for i in r.value)
+
     def get_name(self):
-        r = self._get_property(
-                xcb.xcb.XA_WM_NAME,
+        r = self.get_property(
+                xcb.xproto.Atom.WM_NAME,
+                xcb.xproto.GetPropertyType.Any
             )
         if r.value_len == 0:
             return None
         else:
-            # FIXME
-            return toString(r.value[0])
+            return self._propertyString(r)
 
     def get_hints(self):
-        r = self._get_property(
-                xcb.xcb.XA_WM_HINTS
+        r = self.get_property(
+                xcb.xproto.Atom.WM_HINTS,
+                xcb.xproto.GetPropertyType.Any
             )
         return list(r.value)
 
@@ -216,8 +214,9 @@ class Window:
         """
             http://standards.freedesktop.org/wm-spec/wm-spec-latest.html#id2551529
         """
-        r = self._get_property(
-                self.conn.atoms['_NET_WM_WINDOW_TYPE']
+        r = self.get_property(
+                self.conn.atoms['_NET_WM_WINDOW_TYPE'],
+                xcb.xproto.GetPropertyType.Any
         )
         if r.value_len == 0:
             return None
@@ -287,6 +286,17 @@ class Window:
     def map(self):
         self.conn.conn.core.MapWindow(self.wid)
 
+    def get_attributes(self):
+        return self.conn.conn.core.GetWindowAttributes(self.wid).reply()
+
+    def get_property(self, prop, type):
+        return self.conn.conn.core.GetProperty(    
+            False, self.wid, 
+            self.conn.atoms[prop] if isinstance(prop, basestring) else prop, 
+            self.conn.atoms[type] if isinstance(type, basestring) else type, 
+            0, (2**32)-1
+        ).reply()
+
     def create_gc(self, **kwargs):
         gid = self.conn.conn.generate_id()
         mask, values = GCMasks(**kwargs)
@@ -332,12 +342,8 @@ class Font:
         return self.fid
 
     def text_extents(self, s):
-        print "CONN"
         x = self.conn.conn.core.QueryTextExtents(self.fid, len(s), s)
-        print "PREREPLY"
         x = x.reply()
-        print "POSTREPLY"
-        print x
         return x
 
 
