@@ -19,21 +19,8 @@
 # SOFTWARE.
 
 import operator, functools
-from Xlib import X
-
 import sys
-
-_modmasks = {
-    "shift":    X.ShiftMask,
-    "lock":     X.LockMask,
-    "control":  X.ControlMask,
-    "mod1":     X.Mod1Mask,
-    "mod2":     X.Mod2Mask,
-    "mod3":     X.Mod3Mask,
-    "mod4":     X.Mod4Mask,
-    "mod5":     X.Mod5Mask,
-}
-
+import xcbq
 
 def lget(o, v):
     try:
@@ -50,7 +37,7 @@ def translateMasks(modifiers):
     masks = []
     for i in modifiers:
         try:
-            masks.append(_modmasks[i])
+            masks.append(xcbq.ModMasks[i])
         except KeyError:
             raise KeyError("Unknown modifier: %s"%i)
     return reduce(operator.or_, masks) if masks else 0

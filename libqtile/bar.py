@@ -20,7 +20,6 @@
 
 import sys
 import manager, window, confreader, command, utils, hook
-import Xlib.X
 
 _HIGHLIGHT = "#48677E"
 _FOREGROUND = "#dddddd"

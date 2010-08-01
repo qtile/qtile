@@ -189,6 +189,13 @@ class Window:
         """
         return "".join(chr(i) for i in r.value)
 
+    def set_input_focus(self):
+        self.conn.conn.core.SetInputFocus(
+            xcb.xproto.InputFocus.PointerRoot,
+            self.wid,
+            xcb.xproto.Time.CurrentTime
+        )
+
     def get_name(self):
         r = self.get_property(
                 xcb.xproto.Atom.WM_NAME,
@@ -285,6 +292,9 @@ class Window:
 
     def map(self):
         self.conn.conn.core.MapWindow(self.wid)
+
+    def unmap(self):
+        self.conn.conn.core.UnmapWindow(self.wid)
 
     def get_attributes(self):
         return self.conn.conn.core.GetWindowAttributes(self.wid).reply()

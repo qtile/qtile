@@ -666,8 +666,7 @@ class Qtile(command.CommandObject):
 
     @utils.LRUCache(200)
     def colorPixel(self, name):
-        colormap = self.display.screen().default_colormap
-        return colormap.alloc_named_color(name).pixel
+        return self.conn.screens[0].default_colormap.alloc_color(name).pixel
 
     @property
     def currentLayout(self):
