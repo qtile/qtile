@@ -624,8 +624,13 @@ class Qtile(command.CommandObject):
             self.screens.append(s)
         self.currentScreen = self.screens[0]
 
+        # FIXME
         #self.display.set_error_handler(self.initialErrorHandler)
-        self.conn.screens[0].root.set_attribute(
+
+        # Because we only do Xinerama multi-screening, we can assume that the first
+        # screen's root is _the_ root.
+        self.root = self.conn.screens[0].root
+        self.root.set_attribute(
             eventmask = EventMask.StructureNotify |\
                         EventMask.SubstructureNotify |\
                         EventMask.SubstructureRedirect |\
@@ -636,8 +641,8 @@ class Qtile(command.CommandObject):
         if self._exit:
             print >> sys.stderr, "Access denied: Another window manager running?"
             sys.exit(1)
-        # Now install the real error handler
-        #self.display.set_error_handler(self.errorHandler)
+        # Now install the real error handler FIXME
+        # self.display.set_error_handler(self.errorHandler)
 
         self.server = command._Server(self.fname, self, config)
         self.ignoreEvents = set([
@@ -724,30 +729,30 @@ class Qtile(command.CommandObject):
                 hook.fire("client_new", c)
 
     def grabKeys(self):
-        self.root.ungrab_key(X.AnyKey, X.AnyModifier)
+        self.root.ungrab_key(None, None)
         for i in self.keyMap.values():
-            code = self.display.keysym_to_keycode(i.keysym)
+            code = self.conn.keysym_to_keycode(i.keysym)
             self.root.grab_key(
+                True,
                 code,
                 i.modmask,
-                True,
-                X.GrabModeAsync,
-                X.GrabModeAsync
+                xcb.xproto.GrabMode.Async,
+                xcb.xproto.GrabMode.Async,
             )
             if self.numlockMask:
                 self.root.grab_key(
                     code,
                     i.modmask | self.numlockMask,
                     True,
-                    X.GrabModeAsync,
-                    X.GrabModeAsync
+                    xcb.xproto.GrabMode.Async,
+                    xcb.xproto.GrabMode.Async,
                 )
                 self.root.grab_key(
                     code,
                     i.modmask | self.numlockMask | X.LockMask,
                     True,
-                    X.GrabModeAsync,
-                    X.GrabModeAsync
+                    xcb.xproto.GrabMode.Async,
+                    xcb.xproto.GrabMode.Async,
                 )
                 
     def _eventStr(self, e):

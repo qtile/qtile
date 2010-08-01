@@ -294,6 +294,26 @@ class Window:
         self.conn.conn.core.CreateGCChecked(gid, self.wid, mask, values)
         return GC(self.conn, gid)
 
+    def ungrab_key(self, key, modifiers):
+        """
+            Passing None means any key, or any modifier.
+        """
+        if key is None:
+            key = xcb.xproto.Atom.Any
+        if modifiers is None:
+            modifiers = xcb.xproto.ModMask.Any
+        self.conn.conn.core.UngrabKey(key, self.wid, modifiers)
+
+    def grab_key(self, key, modifiers, owner_events, pointer_mode, keyboard_mode):
+        self.conn.conn.core.GrabKey(
+            owner_events,
+            self.wid,
+            modifiers,
+            key,
+            pointer_mode,
+            keyboard_mode
+        )
+
 
 class Font:
     def __init__(self, conn, fid):
