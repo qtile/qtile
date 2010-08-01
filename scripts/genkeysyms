@@ -1,0 +1,29 @@
+#!/usr/bin/env python
+"""
+    This script is used to generate xkeysyms.py from the X keysymdef.h definition
+    header file.
+"""
+import os, os.path, sys
+import re
+
+def genkeysyms(path):
+    XRE = r"#define\s+XK_(\S+)\s+(\S+)"
+    ks = []
+    for i in file(path):
+        m = re.match(XRE, i)
+        if m:
+            ks.append(
+                (m.group(1), m.group(2))
+            )
+    print "keysyms = {"
+    for i in ks:
+        print "    '%s': %s,"%i
+    print "}"
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print >> sys.stderr, "Usage: genkeysyms path/to/keysymdef.h"
+        sys.exit(1)
+    genkeysyms(sys.argv[1])
+
+

@@ -23,7 +23,7 @@ import xcbq
 import xcb.xproto, xcb.xinerama
 import xcb
 from xcb.xproto import EventMask
-import command, utils, window, confreader, hook, xk
+import command, utils, window, confreader, hook
 
 import Xlib
 import Xlib.display
@@ -52,7 +52,7 @@ class Key:
             are run in sequence.
         """
         self.modifiers, self.key, self.commands = modifiers, key, commands
-        self.keysym = xk.string_to_keysym(key)
+        self.keysym = xcbq.keysyms[key]
         if self.keysym == 0:
             raise QtileError("Unknown key: %s"%key)
         try:
@@ -662,8 +662,8 @@ class Qtile(command.CommandObject):
             X.Mod5MapIndex: X.Mod5Mask,
             X.ShiftMapIndex: X.ShiftMask,
         }
-        nc = self.display.keysym_to_keycode(
-                xk.string_to_keysym("Num_Lock")
+        nc = self.conn.keysym_to_keycode(
+                xcbq.keysyms["Num_Lock"]
             )
         self.numlockMask = None
         for i, l in enumerate(self.display.get_modifier_mapping()):
@@ -1161,7 +1161,7 @@ class Qtile(command.CommandObject):
 
                 simulate_keypress(["control", "mod2"], "k")
         """
-        keysym = xk.string_to_keysym(key)
+        keysym = xcbq.keysyms[key]
         if keysym == 0:
             raise command.CommandError("Unknown key: %s"%key)
         keycode = self.display.keysym_to_keycode(keysym)
