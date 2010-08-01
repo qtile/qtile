@@ -18,10 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import marshal, sys
+import sys, struct
 import xcbq
 import xcb.xcb
 from xcb.xproto import EventMask
+import xcb.xproto
 import command, utils
 import manager, hook
 
@@ -168,7 +169,6 @@ class _Window(command.CommandObject):
     def updateName(self):
         try:
             self.name = self.window.get_name()
-            print self.name
             hook.fire("window_name_change")
         except (Xlib.error.BadWindow, Xlib.error.BadValue):
             # This usually means the window has just been deleted, and a new
@@ -271,20 +271,27 @@ class _Window(command.CommandObject):
             return as_float
 
     opacity = property(getOpacity, setOpacity)
-            
+
     def notify(self):
-        e = event.ConfigureNotify(
-                window = self.window,
-                event = self.window,
-                x = self.x,
-                y = self.y,
-                width = self.width,
-                height = self.height,
-                border_width = self.borderwidth,
-                override = False,
-                above_sibling = X.NONE
+        # Having to do it this way is goddamn awful.
+        vals = [
+            22, # ConfigureNotifyEvent
+            self.window.wid,
+            self.window.wid,
+            xcb.xproto.Window._None,
+            self.x,
+            self.y,
+            self.width,
+            self.height,
+            self.borderwidth,
+            False
+        ]
+        self.window.send_event(
+            struct.pack(
+                'Bxx2xIIIhhHHHBx',
+                *vals
+            )
         )
-        self.window.send_event(e)
 
     def kill(self):
         if self.hasProtocol("WM_DELETE_WINDOW"):
@@ -489,13 +496,14 @@ class Window(_Window):
             self.qtile.toScreen(self.group.screen.index)
 
     def handle_ConfigureRequest(self, e):
-        if e.value_mask & Xutil.XValue:
+        cw = xcb.xproto.ConfigWindow
+        if e.value_mask & cw.X:
             self.floatDimensions['x'] = e.x
-        if e.value_mask & Xutil.YValue:
+        if e.value_mask & cw.Y:
             self.floatDimensions['y'] = e.y
-        if e.value_mask & Xutil.WidthValue:
+        if e.value_mask & cw.Width:
             self.floatDimensions['w'] = e.width
-        if e.value_mask & Xutil.HeightValue:
+        if e.value_mask & cw.Height:
             self.floatDimensions['h'] = e.height
         if self.group.screen:
             self.group.layout.configure(self)

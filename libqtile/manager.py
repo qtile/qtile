@@ -707,7 +707,7 @@ class Qtile(command.CommandObject):
         else:
             if not w in self.windowMap:
                 c = window.Window(w, self)
-                self.windowMap[w] = c
+                self.windowMap[w.wid] = c
                 self.currentScreen.group.add(c)
                 hook.fire("client_new", c)
 
