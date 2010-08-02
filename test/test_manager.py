@@ -227,6 +227,9 @@ class uQtile(utils.QtileTests):
         self.config = config
         utils.QtileTests.__init__(self)
 
+    def test_xeyes(self):
+        self.testXeyes()
+
     def test_mapRequest(self):
         self.testWindow("one")
         info = self.c.groups()["a"]

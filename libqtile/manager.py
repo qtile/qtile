@@ -762,6 +762,7 @@ class Qtile(command.CommandObject):
                     if not e:
                         break
                     ename = e.__class__.__name__
+                    print ename
                     if ename.endswith("Event"):
                         ename = ename[:-5]
                     c = None

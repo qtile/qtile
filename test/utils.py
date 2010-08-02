@@ -144,11 +144,11 @@ class _QtileTruss(libpry.AutoTree):
         for pid in self.testwindows[:]:
             self._kill(pid)
 
-    def testWindow(self, name):
+    def _testProc(self, path, args):
         start = len(self.c.windows())
         pid = os.fork()
         if pid == 0:
-            os.execv("scripts/window", ["scripts/window", self["display"], name])
+            os.execv(path, args)
         for i in range(20):
             if len(self.c.windows()) > start:
                 break
@@ -157,6 +157,26 @@ class _QtileTruss(libpry.AutoTree):
             raise AssertionError("Window never appeared...")
         self.testwindows.append(pid)
         return pid
+
+    def whereis(self, program):
+        for path in os.environ.get('PATH', '').split(':'):
+            if os.path.exists(os.path.join(path, program)) and \
+               not os.path.isdir(os.path.join(path, program)):
+                return os.path.join(path, program)
+        return None
+
+    def testWindow(self, name):
+        return self._testProc(
+                    "scripts/window",
+                    ["scripts/window", self["display"], name]
+                )
+
+    def testXeyes(self):
+        path = self.whereis("xeyes")
+        return self._testProc(
+                    path,
+                    [path, "-display", self["display"]]
+                )
 
     def _kill(self, pid):
         os.kill(pid, 9)
