@@ -128,7 +128,7 @@ class ServerConfig(libqtile.confreader.Config):
         libqtile.manager.Screen(
             bottom=libqtile.bar.Bar(
                         [
-                            libqtile.widget.TextBox("three"),
+                            libqtile.widget.TextBox("two"),
                         ],
                         20
                     ),
@@ -156,7 +156,7 @@ class u_Server(utils.QtileTests):
 
         v = self.c.items("widget")
         assert not v[0]
-        assert sorted(v[1]) == ['four', 'one', 'three', 'two']
+        assert sorted(v[1]) == ['one', 'two']
 
         assert self.c.items("bar") == (False, ["bottom"])
         t, lst = self.c.items("window")

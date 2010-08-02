@@ -30,10 +30,6 @@ class QtileError(Exception): pass
 class ThemeSyntaxError(Exception): pass
 
 
-class Core:
-    def __init__(self):
-        pass
-
 
 class Key:
     def __init__(self, modifiers, key, *commands):
@@ -135,7 +131,7 @@ class Screen(command.CommandObject):
         if name == "layout":
             return True, range(len(self.group.layouts))
         elif name == "window":
-            return True, [i.window.id for i in self.group.windows]
+            return True, [i.window.wid for i in self.group.windows]
         elif name == "bar":
             return False, [x.position for x in self.gaps]
 
@@ -150,7 +146,7 @@ class Screen(command.CommandObject):
                 return self.group.currentWindow
             else:
                 for i in self.group.windows:
-                    if i.window.id == sel:
+                    if i.window.wid == sel:
                         return i
         elif name == "bar":
             return getattr(self, sel)
@@ -274,7 +270,7 @@ class Group(command.CommandObject):
         if name == "layout":
             return True, range(len(self.layouts))
         elif name == "window":
-            return True, [i.window.id for i in self.windows]
+            return True, [i.window.wid for i in self.windows]
         elif name == "screen":
             return True, None
 
@@ -289,7 +285,7 @@ class Group(command.CommandObject):
                 return self.currentWindow
             else:
                 for i in self.windows:
-                    if i.window.id == sel:
+                    if i.window.wid == sel:
                         return i
         elif name == "screen":
             return self.screen
@@ -701,9 +697,9 @@ class Qtile(command.CommandObject):
         if attrs and attrs.override_redirect:
             return
         if internal.value:
-            if not w in self.internalMap:
+            if not w.wid in self.internalMap:
                 c = window.Internal(w, self)
-                self.internalMap[w] = c
+                self.internalMap[w.wid] = c
         else:
             if not w in self.windowMap:
                 c = window.Window(w, self)

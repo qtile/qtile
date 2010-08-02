@@ -134,7 +134,7 @@ class Bar(Gap):
                      )
         self.window.handle_Expose = self.handle_Expose
         self.window.handle_ButtonPress = self.handle_ButtonPress
-        qtile.internalMap[self.window.window] = self.window
+        qtile.internalMap[self.window.window.wid] = self.window
         self.window.unhide()
 
         for i in self.widgets:
@@ -179,7 +179,7 @@ class Bar(Gap):
         return dict(
             position = self.position,
             widgets = [i.info() for i in self.widgets],
-            window = self.window.window.id
+            window = self.window.window.wid
         )
 
     def get(self, q, screen, position):
