@@ -291,22 +291,35 @@ class _Window(command.CommandObject):
 
     def kill(self):
         if self.hasProtocol("WM_DELETE_WINDOW"):
-            e = event.ClientMessage(
-                    window = self.window,
-                    client_type = self.qtile.display.intern_atom("WM_PROTOCOLS"),
-                    data = [
-                        # Use 32-bit format:
-                        32,
-                        # Must be exactly 20 bytes long:
-                        [
-                            self.qtile.display.intern_atom("WM_DELETE_WINDOW"),
-                            X.CurrentTime,
-                            0,
-                            0,
-                            0
-                        ]
-                    ]
-            )
+            #e = event.ClientMessage(
+            #        window = self.window,
+            #        client_type = self.qtile.display.intern_atom("WM_PROTOCOLS"),
+            #        data = [
+            #            # Use 32-bit format:
+            #            32,
+            #            # Must be exactly 20 bytes long:
+            #            [
+            #                self.qtile.display.intern_atom("WM_DELETE_WINDOW"),
+            #                X.CurrentTime,
+            #                0,
+            #                0,
+            #                0
+            #            ]
+            #        ]
+            #)
+            vals = [
+                33, # ClientMessageEvent
+                32, # Format
+                0,
+                self.window.wid,
+                self.qtile.conn.atoms["WM_PROTOCOLS"],
+                self.qtile.conn.atoms["WM_DELETE_WINDOW"],
+                xcb.xproto.Time.CurrentTime,
+                0,
+                0,
+                0,
+            ]
+            e = struct.pack('BBHII5I', *vals)
             self.window.send_event(e)
         else:
             self.window.kill_client()

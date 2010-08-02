@@ -1189,7 +1189,7 @@ class Qtile(command.CommandObject):
         """
             Sync the X display. Should only be used for development.
         """
-        self.display.sync()
+        self.conn.flush()
 
     def cmd_to_screen(self, n):
         """
