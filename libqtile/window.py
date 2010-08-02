@@ -165,7 +165,7 @@ class _Window(command.CommandObject):
     def setFullscreen(self, val):
         self.setState("fullscreen", val)
     fullscreen = property(getFullscreen, setFullscreen)
-
+    
     def updateName(self):
         try:
             self.name = self.window.get_name()
@@ -199,14 +199,10 @@ class _Window(command.CommandObject):
           update the local copy of the window's WM_HINTS
           http://tronche.com/gui/x/icccm/sec-4.html#WM_HINTS
         '''
-        
         def update_hint(hint, value, hook=True):
             if self.hints[hint] != value:
                 self.hints[hint] = value
-        try:
-            h = self.window.get_hints()
-        except (Xlib.error.BadWindow, Xlib.error.BadValue):
-            return
+        h = self.window.get_wm_hints()
         if not h:
             return
 
@@ -361,11 +357,7 @@ class _Window(command.CommandObject):
         hook.fire("client_focus", self)
 
     def hasProtocol(self, name):
-        s = set()
-        d = self.qtile.display
-        for i in self.window.get_wm_protocols():
-            s.add(d.get_atom_name(i))
-        return name in s
+        return name in self.window.get_wm_protocols()
 
     def _items(self, name, sel):
         return None
@@ -387,10 +379,10 @@ class _Window(command.CommandObject):
         attrs = {
             "backing_store": a.backing_store,
             "visual": a.visual,
-            "class": a.win_class,
+            "class": a._class,
             "bit_gravity": a.bit_gravity,
             "win_gravity": a.win_gravity,
-            "backing_bit_planes": a.backing_bit_planes,
+            "backing_planes": a.backing_planes,
             "backing_pixel": a.backing_pixel,
             "save_under": a.save_under,
             "map_is_installed": a.map_is_installed,
@@ -401,8 +393,7 @@ class _Window(command.CommandObject):
             "your_event_mask": a.your_event_mask,
             "do_not_propagate_mask": a.do_not_propagate_mask
         }
-        props = [self.qtile.display.get_atom_name(x) for x in self.window.list_properties()]
-        
+        props = self.window.list_properties()
         h = self.window.get_wm_normal_hints()
         if h:
             normalhints = dict(
@@ -438,14 +429,14 @@ class _Window(command.CommandObject):
 
         protocols = []
         for i in self.window.get_wm_protocols():
-            protocols.append(self.qtile.display.get_atom_name(i))
+            protocols.append(i)
 
         state = self.window.get_wm_state()
 
         return dict(
             attributes=attrs,
             properties=props,
-            name = self.window.get_wm_name(),
+            name = self.window.get_name(),
             wm_class = self.window.get_wm_class(),
             wm_transient_for = self.window.get_wm_transient_for(),
             protocols = protocols,

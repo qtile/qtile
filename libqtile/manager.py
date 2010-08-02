@@ -697,7 +697,7 @@ class Qtile(command.CommandObject):
 
     def manage(self, w):
         attrs = w.get_attributes()
-        internal = w.get_property("internal", "python")
+        internal = w.get_property("QTILE_INTERNAL")
         if attrs and attrs.override_redirect:
             return
         if internal.value:
@@ -844,8 +844,10 @@ class Qtile(command.CommandObject):
         self.unmanage(e.window)
 
     def handle_UnmapNotify(self, e):
-        if e.event == self.root and e.send_event:
-            self.unmanage(e.window)
+        #FIXME: xpyb doesn't seem to expose the send_event attribute on UnmapNotify?
+        #if e.event == self.root.wid and e.send_event:
+        #    self.unmanage(e.window)
+        pass
 
     def toScreen(self, n):
         if len(self.screens) < n-1:
@@ -931,12 +933,12 @@ class Qtile(command.CommandObject):
                 return utils.lget(self.screens, sel)
 
     def listWID(self):
-        return [i.window.id for i in self.windowMap.values() + self.internalMap.values()]
+        return [i.window.wid for i in self.windowMap.values() + self.internalMap.values()]
 
     def clientFromWID(self, wid):
         all = self.windowMap.values() + self.internalMap.values()
         for i in all:
-            if i.window.id == wid:
+            if i.window.wid == wid:
                 return i
         return None
 

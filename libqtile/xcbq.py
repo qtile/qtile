@@ -5,7 +5,7 @@
 import sys
 import xcb.xproto, xcb.xinerama, xcb.xcb
 from xcb.xproto import CW, WindowClass, EventMask
-import utils, xkeysyms
+import utils, xkeysyms, xatom
 
 keysyms = xkeysyms.keysyms
 
@@ -118,6 +118,8 @@ class AtomCache:
         for i in dir(xcb.xcb):
             if i.startswith("XA_"):
                 self.insert(name=i[3:], atom=getattr(xcb.xcb, i))
+        for k, v in xatom.atoms.items():
+            self.insert(k, v)
 
     def insert(self, name = None, atom = None):
         assert name or atom
@@ -126,8 +128,7 @@ class AtomCache:
             atom = c.reply().atom
         if name is None:
             c = self.conn.conn.core.GetAtomName(atom)
-            name = str(c.reply().name)
-            print name
+            name = "".join([chr(i) for i in c.reply().name])
         self.atoms[name] = atom
         self.reverse[atom] = name
 
@@ -222,21 +223,43 @@ class Window:
         )
 
     def get_name(self):
-        r = self.get_property(
-                xcb.xproto.Atom.WM_NAME,
-                xcb.xproto.GetPropertyType.Any
-            )
+        r = self.get_property("_NET_WM_NAME")
         if r.value_len == 0:
             return None
         else:
             return self._propertyString(r)
 
-    def get_hints(self):
-        r = self.get_property(
-                xcb.xproto.Atom.WM_HINTS,
-                xcb.xproto.GetPropertyType.Any
-            )
+    def get_wm_hints(self):
+        r = self.get_property("WM_HINTS", xcb.xproto.GetPropertyType.Any)
         return list(r.value)
+
+    def get_wm_normal_hints(self):
+        r = self.get_property("WM_NORMAL_HINTS", xcb.xproto.GetPropertyType.Any)
+        return list(r.value)
+
+    def get_wm_protocols(self):
+        r = self.get_property("WM_PROTOCOLS", xcb.xproto.GetPropertyType.Any)
+        return [self.conn.atoms.get_name(i) for i in r.value if i]
+
+    def get_wm_state(self):
+        r = self.get_property("WM_STATE", xcb.xproto.GetPropertyType.Any)
+        return list(r.value)
+
+    def get_wm_class(self):
+        r = self.get_property("WM_CLASS", "UTF8_STRING")
+        return self._propertyString(r)
+
+    def get_wm_transient_for(self):
+        r = self.get_property("WM_TRANSIENT_FOR", "ATOM")
+        return list(r.value)
+
+    def get_wm_icon_name(self):
+        r = self.get_property("WM_ICON_NAME", "UTF8_STRING")
+        return self._propertyString(r)
+
+    def get_wm_client_machine(self):
+        r = self.get_property("WM_CLIENT_MACHINE", "UTF8_STRING")
+        return self._propertyString(r)
 
     def get_geometry(self):
         q = self.conn.conn.core.GetGeometry(self.wid)
@@ -315,6 +338,23 @@ class Window:
             buf
         )
 
+    def get_property(self, prop, type=None):
+        if type is None: 
+            if not prop in PropertyMap:
+                raise ValueError, "Must specify type for unknown property."
+            else:
+                type, _ = PropertyMap[prop]
+        return self.conn.conn.core.GetProperty(    
+            False, self.wid, 
+            self.conn.atoms[prop] if isinstance(prop, basestring) else prop, 
+            self.conn.atoms[type] if isinstance(type, basestring) else type, 
+            0, (2**32)-1
+        ).reply()
+
+    def list_properties(self):
+        r = self.conn.conn.core.ListProperties(self.wid).reply()
+        return [self.conn.atoms.get_name(i) for i in r.atoms]
+
     def map(self):
         self.conn.conn.core.MapWindow(self.wid)
 
@@ -323,14 +363,6 @@ class Window:
 
     def get_attributes(self):
         return self.conn.conn.core.GetWindowAttributes(self.wid).reply()
-
-    def get_property(self, prop, type):
-        return self.conn.conn.core.GetProperty(    
-            False, self.wid, 
-            self.conn.atoms[prop] if isinstance(prop, basestring) else prop, 
-            self.conn.atoms[type] if isinstance(type, basestring) else type, 
-            0, (2**32)-1
-        ).reply()
 
     def create_gc(self, **kwargs):
         gid = self.conn.conn.generate_id()
