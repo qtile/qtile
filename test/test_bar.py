@@ -12,20 +12,15 @@ class GBConfig:
     screens = [
         libqtile.manager.Screen(
             top = libqtile.bar.Bar(
-                [
-                    libqtile.widget.ClickableIcon("myicon",
-                                                  "/usr/share/pixmaps/xterm_32x32.xpm",
-                                                  _Call([('group', 'd')], 'toscreen')
-                                                  )
+                    [
+                        libqtile.widget.GroupBox(),
                     ],
-                20,
+                    20,
                 ),
             bottom=libqtile.bar.Bar(
                         [
                             libqtile.widget.GroupBox(),
                             libqtile.widget.WindowName(),
-                            libqtile.widget.TextBox("text", text="default", width=100),
-                            libqtile.widget.MeasureBox("measure", width=100),
                         ],
                         20
                     ),

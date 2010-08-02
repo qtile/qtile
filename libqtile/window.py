@@ -167,13 +167,8 @@ class _Window(command.CommandObject):
     fullscreen = property(getFullscreen, setFullscreen)
     
     def updateName(self):
-        try:
-            self.name = self.window.get_name()
-            hook.fire("window_name_change")
-        except (Xlib.error.BadWindow, Xlib.error.BadValue):
-            # This usually means the window has just been deleted, and a new
-            # focus will be acquired shortly. We don't raise an event for this.
-            pass
+        self.name = self.window.get_name()
+        hook.fire("window_name_change")
 
     def setWindowType(self, window_type):
         try:

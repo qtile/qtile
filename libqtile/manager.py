@@ -47,9 +47,9 @@ class Key:
             are run in sequence.
         """
         self.modifiers, self.key, self.commands = modifiers, key, commands
-        self.keysym = xcbq.keysyms[key]
-        if self.keysym == 0:
+        if key not in xcbq.keysyms:
             raise QtileError("Unknown key: %s"%key)
+        self.keysym = xcbq.keysyms[key]
         try:
             self.modmask = utils.translateMasks(self.modifiers)
         except KeyError, v:
@@ -810,7 +810,7 @@ class Qtile(command.CommandObject):
             Handle xrandr events.
         """
         screen = self.currentScreen
-        if e.window == self.root and e.width != screen.width and e.height != screen.height:
+        if e.window == self.root.wid and e.width != screen.width and e.height != screen.height:
             screen.resize(0, 0, e.width, e.height)
             
     def handle_ConfigureRequest(self, e):

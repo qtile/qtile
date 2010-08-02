@@ -223,7 +223,7 @@ class Window:
         )
 
     def get_name(self):
-        r = self.get_property("_NET_WM_NAME")
+        r = self.get_property(xcb.xproto.Atom.WM_NAME, xcb.xproto.GetPropertyType.Any)
         if r.value_len == 0:
             return None
         else:
