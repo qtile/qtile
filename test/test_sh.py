@@ -1,5 +1,5 @@
 import libpry
-import libqtile, libqtile.sh, libqtile.confreader, libqtile.layout
+import libqtile, libqtile.sh, libqtile.confreader, libqtile.layout, libqtile.manager
 import utils
 
 class ShConfig(libqtile.confreader.Config):

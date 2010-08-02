@@ -6,9 +6,10 @@ class GroupBox(base._Widget):
     PADDING = 3
     BORDERWIDTH = 1
     def click(self, x, y):
-        groupOffset = x/self.boxwidth
-        if len(self.qtile.groups) - 1 >= groupOffset:
-            self.bar.screen.setGroup(self.qtile.groups[groupOffset])
+        return
+        #groupOffset = x/self.boxwidth
+        #if len(self.qtile.groups) - 1 >= groupOffset:
+        #    self.bar.screen.setGroup(self.qtile.groups[groupOffset])
 
     def _configure(self, qtile, bar, theme):
         base._Widget._configure(self, qtile, bar, theme)
