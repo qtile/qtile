@@ -749,6 +749,8 @@ class Qtile(command.CommandObject):
                         e = self.conn.conn.poll_for_event()
                     except Exception, v:
                         self.errorHandler(v)
+                        if self._exit:
+                            return
                         continue
                     if not e:
                         break
