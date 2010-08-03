@@ -84,8 +84,7 @@ class _Server(ipc.Server):
             return ERROR, v.args[0]
         except Exception, v:
             return EXCEPTION, traceback.format_exc()
-        if self.qtile._testing:
-            self.qtile.display.sync()
+        self.qtile.conn.flush()
 
 
 class _Command:

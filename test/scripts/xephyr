@@ -1,2 +1,2 @@
 #!/bin/sh
-Xephyr -screen 800x600+800+0 :1 -ac & (sleep 1; env DISPLAY=:1 ./qtile -d & env DISPLAY=:1 xterm)
+Xephyr -screen 800x600+800+0 :1 -ac & (sleep 1; env DISPLAY=:1 ./qtile -d -c ./test/configs/run.py & env DISPLAY=:1 xterm)

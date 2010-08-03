@@ -734,15 +734,6 @@ class Qtile(command.CommandObject):
                     xcb.xproto.GrabMode.Async,
                 )
                 
-    def _eventStr(self, e):
-        """
-            Returns a somewhat less verbose descriptive event string.
-        """
-        s = str(e)
-        s = s.replace("Xlib.protocol.event.", "")
-        s = s.replace("Xlib.display.", "")
-        return s
-
     def loop(self):
         try:
             while 1:
@@ -772,19 +763,20 @@ class Qtile(command.CommandObject):
                     else:
                         h = getattr(self, "handle_%s"%ename, None)
                     if h:
-                        self.log.add("Handling: %s"%self._eventStr(e))
+                        self.log.add("Handling: %s"%ename)
                         h(e)
                     elif e.__class__ in self.ignoreEvents:
                         pass
                     else:
-                        self.log.add("Unknown event: %s"%self._eventStr(e))
+                        self.log.add("Unknown event: %s"%ename)
+                self.conn.flush()
         except:
             # We've already written a report.
             if not self._exit:
                 self.writeReport(traceback.format_exc())
 
     def handle_KeyPress(self, e):
-        keysym =  self.display.keycode_to_keysym(e.detail, 0)
+        keysym = self.conn.code_to_syms[e.detail][0]
         state = e.state
         if self.numlockMask:
             state = e.state | self.numlockMask
@@ -828,8 +820,8 @@ class Qtile(command.CommandObject):
         w.configure(**args)
 
     def handle_MappingNotify(self, e):
-        self.display.refresh_keyboard_mapping(e)
-        if e.request == X.MappingKeyboard:
+        self.conn.refresh_keymap()
+        if e.request == xcb.xproto.Mapping.Keyboard:
             self.grabKeys()
 
     def handle_MapRequest(self, e):
@@ -1133,35 +1125,21 @@ class Qtile(command.CommandObject):
 
                 simulate_keypress(["control", "mod2"], "k")
         """
-        keysym = xcbq.keysyms[key]
-        if keysym == 0:
+        # FIXME: This needs to be done with sendevent, once we have that fixed.
+        keysym = xcbq.keysyms.get(key)
+        if keysym is None:
             raise command.CommandError("Unknown key: %s"%key)
-        keycode = self.display.keysym_to_keycode(keysym)
+        keycode = self.conn.first_sym_to_code[keysym]
+        class DummyEv:
+            pass
+
+        d = DummyEv()
+        d.detail = keycode
         try:
-            mask = utils.translateMasks(modifiers)
+            d.state = utils.translateMasks(modifiers)
         except KeyError, v:
             return v.args[0]
-        if self.currentWindow:
-            win = self.currentWindow.window
-        else:
-            win = self.root
-        e = event.KeyPress(
-                state = mask,
-                detail = keycode,
-
-                root = self.root,
-                window = win,
-                child = X.NONE,
-
-                time = X.CurrentTime,
-                root_x = 1,
-                root_y = 1,
-                event_x = 1,
-                event_y = 1,
-                same_screen = 1,
-        )
-        win.send_event(e, X.KeyPressMask|X.SubstructureNotifyMask, propagate=True)
-        self.display.sync()
+        self.handle_KeyPress(d)
 
     def cmd_spawn(self, cmd):
         """

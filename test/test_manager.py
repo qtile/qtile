@@ -148,7 +148,7 @@ class uSingle(utils.QtileTests):
 
     # FIXME: failing test disabled. For some reason we don't seem
     # to have a keymap in Xnest or Xephyr 99% of the time.
-    def _test_keypress(self):
+    def test_keypress(self):
         self.testWindow("one")
         self.testWindow("two")
         v = self.c.simulate_keypress(["unknown"], "j")
