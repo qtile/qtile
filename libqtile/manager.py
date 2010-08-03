@@ -734,6 +734,32 @@ class Qtile(command.CommandObject):
                     xcb.xproto.GrabMode.Async,
                 )
 
+    def get_target_chain(self, ename, e):
+        """
+            Returns a chain of targets that can handle this event. The event
+            will be passed to each target in turn for handling, until one of
+            the handlers returns False or the end of the chain is reached.
+        """
+        chain = []
+        handler = "handle_%s"%ename
+        # Certain events expose the affected window id as an "event" attribute.
+        eventEvents = [
+            "EnterNotify",
+
+        ]
+        c = None
+        if hasattr(e, "window"):
+            c = self.windowMap.get(e.window) or self.internalMap.get(e.window)
+        if ename in eventEvents:
+            c = self.windowMap.get(e.event) or self.internalMap.get(e.event)
+        if c and hasattr(c, handler):
+            chain.append(getattr(c, handler))
+        if hasattr(self, handler):
+            chain.append(getattr(self, handler))
+        if not chain:
+            self.log.add("Unknown event: %s"%ename)
+        return chain
+
     def loop(self):
         try:
             while 1:
@@ -752,20 +778,12 @@ class Qtile(command.CommandObject):
                         ename = e.__class__.__name__
                         if ename.endswith("Event"):
                             ename = ename[:-5]
-                        c = None
-                        if hasattr(e, "window"):
-                            c = self.windowMap.get(e.window) or self.internalMap.get(e.window)
-                        if c and hasattr(c, "handle_%s"%ename):
-                            h = getattr(c, "handle_%s"%ename)
-                        else:
-                            h = getattr(self, "handle_%s"%ename, None)
-                        if h:
-                            self.log.add("Handling: %s"%ename)
-                            h(e)
-                        elif e.__class__ in self.ignoreEvents:
-                            pass
-                        else:
-                            self.log.add("Unknown event: %s"%ename)
+                        if not e.__class__ in self.ignoreEvents:
+                            for h in self.get_target_chain(ename, e):
+                                self.log.add("Handling: %s"%ename)
+                                r = h(e)
+                                if not r:
+                                    break
                     except Exception, v:
                         self.errorHandler(v)
                         if self._exit:

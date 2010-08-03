@@ -469,6 +469,7 @@ class Window(_Window):
             self.group.focus(self, False)
         if self.group.screen and self.qtile.currentScreen != self.group.screen:
             self.qtile.toScreen(self.group.screen.index)
+        return True
 
     def handle_ConfigureRequest(self, e):
         cw = xcb.xproto.ConfigWindow
@@ -483,6 +484,7 @@ class Window(_Window):
         if self.group.screen:
             self.group.layout.configure(self)
             self.notify()
+        return False
 
     def handle_PropertyNotify(self, e):
         name = self.qtile.conn.atoms.get_name(e.atom)
@@ -500,6 +502,7 @@ class Window(_Window):
             pass
         else:
             print >> sys.stderr, "Unknown window property: ", name
+        return False
 
     def _items(self, name):
         if name == "group":
