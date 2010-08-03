@@ -276,8 +276,8 @@ class Window:
         if r.value_len == 0:
             return None
         else:
-            # look up wm_type
-            raise NotImplementedError
+            # FIXME: look up wm_type
+            return None
 
     def configure(self, **kwargs):
         """
