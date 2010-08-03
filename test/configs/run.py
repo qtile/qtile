@@ -58,9 +58,8 @@ for i in groups:
 
 # Two simple layout instances:
 layouts = [
+    layout.Stack(stacks=2),
     layout.Max(),
-    #layout.Stack(stacks=2, borderWidth=2)
-    layout.Stack(stacks=2)
 ]
 
 

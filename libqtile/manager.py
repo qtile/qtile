@@ -733,7 +733,7 @@ class Qtile(command.CommandObject):
                     xcb.xproto.GrabMode.Async,
                     xcb.xproto.GrabMode.Async,
                 )
-                
+
     def loop(self):
         try:
             while 1:
