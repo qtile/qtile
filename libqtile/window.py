@@ -194,33 +194,9 @@ class _Window(command.CommandObject):
           update the local copy of the window's WM_HINTS
           http://tronche.com/gui/x/icccm/sec-4.html#WM_HINTS
         '''
-        def update_hint(hint, value, hook=True):
-            if self.hints[hint] != value:
-                self.hints[hint] = value
         h = self.window.get_wm_hints()
-        if not h:
-            return
-
-        flags = h.flags
-        if flags & Xutil.InputHint:
-            update_hint('input', h.input)
-        if flags & Xutil.StateHint:
-            update_hint('state', h.initial_state)
-        if flags & Xutil.IconPixmapHint:
-            update_hint('icon_pixmap', h.icon_pixmap)
-        if flags & Xutil.IconWindowHint:
-            update_hint('icon_window', h.icon_window)
-        if flags & Xutil.IconPositionHint:
-            update_hint('icon_x', h.icon_x, hook=False)
-            update_hint('icon_y', h.icon_y, hook=False)
-        if flags & Xutil.IconMaskHint:
-            update_hint('icon_mask', h.icon_mask)
-        if flags & Xutil.WindowGroupHint:
-            update_hint('window_group', h.window_group)
-        if flags & 256: #urgency_hint
-            update_hint('urgent', True)
-        else:
-            update_hint('urgent', False)
+        # FIXME
+        return
 
     @property
     def urgent(self):

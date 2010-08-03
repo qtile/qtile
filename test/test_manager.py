@@ -230,6 +230,9 @@ class uQtile(utils.QtileTests):
     def test_xeyes(self):
         self.testXeyes()
 
+    def test_xterm(self):
+        self.testXterm()
+
     def test_mapRequest(self):
         self.testWindow("one")
         info = self.c.groups()["a"]

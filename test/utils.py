@@ -178,6 +178,13 @@ class _QtileTruss(libpry.AutoTree):
                     [path, "-display", self["display"]]
                 )
 
+    def testXterm(self):
+        path = self.whereis("xterm")
+        return self._testProc(
+                    path,
+                    [path, "-display", self["display"]]
+                )
+
     def _kill(self, pid):
         os.kill(pid, 9)
         os.waitpid(pid, 0)

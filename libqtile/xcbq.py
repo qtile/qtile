@@ -231,7 +231,6 @@ class Window:
 
     def get_wm_hints(self):
         r = self.get_property("WM_HINTS", xcb.xproto.GetPropertyType.Any)
-        print dir(r)
         return list(r.value)
 
     def get_wm_normal_hints(self):
