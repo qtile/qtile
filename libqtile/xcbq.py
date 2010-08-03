@@ -113,8 +113,6 @@ class AtomCache:
         # We can change the pre-loads not to wait for a return
         for name in WindowTypes.keys():
             self.insert(name=name)
-        for name in PropertyMap.keys():
-            self.insert(name=name)
         for i in dir(xcb.xcb):
             if i.startswith("XA_"):
                 self.insert(name=i[3:], atom=getattr(xcb.xcb, i))
@@ -214,6 +212,9 @@ class Window:
             0,
             eventbuf
         )
+
+    def kill_client(self):
+        self.conn.conn.core.KillClient(self.wid)
 
     def set_input_focus(self):
         self.conn.conn.core.SetInputFocus(
@@ -344,6 +345,10 @@ class Window:
                 raise ValueError, "Must specify type for unknown property."
             else:
                 type, _ = PropertyMap[prop]
+        #print prop, self.conn.atoms[prop] if isinstance(prop, basestring) else prop 
+        #c = self.conn.conn.core.GetAtomName(prop)
+        #print "".join([chr(i) for i in c.reply().name])
+
         return self.conn.conn.core.GetProperty(    
             False, self.wid, 
             self.conn.atoms[prop] if isinstance(prop, basestring) else prop, 

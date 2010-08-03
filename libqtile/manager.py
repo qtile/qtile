@@ -687,8 +687,8 @@ class Qtile(command.CommandObject):
     def unmanage(self, window):
         c = self.windowMap.get(window)
         if c:
-            c.group.remove(c)
             del self.windowMap[window]
+            c.group.remove(c)
             hook.fire("client_killed", c)
 
     def manage(self, w):
@@ -701,7 +701,7 @@ class Qtile(command.CommandObject):
                 c = window.Internal(w, self)
                 self.internalMap[w.wid] = c
         else:
-            if not w in self.windowMap:
+            if not w.wid in self.windowMap:
                 c = window.Window(w, self)
                 self.windowMap[w.wid] = c
                 self.currentScreen.group.add(c)
@@ -747,30 +747,30 @@ class Qtile(command.CommandObject):
                 while True:
                     try:
                         e = self.conn.conn.poll_for_event()
+                        if not e:
+                            break
+                        ename = e.__class__.__name__
+                        if ename.endswith("Event"):
+                            ename = ename[:-5]
+                        c = None
+                        if hasattr(e, "window"):
+                            c = self.windowMap.get(e.window) or self.internalMap.get(e.window)
+                        if c and hasattr(c, "handle_%s"%ename):
+                            h = getattr(c, "handle_%s"%ename)
+                        else:
+                            h = getattr(self, "handle_%s"%ename, None)
+                        if h:
+                            self.log.add("Handling: %s"%ename)
+                            h(e)
+                        elif e.__class__ in self.ignoreEvents:
+                            pass
+                        else:
+                            self.log.add("Unknown event: %s"%ename)
                     except Exception, v:
                         self.errorHandler(v)
                         if self._exit:
                             return
                         continue
-                    if not e:
-                        break
-                    ename = e.__class__.__name__
-                    if ename.endswith("Event"):
-                        ename = ename[:-5]
-                    c = None
-                    if hasattr(e, "window"):
-                        c = self.windowMap.get(e.window) or self.internalMap.get(e.window)
-                    if c and hasattr(c, "handle_%s"%ename):
-                        h = getattr(c, "handle_%s"%ename)
-                    else:
-                        h = getattr(self, "handle_%s"%ename, None)
-                    if h:
-                        self.log.add("Handling: %s"%ename)
-                        h(e)
-                    elif e.__class__ in self.ignoreEvents:
-                        pass
-                    else:
-                        self.log.add("Unknown event: %s"%ename)
                 self.conn.flush()
         except:
             # We've already written a report.
@@ -835,10 +835,11 @@ class Qtile(command.CommandObject):
         self.unmanage(e.window)
 
     def handle_UnmapNotify(self, e):
+        RESPONSE_TYPE_MASK = 0x7f
         #FIXME: xpyb doesn't seem to expose the send_event attribute on UnmapNotify?
-        #if e.event == self.root.wid and e.send_event:
-        #    self.unmanage(e.window)
-        pass
+        if e.event == self.root.wid and e.response_type & (~RESPONSE_TYPE_MASK):
+            print >> sys.stderr, "UNMANAGE"
+            self.unmanage(e.window)
 
     def toScreen(self, n):
         if len(self.screens) < n-1:
@@ -880,7 +881,7 @@ class Qtile(command.CommandObject):
             print >> sys.stderr, "\tmajor_opcode", e.args[0].major_opcode
             print >> sys.stderr, "\tminor_opcode", e.args[0].minor_opcode
         else:
-            self.writeReport(e)
+            self.writeReport(m)
         self._exit = True
 
     def _items(self, name):

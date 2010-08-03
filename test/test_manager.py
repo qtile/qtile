@@ -233,6 +233,13 @@ class uQtile(utils.QtileTests):
     def test_xterm(self):
         self.testXterm()
 
+    def test_xterm_kill(self):
+        self.testXterm()
+        self.c.window.kill()
+        self.c.sync()
+        time.sleep(0.1)
+        assert not self.c.windows()
+
     def test_mapRequest(self):
         self.testWindow("one")
         info = self.c.groups()["a"]
