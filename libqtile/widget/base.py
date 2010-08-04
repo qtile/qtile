@@ -11,18 +11,20 @@ class _Drawer:
     _fallbackFont = "-*-fixed-bold-r-normal-*-15-*-*-*-c-*-*-*"
     def __init__(self, qtile, window):
         self.qtile, self.window = qtile, window
-        for i in qtile.conn.default_screen.allowed_depths:
-            for v in i.visuals:
-                if v.visual_id == qtile.conn.default_screen.root_visual:
-                    break
         self.surface = cairo.XCBSurface(
                             qtile.conn.conn,
                             window.window.wid,
-                            v,
+                            self.find_root_visual(),
                             window.width,
                             window.height
                         )
         self.set_background((0, 0, 1))
+
+    def find_root_visual(self):
+        for i in self.qtile.conn.default_screen.allowed_depths:
+            for v in i.visuals:
+                if v.visual_id == self.qtile.conn.default_screen.root_visual:
+                    return v
 
     def ctx(self):
         return cairo.Context(self.surface)
