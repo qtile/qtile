@@ -1,5 +1,6 @@
 import sys
 from .. import command, utils, bar
+import cairo
 
 LEFT = object()
 CENTER = object()
@@ -9,7 +10,29 @@ class _Drawer:
     """
     _fallbackFont = "-*-fixed-bold-r-normal-*-15-*-*-*-c-*-*-*"
     def __init__(self, qtile, window):
-        pass
+        self.qtile, self.window = qtile, window
+        for i in qtile.conn.default_screen.allowed_depths:
+            for v in i.visuals:
+                if v.visual_id == qtile.conn.default_screen.root_visual:
+                    break
+        self.surface = cairo.XCBSurface(
+                            qtile.conn.conn,
+                            window.window.wid,
+                            v,
+                            window.width,
+                            window.height
+                        )
+        self.set_background((0, 0, 1))
+
+    def ctx(self):
+        return cairo.Context(self.surface)
+
+    def set_background(self, colour):
+        c = self.ctx()
+        c.set_source_rgb(*colour)
+        c.rectangle(0, 0, self.window.width, self.window.height)
+        c.fill()
+        c.stroke()
         
     def textbox(self, text, x, y, width, height, padding = 0,
                 alignment=LEFT, background=None, **attrs):
