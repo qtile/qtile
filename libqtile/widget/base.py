@@ -1,6 +1,8 @@
 import sys
 from .. import command, utils, bar
+import xcb.xproto
 import cairo
+
 
 LEFT = object()
 CENTER = object()
@@ -11,14 +13,40 @@ class _Drawer:
     _fallbackFont = "-*-fixed-bold-r-normal-*-15-*-*-*-c-*-*-*"
     def __init__(self, qtile, window):
         self.qtile, self.window = qtile, window
+        pixmap = self.qtile.conn.conn.generate_id()
+        gc = self.qtile.conn.conn.generate_id()
+
+        self.qtile.conn.conn.core.CreatePixmap(
+            self.qtile.conn.default_screen.root_depth,
+            pixmap,
+            window.window.wid,
+            window.width,
+            window.height
+        )
+        self.qtile.conn.conn.core.CreateGC(
+            gc,
+            window.window.wid,
+            xcb.xproto.GC.Foreground | xcb.xproto.GC.Background,
+            [
+                self.qtile.conn.default_screen.black_pixel,
+                self.qtile.conn.default_screen.white_pixel
+            ]
+        )
         self.surface = cairo.XCBSurface(
                             qtile.conn.conn,
-                            window.window.wid,
+                            pixmap,
                             self.find_root_visual(),
                             window.width,
                             window.height
                         )
         self.set_background((0, 0, 1))
+        self.qtile.conn.conn.core.CopyArea(
+            pixmap,
+            window.window.wid,
+            gc,
+            0, 0, 0, 0,
+            window.width, window.height
+        )
 
     def find_root_visual(self):
         for i in self.qtile.conn.default_screen.allowed_depths:

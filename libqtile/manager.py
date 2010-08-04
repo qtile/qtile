@@ -893,11 +893,15 @@ class Qtile(command.CommandObject):
     def errorHandler(self, e):
         if e.__class__ in self._ignoreErrors:
             return
+
+        m = "\n".join([
+            "Server Error: %s"%e.__class__.__name__,
+            "\tbad_value: %s"%e.args[0].bad_value,
+            "\tmajor_opcode: %s"%e.args[0].major_opcode,
+            "\tminor_opcode: %s"%e.args[0].minor_opcode
+        ])
         if self._testing:
-            print >> sys.stderr, "Server Error:", e.__class__.__name__
-            print >> sys.stderr, "\tbad_value", e.args[0].bad_value
-            print >> sys.stderr, "\tmajor_opcode", e.args[0].major_opcode
-            print >> sys.stderr, "\tminor_opcode", e.args[0].minor_opcode
+            print >> sys.stderr, m
         else:
             self.writeReport(m)
         self._exit = True
