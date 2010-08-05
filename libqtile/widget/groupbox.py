@@ -5,11 +5,12 @@ import base
 class GroupBox(base._Widget):
     PADDING_Y = 2           # Y padding outside the box
     PADDING_X = 2           # X padding outside the box
-    BORDERWIDTH = 2
+    BORDERWIDTH = 3
 
-    FOREGROUND = "FFFFFF"
+    ACTIVE = "FFFFFF"
+    INACTIVE = "404040"
     BACKGROUND = "000000"
-    THIS_SCREEN_BORDER = "0000ff"
+    THIS_SCREEN_BORDER = "215578"
     OTHER_SCREEN_BORDER = "404040"
     MIN_MARGIN_X = 5
 
@@ -60,7 +61,10 @@ class GroupBox(base._Widget):
                 self.drawer.ctx.stroke()
 
             # We could cache these...
-            self.drawer.ctx.set_source_rgb(*utils.rgb(self.FOREGROUND))
+            if e.windows:
+                self.drawer.ctx.set_source_rgb(*utils.rgb(self.ACTIVE))
+            else:
+                self.drawer.ctx.set_source_rgb(*utils.rgb(self.INACTIVE))
             # We use the x_advance value rather than the width.
             _, _, _, y, x, _ = self.drawer.text_extents(e.name)
             self.drawer.ctx.move_to(

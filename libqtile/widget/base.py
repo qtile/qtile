@@ -64,9 +64,6 @@ class _Drawer:
         self.ctx.arc(x + delta, y + delta, radius, 180 * degrees, 270 * degrees)
         self.ctx.close_path()
 
-        #self.ctx.set_source_rgb (0.5, 0.5, 1)
-        #self.ctx.fill_preserve ()
-        #self.ctx.set_source_rgba (0.5, 0, 0, 0.5)
         self.ctx.set_line_width(linewidth)
         self.ctx.stroke()
 
