@@ -15,7 +15,7 @@ class GBConfig:
                     [
                         libqtile.widget.GroupBox(),
                     ],
-                    80,
+                    60,
                 ),
             bottom=libqtile.bar.Bar(
                         [
@@ -23,7 +23,7 @@ class GBConfig:
                             libqtile.widget.TextBox("text"),
                             libqtile.widget.WindowName(),
                         ],
-                        80
+                        60
                     ),
         )
     ]
@@ -38,17 +38,18 @@ class uWidgets(utils.QtileTests):
         assert b["widgets"][0]["name"] == "GroupBox"
 
     def test_event(self):
-        self.c.group["b"].toscreen()
+        self.c.group["bb"].toscreen()
         self.c.log()
 
     def test_textbox(self):
         assert "text" in self.c.list_widgets()
         self.c.widget["text"].update("testing")
         assert self.c.widget["text"].get() == "testing"
+        self.c.group["dddd"].toscreen()
         time.sleep(2)
 
     def test_groupbox_click(self):
-        self.c.group["c"].toscreen()
+        self.c.group["ccc"].toscreen()
         assert self.c.groups()["a"]["screen"] == None
         self.c.bar["bottom"].fake_click(0, "bottom", 10, 10)
         # FIXME

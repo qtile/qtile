@@ -1,4 +1,4 @@
-import sys
+import sys, math
 from .. import command, utils, bar
 import xcb.xproto
 import cairo
@@ -49,6 +49,25 @@ class _Drawer:
         self.clear((0, 0, 1))
 
 
+    def rounded_rectangle(self, x, y, width, height, linewidth):
+        aspect = 1.0
+        corner_radius = height / 10.0
+        radius = corner_radius / aspect
+        degrees = math.pi/180.0
+
+        self.ctx.new_sub_path ()
+        self.ctx.arc (x + width - radius, y + radius, radius, -90 * degrees, 0 * degrees)
+        self.ctx.arc (x + width - radius, y + height - radius, radius, 0 * degrees, 90 * degrees)
+        self.ctx.arc (x + radius, y + height - radius, radius, 90 * degrees, 180 * degrees)
+        self.ctx.arc (x + radius, y + radius, radius, 180 * degrees, 270 * degrees)
+        self.ctx.close_path ()
+
+        #self.ctx.set_source_rgb (0.5, 0.5, 1)
+        #self.ctx.fill_preserve ()
+        #self.ctx.set_source_rgba (0.5, 0, 0, 0.5)
+        self.ctx.set_line_width (linewidth)
+        self.ctx.stroke ()
+
     def set_font(self, fontface, size, antialias=True):
         self.ctx.select_font_face(fontface)
         self.ctx.set_font_size(size)
@@ -96,7 +115,7 @@ class _Drawer:
         return cairo.Context(self.surface)
 
     def clear(self, colour):
-        self.ctx.set_source_rgb(*colour)
+        self.ctx.set_source_rgb(*utils.rgb(colour))
         self.ctx.rectangle(0, 0, self.widget.bar.width, self.widget.bar.height)
         self.ctx.fill()
         self.ctx.stroke()

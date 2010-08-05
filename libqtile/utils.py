@@ -138,3 +138,14 @@ def isSequenceLike(anobj):
         except:
             return 0
     return 1
+
+
+def rgb(x):
+    if isinstance(x, tuple) or isinstance(x, list):
+        return (x[0]/255.0, x[1]/255.0, x[2]/255.0)
+    elif isinstance(x, basestring):
+        if len(x) != 6:
+            raise ValueError("RGB specifier must be 6 characters long.")
+        return rgb([int(i, 16) for i in (x[0:2], x[2:4], x[4:6])])
+    raise ValueError("Invalid RGB specifier.")
+
