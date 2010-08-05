@@ -9,23 +9,29 @@ CENTER = object()
 class _Drawer:
     """
         A helper class for drawing and text layout.
+
+        We have a drawer object for each widget in the bar. The underlying
+        surface is a pixmap with the same size as the bar itself. We draw to
+        the pixmap starting at offset 0, 0, and when the time comes to display
+        to the window, we copy the appropriate portion of the pixmap onto the
+        window.
     """
     _fallbackFont = "-*-fixed-bold-r-normal-*-15-*-*-*-c-*-*-*"
-    def __init__(self, qtile, window):
-        self.qtile, self.window = qtile, window
-        pixmap = self.qtile.conn.conn.generate_id()
-        gc = self.qtile.conn.conn.generate_id()
+    def __init__(self, qtile, widget):
+        self.qtile, self.widget = qtile, widget
+        self.pixmap = self.qtile.conn.conn.generate_id()
+        self.gc = self.qtile.conn.conn.generate_id()
 
         self.qtile.conn.conn.core.CreatePixmap(
             self.qtile.conn.default_screen.root_depth,
-            pixmap,
-            window.window.wid,
-            window.width,
-            window.height
+            self.pixmap,
+            widget.win.wid,
+            widget.bar.width,
+            widget.bar.height
         )
         self.qtile.conn.conn.core.CreateGC(
-            gc,
-            window.window.wid,
+            self.gc,
+            widget.win.wid,
             xcb.xproto.GC.Foreground | xcb.xproto.GC.Background,
             [
                 self.qtile.conn.default_screen.black_pixel,
@@ -34,18 +40,50 @@ class _Drawer:
         )
         self.surface = cairo.XCBSurface(
                             qtile.conn.conn,
-                            pixmap,
+                            self.pixmap,
                             self.find_root_visual(),
-                            window.width,
-                            window.height
+                            widget.bar.width,
+                            widget.bar.height
                         )
-        self.set_background((0, 0, 1))
+        self.ctx = self.new_ctx()
+        self.clear((0, 0, 1))
+
+
+    def set_font(self, fontface, size, antialias=True):
+        self.ctx.select_font_face(fontface)
+        self.ctx.set_font_size(size)
+        fo = self.ctx.get_font_options()
+        fo.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
+
+    def text_extents(self, text):
+        return self.ctx.text_extents(text)
+
+    def fit_fontsize(self, strings, heightlimit):
+        """
+            Try to find a maximum font size that fits all strings in the
+            height.
+        """
+        self.ctx.set_font_size(heightlimit)
+        maxheight = 0
+        for i in strings:
+            _, _, x, y, _, _ = self.ctx.text_extents(i)
+            maxheight = max(maxheight, y)
+        self.ctx.set_font_size(int(heightlimit*(heightlimit/float(maxheight))))
+        maxwidth, maxheight = 0, 0
+        for i in strings:
+            _, _, x, y, _, _ = self.ctx.text_extents(i)
+            maxwidth = max(maxwidth, x)
+            maxheight = max(maxheight, y)
+        return maxwidth, maxheight
+
+    def draw(self):
         self.qtile.conn.conn.core.CopyArea(
-            pixmap,
-            window.window.wid,
-            gc,
-            0, 0, 0, 0,
-            window.width, window.height
+            self.pixmap,
+            self.widget.win.wid,
+            self.gc,
+            0, 0, # srcx, srcy
+            self.widget.offset, 0, # dstx, dsty
+            self.widget.width, self.widget.bar.height
         )
 
     def find_root_visual(self):
@@ -54,15 +92,14 @@ class _Drawer:
                 if v.visual_id == self.qtile.conn.default_screen.root_visual:
                     return v
 
-    def ctx(self):
+    def new_ctx(self):
         return cairo.Context(self.surface)
 
-    def set_background(self, colour):
-        c = self.ctx()
-        c.set_source_rgb(*colour)
-        c.rectangle(0, 0, self.window.width, self.window.height)
-        c.fill()
-        c.stroke()
+    def clear(self, colour):
+        self.ctx.set_source_rgb(*colour)
+        self.ctx.rectangle(0, 0, self.widget.bar.width, self.widget.bar.height)
+        self.ctx.fill()
+        self.ctx.stroke()
         
     def textbox(self, text, x, y, width, height, padding = 0,
                 alignment=LEFT, background=None, **attrs):
@@ -105,10 +142,10 @@ class _Widget(command.CommandObject):
 
     def _configure(self, qtile, bar, theme):
         self.qtile, self.bar, self.theme = qtile, bar, theme
-        self._drawer = _Drawer(qtile, self.bar.window)
+        self.drawer = _Drawer(qtile, self)
 
     def clear(self):
-        self._drawer.rectangle(
+        self.drawer.rectangle(
             self.offset, 0, self.width, self.bar.size,
             self.bar.background
         )
@@ -159,7 +196,7 @@ class _TextBox(_Widget):
             self.font = theme.font
 
     def draw(self):
-        self._drawer.textbox(
+        self.drawer.textbox(
             self.text,
             self.offset, 0, self.width, self.bar.size,
             padding = self.PADDING,

@@ -21,8 +21,6 @@
 import sys
 import manager, window, confreader, command, utils, hook
 
-_HIGHLIGHT = "#48677E"
-_FOREGROUND = "#dddddd"
 
 class Gap(command.CommandObject):
     def __init__(self, size):

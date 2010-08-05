@@ -7,7 +7,7 @@ theme = libqtile.manager.Theme()
 
 class GBConfig:
     keys = []
-    groups = ["a", "b", "c", "d"]
+    groups = ["a", "bb", "ccc", "dddd"]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
     screens = [
         libqtile.manager.Screen(
@@ -15,7 +15,7 @@ class GBConfig:
                     [
                         libqtile.widget.GroupBox(),
                     ],
-                    20,
+                    80,
                 ),
             bottom=libqtile.bar.Bar(
                         [
@@ -23,7 +23,7 @@ class GBConfig:
                             libqtile.widget.TextBox("text"),
                             libqtile.widget.WindowName(),
                         ],
-                        20
+                        80
                     ),
         )
     ]
@@ -45,6 +45,7 @@ class uWidgets(utils.QtileTests):
         assert "text" in self.c.list_widgets()
         self.c.widget["text"].update("testing")
         assert self.c.widget["text"].get() == "testing"
+        time.sleep(2)
 
     def test_groupbox_click(self):
         self.c.group["c"].toscreen()
