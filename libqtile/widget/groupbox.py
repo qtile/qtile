@@ -5,7 +5,7 @@ import base
 class GroupBox(base._Widget):
     PADDING_Y = 2           # Y padding outside the box
     PADDING_X = 2           # X padding outside the box
-    BORDERWIDTH = 1
+    BORDERWIDTH = 2
 
     FOREGROUND = "FFFFFF"
     BACKGROUND = "000000"
@@ -22,9 +22,8 @@ class GroupBox(base._Widget):
         base._Widget._configure(self, qtile, bar, theme)
         self.drawer.set_font("Monospace", self.bar.height)
                 
-        # Leave a 10% margin
-        self.margin_y = int((self.bar.height - (self.PADDING_Y + self.BORDERWIDTH)*2)*0.1)
-
+        # Leave a 10% margin top and bottom
+        self.margin_y = int((self.bar.height - (self.PADDING_Y + self.BORDERWIDTH)*2)*0.2)
         self.maxwidth, self.maxheight = self.drawer.fit_fontsize(
             [i.name for i in qtile.groups],
             self.bar.height - (self.PADDING_Y + self.margin_y + self.BORDERWIDTH)*2
@@ -52,7 +51,8 @@ class GroupBox(base._Widget):
                 self.drawer.ctx.set_source_rgb(*utils.rgb(border))
                 self.drawer.rounded_rectangle(
                     (self.boxwidth * i) + self.PADDING_X, self.PADDING_Y,
-                    self.boxwidth - 2*self.PADDING_X, self.bar.height - 2*self.PADDING_Y,
+                    self.boxwidth - 2*self.PADDING_X - self.BORDERWIDTH,
+                    self.bar.height - 2*self.PADDING_Y - self.BORDERWIDTH,
                     self.BORDERWIDTH
                 )
                 self.drawer.ctx.stroke()
@@ -61,7 +61,7 @@ class GroupBox(base._Widget):
             self.drawer.ctx.set_source_rgb(*utils.rgb(self.FOREGROUND))
             _, _, x, y, _, _ = self.drawer.text_extents(e.name)
             self.drawer.ctx.move_to(
-                (self.boxwidth * i) + (self.boxwidth - x)/2,
+                (self.boxwidth * i) + self.boxwidth/2 - x/2,
                 self.maxheight + (self.bar.height - self.maxheight - self.margin_y)/2
             )
             self.drawer.ctx.show_text(e.name)

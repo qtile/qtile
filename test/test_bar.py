@@ -45,7 +45,7 @@ class uWidgets(utils.QtileTests):
         assert "text" in self.c.list_widgets()
         self.c.widget["text"].update("testing")
         assert self.c.widget["text"].get() == "testing"
-        self.c.group["dddd"].toscreen()
+        #self.c.group["dddd"].toscreen()
         time.sleep(2)
 
     def test_groupbox_click(self):
