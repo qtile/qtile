@@ -55,18 +55,26 @@ class _Drawer:
         radius = corner_radius / aspect
         degrees = math.pi/180.0
 
-        self.ctx.new_sub_path ()
-        self.ctx.arc (x + width - radius, y + radius, radius, -90 * degrees, 0 * degrees)
-        self.ctx.arc (x + width - radius, y + height - radius, radius, 0 * degrees, 90 * degrees)
-        self.ctx.arc (x + radius, y + height - radius, radius, 90 * degrees, 180 * degrees)
-        self.ctx.arc (x + radius, y + radius, radius, 180 * degrees, 270 * degrees)
-        self.ctx.close_path ()
+        self.ctx.new_sub_path()
+
+        delta = radius + linewidth/2
+        self.ctx.arc(x + width - delta, y + delta, radius, -90 * degrees, 0 * degrees)
+        self.ctx.arc(x + width - delta, y + height - delta, radius, 0 * degrees, 90 * degrees)
+        self.ctx.arc(x + delta, y + height - delta, radius, 90 * degrees, 180 * degrees)
+        self.ctx.arc(x + delta, y + delta, radius, 180 * degrees, 270 * degrees)
+        self.ctx.close_path()
 
         #self.ctx.set_source_rgb (0.5, 0.5, 1)
         #self.ctx.fill_preserve ()
         #self.ctx.set_source_rgba (0.5, 0, 0, 0.5)
-        self.ctx.set_line_width (linewidth)
-        self.ctx.stroke ()
+        self.ctx.set_line_width(linewidth)
+        self.ctx.stroke()
+
+    def rectangle(self, x, y, width, height, linewidth):
+        self.ctx.set_source_rgb(1, 1, 1)
+        self.ctx.set_line_width(linewidth)
+        self.ctx.rectangle(x, y, width, height)
+        self.ctx.stroke()
 
     def set_font(self, fontface, size, antialias=True):
         self.ctx.select_font_face(fontface)
@@ -85,7 +93,7 @@ class _Drawer:
         self.ctx.set_font_size(heightlimit)
         maxheight = 0
         for i in strings:
-            _, _, x, y, _, _ = self.ctx.text_extents(i)
+            xb, yb, x, y, _, _ = self.ctx.text_extents(i)
             maxheight = max(maxheight, y)
         self.ctx.set_font_size(int(heightlimit*(heightlimit/float(maxheight))))
         maxwidth, maxheight = 0, 0
@@ -129,9 +137,6 @@ class _Drawer:
             :background Fill box with the specified color first.
             :padding  Padding to the left of the text.
         """
-        pass
-
-    def rectangle(self, x, y, width, height, fillColor=None, borderColor=None, borderWidth=1):
         pass
 
 

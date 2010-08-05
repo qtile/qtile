@@ -11,6 +11,7 @@ class GroupBox(base._Widget):
     BACKGROUND = "000000"
     THIS_SCREEN_BORDER = "0000ff"
     OTHER_SCREEN_BORDER = "404040"
+    MIN_MARGIN_X = 5
 
     def click(self, x, y):
         return
@@ -28,7 +29,7 @@ class GroupBox(base._Widget):
             [i.name for i in qtile.groups],
             self.bar.height - (self.PADDING_Y + self.margin_y + self.BORDERWIDTH)*2
         )
-        self.margin_x = int(self.maxwidth * 0.1)
+        self.margin_x = max(self.MIN_MARGIN_X, int(self.maxwidth * 0.2))
         self.boxwidth = self.maxwidth + self.PADDING_X*2 + self.BORDERWIDTH*2 + self.margin_x*2
         self.width = self.boxwidth * len(self.qtile.groups)
         hook.subscribe("setgroup", self.draw)
@@ -39,6 +40,7 @@ class GroupBox(base._Widget):
         return len([w for w in group.windows if w.urgent]) > 0
 
     def draw(self):
+        extents = self.drawer.text_extents("".join(i.name for i in self.qtile.groups))
         self.drawer.clear(self.BACKGROUND)
         for i, e in enumerate(self.qtile.groups):
             border = False
@@ -51,18 +53,19 @@ class GroupBox(base._Widget):
                 self.drawer.ctx.set_source_rgb(*utils.rgb(border))
                 self.drawer.rounded_rectangle(
                     (self.boxwidth * i) + self.PADDING_X, self.PADDING_Y,
-                    self.boxwidth - 2*self.PADDING_X - self.BORDERWIDTH,
-                    self.bar.height - 2*self.PADDING_Y - self.BORDERWIDTH,
+                    self.boxwidth - 2*self.PADDING_X,
+                    self.bar.height - 2*self.PADDING_Y,
                     self.BORDERWIDTH
                 )
                 self.drawer.ctx.stroke()
 
             # We could cache these...
             self.drawer.ctx.set_source_rgb(*utils.rgb(self.FOREGROUND))
-            _, _, x, y, _, _ = self.drawer.text_extents(e.name)
+            # We use the x_advance value rather than the width.
+            _, _, _, y, x, _ = self.drawer.text_extents(e.name)
             self.drawer.ctx.move_to(
-                (self.boxwidth * i) + self.boxwidth/2 - x/2,
-                self.maxheight + (self.bar.height - self.maxheight - self.margin_y)/2
+                (self.boxwidth*i) + self.boxwidth/2 - x/2,
+                self.bar.height/2.0 + self.maxheight/2
             )
             self.drawer.ctx.show_text(e.name)
             self.drawer.ctx.stroke()
