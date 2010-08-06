@@ -14,13 +14,13 @@ class GBConfig:
             top = libqtile.bar.Bar(
                     [
                         libqtile.widget.GroupBox(),
+                        libqtile.widget.TextBox("text"),
                     ],
                     50,
                 ),
             bottom=libqtile.bar.Bar(
                         [
                             libqtile.widget.GroupBox(),
-                            libqtile.widget.TextBox("text"),
                             libqtile.widget.WindowName(),
                         ],
                         50
@@ -46,7 +46,6 @@ class uWidgets(utils.QtileTests):
         self.c.widget["text"].update("testing")
         assert self.c.widget["text"].get() == "testing"
         self.c.group["pppp"].toscreen()
-        time.sleep(2)
 
     def test_groupbox_click(self):
         self.c.group["ccc"].toscreen()

@@ -27,7 +27,7 @@ class GroupBox(base._Widget):
                 
         # Leave a 10% margin top and bottom
         self.margin_y = int((self.bar.height - (self.PADDING_Y + self.BORDERWIDTH)*2)*0.2)
-        self.maxwidth, self.maxheight = self.drawer.fit_fontsize(
+        self.maxwidth, self.maxheight = self.drawer.fit_text(
             [i.name for i in qtile.groups],
             self.bar.height - (self.PADDING_Y + self.margin_y + self.BORDERWIDTH)*2
         )

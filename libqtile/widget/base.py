@@ -82,13 +82,25 @@ class _Drawer:
     def text_extents(self, text):
         return self.ctx.text_extents(text)
 
-    def fit_fontsize(self, strings, heightlimit):
+    def fit_fontsize(self, heightlimit):
+        """
+            Try to find a maximum font size that fits any strings within the
+            height.
+        """
+        self.ctx.set_font_size(heightlimit)
+        asc, desc, height, _, _  = self.ctx.font_extents()
+        self.ctx.set_font_size(int(heightlimit*(heightlimit/float(height))))
+        return self.ctx.font_extents()
+
+    def fit_text(self, strings, heightlimit):
         """
             Try to find a maximum font size that fits all strings within the
             height.
         """
         self.ctx.set_font_size(heightlimit)
         _, _, _, maxheight, _, _ = self.ctx.text_extents("".join(strings))
+        if not maxheight:
+            return 0, 0
         self.ctx.set_font_size(int(heightlimit*(heightlimit/float(maxheight))))
         maxwidth, maxheight = 0, 0
         for i in strings:
@@ -122,16 +134,12 @@ class _Drawer:
         self.ctx.fill()
         self.ctx.stroke()
         
-    def textbox(self, text, x, y, width, height, padding = 0,
-                alignment=LEFT, background=None, **attrs):
+    def textbox(self, text):
         """
-            Draw text in the specified box using the current font. Text is
-            centered vertically, and left-aligned. 
-            
-            :background Fill box with the specified color first.
-            :padding  Padding to the left of the text.
+            Draw text using the current font.
         """
-        pass
+        self.ctx.set_source_rgb(*utils.rgb("ffffff"))
+        self.ctx.show_text(text)
 
 
 class _Widget(command.CommandObject):
@@ -145,7 +153,6 @@ class _Widget(command.CommandObject):
         The offset attribute is set by the Bar after all widgets have been
         configured.
     """
-    font = "-*-luxi mono-*-r-*-*-12-*-*-*-*-*-*-*"
     width = None
     offset = None
     name = None
@@ -153,10 +160,6 @@ class _Widget(command.CommandObject):
     @property
     def win(self):
         return self.bar.window.window
-
-    @property
-    def colormap(self):
-        return self.qtile.display.screen().default_colormap
 
     def _configure(self, qtile, bar, theme):
         self.qtile, self.bar, self.theme = qtile, bar, theme
@@ -204,16 +207,18 @@ class _Widget(command.CommandObject):
 
 class _TextBox(_Widget):
     PADDING = 5
+    FONTSIZE = 20
     def __init__(self, text=" ", width=bar.STRETCH):
         self.width = width
         self.text = text
 
     def draw(self):
-        self.drawer.textbox(
-            self.text,
-            self.offset, 0, self.width, self.bar.size,
-            padding = self.PADDING,
-            foreground=self.theme.fg_normal,
-            background=self.theme.bg_normal,
-        )
+        self.drawer.clear("000000")
+        asc, desc, height, xadv, _ = self.drawer.fit_fontsize(self.bar.height*0.8)
+        self.drawer.ctx.move_to(xadv/2, self.bar.height*0.1 + height-desc)
+        self.drawer.textbox(self.text)
+        self.drawer.draw()
+
+
+
 
