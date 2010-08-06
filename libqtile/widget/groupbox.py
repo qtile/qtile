@@ -7,6 +7,7 @@ class GroupBox(base._Widget):
     PADDING_X = 2           # X padding outside the box
     BORDERWIDTH = 3
 
+    FONT = "Monospace"
     ACTIVE = "FFFFFF"
     INACTIVE = "404040"
     BACKGROUND = "000000"
@@ -22,7 +23,7 @@ class GroupBox(base._Widget):
 
     def _configure(self, qtile, bar, theme):
         base._Widget._configure(self, qtile, bar, theme)
-        self.drawer.set_font("Monospace", self.bar.height)
+        self.drawer.set_font(self.FONT, self.bar.height)
                 
         # Leave a 10% margin top and bottom
         self.margin_y = int((self.bar.height - (self.PADDING_Y + self.BORDERWIDTH)*2)*0.2)
@@ -41,7 +42,6 @@ class GroupBox(base._Widget):
         return len([w for w in group.windows if w.urgent]) > 0
 
     def draw(self):
-        extents = self.drawer.text_extents("".join(i.name for i in self.qtile.groups))
         self.drawer.clear(self.BACKGROUND)
         for i, e in enumerate(self.qtile.groups):
             border = False
@@ -76,7 +76,6 @@ class GroupBox(base._Widget):
         self.drawer.draw()
 
     def setup_hooks(self):
-        draw = self.draw
         def hook_response(*args, **kwargs):
             self.draw()
         hook.subscribe("client_new", hook_response)

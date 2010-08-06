@@ -2,6 +2,7 @@ from .. import bar
 import base
 
 class TextBox(base._TextBox):
+    FONT = "Monospace"
     def __init__(self, name, text=" ", width=bar.STRETCH):
         """
             :name Name for this widget.
@@ -10,6 +11,10 @@ class TextBox(base._TextBox):
         """
         self.name = name
         base._TextBox.__init__(self, text, width)
+
+    def _configure(self, qtile, bar, theme):
+        base._Widget._configure(self, qtile, bar, theme)
+        self.drawer.set_font(self.FONT, self.bar.height)
 
     def update(self, text):
         self.text = text

@@ -84,14 +84,11 @@ class _Drawer:
 
     def fit_fontsize(self, strings, heightlimit):
         """
-            Try to find a maximum font size that fits all strings in the
+            Try to find a maximum font size that fits all strings within the
             height.
         """
         self.ctx.set_font_size(heightlimit)
-        maxheight = 0
-        for i in strings:
-            xb, yb, x, y, _, _ = self.ctx.text_extents(i)
-            maxheight = max(maxheight, y)
+        _, _, _, maxheight, _, _ = self.ctx.text_extents("".join(strings))
         self.ctx.set_font_size(int(heightlimit*(heightlimit/float(maxheight))))
         maxwidth, maxheight = 0, 0
         for i in strings:
@@ -210,11 +207,6 @@ class _TextBox(_Widget):
     def __init__(self, text=" ", width=bar.STRETCH):
         self.width = width
         self.text = text
-
-    def _configure(self, qtile, bar, theme):
-        _Widget._configure(self, qtile, bar, theme)
-        if theme.font:
-            self.font = theme.font
 
     def draw(self):
         self.drawer.textbox(
