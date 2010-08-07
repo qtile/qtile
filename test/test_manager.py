@@ -3,8 +3,6 @@ import libpry
 import libqtile, libqtile.layout, libqtile.bar, libqtile.widget, libqtile.manager
 import utils
 
-theme = libqtile.manager.Theme()
-
 class TestConfig:
     groups = ["a", "b", "c", "d"]
     layouts = [
@@ -31,8 +29,6 @@ class TestConfig:
                         20
                     ),
     )]
-    theme = None
-    themedir = "themes"
 
 
 class BareConfig:
@@ -54,8 +50,6 @@ class BareConfig:
         ),
     ]
     screens = [libqtile.manager.Screen()]
-    theme = None
-    themedir = "themes"
 
 
 
@@ -109,35 +103,6 @@ class uSingle(utils.QtileTests):
     config = TestConfig()
     def test_events(self):
         assert self.c.status() == "OK"
-
-    def test_themes(self):
-        assert self.c.themes() == ["a", "b", "c"]
-        assert not self.c.theme_current()
-        self.c.theme_load("a")
-        assert self.c.theme_current() == "a"
-        self.c.theme_next()
-
-    def test_theme_next(self):
-        assert not self.c.theme_current()
-        self.c.theme_next()
-        assert self.c.theme_current() == "a"
-        self.c.theme_next()
-        assert self.c.theme_current() == "b"
-        self.c.theme_next()
-        assert self.c.theme_current() == "c"
-        self.c.theme_next()
-        assert self.c.theme_current() == "a"
-
-    def test_theme_prev(self):
-        assert not self.c.theme_current()
-        self.c.theme_prev()
-        assert self.c.theme_current() == "c"
-        self.c.theme_prev()
-        assert self.c.theme_current() == "b"
-        self.c.theme_prev()
-        assert self.c.theme_current() == "a"
-        self.c.theme_prev()
-        assert self.c.theme_current() == "c"
 
     def test_report(self):
         p = os.path.join(self.tmpdir(), "crashreport")
@@ -353,95 +318,27 @@ class TScreen(libqtile.manager.Screen):
 class uScreenDimensions(libpry.AutoTree):
     def test_dx(self):
         s = TScreen(left = libqtile.bar.Gap(10))
-        s._configure(None, libqtile.manager.Theme(), 0, 0, 0, 100, 100, None)
+        s._configure(None, 0, 0, 0, 100, 100, None)
         assert s.dx == 10
 
     def test_dwidth(self):
         s = TScreen(left = libqtile.bar.Gap(10))
-        s._configure(None, libqtile.manager.Theme(), 0, 0, 0, 100, 100, None)
+        s._configure(None, 0, 0, 0, 100, 100, None)
         assert s.dwidth == 90
         s.right = libqtile.bar.Gap(10)
         assert s.dwidth == 80
 
     def test_dy(self):
         s = TScreen(top = libqtile.bar.Gap(10))
-        s._configure(None, libqtile.manager.Theme(), 0, 0, 0, 100, 100, None)
+        s._configure(None, 0, 0, 0, 100, 100, None)
         assert s.dy == 10
 
     def test_dheight(self):
         s = TScreen(top = libqtile.bar.Gap(10))
-        s._configure(None, libqtile.manager.Theme(), 0, 0, 0, 100, 100, None)
+        s._configure(None, 0, 0, 0, 100, 100, None)
         assert s.dheight == 90
         s.bottom = libqtile.bar.Gap(10)
         assert s.dheight == 80
-
-
-class uTheme(libpry.AutoTree):
-    def test_unknown_element(self):
-        libpry.raises("unknown theme element", libqtile.manager.Theme, unknown=1)
-
-    def test_simple(self):
-        t = libqtile.manager.Theme(border_width=99)
-        assert t.border_width == 99
-        assert t.opacity == libqtile.manager.Theme._elements["opacity"][0]
-
-    def _sub(self):
-        t = libqtile.manager.Theme(border_width=2)
-        t["sub"] = libqtile.manager.Theme(
-                        border_width=3,
-                        opacity=0.5
-                    )
-        # Obligatory Melville reference
-        t["sub"]["sub"] = libqtile.manager.Theme(
-                                border_width=4
-                             )
-        return t
-
-    def test_type_err(self):
-        libpry.raises("must be of type integer", libqtile.manager.Theme, border_width="foo")
-        
-    def test_subtheme(self):
-        t = self._sub()
-        assert t.border_width == 2
-        assert t["sub"].border_width == 3
-        assert t["sub"]["sub"].border_width == 4
-        assert t["sub"]["sub"].opacity == 0.5 
-        libpry.raises(KeyError, t.__getitem__, "nonexistent")
-
-    def test_get(self):
-        t = self._sub()
-        assert t["sub.sub"].opacity == 0.5
-        assert t["sub"].border_width == 3
-        assert t[None].border_width == 2
-
-    def test_path(self):
-        t = self._sub()
-        assert t["sub.sub"].path == "sub.sub"
-        assert t[None].path == None
-
-    def test_preOrder(self):
-        t = self._sub()
-        assert len(list(t.preOrder())) == 3
-
-    def test_dump_roundtrip(self):
-        t = self._sub()
-        t2 = libqtile.manager.Theme.parse(t.dump())
-        assert t == t2
-
-    def test_parserrors(self):
-        s = libqtile.manager.Theme.parse
-        libpry.raises("syntax error", s, "default {")
-        libpry.raises("syntax error", s, "default ")
-        libpry.raises("syntax error", s, "default { opacity =")
-        libpry.raises("syntax error", s, "default { opacity = 0.1")
-        libpry.raises("not a valid theme element", s, "default { invalid = 0.1 }")
-        libpry.raises("must be of type integer", s, "default { border_width = 0.1 }")
-        libpry.raises("must be of type float", s, "default { opacity = foo }")
-
-    def test_fromFile(self):
-        t = libqtile.manager.Theme.fromFile("themes/a")
-        assert t
-        
 
 
 tests = [
@@ -462,6 +359,5 @@ tests = [
     uKey(),
     uLog(),
     uScreenDimensions(),
-    uTheme(),
 ]
 

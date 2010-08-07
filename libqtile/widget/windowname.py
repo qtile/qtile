@@ -2,8 +2,8 @@ from .. import hook
 import base
 
 class WindowName(base._TextBox):
-    def _configure(self, qtile, bar, theme):
-        base._TextBox._configure(self, qtile, bar, theme)
+    def _configure(self, qtile, bar):
+        base._TextBox._configure(self, qtile, bar)
         hook.subscribe("window_name_change", self.update)
         hook.subscribe("focus_change", self.update)
 

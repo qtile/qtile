@@ -29,7 +29,6 @@ class Config:
     groups = None
     layouts = None
     screens = ()
-    theme = None
 
 
 class File(Config):
@@ -52,9 +51,4 @@ class File(Config):
         self.groups = globs.get("groups")
         self.layouts = globs.get("layouts")
         self.screens = globs.get("screens")
-        self.theme = globs.get("theme")
-        if globs.get("themedir"):
-            self.themedir = globs.get("themedir")
-        else:
-            self.themedir = os.path.join(os.path.split(self.fname)[0], "themes")
 

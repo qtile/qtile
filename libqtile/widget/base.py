@@ -161,8 +161,8 @@ class _Widget(command.CommandObject):
     def win(self):
         return self.bar.window.window
 
-    def _configure(self, qtile, bar, theme):
-        self.qtile, self.bar, self.theme = qtile, bar, theme
+    def _configure(self, qtile, bar):
+        self.qtile, self.bar = qtile, bar
         self.drawer = _Drawer(qtile, self)
 
     def clear(self):

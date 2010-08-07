@@ -94,6 +94,9 @@ class _WinStack(object):
 
 class Stack(Layout):
     name = "stack"
+    BORDER_FOCUS = "#0000ff"
+    BORDER_NORMAL = "#000000"
+    BORDER_WIDTH = 1
     def __init__(self, stacks=2):
         """
             :stacks Number of stacks to start with.
@@ -191,24 +194,24 @@ class Stack(Layout):
             c.hide()
 
         if c is self.group.currentWindow:
-            px = self.group.qtile.colorPixel(self.theme.border_focus)
+            px = self.group.qtile.colorPixel(self.BORDER_FOCUS)
         else:
-            px = self.group.qtile.colorPixel(self.theme.border_normal)
+            px = self.group.qtile.colorPixel(self.BORDER_NORMAL)
 
         columnWidth = int(self.group.screen.dwidth/float(len(self.stacks)))
         xoffset = self.group.screen.dx + i*columnWidth
-        winWidth = columnWidth - 2*self.theme.border_width
+        winWidth = columnWidth - 2*self.BORDER_WIDTH
 
         if s.split:
             columnHeight = int(self.group.screen.dheight/float(len(s)))
-            winHeight = columnHeight - 2*self.theme.border_width
+            winHeight = columnHeight - 2*self.BORDER_WIDTH
             yoffset = self.group.screen.dy + s.index(c)*columnHeight
             c.place(
                 xoffset,
                 yoffset,
                 winWidth,
                 winHeight,
-                self.theme.border_width,
+                self.BORDER_WIDTH,
                 px
             )
             c.unhide()
@@ -218,8 +221,8 @@ class Stack(Layout):
                     xoffset,
                     self.group.screen.dy,
                     winWidth,
-                    self.group.screen.dheight - 2*self.theme.border_width,
-                    self.theme.border_width,
+                    self.group.screen.dheight - 2*self.BORDER_WIDTH,
+                    self.BORDER_WIDTH,
                     px
                 )
                 c.unhide()

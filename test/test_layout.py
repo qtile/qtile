@@ -3,8 +3,6 @@ from libqtile import layout
 import libqtile.manager
 import utils
 
-theme = libqtile.manager.Theme()
-
 class MaxConfig:
     groups = ["a", "b", "c", "d"]
     layouts = [
@@ -12,7 +10,6 @@ class MaxConfig:
     ]
     keys = []
     screens = []
-    theme = None
 
 
 class uMax(utils.QtileTests):
@@ -49,7 +46,6 @@ class StackConfig:
     ]
     keys = []
     screens = []
-    theme = None
 
 
 class uStack(utils.QtileTests):
@@ -217,7 +213,6 @@ class SelectorConfig:
     ]
     keys = []
     screens = []
-    theme = None
 
 
 class uSelectors(utils.QtileTests):
@@ -233,7 +228,6 @@ class TileConfig:
         layout.Tile(masterWindows=2)
         ]
     keys = []
-    theme = None
     screens = []
 
 
@@ -280,7 +274,6 @@ class MagnifyConfig:
         ]
     keys = []
     screens = []
-    theme = None
 
 
 class uMagnify(utils.QtileTests):

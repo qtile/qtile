@@ -29,10 +29,6 @@ class Layout(command.CommandObject):
         for i in windows:
             self.configure(i)
 
-    @property
-    def theme(self):
-        return self.group.qtile.theme
-
     def clone(self, group):
         """
             :group Group to attach new layout instance to.

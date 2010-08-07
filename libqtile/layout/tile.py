@@ -3,6 +3,9 @@ from .. import command, utils
 
 class Tile(Layout):
     name="tile"
+    BORDER_FOCUS = "#0000ff"
+    BORDER_NORMAL = "#000000"
+    BORDER_WIDTH = 1
     def __init__(self, ratio=0.618, masterWindows = 1, expand=True):
         Layout.__init__(self)
         self.clients = []
@@ -53,7 +56,7 @@ class Tile(Layout):
         screenWidth = self.group.screen.dwidth
         screenHeight = self.group.screen.dheight
         x = y = w = h = 0
-        borderWidth = self.theme.border_width
+        borderWidth = self.BORDER_WIDTH
         if self.clients and c in self.clients:
             pos = self.clients.index(c)
             if c in self.master_windows:
@@ -69,9 +72,9 @@ class Tile(Layout):
                 x = self.group.screen.dx + int(screenWidth*self.ratio)
                 y = self.group.screen.dy + self.clients[self.master:].index(c)*h
             if c is self.focused:
-                bc = self.group.qtile.colorPixel(self.theme.border_focus)
+                bc = self.group.qtile.colorPixel(self.BORDER_FOCUS)
             else:
-                bc = self.group.qtile.colorPixel(self.theme.border_normal)
+                bc = self.group.qtile.colorPixel(self.BORDER_NORMAL)
             c.place(
                 x,
                 y,

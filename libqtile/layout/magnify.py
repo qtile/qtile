@@ -3,6 +3,9 @@ from .. import command, utils
 
 class Magnify(Layout):
     name = "layout"
+    BORDER_WIDTH = 1
+    BORDER_FOCUS = "#0000ff"
+    BORDER_NORMAL = "#000000"
     def __init__(self, gap=50):
         Layout.__init__(self)
         self.clients = []
@@ -57,14 +60,14 @@ class Magnify(Layout):
         screenHeight = self.group.screen.dheight
         gap = self.gap
         x = y = w = h = 0
-        borderWidth = self.theme.border_width
+        borderWidth = self.BORDER_WIDTH
         if self.clients and c in self.clients:
             if c is self.clients[0]:
                 x = self.group.screen.dx + gap
                 y = self.group.screen.dy + gap
                 w = screenWidth - 2*gap
                 h = screenHeight - 2*gap
-                bc = self.group.qtile.colorPixel(self.theme.border_focus)
+                bc = self.group.qtile.colorPixel(self.BORDER_FOCUS)
             else:
                 clis = self.clients[1:]
                 position = clis.index(c)
@@ -72,7 +75,7 @@ class Magnify(Layout):
                 h = screenHeight/len(clis) #TODO: CAST TO INT?
                 x = self.group.screen.dx
                 y = self.group.screen.dy + position*h
-                bc = self.group.qtile.colorPixel(self.theme.border_normal)
+                bc = self.group.qtile.colorPixel(self.BORDER_NORMAL)
             c.place(
                 x,
                 y,

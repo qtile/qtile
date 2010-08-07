@@ -30,8 +30,8 @@ class Gap(command.CommandObject):
         self.size = size
         self.qtile, self.screen = None, None
 
-    def _configure(self, qtile, screen, theme):
-        self.qtile, self.screen, self.theme = qtile, screen, theme
+    def _configure(self, qtile, screen):
+        self.qtile, self.screen = qtile, screen
 
     @property
     def x(self):
@@ -103,6 +103,7 @@ class Bar(Gap):
     background = "black"
     widgets = None
     window = None
+    OPACITY = 1
     def __init__(self, widgets, size):
         """
             Note that bars can only be at the top or the bottom of the screen.
@@ -113,22 +114,20 @@ class Bar(Gap):
         Gap.__init__(self, size)
         self.widgets = widgets
 
-    def _configure(self, qtile, screen, theme):
+    def _configure(self, qtile, screen):
         if not self in [screen.top, screen.bottom]:
             raise confreader.ConfigError(
                     "Bars must be at the top or the bottom of the screen."
                   )
-        Gap._configure(self, qtile, screen, theme)
-        self.background = theme.bg_normal
+        Gap._configure(self, qtile, screen)
         c = qtile.conn.default_screen.default_colormap.alloc_color(
                 self.background
             )
-        opacity = theme.opacity
         self.window = window.Internal.create(
                         self.qtile,
                         c,
                         self.x, self.y, self.width, self.height,
-                        opacity
+                        self.OPACITY
                      )
         self.window.handle_Expose = self.handle_Expose
         self.window.handle_ButtonPress = self.handle_ButtonPress
@@ -137,7 +136,7 @@ class Bar(Gap):
 
         for i in self.widgets:
             qtile.registerWidget(i)
-            i._configure(qtile, self, theme)
+            i._configure(qtile, self)
         self.resize()
 
     def resize(self):

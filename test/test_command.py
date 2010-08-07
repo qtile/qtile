@@ -5,7 +5,6 @@ import utils
 
 import libqtile.confreader, libqtile.manager, libqtile.layout, libqtile.bar, libqtile.widget
 
-theme = libqtile.manager.Theme()
 
 class CallConfig(libqtile.confreader.Config):
     keys = [

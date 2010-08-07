@@ -3,8 +3,6 @@ import libqtile.layout, libqtile.bar, libqtile.widget, libqtile.manager
 from libqtile.command import _Call
 import utils
 
-theme = libqtile.manager.Theme()
-
 class GBConfig:
     keys = []
     groups = ["a", "bb", "ccc", "dddd", "pppp"]
@@ -27,7 +25,6 @@ class GBConfig:
                     ),
         )
     ]
-    theme = None
 
 
 class uWidgets(utils.QtileTests):
@@ -68,7 +65,6 @@ class GeomConf:
             bottom=libqtile.bar.Bar([], 10),
         )
     ]
-    theme = None
 
 
 class uBarGeometry(utils.QtileTests):
@@ -107,8 +103,8 @@ class uBarErr(utils._QtileTruss):
 
 
 class TestWidget(libqtile.widget.base._Widget):
-    def _configure(self, qtile, bar, theme):
-        libqtile.widget.base._Widget._configure(self, qtile, bar, theme)
+    def _configure(self, qtile, bar):
+        libqtile.widget.base._Widget._configure(self, qtile, bar)
         self.width = 10
 
     def draw(self): pass
