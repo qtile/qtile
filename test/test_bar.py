@@ -48,6 +48,7 @@ class uWidgets(utils.QtileTests):
         self.c.widget["text"].update(None)
         self.c.widget["text"].update("".join(chr(i) for i in range(255)))
         self.c.widget["text"].update("V\xE2r\xE2na\xE7\xEE")
+        self.c.widget["text"].update(u"\ua000")
         
     def test_groupbox_click(self):
         self.c.group["ccc"].toscreen()

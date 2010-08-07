@@ -132,13 +132,24 @@ class _Drawer:
         self.ctx.rectangle(0, 0, self.widget.bar.width, self.widget.bar.height)
         self.ctx.fill()
         self.ctx.stroke()
+
+    def _scrub_to_utf8(self, text):
+        if isinstance(text, unicode):
+            return text
+        else:
+            try:
+                return text.decode("utf-8")
+            except UnicodeDecodeError:
+                # We don't know the provenance of this string - so we scrub it to ASCII.
+                return "".join(i for i in text if 31 < ord(i) <  127)
         
     def textbox(self, text):
         """
             Draw text using the current font.
         """
-        self.ctx.set_source_rgb(*utils.rgb("ffffff"))
-        self.ctx.show_text(text)
+        if text:
+            self.ctx.set_source_rgb(*utils.rgb("ffffff"))
+            self.ctx.show_text(self._scrub_to_utf8(text))
 
 
 class _Widget(command.CommandObject):
@@ -220,8 +231,7 @@ class _TextBox(_Widget):
         self.drawer.clear("000000")
         asc, desc, height, xadv, _ = self.drawer.fit_fontsize(self.bar.height*0.8)
         self.drawer.ctx.move_to(xadv/2, self.bar.height*0.1 + height-desc)
-        if self.text:
-            self.drawer.textbox(self.text)
+        self.drawer.textbox(self.text)
         self.drawer.draw()
 
 
