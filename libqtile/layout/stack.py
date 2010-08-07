@@ -94,13 +94,16 @@ class _WinStack(object):
 
 class Stack(Layout):
     name = "stack"
-    BORDER_FOCUS = "#0000ff"
-    BORDER_NORMAL = "#000000"
-    BORDER_WIDTH = 1
-    def __init__(self, stacks=2):
+    defaults = dict(
+        border_focus = "#0000ff",
+        border_normal = "#000000",
+        border_width = 1
+    )
+    def __init__(self, stacks=2, **attrs):
         """
             :stacks Number of stacks to start with.
         """
+        Layout.__init__(self, **attrs)
         self.stacks = [_WinStack() for i in range(stacks)]
 
     @property
@@ -194,24 +197,24 @@ class Stack(Layout):
             c.hide()
 
         if c is self.group.currentWindow:
-            px = self.group.qtile.colorPixel(self.BORDER_FOCUS)
+            px = self.group.qtile.colorPixel(self.border_focus)
         else:
-            px = self.group.qtile.colorPixel(self.BORDER_NORMAL)
+            px = self.group.qtile.colorPixel(self.border_normal)
 
         columnWidth = int(self.group.screen.dwidth/float(len(self.stacks)))
         xoffset = self.group.screen.dx + i*columnWidth
-        winWidth = columnWidth - 2*self.BORDER_WIDTH
+        winWidth = columnWidth - 2*self.border_width
 
         if s.split:
             columnHeight = int(self.group.screen.dheight/float(len(s)))
-            winHeight = columnHeight - 2*self.BORDER_WIDTH
+            winHeight = columnHeight - 2*self.border_width
             yoffset = self.group.screen.dy + s.index(c)*columnHeight
             c.place(
                 xoffset,
                 yoffset,
                 winWidth,
                 winHeight,
-                self.BORDER_WIDTH,
+                self.border_width,
                 px
             )
             c.unhide()
@@ -221,8 +224,8 @@ class Stack(Layout):
                     xoffset,
                     self.group.screen.dy,
                     winWidth,
-                    self.group.screen.dheight - 2*self.BORDER_WIDTH,
-                    self.BORDER_WIDTH,
+                    self.group.screen.dheight - 2*self.border_width,
+                    self.border_width,
                     px
                 )
                 c.unhide()

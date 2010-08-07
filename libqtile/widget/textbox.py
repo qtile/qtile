@@ -2,19 +2,21 @@ from .. import bar
 import base
 
 class TextBox(base._TextBox):
-    FONT = "Monospace"
-    def __init__(self, name, text=" ", width=bar.STRETCH):
+    defaults = dict(
+        font = "Monospace",
+    )
+    def __init__(self, name, text=" ", width=bar.STRETCH, **attrs):
         """
             :name Name for this widget.
             :text Initial widget text.
             :width Either an integer width, or the STRETCH constant.
         """
         self.name = name
-        base._TextBox.__init__(self, text, width)
+        base._TextBox.__init__(self, text, width, **attrs)
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
-        self.drawer.set_font(self.FONT, self.bar.height)
+        self.drawer.set_font(self.font, self.bar.height)
 
     def update(self, text):
         self.text = text

@@ -100,11 +100,11 @@ class Gap(command.CommandObject):
 
 STRETCH = -1
 class Bar(Gap):
-    background = "black"
-    widgets = None
-    window = None
-    OPACITY = 1
-    def __init__(self, widgets, size):
+    defaults = dict(
+        background = "black",
+        opacity = 1
+    )
+    def __init__(self, widgets, size, **attrs):
         """
             Note that bars can only be at the top or the bottom of the screen.
             
@@ -113,6 +113,7 @@ class Bar(Gap):
         """
         Gap.__init__(self, size)
         self.widgets = widgets
+        utils.load(self, self.defaults, attrs)
 
     def _configure(self, qtile, screen):
         if not self in [screen.top, screen.bottom]:
@@ -127,7 +128,7 @@ class Bar(Gap):
                         self.qtile,
                         c,
                         self.x, self.y, self.width, self.height,
-                        self.OPACITY
+                        self.opacity
                      )
         self.window.handle_Expose = self.handle_Expose
         self.window.handle_ButtonPress = self.handle_ButtonPress

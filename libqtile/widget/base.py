@@ -16,7 +16,6 @@ class _Drawer:
         to the window, we copy the appropriate portion of the pixmap onto the
         window.
     """
-    _fallbackFont = "-*-fixed-bold-r-normal-*-15-*-*-*-c-*-*-*"
     def __init__(self, qtile, widget):
         self.qtile, self.widget = qtile, widget
         self.pixmap = self.qtile.conn.conn.generate_id()
@@ -156,6 +155,10 @@ class _Widget(command.CommandObject):
     width = None
     offset = None
     name = None
+    defaults = {}
+    def __init__(self, **attrs):
+        command.CommandObject.__init__(self)
+        utils.load(self, self.defaults, attrs)
 
     @property
     def win(self):
@@ -208,7 +211,8 @@ class _Widget(command.CommandObject):
 class _TextBox(_Widget):
     PADDING = 5
     FONTSIZE = 20
-    def __init__(self, text=" ", width=bar.STRETCH):
+    def __init__(self, text=" ", width=bar.STRETCH, **attrs):
+        _Widget.__init__(self, **attrs)
         self.width = width
         self.text = text
 

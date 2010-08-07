@@ -149,3 +149,12 @@ def rgb(x):
         return rgb([int(i, 16) for i in (x[0:2], x[2:4], x[4:6])])
     raise ValueError("Invalid RGB specifier.")
 
+
+def load(target, defaults, attrs):
+    """
+        Loads a dict of attributes, using specified defaults, onto target.
+    """
+    for k, v in defaults.items():
+        val = attrs.get(k, v)
+        setattr(target, k, val)
+

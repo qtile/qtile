@@ -3,18 +3,18 @@ import cairo
 import base
 
 class GroupBox(base._Widget):
-    PADDING_Y = 2           # Y padding outside the box
-    PADDING_X = 2           # X padding outside the box
-    BORDERWIDTH = 3
-
-    FONT = "Monospace"
-    ACTIVE = "FFFFFF"
-    INACTIVE = "404040"
-    BACKGROUND = "000000"
-    THIS_SCREEN_BORDER = "215578"
-    OTHER_SCREEN_BORDER = "404040"
-    MIN_MARGIN_X = 5
-
+    defaults = dict(
+        padding_y = 2,           # Y padding outside the box
+        padding_x = 2,           # X padding outside the box
+        borderwidth = 3,
+        font = "Monospace",
+        active = "FFFFFF",
+        inactive = "404040",
+        background = "000000",
+        this_screen_border = "215578",
+        other_screen_border = "404040",
+        min_margin_x = 5
+    )
     def click(self, x, y):
         return
         #groupOffset = x/self.boxwidth
@@ -23,16 +23,16 @@ class GroupBox(base._Widget):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
-        self.drawer.set_font(self.FONT, self.bar.height)
+        self.drawer.set_font(self.font, self.bar.height)
                 
         # Leave a 10% margin top and bottom
-        self.margin_y = int((self.bar.height - (self.PADDING_Y + self.BORDERWIDTH)*2)*0.2)
+        self.margin_y = int((self.bar.height - (self.padding_y + self.borderwidth)*2)*0.2)
         self.maxwidth, self.maxheight = self.drawer.fit_text(
             [i.name for i in qtile.groups],
-            self.bar.height - (self.PADDING_Y + self.margin_y + self.BORDERWIDTH)*2
+            self.bar.height - (self.padding_y + self.margin_y + self.borderwidth)*2
         )
-        self.margin_x = max(self.MIN_MARGIN_X, int(self.maxwidth * 0.2))
-        self.boxwidth = self.maxwidth + self.PADDING_X*2 + self.BORDERWIDTH*2 + self.margin_x*2
+        self.margin_x = max(self.min_margin_x, int(self.maxwidth * 0.2))
+        self.boxwidth = self.maxwidth + self.padding_x*2 + self.borderwidth*2 + self.margin_x*2
         self.width = self.boxwidth * len(self.qtile.groups)
         hook.subscribe("setgroup", self.draw)
         hook.subscribe("window_add", self.draw)
@@ -42,29 +42,29 @@ class GroupBox(base._Widget):
         return len([w for w in group.windows if w.urgent]) > 0
 
     def draw(self):
-        self.drawer.clear(self.BACKGROUND)
+        self.drawer.clear(self.background)
         for i, e in enumerate(self.qtile.groups):
             border = False
             if e.screen:
                 if self.bar.screen.group.name == e.name:
-                    border = self.THIS_SCREEN_BORDER
+                    border = self.this_screen_border
                 else:
-                    border = self.OTHER_SCREEN_BORDER
+                    border = self.other_screen_border
             if border:
                 self.drawer.ctx.set_source_rgb(*utils.rgb(border))
                 self.drawer.rounded_rectangle(
-                    (self.boxwidth * i) + self.PADDING_X, self.PADDING_Y,
-                    self.boxwidth - 2*self.PADDING_X,
-                    self.bar.height - 2*self.PADDING_Y,
-                    self.BORDERWIDTH
+                    (self.boxwidth * i) + self.padding_x, self.padding_y,
+                    self.boxwidth - 2*self.padding_x,
+                    self.bar.height - 2*self.padding_y,
+                    self.borderwidth
                 )
                 self.drawer.ctx.stroke()
 
             # We could cache these...
             if e.windows:
-                self.drawer.ctx.set_source_rgb(*utils.rgb(self.ACTIVE))
+                self.drawer.ctx.set_source_rgb(*utils.rgb(self.active))
             else:
-                self.drawer.ctx.set_source_rgb(*utils.rgb(self.INACTIVE))
+                self.drawer.ctx.set_source_rgb(*utils.rgb(self.inactive))
             # We use the x_advance value rather than the width.
             _, _, _, y, x, _ = self.drawer.text_extents(e.name)
             self.drawer.ctx.move_to(

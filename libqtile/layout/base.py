@@ -19,12 +19,17 @@
 # SOFTWARE.
 
 import copy, sys
-from .. import command
+from .. import command, utils
 
 class Layout(command.CommandObject):
     """
         This class defines the API that should be exposed by all layouts.
     """
+    defaults = {}
+    def __init__(self, **attrs):
+        command.CommandObject.__init__(self)
+        utils.load(self, self.defaults, attrs)
+
     def layout(self, windows):
         for i in windows:
             self.configure(i)
