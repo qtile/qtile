@@ -44,6 +44,11 @@ class uWidgets(utils.QtileTests):
         assert self.c.widget["text"].get() == "testing"
         self.c.group["pppp"].toscreen()
 
+    def test_textbox_errors(self):
+        self.c.widget["text"].update(None)
+        self.c.widget["text"].update("".join(chr(i) for i in range(255)))
+        self.c.widget["text"].update("V\xE2r\xE2na\xE7\xEE")
+        
     def test_groupbox_click(self):
         self.c.group["ccc"].toscreen()
         assert self.c.groups()["a"]["screen"] == None

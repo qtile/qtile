@@ -378,39 +378,8 @@ class _Window(command.CommandObject):
             "do_not_propagate_mask": a.do_not_propagate_mask
         }
         props = self.window.list_properties()
-        h = self.window.get_wm_normal_hints()
-        if h:
-            normalhints = dict(
-                flags = h.flags,
-                min_width = h.min_width,
-                min_height = h.min_height,
-                max_width = h.max_width,
-                max_height = h.max_height,
-                width_inc = h.width_inc,
-                height_inc = h.height_inc,
-                min_aspect = dict(num=h.min_aspect["num"], denum=h.min_aspect["denum"]),
-                max_aspect = dict(num=h.max_aspect["num"], denum=h.max_aspect["denum"]),
-                base_width = h.base_width,
-                base_height = h.base_height,
-                win_gravity = h.win_gravity
-            )
-        else:
-            normalhints = None
-        
-        h = self.window.get_wm_hints()
-        if h:
-            hints = dict(
-                flags = h.flags,
-                input = h.input,
-                initial_state = h.initial_state,
-                icon_window = h.icon_window.id,
-                icon_x = h.icon_x,
-                icon_y = h.icon_y,
-                window_group = h.window_group.id
-            )
-        else:
-            hints = None
-
+        normalhints = self.window.get_wm_normal_hints()
+        hints = self.window.get_wm_hints()
         protocols = []
         for i in self.window.get_wm_protocols():
             protocols.append(i)
@@ -497,7 +466,8 @@ class Window(_Window):
             print >> sys.stderr, "normal_hints"
         elif name == "WM_NAME":
             self.updateName()
-            hook.fire("client_name_updated", self)
+        elif name == "_NET_WM_NAME":
+            self.updateName()
         elif name == "_NET_WM_WINDOW_OPACITY":
             pass
         else:

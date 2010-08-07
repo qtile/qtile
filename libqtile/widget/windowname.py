@@ -1,3 +1,4 @@
+import sys
 from .. import hook
 import base
 

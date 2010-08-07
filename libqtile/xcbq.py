@@ -2,7 +2,7 @@
     A minimal EWMH-aware OO layer over xpyb. This is NOT intended to be
     complete - it only implements the subset of functionalty needed by qtile.
 """
-import sys
+import sys, struct
 import xcb.xproto, xcb.xinerama, xcb.xcb
 from xcb.xproto import CW, WindowClass, EventMask
 import utils, xkeysyms, xatom
@@ -22,6 +22,30 @@ ModMasks = {
 }
 ModMapOrder = ["shift", "lock", "control", "mod1", "mod2", "mod3", "mod4", "mod5"]
 
+NormalHintsFlags = {
+    "USPosition":  1,          # User-specified x, y
+    "USSize":      2,          # User-specified width, height
+    "PPosition":   4,          # Program-specified position
+    "PSize":       8,          # Program-specified size
+    "PMinSize":    16,         # Program-specified minimum size
+    "PMaxSize":    32,         # Program-specified maximum size
+    "PResizeInc":  64,         # Program-specified resize increments
+    "PAspect":     128,        # Program-specified min and max aspect ratios
+    "PBaseSize":   256,        # Program-specified base size
+    "PWinGravity": 512,        # Program-specified window gravity
+}
+
+HintsFlags = {
+    "InputHint":	1,      # input
+    "StateHint":	2,      # initial_state
+    "IconPixmapHint":	4,      # icon_pixmap
+    "IconWindowHint":	8,      # icon_window
+    "IconPositionHint":	16,     # icon_x & icon_y
+    "IconMaskHint":	32,     # icon_mask
+    "WindowGroupHint":	64,     # window_group
+    "MessageHint":	128,    # (this bit is obsolete)
+    "UrgencyHint":	256,    # urgency
+}
 
 WindowTypes = {
     '_NET_WM_WINDOW_TYPE_DESKTOP': "desktop",
@@ -234,11 +258,48 @@ class Window:
 
     def get_wm_hints(self):
         r = self.get_property("WM_HINTS", xcb.xproto.GetPropertyType.Any)
-        return list(r.value)
+        if r.value_len:
+            data = struct.pack("B" * len(r.value), *(list(r.value)))
+            l = struct.unpack_from("=IIIIIIIII", data)
+            flags = set()
+            for k, v in HintsFlags.items():
+                if l[0]&v:
+                    flags.add(k)
+            return dict(
+                flags = flags,
+                input = l[1],
+                initial_state = l[2],
+                icon_pixmap = l[3],
+                icon_window = l[4],
+                icon_x = l[5],
+                icon_y = l[6],
+                icon_mask = l[7],
+                window_group = l[8]
+            )
 
     def get_wm_normal_hints(self):
         r = self.get_property("WM_NORMAL_HINTS", xcb.xproto.GetPropertyType.Any)
-        return list(r.value)
+        if r.value_len:
+            data = struct.pack("B" * len(r.value), *(list(r.value)))
+            l = struct.unpack_from("=IIIIIIIIIIIIII", data)
+            flags = set()
+            for k, v in NormalHintsFlags.items():
+                if l[0]&v:
+                    flags.add(k)
+            return dict(
+                flags = flags,
+                min_width = l[1+4],
+                min_height = l[2+4],
+                max_width = l[3+4],
+                max_height = l[4+4],
+                width_inc = l[5+4],
+                height_inc = l[6+4],
+                min_aspect = l[7+4],
+                max_aspect = l[8+4],
+                base_width = l[9+4],
+                base_height = l[9+4],
+                win_gravity = l[9+4],
+            )
 
     def get_wm_protocols(self):
         r = self.get_property("WM_PROTOCOLS", xcb.xproto.GetPropertyType.Any)
@@ -347,10 +408,6 @@ class Window:
                 raise ValueError, "Must specify type for unknown property."
             else:
                 type, _ = PropertyMap[prop]
-        #print prop, self.conn.atoms[prop] if isinstance(prop, basestring) else prop 
-        #c = self.conn.conn.core.GetAtomName(prop)
-        #print "".join([chr(i) for i in c.reply().name])
-
         return self.conn.conn.core.GetProperty(    
             False, self.wid, 
             self.conn.atoms[prop] if isinstance(prop, basestring) else prop, 

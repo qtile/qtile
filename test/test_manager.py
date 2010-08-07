@@ -159,8 +159,12 @@ class uSingle(utils.QtileTests):
         self.c.log_setlength(5)
         assert self.c.log_getlength() == 5
 
-    def test_inspect(self):
-        self.testWindow("one")
+    def test_inspect_xeyes(self):
+        self.testXeyes()
+        assert self.c.window.inspect()
+
+    def test_inspect_xterm(self):
+        self.testXeyes()
         assert self.c.window.inspect()
 
 

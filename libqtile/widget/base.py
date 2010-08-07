@@ -220,7 +220,8 @@ class _TextBox(_Widget):
         self.drawer.clear("000000")
         asc, desc, height, xadv, _ = self.drawer.fit_fontsize(self.bar.height*0.8)
         self.drawer.ctx.move_to(xadv/2, self.bar.height*0.1 + height-desc)
-        self.drawer.textbox(self.text)
+        if self.text:
+            self.drawer.textbox(self.text)
         self.drawer.draw()
 
 
