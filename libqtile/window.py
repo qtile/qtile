@@ -261,7 +261,7 @@ class _Window(command.CommandObject):
         )
 
     def kill(self):
-        if self.hasProtocol("WM_DELETE_WINDOW"):
+        if "WM_DELETE_WINDOW" in self.window.get_wm_protocols():
             #e = event.ClientMessage(
             #        window = self.window,
             #        client_type = self.qtile.display.intern_atom("WM_PROTOCOLS"),
@@ -339,9 +339,6 @@ class _Window(command.CommandObject):
             if warp:
                 self.window.warp_pointer(0, 0)
         hook.fire("client_focus", self)
-
-    def hasProtocol(self, name):
-        return name in self.window.get_wm_protocols()
 
     def _items(self, name, sel):
         return None
@@ -458,15 +455,16 @@ class Window(_Window):
     def handle_PropertyNotify(self, e):
         name = self.qtile.conn.atoms.get_name(e.atom)
         if name == "WM_TRANSIENT_FOR":
-            print >> sys.stderr, "transient"
+            pass
         elif name == "WM_HINTS":
             self.updateHints()
-            print >> sys.stderr, "hints"
         elif name == "WM_NORMAL_HINTS":
-            print >> sys.stderr, "normal_hints"
+            pass
         elif name == "WM_NAME":
             self.updateName()
         elif name == "_NET_WM_NAME":
+            self.updateName()
+        elif name == "_NET_WM_VISIBLE_NAME":
             self.updateName()
         elif name == "_NET_WM_WINDOW_OPACITY":
             pass

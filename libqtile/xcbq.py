@@ -250,15 +250,26 @@ class Window:
         )
 
     def get_name(self):
+        """
+            Tries to retrieve a canonical window name. We test the following
+            properties in order of preference: _NET_WM_VISIBLE_NAME,
+            _NET_WM_NAME, WM_NAME.
+        """
+        r = self.get_property("_NET_WM_VISIBLE_NAME", xcb.xproto.GetPropertyType.Any)
+        if r:
+            return self._propertyString(r)
+
+        r = self.get_property("_NET_WM_NAME", xcb.xproto.GetPropertyType.Any)
+        if r:
+            return self._propertyString(r)
+
         r = self.get_property(xcb.xproto.Atom.WM_NAME, xcb.xproto.GetPropertyType.Any)
-        if r.value_len == 0:
-            return None
-        else:
+        if r:
             return self._propertyString(r)
 
     def get_wm_hints(self):
         r = self.get_property("WM_HINTS", xcb.xproto.GetPropertyType.Any)
-        if r.value_len:
+        if r:
             data = struct.pack("B" * len(r.value), *(list(r.value)))
             l = struct.unpack_from("=IIIIIIIII", data)
             flags = set()
@@ -279,7 +290,7 @@ class Window:
 
     def get_wm_normal_hints(self):
         r = self.get_property("WM_NORMAL_HINTS", xcb.xproto.GetPropertyType.Any)
-        if r.value_len:
+        if r:
             data = struct.pack("B" * len(r.value), *(list(r.value)))
             l = struct.unpack_from("=IIIIIIIIIIIIII", data)
             flags = set()
@@ -303,27 +314,35 @@ class Window:
 
     def get_wm_protocols(self):
         r = self.get_property("WM_PROTOCOLS", xcb.xproto.GetPropertyType.Any)
-        return [self.conn.atoms.get_name(i) for i in r.value if i]
+        if r:
+            return set([self.conn.atoms.get_name(i) for i in r.value if i])
+        else:
+            return set()
 
     def get_wm_state(self):
         r = self.get_property("WM_STATE", xcb.xproto.GetPropertyType.Any)
-        return list(r.value)
+        if r:
+            list(r.value)
 
     def get_wm_class(self):
         r = self.get_property("WM_CLASS", "UTF8_STRING")
-        return self._propertyString(r)
+        if r:
+            self._propertyString(r)
 
     def get_wm_transient_for(self):
         r = self.get_property("WM_TRANSIENT_FOR", "ATOM")
-        return list(r.value)
+        if r:
+            return list(r.value)
 
     def get_wm_icon_name(self):
         r = self.get_property("WM_ICON_NAME", "UTF8_STRING")
-        return self._propertyString(r)
+        if r:
+            self._propertyString(r)
 
     def get_wm_client_machine(self):
         r = self.get_property("WM_CLIENT_MACHINE", "UTF8_STRING")
-        return self._propertyString(r)
+        if r:
+            self._propertyString(r)
 
     def get_geometry(self):
         q = self.conn.conn.core.GetGeometry(self.wid)
@@ -337,11 +356,8 @@ class Window:
                 self.conn.atoms['_NET_WM_WINDOW_TYPE'],
                 xcb.xproto.GetPropertyType.Any
         )
-        if r.value_len == 0:
-            return None
-        else:
-            # FIXME: look up wm_type
-            return None
+        # FIXME: look up wm_type
+        return None
 
     def configure(self, **kwargs):
         """
@@ -408,12 +424,16 @@ class Window:
                 raise ValueError, "Must specify type for unknown property."
             else:
                 type, _ = PropertyMap[prop]
-        return self.conn.conn.core.GetProperty(    
+        r = self.conn.conn.core.GetProperty(    
             False, self.wid, 
             self.conn.atoms[prop] if isinstance(prop, basestring) else prop, 
             self.conn.atoms[type] if isinstance(type, basestring) else type, 
             0, (2**32)-1
         ).reply()
+        if not r.value_len:
+            return None
+        else:
+            return r
 
     def list_properties(self):
         r = self.conn.conn.core.ListProperties(self.wid).reply()

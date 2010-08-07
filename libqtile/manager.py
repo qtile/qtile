@@ -520,7 +520,7 @@ class Qtile(command.CommandObject):
         internal = w.get_property("QTILE_INTERNAL")
         if attrs and attrs.override_redirect:
             return
-        if internal.value:
+        if internal:
             if not w.wid in self.internalMap:
                 c = window.Internal(w, self)
                 self.internalMap[w.wid] = c
