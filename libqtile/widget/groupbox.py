@@ -71,7 +71,9 @@ class GroupBox(base._Widget):
                 (self.boxwidth*i) + self.boxwidth/2 - x/2,
                 self.bar.height/2.0 + self.maxheight/2
             )
-            self.drawer.ctx.show_text(e.name)
+            self.drawer.ctx.show_text(
+                e.name
+            )
             self.drawer.ctx.stroke()
         self.drawer.draw()
 

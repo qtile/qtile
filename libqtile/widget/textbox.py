@@ -4,6 +4,10 @@ import base
 class TextBox(base._TextBox):
     defaults = dict(
         font = "Monospace",
+        fontsize = None,
+        padding_left = None,
+        background = None,
+        foreground = "#ffffff"
     )
     def __init__(self, name, text=" ", width=bar.STRETCH, **attrs):
         """
@@ -13,10 +17,6 @@ class TextBox(base._TextBox):
         """
         self.name = name
         base._TextBox.__init__(self, text, width, **attrs)
-
-    def _configure(self, qtile, bar):
-        base._Widget._configure(self, qtile, bar)
-        self.drawer.set_font(self.font, self.bar.height)
 
     def update(self, text):
         self.text = text

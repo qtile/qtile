@@ -143,12 +143,12 @@ class _Drawer:
                 # We don't know the provenance of this string - so we scrub it to ASCII.
                 return "".join(i for i in text if 31 < ord(i) <  127)
         
-    def textbox(self, text):
+    def textbox(self, text, colour):
         """
             Draw text using the current font.
         """
         if text:
-            self.ctx.set_source_rgb(*utils.rgb("ffffff"))
+            self.ctx.set_source_rgb(*utils.rgb(colour))
             self.ctx.show_text(self._scrub_to_utf8(text))
 
 
@@ -220,18 +220,23 @@ class _Widget(command.CommandObject):
 
 
 class _TextBox(_Widget):
-    PADDING = 5
-    FONTSIZE = 20
     def __init__(self, text=" ", width=bar.STRETCH, **attrs):
         _Widget.__init__(self, **attrs)
         self.width = width
         self.text = text
 
+    def _configure(self, qtile, bar):
+        _Widget._configure(self, qtile, bar)
+        self.drawer.set_font(self.font, self.fontsize or self.bar.height)
+
     def draw(self):
-        self.drawer.clear("000000")
+        self.drawer.clear(self.background or self.bar.background)
         asc, desc, height, xadv, _ = self.drawer.fit_fontsize(self.bar.height*0.8)
-        self.drawer.ctx.move_to(xadv/2, self.bar.height*0.1 + height-desc)
-        self.drawer.textbox(self.text)
+        self.drawer.ctx.move_to(
+            self.padding_left or xadv/2,
+            self.bar.height*0.1 + height-desc
+        )
+        self.drawer.textbox(self.text, self.foreground)
         self.drawer.draw()
 
 

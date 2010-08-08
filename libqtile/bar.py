@@ -101,7 +101,7 @@ class Gap(command.CommandObject):
 STRETCH = -1
 class Bar(Gap):
     defaults = dict(
-        background = "black",
+        background = "#000000",
         opacity = 1
     )
     def __init__(self, widgets, size, **attrs):
