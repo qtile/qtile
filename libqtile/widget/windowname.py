@@ -1,5 +1,5 @@
 import sys
-from .. import hook
+from .. import hook, bar
 import base
 
 class WindowName(base._TextBox):
@@ -10,6 +10,9 @@ class WindowName(base._TextBox):
         background = "000000",
         foreground = "ffffff"
     )
+    def __init__(self, **attrs):
+        base._TextBox.__init__(self, width=bar.STRETCH, **attrs)
+
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         hook.subscribe("window_name_change", self.update)

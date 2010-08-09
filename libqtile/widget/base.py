@@ -79,7 +79,7 @@ class _Drawer:
         fo.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
 
     def text_extents(self, text):
-        return self.ctx.text_extents(text)
+        return self.ctx.text_extents(self._scrub_to_utf8(text))
 
     def font_extents(self):
         return self.ctx.font_extents()
@@ -170,9 +170,18 @@ class _Widget(command.CommandObject):
     offset = None
     name = None
     defaults = {}
-    def __init__(self, **attrs):
+    def __init__(self, width, **attrs):
+        """
+            width: bar.STRETCH, bar.CALCULATED, or a specified width.
+        """
         command.CommandObject.__init__(self)
         utils.load(self, self.defaults, attrs)
+        if width >= 0:
+            self.width_type = bar.STATIC
+            self.width = width
+        else:
+            self.width_type = width
+            self.width = 0
 
     @property
     def win(self):
@@ -182,6 +191,13 @@ class _Widget(command.CommandObject):
         self.qtile, self.bar = qtile, bar
         self.drawer = _Drawer(qtile, self)
 
+    def resize(self):
+        """
+            Should be called whenever widget changes size.
+        """
+        self.bar.resize()
+        self.bar.draw()
+    
     def clear(self):
         self.drawer.rectangle(
             self.offset, 0, self.width, self.bar.size,
@@ -223,9 +239,8 @@ class _Widget(command.CommandObject):
 
 
 class _TextBox(_Widget):
-    def __init__(self, text=" ", width=bar.STRETCH, **attrs):
-        _Widget.__init__(self, **attrs)
-        self.width = width
+    def __init__(self, text=" ", width=bar.CALCULATED, **attrs):
+        _Widget.__init__(self, width, **attrs)
         self.text = text
 
     def guess_width(self):
@@ -239,7 +254,7 @@ class _TextBox(_Widget):
             width += font_xadv
         if width != self.width:
             self.width = width
-            self.bar.resize()
+            self.resize()
 
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)

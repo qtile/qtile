@@ -15,6 +15,9 @@ class GroupBox(base._Widget):
         other_screen_border = "404040",
         min_margin_x = 5
     )
+    def __init__(self, **attrs):
+        base._Widget.__init__(self, bar.CALCULATED, **attrs)
+
     def click(self, x, y):
         return
         #groupOffset = x/self.boxwidth

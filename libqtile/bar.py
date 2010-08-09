@@ -99,6 +99,8 @@ class Gap(command.CommandObject):
 
 
 STRETCH = -1
+CALCULATED = -2
+STATIC = -3
 class Bar(Gap):
     defaults = dict(
         background = "#000000",
@@ -145,7 +147,9 @@ class Bar(Gap):
         stretchWidget = None
         for i in self.widgets:
             i.offset = offset
-            if i.width == STRETCH:
+            if i.width_type == STRETCH:
+                if stretchWidget:
+                    raise confreader.ConfigError("Can't have more than one stretch widget on a bar.")
                 stretchWidget = i
                 break
             offset += i.width
@@ -153,12 +157,12 @@ class Bar(Gap):
         offset = self.width
         if stretchWidget:
             for i in reversed(self.widgets):
-                if i.width == STRETCH:
+                if i.width_type == STRETCH:
                     break
                 offset -= i.width
                 total += i.width
                 i.offset = offset
-            stretchWidget.width = self.width - total
+            stretchWidget.width = max(self.width - total, 0)
 
     def handle_Expose(self, e):
         self.draw()
@@ -175,6 +179,7 @@ class Bar(Gap):
 
     def info(self):
         return dict(
+            width = self.width,
             position = self.position,
             widgets = [i.info() for i in self.widgets],
             window = self.window.window.wid

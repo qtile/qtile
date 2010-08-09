@@ -11,7 +11,7 @@ class GBConfig:
         libqtile.manager.Screen(
             top = libqtile.bar.Bar(
                     [
-                        libqtile.widget.GroupBox(),
+                        libqtile.widget.WindowName(),
                         libqtile.widget.TextBox("text"),
                     ],
                     50,
@@ -41,10 +41,13 @@ class uWidgets(utils.QtileTests):
 
     def test_textbox(self):
         assert "text" in self.c.list_widgets()
-        self.c.widget["text"].update("testing")
-        assert self.c.widget["text"].get() == "testing"
+        s = "bit longer"
+        self.c.widget["text"].update(s)
+        assert self.c.widget["text"].get() == s
+        s = "much longer string than the initial one"
+        self.c.widget["text"].update(s)
+        assert self.c.widget["text"].get() == s
         self.c.group["pppp"].toscreen()
-        time.sleep(2)
 
     def test_textbox_errors(self):
         self.c.widget["text"].update(None)
@@ -111,9 +114,11 @@ class uBarErr(utils._QtileTruss):
 
 
 class TestWidget(libqtile.widget.base._Widget):
+    def __init__(self):
+        libqtile.widget.base._Widget.__init__(self, 10)
+
     def _configure(self, qtile, bar):
         libqtile.widget.base._Widget._configure(self, qtile, bar)
-        self.width = 10
 
     def draw(self): pass
 
@@ -124,7 +129,7 @@ class OffsetConf(GeomConf):
             bottom=libqtile.bar.Bar(
                 [
                     TestWidget(),
-                    libqtile.widget.Spacer(),
+                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
                     TestWidget()
                 ],
                 10
@@ -148,7 +153,7 @@ class uOffsetCalculation(utils._QtileTruss):
                 bottom=libqtile.bar.Bar(
                     [
                         TestWidget(),
-                        libqtile.widget.Spacer(),
+                        libqtile.widget.Spacer(libqtile.bar.STRETCH),
                         TestWidget()
                     ],
                     10
@@ -167,7 +172,7 @@ class uOffsetCalculation(utils._QtileTruss):
             libqtile.manager.Screen(
                 bottom=libqtile.bar.Bar(
                     [
-                        libqtile.widget.Spacer(),
+                        libqtile.widget.Spacer(libqtile.bar.STRETCH),
                     ],
                     10
                 )

@@ -13,17 +13,14 @@ class Clock(base._TextBox):
     FMT = "%H:%M"
     def __init__(self, *args, **kwargs):
         base._TextBox.__init__(self, *args, **kwargs)
-        self.current = None
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         hook.subscribe("tick", self.update)
-        self.text = datetime.datetime.now().strftime(self.FMT)
-        self.guess_width()
 
     def update(self):
         now = datetime.datetime.now().strftime(self.FMT)
-        if self.current != now:
+        if self.text != now:
             _, _, _, _, self.width, _  = self.drawer.text_extents(now)
             self.text = now
             self.guess_width()

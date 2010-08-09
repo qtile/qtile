@@ -9,17 +9,19 @@ class TextBox(base._TextBox):
         background = None,
         foreground = "#ffffff"
     )
-    def __init__(self, name, text=" ", width=bar.STRETCH, **attrs):
+    def __init__(self, name, text=" ", width=bar.CALCULATED, **attrs):
         """
             :name Name for this widget.
             :text Initial widget text.
-            :width Either an integer width, or the STRETCH constant.
+            :width An integer width, STRETCH, or CALCULATED .
         """
         self.name = name
         base._TextBox.__init__(self, text, width, **attrs)
 
     def update(self, text):
         self.text = text
+        if self.width_type == bar.CALCULATED:
+            self.guess_width()
         self.draw()
 
     def cmd_update(self, text):
