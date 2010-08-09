@@ -1,36 +1,38 @@
 
-Qtile's public API consists of a graph of nodes, each with a set of associated
-commands. The same API serves a number of different purposes:
+Qtile's public API consists of a graph of objects, each with a set of
+associated commands. The object commands are used for a number of different
+purposes:
 
-    - Commands can be bound to keys in the Qtile configuration file. 
-    - Commands can be called manually through __qsh__, the Qtile shell.
-    - Commands can be called to interact with Qtile from a script. 
+- Commands can be bound to keys in the Qtile configuration file. 
+- Commands can be called manually through __qsh__, the Qtile shell.
+- Commands can be called to interact with Qtile from a script. 
 
-Please explore the API using __qsh__ - command lists and detailed documentation
-can be accessed from its built-in help command, and are not documented here.
+If the explanation below seems a bit complex, please take a moment to explore
+the API using the __qsh__ command shell. Command lists and detailed
+documentation can be accessed from its built-in help command, and are not
+documented here.
 
 
 Object Graph
 ============
 
-    Qtile's object graph consists of seven node types: __layout__, __window__,
-    __group__, __bar__, __widget__, __screen__, and a special __root__ node.
-    Individual nodes are addressed by a path specification that starts at the
-    root node, and follows the edges of the graph. Each node has a set of
-    associated commands, a set of children, and a set of keys.  This is what
-    the graph looks like:
+Qtile's object graph consists of seven node types: __layout__, __window__,
+__group__, __bar__, __widget__, __screen__, and a special __root__ node.
+Objects are addressed by a path specification that starts at the root, and
+follows the edges of the graph. Each object has a set of associated commands, a
+set of children, and a set of keys. This is what the graph looks like:
 
 <center>
 <img src="objgraph.png">
 </center>
     
-    Each arrow can be read as "holds a reference to". So, we would say that a
-    __widget__ object _holds a reference to_ objects of type __bar__,
-    __screen__ and __group__, exposed as attributes with the same names.
+Each arrow can be read as "holds a reference to". So, we would say that a
+__widget__ object _holds a reference to_ objects of type __bar__,
+__screen__ and __group__, exposed as attributes with the same names.
 
-    Lets start with a simple example. The following script runs the __status__
-    command on the root node of the command graph (which, in this case, is the
-    Client object):
+Lets start with a simple example. The following script runs the __status__
+command on the root node of the command graph (which, in this case, is the
+Client object):
 
 <!--(block | pySyntax)-->
 from libqtile.command import Client
@@ -38,43 +40,42 @@ c = Client()
 print c.status()
 <!--(end)-->
 
-    From the graph, we can see that the root node holds a reference to
-    __group__ nodes. We can access the "info" command on the current group like
-    so:
+From the graph, we can see that the root node holds a reference to
+__group__ nodes. We can access the "info" command on the current group like
+so:
 
 <!--(block | pySyntax)-->
 c.group.info()
 <!--(end)-->
 
-    To access a specific group, regardless of whether or not it is current, we
-    use the Python containment syntax:
+To access a specific group, regardless of whether or not it is current, we
+use the Python containment syntax:
 
 <!--(block | pySyntax)-->
 c.group["b"].info()
 <!--(end)-->
 
-    The current __group__, __layout__, __screen__ and __window__ can be
-    accessed by simply leaving the key specifier out. The key specifier is
-    mandatory for __widget__ and __bar__ nodes. 
+The current __group__, __layout__, __screen__ and __window__ can be
+accessed by simply leaving the key specifier out. The key specifier is
+mandatory for __widget__ and __bar__ nodes. 
 
-    We can now drill down deeper in the graph. To access the screen
-    currently displaying group "b", we can do this:
+We can now drill down deeper in the graph. To access the screen
+currently displaying group "b", we can do this:
 
 <!--(block | pySyntax)-->
 c.group["b"].screen.info()
 <!--(end)-->
    
-    Be aware, however, that group "b" might not currently be displayed. In that
-    case, it has no associated screen, the path resolves to a non-existent
-    node, and we get an exeption:
+Be aware, however, that group "b" might not currently be displayed. In that
+case, it has no associated screen, the path resolves to a non-existent
+node, and we get an exeption:
 
 <pre>
 libqtile.command.CommandError: No object screen in path 'group['b'].screen'
 </pre>
 
-    The graph is not a tree, since it can contain cycles. This path
-    (redundantly) specifies the group belonging to the screen that belongs to
-    group "b":
+The graph is not a tree, since it can contain cycles. This path (redundantly)
+specifies the group belonging to the screen that belongs to group "b":
 
 <!--(block | pySyntax)-->
 c.group["b"].screen.group()
@@ -95,7 +96,7 @@ The key specifier for the various object types are as follows:
 
     <tr> 
         <td> bar </td>
-        <td> One of "top", "bottom", "left", "right" </td>
+        <td> "top", "bottom" </td>
         <td> No </td>
         <td> c.screen.bar["bottom"] </td>
     </tr>

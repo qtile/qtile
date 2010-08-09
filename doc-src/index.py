@@ -2,7 +2,7 @@ import sys, os
 sys.path.insert(0, "..")
 import countershape.widgets
 import countershape.layout
-import countershape.grok
+import countershape.markup
 from countershape.doc import *
 
 class Examples:
@@ -19,19 +19,19 @@ class Examples:
     def py(self, path, **kwargs):
         return self._wrap(ns.pySyntax.withConf(**kwargs), path)
 
+this.markup = countershape.markup.Markdown()
 ns.examples = Examples("..")
 
-ns.docTitle = "Qtile 0.2"
+ns.docTitle = "Qtile 0.4"
 ns.docMaintainer = "Aldo Cortesi"
 ns.docMaintainerEmail = "aldo@nullcube.com"
-ns.foot = "Copyright Aldo Cortesi 2008"
-ns.version = "0.2"
+ns.foot = "Copyright Aldo Cortesi 2010"
+ns.version = "0.4"
 ns.sidebar = countershape.widgets.SiblingPageIndex('/index.html')
-ns.copyright = "Copyright (c) 2009 Aldo Cortesi"
+ns.copyright = "Copyright (c) 2010 Aldo Cortesi"
 this.layout = countershape.Layout("_layout.html")
 this.titlePrefix = "Qtile %s - "%ns.version
 
-ns.qtgrok = countershape.grok.parse("../libqtile")
 
 pages = [
     Page("index.html", "Introduction"),
@@ -40,7 +40,7 @@ pages = [
     Page("configuration.html", "Configuration"),
     Directory("configuration"),
     Page("scripting.html", "Scripting"),
-    Page("qsh.html", "qsh - The Qtile Shell"),
+    Page("qsh.html", "qsh - the Qtile shell"),
     Page("dev.html", "Hacking on Qtile"),
     Page("faq.html", "FAQ"),
     Page("admin.html", "Administrivia")
