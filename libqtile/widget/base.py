@@ -244,13 +244,17 @@ class _TextBox(_Widget):
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
         self.drawer.set_font(self.font, self.fontsize or self.bar.height)
-        _, self.font_desc, self.font_height, self.font_xadv, _ = self.drawer.fit_fontsize(self.bar.height*0.8)
+        if not self.fontsize:
+            _, self.font_desc, self.font_height, self.font_xadv, _ = self.drawer.fit_fontsize(self.bar.height*0.8)
+        else:
+            _, self.font_desc, self.font_height, self.font_xadv, _ = self.drawer.font_extents()
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
+        margin = (self.bar.height - self.font_height)/2
         self.drawer.ctx.move_to(
             self.padding or self.font_xadv/2,
-            self.bar.height*0.1 + self.font_height-self.font_desc
+            margin + self.font_height-self.font_desc
         )
         self.drawer.textbox(self.text, self.foreground)
         self.drawer.draw()
