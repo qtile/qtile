@@ -368,7 +368,7 @@ class Window:
 
     def set_attribute(self, **kwargs):
         mask, values = AttributeMasks(**kwargs)
-        self.conn.conn.core.ChangeWindowAttributes(self.wid, mask, values)
+        self.conn.conn.core.ChangeWindowAttributesChecked(self.wid, mask, values)
 
     def set_property(self, name, value, type=None, format=None):
         """
@@ -586,6 +586,12 @@ class Connection:
 
     def flush(self):
         return self.conn.flush()
+
+    def xsync(self):
+        # The idea here is that pushing an innocuous request through
+        # the queue and waiting for a response "syncs" the connection, since
+        # requests are serviced in order.
+        self.conn.core.GetInputFocus().reply()
 
     def grab_server(self):
         return self.conn.core.GrabServer()

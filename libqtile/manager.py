@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import datetime, subprocess, sys, operator, os, traceback, shlex
+import datetime, subprocess, sys, operator, os, traceback, shlex, time
 import select
 import xcbq
 import xcb.xproto, xcb.xinerama
@@ -436,21 +436,6 @@ class Qtile(command.CommandObject):
             self.screens.append(s)
         self.currentScreen = self.screens[0]
 
-        # Because we only do Xinerama multi-screening, we can assume that the first
-        # screen's root is _the_ root.
-        self.root = self.conn.default_screen.root
-        self.root.set_attribute(
-            eventmask = EventMask.StructureNotify |\
-                        EventMask.SubstructureNotify |\
-                        EventMask.SubstructureRedirect |\
-                        EventMask.EnterWindow |\
-                        EventMask.LeaveWindow
-        )
-        if self._exit:
-            print >> sys.stderr, "Access denied: Another window manager running?"
-            sys.exit(1)
-
-        self.server = command._Server(self.fname, self, config)
         self.ignoreEvents = set([
             xcb.xproto.KeyReleaseEvent,
             xcb.xproto.ReparentNotifyEvent,
@@ -462,6 +447,24 @@ class Qtile(command.CommandObject):
             xcb.xproto.FocusInEvent,
         ])
 
+        # Because we only do Xinerama multi-screening, we can assume that the first
+        # screen's root is _the_ root.
+        self.root = self.conn.default_screen.root
+        self.root.set_attribute(
+            eventmask = EventMask.StructureNotify |\
+                        EventMask.SubstructureNotify |\
+                        EventMask.SubstructureRedirect |\
+                        EventMask.EnterWindow |\
+                        EventMask.LeaveWindow
+        )
+        self.conn.flush()
+        self.conn.xsync()
+        self.xpoll()
+        if self._exit:
+            print >> sys.stderr, "Access denied: Another window manager running?"
+            sys.exit(1)
+
+        self.server = command._Server(self.fname, self, config)
         # Find the modifier mask for the numlock key, if there is one:
         nc = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
         self.numlockMask = xcbq.ModMasks[self.conn.get_modifier(nc)]
@@ -584,6 +587,27 @@ class Qtile(command.CommandObject):
             self.log.add("Unknown event: %s"%ename)
         return chain
 
+    def xpoll(self):
+        while True:
+            try:
+                e = self.conn.conn.poll_for_event()
+                if not e:
+                    break
+                ename = e.__class__.__name__
+                if ename.endswith("Event"):
+                    ename = ename[:-5]
+                if not e.__class__ in self.ignoreEvents:
+                    for h in self.get_target_chain(ename, e):
+                        self.log.add("Handling: %s"%ename)
+                        r = h(e)
+                        if not r:
+                            break
+            except Exception, v:
+                self.errorHandler(v)
+                if self._exit:
+                    return
+                continue
+
     def loop(self):
         try:
             while 1:
@@ -594,25 +618,7 @@ class Qtile(command.CommandObject):
                 if self._exit:
                     sys.exit(1)
                 self.server.receive()
-                while True:
-                    try:
-                        e = self.conn.conn.poll_for_event()
-                        if not e:
-                            break
-                        ename = e.__class__.__name__
-                        if ename.endswith("Event"):
-                            ename = ename[:-5]
-                        if not e.__class__ in self.ignoreEvents:
-                            for h in self.get_target_chain(ename, e):
-                                self.log.add("Handling: %s"%ename)
-                                r = h(e)
-                                if not r:
-                                    break
-                    except Exception, v:
-                        self.errorHandler(v)
-                        if self._exit:
-                            return
-                        continue
+                self.xpoll()
                 self.conn.flush()
         except:
             # We've already written a report.
@@ -716,8 +722,8 @@ class Qtile(command.CommandObject):
     ])
     def errorHandler(self, e):
         if e.__class__ in self._ignoreErrors:
+            print >> sys.stderr, e
             return
-        
         if hasattr(e.args[0], "bad_value"):
             m = "\n".join([
                 "Server Error: %s"%e.__class__.__name__,
