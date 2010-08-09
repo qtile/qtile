@@ -5,7 +5,7 @@ class TextBox(base._TextBox):
     defaults = dict(
         font = "Monospace",
         fontsize = None,
-        padding_left = None,
+        padding = None,
         background = None,
         foreground = "#ffffff"
     )

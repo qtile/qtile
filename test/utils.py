@@ -119,8 +119,7 @@ class _QtileTruss(libpry.AutoTree):
         pid = os.fork()
         if pid == 0:
             try:
-                q = libqtile.manager.Qtile(config, self["display"], self["fname"])
-                q._testing = True
+                q = libqtile.manager.Qtile(config, self["display"], self["fname"], testing=True)
                 # BEWARE: Xnest somehow stuffs up geometry detection for
                 # multiple screens in xinerama. We poke into qtile to fix this.
                 if self["xinerama"] and len(q.screens) > 1:

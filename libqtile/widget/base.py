@@ -81,15 +81,18 @@ class _Drawer:
     def text_extents(self, text):
         return self.ctx.text_extents(text)
 
+    def font_extents(self):
+        return self.ctx.font_extents()
+
     def fit_fontsize(self, heightlimit):
         """
             Try to find a maximum font size that fits any strings within the
             height.
         """
         self.ctx.set_font_size(heightlimit)
-        asc, desc, height, _, _  = self.ctx.font_extents()
+        asc, desc, height, _, _  = self.font_extents()
         self.ctx.set_font_size(int(heightlimit*(heightlimit/float(height))))
-        return self.ctx.font_extents()
+        return self.font_extents()
 
     def fit_text(self, strings, heightlimit):
         """
@@ -225,20 +228,30 @@ class _TextBox(_Widget):
         self.width = width
         self.text = text
 
+    def guess_width(self):
+        if not self.text:
+            return 0
+        _, _, _, _, width, _  = self.drawer.text_extents(self.text)
+        if self.padding:
+            width += self.padding * 2
+        else:
+            _, _, _, font_xadv, _  = self.drawer.font_extents()
+            width += font_xadv
+        if width != self.width:
+            self.width = width
+            self.bar.resize()
+
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
         self.drawer.set_font(self.font, self.fontsize or self.bar.height)
+        _, self.font_desc, self.font_height, self.font_xadv, _ = self.drawer.fit_fontsize(self.bar.height*0.8)
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
-        asc, desc, height, xadv, _ = self.drawer.fit_fontsize(self.bar.height*0.8)
         self.drawer.ctx.move_to(
-            self.padding_left or xadv/2,
-            self.bar.height*0.1 + height-desc
+            self.padding or self.font_xadv/2,
+            self.bar.height*0.1 + self.font_height-self.font_desc
         )
         self.drawer.textbox(self.text, self.foreground)
         self.drawer.draw()
-
-
-
 

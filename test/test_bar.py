@@ -20,6 +20,7 @@ class GBConfig:
                         [
                             libqtile.widget.GroupBox(),
                             libqtile.widget.WindowName(),
+                            libqtile.widget.Clock(),
                         ],
                         50
                     ),
@@ -43,6 +44,7 @@ class uWidgets(utils.QtileTests):
         self.c.widget["text"].update("testing")
         assert self.c.widget["text"].get() == "testing"
         self.c.group["pppp"].toscreen()
+        time.sleep(2)
 
     def test_textbox_errors(self):
         self.c.widget["text"].update(None)

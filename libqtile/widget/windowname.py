@@ -6,7 +6,7 @@ class WindowName(base._TextBox):
     defaults = dict(
         font = "Monospace",
         fontsize = None,
-        padding_left = None,
+        padding = None,
         background = "000000",
         foreground = "ffffff"
     )

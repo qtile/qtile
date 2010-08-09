@@ -367,7 +367,8 @@ class Qtile(command.CommandObject):
     _exit = False
     _testing = False
     _logLength = 100 
-    def __init__(self, config, displayName=None, fname=None):
+    def __init__(self, config, displayName=None, fname=None, testing=False):
+        self._testing = testing
         if not displayName:
             displayName = os.environ.get("DISPLAY")
             if not displayName:
@@ -620,6 +621,7 @@ class Qtile(command.CommandObject):
                 self.server.receive()
                 self.xpoll()
                 self.conn.flush()
+                hook.fire("tick")
         except:
             # We've already written a report.
             if not self._exit:

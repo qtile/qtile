@@ -14,7 +14,7 @@ hooks = set(
         "client_mouse_enter",
         "client_name_updated",
         "client_urgent_hint_changed",
-        "mainloop_tick",
+        "tick",
     ]
 )
 subscriptions = {}
