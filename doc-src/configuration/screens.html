@@ -1,0 +1,58 @@
+
+The __screens__ configuration variable is where the physical screens, their
+associated __bars__, and the __widgets__ contained within the bars are defined.
+
+
+# screens
+
+$!cmdobj("libqtile.manager.Screen")!$
+
+# bars
+
+$!cmdobj("libqtile.bar.Bar")!$
+
+$!cmdobj("libqtile.bar.Gap")!$
+
+
+# widgets
+
+
+$!cmdobj("libqtile.widget.Clock")!$
+
+$!cmdobj("libqtile.widget.GroupBox")!$
+
+$!cmdobj("libqtile.widget.Spacer")!$
+
+$!cmdobj("libqtile.widget.TextBox")!$
+
+$!cmdobj("libqtile.widget.WindowName")!$
+
+
+# Example
+
+Tying together screens, bars and widgets, we get something like this:
+
+<!--(block|pySyntax)-->
+from libqtile.manager import Screen
+from libqtile import bar, widget
+screens = [
+    Screen(
+        bottom = bar.Bar(
+                    [
+                        widget.GroupBox(),
+                        widget.WindowName()
+                    ],
+                    30,
+                ),
+    ),
+    Screen(
+        bottom = bar.Bar(
+                    [
+                        widget.GroupBox(),
+                        widget.WindowName()
+                    ],
+                    30,
+                ),
+    )
+]
+<!--(end)-->

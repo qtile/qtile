@@ -1,19 +1,8 @@
 
 The __keys__ variable defines Qtile's key bindings. 
 
-# libqtile.manager.Key
 
-<!--(block | pySyntax)-->
-class Key:
-    def __init__(self, modifiers, key, *commands):
-<!--(end)-->
-
-- __modifiers__: A list of modifier specifications. Modifier
-specifications are one of: "shift", "lock", "control", "mod1",
-"mod2", "mod3", "mod4", "mod5".
-- __key__: A key specification, e.g. "a", "Tab", "Return", "space".
-- __*commands__: A list of lazy command objects generated with the command.lazy
-helper. If multiple Call objects are specified, they are run in sequence.
+$!cmdobj("libqtile.manager.Key")!$
 
 
 # The command.lazy object
@@ -27,6 +16,7 @@ command through a script or through [qsh](@!urlTo("qsh.html")!@).
 # Example
 
 <!--(block | pySyntax)-->
+from libqtile.manager import Key
 keys = [
     Key(
         ["mod1"], "k",

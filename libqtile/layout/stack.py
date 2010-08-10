@@ -108,7 +108,7 @@ class Stack(Layout):
     )
     def __init__(self, stacks=2, **attrs):
         """
-            :stacks Number of stacks to start with.
+            - stacks: Number of stacks to start with.
         """
         Layout.__init__(self, **attrs)
         self.stacks = [_WinStack() for i in range(stacks)]

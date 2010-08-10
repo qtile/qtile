@@ -3,6 +3,9 @@ from .. import hook, bar
 import base
 
 class WindowName(base._TextBox):
+    """
+        Displays the name of the window that currently has focus.
+    """
     defaults = dict(
         font = "Monospace",
         fontsize = None,

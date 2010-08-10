@@ -31,13 +31,18 @@ class QtileError(Exception): pass
 
 
 class Key:
+    """
+        Defines a keybinding.
+    """
     def __init__(self, modifiers, key, *commands):
         """
-            :modifiers A list of modifier specifications. Modifier
+            - modifiers: A list of modifier specifications. Modifier
             specifications are one of: "shift", "lock", "control", "mod1",
             "mod2", "mod3", "mod4", "mod5".
-            :key A key specification, e.g. "a", "Tab", "Return", "space".
-            :*commands A list of lazy command objects generated with the
+
+            - key: A key specification, e.g. "a", "Tab", "Return", "space".
+
+            - *commands: A list of lazy command objects generated with the
             command.lazy helper. If multiple Call objects are specified, they
             are run in sequence.
         """
@@ -55,13 +60,16 @@ class Key:
 
 
 class Screen(command.CommandObject):
+    """
+        A physical screen, and its associated paraphernalia.
+    """
     group = None
     def __init__(self, top=None, bottom=None, left=None, right=None):
         """
-            :top An instance of bar.Gap or bar.Bar or None.
-            :bottom An instance of bar.Gap or bar.Bar or None.
-            :left An instance of bar.Gap or None.
-            :right An instance of bar.Gap or None.
+            - top, bottom, left, right: Instances of bar objects, or None.
+            
+            Note that bar.Bar objects can only be placed at the top or the
+            bottom of the screen (bar.Gap objects can be placed anywhere).
         """
         self.top, self.bottom = top, bottom
         self.left, self.right = left, right
@@ -299,7 +307,7 @@ class Group(command.CommandObject):
         """
             Pull a group to a specified screen.
 
-            :screen Screen offset. If not specified, we assume the current screen.
+            - screen: Screen offset. If not specified, we assume the current screen.
 
             Examples:
 

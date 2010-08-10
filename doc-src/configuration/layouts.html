@@ -1,4 +1,9 @@
 
+A layout is an algorithm for laying out screens on your window. Since Qtile is
+a tiling window manager, this usually means that we try to use space as
+efficiently as possible, and give the user ample commands that they can bind to
+keybindings to interact with layouts. 
+
 The __layouts__ variable defines the list of layouts you will use with Qtile.
 The first layout in the list is the default. If you define more than one
 layout, you will probably also want to define key bindings to let you switch to
@@ -14,5 +19,11 @@ $!cmdobj("libqtile.layout.Max")!$
 # Example
 
 
-
+<!--(block | pySyntax)-->
+from libqtile import layout
+layouts = [
+    layout.Max(),
+    layout.Stack(stacks=2)
+]
+<!--(end)-->
 

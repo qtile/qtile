@@ -26,7 +26,7 @@ class CmdObj:
     template = countershape.template.File(None, "_cmdobj.html")
     def __init__(self, o):
         parts = o.split(".")
-        o = __import__("libqtile.layout", globals(), locals())
+        o = __import__(".".join(parts[:-1]), globals(), locals())
         for i in parts[1:]:
             o = getattr(o, i)
         self.parts = parts
@@ -69,7 +69,7 @@ class CmdObj:
     @property
     def initdoc(self):
         s = getattr(self.o, "__init__")
-        return inspect.getdoc(s)
+        return markdown2.markdown(inspect.getdoc(s) or "")
 
     def __str__(self):
         return str(self.template(c=self))

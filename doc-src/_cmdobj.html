@@ -5,27 +5,30 @@ $!c.classdoc!$
 
 <!--(block|pySyntax)-->
 class @!c.name!@:
-    def __init__@!c.initargs!@:
-        <!--(block doc)-->
-        """
-            @!c.initdoc!@
-        """
-        <!--(end)-->
+    def __init__$!c.initargs!$:
+        ...
+<!--(end)-->
+<!--(block doc)-->
+$!c.initdoc!$
+<!--(end)-->
 $!doc if c.initdoc else ""!$
 
-<!--(end)-->
 
-### Commands
 
+<!--(block cmdtable)-->
 <table class="commandtable">
+    <tr>
+        <th> command </th>
+        <th> description </th>
+    </tr>
     <!--(for i in c.commands)-->
     <tr>
-        <th> @!i[0]!@ </th>
+        <td> @!i[0]!@ </td>
         <td> $!i[1]!$ </td>
     </tr>
     <!--(end)-->
-
-
 </table>
+<!--(end)-->
+$!cmdtable if c.commands else ""!$
 
 

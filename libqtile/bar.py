@@ -23,9 +23,15 @@ import manager, window, confreader, command, utils, hook
 
 
 class Gap(command.CommandObject):
+    """
+        A gap, placed along one of the edges of the screen. If a gap has been
+        defined, Qtile will avoid covering it with windows. The most probable
+        reason for configuring a gap is to make space for a third-party bar or
+        other static window.
+    """
     def __init__(self, size):
         """
-            :size The width of the gap.
+            - size: The width of the gap.
         """
         self.size = size
         self.qtile, self.screen = None, None
@@ -102,16 +108,18 @@ STRETCH = -1
 CALCULATED = -2
 STATIC = -3
 class Bar(Gap):
+    """
+        A bar, which can contain widgets. Note that bars can only be placed at
+        the top or bottom of the screen.
+    """
     defaults = dict(
         background = "#000000",
         opacity = 1
     )
     def __init__(self, widgets, size, **attrs):
         """
-            Note that bars can only be at the top or the bottom of the screen.
-            
-            :widgets A list of widget objects.
-            :size The width of the bar.
+            - widgets: A list of widget objects.
+            - size: The height of the bar.
         """
         Gap.__init__(self, size)
         self.widgets = widgets

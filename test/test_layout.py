@@ -221,97 +221,10 @@ class uSelectors(utils.QtileTests):
         pass
 
 
-class TileConfig:
-    groups = ["a", "b", "c", "d"]
-    layouts = [
-        layout.Tile(),
-        layout.Tile(masterWindows=2)
-        ]
-    keys = []
-    screens = []
-
-
-class uTile(utils.QtileTests):
-    config = TileConfig()
-    def test_updown(self):
-        self.testWindow("one")
-        self.testWindow("two")
-        self.testWindow("three")
-        assert self.c.layout.info()["all"] == ["three", "two", "one"]
-        self.c.layout.down()
-        assert self.c.layout.info()["all"] == ["two", "one","three"]
-        self.c.layout.up()
-        assert self.c.layout.info()["all"] == ["three", "two", "one"]
-    
-    def test_master_and_slave(self):
-        self.testWindow("one")
-        self.testWindow("two")
-        self.testWindow("three")
-        
-        assert self.c.layout.info()["master"] == ["three"]
-        assert self.c.layout.info()["slave"] == ["two", "one"]
-
-        self.c.nextlayout()
-        assert self.c.layout.info()["master"] == ["three", "two"]
-        assert self.c.layout.info()["slave"] == ["one"]
-
-    def test_remove(self):
-        one = self.testWindow("one")
-        self.testWindow("two")
-        three = self.testWindow("three")
-        
-        assert self.c.layout.info()["master"] == ["three"]
-        self.kill(one)
-        assert self.c.layout.info()["master"] == ["three"]
-        self.kill(three)
-        assert self.c.layout.info()["master"] == ["two"]
-        
-        
-class MagnifyConfig:
-    groups = ["a", "b", "c", "d"]
-    layouts = [
-        layout.Magnify()
-        ]
-    keys = []
-    screens = []
-
-
-class uMagnify(utils.QtileTests):
-    config = MagnifyConfig()
-    def test_focus(self):
-        one = self.testWindow("one")
-        two = self.testWindow("two")
-        three = self.testWindow("three")
-        
-        assert self.c.groups()["a"]["focus"] == "three"
-        self.c.layout.down()
-        assert self.c.groups()["a"]["focus"] == "two"
-        self.c.layout.down()
-        assert self.c.groups()["a"]["focus"] == "one"
-        
-        self.kill(one)
-        assert self.c.layout.info() == ["three", "two"]
-        assert self.c.groups()["a"]["focus"] == "three"
-        self.kill(two)
-        assert self.c.groups()["a"]["focus"] == "three"
-
-    def test_updown(self):
-        self.testWindow("one")
-        self.testWindow("two")
-        self.testWindow("three")
-        assert self.c.layout.info() == ["three", "two", "one"]
-        self.c.layout.down()
-        assert self.c.layout.info() == ["two", "one","three"]
-        self.c.layout.up()
-        assert self.c.layout.info() == ["three", "two", "one"]
-
-
 tests = [
     utils.xfactory(xinerama=False), [
         uMax(),
         uStack(),
-        uTile(),
-        uMagnify(),
         uSelectors(),
     ],
 ]

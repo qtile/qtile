@@ -3,6 +3,10 @@ import cairo
 import base
 
 class GroupBox(base._Widget):
+    """
+        A widget that graphically displays the group list, indicating which
+        groups have focus, and which groups contain clients.
+    """
     defaults = dict(
         padding_y = 2,           # Y padding outside the box
         padding_x = 2,           # X padding outside the box

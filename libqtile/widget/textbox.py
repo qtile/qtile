@@ -2,6 +2,10 @@ from .. import bar
 import base
 
 class TextBox(base._TextBox):
+    """
+        A flexible textbox that can be updated from bound keys, scripts and
+        qsh.
+    """
     defaults = dict(
         font = "Monospace",
         fontsize = None,
@@ -11,9 +15,10 @@ class TextBox(base._TextBox):
     )
     def __init__(self, name, text=" ", width=bar.CALCULATED, **attrs):
         """
-            :name Name for this widget.
-            :text Initial widget text.
-            :width An integer width, STRETCH, or CALCULATED .
+            - name: Name for this widget. Used to address the widget from
+            scripts, commands and qsh.
+            - text: Initial widget text.
+            - width: An integer width, bar.STRETCH, or bar.CALCULATED .
         """
         self.name = name
         base._TextBox.__init__(self, text, width, **attrs)
