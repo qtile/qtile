@@ -1,4 +1,4 @@
-from libqtile.manager import Key, Screen
+from libqtile.manager import Key, Screen, Group
 from libqtile.command import lazy
 from libqtile import layout, bar, widget
 
@@ -54,37 +54,42 @@ keys = [
     ),
     Key(
         ["mod1", "shift"], "n",
-        #lazy.spawn("mocp -G")
         lazy.spawn("amarok -t")
     ),
     Key(
         ["mod1", "shift"], "l",
-        #lazy.spawn("mocp -f")
         lazy.spawn("amarok -f")
     ),
     Key(
         ["mod1", "shift"], "h",
-        #lazy.spawn("mocp -r")
         lazy.spawn("amarok -r")
     ),
 ]
 
 # Next, we specify group names, and use the group name list to generate an appropriate
 # set of bindings for group switching.
-groups = ["a", "s", "d", "f", "u", "i", "o", "p"]
+groups = [
+    Group("a"),
+    Group("s"),
+    Group("d"),
+    Group("f"),
+    Group("u"),
+    Group("i"),
+    Group("o"),
+    Group("p"),
+]
 for i in groups:
     keys.append(
-        Key(["mod1"], i, lazy.group[i].toscreen())
+        Key(["mod1"], i.name, lazy.group[i.name].toscreen())
     )
     keys.append(
-        Key(["mod1", "shift"], i, lazy.window.togroup(i))
+        Key(["mod1", "shift"], i.name, lazy.window.togroup(i.name))
     )
 
 
 # Two simple layout instances:
 layouts = [
     layout.Max(),
-    #layout.Stack(stacks=2, borderWidth=2)
     layout.Stack(stacks=2)
 ]
 

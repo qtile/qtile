@@ -4,7 +4,12 @@ import libqtile, libqtile.layout, libqtile.bar, libqtile.widget, libqtile.manage
 import utils
 
 class TestConfig:
-    groups = ["a", "b", "c", "d"]
+    groups = [
+        libqtile.manager.Group("a"),
+        libqtile.manager.Group("b"),
+        libqtile.manager.Group("c"),
+        libqtile.manager.Group("d")
+    ]
     layouts = [
                 libqtile.layout.stack.Stack(stacks=1),
                 libqtile.layout.stack.Stack(2)
@@ -32,7 +37,12 @@ class TestConfig:
 
 
 class BareConfig:
-    groups = ["a", "b", "c", "d"]
+    groups = [
+        libqtile.manager.Group("a"),
+        libqtile.manager.Group("b"),
+        libqtile.manager.Group("c"),
+        libqtile.manager.Group("d")
+    ]
     layouts = [
                 libqtile.layout.stack.Stack(stacks=1),
                 libqtile.layout.stack.Stack(2)

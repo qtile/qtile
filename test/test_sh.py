@@ -4,7 +4,10 @@ import utils
 
 class ShConfig(libqtile.confreader.Config):
     keys = []
-    groups = ["a", "b"]
+    groups = [
+        libqtile.manager.Group("a"),
+        libqtile.manager.Group("b"),
+    ]
     layouts = [
         libqtile.layout.Max(),
     ]

@@ -5,7 +5,13 @@ import utils
 
 class GBConfig:
     keys = []
-    groups = ["a", "bb", "ccc", "dddd", "pppp"]
+    groups = [
+        libqtile.manager.Group("a"),
+        libqtile.manager.Group("bb"),
+        libqtile.manager.Group("ccc"),
+        libqtile.manager.Group("dddd"),
+        libqtile.manager.Group("pppp")
+    ]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
     screens = [
         libqtile.manager.Screen(
@@ -66,7 +72,12 @@ class uWidgets(utils.QtileTests):
 
 class GeomConf:
     keys = []
-    groups = ["a", "b", "c", "d"]
+    groups = [
+        libqtile.manager.Group("a"),
+        libqtile.manager.Group("b"),
+        libqtile.manager.Group("c"),
+        libqtile.manager.Group("d")
+    ]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
     screens = [
         libqtile.manager.Screen(

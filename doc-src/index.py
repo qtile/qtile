@@ -69,7 +69,7 @@ class CmdObj:
                 l.append(
                     [
                         i[4:] + a, 
-                        markdown2.markdown(inspect.getdoc(f))
+                        markdown2.markdown(inspect.getdoc(f) or "")
                     ]
                 )
         return l

@@ -204,13 +204,21 @@ class Screen(command.CommandObject):
 
 
 class Group(command.CommandObject):
-    def __init__(self, name, layouts, qtile):
-        self.name, self.qtile = name, qtile
+    """
+        A group is a container for a bunch of windows, analogous to workspaces
+        in other window managers. Each client window managed by the window
+        manager belongs to exactly one group.
+    """
+    def __init__(self, name):
+        self.name = name
+
+    def _configure(self, layouts, qtile):
         self.screen = None
-        self.layouts = [i.clone(self) for i in layouts]
         self.currentLayout = 0
         self.currentWindow = None
         self.windows = set()
+        self.qtile = qtile
+        self.layouts = [i.clone(self) for i in layouts]
 
     @property
     def layout(self):
@@ -324,15 +332,17 @@ class Group(command.CommandObject):
 
             - screen: Screen offset. If not specified, we assume the current screen.
 
-            Examples:
-
             Pull group to the current screen:
+
                 
                 toscreen()
 
+
             Pull group to screen 0:
+
         
                 toscreen(0)
+
         """
         if not screen:
             screen = self.qtile.currentScreen
@@ -345,13 +355,23 @@ class Group(command.CommandObject):
         nextgroup = (currentgroup + direction) % len(self.qtile.groups)
         self.qtile.currentScreen.setGroup(self.qtile.groups[nextgroup])
 
+    # FIXME cmd_nextgroup and cmd_prevgroup should be on the Screen object.
     def cmd_nextgroup(self):
+        """
+            Switch to the next group.
+        """
         self.move_groups(1)
 
     def cmd_prevgroup(self):
+        """
+            Switch to the previous group.
+        """
         self.move_groups(-1)
 
     def cmd_unminimise_all(self):
+        """
+            Unminimise all windows in this group.
+        """
         for w in self.windows:
             w.minimised = False
         self.layoutAll()
@@ -415,11 +435,10 @@ class Qtile(command.CommandObject):
         self.widgetMap = {}
         self.groupMap = {}
 
-        self.groups = []
-        for i in self.config.groups:
-            g = Group(i, self.config.layouts, self)
-            self.groups.append(g)
-            self.groupMap[g.name] = g
+        self.groups = self.config.groups[:]
+        for i in self.groups:
+            i._configure(config.layouts, self)
+            self.groupMap[i.name] = i
 
         self.currentScreen = None
         self.screens = []

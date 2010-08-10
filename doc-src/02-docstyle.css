@@ -49,3 +49,12 @@
 .commandtable td p {
     margin-bottom: 0px;
 }
+
+.commandtable pre {
+    margin-top: 2em;
+    margin-bottom: 2em;
+    margin-left: 2em;
+
+
+
+}

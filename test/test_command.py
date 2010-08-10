@@ -17,7 +17,10 @@ class CallConfig(libqtile.confreader.Config):
             libqtile.command._Call([("layout", None)], "up"),
         ),
     ]
-    groups = ["a", "b"]
+    groups = [
+        libqtile.manager.Group("a"),
+        libqtile.manager.Group("b"),
+    ]
     layouts = [
         libqtile.layout.Stack(stacks=1),
         libqtile.layout.Max(),
@@ -109,7 +112,11 @@ class u_CommandTree(libpry.AutoTree):
 
 class ServerConfig(libqtile.confreader.Config):
     keys = []
-    groups = ["a", "b", "c"]
+    groups = [
+        libqtile.manager.Group("a"),
+        libqtile.manager.Group("b"),
+        libqtile.manager.Group("c"),
+    ]
     layouts = [
         libqtile.layout.Stack(stacks=1),
         libqtile.layout.Stack(stacks=2),

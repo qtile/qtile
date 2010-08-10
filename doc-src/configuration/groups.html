@@ -1,0 +1,18 @@
+
+The __groups__ config file variable should be initialized to a list of Group
+objects.
+
+$!cmdobj("libqtile.manager.Group")!$
+
+
+# Example
+
+<!--(block | pySyntax)-->
+from libqtile.manager import Group
+groups = [
+    Group("a"),
+    Group("b"),
+    Group("c"),
+]
+<!--(end)-->
+
