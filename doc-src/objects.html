@@ -1,6 +1,6 @@
 
-Qtile's public API consists of a graph of objects, each with a set of
-associated commands. The object commands are used for a number of different
+Qtile's public API consists of a graph of objects, where each object has a set
+of associated commands. Object commands are used for a number of different
 purposes:
 
 - Commands can be bound to keys in the Qtile configuration file. 
@@ -16,23 +16,21 @@ documented here.
 Object Graph
 ============
 
-Qtile's object graph consists of seven node types: __layout__, __window__,
-__group__, __bar__, __widget__, __screen__, and a special __root__ node.
-Objects are addressed by a path specification that starts at the root, and
-follows the edges of the graph. Each object has a set of associated commands, a
-set of children, and a set of keys. This is what the graph looks like:
+The objects in Qtile's object graph come in seven flavours, matching the seven
+basic components of the window manager: __layout__, __window__, __group__,
+__bar__, __widget__, __screen__, and a special __root__ node.  Objects are
+addressed by a path specification that starts at the root, and follows the
+edges of the graph. This is what the graph looks like:
 
 <center>
 <img src="objgraph.png">
 </center>
     
-Each arrow can be read as "holds a reference to". So, we would say that a
-__widget__ object _holds a reference to_ objects of type __bar__,
-__screen__ and __group__, exposed as attributes with the same names.
-
-Lets start with a simple example. The following script runs the __status__
-command on the root node of the command graph (which, in this case, is the
-Client object):
+Each arrow can be read as "holds a reference to". So, we can see that a
+__widget__ object _holds a reference to_ objects of type __bar__, __screen__
+and __group__. Lets start with some simple examples of how the addressing
+works. The following script runs the __status__ command on the root node of the
+command graph (which, in this case, is represented by the Client object):
 
 <!--(block | pySyntax)-->
 from libqtile.command import Client
@@ -105,21 +103,30 @@ The key specifier for the various object types are as follows:
         <td> group </td>
         <td> Name string </td>
         <td> Yes </td>
-        <td> c.group["one"] </td>
+        <td> 
+            c.group["one"] <br>
+            c.group
+        </td>
     </tr>
 
     <tr> 
         <td> layout </td>
         <td> Integer offset </td>
         <td> Yes </td>
-        <td> c.layout[2] </td>
+        <td> 
+            c.layout[2] <br>
+            c.layout
+        </td>
     </tr>
 
     <tr> 
         <td> screen </td>
         <td> Integer offset </td>
         <td> Yes </td>
-        <td> c.screen[1] </td>
+        <td> 
+            c.screen[1] <br>
+            c.screen
+        </td>
     </tr>
 
     <tr> 
@@ -133,7 +140,10 @@ The key specifier for the various object types are as follows:
         <td> window </td>
         <td> Integer window ID </td>
         <td> Yes </td>
-        <td> c.window[123456] </td>
+        <td> 
+            c.window[123456]  <br>
+            c.window
+        </td>
     </tr>
 
 </table>

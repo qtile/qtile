@@ -35,10 +35,9 @@ this.titlePrefix = "Qtile %s - "%ns.version
 
 pages = [
     Page("index.html", "Introduction"),
-    Page("objects.html", "Base Objects"),
-    Directory("objects"),
     Page("configuration.html", "Configuration"),
     Directory("configuration"),
+    Page("objects.html", "Object Graph"),
     Page("scripting.html", "Scripting"),
     Page("qsh.html", "qsh - the Qtile shell"),
     Page("dev.html", "Hacking on Qtile"),
