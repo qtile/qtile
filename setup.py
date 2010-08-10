@@ -31,7 +31,6 @@ setup(
         packages = [
         "libqtile", 
         "libqtile.layout",
-        "libqtile.layout.sublayout",
         "libqtile.widget"
         ],
         scripts = ["qtile", "qsh"],
