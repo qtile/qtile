@@ -315,7 +315,9 @@ class Window:
     def get_wm_protocols(self):
         r = self.get_property("WM_PROTOCOLS", xcb.xproto.GetPropertyType.Any)
         if r:
-            return set([self.conn.atoms.get_name(i) for i in r.value if i])
+            data = struct.pack("B" * len(r.value), *(list(r.value)))
+            l = struct.unpack_from("=" + "L"*r.value_len, data)
+            return set([self.conn.atoms.get_name(i) for i in l])
         else:
             return set()
 
