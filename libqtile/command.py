@@ -323,13 +323,15 @@ class CommandObject(object):
 
     def cmd_commands(self):
         """
-            Returns a list of possible commands for this object.
+            Returns a list of possible commands for this object. Used by __qsh__
+            for command completion and online help.
         """
         return self.commands()
 
     def cmd_items(self, name):
         """
-            Returns a list of items contained in this object.
+            Returns a list of contained items for the specified name. Used by
+            __qsh__ to allow navigation of the object graph.
         """
         return self.items(name)
 
@@ -350,7 +352,8 @@ class CommandObject(object):
 
     def cmd_doc(self, name):
         """
-            Returns the documentation for a specified command name.
+            Returns the documentation for a specified command name. Used by
+            __qsh__ to provide online help.
         """
         if name in self.commands():
             return self.doc(name)

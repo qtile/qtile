@@ -22,6 +22,12 @@ from .. import command, utils
 
 
 class Max(Layout):
+    """
+        A simple layout that only displays one window at a time, filling the
+        screen. This is suitable for use on laptops and other devices with
+        small screens. Conceptually, the windows are managed as a stack, with
+        commands to switch to next and previous windows in the stack.
+    """
     name = "max"
     def __init__(self):
         Layout.__init__(self)

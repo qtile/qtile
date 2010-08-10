@@ -1,37 +1,35 @@
 
 Qtile is configured in Python. A script (~/.qtile/config.py by default) is
-evaluated, and a small set of configuration variables - __keys__, __groups__,
-__layouts__ and __screens__ - are pulled from its global namespace. Each of
-these variables are described below, and a full configuration example can be
-found @!aLink("configuration/example.html", "here")!@. There are also a number
-of example configurations in the __examples__ directory of the source
-distribution.
+evaluated, and a small set of configuration variables (groups,
+@!linkTo("keys.html")!@, @!linkTo("layouts.html")!@, and
+@!linkTo("screens.html")!@) are pulled from its global namespace. 
 
-
-keys
-====
-
-A list of __libqtile.manager.Key__ objects.
-
-More information on specifying commands, can be found in the
-@!linkTo("objects.html")!@ section of this manual.
-
-
-groups
-======
+# groups
 
 A list of strings specifying group names.
 
+<!--(block | pySyntax)-->
+groups = ["a", "b", "c", "d"]
+<!--(end)-->
 
-layouts
-=======
+# @!linkTo("keys.html")!@
 
-A list of layout objects. See the @!linkTo("layouts.html")!@ section for
-more information on these.
-    
+A list of __libqtile.manager.Key__ objects which defines the keybindings. At a
+minimum, this will probably include bindings to switch between windows, groups
+and layouts.
 
-screens
-=======
+# @!linkTo("layouts.html")!@
 
-A list of @!aLink("screens.html", "Screen")!@ objects.
+A list layout objects, configuring the layouts you want to use.
+
+# @!linkTo("screens.html")!@
+
+A list of __libqtile.manager.Screen__ objects, which defines the physical
+screens you want to use, and the bars and widgets associated with them. Most of
+the visible "look and feel" configuration will happen in this section.
+
+
+# Complete example
+
+$!examples.py("examples/config/cortesi-config.py")!$
 

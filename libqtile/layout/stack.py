@@ -93,6 +93,13 @@ class _WinStack(object):
 
 
 class Stack(Layout):
+    """
+        The stack layout divides the screen horizontally into a set of stacks.
+        Commands allow you to switch between stacks, to next and previous
+        windows within a stack, and to split a stack to show all windows in the
+        stack, or unsplit it to show only the current window. At the moment,
+        this is the most mature and flexible layout in Qtile.
+    """
     name = "stack"
     defaults = dict(
         border_focus = "#0000ff",
@@ -240,7 +247,7 @@ class Stack(Layout):
 
     def cmd_toggle_split(self):
         """
-            Toggle vertical split on the current layout.
+            Toggle vertical split on the current stack.
         """
         self.currentStack.toggleSplit()
         self.group.layoutAll()
@@ -283,7 +290,7 @@ class Stack(Layout):
 
     def cmd_add(self):
         """
-            Add a stack to the layout.
+            Add another stack to the layout.
         """
         self.stacks.append(_WinStack())
         self.group.layoutAll()

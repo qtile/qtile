@@ -46,23 +46,26 @@ keys = [
     # The bindings below control Amarok, and my sound volume.
     Key(
         ["mod1", "shift"], "k",
-        lazy.spawn("amixer -qc 1 set PCM 2dB+")
+        lazy.spawn("amixer -c 1 -q set Speaker 2dB+")
     ),
     Key(
         ["mod1", "shift"], "j",
-        lazy.spawn("amixer -qc 1 set PCM 2dB-")
+        lazy.spawn("amixer -c 1 -q set Speaker 2dB-")
     ),
     Key(
         ["mod1", "shift"], "n",
-        lazy.spawn("mocp -G")
+        #lazy.spawn("mocp -G")
+        lazy.spawn("amarok -t")
     ),
     Key(
         ["mod1", "shift"], "l",
-        lazy.spawn("mocp -f")
+        #lazy.spawn("mocp -f")
+        lazy.spawn("amarok -f")
     ),
     Key(
         ["mod1", "shift"], "h",
-        lazy.spawn("mocp -r")
+        #lazy.spawn("mocp -r")
+        lazy.spawn("amarok -r")
     ),
 ]
 

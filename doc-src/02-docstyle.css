@@ -38,95 +38,14 @@
 }
 
 
-
-.sourceindex {
-    margin-left: 100px;
+#yui-main h1 {
+    font-size: 170%;
 }
 
-.sourceindex ul {
-    list-style-image:none;
-    list-style-position:outside;
-    list-style-type:none;
-    margin-left: 0px;
+.commandtable th {
+    text-align: left;
+}
+
+.commandtable td p {
     margin-bottom: 0px;
-}
-
-.sourceindex a {
-    font-size: 18px;
-    color:     #aaaadd;
-}
-
-.sourceindex a:hover {
-    color:     #aaffff;
-}
-
-.sourceindex li { margin: 0; }
-
-.sourceindex li.active {
-    padding-left: 10px;
-    border-left: 5px solid #ff0000;
-}
-
-.sourceindex li.inactive{
-    border-left: none;
-    margin-left: 15px;
-}
-
-.sourceindex li li a {
-    display: block;
-    background-color: transparent;
-    margin: 0;
-    border-top: none;
-    border-bottom: none;
-}
-
-.sourceindex ul ul {
-    margin-left: 50px;
-    padding: 0;
-    list-style-type: none;
-}
-
-
-/*
- * Countershape Code Generation
- */
-.grokdoc_class  { 
-    margin-bottom: 15px;
-}
-
-.grokdoc_class_title { 
-    margin-bottom:   5px;
-}
-
-.grokdoc_function_title { 
-    margin-bottom:   5px;
-}
-
-.grokdoc_description { 
-    padding-left: 40px;
-}
-
-.grokdoc pre {
-    margin: 0px;
-}
-
-.grokdoc_description p { 
-    margin-top: 5px;
-    margin-bottom: 5px;
-}
-
-.grokdoc_vartable { 
-    border-style:   solid;
-    border-color:   #c0c0c0;
-    border-width:   1px;
-}
-
-.grokdoc_vartable td { 
-    border-style:   solid;
-    border-color:   #c0c0c0;
-    border-width:   1px;
-    padding:        5px;
-}
-
-.grokdoc_varname { 
 }

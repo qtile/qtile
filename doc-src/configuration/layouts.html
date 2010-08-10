@@ -1,19 +1,18 @@
 
-Max
-====
+The __layouts__ variable defines the list of layouts you will use with Qtile.
+The first layout in the list is the default. If you define more than one
+layout, you will probably also want to define key bindings to let you switch to
+the next and previous layouts.
 
-    Max is the simplest possible layout - windows are simply layed out to fill
-    the screen, with one window visible at a time. It takes no instantiation
-    arguments:
+# Built-in layouts
+
+$!cmdobj("libqtile.layout.Stack")!$
+
+$!cmdobj("libqtile.layout.Max")!$
 
 
+# Example
 
-Stack
-=====
-
-    The Stack layout manages windows in a user-specified number of stacks, each
-    of which can contain an arbitrary number of windows. Users can dynamically
-    add, remove, reorder and split stacks. 
 
 
 
