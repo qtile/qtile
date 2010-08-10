@@ -41,6 +41,14 @@ class CmdObj:
         return self.parts[-1]
 
     @property
+    def defaults(self):
+        d = getattr(self.o, "defaults", None)
+        if d:
+            return d.defaults
+        else:
+            return d
+
+    @property
     def initargs(self):
         s = inspect.getargspec(getattr(self.o, "__init__"))
         return inspect.formatargspec(*s)

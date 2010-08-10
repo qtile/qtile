@@ -1,4 +1,4 @@
-from .. import bar, hook, utils
+from .. import bar, hook, utils, manager
 import cairo
 import base
 
@@ -7,20 +7,20 @@ class GroupBox(base._Widget):
         A widget that graphically displays the group list, indicating which
         groups have focus, and which groups contain clients.
     """
-    defaults = dict(
-        padding_y = 2,           # Y padding outside the box
-        padding_x = 2,           # X padding outside the box
-        borderwidth = 3,
-        font = "Monospace",
-        active = "FFFFFF",
-        inactive = "404040",
-        background = "000000",
-        this_screen_border = "215578",
-        other_screen_border = "404040",
-        min_margin_x = 5
+    defaults = manager.Defaults(
+        ("padding_y", 2, "Y padding outside the box"),
+        ("padding_x", 2, "X padding outside the box"),
+        ("borderwidth", 3, "Current group border width."),
+        ("font", "Monospace", "Font face"),
+        ("active", "FFFFFF", "Active group font colour"),
+        ("inactive", "404040", "Inactive group font colour"),
+        ("background", "000000", "Widget background"),
+        ("this_screen_border", "215578", "Border colour for group on this screen."),
+        ("other_screen_border", "404040", "Border colour for group on other screen."),
+        ("min_margin_x", 5, "Minimum X margin (inside the box).")
     )
-    def __init__(self, **attrs):
-        base._Widget.__init__(self, bar.CALCULATED, **attrs)
+    def __init__(self, **config):
+        base._Widget.__init__(self, bar.CALCULATED, **config)
 
     def click(self, x, y):
         return

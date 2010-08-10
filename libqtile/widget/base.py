@@ -1,5 +1,5 @@
 import sys, math
-from .. import command, utils, bar
+from .. import command, utils, bar, manager
 import xcb.xproto
 import cairo
 
@@ -169,13 +169,13 @@ class _Widget(command.CommandObject):
     width = None
     offset = None
     name = None
-    defaults = {}
-    def __init__(self, width, **attrs):
+    defaults = manager.Defaults()
+    def __init__(self, width, **config):
         """
             width: bar.STRETCH, bar.CALCULATED, or a specified width.
         """
         command.CommandObject.__init__(self)
-        utils.load(self, self.defaults, attrs)
+        self.defaults.load(self, config)
         if width >= 0:
             self.width_type = bar.STATIC
             self.width = width
@@ -239,8 +239,8 @@ class _Widget(command.CommandObject):
 
 
 class _TextBox(_Widget):
-    def __init__(self, text=" ", width=bar.CALCULATED, **attrs):
-        _Widget.__init__(self, width, **attrs)
+    def __init__(self, text=" ", width=bar.CALCULATED, **config):
+        _Widget.__init__(self, width, **config)
         self.text = text
 
     def guess_width(self):

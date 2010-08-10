@@ -19,7 +19,7 @@
 # SOFTWARE.
 import sys
 from base import Layout
-from .. import command, utils
+from .. import command, utils, manager
 
 
 class _WinStack(object):
@@ -101,16 +101,16 @@ class Stack(Layout):
         this is the most mature and flexible layout in Qtile.
     """
     name = "stack"
-    defaults = dict(
-        border_focus = "#0000ff",
-        border_normal = "#000000",
-        border_width = 1
+    defaults = manager.Defaults(
+        ("border_focus", "#0000ff", "Border colour for the focused window."),
+        ("border_normal", "#000000", "Border colour for un-focused winows."),
+        ("border_width", 1, "Border width.")
     )
-    def __init__(self, stacks=2, **attrs):
+    def __init__(self, stacks=2, **config):
         """
             - stacks: Number of stacks to start with.
         """
-        Layout.__init__(self, **attrs)
+        Layout.__init__(self, **config)
         self.stacks = [_WinStack() for i in range(stacks)]
 
     @property

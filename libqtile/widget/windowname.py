@@ -1,20 +1,20 @@
 import sys
-from .. import hook, bar
+from .. import hook, bar, manager
 import base
 
 class WindowName(base._TextBox):
     """
         Displays the name of the window that currently has focus.
     """
-    defaults = dict(
-        font = "Monospace",
-        fontsize = None,
-        padding = None,
-        background = "000000",
-        foreground = "ffffff"
+    defaults = manager.Defaults(
+        ("font", "Monospace", "Font face."),
+        ("fontsize", None, "Font pixel size. Calculated if None."),
+        ("padding", None, "Padding left and right."),
+        ("background", "000000", "Background colour."),
+        ("foreground", "ffffff", "Foreground colour."),
     )
-    def __init__(self, **attrs):
-        base._TextBox.__init__(self, width=bar.STRETCH, **attrs)
+    def __init__(self, **config):
+        base._TextBox.__init__(self, width=bar.STRETCH, **config)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)

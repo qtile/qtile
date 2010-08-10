@@ -112,18 +112,18 @@ class Bar(Gap):
         A bar, which can contain widgets. Note that bars can only be placed at
         the top or bottom of the screen.
     """
-    defaults = dict(
-        background = "#000000",
-        opacity = 1
+    defaults = manager.Defaults(
+        ("background", "#000000", "Background colour."),
+        ("opacity",  1, "Bar window opacity.")
     )
-    def __init__(self, widgets, size, **attrs):
+    def __init__(self, widgets, size, **config):
         """
             - widgets: A list of widget objects.
             - size: The height of the bar.
         """
         Gap.__init__(self, size)
         self.widgets = widgets
-        utils.load(self, self.defaults, attrs)
+        self.defaults.load(self, config)
 
     def _configure(self, qtile, screen):
         if not self in [screen.top, screen.bottom]:

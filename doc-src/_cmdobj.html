@@ -13,6 +13,23 @@ $!c.initdoc!$
 <!--(end)-->
 $!doc if c.initdoc else ""!$
 
+<!--(block configtable)-->
+<table class="commandtable">
+    <tr>
+        <th> config </th>
+        <th> default </th>
+        <th> description </th>
+    </tr>
+    <!--(for i in c.defaults)-->
+    <tr>
+        <td> @!i[0]!@ </td>
+        <td> $!repr(i[1])!$ </td>
+        <td> $!i[2]!$ </td>
+    </tr>
+    <!--(end)-->
+</table>
+<!--(end)-->
+$!configtable if c.defaults else ""!$
 
 
 <!--(block cmdtable)-->
