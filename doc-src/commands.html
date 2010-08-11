@@ -1,24 +1,28 @@
 
-Qtile's public API is based on a graph of objects, where each object has a set
-of associated commands. The same set of object commands are used for a number
-of different purposes:
+Qtile's command API is based on a graph of objects, where each object has a set
+of associated commands. The graph and object commands are used in a number of
+different places:
 
-- Commands can be bound to keys in the Qtile configuration file. 
-- Commands can be called manually through __qsh__, the Qtile shell.
-- Commands can be called to interact with Qtile from a script. 
+- Commands can be [bound to keys](@!urlTo("keys.html")!@) in the Qtile
+configuration file. 
+
+- Commands can be [called through __qsh__](@!urlTo("qsh.html")!@), the Qtile
+shell.
+
+- Commands can be [called from a script](@!urlTo("scripting.html")!@) to
+interact with Qtile from Python. 
 
 If the explanation below seems a bit complex, please take a moment to explore
 the API using the __qsh__ command shell. Command lists and detailed
-documentation can be accessed from its built-in help command, and are not
-documented here.
+documentation can be accessed from its built-in help command.
 
 
 Object Graph
 ============
 
 The objects in Qtile's object graph come in seven flavours, matching the seven
-basic components of the window manager: __layout__, __window__, __group__,
-__bar__, __widget__, __screen__, and a special __root__ node.  Objects are
+basic components of the window manager: __layouts__, __windows__, __groups__,
+__bars__, __widgets__, __screens__, and a special __root__ node.  Objects are
 addressed by a path specification that starts at the root, and follows the
 edges of the graph. This is what the graph looks like:
 
@@ -29,8 +33,13 @@ edges of the graph. This is what the graph looks like:
 Each arrow can be read as "holds a reference to". So, we can see that a
 __widget__ object _holds a reference to_ objects of type __bar__, __screen__
 and __group__. Lets start with some simple examples of how the addressing
-works. The following script runs the __status__ command on the root node of the
-command graph (which, in this case, is represented by the Client object):
+works. Which particular objects we hold reference to depends on the context -
+for instance, widgets hold a reference to the screen that they appear on, and
+the bar they are attached to. 
+
+Lets look at an example, starting at the root node. The following script runs
+the __status__ command on the root node, which, in this case, is represented by
+the Client object:
 
 <!--(block | pySyntax)-->
 from libqtile.command import Client
@@ -46,11 +55,11 @@ so:
 c.group.info()
 <!--(end)-->
 
-To access a specific group, regardless of whether or not it is current, we
-use the Python containment syntax:
+To access a specific group, regardless of whether or not it is current, we use
+the Python containment syntax. This command sends group "b" to screen 1:
 
 <!--(block | pySyntax)-->
-c.group["b"].info()
+c.group["b"].to_screen(1)
 <!--(end)-->
 
 The current __group__, __layout__, __screen__ and __window__ can be

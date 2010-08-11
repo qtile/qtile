@@ -102,10 +102,9 @@ pages = [
     Page("index.html", "Introduction"),
     Page("configuration.html", "Configuration"),
     Directory("configuration"),
-    Page("objects.html", "Object Graph"),
-    Page("scripting.html", "Scripting"),
-    Page("qsh.html", "qsh - the Qtile shell"),
-    Page("dev.html", "Hacking on Qtile"),
+    Page("commands.html", "Command API"),
+    Directory("commands"),
+    Page("dev.html", "Hacking Qtile"),
     Page("faq.html", "FAQ"),
     Page("admin.html", "Administrivia")
 ]
