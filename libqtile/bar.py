@@ -104,9 +104,20 @@ class Gap(command.CommandObject):
         return self.info()
 
 
-STRETCH = -1
-CALCULATED = -2
-STATIC = -3
+class _Obj:
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return self.name
+
+
+STRETCH = _Obj("STRETCH")
+CALCULATED = _Obj("CALCULATED")
+STATIC = _Obj("STATIC")
 class Bar(Gap):
     """
         A bar, which can contain widgets. Note that bars can only be placed at
@@ -155,7 +166,7 @@ class Bar(Gap):
         stretchWidget = None
         for i in self.widgets:
             i.offset = offset
-            if i.width_type == STRETCH:
+            if i.width_type is STRETCH:
                 if stretchWidget:
                     raise confreader.ConfigError("Can't have more than one stretch widget on a bar.")
                 stretchWidget = i
@@ -165,7 +176,7 @@ class Bar(Gap):
         offset = self.width
         if stretchWidget:
             for i in reversed(self.widgets):
-                if i.width_type == STRETCH:
+                if i.width_type is STRETCH:
                     break
                 offset -= i.width
                 total += i.width

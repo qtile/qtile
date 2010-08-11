@@ -134,21 +134,6 @@ class TestWidget(libqtile.widget.base._Widget):
     def draw(self): pass
 
 
-class OffsetConf(GeomConf):
-    screens = [
-        libqtile.manager.Screen(
-            bottom=libqtile.bar.Bar(
-                [
-                    TestWidget(),
-                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
-                    TestWidget()
-                ],
-                10
-            )
-        )
-    ]
-
-
 class uOffsetCalculation(utils._QtileTruss):
     def setUp(self):
         utils._QtileTruss.setUp(self)

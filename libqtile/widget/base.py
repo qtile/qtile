@@ -176,12 +176,12 @@ class _Widget(command.CommandObject):
         """
         command.CommandObject.__init__(self)
         self.defaults.load(self, config)
-        if width >= 0:
-            self.width_type = bar.STATIC
-            self.width = width
-        else:
+        if width in (bar.CALCULATED, bar.STRETCH):
             self.width_type = width
             self.width = 0
+        else:
+            self.width_type = bar.STATIC
+            self.width = width
 
     @property
     def win(self):
@@ -256,8 +256,8 @@ class _TextBox(_Widget):
             self.width = width
             self.resize()
 
-    def _configure(self, qtile, bar):
-        _Widget._configure(self, qtile, bar)
+    def _configure(self, qtile, qbar):
+        _Widget._configure(self, qtile, qbar)
         self.drawer.set_font(self.font, self.fontsize or self.bar.height)
         if not self.fontsize:
             _, self.font_desc, self.font_height, self.font_xadv, _ = self.drawer.fit_fontsize(self.bar.height*0.8)
