@@ -91,7 +91,6 @@ XCNOENT = 2
 
 
 class _Window(command.CommandObject):
-    possible_states = ["normal", "minimised", "floating", "maximised", "fullscreen"]
     def __init__(self, window, qtile):
         self.window, self.qtile = window, qtile
         self.hidden = True
@@ -102,10 +101,6 @@ class _Window(command.CommandObject):
         self.states = ["normal"]
         self.window_type = "normal"
         g = self.window.get_geometry()
-        self.floatDimensions = {
-                'x': g.x, 'y': g.y,
-                'w': g.width, 'h': g.height
-            }
         self.hints = {
             'input': True,
             'state': NormalState, #Normal state
@@ -119,75 +114,10 @@ class _Window(command.CommandObject):
             }
         self.updateName()
         self.updateHints()
-        self.updateWindowType()
 
-    def setState(self, state, val):
-        if state not in self.possible_states:
-            print "No such state: %s" % state
-            return
-        oldstate = self.states[0]
-        if val:
-            if self.states[0] != state:
-                self.states.insert(0, state)
-        else:
-            if self.states[0] == state:
-                self.states = self.states[1:]
-            if not self.states:
-                self.states = ["normal"]
-        if oldstate != self.states[0]:
-            hook.fire("client_state_changed", state, self)
-    def getState(self, state):
-        if self.states[0] == state:
-            return True
-        else:
-            return False
-
-    def getMinimised(self):
-        return self.getState("minimised")
-    def setMinimised(self, val):
-        self.setState("minimised", val)
-    minimised = property(getMinimised, setMinimised)
-
-    def getFloating(self):
-        return self.getState("floating")
-    def setFloating(self, val):
-        self.setState("floating", val)
-    floating = property(getFloating, setFloating)
-
-    def getMaximised(self):
-        return self.getState("maximised")
-    def setMaximised(self, val):
-        self.setState("maximised", val)
-    maximised = property(getMaximised, setMaximised)
-
-    def getFullscreen(self):
-        return self.getState("fullscreen")
-    def setFullscreen(self, val):
-        self.setState("fullscreen", val)
-    fullscreen = property(getFullscreen, setFullscreen)
-    
     def updateName(self):
         self.name = self.window.get_name()
         hook.fire("window_name_change")
-
-    def setWindowType(self, window_type):
-        try:
-            oldtype = self._type
-        except:
-            oldtype = None
-        self._type = window_type
-        if self._type != oldtype:
-            hook.fire("client_type_changed", self)
-    def getWindowType(self):
-        return self._type
-    window_type = property(getWindowType, setWindowType)
-
-    def updateWindowType(self):
-        win_type = self.window.get_wm_type()
-        if not win_type:
-            self.window_type = "normal"
-        else:
-            self.window_type = win_type
 
     def updateHints(self):
         ''' 
@@ -210,7 +140,6 @@ class _Window(command.CommandObject):
             width = self.width,
             height = self.height,
             id = self.window.wid,
-            floatDimensions = self.floatDimensions,
         )
 
     def setOpacity(self, opacity):
@@ -440,13 +369,13 @@ class Window(_Window):
     def handle_ConfigureRequest(self, e):
         cw = xcb.xproto.ConfigWindow
         if e.value_mask & cw.X:
-            self.floatDimensions['x'] = e.x
+            pass
         if e.value_mask & cw.Y:
-            self.floatDimensions['y'] = e.y
+            pass
         if e.value_mask & cw.Width:
-            self.floatDimensions['w'] = e.width
+            pass
         if e.value_mask & cw.Height:
-            self.floatDimensions['h'] = e.height
+            pass
         if self.group.screen:
             self.group.layout.configure(self)
             self.notify()
@@ -467,6 +396,8 @@ class Window(_Window):
         elif name == "_NET_WM_VISIBLE_NAME":
             self.updateName()
         elif name == "_NET_WM_WINDOW_OPACITY":
+            pass
+        elif name == "WM_PROTOCOLS":
             pass
         else:
             print >> sys.stderr, "Unknown window property: ", name
@@ -519,63 +450,6 @@ class Window(_Window):
             self.group.layoutAll()
             group.layoutAll()
 
-    def cmd_move_floating(self, x, y):
-        self.floatDimensions['x'] += x
-        self.floatDimensions['y'] += y
-        self.group.layoutAll()
-
-    def cmd_move_to_screen_edge(self, edge):
-        if edge == 'Left':
-            self.floatDimensions['x'] = 0
-        elif edge == 'Up':
-            self.floatDimensions['y'] = 0
-        elif edge == 'Right':
-            self.floatDimensions['x'] = \
-                self.group.screen.dwidth - self.floatDimensions['w']
-        elif edge == 'Down':
-            self.floatDimensions['y'] = \
-                self.group.screen.dheight + self.group.screen.dy - self.floatDimensions['h']
-        self.group.layoutAll()
-
-    def cmd_resize_floating(self, xinc, yinc):
-        self.floatDimensions['w'] += xinc
-        self.floatDimensions['h'] += yinc
-        self.group.layoutAll()
-
-    def cmd_toggle_floating(self):
-        self.floating = not self.floating
-        if not self.floating and self.window_type in ("dialog", "utility"): #maybe add more here
-            self.window_type = "pseudo-normal"
-        elif self.window_type == "pseudo-normal":
-            self.updateWindowType()
-        self.group.layoutAll()
-
-    def cmd_semitransparent(self):
-        self.opacity = 0.5
-
     def cmd_opacity(self, opacity):
         self.opacity = opacity
 
-    def cmd_minimise(self):
-        self.minimised = True
-        self.group.layoutAll()
-
-    def cmd_unminimise(self):
-        self.minimised = False
-        self.group.layoutAll()
-
-    def cmd_maximise(self):
-        self.maximised = True
-        self.group.layoutAll()
-    
-    def cmd_unmaximise(self):
-        self.maximised = False
-        self.group.layoutAll()
-
-    def cmd_fullscreen(self):
-        self.fullscreen = True
-        self.group.layoutAll()
-
-    def cmd_unfullscreen(self):
-        self.fullscreen = True
-        self.group.layoutAll()
