@@ -153,7 +153,7 @@ class Bar(Gap):
                      )
         self.window.handle_Expose = self.handle_Expose
         self.window.handle_ButtonPress = self.handle_ButtonPress
-        qtile.internalMap[self.window.window.wid] = self.window
+        qtile.windowMap[self.window.window.wid] = self.window
         self.window.unhide()
 
         for i in self.widgets:

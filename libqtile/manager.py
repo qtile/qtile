@@ -431,7 +431,6 @@ class Qtile(command.CommandObject):
         hook.init(self)
 
         self.windowMap = {}
-        self.internalMap = {}
         self.widgetMap = {}
         self.groupMap = {}
 
@@ -566,12 +565,12 @@ class Qtile(command.CommandObject):
         internal = w.get_property("QTILE_INTERNAL")
         if attrs and attrs.override_redirect:
             return
-        if internal:
-            if not w.wid in self.internalMap:
+
+        if not w.wid in self.windowMap:
+            if internal:
                 c = window.Internal(w, self)
-                self.internalMap[w.wid] = c
-        else:
-            if not w.wid in self.windowMap:
+                self.windowMap[w.wid] = c
+            else:
                 c = window.Window(w, self)
                 hook.fire("client_new", c)
                 self.windowMap[w.wid] = c
@@ -620,9 +619,9 @@ class Qtile(command.CommandObject):
         ]
         c = None
         if hasattr(e, "window"):
-            c = self.windowMap.get(e.window) or self.internalMap.get(e.window)
+            c = self.windowMap.get(e.window)
         if ename in eventEvents:
-            c = self.windowMap.get(e.event) or self.internalMap.get(e.event)
+            c = self.windowMap.get(e.event)
         if c and hasattr(c, handler):
             chain.append(getattr(c, handler))
         if hasattr(self, handler):
@@ -731,7 +730,6 @@ class Qtile(command.CommandObject):
         RESPONSE_TYPE_MASK = 0x7f
         #FIXME: xpyb doesn't seem to expose the send_event attribute on UnmapNotify?
         if e.event == self.root.wid and e.response_type & (~RESPONSE_TYPE_MASK):
-            print >> sys.stderr, "UNMANAGE"
             self.unmanage(e.window)
 
     def toScreen(self, n):
@@ -826,11 +824,10 @@ class Qtile(command.CommandObject):
                 return utils.lget(self.screens, sel)
 
     def listWID(self):
-        return [i.window.wid for i in self.windowMap.values() + self.internalMap.values()]
+        return [i.window.wid for i in self.windowMap.values()]
 
     def clientFromWID(self, wid):
-        all = self.windowMap.values() + self.internalMap.values()
-        for i in all:
+        for i in self.windowMap.values():
             if i.window.wid == wid:
                 return i
         return None
@@ -866,7 +863,7 @@ class Qtile(command.CommandObject):
         """
             Return info for each internal window (bars, for example).
         """
-        return [i.info() for i in self.internalMap.values()]
+        return [i.info() for i in self.windowMap.values() if isinstance(i, window.Internal)]
 
     def cmd_list_widgets(self):
         """
@@ -1025,4 +1022,4 @@ class Qtile(command.CommandObject):
         """
             Return info for each client window.
         """
-        return [i.info() for i in self.windowMap.values()]
+        return [i.info() for i in self.windowMap.values() if isinstance(i, window.Window)]
