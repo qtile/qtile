@@ -18,6 +18,7 @@ hooks = set(
     ]
 )
 subscriptions = {}
+SKIPLOG = set(["tick"])
 
 def init(q):
     global qtile
@@ -36,7 +37,8 @@ def subscribe(event, func):
 def fire(event, *args, **kwargs):
     if event not in hooks:
         raise manager.QtileError("Unknown event: %s"%event)
-    qtile.log.add("Internal event: %s(%s, %s)"%(event, args, kwargs))
+    if not event in SKIPLOG:
+        qtile.log.add("Internal event: %s(%s, %s)"%(event, args, kwargs))
     for i in subscriptions.get(event, []):
         i(*args, **kwargs)
 
