@@ -23,10 +23,9 @@ class GroupBox(base._Widget):
         base._Widget.__init__(self, bar.CALCULATED, **config)
 
     def click(self, x, y):
-        return
-        #groupOffset = x/self.boxwidth
-        #if len(self.qtile.groups) - 1 >= groupOffset:
-        #    self.bar.screen.setGroup(self.qtile.groups[groupOffset])
+        groupOffset = int(x/self.boxwidth)
+        if len(self.qtile.groups) - 1 >= groupOffset:
+            self.bar.screen.setGroup(self.qtile.groups[groupOffset])
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)

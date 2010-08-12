@@ -221,7 +221,8 @@ class Bar(Gap):
             :screen The integer screen offset
             :position One of "top", "bottom", "left", or "right"
         """
-        class _fake: pass
+        class _fake: 
+            pass
         fake = _fake()
         fake.event_x = x
         fake.event_y = y

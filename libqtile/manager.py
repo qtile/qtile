@@ -615,6 +615,7 @@ class Qtile(command.CommandObject):
         # Certain events expose the affected window id as an "event" attribute.
         eventEvents = [
             "EnterNotify",
+            "ButtonPress",
 
         ]
         c = None
