@@ -277,7 +277,7 @@ class Group(command.CommandObject):
         )
 
     def add(self, window):
-        hook.fire("window_add")
+        hook.fire("group_window_add")
         self.windows.add(window)
         window.group = self
         for i in self.layouts:
@@ -573,9 +573,9 @@ class Qtile(command.CommandObject):
         else:
             if not w.wid in self.windowMap:
                 c = window.Window(w, self)
+                hook.fire("client_new", c)
                 self.windowMap[w.wid] = c
                 self.currentScreen.group.add(c)
-                hook.fire("client_new", c)
 
     def grabKeys(self):
         self.root.ungrab_key(None, None)

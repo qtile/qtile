@@ -42,7 +42,7 @@ class GroupBox(base._Widget):
         self.boxwidth = self.maxwidth + self.padding_x*2 + self.borderwidth*2 + self.margin_x*2
         self.width = self.boxwidth * len(self.qtile.groups)
         hook.subscribe("setgroup", self.draw)
-        hook.subscribe("window_add", self.draw)
+        hook.subscribe("group_window_add", self.draw)
         self.setup_hooks()
 
     def group_has_urgent(self, group):
