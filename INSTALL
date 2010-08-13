@@ -2,9 +2,9 @@
 Dependencies
 ------------
 
-Qtile requires a recent version of Python Xlib:
-
-http://python-xlib.sourceforge.net/
+Qtile depends on recent repository checkouts of xpyb and pycairo. More
+instructions on building and installing these can be found in the documentation
+on www.qtile.org.
 
 
 Installation
