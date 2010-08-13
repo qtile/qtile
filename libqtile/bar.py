@@ -142,12 +142,8 @@ class Bar(Gap):
                     "Bars must be at the top or the bottom of the screen."
                   )
         Gap._configure(self, qtile, screen)
-        c = qtile.conn.default_screen.default_colormap.alloc_color(
-                self.background
-            )
         self.window = window.Internal.create(
                         self.qtile,
-                        c,
                         self.x, self.y, self.width, self.height,
                         self.opacity
                      )

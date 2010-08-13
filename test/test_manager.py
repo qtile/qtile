@@ -177,6 +177,11 @@ class uSingle(utils.QtileTests):
         self.testXeyes()
         assert self.c.window.inspect()
 
+    def test_static(self):
+        self.testXeyes()
+        self.testWindow("one")
+        self.c.window[self.c.window.info()["id"]].static(0, 0, 0, 100, 100)
+
 
 class uRandr(utils.QtileTests):
     config = TestConfig()

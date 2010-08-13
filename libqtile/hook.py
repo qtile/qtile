@@ -51,6 +51,8 @@ class Subscribe:
     def client_new(self, func):
         """
             Called whenever Qtile starts managing a new client.
+
+            - arguments: window.Window object
         """
         return self._subscribe("client_new", func)
 
@@ -111,4 +113,3 @@ def fire(event, *args, **kwargs):
         qtile.log.add("Internal event: %s(%s, %s)"%(event, args, kwargs))
     for i in subscriptions.get(event, []):
         i(*args, **kwargs)
-

@@ -338,7 +338,7 @@ class Internal(_Window):
                   EventMask.Exposure |\
                   EventMask.ButtonPress
     @classmethod
-    def create(klass, qtile, background, x, y, width, height, opacity=1.0):
+    def create(klass, qtile, x, y, width, height, opacity=1.0):
         win = qtile.conn.create_window(
                     x, y, width, height
               )
@@ -352,12 +352,46 @@ class Internal(_Window):
         return "Internal(%s)"%self.name
 
 
+class Static(_Window):
+    """
+        An internal window, that should not be managed by qtile.
+    """
+    _windowMask = EventMask.StructureNotify |\
+                  EventMask.PropertyChange |\
+                  EventMask.EnterWindow |\
+                  EventMask.FocusChange |\
+                  EventMask.Exposure
+    def __init__(self, win, qtile, screen, x, y, width, height):
+        _Window.__init__(self, win, qtile)
+        self.x, self.y = x, y
+        self.width, self.height = width, height
+        self.screen = screen
+        self.place(x, y, width, height, 0, 0)
+
+    def __repr__(self):
+        return "Static(%s)"%self.name
+
+
 class Window(_Window):
     _windowMask = EventMask.StructureNotify |\
                   EventMask.PropertyChange |\
                   EventMask.EnterWindow |\
                   EventMask.FocusChange
+    # Set when this object is being retired.
+    defunct = False
     group = None
+    def static(self, screen, x, y, width, height):
+        """
+            Makes this window a static window, attached to a Screen.
+        """
+        self.defunct = True
+        screen = self.qtile.screens[screen]
+        if self.group:
+            self.group.remove(self)
+        s = Static(self.window, self.qtile, screen, x, y, width, height)
+        self.qtile.windowMap[self.window.wid] = self
+        return s
+
     def handle_EnterNotify(self, e):
         hook.fire("client_mouse_enter", self)
         if self.group.currentWindow != self:
@@ -424,6 +458,9 @@ class Window(_Window):
 
     def __repr__(self):
         return "Window(%s)"%self.name
+
+    def cmd_static(self, screen, x, y, width, height):
+        self.static(screen, x, y, width, height)
 
     def cmd_kill(self):
         """
