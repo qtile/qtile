@@ -25,7 +25,7 @@ class Clock(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        hook.subscribe("tick", self.update)
+        hook.subscribe.tick(self.update)
 
     def update(self):
         now = datetime.datetime.now().strftime(self.fmt)

@@ -16,9 +16,8 @@ class uHook(libpry.AutoTree):
         dummy.log = libqtile.manager.Log(5, io)
         libqtile.hook.init(dummy)
 
-        libpry.raises("unknown event", libqtile.hook.subscribe, "unkown", test)
         libpry.raises("unknown event", libqtile.hook.fire, "unkown")
-        libqtile.manager.hook.subscribe("group_window_add", test)
+        libqtile.manager.hook.subscribe.group_window_add(test)
         libqtile.manager.hook.fire("group_window_add", 1)
         assert self.testVal == 1
 

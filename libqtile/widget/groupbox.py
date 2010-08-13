@@ -40,8 +40,8 @@ class GroupBox(base._Widget):
         self.margin_x = max(self.min_margin_x, int(self.maxwidth * 0.2))
         self.boxwidth = self.maxwidth + self.padding_x*2 + self.borderwidth*2 + self.margin_x*2
         self.width = self.boxwidth * len(self.qtile.groups)
-        hook.subscribe("setgroup", self.draw)
-        hook.subscribe("group_window_add", self.draw)
+        hook.subscribe.setgroup(self.draw)
+        hook.subscribe.group_window_add(self.draw)
         self.setup_hooks()
 
     def group_has_urgent(self, group):
@@ -86,7 +86,7 @@ class GroupBox(base._Widget):
     def setup_hooks(self):
         def hook_response(*args, **kwargs):
             self.draw()
-        hook.subscribe("client_new", hook_response)
-        hook.subscribe("client_urgent_hint_changed", hook_response)
-        hook.subscribe("client_killed", hook_response)
+        hook.subscribe.client_new(hook_response)
+        hook.subscribe.client_urgent_hint_changed(hook_response)
+        hook.subscribe.client_killed(hook_response)
 

@@ -1,22 +1,5 @@
 import manager
 
-hooks = [
-    ["setgroup", "Called when group is changed."],
-    ["focus_change", "Called when focus is changed."],
-    ["group_window_add", "Called when a new window is added to a group."],
-    ["window_name_change", "Called whenever a windows name changes."],
-    ["client_new", "Called whenever Qtile starts managing a new client."],
-    ["client_killed", "Called whenever a client is killed."],
-    ["client_state_changed", "Called whenever client state changes."],
-    ["client_type_changed", "Called whenever window type changes."],
-    ["client_focus", "Called whenver focus changes."],
-    ["client_mouse_enter", "Called when the mouse enters a client."],
-    ["client_name_updated", "Called when the client name changes."],
-    ["client_urgent_hint_changed", "Called when the client urgent hint changes."],
-    ["tick", "Called whenever the mainloop ticks."],
-]
-
-_hooks = set(i[0] for i in hooks)
 subscriptions = {}
 SKIPLOG = set(["tick"])
 
@@ -27,15 +10,102 @@ def init(q):
 def clear():
     subscriptions.clear()
 
-def subscribe(event, func):
-    if event not in _hooks:
-        raise manager.QtileError("Unknown event: %s"%event)
-    lst = subscriptions.setdefault(event, [])
-    if not func in lst:
-        lst.append(func)
+
+class Subscribe:
+    def __init__(self):
+        hooks = set([])
+        for i in dir(self):
+            if not i.startswith("_"):
+                hooks.add(i)
+        self.hooks = hooks
+        
+    def _subscribe(self, event, func):
+        lst = subscriptions.setdefault(event, [])
+        if not func in lst:
+            lst.append(func)
+
+    def setgroup(self, func):
+        """
+            Called when group is changed.
+        """
+        return self._subscribe("setgroup", func)
+
+    def focus_change(self, func):
+        """
+            Called when focus is changed.
+        """
+        return self._subscribe("focus_change", func)
+
+    def group_window_add(self, func):
+        """
+            Called when a new window is added to a group.
+        """
+        return self._subscribe("group_window_add", func)
+
+    def window_name_change(self, func):
+        """
+            Called whenever a windows name changes.
+        """
+        return self._subscribe("window_name_change", func)
+
+    def client_new(self, func):
+        """
+            Called whenever Qtile starts managing a new client.
+        """
+        return self._subscribe("client_new", func)
+
+    def client_killed(self, func):
+        """
+            Called whenever a client is killed.
+        """
+        return self._subscribe("client_killed", func)
+
+    def client_state_changed(self, func):
+        """
+            Called whenever client state changes.
+        """
+        return self._subscribe("client_state_changed", func)
+
+    def client_type_changed(self, func):
+        """
+            Called whenever window type changes.
+        """
+        return self._subscribe("client_type_changed", func)
+
+    def client_focus(self, func):
+        """
+            Called whenver focus changes.
+        """
+        return self._subscribe("client_focus", func)
+
+    def client_mouse_enter(self, func):
+        """
+            Called when the mouse enters a client.
+        """
+        return self._subscribe("client_mouse_enter", func)
+
+    def client_name_updated(self, func):
+        """
+            Called when the client name changes.
+        """
+        return self._subscribe("client_name_updated", func)
+
+    def client_urgent_hint_changed(self, func):
+        """
+            Called when the client urgent hint changes.
+        """
+        return self._subscribe("client_urgent_hint_changed", func)
+
+    def tick(self, func):
+        """
+            Called whenever the mainloop ticks.
+        """
+        return self._subscribe("tick", func)
+
+subscribe = Subscribe()
 
 def fire(event, *args, **kwargs):
-    if event not in _hooks:
+    if event not in subscribe.hooks:
         raise manager.QtileError("Unknown event: %s"%event)
     if not event in SKIPLOG:
         qtile.log.add("Internal event: %s(%s, %s)"%(event, args, kwargs))

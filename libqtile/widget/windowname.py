@@ -18,8 +18,8 @@ class WindowName(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        hook.subscribe("window_name_change", self.update)
-        hook.subscribe("focus_change", self.update)
+        hook.subscribe.window_name_change(self.update)
+        hook.subscribe.focus_change(self.update)
 
     def update(self):
         w = self.bar.screen.group.currentWindow
