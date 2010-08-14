@@ -174,8 +174,8 @@ class uSingle(utils.QtileTests):
         assert self.c.window.inspect()
 
     def test_inspect_xterm(self):
-        self.testXeyes()
-        assert self.c.window.inspect()
+        self.testXterm()
+        print self.c.window.inspect()["wm_class"]
 
     def test_static(self):
         self.testXeyes()

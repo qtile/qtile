@@ -324,12 +324,16 @@ class Window:
     def get_wm_state(self):
         r = self.get_property("WM_STATE", xcb.xproto.GetPropertyType.Any)
         if r:
-            list(r.value)
+            return list(r.value)
 
     def get_wm_class(self):
-        r = self.get_property("WM_CLASS", "UTF8_STRING")
+        """
+            Return an (instance, class) tuple if WM_CLASS exists, or None.
+        """
+        r = self.get_property("WM_CLASS", "STRING")
         if r:
-            self._propertyString(r)
+            s = self._propertyString(r)
+            return tuple(s.strip("\0").split("\0"))
 
     def get_wm_transient_for(self):
         r = self.get_property("WM_TRANSIENT_FOR", "ATOM")
@@ -339,12 +343,12 @@ class Window:
     def get_wm_icon_name(self):
         r = self.get_property("WM_ICON_NAME", "UTF8_STRING")
         if r:
-            self._propertyString(r)
+            return self._propertyString(r)
 
     def get_wm_client_machine(self):
         r = self.get_property("WM_CLIENT_MACHINE", "UTF8_STRING")
         if r:
-            self._propertyString(r)
+            return self._propertyString(r)
 
     def get_geometry(self):
         q = self.conn.conn.core.GetGeometry(self.wid)
