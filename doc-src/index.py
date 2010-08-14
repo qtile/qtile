@@ -22,8 +22,7 @@ class Examples:
         return self._wrap(ns.pySyntax.withConf(**kwargs), path)
 
 
-class CmdObj:
-    template = countershape.template.File(None, "_cmdobj.html")
+class _Obj:
     def __init__(self, o):
         parts = o.split(".")
         o = __import__(".".join(parts[:-1]), globals(), locals())
@@ -83,8 +82,17 @@ class CmdObj:
         return str(self.template(c=self))
 
 
+class ConfObj(_Obj):
+    template = countershape.template.File(None, "_configobj.html")
+
+
+class CmdObj(_Obj):
+    template = countershape.template.File(None, "_cmdobj.html")
+
+
 this.markup = countershape.markup.Markdown()
 ns.examples = Examples("..")
+ns.confobj = ConfObj
 ns.cmdobj = CmdObj
 
 ns.docTitle = "Qtile 0.4"
@@ -102,7 +110,7 @@ pages = [
     Page("index.html", "Introduction"),
     Page("configuration.html", "Configuration"),
     Directory("configuration"),
-    Page("commands.html", "Command API"),
+    Page("commands.html", "API"),
     Directory("commands"),
     Page("dev.html", "Hacking Qtile"),
     Page("faq.html", "FAQ"),

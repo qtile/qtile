@@ -406,6 +406,9 @@ class Log:
 
 
 class Qtile(command.CommandObject):
+    """
+        This object is the __root__ of the command graph.
+    """
     debug = False
     _exit = False
     _testing = False
