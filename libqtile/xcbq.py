@@ -229,15 +229,8 @@ class Window:
         """
         return "".join(chr(i) for i in r.value)
 
-    # I'm sure even pigs and possibly their tapeworms have better ways to send
-    # events than this. We have to fix xpyb.
-    def send_event(self, eventbuf):
-        self.conn.conn.core.SendEvent(
-            0,
-            self.wid,
-            0,
-            eventbuf
-        )
+    def send_event(self, eventbuf, mask=EventMask.NoEvent):
+        self.conn.conn.core.SendEvent(False, self.wid, mask, eventbuf)
 
     def kill_client(self):
         self.conn.conn.core.KillClient(self.wid)

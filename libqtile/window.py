@@ -97,6 +97,7 @@ class _Window(command.CommandObject):
         window.set_attribute(eventmask=self._windowMask)
         self.x, self.y, self.width, self.height = None, None, None, None
         self.borderwidth = 0
+        self.bordercolor = None
         self.name = "<no name>"
         self.states = ["normal"]
         self.window_type = "normal"
@@ -172,6 +173,7 @@ class _Window(command.CommandObject):
         # Having to do it this way is goddamn awful.
         vals = [
             22, # ConfigureNotifyEvent
+            0,
             self.window.wid,
             self.window.wid,
             xcb.xproto.Window._None,
@@ -184,9 +186,10 @@ class _Window(command.CommandObject):
         ]
         self.window.send_event(
             struct.pack(
-                'Bxx2xIIIhhHHHBx',
+                'B1xHLLLhhHHHB5x',
                 *vals
-            )
+            ),
+            xcb.xproto.EventMask.StructureNotify
         )
 
     def kill(self):
@@ -245,21 +248,22 @@ class _Window(command.CommandObject):
             eventmask=self._windowMask
         )
 
-    def place(self, x, y, width, height, border, borderColor):
+    def place(self, x, y, width, height, borderwidth, bordercolor):
         """
             Places the window at the specified location with the given size.
         """
         self.x, self.y, self.width, self.height = x, y, width, height
+        self.borderwidth, self.bordercolor = borderwidth, bordercolor
         self.window.configure(
             x=x,
             y=y,
             width=width,
             height=height,
-            borderwidth=border
+            borderwidth=borderwidth
         )
-        if borderColor is not None:
+        if bordercolor is not None:
             self.window.set_attribute(
-                borderpixel = borderColor
+                borderpixel = bordercolor
             )
 
     def focus(self, warp):
@@ -403,16 +407,15 @@ class Window(_Window):
     def handle_ConfigureRequest(self, e):
         cw = xcb.xproto.ConfigWindow
         if e.value_mask & cw.X:
-            pass
+            self.x = e.x
         if e.value_mask & cw.Y:
-            pass
+            self.y = e.y
         if e.value_mask & cw.Width:
-            pass
+            self.width = e.width
         if e.value_mask & cw.Height:
-            pass
-        if self.group.screen:
-            self.group.layout.configure(self)
-            self.notify()
+            self.height = e.height
+        self.place(self.x, self.y, self.width, self.height, self.borderwidth, self.bordercolor)
+        self.notify()
         return False
 
     def handle_PropertyNotify(self, e):

@@ -91,7 +91,7 @@ class GeomConf:
 class uBarGeometry(utils.QtileTests):
     config = GeomConf()
     def test_geometry(self):
-        self.testWindow("one")
+        self.testXeyes()
         g = self.c.screens()[0]["gaps"]
         assert g["top"] == (0, 0, 800, 10)
         assert g["bottom"] == (0, 590, 800, 10)
@@ -103,10 +103,8 @@ class uBarGeometry(utils.QtileTests):
         assert geom["y"] == 10
         assert geom["width"] == 778
         assert geom["height"] == 578
-
         internal = self.c.internal()
         assert len(internal) == 2
-
         wid = self.c.bar["bottom"].info()["window"]
         assert self.c.window[wid].inspect()
 
