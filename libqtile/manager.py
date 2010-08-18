@@ -1021,6 +1021,18 @@ class Qtile(command.CommandObject):
         """
         return self.toScreen(n)
 
+    def cmd_to_next_screen(self):
+        """
+            Move to next screen
+        """
+        return self.toScreen((self.screens.index(self.currentScreen) + 1 ) % len(self.screens))
+
+    def cmd_to_prev_screen(self):
+        """
+            Move to the previous screen
+        """
+        return self.toScreen((self.screens.index(self.currentScreen) - 1) % len(self.screens))    
+
     def cmd_windows(self):
         """
             Return info for each client window.
