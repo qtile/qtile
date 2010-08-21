@@ -1,0 +1,22 @@
+
+Qtile has an extensive set of hooks that users can bind functions to. Be
+careful when writing hooks - they run in the context of the Qtile process, and
+have complete access to all of Qtile's internal object APIs. This means they
+can be arbitrarily powerful, but they can also crash Qtile or corrupt its data
+structures.
+
+Normally, hooks are subscribed to in the Qtile configuration file. Hooks are
+exposed on the __hook.subscribe__ object. The following code will print the
+client name to stderr (which will show up in your .xsession-errors file)
+whenever focus changes.
+
+<!--(block | pySyntax)-->
+from libqtile import hook
+
+def mymethod(c):
+    print >> sys.stderr, c.name
+
+hook.subscribe.client_focus(mymethod)
+<!--(end)-->
+
+$!hookobj("libqtile.hook.Subscribe")!$

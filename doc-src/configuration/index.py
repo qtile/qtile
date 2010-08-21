@@ -5,4 +5,5 @@ pages = [
     Page("keys.html", "keys"),
     Page("layouts.html", "layouts"),
     Page("screens.html", "screens"),
+    Page("hooks.html", "hooks"),
 ]

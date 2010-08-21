@@ -415,7 +415,11 @@ class Window(_Window):
     group = None
     def static(self, screen, x=None, y=None, width=None, height=None):
         """
-            Makes this window a static window, attached to a Screen.
+            Makes this window a static window, attached to a Screen. If any of
+            the arguments are left unspecified, the values given by the window
+            itself are used instead. So, for a window that's aware of its
+            appropriate size and location (like dzen), you don't have to
+            specify anything.
         """
         self.defunct = True
         screen = self.qtile.screens[screen]

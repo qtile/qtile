@@ -74,6 +74,23 @@ class _Obj:
         return l
 
     @property
+    def methods(self):
+        """
+            Returns a list of dicts describing methods.
+        """
+        l = []
+        for i in sorted(dir(self.o)):
+            if not i.startswith("_"):
+                f = getattr(self.o, i)
+                l.append(
+                    dict(
+                        name = i,
+                        doc = markdown2.markdown(inspect.getdoc(f) or "")
+                    )
+                )
+        return l
+
+    @property
     def initdoc(self):
         s = getattr(self.o, "__init__")
         return markdown2.markdown(inspect.getdoc(s) or "")
@@ -90,10 +107,15 @@ class CmdObj(_Obj):
     template = countershape.template.File(None, "_cmdobj.html")
 
 
+class HookObj(_Obj):
+    template = countershape.template.File(None, "_hookobj.html")
+
+
 this.markup = countershape.markup.Markdown()
 ns.examples = Examples("..")
 ns.confobj = ConfObj
 ns.cmdobj = CmdObj
+ns.hookobj = HookObj
 
 ns.docTitle = "Qtile 0.4"
 ns.docMaintainer = "Aldo Cortesi"
