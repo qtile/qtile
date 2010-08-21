@@ -4,6 +4,7 @@ import libqtile.manager
 import utils
 
 class MaxConfig:
+    main = None
     groups = [
         libqtile.manager.Group("a"),
         libqtile.manager.Group("b"),
@@ -44,6 +45,7 @@ class uMax(utils.QtileTests):
 
 
 class StackConfig:
+    main = None
     groups = [
         libqtile.manager.Group("a"),
         libqtile.manager.Group("b"),
@@ -216,6 +218,7 @@ class uStack(utils.QtileTests):
 
 
 class SelectorConfig:
+    main = None
     groups = [
         libqtile.manager.Group("a"),
         libqtile.manager.Group("b"),

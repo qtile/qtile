@@ -115,10 +115,11 @@ class MaskMap:
         mask = 0
         values = []
         for m, s in self.mmap:
-            val = kwargs.get(s)
-            if val is not None:
-                mask |= m
-                values.append(getattr(val, "_maskvalue", val))
+            if s in kwargs:
+                val = kwargs.get(s)
+                if val is not None:
+                    mask |= m
+                    values.append(getattr(val, "_maskvalue", val))
                 del kwargs[s]
         if kwargs:
             raise ValueError("Unknown mask names: %s"%kwargs.keys())

@@ -365,12 +365,41 @@ class Static(_Window):
                   EventMask.EnterWindow |\
                   EventMask.FocusChange |\
                   EventMask.Exposure
-    def __init__(self, win, qtile, screen, x, y, width, height):
+    def __init__(self, win, qtile, screen, x=None, y=None, width=None, height=None):
         _Window.__init__(self, win, qtile)
-        self.x, self.y = x, y
-        self.width, self.height = width, height
+        self.conf_x, self.conf_y = x, y
+        self.conf_width, self.conf_height = width, height
+        self.x, self.y, self.width, self.height = x or 0, y or 0, width or 0, height or 0
         self.screen = screen
-        self.place(x, y, width, height, 0, 0)
+        if None not in (x, y, width, height):
+            self.place(x, y, width, height, 0, 0)
+
+    def handle_ConfigureRequest(self, e):
+        cw = xcb.xproto.ConfigWindow
+        x = self.conf_x
+        y = self.conf_y
+        width = self.conf_width
+        height = self.conf_height
+
+        if self.conf_x is None and e.value_mask & cw.X:
+            self.x = e.x
+        if self.conf_y is None and e.value_mask & cw.Y:
+            self.y = e.y
+        if self.conf_width is None and e.value_mask & cw.Width:
+            self.width = e.width
+        if self.conf_height is None and e.value_mask & cw.Height:
+            self.height = e.height
+        
+        self.place(
+            self.screen.x + self.x,
+            self.screen.y + self.y,
+            self.width,
+            self.height,
+            self.borderwidth,
+            self.bordercolor
+        )
+        self.notify()
+        return False
 
     def __repr__(self):
         return "Static(%s)"%self.name
@@ -384,7 +413,7 @@ class Window(_Window):
     # Set when this object is being retired.
     defunct = False
     group = None
-    def static(self, screen, x, y, width, height):
+    def static(self, screen, x=None, y=None, width=None, height=None):
         """
             Makes this window a static window, attached to a Screen.
         """
@@ -393,7 +422,7 @@ class Window(_Window):
         if self.group:
             self.group.remove(self)
         s = Static(self.window, self.qtile, screen, x, y, width, height)
-        self.qtile.windowMap[self.window.wid] = self
+        self.qtile.windowMap[self.window.wid] = s
         return s
 
     def handle_EnterNotify(self, e):

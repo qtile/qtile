@@ -1,6 +1,7 @@
 import os, time, cStringIO, subprocess
 import libpry
 import libqtile, libqtile.layout, libqtile.bar, libqtile.widget, libqtile.manager
+import libqtile.hook
 import utils
 
 class TestConfig:
@@ -34,6 +35,7 @@ class TestConfig:
                         20
                     ),
     )]
+    main = None
 
 
 class BareConfig:
@@ -60,6 +62,7 @@ class BareConfig:
         ),
     ]
     screens = [libqtile.manager.Screen()]
+    main = None
 
 
 
@@ -360,6 +363,54 @@ class uScreenDimensions(libpry.AutoTree):
         assert s.dheight == 80
 
 
+class _Config:
+    groups = [
+        libqtile.manager.Group("a"),
+        libqtile.manager.Group("b"),
+        libqtile.manager.Group("c"),
+        libqtile.manager.Group("d")
+    ]
+    layouts = [
+                libqtile.layout.stack.Stack(stacks=1),
+                libqtile.layout.stack.Stack(2)
+            ]
+    keys = [
+        libqtile.manager.Key(
+            ["control"],
+            "k",
+            libqtile.command._Call([("layout", None)], "up")
+        ),
+        libqtile.manager.Key(
+            ["control"],
+            "j",
+            libqtile.command._Call([("layout", None)], "down")
+        ),
+    ]
+    screens = [libqtile.manager.Screen()]
+
+
+
+class ClientNewConfig(_Config):
+    @staticmethod
+    def main(c):
+        import libqtile.hook
+        def client_new(c):
+            c.static(0)
+        libqtile.hook.subscribe.client_new(client_new)
+
+
+class uStatic(utils.QtileTests):
+    config = ClientNewConfig()
+    def test_minimal(self):
+        a = self.testWindow("one")
+        self.kill(a)
+
+    if utils.whereis("gkrellm"):
+        def test_gkrellm(self):
+            self.testGkrellm()
+            time.sleep(0.1)
+
+
 tests = [
     utils.xfactory(xinerama=True), [
         uQtile("bare", BareConfig),
@@ -370,7 +421,8 @@ tests = [
         uSingle(),
         uQtile("bare", BareConfig),
         uQtile("complex", TestConfig),
-        uMinimal()
+        uMinimal(),
+        uStatic()
     ],
     utils.xfactory(xinerama=False), [
         uRandr(),

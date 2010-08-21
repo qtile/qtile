@@ -433,6 +433,9 @@ class Qtile(command.CommandObject):
             )
         hook.init(self)
 
+        if config.main:
+            config.main(self)
+
         self.windowMap = {}
         self.widgetMap = {}
         self.groupMap = {}
@@ -559,7 +562,8 @@ class Qtile(command.CommandObject):
     def unmanage(self, window):
         c = self.windowMap.get(window)
         if c:
-            c.group.remove(c)
+            if hasattr(c, "group"):
+                c.group.remove(c)
             del self.windowMap[window]
             hook.fire("client_killed", c)
 
@@ -576,8 +580,9 @@ class Qtile(command.CommandObject):
             else:
                 c = window.Window(w, self)
                 hook.fire("client_new", c)
-                self.windowMap[w.wid] = c
-                self.currentScreen.group.add(c)
+                if not c.defunct:
+                    self.windowMap[w.wid] = c
+                    self.currentScreen.group.add(c)
 
     def grabKeys(self):
         self.root.ungrab_key(None, None)
@@ -862,12 +867,6 @@ class Qtile(command.CommandObject):
             d[i.name] = i.info()
         return d
 
-    def cmd_internal(self):
-        """
-            Return info for each internal window (bars, for example).
-        """
-        return [i.info() for i in self.windowMap.values() if isinstance(i, window.Internal)]
-
     def cmd_list_widgets(self):
         """
             List of all addressible widget names.
@@ -1025,4 +1024,11 @@ class Qtile(command.CommandObject):
         """
             Return info for each client window.
         """
-        return [i.info() for i in self.windowMap.values() if isinstance(i, window.Window)]
+        return [i.info() for i in self.windowMap.values() if not isinstance(i, window.Internal)]
+
+    def cmd_internal_windows(self):
+        """
+            Return info for each internal window (bars, for example).
+        """
+        return [i.info() for i in self.windowMap.values() if isinstance(i, window.Internal)]
+

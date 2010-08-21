@@ -7,6 +7,7 @@ def init(q):
     global qtile
     qtile = q
 
+
 def clear():
     subscriptions.clear()
 

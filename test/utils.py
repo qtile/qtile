@@ -1,11 +1,19 @@
 import subprocess, os, time, sys, socket, traceback
 import Xlib.display, Xlib.X
 import libpry
-import libqtile, libqtile.ipc
+import libqtile, libqtile.ipc, libqtile.hook
 
 WIDTH = 800
 HEIGHT = 600
 DISPLAY = ":1"
+
+
+def whereis(program):
+    for path in os.environ.get('PATH', '').split(':'):
+        if os.path.exists(os.path.join(path, program)) and \
+           not os.path.isdir(os.path.join(path, program)):
+            return os.path.join(path, program)
+    return None
 
 
 class XNest(libpry.TestContainer):
@@ -134,6 +142,7 @@ class _QtileTruss(libpry.AutoTree):
             self._waitForQtile()
 
     def stopQtile(self):
+        assert self.c.status()
         if self.qtilepid:
             try:
                 self._kill(self.qtilepid)
@@ -147,6 +156,7 @@ class _QtileTruss(libpry.AutoTree):
         start = len(self.c.windows())
         pid = os.fork()
         if pid == 0:
+            os.putenv("DISPLAY", self["display"])
             os.execv(path, args)
         for i in range(20):
             if len(self.c.windows()) > start:
@@ -157,13 +167,6 @@ class _QtileTruss(libpry.AutoTree):
         self.testwindows.append(pid)
         return pid
 
-    def whereis(self, program):
-        for path in os.environ.get('PATH', '').split(':'):
-            if os.path.exists(os.path.join(path, program)) and \
-               not os.path.isdir(os.path.join(path, program)):
-                return os.path.join(path, program)
-        return None
-
     def testWindow(self, name):
         return self._testProc(
                     "scripts/window",
@@ -171,14 +174,21 @@ class _QtileTruss(libpry.AutoTree):
                 )
 
     def testXeyes(self):
-        path = self.whereis("xeyes")
+        path = whereis("xeyes")
         return self._testProc(
                     path,
                     [path, "-display", self["display"]]
                 )
 
+    def testGkrellm(self):
+        path = whereis("gkrellm")
+        return self._testProc(
+                    path,
+                    [path]
+                )
+
     def testXterm(self):
-        path = self.whereis("xterm")
+        path = whereis("xterm")
         return self._testProc(
                     path,
                     [path, "-display", self["display"]]
@@ -209,6 +219,7 @@ class QtileTests(_QtileTruss):
 
     def tearDown(self):
         _QtileTruss.tearDown(self)
+        libqtile.hook.clear()
         self.stopQtile()
 
     def _groupconsistency(self):

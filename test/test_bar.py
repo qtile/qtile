@@ -32,6 +32,7 @@ class GBConfig:
                     ),
         )
     ]
+    main = None
 
 
 class uWidgets(utils.QtileTests):
@@ -70,6 +71,7 @@ class uWidgets(utils.QtileTests):
 
 
 class GeomConf:
+    main = None
     keys = []
     groups = [
         libqtile.manager.Group("a"),
@@ -103,7 +105,7 @@ class uBarGeometry(utils.QtileTests):
         assert geom["y"] == 10
         assert geom["width"] == 778
         assert geom["height"] == 578
-        internal = self.c.internal()
+        internal = self.c.internal_windows()
         assert len(internal) == 2
         wid = self.c.bar["bottom"].info()["window"]
         assert self.c.window[wid].inspect()

@@ -29,6 +29,7 @@ class Config:
     groups = None
     layouts = None
     screens = ()
+    main = None
 
 
 class File(Config):
@@ -51,4 +52,5 @@ class File(Config):
         self.groups = globs.get("groups")
         self.layouts = globs.get("layouts")
         self.screens = globs.get("screens")
+        self.main = globs.get("main")
 
