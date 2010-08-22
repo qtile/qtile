@@ -324,7 +324,11 @@ class Group(command.CommandObject):
         """
             Returns a dictionary of info for this object.
         """
-        return dict(name=self.name)
+        return dict(
+                name=self.name,
+                screen = self.screen.index if self.screen else None,
+                windows = [i.window.wid for i in self.windows]
+               )
 
     def cmd_toscreen(self, screen=None):
         """
@@ -580,9 +584,14 @@ class Qtile(command.CommandObject):
             else:
                 c = window.Window(w, self)
                 hook.fire("client_new", c)
-                if not c.defunct:
-                    self.windowMap[w.wid] = c
+                # Window may be defunct because it's been declared static in hook.
+                if c.defunct:
+                    return
+                self.windowMap[w.wid] = c
+                # Window may have been bound to a group in the hook.
+                if not c.group:
                     self.currentScreen.group.add(c)
+            return c
 
     def grabKeys(self):
         self.root.ungrab_key(None, None)
@@ -728,7 +737,9 @@ class Qtile(command.CommandObject):
 
     def handle_MapRequest(self, e):
         w = xcbq.Window(self.conn, e.window)
-        self.manage(w)
+        c = self.manage(w)
+        if c and not c.group.screen:
+            return
         w.map()
 
     def handle_DestroyNotify(self, e):

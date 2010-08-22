@@ -429,6 +429,21 @@ class Window(_Window):
         self.qtile.windowMap[self.window.wid] = s
         return s
 
+    def togroup(self, groupName):
+        """
+            Move window to a specified group.
+        """
+        group = self.qtile.groupMap.get(groupName)
+        if group is None:
+            raise command.CommandError("No such group: %s"%groupName)
+        if self.group is not group:
+            if self.group:
+                self.hide()
+                self.group.remove(self)
+            group.add(self)
+            self.group.layoutAll()
+            group.layoutAll()
+
     def handle_EnterNotify(self, e):
         hook.fire("client_mouse_enter", self)
         if self.group.currentWindow != self:
@@ -447,8 +462,16 @@ class Window(_Window):
             self.width = e.width
         if e.value_mask & cw.Height:
             self.height = e.height
-        self.place(self.x, self.y, self.width, self.height, self.borderwidth, self.bordercolor)
-        self.notify()
+        if self.group and self.group.screen:
+            self.place(
+                self.x,
+                self.y,
+                self.width,
+                self.height,
+                self.borderwidth,
+                self.bordercolor
+            )
+            self.notify()
         return False
 
     def handle_PropertyNotify(self, e):
@@ -513,15 +536,7 @@ class Window(_Window):
 
                 togroup("a")
         """
-        group = self.qtile.groupMap.get(groupName)
-        if group is None:
-            raise command.CommandError("No such group: %s"%groupName)
-        if self.group is not group:
-            self.hide()
-            self.group.remove(self)
-            group.add(self)
-            self.group.layoutAll()
-            group.layoutAll()
+        self.togroup(groupName)
 
     def cmd_opacity(self, opacity):
         self.opacity = opacity

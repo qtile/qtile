@@ -386,11 +386,18 @@ class _Config:
             libqtile.command._Call([("layout", None)], "down")
         ),
     ]
-    screens = [libqtile.manager.Screen()]
+    screens = [libqtile.manager.Screen(
+            bottom=libqtile.bar.Bar(
+                        [
+                            libqtile.widget.GroupBox(),
+                        ],
+                        20
+                    ),
+    )]
 
 
 
-class ClientNewConfig(_Config):
+class ClientNewStaticConfig(_Config):
     @staticmethod
     def main(c):
         import libqtile.hook
@@ -399,8 +406,8 @@ class ClientNewConfig(_Config):
         libqtile.hook.subscribe.client_new(client_new)
 
 
-class uStatic(utils.QtileTests):
-    config = ClientNewConfig()
+class uClientNewStatic(utils.QtileTests):
+    config = ClientNewStaticConfig()
     def test_minimal(self):
         a = self.testWindow("one")
         self.kill(a)
@@ -409,6 +416,25 @@ class uStatic(utils.QtileTests):
         def test_gkrellm(self):
             self.testGkrellm()
             time.sleep(0.1)
+
+
+class ToGroupConfig(_Config):
+    @staticmethod
+    def main(c):
+        import libqtile.hook
+        def client_new(c):
+            c.togroup("d")
+        libqtile.hook.subscribe.client_new(client_new)
+
+
+class uClientNewToGroup(utils.QtileTests):
+    config = ToGroupConfig()
+    def test_minimal(self):
+        self.c.group["d"].toscreen()
+        self.c.group["a"].toscreen()
+        a = self.testWindow("one")
+        assert len(self.c.group["d"].info()["windows"]) == 1
+        self.kill(a)
 
 
 tests = [
@@ -422,7 +448,8 @@ tests = [
         uQtile("bare", BareConfig),
         uQtile("complex", TestConfig),
         uMinimal(),
-        uStatic()
+        uClientNewStatic(),
+        uClientNewToGroup()
     ],
     utils.xfactory(xinerama=False), [
         uRandr(),
