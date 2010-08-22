@@ -656,6 +656,8 @@ class Qtile(command.CommandObject):
                 ename = e.__class__.__name__
                 if ename.endswith("Event"):
                     ename = ename[:-5]
+                if self.debug:
+                    print >> sys.stderr, ename
                 if not e.__class__ in self.ignoreEvents:
                     for h in self.get_target_chain(ename, e):
                         self.log.add("Handling: %s"%ename)
@@ -747,8 +749,8 @@ class Qtile(command.CommandObject):
 
     def handle_UnmapNotify(self, e):
         RESPONSE_TYPE_MASK = 0x7f
-        #FIXME: xpyb doesn't seem to expose the send_event attribute on UnmapNotify?
-        if e.event == self.root.wid and e.response_type & (~RESPONSE_TYPE_MASK):
+        SEND_EVENT_MASK = 0x80
+        if e.event != self.root.wid:
             self.unmanage(e.window)
 
     def toScreen(self, n):
