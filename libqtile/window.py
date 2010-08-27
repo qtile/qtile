@@ -492,7 +492,7 @@ class Window(_Window):
             pass
         elif name == "WM_PROTOCOLS":
             pass
-        else:
+        elif self.qtile.debug:
             print >> sys.stderr, "Unknown window property: ", name
         return False
 
