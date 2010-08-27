@@ -25,6 +25,7 @@ class GBConfig:
             bottom=libqtile.bar.Bar(
                         [
                             libqtile.widget.GroupBox(),
+                            libqtile.widget.AGroupBox(),
                             libqtile.widget.WindowName(),
                             libqtile.widget.Clock(),
                         ],
