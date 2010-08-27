@@ -82,6 +82,15 @@ class uMultiScreen(utils.QtileTests):
         gb = self.c.groups()["b"]
         assert gb["windows"] == ["one"]
 
+        assert self.c.window.info()["name"] == "two"
+        self.c.to_next_screen()
+        assert self.c.window.info()["name"] == "one"
+        self.c.to_next_screen()
+        assert self.c.window.info()["name"] == "two"
+        self.c.to_prev_screen()
+        assert self.c.window.info()["name"] == "one"
+
+
     def test_togroup(self):
         self.testWindow("one")
         libpry.raises("no such group", self.c.window.togroup, "nonexistent")
