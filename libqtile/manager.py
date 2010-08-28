@@ -591,6 +591,7 @@ class Qtile(command.CommandObject):
                 # Window may have been bound to a group in the hook.
                 if not c.group:
                     self.currentScreen.group.add(c)
+                hook.fire("client_managed", c)
             return c
 
     def grabKeys(self):

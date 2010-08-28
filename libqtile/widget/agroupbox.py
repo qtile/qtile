@@ -67,6 +67,6 @@ class AGroupBox(base._Widget):
     def setup_hooks(self):
         def hook_response(*args, **kwargs):
             self.draw()
-        hook.subscribe.client_new(hook_response)
+        hook.subscribe.client_managed(hook_response)
         hook.subscribe.client_urgent_hint_changed(hook_response)
         hook.subscribe.client_killed(hook_response)

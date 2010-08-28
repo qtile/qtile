@@ -427,6 +427,7 @@ class Window(_Window):
             self.group.remove(self)
         s = Static(self.window, self.qtile, screen, x, y, width, height)
         self.qtile.windowMap[self.window.wid] = s
+        hook.fire("client_managed", s)
         return s
 
     def togroup(self, groupName):

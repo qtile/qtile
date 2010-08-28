@@ -51,8 +51,9 @@ class Subscribe:
 
     def client_new(self, func):
         """
-            Called before Qtile starts managing a new client. Use this hook to 
-            declare windows static, or add them to a group on startup.
+            Called before Qtile starts managing a new client. Use this hook to
+            declare windows static, or add them to a group on startup. This
+            hook is not called for internal windows.
 
             - arguments: window.Window object
 
@@ -66,6 +67,16 @@ class Subscribe:
                 libqtile.hook.subscribe(func)
         """
         return self._subscribe("client_new", func)
+
+    def client_managed(self, func):
+        """
+            Called after Qtile starts managing a new client. That is, after a
+            window is assigned to a group, or when a window is made static.
+            This hook is not called for internal windows.
+            
+            - arguments: window.Window object
+        """
+        return self._subscribe("client_managed", func)
 
     def client_killed(self, func):
         """
