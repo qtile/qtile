@@ -689,6 +689,21 @@ class Qtile(command.CommandObject):
             if not self._exit:
                 self.writeReport(traceback.format_exc())
 
+    def find_screen(self, x, y):
+        """
+            Find a screen based on the x and y offset.
+        """
+        for i in self.screens:
+            if x >= i.x and x <= i.x + i.width and y >= i.y and y <= i.y + i.height:
+                return i
+
+    def handle_EnterNotify(self, e):
+        if e.event in self.windowMap:
+            return True
+        s = self.find_screen(e.root_x, e.root_y)
+        if s:
+            self.toScreen(s.index)
+
     def handle_KeyPress(self, e):
         keysym = self.conn.code_to_syms[e.detail][0]
         state = e.state
