@@ -339,4 +339,5 @@ class Stack(Layout):
         self.currentStack.remove(win)
         self.stacks[next].add(win)
         self.stacks[next].focus(win)
+        self.group.layoutAll()
 
