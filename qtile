@@ -39,12 +39,18 @@ def main():
                         dest="debug",
                         help='Print lots of debugging output.'
                     )
+    parser.add_option(
+                        "-s", "--socket",
+                        action="store_true", default=None,
+                        dest="socket",
+                        help='Path to Qtile comms socket.'
+                    )
     options, args = parser.parse_args()
     try:
         c = confreader.File(options.configfile)
     except confreader.ConfigError, v:
         parser.error(v.message)
-    q = manager.Qtile(c)
+    q = manager.Qtile(c, fname=options.socket)
     q.debug = options.debug
     q.loop()
 

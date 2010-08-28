@@ -425,7 +425,9 @@ class Qtile(command.CommandObject):
                 raise QtileError("No DISPLAY set.")
 
         if not fname:
-            fname = command.find_sockfile()
+            if not "." in displayName:
+                displayName = displayName + ".0"
+            fname = command.find_sockfile(displayName)
 
         self.conn = xcbq.Connection(displayName)
         self.config, self.fname = config, fname
@@ -556,8 +558,10 @@ class Qtile(command.CommandObject):
     def scan(self):
         _, _, children = self.root.query_tree()
         for i in children:
-            # FIXME
-            a = i.get_attributes()
+            try:
+                a = i.get_attributes()
+            except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+                continue
             if a.map_state == xcb.xproto.MapState.Viewable:
                 self.manage(i)
 
@@ -1012,6 +1016,12 @@ class Qtile(command.CommandObject):
             return v.args[0]
         self.handle_KeyPress(d)
 
+    def cmd_execute(self, cmd, args):
+        """
+            Executes the specified command, replacing the current process.
+        """
+        os.execv(cmd, args)
+
     def cmd_spawn(self, cmd):
         """
             Run cmd in a shell.
@@ -1070,4 +1080,12 @@ class Qtile(command.CommandObject):
             Return info for each internal window (bars, for example).
         """
         return [i.info() for i in self.windowMap.values() if isinstance(i, window.Internal)]
+
+    def cmd_info(self):
+        """
+            Returns a dictionary of info on the Qtile instance.
+        """
+        return dict(
+            socketname = self.fname
+        )
 

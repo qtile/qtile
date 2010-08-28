@@ -197,17 +197,18 @@ class _CommandRoot(_CommandTree):
         pass
 
 
-def find_sockfile():
+def find_sockfile(display=None):
     """
         Finds the appropriate socket file.
     """
-    d = os.environ.get("DISPLAY")
-    if not d:
-        d = ":0.0"
+    if not display:
+        display = os.environ.get("DISPLAY")
+    if not display:
+        display = ":0.0"
     cache_directory = os.path.expandvars('$XDG_CACHE_HOME')
     if cache_directory == '$XDG_CACHE_HOME': #if variable wasn't set
-        cache_directory = os.path.expanduser("~/.config")
-    return os.path.join(cache_directory, SOCKBASE%d)
+        cache_directory = os.path.expanduser("~/.cache")
+    return os.path.join(cache_directory, SOCKBASE%display)
 
 
 class Client(_CommandRoot):
