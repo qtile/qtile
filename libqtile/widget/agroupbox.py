@@ -4,8 +4,7 @@ import base
 
 class AGroupBox(base._Widget):
     """
-        A widget that graphically displays the group list, indicating which
-        groups have focus, and which groups contain clients.
+        A widget that graphically displays just the current group.
     """
     defaults = manager.Defaults(
         ("padding_y", 2, "Y padding outside the box"),
