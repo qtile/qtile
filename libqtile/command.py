@@ -34,7 +34,7 @@ SUCCESS = 0
 ERROR = 1
 EXCEPTION = 2
 
-SOCKBASE = ".qtilesocket.%s"
+SOCKBASE = "qtilesocket.%s"
 
 
 def formatSelector(lst):
@@ -197,6 +197,19 @@ class _CommandRoot(_CommandTree):
         pass
 
 
+def find_sockfile():
+    """
+        Finds the appropriate socket file.
+    """
+    d = os.environ.get("DISPLAY")
+    if not d:
+        d = ":0.0"
+    cache_directory = os.path.expandvars('$XDG_CACHE_HOME')
+    if cache_directory == '$XDG_CACHE_HOME': #if variable wasn't set
+        cache_directory = os.path.expanduser("~/.config")
+    return os.path.join(cache_directory, SOCKBASE%d)
+
+
 class Client(_CommandRoot):
     """
         Exposes a command tree used to communicate with a running instance of
@@ -204,11 +217,7 @@ class Client(_CommandRoot):
     """
     def __init__(self, fname=None, conf=None):
         if not fname:
-            d = os.environ.get("DISPLAY")
-            if not d:
-                d = ":0.0"
-            fname = os.path.join("~", SOCKBASE%d)
-            fname = os.path.expanduser(fname)
+            fname = find_sockfile()
         self.client = ipc.Client(fname)
         _CommandRoot.__init__(self)
 

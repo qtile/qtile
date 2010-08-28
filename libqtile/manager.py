@@ -423,11 +423,9 @@ class Qtile(command.CommandObject):
             displayName = os.environ.get("DISPLAY")
             if not displayName:
                 raise QtileError("No DISPLAY set.")
+
         if not fname:
-            if not "." in displayName:
-                displayName = displayName + ".0"
-            fname = os.path.join("~", command.SOCKBASE%displayName)
-            fname = os.path.expanduser(fname)
+            fname = command.find_sockfile()
 
         self.conn = xcbq.Connection(displayName)
         self.config, self.fname = config, fname

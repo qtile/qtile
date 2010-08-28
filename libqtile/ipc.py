@@ -24,7 +24,7 @@
     run the same Python version, and that clients must be trusted (as
     un-marshalling untrusted data can result in arbitrary code execution).
 """
-import marshal, socket, select, os.path, socket
+import marshal, select, os.path, socket
 
 HDRLEN = 3
 BUFSIZE = 1024 * 1024
