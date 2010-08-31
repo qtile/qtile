@@ -239,10 +239,86 @@ class uSelectors(utils.QtileTests):
         pass
 
 
+class TileConfig:
+    main = None
+    groups = [
+        libqtile.manager.Group("a"),
+        libqtile.manager.Group("b"),
+        libqtile.manager.Group("c"),
+        libqtile.manager.Group("d")
+    ]
+    layouts = [
+        layout.Tile(),
+        layout.Tile(masterWindows=2)
+        ]
+    keys = []
+    screens = []
+
+class uTile(utils.QtileTests):
+    config = TileConfig()
+    def test_updown(self):
+        self.testWindow("one")
+        self.testWindow("two")
+        self.testWindow("three")
+        assert self.c.layout.info()["all"] == ["three", "two", "one"]
+        self.c.layout.down()
+        assert self.c.layout.info()["all"] == ["two", "one","three"]
+        self.c.layout.up()
+        assert self.c.layout.info()["all"] == ["three", "two", "one"]
+
+    def test_nextprev(self):
+        self.testWindow("one")
+        self.testWindow("two")
+        self.testWindow("three")
+
+        assert self.c.layout.info()["all"] == ["three", "two", "one"]
+        assert self.c.groups()["a"]["focus"] == "three"
+
+        self.c.layout.previous()
+        assert self.c.groups()["a"]["focus"] == "two"
+
+        self.c.layout.next()
+        assert self.c.groups()["a"]["focus"] == "three"
+
+        self.c.layout.next()
+        assert self.c.groups()["a"]["focus"] == "one"
+
+        self.c.layout.next()
+        self.c.layout.next()
+        self.c.layout.next()
+        assert self.c.groups()["a"]["focus"] == "one"
+
+    def test_master_and_slave(self):
+        self.testWindow("one")
+        self.testWindow("two")
+        self.testWindow("three")
+
+        assert self.c.layout.info()["master"] == ["three"]
+        assert self.c.layout.info()["slave"] == ["two", "one"]
+
+        self.c.nextlayout()
+        assert self.c.layout.info()["master"] == ["three", "two"]
+        assert self.c.layout.info()["slave"] == ["one"]
+
+    def test_remove(self):
+        one = self.testWindow("one")
+        self.testWindow("two")
+        three = self.testWindow("three")
+
+        assert self.c.layout.info()["master"] == ["three"]
+        self.kill(one)
+        assert self.c.layout.info()["master"] == ["three"]
+        self.kill(three)
+        assert self.c.layout.info()["master"] == ["two"]
+
+
+
+
 tests = [
     utils.xfactory(xinerama=False), [
         uMax(),
         uStack(),
+        uTile(),
         uSelectors(),
     ],
 ]
