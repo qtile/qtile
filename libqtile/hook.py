@@ -64,7 +64,7 @@ class Subscribe:
                         c.to_group("a")
                     elif c.name == "dzen":
                         c.static()
-                libqtile.hook.subscribe(func)
+                libqtile.hook.subscribe.client_new(func)
         """
         return self._subscribe("client_new", func)
 
