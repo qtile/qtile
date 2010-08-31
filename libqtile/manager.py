@@ -1088,4 +1088,11 @@ class Qtile(command.CommandObject):
         return dict(
             socketname = self.fname
         )
+        return [i.info() for i in self.windowMap.values()]
+
+    def cmd_shutdown(self):
+        """
+            Quit Qtile.
+        """
+        self._exit = True
 
