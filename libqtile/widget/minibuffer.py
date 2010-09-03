@@ -21,6 +21,12 @@ class Minibuffer(base._TextBox):
         base._TextBox._configure(self, qtile, bar)
 
     def startInput(self, message, callback):
+        """
+            Displays a message and starts to take one line of
+            keyboard input from the user.
+            When done, calls the callback with the input string
+            as argument.
+        """
         self.message = message
         self.userInput = ""
         self.callback = callback
@@ -30,6 +36,10 @@ class Minibuffer(base._TextBox):
         self.bar.widget_grab_keyboard(self)
 
     def handle_KeyPress(self, e):
+        """
+            KeyPress handler for the minibuffer.
+            Currently only supports ASCII characters.
+        """
         keysym = self.qtile.conn.keycode_to_keysym(e.detail, e.state)
         if keysym < 127:
             # No LookupString in XCB... oh, the shame! Unicode users beware!

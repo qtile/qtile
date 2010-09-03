@@ -189,10 +189,18 @@ class Bar(Gap):
                 break
 
     def widget_grab_keyboard(self, widget):
+        """
+            A widget can call this method to grab the keyboard focus
+            and receive keyboard messages. When done,
+            widget_ungrab_keyboard() must be called.
+        """
         self.window.handle_KeyPress = widget.handle_KeyPress
         self.window.window.set_input_focus()
 
     def widget_ungrab_keyboard(self):
+        """
+            Removes the widget's keyboard handler.
+        """
         del self.window.handle_KeyPress
 
     def draw(self):
