@@ -425,7 +425,10 @@ class Qtile(command.CommandObject):
                 raise QtileError("No DISPLAY set.")
 
         if not fname:
-            if not "." in displayName:
+            # Dots might appear in the host part of the display name
+            # during remote X sessions. Let's strip the host part first.
+            displayNum = displayName.partition(":")[2]
+            if not "." in displayNum:
                 displayName = displayName + ".0"
             fname = command.find_sockfile(displayName)
 
