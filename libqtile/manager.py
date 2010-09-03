@@ -638,6 +638,7 @@ class Qtile(command.CommandObject):
         eventEvents = [
             "EnterNotify",
             "ButtonPress",
+            "KeyPress",
 
         ]
         c = None

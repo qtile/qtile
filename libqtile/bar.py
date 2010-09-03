@@ -188,6 +188,13 @@ class Bar(Gap):
                 i.click(e.event_x - i.offset, e.event_y)
                 break
 
+    def widget_grab_keyboard(self, widget):
+        self.window.handle_KeyPress = widget.handle_KeyPress
+        self.window.window.set_input_focus()
+
+    def widget_ungrab_keyboard(self):
+        del self.window.handle_KeyPress
+
     def draw(self):
         for i in self.widgets:
             i.draw()
