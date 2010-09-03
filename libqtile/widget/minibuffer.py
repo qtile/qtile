@@ -3,8 +3,6 @@ import base
 import xcb
 from .. import xkeysyms
 
-import sys
-
 class Minibuffer(base._TextBox):
 
     defaults = manager.Defaults(
@@ -27,6 +25,7 @@ class Minibuffer(base._TextBox):
         self.userInput = ""
         self.callback = callback
         self.text = "%s: %s" % (self.message, self.userInput)
+        self.guess_width()
         self.draw()
         self.bar.widget_grab_keyboard(self)
 
