@@ -569,6 +569,11 @@ class Connection:
             return 0
         return self.first_sym_to_code[keysym]
 
+    def keycode_to_keysym(self, keycode, modifier):
+        if keycode >= len(self.code_to_syms) or modifier >= len(self.code_to_syms[keycode]):
+            return 0
+        return self.code_to_syms[keycode][modifier]
+
     def create_window(self, x, y, width, height):
         wid = self.conn.generate_id()
         q = self.conn.core.CreateWindow(
