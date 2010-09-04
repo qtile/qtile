@@ -1102,7 +1102,7 @@ class Qtile(command.CommandObject):
 
     def cmd_spawncmd(self, prompt="cmd:"):
         """
-            Spawn a command using the minibuffer widget.
+            Spawn a command using the prompt widget, with tab-completion.
         """
         try:
             mb = self.widgetMap["prompt"]
