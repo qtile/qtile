@@ -135,6 +135,7 @@ class Bar(Gap):
         Gap.__init__(self, size)
         self.widgets = widgets
         self.defaults.load(self, config)
+        self.saved_focus = None
 
     def _configure(self, qtile, screen):
         if not self in [screen.top, screen.bottom]:

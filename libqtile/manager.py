@@ -1100,13 +1100,16 @@ class Qtile(command.CommandObject):
         """
         self._exit = True
 
-    def cmd_spawncmd(self, prompt="cmd:"):
+    def cmd_spawncmd(self, prompt="spawn:", widget="prompt"):
         """
-            Spawn a command using the prompt widget, with tab-completion.
+            Spawn a command using a prompt widget, with tab-completion. 
+
+            prompt: Text with which to prompt user.
+            widget: Name of the prompt widget (default: "prompt").
         """
         try:
-            mb = self.widgetMap["prompt"]
+            mb = self.widgetMap[widget]
             mb.startInput(prompt, self.cmd_spawn, "cmd")
         except:
-            self.log.add("No minibuffer widget present.")
+            self.log.add("No widget named '%s' present."%widget)
 
