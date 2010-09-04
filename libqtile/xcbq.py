@@ -565,6 +565,8 @@ class Connection:
         return None
 
     def keysym_to_keycode(self, keysym):
+        if keysym >= len(self.first_sym_to_code):
+            return 0
         return self.first_sym_to_code[keysym]
 
     def create_window(self, x, y, width, height):
