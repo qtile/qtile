@@ -4,3 +4,4 @@ from windowname import WindowName
 from textbox import TextBox
 from spacer import Spacer
 from clock import Clock
+from sep import Sep

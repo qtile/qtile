@@ -27,6 +27,7 @@ class GBConfig:
                             libqtile.widget.GroupBox(),
                             libqtile.widget.AGroupBox(),
                             libqtile.widget.WindowName(),
+                            libqtile.widget.Sep(),
                             libqtile.widget.Clock(),
                         ],
                         50
