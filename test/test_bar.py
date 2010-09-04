@@ -47,6 +47,7 @@ class uWidgets(utils.QtileTests):
 
     def test_prompt(self):
         assert self.c.widget["prompt"].info()["width"] == 0
+        self.c.spawncmd("prompt")
 
     def test_event(self):
         self.c.group["bb"].toscreen()

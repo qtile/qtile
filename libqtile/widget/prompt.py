@@ -1,6 +1,6 @@
-from .. import hook, bar, manager, xcbq, xkeysyms
+import time, sys
+from .. import hook, bar, manager, xkeysyms
 import base
-import xcb
 
 class Prompt(base._TextBox):
     """
@@ -12,29 +12,53 @@ class Prompt(base._TextBox):
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("padding", None, "Padding. Calculated if None."),
         ("background", "000000", "Background colour"),
-        ("foreground", "ffffff", "Foreground colour")
+        ("foreground", "ffffff", "Foreground colour"),
+        ("cursorblink", 0.5, "Cursor blink rate. 0 to disable.")
     )
-    def __init__(self, width=bar.CALCULATED, **config):
+    def __init__(self, width=bar.CALCULATED, name="prompt", **config):
         base._TextBox.__init__(self, " ", width, **config)
-        self.name = "prompt"
+        self.name = name
+        self.active = False
+        self.blink = False
+        self.lasttick = 0
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
+        if self.cursorblink:
+            hook.subscribe.tick(self.tick)
 
-    def startInput(self, message, callback):
+    def startInput(self, prompt, callback):
         """
-            Displays a message and starts to take one line of
+            Displays a prompt and starts to take one line of
             keyboard input from the user.
             When done, calls the callback with the input string
             as argument.
         """
-        self.message = message
+        self.active = True
+        self.prompt = prompt
         self.userInput = ""
         self.callback = callback
-        self.text = "%s: %s" % (self.message, self.userInput)
+        self._update()
+        self.bar.widget_grab_keyboard(self)
+
+    def tick(self):
+        t = time.time()
+        if self.lasttick + self.cursorblink < t:
+            self.lasttick = t
+            self.blink = not self.blink
+            self._update()
+
+    def _update(self):
+        if self.active:
+            self.text = "%s%s"%(self.prompt, self.userInput)
+            if self.blink:
+                self.text = self.text + "_"
+            else:
+                self.text = self.text + " "
+        else:
+            self.text = ""
         self.guess_width()
         self.bar.draw()
-        self.bar.widget_grab_keyboard(self)
 
     def handle_KeyPress(self, e):
         """
@@ -45,19 +69,16 @@ class Prompt(base._TextBox):
         if keysym < 127:
             # No LookupString in XCB... oh, the shame! Unicode users beware!
             self.userInput += chr(keysym)
-            self.text = "%s: %s" % (self.message, self.userInput)
         elif keysym == xkeysyms.keysyms['BackSpace'] and len(self.userInput) > 0:
             self.userInput = self.userInput[:-1]
-            self.text = "%s: %s" % (self.message, self.userInput)
         elif keysym == xkeysyms.keysyms['Escape']:
-            self.text = ""
+            self.active = False
             self.bar.widget_ungrab_keyboard()
         elif keysym == xkeysyms.keysyms['Return']:
-            self.text = ""
+            self.active = False
             self.bar.widget_ungrab_keyboard()
             self.callback(self.userInput)
-        self.guess_width()
-        self.bar.draw()
+        self._update()
 
     def cmd_info(self):
         """
