@@ -1,6 +1,66 @@
-import time, sys
+import time, sys, os, bisect, glob
 from .. import hook, bar, manager, xkeysyms
 import base
+
+
+class NullCompleter:
+    def final(self):
+        return txt
+
+    def complete(self, txt):
+        return txt
+
+
+class CommandCompleter:
+    DEFAULTPATH = "/bin:/usr/bin:/usr/local/bin"
+    def __init__(self, _testing=False):
+        """
+            _testing: disables reloading of the lookup table to make testing possible.
+        """
+        self.lookup, self.last, self.offset = None, None, None
+        self.thisfinal = None
+        self._testing = _testing
+
+    def final(self):
+        return self.thisfinal
+
+    def complete(self, txt):
+        """
+            Returns the next completion for txt, or None if there is no completion.
+        """
+        if not txt == self.last:
+            if not self._testing:
+                dirs = os.environ.get("PATH", self.DEFAULTPATH).split(":")
+                self.lookup = []
+                for didx, d in enumerate(dirs):
+                    try:
+                        for cmd in glob.glob(os.path.join(d, "%s*"%txt)):
+                            self.lookup.append((os.path.basename(cmd), d))
+                    except OSError:
+                        pass
+
+            self.lookup.sort()
+            self.last = txt
+            self.offset = 0
+        else:
+            self.offset += 1
+        start = bisect.bisect_left(self.lookup, (txt, 0))
+        if start >= len(self.lookup):
+            self.thisfinal = txt
+            return txt
+        if start + self.offset >= len(self.lookup):
+            self.offset = 0
+        ret = self.lookup[min(start + self.offset, len(self.lookup))]
+        if not ret[0].startswith(txt):
+            if self.offset:
+                self.offset = 0
+                ret = self.lookup[start + self.offset]
+            else:
+                self.thisfinal = txt
+                return txt
+        self.thisfinal = os.path.join(ret[1], ret[0])
+        return ret[0]
+
 
 class Prompt(base._TextBox):
     """
@@ -15,8 +75,8 @@ class Prompt(base._TextBox):
         ("foreground", "ffffff", "Foreground colour"),
         ("cursorblink", 0.5, "Cursor blink rate. 0 to disable.")
     )
-    def __init__(self, width=bar.CALCULATED, name="prompt", **config):
-        base._TextBox.__init__(self, " ", width, **config)
+    def __init__(self, name="prompt", **config):
+        base._TextBox.__init__(self, " ", bar.CALCULATED, **config)
         self.name = name
         self.active = False
         self.blink = False

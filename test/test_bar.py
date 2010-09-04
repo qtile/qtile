@@ -38,6 +38,30 @@ class GBConfig:
     main = None
 
 
+class uPromptCompletion(libpry.AutoTree):
+    def test_completion(self):
+        c = libqtile.widget.prompt.CommandCompleter(True)
+        c.lookup = [
+            ("a", "x"),
+            ("aa", "x"),
+            ("b", "x"),
+        ]
+        assert c.complete("a") == "a"
+        assert c.final() == "x/a"
+        assert c.complete("a") == "aa"
+        assert c.complete("a") == "a"
+        assert c.complete("z") == "z"
+        assert c.complete("b") == "b"
+        assert c.complete("b") == "b"
+        assert c.complete("as") == "as"
+        assert c.final() == "as"
+
+        c = libqtile.widget.prompt.CommandCompleter()
+        r = c.complete("l") 
+        assert c.final().endswith(r)
+
+
+
 class uWidgets(utils.QtileTests):
     config = GBConfig()
     def test_draw(self):
@@ -204,6 +228,7 @@ class uOffsetCalculation(utils._QtileTruss):
 
 
 tests = [
+    uPromptCompletion(),
     utils.xfactory(xinerama=True), [
         uBarGeometry(),
         uWidgets(),
