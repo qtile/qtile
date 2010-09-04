@@ -31,7 +31,7 @@ class Minibuffer(base._TextBox):
         self.callback = callback
         self.text = "%s: %s" % (self.message, self.userInput)
         self.guess_width()
-        self.draw()
+        self.bar.draw()
         self.bar.widget_grab_keyboard(self)
 
     def handle_KeyPress(self, e):
@@ -44,20 +44,25 @@ class Minibuffer(base._TextBox):
             # No LookupString in XCB... oh, the shame! Unicode users beware!
             self.userInput += chr(keysym)
             self.text = "%s: %s" % (self.message, self.userInput)
-            self.guess_width()
-            self.draw()
         elif keysym == xkeysyms.keysyms['BackSpace'] and len(self.userInput) > 0:
-            self.guess_width()
             self.userInput = self.userInput[:-1]
             self.text = "%s: %s" % (self.message, self.userInput)
-            self.draw()
         elif keysym == xkeysyms.keysyms['Escape']:
             self.text = ""
-            self.draw()
             self.bar.widget_ungrab_keyboard()
         elif keysym == xkeysyms.keysyms['Return']:
             self.text = ""
-            self.draw()
             self.bar.widget_ungrab_keyboard()
             self.callback(self.userInput)
+        self.guess_width()
+        self.bar.draw()
+
+    def cmd_info(self):
+        """
+            Returns a dictionary of info for this object.
+        """
+        return dict(
+            name = self.name,
+            width = self.width,
+        )
 

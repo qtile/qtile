@@ -245,16 +245,18 @@ class _TextBox(_Widget):
 
     def guess_width(self):
         if not self.text:
-            return 0
-        _, _, _, _, width, _  = self.drawer.text_extents(self.text)
-        if self.padding:
-            width += self.padding * 2
+            width = 0
         else:
-            _, _, _, font_xadv, _  = self.drawer.font_extents()
-            width += font_xadv
+            _, _, _, _, width, _  = self.drawer.text_extents(self.text)
+            if self.padding:
+                width += self.padding * 2
+            else:
+                _, _, _, font_xadv, _  = self.drawer.font_extents()
+                width += font_xadv
         if width != self.width:
             self.width = width
             self.resize()
+        return width
 
     def _configure(self, qtile, qbar):
         _Widget._configure(self, qtile, qbar)

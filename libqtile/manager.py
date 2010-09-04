@@ -1100,13 +1100,13 @@ class Qtile(command.CommandObject):
         """
         self._exit = True
 
-    def cmd_spawncmd(self):
+    def cmd_spawncmd(self, prompt="cmd:"):
         """
             Spawn a command using the minibuffer widget.
         """
         try:
             mb = self.widgetMap["minibuffer"]
-            mb.startInput("command", self.cmd_spawn)
+            mb.startInput(prompt, self.cmd_spawn)
         except:
             self.log.add("No minibuffer widget present.")
 
