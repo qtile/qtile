@@ -4,7 +4,7 @@ import base
 
 class Sep(base._Widget):
     """
-        A visible separator.
+        A visible widget separator.
     """
     defaults = manager.Defaults(
         ("padding", 2, "Padding on either side of separator."),

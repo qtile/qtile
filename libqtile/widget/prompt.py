@@ -3,6 +3,10 @@ import base
 import xcb
 
 class Prompt(base._TextBox):
+    """
+        A widget that prompts for user input. Input should be started using the
+        .startInput method on this class.
+    """
     defaults = manager.Defaults(
         ("font", "Monospace", "Font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
