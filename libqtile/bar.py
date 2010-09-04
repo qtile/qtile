@@ -195,6 +195,7 @@ class Bar(Gap):
             widget_ungrab_keyboard() must be called.
         """
         self.window.handle_KeyPress = widget.handle_KeyPress
+        self.saved_focus = self.qtile.currentWindow
         self.window.window.set_input_focus()
 
     def widget_ungrab_keyboard(self):
@@ -202,6 +203,8 @@ class Bar(Gap):
             Removes the widget's keyboard handler.
         """
         del self.window.handle_KeyPress
+        if not self.saved_focus == None:
+            self.saved_focus.window.set_input_focus()
 
     def draw(self):
         for i in self.widgets:
