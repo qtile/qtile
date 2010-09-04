@@ -340,7 +340,8 @@ class Internal(_Window):
                   EventMask.EnterWindow |\
                   EventMask.FocusChange |\
                   EventMask.Exposure |\
-                  EventMask.ButtonPress
+                  EventMask.ButtonPress |\
+                  EventMask.KeyPress
     @classmethod
     def create(klass, qtile, x, y, width, height, opacity=1.0):
         win = qtile.conn.create_window(
