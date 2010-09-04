@@ -56,9 +56,9 @@ class uPromptCompletion(libpry.AutoTree):
         assert c.actual().endswith(r)
 
         c.reset()
-        assert c.complete("/bi") == "/bin"
+        assert c.complete("/bi") == "/bin/"
         c.reset()
-        assert c.complete("/bin") != "/bin"
+        assert c.complete("/bin") != "/bin/"
         c.reset()
         assert c.complete("~") != "~"
 

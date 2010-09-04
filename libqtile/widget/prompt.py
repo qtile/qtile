@@ -50,7 +50,7 @@ class CommandCompleter:
                     else:
                         files = glob.glob(path+"*")
                         prefix = os.path.dirname(txt)
-                    prefix = prefix.rstrip("/")
+                    prefix = prefix.rstrip("/") or "/"
                     for f in files:
                         if self.executable(f):
                             display = os.path.join(prefix, os.path.basename(f))
