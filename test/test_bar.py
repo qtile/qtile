@@ -44,6 +44,9 @@ class uWidgets(utils.QtileTests):
         b = self.c.bar["bottom"].info()
         assert b["widgets"][0]["name"] == "GroupBox"
 
+    def test_minibuffer(self):
+        print self.c.widget["minibuffer"].info(s)
+
     def test_event(self):
         self.c.group["bb"].toscreen()
         self.c.log()
