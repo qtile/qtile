@@ -1,10 +1,8 @@
-from .. import hook, bar, manager, xcbq
+from .. import hook, bar, manager, xcbq, xkeysyms
 import base
 import xcb
-from .. import xkeysyms
 
-class Minibuffer(base._TextBox):
-
+class Prompt(base._TextBox):
     defaults = manager.Defaults(
         ("font", "Monospace", "Font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
@@ -14,7 +12,7 @@ class Minibuffer(base._TextBox):
     )
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, " ", width, **config)
-        self.name = "minibuffer"
+        self.name = "prompt"
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)

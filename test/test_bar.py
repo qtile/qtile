@@ -26,7 +26,7 @@ class GBConfig:
                         [
                             libqtile.widget.GroupBox(),
                             libqtile.widget.AGroupBox(),
-                            libqtile.widget.Minibuffer(),
+                            libqtile.widget.Prompt(),
                             libqtile.widget.WindowName(),
                             libqtile.widget.Sep(),
                             libqtile.widget.Clock(),
@@ -45,8 +45,8 @@ class uWidgets(utils.QtileTests):
         b = self.c.bar["bottom"].info()
         assert b["widgets"][0]["name"] == "GroupBox"
 
-    def test_minibuffer(self):
-        assert self.c.widget["minibuffer"].info()["width"] == 0
+    def test_prompt(self):
+        assert self.c.widget["prompt"].info()["width"] == 0
 
     def test_event(self):
         self.c.group["bb"].toscreen()

@@ -5,4 +5,4 @@ from textbox import TextBox
 from spacer import Spacer
 from clock import Clock
 from sep import Sep
-from minibuffer import Minibuffer
+from prompt import Prompt
