@@ -41,25 +41,31 @@ class GBConfig:
 class uPromptCompletion(libpry.AutoTree):
     def test_completion(self):
         c = libqtile.widget.prompt.CommandCompleter(True)
+        c.reset()
         c.lookup = [
-            ("a", "x"),
-            ("aa", "x"),
-            ("b", "x"),
+            ("a", "x/a"),
+            ("aa", "x/aa"),
         ]
         assert c.complete("a") == "a"
-        assert c.final() == "x/a"
+        assert c.actual() == "x/a"
         assert c.complete("a") == "aa"
         assert c.complete("a") == "a"
-        assert c.complete("z") == "z"
-        assert c.complete("b") == "b"
-        assert c.complete("b") == "b"
-        assert c.complete("as") == "as"
-        assert c.final() == "as"
 
         c = libqtile.widget.prompt.CommandCompleter()
         r = c.complete("l") 
-        assert c.final().endswith(r)
+        assert c.actual().endswith(r)
 
+        c.reset()
+        assert c.complete("/bi") == "/bin"
+        c.reset()
+        assert c.complete("/bin") != "/bin"
+        c.reset()
+        assert c.complete("~") != "~"
+
+        c.reset()
+        s = "thisisatotallynonexistantpathforsure"
+        assert c.complete(s) == s
+        assert c.actual() == s
 
 
 class uWidgets(utils.QtileTests):
@@ -71,7 +77,17 @@ class uWidgets(utils.QtileTests):
 
     def test_prompt(self):
         assert self.c.widget["prompt"].info()["width"] == 0
-        self.c.spawncmd("prompt")
+        self.c.spawncmd(":")
+        self.c.widget["prompt"].fake_keypress("a")
+        self.c.widget["prompt"].fake_keypress("Tab")
+
+        self.c.spawncmd(":")
+        self.c.widget["prompt"].fake_keypress("slash")
+        self.c.widget["prompt"].fake_keypress("Tab")
+
+        time.sleep(2)
+
+
 
     def test_event(self):
         self.c.group["bb"].toscreen()

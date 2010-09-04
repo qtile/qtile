@@ -1106,7 +1106,7 @@ class Qtile(command.CommandObject):
         """
         try:
             mb = self.widgetMap["prompt"]
-            mb.startInput(prompt, self.cmd_spawn)
+            mb.startInput(prompt, self.cmd_spawn, "cmd")
         except:
             self.log.add("No minibuffer widget present.")
 
