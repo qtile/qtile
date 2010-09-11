@@ -8,7 +8,7 @@ Dependencies
 
     - Xephyr (preferred) or Xnest nested X server.
 
-
+    - xeyes, xterm
 
 Running Tests
 =============

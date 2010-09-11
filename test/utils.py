@@ -153,6 +153,8 @@ class _QtileTruss(libpry.AutoTree):
             self._kill(pid)
 
     def _testProc(self, path, args):
+        if path is None:
+            raise AssertionError("Trying to run None! (missing executable)")
         start = len(self.c.windows())
         pid = os.fork()
         if pid == 0:
