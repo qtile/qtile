@@ -16,37 +16,6 @@ def whereis(program):
     return None
 
 
-class XNest(libpry.TestContainer):
-    nestx = "xnest"
-    def __init__(self, xinerama):
-        if xinerama:
-            self.name = self.nestx + "_xinerama"
-        else:
-            self.name = self.nestx
-        libpry.TestContainer.__init__(self)
-        self.xinerama = xinerama
-        self["display"] = DISPLAY
-        self["xinerama"] = xinerama
-
-    def setUp(self):
-        args = [
-            "Xnest", "+kb",
-            "-geometry", "%sx%s"%(WIDTH, HEIGHT),
-            self["display"], "-ac", "-sync"
-        ]
-        if self.xinerama:
-            args.extend(["+xinerama", "-scrns", "2"])
-        self.sub = subprocess.Popen(
-                        args,
-                        stdout = subprocess.PIPE,
-                        stderr = subprocess.PIPE,
-                    )
-
-    def tearDown(self):
-        os.kill(self.sub.pid, 9)
-        os.waitpid(self.sub.pid, 0)
-                
-
 class Xephyr(libpry.TestContainer):
     nestx = "xephyr"
     def __init__(self, xinerama):
@@ -80,20 +49,13 @@ class Xephyr(libpry.TestContainer):
         os.waitpid(self.sub.pid, 0)
 
 
-def xfactory(*args, **kwargs):
-    if subprocess.call(["which", "Xephyr"], stdout=subprocess.PIPE):
-        return XNest(*args, **kwargs)
-    else:
-        return Xephyr(*args, **kwargs)
-
-
 class _QtileTruss(libpry.AutoTree):
     qtilepid = None
     def setUp(self):
         self.testwindows = []
 
-    def _waitForXNest(self):
-        # Try until XNest is up
+    def _waitForXephyr(self):
+        # Try until Xephyr is up
         for i in range(20):
             try:
                 d = Xlib.display.Display(self["display"])
@@ -117,21 +79,17 @@ class _QtileTruss(libpry.AutoTree):
             raise AssertionError, "Timeout waiting for Qtile"
 
     def qtileRaises(self, exc, config):
-        self._waitForXNest()
+        self._waitForXephyr()
         self["fname"] = os.path.join(self.tmpdir(), "qtilesocket")
         libpry.raises(exc, libqtile.manager.Qtile, config, self["display"], self["fname"])
 
     def startQtile(self, config):
-        self._waitForXNest()
+        self._waitForXephyr()
         self["fname"] = os.path.join(self.tmpdir(), "qtilesocket")
         pid = os.fork()
         if pid == 0:
             try:
                 q = libqtile.manager.Qtile(config, self["display"], self["fname"], testing=True)
-                # BEWARE: Xnest somehow stuffs up geometry detection for
-                # multiple screens in xinerama. We poke into qtile to fix this.
-                if self["xinerama"] and len(q.screens) > 1:
-                    q.screens[1].x = WIDTH
                 q.loop()
             except Exception, e:
                 traceback.print_exc(file=sys.stderr)

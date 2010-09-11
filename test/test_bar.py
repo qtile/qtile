@@ -245,7 +245,7 @@ class uOffsetCalculation(utils._QtileTruss):
 
 tests = [
     uPromptCompletion(),
-    utils.xfactory(xinerama=True), [
+    utils.Xephyr(xinerama=True), [
         uBarGeometry(),
         uWidgets(),
         uBarErr(),

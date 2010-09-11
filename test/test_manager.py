@@ -198,9 +198,6 @@ class uSingle(utils.QtileTests):
 class uRandr(utils.QtileTests):
     config = TestConfig()
     def test_randr(self):
-        # Xnest doesn't support randr
-        if self.findAttr("nestx") == "xnest":
-            return
         self.testWindow("one")
         subprocess.call(
             [
@@ -447,12 +444,12 @@ class uClientNewToGroup(utils.QtileTests):
 
 
 tests = [
-    utils.xfactory(xinerama=True), [
+    utils.Xephyr(xinerama=True), [
         uQtile("bare", BareConfig),
         uQtile("complex", TestConfig),
         uMultiScreen()
     ],
-    utils.xfactory(xinerama=False), [
+    utils.Xephyr(xinerama=False), [
         uSingle(),
         uQtile("bare", BareConfig),
         uQtile("complex", TestConfig),
@@ -460,7 +457,7 @@ tests = [
         uClientNewStatic(),
         uClientNewToGroup()
     ],
-    utils.xfactory(xinerama=False), [
+    utils.Xephyr(xinerama=False), [
         uRandr(),
     ],
     uKey(),

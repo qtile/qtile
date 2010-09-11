@@ -304,7 +304,7 @@ class u_Server(utils.QtileTests):
     
 tests = [
     uCommandObject(),
-    utils.xfactory(xinerama=True), [
+    utils.Xephyr(xinerama=True), [
         uCall(),
         u_Server(),
     ],

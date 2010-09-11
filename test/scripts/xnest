@@ -1,2 +1,0 @@
-#!/bin/sh
-Xnest -geometry 800x600 :1 -ac & env DISPLAY=:1 ./qtile -d & env DISPLAY=:1 xterm

@@ -315,7 +315,7 @@ class uTile(utils.QtileTests):
 
 
 tests = [
-    utils.xfactory(xinerama=False), [
+    utils.Xephyr(xinerama=False), [
         uMax(),
         uStack(),
         uTile(),

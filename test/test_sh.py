@@ -89,7 +89,7 @@ class uQSh(utils.QtileTests):
         
 
 tests = [
-    utils.xfactory(xinerama=True), [
+    utils.Xephyr(xinerama=True), [
         uQSh(),
     ],
 ]
