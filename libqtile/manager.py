@@ -20,7 +20,7 @@
 import datetime, subprocess, sys, operator, os, traceback, shlex, time
 import select
 import xcbq
-import xcb.xproto, xcb.xinerama
+import xcb.xproto, xcb.xinerama, xcb.randr
 import xcb
 from xcb.xproto import EventMask
 import command, utils, window, confreader, hook
@@ -454,26 +454,23 @@ class Qtile(command.CommandObject):
 
         self.currentScreen = None
         self.screens = []
-
-        extensions = self.conn.extensions()
-        if "xinerama" in extensions:
-            for i, s in enumerate(self.conn.xinerama.query_screens()):
-                if i+1 > len(config.screens):
-                    scr = Screen()
-                else:
-                    scr = config.screens[i]
-                if not self.currentScreen:
-                    self.currentScreen = scr
-                scr._configure(
-                    self,
-                    i,
-                    s.x_org,
-                    s.y_org,
-                    s.width,
-                    s.height,
-                    self.groups[i],
-                )
-                self.screens.append(scr)
+        for i, s in enumerate(self.conn.pseudoscreens):
+            if i+1 > len(config.screens):
+                scr = Screen()
+            else:
+                scr = config.screens[i]
+            if not self.currentScreen:
+                self.currentScreen = scr
+            scr._configure(
+                self,
+                i,
+                s.x,
+                s.y,
+                s.width,
+                s.height,
+                self.groups[i],
+            )
+            self.screens.append(scr)
 
         if not self.screens:
             if config.screens:

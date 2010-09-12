@@ -197,7 +197,10 @@ class uSingle(utils.QtileTests):
 
 class uRandr(utils.QtileTests):
     config = TestConfig()
-    def test_randr(self):
+    def test_screens(self):
+        assert len(self.c.screens())
+
+    def test_resize(self):
         self.testWindow("one")
         subprocess.call(
             [
@@ -457,7 +460,7 @@ tests = [
         uClientNewStatic(),
         uClientNewToGroup()
     ],
-    utils.Xephyr(xinerama=False), [
+    utils.Xephyr(xinerama=False, randr=True), [
         uRandr(),
     ],
     uKey(),

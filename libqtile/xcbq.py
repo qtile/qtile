@@ -3,7 +3,7 @@
     complete - it only implements the subset of functionalty needed by qtile.
 """
 import sys, struct
-import xcb.xproto, xcb.xinerama, xcb.xcb
+import xcb.xproto, xcb.xinerama, xcb.randr, xcb.xcb
 from xcb.xproto import CW, WindowClass, EventMask
 import utils, xkeysyms, xatom
 
@@ -175,10 +175,23 @@ class _Wrapper:
 
 
 class Screen(_Wrapper):
+    """
+        This represents an actual X screen.
+    """
     def __init__(self, conn, screen):
         _Wrapper.__init__(self, screen)
         self.default_colormap = Colormap(conn, screen.default_colormap)
         self.root = Window(conn, self.root)
+
+
+class PseudoScreen:
+    """
+        This may be a Xinerama screen or a RandR CRTC, both of which are
+        rectagular sections of an actual Screen.
+    """
+    def __init__(self, conn, x, y, width, height):
+        self.conn = conn
+        self.x, self.y, self.width, self.height = x, y, width, height
 
 
 class Colormap:
@@ -209,6 +222,24 @@ class Xinerama:
     def query_screens(self):
         r = self.ext.QueryScreens().reply()
         return r.screen_info
+
+
+class RandR:
+    def __init__(self, conn):
+        self.ext = conn.conn(xcb.randr.key)
+
+    def query_crtcs(self, root):
+        l = []
+        for i in self.ext.GetScreenResources(root).reply().crtcs:
+            info = self.ext.GetCrtcInfo(i, xcb.xcb.CurrentTime).reply()
+            d = dict(
+                x = info.x,
+                y = info.y,
+                width = info.width,
+                height = info.height
+            )
+            l.append(d)
+        return l
 
 
 class GC:
@@ -503,6 +534,7 @@ class Font:
 class Connection:
     _extmap = {
         "xinerama": Xinerama,
+        "randr": RandR,
     }
     def __init__(self, display):
         self.conn = xcb.xcb.connect(display=display)
@@ -511,7 +543,30 @@ class Connection:
         for i in extensions:
             if i in self._extmap:
                 setattr(self, i, self._extmap[i](self))
+
         self.screens = [Screen(self, i) for i in self.setup.roots]
+        self.pseudoscreens = []
+        if "xinerama" in extensions:
+            for i, s in enumerate(self.xinerama.query_screens()):
+                scr = PseudoScreen(
+                    self,
+                    s.x_org,
+                    s.y_org,
+                    s.width,
+                    s.height,
+                )
+                self.pseudoscreens.append(scr)
+        elif "randr" in extensions:
+            for i in self.randr.query_crtcs(self.screens[0].root.wid):
+                scr = PseudoScreen(
+                    self,
+                    i["x"],
+                    i["y"],
+                    i["width"],
+                    i["height"],
+                )
+                self.pseudoscreens.append(scr)
+
         self.default_screen = self.screens[self.conn.pref_screen]
         self.atoms = AtomCache(self)
 

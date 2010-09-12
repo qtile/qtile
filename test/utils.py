@@ -17,14 +17,14 @@ def whereis(program):
 
 
 class Xephyr(libpry.TestContainer):
-    nestx = "xephyr"
-    def __init__(self, xinerama):
+    def __init__(self, xinerama, randr=False):
+        self.xinerama, self.randr = xinerama, randr
+        self.name = "xephyr"
         if xinerama:
-            self.name = self.nestx + "_xinerama"
-        else:
-            self.name = self.nestx
+            self.name += "_xinerama"
+        if randr:
+            self.name += "_randr"
         libpry.TestContainer.__init__(self)
-        self.xinerama = xinerama
         self["display"] = DISPLAY
         self["xinerama"] = xinerama
 
@@ -37,6 +37,8 @@ class Xephyr(libpry.TestContainer):
         ]
         if self.xinerama:
             args.extend(["+xinerama"])
+        if self.randr:
+            args.extend(["+extension", "RANDR"])
         self.sub = subprocess.Popen(
                         args,
                         stdout = subprocess.PIPE,
