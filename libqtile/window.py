@@ -61,11 +61,13 @@ AllHints = (InputHint|StateHint|IconPixmapHint|IconWindowHint|
             IconPositionHint|IconMaskHint|WindowGroupHint|MessageHint|
             UrgencyHint)
 WithdrawnState = 0
-NormalState = 1
-IconicState = 3
+
 DontCareState = 0
+NormalState = 1
 ZoomState = 2
+IconicState = 3
 InactiveState = 4
+
 RectangleOut = 0
 RectangleIn = 1
 RectanglePart = 2
@@ -446,6 +448,31 @@ class Window(_Window):
             self.group.layoutAll()
             group.layoutAll()
 
+    def match(self, wname=None, wmclass=None):
+        """
+            Match window against given attributes.
+        """
+        if not wname and not wmclass:
+            raise TypeError, "Either a name or a wmclass must be specified"
+        if wname and wname != self.name:
+            return False
+        if wmclass:
+            cliclass = self.cmd_inspect().get('wm_class')
+            if cliclass and not wmclass in cliclass:
+                return False
+        return True
+
+        group = self.qtile.groupMap.get(groupName)
+        if group is None:
+            raise command.CommandError("No such group: %s"%groupName)
+        if self.group is not group:
+            if self.group:
+                self.hide()
+                self.group.remove(self)
+            group.add(self)
+            self.group.layoutAll()
+            group.layoutAll()
+
     def handle_EnterNotify(self, e):
         hook.fire("client_mouse_enter", self)
         if self.group.currentWindow != self:
@@ -539,6 +566,9 @@ class Window(_Window):
                 togroup("a")
         """
         self.togroup(groupName)
+
+    def cmd_match(self, *args, **kwargs):
+        self.match(*args, **kwargs)
 
     def cmd_opacity(self, opacity):
         self.opacity = opacity
