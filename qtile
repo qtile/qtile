@@ -41,7 +41,8 @@ def main():
                     )
     parser.add_option(
                         "-s", "--socket",
-                        action="store_true", default=None,
+                        action="store", type="string",
+                        default=None,
                         dest="socket",
                         help='Path to Qtile comms socket.'
                     )
