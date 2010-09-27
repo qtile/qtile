@@ -194,6 +194,11 @@ class uSingle(utils.QtileTests):
         self.testWindow("one")
         self.c.window[self.c.window.info()["id"]].static(0, 0, 0, 100, 100)
 
+    def test_match(self):
+        self.testXeyes()
+        assert self.c.window.match(wname="xeyes")
+        assert not self.c.window.match(wname="nonexistent")
+
 
 class uRandr(utils.QtileTests):
     config = TestConfig()

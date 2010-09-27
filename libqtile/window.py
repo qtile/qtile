@@ -457,21 +457,10 @@ class Window(_Window):
         if wname and wname != self.name:
             return False
         if wmclass:
-            cliclass = self.cmd_inspect().get('wm_class')
+            cliclass = self.window.get_wm_class()
             if cliclass and not wmclass in cliclass:
                 return False
         return True
-
-        group = self.qtile.groupMap.get(groupName)
-        if group is None:
-            raise command.CommandError("No such group: %s"%groupName)
-        if self.group is not group:
-            if self.group:
-                self.hide()
-                self.group.remove(self)
-            group.add(self)
-            self.group.layoutAll()
-            group.layoutAll()
 
     def handle_EnterNotify(self, e):
         hook.fire("client_mouse_enter", self)
@@ -568,7 +557,7 @@ class Window(_Window):
         self.togroup(groupName)
 
     def cmd_match(self, *args, **kwargs):
-        self.match(*args, **kwargs)
+        return self.match(*args, **kwargs)
 
     def cmd_opacity(self, opacity):
         self.opacity = opacity
