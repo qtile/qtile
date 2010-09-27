@@ -38,7 +38,7 @@ def main():
                         action="store", type="string",
                         default=None,
                         dest="socket",
-                        help='Use specified communication socket.'
+                        help='Use specified comms socket.'
                     )
     options, args = parser.parse_args()
 
