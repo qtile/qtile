@@ -179,6 +179,7 @@ class Bar(Gap):
                 total += i.width
                 i.offset = offset
             stretchWidget.width = max(self.width - total, 0)
+        self.draw()
 
     def handle_Expose(self, e):
         self.draw()

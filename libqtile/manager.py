@@ -20,7 +20,7 @@
 import datetime, subprocess, sys, operator, os, traceback, shlex, time
 import select
 import xcbq
-import xcb.xproto, xcb.xinerama, xcb.randr
+import xcb.xproto, xcb.xinerama
 import xcb
 from xcb.xproto import EventMask
 import command, utils, window, confreader, hook
@@ -636,7 +636,6 @@ class Qtile(command.CommandObject):
             "EnterNotify",
             "ButtonPress",
             "KeyPress",
-
         ]
         c = None
         if hasattr(e, "window"):
