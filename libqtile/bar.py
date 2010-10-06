@@ -157,6 +157,9 @@ class Bar(Gap):
             qtile.registerWidget(i)
             i._configure(qtile, self)
         self.resize()
+        hook.subscribe.setgroup(self.resize)
+        hook.subscribe.delgroup(self.resize)
+
 
     def resize(self):
         offset = 0

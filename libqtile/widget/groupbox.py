@@ -27,20 +27,23 @@ class GroupBox(base._Widget):
         if len(self.qtile.groups) - 1 >= groupOffset:
             self.bar.screen.setGroup(self.qtile.groups[groupOffset])
 
-    def _configure(self, qtile, bar):
-        base._Widget._configure(self, qtile, bar)
+    def _metrics(self):
         self.drawer.set_font(self.font, self.bar.height)
-                
+
         # Leave a 10% margin top and bottom
         self.margin_y = int((self.bar.height - (self.padding_y + self.borderwidth)*2)*0.2)
         self.maxwidth, self.maxheight = self.drawer.fit_text(
-            [i.name for i in qtile.groups],
+            [i.name for i in self.qtile.groups],
             self.bar.height - (self.padding_y + self.margin_y + self.borderwidth)*2
         )
         self.margin_x = max(self.min_margin_x, int(self.maxwidth * 0.2))
         self.boxwidth = self.maxwidth + self.padding_x*2 + self.borderwidth*2 + self.margin_x*2
         self.width = self.boxwidth * len(self.qtile.groups)
+
+    def _configure(self, qtile, bar):
+        base._Widget._configure(self, qtile, bar)
         hook.subscribe.setgroup(self.draw)
+        hook.subscribe.delgroup(self.draw)
         hook.subscribe.group_window_add(self.draw)
         self.setup_hooks()
 
@@ -48,6 +51,7 @@ class GroupBox(base._Widget):
         return len([w for w in group.windows if w.urgent]) > 0
 
     def draw(self):
+        self._metrics()
         self.drawer.clear(self.background)
         for i, e in enumerate(self.qtile.groups):
             border = False

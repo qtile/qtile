@@ -529,6 +529,25 @@ class Qtile(command.CommandObject):
         self.grabKeys()
         self.scan()
 
+    def addGroup(self, name):
+        if name not in self.groupMap.keys():
+            g = Group(name)
+            self.groups.append(g)
+            g._configure(self.config.layouts, self)
+            self.groupMap[name] = g
+            hook.fire("setgroup")
+            return True
+        return False
+
+    def delGroup(self, name):
+        #TODO: handle unexisting names
+        if name in self.groupMap.keys():
+            if self.currentGroup.name == name:
+                self.currentGroup.cmd_prevgroup()
+            self.groups.remove(self.groupMap[name])
+            del(self.groupMap[name])
+            hook.fire("delgroup")
+
     def registerWidget(self, w):
         """
             Register a bar widget. If a widget with the same name already

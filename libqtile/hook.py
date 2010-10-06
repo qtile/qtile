@@ -31,6 +31,12 @@ class Subscribe:
         """
         return self._subscribe("setgroup", func)
 
+    def delgroup(self, func):
+        """
+            Called when group is deleted.
+        """
+        return self._subscribe("delgroup", func)
+
     def focus_change(self, func):
         """
             Called when focus is changed.
