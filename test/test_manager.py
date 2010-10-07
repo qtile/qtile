@@ -208,8 +208,7 @@ class uRandr(utils.QtileTests):
     def test_rotate(self):
         self.testWindow("one")
         s = self.c.screens()[0]
-        assert s["height"] == 600
-        assert s["width"] == 800
+        height, width = s["height"], s["width"]
         subprocess.call(
             [
                 "xrandr",
@@ -218,8 +217,9 @@ class uRandr(utils.QtileTests):
                 "--rotate", "left"
             ]
         )
-        assert s["height"] == 800
-        assert s["width"] == 600
+        s = self.c.screens()[0]
+        assert s["height"] == width
+        assert s["width"] == height
 
     def test_resize(self):
         self.testWindow("one")
