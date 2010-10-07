@@ -353,24 +353,34 @@ class Group(command.CommandObject):
         else:
             screen = self.screens[screen]
         screen.setGroup(self)
-    
-    def move_groups(self, direction):
+
+    def _dirGroup(self, direction):
         currentgroup = self.qtile.groups.index(self)
         nextgroup = (currentgroup + direction) % len(self.qtile.groups)
-        self.qtile.currentScreen.setGroup(self.qtile.groups[nextgroup])
+        return self.qtile.groups[nextgroup]
 
+    def prevGroup(self):
+        return self._dirGroup(-1)
+    
+    def nextGroup(self):
+        return self._dirGroup(1)
+    
     # FIXME cmd_nextgroup and cmd_prevgroup should be on the Screen object.
     def cmd_nextgroup(self):
         """
             Switch to the next group.
         """
-        self.move_groups(1)
+        n = self.nextGroup()
+        self.qtile.currentScreen.setGroup(n)
+        return n.name
 
     def cmd_prevgroup(self):
         """
             Switch to the previous group.
         """
-        self.move_groups(-1)
+        n = self.prevGroup()
+        self.qtile.currentScreen.setGroup(n)
+        return n.name
 
     def cmd_unminimise_all(self):
         """
@@ -535,16 +545,21 @@ class Qtile(command.CommandObject):
             self.groups.append(g)
             g._configure(self.config.layouts, self)
             self.groupMap[name] = g
-            hook.fire("setgroup")
+            hook.fire("addgroup")
             return True
         return False
 
     def delGroup(self, name):
-        #TODO: handle unexisting names
+        if len(self.groups) == 1:
+            raise ValueError("Can't delete all groups.")
         if name in self.groupMap.keys():
+            group = self.groupMap[name]
+            prev = group.prevGroup()
+            for i in list(group.windows):
+                i.togroup(prev.name)
             if self.currentGroup.name == name:
                 self.currentGroup.cmd_prevgroup()
-            self.groups.remove(self.groupMap[name])
+            self.groups.remove(group)
             del(self.groupMap[name])
             hook.fire("delgroup")
 
@@ -1135,4 +1150,11 @@ class Qtile(command.CommandObject):
             mb.startInput(prompt, self.cmd_spawn, "cmd")
         except:
             self.log.add("No widget named '%s' present."%widget)
+
+    def cmd_addgroup(self, group):
+        return self.addGroup(group)
+
+    def cmd_delgroup(self, group):
+        return self.delGroup(group)
+
 

@@ -159,7 +159,7 @@ class Bar(Gap):
         self.resize()
         hook.subscribe.setgroup(self.resize)
         hook.subscribe.delgroup(self.resize)
-
+        hook.subscribe.addgroup(self.resize)
 
     def resize(self):
         offset = 0

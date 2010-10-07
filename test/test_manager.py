@@ -173,6 +173,27 @@ class uSingle(utils.QtileTests):
         self.c.nextlayout()
         assert len(self.c.layout.info()["stacks"]) == 1
 
+    def test_adddelgroup(self):
+        self.testWindow("one")
+        self.c.addgroup("testgroup")
+        assert "testgroup" in self.c.groups().keys()
+        self.c.window.togroup("testgroup")
+        self.c.delgroup("testgroup")
+        assert not "testgroup" in self.c.groups().keys()
+        # Assert that the test window is still a member of some group.
+        assert sum([len(i["windows"]) for i in self.c.groups().values()])
+        for i in self.c.groups().keys()[:-1]:
+            self.c.delgroup(i)
+        libpry.raises("Can't delete all groups", self.c.delgroup, self.c.groups().keys()[0])
+
+    def test_nextprevgroup(self):
+        start = self.c.group.info()["name"]
+        ret = self.c.group.nextgroup()
+        assert self.c.group.info()["name"] != start
+        assert self.c.group.info()["name"] == ret
+        ret = self.c.group.prevgroup()
+        assert self.c.group.info()["name"] == start
+
     def test_log_clear(self):
         self.testWindow("one")
         self.c.log_clear()

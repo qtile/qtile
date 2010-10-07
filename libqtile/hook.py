@@ -31,6 +31,12 @@ class Subscribe:
         """
         return self._subscribe("setgroup", func)
 
+    def addgroup(self, func):
+        """
+            Called when group is added.
+        """
+        return self._subscribe("addgroup", func)
+
     def delgroup(self, func):
         """
             Called when group is deleted.
