@@ -780,15 +780,15 @@ class Qtile(command.CommandObject):
         cw = xcb.xproto.ConfigWindow
         args = {}
         if e.value_mask & cw.X:
-            args["x"] = e.x
+            args["x"] = max(e.x, 0)
         if e.value_mask & cw.Y:
-            args["y"] = e.y
+            args["y"] = max(e.y, 0)
         if e.value_mask & cw.Height:
-            args["height"] = e.height
+            args["height"] = max(e.height, 0)
         if e.value_mask & cw.Width:
-            args["width"] = e.width
+            args["width"] = max(e.width, 0)
         if e.value_mask & cw.BorderWidth:
-            args["borderwidth"] = e.border_width
+            args["borderwidth"] = max(e.border_width, 0)
         w = xcbq.Window(self.conn, e.window)
         w.configure(**args)
 
