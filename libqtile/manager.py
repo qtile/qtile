@@ -209,8 +209,9 @@ class Group(command.CommandObject):
         in other window managers. Each client window managed by the window
         manager belongs to exactly one group.
     """
-    def __init__(self, name):
+    def __init__(self, name, layout=None):
         self.name = name
+        self.customLayout = layout  # will be set on _configure
 
     def _configure(self, layouts, qtile):
         self.screen = None
@@ -219,10 +220,29 @@ class Group(command.CommandObject):
         self.windows = set()
         self.qtile = qtile
         self.layouts = [i.clone(self) for i in layouts]
+        if self.customLayout is not None:
+            self.layout = self.customLayout
+            self.customLayout = None
 
     @property
     def layout(self):
         return self.layouts[self.currentLayout]
+
+    @layout.setter
+    def layout(self, layout):
+        """
+            "layout" is either a string with the name or a Layout object
+        """
+        if isinstance(layout, str):
+            for index, obj in enumerate(self.layouts):
+                if obj.name == layout:
+                    self.currentLayout = index
+                    self.layoutAll()
+                    break
+        else:
+            self.layouts.insert(0, layout.clone(self))
+            self.currentLayout = 0
+            self.layoutAll()
 
     def nextLayout(self):
         self.currentLayout = (self.currentLayout + 1)%(len(self.layouts))
