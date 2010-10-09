@@ -422,15 +422,15 @@ class Window:
         for i in value:
             # We'll expand these conversions as we need them
             if format == 32:
-                buf.append(utils.multichar(i, 4))
+                buf.append(struct.pack("L", i))
             elif format == 16:
-                buf.append(utils.multichar(i, 2))
+                buf.append(struct.pack("H", i))
             elif format == 8:
                 if utils.isStringLike(i):
                     # FIXME: Unicode -> bytes conversion needed here
                     buf.append(i)
                 else:
-                    buf.append(utils.multichar(i, 1))
+                    buf.append(struct.pack("B", i))
         buf = "".join(buf)
 
         length = len(buf)/(format/8)

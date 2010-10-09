@@ -103,6 +103,10 @@ def multichar(a, width):
 
         The return string will be padded to the left to ensure that it is of
         length "width".
+
+        This method packs integers as big-endian strings. For widths of
+        1, 2, 4 and 8 this is the equivalent to using struct.pack()
+        with formats ">B", ">H", ">L", ">Q" respectively.
     """
     a = int(a)
     chars = []
