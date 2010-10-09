@@ -73,9 +73,9 @@ class Subscribe:
 
                 def func(c):
                     if c.name == "xterm":
-                        c.to_group("a")
+                        c.togroup("a")
                     elif c.name == "dzen":
-                        c.static()
+                        c.static(0)
                 libqtile.hook.subscribe.client_new(func)
         """
         return self._subscribe("client_new", func)
