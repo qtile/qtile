@@ -231,18 +231,14 @@ class Group(command.CommandObject):
     @layout.setter
     def layout(self, layout):
         """
-            "layout" is either a string with the name or a Layout object
+            "layout" is a string with matching the name of a Layout object.
         """
-        if isinstance(layout, str):
-            for index, obj in enumerate(self.layouts):
-                if obj.name == layout:
-                    self.currentLayout = index
-                    self.layoutAll()
-                    break
-        else:
-            self.layouts.insert(0, layout.clone(self))
-            self.currentLayout = 0
-            self.layoutAll()
+        for index, obj in enumerate(self.layouts):
+            if obj.name == layout:
+                self.currentLayout = index
+                self.layoutAll()
+                return
+        raise ValueError("No such layout: %s"%layout)
 
     def nextLayout(self):
         self.currentLayout = (self.currentLayout + 1)%(len(self.layouts))
@@ -339,6 +335,9 @@ class Group(command.CommandObject):
                         return i
         elif name == "screen":
             return self.screen
+
+    def cmd_setlayout(self, layout):
+        self.layout = layout
 
     def cmd_info(self):
         """

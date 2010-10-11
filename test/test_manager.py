@@ -13,7 +13,8 @@ class TestConfig:
     ]
     layouts = [
                 libqtile.layout.stack.Stack(stacks=1),
-                libqtile.layout.stack.Stack(2)
+                libqtile.layout.stack.Stack(2),
+                libqtile.layout.max.Max()
             ]
     keys = [
         libqtile.manager.Key(
@@ -89,7 +90,6 @@ class uMultiScreen(utils.QtileTests):
         assert self.c.window.info()["name"] == "two"
         self.c.to_prev_screen()
         assert self.c.window.info()["name"] == "one"
-
 
     def test_togroup(self):
         self.testWindow("one")
@@ -171,7 +171,13 @@ class uSingle(utils.QtileTests):
         self.c.nextlayout()
         assert len(self.c.layout.info()["stacks"]) == 2
         self.c.nextlayout()
+        self.c.nextlayout()
         assert len(self.c.layout.info()["stacks"]) == 1
+
+    def test_setlayout(self):
+        assert not self.c.layout.info()["name"] == "max"
+        self.c.group.setlayout("max")
+        assert self.c.layout.info()["name"] == "max"
 
     def test_adddelgroup(self):
         self.testWindow("one")
