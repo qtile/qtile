@@ -12,19 +12,6 @@ class TestServer(ipc.Server):
         self.last = data
         return "OK"
 
-class uMultiord(libpry.AutoTree):
-    def test_convert(self):
-        assert ipc.multiord("\x11") == 0x11
-        assert ipc.multiord("\x11\x11") == (256 * 0x11) + 0x11
-        assert ipc.multiord("") == 0
-        assert ipc.multiord("\x00") == 0
-        assert ipc.multiord("\x01") == 1
-
-
-class uMultichar(libpry.AutoTree):
-    def test_convert(self):
-        libpry.raises("too wide", ipc.multichar, 999999999, 2)
-
 
 class uIPC(libpry.AutoTree):
     def send(self, fname, data, q):
@@ -82,6 +69,4 @@ class uIPC(libpry.AutoTree):
 
 tests = [
     uIPC(),
-    uMultiord(),
-    uMultichar(),
 ]

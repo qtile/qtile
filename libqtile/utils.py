@@ -95,30 +95,6 @@ class LRUCache:
         return wrap
 
 
-def multichar(a, width):
-    """
-        Like chr(), but takes a large integer that could fill many bytes,
-        and returns a string. I.e. calculate the base256 equivalent string,
-        from a given base10 integer.
-
-        The return string will be padded to the left to ensure that it is of
-        length "width".
-
-        This method packs integers as big-endian strings. For widths of
-        1, 2, 4 and 8 this is the equivalent to using struct.pack()
-        with formats ">B", ">H", ">L", ">Q" respectively.
-    """
-    a = int(a)
-    chars = []
-    while (a != 0):
-        chars.insert(0, chr(a%256))
-        a = a/256
-    if len(chars) > width:
-        raise ValueError, "Number too wide for width."
-    ret = ["\0"]*(width-len(chars)) + chars
-    return "".join(ret)
-
-
 def isStringLike(anobj):
     try:
         # Avoid succeeding expensively if anobj is large.

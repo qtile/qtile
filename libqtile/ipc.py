@@ -24,50 +24,17 @@
     run the same Python version, and that clients must be trusted (as
     un-marshalling untrusted data can result in arbitrary code execution).
 """
-import marshal, select, os.path, socket
+import marshal, select, os.path, socket, struct
 
-HDRLEN = 3
+HDRLEN = 4
 BUFSIZE = 1024 * 1024
 
 class IPCError(Exception): pass
 
 
-def multiord(x):
-    """
-        Like ord(), but takes multiple characters. I.e. calculate the
-        base10 equivalent of a string considered as a set of base-256 digits.
-    """
-    num = 0
-    scale = 1
-    for i in range(len(x)-1, -1, -1):
-        num = num + (ord(x[i])*scale)
-        scale = scale*256
-    return num
-
-
-def multichar(a, width):
-    """
-        Like chr(), but takes a large integer that could fill many bytes,
-        and returns a string. I.e. calculate the base256 equivalent string,
-        from a given base10 integer.
-
-        The return string will be padded to the left to ensure that it is of
-        length "width".
-    """
-    a = int(a)
-    chars = []
-    while (a != 0):
-        chars.insert(0, chr(a%256))
-        a = a/256
-    if len(chars) > width:
-        raise ValueError, "Number too wide for width."
-    ret = ["\0"]*(width-len(chars)) + chars
-    return "".join(ret)
-
-
 class _IPC:
     def _read(self, sock):
-        size = multiord(sock.recv(HDRLEN))
+        size = struct.unpack("!L", sock.recv(HDRLEN))[0]
         data = ""
         while len(data) < size:
             data += sock.recv(BUFSIZE)
@@ -75,7 +42,7 @@ class _IPC:
 
     def _write(self, sock, msg):
         msg = marshal.dumps(msg)
-        size = multichar(len(msg), HDRLEN)
+        size = struct.pack("!L", len(msg))
         sock.sendall(size)
         sock.sendall(msg)
 
