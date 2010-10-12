@@ -360,6 +360,11 @@ class Window:
             s = self._propertyString(r)
             return tuple(s.strip("\0").split("\0"))
 
+    def get_wm_window_role(self):
+        r = self.get_property("WM_WINDOW_ROLE", "STRING")
+        if r:
+            return self._propertyString(r)
+
     def get_wm_transient_for(self):
         r = self.get_property("WM_TRANSIENT_FOR", "ATOM")
         if r:

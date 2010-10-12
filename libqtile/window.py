@@ -323,6 +323,7 @@ class _Window(command.CommandObject):
             properties=props,
             name = self.window.get_name(),
             wm_class = self.window.get_wm_class(),
+            wm_window_role = self.window.get_wm_window_role(),
             wm_transient_for = self.window.get_wm_transient_for(),
             protocols = protocols,
             wm_icon_name = self.window.get_wm_icon_name(),
@@ -448,18 +449,31 @@ class Window(_Window):
             self.group.layoutAll()
             group.layoutAll()
 
-    def match(self, wname=None, wmclass=None):
+    def match(self, wname=None, wmclass=None, role=None):
         """
             Match window against given attributes.
+
+            - wname matches against the window name or title, that is,
+            either `_NET_WM_VISIBLE_NAME`, `_NET_WM_NAME`, `WM_NAME`.
+
+            - wmclass matches against any of the two values in the
+            `WM_CLASS` property
+
+            - role matches against the `WM_WINDOW_ROLE` property
         """
-        if not wname and not wmclass:
-            raise TypeError, "Either a name or a wmclass must be specified"
+        if not (wname or wmclass or role):
+            raise TypeError, "Either a name, a wmclass or a role must be specified"
+
         if wname and wname != self.name:
             return False
-        if wmclass:
-            cliclass = self.window.get_wm_class()
-            if cliclass and not wmclass in cliclass:
-                return False
+
+        cliclass = self.window.get_wm_class()
+        if wmclass and cliclass and not wmclass in cliclass:
+            return False
+
+        clirole = self.window.get_wm_window_role()
+        if role and clirole and role != clirole:
+            return False
         return True
 
     def handle_EnterNotify(self, e):
