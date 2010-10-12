@@ -384,6 +384,11 @@ class Window:
         q = self.conn.conn.core.GetGeometry(self.wid)
         return q.reply()
 
+    def get_wm_desktop(self):
+        r = self.get_property("_NET_WM_DESKTOP", "CARDINAL")
+        if r:
+            return r.value[0]
+
     def get_wm_type(self):
         """
             http://standards.freedesktop.org/wm-spec/wm-spec-latest.html#id2551529

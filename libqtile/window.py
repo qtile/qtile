@@ -421,7 +421,30 @@ class Window(_Window):
                   EventMask.FocusChange
     # Set when this object is being retired.
     defunct = False
-    group = None
+    _group = None
+
+    def __init__(self, window, qtile):
+        _Window.__init__(self, window, qtile)
+
+        # add to group by position according to _NET_WM_DESKTOP property
+        index = window.get_wm_desktop()
+        if index and index < len(qtile.groups):
+            group = qtile.groups[index]
+            group.add(self)
+            if group != qtile.currentScreen.group:
+                self.hide()
+
+    @property
+    def group(self):
+        return self._group
+
+    @group.setter
+    def group(self, group):
+        if group:
+            self.window.set_property("_NET_WM_DESKTOP",
+                self.qtile.groups.index(group))
+        self._group = group
+
     def static(self, screen, x=None, y=None, width=None, height=None):
         """
             Makes this window a static window, attached to a Screen. If any of
