@@ -446,8 +446,6 @@ class Window(_Window):
                 self.hide()
                 self.group.remove(self)
             group.add(self)
-            self.group.layoutAll()
-            group.layoutAll()
 
     def match(self, wname=None, wmclass=None, role=None):
         """
