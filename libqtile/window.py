@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import sys, struct
+import sys, struct, contextlib
 import xcbq
 import xcb.xcb
 from xcb.xproto import EventMask
@@ -231,21 +231,26 @@ class _Window(command.CommandObject):
 
     def hide(self):
         # We don't want to get the UnmapNotify for this unmap
-        self.disableMask(xcb.xproto.EventMask.StructureNotify)
-        self.window.unmap()
-        self.resetMask()
+        with self.disableMask(xcb.xproto.EventMask.StructureNotify):
+            self.window.unmap()
         self.hidden = True
 
     def unhide(self):
         self.window.map()
         self.hidden = False
 
+    @contextlib.contextmanager
     def disableMask(self, mask):
+        self._disableMask(mask)
+        yield
+        self._resetMask()
+
+    def _disableMask(self, mask):
         self.window.set_attribute(
             eventmask=self._windowMask&(~mask)
         )
 
-    def resetMask(self):
+    def _resetMask(self):
         self.window.set_attribute(
             eventmask=self._windowMask
         )

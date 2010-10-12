@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import datetime, subprocess, sys, operator, os, traceback, shlex, time
-import select
+import select, contextlib
 import xcbq
 import xcb.xproto, xcb.xinerama
 import xcb
@@ -245,12 +245,11 @@ class Group(command.CommandObject):
         self.layoutAll()
 
     def layoutAll(self):
-        self.disableMask(xcb.xproto.EventMask.EnterWindow)
-        if self.screen and len(self.windows):
-            self.layout.layout(self.windows)
-            if self.currentWindow:
-                self.currentWindow.focus(False)
-        self.resetMask()
+        with self.disableMask(xcb.xproto.EventMask.EnterWindow):
+            if self.screen and len(self.windows):
+                self.layout.layout(self.windows)
+                if self.currentWindow:
+                    self.currentWindow.focus(False)
 
     def _setScreen(self, screen):
         self.screen = screen
@@ -264,13 +263,13 @@ class Group(command.CommandObject):
         for i in self.windows:
             i.hide()
 
+    @contextlib.contextmanager
     def disableMask(self, mask):
         for i in self.windows:
-            i.disableMask(mask)
-
-    def resetMask(self):
+            i._disableMask(mask)
+        yield
         for i in self.windows:
-            i.resetMask()
+            i._resetMask()
 
     def focus(self, window, warp):
         if window and not window in self.windows:
