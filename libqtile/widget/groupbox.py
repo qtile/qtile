@@ -42,9 +42,6 @@ class GroupBox(base._Widget):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
-        hook.subscribe.setgroup(self.draw)
-        hook.subscribe.delgroup(self.draw)
-        hook.subscribe.group_window_add(self.draw)
         self.setup_hooks()
 
     def group_has_urgent(self, group):
@@ -93,4 +90,7 @@ class GroupBox(base._Widget):
         hook.subscribe.client_managed(hook_response)
         hook.subscribe.client_urgent_hint_changed(hook_response)
         hook.subscribe.client_killed(hook_response)
+        hook.subscribe.setgroup(self.draw)
+        hook.subscribe.delgroup(self.draw)
+        hook.subscribe.group_window_add(self.draw)
 
