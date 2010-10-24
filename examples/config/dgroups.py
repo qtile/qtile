@@ -21,8 +21,6 @@ class Match(object):
             else:
                 value = client.window.get_wm_window_role()
 
-            print _type, value
-
             if match_func(value):
                 return True
         return False
