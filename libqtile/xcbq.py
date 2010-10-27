@@ -2,7 +2,7 @@
     A minimal EWMH-aware OO layer over xpyb. This is NOT intended to be
     complete - it only implements the subset of functionalty needed by qtile.
 """
-import sys, struct
+import struct
 import xcb.xproto, xcb.xinerama, xcb.randr, xcb.xcb
 from xcb.xproto import CW, WindowClass, EventMask
 import utils, xkeysyms, xatom
@@ -594,7 +594,6 @@ class Connection:
         q = self.conn.core.GetKeyboardMapping(first, count).reply()
 
         l = []
-        sym = None
         for i, v in enumerate(q.keysyms):
             if not i%q.keysyms_per_keycode:
                 if l:

@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from base import Layout
-from .. import command, utils
+from .. import utils
 
 
 class Max(Layout):

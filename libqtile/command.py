@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import inspect, UserDict, traceback, textwrap, os, inspect
+import inspect, traceback, textwrap, os
 import ipc
 
 class CommandError(Exception): pass

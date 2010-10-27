@@ -19,13 +19,12 @@
 # SOFTWARE.
 
 import sys, struct, contextlib
-import xcbq
 import xcb.xcb
 from xcb.xproto import EventMask
 import xcb.xproto
 import command, utils
-import manager, hook
-
+import hook
+import Xatom
 
 
 # ICCM Constants
@@ -123,10 +122,10 @@ class _Window(command.CommandObject):
         hook.fire("window_name_change")
 
     def updateHints(self):
-        ''' 
-          update the local copy of the window's WM_HINTS
-          http://tronche.com/gui/x/icccm/sec-4.html#WM_HINTS
-        '''
+        """
+            update the local copy of the window's WM_HINTS
+            http://tronche.com/gui/x/icccm/sec-4.html#WM_HINTS
+        """
         h = self.window.get_wm_hints()
         # FIXME
         return
@@ -385,10 +384,10 @@ class Static(_Window):
 
     def handle_ConfigureRequest(self, e):
         cw = xcb.xproto.ConfigWindow
-        x = self.conf_x
-        y = self.conf_y
-        width = self.conf_width
-        height = self.conf_height
+        # x = self.conf_x
+        # y = self.conf_y
+        # width = self.conf_width
+        # height = self.conf_height
 
         if self.conf_x is None and e.value_mask & cw.X:
             self.x = e.x

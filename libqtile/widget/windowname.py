@@ -1,4 +1,3 @@
-import sys
 from .. import hook, bar, manager
 import base
 

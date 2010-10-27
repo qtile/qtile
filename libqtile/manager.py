@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import datetime, subprocess, sys, operator, os, traceback, shlex, time
+import datetime, subprocess, sys, os, traceback
 import select, contextlib
 import xcbq
 import xcb.xproto, xcb.xinerama
