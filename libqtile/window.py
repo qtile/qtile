@@ -24,7 +24,6 @@ from xcb.xproto import EventMask
 import xcb.xproto
 import command, utils
 import hook
-import Xatom
 
 
 # ICCM Constants
