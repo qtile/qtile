@@ -128,7 +128,33 @@ class _Window(command.CommandObject):
           http://tronche.com/gui/x/icccm/sec-4.html#WM_HINTS
         '''
         h = self.window.get_wm_hints()
+
         # FIXME
+        # h values
+        #{
+        #    'icon_pixmap': 4194337,
+        #    'icon_window': 0, 
+        #    'icon_mask': 4194340,
+        #    'icon_y': 0,
+        #    'input': 1,
+        #    'icon_x': 0,
+        #    'window_group': 4194305
+        #    'initial_state': 1,
+        #    'flags': set(['StateHint',
+        #                  'IconMaskHint',
+        #                  'WindowGroupHint',
+        #                  'InputHint',
+        #                  'UrgencyHint',
+        #                  'IconPixmapHint']),
+        #}
+
+        if h and 'UrgencyHint' in h['flags']:
+            self.hints['urgent'] = True
+            hook.fire('client_urgent_hint_changed', self)
+        elif self.urgent:
+            self.hints['urgent'] = False
+            hook.fire('client_urgent_hint_changed', self)
+
         return
 
     @property

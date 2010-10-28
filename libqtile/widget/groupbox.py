@@ -17,7 +17,8 @@ class GroupBox(base._Widget):
         ("background", "000000", "Widget background"),
         ("this_screen_border", "215578", "Border colour for group on this screen."),
         ("other_screen_border", "404040", "Border colour for group on other screen."),
-        ("min_margin_x", 5, "Minimum X margin (inside the box).")
+        ("min_margin_x", 5, "Minimum X margin (inside the box)."),
+        ("urgent_border", "FF0000", "Urgent border color")
     )
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
@@ -57,6 +58,9 @@ class GroupBox(base._Widget):
                     border = self.this_screen_border
                 else:
                     border = self.other_screen_border
+            elif self.group_has_urgent(e):
+                border = self.urgent_border
+
             if border:
                 self.drawer.ctx.set_source_rgb(*utils.rgb(border))
                 self.drawer.rounded_rectangle(
@@ -93,4 +97,5 @@ class GroupBox(base._Widget):
         hook.subscribe.setgroup(self.draw)
         hook.subscribe.delgroup(self.draw)
         hook.subscribe.group_window_add(self.draw)
+        hook.subscribe.client_urgent_hint_changed(hook_response)
 
