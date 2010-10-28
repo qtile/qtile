@@ -1,7 +1,7 @@
 import sys, math
 from .. import command, utils, bar, manager
 import xcb.xproto
-import cairo
+import cairo, pangocairo, pango
 
 
 LEFT = object()
@@ -128,7 +128,7 @@ class _Drawer:
                     return v
 
     def new_ctx(self):
-        return cairo.Context(self.surface)
+        return pangocairo.CairoContext(cairo.Context(self.surface))
 
     def clear(self, colour):
         self.ctx.set_source_rgb(*utils.rgb(colour))
@@ -146,13 +146,22 @@ class _Drawer:
                 # We don't know the provenance of this string - so we scrub it to ASCII.
                 return "".join(i for i in text if 31 < ord(i) <  127)
         
-    def textbox(self, text, colour):
+    def textlayout(self, text, colour, font, fontsize):
         """
-            Draw text using the current font.
+            Get a text layout.
         """
-        if text:
-            self.ctx.set_source_rgb(*utils.rgb(colour))
-            self.ctx.show_text(self._scrub_to_utf8(text))
+        self.ctx.set_source_rgb(*utils.rgb(colour))
+        layout = self.ctx.create_layout()
+        layout.set_text(self._scrub_to_utf8(text))
+        layout.set_alignment(pango.ALIGN_LEFT)
+
+        desc = pango.FontDescription()
+        desc.set_family(font)
+        desc.set_absolute_size(fontsize * pango.SCALE)
+        layout.set_font_description(desc)
+
+        return layout
+
 
 
 class _Widget(command.CommandObject):
@@ -261,18 +270,20 @@ class _TextBox(_Widget):
     def _configure(self, qtile, qbar):
         _Widget._configure(self, qtile, qbar)
         self.drawer.set_font(self.font, self.fontsize or self.bar.height)
-        if not self.fontsize:
-            _, self.font_desc, self.font_height, self.font_xadv, _ = self.drawer.fit_fontsize(self.bar.height*0.8)
-        else:
-            _, self.font_desc, self.font_height, self.font_xadv, _ = self.drawer.font_extents()
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
-        margin = (self.bar.height - self.font_height)/2
+        layout = self.drawer.textlayout(
+                    self.text,
+                    self.foreground,
+                    self.font,
+                    self.fontsize or self.bar.height
+                 )
+        width, height = layout.get_pixel_size()
         self.drawer.ctx.move_to(
-            self.padding or self.font_xadv/2,
-            margin + self.font_height-self.font_desc
+            self.padding or 5,
+            (self.bar.height - height) / 2
         )
-        self.drawer.textbox(self.text, self.foreground)
+        self.drawer.ctx.show_layout(layout)
         self.drawer.draw()
 

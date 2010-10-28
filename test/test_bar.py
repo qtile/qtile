@@ -17,22 +17,22 @@ class GBConfig:
         libqtile.manager.Screen(
             top = libqtile.bar.Bar(
                     [
-                        libqtile.widget.WindowName(),
-                        libqtile.widget.TextBox("text"),
+                        #libqtile.widget.WindowName(),
+                        libqtile.widget.TextBox("text", background="333333"),
                     ],
                     50,
                 ),
-            bottom=libqtile.bar.Bar(
-                        [
-                            libqtile.widget.GroupBox(),
-                            libqtile.widget.AGroupBox(),
-                            libqtile.widget.Prompt(),
-                            libqtile.widget.WindowName(),
-                            libqtile.widget.Sep(),
-                            libqtile.widget.Clock(),
-                        ],
-                        50
-                    ),
+            #bottom=libqtile.bar.Bar(
+            #            [
+            #                libqtile.widget.GroupBox(),
+            #                libqtile.widget.AGroupBox(),
+            #                libqtile.widget.Prompt(),
+            #                libqtile.widget.WindowName(),
+            #                libqtile.widget.Sep(),
+            #                libqtile.widget.Clock(),
+            #            ],
+            #            50
+            #        ),
         )
     ]
     main = None
@@ -102,6 +102,7 @@ class uWidgets(utils.QtileTests):
         self.c.widget["text"].update(s)
         assert self.c.widget["text"].get() == s
         self.c.group["pppp"].toscreen()
+        time.sleep(2)
 
     def test_textbox_errors(self):
         self.c.widget["text"].update(None)
