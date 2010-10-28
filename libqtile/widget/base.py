@@ -252,37 +252,35 @@ class _TextBox(_Widget):
         _Widget.__init__(self, width, **config)
         self.text = text
 
+    def get_layout(self):
+        layout = self.drawer.textlayout(
+                    self.text,
+                    self.foreground,
+                    self.font,
+                    self.fontsize or (self.bar.height-self.bar.height/5)
+                 )
+        layout.set_ellipsize(pango.ELLIPSIZE_END)
+        return layout
+
     def guess_width(self):
         if not self.text:
             width = 0
         else:
-            _, _, _, _, width, _  = self.drawer.text_extents(self.text)
-            if self.padding:
-                width += self.padding * 2
-            else:
-                _, _, _, font_xadv, _  = self.drawer.font_extents()
-                width += font_xadv
+            layout = self.get_layout()
+            width, _ = layout.get_pixel_size()
+            width = min(width, self.bar.width)
         if width != self.width:
             self.width = width
             self.resize()
         return width
 
-    def _configure(self, qtile, qbar):
-        _Widget._configure(self, qtile, qbar)
-        self.drawer.set_font(self.font, self.fontsize or self.bar.height)
-
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
-        layout = self.drawer.textlayout(
-                    self.text,
-                    self.foreground,
-                    self.font,
-                    self.fontsize or self.bar.height
-                 )
+        layout = self.get_layout()
         width, height = layout.get_pixel_size()
         self.drawer.ctx.move_to(
-            self.padding or 5,
-            (self.bar.height - height) / 2
+            self.padding or 0,
+            0
         )
         self.drawer.ctx.show_layout(layout)
         self.drawer.draw()

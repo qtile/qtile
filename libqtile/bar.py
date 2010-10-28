@@ -161,27 +161,26 @@ class Bar(Gap):
         hook.subscribe.delgroup(self.resize)
         hook.subscribe.addgroup(self.resize)
 
-    def resize(self):
+    def _resize(self, width, widgets):
+        stretches = [i.width_type == STRETCH for i in widgets]
+        if any(stretches):
+            if stretches.count(True) > 1:
+                raise confreader.ConfigError("Error: more than one stretch widget.")
+            stretch_offset = stretches.index(True)
+            pre = sum([i.width for i in widgets[:stretch_offset]])
+            post = sum([i.width for i in widgets[stretch_offset+1:]])
+            widgets[stretch_offset].width = max(width - pre - post, 0)
+
         offset = 0
-        stretchWidget = None
-        for i in self.widgets:
+        for i in widgets:
             i.offset = offset
-            if i.width_type is STRETCH:
-                if stretchWidget:
-                    raise confreader.ConfigError("Can't have more than one stretch widget on a bar.")
-                stretchWidget = i
-                break
             offset += i.width
-        total = offset
-        offset = self.width
-        if stretchWidget:
-            for i in reversed(self.widgets):
-                if i.width_type is STRETCH:
-                    break
-                offset -= i.width
-                total += i.width
-                i.offset = offset
-            stretchWidget.width = max(self.width - total, 0)
+
+    def resize(self):
+        """
+            Resize all widgets, and redraw.
+        """
+        self._resize(self.width, self.widgets)
         self.draw()
 
     def handle_Expose(self, e):
