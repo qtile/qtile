@@ -17,22 +17,22 @@ class GBConfig:
         libqtile.manager.Screen(
             top = libqtile.bar.Bar(
                     [
-                        #libqtile.widget.WindowName(),
+                        libqtile.widget.WindowName(),
                         libqtile.widget.TextBox("text", background="333333"),
                     ],
                     50,
                 ),
-            #bottom=libqtile.bar.Bar(
-            #            [
-            #                libqtile.widget.GroupBox(),
-            #                libqtile.widget.AGroupBox(),
-            #                libqtile.widget.Prompt(),
-            #                libqtile.widget.WindowName(),
-            #                libqtile.widget.Sep(),
-            #                libqtile.widget.Clock(),
-            #            ],
-            #            50
-            #        ),
+            bottom=libqtile.bar.Bar(
+                        [
+                            libqtile.widget.GroupBox(),
+                            libqtile.widget.AGroupBox(),
+                            libqtile.widget.Prompt(),
+                            libqtile.widget.WindowName(),
+                            libqtile.widget.Sep(),
+                            libqtile.widget.Clock(),
+                        ],
+                        50
+                    ),
         )
     ]
     main = None
@@ -85,10 +85,6 @@ class uWidgets(utils.QtileTests):
         self.c.widget["prompt"].fake_keypress("slash")
         self.c.widget["prompt"].fake_keypress("Tab")
 
-        time.sleep(2)
-
-
-
     def test_event(self):
         self.c.group["bb"].toscreen()
         self.c.log()
@@ -98,8 +94,6 @@ class uWidgets(utils.QtileTests):
         s = "some text"
         self.c.widget["text"].update(s)
         assert self.c.widget["text"].get() == s
-        time.sleep(2)
-        return
         s = "Aye, much longer string than the initial one"
         self.c.widget["text"].update(s)
         assert self.c.widget["text"].get() == s

@@ -181,7 +181,7 @@ class Screen(command.CommandObject):
         self._configure(self.qtile, self.index, x, y, w, h, self.group)
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
-                bar.resize()
+                bar.draw()
         self.group.layoutAll()
 
     def cmd_info(self):

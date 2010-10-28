@@ -14,7 +14,7 @@ class Sep(base._Widget):
         ("height_percent", 80, "Height as a percentage of bar height (0-100)."),
     )
     def __init__(self, **config):
-        base._Widget.__init__(self, bar.CALCULATED, **config)
+        base._Widget.__init__(self, bar.STATIC, **config)
         self.width = self.padding + self.linewidth
 
     def draw(self):

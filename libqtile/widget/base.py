@@ -137,7 +137,9 @@ class _Drawer:
         self.ctx.stroke()
 
     def _scrub_to_utf8(self, text):
-        if isinstance(text, unicode):
+        if not text:
+            return ""
+        elif isinstance(text, unicode):
             return text
         else:
             try:
@@ -166,8 +168,7 @@ class _Drawer:
 
 class _Widget(command.CommandObject):
     """
-        Each widget must set its own width attribute when the _configure method
-        is called. If this is set to the special value bar.STRETCH, the bar itself
+        If width is set to the special value bar.STRETCH, the bar itself
         will set the width to the maximum remaining space, after all other
         widgets have been configured. Only ONE widget per bar can have the
         bar.STRETCH width set.
@@ -191,6 +192,16 @@ class _Widget(command.CommandObject):
         else:
             self.width_type = bar.STATIC
             self.width = width
+
+    @property
+    def width(self):
+        if self.width_type == bar.CALCULATED:
+            return self.calculate_width()
+        return self._width
+
+    @width.setter
+    def width(self, value):
+        self._width = value
 
     @property
     def win(self):
@@ -262,17 +273,13 @@ class _TextBox(_Widget):
         layout.set_ellipsize(pango.ELLIPSIZE_END)
         return layout
 
-    def guess_width(self):
-        if not self.text:
-            width = 0
-        else:
+    def calculate_width(self):
+        if self.text:
             layout = self.get_layout()
             width, _ = layout.get_pixel_size()
-            width = min(width, self.bar.width)
-        if width != self.width:
-            self.width = width
-            self.resize()
-        return width
+            return min(width, self.bar.width)
+        else:
+            return 0
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)

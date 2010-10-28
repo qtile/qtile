@@ -156,10 +156,11 @@ class Bar(Gap):
         for i in self.widgets:
             qtile.registerWidget(i)
             i._configure(qtile, self)
-        self.resize()
-        hook.subscribe.setgroup(self.resize)
-        hook.subscribe.delgroup(self.resize)
-        hook.subscribe.addgroup(self.resize)
+
+        # FIXME: These should be targetted better.
+        hook.subscribe.setgroup(self.draw)
+        hook.subscribe.delgroup(self.draw)
+        hook.subscribe.addgroup(self.draw)
 
     def _resize(self, width, widgets):
         stretches = [i.width_type == STRETCH for i in widgets]
@@ -175,13 +176,6 @@ class Bar(Gap):
         for i in widgets:
             i.offset = offset
             offset += i.width
-
-    def resize(self):
-        """
-            Resize all widgets, and redraw.
-        """
-        self._resize(self.width, self.widgets)
-        self.draw()
 
     def handle_Expose(self, e):
         self.draw()
@@ -211,6 +205,7 @@ class Bar(Gap):
             self.saved_focus.window.set_input_focus()
 
     def draw(self):
+        self._resize(self.width, self.widgets)
         for i in self.widgets:
             i.draw()
 

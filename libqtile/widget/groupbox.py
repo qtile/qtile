@@ -28,7 +28,7 @@ class GroupBox(base._Widget):
         if len(self.qtile.groups) - 1 >= groupOffset:
             self.bar.screen.setGroup(self.qtile.groups[groupOffset])
 
-    def _metrics(self):
+    def calculate_width(self):
         self.drawer.set_font(self.font, self.bar.height)
 
         # Leave a 10% margin top and bottom
@@ -39,7 +39,7 @@ class GroupBox(base._Widget):
         )
         self.margin_x = max(self.min_margin_x, int(self.maxwidth * 0.2))
         self.boxwidth = self.maxwidth + self.padding_x*2 + self.borderwidth*2 + self.margin_x*2
-        self.width = self.boxwidth * len(self.qtile.groups)
+        return int(self.boxwidth * len(self.qtile.groups))
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
@@ -49,7 +49,7 @@ class GroupBox(base._Widget):
         return len([w for w in group.windows if w.urgent]) > 0
 
     def draw(self):
-        self._metrics()
+        self.calculate_width()
         self.drawer.clear(self.background)
         for i, e in enumerate(self.qtile.groups):
             border = False
@@ -89,13 +89,13 @@ class GroupBox(base._Widget):
         self.drawer.draw()
 
     def setup_hooks(self):
-        def hook_response(*args, **kwargs):
-            self.draw()
-        hook.subscribe.client_managed(hook_response)
-        hook.subscribe.client_urgent_hint_changed(hook_response)
-        hook.subscribe.client_killed(hook_response)
-        hook.subscribe.setgroup(self.draw)
-        hook.subscribe.delgroup(self.draw)
-        hook.subscribe.group_window_add(self.draw)
-        hook.subscribe.client_urgent_hint_changed(hook_response)
+        def bardraw(*args, **kwargs):
+            self.bar.draw()
+        hook.subscribe.client_managed(bardraw)
+        hook.subscribe.client_urgent_hint_changed(bardraw)
+        hook.subscribe.client_killed(bardraw)
+        hook.subscribe.setgroup(bardraw)
+        hook.subscribe.delgroup(bardraw)
+        hook.subscribe.group_window_add(bardraw)
+        hook.subscribe.client_urgent_hint_changed(self.bar.draw)
 
