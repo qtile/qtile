@@ -97,5 +97,4 @@ class GroupBox(base._Widget):
         hook.subscribe.setgroup(bardraw)
         hook.subscribe.delgroup(bardraw)
         hook.subscribe.group_window_add(bardraw)
-        hook.subscribe.client_urgent_hint_changed(self.bar.draw)
 
