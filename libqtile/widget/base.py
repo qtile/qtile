@@ -176,7 +176,6 @@ class _Widget(command.CommandObject):
         The offset attribute is set by the Bar after all widgets have been
         configured.
     """
-    width = None
     offset = None
     name = None
     defaults = manager.Defaults()
@@ -257,38 +256,100 @@ class _Widget(command.CommandObject):
         """
         return dict(name=self.name)
 
+    def draw(self):
+        """
+            Method that draws the widget. You may call this explicitly to
+            redraw the widget, but only if the width of the widget hasn't
+            changed. If it has, you must call bar.draw instead.
+        """
+        raise NotImplementedError
+
+    def calculate_width(self):
+        """
+            Must be implemented if the widget can take CALCULATED for width.
+        """
+        raise NotImplementedError
+
+
+
+UNSPECIFIED = bar.Obj("UNSPECIFIED")
+
 
 class _TextBox(_Widget):
+    """
+        Base class for widgets that are just boxes containing text.
+    
+        If you derive from this class, you must add the following defaults:
+
+            font
+            fontsize
+            padding
+            background
+            foreground
+    """
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
         _Widget.__init__(self, width, **config)
         self.text = text
 
-    def get_layout(self):
+    @property
+    def actual_padding(self):
+        if self.padding is None:
+            return self.soft_padding
+        else:
+            return self.padding
+
+    def _configure(self, qtile, bar):
+        _Widget._configure(self, qtile, bar)
+        self.change_font(self.font, self.fontsize)
+
+    def change_font(self, font, fontsize):
+        self.font = font
+        if fontsize:
+            self.fontsize = fontsize
+        else:
+            self.fontsize = (self.bar.height-self.bar.height/5)
+        self.soft_padding = self.fontsize/2
+
+    def get_layout(self, text):
         layout = self.drawer.textlayout(
-                    self.text,
+                    text,
                     self.foreground,
                     self.font,
-                    self.fontsize or (self.bar.height-self.bar.height/5)
+                    self.fontsize
                  )
         layout.set_ellipsize(pango.ELLIPSIZE_END)
         return layout
 
     def calculate_width(self):
         if self.text:
-            layout = self.get_layout()
+            layout = self.get_layout(self.text)
             width, _ = layout.get_pixel_size()
-            return min(width, self.bar.width)
+            return min(width, self.bar.width) + self.actual_padding * 2
         else:
             return 0
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
-        layout = self.get_layout()
+        layout = self.get_layout(self.text)
         width, height = layout.get_pixel_size()
         self.drawer.ctx.move_to(
-            self.padding or 0,
-            0
+            self.actual_padding or 0,
+            int(self.bar.height/2.0 - height/2.0)
         )
         self.drawer.ctx.show_layout(layout)
         self.drawer.draw()
+
+    def cmd_set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED):
+        """
+            Change the font used by this widget. If font is None, the current
+            font is used.
+        """
+        if font is UNSPECIFIED:
+            font = self.font
+        if fontsize is UNSPECIFIED:
+            fontsize = self.fontsize
+        self.change_font(font, fontsize)
+        self.bar.draw()
+
+
 

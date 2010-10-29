@@ -98,6 +98,10 @@ class uWidgets(utils.QtileTests):
         self.c.widget["text"].update(s)
         assert self.c.widget["text"].get() == s
         self.c.group["pppp"].toscreen()
+        time.sleep(1)
+        self.c.widget["text"].set_font(fontsize=12)
+        time.sleep(2)
+
 
     def test_textbox_errors(self):
         self.c.widget["text"].update(None)

@@ -31,7 +31,7 @@ class Gap(command.CommandObject):
     """
     def __init__(self, size):
         """
-            - size: The width of the gap.
+            size: The width of the gap.
         """
         self.size = size
         self.qtile, self.screen = None, None
@@ -104,7 +104,7 @@ class Gap(command.CommandObject):
         return self.info()
 
 
-class _Obj:
+class Obj:
     def __init__(self, name):
         self.name = name
 
@@ -115,9 +115,10 @@ class _Obj:
         return self.name
 
 
-STRETCH = _Obj("STRETCH")
-CALCULATED = _Obj("CALCULATED")
-STATIC = _Obj("STATIC")
+STRETCH = Obj("STRETCH")
+CALCULATED = Obj("CALCULATED")
+STATIC = Obj("STATIC")
+
 class Bar(Gap):
     """
         A bar, which can contain widgets. Note that bars can only be placed at
@@ -216,15 +217,6 @@ class Bar(Gap):
             widgets = [i.info() for i in self.widgets],
             window = self.window.window.wid
         )
-
-    def get(self, q, screen, position):
-        if len(q.screens) - 1 < screen:
-            raise command.CommandError("No such screen: %s"%screen)
-        s = q.screens[screen]
-        b = getattr(s, position)
-        if not b:
-            raise command.CommandError("No such bar: %s:%s"%(screen, position))
-        return b
 
     def cmd_fake_click(self, screen, position, x, y):
         """
