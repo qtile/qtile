@@ -91,6 +91,7 @@ XCNOENT = 2
 
 
 class _Window(command.CommandObject):
+    POSSIBLE_STATES = ["normal", "minimised", "floating", "maximised", "fullscreen"]
     def __init__(self, window, qtile):
         self.window, self.qtile = window, qtile
         self.hidden = True
@@ -99,9 +100,14 @@ class _Window(command.CommandObject):
         self.borderwidth = 0
         self.bordercolor = None
         self.name = "<no name>"
-        self.states = ["normal"]
+        self.state = "normal"
         self.window_type = "normal"
         g = self.window.get_geometry()
+        self.float_dimensions = {
+            'x': g.x, 'y': g.y, 
+            'w': g.width, 'h': g.height
+            }
+
         self.hints = {
             'input': True,
             'state': NormalState, #Normal state
@@ -141,7 +147,23 @@ class _Window(command.CommandObject):
             width = self.width,
             height = self.height,
             id = self.window.wid,
+            float_dimensions = self.float_dimensions
         )
+
+    def setState(self, val):
+        if val in self.POSSIBLE_STATES:
+            self.state = val
+
+    def getState(self, val):
+        return self.state == val
+
+    def getFloating(self):
+        return self.getState("floating")
+    
+    def setFloating(self, val):
+        self.setState("floating")
+    floating = property(getFloating, setFloating)
+
 
     def setOpacity(self, opacity):
         if 0.0 <= opacity <= 1.0:
@@ -460,6 +482,18 @@ class Window(_Window):
         hook.fire("client_managed", s)
         return s
 
+    def movefloating(self, x, y):
+        self.float_dimensions['x'] += x
+        self.float_dimensions['y'] += y
+        self.group.layoutAll()
+
+    def togglefloating(self):
+        if self.state == 'floating':
+            self.state = 'normal'
+        else:
+            self.state = 'floating'
+        self.group.layoutAll()
+
     def togroup(self, groupName):
         """
             Move window to a specified group.
@@ -593,6 +627,14 @@ class Window(_Window):
                 togroup("a")
         """
         self.togroup(groupName)
+
+    def cmd_move_floating(self, x, y):
+        self.movefloating(x, y)
+
+    cmd_resize_floating = cmd_move_floating
+
+    def cmd_toggle_floating(self):
+        self.togglefloating()
 
     def cmd_match(self, *args, **kwargs):
         return self.match(*args, **kwargs)

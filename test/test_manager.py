@@ -91,6 +91,9 @@ class uMultiScreen(utils.QtileTests):
         self.c.to_prev_screen()
         assert self.c.window.info()["name"] == "one"
 
+
+    
+        
     def test_togroup(self):
         self.testWindow("one")
         libpry.raises("no such group", self.c.window.togroup, "nonexistent")
@@ -225,6 +228,18 @@ class uSingle(utils.QtileTests):
         self.testXeyes()
         assert self.c.window.match(wname="xeyes")
         assert not self.c.window.match(wname="nonexistent")
+
+class TestFloat(utils.QtileTests):
+    config = TestConfig()
+
+    def test_toggle_floating(self):
+        self.testXeyes()
+        self.testWindow("one")
+        self.c.window.toggle_floating()
+        print 'FLOAT', self.c.window.inspect() #['state']
+        assert self.c.window.state == 'floating'
+        self.c.window.togglefloating()
+        assert self.c.window.state == 'normal'
 
 
 class uRandr(utils.QtileTests):
@@ -506,7 +521,8 @@ tests = [
         uQtile("complex", TestConfig),
         uMinimal(),
         uClientNewStatic(),
-        uClientNewToGroup()
+        uClientNewToGroup(),
+        TestFloat(),
     ],
     utils.Xephyr(xinerama=False, randr=True), [
         uRandr(),
