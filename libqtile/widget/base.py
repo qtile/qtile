@@ -4,6 +4,19 @@ import xcb.xproto
 import cairo, pangocairo, pango
 
 
+def scrub_to_utf8(text):
+    if not text:
+        return ""
+    elif isinstance(text, unicode):
+        return text
+    else:
+        try:
+            return text.decode("utf-8")
+        except UnicodeDecodeError:
+            # We don't know the provenance of this string - so we scrub it to ASCII.
+            return "".join(i for i in text if 31 < ord(i) <  127)
+        
+
 LEFT = object()
 CENTER = object()
 class _Drawer:
@@ -79,7 +92,7 @@ class _Drawer:
         fo.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
 
     def text_extents(self, text):
-        return self.ctx.text_extents(self._scrub_to_utf8(text))
+        return self.ctx.text_extents(scrub_to_utf8(text))
 
     def font_extents(self):
         return self.ctx.font_extents()
@@ -136,25 +149,13 @@ class _Drawer:
         self.ctx.fill()
         self.ctx.stroke()
 
-    def _scrub_to_utf8(self, text):
-        if not text:
-            return ""
-        elif isinstance(text, unicode):
-            return text
-        else:
-            try:
-                return text.decode("utf-8")
-            except UnicodeDecodeError:
-                # We don't know the provenance of this string - so we scrub it to ASCII.
-                return "".join(i for i in text if 31 < ord(i) <  127)
-        
     def textlayout(self, text, colour, font, fontsize):
         """
             Get a text layout.
         """
         self.ctx.set_source_rgb(*utils.rgb(colour))
         layout = self.ctx.create_layout()
-        layout.set_text(self._scrub_to_utf8(text))
+        layout.set_text(scrub_to_utf8(text))
         layout.set_alignment(pango.ALIGN_LEFT)
 
         desc = pango.FontDescription()
@@ -272,6 +273,68 @@ class _Widget(command.CommandObject):
 
 
 
+class TextLayout(object):
+    def __init__(self, ctx, text, colour, font_family, font_size):
+        self.ctx, self.colour = ctx, colour
+        layout = ctx.create_layout()
+        layout.set_alignment(pango.ALIGN_LEFT)
+        desc = pango.FontDescription()
+        desc.set_family(font_family)
+        desc.set_absolute_size(font_size * pango.SCALE)
+        layout.set_font_description(desc)
+        layout.set_ellipsize(pango.ELLIPSIZE_END)
+        self.layout = layout
+        self.text = text
+
+    @property
+    def text(self):
+        return self.layout.get_text()
+
+    @text.setter
+    def text(self, value):
+        return self.layout.set_text(scrub_to_utf8(value))
+
+    @property
+    def width(self):
+        return self.layout.get_pixel_size()[0]
+
+    @property
+    def height(self):
+        return self.layout.get_pixel_size()[1]
+
+    def fontdescription(self):
+        return self.layout.get_font_description()
+
+    @property
+    def font_family(self):
+        d = self.fontdescription()
+        return d.get_family()
+
+    @font_family.setter
+    def font_family(self, font):
+        d = self.fontdescription()
+        d.set_family(font)
+        self.layout.set_font_description(d)
+
+    @property
+    def font_size(self):
+        d = self.fontdescription()
+        return d.get_size()
+
+    @font_size.setter
+    def font_size(self, size):
+        d = self.fontdescription()
+        d.set_size(size)
+        d.set_absolute_size(size * pango.SCALE)
+        self.layout.set_font_description(d)
+
+    def draw(self, x, y):
+        self.ctx.move_to(x, y)
+        self.ctx.set_source_rgb(*utils.rgb(self.colour))
+        self.ctx.show_layout(self.layout)
+
+
+
 UNSPECIFIED = bar.Obj("UNSPECIFIED")
 
 
@@ -288,55 +351,72 @@ class _TextBox(_Widget):
             foreground
     """
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
+        self.layout = None
         _Widget.__init__(self, width, **config)
         self.text = text
 
     @property
+    def text(self):
+        return self._text
+
+    @text.setter
+    def text(self, value):
+        self._text = value
+        if self.layout:
+            self.layout.text = value
+
+    @property
+    def font(self):
+        return self._font
+
+    @font.setter
+    def font(self, value):
+        self._font = value
+        if self.layout:
+            self.layout.font = value
+
+    @property
+    def fontsize(self):
+        if self._fontsize is None:
+            return self.bar.height-self.bar.height/5
+        else:
+            return self._fontsize
+
+    @fontsize.setter
+    def fontsize(self, value):
+        self._fontsize = value
+        if self.layout:
+            self.layout.font_size = value
+
+    @property
     def actual_padding(self):
         if self.padding is None:
-            return self.soft_padding
+            return self.fontsize/2
         else:
             return self.padding
 
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
-        self.change_font(self.font, self.fontsize)
-
-    def change_font(self, font, fontsize):
-        self.font = font
-        if fontsize:
-            self.fontsize = fontsize
-        else:
-            self.fontsize = (self.bar.height-self.bar.height/5)
-        self.soft_padding = self.fontsize/2
-
-    def get_layout(self, text):
-        layout = self.drawer.textlayout(
-                    text,
+        self.layout = TextLayout(
+                    self.drawer.ctx,
+                    self.text,
                     self.foreground,
                     self.font,
                     self.fontsize
                  )
-        layout.set_ellipsize(pango.ELLIPSIZE_END)
-        return layout
 
     def calculate_width(self):
         if self.text:
-            layout = self.get_layout(self.text)
-            width, _ = layout.get_pixel_size()
-            return min(width, self.bar.width) + self.actual_padding * 2
+            return min(self.layout.width, self.bar.width) + self.actual_padding * 2
         else:
             return 0
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
-        layout = self.get_layout(self.text)
-        width, height = layout.get_pixel_size()
-        self.drawer.ctx.move_to(
+        self.layout.draw(
             self.actual_padding or 0,
-            int(self.bar.height/2.0 - height/2.0)
+            int(self.bar.height/2.0 - self.layout.height/2.0)
         )
-        self.drawer.ctx.show_layout(layout)
         self.drawer.draw()
 
     def cmd_set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED):
@@ -344,12 +424,8 @@ class _TextBox(_Widget):
             Change the font used by this widget. If font is None, the current
             font is used.
         """
-        if font is UNSPECIFIED:
-            font = self.font
-        if fontsize is UNSPECIFIED:
-            fontsize = self.fontsize
-        self.change_font(font, fontsize)
+        if font is not UNSPECIFIED:
+            self.font = font
+        if fontsize is not UNSPECIFIED:
+            self.fontsize = fontsize
         self.bar.draw()
-
-
-
