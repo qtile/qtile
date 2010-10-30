@@ -146,7 +146,6 @@ class Prompt(base._TextBox):
         else:
             self.text = ""
         self.bar.draw()
-        self.guess_width()
 
     def handle_KeyPress(self, e):
         """

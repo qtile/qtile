@@ -25,9 +25,7 @@ class TextBox(base._TextBox):
 
     def update(self, text):
         self.text = text
-        if self.width_type == bar.CALCULATED:
-            self.guess_width()
-        self.draw()
+        self.bar.draw()
 
     def cmd_update(self, text):
         """

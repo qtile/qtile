@@ -18,7 +18,7 @@ class GBConfig:
             top = libqtile.bar.Bar(
                     [
                         libqtile.widget.WindowName(),
-                        libqtile.widget.TextBox("text"),
+                        libqtile.widget.TextBox("text", background="333333"),
                     ],
                     50,
                 ),
@@ -85,23 +85,23 @@ class uWidgets(utils.QtileTests):
         self.c.widget["prompt"].fake_keypress("slash")
         self.c.widget["prompt"].fake_keypress("Tab")
 
-        time.sleep(2)
-
-
-
     def test_event(self):
         self.c.group["bb"].toscreen()
         self.c.log()
 
     def test_textbox(self):
         assert "text" in self.c.list_widgets()
-        s = "bit longer"
+        s = "some text"
         self.c.widget["text"].update(s)
         assert self.c.widget["text"].get() == s
-        s = "much longer string than the initial one"
+        s = "Aye, much longer string than the initial one"
         self.c.widget["text"].update(s)
         assert self.c.widget["text"].get() == s
         self.c.group["pppp"].toscreen()
+        time.sleep(1)
+        self.c.widget["text"].set_font(fontsize=12)
+        time.sleep(2)
+
 
     def test_textbox_errors(self):
         self.c.widget["text"].update(None)
@@ -137,6 +137,11 @@ class GeomConf:
     ]
 
 
+class DWidget:
+    def __init__(self, width, width_type):
+        self.width, self.width_type = width, width_type
+
+
 class uBarGeometry(utils.QtileTests):
     config = GeomConf()
     def test_geometry(self):
@@ -156,6 +161,55 @@ class uBarGeometry(utils.QtileTests):
         assert len(internal) == 2
         wid = self.c.bar["bottom"].info()["window"]
         assert self.c.window[wid].inspect()
+
+    def test_resize(self):
+        def wd(l):
+            return [i.width for i in l]
+        def off(l):
+            return [i.offset for i in l]
+
+        b = libqtile.bar.Bar([], 100)
+
+        l = [
+            DWidget(10, libqtile.bar.CALCULATED),
+            DWidget(None, libqtile.bar.STRETCH),
+            DWidget(None, libqtile.bar.STRETCH),
+            DWidget(10, libqtile.bar.CALCULATED),
+        ]
+        libpry.raises("more than one stretch", b._resize, 100, l)
+
+        l = [
+            DWidget(10, libqtile.bar.CALCULATED)
+        ]
+        b._resize(100, l)
+        assert wd(l) == [10]
+        assert off(l) == [0]
+
+        l = [
+            DWidget(10, libqtile.bar.CALCULATED),
+            DWidget(None, libqtile.bar.STRETCH)
+        ]
+        b._resize(100, l)
+        assert wd(l) == [10, 90]
+        assert off(l) == [0, 10]
+
+        l = [
+            DWidget(None, libqtile.bar.STRETCH),
+            DWidget(10, libqtile.bar.CALCULATED),
+        ]
+        b._resize(100, l)
+        assert wd(l) == [90, 10]
+        assert off(l) == [0, 90]
+        
+        l = [
+            DWidget(10, libqtile.bar.CALCULATED),
+            DWidget(None, libqtile.bar.STRETCH),
+            DWidget(10, libqtile.bar.CALCULATED),
+        ]
+        b._resize(100, l)
+        assert wd(l) == [10, 80, 10]
+        assert off(l) == [0, 10, 90]
+
 
 
 class ErrConf(GeomConf):

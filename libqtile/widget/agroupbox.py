@@ -21,19 +21,20 @@ class AGroupBox(base._Widget):
     def click(self, x, y):
         self.bar.screen.group.cmd_nextgroup()
 
-    def _configure(self, qtile, bar):
-        base._Widget._configure(self, qtile, bar)
-        self.drawer.set_font(self.font, self.bar.height)
-                
+    def calculate_width(self):
         # Leave a 10% margin top and bottom
         self.margin_y = int((self.bar.height - (self.padding_y + self.borderwidth)*2)*0.2)
         self.maxwidth, self.maxheight = self.drawer.fit_text(
-            [i.name for i in qtile.groups],
+            [i.name for i in self.qtile.groups],
             self.bar.height - (self.padding_y + self.margin_y + self.borderwidth)*2
         )
         self.margin_x = max(self.min_margin_x, int(self.maxwidth * 0.2))
-        self.boxwidth = self.maxwidth + self.padding_x*2 + self.borderwidth*2 + self.margin_x*2
-        self.width = self.boxwidth
+        return self.maxwidth + self.padding_x*2 + self.borderwidth*2 + self.margin_x*2
+
+    def _configure(self, qtile, bar):
+        base._Widget._configure(self, qtile, bar)
+        self.drawer.set_font(self.font, self.bar.height)
+
         hook.subscribe.setgroup(self.draw)
         hook.subscribe.group_window_add(self.draw)
         self.setup_hooks()
@@ -47,7 +48,7 @@ class AGroupBox(base._Widget):
         self.drawer.ctx.set_source_rgb(*utils.rgb(self.border))
         self.drawer.rounded_rectangle(
             self.padding_x, self.padding_y,
-            self.boxwidth - 2*self.padding_x,
+            self.width - 2*self.padding_x,
             self.bar.height - 2*self.padding_y,
             self.borderwidth
         )
@@ -57,7 +58,7 @@ class AGroupBox(base._Widget):
        # We use the x_advance value rather than the width.
         _, _, _, y, x, _ = self.drawer.text_extents(e.name)
         self.drawer.ctx.move_to(
-         (self.boxwidth - x)/2, (self.bar.height + self.maxheight)/2 )
+         (self.width - x)/2, (self.bar.height + self.maxheight)/2 )
         self.drawer.ctx.show_text( e.name )
         self.drawer.ctx.stroke()
         self.drawer.draw()

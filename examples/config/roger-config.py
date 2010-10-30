@@ -99,17 +99,16 @@ screens = [
 ]
 
 
-# Dinamyc Tag Hook
-import libqtile.hook
-
-def dtag_add(c):
-    name = c.name[0]
-    c.qtile.addGroup(name)
-    c.togroup(name)
-
-def dtag_del(c):
-    name = c.name[0]
-    c.qtile.delGroup(name)
-
-libqtile.hook.subscribe.client_new(dtag_add)
-libqtile.hook.subscribe.client_killed(dtag_del)
+def main(qtile):
+    from dgroups import DGroups, Match
+    import re
+    groups = {
+            'design':  {'init': True, 'persist': True},
+            'h4x':  {'init': True, 'spawn': 'Terminal', 'exclusive': True},
+            'lol':  {},
+           }
+    apps = [
+            {'match': Match(wm_class=['Gimp']), 'group': 'design'},
+            {'match': Match(title=[re.compile('T.*')]), 'group': 'h4x'},
+           ]
+    dgroups = DGroups(qtile, groups, apps)

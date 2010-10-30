@@ -30,9 +30,7 @@ class Clock(base._TextBox):
     def update(self):
         now = datetime.datetime.now().strftime(self.fmt)
         if self.text != now:
-            _, _, _, _, self.width, _  = self.drawer.text_extents(now)
             self.text = now
-            self.guess_width()
-            self.draw()
+            self.bar.draw()
 
 

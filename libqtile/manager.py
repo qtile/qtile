@@ -181,7 +181,7 @@ class Screen(command.CommandObject):
         self._configure(self.qtile, self.index, x, y, w, h, self.group)
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
-                bar.resize()
+                bar.draw()
         self.group.layoutAll()
 
     def cmd_info(self):
@@ -468,14 +468,15 @@ class Qtile(command.CommandObject):
             )
         hook.init(self)
 
-        if config.main:
-            config.main(self)
-
         self.windowMap = {}
         self.widgetMap = {}
         self.groupMap = {}
+        self.groups = []
 
-        self.groups = self.config.groups[:]
+        if config.main:
+            config.main(self)
+
+        self.groups += self.config.groups[:]
         for i in self.groups:
             i._configure(config.layouts, self)
             self.groupMap[i.name] = i
@@ -628,10 +629,10 @@ class Qtile(command.CommandObject):
     def unmanage(self, window):
         c = self.windowMap.get(window)
         if c:
+            hook.fire("client_killed", c)
             if hasattr(c, "group"):
                 c.group.remove(c)
             del self.windowMap[window]
-            hook.fire("client_killed", c)
 
     def manage(self, w):
         attrs = w.get_attributes()

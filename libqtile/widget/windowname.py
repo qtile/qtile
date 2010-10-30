@@ -23,6 +23,6 @@ class WindowName(base._TextBox):
     def update(self):
         w = self.bar.screen.group.currentWindow
         self.text = w.name if w else " "
-        self.draw()
+        self.bar.draw()
 
 

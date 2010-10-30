@@ -30,7 +30,7 @@ class Gap(command.CommandObject):
     """
     def __init__(self, size):
         """
-            - size: The width of the gap.
+            size: The width of the gap.
         """
         self.size = size
         self.qtile, self.screen = None, None
@@ -103,7 +103,7 @@ class Gap(command.CommandObject):
         return self.info()
 
 
-class _Obj:
+class Obj:
     def __init__(self, name):
         self.name = name
 
@@ -114,9 +114,10 @@ class _Obj:
         return self.name
 
 
-STRETCH = _Obj("STRETCH")
-CALCULATED = _Obj("CALCULATED")
-STATIC = _Obj("STATIC")
+STRETCH = Obj("STRETCH")
+CALCULATED = Obj("CALCULATED")
+STATIC = Obj("STATIC")
+
 class Bar(Gap):
     """
         A bar, which can contain widgets. Note that bars can only be placed at
@@ -155,33 +156,26 @@ class Bar(Gap):
         for i in self.widgets:
             qtile.registerWidget(i)
             i._configure(qtile, self)
-        self.resize()
-        hook.subscribe.setgroup(self.resize)
-        hook.subscribe.delgroup(self.resize)
-        hook.subscribe.addgroup(self.resize)
 
-    def resize(self):
+        # FIXME: These should be targetted better.
+        hook.subscribe.setgroup(self.draw)
+        hook.subscribe.delgroup(self.draw)
+        hook.subscribe.addgroup(self.draw)
+
+    def _resize(self, width, widgets):
+        stretches = [i.width_type == STRETCH for i in widgets]
+        if any(stretches):
+            if stretches.count(True) > 1:
+                raise confreader.ConfigError("Error: more than one stretch widget.")
+            stretch_offset = stretches.index(True)
+            pre = sum([i.width for i in widgets[:stretch_offset]])
+            post = sum([i.width for i in widgets[stretch_offset+1:]])
+            widgets[stretch_offset].width = max(width - pre - post, 0)
+
         offset = 0
-        stretchWidget = None
-        for i in self.widgets:
+        for i in widgets:
             i.offset = offset
-            if i.width_type is STRETCH:
-                if stretchWidget:
-                    raise confreader.ConfigError("Can't have more than one stretch widget on a bar.")
-                stretchWidget = i
-                break
             offset += i.width
-        total = offset
-        offset = self.width
-        if stretchWidget:
-            for i in reversed(self.widgets):
-                if i.width_type is STRETCH:
-                    break
-                offset -= i.width
-                total += i.width
-                i.offset = offset
-            stretchWidget.width = max(self.width - total, 0)
-        self.draw()
 
     def handle_Expose(self, e):
         self.draw()
@@ -211,6 +205,7 @@ class Bar(Gap):
             self.saved_focus.window.set_input_focus()
 
     def draw(self):
+        self._resize(self.width, self.widgets)
         for i in self.widgets:
             i.draw()
 
@@ -221,15 +216,6 @@ class Bar(Gap):
             widgets = [i.info() for i in self.widgets],
             window = self.window.window.wid
         )
-
-    def get(self, q, screen, position):
-        if len(q.screens) - 1 < screen:
-            raise command.CommandError("No such screen: %s"%screen)
-        s = q.screens[screen]
-        b = getattr(s, position)
-        if not b:
-            raise command.CommandError("No such bar: %s:%s"%(screen, position))
-        return b
 
     def cmd_fake_click(self, screen, position, x, y):
         """
