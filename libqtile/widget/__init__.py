@@ -6,3 +6,4 @@ from spacer import Spacer
 from clock import Clock
 from sep import Sep
 from prompt import Prompt
+from systray import Systray

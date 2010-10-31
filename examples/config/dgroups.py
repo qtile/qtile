@@ -72,7 +72,6 @@ class DGroups(object):
             client.togroup(wm_class[1])
 
     def _del(self, client):
-        name = client.name
         group = client.group
 
         # Delete group if empty and no persist
