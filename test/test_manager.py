@@ -236,12 +236,37 @@ class TestFloat(utils.QtileTests):
         self.testXeyes()
         self.testWindow("one")
         self.c.window.toggle_floating()
-        print 'FLOAT', self.c.window.inspect() #['state']
-        assert self.c.window.state == 'floating'
-        self.c.window.togglefloating()
-        assert self.c.window.state == 'normal'
+        assert self.c.window.info()['float_info']['floating'] == True
+        self.c.window.toggle_floating()
+        assert self.c.window.info()['float_info']['floating'] == False
+        self.c.window.toggle_floating()
+        assert self.c.window.info()['float_info']['floating'] == True
 
+        #change layout (should still be floating)
+        self.c.nextlayout()
+        assert self.c.window.info()['float_info']['floating'] == True
+    def test_move_floating(self):
+        self.testXeyes()
+        self.testWindow("one")
+        assert self.c.window.info()['width'] == 798
+        assert self.c.window.info()['height'] == 578
 
+        assert self.c.window.info()['x'] == 0
+        assert self.c.window.info()['y'] == 0
+        self.c.window.toggle_floating()
+        assert self.c.window.info()['float_info']['floating'] == True
+        
+        self.c.window.move_floating(10, 20)
+        assert self.c.window.info()['width'] == 798
+        assert self.c.window.info()['height'] == 578
+        assert self.c.window.info()['x'] == 10
+        assert self.c.window.info()['y'] == 20
+
+        #change layout (x, y should be same)
+        self.c.nextlayout()
+        assert self.c.window.info()['x'] == 10
+        assert self.c.window.info()['y'] == 20
+        
 class uRandr(utils.QtileTests):
     config = TestConfig()
     def test_screens(self):

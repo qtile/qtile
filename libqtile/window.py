@@ -91,7 +91,6 @@ XCNOENT = 2
 
 
 class _Window(command.CommandObject):
-    POSSIBLE_STATES = ["normal", "minimised", "floating", "maximised", "fullscreen"]
     def __init__(self, window, qtile):
         self.window, self.qtile = window, qtile
         self.hidden = True
@@ -103,7 +102,8 @@ class _Window(command.CommandObject):
         self.state = "normal"
         self.window_type = "normal"
         g = self.window.get_geometry()
-        self.float_dimensions = {
+        self._float_info = {
+            'floating': False,
             'x': g.x, 'y': g.y, 
             'w': g.width, 'h': g.height
             }
@@ -173,7 +173,7 @@ class _Window(command.CommandObject):
             width = self.width,
             height = self.height,
             id = self.window.wid,
-            float_dimensions = self.float_dimensions
+            float_info = self._float_info
         )
 
     def setState(self, val):
@@ -184,10 +184,11 @@ class _Window(command.CommandObject):
         return self.state == val
 
     def getFloating(self):
-        return self.getState("floating")
+        return self._float_info.get('floating')
     
     def setFloating(self, val):
-        self.setState("floating")
+        assert isinstance(val, bool)
+        self._float_info['floating'] = val
     floating = property(getFloating, setFloating)
 
 
@@ -381,7 +382,8 @@ class _Window(command.CommandObject):
             wm_client_machine = self.window.get_wm_client_machine(),
             normalhints = normalhints,
             hints = hints,
-            state = state
+            state = state,
+            float_info = self._float_info
         )
 
 
@@ -509,15 +511,19 @@ class Window(_Window):
         return s
 
     def movefloating(self, x, y):
-        self.float_dimensions['x'] += x
-        self.float_dimensions['y'] += y
-        self.group.layoutAll()
+        self._float_info['x'] += x
+        self._float_info['y'] += y
+        self.place(self._float_info['x'],
+                   self._float_info['y'],
+                   self.width,
+                   self.height,
+                   self.borderwidth,
+                   self.bordercolor
+                   )
+        self.notify()
 
     def togglefloating(self):
-        if self.state == 'floating':
-            self.state = 'normal'
-        else:
-            self.state = 'floating'
+        self._float_info['floating'] = not self._float_info['floating']
         self.group.layoutAll()
 
     def togroup(self, groupName):
