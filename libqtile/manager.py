@@ -473,6 +473,17 @@ class Qtile(command.CommandObject):
         self.groupMap = {}
         self.groups = []
 
+        # Because we only do Xinerama multi-screening, we can assume that the first
+        # screen's root is _the_ root.
+        self.root = self.conn.default_screen.root
+        self.root.set_attribute(
+            eventmask = EventMask.StructureNotify |\
+                        EventMask.SubstructureNotify |\
+                        EventMask.SubstructureRedirect |\
+                        EventMask.EnterWindow |\
+                        EventMask.LeaveWindow
+        )
+
         if config.main:
             config.main(self)
 
@@ -528,16 +539,6 @@ class Qtile(command.CommandObject):
             xcb.xproto.FocusInEvent,
         ])
 
-        # Because we only do Xinerama multi-screening, we can assume that the first
-        # screen's root is _the_ root.
-        self.root = self.conn.default_screen.root
-        self.root.set_attribute(
-            eventmask = EventMask.StructureNotify |\
-                        EventMask.SubstructureNotify |\
-                        EventMask.SubstructureRedirect |\
-                        EventMask.EnterWindow |\
-                        EventMask.LeaveWindow
-        )
         self.conn.flush()
         self.conn.xsync()
         self.xpoll()
@@ -717,7 +718,11 @@ class Qtile(command.CommandObject):
                 e = self.conn.conn.poll_for_event()
                 if not e:
                     break
+                if e.response_type == 161:
+                    e = xcb.xproto.ClientMessageEvent(e)
+
                 ename = e.__class__.__name__
+
                 if ename.endswith("Event"):
                     ename = ename[:-5]
                 if self.debug:

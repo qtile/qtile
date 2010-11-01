@@ -91,6 +91,7 @@ screens = [
                         widget.GroupBox(),
                         widget.WindowName(),
                         #widget.Spacer(),
+                        widget.Systray(),
                         widget.Clock(),
                     ],
                     20,
