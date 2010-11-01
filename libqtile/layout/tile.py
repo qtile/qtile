@@ -144,8 +144,8 @@ class Tile(Layout):
 
     def cmd_decrease_nmaster(self):
         self.master -= 1
-        if self.master < 0:
-            self.master += 1
+        if self.master <= 0:
+            self.master = 1
         self.group.layoutAll()
 
     def cmd_increase_nmaster(self):
