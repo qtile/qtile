@@ -19,13 +19,11 @@
 # SOFTWARE.
 
 import sys, struct, contextlib
-import xcbq
 import xcb.xcb
 from xcb.xproto import EventMask
 import xcb.xproto
 import command, utils
-import manager, hook
-
+import hook
 
 
 # ICCM Constants
@@ -101,9 +99,15 @@ class _Window(command.CommandObject):
         self.borderwidth = 0
         self.bordercolor = None
         self.name = "<no name>"
-        self.states = ["normal"]
+        self.state = "normal"
         self.window_type = "normal"
         g = self.window.get_geometry()
+        self._float_info = {
+            'floating': False,
+            'x': g.x, 'y': g.y, 
+            'w': g.width, 'h': g.height
+            }
+
         self.hints = {
             'input': True,
             'state': NormalState, #Normal state
@@ -122,10 +126,10 @@ class _Window(command.CommandObject):
         hook.fire("window_name_change")
 
     def updateHints(self):
-        ''' 
-          update the local copy of the window's WM_HINTS
-          http://tronche.com/gui/x/icccm/sec-4.html#WM_HINTS
-        '''
+        """
+            update the local copy of the window's WM_HINTS
+            http://tronche.com/gui/x/icccm/sec-4.html#WM_HINTS
+        """
         h = self.window.get_wm_hints()
 
         # FIXME
@@ -168,7 +172,24 @@ class _Window(command.CommandObject):
             width = self.width,
             height = self.height,
             id = self.window.wid,
+            float_info = self._float_info
         )
+
+    def setState(self, val):
+        if val in self.POSSIBLE_STATES:
+            self.state = val
+
+    def getState(self, val):
+        return self.state == val
+
+    def getFloating(self):
+        return self._float_info.get('floating')
+    
+    def setFloating(self, val):
+        assert isinstance(val, bool)
+        self._float_info['floating'] = val
+    floating = property(getFloating, setFloating)
+
 
     def setOpacity(self, opacity):
         if 0.0 <= opacity <= 1.0:
@@ -360,7 +381,8 @@ class _Window(command.CommandObject):
             wm_client_machine = self.window.get_wm_client_machine(),
             normalhints = normalhints,
             hints = hints,
-            state = state
+            state = state,
+            float_info = self._float_info
         )
 
 
@@ -411,10 +433,10 @@ class Static(_Window):
 
     def handle_ConfigureRequest(self, e):
         cw = xcb.xproto.ConfigWindow
-        x = self.conf_x
-        y = self.conf_y
-        width = self.conf_width
-        height = self.conf_height
+        # x = self.conf_x
+        # y = self.conf_y
+        # width = self.conf_width
+        # height = self.conf_height
 
         if self.conf_x is None and e.value_mask & cw.X:
             self.x = e.x
@@ -487,6 +509,22 @@ class Window(_Window):
         self.qtile.windowMap[self.window.wid] = s
         hook.fire("client_managed", s)
         return s
+
+    def movefloating(self, x, y):
+        self._float_info['x'] += x
+        self._float_info['y'] += y
+        self.place(self._float_info['x'],
+                   self._float_info['y'],
+                   self.width,
+                   self.height,
+                   self.borderwidth,
+                   self.bordercolor
+                   )
+        self.notify()
+
+    def togglefloating(self):
+        self._float_info['floating'] = not self._float_info['floating']
+        self.group.layoutAll()
 
     def togroup(self, groupName):
         """
@@ -621,6 +659,14 @@ class Window(_Window):
                 togroup("a")
         """
         self.togroup(groupName)
+
+    def cmd_move_floating(self, x, y):
+        self.movefloating(x, y)
+
+    cmd_resize_floating = cmd_move_floating
+
+    def cmd_toggle_floating(self):
+        self.togglefloating()
 
     def cmd_match(self, *args, **kwargs):
         return self.match(*args, **kwargs)

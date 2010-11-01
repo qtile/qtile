@@ -1,4 +1,4 @@
-import sys, math
+import math
 from .. import command, utils, bar, manager
 import xcb.xproto
 import cairo, pangocairo, pango

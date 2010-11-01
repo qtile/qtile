@@ -1,4 +1,3 @@
-import platform, sys
 from distutils.core import setup
 
 long_description = """

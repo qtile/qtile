@@ -91,6 +91,9 @@ class uMultiScreen(utils.QtileTests):
         self.c.to_prev_screen()
         assert self.c.window.info()["name"] == "one"
 
+
+    
+        
     def test_togroup(self):
         self.testWindow("one")
         libpry.raises("no such group", self.c.window.togroup, "nonexistent")
@@ -226,7 +229,44 @@ class uSingle(utils.QtileTests):
         assert self.c.window.match(wname="xeyes")
         assert not self.c.window.match(wname="nonexistent")
 
+class TestFloat(utils.QtileTests):
+    config = TestConfig()
 
+    def test_toggle_floating(self):
+        self.testXeyes()
+        self.testWindow("one")
+        self.c.window.toggle_floating()
+        assert self.c.window.info()['float_info']['floating'] == True
+        self.c.window.toggle_floating()
+        assert self.c.window.info()['float_info']['floating'] == False
+        self.c.window.toggle_floating()
+        assert self.c.window.info()['float_info']['floating'] == True
+
+        #change layout (should still be floating)
+        self.c.nextlayout()
+        assert self.c.window.info()['float_info']['floating'] == True
+    def test_move_floating(self):
+        self.testXeyes()
+        self.testWindow("one")
+        assert self.c.window.info()['width'] == 798
+        assert self.c.window.info()['height'] == 578
+
+        assert self.c.window.info()['x'] == 0
+        assert self.c.window.info()['y'] == 0
+        self.c.window.toggle_floating()
+        assert self.c.window.info()['float_info']['floating'] == True
+        
+        self.c.window.move_floating(10, 20)
+        assert self.c.window.info()['width'] == 798
+        assert self.c.window.info()['height'] == 578
+        assert self.c.window.info()['x'] == 10
+        assert self.c.window.info()['y'] == 20
+
+        #change layout (x, y should be same)
+        self.c.nextlayout()
+        assert self.c.window.info()['x'] == 10
+        assert self.c.window.info()['y'] == 20
+        
 class uRandr(utils.QtileTests):
     config = TestConfig()
     def test_screens(self):
@@ -506,7 +546,8 @@ tests = [
         uQtile("complex", TestConfig),
         uMinimal(),
         uClientNewStatic(),
-        uClientNewToGroup()
+        uClientNewToGroup(),
+        TestFloat(),
     ],
     utils.Xephyr(xinerama=False, randr=True), [
         uRandr(),

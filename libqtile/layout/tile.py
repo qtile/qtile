@@ -1,5 +1,5 @@
 from base import Layout
-from .. import command, utils, manager
+from .. import utils, manager
 
 class Tile(Layout):
     name="tile"

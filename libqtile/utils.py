@@ -19,7 +19,6 @@
 # SOFTWARE.
 
 import operator, functools
-import sys
 import xcbq
 
 def lget(o, v):

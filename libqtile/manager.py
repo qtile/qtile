@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import datetime, subprocess, sys, operator, os, traceback, shlex, time
+import datetime, subprocess, sys, os, traceback
 import select, contextlib
 import xcbq
 import xcb.xproto, xcb.xinerama
@@ -247,7 +247,7 @@ class Group(command.CommandObject):
     def layoutAll(self):
         with self.disableMask(xcb.xproto.EventMask.EnterWindow):
             if self.screen and len(self.windows):
-                self.layout.layout(self.windows)
+                self.layout.layout([x for x in self.windows if not x.floating])
                 if self.currentWindow:
                     self.currentWindow.focus(False)
 

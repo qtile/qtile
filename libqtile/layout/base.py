@@ -18,8 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import copy, sys
-from .. import command, utils, manager
+import copy
+from .. import command, manager
 
 class Layout(command.CommandObject):
     """

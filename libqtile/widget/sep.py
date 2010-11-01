@@ -1,5 +1,4 @@
-from .. import bar, hook, utils, manager
-import cairo
+from .. import bar, utils, manager
 import base
 
 class Sep(base._Widget):

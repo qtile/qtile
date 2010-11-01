@@ -18,8 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import sys
-import manager, window, confreader, command, utils, hook
+import manager, window, confreader, command, hook
 
 
 class Gap(command.CommandObject):

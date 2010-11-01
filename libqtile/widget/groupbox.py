@@ -1,5 +1,4 @@
 from .. import bar, hook, utils, manager
-import cairo
 import base
 
 class GroupBox(base._Widget):

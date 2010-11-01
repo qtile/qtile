@@ -1,11 +1,11 @@
-import time, sys, os, bisect, glob
+import time, os, glob
 from .. import hook, bar, manager, xkeysyms, xcbq
 import base
 
 
 class NullCompleter:
     def actual(self):
-        return txt
+        return None
 
     def complete(self, txt):
         return txt
