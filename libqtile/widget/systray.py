@@ -67,6 +67,7 @@ class Systray(base._Widget):
     """
     defaults = manager.Defaults(
                 ('icon_size', 20, 'Icon width'),
+                ('padding', 5, 'Padding between icons'),
             )
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
@@ -76,7 +77,7 @@ class Systray(base._Widget):
         pass
 
     def calculate_width(self):
-        width = len(self.icons) * self.icon_size
+        width = len(self.icons) * (self.icon_size + self.padding) + self.padding
         return width
 
     def _configure(self, qtile, bar):
@@ -102,7 +103,8 @@ class Systray(base._Widget):
     def draw(self):
         for pos, icon in enumerate(self.icons.values()):
             icon.place(
-                    self.offset+(self.icon_size*pos), 0, 
+                    self.offset + (self.icon_size + self.padding)*pos + self.padding,
+                    self.bar.height/2 - self.icon_size/2, 
                     self.icon_size, self.icon_size,
                     0,
                     None
