@@ -8,13 +8,15 @@ class Tile(Layout):
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width.")
     )
-    def __init__(self, ratio=0.618, masterWindows = 1, expand=True, **config):
+    def __init__(self, ratio=0.618, masterWindows=1, expand=True,
+        ratio_increment=0.05, **config):
         Layout.__init__(self, **config)
         self.clients = []
         self.ratio = ratio
         self.master = masterWindows
         self.focused = None
         self.expand = expand
+        self.ratio_increment = ratio_increment
 
     @property
     def master_windows(self):
@@ -35,7 +37,7 @@ class Tile(Layout):
         if nextindex >= len(self.clients):
             nextindex = 0
         return self.clients[nextindex]
-    
+
     def getPreviousClient(self):
         previndex = self.clients.index(self.focused) - 1
         if previndex < 0:
@@ -56,7 +58,7 @@ class Tile(Layout):
         if self.clients:
             function(self.clients)
             self.group.layoutAll()
-    
+
     def clone(self, group):
         c = Layout.clone(self, group)
         c.clients = []
@@ -71,7 +73,7 @@ class Tile(Layout):
         if len(self.clients) == 1:
             self.group.focus(c, True)
             self.focus(c)
-        
+
     def remove(self, c):
         self.clients.remove(c)
         if self.clients and c is self.focused:
@@ -93,7 +95,7 @@ class Tile(Layout):
                 x = self.group.screen.dx
                 y = self.group.screen.dy + pos*h
             else:
-                w = int(screenWidth*(1-self.ratio))
+                w = screenWidth-int(screenWidth*self.ratio)
                 h = screenHeight/(len(self.slave_windows))
                 x = self.group.screen.dx + int(screenWidth*self.ratio)
                 y = self.group.screen.dy + self.clients[self.master:].index(c)*h
@@ -104,15 +106,15 @@ class Tile(Layout):
             c.place(
                 x,
                 y,
-                w,
-                h,
+                w-borderWidth*2,
+                h-borderWidth*2,
                 borderWidth,
                 bc,
                 )
             c.unhide()
         else:
             c.hide()
-             
+
     def info(self):
         return dict(
             all = [c.name for c in self.clients],
@@ -132,3 +134,20 @@ class Tile(Layout):
     def cmd_previous(self):
         self.previous()
 
+    def cmd_decrease_ratio(self):
+        self.ratio -= self.ratio_increment
+        self.group.layoutAll()
+
+    def cmd_increase_ratio(self):
+        self.ratio += self.ratio_increment
+        self.group.layoutAll()
+
+    def cmd_decrease_nmaster(self):
+        self.master -= 1
+        if self.master < 0:
+            self.master += 1
+        self.group.layoutAll()
+
+    def cmd_increase_nmaster(self):
+        self.master += 1
+        self.group.layoutAll()
