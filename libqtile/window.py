@@ -115,7 +115,6 @@ class _Window(command.CommandObject):
             'window_group': None,
             'urgent': False,
             }
-        self.updateName()
         self.updateHints()
 
     def updateName(self):
@@ -402,6 +401,7 @@ class Static(_Window):
                   EventMask.Exposure
     def __init__(self, win, qtile, screen, x=None, y=None, width=None, height=None):
         _Window.__init__(self, win, qtile)
+        self.updateName()
         self.conf_x, self.conf_y = x, y
         self.conf_width, self.conf_height = width, height
         self.x, self.y, self.width, self.height = x or 0, y or 0, width or 0, height or 0
@@ -451,7 +451,7 @@ class Window(_Window):
 
     def __init__(self, window, qtile):
         _Window.__init__(self, window, qtile)
-
+        self.updateName()
         # add to group by position according to _NET_WM_DESKTOP property
         index = window.get_wm_desktop()
         if index and index < len(qtile.groups):
