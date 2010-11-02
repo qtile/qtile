@@ -10,7 +10,7 @@ class GBConfig:
         libqtile.manager.Group("bb"),
         libqtile.manager.Group("ccc"),
         libqtile.manager.Group("dddd"),
-        libqtile.manager.Group("pppp")
+        libqtile.manager.Group("Pppy")
     ]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
     screens = [
@@ -97,10 +97,9 @@ class uWidgets(utils.QtileTests):
         s = "Aye, much longer string than the initial one"
         self.c.widget["text"].update(s)
         assert self.c.widget["text"].get() == s
-        self.c.group["pppp"].toscreen()
-        time.sleep(1)
+        self.c.group["Pppy"].toscreen()
         self.c.widget["text"].set_font(fontsize=12)
-        time.sleep(2)
+        time.sleep(1)
 
 
     def test_textbox_errors(self):

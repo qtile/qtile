@@ -85,6 +85,45 @@ class _Drawer:
         self.ctx.rectangle(x, y, width, height)
         self.ctx.stroke()
 
+    def draw(self):
+        self.qtile.conn.conn.core.CopyArea(
+            self.pixmap,
+            self.widget.win.wid,
+            self.gc,
+            0, 0, # srcx, srcy
+            self.widget.offset, 0, # dstx, dsty
+            self.widget.width, self.widget.bar.height
+        )
+
+    def find_root_visual(self):
+        for i in self.qtile.conn.default_screen.allowed_depths:
+            for v in i.visuals:
+                if v.visual_id == self.qtile.conn.default_screen.root_visual:
+                    return v
+
+    def new_ctx(self):
+        return pangocairo.CairoContext(cairo.Context(self.surface))
+
+    def clear(self, colour):
+        self.ctx.set_source_rgb(*utils.rgb(colour))
+        self.ctx.rectangle(0, 0, self.widget.bar.width, self.widget.bar.height)
+        self.ctx.fill()
+        self.ctx.stroke()
+
+    def textlayout(self, text, colour, font_family, font_size):
+        """
+            Get a text layout.
+        """
+        return TextLayout(self, text, colour, font_family, font_size)
+
+    def max_layout_size(self, texts, font_family, font_size):
+        ll = [self.textlayout(i, "ffffff", font_family, font_size) for i in texts]
+        width = max(i.width for i in ll)
+        height = max(i.height for i in ll)
+        return width, height
+
+
+    # Old text layout functions, to be deprectated.
     def set_font(self, fontface, size, antialias=True):
         self.ctx.select_font_face(fontface)
         self.ctx.set_font_size(size)
@@ -124,46 +163,6 @@ class _Drawer:
             maxheight = max(maxheight, y)
         return maxwidth, maxheight
 
-    def draw(self):
-        self.qtile.conn.conn.core.CopyArea(
-            self.pixmap,
-            self.widget.win.wid,
-            self.gc,
-            0, 0, # srcx, srcy
-            self.widget.offset, 0, # dstx, dsty
-            self.widget.width, self.widget.bar.height
-        )
-
-    def find_root_visual(self):
-        for i in self.qtile.conn.default_screen.allowed_depths:
-            for v in i.visuals:
-                if v.visual_id == self.qtile.conn.default_screen.root_visual:
-                    return v
-
-    def new_ctx(self):
-        return pangocairo.CairoContext(cairo.Context(self.surface))
-
-    def clear(self, colour):
-        self.ctx.set_source_rgb(*utils.rgb(colour))
-        self.ctx.rectangle(0, 0, self.widget.bar.width, self.widget.bar.height)
-        self.ctx.fill()
-        self.ctx.stroke()
-
-    def textlayout(self, text, colour, font, fontsize):
-        """
-            Get a text layout.
-        """
-        self.ctx.set_source_rgb(*utils.rgb(colour))
-        layout = self.ctx.create_layout()
-        layout.set_text(scrub_to_utf8(text))
-        layout.set_alignment(pango.ALIGN_LEFT)
-
-        desc = pango.FontDescription()
-        desc.set_family(font)
-        desc.set_absolute_size(fontsize * pango.SCALE)
-        layout.set_font_description(desc)
-
-        return layout
 
 
 
@@ -274,9 +273,9 @@ class _Widget(command.CommandObject):
 
 
 class TextLayout(object):
-    def __init__(self, ctx, text, colour, font_family, font_size):
-        self.ctx, self.colour = ctx, colour
-        layout = ctx.create_layout()
+    def __init__(self, drawer, text, colour, font_family, font_size):
+        self.drawer, self.colour = drawer, colour
+        layout = drawer.ctx.create_layout()
         layout.set_alignment(pango.ALIGN_LEFT)
         desc = pango.FontDescription()
         desc.set_family(font_family)
@@ -329,9 +328,31 @@ class TextLayout(object):
         self.layout.set_font_description(d)
 
     def draw(self, x, y):
-        self.ctx.move_to(x, y)
-        self.ctx.set_source_rgb(*utils.rgb(self.colour))
-        self.ctx.show_layout(self.layout)
+        self.drawer.ctx.move_to(x, y)
+        self.drawer.ctx.set_source_rgb(*utils.rgb(self.colour))
+        self.drawer.ctx.show_layout(self.layout)
+
+    def framed(self, border_width, border_color, pad_x, pad_y):
+        return TextFrame(self, border_width, border_color, pad_x, pad_y)
+
+
+class TextFrame:
+    def __init__(self, layout, border_width, border_color, pad_x, pad_y):
+        self.layout, self.pad_x = layout, pad_x
+        self.pad_y, self.border_width = pad_y, border_width
+        self.border_color = border_color
+        self.drawer = self.layout.drawer
+
+    def draw(self, x, y):
+        self.drawer.ctx.set_source_rgb(*utils.rgb(self.border_color))
+        self.drawer.rounded_rectangle(
+            x, y,
+            self.layout.width + self.pad_x * 2,
+            self.layout.height + self.pad_y * 2,
+            self.border_width
+        )
+        self.drawer.ctx.stroke()
+        self.layout.draw(x + self.pad_x, y + self.pad_y)
 
 
 
@@ -397,8 +418,7 @@ class _TextBox(_Widget):
 
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
-        self.layout = TextLayout(
-                    self.drawer.ctx,
+        self.layout = self.drawer.textlayout(
                     self.text,
                     self.foreground,
                     self.font,
