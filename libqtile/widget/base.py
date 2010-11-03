@@ -281,9 +281,9 @@ class TextLayout(object):
         desc.set_family(font_family)
         desc.set_absolute_size(font_size * pango.SCALE)
         layout.set_font_description(desc)
-        layout.set_ellipsize(pango.ELLIPSIZE_END)
         self.layout = layout
         self.text = text
+        self._width = None
 
     @property
     def text(self):
@@ -295,7 +295,16 @@ class TextLayout(object):
 
     @property
     def width(self):
-        return self.layout.get_pixel_size()[0]
+        if self._width is not None:
+            return self._width
+        else:
+            return self.layout.get_pixel_size()[0]
+
+    @width.setter
+    def width(self, value):
+        print self.width,
+        self._width = value
+        self.layout.set_width(value)
 
     @property
     def height(self):
@@ -352,7 +361,10 @@ class TextFrame:
             self.border_width
         )
         self.drawer.ctx.stroke()
-        self.layout.draw(x + self.pad_x, y + self.pad_y)
+        self.layout.draw(
+            x + self.pad_x,
+            y + self.pad_y
+        )
 
 
 
