@@ -6,15 +6,15 @@ class AGroupBox(base._Widget):
         A widget that graphically displays the current group.
     """
     defaults = manager.Defaults(
-        ("padding_y", 3, "Y padding outside the box"),
-        ("padding_x", 3, "X padding outside the box"),
+        ("margin_y", 3, "Y margin outside the box"),
+        ("margin_x", 3, "X margin outside the box"),
         ("borderwidth", 3, "Current group border width"),
         ("font", "Monospace", "Font face"),
         ("fontsize", None, "Font pixel size - calculated if None"),
         ("foreground", "aaaaaa", "Active group font colour"),
         ("background", "000000", "Widget background"),
         ("border", "215578", "Border colour"),
-        ("margin", 5, "Margin inside the box")
+        ("padding", 5, "Padding inside the box")
     )
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
@@ -22,7 +22,7 @@ class AGroupBox(base._Widget):
     @property
     def fontsize(self):
         if self._fontsize is None:
-            return self.bar.height - self.padding_y*2 - self.borderwidth*2 - self.margin*2
+            return self.bar.height - self.margin_y*2 - self.borderwidth*2 - self.padding*2
         else:
             return self._fontsize
 
@@ -39,7 +39,7 @@ class AGroupBox(base._Widget):
             self.font,
             self.fontsize
         )
-        return width + self.margin*2 + self.padding_x*2 + self.borderwidth*2
+        return width + self.padding*2 + self.margin_x*2 + self.borderwidth*2
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
@@ -49,10 +49,10 @@ class AGroupBox(base._Widget):
         self.drawer.clear(self.background)
         e = (i for i in self.qtile.groups if i.name == self.bar.screen.group.name ).next()
         layout = self.drawer.textlayout(e.name, self.foreground, self.font, self.fontsize)
-        framed = layout.framed(self.borderwidth, self.border, self.margin, self.margin)
+        framed = layout.framed(self.borderwidth, self.border, self.padding, self.padding)
         framed.draw(
-            self.padding_x,
-            self.padding_y
+            self.margin_x,
+            self.margin_y
         )
         self.drawer.draw()
 
