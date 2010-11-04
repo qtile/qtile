@@ -58,7 +58,7 @@ class _QtileTruss(libpry.AutoTree):
 
     def _waitForXephyr(self):
         # Try until Xephyr is up
-        for i in range(20):
+        for i in range(50):
             try:
                 d = Xlib.display.Display(self["display"])
                 break
