@@ -7,7 +7,7 @@ class TextBox(base._TextBox):
         qsh.
     """
     defaults = manager.Defaults(
-        ("font", "Monospace", "Text font"),
+        ("font", "Arial", "Text font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("padding", None, "Padding left and right. Calculated if None."),
         ("background", None, "Background colour."),
