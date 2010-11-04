@@ -93,7 +93,7 @@ class Prompt(base._TextBox):
         None: NullCompleter
     }
     defaults = manager.Defaults(
-        ("font", "Monospace", "Font"),
+        ("font", "Arial", "Font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("padding", None, "Padding. Calculated if None."),
         ("background", "000000", "Background colour"),

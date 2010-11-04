@@ -6,7 +6,7 @@ class WindowName(base._TextBox):
         Displays the name of the window that currently has focus.
     """
     defaults = manager.Defaults(
-        ("font", "Monospace", "Font face."),
+        ("font", "Arial", "Font face."),
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("padding", None, "Padding left and right."),
         ("background", "000000", "Background colour."),
