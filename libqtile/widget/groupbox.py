@@ -37,11 +37,11 @@ class _GroupBase(base._Widget):
         hook.subscribe.setgroup(hook_response)
         hook.subscribe.group_window_add(hook_response)
 
-    def drawbox(self, offset, text, width=None):
+    def drawbox(self, offset, text, color, width=None):
         layout = self.drawer.textlayout(text, self.foreground, self.font, self.fontsize)
         if width is not None:
             layout.width = width
-        framed = layout.framed(self.borderwidth, self.border, self.padding, self.padding)
+        framed = layout.framed(self.borderwidth, color, self.padding, self.padding)
         framed.draw(offset, self.margin_y)
 
 
@@ -69,7 +69,7 @@ class AGroupBox(_GroupBase):
     def draw(self):
         self.drawer.clear(self.background)
         e = (i for i in self.qtile.groups if i.name == self.bar.screen.group.name ).next()
-        self.drawbox(self.margin_x, e.name)
+        self.drawbox(self.margin_x, e.name, self.border)
         self.drawer.draw()
 
 
@@ -85,7 +85,10 @@ class GroupBox(_GroupBase):
         ("fontsize", None, "Font pixel size - calculated if None"),
         ("foreground", "aaaaaa", "Active group font colour"),
         ("background", "000000", "Widget background"),
-        ("border", "215578", "Border colour"),
+
+        ("this_screen_border", "215578", "Border colour for group on this screen."),
+        ("other_screen_border", "404040", "Border colour for group on other screen."),
+
         ("padding", 5, "Padding inside the box")
     )
     def __init__(self, **config):
@@ -94,11 +97,29 @@ class GroupBox(_GroupBase):
     def calculate_width(self):
         return self.box_width() * len(self.qtile.groups)
 
+    def group_has_urgent(self, group):
+        return len([w for w in group.windows if w.urgent]) > 0
+
     def draw(self):
         bw = self.box_width()
         self.drawer.clear(self.background)
         for i, g in enumerate(self.qtile.groups):
-            self.drawbox(self.margin_x + (bw*i), g.name, bw - self.margin_x*2 - self.padding*2)
+            if g.screen:
+                if self.bar.screen.group.name == g.name:
+                    border = self.this_screen_border
+                else:
+                    border = self.other_screen_border
+            elif self.group_has_urgent(g):
+                border = self.urgent_border
+            else:
+                border = self.background
+
+            self.drawbox(
+                self.margin_x + (bw*i),
+                g.name,
+                border,
+                bw - self.margin_x*2 - self.padding*2
+            )
         self.drawer.draw()
 
 
