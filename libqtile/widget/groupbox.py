@@ -85,10 +85,8 @@ class GroupBox(_GroupBase):
         ("fontsize", None, "Font pixel size - calculated if None"),
         ("foreground", "aaaaaa", "Active group font colour"),
         ("background", "000000", "Widget background"),
-
         ("this_screen_border", "215578", "Border colour for group on this screen."),
         ("other_screen_border", "404040", "Border colour for group on other screen."),
-
         ("padding", 5, "Padding inside the box")
     )
     def __init__(self, **config):
