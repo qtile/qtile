@@ -276,7 +276,7 @@ class TextLayout(object):
     def __init__(self, drawer, text, colour, font_family, font_size):
         self.drawer, self.colour = drawer, colour
         layout = drawer.ctx.create_layout()
-        layout.set_alignment(pango.ALIGN_LEFT)
+        layout.set_alignment(pango.ALIGN_CENTER)
         desc = pango.FontDescription()
         desc.set_family(font_family)
         desc.set_absolute_size(font_size * pango.SCALE)
@@ -302,9 +302,8 @@ class TextLayout(object):
 
     @width.setter
     def width(self, value):
-        print self.width,
         self._width = value
-        self.layout.set_width(value)
+        self.layout.set_width(value * pango.SCALE)
 
     @property
     def height(self):
@@ -337,8 +336,8 @@ class TextLayout(object):
         self.layout.set_font_description(d)
 
     def draw(self, x, y):
-        self.drawer.ctx.move_to(x, y)
         self.drawer.ctx.set_source_rgb(*utils.rgb(self.colour))
+        self.drawer.ctx.move_to(x, y)
         self.drawer.ctx.show_layout(self.layout)
 
     def framed(self, border_width, border_color, pad_x, pad_y):
