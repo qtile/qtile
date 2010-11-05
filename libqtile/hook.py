@@ -144,6 +144,21 @@ class Subscribe:
 
 subscribe = Subscribe()
 
+class Unsubscribe(Subscribe):
+    """
+        This class mirrors subscribe, except the _subscribe member has been
+        overridden to removed calls from hooks.
+    """
+    def _subscribe(self, event, func):
+        lst = subscriptions.setdefault(event, [])
+        try:
+            lst.remove(func)
+        except ValueError:
+            raise manager.QtileError("Tried to unsubscribe a hook that was not currently subscribed")
+
+
+unsubscribe = Unsubscribe()
+
 def fire(event, *args, **kwargs):
     if event not in subscribe.hooks:
         raise manager.QtileError("Unknown event: %s"%event)
