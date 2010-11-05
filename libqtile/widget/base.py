@@ -113,15 +113,29 @@ class _Drawer:
     def textlayout(self, text, colour, font_family, font_size):
         """
             Get a text layout.
+
+            NB: the return value of this function should be saved, and reused
+            to avoid a huge memory leak in the pygtk bindings. Once this has
+            been repaired, we can make the semantics easier.
+
+            https://bugzilla.gnome.org/show_bug.cgi?id=625287
         """
         return TextLayout(self, text, colour, font_family, font_size)
 
+    _sizelayout = None
     def max_layout_size(self, texts, font_family, font_size):
-        ll = [self.textlayout(i, "ffffff", font_family, font_size) for i in texts]
-        width = max(i.width for i in ll)
-        height = max(i.height for i in ll)
-        return width, height
-
+        # FIXME: This is incredibly clumsy, to avoid a memory leak in pygtk. See         
+        # comment on textlayout() for details.
+        if not self._sizelayout:
+            self._sizelayout = self.textlayout("", "ffffff", font_family, font_size)
+        widths, heights = [], []
+        self._sizelayout.font_family = font_family
+        self._sizelayout.font_size = font_size
+        for i in texts:
+            self._sizelayout.text = i
+            widths.append(self._sizelayout.width)
+            heights.append(self._sizelayout.height)
+        return max(widths), max(heights)
 
     # Old text layout functions, to be deprectated.
     def set_font(self, fontface, size, antialias=True):

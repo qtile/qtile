@@ -27,6 +27,7 @@ class _GroupBase(base._Widget):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
+        self.layout = self.drawer.textlayout("", "ffffff", self.font, self.fontsize)
         self.setup_hooks()
 
     def setup_hooks(self):
@@ -39,10 +40,13 @@ class _GroupBase(base._Widget):
         hook.subscribe.group_window_add(hook_response)
 
     def drawbox(self, offset, text, bordercolor, textcolor, width=None):
-        layout = self.drawer.textlayout(text, textcolor, self.font, self.fontsize)
+        self.layout.text = text
+        self.layout.font_family = self.font
+        self.layout.font_size = self.fontsize
+        self.layout.colour = textcolor
         if width is not None:
-            layout.width = width
-        framed = layout.framed(self.borderwidth, bordercolor, self.padding, self.padding)
+            self.layout.width = width
+        framed = self.layout.framed(self.borderwidth, bordercolor, self.padding, self.padding)
         framed.draw(offset, self.margin_y)
 
 
