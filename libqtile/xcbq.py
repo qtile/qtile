@@ -22,6 +22,17 @@ ModMasks = {
 }
 ModMapOrder = ["shift", "lock", "control", "mod1", "mod2", "mod3", "mod4", "mod5"]
 
+ButtonCodes = {
+    "Button1": 1,
+    "Button2": 2,
+    "Button3": 3,
+    "Button4": 4,
+    "Button5": 5,
+}
+AllButtonsMask = 0b11111 << 8
+ButtonMotionMask = 1 << 13
+ButtonReleaseMask = 1 << 3
+
 NormalHintsFlags = {
     "USPosition":  1,          # User-specified x, y
     "USSize":      2,          # User-specified width, height
@@ -446,8 +457,8 @@ class Window:
         length = len(buf)/(format/8)
 
         # This is a real balls-up interface-wise. As I understand it, each type
-        # can have a different associated size. 
-        #  - value is a string of bytes. 
+        # can have a different associated size.
+        #  - value is a string of bytes.
         #  - length is the length of the data in terms of the specified format.
         self.conn.conn.core.ChangeProperty(
             xcb.xproto.PropMode.Replace,
@@ -460,15 +471,15 @@ class Window:
         )
 
     def get_property(self, prop, type=None):
-        if type is None: 
+        if type is None:
             if not prop in PropertyMap:
                 raise ValueError, "Must specify type for unknown property."
             else:
                 type, _ = PropertyMap[prop]
-        r = self.conn.conn.core.GetProperty(    
-            False, self.wid, 
-            self.conn.atoms[prop] if isinstance(prop, basestring) else prop, 
-            self.conn.atoms[type] if isinstance(type, basestring) else type, 
+        r = self.conn.conn.core.GetProperty(
+            False, self.wid,
+            self.conn.atoms[prop] if isinstance(prop, basestring) else prop,
+            self.conn.atoms[type] if isinstance(type, basestring) else type,
             0, (2**32)-1
         ).reply()
         if not r.value_len:
@@ -513,6 +524,46 @@ class Window:
             key,
             pointer_mode,
             keyboard_mode
+        )
+
+    def ungrab_button(self, button, modifiers):
+        """
+            Passing None means any key, or any modifier.
+        """
+        if button is None:
+            button = xcb.xproto.Atom.Any
+        if modifiers is None:
+            modifiers = xcb.xproto.ModMask.Any
+        self.conn.conn.core.UngrabButton(button, self.wid, modifiers)
+
+    def grab_button(self, button, modifiers, owner_events, event_mask, pointer_mode, keyboard_mode):
+        self.conn.conn.core.GrabButton(
+            owner_events,
+            self.wid,
+            event_mask,
+            pointer_mode,
+            keyboard_mode,
+            xcb.xproto.Atom._None,
+            xcb.xproto.Atom._None,
+            button,
+            modifiers,
+        )
+
+    def grab_pointer(self, owner_events, event_mask, pointer_mode, keyboard_mode, cursor=None):
+        self.conn.conn.core.GrabPointer(
+            owner_events,
+            self.wid,
+            event_mask,
+            pointer_mode,
+            keyboard_mode,
+            xcb.xproto.Atom._None,
+            cursor or xcb.xproto.Atom._None,
+            xcb.xproto.Atom._None,
+        )
+
+    def ungrab_pointer(self):
+        self.conn.conn.core.UngrabPointer(
+            xcb.xproto.Atom._None,
         )
 
     def query_tree(self):
@@ -610,11 +661,11 @@ class Connection:
             first_sym_to_code[s[0]] = k
 
         self.first_sym_to_code = first_sym_to_code
-    
+
     def refresh_modmap(self):
         q = self.conn.core.GetModifierMapping().reply()
         modmap = {}
-        for i, k in enumerate(q.keycodes): 
+        for i, k in enumerate(q.keycodes):
             l = modmap.setdefault(ModMapOrder[i/q.keycodes_per_modifier], [])
             l.append(k)
         self.modmap = modmap
@@ -675,4 +726,3 @@ class Connection:
 
     def extensions(self):
         return set([toStr(i).lower() for i in self.conn.core.ListExtensions().reply().names])
-
