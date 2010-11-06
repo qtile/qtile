@@ -5,6 +5,7 @@ import utils
 
 class GBConfig:
     keys = []
+    mouse = []
     groups = [
         libqtile.manager.Group("a"),
         libqtile.manager.Group("bb"),
@@ -52,7 +53,7 @@ class uPromptCompletion(libpry.AutoTree):
         assert c.complete("a") == "a"
 
         c = libqtile.widget.prompt.CommandCompleter()
-        r = c.complete("l") 
+        r = c.complete("l")
         assert c.actual().endswith(r)
 
         c.reset()
@@ -107,7 +108,7 @@ class uWidgets(utils.QtileTests):
         self.c.widget["text"].update("".join(chr(i) for i in range(255)))
         self.c.widget["text"].update("V\xE2r\xE2na\xE7\xEE")
         self.c.widget["text"].update(u"\ua000")
-        
+
     def test_groupbox_click(self):
         self.c.group["ccc"].toscreen()
         assert self.c.groups()["a"]["screen"] == None
@@ -119,6 +120,7 @@ class uWidgets(utils.QtileTests):
 class GeomConf:
     main = None
     keys = []
+    mouse = []
     groups = [
         libqtile.manager.Group("a"),
         libqtile.manager.Group("b"),
@@ -199,7 +201,7 @@ class uBarGeometry(utils.QtileTests):
         b._resize(100, l)
         assert wd(l) == [90, 10]
         assert off(l) == [0, 90]
-        
+
         l = [
             DWidget(10, libqtile.bar.CALCULATED),
             DWidget(None, libqtile.bar.STRETCH),

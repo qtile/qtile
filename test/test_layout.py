@@ -15,6 +15,7 @@ class MaxConfig:
         layout.Max()
     ]
     keys = []
+    mouse = []
     screens = []
 
 
@@ -57,6 +58,7 @@ class StackConfig:
         layout.Stack(stacks=1),
     ]
     keys = []
+    mouse = []
     screens = []
 
 
@@ -129,7 +131,7 @@ class uStack(utils.QtileTests):
         self.c.layout.down()
         self.c.layout.down()
         assert self._stacks() == [["two", "one", "three"]]
-        
+
     def test_nextprev(self):
         self.c.layout.add()
         one = self.testWindow("one")
@@ -230,6 +232,7 @@ class SelectorConfig:
         layout.Stack()
     ]
     keys = []
+    mouse = []
     screens = []
 
 
@@ -252,6 +255,7 @@ class TileConfig:
         layout.Tile(masterWindows=2)
         ]
     keys = []
+    mouse = []
     screens = []
 
 class uTile(utils.QtileTests):

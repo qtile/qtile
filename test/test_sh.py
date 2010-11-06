@@ -4,6 +4,7 @@ import utils
 
 class ShConfig(libqtile.confreader.Config):
     keys = []
+    mouse = []
     groups = [
         libqtile.manager.Group("a"),
         libqtile.manager.Group("b"),
@@ -24,7 +25,7 @@ class uQSh(utils.QtileTests):
 
     def test_columnize(self):
         assert self.sh.columnize(["one", "two"]) == "one  two"
-        
+
         self.sh.termwidth = 1
         assert self.sh.columnize(["one", "two"]) == "one\ntwo"
 
@@ -43,7 +44,7 @@ class uQSh(utils.QtileTests):
 
         n = self.sh._findNode(n, "0")
         assert n.path == "layout[0]"
-        
+
         n = self.sh._findNode(n, "..")
         assert n.path == "layout"
 
@@ -63,7 +64,7 @@ class uQSh(utils.QtileTests):
 
     def test_call(self):
         assert self.sh._call("status", []) == "OK"
-        
+
         v = self.sh._call("nonexistent", "")
         assert "No such command" in v
 
@@ -86,7 +87,7 @@ class uQSh(utils.QtileTests):
         assert self.sh.do_help("log")
         assert self.sh.do_help("nonexistent").startswith("No such command")
         assert self.sh.do_help("help")
-        
+
 
 tests = [
     utils.Xephyr(xinerama=True), [
