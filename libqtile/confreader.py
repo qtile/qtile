@@ -20,6 +20,7 @@
 
 import os.path
 import sys
+import utils
 
 class ConfigError(Exception): pass
 
@@ -39,8 +40,12 @@ class File(Config):
             if config_directory == '$XDG_CONFIG_HOME': #if variable wasn't set
                 config_directory = os.path.expanduser("~/.config")
             fname = os.path.join(config_directory, "qtile", "config.py")
+        elif fname == "default":
+            fname = utils.data.path("resources/default-config.py")
+
         self.fname = fname
         globs = {}
+
         if not os.path.isfile(fname):
             raise ConfigError("Config file does not exist: %s"%fname)
         try:
@@ -48,6 +53,8 @@ class File(Config):
             execfile(self.fname, {}, globs)
         except Exception, v:
             raise ConfigError(str(v))
+
+
         self.keys = globs.get("keys")
         self.groups = globs.get("groups")
         self.layouts = globs.get("layouts")

@@ -1,2 +1,2 @@
 #!/bin/sh
-Xephyr +extension RANDR -screen 800x600 :1 -ac & (sleep 1; env DISPLAY=:1 ./qtile -d & env DISPLAY=:1 xterm)
+Xephyr +extension RANDR -screen 800x600 :1 -ac & (sleep 1; env DISPLAY=:1 ./qtile -d -c default& env DISPLAY=:1 xterm)

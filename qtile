@@ -31,7 +31,7 @@ def main():
                         action="store", type="string",
                         default=None,
                         dest="configfile",
-                        help='Use specified configuration file.'
+                        help='Use specified configuration file, "default" will load the system default config.'
                     )
     parser.add_option(
                         "-d", "--debug",
