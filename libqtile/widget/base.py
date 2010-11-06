@@ -15,7 +15,7 @@ def scrub_to_utf8(text):
         except UnicodeDecodeError:
             # We don't know the provenance of this string - so we scrub it to ASCII.
             return "".join(i for i in text if 31 < ord(i) <  127)
-        
+
 
 LEFT = object()
 CENTER = object()
@@ -85,6 +85,12 @@ class _Drawer:
         self.ctx.rectangle(x, y, width, height)
         self.ctx.stroke()
 
+    def fillrect(self, x, y, w, h, colour):
+        self.ctx.set_source_rgb(*utils.rgb(colour))
+        self.ctx.rectangle(x, y, w, h)
+        self.ctx.fill()
+        self.ctx.stroke()
+
     def draw(self):
         self.qtile.conn.conn.core.CopyArea(
             self.pixmap,
@@ -109,6 +115,7 @@ class _Drawer:
         self.ctx.rectangle(0, 0, self.widget.bar.width, self.widget.bar.height)
         self.ctx.fill()
         self.ctx.stroke()
+
 
     def textlayout(self, text, colour, font_family, font_size):
         """
@@ -216,7 +223,7 @@ class _Widget(command.CommandObject):
         """
         self.bar.resize()
         self.bar.draw()
-    
+
     def clear(self):
         self.drawer.rectangle(
             self.offset, 0, self.width, self.bar.size,
@@ -373,7 +380,7 @@ UNSPECIFIED = bar.Obj("UNSPECIFIED")
 class _TextBox(_Widget):
     """
         Base class for widgets that are just boxes containing text.
-    
+
         If you derive from this class, you must add the following defaults:
 
             font
