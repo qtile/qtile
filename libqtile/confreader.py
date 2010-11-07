@@ -57,7 +57,7 @@ class File(Config):
 
 
         self.keys = globs.get("keys")
-        self.mouse = globs.get("mouse")
+        self.mouse = globs.get("mouse", [])
         self.groups = globs.get("groups")
         self.layouts = globs.get("layouts")
         self.screens = globs.get("screens")
