@@ -75,7 +75,7 @@ class AGroupBox(_GroupBase):
         self.drawer.clear(self.background)
         e = (i for i in self.qtile.groups if i.name == self.bar.screen.group.name ).next()
         self.drawbox(self.margin_x, e.name, self.border, self.foreground)
-        self.drawer.draw()
+        self.drawer.draw(self.offset, self.width)
 
 
 class GroupBox(_GroupBase):
@@ -136,6 +136,6 @@ class GroupBox(_GroupBase):
                 text,
                 bw - self.margin_x*2 - self.padding*2
             )
-        self.drawer.draw()
+        self.drawer.draw(self.offset, self.width)
 
 

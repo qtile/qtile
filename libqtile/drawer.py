@@ -97,8 +97,6 @@ class TextFrame:
         )
 
 
-
-
 class Drawer:
     """
         A helper class for drawing and text layout.
@@ -109,21 +107,23 @@ class Drawer:
         to the window, we copy the appropriate portion of the pixmap onto the
         window.
     """
-    def __init__(self, qtile, widget):
-        self.qtile, self.widget = qtile, widget
+    def __init__(self, qtile, wid, width, height):
+        self.qtile = qtile
+        self.wid, self.width, self.height = wid, width, height
+
         self.pixmap = self.qtile.conn.conn.generate_id()
         self.gc = self.qtile.conn.conn.generate_id()
 
         self.qtile.conn.conn.core.CreatePixmap(
             self.qtile.conn.default_screen.root_depth,
             self.pixmap,
-            widget.win.wid,
-            widget.bar.width,
-            widget.bar.height
+            self.wid,
+            self.width,
+            self.height
         )
         self.qtile.conn.conn.core.CreateGC(
             self.gc,
-            widget.win.wid,
+            self.wid,
             xcb.xproto.GC.Foreground | xcb.xproto.GC.Background,
             [
                 self.qtile.conn.default_screen.black_pixel,
@@ -134,8 +134,8 @@ class Drawer:
                             qtile.conn.conn,
                             self.pixmap,
                             self.find_root_visual(),
-                            widget.bar.width,
-                            widget.bar.height
+                            self.width,
+                            self.height,
                         )
         self.ctx = self.new_ctx()
         self.clear((0, 0, 1))
@@ -171,14 +171,18 @@ class Drawer:
         self.ctx.fill()
         self.ctx.stroke()
 
-    def draw(self):
+    def draw(self, offset, width):
+        """
+            offset: the X offset to start drawing at.
+            width: the portion of the canvas to draw at the starting point.
+        """
         self.qtile.conn.conn.core.CopyArea(
             self.pixmap,
-            self.widget.win.wid,
+            self.wid,
             self.gc,
             0, 0, # srcx, srcy
-            self.widget.offset, 0, # dstx, dsty
-            self.widget.width, self.widget.bar.height
+            offset, 0, # dstx, dsty
+            width, self.height
         )
 
     def find_root_visual(self):
@@ -192,7 +196,7 @@ class Drawer:
 
     def clear(self, colour):
         self.ctx.set_source_rgb(*utils.rgb(colour))
-        self.ctx.rectangle(0, 0, self.widget.bar.width, self.widget.bar.height)
+        self.ctx.rectangle(0, 0, self.width, self.height)
         self.ctx.fill()
         self.ctx.stroke()
 

@@ -24,5 +24,5 @@ class Sep(base._Widget):
         self.drawer.ctx.line_to(float(self.width)/2, self.bar.height-margin_top)
         self.drawer.ctx.set_line_width(self.linewidth)
         self.drawer.ctx.stroke()
-        self.drawer.draw()
+        self.drawer.draw(self.offset, self.width)
 

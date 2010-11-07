@@ -47,7 +47,12 @@ class _Widget(command.CommandObject):
 
     def _configure(self, qtile, bar):
         self.qtile, self.bar = qtile, bar
-        self.drawer = drawer.Drawer(qtile, self)
+        self.drawer = drawer.Drawer(
+                            qtile,
+                            self.win.wid,
+                            self.bar.width,
+                            self.bar.height
+                      )
 
     def resize(self):
         """
@@ -193,7 +198,7 @@ class _TextBox(_Widget):
             self.actual_padding or 0,
             int(self.bar.height/2.0 - self.layout.height/2.0)
         )
-        self.drawer.draw()
+        self.drawer.draw(self.offset, self.width)
 
     def cmd_set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED):
         """

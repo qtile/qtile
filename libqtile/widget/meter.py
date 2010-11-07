@@ -50,7 +50,7 @@ class _Graph(base._Widget):
             ch = int(round(h*val*k))
             self.drawer.fillrect(x, y+h-ch, w, ch, self.foreground)
             x += w
-        self.drawer.draw()
+        self.drawer.draw(self.offset, self.width)
 
     def push(self, value):
         self.values.append(value)
