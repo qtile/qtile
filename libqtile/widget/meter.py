@@ -7,7 +7,7 @@ __all__ = [
     'CPUGraph',
     'MemoryGraph',
     'SwapGraph',
-    ]
+]
 
 class _Graph(base._Widget):
     ticks = 0

@@ -151,3 +151,18 @@ class Data:
         return fullpath
 
 data = Data(__name__)
+
+
+def scrub_to_utf8(text):
+    if not text:
+        return ""
+    elif isinstance(text, unicode):
+        return text
+    else:
+        try:
+            return text.decode("utf-8")
+        except UnicodeDecodeError:
+            # We don't know the provenance of this string - so we scrub it to ASCII.
+            return "".join(i for i in text if 31 < ord(i) <  127)
+
+
