@@ -20,12 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os, os.path
+import os, os.path, sys
 from libqtile import confreader, manager
 
 def main():
     from optparse import OptionParser, OptionGroup
-    parser = OptionParser(version="%prog 0.2")
+    parser = OptionParser(version="%prog 0.4")
     parser.add_option(
                         "-c", "--config",
                         action="store", type="string",
@@ -50,7 +50,9 @@ def main():
     try:
         c = confreader.File(options.configfile)
     except confreader.ConfigError, v:
-        parser.error(v.message)
+        print >> sys.stderr, "Config error: %s" % v.message
+        print >> sys.stderr, "Falling back to default config"
+        c = confreader.File("default")
     q = manager.Qtile(c, fname=options.socket)
     q.debug = options.debug
     q.loop()

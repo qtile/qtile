@@ -1233,7 +1233,14 @@ class Qtile(command.CommandObject):
         """
             Executes the specified command, replacing the current process.
         """
+        # run atexit hooks here if you use it
         os.execv(cmd, args)
+
+    def cmd_restart(self):
+        """
+            Restart qtile using the execute command.
+        """
+        self.cmd_execute(sys.executable, [sys.executable] + sys.argv)
 
     def cmd_spawn(self, cmd):
         """
