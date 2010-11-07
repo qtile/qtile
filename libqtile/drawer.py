@@ -266,5 +266,3 @@ class Drawer:
             maxwidth = max(maxwidth, x)
             maxheight = max(maxheight, y)
         return maxwidth, maxheight
-
-

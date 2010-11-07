@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import manager, window, confreader, command, hook
+import manager, window, confreader, command, hook, drawer
 
 
 class Gap(command.CommandObject):
@@ -148,6 +148,15 @@ class Bar(Gap):
                         self.x, self.y, self.width, self.height,
                         self.opacity
                      )
+
+        self.drawer = drawer.Drawer(
+                            self.qtile,
+                            self.window.window.wid,
+                            self.width,
+                            self.height
+                      )
+        self.drawer.clear(self.background)
+
         self.window.handle_Expose = self.handle_Expose
         self.window.handle_ButtonPress = self.handle_ButtonPress
         qtile.windowMap[self.window.window.wid] = self.window
@@ -157,7 +166,7 @@ class Bar(Gap):
             qtile.registerWidget(i)
             i._configure(qtile, self)
 
-        # FIXME: These should be targetted better.
+        # FIXME: These should be targeted better.
         hook.subscribe.setgroup(self.draw)
         hook.subscribe.delgroup(self.draw)
         hook.subscribe.addgroup(self.draw)
@@ -208,6 +217,10 @@ class Bar(Gap):
         self._resize(self.width, self.widgets)
         for i in self.widgets:
             i.draw()
+        if self.widgets:
+            end = i.offset + i.width
+            if end < self.width:
+                self.drawer.draw(end, self.width-end)
 
     def info(self):
         return dict(
