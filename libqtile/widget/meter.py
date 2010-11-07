@@ -1,4 +1,4 @@
-import collections
+import collections, time
 
 from . import base
 from .. import manager, bar, hook, utils
@@ -21,12 +21,13 @@ class _Graph(base._Widget):
         ("margin_y", 3, "Margin Y"),
         ("bars", 32, "Count of graph bars"),
         ("bar_width", 1, "Width of single bar"),
-        ("frequency", 100, "Amount of ticks for update"),
-        )
+        ("frequency", 0.5, "Update frequency in seconds"),
+    )
 
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
         self.values = collections.deque([0]*self.bars)
+        self.lasttick = 0
         self.maxvalue = 0
 
     def calculate_width(self):
@@ -63,9 +64,11 @@ class _Graph(base._Widget):
         hook.subscribe.tick(self.update)
 
     def update(self):
-        self.ticks += 1
-        if not (self.ticks % self.frequency):
+        t = time.time()
+        if self.lasttick + self.frequency < t:
+            self.lasttick = t
             self.update_graph()
+
 
 class CPUGraph(_Graph):
     fixed_upper_bound = True
