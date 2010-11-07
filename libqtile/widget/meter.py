@@ -88,9 +88,19 @@ class CPUGraph(_Graph):
         self.push(busy*100.0/(busy+nval[3]-oval[3]))
         self.oldvalues = nval
 
+
+def get_meminfo():
+    with open('/proc/meminfo') as file:
+        val = {}
+        for line in file:
+            key, tail = line.split(':')
+            uv = tail.split()
+            val[key] = int(uv[0])
+    return val
+
+
 class MemoryGraph(_Graph):
     fixed_upper_bound = True
-
     def __init__(self, **config):
         _Graph.__init__(self, **config)
         val = self._getvalues()
@@ -99,28 +109,16 @@ class MemoryGraph(_Graph):
             self.values[i] = val['MemTotal'] - val['MemFree'] - val['Inactive']
 
     def _getvalues(self):
-        with open('/proc/meminfo') as file:
-            val = {}
-            for line in file:
-                key, tail = line.split(':')
-                value, unit = tail.split()
-                val[key] = int(value)
-        return val
+        return get_meminfo()
 
     def update_graph(self):
         val = self._getvalues()
         self.push(val['MemTotal'] - val['MemFree'] - val['Inactive'])
 
-class SwapGraph(_Graph):
 
+class SwapGraph(_Graph):
     def _getvalues(self):
-        with open('/proc/meminfo') as file:
-            val = {}
-            for line in file:
-                key, tail = line.split(':')
-                value, unit = tail.split()
-                val[key] = int(value)
-        return val
+        return get_meminfo()
 
     def update_graph(self):
         val = self._getvalues()
