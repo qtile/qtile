@@ -36,6 +36,8 @@ keys = [
     Key(["mod1"], "Return", lazy.spawn("xterm")),
     Key(["mod1"], "Tab",    lazy.nextlayout()),
     Key(["mod1"], "w",      lazy.window.kill()),
+
+    Key(["mod1", "control"], "r", lazy.restart()),
 ]
 
 groups = [
