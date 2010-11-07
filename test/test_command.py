@@ -17,6 +17,7 @@ class CallConfig(libqtile.confreader.Config):
             libqtile.command._Call([("layout", None)], "up"),
         ),
     ]
+    mouse = []
     groups = [
         libqtile.manager.Group("a"),
         libqtile.manager.Group("b"),
@@ -112,6 +113,7 @@ class u_CommandTree(libpry.AutoTree):
 
 class ServerConfig(libqtile.confreader.Config):
     keys = []
+    mouse = []
     groups = [
         libqtile.manager.Group("a"),
         libqtile.manager.Group("b"),
@@ -187,7 +189,7 @@ class u_Server(utils.QtileTests):
         libpry.raises("no object", self.c.widget.info)
 
         assert self.c.bar["bottom"].info()["position"] == "bottom"
-        
+
         win = self.testWindow("one")
         wid = self.c.window.info()["id"]
         assert self.c.window[wid].info()["id"] == wid
@@ -301,7 +303,7 @@ class u_Server(utils.QtileTests):
         assert w.bar.info()["position"] == "bottom"
         libpry.raises("no object", w.bar["bottom"].info)
 
-    
+
 tests = [
     uCommandObject(),
     utils.Xephyr(xinerama=True), [

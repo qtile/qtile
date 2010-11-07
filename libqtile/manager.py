@@ -1,15 +1,15 @@
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -69,9 +69,53 @@ class Key:
             self.modmask = utils.translateMasks(self.modifiers)
         except KeyError, v:
             raise QtileError(v)
-    
+
     def __repr__(self):
         return "Key(%s, %s)"%(self.modifiers, self.key)
+
+class Drag(object):
+    """
+        Defines binding of a mouse to some dragging action
+
+        On each motion event command is executed with two extra parameters added
+        x and y offset from previous move
+    """
+    def __init__(self, modifiers, button, *commands, **kw):
+        self.start = kw.pop('start', None)
+        if kw:
+            raise TypeError("Unexpected arguments: %s" % ', '.join(kw))
+        self.modifiers = modifiers
+        self.button = button
+        self.commands = commands
+        if button not in xcbq.ButtonCodes:
+            raise QtileError("Unknown button: %s" % button)
+        self.button_code = xcbq.ButtonCodes[self.button]
+        try:
+            self.modmask = utils.translateMasks(self.modifiers)
+        except KeyError, v:
+            raise QtileError(v)
+
+    def __repr__(self):
+        return "Drag(%s, %s)"%(self.modifiers, self.button)
+
+class Click(object):
+    """
+        Defines binding of a mouse click
+    """
+    def __init__(self, modifiers, button, *commands):
+        self.modifiers = modifiers
+        self.button = button
+        self.commands = commands
+        if button not in xcbq.ButtonCodes:
+            raise QtileError("Unknown button: %s" % button)
+        self.button_code = xcbq.ButtonCodes[self.button]
+        try:
+            self.modmask = utils.translateMasks(self.modifiers)
+        except KeyError, v:
+            raise QtileError(v)
+
+    def __repr__(self):
+        return "Click(%s, %s)"%(self.modifiers, self.button)
 
 
 class Screen(command.CommandObject):
@@ -82,7 +126,7 @@ class Screen(command.CommandObject):
     def __init__(self, top=None, bottom=None, left=None, right=None):
         """
             - top, bottom, left, right: Instances of bar objects, or None.
-            
+
             Note that bar.Bar objects can only be placed at the top or the
             bottom of the screen (bar.Gap objects can be placed anywhere).
         """
@@ -356,13 +400,13 @@ class Group(command.CommandObject):
 
             Pull group to the current screen:
 
-                
+
                 toscreen()
 
 
             Pull group to screen 0:
 
-        
+
                 toscreen(0)
 
         """
@@ -379,10 +423,10 @@ class Group(command.CommandObject):
 
     def prevGroup(self):
         return self._dirGroup(-1)
-    
+
     def nextGroup(self):
         return self._dirGroup(1)
-    
+
     # FIXME cmd_nextgroup and cmd_prevgroup should be on the Screen object.
     def cmd_nextgroup(self):
         """
@@ -444,7 +488,7 @@ class Qtile(command.CommandObject):
     debug = False
     _exit = False
     _testing = False
-    _logLength = 100 
+    _logLength = 100
     def __init__(self, config, displayName=None, fname=None, testing=False):
         self._testing = testing
         if not displayName:
@@ -519,7 +563,7 @@ class Qtile(command.CommandObject):
                 s = Screen()
             self.currentScreen = s
             s._configure(
-                self, 
+                self,
                 0, 0, 0,
                 self.conn.default_screen.width_in_pixels,
                 self.conn.default_screen.height_in_pixels,
@@ -556,7 +600,12 @@ class Qtile(command.CommandObject):
         for i in self.config.keys:
             self.keyMap[(i.keysym, i.modmask&self.validMask)] = i
 
+        self.mouseMap = {}
+        for i in self.config.mouse:
+            self.mouseMap[(i.button_code, i.modmask&self.validMask)] = i
+
         self.grabKeys()
+        self.grabMouse()
         self.scan()
 
     def addGroup(self, name):
@@ -658,6 +707,38 @@ class Qtile(command.CommandObject):
                 hook.fire("client_managed", c)
             return c
 
+    def grabMouse(self):
+        self.root.ungrab_button(None, None)
+        for i in self.config.mouse:
+            eventmask = EventMask.ButtonPress
+            if isinstance(i, Drag):
+                eventmask |= EventMask.ButtonRelease
+            self.root.grab_button(
+                i.button_code,
+                i.modmask,
+                True,
+                eventmask,
+                xcb.xproto.GrabMode.Async,
+                xcb.xproto.GrabMode.Async,
+                )
+            if self.numlockMask:
+                self.root.grab_button(
+                    i.button_code,
+                    i.modmask | self.numlockMask,
+                    True,
+                    eventmask,
+                    xcb.xproto.GrabMode.Async,
+                    xcb.xproto.GrabMode.Async,
+                    )
+                self.root.grab_button(
+                    i.button_code,
+                    i.modmask | self.numlockMask | xcbq.ModMasks["lock"],
+                    True,
+                    eventmask,
+                    xcb.xproto.GrabMode.Async,
+                    xcb.xproto.GrabMode.Async,
+                    )
+
     def grabKeys(self):
         self.root.ungrab_key(None, None)
         for i in self.keyMap.values():
@@ -697,6 +778,7 @@ class Qtile(command.CommandObject):
         eventEvents = [
             "EnterNotify",
             "ButtonPress",
+            "ButtonRelease",
             "KeyPress",
         ]
         c = None
@@ -709,7 +791,7 @@ class Qtile(command.CommandObject):
         if hasattr(self, handler):
             chain.append(getattr(self, handler))
         if not chain:
-            self.log.add("Unknown event: %s"%ename)
+            self.log.add("Unknown event: %r"%ename)
         return chain
 
     def xpoll(self):
@@ -791,6 +873,71 @@ class Qtile(command.CommandObject):
         else:
             return
 
+    def handle_ButtonPress(self, e):
+        button_code = e.detail
+        state = e.state
+        if self.numlockMask:
+            state = e.state | self.numlockMask
+        m = self.mouseMap.get((button_code, state&self.validMask))
+        if not m:
+            print >> sys.stderr, "Ignoring unknown button: %s"%button_code
+            return
+        if isinstance(m, Click):
+            for i in m.commands:
+                if i.check(self):
+                    status, val = self.server.call((i.selectors, i.name, i.args, i.kwargs))
+                    if status in (command.ERROR, command.EXCEPTION):
+                        s = "Mouse command error %s: %s"%(i.name, val)
+                        self.log.add(s)
+                        print >> sys.stderr, s
+        elif isinstance(m, Drag):
+            x = e.event_x
+            y = e.event_y
+            if m.start:
+                i = m.start
+                status, val = self.server.call((i.selectors, i.name, i.args, i.kwargs))
+                if status in (command.ERROR, command.EXCEPTION):
+                    s = "Mouse command error %s: %s"%(i.name, val)
+                    self.log.add(s)
+                    print >> sys.stderr, s
+                    return
+            else:
+                val = 0, 0
+            self._drag = x, y, val[0], val[1], m.commands
+            self.root.grab_pointer(
+                True,
+                xcbq.ButtonMotionMask | xcbq.AllButtonsMask | xcbq.ButtonReleaseMask,
+                xcb.xproto.GrabMode.Async,
+                xcb.xproto.GrabMode.Async,
+                )
+
+    def handle_ButtonRelease(self, e):
+        button_code = e.detail
+        state = e.state & ~xcbq.AllButtonsMask
+        if self.numlockMask:
+            state = state | self.numlockMask
+        m = self.mouseMap.get((button_code, state&self.validMask))
+        if not m:
+            print >> sys.stderr, "Ignoring unknown button release: %s"%button_code
+            return
+        if isinstance(m, Drag):
+            del self._drag
+            self.root.ungrab_pointer()
+
+    def handle_MotionNotify(self, e):
+        ox, oy, rx, ry, cmd = self._drag
+        dx = e.event_x - ox
+        dy = e.event_y - oy
+        if dx or dy:
+            for i in cmd:
+                if i.check(self):
+                    status, val = self.server.call((i.selectors, i.name, i.args + (rx+dx, ry+dy), i.kwargs))
+                    if status in (command.ERROR, command.EXCEPTION):
+                        s = "Mouse command error %s: %s"%(i.name, val)
+                        self.log.add(s)
+                        print >> sys.stderr, s
+
+
     def handle_ConfigureNotify(self, e):
         """
             Handle xrandr events.
@@ -798,7 +945,7 @@ class Qtile(command.CommandObject):
         screen = self.currentScreen
         if e.window == self.root.wid and e.width != screen.width and e.height != screen.height:
             screen.resize(0, 0, e.width, e.height)
-            
+
     def handle_ConfigureRequest(self, e):
         # It's not managed, or not mapped, so we just obey it.
         cw = xcb.xproto.ConfigWindow
@@ -956,7 +1103,7 @@ class Qtile(command.CommandObject):
             Return a dictionary containing information for all groups.
 
             Example:
-                
+
                 groups()
         """
         d = {}
@@ -975,7 +1122,7 @@ class Qtile(command.CommandObject):
             Return the last n log records, where n is all by default.
 
             Examples:
-                
+
                 log(5)
 
                 log()
@@ -1017,13 +1164,13 @@ class Qtile(command.CommandObject):
 
     def cmd_report(self, msg="None", path="~/qtile_crashreport"):
         """
-            Write a qtile crash report. 
-            
+            Write a qtile crash report.
+
             :msg Message that should head the report
             :path Path of the file to write to
 
             Examples:
-                
+
                 report()
 
                 report(msg="My messasge")
@@ -1056,11 +1203,11 @@ class Qtile(command.CommandObject):
 
     def cmd_simulate_keypress(self, modifiers, key):
         """
-            Simulates a keypress on the focused window. 
-            
+            Simulates a keypress on the focused window.
+
             :modifiers A list of modifier specification strings. Modifiers can
             be one of "shift", "lock", "control" and "mod1" - "mod5".
-            :key Key specification.  
+            :key Key specification.
 
             Examples:
 
@@ -1133,7 +1280,7 @@ class Qtile(command.CommandObject):
         """
             Move to the previous screen
         """
-        return self.toScreen((self.screens.index(self.currentScreen) - 1) % len(self.screens))    
+        return self.toScreen((self.screens.index(self.currentScreen) - 1) % len(self.screens))
 
     def cmd_windows(self):
         """
@@ -1164,7 +1311,7 @@ class Qtile(command.CommandObject):
 
     def cmd_spawncmd(self, prompt="spawn:", widget="prompt"):
         """
-            Spawn a command using a prompt widget, with tab-completion. 
+            Spawn a command using a prompt widget, with tab-completion.
 
             prompt: Text with which to prompt user.
             widget: Name of the prompt widget (default: "prompt").
@@ -1180,5 +1327,3 @@ class Qtile(command.CommandObject):
 
     def cmd_delgroup(self, group):
         return self.delGroup(group)
-
-

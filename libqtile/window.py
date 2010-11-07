@@ -1,15 +1,15 @@
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,10 +20,11 @@
 
 import sys, struct, contextlib
 import xcb.xcb
-from xcb.xproto import EventMask
+from xcb.xproto import EventMask, StackMode
 import xcb.xproto
 import command, utils
 import hook
+import xcbq
 
 
 # ICCM Constants
@@ -104,7 +105,7 @@ class _Window(command.CommandObject):
         g = self.window.get_geometry()
         self._float_info = {
             'floating': False,
-            'x': g.x, 'y': g.y, 
+            'x': g.x, 'y': g.y,
             'w': g.width, 'h': g.height
             }
 
@@ -136,7 +137,7 @@ class _Window(command.CommandObject):
         # h values
         #{
         #    'icon_pixmap': 4194337,
-        #    'icon_window': 0, 
+        #    'icon_window': 0,
         #    'icon_mask': 4194340,
         #    'icon_y': 0,
         #    'input': 1,
@@ -184,7 +185,7 @@ class _Window(command.CommandObject):
 
     def getFloating(self):
         return self._float_info.get('floating')
-    
+
     def setFloating(self, val):
         assert isinstance(val, bool)
         self._float_info['floating'] = val
@@ -446,7 +447,7 @@ class Static(_Window):
             self.width = e.width
         if self.conf_height is None and e.value_mask & cw.Height:
             self.height = e.height
-        
+
         self.place(
             self.screen.x + self.x,
             self.screen.y + self.y,
@@ -510,9 +511,7 @@ class Window(_Window):
         hook.fire("client_managed", s)
         return s
 
-    def movefloating(self, x, y):
-        self._float_info['x'] += x
-        self._float_info['y'] += y
+    def _reconfigure_floating(self):
         self.place(self._float_info['x'],
                    self._float_info['y'],
                    self.width,
@@ -521,6 +520,35 @@ class Window(_Window):
                    self.bordercolor
                    )
         self.notify()
+        if not self._float_info['floating']:
+            self._float_info['floating'] = True
+            self.group.layoutAll()
+
+    def movefloating(self, x, y):
+        self._float_info['x'] += x
+        self._float_info['y'] += y
+        self._reconfigure_floating()
+
+    def resizefloating(self, x, y):
+        self.width += x
+        self.height += y
+        self._reconfigure_floating()
+
+    def setsizefloating(self, w, h):
+        self.width = w
+        self.height = h
+        self._reconfigure_floating()
+
+    def setposfloating(self, x, y):
+        self._float_info['x'] = max(x, 0)
+        self._float_info['y'] = max(y, 0)
+        self._reconfigure_floating()
+
+    def getsize(self):
+        return self.width, self.height
+
+    def getposition(self):
+        return self._float_info['x'], self._float_info['y']
 
     def togglefloating(self):
         self._float_info['floating'] = not self._float_info['floating']
@@ -663,14 +691,37 @@ class Window(_Window):
     def cmd_move_floating(self, x, y):
         self.movefloating(x, y)
 
-    cmd_resize_floating = cmd_move_floating
+    def cmd_resize_floating(self, x, y):
+        self.resizefloating(x, y)
+
+    def cmd_set_position_floating(self, x, y):
+        self.setposfloating(x, y)
+
+    def cmd_set_size_floating(self, w, h):
+        self.setsizefloating(w, h)
+
+    def cmd_get_position(self):
+        return self.getposition()
+
+    def cmd_get_size(self):
+        return self.getsize()
 
     def cmd_toggle_floating(self):
         self.togglefloating()
+
+    def cmd_disable_floating(self):
+        if self._float_info['floating']:
+            self._float_info['floating'] = False
+            self.group.layoutAll()
+
+    def cmd_bring_to_front(self):
+        if not self._float_info['floating']:
+            self._float_info['floating'] = True
+            self.group.layoutAll()
+        self.window.configure(stackmode=StackMode.Above)
 
     def cmd_match(self, *args, **kwargs):
         return self.match(*args, **kwargs)
 
     def cmd_opacity(self, opacity):
         self.opacity = opacity
-
