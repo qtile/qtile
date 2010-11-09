@@ -299,8 +299,14 @@ class Group(command.CommandObject):
         self.screen = screen
         if self.screen:
             self.layoutAll()
+            self._showFloating()
         else:
             self.hide()
+
+    def _showFloating(self):
+        for x in self.windows:
+            if x.floating:
+                x.unhide()
 
     def hide(self):
         self.screen = None
@@ -316,6 +322,9 @@ class Group(command.CommandObject):
             i._resetMask()
 
     def focus(self, window, warp):
+        if hasattr(self.qtile, '_drag'):
+            # don't change focus while dragging windows
+            return
         if window and not window in self.windows:
             return
         if not window:
@@ -339,20 +348,31 @@ class Group(command.CommandObject):
         hook.fire("group_window_add")
         self.windows.add(window)
         window.group = self
-        for i in self.layouts:
-            i.add(window)
-        self.focus(window, True)
+        if not window.floating: # may be set by hook
+            self.layout_add(window)
 
     def remove(self, window):
         self.windows.remove(window)
         window.group = None
         nextfocus = None
+        if not window.floating:
+            for i in self.layouts:
+                if i is self.layout:
+                    nextfocus = i.remove(window)
+                else:
+                    i.remove(window)
+            self.focus(nextfocus, True)
+            self.layoutAll()
+        #else: TODO: change focus
+
+    def layout_add(self, window):
         for i in self.layouts:
-            if i is self.layout:
-                nextfocus = i.remove(window)
-            else:
-                i.remove(window)
-        self.focus(nextfocus, True)
+            i.add(window)
+        self.focus(window, True)
+
+    def layout_remove(self, window):
+        for i in self.layouts:
+            i.remove(window)
         self.layoutAll()
 
     def _items(self, name):

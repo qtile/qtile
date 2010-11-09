@@ -103,8 +103,8 @@ class _Window(command.CommandObject):
         self.state = "normal"
         self.window_type = "normal"
         g = self.window.get_geometry()
+        self._floating = False
         self._float_info = {
-            'floating': False,
             'x': g.x, 'y': g.y,
             'w': g.width, 'h': g.height
             }
@@ -182,15 +182,6 @@ class _Window(command.CommandObject):
 
     def getState(self, val):
         return self.state == val
-
-    def getFloating(self):
-        return self._float_info.get('floating')
-
-    def setFloating(self, val):
-        assert isinstance(val, bool)
-        self._float_info['floating'] = val
-    floating = property(getFloating, setFloating)
-
 
     def setOpacity(self, opacity):
         if 0.0 <= opacity <= 1.0:
@@ -302,19 +293,22 @@ class _Window(command.CommandObject):
             eventmask=self._windowMask
         )
 
-    def place(self, x, y, width, height, borderwidth, bordercolor):
+    def place(self, x, y, width, height, borderwidth, bordercolor, above=False):
         """
             Places the window at the specified location with the given size.
         """
         self.x, self.y, self.width, self.height = x, y, width, height
         self.borderwidth, self.bordercolor = borderwidth, bordercolor
-        self.window.configure(
+        kwarg = dict(
             x=x,
             y=y,
             width=width,
             height=height,
-            borderwidth=borderwidth
-        )
+            borderwidth=borderwidth,
+            )
+        if above:
+            kwarg['stackmode'] = StackMode.Above
+        self.window.configure(**kwarg)
         if bordercolor is not None:
             self.window.set_attribute(
                 borderpixel = bordercolor
@@ -494,6 +488,17 @@ class Window(_Window):
                 self.qtile.groups.index(group))
         self._group = group
 
+    @property
+    def floating(self):
+        return self._floating
+
+    @floating.setter
+    def floating(self):
+        if self._floating:
+            self.disablefloating()
+        else:
+            self.enablefloating()
+
     def static(self, screen, x=None, y=None, width=None, height=None):
         """
             Makes this window a static window, attached to a Screen. If any of
@@ -512,21 +517,23 @@ class Window(_Window):
         return s
 
     def _reconfigure_floating(self):
-        self.place(self._float_info['x'],
-                   self._float_info['y'],
+        self.place(self.x,
+                   self.y,
                    self.width,
                    self.height,
                    self.borderwidth,
-                   self.bordercolor
+                   self.bordercolor,
+                   above=True,
                    )
         self.notify()
-        if not self._float_info['floating']:
-            self._float_info['floating'] = True
+        if not self._floating:
+            self._floating = True
+            self.group.layout_remove(self)
             self.group.layoutAll()
 
     def movefloating(self, x, y):
-        self._float_info['x'] += x
-        self._float_info['y'] += y
+        self.x += x
+        self.y += y
         self._reconfigure_floating()
 
     def resizefloating(self, x, y):
@@ -540,19 +547,39 @@ class Window(_Window):
         self._reconfigure_floating()
 
     def setposfloating(self, x, y):
-        self._float_info['x'] = max(x, 0)
-        self._float_info['y'] = max(y, 0)
+        self.x = max(x, 0)
+        self.y = max(y, 0)
         self._reconfigure_floating()
 
     def getsize(self):
         return self.width, self.height
 
     def getposition(self):
-        return self._float_info['x'], self._float_info['y']
+        return self.x, self.y
 
     def togglefloating(self):
-        self._float_info['floating'] = not self._float_info['floating']
-        self.group.layoutAll()
+        if self.floating:
+            self.disablefloating()
+        else:
+            self._reconfigure_floating()
+
+    def enablefloating(self):
+        if not self._floating:
+            self.x = self._float_info['x']
+            self.y = self._float_info['y']
+            self.width = self._float_info['w']
+            self.height = self._float_info['h']
+            self._reconfigure_floating()
+
+    def disablefloating(self):
+        if self._floating:
+            self._floating = False
+            self._float_info['x'] = self.x
+            self._float_info['y'] = self.y
+            self._float_info['w'] = self.width
+            self._float_info['h'] = self.height
+            self.group.layout_add(self)
+            self.group.layoutAll()
 
     def togroup(self, groupName):
         """
@@ -710,15 +737,16 @@ class Window(_Window):
         self.togglefloating()
 
     def cmd_disable_floating(self):
-        if self._float_info['floating']:
-            self._float_info['floating'] = False
-            self.group.layoutAll()
+        self.disablefloating()
+
+    def cmd_enable_floating(self):
+        self.enablefloating()
 
     def cmd_bring_to_front(self):
-        if not self._float_info['floating']:
-            self._float_info['floating'] = True
-            self.group.layoutAll()
-        self.window.configure(stackmode=StackMode.Above)
+        if self.floating:
+            self.window.configure(stackmode=StackMode.Above)
+        else:
+            self._reconfigure_floating() #atomatically above
 
     def cmd_match(self, *args, **kwargs):
         return self.match(*args, **kwargs)
