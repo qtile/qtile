@@ -173,6 +173,7 @@ class _Window(command.CommandObject):
             width = self.width,
             height = self.height,
             id = self.window.wid,
+            floating = self._floating,
             float_info = self._float_info
         )
 
