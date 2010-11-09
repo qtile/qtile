@@ -172,14 +172,15 @@ class Bar(Gap):
         hook.subscribe.addgroup(self.draw)
 
     def _resize(self, width, widgets):
-        stretches = [i.width_type == STRETCH for i in widgets]
-        if any(stretches):
-            if stretches.count(True) > 1:
-                raise confreader.ConfigError("Error: more than one stretch widget.")
-            stretch_offset = stretches.index(True)
-            pre = sum([i.width for i in widgets[:stretch_offset]])
-            post = sum([i.width for i in widgets[stretch_offset+1:]])
-            widgets[stretch_offset].width = max(width - pre - post, 0)
+        stretches = [i for i in widgets if i.width_type == STRETCH]
+        if stretches:
+            stretchspace = width - sum([i.width for i in widgets if i.width_type != STRETCH])
+            stretchspace = max(stretchspace, 0)
+            astretch = stretchspace/len(stretches)
+            for i in stretches:
+                i.width = astretch
+            if astretch:
+                i.width += stretchspace%astretch
 
         offset = 0
         for i in widgets:

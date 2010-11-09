@@ -179,7 +179,11 @@ class uBarGeometry(utils.QtileTests):
             DWidget(None, libqtile.bar.STRETCH),
             DWidget(10, libqtile.bar.CALCULATED),
         ]
-        libpry.raises("more than one stretch", b._resize, 100, l)
+        b._resize(100, l)
+        assert wd(l) == [10, 40, 40, 10]
+
+        b._resize(101, l)
+        assert wd(l) == [10, 40, 41, 10]
 
         l = [
             DWidget(10, libqtile.bar.CALCULATED)
