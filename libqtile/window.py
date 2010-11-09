@@ -371,6 +371,7 @@ class _Window(command.CommandObject):
             name = self.window.get_name(),
             wm_class = self.window.get_wm_class(),
             wm_window_role = self.window.get_wm_window_role(),
+            wm_type = self.window.get_wm_type(),
             wm_transient_for = self.window.get_wm_transient_for(),
             protocols = protocols,
             wm_icon_name = self.window.get_wm_icon_name(),
@@ -494,10 +495,10 @@ class Window(_Window):
         return self._floating
 
     @floating.setter
-    def floating(self):
-        if self._floating:
+    def floating(self, value):
+        if self._floating and not value:
             self.disablefloating()
-        else:
+        elif not self._floating and value:
             self.enablefloating()
 
     def static(self, screen, x=None, y=None, width=None, height=None):
@@ -529,8 +530,9 @@ class Window(_Window):
         self.notify()
         if not self._floating:
             self._floating = True
-            self.group.layout_remove(self)
-            self.group.layoutAll()
+            if self.group: # may be not, if it's called from hook
+                self.group.layout_remove(self)
+                self.group.layoutAll()
 
     def movefloating(self, x, y):
         self.x += x
