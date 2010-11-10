@@ -1,4 +1,4 @@
-import collections, time
+import time
 
 from . import base
 from .. import manager, bar, hook, utils
@@ -19,42 +19,42 @@ class _Graph(base._Widget):
         ("border_width", 2, "Widget background"),
         ("margin_x", 3, "Margin X"),
         ("margin_y", 3, "Margin Y"),
-        ("bars", 32, "Count of graph bars"),
-        ("bar_width", 1, "Width of single bar"),
+        ("bars", 100, "Count of graph bars."),
         ("frequency", 0.5, "Update frequency in seconds"),
     )
 
-    def __init__(self, **config):
-        base._Widget.__init__(self, bar.CALCULATED, **config)
-        self.values = collections.deque([0]*self.bars)
+    def __init__(self, width = 100, **config):
+        base._Widget.__init__(self, width, **config)
+        self.values = [0]*self.bars
         self.lasttick = 0
         self.maxvalue = 0
 
-    def calculate_width(self):
-        return self.bars*self.bar_width + self.border_width*2 + self.margin_x*2
+    @property
+    def graphwidth(self):
+        return self.width - self.border_width * 2 - self.margin_x * 2
 
     def draw(self):
         self.drawer.clear(self.background)
         if self.border_width:
             self.drawer.ctx.set_source_rgb(*utils.rgb(self.border_color))
             self.drawer.rounded_rectangle(self.margin_x, self.margin_y,
-                self.bars*self.bar_width + self.border_width*2,
+                self.graphwidth + self.border_width*2,
                 self.bar.height - self.margin_y*2,
                 self.border_width)
         x = self.margin_x+self.border_width
         y = self.margin_y+self.border_width
-        w = self.bar_width
+        w = self.graphwidth/float(self.bars)
         h = self.bar.height - self.margin_y*2 - self.border_width*2
         k = 1.0/(self.maxvalue or 1)
-        for val in self.values:
+        for val in reversed(self.values):
             ch = int(round(h*val*k))
             self.drawer.fillrect(x, y+h-ch, w, ch, self.foreground)
             x += w
         self.drawer.draw(self.offset, self.width)
 
     def push(self, value):
-        self.values.append(value)
-        self.values.popleft()
+        self.values.insert(0, value)
+        self.values.pop()
         if not self.fixed_upper_bound:
             self.maxvalue = max(self.values)
         self.draw()
