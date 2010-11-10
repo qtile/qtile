@@ -19,13 +19,13 @@ class _Graph(base._Widget):
         ("border_width", 2, "Widget background"),
         ("margin_x", 3, "Margin X"),
         ("margin_y", 3, "Margin Y"),
-        ("bars", 100, "Count of graph bars."),
+        ("samples", 100, "Count of graph samples."),
         ("frequency", 0.5, "Update frequency in seconds"),
     )
 
     def __init__(self, width = 100, **config):
         base._Widget.__init__(self, width, **config)
-        self.values = [0]*self.bars
+        self.values = [0]*self.samples
         self.lasttick = 0
         self.maxvalue = 0
 
@@ -43,7 +43,7 @@ class _Graph(base._Widget):
                 self.border_width)
         x = self.margin_x+self.border_width
         y = self.margin_y+self.border_width
-        w = self.graphwidth/float(self.bars)
+        w = self.graphwidth/float(self.samples)
         h = self.bar.height - self.margin_y*2 - self.border_width*2
         k = 1.0/(self.maxvalue or 1)
         for val in reversed(self.values):

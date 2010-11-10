@@ -18,7 +18,7 @@ class GBConfig:
         libqtile.manager.Screen(
             top = libqtile.bar.Bar(
                     [
-                        libqtile.widget.CPUGraph(width=200),
+                        libqtile.widget.CPUGraph(width=libqtile.bar.STRETCH),
                         libqtile.widget.MemoryGraph(),
                         libqtile.widget.SwapGraph(),
                         libqtile.widget.TextBox("text", background="333333"),
