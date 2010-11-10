@@ -18,7 +18,7 @@ class GBConfig:
         libqtile.manager.Screen(
             top = libqtile.bar.Bar(
                     [
-                        libqtile.widget.CPUGraph(width=libqtile.bar.STRETCH),
+                        libqtile.widget.CPUGraph(width=libqtile.bar.STRETCH, type="line"),
                         libqtile.widget.MemoryGraph(),
                         libqtile.widget.SwapGraph(),
                         libqtile.widget.TextBox("text", background="333333"),
@@ -96,9 +96,11 @@ class uWidgets(utils.QtileTests):
         assert "text" in self.c.list_widgets()
         s = "some text"
         self.c.widget["text"].update(s)
+        time.sleep(9)
         assert self.c.widget["text"].get() == s
         s = "Aye, much longer string than the initial one"
         self.c.widget["text"].update(s)
+        time.sleep(1)
         assert self.c.widget["text"].get() == s
         self.c.group["Pppy"].toscreen()
         self.c.widget["text"].set_font(fontsize=12)

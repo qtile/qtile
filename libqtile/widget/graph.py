@@ -10,7 +10,6 @@ __all__ = [
 ]
 
 class _Graph(base._Widget):
-    ticks = 0
     fixed_upper_bound = False
     defaults = manager.Defaults(
         ("foreground", "0000ff", "Bars color"),
@@ -21,6 +20,8 @@ class _Graph(base._Widget):
         ("margin_y", 3, "Margin Y"),
         ("samples", 100, "Count of graph samples."),
         ("frequency", 0.5, "Update frequency in seconds"),
+        ("type", "box", "'box' or 'line'"),
+        ("line_width", 2, "Line width"),
     )
 
     def __init__(self, width = 100, **config):
@@ -33,6 +34,20 @@ class _Graph(base._Widget):
     def graphwidth(self):
         return self.width - self.border_width * 2 - self.margin_x * 2
 
+    def draw_box(self, x, y, step, values):
+        for val in values:
+            self.drawer.fillrect(x, y-val, step, val, self.foreground)
+            x += step 
+
+    def draw_line(self, x, y, step, values):
+        self.drawer.ctx.set_source_rgb(*utils.rgb(self.foreground))
+        self.drawer.ctx.set_line_width(self.line_width)
+        self.drawer.ctx.move_to(x, y)
+        for val in values:
+            self.drawer.ctx.line_to(x, y-val)
+            x += step 
+        self.drawer.ctx.stroke()
+
     def draw(self):
         self.drawer.clear(self.background)
         if self.border_width:
@@ -41,15 +56,19 @@ class _Graph(base._Widget):
                 self.graphwidth + self.border_width*2,
                 self.bar.height - self.margin_y*2,
                 self.border_width)
-        x = self.margin_x+self.border_width
-        y = self.margin_y+self.border_width
-        w = self.graphwidth/float(self.samples)
+
         h = self.bar.height - self.margin_y*2 - self.border_width*2
+        x = self.margin_x+self.border_width
+        y = self.margin_y+self.border_width + h
+        step = self.graphwidth/float(self.samples)
         k = 1.0/(self.maxvalue or 1)
-        for val in reversed(self.values):
-            ch = int(round(h*val*k))
-            self.drawer.fillrect(x, y+h-ch, w, ch, self.foreground)
-            x += w
+        scaled = [h * val * k for val in reversed(self.values)]
+
+        if self.type == "box":
+            self.draw_box(x, y, step, scaled)
+        elif self.type == "line":
+            self.draw_line(x, y, step, scaled)
+
         self.drawer.draw(self.offset, self.width)
 
     def push(self, value):
