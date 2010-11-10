@@ -1,4 +1,5 @@
 import time
+import cairo
 
 from . import base
 from .. import manager, bar, hook, utils
@@ -12,7 +13,8 @@ __all__ = [
 class _Graph(base._Widget):
     fixed_upper_bound = False
     defaults = manager.Defaults(
-        ("foreground", "0000ff", "Bars color"),
+        ("graph_color", "0000ff", "Graph color"),
+        ("fill_color", "ff0000", "Fill color for linefill graph"),
         ("background", "000000", "Widget background"),
         ("border_color", "215578", "Widget border color"),
         ("border_width", 2, "Widget background"),
@@ -20,8 +22,8 @@ class _Graph(base._Widget):
         ("margin_y", 3, "Margin Y"),
         ("samples", 100, "Count of graph samples."),
         ("frequency", 0.5, "Update frequency in seconds"),
-        ("type", "box", "'box' or 'line'"),
-        ("line_width", 2, "Line width"),
+        ("type", "box", "'box', 'line', 'linefill'"),
+        ("line_width", 3, "Line width"),
     )
 
     def __init__(self, width = 100, **config):
@@ -36,11 +38,12 @@ class _Graph(base._Widget):
 
     def draw_box(self, x, y, step, values):
         for val in values:
-            self.drawer.fillrect(x, y-val, step, val, self.foreground)
+            self.drawer.fillrect(x, y-val, step, val, self.graph_color)
             x += step 
 
     def draw_line(self, x, y, step, values):
-        self.drawer.ctx.set_source_rgb(*utils.rgb(self.foreground))
+        self.drawer.ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+        self.drawer.ctx.set_source_rgb(*utils.rgb(self.graph_color))
         self.drawer.ctx.set_line_width(self.line_width)
         self.drawer.ctx.move_to(x, y)
         for val in values:
@@ -48,15 +51,32 @@ class _Graph(base._Widget):
             x += step 
         self.drawer.ctx.stroke()
 
+    def draw_linefill(self, x, y, step, values):
+        self.drawer.ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+        self.drawer.ctx.set_source_rgb(*utils.rgb(self.graph_color))
+        self.drawer.ctx.set_line_width(self.line_width)
+        self.drawer.ctx.move_to(x, y)
+        current = x + step
+        for val in values:
+            self.drawer.ctx.line_to(current, y-val)
+            current += step 
+        self.drawer.ctx.stroke_preserve()
+        self.drawer.ctx.line_to(current, y)
+        self.drawer.ctx.line_to(x, y)
+        self.drawer.ctx.set_source_rgb(*utils.rgb(self.fill_color))
+        self.drawer.ctx.fill()
+
     def draw(self):
         self.drawer.clear(self.background)
         if self.border_width:
             self.drawer.ctx.set_source_rgb(*utils.rgb(self.border_color))
-            self.drawer.rounded_rectangle(self.margin_x, self.margin_y,
+            self.drawer.ctx.set_line_width(self.border_width)
+            self.drawer.ctx.rectangle(
+                self.margin_x, self.margin_y,
                 self.graphwidth + self.border_width*2,
                 self.bar.height - self.margin_y*2,
-                self.border_width)
-
+            )
+            self.drawer.ctx.stroke()
         h = self.bar.height - self.margin_y*2 - self.border_width*2
         x = self.margin_x+self.border_width
         y = self.margin_y+self.border_width + h
@@ -68,6 +88,10 @@ class _Graph(base._Widget):
             self.draw_box(x, y, step, scaled)
         elif self.type == "line":
             self.draw_line(x, y, step, scaled)
+        elif self.type == "linefill":
+            self.draw_linefill(x, y, step, scaled)
+        else:
+            raise ValueError("Unknown graph type: %s."%self.type)
 
         self.drawer.draw(self.offset, self.width)
 
