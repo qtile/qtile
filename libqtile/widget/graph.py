@@ -23,7 +23,7 @@ class _Graph(base._Widget):
         ("samples", 100, "Count of graph samples."),
         ("frequency", 0.5, "Update frequency in seconds"),
         ("type", "box", "'box', 'line', 'linefill'"),
-        ("line_width", 3, "Line width"),
+        ("line_width", 5, "Line width"),
     )
 
     def __init__(self, width = 100, **config):
@@ -58,11 +58,11 @@ class _Graph(base._Widget):
         self.drawer.ctx.move_to(x, y)
         current = x + step
         for val in values:
-            self.drawer.ctx.line_to(current, y-val)
+            self.drawer.ctx.line_to(current, y-val + self.line_width/2)
             current += step 
         self.drawer.ctx.stroke_preserve()
-        self.drawer.ctx.line_to(current, y)
-        self.drawer.ctx.line_to(x, y)
+        self.drawer.ctx.line_to(current, y + self.line_width/2)
+        self.drawer.ctx.line_to(x, y + self.line_width/2)
         self.drawer.ctx.set_source_rgb(*utils.rgb(self.fill_color))
         self.drawer.ctx.fill()
 

@@ -96,7 +96,6 @@ class uWidgets(utils.QtileTests):
         assert "text" in self.c.list_widgets()
         s = "some text"
         self.c.widget["text"].update(s)
-        time.sleep(6)
         assert self.c.widget["text"].get() == s
         s = "Aye, much longer string than the initial one"
         self.c.widget["text"].update(s)

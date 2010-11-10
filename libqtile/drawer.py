@@ -140,7 +140,6 @@ class Drawer:
         self.ctx = self.new_ctx()
         self.clear((0, 0, 1))
 
-
     def rounded_rectangle(self, x, y, width, height, linewidth):
         aspect = 1.0
         corner_radius = height / 10.0
