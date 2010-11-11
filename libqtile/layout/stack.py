@@ -171,6 +171,7 @@ class Stack(Layout):
         for i in self.stacks:
             if c in i:
                 i.focus(c)
+        self.group.layoutAll()
 
     def add(self, c):
         for i in self.stacks:

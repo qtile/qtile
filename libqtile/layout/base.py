@@ -50,6 +50,12 @@ class Layout(command.CommandObject):
             Called whenever the focus changes.
         """
         pass
+        
+    def blur(self):
+        """
+            Called whenever focus is gone from this layout.
+        """
+        pass
 
     def add(self, c):
         """

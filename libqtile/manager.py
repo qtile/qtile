@@ -257,13 +257,14 @@ class Group(command.CommandObject):
         self.name = name
         self.customLayout = layout  # will be set on _configure
 
-    def _configure(self, layouts, qtile):
+    def _configure(self, layouts, floating_layout, qtile):
         self.screen = None
         self.currentLayout = 0
         self.currentWindow = None
         self.windows = set()
         self.qtile = qtile
         self.layouts = [i.clone(self) for i in layouts]
+        self.floating_layout = floating_layout.clone(self)
         if self.customLayout is not None:
             self.layout = self.customLayout
             self.customLayout = None
@@ -289,8 +290,9 @@ class Group(command.CommandObject):
         self.layoutAll()
 
     def layoutAll(self):
-        with self.disableMask(xcb.xproto.EventMask.EnterWindow):
-            if self.screen and len(self.windows):
+        if self.screen and len(self.windows):
+            with self.disableMask(xcb.xproto.EventMask.EnterWindow):
+                self.floating_layout.layout([x for x in self.windows if x.floating])
                 self.layout.layout([x for x in self.windows if not x.floating])
                 if self.currentWindow:
                     self.currentWindow.focus(False)
@@ -299,14 +301,8 @@ class Group(command.CommandObject):
         self.screen = screen
         if self.screen:
             self.layoutAll()
-            self._showFloating()
         else:
             self.hide()
-
-    def _showFloating(self):
-        for x in self.windows:
-            if x.floating:
-                x.unhide()
 
     def hide(self):
         self.screen = None
@@ -331,7 +327,15 @@ class Group(command.CommandObject):
             self.currentWindow = None
         else:
             self.currentWindow = window
-        self.layout.focus(window)
+        if window:
+            if window.floating:
+                for l in self.layouts:
+                    l.blur()
+                self.floating_layout.focus(window)
+            else:
+                self.floating_layout.blur()
+                for l in self.layouts:
+                    l.focus(window)
         hook.fire("focus_change")
         self.layoutAll()
 
@@ -348,14 +352,21 @@ class Group(command.CommandObject):
         hook.fire("group_window_add")
         self.windows.add(window)
         window.group = self
-        if not window.floating: # may be set by hook
-            self.layout_add(window)
+        if window.floating:
+            self.floating_layout.add(window)
+        else:
+            for i in self.layouts:
+                i.add(window)
+        if len(self.windows) == 1:
+            self.focus(window, True)
 
     def remove(self, window):
         self.windows.remove(window)
         window.group = None
         nextfocus = None
-        if not window.floating:
+        if window.floating:
+            self.floating_layout.remove(window)
+        else:
             for i in self.layouts:
                 if i is self.layout:
                     nextfocus = i.remove(window)
@@ -365,14 +376,22 @@ class Group(command.CommandObject):
             self.layoutAll()
         #else: TODO: change focus
 
-    def layout_add(self, window):
-        for i in self.layouts:
-            i.add(window)
-        self.focus(window, True)
-
-    def layout_remove(self, window):
-        for i in self.layouts:
-            i.remove(window)
+    def mark_floating(self, window, floating):
+        if floating:
+            for i in self.layouts:
+                i.remove(window)
+                if window is self.currentWindow:
+                    i.blur()
+            self.floating_layout.add(window)
+            if window is self.currentWindow:
+                self.floating_layout.focus(window)
+        else:
+            self.floating_layout.remove(window)
+            self.floating_layout.blur()
+            for i in self.layouts:
+                i.add(window)
+                if window is self.currentWindow:
+                    i.focus(window)
         self.layoutAll()
 
     def _items(self, name):
@@ -472,6 +491,40 @@ class Group(command.CommandObject):
             w.minimised = False
         self.layoutAll()
 
+    def cmd_next_window(self):
+        if not self.windows:
+            return
+        if self.currentWindow.floating:
+            next = self.floating_layout.focus_next(self.currentWindow)
+            if not next:
+                next = self.layout.focus_first()
+            if not next:
+                next = self.floating_layout.focus_first()
+        else:
+            next = self.layout.focus_next(self.currentWindow)
+            if not next:
+                next = self.floating_layout.focus_first()
+            if not next:
+                next = self.layout.focus_first()
+        self.focus(next, True)
+    
+    def cmd_prev_window(self):
+        if not self.windows:
+            return
+        if self.currentWindow.floating:
+            next = self.floating_layout.focus_prev(self.currentWindow)
+            if not next:
+                next = self.layout.focus_last()
+            if not next:
+                next = self.floating_layout.focus_last()
+        else:
+            next = self.layout.focus_prev(self.currentWindow)
+            if not next:
+                next = self.floating_layout.focus_last()
+            if not next:
+                next = self.layout.focus_last()
+        self.focus(next, True)
+
 
 class Log:
     """
@@ -553,7 +606,7 @@ class Qtile(command.CommandObject):
 
         self.groups += self.config.groups[:]
         for i in self.groups:
-            i._configure(config.layouts, self)
+            i._configure(config.layouts, config.floating_layout, self)
             self.groupMap[i.name] = i
 
         self.currentScreen = None
