@@ -13,17 +13,17 @@ __all__ = [
 class _Graph(base._Widget):
     fixed_upper_bound = False
     defaults = manager.Defaults(
-        ("graph_color", "0000ff", "Graph color"),
-        ("fill_color", "ff0000", "Fill color for linefill graph"),
+        ("graph_color", "18BAEB", "Graph color"),
+        ("fill_color", "1667EB.3", "Fill color for linefill graph"),
         ("background", "000000", "Widget background"),
         ("border_color", "215578", "Widget border color"),
-        ("border_width", 2, "Widget background"),
+        ("border_width", 1, "Widget background"),
         ("margin_x", 3, "Margin X"),
         ("margin_y", 3, "Margin Y"),
         ("samples", 100, "Count of graph samples."),
         ("frequency", 0.5, "Update frequency in seconds"),
-        ("type", "box", "'box', 'line', 'linefill'"),
-        ("line_width", 5, "Line width"),
+        ("type", "linefill", "'box', 'line', 'linefill'"),
+        ("line_width", 3, "Line width"),
     )
 
     def __init__(self, width = 100, **config):
@@ -43,7 +43,7 @@ class _Graph(base._Widget):
 
     def draw_line(self, x, y, step, values):
         self.drawer.ctx.set_line_join(cairo.LINE_JOIN_ROUND)
-        self.drawer.ctx.set_source_rgb(*utils.rgb(self.graph_color))
+        self.drawer.set_source_rgb(self.graph_color)
         self.drawer.ctx.set_line_width(self.line_width)
         self.drawer.ctx.move_to(x, y)
         for val in values:
@@ -53,7 +53,7 @@ class _Graph(base._Widget):
 
     def draw_linefill(self, x, y, step, values):
         self.drawer.ctx.set_line_join(cairo.LINE_JOIN_ROUND)
-        self.drawer.ctx.set_source_rgb(*utils.rgb(self.graph_color))
+        self.drawer.set_source_rgb(self.graph_color)
         self.drawer.ctx.set_line_width(self.line_width)
         self.drawer.ctx.move_to(x, y)
         current = x + step
@@ -63,13 +63,13 @@ class _Graph(base._Widget):
         self.drawer.ctx.stroke_preserve()
         self.drawer.ctx.line_to(current, y + self.line_width/2)
         self.drawer.ctx.line_to(x, y + self.line_width/2)
-        self.drawer.ctx.set_source_rgb(*utils.rgb(self.fill_color))
+        self.drawer.set_source_rgb(self.fill_color)
         self.drawer.ctx.fill()
 
     def draw(self):
         self.drawer.clear(self.background)
         if self.border_width:
-            self.drawer.ctx.set_source_rgb(*utils.rgb(self.border_color))
+            self.drawer.set_source_rgb(self.border_color)
             self.drawer.ctx.set_line_width(self.border_width)
             self.drawer.ctx.rectangle(
                 self.margin_x, self.margin_y,

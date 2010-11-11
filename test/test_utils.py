@@ -39,8 +39,17 @@ class uLRUCache(libpry.AutoTree):
         assert len(f._cachelist_one) == 2
 
 
+class uRGB(libpry.AutoTree):
+    def test_rgb(self):
+        assert utils.rgb([255, 255, 0, 0.5]) == (1, 1, 0, 0.5)
+        assert utils.rgb([255, 255, 0]) == (1, 1, 0, 1)
+        assert utils.rgb("ff0000") == (1, 0, 0, 1)
+        assert utils.rgb("ff0000.5") == (1, 0, 0, 0.5)
+
+
 tests = [
     utranslateMasks(),
-    uLRUCache()
+    uLRUCache(),
+    uRGB(),
 ]
 

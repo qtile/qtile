@@ -120,16 +120,36 @@ def isSequenceLike(anobj):
 
 
 def rgb(x):
+    """
+        Returns a valid RGBA tuple.
+
+        Here are some valid specifcations:
+            #ff0000
+            ff0000
+            with alpha: ff0000.5  
+            (255, 0, 0)
+            (255, 0, 0, 0.5)
+    """
     if isinstance(x, tuple) or isinstance(x, list):
-        return (x[0]/255.0, x[1]/255.0, x[2]/255.0)
+        if len(x) == 4:
+            alpha = x[3]
+        else:
+            alpha = 1
+        return (x[0]/255.0, x[1]/255.0, x[2]/255.0, alpha)
     elif isinstance(x, basestring):
         if x.startswith("#"):
             x = x[1:]
+        if "." in x:
+            x, alpha = x.split(".")
+            alpha = float("0."+alpha)
+        else:
+            alpha = 1
         if len(x) != 6:
             raise ValueError("RGB specifier must be 6 characters long.")
-        return rgb([int(i, 16) for i in (x[0:2], x[2:4], x[4:6])])
+        vals = [int(i, 16) for i in (x[0:2], x[2:4], x[4:6])]
+        vals.append(alpha)
+        return rgb(vals)
     raise ValueError("Invalid RGB specifier.")
-
 
 
 class Data:

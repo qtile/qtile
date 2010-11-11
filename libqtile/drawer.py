@@ -67,7 +67,7 @@ class TextLayout(object):
         self.layout.set_font_description(d)
 
     def draw(self, x, y):
-        self.drawer.ctx.set_source_rgb(*utils.rgb(self.colour))
+        self.drawer.set_source_rgb(self.colour)
         self.drawer.ctx.move_to(x, y)
         self.drawer.ctx.show_layout(self.layout)
 
@@ -83,7 +83,7 @@ class TextFrame:
         self.drawer = self.layout.drawer
 
     def draw(self, x, y):
-        self.drawer.ctx.set_source_rgb(*utils.rgb(self.border_color))
+        self.drawer.set_source_rgb(self.border_color)
         self.drawer.rounded_rectangle(
             x, y,
             self.layout.width + self.pad_x * 2,
@@ -159,13 +159,12 @@ class Drawer:
         self.ctx.stroke()
 
     def rectangle(self, x, y, width, height, linewidth):
-        self.ctx.set_source_rgb(1, 1, 1)
         self.ctx.set_line_width(linewidth)
         self.ctx.rectangle(x, y, width, height)
         self.ctx.stroke()
 
     def fillrect(self, x, y, w, h, colour):
-        self.ctx.set_source_rgb(*utils.rgb(colour))
+        self.set_source_rgb(colour)
         self.ctx.rectangle(x, y, w, h)
         self.ctx.fill()
         self.ctx.stroke()
@@ -193,8 +192,11 @@ class Drawer:
     def new_ctx(self):
         return pangocairo.CairoContext(cairo.Context(self.surface))
 
+    def set_source_rgb(self, colour):
+        self.ctx.set_source_rgba(*utils.rgb(colour))
+
     def clear(self, colour):
-        self.ctx.set_source_rgb(*utils.rgb(colour))
+        self.set_source_rgb(colour)
         self.ctx.rectangle(0, 0, self.width, self.height)
         self.ctx.fill()
         self.ctx.stroke()
