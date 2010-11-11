@@ -408,8 +408,9 @@ class Window:
                 self.conn.atoms['_NET_WM_WINDOW_TYPE'],
                 xcb.xproto.GetPropertyType.Any
         )
-        # FIXME: look up wm_type
-        return None
+        if r:
+            name = self.conn.atoms.get_name(r.value[0])
+            return WindowTypes.get(name, name)
 
     def configure(self, **kwargs):
         """
