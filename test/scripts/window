@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 """
     This program is carefully crafted to exercise a number of corner-cases in
     Qtile.
