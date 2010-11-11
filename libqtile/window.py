@@ -531,8 +531,7 @@ class Window(_Window):
         if not self._floating:
             self._floating = True
             if self.group: # may be not, if it's called from hook
-                self.group.layout_remove(self)
-                self.group.layoutAll()
+                self.group.mark_floating(self, True)
 
     def movefloating(self, x, y):
         self.x += x
@@ -581,8 +580,7 @@ class Window(_Window):
             self._float_info['y'] = self.y
             self._float_info['w'] = self.width
             self._float_info['h'] = self.height
-            self.group.layout_add(self)
-            self.group.layoutAll()
+            self.group.mark_floating(self, False)
 
     def togroup(self, groupName):
         """

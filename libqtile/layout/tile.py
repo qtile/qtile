@@ -32,6 +32,24 @@ class Tile(Layout):
     def down(self):
         self.shuffle(utils.shuffleDown)
 
+    def focus_first(self):
+        if self.clients:
+            return self.clients[0]
+
+    def focus_next(self, win):
+        idx = self.clients.index(win)
+        if len(self.clients) > idx+1:
+            return self.clients[idx+1]
+
+    def focus_last(self):
+        if self.clients:
+            return self.clients[-1]
+
+    def focus_prev(self, win):
+        idx = self.clients.index(win)
+        if idx > 0:
+            return self.clients[idx-1]
+
     def getNextClient(self):
         nextindex = self.clients.index(self.focused) + 1
         if nextindex >= len(self.clients):
@@ -66,15 +84,17 @@ class Tile(Layout):
 
     def focus(self, c):
         self.focused = c
+    
+    def blur(self):
+        self.focused = None
 
     def add(self, c):
         self.clients.insert(0, c) #TODO: maybe make this configurable
                                   # Should new clients go to top?
-        if len(self.clients) == 1:
-            self.group.focus(c, True)
-            self.focus(c)
 
     def remove(self, c):
+        if self.focused is c:
+            self.focused = None
         self.clients.remove(c)
         if self.clients and c is self.focused:
             self.focused = self.clients[0]

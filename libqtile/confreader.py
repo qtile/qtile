@@ -60,5 +60,9 @@ class File(Config):
         self.mouse = globs.get("mouse", [])
         self.groups = globs.get("groups")
         self.layouts = globs.get("layouts")
+        self.floating_layout = globs.get('floating_layout', None)
+        if self.floating_layout is None:
+            from .layout import Floating
+            self.floating_layout = Floating()
         self.screens = globs.get("screens")
         self.main = globs.get("main")
