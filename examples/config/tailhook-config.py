@@ -9,9 +9,6 @@ xcbq.keysyms["XF86AudioMute"] = 0x1008ff12
 
 mod = "mod4"
 keys = [
-    # First, a set of bindings to control the layouts
-    Key([mod], "k",
-        lazy.layout.down()),
     Key([mod], "j",
         lazy.layout.up()),
     Key([mod], "k",
@@ -25,10 +22,12 @@ keys = [
     Key([mod], "period",
         lazy.layout.decrease_nmaster()),
     Key([mod], "Tab",
-        lazy.layout.next()),
-    Key([mod, "shift"], "space",
-        lazy.layout.rotate()),
+        lazy.group.next_window()),
+    Key([mod, "shift"], "Tab",
+        lazy.group.prev_window()),
     Key([mod, "shift"], "Return",
+        lazy.layout.rotate()),
+    Key([mod, "shift"], "space",
         lazy.layout.toggle_split()),
 
     Key([mod], "w",
@@ -86,11 +85,16 @@ for i in groups:
         Key([mod, "shift"], i.name, lazy.window.togroup(i.name))
     )
 
-
+border = dict(
+    border_normal='#808080',
+    border_width=2,
+    )
 layouts = [
-    layout.Tile(border_normal='#808080', border_width=2),
+    layout.Tile(**border),
     layout.Max(),
+    layout.Stack(**border),
 ]
+floating_layout = layout.Floating(**border)
 
 screens = [
     Screen(
