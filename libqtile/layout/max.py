@@ -50,19 +50,14 @@ class Max(Layout):
             return self.clients[0]
 
     def focus_next(self, win):
-        idx = self.clients.index(win)
-        if len(self.clients) > idx+1:
-            self.clients[idx+1]
-            
+        return None
 
     def focus_last(self):
         if self.clients:
-            return self.clients[-1]
+            return self.clients[0]
 
     def focus_prev(self, win):
-        idx = self.clients.index(win)
-        if idx > 0:
-            return self.clients[idx-1]
+        return None
 
     def clone(self, group):
         c = Layout.clone(self, group)

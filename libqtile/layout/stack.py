@@ -171,7 +171,38 @@ class Stack(Layout):
         for i in self.stacks:
             if c in i:
                 i.focus(c)
-        self.group.layoutAll()
+    
+    def focus_first(self):
+        for i in self.stacks:
+            if i:
+                return i.cw
+                
+    def focus_last(self):
+        for i in reversed(self.stacks):
+            if i:
+                return i.cw
+    
+    def focus_next(self, c):
+        iterator = iter(self.stacks)
+        for i in iterator:
+            if c in i:
+                break
+        else:
+            return
+        for i in iterator:
+            if i:
+                return i.cw
+    
+    def focus_prev(self, c):
+        iterator = iter(reversed(self.stacks))
+        for i in iterator:
+            if c in i:
+                break
+        else:
+            return
+        for i in iterator:
+            if i:
+                return i.cw
 
     def add(self, c):
         for i in self.stacks:
