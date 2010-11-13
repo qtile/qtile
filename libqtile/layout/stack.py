@@ -55,6 +55,32 @@ class _WinStack(object):
     def focus(self, w):
         self.current = self.lst.index(w)
 
+    def focus_first(self):
+        if self:
+            if self.split:
+                return self[0]
+            else:
+                return self.cw
+
+    def focus_next(self, win):
+        if self.split:
+            idx = self.index(win)
+            if idx+1 < len(self):
+                return self[idx+1]
+
+    def focus_last(self):
+        if self:
+            if self.split:
+                return self[-1]
+            else:
+                return self.cw
+
+    def focus_prev(self, win):
+        if self.split:
+            idx = self.index(win)
+            if idx > 0:
+                return self[idx-1]
+
     def add(self, w):
         self.lst.insert(self.current, w)
 
@@ -175,34 +201,38 @@ class Stack(Layout):
     def focus_first(self):
         for i in self.stacks:
             if i:
-                return i.cw
+                return i.focus_first()
                 
     def focus_last(self):
         for i in reversed(self.stacks):
             if i:
-                return i.cw
+                return i.focus_last()
     
     def focus_next(self, c):
         iterator = iter(self.stacks)
         for i in iterator:
             if c in i:
+                next = i.focus_next(c)
+                if next: return next
                 break
         else:
             return
         for i in iterator:
             if i:
-                return i.cw
+                return i.focus_first()
     
     def focus_prev(self, c):
         iterator = iter(reversed(self.stacks))
         for i in iterator:
             if c in i:
+                next = i.focus_prev(c)
+                if next: return next
                 break
         else:
             return
         for i in iterator:
             if i:
-                return i.cw
+                return i.focus_last()
 
     def add(self, c):
         for i in self.stacks:
