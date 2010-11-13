@@ -14,6 +14,7 @@ class MaxConfig:
     layouts = [
         layout.Max()
     ]
+    floating_layout = libqtile.layout.floating.Floating()
     keys = []
     mouse = []
     screens = []
@@ -57,6 +58,7 @@ class StackConfig:
         layout.Stack(stacks=2),
         layout.Stack(stacks=1),
     ]
+    floating_layout = libqtile.layout.floating.Floating()
     keys = []
     mouse = []
     screens = []
@@ -231,6 +233,7 @@ class SelectorConfig:
         layout.Max(),
         layout.Stack()
     ]
+    floating_layout = libqtile.layout.floating.Floating()
     keys = []
     mouse = []
     screens = []
@@ -254,6 +257,7 @@ class TileConfig:
         layout.Tile(),
         layout.Tile(masterWindows=2)
         ]
+    floating_layout = libqtile.layout.floating.Floating()
     keys = []
     mouse = []
     screens = []

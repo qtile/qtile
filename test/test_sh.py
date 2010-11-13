@@ -12,6 +12,7 @@ class ShConfig(libqtile.confreader.Config):
     layouts = [
         libqtile.layout.Max(),
     ]
+    floating_layout = libqtile.layout.floating.Floating()
     screens = [
         libqtile.manager.Screen()
     ]

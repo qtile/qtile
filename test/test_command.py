@@ -26,6 +26,7 @@ class CallConfig(libqtile.confreader.Config):
         libqtile.layout.Stack(stacks=1),
         libqtile.layout.Max(),
     ]
+    floating_layout = libqtile.layout.floating.Floating()
     screens = [
         libqtile.manager.Screen(
             bottom=libqtile.bar.Bar(
@@ -124,6 +125,7 @@ class ServerConfig(libqtile.confreader.Config):
         libqtile.layout.Stack(stacks=2),
         libqtile.layout.Stack(stacks=3),
     ]
+    floating_layout = libqtile.layout.floating.Floating()
     screens = [
         libqtile.manager.Screen(
             bottom=libqtile.bar.Bar(

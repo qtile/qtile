@@ -357,8 +357,7 @@ class Group(command.CommandObject):
         else:
             for i in self.layouts:
                 i.add(window)
-        if len(self.windows) == 1:
-            self.focus(window, True)
+        self.focus(window, True)
 
     def remove(self, window):
         self.windows.remove(window)
@@ -685,7 +684,7 @@ class Qtile(command.CommandObject):
         if name not in self.groupMap.keys():
             g = Group(name)
             self.groups.append(g)
-            g._configure(self.config.layouts, self)
+            g._configure(self.config.layouts, self.config.floating_layout, self)
             self.groupMap[name] = g
             hook.fire("addgroup")
             return True

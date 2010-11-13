@@ -14,6 +14,7 @@ class GBConfig:
         libqtile.manager.Group("Pppy")
     ]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
+    floating_layout = libqtile.layout.floating.Floating()
     screens = [
         libqtile.manager.Screen(
             top = libqtile.bar.Bar(
@@ -130,6 +131,7 @@ class GeomConf:
         libqtile.manager.Group("d")
     ]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
+    floating_layout = libqtile.layout.floating.Floating()
     screens = [
         libqtile.manager.Screen(
             left=libqtile.bar.Gap(10),
