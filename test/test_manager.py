@@ -16,6 +16,7 @@ class TestConfig:
                 libqtile.layout.stack.Stack(2),
                 libqtile.layout.max.Max()
             ]
+    floating_layout = libqtile.layout.floating.Floating()
     keys = [
         libqtile.manager.Key(
             ["control"],
@@ -51,6 +52,7 @@ class BareConfig:
                 libqtile.layout.stack.Stack(stacks=1),
                 libqtile.layout.stack.Stack(2)
             ]
+    floating_layout = libqtile.layout.floating.Floating()
     keys = [
         libqtile.manager.Key(
             ["control"],
@@ -476,6 +478,7 @@ class _Config:
                 libqtile.layout.stack.Stack(stacks=1),
                 libqtile.layout.stack.Stack(2)
             ]
+    floating_layout = libqtile.layout.floating.Floating()
     keys = [
         libqtile.manager.Key(
             ["control"],
