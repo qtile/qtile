@@ -65,12 +65,10 @@ class Tile(Layout):
     def next(self):
         n = self.getPreviousClient()
         self.group.focus(n, True)
-        self.focus(n)
 
     def previous(self):
         n = self.getNextClient()
         self.group.focus(n, True)
-        self.focus(n)
 
     def shuffle(self, function):
         if self.clients:
