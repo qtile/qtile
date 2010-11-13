@@ -17,7 +17,7 @@ class _Graph(base._Widget):
         ("fill_color", "1667EB.3", "Fill color for linefill graph"),
         ("background", "000000", "Widget background"),
         ("border_color", "215578", "Widget border color"),
-        ("border_width", 1, "Widget background"),
+        ("border_width", 2, "Widget background"),
         ("margin_x", 3, "Margin X"),
         ("margin_y", 3, "Margin Y"),
         ("samples", 100, "Count of graph samples."),
@@ -34,35 +34,40 @@ class _Graph(base._Widget):
 
     @property
     def graphwidth(self):
-        return self.width - self.border_width * 2 - self.margin_x * 2
+        return self.width - self.border_width*2 - self.margin_x*2
 
-    def draw_box(self, x, y, step, values):
+    @property
+    def graphheight(self):
+        return self.bar.height - self.margin_y*2 - self.border_width*2
+
+    def draw_box(self, x, y, values):
+        step = self.graphwidth/float(self.samples)
         for val in values:
             self.drawer.fillrect(x, y-val, step, val, self.graph_color)
             x += step 
 
-    def draw_line(self, x, y, step, values):
+    def draw_line(self, x, y, values):
+        step = self.graphwidth/float(self.samples-1)
         self.drawer.ctx.set_line_join(cairo.LINE_JOIN_ROUND)
         self.drawer.set_source_rgb(self.graph_color)
         self.drawer.ctx.set_line_width(self.line_width)
-        self.drawer.ctx.move_to(x, y)
         for val in values:
             self.drawer.ctx.line_to(x, y-val)
             x += step 
         self.drawer.ctx.stroke()
 
-    def draw_linefill(self, x, y, step, values):
+    def draw_linefill(self, x, y, values):
+        step = self.graphwidth/float(self.samples-1)
         self.drawer.ctx.set_line_join(cairo.LINE_JOIN_ROUND)
         self.drawer.set_source_rgb(self.graph_color)
         self.drawer.ctx.set_line_width(self.line_width)
-        self.drawer.ctx.move_to(x, y)
-        current = x + step
+        current = x
         for val in values:
-            self.drawer.ctx.line_to(current, y-val + self.line_width/2)
+            self.drawer.ctx.line_to(current, y-val)
             current += step 
         self.drawer.ctx.stroke_preserve()
-        self.drawer.ctx.line_to(current, y + self.line_width/2)
-        self.drawer.ctx.line_to(x, y + self.line_width/2)
+        self.drawer.ctx.line_to(current, y + self.line_width/2.0)
+        self.drawer.ctx.line_to(x, y + self.line_width/2.0)
         self.drawer.set_source_rgb(self.fill_color)
         self.drawer.ctx.fill()
 
@@ -72,24 +77,22 @@ class _Graph(base._Widget):
             self.drawer.set_source_rgb(self.border_color)
             self.drawer.ctx.set_line_width(self.border_width)
             self.drawer.ctx.rectangle(
-                self.margin_x, self.margin_y,
-                self.graphwidth + self.border_width*2,
-                self.bar.height - self.margin_y*2,
+                self.margin_x + self.border_width/2.0, self.margin_y + self.border_width/2.0,
+                self.graphwidth + self.border_width,
+                self.bar.height - self.margin_y*2 - self.border_width,
             )
             self.drawer.ctx.stroke()
-        h = self.bar.height - self.margin_y*2 - self.border_width*2
-        x = self.margin_x+self.border_width
-        y = self.margin_y+self.border_width + h
-        step = self.graphwidth/float(self.samples)
+        x = self.margin_x + self.border_width
+        y = self.margin_y + self.graphheight + self.border_width
         k = 1.0/(self.maxvalue or 1)
-        scaled = [h * val * k for val in reversed(self.values)]
+        scaled = [self.graphheight * val * k for val in reversed(self.values)]
 
         if self.type == "box":
-            self.draw_box(x, y, step, scaled)
+            self.draw_box(x, y, scaled)
         elif self.type == "line":
-            self.draw_line(x, y, step, scaled)
+            self.draw_line(x, y, scaled)
         elif self.type == "linefill":
-            self.draw_linefill(x, y, step, scaled)
+            self.draw_linefill(x, y, scaled)
         else:
             raise ValueError("Unknown graph type: %s."%self.type)
 
