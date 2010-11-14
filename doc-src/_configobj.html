@@ -1,6 +1,11 @@
 
 ## @!c.path!@
 
+<!--(block img)-->
+<img src="@!urlTo(c.image)!@"/>
+<!--(end)-->
+$!img if c.image else ""!$
+
 $!c.classdoc!$
 
 <!--(block|pySyntax)-->

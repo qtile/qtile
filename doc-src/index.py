@@ -23,7 +23,8 @@ class Examples:
 
 
 class _Obj:
-    def __init__(self, o):
+    def __init__(self, o, image=None):
+        self.image = image
         parts = o.split(".")
         o = __import__(".".join(parts[:-1]), globals(), locals())
         for i in parts[1:]:

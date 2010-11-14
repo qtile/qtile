@@ -1,8 +1,7 @@
 
-Qtile is configured in Python. A script (~/.qtile/config.py by default) is
-evaluated, and a small set of configuration variables (groups,
-@!linkTo("keys.html")!@, @!linkTo("layouts.html")!@, and
-@!linkTo("screens.html")!@) are pulled from its global namespace. 
+Qtile is configured in Python. A script (~/.config/qtile/config.py by default) is
+evaluated, and a small set of configuration variables are pulled from its
+global namespace. 
 
 # Variables
 
@@ -19,6 +18,12 @@ and layouts.
 ## @!linkTo("layouts.html")!@
 
 A list layout objects, configuring the layouts you want to use.
+
+## __main__ 
+
+A function that executes after the window manager is initialized, but before
+groups, screens and other components are set up. There are few reasons to use
+this, other than testing and debugging.
 
 
 ## @!linkTo("mouse.html")!@
