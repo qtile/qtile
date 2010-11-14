@@ -657,6 +657,8 @@ class Qtile(command.CommandObject):
 
         self.conn.flush()
         self.conn.xsync()
+        self._prev = None # for logging
+        self._prev_count = 0
         self.xpoll()
         if self._exit:
             print >> sys.stderr, "Access denied: Another window manager running?"
@@ -880,7 +882,15 @@ class Qtile(command.CommandObject):
                 if ename.endswith("Event"):
                     ename = ename[:-5]
                 if self.debug:
-                    print >> sys.stderr, ename
+                    if ename != self._prev:
+                        print >> sys.stderr, '\n', ename,
+                        self._prev = ename
+                        self._prev_count = 0
+                    else:
+                        self._prev_count += 1
+                        # only print every 10th
+                        if self._prev_count % 20 == 0:
+                            print >> sys.stderr, '.',
                 if not e.__class__ in self.ignoreEvents:
                     for h in self.get_target_chain(ename, e):
                         self.log.add("Handling: %s"%ename)
