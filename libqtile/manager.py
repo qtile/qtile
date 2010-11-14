@@ -996,8 +996,8 @@ class Qtile(command.CommandObject):
             try:
                 del self._drag
             except AttributeError:
-                # Probably two events queued, before we released pointer
-                # we will ungrab pointer anyway, to be sure
+                # Command on drag start is failed to execute
+                # We will ungrab pointer anyway, to be sure
                 pass
             self.root.ungrab_pointer()
 
