@@ -7,6 +7,20 @@ import xcb.xproto, xcb.xinerama, xcb.randr, xcb.xcb
 from xcb.xproto import CW, WindowClass, EventMask
 import utils, xkeysyms, xatom
 
+
+
+# hack xcb.xproto for negative numbers
+def ConfigureWindow(self, window, value_mask, value_list):
+    import cStringIO
+    from struct import pack
+    from array import array
+    buf = cStringIO.StringIO()
+    buf.write(pack('xx2xIH2x', window, value_mask))
+    buf.write(str(buffer(array('i', value_list))))
+    return self.send_request(xcb.Request(buf.getvalue(), 12, True, False),
+                                 xcb.VoidCookie())
+xcb.xproto.xprotoExtension.ConfigureWindow = ConfigureWindow
+
 keysyms = xkeysyms.keysyms
 
 # These should be in xpyb:
