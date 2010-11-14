@@ -993,7 +993,12 @@ class Qtile(command.CommandObject):
             print >> sys.stderr, "Ignoring unknown button release: %s"%button_code
             return
         if isinstance(m, Drag):
-            del self._drag
+            try:
+                del self._drag
+            except AttributeError:
+                # Probably two events queued, before we released pointer
+                # we will ungrab pointer anyway, to be sure
+                pass
             self.root.ungrab_pointer()
 
     def handle_MotionNotify(self, e):
