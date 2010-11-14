@@ -134,7 +134,12 @@ class CPUGraph(_Graph):
         nval = self._getvalues()
         oval = self.oldvalues
         busy = (nval[0]+nval[1]+nval[2] - oval[0]-oval[1]-oval[2])
-        self.push(busy*100.0/(busy+nval[3]-oval[3]))
+        total = busy+nval[3]-oval[3]
+        if total:
+            # sometimes this value is zero for unknown reason (time shift?)
+            # we just skip the value, because it gives us no info about
+            # cpu load, if it's zero
+            self.push(busy*100.0/total)
         self.oldvalues = nval
 
 
