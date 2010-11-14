@@ -236,6 +236,25 @@ class uSingle(utils.QtileTests):
 class TestFloat(utils.QtileTests):
     config = TestConfig()
 
+    def test_toggle_max(self):
+        self.testXeyes()
+        self.c.layout.down()
+        assert self.c.window.info()['width'] == 798
+        assert self.c.window.info()['height'] == 578
+        assert self.c.window.info()['float_info'] == {'y': 0, 'x': 0, 'w': 150, 'h': 100}
+
+        self.c.window.toggle_maximize()
+        assert self.c.window.info()['floating'] == True
+        assert self.c.window.info()['maximized'] == True
+        assert self.c.window.info()['width'] == 800
+        assert self.c.window.info()['height'] == 580
+        
+        self.c.window.toggle_maximize()
+        assert self.c.window.info()['floating'] == False
+        assert self.c.window.info()['maximized'] == False
+        assert self.c.window.info()['width'] == 798
+        assert self.c.window.info()['height'] == 578
+
     def test_toggle_floating(self):
         self.testXeyes()
         self.testWindow("one")

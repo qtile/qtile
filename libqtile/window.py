@@ -104,6 +104,7 @@ class _Window(command.CommandObject):
         self.window_type = "normal"
         g = self.window.get_geometry()
         self._floating = False
+        self._maximized = False
         self._float_info = {
             'x': g.x, 'y': g.y,
             'w': g.width, 'h': g.height
@@ -174,7 +175,8 @@ class _Window(command.CommandObject):
             height = self.height,
             id = self.window.wid,
             floating = self._floating,
-            float_info = self._float_info
+            float_info = self._float_info,
+            maximized = self._maximized
         )
 
     def setState(self, val):
@@ -501,6 +503,17 @@ class Window(_Window):
         elif not self._floating and value:
             self.enablefloating()
 
+    @property
+    def maximized(self):
+        return self._maximized
+
+    @maximized.setter
+    def maximized(self, value):
+        if self._maximized and not value:
+            self.disablemaximize()
+        elif not self._maximized and value:
+            self.enablemaximize()
+
     def static(self, screen, x=None, y=None, width=None, height=None):
         """
             Makes this window a static window, attached to a Screen. If any of
@@ -518,7 +531,7 @@ class Window(_Window):
         hook.fire("client_managed", s)
         return s
 
-    def _reconfigure_floating(self):
+    def _reconfigure_floating(self, maximize=False):
         self.place(self.x,
                    self.y,
                    self.width,
@@ -530,6 +543,7 @@ class Window(_Window):
         self.notify()
         if not self._floating:
             self._floating = True
+            self._maximized = maximize
             if self.group: # may be not, if it's called from hook
                 self.group.mark_floating(self, True)
 
@@ -559,23 +573,45 @@ class Window(_Window):
     def getposition(self):
         return self.x, self.y
 
+    def togglemaximize(self):
+        if self.maximized:
+            self.disablemaximize()
+        else:
+            self.enablemaximize()
+
+    def enablemaximize(self):
+        screen = self.group.screen
+        self._enablefloating(screen.dx,
+                             screen.dy,
+                             screen.dwidth,
+                             screen.dheight,
+                             maximize=True)
+
+    def disablemaximize(self):
+        self.disablefloating()
+        
     def togglefloating(self):
         if self.floating:
             self.disablefloating()
         else:
             self._reconfigure_floating()
 
-    def enablefloating(self):
+    def _enablefloating(self, x, y, w, h, maximize=False):
         if not self._floating:
-            self.x = self._float_info['x']
-            self.y = self._float_info['y']
-            self.width = self._float_info['w']
-            self.height = self._float_info['h']
-            self._reconfigure_floating()
+            self.x = x
+            self.y = y
+            self.width = w
+            self.height = h
+            self._reconfigure_floating(maximize=maximize)
+
+    def enablefloating(self):
+        fi = self._float_info
+        self._enablefloating(fi['x'], fi['y'], fi['w'], fi['h'])
 
     def disablefloating(self):
         if self._floating:
             self._floating = False
+            self._maximized = False
             self._float_info['x'] = self.x
             self._float_info['y'] = self.y
             self._float_info['w'] = self.width
@@ -742,6 +778,15 @@ class Window(_Window):
 
     def cmd_enable_floating(self):
         self.enablefloating()
+
+    def cmd_toggle_maximize(self):
+        self.togglemaximize()
+
+    def cmd_disable_maximimize(self):
+        self.disablemaximize()
+
+    def cmd_enable_maximize(self):
+        self.enablemaximize()
 
     def cmd_bring_to_front(self):
         if self.floating:
