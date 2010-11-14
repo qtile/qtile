@@ -255,6 +255,25 @@ class TestFloat(utils.QtileTests):
         assert self.c.window.info()['width'] == 798
         assert self.c.window.info()['height'] == 578
 
+    def test_toggle_min(self):
+        self.testXeyes()
+        self.c.layout.down()
+        assert self.c.window.info()['width'] == 798
+        assert self.c.window.info()['height'] == 578
+        assert self.c.window.info()['float_info'] == {'y': 0, 'x': 0, 'w': 150, 'h': 100}
+
+        self.c.window.toggle_minimize()
+        assert self.c.window.info()['floating'] == True
+        assert self.c.window.info()['minimized'] == True
+        assert self.c.window.info()['width'] == 0
+        assert self.c.window.info()['height'] == 0
+        
+        self.c.window.toggle_minimize()
+        assert self.c.window.info()['floating'] == False
+        assert self.c.window.info()['minimized'] == False
+        assert self.c.window.info()['width'] == 798
+        assert self.c.window.info()['height'] == 578
+
     def test_toggle_floating(self):
         self.testXeyes()
         self.testWindow("one")

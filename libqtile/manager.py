@@ -292,7 +292,7 @@ class Group(command.CommandObject):
     def layoutAll(self):
         if self.screen and len(self.windows):
             with self.disableMask(xcb.xproto.EventMask.EnterWindow):
-                self.floating_layout.layout([x for x in self.windows if x.floating])
+                self.floating_layout.layout([x for x in self.windows if x.floating and not x.minimized])
                 self.layout.layout([x for x in self.windows if not x.floating])
                 if self.currentWindow:
                     self.currentWindow.focus(False)
