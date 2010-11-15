@@ -547,7 +547,10 @@ class Window(_Window):
         return s
 
     def _reconfigure_floating(self, maximize=False, minimize=False):
-        self.place(self.x,
+        if minimize:
+            self.hide()
+        else:
+            self.place(self.x,
                    self.y,
                    self.width,
                    self.height,
