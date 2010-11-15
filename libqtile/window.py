@@ -796,6 +796,10 @@ class Window(_Window):
         self.setposfloating(x, y)
 
     def cmd_set_size_floating(self, w, h):
+        if w < 0:
+            w = 0
+        if h < 0:
+            h = 0
         self.setsizefloating(w, h)
 
     def cmd_get_position(self):
