@@ -787,14 +787,12 @@ class Window(_Window):
         self.togroup(groupName)
 
     def cmd_move_floating(self, x, y):
-        print "MOVE", x , y
         self.movefloating(x, y)
 
     def cmd_resize_floating(self, x, y):
         self.resizefloating(x, y)
 
     def cmd_set_position_floating(self, x, y):
-        print "SET PS", x, y
         self.setposfloating(x, y)
 
     def cmd_set_size_floating(self, w, h):
