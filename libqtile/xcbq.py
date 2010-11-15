@@ -418,12 +418,9 @@ class Window:
         """
             http://standards.freedesktop.org/wm-spec/wm-spec-latest.html#id2551529
         """
-        r = self.get_property(
-                self.conn.atoms['_NET_WM_WINDOW_TYPE'],
-                xcb.xproto.GetPropertyType.Any
-        )
+        r = self.get_property('_NET_WM_WINDOW_TYPE', "ATOM", unpack='I')
         if r:
-            name = self.conn.atoms.get_name(r.value[0])
+            name = self.conn.atoms.get_name(r[0])
             return WindowTypes.get(name, name)
 
     def configure(self, **kwargs):
@@ -485,7 +482,12 @@ class Window:
             buf
         )
 
-    def get_property(self, prop, type=None):
+    def get_property(self, prop, type=None, unpack=None):
+        """
+            Return the contents of a property as a GetPropertyReply, or
+            a tuple of values if unpack is specified, which is a format
+            string to be used with the struct module.
+        """
         if type is None:
             if not prop in PropertyMap:
                 raise ValueError, "Must specify type for unknown property."
@@ -497,8 +499,11 @@ class Window:
             self.conn.atoms[type] if isinstance(type, basestring) else type,
             0, (2**32)-1
         ).reply()
+
         if not r.value_len:
             return None
+        elif unpack is not None:
+            return struct.unpack_from(unpack, r.value.buf())
         else:
             return r
 
