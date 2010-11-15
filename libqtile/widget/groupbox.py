@@ -100,7 +100,7 @@ class GroupBox(_GroupBase):
         base._Widget.__init__(self, bar.CALCULATED, **config)
 
     def click(self, x, y):
-        groupOffset = int((x-self.margin_x)/self.box_width())
+        groupOffset = int(x/self.box_width())
         if len(self.qtile.groups) - 1 >= groupOffset:
             self.bar.screen.setGroup(self.qtile.groups[groupOffset])
 
