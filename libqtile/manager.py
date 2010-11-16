@@ -389,7 +389,10 @@ class Group(command.CommandObject):
         #else: TODO: change focus
 
     def mark_floating(self, window, floating):
-        if floating:
+        if floating and window in self.floating_layout.clients:
+            # already floating
+            pass
+        elif floating:
             for i in self.layouts:
                 i.remove(window)
                 if window is self.currentWindow:
