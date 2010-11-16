@@ -641,6 +641,7 @@ class Window(_Window):
             self._float_state = new_float_state
             if self.group: # may be not, if it's called from hook
                 self.group.mark_floating(self, True)
+            hook.fire('float_change')
 
     def _enablefloating(self, x=None, y=None, w=None, h=None, new_float_state=FLOATING):
         if self._float_state != new_float_state:
@@ -667,7 +668,8 @@ class Window(_Window):
             self._float_info['w'] = self.width
             self._float_info['h'] = self.height
             self.group.mark_floating(self, False)
-
+            hook.fire('float_change')
+            
     def togroup(self, groupName):
         """
             Move window to a specified group.

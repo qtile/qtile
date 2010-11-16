@@ -19,10 +19,20 @@ class WindowName(base._TextBox):
         base._TextBox._configure(self, qtile, bar)
         hook.subscribe.window_name_change(self.update)
         hook.subscribe.focus_change(self.update)
+        hook.subscribe.float_change(self.update)
 
     def update(self):
         w = self.bar.screen.group.currentWindow
-        self.text = w.name if w else " "
+        state = ''
+        if w is None:
+            pass
+        elif w.maximized:
+            state = '[]'
+        elif w.minimized:
+            state = '_'
+        elif w.floating:
+            state = 'V'
+        self.text = state + w.name if w else " "
         self.bar.draw()
 
 

@@ -49,6 +49,12 @@ class Subscribe:
         """
         return self._subscribe("focus_change", func)
 
+    def float_change(self, func):
+        """
+            Called when a change in float state is made
+        """
+        return self._subscribe("float_change", func)
+
     def group_window_add(self, func):
         """
             Called when a new window is added to a group.
