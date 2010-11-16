@@ -27,12 +27,12 @@ class WindowName(base._TextBox):
         if w is None:
             pass
         elif w.maximized:
-            state = '[]'
+            state = '[] '
         elif w.minimized:
-            state = '_'
+            state = '_ '
         elif w.floating:
-            state = 'V'
-        self.text = state + w.name if w else " "
+            state = 'V '
+        self.text = "%s%s" % (state,  w.name if w else " ")
         self.bar.draw()
 
 
