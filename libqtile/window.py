@@ -570,20 +570,20 @@ class Window(_Window):
                     w=None, h=None, dw=0, dh=0):
         if x is not None:
             self.x = x
-        if dx:
-            self.x += dx
+        self.x += dx
+
         if y is not None:
             self.y = y
-        if dy:
-            self.y += dy
+        self.y += dy
+
         if w is not None:
             self.width = w
-        if dw:
-            self.width += dw
+        self.width += dw
+
         if h is not None:
             self.height = h
-        if dh:
-            self.height += dh
+        self.height += dh
+
         if self.height < 0:
             self.height = 0
         if self.width < 0:
