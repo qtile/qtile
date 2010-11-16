@@ -725,7 +725,7 @@ class Qtile(command.CommandObject):
         """
         if w.name:
             if self.widgetMap.has_key(w.name):
-                raise confreader.ConfigError("Duplicate widget name: %s"%w.name)
+                return
             self.widgetMap[w.name] = w
 
     @utils.LRUCache(200)
