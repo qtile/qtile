@@ -566,26 +566,30 @@ class Window(_Window):
             if self.group: # may be not, if it's called from hook
                 self.group.mark_floating(self, True)
 
-    def movefloating(self, x, y):
-        self.x += x
-        self.y += y
+    def tweak_float(self, x=None, y=None, dx=0, dy=0,
+                    w=None, h=None, dw=0, dh=0):
+        if x is not None:
+            self.x = x
+        if dx:
+            self.x += dx
+        if y is not None:
+            self.y = y
+        if dy:
+            self.y += dy
+        if w is not None:
+            self.width = w
+        if dw:
+            self.width += dw
+        if h is not None:
+            self.height = h
+        if dh:
+            self.height += dh
+        if self.height < 0:
+            self.height = 0
+        if self.width < 0:
+            self.width = 0
         self._reconfigure_floating()
-
-    def resizefloating(self, x, y):
-        self.width += x
-        self.height += y
-        self._reconfigure_floating()
-
-    def setsizefloating(self, w, h):
-        self.width = w
-        self.height = h
-        self._reconfigure_floating()
-
-    def setposfloating(self, x, y):
-        self.x = x #max(x, 0)
-        self.y = y #max(y, 0)
-        self._reconfigure_floating()
-
+        
     def getsize(self):
         return self.width, self.height
 
@@ -786,21 +790,29 @@ class Window(_Window):
         """
         self.togroup(groupName)
 
-    def cmd_move_floating(self, x, y):
-        self.movefloating(x, y)
+    def cmd_move_floating(self, dx, dy):
+        """
+            Move window by dx and dy
+        """
+        self.tweak_float(dx=dx, dy=dy)
 
-    def cmd_resize_floating(self, x, y):
-        self.resizefloating(x, y)
+    def cmd_resize_floating(self, dw, dh):
+        """
+            Add dw and dh to size of window
+        """
+        self.tweak_float(dw=dw, dh=dh)
 
     def cmd_set_position_floating(self, x, y):
-        self.setposfloating(x, y)
+        """
+            Move window to x and y
+        """
+        self.tweak_float(x=x, y=y)
 
     def cmd_set_size_floating(self, w, h):
-        if w < 0:
-            w = 0
-        if h < 0:
-            h = 0
-        self.setsizefloating(w, h)
+        """
+            Set window dimensions to w and h
+        """
+        self.tweak_float(w=w, h=h)
 
     def cmd_get_position(self):
         return self.getposition()

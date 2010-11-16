@@ -323,11 +323,8 @@ class Group(command.CommandObject):
             return
         if window and not window in self.windows:
             return
-        if not window:
-            self.currentWindow = None
-        else:
-            self.currentWindow = window
         if window:
+            self.currentWindow = window
             if window.floating:
                 for l in self.layouts:
                     l.blur()
@@ -336,6 +333,8 @@ class Group(command.CommandObject):
                 self.floating_layout.blur()
                 for l in self.layouts:
                     l.focus(window)
+        else:
+            self.currentWindow = None
         hook.fire("focus_change")
         self.layoutAll()
 
@@ -424,11 +423,7 @@ class Group(command.CommandObject):
         """
             Returns a dictionary of info for this object.
         """
-        return dict(
-                name=self.name,
-                screen = self.screen.index if self.screen else None,
-                windows = [i.window.wid for i in self.windows]
-               )
+        return self.info()
 
     def cmd_toscreen(self, screen=None):
         """

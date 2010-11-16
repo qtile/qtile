@@ -287,9 +287,47 @@ class TestFloat(utils.QtileTests):
         #change layout (should still be floating)
         self.c.nextlayout()
         assert self.c.window.info()['floating'] == True
+
+    def test_floating_focus(self):
+        # change to 2 col stack
+        self.c.nextlayout()
+        assert len(self.c.layout.info()["stacks"]) == 2
+        self.testXterm()
+        self.testXeyes()
+        #self.testWindow("one")
+        assert self.c.window.info()['width'] == 398
+        assert self.c.window.info()['height'] == 578
+        self.c.window.toggle_floating()
+        self.c.window.move_floating(10, 20)
+        assert self.c.window.info()['name'] == 'xeyes'
+        assert self.c.group.info()['focus'] == 'xeyes'
+        
+        # change focus to xterm
+        self.c.group.next_window()
+        assert self.c.window.info()['width'] == 398
+        assert self.c.window.info()['height'] == 578
+        assert self.c.window.info()['name'] != 'xeyes'
+        assert self.c.group.info()['focus'] != 'xeyes'
+
+        # focus back to xeyes
+        self.c.group.next_window()
+        assert self.c.window.info()['name'] == 'xeyes'
+
+        # now focusing via layout is borked (won't go to float)
+        self.c.layout.up()
+        assert self.c.window.info()['name'] != 'xeyes'
+        self.c.layout.up()
+        assert self.c.window.info()['name'] != 'xeyes'
+
+        # focus back to xeyes
+        self.c.group.next_window()
+        assert self.c.window.info()['name'] == 'xeyes'
+        
+        
+
     def test_move_floating(self):
         self.testXeyes()
-        self.testWindow("one")
+        #self.testWindow("one")
         assert self.c.window.info()['width'] == 798
         assert self.c.window.info()['height'] == 578
 
@@ -304,8 +342,28 @@ class TestFloat(utils.QtileTests):
         assert self.c.window.info()['x'] == 10
         assert self.c.window.info()['y'] == 20
 
+        self.c.window.set_size_floating(50, 90)
+        assert self.c.window.info()['width'] == 50
+        assert self.c.window.info()['height'] == 90
+        assert self.c.window.info()['x'] == 10
+        assert self.c.window.info()['y'] == 20
+
+        self.c.window.resize_floating(10, 20)
+        assert self.c.window.info()['width'] == 60
+        assert self.c.window.info()['height'] == 110
+        assert self.c.window.info()['x'] == 10
+        assert self.c.window.info()['y'] == 20
+
+        self.c.window.set_size_floating(10, 20)
+        assert self.c.window.info()['width'] == 10
+        assert self.c.window.info()['height'] == 20
+        assert self.c.window.info()['x'] == 10
+        assert self.c.window.info()['y'] == 20
+
         #change layout (x, y should be same)
         self.c.nextlayout()
+        assert self.c.window.info()['width'] == 10
+        assert self.c.window.info()['height'] == 20
         assert self.c.window.info()['x'] == 10
         assert self.c.window.info()['y'] == 20
 
