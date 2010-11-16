@@ -289,13 +289,19 @@ class Group(command.CommandObject):
         self.currentLayout = (self.currentLayout + 1)%(len(self.layouts))
         self.layoutAll()
 
-    def layoutAll(self):
+    def layoutAll(self, warp=False):
+        """
+        Layout the floating layer, then the current layout.
+
+        If we have have a currentWindow give it focus, optionally
+        moving warp to it.
+        """
         if self.screen and len(self.windows):
             with self.disableMask(xcb.xproto.EventMask.EnterWindow):
                 self.floating_layout.layout([x for x in self.windows if x.floating and not x.minimized])
                 self.layout.layout([x for x in self.windows if not x.floating])
                 if self.currentWindow:
-                    self.currentWindow.focus(False)
+                    self.currentWindow.focus(warp)
 
     def _setScreen(self, screen):
         self.screen = screen
@@ -318,6 +324,13 @@ class Group(command.CommandObject):
             i._resetMask()
 
     def focus(self, window, warp):
+        """
+            if window is in the group, blur any windows and call
+            ``focus`` on the layout (in case it wants to track
+            anything), fire focus_change hook and invoke layoutAll.
+
+            warp - warp pointer to window
+        """
         if hasattr(self.qtile, '_drag'):
             # don't change focus while dragging windows
             return
@@ -336,6 +349,7 @@ class Group(command.CommandObject):
         else:
             self.currentWindow = None
         hook.fire("focus_change")
+        # !!! note that warp isn't hooked up now
         self.layoutAll()
 
     def info(self):

@@ -301,6 +301,8 @@ class TestFloat(utils.QtileTests):
         self.c.window.move_floating(10, 20)
         assert self.c.window.info()['name'] == 'xeyes'
         assert self.c.group.info()['focus'] == 'xeyes'
+        # check what stack thinks is focus
+        assert [x['current'] for x in self.c.layout.info()['stacks']] == [0,0]
         
         # change focus to xterm
         self.c.group.next_window()
@@ -308,20 +310,29 @@ class TestFloat(utils.QtileTests):
         assert self.c.window.info()['height'] == 578
         assert self.c.window.info()['name'] != 'xeyes'
         assert self.c.group.info()['focus'] != 'xeyes'
+        # check what stack thinks is focus
+        # check what stack thinks is focus
+        assert [x['current'] for x in self.c.layout.info()['stacks']] == [0,0]
 
         # focus back to xeyes
         self.c.group.next_window()
         assert self.c.window.info()['name'] == 'xeyes'
+        # check what stack thinks is focus
+        assert [x['current'] for x in self.c.layout.info()['stacks']] == [0,0]
 
         # now focusing via layout is borked (won't go to float)
         self.c.layout.up()
         assert self.c.window.info()['name'] != 'xeyes'
         self.c.layout.up()
         assert self.c.window.info()['name'] != 'xeyes'
+        # check what stack thinks is focus
+        assert [x['current'] for x in self.c.layout.info()['stacks']] == [0,0]
 
         # focus back to xeyes
         self.c.group.next_window()
         assert self.c.window.info()['name'] == 'xeyes'
+        # check what stack thinks is focus
+        assert [x['current'] for x in self.c.layout.info()['stacks']] == [0,0]
         
         
 

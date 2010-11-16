@@ -402,3 +402,5 @@ class Stack(Layout):
         self.stacks[next].focus(win)
         self.group.layoutAll()
 
+    def cmd_info(self):
+        return self.info()
