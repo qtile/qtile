@@ -24,7 +24,6 @@ from xcb.xproto import EventMask, StackMode
 import xcb.xproto
 import command, utils
 import hook
-import xcbq
 
 
 # ICCM Constants
@@ -592,7 +591,7 @@ class Window(_Window):
 
     def toggleminimize(self):
         if self.minimized:
-            self.disableminimize()
+            self.disablefloating()
         else:
             self.enableminimize()
             
@@ -600,26 +599,27 @@ class Window(_Window):
         #self._enablefloating(0, 0, 0, 0, new_float_state=MINIMIZED)
         self._enablefloating(new_float_state=MINIMIZED)
         
-    def disableminimize(self):
-        self.disablefloating()
-    
-    def togglemaximize(self):
-        if self.maximized:
-            self.disablemaximize()
+    def togglemaximize(self, state=MAXIMIZED):
+        if self._float_state == state:
+            self.disablefloating()
         else:
-            self.enablemaximize()
+            self.enablemaximize(state)
 
-    def enablemaximize(self):
+    def enablemaximize(self, state=MAXIMIZED):
         screen = self.group.screen
-        self._enablefloating(screen.dx,
+        if state == MAXIMIZED:
+            self._enablefloating(screen.dx,
                              screen.dy,
                              screen.dwidth,
                              screen.dheight,
-                             new_float_state=MAXIMIZED)
+                             new_float_state=state)
+        elif state == FULLSCREEN:
+            self._enablefloating(screen.x,
+                                 screen.y,
+                                 screen.width,
+                                 screen.height,
+                                 new_float_state=state)
 
-    def disablemaximize(self):
-        self.disablefloating()
-        
     def togglefloating(self):
         if self.floating:
             self.disablefloating()
@@ -665,10 +665,6 @@ class Window(_Window):
     def disablefloating(self):
         if self._float_state != NOT_FLOATING:
             self._float_state = NOT_FLOATING
-            self._float_info['x'] = self.x
-            self._float_info['y'] = self.y
-            self._float_info['w'] = self.width
-            self._float_info['h'] = self.height
             self.group.mark_floating(self, False)
             hook.fire('float_change')
             
@@ -849,10 +845,19 @@ class Window(_Window):
         self.togglemaximize()
 
     def cmd_disable_maximimize(self):
-        self.disablemaximize()
+        self.disablefloating()
 
     def cmd_enable_maximize(self):
         self.enablemaximize()
+
+    def cmd_toggle_fullscreen(self):
+        self.togglemaximize(state=FULLSCREEN)
+
+    def cmd_enable_fullscreen(self):
+        self.enablemaximize(state=FULLSCREEN)
+
+    def cmd_disable_fullscreen(self):
+        self.disablefloating()
 
     def cmd_toggle_minimize(self):
         self.toggleminimize()
@@ -861,7 +866,7 @@ class Window(_Window):
         self.enableminimize()
 
     def cmd_disable_minimize(self):
-        self.disableminimize()
+        self.disablefloating()
 
     def cmd_bring_to_front(self):
         if self.floating:

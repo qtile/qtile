@@ -299,6 +299,39 @@ class TestFloat(utils.QtileTests):
         assert self.c.window.info()['y'] == 0
 
         
+    def test_toggle_fullscreen(self):
+        # change to 2 col stack
+        self.c.nextlayout()
+        assert len(self.c.layout.info()["stacks"]) == 2
+        self.testXterm()
+        self.testXeyes()
+
+        assert self.c.group.info()['focus'] == 'xeyes'
+        assert self.c.window.info()['width'] == 398
+        assert self.c.window.info()['height'] == 578
+        assert self.c.window.info()['float_info'] == {'y': 0, 'x': 0, 'w': 150, 'h': 100}
+        assert self.c.window.info()['x'] == 400
+        assert self.c.window.info()['y'] == 0
+
+        self.c.window.toggle_fullscreen()
+        assert self.c.window.info()['floating'] == True
+        assert self.c.window.info()['maximized'] == False
+        assert self.c.window.info()['fullscreen'] == True
+        assert self.c.window.info()['width'] == 800
+        assert self.c.window.info()['height'] == 600
+        assert self.c.window.info()['x'] == 0
+        assert self.c.window.info()['y'] == 0
+
+        self.c.window.toggle_fullscreen()
+        assert self.c.window.info()['floating'] == False
+        assert self.c.window.info()['maximized'] == False
+        assert self.c.window.info()['fullscreen'] == False
+        assert self.c.window.info()['width'] == 398
+        assert self.c.window.info()['height'] == 578
+        assert self.c.window.info()['x'] == 400
+        assert self.c.window.info()['y'] == 0
+
+        
     def test_toggle_max(self):
         # change to 2 col stack
         self.c.nextlayout()
@@ -365,7 +398,7 @@ class TestFloat(utils.QtileTests):
 
     def test_toggle_floating(self):
         self.testXeyes()
-        self.testWindow("one")
+        assert self.c.window.info()['floating'] == False
         self.c.window.toggle_floating()
         assert self.c.window.info()['floating'] == True
         self.c.window.toggle_floating()
