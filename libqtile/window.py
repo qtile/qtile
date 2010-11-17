@@ -525,7 +525,7 @@ class Window(_Window):
                 self.enablemaximize()
         else:
             if self._float_state == MAXIMIZED:
-                self.disablemaximize()
+                self.disablefloating()
 
     @property
     def minimized(self):
@@ -538,7 +538,7 @@ class Window(_Window):
                 self.enableminimize()
         else:
             if self._float_state == MINIMIZED:
-                self.disableminimize()
+                self.disablefloating()
 
 
     def static(self, screen, x=None, y=None, width=None, height=None):
