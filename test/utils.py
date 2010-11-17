@@ -135,6 +135,13 @@ class _QtileTruss(libpry.AutoTree):
                     ["scripts/window", self["display"], name]
                 )
 
+    def testXclock(self):
+        path = whereis("xclock")
+        return self._testProc(
+                    path,
+                    [path, "-display", self["display"]]
+                )
+
     def testXeyes(self):
         path = whereis("xeyes")
         return self._testProc(

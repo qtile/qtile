@@ -309,6 +309,13 @@ class _Window(command.CommandObject):
             Places the window at the specified location with the given size.
         """
         self.x, self.y, self.width, self.height = x, y, width, height
+        if self.x is None:
+            # get from geometry (when initial float this is a problem)
+            g = self.window.get_geometry()
+            self.x = g.x
+            self.y = g.y
+            self.width = g.width
+            self.height = g.height
         self.borderwidth, self.bordercolor = borderwidth, bordercolor
         kwarg = dict(
             x=x,
@@ -440,11 +447,6 @@ class Static(_Window):
 
     def handle_ConfigureRequest(self, e):
         cw = xcb.xproto.ConfigWindow
-        # x = self.conf_x
-        # y = self.conf_y
-        # width = self.conf_width
-        # height = self.conf_height
-
         if self.conf_x is None and e.value_mask & cw.X:
             self.x = e.x
         if self.conf_y is None and e.value_mask & cw.Y:

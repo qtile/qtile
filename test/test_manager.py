@@ -16,7 +16,7 @@ class TestConfig:
                 libqtile.layout.stack.Stack(2),
                 libqtile.layout.max.Max()
             ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.layout.floating.Floating(float_rules=[dict(wmclass="xclock")])
     keys = [
         libqtile.manager.Key(
             ["control"],
@@ -235,6 +235,27 @@ class uSingle(utils.QtileTests):
 
 class TestFloat(utils.QtileTests):
     config = TestConfig()
+
+    def test_default_float(self):
+        # change to 2 col stack
+        self.c.nextlayout()
+        assert len(self.c.layout.info()["stacks"]) == 2
+        self.testXclock()
+
+        assert self.c.group.info()['focus'] == 'xclock'
+        assert self.c.window.info()['width'] == 164
+        assert self.c.window.info()['height'] == 164
+        assert self.c.window.info()['x'] == 0
+        assert self.c.window.info()['y'] == 0
+        assert self.c.window.info()['floating'] == True
+
+        self.c.window.move_floating(10, 20)
+        assert self.c.window.info()['width'] == 164
+        assert self.c.window.info()['height'] == 164
+        assert self.c.window.info()['x'] == 10
+        assert self.c.window.info()['y'] == 20
+        assert self.c.window.info()['floating'] == True
+
 
     def test_float_max_min_combo(self):
         # change to 2 col stack

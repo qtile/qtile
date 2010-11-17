@@ -361,16 +361,20 @@ class Group(command.CommandObject):
             screen = self.screen.index if self.screen else None
         )
 
-    def add(self, window):
+    def add(self, win):
         hook.fire("group_window_add")
-        self.windows.add(window)
-        window.group = self
-        if window.floating:
-            self.floating_layout.add(window)
+        self.windows.add(win)
+        win.group = self
+        if self.floating_layout.match(win):
+            # !!! tell it to float, can't set floating because it's too early
+            # so just set the flag underneath
+            win._float_state = window.FLOATING
+        if win.floating:
+            self.floating_layout.add(win)
         else:
             for i in self.layouts:
-                i.add(window)
-        self.focus(window, True)
+                i.add(win)
+        self.focus(win, True)
 
     def remove(self, window):
         self.windows.remove(window)
