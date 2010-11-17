@@ -470,8 +470,8 @@ class TestFloat(utils.QtileTests):
         assert self.c.window.info()['floating'] == True
 
         self.c.window.move_floating(10, 20)
-        assert self.c.window.info()['width'] == 798
-        assert self.c.window.info()['height'] == 578
+        assert self.c.window.info()['width'] == 150
+        assert self.c.window.info()['height'] == 100
         assert self.c.window.info()['x'] == 10
         assert self.c.window.info()['y'] == 20
 

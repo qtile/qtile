@@ -624,7 +624,7 @@ class Window(_Window):
         if self.floating:
             self.disablefloating()
         else:
-            self._reconfigure_floating()
+            self.enablefloating()
             
     def _reconfigure_floating(self, new_float_state=FLOATING):
         if new_float_state == MINIMIZED:
