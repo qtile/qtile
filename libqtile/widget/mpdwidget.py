@@ -10,7 +10,7 @@
 
 from .. import hook, bar, manager
 import base
-from mpd import (MPDClient, CommandError)
+from mpd import MPDClient, CommandError
 from socket import error as SocketError
 
 class Mpd(base._TextBox):
@@ -18,12 +18,33 @@ class Mpd(base._TextBox):
         An mpd widget
     """
     defaults = manager.Defaults(
-        ("font", "Arial", "Clock font"),
-        ("fontsize", None, "Clock pixel size. Calculated if None."),
-        ("padding", None, "Clock padding. Calculated if None."),
+        ("font", "Arial", "Mpd widget font"),
+        ("fontsize", None, "Mpd widget pixel size. Calculated if None."),
+        ("padding", None, "Mpd widget padding. Calculated if None."),
         ("background", "000000", "Background colour"),
         ("foreground", "ffffff", "Foreground colour")
     )
+    def __init__(self, width=bar.CALCULATED, host='localhost', port=6600, password=False, **config):
+        """
+            - host: host to connect to
+            - port: port to connect to
+            - password: password to use
+            - width: A fixed width, or bar.CALCULATED to calculate the width
+            automatically (which is recommended).
+        """
+        self.host = host
+        self.port = port
+        self.password = password
+        base._TextBox.__init__(self, " ", width, **config)
+        self.client = MPDClient()
+        CON_ID = {'host': self.host, 'port': self.port}
+        if not self.mpdConnect(CON_ID):
+            print >> stderr, 'fail to connect MPD server.'
+        if self.password:
+            if not self.mpdAuth(self.password):
+                print >> stderr, 'Error trying to pass auth.'
+                client.disconnect()
+
     def mpdConnect(self, con_id):
         """
             Simple wrapper to connect MPD.
@@ -43,27 +64,6 @@ class Mpd(base._TextBox):
         except CommandError:
             return False
         return True
-
-    def __init__(self, width=bar.CALCULATED, host='localhost', port=6600, password=False, **config):
-        """
-	    - host: host to connect to
-	    - port: port to connect to
-	    - password: password to use
-            - width: A fixed width, or bar.CALCULATED to calculate the width
-            automatically (which is recommended).
-        """
-        self.host = host
-        self.port = port
-        self.password = password
-        base._TextBox.__init__(self, " ", width, **config)
-        self.client = MPDClient()
-        CON_ID = {'host':self.host, 'port':self.port}
-        if not self.mpdConnect(CON_ID):
-            print >> stderr, 'fail to connect MPD server.'
-        if self.password:
-            if not self.mpdAuth(self.password):
-                print >> stderr, 'Error trying to pass auth.'
-                client.disconnect()
 
     def _configure(self, qtile, bar):
         #TODO: don't do this if connection failed
