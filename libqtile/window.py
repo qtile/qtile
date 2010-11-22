@@ -695,18 +695,17 @@ class Window(_Window):
         """
         if not (wname or wmclass or role):
             raise TypeError, "Either a name, a wmclass or a role must be specified"
-
-        if wname and wname != self.name:
-            return False
+        if wname and wname == self.name:
+            return True
 
         cliclass = self.window.get_wm_class()
-        if wmclass and cliclass and not wmclass in cliclass:
-            return False
+        if wmclass and cliclass and wmclass in cliclass:
+            return True
 
         clirole = self.window.get_wm_window_role()
-        if role and clirole and role != clirole:
-            return False
-        return True
+        if role and clirole and role == clirole:
+            return True
+        return False
 
     def handle_EnterNotify(self, e):
         hook.fire("client_mouse_enter", self)
