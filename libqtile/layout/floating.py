@@ -1,6 +1,8 @@
 from base import Layout
 from .. import manager
 
+FLOAT_WM_TYPES = { 'utility':1,
+                   'splash':1}
 
 class Floating(Layout):
     """
@@ -40,6 +42,8 @@ class Floating(Layout):
         """
         Used to default float some windows.
         """
+        if win.window.get_wm_type() in FLOAT_WM_TYPES:
+            return True
         for rule_dict in self.float_rules:
             if win.match(**rule_dict):
                 return True
