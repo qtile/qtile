@@ -945,6 +945,31 @@ class Qtile(command.CommandObject):
             if x >= i.x and x <= i.x + i.width and y >= i.y and y <= i.y + i.height:
                 return i
 
+    def find_closest_screen(self, x, y):
+        """
+        If find_screen returns None, then this basically extends a
+        screen vertically and horizontally and see if x,y lies in the
+        band.
+
+        Useful when dragging a window out of a screen onto another but
+        having leftmost corner above viewport.
+        """
+        normal = self.find_screen(x, y)
+        if normal is not None:
+            return normal
+        x_match = []
+        y_match = []
+        for i in self.screens:
+            if x >= i.x and x <= i.x + i.width:
+                x_match.append(i)
+            if y >= i.y and y <= i.y + i.height:
+                y_match.append(i)
+        if len(x_match) == 1:
+            return x_match[0]
+        if len(y_match) == 1:
+            return y_match[0]
+        return None
+
     def handle_EnterNotify(self, e):
         if e.event in self.windowMap:
             return True

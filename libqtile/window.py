@@ -316,6 +316,14 @@ class _Window(command.CommandObject):
             self.width = g.width
             self.height = g.height
         self.borderwidth, self.bordercolor = borderwidth, bordercolor
+        # shift by screen.x (y) so they appear on the right screen
+        try:
+            if self.group:
+                if self.x < self.group.screen.x:
+                    self.x += self.group.screen.x
+                    x = self.x
+        except AttributeError, e:
+            pass
         kwarg = dict(
             x=x,
             y=y,
@@ -582,7 +590,7 @@ class Window(_Window):
         if self.width < 0:
             self.width = 0
 
-        screen = self.qtile.find_screen(self.x, self.y)
+        screen = self.qtile.find_closest_screen(self.x, self.y)
         if screen is not None and screen != self.group.screen:
             # change group
             self.group.remove(self)
