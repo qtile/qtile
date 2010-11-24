@@ -581,6 +581,15 @@ class Window(_Window):
             self.height = 0
         if self.width < 0:
             self.width = 0
+
+        screen = self.qtile.find_screen(self.x, self.y)
+        if screen is not None and screen != self.group.screen:
+            # change group
+            self.group.remove(self)
+            screen.group.add(self)
+            # togroup messes up focus here
+            # need to kick boxes to update
+
         self._reconfigure_floating()
         
     def getsize(self):
