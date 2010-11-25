@@ -73,7 +73,13 @@ class Mpd(base._TextBox):
     def update(self):
         song = self.client.currentsong()
         if song:
-            playing = "%s - %s" % (song['artist'], song['title'])
+            artist = ''
+            title = ''
+            if 'artist' in song:
+                artist = song['artist']
+            if 'title' in song:
+                title  = song['title']
+            playing = "%s - %s" % (artist, title)
         else:
             playing = ' - '
         if self.text != playing:
