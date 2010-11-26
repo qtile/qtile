@@ -4,10 +4,11 @@ import libqtile.hook
 class Match(object):
     ''' Match for dynamic groups
         it can match by title, class or role '''
-    def __init__(self, title=[], wm_class=[], role=[]):
+    def __init__(self, title=[], wm_class=[], role=[], wm_type=[]):
         self._rules = [('title', t) for t in title]
         self._rules += [('wm_class', w) for w in wm_class]
         self._rules += [('role', r) for r in  role]
+        self._rules += [('wm_type', r) for r in  wm_type]
 
     def compare(self, client):
         for _type, rule in self._rules:
@@ -18,6 +19,8 @@ class Match(object):
                 value = client.name
             elif _type == 'wm_class':
                 value = client.window.get_wm_class()[1]
+            elif _type == 'wm_type':
+                value = client.window.get_wm_type()
             else:
                 value = client.window.get_wm_window_role()
 
@@ -56,9 +59,13 @@ class DGroups(object):
         for app in self.apps:
             # Matching Rules
             if app['match'].compare(client):
-                group = app['group']
-                self.qtile.addGroup(group)
-                client.togroup(group)
+                if 'group' in app:
+                    group = app['group']
+                    self.qtile.addGroup(group)
+                    client.togroup(group)
+
+                if 'float' in app and app['float']:
+                    client.floating = True
                 return
 
         # Unmatched

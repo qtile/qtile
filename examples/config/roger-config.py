@@ -1,62 +1,71 @@
-from libqtile.manager import Key, Screen, Group
+from libqtile.manager import Key, Click, Drag, Screen, Group
 from libqtile.command import lazy
 from libqtile import layout, bar, widget
 
+mod = 'mod4'
 # The bindings below are for use with a Kinesis keyboard, and may not make
 # sense for standard keyboards.
 keys = [
     # First, a set of bindings to control the layouts
     Key(
-        ["mod4"], "k",
+        [mod], "k",
         lazy.layout.down()
     ),
     Key(
-        ["mod4"], "j",
+        [mod], "j",
         lazy.layout.up()
     ),
     Key(
-        ["mod4", "control"], "k",
+        [mod, "control"], "k",
         lazy.layout.shuffle_down()
     ),
     Key(
-        ["mod4", "control"], "j",
+        [mod, "control"], "j",
         lazy.layout.shuffle_up()
     ),
     Key(
-        ["mod4"], "space",
+        [mod], "space",
         lazy.layout.next()
     ),
     Key(
-        ["mod4", "shift"], "space",
+        [mod, "shift"], "space",
         lazy.layout.rotate()
     ),
     Key(
-        ["mod4", "shift"], "Return",
+        [mod, "shift"], "Return",
         lazy.layout.toggle_split()
     ),
 
-    Key(["mod4"], "h",      lazy.to_screen(1)),
-    Key(["mod4"], "l",      lazy.to_screen(0)),
+    Key([mod], "h",      lazy.to_screen(1)),
+    Key([mod], "l",      lazy.to_screen(0)),
     # ~/bin/x starts a terminal program
-    Key(["mod4"], "Tab",    lazy.nextlayout()),
-    Key(["mod4"], "w",      lazy.window.kill()),
-    Key(["mod4"], "F2",     lazy.spawn(
+    Key([mod], "Tab",    lazy.nextlayout()),
+    Key([mod], "w",      lazy.window.kill()),
+    Key([mod], "F2",     lazy.spawn(
         "dmenu_run -p run -nb '#202020' -nf '#ffffff' -fa 'Anonymous Pro-10'")),
 
     Key(
-        ["mod4", "shift"], "k",
+        [mod, "shift"], "k",
         lazy.spawn("amixer -c 0 -q set Master 2dB+")
     ),
     Key(
-        ["mod4", "shift"], "j",
+        [mod, "shift"], "j",
         lazy.spawn("amixer -c 0 -q set Master 2dB-")
     ),
     Key(
-        ["mod4"], "Left", lazy.prevgroup(),
+        [mod], "Left", lazy.prevgroup(),
     ),
     Key(
-        ["mod4"], "Right", lazy.nextgroup(),
+        [mod], "Right", lazy.nextgroup(),
     ),
+]
+
+mouse = [
+    Drag([mod], "Button1", lazy.window.set_position_floating(),
+        start=lazy.window.get_position()),
+    Drag([mod], "Button3", lazy.window.set_size_floating(),
+        start=lazy.window.get_size()),
+    Click([mod], "Button2", lazy.window.bring_to_front())
 ]
 
 # Next, we specify group names, and use the group name list to generate an appropriate
@@ -109,7 +118,9 @@ def main(qtile):
             'lol':  {},
            }
     apps = [
-            {'match': Match(wm_class=['Gimp']), 'group': 'design'},
+            {'match': Match(wm_class=['Gimp']),
+                'group': 'design', 'float': True},
             {'match': Match(title=[re.compile('T.*')]), 'group': 'h4x'},
+            {'match': Match(wm_type=['dialog']), 'float': True},
            ]
     dgroups = DGroups(qtile, groups, apps)
