@@ -681,6 +681,11 @@ class Window(_Window):
 
     def disablefloating(self):
         if self._float_state != NOT_FLOATING:
+            if self._float_state == FLOATING:
+                # store last size
+                fi = self._float_info
+                fi['w'] = self.width
+                fi['h'] = self.height
             self._float_state = NOT_FLOATING
             self.group.mark_floating(self, False)
             hook.fire('float_change')
