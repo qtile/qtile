@@ -7,11 +7,16 @@
 # TODO: a teardown hook so I can client.disconnect() ?
 # TODO: some kind of templating to make shown info configurable
 # TODO: best practice to handle failures? just write to stderr?
+from socket import error as SocketError
 
 from .. import hook, bar, manager
+
 import base
-from mpd import MPDClient, CommandError
-from socket import error as SocketError
+try:
+    from mpd import MPDClient, CommandError
+except ImportError, ie:
+    pass
+
 
 class Mpd(base._TextBox):
     """
