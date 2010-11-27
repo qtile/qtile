@@ -73,6 +73,34 @@ class BareConfig:
 
 class uMultiScreen(utils.QtileTests):
     config = TestConfig()
+
+    def test_screen_dim(self):
+        #self.c.restart()
+        self.testXclock()
+        assert self.c.screen.info()["index"] == 0
+        assert self.c.screen.info()["x"] == 0
+        assert self.c.screen.info()["width"] == 800
+        assert self.c.group.info()["name"] == 'a'
+        assert self.c.group.info()["focus"] == 'xclock'
+        
+        self.c.to_screen(1)
+        self.testXeyes()
+        assert self.c.screen.info()["index"] == 1
+        # !!! note that the following wrong!
+        # x offset would be 800 on real screens
+        assert self.c.screen.info()["x"] == 0
+        assert self.c.screen.info()["width"] == 640
+        assert self.c.group.info()["name"] == 'b'
+        assert self.c.group.info()["focus"] == 'xeyes'
+
+        self.c.to_screen(0)
+        assert self.c.screen.info()["index"] == 0
+        assert self.c.screen.info()["x"] == 0
+        assert self.c.screen.info()["width"] == 800
+        assert self.c.group.info()["name"] == 'a'
+        assert self.c.group.info()["focus"] == 'xclock'
+
+        
     def test_to_screen(self):
         assert self.c.screen.info()["index"] == 0
         self.c.to_screen(1)
@@ -256,7 +284,38 @@ class TestFloat(utils.QtileTests):
         assert self.c.window.info()['y'] == 20
         assert self.c.window.info()['floating'] == True
 
+    def test_last_float_size(self):
+        """
+        When you re-float something it would be preferable to have it
+        use the previous float size
+        """
+        self.testXeyes()
+        assert self.c.window.info()['name'] == 'xeyes'
+        assert self.c.window.info()['width'] == 798
+        assert self.c.window.info()['height'] == 578
+        self.c.window.toggle_floating()
+        assert self.c.window.info()['width'] == 150
+        assert self.c.window.info()['height'] == 100
+        # resize 
+        self.c.window.set_size_floating(50, 90)
+        assert self.c.window.info()['width'] == 50
+        assert self.c.window.info()['height'] == 90
+        self.c.window.toggle_floating()
+        assert self.c.window.info()['width'] == 798
+        assert self.c.window.info()['height'] == 578
+        # float again, should use last float size
+        self.c.window.toggle_floating()
+        assert self.c.window.info()['width'] == 50
+        assert self.c.window.info()['height'] == 90
 
+        # make sure it works through min and max
+        self.c.window.toggle_maximize()
+        self.c.window.toggle_minimize()
+        self.c.window.toggle_minimize()
+        self.c.window.toggle_floating()
+        assert self.c.window.info()['width'] == 50
+        assert self.c.window.info()['height'] == 90
+        
     def test_float_max_min_combo(self):
         # change to 2 col stack
         self.c.nextlayout()
@@ -500,7 +559,9 @@ class TestFloat(utils.QtileTests):
         assert self.c.window.info()['x'] == 10
         assert self.c.window.info()['y'] == 20
 
-
+        
+        
+        
 class uRandr(utils.QtileTests):
     config = TestConfig()
     def test_screens(self):

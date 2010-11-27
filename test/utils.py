@@ -5,6 +5,8 @@ import libqtile, libqtile.ipc, libqtile.hook
 
 WIDTH = 800
 HEIGHT = 600
+SECOND_WIDTH = 640
+SECOND_HEIGHT = 480
 DISPLAY = ":1"
 
 
@@ -32,7 +34,7 @@ class Xephyr(libpry.TestContainer):
         args = [
             "Xephyr", "-keybd", "evdev",
             "-screen", "%sx%s"%(WIDTH, HEIGHT),
-            "-screen", "%sx%s+800+0"%(WIDTH, HEIGHT),
+            "-screen", "%sx%s+800+0"%(SECOND_WIDTH, SECOND_HEIGHT),
             self["display"], "-ac"
         ]
         if self.xinerama:
