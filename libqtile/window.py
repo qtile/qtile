@@ -106,7 +106,7 @@ class _Window(command.CommandObject):
         self.borderwidth = 0
         self.bordercolor = None
         self.name = "<no name>"
-        self.state = "normal"
+        self.state = NormalState
         self.window_type = "normal"
         g = self.window.get_geometry()
         self._float_state = NOT_FLOATING
@@ -186,12 +186,14 @@ class _Window(command.CommandObject):
             fullscreen = self._float_state == FULLSCREEN
         )
 
-    def setState(self, val):
-        if val in self.POSSIBLE_STATES:
-            self.state = val
+    @property
+    def state(self):
+        return self.window.get_wm_state()[0]
 
-    def getState(self, val):
-        return self.state == val
+    @state.setter
+    def state(self, val):
+        if val in (WithdrawnState, NormalState, IconicState):
+            self.window.set_property('WM_STATE', [val, 0])
 
     def setOpacity(self, opacity):
         if 0.0 <= opacity <= 1.0:
@@ -281,10 +283,12 @@ class _Window(command.CommandObject):
         # We don't want to get the UnmapNotify for this unmap
         with self.disableMask(xcb.xproto.EventMask.StructureNotify):
             self.window.unmap()
+        self.state = WithdrawnState
         self.hidden = True
 
     def unhide(self):
         self.window.map()
+        self.state = NormalState
         self.hidden = False
 
     @contextlib.contextmanager

@@ -109,6 +109,8 @@ PropertyMap = {
     "_NET_WM_STRUT_PARTIAL": ("CARDINAL", 32),
     "_NET_WM_WINDOW_OPACITY": ("CARDINAL", 32),
     "_NET_WM_WINDOW_TYPE": ("CARDINAL", 32),
+    # ICCCM
+    "WM_STATE": ("WM_STATE", 32),
     # Qtile-specific properties
     "QTILE_INTERNAL": ("CARDINAL", 32)
 }
@@ -373,7 +375,7 @@ class Window:
     def get_wm_state(self):
         r = self.get_property("WM_STATE", xcb.xproto.GetPropertyType.Any)
         if r:
-            return list(r.value)
+            return struct.unpack('=LL', r.value.buf())
 
     def get_wm_class(self):
         """
