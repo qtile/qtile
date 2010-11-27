@@ -318,10 +318,12 @@ class Group(command.CommandObject):
         """
         Set this group's screen to new_screen
         """
-        if screen and self.screen != screen:
-            self.screen = screen
+        if screen == self.screen:
+            return
+        self.screen = screen
+        if self.screen:
             self.layoutAll()
-        elif screen is None:
+        else:
             self.hide()
 
     def hide(self):
