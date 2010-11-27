@@ -14,7 +14,7 @@ from .. import hook, bar, manager
 import base
 try:
     from mpd import MPDClient, CommandError
-except ImportError, ie:
+except ImportError:
     pass
 
 
