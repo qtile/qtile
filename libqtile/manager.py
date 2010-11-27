@@ -17,7 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import datetime, subprocess, sys, os, traceback
+import atexit, datetime, subprocess, sys, os, traceback
 import select, contextlib
 import xcbq
 import xcb.xproto, xcb.xinerama
@@ -1361,7 +1361,7 @@ class Qtile(command.CommandObject):
         """
             Executes the specified command, replacing the current process.
         """
-        # run atexit hooks here if you use it
+        atexit._run_exitfuncs()
         os.execv(cmd, args)
 
     def cmd_restart(self):

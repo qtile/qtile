@@ -3,8 +3,8 @@ import cairo
 import base
 
 import xcb
-from xcb.xproto import EventMask
-import struct
+from xcb.xproto import EventMask, SetMode
+import atexit, struct
 
 
 class Icon(window._Window):
@@ -55,6 +55,11 @@ class TrayWindow(window._Window):
             icon = Icon(w, self.qtile, self.systray)
             self.systray.icons[task] = icon
             self.qtile.windowMap[task] = icon
+
+            # add icon window to the save-set, so it gets reparented
+            # to the root window when qtile dies
+            conn.core.ChangeSaveSet(SetMode.Insert, task)
+
             conn.core.ReparentWindow(task, parent.wid, 0, 0)
             conn.flush()
             w.map()
@@ -71,6 +76,7 @@ class Systray(base._Widget):
             )
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
+        self.traywin = None
         self.icons = {}
 
     def click(self, x, y):
@@ -86,8 +92,8 @@ class Systray(base._Widget):
         self.bar = bar
         atoms = qtile.conn.atoms
         win = qtile.conn.create_window(-1, -1, 1, 1)
-        intwin = TrayWindow(win, self.qtile, self)
-        qtile.windowMap[win.wid] = intwin
+        self.traywin = TrayWindow(win, self.qtile, self)
+        qtile.windowMap[win.wid] = self.traywin
         qtile.conn.conn.core.SetSelectionOwner(
             win.wid,
             atoms['_NET_SYSTEM_TRAY_S0'],
@@ -100,6 +106,9 @@ class Systray(base._Widget):
 
         win.send_event(event)
 
+        # cleanup before exit
+        atexit.register(self.cleanup)
+
     def draw(self):
         for pos, icon in enumerate(self.icons.values()):
             icon.place(
@@ -110,3 +119,12 @@ class Systray(base._Widget):
                     None
             )
             
+
+    def cleanup(self):
+        atoms = self.qtile.conn.atoms
+        self.qtile.conn.conn.core.SetSelectionOwner(
+            0,
+            atoms['_NET_SYSTEM_TRAY_S0'],
+            xcb.CurrentTime,
+        )
+        self.traywin.hide()
