@@ -695,7 +695,13 @@ class Window(_Window):
         if self.group is not group:
             if self.group:
                 self.hide()
+                if self.group.screen:
+                    # for floats remove window offset
+                    self.x -= self.group.screen.x
                 self.group.remove(self)
+
+            if group.screen:
+                self.x += group.screen.x
             group.add(self)
 
     def match(self, wname=None, wmclass=None, role=None):

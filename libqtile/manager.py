@@ -132,7 +132,15 @@ class Screen(command.CommandObject):
         """
         self.top, self.bottom = top, bottom
         self.left, self.right = left, right
-
+        self.qtile = None
+        self.index = None
+        self.x = None # x position of upper left corner can be > 0
+                      # if one screen is "right" of the other
+        self.y = None
+        self.width = None
+        self.height = None
+        
+        
     def _configure(self, qtile, index, x, y, width, height, group):
         self.qtile = qtile
         self.index, self.x, self.y = index, x, y,
@@ -175,21 +183,24 @@ class Screen(command.CommandObject):
             val -= self.bottom.size
         return val
 
-    def setGroup(self, group):
-        if group.screen == self:
+    def setGroup(self, new_group):
+        """
+        Put group on this screen
+        """
+        if new_group.screen == self:
             return
-        elif group.screen:
-            tmpg = self.group
-            tmps = group.screen
-            tmps.group = tmpg
-            tmpg._setScreen(tmps)
-            self.group = group
-            group._setScreen(self)
+        elif new_group.screen:
+            tmp_g = self.group
+            tmp_s = new_group.screen
+            tmp_s.group = tmp_g
+            tmp_g._setScreen(tmp_s)
+            self.group = new_group
+            new_group._setScreen(self)
         else:
             if self.group is not None:
                 self.group._setScreen(None)
-            self.group = group
-            group._setScreen(self)
+            self.group = new_group
+            new_group._setScreen(self)
         hook.fire("setgroup")
         hook.fire("focus_change")
 
@@ -298,16 +309,19 @@ class Group(command.CommandObject):
         """
         if self.screen and len(self.windows):
             with self.disableMask(xcb.xproto.EventMask.EnterWindow):
-                self.floating_layout.layout([x for x in self.windows if x.floating and not x.minimized])
                 self.layout.layout([x for x in self.windows if not x.floating])
+                self.floating_layout.layout([x for x in self.windows if x.floating and not x.minimized])
                 if self.currentWindow:
                     self.currentWindow.focus(warp)
 
     def _setScreen(self, screen):
-        self.screen = screen
-        if self.screen:
+        """
+        Set this group's screen to new_screen
+        """
+        if screen and self.screen != screen:
+            self.screen = screen
             self.layoutAll()
-        else:
+        elif screen is None:
             self.hide()
 
     def hide(self):
@@ -453,16 +467,10 @@ class Group(command.CommandObject):
             - screen: Screen offset. If not specified, we assume the current screen.
 
             Pull group to the current screen:
-
-
                 toscreen()
 
-
             Pull group to screen 0:
-
-
                 toscreen(0)
-
         """
         if not screen:
             screen = self.qtile.currentScreen
@@ -941,9 +949,13 @@ class Qtile(command.CommandObject):
         """
             Find a screen based on the x and y offset.
         """
+        result = []
         for i in self.screens:
             if x >= i.x and x <= i.x + i.width and y >= i.y and y <= i.y + i.height:
-                return i
+                result.append(i)
+        if len(result) == 1:
+            return result[0]
+        return None
 
     def find_closest_screen(self, x, y):
         """
