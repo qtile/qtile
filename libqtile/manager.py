@@ -230,7 +230,7 @@ class Screen(command.CommandObject):
 
     def cmd_info(self):
         """
-            Returns a dictionary of info for this object.
+            Returns a dictionary of info for this screen.
         """
         return dict(
             index=self.index,
@@ -442,7 +442,7 @@ class Group(command.CommandObject):
 
     def cmd_info(self):
         """
-            Returns a dictionary of info for this object.
+            Returns a dictionary of info for this group.
         """
         return self.info()
 
@@ -1397,7 +1397,7 @@ class Qtile(command.CommandObject):
 
     def cmd_to_screen(self, n):
         """
-            Warp to screen n, where n is a 0-based screen number.
+            Warp focus to screen n, where n is a 0-based screen number.
 
             Example:
 
