@@ -163,11 +163,10 @@ class AtomCache:
         # We can change the pre-loads not to wait for a return
         for name in WindowTypes.keys():
             self.insert(name=name)
-        for i in dir(xcb.xcb):
-            if i.startswith("XA_"):
-                self.insert(name=i[3:], atom=getattr(xcb.xcb, i))
-        for k, v in xatom.atoms.items():
-            self.insert(k, v)
+
+        for i in dir(xcb.xproto.Atom):
+            if not i.startswith("_"):
+                self.insert(name=i, atom=getattr(xcb.xproto.Atom, i))
 
     def insert(self, name = None, atom = None):
         assert name or atom
@@ -176,7 +175,7 @@ class AtomCache:
             atom = c.reply().atom
         if name is None:
             c = self.conn.conn.core.GetAtomName(atom)
-            name = "".join([chr(i) for i in c.reply().name])
+            name = str(c.reply().name.buf())
         self.atoms[name] = atom
         self.reverse[atom] = name
 
