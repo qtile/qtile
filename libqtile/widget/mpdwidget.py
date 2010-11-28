@@ -43,7 +43,7 @@ class Mpd(base._TextBox):
         if self.password:
             if not self.mpdAuth(self.password):
                 print >> stderr, 'Error trying to pass auth.'
-                client.disconnect()
+                self.client.disconnect()
 
     def mpdConnect(self, con_id):
         """
