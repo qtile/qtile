@@ -110,6 +110,7 @@ class Systray(base._Widget):
         atexit.register(self.cleanup)
 
     def draw(self):
+        self.drawer.draw(self.offset, self.calculate_width())
         for pos, icon in enumerate(self.icons.values()):
             icon.place(
                     self.offset + (self.icon_size + self.padding)*pos + self.padding,
@@ -118,7 +119,6 @@ class Systray(base._Widget):
                     0,
                     None
             )
-            
 
     def cleanup(self):
         atoms = self.qtile.conn.atoms
