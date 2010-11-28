@@ -283,7 +283,6 @@ class _Window(command.CommandObject):
         # We don't want to get the UnmapNotify for this unmap
         with self.disableMask(xcb.xproto.EventMask.StructureNotify):
             self.window.unmap()
-        self.state = WithdrawnState
         self.hidden = True
 
     def unhide(self):
@@ -649,6 +648,7 @@ class Window(_Window):
             
     def _reconfigure_floating(self, new_float_state=FLOATING):
         if new_float_state == MINIMIZED:
+            self.state = IconicState
             self.hide()
         else:
             self.place(self.x,
