@@ -18,13 +18,15 @@ class Match(object):
             if _type == 'title':
                 value = client.name
             elif _type == 'wm_class':
-                value = client.window.get_wm_class()[1]
+                value = client.window.get_wm_class()
+                if value:
+                    value = value[1]
             elif _type == 'wm_type':
                 value = client.window.get_wm_type()
             else:
                 value = client.window.get_wm_window_role()
 
-            if match_func(value):
+            if value and match_func(value):
                 return True
         return False
 
@@ -75,8 +77,13 @@ class DGroups(object):
 
             wm_class = client.window.get_wm_class()
 
-            self.qtile.addGroup(wm_class[1])
-            client.togroup(wm_class[1])
+            if wm_class:
+                group_name = wm_class[1]
+            else:
+                group_name = client.name
+
+            self.qtile.addGroup(group_name)
+            client.togroup(group_name)
 
     def _del(self, client):
         group = client.group
@@ -85,4 +92,6 @@ class DGroups(object):
         if not (group.name in self.groups and\
            self.groups[group.name].get('persist')) and\
                                len(group.windows) == 1:
+
+            client.group.remove(client)
             self.qtile.delGroup(group.name)
