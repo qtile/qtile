@@ -3,7 +3,7 @@ import cairo
 import base
 
 import xcb
-from xcb.xproto import EventMask, SetMode
+from xcb.xproto import EventMask
 import atexit, struct
 
 
@@ -56,9 +56,9 @@ class TrayWindow(window._Window):
             self.systray.icons[task] = icon
             self.qtile.windowMap[task] = icon
 
-            # add icon window to the save-set, so it gets reparented
-            # to the root window when qtile dies
-            conn.core.ChangeSaveSet(SetMode.Insert, task)
+            # creating xcbq.Window adds the window to the save-set
+            # it's not needed here anymore, but i'll keep it as a reminder
+            #conn.core.ChangeSaveSet(SetMode.Insert, task)
 
             conn.core.ReparentWindow(task, parent.wid, 0, 0)
             conn.flush()

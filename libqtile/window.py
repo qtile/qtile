@@ -20,7 +20,7 @@
 
 import sys, struct, contextlib
 import xcb.xcb
-from xcb.xproto import EventMask, StackMode
+from xcb.xproto import EventMask, StackMode, SetMode
 import xcb.xproto
 import command, utils
 import hook
@@ -500,6 +500,10 @@ class Window(_Window):
             group.add(self)
             if group != qtile.currentScreen.group:
                 self.hide()
+
+        # add window to the save-set, so it gets mapped (and reparented
+        # to root in case of systray icons) when qtile dies
+        qtile.conn.conn.core.ChangeSaveSet(SetMode.Insert, self.window.wid)
 
     @property
     def group(self):
