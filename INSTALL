@@ -1,10 +1,13 @@
-
 Dependencies
 ------------
 
-Qtile depends on recent repository checkouts of xpyb and pycairo. More
-instructions on building and installing these can be found in the documentation
-on www.qtile.org.
+
+Qtile has a set of dependencies that currently need to be installed from fresh
+repository checkouts. This will become much simpler once the new features we
+depend on make it into distros, but until then, please follow the instructions
+in the Qtile documentation:
+
+    http://qtile.org/doc-current/index.html
 
 
 Installation
