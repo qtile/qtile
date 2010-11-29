@@ -8,8 +8,5 @@ from sep import Sep
 from prompt import Prompt
 from systray import Systray
 from graph import *
+from mpdwidget import Mpd
 
-try:
-    from mpdwidget import Mpd
-except ImportError:
-    pass
