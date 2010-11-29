@@ -53,10 +53,10 @@ keys = [
         lazy.spawn("amixer -c 0 -q set Master 2dB-")
     ),
     Key(
-        [mod], "Left", lazy.prevgroup(),
+        [mod], "Left", lazy.group.prevgroup(),
     ),
     Key(
-        [mod], "Right", lazy.nextgroup(),
+        [mod], "Right", lazy.group.nextgroup(),
     ),
 ]
 
@@ -71,8 +71,8 @@ mouse = [
 # Next, we specify group names, and use the group name list to generate an appropriate
 # set of bindings for group switching.
 groups = [
-    Group("1"),
-    Group("2"),
+#    Group("1"),
+#    Group("2"),
 ]
 for i in groups:
     keys.append(
@@ -91,19 +91,30 @@ layouts = [
 ]
 
 
-# I have two screens, each of which has a Bar at the bottom. Each Bar has two
-# simple widgets - a GroupBox, and a WindowName.
 screens = [
     Screen(
         top = bar.Bar(
                     [
-                        widget.GroupBox(),
-                        widget.WindowName(),
-                        #widget.Spacer(),
+                        widget.GroupBox(borderwidth=2,
+                            fontsize=14,
+                            padding=1, margin_x=1, margin_y=1),
+                        widget.Sep(),
+                        widget.WindowName(
+                            fontsize=14, margin_x=6),
+                        widget.Sep(),
+                        widget.CPUGraph(width=50, graph_color='0066FF', 
+                                                  fill_color='001188'),
+                        widget.MemoryGraph(width=50, graph_color='22FF44',
+                                                     fill_color='11AA11'),
+                        widget.SwapGraph(width=50, graph_color='FF2020',
+                                                   fill_color='C01010'),
+                        widget.Sep(),
                         widget.Systray(),
-                        widget.Clock(),
+                        widget.Sep(),
+                        widget.Clock('%H:%M %d/%m/%y',
+                            fontsize=18, padding=6),
                     ],
-                    20,
+                    24
                 ),
     ),
 ]
@@ -111,16 +122,22 @@ screens = [
 
 def main(qtile):
     from dgroups import DGroups, Match
-    import re
+
     groups = {
-            'design':  {'init': True, 'persist': True},
-            'h4x':  {'init': True, 'spawn': 'Terminal', 'exclusive': True},
-            'lol':  {},
+            'h4x':  {'init': True, 'persist': True, 'spawn': 'guake'},
+            'design': {},
+            'emesene': {},
+            'gajim': {},
            }
     apps = [
             {'match': Match(wm_class=['Gimp']),
                 'group': 'design', 'float': True},
-            {'match': Match(title=[re.compile('T.*')]), 'group': 'h4x'},
-            {'match': Match(wm_type=['dialog']), 'float': True},
+            {'match': Match(wm_class=['emesene']),
+                'group': 'emesene'},
+            {'match': Match(wm_class=['Gajim.py']),
+                'group': 'gajim'},
+            {'match': Match(wm_class=['Guake.py', 'MPlayer'],
+                wm_type=['dialog']), 'float': True},
+            {'match': Match(wm_class=['Wine']), 'float': True, 'group': 'wine'},
            ]
     dgroups = DGroups(qtile, groups, apps)

@@ -5,7 +5,7 @@
 import struct
 import xcb.xproto, xcb.xinerama, xcb.randr, xcb.xcb
 from xcb.xproto import CW, WindowClass, EventMask
-import utils, xkeysyms, xatom
+import utils, xkeysyms
 
 
 
@@ -109,6 +109,8 @@ PropertyMap = {
     "_NET_WM_STRUT_PARTIAL": ("CARDINAL", 32),
     "_NET_WM_WINDOW_OPACITY": ("CARDINAL", 32),
     "_NET_WM_WINDOW_TYPE": ("CARDINAL", 32),
+    # ICCCM
+    "WM_STATE": ("WM_STATE", 32),
     # Qtile-specific properties
     "QTILE_INTERNAL": ("CARDINAL", 32)
 }
@@ -163,11 +165,10 @@ class AtomCache:
         # We can change the pre-loads not to wait for a return
         for name in WindowTypes.keys():
             self.insert(name=name)
-        for i in dir(xcb.xcb):
-            if i.startswith("XA_"):
-                self.insert(name=i[3:], atom=getattr(xcb.xcb, i))
-        for k, v in xatom.atoms.items():
-            self.insert(k, v)
+
+        for i in dir(xcb.xproto.Atom):
+            if not i.startswith("_"):
+                self.insert(name=i, atom=getattr(xcb.xproto.Atom, i))
 
     def insert(self, name = None, atom = None):
         assert name or atom
@@ -176,7 +177,7 @@ class AtomCache:
             atom = c.reply().atom
         if name is None:
             c = self.conn.conn.core.GetAtomName(atom)
-            name = "".join([chr(i) for i in c.reply().name])
+            name = str(c.reply().name.buf())
         self.atoms[name] = atom
         self.reverse[atom] = name
 
@@ -374,7 +375,7 @@ class Window:
     def get_wm_state(self):
         r = self.get_property("WM_STATE", xcb.xproto.GetPropertyType.Any)
         if r:
-            return list(r.value)
+            return struct.unpack('=LL', r.value.buf())
 
     def get_wm_class(self):
         """
@@ -455,15 +456,15 @@ class Window:
         for i in value:
             # We'll expand these conversions as we need them
             if format == 32:
-                buf.append(struct.pack("L", i))
+                buf.append(struct.pack("=L", i))
             elif format == 16:
-                buf.append(struct.pack("H", i))
+                buf.append(struct.pack("=H", i))
             elif format == 8:
                 if utils.isStringLike(i):
                     # FIXME: Unicode -> bytes conversion needed here
                     buf.append(i)
                 else:
-                    buf.append(struct.pack("B", i))
+                    buf.append(struct.pack("=B", i))
         buf = "".join(buf)
 
         length = len(buf)/(format/8)

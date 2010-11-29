@@ -7,7 +7,17 @@ WIDTH = 800
 HEIGHT = 600
 SECOND_WIDTH = 640
 SECOND_HEIGHT = 480
-DISPLAY = ":1"
+
+def _find_display():
+    """
+        Returns the next available display
+    """
+    display = 1
+    while os.path.exists("/tmp/.X%s-lock" % display):
+        display += 1
+    return display
+
+DISPLAY = ":%s" % _find_display()
 
 
 def whereis(program):

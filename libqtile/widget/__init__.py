@@ -4,8 +4,12 @@ from windowname import WindowName
 from textbox import TextBox
 from spacer import Spacer
 from clock import Clock
-from mpdwidget import Mpd
 from sep import Sep
 from prompt import Prompt
 from systray import Systray
 from graph import *
+
+try:
+    from mpdwidget import Mpd
+except ImportError:
+    pass

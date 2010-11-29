@@ -20,7 +20,7 @@
 
 import sys, struct, contextlib
 import xcb.xcb
-from xcb.xproto import EventMask, StackMode
+from xcb.xproto import EventMask, StackMode, SetMode
 import xcb.xproto
 import command, utils
 import hook
@@ -106,7 +106,7 @@ class _Window(command.CommandObject):
         self.borderwidth = 0
         self.bordercolor = None
         self.name = "<no name>"
-        self.state = "normal"
+        self.state = NormalState
         self.window_type = "normal"
         g = self.window.get_geometry()
         self._float_state = NOT_FLOATING
@@ -186,12 +186,14 @@ class _Window(command.CommandObject):
             fullscreen = self._float_state == FULLSCREEN
         )
 
-    def setState(self, val):
-        if val in self.POSSIBLE_STATES:
-            self.state = val
+    @property
+    def state(self):
+        return self.window.get_wm_state()[0]
 
-    def getState(self, val):
-        return self.state == val
+    @state.setter
+    def state(self, val):
+        if val in (WithdrawnState, NormalState, IconicState):
+            self.window.set_property('WM_STATE', [val, 0])
 
     def setOpacity(self, opacity):
         if 0.0 <= opacity <= 1.0:
@@ -285,6 +287,7 @@ class _Window(command.CommandObject):
 
     def unhide(self):
         self.window.map()
+        self.state = NormalState
         self.hidden = False
 
     @contextlib.contextmanager
@@ -498,6 +501,9 @@ class Window(_Window):
             if group != qtile.currentScreen.group:
                 self.hide()
 
+        # add window to the save-set, so it gets mapped when qtile dies
+        qtile.conn.conn.core.ChangeSaveSet(SetMode.Insert, self.window.wid)
+
     @property
     def group(self):
         return self._group
@@ -645,6 +651,7 @@ class Window(_Window):
             
     def _reconfigure_floating(self, new_float_state=FLOATING):
         if new_float_state == MINIMIZED:
+            self.state = IconicState
             self.hide()
         else:
             self.place(self.x,
