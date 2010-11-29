@@ -770,7 +770,7 @@ class Qtile(command.CommandObject):
         c = self.windowMap.get(window)
         if c:
             hook.fire("client_killed", c)
-            if hasattr(c, "group"):
+            if getattr(c, "group", None):
                 c.group.remove(c)
             del self.windowMap[window]
 
