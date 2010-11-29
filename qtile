@@ -34,6 +34,13 @@ def main():
                         help='Use specified configuration file, "default" will load the system default config.'
                     )
     parser.add_option(
+                        "-f", "--fallback",
+                        action="store", type="string",
+                        default=None,
+                        dest="fallback",
+                        help='Use specified fallback configuration file, "default" will load the system default config as fallback.'
+                    )
+    parser.add_option(
                         "-d", "--debug",
                         action="store_true", default=False,
                         dest="debug",
@@ -50,9 +57,12 @@ def main():
     try:
         c = confreader.File(options.configfile)
     except confreader.ConfigError, v:
-        print >> sys.stderr, "Config error: %s" % v.message
-        print >> sys.stderr, "Falling back to default config"
-        c = confreader.File("default")
+        if options.fallback:
+            print >> sys.stderr, "Config error: %s" % v.message
+            print >> sys.stderr, "Falling back to config file: %s" % options.fallback
+            c = confreader.File(options.fallback)
+        else:
+            raise
     q = manager.Qtile(c, fname=options.socket)
     q.debug = options.debug
     q.loop()

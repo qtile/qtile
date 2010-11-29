@@ -5,7 +5,7 @@
 import struct
 import xcb.xproto, xcb.xinerama, xcb.randr, xcb.xcb
 from xcb.xproto import CW, WindowClass, EventMask
-import utils, xkeysyms, xatom
+import utils, xkeysyms
 
 
 

@@ -20,7 +20,7 @@
 
 import sys, struct, contextlib
 import xcb.xcb
-from xcb.xproto import EventMask, StackMode
+from xcb.xproto import EventMask, StackMode, SetMode
 import xcb.xproto
 import command, utils
 import hook
@@ -283,7 +283,6 @@ class _Window(command.CommandObject):
         # We don't want to get the UnmapNotify for this unmap
         with self.disableMask(xcb.xproto.EventMask.StructureNotify):
             self.window.unmap()
-        self.state = WithdrawnState
         self.hidden = True
 
     def unhide(self):
@@ -502,6 +501,9 @@ class Window(_Window):
             if group != qtile.currentScreen.group:
                 self.hide()
 
+        # add window to the save-set, so it gets mapped when qtile dies
+        qtile.conn.conn.core.ChangeSaveSet(SetMode.Insert, self.window.wid)
+
     @property
     def group(self):
         return self._group
@@ -649,6 +651,7 @@ class Window(_Window):
             
     def _reconfigure_floating(self, new_float_state=FLOATING):
         if new_float_state == MINIMIZED:
+            self.state = IconicState
             self.hide()
         else:
             self.place(self.x,
