@@ -300,6 +300,10 @@ class Group(command.CommandObject):
         self.currentLayout = (self.currentLayout + 1)%(len(self.layouts))
         self.layoutAll()
 
+    def prevLayout(self):
+        self.currentLayout = (self.currentLayout - 1)%(len(self.layouts))
+        self.layoutAll()
+
     def layoutAll(self, warp=False):
         """
         Layout the floating layer, then the current layout.
@@ -1303,6 +1307,20 @@ class Qtile(command.CommandObject):
         else:
             group = self.currentGroup
         group.nextLayout()
+
+    def cmd_prevlayout(self, group=None):
+        """
+            Switch to the prev layout.
+
+            :group Group name. If not specified, the current group is assumed.
+        """
+        if group:
+            group = self.groupMap.get(group)
+        else:
+            group = self.currentGroup
+        group.prevLayout()
+
+
 
     def cmd_report(self, msg="None", path="~/qtile_crashreport"):
         """
