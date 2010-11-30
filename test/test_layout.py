@@ -244,7 +244,101 @@ class uSelectors(utils.QtileTests):
     def test_simple(self):
         pass
 
+class RatioTileConfig:
+    main = None
+    groups = [
+        libqtile.manager.Group("a"),
+        libqtile.manager.Group("b"),
+        libqtile.manager.Group("c"),
+        libqtile.manager.Group("d")
+    ]
+    layouts = [
+        layout.RatioTile(ratio=.5),
+        layout.RatioTile(),
+        ]
+    floating_layout = libqtile.layout.floating.Floating()
+    keys = []
+    mouse = []
+    screens = []
+    
+class uRatioTile(utils.QtileTests):
+    config = RatioTileConfig()
+    def test_add_windows(self):
+        for i in range(12):
+            self.testWindow(str(i))
+            if i == 0:
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 800, 600)]
+            elif i == 1:
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 400, 600), (400, 0, 400, 600)]
+            elif i == 2:
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 266, 600), (266, 0, 266, 600), (532, 0, 268, 600)]
+            elif i == 3:
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 200, 600), (200, 0, 200, 600), (400, 0, 200, 600), (600, 0, 200, 600)]
+            elif i == 4:
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 160, 600), (160, 0, 160, 600), (320, 0, 160, 600), (480, 0, 160, 600), (640, 0, 160, 600)]
+            elif i == 5:
+                assert self.c.layout.info()['layout_info'] ==  [(0, 0, 133, 600), (133, 0, 133, 600), (266, 0, 133, 600), (399, 0, 133, 600), (532, 0, 133, 600), (665, 0, 135, 600)]
+           
+            elif i == 6:
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 200, 300), (200, 0, 200, 300), (400, 0, 200, 300), (600, 0, 200, 300), (0, 300, 266, 300), (266, 300, 266, 300), (532, 300, 268, 300)]
+           
+            elif i == 7:
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 200, 300), (200, 0, 200, 300), (400, 0, 200, 300), (600, 0, 200, 300), (0, 300, 200, 300), (200, 300, 200, 300), (400, 300, 200, 300), (600, 300, 200, 300)]
+            elif i == 8:
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 160, 300), (160, 0, 160, 300), (320, 0, 160, 300), (480, 0, 160, 300), (640, 0, 160, 300), (0, 300, 200, 300), (200, 300, 200, 300), (400, 300, 200, 300), (600, 300, 200, 300)]
+            elif i == 9:
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 160, 300), (160, 0, 160, 300), (320, 0, 160, 300), (480, 0, 160, 300), (640, 0, 160, 300), (0, 300, 160, 300), (160, 300, 160, 300), (320, 300, 160, 300), (480, 300, 160, 300), (640, 300, 160, 300)]
+            elif i == 10:
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 133, 300), (133, 0, 133, 300), (266, 0, 133, 300), (399, 0, 133, 300), (532, 0, 133, 300), (665, 0, 135, 300), (0, 300, 160, 300), (160, 300, 160, 300), (320, 300, 160, 300), (480, 300, 160, 300), (640, 300, 160, 300)] 
+            elif i == 11:
+                assert self.c.layout.info()['layout_info'] ==[(0, 0, 133, 300), (133, 0, 133, 300), (266, 0, 133, 300), (399, 0, 133, 300), (532, 0, 133, 300), (665, 0, 135, 300), (0, 300, 133, 300), (133, 300, 133, 300), (266, 300, 133, 300), (399, 300, 133, 300), (532, 300, 133, 300), (665, 300, 135, 300)] 
+            else:
+                assert False
 
+                
+    def test_add_windows_golden_ratio(self):
+        self.c.nextlayout()
+        for i in range(12):
+            self.testWindow(str(i))
+            if i == 0:
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 800, 600)]
+            elif i == 4:
+                # the rest test col order
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 400, 200), (0, 200, 400, 200), (0, 400, 400, 200), (400, 0, 400, 300), (400, 300, 400, 300)]
+            elif i == 5:
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 400, 200), (0, 200, 400, 200), (0, 400, 400, 200), (400, 0, 400, 200), (400, 200, 400, 200), (400, 400, 400, 200)]
+                
+            elif i == 9:
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 266, 150), (0, 150, 266, 150), (0, 300, 266, 150), (0, 450, 266, 150), (266, 0, 266, 150), (266, 150, 266, 150), (266, 300, 266, 150), (266, 450, 266, 150), (532, 0, 266, 300), (532, 300, 266, 300)]
+            elif i == 10:
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 266, 150), (0, 150, 266, 150), (0, 300, 266, 150), (0, 450, 266, 150), (266, 0, 266, 150), (266, 150, 266, 150), (266, 300, 266, 150), (266, 450, 266, 150), (532, 0, 266, 200), (532, 200, 266, 200), (532, 400, 266, 200)]
+            elif i == 11:
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 266, 150), (0, 150, 266, 150), (0, 300, 266, 150), (0, 450, 266, 150), (266, 0, 266, 150), (266, 150, 266, 150), (266, 300, 266, 150), (266, 450, 266, 150), (532, 0, 266, 150), (532, 150, 266, 150), (532, 300, 266, 150), (532, 450, 266, 150)]
+                
+    def test_basic(self):
+        self.testWindow("one")
+        self.testWindow("two")
+        self.testWindow("three")
+        assert self.c.window.info()['width'] == 264
+        assert self.c.window.info()['height'] == 598
+        assert self.c.window.info()['x'] == 0
+        assert self.c.window.info()['y'] == 0
+        assert self.c.window.info()['name'] == 'three'
+
+        self.c.group.next_window()
+        assert self.c.window.info()['width'] == 264
+        assert self.c.window.info()['height'] == 598
+        assert self.c.window.info()['x'] == 266
+        assert self.c.window.info()['y'] == 0
+        assert self.c.window.info()['name'] == 'two'
+
+        self.c.group.next_window()
+        assert self.c.window.info()['width'] == 266
+        assert self.c.window.info()['height'] == 598
+        assert self.c.window.info()['x'] == 532
+        assert self.c.window.info()['y'] == 0
+        assert self.c.window.info()['name'] == 'one'
+        
 class TileConfig:
     main = None
     groups = [
@@ -327,6 +421,7 @@ tests = [
         uMax(),
         uStack(),
         uTile(),
+        uRatioTile(),
         uSelectors(),
     ],
 ]
