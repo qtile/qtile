@@ -65,7 +65,7 @@ class AGroupBox(_GroupBase):
         ("border", "215578", "Border colour"),
         ("padding", 5, "Padding inside the box")
     )
-    def click(self, x, y):
+    def click(self, x, y, button):
         self.bar.screen.group.cmd_nextgroup()
 
     def calculate_width(self):
@@ -99,7 +99,7 @@ class GroupBox(_GroupBase):
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
 
-    def click(self, x, y):
+    def click(self, x, y, button):
         groupOffset = int(x/self.box_width())
         if len(self.qtile.groups) - 1 >= groupOffset:
             self.bar.screen.setGroup(self.qtile.groups[groupOffset])
