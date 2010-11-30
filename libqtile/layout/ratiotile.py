@@ -194,11 +194,14 @@ class RatioTile(Layout):
                  }
 
     def up(self):
-        utils.shuffleUp(self.windows)
+        if self.windows:
+            utils.shuffleUp(self.windows)
+            self.group.layoutAll()
 
     def down(self):
-        utils.shuffleDown(self.windows)
-
+        if self.windows:
+            utils.shuffleDown(self.windows)
+            self.group.layoutAll()
     
     def focus_first(self):
         if self.windows:
