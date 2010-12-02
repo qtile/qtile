@@ -172,8 +172,8 @@ class RatioTile(Layout):
                           self.group.screen.dwidth,
                           self.group.screen.dheight)
             self.last_size = self.group.screen.dwidth, self.group.screen.dheight 
-            self.layout_info = gi.get_sizes(self.group.screen.x,
-                                            self.group.screen.y)
+            self.layout_info = gi.get_sizes(self.group.screen.dx,
+                                            self.group.screen.dy)
             
             self.dirty = False
         try:
