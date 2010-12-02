@@ -282,6 +282,26 @@ class TestFakeScreen(utils.QtileTests):
             self.c.group['a'].toscreen()
         assert self.c.group['a'].info()['windows'] == ['xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock']
 
+    def test_hammer_ratio_tile(self):
+        # change to ratio tile layout
+        self.c.nextlayout()
+        for i in range(7):
+            self.testXclock()
+        for i in range(30):
+
+            old_group = (i+1)%4
+            if old_group == 0:
+                name = 'a'
+            elif old_group == 1:
+                name = 'b'
+            elif old_group == 2:
+                name = 'c'
+            elif old_group == 3:
+                name = 'd'
+                
+            self.c.to_screen((i+1)%4)
+            self.c.group['a'].toscreen()
+        assert self.c.group['a'].info()['windows'] == ['xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock']
     def test_ratio_to_fourth_screen(self):
         # change to ratio tile layout
         self.c.nextlayout()

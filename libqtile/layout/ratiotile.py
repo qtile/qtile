@@ -23,6 +23,9 @@ class GridInfo(object):
     >>> gi.get_sizes()
     [(0, 0, 200, 240), (200, 0, 200, 240), (400, 0, 200, 240), (0, 240, 300, 240), (200, 240, 200, 240)]
 
+    >>> foo = GridInfo(1.6, 7, 400,370)
+    >>> foo.get_sizes(500,580)
+
 
     """
     def __init__(self, ratio, num_windows, width, height):
@@ -66,9 +69,9 @@ class GridInfo(object):
         results = []
         rows, cols, orientation = self.calc()
         if orientation == ROWCOL:
-            y = yoffset
+            y = 0
             for i, row in enumerate(range(rows)):
-                x = xoffset
+                x = 0
                 width = self.width/cols
                 for j, col in enumerate(range(cols)):
                     height = self.height/rows
@@ -81,7 +84,7 @@ class GridInfo(object):
                         # make last column (or item) take up remaining space
                         width = self.width - x
                     
-                    results.append((x, y,
+                    results.append((x + xoffset, y + yoffset,
                                     width,
                                     height))
                     if len(results) == self.num_windows:
@@ -89,9 +92,9 @@ class GridInfo(object):
                     x += width
                 y += height
         else:
-            x = xoffset
+            x = 0
             for i, col in enumerate(range(cols)):
-                y = yoffset
+                y = 0
                 height = self.height/rows
                 for j, row in enumerate(range(rows)):
                     width = self.width/cols
@@ -101,8 +104,8 @@ class GridInfo(object):
                         height = self.height/remaining
                     elif j == rows -1 or len(results) + 1 == self.num_windows:
                         height = self.height - y
-                    results.append((x, #i * width + xoffset,
-                                    y, #j * height + yoffset,
+                    results.append((x + xoffset, #i * width + xoffset,
+                                    y + xoffset, #j * height + yoffset,
                                     width,
                                     height))
                     if len(results) == self.num_windows:
@@ -161,7 +164,9 @@ class RatioTile(Layout):
 
     def configure(self, win):
         # force recalc
-        self.dirty = True
+        if self.last_size and not self.dirty:
+            if self.group.screen.dwidth != self.last_size[0] or  self.group.screen.dheight != self.last_size[1]:
+                self.dirty = True
         if self.dirty:
             gi = GridInfo(self.ratio, len(self.windows),
                           self.group.screen.dwidth,
@@ -170,7 +175,6 @@ class RatioTile(Layout):
             self.layout_info = gi.get_sizes(self.group.screen.x,
                                             self.group.screen.y)
             
-
             self.dirty = False
         try:
             idx = self.windows.index(win)
