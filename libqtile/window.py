@@ -101,6 +101,7 @@ class _Window(command.CommandObject):
     def __init__(self, window, qtile):
         self.window, self.qtile = window, qtile
         self.hidden = True
+        self.group = None
         window.set_attribute(eventmask=self._windowMask)
         self.x, self.y, self.width, self.height = None, None, None, None
         self.borderwidth = 0
@@ -110,6 +111,8 @@ class _Window(command.CommandObject):
         self.window_type = "normal"
         g = self.window.get_geometry()
         self._float_state = NOT_FLOATING
+        # note that _float_info x and y are
+        # really offsets, relative to screen x,y
         self._float_info = {
             'x': g.x, 'y': g.y,
             'w': g.width, 'h': g.height
@@ -172,18 +175,24 @@ class _Window(command.CommandObject):
         return self.hints['urgent']
 
     def info(self):
+        if self.group:
+            group = self.group.name
+        else:
+            group = None
         return dict(
             name = self.name,
             x = self.x,
             y = self.y,
             width = self.width,
             height = self.height,
+            group = group,
             id = self.window.wid,
             floating = self._float_state != NOT_FLOATING,
             float_info = self._float_info,
             maximized = self._float_state == MAXIMIZED,
             minimized = self._float_state == MINIMIZED,
             fullscreen = self._float_state == FULLSCREEN
+            
         )
 
     @property
@@ -598,11 +607,9 @@ class Window(_Window):
 
         screen = self.qtile.find_closest_screen(self.x, self.y)
         if screen is not None and screen != self.group.screen:
-            # change group
             self.group.remove(self)
             screen.group.add(self)
-            # togroup messes up focus here
-            # need to kick boxes to update
+            # TODO - need to kick boxes to update
 
         self._reconfigure_floating()
         

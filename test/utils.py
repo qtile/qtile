@@ -29,24 +29,28 @@ def whereis(program):
 
 
 class Xephyr(libpry.TestContainer):
-    def __init__(self, xinerama, randr=False):
+    def __init__(self, xinerama, randr=False, two_screens=True, width=WIDTH, height=HEIGHT):
         self.xinerama, self.randr = xinerama, randr
         self.name = "xephyr"
         if xinerama:
             self.name += "_xinerama"
         if randr:
             self.name += "_randr"
+        self.two_screens = two_screens
         libpry.TestContainer.__init__(self)
         self["display"] = DISPLAY
         self["xinerama"] = xinerama
+        self.width = width
+        self.height = height
 
     def setUp(self):
         args = [
             "Xephyr", "-keybd", "evdev",
-            "-screen", "%sx%s"%(WIDTH, HEIGHT),
-            "-screen", "%sx%s+800+0"%(SECOND_WIDTH, SECOND_HEIGHT),
-            self["display"], "-ac"
-        ]
+            self["display"], "-ac",
+            "-screen", "%sx%s"%(self.width, self.height)]
+        if self.two_screens:
+            args.extend(["-screen", "%sx%s+800+0"%(SECOND_WIDTH, SECOND_HEIGHT)])
+
         if self.xinerama:
             args.extend(["+xinerama"])
         if self.randr:

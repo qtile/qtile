@@ -123,22 +123,26 @@ class Screen(command.CommandObject):
         A physical screen, and its associated paraphernalia.
     """
     group = None
-    def __init__(self, top=None, bottom=None, left=None, right=None):
+    def __init__(self, top=None, bottom=None, left=None, right=None,
+                 x=None, y=None, width=None, height=None):
         """
             - top, bottom, left, right: Instances of bar objects, or None.
 
             Note that bar.Bar objects can only be placed at the top or the
             bottom of the screen (bar.Gap objects can be placed anywhere).
+
+            x,y,width and height aren't specified usually unless you are
+            using 'fake screens'.
         """
         self.top, self.bottom = top, bottom
         self.left, self.right = left, right
         self.qtile = None
         self.index = None
-        self.x = None # x position of upper left corner can be > 0
+        self.x = x # x position of upper left corner can be > 0
                       # if one screen is "right" of the other
-        self.y = None
-        self.width = None
-        self.height = None
+        self.y = y
+        self.width = width
+        self.height = height
         
         
     def _configure(self, qtile, index, x, y, width, height, group):
@@ -190,12 +194,19 @@ class Screen(command.CommandObject):
         if new_group.screen == self:
             return
         elif new_group.screen:
-            tmp_g = self.group
-            tmp_s = new_group.screen
-            tmp_s.group = tmp_g
-            tmp_g._setScreen(tmp_s)
-            self.group = new_group
-            new_group._setScreen(self)
+            # g1 <-> s1 (self)
+            # g2 (new_group)<-> s2 to
+            # g1 <-> s2
+            # g2 <-> s1
+            g1 = self.group
+            s1 = self
+            g2 = new_group
+            s2 = new_group.screen
+
+            s2.group = g1
+            g1._setScreen(s2)
+            s1.group = g2
+            g2._setScreen(s1)
         else:
             if self.group is not None:
                 self.group._setScreen(None)
@@ -326,6 +337,8 @@ class Group(command.CommandObject):
             return
         self.screen = screen
         if self.screen:
+            # move all floating guys offset to new screen
+            self.floating_layout.to_screen(self.screen)
             self.layoutAll()
         else:
             self.hide()
@@ -378,6 +391,7 @@ class Group(command.CommandObject):
             focus = self.currentWindow.name if self.currentWindow else None,
             windows = [i.name for i in self.windows],
             layout = self.layout.name,
+            floating_info = self.floating_layout.info(),
             screen = self.screen.index if self.screen else None
         )
 
@@ -397,6 +411,7 @@ class Group(command.CommandObject):
         self.focus(win, True)
 
     def remove(self, window):
+
         self.windows.remove(window)
         window.group = None
         nextfocus = None
@@ -411,7 +426,6 @@ class Group(command.CommandObject):
             self.focus(nextfocus, True)
             self.layoutAll()
         #else: TODO: change focus
-
     def mark_floating(self, window, floating):
         if floating and window in self.floating_layout.clients:
             # already floating
@@ -481,7 +495,7 @@ class Group(command.CommandObject):
         if not screen:
             screen = self.qtile.currentScreen
         else:
-            screen = self.screens[screen]
+            screen = self.qtile.screens[screen]
         screen.setGroup(self)
 
     def _dirGroup(self, direction):
@@ -640,38 +654,7 @@ class Qtile(command.CommandObject):
 
         self.currentScreen = None
         self.screens = []
-        for i, s in enumerate(self.conn.pseudoscreens):
-            if i+1 > len(config.screens):
-                scr = Screen()
-            else:
-                scr = config.screens[i]
-            if not self.currentScreen:
-                self.currentScreen = scr
-            scr._configure(
-                self,
-                i,
-                s.x,
-                s.y,
-                s.width,
-                s.height,
-                self.groups[i],
-            )
-            self.screens.append(scr)
-
-        if not self.screens:
-            if config.screens:
-                s = config.screens[0]
-            else:
-                s = Screen()
-            self.currentScreen = s
-            s._configure(
-                self,
-                0, 0, 0,
-                self.conn.default_screen.width_in_pixels,
-                self.conn.default_screen.height_in_pixels,
-                self.groups[0],
-            )
-            self.screens.append(s)
+        self._process_screens()
         self.currentScreen = self.screens[0]
 
         self.ignoreEvents = set([
@@ -712,6 +695,56 @@ class Qtile(command.CommandObject):
         self.grabMouse()
         self.scan()
 
+    def _process_fake_screens(self):
+        """
+        Since Xephyr, Xnest don't really support offset screens,
+        we'll fake it here for testing, (or if you want to partition
+        a physical monitor into separate screens)
+        """
+        for i, s in enumerate(self.config.fake_screens):
+            # should have x,y, width and height set
+            s._configure(self, i, s.x, s.y, s.width, s.height, self.groups[i])
+            if not self.currentScreen:
+                self.currentScreen = s
+            self.screens.append(s)
+        
+    def _process_screens(self):
+        if hasattr(self.config, 'fake_screens'):
+            self._process_fake_screens()
+            return
+        for i, s in enumerate(self.conn.pseudoscreens):
+            if i+1 > len(self.config.screens):
+                scr = Screen()
+            else:
+                scr = self.config.screens[i]
+            if not self.currentScreen:
+                self.currentScreen = scr
+            scr._configure(
+                self,
+                i,
+                s.x,
+                s.y,
+                s.width,
+                s.height,
+                self.groups[i],
+            )
+            self.screens.append(scr)
+
+        if not self.screens:
+            if self.config.screens:
+                s = self.config.screens[0]
+            else:
+                s = Screen()
+            self.currentScreen = s
+            s._configure(
+                self,
+                0, 0, 0,
+                self.conn.default_screen.width_in_pixels,
+                self.conn.default_screen.height_in_pixels,
+                self.groups[0],
+            )
+            self.screens.append(s)
+        
     def addGroup(self, name):
         if name not in self.groupMap.keys():
             g = Group(name)
@@ -969,6 +1002,9 @@ class Qtile(command.CommandObject):
         screen vertically and horizontally and see if x,y lies in the
         band.
 
+        Only works if it can find a SINGLE closest screen, else we
+        revert to _find_closest_closest.
+
         Useful when dragging a window out of a screen onto another but
         having leftmost corner above viewport.
         """
@@ -986,8 +1022,35 @@ class Qtile(command.CommandObject):
             return x_match[0]
         if len(y_match) == 1:
             return y_match[0]
-        return None
+        return self._find_closest_closest(x, y, x_match + y_match)
 
+
+    def _find_closest_closest(self, x, y, candidate_screens):
+        """
+        if find_closest_screen can't determine one, we've got multiple
+        screens, so figure out who is closer.  We'll calculate using
+        the square of the distance from the center of a screen.
+
+        Note that this could return None if x, y is right/below all
+        screens (shouldn't happen but we don't do anything about it
+        here other than returning None)
+        """
+        closest_distance = None
+        closest_screen = None
+        if not candidate_screens:
+            # try all screens
+            candidate_screens = self.screens
+        # if left corner is below and right of screen it can't really be a candidate
+        candidate_screens = [s for s in candidate_screens if x < s.x + s.width and y < s.y + s.width]
+        for s in candidate_screens:
+            middle_x = s.x + s.width/2
+            middle_y = s.y + s.height/2
+            distance = (x - middle_x)**2 + (y - middle_y)**2
+            if closest_distance is None or distance < closest_distance:
+                closest_distance = distance
+                closest_screen = s
+        return closest_screen
+    
     def handle_EnterNotify(self, e):
         if e.event in self.windowMap:
             return True

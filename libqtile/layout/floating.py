@@ -49,6 +49,33 @@ class Floating(Layout):
                 return True
         return False
 
+    def to_screen(self, new_screen):
+        """
+        Adjust offsets of clients within current screen
+        """
+        for i, win in enumerate(self.clients):
+            offset_x = win._float_info['x']
+            offset_y = win._float_info['y']
+
+            if offset_x > 0:
+                new_x = new_screen.x + offset_x
+            else:
+                new_x = new_screen.x + i*10
+            if offset_y > 0:
+                new_y = new_screen.y + offset_y
+            else:
+                new_y = new_screen.y + i*10
+                
+            right_edge = new_screen.x + new_screen.width
+            bottom_edge = new_screen.y + new_screen.height
+            while new_x > right_edge:
+                new_x = (new_x - new_screen.x )/2
+            while new_y > bottom_edge:
+                new_y = (new_y - new_y.y)/2
+            win.x = new_x
+            win.y = new_y
+            win.group = new_screen.group
+    
     def focus_first(self):
         if self.clients:
             return self.clients[0]
