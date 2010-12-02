@@ -13,3 +13,4 @@ try:
     from mpdwidget import Mpd
 except ImportError:
     pass
+from volume import Volume

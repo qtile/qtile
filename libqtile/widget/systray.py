@@ -1,5 +1,4 @@
-from .. import bar, hook, utils, manager, xcbq, window
-import cairo
+from .. import bar, manager, xcbq, window
 import base
 
 import xcb
