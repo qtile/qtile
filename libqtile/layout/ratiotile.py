@@ -34,7 +34,6 @@ class GridInfo(object):
         self.num_cols = 0
 
     def calc(self):
-        #print "TRYING TO MATCH", self.ratio
         best_ratio = None
         best_rows_cols_orientation = None
         for rows, cols, orientation in self._possible_grids():
@@ -43,9 +42,7 @@ class GridInfo(object):
             sample_height = float(self.height)/rows
             sample_ratio = sample_width / sample_height
             diff = abs(sample_ratio - self.ratio)
-            #print "ROWS %s cols %s ratio %s diff %s best %s" %(rows, cols, sample_ratio, diff, best_ratio)
             if best_ratio is None or diff < best_ratio:
-                #print "\tbest"
                 best_ratio = diff
                 best_rows_cols_orientation = rows, cols, orientation
 
@@ -64,8 +61,6 @@ class GridInfo(object):
                 yield cols, rows, COLROW
 
     def get_sizes(self, xoffset=0, yoffset=0):
-
-
         width = 0
         height = 0
         results = []
@@ -136,7 +131,9 @@ class RatioTile(Layout):
         self.ratio = ratio
         self.focused = None
         self.dirty = True # need to recalculate
-        self.layout_info = None
+        self.layout_info = []
+        self.last_size = None
+
 
     def clone(self, group):
         c = Layout.clone(self, group)
@@ -158,25 +155,28 @@ class RatioTile(Layout):
         if self.focused is w:
             self.focused = None
         self.windows.remove(w)
-        if self.windows and w is self.focused:
+        if self.windows: # and w is self.focused:
             self.focused = self.windows[0]
         return self.focused
 
     def configure(self, win):
-        try:
-            idx = self.windows.index(win)
-        except ValueError:
-            win.hide()
-            return
-        
+        # force recalc
+        self.dirty = True
         if self.dirty:
             gi = GridInfo(self.ratio, len(self.windows),
                           self.group.screen.dwidth,
                           self.group.screen.dheight)
-            self.layout_info = gi.get_sizes(self.group.screen.dx,
-                                            self.group.screen.dy)
+            self.last_size = self.group.screen.dwidth, self.group.screen.dheight 
+            self.layout_info = gi.get_sizes(self.group.screen.x,
+                                            self.group.screen.y)
+            
 
             self.dirty = False
+        try:
+            idx = self.windows.index(win)
+        except ValueError, e:
+            win.hide()
+            return
         x, y, w, h = self.layout_info[idx]
         if win is self.focused:
             bc = self.group.qtile.colorPixel(self.border_focus)

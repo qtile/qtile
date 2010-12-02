@@ -41,7 +41,8 @@ class FakeScreenConfig:
     ]
     layouts = [
         layout.Max(),
-        layout.RatioTile()
+        layout.RatioTile(),
+        layout.Tile(),
     ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = []
@@ -259,6 +260,44 @@ class TestFakeScreen(utils.QtileTests):
         assert self.c.window.info()['y'] == -10
         assert self.c.window.info()['group'] == 'b'
 
+    def test_hammer_tile(self):
+        # change to tile layout
+        self.c.nextlayout()
+        self.c.nextlayout()
+        for i in range(7):
+            self.testXclock()
+        for i in range(30):
+
+            old_group = (i+1)%4
+            if old_group == 0:
+                name = 'a'
+            elif old_group == 1:
+                name = 'b'
+            elif old_group == 2:
+                name = 'c'
+            elif old_group == 3:
+                name = 'd'
+                
+            self.c.to_screen((i+1)%4)
+            self.c.group['a'].toscreen()
+        assert self.c.group['a'].info()['windows'] == ['xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock']
+
+    def test_ratio_to_fourth_screen(self):
+        # change to ratio tile layout
+        self.c.nextlayout()
+        for i in range(7):
+            self.testXclock()
+        self.c.to_screen(1)
+        self.c.group['a'].toscreen()
+        assert self.c.group['a'].info()['windows'] == ['xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock']
+
+        # now move to 4th, fails...
+        self.c.to_screen(3)
+        self.c.group['a'].toscreen()
+        assert self.c.group['a'].info()['windows'] == ['xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock']
+        
+      
+        
 # since we are using fake screens don't have Xephyr put up 2
 tests = [utils.Xephyr(xinerama=False, two_screens=False, width=900, height=980),
          [TestFakeScreen()
