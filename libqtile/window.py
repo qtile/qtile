@@ -212,17 +212,11 @@ class _Window(command.CommandObject):
             return
 
     def getOpacity(self):
-        """
-        !!! somewhat broken, we can set opacity but can't currently
-            read it, hence the need for self.cur_opac
-        """
-        opacity = self.window.get_property(
-            "_NET_WM_WINDOW_OPACITY",
-            "CARDINAL")
+        opacity = self.window.get_property("_NET_WM_WINDOW_OPACITY", unpack="I")
         if not opacity:
             return 1.0
         else:
-            value = opacity.value[0]
+            value = opacity[0]
             as_float = round(
                 (float(value)/0xffffffff),
                 2  #2 decimal places
@@ -513,7 +507,7 @@ class Window(_Window):
 
         # add window to the save-set, so it gets mapped when qtile dies
         qtile.conn.conn.core.ChangeSaveSet(SetMode.Insert, self.window.wid)
-        self.cur_opac = 1 # !!! Hack because getOpacity is borked
+
     @property
     def group(self):
         return self._group
@@ -929,15 +923,12 @@ class Window(_Window):
         self.opacity = opacity
 
     def cmd_down_opacity(self):
-        if self.cur_opac > .2:
+        if self.opacity > .2:
             # don't go completely clear
-            self.cur_opac -= .1
-        self.opacity = self.cur_opac
+            self.opacity -= .1
 
     def cmd_up_opacity(self):
-        if self.cur_opac < .9:
-            self.cur_opac += .1
+        if self.opacity < .9:
+            self.opacity += .1
         else:
-            self.cur_opac = 1
-        self.opacity = self.cur_opac
-            
+            self.opacity = 1
