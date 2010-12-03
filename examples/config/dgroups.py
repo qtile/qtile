@@ -73,7 +73,7 @@ class DGroups(object):
         # Unmatched
         current_group = self.qtile.currentGroup.name
         if current_group in self.groups and\
-                self.groups.get(current_group, 'exclusive'):
+                self.groups[current_group].get('exclusive'):
 
             wm_class = client.window.get_wm_class()
 
