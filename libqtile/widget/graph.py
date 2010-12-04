@@ -2,7 +2,7 @@ import time
 import cairo
 
 from . import base
-from .. import manager, bar, hook, utils
+from .. import manager, hook
 
 __all__ = [
     'CPUGraph',
@@ -115,6 +115,9 @@ class _Graph(base._Widget):
             self.lasttick = t
             self.update_graph()
 
+    def fullfill(self, value):
+        self.values = [value] * len(self.values)
+
 
 class CPUGraph(_Graph):
     fixed_upper_bound = True
@@ -159,8 +162,9 @@ class MemoryGraph(_Graph):
         _Graph.__init__(self, **config)
         val = self._getvalues()
         self.maxvalue = val['MemTotal']
-        for i in xrange(len(self.values)):
-            self.values[i] = val['MemTotal'] - val['MemFree'] - val['Inactive']
+
+        mem = val['MemTotal'] - val['MemFree'] - val['Inactive']
+        self.fullfill(mem)
 
     def _getvalues(self):
         return get_meminfo()
@@ -171,9 +175,24 @@ class MemoryGraph(_Graph):
 
 
 class SwapGraph(_Graph):
+    fixed_upper_bound = True
+    def __init__(self, **config):
+        _Graph.__init__(self, **config)
+        val = self._getvalues()
+        self.maxvalue = val['SwapTotal']
+        swap = val['SwapTotal'] - val['SwapFree'] - val['SwapCached']
+        self.fullfill(swap)
+
     def _getvalues(self):
         return get_meminfo()
 
     def update_graph(self):
         val = self._getvalues()
-        self.push(val['SwapTotal'] - val['SwapFree'] - val['SwapCached'])
+
+        swap = val['SwapTotal'] - val['SwapFree'] - val['SwapCached']
+
+        # can change, swapon/off
+        if self.maxvalue != val['SwapTotal']:
+            self.maxvalue = val['SwapTotal']
+            self.fullfill(swap)
+        self.push(swap)
