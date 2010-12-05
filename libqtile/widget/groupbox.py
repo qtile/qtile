@@ -106,7 +106,7 @@ class GroupBox(_GroupBase):
             group = curGroup.prevGroup()
         elif button == 4:
             group = curGroup.nextGroup()
-        elif button == 1:
+        else:
             groupOffset = int(x/self.box_width())
             if len(self.qtile.groups) - 1 >= groupOffset:
                 group = self.qtile.groups[groupOffset]
