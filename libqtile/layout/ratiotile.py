@@ -36,13 +36,16 @@ class GridInfo(object):
         self.num_rows = 0
         self.num_cols = 0
 
-    def calc(self):
+    def calc(self, num_windows, width, height):
+        """
+        returns (rows, cols, orientation) tuple given input
+        """
         best_ratio = None
         best_rows_cols_orientation = None
-        for rows, cols, orientation in self._possible_grids():
+        for rows, cols, orientation in self._possible_grids(num_windows):
 
-            sample_width = float(self.width)/cols
-            sample_height = float(self.height)/rows
+            sample_width = float(width)/cols
+            sample_height = float(height)/rows
             sample_ratio = sample_width / sample_height
             diff = abs(sample_ratio - self.ratio)
             if best_ratio is None or diff < best_ratio:
@@ -51,38 +54,91 @@ class GridInfo(object):
 
         return best_rows_cols_orientation
 
-    def _possible_grids(self):
-        if self.num_windows < 2:
+    def _possible_grids(self, num_windows):
+        """
+        iterates over possible grids given a number of windows
+        """
+        if num_windows < 2:
             end = 2
         else:
-            end = self.num_windows/2 + 1
+            end = num_windows/2 + 1
         for rows in range(1, end):
-            cols = int(math.ceil(float(self.num_windows) / rows))
+            cols = int(math.ceil(float(num_windows) / rows))
             yield rows, cols, ROWCOL
             if rows != cols:
                 # also want the reverse test
                 yield cols, rows, COLROW
 
-    def get_sizes(self, xoffset=0, yoffset=0):
+    def get_sizes_advanced(self, total_width, total_height,xoffset=0, yoffset=0):
+        """
+        after every row/column recalculate remaining area
+        """
+        results = []
+        width = total_width
+        height = total_height
+        while len(results) < self.num_windows:
+            remaining = self.num_windows - len(results)
+            orien, sizes = self._get_row_or_col( remaining, width, height, xoffset, yoffset)
+            results.extend(sizes)
+            if orien == ROWCOL:
+                # adjust height/yoffset
+                height -= sizes[-1][-1]
+                yoffset += sizes[-1][-1]
+            else:
+                width -= sizes[-1][-2]
+                xoffset += sizes[-1][-2]
+
+        return results
+
+
+    def _get_row_or_col(self, num_windows, width, height, xoffset, yoffset):
+        """
+        process one row (or col) at a time
+        """
+        rows, cols, orientation = self.calc(num_windows, width, height)
+        results = []
+        if orientation == ROWCOL:
+            x = 0
+            y = 0
+            for i, col in enumerate(range(cols)):
+                w_width = width/cols
+                w_height = height/rows
+                if i == cols -1:
+                    w_width = width - x
+                results.append((x + xoffset, y + yoffset, w_width, w_height))
+                x += w_width
+        elif orientation == COLROW:
+            x = 0
+            y = 0
+            for i, col in enumerate(range(rows)):
+                w_width = width/cols
+                w_height = height/rows
+                if i == rows -1:
+                    w_height = height - y
+                results.append((x + xoffset, y + yoffset, w_width, w_height))
+                y += w_height
+        return orientation, results
+                
+    def get_sizes(self, total_width, total_height, xoffset=0, yoffset=0):
         width = 0
         height = 0
         results = []
-        rows, cols, orientation = self.calc()
+        rows, cols, orientation = self.calc(self.num_windows, total_width, total_height)
         if orientation == ROWCOL:
             y = 0
             for i, row in enumerate(range(rows)):
                 x = 0
-                width = self.width/cols
+                width = total_width/cols
                 for j, col in enumerate(range(cols)):
-                    height = self.height/rows
+                    height = total_height/rows
                     if i == rows - 1 and j == 0:
                         # last row
                         remaining = self.num_windows - len(results) 
-                        width = self.width/remaining
+                        width = total_width/remaining
                     elif j == cols - 1 or len(results) + 1 == self.num_windows:
                         # since we are dealing with integers,
                         # make last column (or item) take up remaining space
-                        width = self.width - x
+                        width = total_width - x
                     
                     results.append((x + xoffset, y + yoffset,
                                     width,
@@ -95,15 +151,15 @@ class GridInfo(object):
             x = 0
             for i, col in enumerate(range(cols)):
                 y = 0
-                height = self.height/rows
+                height = total_height/rows
                 for j, row in enumerate(range(rows)):
-                    width = self.width/cols
+                    width = total_width/cols
                     # down first
                     if i == cols - 1 and j == 0:
                         remaining = self.num_windows - len(results) 
-                        height = self.height/remaining
+                        height = total_height/remaining
                     elif j == rows -1 or len(results) + 1 == self.num_windows:
-                        height = self.height - y
+                        height = total_height - y
                     results.append((x + xoffset, #i * width + xoffset,
                                     y + xoffset, #j * height + yoffset,
                                     width,
@@ -127,7 +183,7 @@ class RatioTile(Layout):
         ("border_width", 1, "Border width.")
     )
     
-    def __init__(self, ratio=GOLDEN_RATIO, ratio_increment=0.1, **config):
+    def __init__(self, ratio=GOLDEN_RATIO, ratio_increment=0.1, fancy=False, **config):
         Layout.__init__(self, **config)
         self.windows = []
         self.ratio_increment = ratio_increment
@@ -136,6 +192,7 @@ class RatioTile(Layout):
         self.dirty = True # need to recalculate
         self.layout_info = []
         self.last_size = None
+        self.fancy = fancy
 
 
     def clone(self, group):
@@ -171,9 +228,16 @@ class RatioTile(Layout):
             gi = GridInfo(self.ratio, len(self.windows),
                           self.group.screen.dwidth,
                           self.group.screen.dheight)
-            self.last_size = self.group.screen.dwidth, self.group.screen.dheight 
-            self.layout_info = gi.get_sizes(self.group.screen.dx,
-                                            self.group.screen.dy)
+            self.last_size = self.group.screen.dwidth, self.group.screen.dheight
+            if self.fancy:
+                method = gi.get_sizes_advanced
+            else:
+                method = gi.get_sizes
+            
+            self.layout_info = method(self.group.screen.dwidth,
+                                      self.group.screen.dheight,
+                                      self.group.screen.dx,
+                                      self.group.screen.dy)
             
             self.dirty = False
         try:
