@@ -633,6 +633,7 @@ class Qtile(command.CommandObject):
         self.widgetMap = {}
         self.groupMap = {}
         self.groups = []
+        self._drag = None
 
         # Because we only do Xinerama multi-screening, we can assume that the first
         # screen's root is _the_ root.
@@ -1135,6 +1136,8 @@ class Qtile(command.CommandObject):
             self.root.ungrab_pointer()
 
     def handle_MotionNotify(self, e):
+        if self._drag is None:
+            return
         ox, oy, rx, ry, cmd = self._drag
         dx = e.event_x - ox
         dy = e.event_y - oy
