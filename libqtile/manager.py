@@ -628,6 +628,7 @@ class Qtile(command.CommandObject):
             )
         hook.init(self)
 
+        self.keyMap = {}
         self.windowMap = {}
         self.widgetMap = {}
         self.groupMap = {}
@@ -683,7 +684,7 @@ class Qtile(command.CommandObject):
         self.numlockMask = xcbq.ModMasks[self.conn.get_modifier(nc)]
         self.validMask = ~(self.numlockMask | xcbq.ModMasks["lock"])
 
-        self.keyMap = {}
+
         for i in self.config.keys:
             self.keyMap[(i.keysym, i.modmask&self.validMask)] = i
 
