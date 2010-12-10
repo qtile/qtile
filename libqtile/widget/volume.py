@@ -1,6 +1,6 @@
 import re
 import time
-from subprocess import check_output, call
+from subprocess import call
 
 import cairo
 
@@ -89,6 +89,7 @@ class Volume(base._TextBox):
             self.surfaces[img_name] = imgpat
 
     def get_volume(self):
+        from subprocess import check_output
         mixer_out = check_output(['amixer', '-c', str(self.cardid),
                                          'sget', self.channel])
         if '[off]' in mixer_out:
