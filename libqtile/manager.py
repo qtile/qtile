@@ -633,7 +633,6 @@ class Qtile(command.CommandObject):
         self.widgetMap = {}
         self.groupMap = {}
         self.groups = []
-        self._drag = None
 
         # Because we only do Xinerama multi-screening, we can assume that the first
         # screen's root is _the_ root.
