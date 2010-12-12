@@ -1,5 +1,4 @@
-from .. import bar, hook, utils, manager, xcbq, window
-import cairo
+from .. import bar, manager, xcbq, window
 import base
 
 import xcb
@@ -79,7 +78,7 @@ class Systray(base._Widget):
         self.traywin = None
         self.icons = {}
 
-    def click(self, x, y):
+    def click(self, x, y, button):
         pass
 
     def calculate_width(self):

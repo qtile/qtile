@@ -13,10 +13,7 @@ import sys
 
 from .. import hook, bar, manager
 import base
-try:
-    from mpd import MPDClient, CommandError, ConnectionError, ProtocolError
-except ImportError:
-    pass
+from mpd import MPDClient, CommandError, ConnectionError, ProtocolError
 
 class Mpd(base._TextBox):
     """
@@ -119,3 +116,15 @@ class Mpd(base._TextBox):
         if self.text != playing:
             self.text = playing
             self.bar.draw()
+
+    def click(self, x, y, button):
+        if button == 1:
+            if not self.client.status():
+                self.client.play()
+            else:
+                self.client.pause()
+        elif button == 4:
+            self.client.previous()
+        elif button == 5:
+            self.client.next()
+

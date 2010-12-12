@@ -103,7 +103,7 @@ class _Window(command.CommandObject):
         self.hidden = True
         self.group = None
         window.set_attribute(eventmask=self._windowMask)
-        self.x, self.y, self.width, self.height = None, None, None, None
+        self.x, self.y, self.width, self.height = 0, 0, 0, 0
         self.borderwidth = 0
         self.bordercolor = None
         self.name = "<no name>"
@@ -315,7 +315,7 @@ class _Window(command.CommandObject):
             Places the window at the specified location with the given size.
         """
         self.x, self.y, self.width, self.height = x, y, width, height
-        if self.x is None:
+        if self.width == 0:
             # get from geometry (when initial float this is a problem)
             g = self.window.get_geometry()
             self.x = g.x

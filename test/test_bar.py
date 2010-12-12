@@ -120,7 +120,7 @@ class uWidgets(utils.QtileTests):
     def test_groupbox_click(self):
         self.c.group["ccc"].toscreen()
         assert self.c.groups()["a"]["screen"] == None
-        self.c.bar["bottom"].fake_click(0, "bottom", 10, 10)
+        self.c.bar["bottom"].fake_click(0, "bottom", 10, 10, 1)
         assert self.c.groups()["a"]["screen"] == 0
 
 

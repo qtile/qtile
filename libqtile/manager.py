@@ -691,7 +691,7 @@ class Qtile(command.CommandObject):
 
         self.mouseMap = {}
         for i in self.config.mouse:
-            self.mouseMap[(i.button_code, i.modmask&self.validMask)] = i
+            self.mouseMap[i.button_code] = i
 
         self.grabKeys()
         self.grabMouse()
@@ -1084,8 +1084,9 @@ class Qtile(command.CommandObject):
         state = e.state
         if self.numlockMask:
             state = e.state | self.numlockMask
-        m = self.mouseMap.get((button_code, state&self.validMask))
-        if not m:
+
+        m = self.mouseMap.get(button_code)
+        if not m or m.modmask&self.validMask != state&self.validMask:
             print >> sys.stderr, "Ignoring unknown button: %s"%button_code
             return
         if isinstance(m, Click):
@@ -1122,7 +1123,7 @@ class Qtile(command.CommandObject):
         state = e.state & ~xcbq.AllButtonsMask
         if self.numlockMask:
             state = state | self.numlockMask
-        m = self.mouseMap.get((button_code, state&self.validMask))
+        m = self.mouseMap.get(button_code)
         if not m:
             print >> sys.stderr, "Ignoring unknown button release: %s"%button_code
             return
