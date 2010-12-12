@@ -23,7 +23,7 @@ import xcbq
 import xcb.xproto, xcb.xinerama
 import xcb
 from xcb.xproto import EventMask
-import command, utils, window, confreader, hook
+import command, utils, window, hook
 
 
 class QtileError(Exception): pass
@@ -278,7 +278,14 @@ class Group(command.CommandObject):
     def __init__(self, name, layout=None):
         self.name = name
         self.customLayout = layout  # will be set on _configure
-
+        self.windows = set()
+        self.qtile = None
+        self.layouts = []
+        self.floating_layout = None
+        self.currentWindow = None
+        self.screen = None
+        self.currentLayout = None
+        
     def _configure(self, layouts, floating_layout, qtile):
         self.screen = None
         self.currentLayout = 0
@@ -356,29 +363,29 @@ class Group(command.CommandObject):
         for i in self.windows:
             i._resetMask()
 
-    def focus(self, window, warp):
+    def focus(self, win, warp):
         """
-            if window is in the group, blur any windows and call
+            if win is in the group, blur any windows and call
             ``focus`` on the layout (in case it wants to track
             anything), fire focus_change hook and invoke layoutAll.
 
-            warp - warp pointer to window
+            warp - warp pointer to win
         """
         if hasattr(self.qtile, '_drag'):
             # don't change focus while dragging windows
             return
-        if window and not window in self.windows:
+        if win and not win in self.windows:
             return
-        if window:
-            self.currentWindow = window
-            if window.floating:
+        if win:
+            self.currentWindow = win
+            if win.floating:
                 for l in self.layouts:
                     l.blur()
-                self.floating_layout.focus(window)
+                self.floating_layout.focus(win)
             else:
                 self.floating_layout.blur()
                 for l in self.layouts:
-                    l.focus(window)
+                    l.focus(win)
         else:
             self.currentWindow = None
         hook.fire("focus_change")
@@ -410,41 +417,41 @@ class Group(command.CommandObject):
                 i.add(win)
         self.focus(win, True)
 
-    def remove(self, window):
+    def remove(self, win):
 
-        self.windows.remove(window)
-        window.group = None
+        self.windows.remove(win)
+        win.group = None
         nextfocus = None
-        if window.floating:
-            self.floating_layout.remove(window)
+        if win.floating:
+            self.floating_layout.remove(win)
         else:
             for i in self.layouts:
                 if i is self.layout:
-                    nextfocus = i.remove(window)
+                    nextfocus = i.remove(win)
                 else:
-                    i.remove(window)
+                    i.remove(win)
             self.focus(nextfocus, True)
             self.layoutAll()
         #else: TODO: change focus
-    def mark_floating(self, window, floating):
-        if floating and window in self.floating_layout.clients:
+    def mark_floating(self, win, floating):
+        if floating and win in self.floating_layout.clients:
             # already floating
             pass
         elif floating:
             for i in self.layouts:
-                i.remove(window)
-                if window is self.currentWindow:
+                i.remove(win)
+                if win is self.currentWindow:
                     i.blur()
-            self.floating_layout.add(window)
-            if window is self.currentWindow:
-                self.floating_layout.focus(window)
+            self.floating_layout.add(win)
+            if win is self.currentWindow:
+                self.floating_layout.focus(win)
         else:
-            self.floating_layout.remove(window)
+            self.floating_layout.remove(win)
             self.floating_layout.blur()
             for i in self.layouts:
-                i.add(window)
-                if window is self.currentWindow:
-                    i.focus(window)
+                i.add(win)
+                if win is self.currentWindow:
+                    i.focus(win)
         self.layoutAll()
 
     def _items(self, name):
@@ -538,35 +545,35 @@ class Group(command.CommandObject):
         if not self.windows:
             return
         if self.currentWindow.floating:
-            next = self.floating_layout.focus_next(self.currentWindow)
-            if not next:
-                next = self.layout.focus_first()
-            if not next:
-                next = self.floating_layout.focus_first()
+            nxt = self.floating_layout.focus_next(self.currentWindow)
+            if not nxt:
+                nxt = self.layout.focus_first()
+            if not nxt:
+                nxt = self.floating_layout.focus_first()
         else:
-            next = self.layout.focus_next(self.currentWindow)
-            if not next:
-                next = self.floating_layout.focus_first()
-            if not next:
-                next = self.layout.focus_first()
-        self.focus(next, True)
+            nxt = self.layout.focus_next(self.currentWindow)
+            if not nxt:
+                nxt = self.floating_layout.focus_first()
+            if not nxt:
+                nxt = self.layout.focus_first()
+        self.focus(nxt, True)
     
     def cmd_prev_window(self):
         if not self.windows:
             return
         if self.currentWindow.floating:
-            next = self.floating_layout.focus_prev(self.currentWindow)
-            if not next:
-                next = self.layout.focus_last()
-            if not next:
-                next = self.floating_layout.focus_last()
+            nxt = self.floating_layout.focus_prev(self.currentWindow)
+            if not nxt:
+                nxt = self.layout.focus_last()
+            if not nxt:
+                nxt = self.floating_layout.focus_last()
         else:
-            next = self.layout.focus_prev(self.currentWindow)
-            if not next:
-                next = self.floating_layout.focus_last()
-            if not next:
-                next = self.layout.focus_last()
-        self.focus(next, True)
+            nxt = self.layout.focus_prev(self.currentWindow)
+            if not nxt:
+                nxt = self.floating_layout.focus_last()
+            if not nxt:
+                nxt = self.layout.focus_last()
+        self.focus(nxt, True)
 
 
 class Log:
@@ -814,13 +821,13 @@ class Qtile(command.CommandObject):
             # b) create a function to get *just* 'initial_state'
                 self.manage(i)
 
-    def unmanage(self, window):
-        c = self.windowMap.get(window)
+    def unmanage(self, win):
+        c = self.windowMap.get(win)
         if c:
             hook.fire("client_killed", c)
             if getattr(c, "group", None):
                 c.group.remove(c)
-            del self.windowMap[window]
+            del self.windowMap[win]
 
     def manage(self, w):
         attrs = w.get_attributes()
@@ -1535,7 +1542,6 @@ class Qtile(command.CommandObject):
         return dict(
             socketname = self.fname
         )
-        return [i.info() for i in self.windowMap.values()]
 
     def cmd_shutdown(self):
         """
