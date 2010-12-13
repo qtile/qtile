@@ -1,0 +1,5 @@
+
+* Fix memory leak in charts
+* Battery Widget
+* Fix xrandr add/remove monitor support
+* Response to application fullscreen commands
