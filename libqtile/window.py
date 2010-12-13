@@ -528,10 +528,21 @@ class Window(_Window):
         if do_float:
             if self._float_state == NOT_FLOATING:
                 self.enablefloating()
-        else:
-            if self._float_state != NOT_FLOATING:
-                self.disablefloating()
 
+
+    @property
+    def fullscreen(self):
+        return self._float_state == FULLSCREEN
+
+    @fullscreen.setter
+    def fullscreen(self, do_full):
+        if do_full:
+            if self._float_state != FULLSCREEN:
+                self.enablemaximize(state=FULLSCREEN)
+        else:
+            if self._float_state == FULLSCREEN:
+                self.disablefloating()
+                
     @property
     def maximized(self):
         return self._float_state == MAXIMIZED
@@ -621,7 +632,6 @@ class Window(_Window):
             self.enableminimize()
             
     def enableminimize(self):
-        #self._enablefloating(0, 0, 0, 0, new_float_state=MINIMIZED)
         self._enablefloating(new_float_state=MINIMIZED)
         
     def togglemaximize(self, state=MAXIMIZED):
@@ -677,17 +687,12 @@ class Window(_Window):
             hook.fire('float_change')
 
     def _enablefloating(self, x=None, y=None, w=None, h=None, new_float_state=FLOATING):
-        if self._float_state != new_float_state:
-            if x is not None:
-                self.x = x
-            if y is not None:
-                self.y = y
-            if w is not None:
-                self.width = w
-            if h is not None:
-                self.height = h
-            
-            self._reconfigure_floating(new_float_state=new_float_state)
+        if new_float_state != MINIMIZED:
+            self.x = x
+            self.y = y
+            self.width = w
+            self.height = h
+        self._reconfigure_floating(new_float_state=new_float_state)
 
 
     def enablefloating(self):

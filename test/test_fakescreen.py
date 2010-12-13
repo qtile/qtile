@@ -75,7 +75,7 @@ class FakeScreenConfig:
         x=0, y=0, width=600, height=480
         ), 
     Screen(
-        bottom = bar.Bar(
+        top = bar.Bar(
                     [
                         widget.GroupBox(),
                         widget.WindowName(),
@@ -86,7 +86,7 @@ class FakeScreenConfig:
         x=600, y=0, width=300, height=580
         ),
     Screen(
-            bottom = bar.Bar(
+            top = bar.Bar(
                     [
                         widget.GroupBox(),
                         widget.WindowName(),
@@ -126,6 +126,31 @@ class TestFakeScreen(utils.QtileTests):
         self.testXclock()
         assert self.c.screen.info() == {'y': 580, 'x': 500, 'index': 3, 'width': 400, 'height': 400}
 
+    def test_maximize_with_move_to_screen(self):
+        """
+        Ensure that maximize respects bars
+        """
+        self.testXclock()
+        self.c.window.toggle_maximize()
+        assert self.c.window.info()['width'] == 600
+        assert self.c.window.info()['height'] == 456
+        assert self.c.window.info()['x'] == 0
+        assert self.c.window.info()['y'] == 0
+        assert self.c.window.info()['group'] == 'a'
+
+        # go to second screen
+        self.c.to_screen(1)
+        assert self.c.screen.info() == {'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
+        assert self.c.group.info()['name'] == 'b'
+        self.c.group['a'].toscreen()
+        
+        assert self.c.window.info()['width'] == 300
+        assert self.c.window.info()['height'] == 550
+        assert self.c.window.info()['x'] == 600
+        assert self.c.window.info()['y'] == 30
+        assert self.c.window.info()['group'] == 'a'
+
+        
     def test_float_first_on_second_screen(self):
         self.c.to_screen(1)
         assert self.c.screen.info() == {'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}

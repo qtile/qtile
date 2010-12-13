@@ -1,5 +1,5 @@
 from base import Layout
-from .. import manager
+from .. import manager, window
 
 FLOAT_WM_TYPES = { 'utility':1,
                    'splash':1}
@@ -11,7 +11,9 @@ class Floating(Layout):
     defaults = manager.Defaults(
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
-        ("border_width", 1, "Border width.")
+        ("border_width", 1, "Border width."),
+        ("max_border_width", 0, "Border width for maximize."),
+        ("fullscreen_border_width", 0, "Border width for fullscreen."),
     )
     name = "floating"
     def __init__(self, float_rules=None, **config):
@@ -54,6 +56,13 @@ class Floating(Layout):
         Adjust offsets of clients within current screen
         """
         for i, win in enumerate(self.clients):
+            if win.maximized:
+                win.enablemaximize()
+                continue
+            elif win.fullscreen:
+                win.enablemaximize(state=window.FULLSCREEN)
+                continue
+
             offset_x = win._float_info['x']
             offset_y = win._float_info['y']
 
@@ -105,12 +114,18 @@ class Floating(Layout):
             bc = self.group.qtile.colorPixel(self.border_focus)
         else:
             bc = self.group.qtile.colorPixel(self.border_normal)
+        if c.maximized:
+            bw = self.max_border_width
+        elif c.fullscreen:
+            bw = self.fullscreen_border_width
+        else:
+            bw = self.border_width
         c.place(c.x,
-               c.y,
-               c.width,
-               c.height,
-               self.border_width,
-               bc)
+                c.y,
+                c.width,
+                c.height,
+                bw,
+                bc)
         c.unhide()
 
     def clone(self, group):

@@ -1205,6 +1205,9 @@ class Qtile(command.CommandObject):
             self.unmanage(e.window)
 
     def toScreen(self, n):
+        """
+        Have Qtile move to screen and put focus there
+        """
         if len(self.screens) < n-1:
             return
         self.currentScreen = self.screens[n]
