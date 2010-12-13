@@ -103,13 +103,13 @@ class _Window(command.CommandObject):
         self.hidden = True
         self.group = None
         window.set_attribute(eventmask=self._windowMask)
-        self.x, self.y, self.width, self.height = 0, 0, 0, 0
+        g = self.window.get_geometry()
+        self.x, self.y, self.width, self.height = g.x, g.y, g.width, g.height
         self.borderwidth = 0
         self.bordercolor = None
         self.name = "<no name>"
         self.state = NormalState
         self.window_type = "normal"
-        g = self.window.get_geometry()
         self._float_state = NOT_FLOATING
         # note that _float_info x and y are
         # really offsets, relative to screen x,y
@@ -315,13 +315,6 @@ class _Window(command.CommandObject):
             Places the window at the specified location with the given size.
         """
         self.x, self.y, self.width, self.height = x, y, width, height
-        if self.width == 0:
-            # get from geometry (when initial float this is a problem)
-            g = self.window.get_geometry()
-            self.x = g.x
-            self.y = g.y
-            self.width = g.width
-            self.height = g.height
         self.borderwidth, self.bordercolor = borderwidth, bordercolor
         kwarg = dict(
             x=x,
