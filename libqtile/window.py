@@ -323,14 +323,6 @@ class _Window(command.CommandObject):
             self.width = g.width
             self.height = g.height
         self.borderwidth, self.bordercolor = borderwidth, bordercolor
-        # shift by screen.x (y) so they appear on the right screen
-        try:
-            if self.group:
-                if self.x < self.group.screen.x:
-                    self.x += self.group.screen.x
-                    x = self.x
-        except AttributeError, e:
-            pass
         kwarg = dict(
             x=x,
             y=y,
