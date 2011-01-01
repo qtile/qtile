@@ -21,48 +21,61 @@
 import os.path
 import sys
 import utils
+from libqtile.manager import Key, Group, Screen
+from libqtile.layout.base import Layout
+from libqtile.layout.floating import Floating
 
 class ConfigError(Exception): pass
 
 
 class Config:
-    keys = ()
-    mouse = ()
-    groups = None
-    layouts = None
-    screens = ()
+    keys = []
+    mouse = []
+    groups = []
+    layouts = []
+    screens = []
     main = None
+    floating_layout = Floating()
 
+config = Config()
 
-class File(Config):
-    def __init__(self, fname=None):
-        if not fname:
-            config_directory = os.path.expandvars('$XDG_CONFIG_HOME')
-            if config_directory == '$XDG_CONFIG_HOME': #if variable wasn't set
-                config_directory = os.path.expanduser("~/.config")
-            fname = os.path.join(config_directory, "qtile", "config.py")
-        elif fname == "default":
-            fname = utils.data.path("resources/default-config.py")
+__all__ = [
+    'add_keys',
+    'add_groups',
+    'add_layouts',
+    'add_screens',
+    'add_main' ]
 
-        self.fname = fname
-        globs = {}
+def initconfig(fname=None):
+    if not fname:
+        config_directory = os.path.expandvars('$XDG_CONFIG_HOME')
+        if config_directory == '$XDG_CONFIG_HOME': #if variable wasn't set
+            config_directory = os.path.expanduser("~/.config")
+        fname = os.path.join(config_directory, "qtile", "config.py")
+        
+    elif fname == "default":
+        fname = utils.data.path("resources/default-config.py")
+    
+    if not os.path.isfile(fname):
+        raise ConfigError("Config file does not exist: %s"%fname)
+    try:
+        sys.path.append(os.path.dirname(fname))
+        execfile(fname)
+    except Exception, v:
+        raise ConfigError(str(v))
 
-        if not os.path.isfile(fname):
-            raise ConfigError("Config file does not exist: %s"%fname)
-        try:
-            sys.path.append(os.path.dirname(self.fname)) #to allow 'import'ing from the config dir
-            execfile(self.fname, {}, globs)
-        except Exception, v:
-            raise ConfigError(str(v))
+def add_keys(keylist):
+    config.keys = [ k for k in keylist if isinstance(k,Key) ]
 
+def add_groups(grouplist):
+    config.groups = [ g for g in grouplist if isinstance(g,Group) ]
 
-        self.keys = globs.get("keys")
-        self.mouse = globs.get("mouse", [])
-        self.groups = globs.get("groups")
-        self.layouts = globs.get("layouts")
-        self.floating_layout = globs.get('floating_layout', None)
-        if self.floating_layout is None:
-            from .layout import Floating
-            self.floating_layout = Floating()
-        self.screens = globs.get("screens")
-        self.main = globs.get("main")
+def add_layouts(layoutlist):
+    config.layouts = [ l for l in layoutlist if isinstance(l,Layout) ]
+
+def add_screens(screenlist):
+    config.screens = [ s for s in screenlist if isinstance(s,Screen) ]
+
+def add_main(f):
+    if callable(f):
+        config.main = f

@@ -20,7 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os, os.path, sys
+import os
+import os.path
+import sys
 from libqtile import confreader, manager
 
 def main():
@@ -55,15 +57,15 @@ def main():
                     )
     options, args = parser.parse_args()
     try:
-        c = confreader.File(options.configfile)
+        confreader.initconfig(fname=options.configfile)
     except confreader.ConfigError, v:
         if options.fallback:
             print >> sys.stderr, "Config error: %s" % v.message
             print >> sys.stderr, "Falling back to config file: %s" % options.fallback
-            c = confreader.File(options.fallback)
+            confreader.initconfig(fname=options.fallback)
         else:
             raise
-    q = manager.Qtile(c, fname=options.socket)
+    q = manager.Qtile(confreader.config, fname=options.socket)
     q.debug = options.debug
     q.loop()
 

@@ -619,7 +619,7 @@ class Qtile(command.CommandObject):
         if config.main:
             config.main(self)
 
-        self.groups += self.config.groups[:]
+        self.groups = self.config.groups[:]
         for i in self.groups:
             i._configure(config.layouts, config.floating_layout, self)
             self.groupMap[i.name] = i
