@@ -1122,6 +1122,14 @@ class Qtile(command.CommandObject):
             True
         )
 
+    def moveToGroup(self, group):
+        """
+            Create a group if it dosn't exist and move a windows there
+        """
+        if self.currentWindow and group:
+            self.addGroup(group)
+            self.currentWindow.togroup(group)
+
     def writeReport(self, m, path="~/qtile_crashreport", _force=False):
         if self._testing and not _force:
             print >> sys.stderr, "Server Error:", m
@@ -1452,11 +1460,16 @@ class Qtile(command.CommandObject):
             prompt: Text with which to prompt user.
             widget: Name of the prompt widget (default: "prompt").
         """
-        try:
-            mb = self.widgetMap[widget]
-            mb.startInput(prompt, self.currentWindow.togroup, "group")
-        except:
-            self.log.add("No widget named '%s' present."%widget)
+        if not self.currentWindow:
+            self.log.add("No window to move")
+            return
+
+        mb = self.widgetMap.get(widget)
+        if not mb:
+            self.log.add("No widget named '%s' present." % widget)
+            return
+
+        mb.startInput(prompt, self.moveToGroup, "group")
 
     def cmd_spawncmd(self, prompt="spawn:", widget="prompt"):
         """
