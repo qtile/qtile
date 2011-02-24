@@ -4,16 +4,54 @@ import base
 
 
 class NullCompleter:
-    def actual(self):
+    def actual(self, qtile):
         return None
 
     def complete(self, txt):
         return txt
 
+class GroupCompleter:
+    def __init__(self, qtile):
+        self.qtile = qtile
+        self.thisfinal = None
+        self.lookup, self.offset = None, None
+
+    def actual(self):
+        """
+            Returns the current actual value.
+        """
+        return self.thisfinal
+
+    def reset(self):
+        self.lookup = None
+        self.offset = -1
+
+    def complete(self, txt):
+        """
+            Returns the next completion for txt, or None if there is no completion.
+        """
+        txt = txt.lower()
+        if not self.lookup:
+            self.lookup = []
+            for group in self.qtile.groupMap.keys():
+                if group.lower().startswith(txt):
+                    self.lookup.append((group, group))
+
+            self.lookup.sort()
+            self.offset = -1
+            self.lookup.append((txt, txt))
+
+        self.offset += 1
+        if self.offset >= len(self.lookup):
+            self.offset = 0
+        ret = self.lookup[self.offset]
+        self.thisfinal = ret[1]
+        return ret[0]
+
 
 class CommandCompleter:
     DEFAULTPATH = "/bin:/usr/bin:/usr/local/bin"
-    def __init__(self, _testing=False):
+    def __init__(self, qtile, _testing=False):
         """
             _testing: disables reloading of the lookup table to make testing possible.
         """
@@ -90,6 +128,7 @@ class Prompt(base._TextBox):
     """
     completers = {
         "cmd": CommandCompleter,
+        "group": GroupCompleter,
         None: NullCompleter
     }
     defaults = manager.Defaults(
@@ -125,7 +164,7 @@ class Prompt(base._TextBox):
         self.prompt = prompt
         self.userInput = ""
         self.callback = callback
-        self.completer = self.completers[complete]()
+        self.completer = self.completers[complete](self.qtile)
         self._update()
         self.bar.widget_grab_keyboard(self)
 

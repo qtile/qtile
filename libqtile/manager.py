@@ -1445,6 +1445,19 @@ class Qtile(command.CommandObject):
         """
         self._exit = True
 
+    def cmd_togroup(self, prompt="group: ", widget="prompt"):
+        """
+            Move current window to the selected group in a propmt widget
+
+            prompt: Text with which to prompt user.
+            widget: Name of the prompt widget (default: "prompt").
+        """
+        try:
+            mb = self.widgetMap[widget]
+            mb.startInput(prompt, self.currentWindow.togroup, "group")
+        except:
+            self.log.add("No widget named '%s' present."%widget)
+
     def cmd_spawncmd(self, prompt="spawn:", widget="prompt"):
         """
             Spawn a command using a prompt widget, with tab-completion.
