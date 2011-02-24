@@ -57,6 +57,15 @@ class DGroups(object):
         libqtile.hook.subscribe.client_new(self._add)
         libqtile.hook.subscribe.client_killed(self._del)
 
+    def shuffle_groups(self, lst, match):
+        masters = []
+        for client in lst:
+            if match.compare(client):
+                masters.append(client)
+        for master in masters:
+            lst.remove(master)
+            lst.insert(0, master)
+
     def _add(self, client):
         for app in self.apps:
             # Matching Rules
@@ -65,6 +74,17 @@ class DGroups(object):
                     group = app['group']
                     self.qtile.addGroup(group)
                     client.togroup(group)
+
+                    group_obj = self.qtile.groupMap[group]
+                    group_opts = self.groups.get(group)
+                    if group_opts:
+                        layout = group_opts.get('layout')
+                        master = group_opts.get('master')
+                        if layout:
+                            group_obj.layout = layout
+                        if master:
+                            group_obj.layout.shuffle(
+                                   lambda lst: self.shuffle_groups(lst, master))
 
                 if 'float' in app and app['float']:
                     client.floating = True
