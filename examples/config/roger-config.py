@@ -53,6 +53,10 @@ keys = [
         lazy.spawn("amixer -c 0 -q set Master 2dB-")
     ),
     Key(
+        [mod], "g",
+        lazy.togroup()
+    ),
+    Key(
         [mod], "Left", lazy.group.prevgroup(),
     ),
     Key(
