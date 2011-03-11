@@ -129,7 +129,8 @@ screens = [
 follow_mouse_focus = True
 
 def main(qtile):
-    from dgroups import DGroups, Match
+    from dgroups import DGroups, Match, simple_key_binder
+    global mod
 
     groups = {
             'h4x':  {'init': True, 'persist': True, 
@@ -149,10 +150,10 @@ def main(qtile):
                 'group': 'design', 'float': True},
             {'match': Match(wm_class=['emesene']),
                 'group': 'emesene'},
-            {'match': Match(wm_class=['Chromium-browser'], role=['browser']),
-                'group': 'www'},
+            {'match': Match(wm_class=['Chromium-browser', 'Minefield'], 
+                role=['browser']), 'group': 'www'},
             {'match': Match(wm_class=['Gajim.py']),
                 'group': 'gajim'},
             {'match': Match(wm_class=['Wine']), 'float': True, 'group': 'wine'},
            ]
-    dgroups = DGroups(qtile, groups, apps)
+    dgroups = DGroups(qtile, groups, apps, simple_key_binder(mod))
