@@ -604,6 +604,12 @@ class Qtile(command.CommandObject):
         self.widgetMap = {}
         self.groupMap = {}
         self.groups = []
+        self.keyMap = {}
+
+        # Find the modifier mask for the numlock key, if there is one:
+        nc = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
+        self.numlockMask = xcbq.ModMasks[self.conn.get_modifier(nc)]
+        self.validMask = ~(self.numlockMask | xcbq.ModMasks["lock"])
 
         # Because we only do Xinerama multi-screening, we can assume that the first
         # screen's root is _the_ root.
@@ -681,22 +687,64 @@ class Qtile(command.CommandObject):
             sys.exit(1)
 
         self.server = command._Server(self.fname, self, config)
-        # Find the modifier mask for the numlock key, if there is one:
-        nc = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
-        self.numlockMask = xcbq.ModMasks[self.conn.get_modifier(nc)]
-        self.validMask = ~(self.numlockMask | xcbq.ModMasks["lock"])
 
-        self.keyMap = {}
-        for i in self.config.keys:
-            self.keyMap[(i.keysym, i.modmask&self.validMask)] = i
+        # Map and Grab keys
+        for key in self.config.keys:
+            self.mapKey(key)
 
         self.mouseMap = {}
         for i in self.config.mouse:
             self.mouseMap[i.button_code] = i
 
-        self.grabKeys()
         self.grabMouse()
         self.scan()
+
+    def mapKey(self, key):
+        self.keyMap[(key.keysym, key.modmask&self.validMask)] = key
+        code = self.conn.keysym_to_keycode(key.keysym)
+        self.root.grab_key(
+            code,
+            key.modmask,
+            True,
+            xcb.xproto.GrabMode.Async,
+            xcb.xproto.GrabMode.Async,
+        )
+        if self.numlockMask:
+            self.root.grab_key(
+                code,
+                key.modmask | self.numlockMask,
+                True,
+                xcb.xproto.GrabMode.Async,
+                xcb.xproto.GrabMode.Async,
+            )
+            self.root.grab_key(
+                code,
+                key.modmask | self.numlockMask | xcbq.ModMasks["lock"],
+                True,
+                xcb.xproto.GrabMode.Async,
+                xcb.xproto.GrabMode.Async,
+            )
+
+    def unmapKey(self, key):
+        key_index = (key.keysym, key.modmask&self.validMask)
+        if not key_index in self.keyMap:
+            return
+
+        code = self.conn.keysym_to_keycode(key.keysym)
+        self.root.ungrab_key(
+            code,
+            key.modmask)
+        if self.numlockMask:
+            self.root.ungrab_key(
+                code,
+                key.modmask | self.numlockMask
+            )
+            self.root.ungrab_key(
+                code,
+                key.modmask | self.numlockMask | xcbq.ModMasks["lock"]
+            )
+        del(self.keyMap[key_index])
+
 
     def addGroup(self, name):
         if name not in self.groupMap.keys():
@@ -831,30 +879,8 @@ class Qtile(command.CommandObject):
 
     def grabKeys(self):
         self.root.ungrab_key(None, None)
-        for i in self.keyMap.values():
-            code = self.conn.keysym_to_keycode(i.keysym)
-            self.root.grab_key(
-                code,
-                i.modmask,
-                True,
-                xcb.xproto.GrabMode.Async,
-                xcb.xproto.GrabMode.Async,
-            )
-            if self.numlockMask:
-                self.root.grab_key(
-                    code,
-                    i.modmask | self.numlockMask,
-                    True,
-                    xcb.xproto.GrabMode.Async,
-                    xcb.xproto.GrabMode.Async,
-                )
-                self.root.grab_key(
-                    code,
-                    i.modmask | self.numlockMask | xcbq.ModMasks["lock"],
-                    True,
-                    xcb.xproto.GrabMode.Async,
-                    xcb.xproto.GrabMode.Async,
-                )
+        for key in self.keyMap.values():
+            self.mapKey(key)
 
     def get_target_chain(self, ename, e):
         """
