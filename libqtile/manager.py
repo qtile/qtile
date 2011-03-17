@@ -352,8 +352,11 @@ class Group(command.CommandObject):
 
     def hide(self):
         self.screen = None
-        for i in self.windows:
-            i.hide()
+        with self.disableMask(xcb.xproto.EventMask.EnterWindow
+                              |xcb.xproto.EventMask.FocusChange
+                              |xcb.xproto.EventMask.LeaveWindow):
+            for i in self.windows:
+                i.hide()
 
     @contextlib.contextmanager
     def disableMask(self, mask):
@@ -422,16 +425,24 @@ class Group(command.CommandObject):
         self.windows.remove(win)
         win.group = None
         nextfocus = None
-        if win.floating:
-            self.floating_layout.remove(win)
+        if window.floating:
+            nextfocus = self.floating_layout.remove(win)
+            if nextfocus is None:
+                nextfocus = self.layout.focus_first()
+            if nextfocus is None:
+                nextfocus = self.floating_layout.focus_first()
         else:
             for i in self.layouts:
                 if i is self.layout:
                     nextfocus = i.remove(win)
                 else:
                     i.remove(win)
-            self.focus(nextfocus, True)
-            self.layoutAll()
+            if nextfocus is None:
+                nextfocus = self.floating_layout.focus_first()
+            if nextfocus is None:
+                nextfocus = self.layout.focus_first()
+        self.focus(nextfocus, True)
+        self.layoutAll()
         #else: TODO: change focus
     def mark_floating(self, win, floating):
         if floating and win in self.floating_layout.clients:
@@ -640,6 +651,12 @@ class Qtile(command.CommandObject):
         self.widgetMap = {}
         self.groupMap = {}
         self.groups = []
+        self.keyMap = {}
+
+        # Find the modifier mask for the numlock key, if there is one:
+        nc = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
+        self.numlockMask = xcbq.ModMasks[self.conn.get_modifier(nc)]
+        self.validMask = ~(self.numlockMask | xcbq.ModMasks["lock"])
 
         # Because we only do Xinerama multi-screening, we can assume that the first
         # screen's root is _the_ root.
@@ -686,20 +703,15 @@ class Qtile(command.CommandObject):
             sys.exit(1)
 
         self.server = command._Server(self.fname, self, config)
-        # Find the modifier mask for the numlock key, if there is one:
-        nc = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
-        self.numlockMask = xcbq.ModMasks[self.conn.get_modifier(nc)]
-        self.validMask = ~(self.numlockMask | xcbq.ModMasks["lock"])
 
-
-        for i in self.config.keys:
-            self.keyMap[(i.keysym, i.modmask&self.validMask)] = i
+        # Map and Grab keys
+        for key in self.config.keys:
+            self.mapKey(key)
 
         self.mouseMap = {}
         for i in self.config.mouse:
             self.mouseMap[i.button_code] = i
 
-        self.grabKeys()
         self.grabMouse()
         self.scan()
 
@@ -753,6 +765,53 @@ class Qtile(command.CommandObject):
             )
             self.screens.append(s)
         
+    def mapKey(self, key):
+        self.keyMap[(key.keysym, key.modmask&self.validMask)] = key
+        code = self.conn.keysym_to_keycode(key.keysym)
+        self.root.grab_key(
+            code,
+            key.modmask,
+            True,
+            xcb.xproto.GrabMode.Async,
+            xcb.xproto.GrabMode.Async,
+        )
+        if self.numlockMask:
+            self.root.grab_key(
+                code,
+                key.modmask | self.numlockMask,
+                True,
+                xcb.xproto.GrabMode.Async,
+                xcb.xproto.GrabMode.Async,
+            )
+            self.root.grab_key(
+                code,
+                key.modmask | self.numlockMask | xcbq.ModMasks["lock"],
+                True,
+                xcb.xproto.GrabMode.Async,
+                xcb.xproto.GrabMode.Async,
+            )
+
+    def unmapKey(self, key):
+        key_index = (key.keysym, key.modmask&self.validMask)
+        if not key_index in self.keyMap:
+            return
+
+        code = self.conn.keysym_to_keycode(key.keysym)
+        self.root.ungrab_key(
+            code,
+            key.modmask)
+        if self.numlockMask:
+            self.root.ungrab_key(
+                code,
+                key.modmask | self.numlockMask
+            )
+            self.root.ungrab_key(
+                code,
+                key.modmask | self.numlockMask | xcbq.ModMasks["lock"]
+            )
+        del(self.keyMap[key_index])
+
+
     def addGroup(self, name):
         if name not in self.groupMap.keys():
             g = Group(name)
@@ -886,30 +945,8 @@ class Qtile(command.CommandObject):
 
     def grabKeys(self):
         self.root.ungrab_key(None, None)
-        for i in self.keyMap.values():
-            code = self.conn.keysym_to_keycode(i.keysym)
-            self.root.grab_key(
-                code,
-                i.modmask,
-                True,
-                xcb.xproto.GrabMode.Async,
-                xcb.xproto.GrabMode.Async,
-            )
-            if self.numlockMask:
-                self.root.grab_key(
-                    code,
-                    i.modmask | self.numlockMask,
-                    True,
-                    xcb.xproto.GrabMode.Async,
-                    xcb.xproto.GrabMode.Async,
-                )
-                self.root.grab_key(
-                    code,
-                    i.modmask | self.numlockMask | xcbq.ModMasks["lock"],
-                    True,
-                    xcb.xproto.GrabMode.Async,
-                    xcb.xproto.GrabMode.Async,
-                )
+        for key in self.keyMap.values():
+            self.mapKey(key)
 
     def get_target_chain(self, ename, e):
         """
@@ -1215,6 +1252,14 @@ class Qtile(command.CommandObject):
             self.currentWindow,
             True
         )
+
+    def moveToGroup(self, group):
+        """
+            Create a group if it dosn't exist and move a windows there
+        """
+        if self.currentWindow and group:
+            self.addGroup(group)
+            self.currentWindow.togroup(group)
 
     def writeReport(self, m, path="~/qtile_crashreport", _force=False):
         if self._testing and not _force:
@@ -1551,6 +1596,24 @@ class Qtile(command.CommandObject):
             Quit Qtile.
         """
         self._exit = True
+
+    def cmd_togroup(self, prompt="group: ", widget="prompt"):
+        """
+            Move current window to the selected group in a propmt widget
+
+            prompt: Text with which to prompt user.
+            widget: Name of the prompt widget (default: "prompt").
+        """
+        if not self.currentWindow:
+            self.log.add("No window to move")
+            return
+
+        mb = self.widgetMap.get(widget)
+        if not mb:
+            self.log.add("No widget named '%s' present." % widget)
+            return
+
+        mb.startInput(prompt, self.moveToGroup, "group")
 
     def cmd_spawncmd(self, prompt="spawn:", widget="prompt"):
         """

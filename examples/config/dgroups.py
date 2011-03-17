@@ -1,4 +1,6 @@
 import libqtile.hook
+from libqtile.manager import Key
+from libqtile.command import lazy
 
 
 class Match(object):
@@ -31,15 +33,41 @@ class Match(object):
         return False
 
 
+
+def simple_key_binder(mod):
+    ''' Bind keys to mod+group position '''
+    def func(dgroup):
+        # unbind all
+        for key in dgroup.keys[:]:
+            dgroup.qtile.unmapKey(key)
+            dgroup.keys.remove(key)
+
+        # keys 1 to 9 and 0
+        keynumbers = range(1,10) + [0]
+
+        # bind all keys
+        for num, group in zip(keynumbers, dgroup.qtile.groups[:10]):
+            name = group.name
+            key = Key([mod], str(num), lazy.group[name].toscreen())
+            key_s = Key([mod, "shift"], str(num), lazy.window.togroup(name))
+            dgroup.keys.append(key)
+            dgroup.keys.append(key_s)
+            dgroup.qtile.mapKey(key)
+            dgroup.qtile.mapKey(key_s)
+
+    return func
+
+
 class DGroups(object):
     ''' Dynamic Groups '''
-    def __init__(self, qtile, groups, apps, config=None):
+    def __init__(self, qtile, groups, apps, key_binder=None):
         self.qtile = qtile
 
         self.groups = groups
         self.apps = apps
+        self.keys = []
 
-        self.config = config
+        self.key_binder = key_binder
 
         self._setup_hooks()
         self._setup_groups()
@@ -56,6 +84,20 @@ class DGroups(object):
     def _setup_hooks(self):
         libqtile.hook.subscribe.client_new(self._add)
         libqtile.hook.subscribe.client_killed(self._del)
+        if self.key_binder:
+            libqtile.hook.subscribe.addgroup(
+                    lambda: self.key_binder(self))
+            libqtile.hook.subscribe.delgroup(
+                    lambda: self.key_binder(self))
+
+    def shuffle_groups(self, lst, match):
+        masters = []
+        for client in lst:
+            if match.compare(client):
+                masters.append(client)
+        for master in masters:
+            lst.remove(master)
+            lst.insert(0, master)
 
     def _add(self, client):
         for app in self.apps:
@@ -65,6 +107,17 @@ class DGroups(object):
                     group = app['group']
                     self.qtile.addGroup(group)
                     client.togroup(group)
+
+                    group_obj = self.qtile.groupMap[group]
+                    group_opts = self.groups.get(group)
+                    if group_opts:
+                        layout = group_opts.get('layout')
+                        master = group_opts.get('master')
+                        if layout:
+                            group_obj.layout = layout
+                        if master:
+                            group_obj.layout.shuffle(
+                                   lambda lst: self.shuffle_groups(lst, master))
 
                 if 'float' in app and app['float']:
                     client.floating = True

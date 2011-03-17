@@ -3,10 +3,7 @@ from libqtile.command import lazy
 from libqtile import layout, bar, widget
 
 mod = 'mod4'
-# The bindings below are for use with a Kinesis keyboard, and may not make
-# sense for standard keyboards.
 keys = [
-    # First, a set of bindings to control the layouts
     Key(
         [mod], "k",
         lazy.layout.down()
@@ -16,16 +13,18 @@ keys = [
         lazy.layout.up()
     ),
     Key(
-        [mod, "control"], "k",
-        lazy.layout.shuffle_down()
-    ),
-    Key(
-        [mod, "control"], "j",
-        lazy.layout.shuffle_up()
+        [mod], "f",
+        lazy.window.toggle_floating()
     ),
     Key(
         [mod], "space",
+        lazy.nextlayout()
+    ),
+    Key([mod], "Tab",
         lazy.layout.next()
+    ),
+    Key([mod, "shift"], "Tab",
+        lazy.layout.previous()
     ),
     Key(
         [mod, "shift"], "space",
@@ -36,10 +35,11 @@ keys = [
         lazy.layout.toggle_split()
     ),
 
-    Key([mod], "h",      lazy.to_screen(1)),
-    Key([mod], "l",      lazy.to_screen(0)),
-    # ~/bin/x starts a terminal program
-    Key([mod], "Tab",    lazy.nextlayout()),
+    Key([mod, "shift"], "Right",
+        lazy.layout.increase_ratio()),
+    Key([mod, "shift"], "Left",
+        lazy.layout.decrease_ratio()),
+
     Key([mod], "w",      lazy.window.kill()),
     Key([mod], "F2",     lazy.spawn(
         "dmenu_run -p run -nb '#202020' -nf '#ffffff' -fa 'Anonymous Pro-10'")),
@@ -51,6 +51,10 @@ keys = [
     Key(
         [mod, "shift"], "j",
         lazy.spawn("amixer -c 0 -q set Master 2dB-")
+    ),
+    Key(
+        [mod], "g",
+        lazy.togroup()
     ),
     Key(
         [mod], "Left", lazy.group.prevgroup(),
@@ -83,11 +87,10 @@ for i in groups:
     )
 
 
-# Two simple layout instances:
 layouts = [
     layout.Max(),
     layout.Stack(stacks=2),
-    layout.Tile(),
+    layout.Tile(ratio=0.25),
 ]
 
 
@@ -97,18 +100,22 @@ screens = [
                     [
                         widget.GroupBox(borderwidth=2,
                             fontsize=14,
-                            padding=1, margin_x=1, margin_y=1),
+                            padding=1, margin_y=1),
                         widget.Sep(),
+                        widget.Prompt(),
                         widget.WindowName(
                             fontsize=14, margin_x=6),
+                        #widget.Sep(),
+                        #widget.Mpd(fontsize=16),
+                        #widget.Sep(),
+                        #widget.CPUGraph(width=50, graph_color='0066FF',
+                        #                          fill_color='001188'),
+                        #widget.MemoryGraph(width=50, graph_color='22FF44',
+                        #                             fill_color='11AA11'),
+                        #widget.SwapGraph(width=50, graph_color='FF2020',
+                        #                           fill_color='C01010'),
                         widget.Sep(),
-                        widget.CPUGraph(width=50, graph_color='0066FF', 
-                                                  fill_color='001188'),
-                        widget.MemoryGraph(width=50, graph_color='22FF44',
-                                                     fill_color='11AA11'),
-                        widget.SwapGraph(width=50, graph_color='FF2020',
-                                                   fill_color='C01010'),
-                        widget.Sep(),
+                        widget.Volume(theme_path='/usr/share/icons/gnome/256x256/status/'),
                         widget.Systray(),
                         widget.Sep(),
                         widget.Clock('%H:%M %d/%m/%y',
@@ -119,25 +126,34 @@ screens = [
     ),
 ]
 
+follow_mouse_focus = True
 
 def main(qtile):
-    from dgroups import DGroups, Match
+    from dgroups import DGroups, Match, simple_key_binder
+    global mod
 
     groups = {
-            'h4x':  {'init': True, 'persist': True, 'spawn': 'guake'},
+            'h4x':  {'init': True, 'persist': True, 
+                'spawn': 'guake', 'exclusive': True},
             'design': {},
-            'emesene': {},
-            'gajim': {},
+            'www': {'exclusive': True},
+            # master set the master window/windows of layout
+            'emesene': {'layout': 'tile', 'master': Match(role=['main'])},
+            'gajim': {'layout': 'tile', 'master': Match(role=['roster'])},
            }
+
     apps = [
+            {'match': Match(wm_class=['Guake.py', 
+                'MPlayer', 'Exe', 'Gnome-keyring-prompt'],
+               wm_type=['dialog', 'utility', 'splash']), 'float': True},
             {'match': Match(wm_class=['Gimp']),
                 'group': 'design', 'float': True},
             {'match': Match(wm_class=['emesene']),
                 'group': 'emesene'},
+            {'match': Match(wm_class=['Chromium-browser', 'Minefield'], 
+                role=['browser']), 'group': 'www'},
             {'match': Match(wm_class=['Gajim.py']),
                 'group': 'gajim'},
-            {'match': Match(wm_class=['Guake.py', 'MPlayer'],
-                wm_type=['dialog']), 'float': True},
             {'match': Match(wm_class=['Wine']), 'float': True, 'group': 'wine'},
            ]
-    dgroups = DGroups(qtile, groups, apps)
+    dgroups = DGroups(qtile, groups, apps, simple_key_binder(mod))

@@ -17,9 +17,9 @@ class _GroupBase(base._Widget):
     def fontsize(self, value):
         self._fontsize = value
 
-    def box_width(self):
-        width, height = self.drawer.max_layout_size(    
-            [i.name for i in self.qtile.groups],
+    def box_width(self, groups):
+        width, height = self.drawer.max_layout_size(
+            [i.name for i in groups],
             self.font,
             self.fontsize
         )
@@ -69,7 +69,7 @@ class AGroupBox(_GroupBase):
         self.bar.screen.group.cmd_nextgroup()
 
     def calculate_width(self):
-        return self.box_width()
+        return self.box_width(self.qtile.groups)
 
     def draw(self):
         self.drawer.clear(self.background)
@@ -107,22 +107,32 @@ class GroupBox(_GroupBase):
         elif button == 4:
             group = curGroup.nextGroup()
         else:
-            groupOffset = int(x/self.box_width())
-            if len(self.qtile.groups) - 1 >= groupOffset:
-                group = self.qtile.groups[groupOffset]
+            new_width = width = 0
+            for g in self.qtile.groups:
+                new_width += self.box_width([g])
+                if x >= width+1 and x <= new_width:
+                    group = g
+                    break
+                width = new_width
 
-        self.bar.screen.setGroup(group)
+        if group:
+            self.bar.screen.setGroup(group)
 
     def calculate_width(self):
-        return self.box_width() * len(self.qtile.groups)
+        width = 0
+        for g in self.qtile.groups:
+            width += self.box_width([g])
+        return width
 
     def group_has_urgent(self, group):
         return len([w for w in group.windows if w.urgent]) > 0
 
     def draw(self):
-        bw = self.box_width()
         self.drawer.clear(self.background)
+
+        offset = 0
         for i, g in enumerate(self.qtile.groups):
+            bw = self.box_width([g])
             if g.screen:
                 if self.bar.screen.group.name == g.name:
                     border = self.this_screen_border
@@ -139,12 +149,13 @@ class GroupBox(_GroupBase):
                 text = self.inactive
 
             self.drawbox(
-                self.margin_x + (bw*i),
+                self.margin_x + offset,
                 g.name,
                 border,
                 text,
                 bw - self.margin_x*2 - self.padding*2
             )
+            offset += bw
         self.drawer.draw(self.offset, self.width)
 
 
