@@ -62,7 +62,7 @@ class _Widget(command.CommandObject):
         self.bar.draw()
 
     def clear(self):
-        self.drawer.rectangle(
+        self.drawer.fillrect(
             self.offset, 0, self.width, self.bar.size,
             self.bar.background
         )

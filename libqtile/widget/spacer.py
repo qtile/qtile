@@ -13,5 +13,5 @@ class Spacer(base._Widget):
         base._Widget.__init__(self, width)
 
     def draw(self):
-        pass
+        self.clear()
 
