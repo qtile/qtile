@@ -312,8 +312,11 @@ class Group(command.CommandObject):
 
     def hide(self):
         self.screen = None
-        for i in self.windows:
-            i.hide()
+        with self.disableMask(xcb.xproto.EventMask.EnterWindow
+                              |xcb.xproto.EventMask.FocusChange
+                              |xcb.xproto.EventMask.LeaveWindow):
+            for i in self.windows:
+                i.hide()
 
     @contextlib.contextmanager
     def disableMask(self, mask):
@@ -381,15 +384,23 @@ class Group(command.CommandObject):
         window.group = None
         nextfocus = None
         if window.floating:
-            self.floating_layout.remove(window)
+            nextfocus = self.floating_layout.remove(window)
+            if nextfocus is None:
+                nextfocus = self.layout.focus_first()
+            if nextfocus is None:
+                nextfocus = self.floating_layout.focus_first()
         else:
             for i in self.layouts:
                 if i is self.layout:
                     nextfocus = i.remove(window)
                 else:
                     i.remove(window)
-            self.focus(nextfocus, True)
-            self.layoutAll()
+            if nextfocus is None:
+                nextfocus = self.floating_layout.focus_first()
+            if nextfocus is None:
+                nextfocus = self.layout.focus_first()
+        self.focus(nextfocus, True)
+        self.layoutAll()
         #else: TODO: change focus
 
     def mark_floating(self, window, floating):
