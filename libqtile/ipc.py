@@ -25,6 +25,7 @@
     un-marshalling untrusted data can result in arbitrary code execution).
 """
 import marshal, select, os.path, socket, struct
+import gobject
 
 HDRLEN = 4
 BUFSIZE = 1024 * 1024
@@ -38,14 +39,19 @@ class _IPC:
         data = ""
         while len(data) < size:
             data += sock.recv(BUFSIZE)
-        return marshal.loads(data)
+        return self._unpack_body(data)
 
-    def _write(self, sock, msg):
+    def _unpack_body(self, body):
+        return marshal.loads(body)
+
+    def _pack_reply(self, msg):
         msg = marshal.dumps(msg)
         size = struct.pack("!L", len(msg))
-        sock.sendall(size)
-        sock.sendall(msg)
+        return size + msg
 
+        
+    def _write(self, sock, msg):
+        sock.sendall(self._pack_reply(msg))
 
 class Client(_IPC):
     def __init__(self, fname):
@@ -89,22 +95,62 @@ class Server(_IPC):
         self.sock.listen(5)
 
     def close(self):
+        gobject.source_remove(self.gob_tag)
         self.sock.close()
 
-    def receive(self):
-        """
-            Returns either None, or a single message.
-        """
-        fds, _, _ = select.select([self.sock], [], [], 0)
-        if fds:
+    def start(self):
+        self.gob_tag = gobject.io_add_watch(self.sock, gobject.IO_IN, self._connection)
+
+    def _connection(self, sock, cond):
+        try:
             conn, _ = self.sock.accept()
-            try:
-                data = self._read(conn)
-            except socket.error:
-                return
-            try:
-                ret = self.handler(data)
-                self._write(conn, ret)
+        except socket.error as er:
+            if er.errno in (errno.EAGAIN, errno.EINTR):
+                return True
+            raise
+        else:
+            conn.setblocking(0)
+            data = {'buffer': ''} #object which holds connection state
+            gobject.io_add_watch(conn, gobject.IO_IN, self._receive, data)
+            return True
+    
+    def _receive(self, conn, cond, data):
+        try:
+            recv = conn.recv(4096)
+        except socket.error as e:
+            if er.errno in (errno.EAGAIN, errno.EINTR):
+                return True
+            raise
+        else:
+            if recv == '':
+                gobject.source_remove(data['tag'])
                 conn.close()
-            except socket.error:
-                return
+                return True
+
+            data['buffer'] += recv
+            if 'header' not in data and len(data['buffer']) >= HDRLEN:
+                data['header'] = struct.unpack("!L", data['buffer'][:HDRLEN])
+                data['buffer'] = data['buffer'][HDRLEN:]
+            if 'header' in data:
+                if len(data['buffer']) < data['header'][0]:
+                    return True
+
+            req = self._unpack_body(data['buffer'])
+            data['result'] = self._pack_reply(self.handler(req))
+            gobject.io_add_watch(conn, gobject.IO_OUT, self._send, data)
+            return False
+
+    def _send(self, conn, cond, data):
+        try:
+            bytes = conn.send(data['result'])
+        except socket.error as e:
+            if er.errno in (errno.EAGAIN, errno.EINTR):
+                return True
+            raise
+        else:
+            if not bytes or bytes >= len(data['result']):
+                conn.close()
+                return False
+
+            data['result'] = data['result'][bytes:]
+            return True
