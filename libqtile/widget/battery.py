@@ -3,6 +3,11 @@ import os
 from .. import bar, hook, manager
 import base
 
+BAT_DIR = '/sys/class/power_supply'
+CHARGING = 'Charging'
+DISCHARGING = 'Discharging'
+UNKNOWN = 'Unknown'
+
 class Battery(base._TextBox):
     """
         A simple but flexible text-based clock.
@@ -12,81 +17,45 @@ class Battery(base._TextBox):
         ("fontsize", None, "Clock pixel size. Calculated if None."),
         ("padding", None, "Clock padding. Calculated if None."),
         ("background", "000000", "Background colour"),
-        ("foreground", "ffffff", "Foreground colour")
+        ("foreground", "ffffff", "Foreground colour"),
+        ("format", "{char} {percent:2.0%} {hour:d}:{min:02d}", "Display format"),
+        ("battery_name", "BAT0", "ACPI name of a battery, usually BAT0"),
     )
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "BAT", **config)
-        self.bat = BatteryReader(BAT_DIR)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         self.timeout_add(1, self.update)
 
-    def update(self):
-        stat = self.bat.stat()
+    def _get_info(self):
+        stat = self._get_param('status')
+        now = float(self._get_param('energy_now'))
+        full = float(self._get_param('energy_full'))
+        power = float(self._get_param('power_now'))
 
         if stat == DISCHARGING:
-            ntext = 'V {0:2.2f}%'.format(self.bat.percent())
+            char = 'V'
+            time = now/power
         elif stat == CHARGING:
-            ntext = '^ {0:2.2f}%'.format(self.bat.percent())
+            char = '^'
+            time = (full - now)/power
         else:
-            ntext = 'Full'
+            return 'Full'
+
+        hour = int(time)
+        min = int(time*60) % 60
+        return self.format.format(char=char,
+                           percent=now/full,
+                           hour=hour, min=min)
+
+    def update(self):
+        ntext = self._get_info()
         if ntext != self.text:
+            self.text = ntext
             self.bar.draw()
         return True
 
-
-
-class BatteryReader(object):
-    """Battery using functions eats 80% of cpu see if you hold a file
-    handle if it improves"""
-
-    def __init__(self, path):
-        self.path = path
-        self.stat_fin = open(os.path.join(self.path, 'status'))
-        self.now_fin = open(os.path.join(self.path, 'energy_now'))
-        self.full_fin = open(os.path.join(self.path, 'energy_full'))
-
-    def stat(self):
-        self.stat_fin.seek(0)
-        return self.stat_fin.read().strip()
-
-    def percent(self):
-        self.now_fin.seek(0)
-        self.full_fin.seek(0)
-        return 100 * float(self.now_fin.read())/float(self.full_fin.read())
-
-BAT_DIR = '/sys/class/power_supply/BAT0/'
-CHARGING = 'Charging'
-DISCHARGING = 'Discharging'
-UNKNOWN = 'Unknown'
-
-def status():
-    return _read_file('status')
-
-
-def current_charge():
-    return float(_read_file('energy_now'))
-
-
-def capacity():
-    return float(_read_file('energy_full'))
-
-
-def _read_file(x):
-    return open(os.path.join(BAT_DIR, x)).read().strip()
-
-
-def percent():
-    return current_charge()/capacity()
-
-
-def info():
-    stat = status()
-    if stat == CHARGING:
-        return 'charging'
-    elif stat == DISCHARGING:
-        
-        return 'discharging'
-    else:
-        return 'a/c'
+    def _get_param(self, name):
+        with open(os.path.join(BAT_DIR, self.battery_name, name), 'r') as f:
+            return f.read().strip()
