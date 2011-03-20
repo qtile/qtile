@@ -1022,6 +1022,8 @@ class Qtile(command.CommandObject):
                 if context.iteration(True):
                     # this seems to be crucial part
                     self.conn.flush()
+                if self._exit:
+                    break
         finally:
             gobject.source_remove(display_tag)
 
