@@ -1,5 +1,7 @@
 from .. import command, utils, bar, manager, drawer
 
+import gobject
+
 
 LEFT = object()
 CENTER = object()
@@ -114,6 +116,16 @@ class _Widget(command.CommandObject):
         """
         raise NotImplementedError
 
+    def timeout_add(self, seconds, method, *args):
+        """
+            This method calls either ``gobject.timeout_add`` or
+            ``gobject.timeout_add_seconds`` with same arguments. Latter is
+            better for battery usage, but works only with integer timeouts
+        """
+        if int(seconds) == seconds:
+            return gobject.timeout_add_seconds(int(seconds), method, *args)
+        else:
+            return gobject.timeout_add(int(seconds*0.001), method, *args)
 
 
 

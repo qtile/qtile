@@ -1017,27 +1017,13 @@ class Qtile(command.CommandObject):
         self.server.start()
         display_tag = gobject.io_add_watch(self.conn.conn.get_file_descriptor(), gobject.IO_IN, self._xpoll)
         try:
-            gobject.MainLoop().run()
+            context = gobject.main_context_default()
+            while True:
+                if context.iteration(True):
+                    # this seems to be crucial part
+                    self.conn.flush()
         finally:
             gobject.source_remove(display_tag)
-
-    def _oldloop(self):
-        try:
-            while 1:
-                fds, _, _ = select.select(
-                                [self.server.sock, self.conn.conn.get_file_descriptor()],
-                                [], [], 0.01
-                            )
-                if self._exit:
-                    sys.exit(1)
-                self.server.receive()
-                self.xpoll()
-                self.conn.flush()
-                hook.fire("tick")
-        except:
-            # We've already written a report.
-            if not self._exit:
-                self.writeReport(traceback.format_exc())
 
     def find_screen(self, x, y):
         """

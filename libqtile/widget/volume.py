@@ -30,13 +30,12 @@ class Volume(base._TextBox):
     def __init__(self, **config):
         base._TextBox.__init__(self, '0', width=bar.CALCULATED, **config)
         self.surfaces = {}
-        self.lasttick = 0
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         if self.theme_path:
             self.setup_images()
-        hook.subscribe.tick(self.update)
+        self.timeout_add(0.2, self.update)
 
     def click(self, x, y, button):
         if button == 5:
@@ -51,11 +50,8 @@ class Volume(base._TextBox):
         self.draw()
 
     def update(self):
-        t = time.time()
-        if self.lasttick + 0.2 < t:
-            self.lasttick = t
-            #self.draw()
-            self.bar.draw()
+        self.bar.draw()
+        return True
 
     def setup_images(self):
         for img_name in ('audio-volume-high', 'audio-volume-low',

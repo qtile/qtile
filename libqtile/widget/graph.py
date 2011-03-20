@@ -21,7 +21,7 @@ class _Graph(base._Widget):
         ("margin_x", 3, "Margin X"),
         ("margin_y", 3, "Margin Y"),
         ("samples", 100, "Count of graph samples."),
-        ("frequency", 0.5, "Update frequency in seconds"),
+        ("frequency", 1, "Update frequency in seconds"),
         ("type", "linefill", "'box', 'line', 'linefill'"),
         ("line_width", 3, "Line width"),
     )
@@ -29,7 +29,6 @@ class _Graph(base._Widget):
     def __init__(self, width = 100, **config):
         base._Widget.__init__(self, width, **config)
         self.values = [0]*self.samples
-        self.lasttick = 0
         self.maxvalue = 0
 
     @property
@@ -107,13 +106,11 @@ class _Graph(base._Widget):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
-        hook.subscribe.tick(self.update)
+        self.timeout_add(self.frequency, self.update)
 
     def update(self):
-        t = time.time()
-        if self.lasttick + self.frequency < t:
-            self.lasttick = t
-            self.update_graph()
+        self.update_graph()
+        return True
 
     def fullfill(self, value):
         self.values = [value] * len(self.values)

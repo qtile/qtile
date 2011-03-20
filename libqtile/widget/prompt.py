@@ -144,13 +144,12 @@ class Prompt(base._TextBox):
         self.name = name
         self.active = False
         self.blink = False
-        self.lasttick = 0
         self.completer = None
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         if self.cursorblink:
-            hook.subscribe.tick(self.tick)
+            self.timeout_add(self.cursorblink, self._blink)
 
     def startInput(self, prompt, callback, complete=None):
         """
@@ -168,12 +167,10 @@ class Prompt(base._TextBox):
         self._update()
         self.bar.widget_grab_keyboard(self)
 
-    def tick(self):
-        t = time.time()
-        if self.lasttick + self.cursorblink < t:
-            self.lasttick = t
-            self.blink = not self.blink
-            self._update()
+    def _blink(self):
+        self.blink = not self.blink
+        self._update()
+        return True
 
     def _update(self):
         if self.active:

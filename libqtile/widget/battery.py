@@ -20,19 +20,20 @@ class Battery(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        hook.subscribe.tick(self.update)
+        self.timeout_add(1, self.update)
 
     def update(self):
         stat = self.bat.stat()
 
         if stat == DISCHARGING:
-            self.text = 'V {0:2.2f}%'.format(self.bat.percent())
+            ntext = 'V {0:2.2f}%'.format(self.bat.percent())
         elif stat == CHARGING:
-            self.text = '^ {0:2.2f}%'.format(self.bat.percent())
+            ntext = '^ {0:2.2f}%'.format(self.bat.percent())
         else:
-            self.text = 'Full'
-        # following line bumps up cpu to 80%
-        #self.bar.draw()
+            ntext = 'Full'
+        if ntext != self.text:
+            self.bar.draw()
+        return True
 
 
 
