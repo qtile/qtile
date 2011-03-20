@@ -1530,10 +1530,7 @@ class Qtile(command.CommandObject):
 
                 spawn("firefox")
         """
-        try:
-            subprocess.Popen([cmd], shell=True)
-        except Exception, v:
-            print type(v), v
+        gobject.spawn_async([os.environ['SHELL'], '-c', cmd])
 
     def cmd_status(self):
         """
