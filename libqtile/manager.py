@@ -910,6 +910,8 @@ class Qtile(command.CommandObject):
                     self.currentScreen.group.add(c)
                 hook.fire("client_managed", c)
             return c
+        else:
+            return self.windowMap[w.wid]
 
     def grabMouse(self):
         self.root.ungrab_button(None, None)
