@@ -653,7 +653,8 @@ class Window(_Window):
         else:
             # make sure x, y is on the screen
             screen = self.qtile.find_closest_screen(self.x, self.y)
-            if screen is not None and self.group is not None and screen != self.group.screen:
+            if screen is not None and self.group is not None and \
+                  self.group.screen is not None and screen != self.group.screen:
                 self.x = self.group.screen.x
                 self.y = self.group.screen.y
             self.place(self.x,
