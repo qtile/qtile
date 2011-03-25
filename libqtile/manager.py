@@ -864,21 +864,18 @@ class Qtile(command.CommandObject):
 
     def scan(self):
         _, _, children = self.root.query_tree()
-        for i in children:
+        for item in children:
             try:
-                a = i.get_attributes()
-                h = i.get_wm_hints()
+                attrs = item.get_attributes()
+                state = item.get_wm_state()
             except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
                 continue
-            # Are more exceptions needed now we call get_wm_hints?
-            if a and a.map_state is xcb.xproto.MapState.Viewable:
-                self.manage(i)
-            # is this needed? can we just use wm hints?
-            elif h and h.get('initial_state') in (window.NormalState, window.IconicState):
-            # maybe we can prevent a wasted hints call? either:
-            # a) pass hints on to 'manage' so window.py doesn't have to get them
-            # b) create a function to get *just* 'initial_state'
-                self.manage(i)
+
+            if attrs and attrs.map_state == xcb.xproto.MapState.Unmapped:
+                continue
+            if state and state[0] == window.WithdrawnState:
+                continue
+            self.manage(item)
 
     def unmanage(self, win):
         c = self.windowMap.get(win)
