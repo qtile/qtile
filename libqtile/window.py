@@ -316,6 +316,12 @@ class _Window(command.CommandObject):
         """
         self.x, self.y, self.width, self.height = x, y, width, height
         self.borderwidth, self.bordercolor = borderwidth, bordercolor
+
+        # save x and y float offset
+        if self.group is not None and self.group.screen is not None:
+            self._float_info['x'] = x - self.group.screen.x
+            self._float_info['y'] = y - self.group.screen.y
+
         kwarg = dict(
             x=x,
             y=y,
