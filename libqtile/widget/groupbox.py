@@ -110,7 +110,7 @@ class GroupBox(_GroupBase):
             new_width = width = 0
             for g in self.qtile.groups:
                 new_width += self.box_width([g])
-                if x >= width+1 and x <= new_width:
+                if x >= width and x <= new_width:
                     group = g
                     break
                 width = new_width
