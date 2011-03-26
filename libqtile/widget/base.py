@@ -125,7 +125,7 @@ class _Widget(command.CommandObject):
         if int(seconds) == seconds:
             return gobject.timeout_add_seconds(int(seconds), method, *args)
         else:
-            return gobject.timeout_add(int(seconds*0.001), method, *args)
+            return gobject.timeout_add(int(seconds*1000), method, *args)
 
 
 
