@@ -19,6 +19,7 @@
 # SOFTWARE.
 import atexit, datetime, subprocess, sys, os, traceback
 import select, contextlib
+import gobject
 import xcbq
 import xcb.xproto, xcb.xinerama
 import xcb
@@ -697,7 +698,7 @@ class Qtile(command.CommandObject):
         self.conn.xsync()
         self._prev = None # for logging
         self._prev_count = 0
-        self.xpoll()
+        self._xpoll()
         if self._exit:
             print >> sys.stderr, "Access denied: Another window manager running?"
             sys.exit(1)
@@ -977,7 +978,7 @@ class Qtile(command.CommandObject):
             self.log.add("Unknown event: %r"%ename)
         return chain
 
-    def xpoll(self):
+    def _xpoll(self, conn=None, cond=None):
         while True:
             try:
                 e = self.conn.conn.poll_for_event()
@@ -1011,26 +1012,23 @@ class Qtile(command.CommandObject):
             except Exception, v:
                 self.errorHandler(v)
                 if self._exit:
-                    return
+                    return False
                 continue
+        return True
 
     def loop(self):
+        self.server.start()
+        display_tag = gobject.io_add_watch(self.conn.conn.get_file_descriptor(), gobject.IO_IN, self._xpoll)
         try:
-            while 1:
-                fds, _, _ = select.select(
-                                [self.server.sock, self.conn.conn.get_file_descriptor()],
-                                [], [], 0.01
-                            )
+            context = gobject.main_context_default()
+            while True:
+                if context.iteration(True):
+                    # this seems to be crucial part
+                    self.conn.flush()
                 if self._exit:
-                    sys.exit(1)
-                self.server.receive()
-                self.xpoll()
-                self.conn.flush()
-                hook.fire("tick")
-        except:
-            # We've already written a report.
-            if not self._exit:
-                self.writeReport(traceback.format_exc())
+                    break
+        finally:
+            gobject.source_remove(display_tag)
 
     def find_screen(self, x, y):
         """
@@ -1535,10 +1533,7 @@ class Qtile(command.CommandObject):
 
                 spawn("firefox")
         """
-        try:
-            subprocess.Popen([cmd], shell=True)
-        except Exception, v:
-            print type(v), v
+        gobject.spawn_async([os.environ['SHELL'], '-c', cmd])
 
     def cmd_status(self):
         """

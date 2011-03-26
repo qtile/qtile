@@ -92,7 +92,7 @@ class Mpd(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        hook.subscribe.tick(self.update)
+        self.timeout_add(1, self.update)
 
     def update(self):
         if not self.connect(True):

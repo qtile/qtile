@@ -1,7 +1,7 @@
 import manager
 
 subscriptions = {}
-SKIPLOG = set(["tick"])
+SKIPLOG = set()
 
 def init(q):
     global qtile
@@ -141,12 +141,6 @@ class Subscribe:
             Called when the client urgent hint changes.
         """
         return self._subscribe("client_urgent_hint_changed", func)
-
-    def tick(self, func):
-        """
-            Called whenever the mainloop ticks.
-        """
-        return self._subscribe("tick", func)
 
 subscribe = Subscribe()
 
