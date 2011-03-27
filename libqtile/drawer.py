@@ -4,10 +4,12 @@ import xcb.xproto
 
 
 class TextLayout(object):
-    def __init__(self, drawer, text, colour, font_family, font_size):
+    def __init__(self, drawer, text, colour, font_family, font_size, wrap=True):
         self.drawer, self.colour = drawer, colour
         layout = drawer.ctx.create_layout()
         layout.set_alignment(pango.ALIGN_CENTER)
+        if not wrap:  # pango wraps by default
+            layout.set_ellipsize(pango.ELLIPSIZE_END)
         desc = pango.FontDescription()
         desc.set_family(font_family)
         desc.set_absolute_size(font_size * pango.SCALE)
@@ -35,6 +37,11 @@ class TextLayout(object):
     def width(self, value):
         self._width = value
         self.layout.set_width(value * pango.SCALE)
+
+    @width.deleter
+    def width(self):
+        self._width = None
+        self.layout.set_width(-1)
 
     @property
     def height(self):
@@ -96,6 +103,26 @@ class TextFrame:
             y + self.pad_y
         )
 
+    def draw_fill(self, x, y):
+        self.drawer.set_source_rgb(self.border_color)
+        self.drawer.rounded_fillrect(
+            x, y,
+            self.layout.width + self.pad_x * 2,
+            self.layout.height + self.pad_y * 2,
+            self.border_width
+        )
+        self.layout.draw(
+            x + self.pad_x,
+            y + self.pad_y
+        )
+
+    @property
+    def height(self):
+        return self.layout.height + self.pad_y*2
+
+    @property
+    def width(self):
+        return self.layout.width + self.pad_x*2
 
 class Drawer:
     """
@@ -140,7 +167,7 @@ class Drawer:
         self.ctx = self.new_ctx()
         self.clear((0, 0, 1))
 
-    def rounded_rectangle(self, x, y, width, height, linewidth):
+    def _rounded_rect(self, x, y, width, height, linewidth):
         aspect = 1.0
         corner_radius = height / 10.0
         radius = corner_radius / aspect
@@ -155,10 +182,16 @@ class Drawer:
         self.ctx.arc(x + delta, y + delta, radius, 180 * degrees, 270 * degrees)
         self.ctx.close_path()
 
+    def rounded_rectangle(self, x, y, width, height, linewidth):
+        self._rounded_rect(x, y, width, height, linewidth)
         self.ctx.set_line_width(linewidth)
         self.ctx.stroke()
 
-    def rectangle(self, x, y, width, height, linewidth):
+    def rounded_fillrect(self, x, y, width, height, linewidth):
+        self._rounded_rect(x, y, width, height, linewidth)
+        self.ctx.fill()
+
+    def rectangle(self, x, y, width, height):
         self.ctx.set_line_width(linewidth)
         self.ctx.rectangle(x, y, width, height)
         self.ctx.stroke()
@@ -201,7 +234,7 @@ class Drawer:
         self.ctx.fill()
         self.ctx.stroke()
 
-    def textlayout(self, text, colour, font_family, font_size):
+    def textlayout(self, text, colour, font_family, font_size, **kw):
         """
             Get a text layout.
 
@@ -211,11 +244,11 @@ class Drawer:
 
             https://bugzilla.gnome.org/show_bug.cgi?id=625287
         """
-        return TextLayout(self, text, colour, font_family, font_size)
+        return TextLayout(self, text, colour, font_family, font_size, **kw)
 
     _sizelayout = None
     def max_layout_size(self, texts, font_family, font_size):
-        # FIXME: This is incredibly clumsy, to avoid a memory leak in pygtk. See         
+        # FIXME: This is incredibly clumsy, to avoid a memory leak in pygtk. See
         # comment on textlayout() for details.
         if not self._sizelayout:
             self._sizelayout = self.textlayout("", "ffffff", font_family, font_size)
@@ -267,3 +300,18 @@ class Drawer:
             maxwidth = max(maxwidth, x)
             maxheight = max(maxheight, y)
         return maxwidth, maxheight
+
+    def draw_vbar(self, color, x, y1, y2, linewidth=1):
+        self.set_source_rgb(color)
+        self.ctx.move_to(x, y1)
+        self.ctx.line_to(x, y2)
+        self.ctx.set_line_width(linewidth)
+        self.ctx.stroke()
+
+    def draw_hbar(self, color, x1, x2, y, linewidth=1):
+        self.set_source_rgb(color)
+        self.ctx.move_to(x1, y)
+        self.ctx.line_to(x2, y)
+        self.ctx.set_line_width(linewidth)
+        self.ctx.stroke()
+
