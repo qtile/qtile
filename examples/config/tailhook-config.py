@@ -10,12 +10,28 @@ xcbq.keysyms["XF86AudioMute"] = 0x1008ff12
 mod = "mod4"
 keys = [
     Key([mod], "j",
-        lazy.layout.up()),
-    Key([mod], "k",
         lazy.layout.down()),
-    Key([mod], "l",
-        lazy.layout.increase_ratio()),
+    Key([mod], "k",
+        lazy.layout.up()),
+    Key([mod, "shift"], "j",
+        lazy.layout.move_down()),
+    Key([mod, "shift"], "k",
+        lazy.layout.move_up()),
+    Key([mod, "control"], "j",
+        lazy.layout.section_down()),
+    Key([mod, "control"], "k",
+        lazy.layout.section_up()),
     Key([mod], "h",
+        lazy.layout.collapse_branch()),  # for tree layout
+    Key([mod], "l",
+        lazy.layout.expand_branch()),  # for tree layout
+    Key([mod, "shift"], "h",
+        lazy.layout.move_left()),
+    Key([mod, "shift"], "l",
+        lazy.layout.move_right()),
+    Key([mod, "control"], "l",
+        lazy.layout.increase_ratio()),
+    Key([mod, "control"], "h",
         lazy.layout.decrease_ratio()),
     Key([mod], "comma",
         lazy.layout.increase_nmaster()),
@@ -43,7 +59,8 @@ keys = [
     Key([mod, "shift"], "t",
         lazy.window.enable_floating()),
     Key([mod], "p",
-        lazy.spawn("exe=`dmenu_path | dmenu` && eval \"exec $exe\"")),
+        lazy.spawn("dmenu_run "
+            "-fn 'Consolas:size=13' -nb '#000000' -nf '#ffffff' -b")),
     Key([mod], "q",
         lazy.spawn('xtrlock')),
 
@@ -93,6 +110,7 @@ layouts = [
     layout.Tile(**border),
     layout.Max(),
     layout.Stack(**border),
+    layout.TreeTab(sections=['Surfing', 'E-mail', 'Incognito']),
 ]
 floating_layout = layout.Floating(**border)
 
@@ -105,6 +123,9 @@ screens = [
                             padding=1, margin_x=1, margin_y=1),
                         widget.Sep(),
                         widget.WindowName(
+                            font='Consolas',fontsize=18, margin_x=6),
+                        widget.Sep(),
+                        widget.Battery(
                             font='Consolas',fontsize=18, margin_x=6),
                         widget.Sep(),
                         widget.CPUGraph(),
@@ -123,5 +144,6 @@ screens = [
 
 @hook.subscribe.client_new
 def dialogs(window):
-    if window.window.get_wm_type() == 'dialog':
+    if(window.window.get_wm_type() == 'dialog'
+        or window.window.get_wm_transient_for()):
         window.floating = True
