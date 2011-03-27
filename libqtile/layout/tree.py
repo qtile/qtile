@@ -238,6 +238,7 @@ class TreeTab(Layout):
             self._focused = None
         self._nodes[win].remove()
         del self._nodes[win]
+        self.draw_panel()
         return res
 
     def _create_panel(self):
