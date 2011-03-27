@@ -47,30 +47,28 @@ class TreeNode(object):
     def get_next_window(self):
         if self.children and self.expanded:
             return self.children[0]
-        parent = self.parent
         node = self
-        idx = 10000000
-        while idx >= len(node.children)-1:
-            idx = parent.children.index(node)
-            node = parent
-            if isinstance(node, Root):
-                return None
+        while not isinstance(node, Root):
             parent = node.parent
-        return node.children[idx+1].get_first_window()
+            idx = parent.children.index(node)
+            for i in xrange(idx+1, len(parent.children)):
+                res = parent.children[i].get_first_window()
+                if res:
+                    return res
+            node = parent
 
     def get_prev_window(self):
-        parent = self.parent
         node = self
-        idx = 0
-        while idx <= 0:
-            idx = parent.children.index(node)
-            node = parent
-            if idx == 0 and isinstance(node, Window):
-                return node
-            if isinstance(node, Root):
-                return None
+        while not isinstance(node, Root):
             parent = node.parent
-        return node.children[idx-1].get_last_window()
+            idx = parent.children.index(node)
+            if idx == 0 and isinstance(parent, Window):
+                return parent
+            for i in xrange(idx-1, -1, -1):
+                res = parent.children[i].get_last_window()
+                if res:
+                    return res
+            node = parent
 
 class Root(TreeNode):
 
@@ -346,6 +344,34 @@ class TreeTab(Layout):
         if not isinstance(node.parent, Section):
             node.parent.children.remove(node)
             node.parent.parent.add(node)
+        self.draw_panel()
+
+    def cmd_section_up(self):
+        win = self._focused
+        if not win:
+            return
+        node = self._nodes[win]
+        snode = node
+        while not isinstance(snode, Section):
+            snode = snode.parent
+        idx = snode.parent.children.index(snode)
+        if idx > 0:
+            node.parent.children.remove(node)
+            snode.parent.children[idx-1].add(node)
+        self.draw_panel()
+
+    def cmd_section_down(self):
+        win = self._focused
+        if not win:
+            return
+        node = self._nodes[win]
+        snode = node
+        while not isinstance(snode, Section):
+            snode = snode.parent
+        idx = snode.parent.children.index(snode)
+        if idx < len(snode.parent.children)-1:
+            node.parent.children.remove(node)
+            snode.parent.children[idx+1].add(node)
         self.draw_panel()
 
     def cmd_move_right(self):
