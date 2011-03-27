@@ -710,8 +710,8 @@ class Window(_Window):
         if group is None:
             raise command.CommandError("No such group: %s"%groupName)
         if self.group is not group:
+            self.hide()
             if self.group:
-                self.hide()
                 if self.group.screen:
                     # for floats remove window offset
                     self.x -= self.group.screen.x
