@@ -1,14 +1,17 @@
-
+# -*- coding: utf-8 -*-
 from base import Layout
 from .. import manager
 from .. import window
 from .. import drawer
 from .. import hook
 
+to_superscript = dict(zip(map(ord, u'0123456789'), map(ord, u'⁰¹²³⁴⁵⁶⁷⁸⁹')))
+
 class TreeNode(object):
 
     def __init__(self):
         self.children = []
+        self.expanded = True
 
     def add(self, node):
         node.parent = self
@@ -18,6 +21,12 @@ class TreeNode(object):
         for i in self.children:
             top = i.draw(layout, top, level)
         return top
+
+    def add_superscript(self, title):
+        if not self.expanded and self.children:
+            return (unicode(len(self.children))
+                .translate(to_superscript).encode('utf-8') + title)
+        return title
 
     def get_first_window(self):
         if isinstance(self, Window):
@@ -36,7 +45,7 @@ class TreeNode(object):
             return self
 
     def get_next_window(self):
-        if self.children:
+        if self.children and self.expanded:
             return self.children[0]
         parent = self.parent
         node = self
@@ -96,7 +105,7 @@ class Section(TreeNode):
 
     def draw(self, layout, top, level=0):
         layout._layout.font_size = layout.section_fontsize
-        layout._layout.text = self.title
+        layout._layout.text = self.add_superscript(self.title)
         layout._layout.colour = layout.section_fg
         del layout._layout.width  # no centering
         layout._drawer.draw_hbar(layout.section_fg,
@@ -104,7 +113,8 @@ class Section(TreeNode):
         layout._layout.draw(layout.section_left, top + layout.section_top)
         top += (layout._layout.height +
             layout.section_top + layout.section_padding)
-        top = super(Section, self).draw(layout, top, level)
+        if self.expanded:
+            top = super(Section, self).draw(layout, top, level)
         return top + layout.section_bottom
 
 class Window(TreeNode):
@@ -116,7 +126,7 @@ class Window(TreeNode):
     def draw(self, layout, top, level=0):
         left = layout.padding_left + level*layout.level_shift
         layout._layout.font_size = layout.fontsize
-        layout._layout.text = self.window.name
+        layout._layout.text = self.add_superscript(self.window.name)
         if self.window is layout._focused:
             fg = layout.active_fg
             bg = layout.active_bg
@@ -129,14 +139,15 @@ class Window(TreeNode):
             layout.padding_x, layout.padding_y)
         framed.draw_fill(left, top)
         top += framed.height + layout.vspace + layout.border_width
-        return super(Window, self).draw(layout, top, level+1)
+        if self.expanded:
+            return super(Window, self).draw(layout, top, level+1)
+        return top
 
     def remove(self):
-        if not self.children:
-            self.parent.children.remove(self)
-        elif len(self.children) == 1:
+        self.parent.children.remove(self)
+        if len(self.children) == 1:
             self.parent.add(self.children[0])
-        else:
+        elif self.children:
             head = self.children[0]
             self.parent.add(head)
             for i in self.children[1:]:
@@ -346,6 +357,18 @@ class TreeTab(Layout):
         if idx > 0:
             node.parent.children.remove(node)
             node.parent.children[idx-1].add(node)
+        self.draw_panel()
+
+    def cmd_expand_branch(self):
+        if not self._focused:
+            return
+        self._nodes[self._focused].expanded = True
+        self.draw_panel()
+
+    def cmd_collapse_branch(self):
+        if not self._focused:
+            return
+        self._nodes[self._focused].expanded = False
         self.draw_panel()
 
     def cmd_increase_ratio(self):
