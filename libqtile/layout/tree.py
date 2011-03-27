@@ -11,12 +11,57 @@ class TreeNode(object):
         self.children = []
 
     def add(self, node):
+        node.parent = self
         self.children.append(node)
 
     def draw(self, layout, top, level=0):
         for i in self.children:
             top = i.draw(layout, top, level)
         return top
+
+    def get_first_window(self):
+        if isinstance(self, Window):
+            return self
+        for i in self.children:
+            node = i.get_first_window()
+            if node:
+                return node
+
+    def get_last_window(self):
+        for i in reversed(self.children):
+            node = i.get_last_window()
+            if node:
+                return node
+        if isinstance(self, Window):
+            return self
+
+    def get_next_window(self):
+        if self.children:
+            return self.children[0]
+        parent = self.parent
+        node = self
+        idx = 10000000
+        while idx >= len(node.children)-1:
+            idx = parent.children.index(node)
+            node = parent
+            if isinstance(node, Root):
+                return None
+            parent = node.parent
+        return node.children[idx+1].get_first_window()
+
+    def get_prev_window(self):
+        parent = self.parent
+        node = self
+        idx = 0
+        while idx <= 0:
+            idx = parent.children.index(node)
+            node = parent
+            if idx == 0 and isinstance(node, Window):
+                return node
+            if isinstance(node, Root):
+                return None
+            parent = node.parent
+        return node.children[idx-1].get_last_window()
 
 class Root(TreeNode):
 
@@ -36,10 +81,12 @@ class Root(TreeNode):
     def add(self, win):
         sect = getattr(win, 'tree_section', None)
         if sect is None:
-            node = self.sections.get(sect)
-        if node is None:
-            node = self.def_section
-        node.add(Window(win))
+            parent = self.sections.get(sect)
+        if parent is None:
+            parent = self.def_section
+        node = Window(win)
+        parent.add(node)
+        return node
 
 class Section(TreeNode):
 
@@ -52,7 +99,6 @@ class Section(TreeNode):
         layout._layout.text = self.title
         layout._layout.colour = layout.section_fg
         del layout._layout.width  # no centering
-        print("WIDTH", top)
         layout._drawer.draw_hbar(layout.section_fg,
             0, layout.panel_width, top, linewidth=1)
         layout._layout.draw(layout.section_left, top + layout.section_top)
@@ -84,6 +130,18 @@ class Window(TreeNode):
         framed.draw_fill(left, top)
         top += framed.height + layout.vspace + layout.border_width
         return super(Window, self).draw(layout, top, level+1)
+
+    def remove(self):
+        if not self.children:
+            self.parent.children.remove(self)
+        elif len(self.children) == 1:
+            self.parent.add(self.children[0])
+        else:
+            head = self.children[0]
+            self.parent.add(head)
+            for i in self.children[1:]:
+                head.add(i)
+        del self.children
 
 class TreeTab(Layout):
     """Tree Tab Layout
@@ -126,33 +184,35 @@ class TreeTab(Layout):
         Layout.__init__(self, **config)
         self._focused = None
         self._panel = None
-        self._clients = []
         self._tree = Root(self.sections)
+        self._nodes = {}
 
     def clone(self, group):
         c = Layout.clone(self, group)
-        c._clients = []
         c._focused = None
         c._panel = None
         c._tree = Root(self.sections)
         return c
 
     def focus_first(self):
-        return self._clients[0]
+        res = self._tree.get_first_window()
+        if res:
+            return res.window
 
     def focus_last(self):
-        return self._clients[-1]
+        res = self._tree.get_last_window()
+        if res:
+            return res.window
 
     def focus_next(self, win):
-        try:
-            return self._clients[self._clients.index(win)+1]
-        except IndexError:
-            return None
+        res = self._nodes[win].get_next_window()
+        if res:
+            return res.window
 
     def focus_prev(self, win):
-        if win == self._clients[0]:
-            return None
-        return self._clients[self._clients.index(win)-1]
+        res = self._nodes[win].get_prev_window()
+        if res:
+            return res.window
 
     def focus(self, win):
         self._focused = win
@@ -161,15 +221,14 @@ class TreeTab(Layout):
         self._focused = None
 
     def add(self, win):
-        self._clients.append(win)
-        self._tree.add(win)
+        self._nodes[win] = self._tree.add(win)
 
     def remove(self, win):
         res = self.focus_next(win)
         if self._focused is win:
             self._focused = None
-        self._clients.remove(win)
-        self._tree.remove(win)
+        self._nodes[win].remove()
+        del self._nodes[win]
         return res
 
     def _create_panel(self):
@@ -202,7 +261,7 @@ class TreeTab(Layout):
             self._create_panel()
             self._panel.unhide()
             self.draw_panel()
-        if self._clients and c is self._focused:
+        if self._nodes and c is self._focused:
             c.place(
                 self.group.screen.dx + self.panel_width,
                 self.group.screen.dy,
@@ -217,26 +276,71 @@ class TreeTab(Layout):
 
     def info(self):
         d = Layout.info(self)
-        d["clients"] = [i.name for i in self._clients]
+        d["clients"] = [i.name for i in self._nodes]
         return d
 
-    def cmd_up(self):
+    def cmd_down(self):
         """
-            Switch up in the window list
+            Switch down in the window list
         """
         win = self.focus_next(self._focused)
         if not win:
             win = self.focus_first()
         self.group.focus(win, False)
 
-    def cmd_down(self):
+    def cmd_up(self):
         """
-            Switch down in the window list
+            Switch up in the window list
         """
         win = self.focus_prev(self._focused)
         if not win:
             win = self.focus_last()
         self.group.focus(win, False)
+
+    def cmd_move_up(self):
+        win = self._focused
+        if not win:
+            return
+        node = self._nodes[win]
+        p = node.parent.children
+        idx = p.index(node)
+        if idx > 0:
+            p[idx] = p[idx-1]
+            p[idx-1] = node
+        self.draw_panel()
+
+    def cmd_move_down(self):
+        win = self._focused
+        if not win:
+            return
+        node = self._nodes[win]
+        p = node.parent.children
+        idx = p.index(node)
+        if idx < len(p)-1:
+            p[idx] = p[idx+1]
+            p[idx+1] = node
+        self.draw_panel()
+
+    def cmd_move_left(self):
+        win = self._focused
+        if not win:
+            return
+        node = self._nodes[win]
+        if not isinstance(node.parent, Section):
+            node.parent.children.remove(node)
+            node.parent.parent.add(node)
+        self.draw_panel()
+
+    def cmd_move_right(self):
+        win = self._focused
+        if not win:
+            return
+        node = self._nodes[win]
+        idx = node.parent.children.index(node)
+        if idx > 0:
+            node.parent.children.remove(node)
+            node.parent.children[idx-1].add(node)
+        self.draw_panel()
 
     def cmd_increase_ratio(self):
         self.panel_width += 10
