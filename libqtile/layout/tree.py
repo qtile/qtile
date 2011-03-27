@@ -257,10 +257,6 @@ class TreeTab(Layout):
         pass  # TODO
 
     def configure(self, c):
-        if not self._panel:
-            self._create_panel()
-            self._panel.unhide()
-            self.draw_panel()
         if self._nodes and c is self._focused:
             c.place(
                 self.group.screen.dx + self.panel_width,
@@ -278,6 +274,16 @@ class TreeTab(Layout):
         d = Layout.info(self)
         d["clients"] = [i.name for i in self._nodes]
         return d
+
+    def show(self):
+        if not self._panel:
+            self._create_panel()
+        self._panel.unhide()
+        self.draw_panel()
+
+    def hide(self):
+        if self._panel:
+            self._panel.hide()
 
     def cmd_down(self):
         """

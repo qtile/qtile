@@ -144,8 +144,8 @@ class Screen(command.CommandObject):
         self.y = y
         self.width = width
         self.height = height
-        
-        
+
+
     def _configure(self, qtile, index, x, y, width, height, group):
         self.qtile = qtile
         self.index, self.x, self.y = index, x, y,
@@ -286,7 +286,7 @@ class Group(command.CommandObject):
         self.currentWindow = None
         self.screen = None
         self.currentLayout = None
-        
+
     def _configure(self, layouts, floating_layout, qtile):
         self.screen = None
         self.currentLayout = 0
@@ -316,12 +316,16 @@ class Group(command.CommandObject):
         raise ValueError("No such layout: %s"%layout)
 
     def nextLayout(self):
+        self.layout.hide()
         self.currentLayout = (self.currentLayout + 1)%(len(self.layouts))
         self.layoutAll()
+        self.layout.show()
 
     def prevLayout(self):
+        self.layout.hide()
         self.currentLayout = (self.currentLayout - 1)%(len(self.layouts))
         self.layoutAll()
+        self.layout.show()
 
     def layoutAll(self, warp=False):
         """
@@ -348,6 +352,8 @@ class Group(command.CommandObject):
             # move all floating guys offset to new screen
             self.floating_layout.to_screen(self.screen)
             self.layoutAll()
+            self.floating_layout.show()
+            self.layout.show()
         else:
             self.hide()
 
@@ -358,6 +364,7 @@ class Group(command.CommandObject):
                               |xcb.xproto.EventMask.LeaveWindow):
             for i in self.windows:
                 i.hide()
+            self.layout.hide()
 
     @contextlib.contextmanager
     def disableMask(self, mask):
@@ -569,7 +576,7 @@ class Group(command.CommandObject):
             if not nxt:
                 nxt = self.layout.focus_first()
         self.focus(nxt, True)
-    
+
     def cmd_prev_window(self):
         if not self.windows:
             return
@@ -728,7 +735,7 @@ class Qtile(command.CommandObject):
             if not self.currentScreen:
                 self.currentScreen = s
             self.screens.append(s)
-        
+
     def _process_screens(self):
         if hasattr(self.config, 'fake_screens'):
             self._process_fake_screens()
@@ -765,7 +772,7 @@ class Qtile(command.CommandObject):
                 self.groups[0],
             )
             self.screens.append(s)
-        
+
     def mapKey(self, key):
         self.keyMap[(key.keysym, key.modmask&self.validMask)] = key
         code = self.conn.keysym_to_keycode(key.keysym)
@@ -1096,7 +1103,7 @@ class Qtile(command.CommandObject):
                 closest_distance = distance
                 closest_screen = s
         return closest_screen
-    
+
     def handle_EnterNotify(self, e):
         if e.event in self.windowMap:
             return True
@@ -1648,4 +1655,4 @@ class Qtile(command.CommandObject):
         except:
             error = traceback.format_exc().strip().split("\n")[-1]
             return (False, error)
-        
+
