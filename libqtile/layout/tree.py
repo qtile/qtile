@@ -187,7 +187,7 @@ class TreeTab(Layout):
         ("section_padding", 4, "Bottom of magin section label"),
         ("section_left", 4, "Left margin of section label"),
         ("panel_width", 150, "Width of the left panel"),
-        ("sections", ['Surfing', 'News', 'Incognito'],
+        ("sections", ['Default'],
             "Foreground color of inactive tab"),
     )
 
