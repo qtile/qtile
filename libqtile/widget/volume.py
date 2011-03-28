@@ -1,3 +1,4 @@
+import os
 import re
 import time
 from subprocess import call
@@ -26,6 +27,7 @@ class Volume(base._TextBox):
         ("background", None, "Background colour."),
         ("foreground", "#ffffff", "Foreground colour."),
         ("theme_path", None, "Path of the icons"),
+        ("update_interval", 0.2, "Update time in seconds."),
     )
     def __init__(self, **config):
         base._TextBox.__init__(self, '0', width=bar.CALCULATED, **config)
@@ -35,7 +37,7 @@ class Volume(base._TextBox):
         base._TextBox._configure(self, qtile, bar)
         if self.theme_path:
             self.setup_images()
-        self.timeout_add(0.2, self.update)
+        self.timeout_add(self.update_interval, self.update)
 
     def click(self, x, y, button):
         if button == 5:
@@ -59,7 +61,8 @@ class Volume(base._TextBox):
 
             try:
                 img = cairo.ImageSurface.create_from_png(
-                        '%s/%s.png' % (self.theme_path, img_name))
+                    os.path.join(self.theme_path,
+                                 '%s.png' % img_name))
             except cairo.Error, error:
                 self.theme_path = None
                 self.qtile.log.add(error)
