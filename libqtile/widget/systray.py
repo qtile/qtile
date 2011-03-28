@@ -98,12 +98,11 @@ class Systray(base._Widget):
             atoms['_NET_SYSTEM_TRAY_S0'],
             xcb.CurrentTime
         )
-        event = struct.pack('BBHII5I', 161, 32, 0, qtile.root.wid,
+        event = struct.pack('BBHII5I', 33, 32, 0, qtile.root.wid,
                             atoms['MANAGER'], 
                             xcb.CurrentTime, atoms['_NET_SYSTEM_TRAY_S0'],
                             win.wid, 0, 0)
-
-        win.send_event(event)
+        qtile.root.send_event(event, mask=EventMask.StructureNotify)
 
         # cleanup before exit
         atexit.register(self.cleanup)
