@@ -85,9 +85,15 @@ class Volume(base._TextBox):
             self.surfaces[img_name] = imgpat
 
     def get_volume(self):
-        from subprocess import check_output
-        mixer_out = check_output(['amixer', '-c', str(self.cardid),
-                                         'sget', self.channel])
+        import subprocess
+        mixerprocess = subprocess.Popen(['amixer', '-c', str(self.cardid),
+                                         'sget', self.channel],
+                                        stdout=subprocess.PIPE)
+        mixer_out = mixerprocess.communicate()[0]
+        if mixerprocess.returncode:
+            raise subprocess.CalledProcessError(mixerprocess.returncode,
+                                                'amixer')
+        
         if '[off]' in mixer_out:
             return -1
 
