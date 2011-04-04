@@ -23,9 +23,20 @@ class TreeNode(object):
             self.children.insert(idx+1, node)
 
     def draw(self, layout, top, level=0):
+        self._children_start = top
         for i in self.children:
             top = i.draw(layout, top, level)
+        self._children_stop = top
         return top
+
+    def click(self, x, y):
+        """Returns self or sibling which got the click"""
+        if y >= self._children_stop or y < self._children_start:
+            return
+        for i in self.children:
+            res = i.click(x, y)
+            if res is not None:
+                return res
 
     def add_superscript(self, title):
         if not self.expanded and self.children:
@@ -132,6 +143,7 @@ class Window(TreeNode):
         self.window = win
 
     def draw(self, layout, top, level=0):
+        self._title_start = 0
         left = layout.padding_left + level*layout.level_shift
         layout._layout.font_size = layout.fontsize
         layout._layout.text = self.add_superscript(self.window.name)
@@ -150,6 +162,12 @@ class Window(TreeNode):
         if self.expanded:
             return super(Window, self).draw(layout, top, level+1)
         return top
+
+    def click(self, x, y):
+        """Returns self if clicked on title else returns sibling"""
+        if y >= self._title_start and y < self._children_start:
+            return self
+        return super(Window, self).click(x, y)
 
     def remove(self):
         self.parent.children.remove(self)
@@ -278,8 +296,10 @@ class TreeTab(Layout):
         self._tree.draw(self, 0)
         self._drawer.draw(0, self.panel_width)
 
-    def _panel_ButtonPress(self):
-        pass  # TODO
+    def _panel_ButtonPress(self, event):
+        node = self._tree.click(event.event_x, event.event_y)
+        if node:
+            self.group.focus(node.window, False)
 
     def configure(self, c):
         if self._nodes and c is self._focused:
