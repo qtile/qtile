@@ -13,9 +13,14 @@ class TreeNode(object):
         self.children = []
         self.expanded = True
 
-    def add(self, node):
+    def add(self, node, hint):
         node.parent = self
-        self.children.append(node)
+        try:
+            idx = self.children.index(hint)
+        except ValueError:
+            self.children.append(node)
+        else:
+            self.children.insert(idx+1, node)
 
     def draw(self, layout, top, level=0):
         for i in self.children:
@@ -85,14 +90,19 @@ class Root(TreeNode):
         else:
             self.def_section = self.sections[default_section]
 
-    def add(self, win):
-        sect = getattr(win, 'tree_section', None)
+    def add(self, win, hint=None):
+        sect = None
+        parent = None
+        if hint is not None:
+            parent = hint.parent
+        if parent is None:
+            sect = getattr(win, 'tree_section', None)
         if sect is None:
             parent = self.sections.get(sect)
         if parent is None:
             parent = self.def_section
         node = Window(win)
-        parent.add(node)
+        parent.add(node, hint=hint)
         return node
 
 class Section(TreeNode):
@@ -230,7 +240,11 @@ class TreeTab(Layout):
         self._focused = None
 
     def add(self, win):
-        self._nodes[win] = self._tree.add(win)
+        if self._focused:
+            node = self._tree.add(win, hint=self._nodes[self._focused])
+        else:
+            node = self._tree.add(win)
+        self._nodes[win] = node
 
     def remove(self, win):
         res = self.focus_next(win)
