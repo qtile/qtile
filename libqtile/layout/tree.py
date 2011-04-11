@@ -95,10 +95,7 @@ class Root(TreeNode):
         super(Root, self).__init__()
         self.sections = {}
         for s in sections:
-            node = Section(s)
-            node.parent = self
-            self.sections[s] = node
-            self.children.append(node)
+            self.add_section(s)
         if default_section is None:
             self.def_section = self.children[0]
         else:
@@ -118,6 +115,29 @@ class Root(TreeNode):
         node = Window(win)
         parent.add(node, hint=hint)
         return node
+
+    def add_section(self, name):
+        if name in self.sections:
+            raise ValueError("Duplicate section name")
+        node = Section(name)
+        node.parent = self
+        self.sections[name] = node
+        self.children.append(node)
+
+    def del_section(self, name):
+        sec = self.sections[name]
+        idx = self.children.index(sec)
+        if idx == 0:
+            if len(self.children) == 1:
+                raise ValueError("Can't delete last section")
+            else:
+                nsec = self.children[1]
+        else:
+            nsec = self.children[idx-1]
+        del self.children[idx]
+        nsec.children.extend(sec.children)
+        for i in sec.children:
+            i.parent = nsec
 
 class Section(TreeNode):
 
@@ -384,6 +404,16 @@ class TreeTab(Layout):
         if not isinstance(node.parent, Section):
             node.parent.children.remove(node)
             node.parent.parent.add(node)
+        self.draw_panel()
+
+    def cmd_add_section(self, name):
+        """Add named section to tree"""
+        self._tree.add_section(name)
+        self.draw_panel()
+
+    def cmd_del_section(self, name):
+        """Add named section to tree"""
+        self._tree.del_section(name)
         self.draw_panel()
 
     def cmd_section_up(self):
