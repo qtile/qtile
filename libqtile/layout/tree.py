@@ -444,6 +444,32 @@ class TreeTab(Layout):
             snode.parent.children[idx+1].add(node)
         self.draw_panel()
 
+    def cmd_sort_windows(self, sorter, create_sections=True):
+        """Sorts window to sections using sorter function
+
+        :param sorter: returns name of the section where window should be
+        :type sorter: function with single arg returning string
+        :param create_sections: if this parameter is True (default), if sorter
+          returns unknown section name it will be created dynamically
+        """
+        for sec in self._tree.children:
+            for win in sec.children[:]:
+                nname = sorter(win.window)
+                if nname is None or nname == sec.title:
+                    continue
+                try:
+                    nsec = self._tree.sections[nname]
+                except KeyError:
+                    if create_sections:
+                        self._tree.add_section(nname)
+                        nsec = self._tree.sections[nname]
+                    else:
+                        continue
+                sec.children.remove(win)
+                nsec.children.append(win)
+                win.parent = nsec
+        self.draw_panel()
+
     def cmd_move_right(self):
         win = self._focused
         if not win:
