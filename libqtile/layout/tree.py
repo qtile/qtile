@@ -13,14 +13,17 @@ class TreeNode(object):
         self.children = []
         self.expanded = True
 
-    def add(self, node, hint):
+    def add(self, node, hint=None):
         node.parent = self
-        try:
-            idx = self.children.index(hint)
-        except ValueError:
-            self.children.append(node)
+        if hint:
+            try:
+                idx = self.children.index(hint)
+            except ValueError:
+                self.children.append(node)
+            else:
+                self.children.insert(idx+1, node)
         else:
-            self.children.insert(idx+1, node)
+            self.children.append(node)
 
     def draw(self, layout, top, level=0):
         self._children_start = top
