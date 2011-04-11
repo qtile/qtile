@@ -321,6 +321,7 @@ class TreeTab(Layout):
     def info(self):
         d = Layout.info(self)
         d["clients"] = [i.name for i in self._nodes]
+        d["sections"] = [i.title for i in self._tree.children]
         return d
 
     def show(self):
