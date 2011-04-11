@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from libqtile.manager import Key, Click, Drag, Screen, Group
 from libqtile.command import lazy
 from libqtile import layout, bar, widget, hook
@@ -6,6 +7,23 @@ from libqtile import xcbq
 xcbq.keysyms["XF86AudioRaiseVolume"] = 0x1008ff13
 xcbq.keysyms["XF86AudioLowerVolume"] = 0x1008ff11
 xcbq.keysyms["XF86AudioMute"] = 0x1008ff12
+
+
+def window_sorter(win):
+    patterns = (
+        ('Яндекс.Почта', 'E-mail'),
+        ('Gmail', 'E-mail'),
+        ('SquirrelMail', 'E-mail'),
+        ('zeromq', 'Docs'),
+        ('PyYAML', 'Docs'),
+        ('documentation', 'Docs'),
+        ('-ietf-', 'Docs'),
+        ('ØMQ', 'Docs'),
+        ('GNOME Live!', 'Docs'),
+        )
+    for k, v in patterns:
+        if k in win.name:
+            return v
 
 mod = "mod4"
 keys = [
@@ -25,6 +43,8 @@ keys = [
         lazy.layout.collapse_branch()),  # for tree layout
     Key([mod], "l",
         lazy.layout.expand_branch()),  # for tree layout
+    Key([mod], "r",
+        lazy.layout.sort_windows(window_sorter)),  # for tree layout
     Key([mod, "shift"], "h",
         lazy.layout.move_left()),
     Key([mod, "shift"], "l",
