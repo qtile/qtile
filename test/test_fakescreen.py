@@ -271,7 +271,6 @@ class TestFakeScreen(utils.QtileTests):
 
         # move down so still left, but next to screen c
         self.c.window.set_position_floating(-10, 520)
-        assert self.c.window.info()['width'] == 164
         assert self.c.window.info()['height'] == 164
         assert self.c.window.info()['x'] == -10
         assert self.c.window.info()['y'] == 520

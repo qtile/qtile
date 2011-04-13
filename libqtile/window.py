@@ -606,6 +606,7 @@ class Window(_Window):
         if screen is not None and screen != self.group.screen:
             self.group.remove(self)
             screen.group.add(self)
+            self.qtile.toScreen(screen.index)
             # TODO - need to kick boxes to update
 
         self._reconfigure_floating()
