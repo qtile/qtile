@@ -19,10 +19,8 @@ class Sep(base._Widget):
     def draw(self):
         self.drawer.clear(self.background)
         margin_top = (self.bar.height/float(100)*(100-self.height_percent)) / 2.0
-        self.drawer.set_source_rgb(self.foreground)
-        self.drawer.ctx.move_to(float(self.width)/2, margin_top) 
-        self.drawer.ctx.line_to(float(self.width)/2, self.bar.height-margin_top)
-        self.drawer.ctx.set_line_width(self.linewidth)
-        self.drawer.ctx.stroke()
+        self.drawer.draw_vbar(self.foreground,
+            float(self.width)/2, margin_top, self.bar.height - margin_top,
+            linewidth=self.linewidth)
         self.drawer.draw(self.offset, self.width)
 

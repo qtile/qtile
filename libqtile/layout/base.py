@@ -1,15 +1,15 @@
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -50,7 +50,7 @@ class Layout(command.CommandObject):
             Called whenever the focus changes.
         """
         pass
-        
+
     def blur(self):
         """
             Called whenever focus is gone from this layout.
@@ -78,7 +78,7 @@ class Layout(command.CommandObject):
     def configure(self, c):
         """
             This method should:
-                
+
                 - Configure the dimensions and borders of a window using the
                   .place() method.
                 - Call either .hide or .unhide on the window.
@@ -111,5 +111,15 @@ class Layout(command.CommandObject):
             Return a dictionary of info for this object.
         """
         return self.info()
+
+    def show(self):
+        """
+            Called when layout is being shown
+        """
+
+    def hide(self):
+        """
+            Called when layout is being hidden
+        """
 
 
