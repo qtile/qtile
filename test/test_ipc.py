@@ -68,5 +68,6 @@ class uIPC(libpry.AutoTree):
 
 
 tests = [
-    uIPC(),
+    # FIXME: Either add tests, or just remove this.
+    #uIPC(),
 ]
