@@ -1656,3 +1656,10 @@ class Qtile(command.CommandObject):
             error = traceback.format_exc().strip().split("\n")[-1]
             return (False, error)
 
+    def cmd_function(self, function):
+        """ Call a function with qtile instance as argument """
+        try:
+            function(self)
+        except Exception:
+            error = traceback.format_exc().strip().split("\n")[-1]
+            self.log.add('Can\'t call "%s": %s' % (function, error))

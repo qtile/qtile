@@ -140,7 +140,7 @@ class Prompt(base._TextBox):
         ("cursorblink", 0.5, "Cursor blink rate. 0 to disable.")
     )
     def __init__(self, name="prompt", **config):
-        base._TextBox.__init__(self, " ", bar.CALCULATED, **config)
+        base._TextBox.__init__(self, "", bar.CALCULATED, **config)
         self.name = name
         self.active = False
         self.blink = False
@@ -223,5 +223,7 @@ class Prompt(base._TextBox):
         return dict(
             name = self.name,
             width = self.width,
+            text = self.text,
+            active = self.active,
         )
 

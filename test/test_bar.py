@@ -50,7 +50,7 @@ class GBConfig:
 
 class uPromptCompletion(libpry.AutoTree):
     def test_completion(self):
-        c = libqtile.widget.prompt.CommandCompleter(True)
+        c = libqtile.widget.prompt.CommandCompleter(None, True)
         c.reset()
         c.lookup = [
             ("a", "x/a"),
@@ -61,7 +61,7 @@ class uPromptCompletion(libpry.AutoTree):
         assert c.complete("a") == "aa"
         assert c.complete("a") == "a"
 
-        c = libqtile.widget.prompt.CommandCompleter()
+        c = libqtile.widget.prompt.CommandCompleter(None)
         r = c.complete("l")
         assert c.actual().endswith(r)
 
