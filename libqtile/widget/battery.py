@@ -24,6 +24,7 @@ class Battery(base._TextBox):
         ("energy_now_file", "energy_now", "Name of file with the current energy in /sys/class/power_supply/battery_name"),
         ("energy_full_file", "energy_full", "Name of file with the maximum energy in /sys/class/power_supply/battery_name"),
         ("power_now_file", "power_now", "Name of file with the current power draw in /sys/class/power_supply/battery_name"),
+        ("update_delay",1,"The delay in seconds between updates"),
         
     )
     def __init__(self, width=bar.CALCULATED, **config):
@@ -31,7 +32,7 @@ class Battery(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        self.timeout_add(1, self.update)
+        self.timeout_add(self.update_delay, self.update)
 
     def _get_info(self):
         stat = self._get_param(self.status_file)
