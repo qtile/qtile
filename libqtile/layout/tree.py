@@ -278,7 +278,10 @@ class TreeTab(Layout):
         self._focused = win
 
     def blur(self):
-        self._focused = None
+        # Does not clear current window, will change if new one
+        # will be focused. This works better when floating window
+        # will be next focused one
+        pass
 
     def add(self, win):
         if self._focused:
