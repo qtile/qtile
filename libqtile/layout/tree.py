@@ -309,6 +309,16 @@ class TreeTab(Layout):
         hook.subscribe.window_name_change(self.draw_panel)
         hook.subscribe.focus_change(self.draw_panel)
 
+    def _show_panel(self):
+        self._panel.place(
+            self.group.screen.dx,
+            self.group.screen.dy,
+            self.panel_width,
+            self.group.screen.dheight,
+            0,
+            None)
+        self._panel.unhide()
+
     def _panel_Expose(self, e):
         self.draw_panel()
 
@@ -347,7 +357,7 @@ class TreeTab(Layout):
     def show(self):
         if not self._panel:
             self._create_panel()
-        self._panel.unhide()
+        self._show_panel()
         self.draw_panel()
 
     def hide(self):
