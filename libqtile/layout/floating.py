@@ -2,6 +2,7 @@ from base import Layout
 from .. import manager, window
 
 FLOAT_WM_TYPES = { 'utility':1,
+                   'notification':1,
                    'splash':1}
 
 class Floating(Layout):
@@ -21,7 +22,7 @@ class Floating(Layout):
         If you have certain apps that you always want to float you can
         provide ``float_rules`` to do so.
         ``float_rules`` is a list of dictionaries containing:
-        
+
         {wmname: WM_NAME, wmclass: WM_CLASS
         role: WM_WINDOW_ROLE}
 
@@ -74,7 +75,7 @@ class Floating(Layout):
                 new_y = new_screen.y + offset_y
             else:
                 new_y = new_screen.y + i*10
-                
+
             right_edge = new_screen.x + new_screen.width
             bottom_edge = new_screen.y + new_screen.height
             while new_x > right_edge:
@@ -84,7 +85,7 @@ class Floating(Layout):
             win.x = new_x
             win.y = new_y
             win.group = new_screen.group
-    
+
     def focus_first(self):
         if self.clients:
             return self.clients[0]
@@ -102,13 +103,13 @@ class Floating(Layout):
         idx = self.clients.index(win)
         if idx > 0:
             return self.clients[idx-1]
-            
+
     def focus(self, c):
         self.focused = c
-    
+
     def blur(self):
         self.focused = None
-    
+
     def configure(self, c):
         if c is self.focused:
             bc = self.group.qtile.colorPixel(self.border_focus)
