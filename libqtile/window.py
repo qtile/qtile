@@ -750,7 +750,8 @@ class Window(_Window):
 
     def handle_EnterNotify(self, e):
         hook.fire("client_mouse_enter", self)
-        if self.group.currentWindow != self:
+        if self.qtile.config.follow_mouse_focus and \
+                        self.group.currentWindow != self:
             self.group.focus(self, False)
         if self.group.screen and self.qtile.currentScreen != self.group.screen:
             self.qtile.toScreen(self.group.screen.index)
@@ -796,6 +797,11 @@ class Window(_Window):
             pass
         elif name == "WM_PROTOCOLS":
             pass
+        elif name == "_NET_WM_USER_TIME":
+            if not self.qtile.config.follow_mouse_focus and \
+                            self.group.currentWindow != self:
+                self.group.focus(self, False)
+
         elif self.qtile.debug:
             print >> sys.stderr, "Unknown window property: ", name
         return False

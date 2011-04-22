@@ -126,6 +126,7 @@ screens = [
     ),
 ]
 
+# change focus on mouse over
 follow_mouse_focus = True
 
 def main(qtile):
