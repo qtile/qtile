@@ -20,19 +20,25 @@ class Battery(base._TextBox):
         ("foreground", "ffffff", "Foreground colour"),
         ("format", "{char} {percent:2.0%} {hour:d}:{min:02d}", "Display format"),
         ("battery_name", "BAT0", "ACPI name of a battery, usually BAT0"),
+        ("status_file", "status", "Name of status file in /sys/class/power_supply/battery_name"),
+        ("energy_now_file", "energy_now", "Name of file with the current energy in /sys/class/power_supply/battery_name"),
+        ("energy_full_file", "energy_full", "Name of file with the maximum energy in /sys/class/power_supply/battery_name"),
+        ("power_now_file", "power_now", "Name of file with the current power draw in /sys/class/power_supply/battery_name"),
+        ("update_delay",1,"The delay in seconds between updates"),
+        
     )
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "BAT", **config)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        self.timeout_add(1, self.update)
+        self.timeout_add(self.update_delay, self.update)
 
     def _get_info(self):
-        stat = self._get_param('status')
-        now = float(self._get_param('energy_now'))
-        full = float(self._get_param('energy_full'))
-        power = float(self._get_param('power_now'))
+        stat = self._get_param(self.status_file)
+        now = float(self._get_param(self.energy_now_file))
+        full = float(self._get_param(self.energy_full_file))
+        power = float(self._get_param(self.power_now_file))
 
         if stat == DISCHARGING:
             char = 'V'
