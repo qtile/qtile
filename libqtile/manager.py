@@ -699,6 +699,7 @@ class Qtile(command.CommandObject):
             xcb.xproto.LeaveNotifyEvent,
             xcb.xproto.FocusOutEvent,
             xcb.xproto.FocusInEvent,
+            xcb.xproto.NoExposureEvent
         ])
 
         self.conn.flush()
@@ -975,8 +976,11 @@ class Qtile(command.CommandObject):
         c = None
         if hasattr(e, "window"):
             c = self.windowMap.get(e.window)
-        if ename in eventEvents:
+        elif hasattr(e, "drawable"):
+            c = self.windowMap.get(e.drawable)
+        elif ename in eventEvents:
             c = self.windowMap.get(e.event)
+
         if c and hasattr(c, handler):
             chain.append(getattr(c, handler))
         if hasattr(self, handler):

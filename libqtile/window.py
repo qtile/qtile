@@ -428,7 +428,7 @@ class Internal(_Window):
         return i
 
     def __repr__(self):
-        return "Internal(%s)"%self.name
+        return "Internal(%s, %s)"%(self.name, self.window.wid)
 
 
 class Static(_Window):
