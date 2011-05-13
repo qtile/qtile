@@ -85,6 +85,7 @@ class GroupBox(_GroupBase):
     defaults = manager.Defaults(
         ("active", "FFFFFF", "Active group font colour"),
         ("inactive", "404040", "Inactive group font colour"),
+        ("urgent_text", "FF0000", "Urgent group font color"),
         ("margin_y", 3, "Y margin outside the box"),
         ("margin_x", 3, "X margin outside the box"),
         ("borderwidth", 3, "Current group border width"),
@@ -138,12 +139,12 @@ class GroupBox(_GroupBase):
                     border = self.this_screen_border
                 else:
                     border = self.other_screen_border
-            elif self.group_has_urgent(g):
-                border = self.urgent_border
             else:
                 border = self.background
 
-            if g.windows:
+            if self.group_has_urgent(g):
+                text = self.urgent_text
+            elif g.windows:
                 text = self.active
             else:
                 text = self.inactive
