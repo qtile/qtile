@@ -1,4 +1,4 @@
-import time, os, glob
+import time, os, glob, string
 from .. import hook, bar, manager, xkeysyms, xcbq
 import base
 
@@ -193,7 +193,7 @@ class Prompt(base._TextBox):
             self.userInput = self.completer.complete(self.userInput)
         else:
             self.completer.reset()
-            if keysym < 127:
+            if keysym < 127 and chr(keysym) in string.printable:
                 # No LookupString in XCB... oh, the shame! Unicode users beware!
                 self.userInput += chr(keysym)
             elif keysym == xkeysyms.keysyms['BackSpace'] and len(self.userInput) > 0:
