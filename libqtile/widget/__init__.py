@@ -10,6 +10,10 @@ from prompt import Prompt
 from systray import Systray
 from graph import *
 try:
+    from mpriswidget import Mpris
+except ImportError:
+    pass
+try:
     from mpdwidget import Mpd
 except ImportError:
     pass
