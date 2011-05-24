@@ -13,5 +13,5 @@ try:
     from mpdwidget import Mpd
 except ImportError:
     pass
+from maildir import Maildir
 from volume import Volume
-
