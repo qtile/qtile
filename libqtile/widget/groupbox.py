@@ -85,6 +85,7 @@ class GroupBox(_GroupBase):
     defaults = manager.Defaults(
         ("active", "FFFFFF", "Active group font colour"),
         ("inactive", "404040", "Inactive group font colour"),
+        ("urgent_text", "FF0000", "Urgent group font color"),
         ("margin_y", 3, "Y margin outside the box"),
         ("margin_x", 3, "X margin outside the box"),
         ("borderwidth", 3, "Current group border width"),
@@ -94,7 +95,9 @@ class GroupBox(_GroupBase):
         ("this_screen_border", "215578", "Border colour for group on this screen."),
         ("other_screen_border", "404040", "Border colour for group on other screen."),
         ("padding", 5, "Padding inside the box"),
-        ("urgent_border", "FF0000", "Urgent border color")
+        ("urgent_border", "FF0000", "Urgent border color"),
+        ("urgent_alert_method", "border", "Method for alerting you of WM urgent " \
+                                          "hints (one of 'border' or 'text')"),
     )
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
@@ -138,12 +141,14 @@ class GroupBox(_GroupBase):
                     border = self.this_screen_border
                 else:
                     border = self.other_screen_border
-            elif self.group_has_urgent(g):
+            elif self.group_has_urgent(g) and self.urgent_alert_method == "border":
                 border = self.urgent_border
             else:
                 border = self.background
 
-            if g.windows:
+            if self.group_has_urgent(g) and self.urgent_alert_method == "text":
+                text = self.urgent_text
+            elif g.windows:
                 text = self.active
             else:
                 text = self.inactive
