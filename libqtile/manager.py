@@ -118,6 +118,25 @@ class Click(object):
     def __repr__(self):
         return "Click(%s, %s)"%(self.modifiers, self.button)
 
+class ScreenRect(object):
+
+    def __init__(self, x, y, width, height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+
+    def hsplit(self, columnwidth):
+        assert columnwidth < self.width
+        return (self.__class__(self.x, self.y, columnwidth, self.height),
+                self.__class__(self.x+columnwidth, self.y,
+                               self.width - columnwidth, self.height))
+
+    def vsplit(self, rowheight):
+        assert rowheight < self.height
+        return (self.__class__(self.x, self.y, self.width, rowheight),
+                self.__class__(self.x, self.y + rowheight,
+                               self.width, self.height - rowheight))
 
 class Screen(command.CommandObject):
     """
@@ -187,6 +206,9 @@ class Screen(command.CommandObject):
         if self.bottom:
             val -= self.bottom.size
         return val
+
+    def get_rect(self):
+        return ScreenRect(self.dx, self.dy, self.dwidth, self.dheight)
 
     def setGroup(self, new_group):
         """
@@ -336,8 +358,12 @@ class Group(command.CommandObject):
         """
         if self.screen and len(self.windows):
             with self.disableMask(xcb.xproto.EventMask.EnterWindow):
-                self.layout.layout([x for x in self.windows if not x.floating])
-                self.floating_layout.layout([x for x in self.windows if x.floating and not x.minimized])
+                normal = [x for x in self.windows if not x.floating]
+                floating = [x for x in self.windows
+                    if x.floating and not x.minimized]
+                screen = self.screen.get_rect()
+                self.layout.layout(normal, screen)
+                self.floating_layout.layout(floating, screen)
                 if self.currentWindow:
                     self.currentWindow.focus(warp)
 

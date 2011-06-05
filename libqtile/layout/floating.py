@@ -110,7 +110,7 @@ class Floating(Layout):
     def blur(self):
         self.focused = None
 
-    def configure(self, c):
+    def configure(self, c, screen):
         if c is self.focused:
             bc = self.group.qtile.colorPixel(self.border_focus)
         else:

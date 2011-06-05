@@ -30,9 +30,9 @@ class Layout(command.CommandObject):
         command.CommandObject.__init__(self)
         self.defaults.load(self, config)
 
-    def layout(self, windows):
+    def layout(self, windows, screen):
         for i in windows:
-            self.configure(i)
+            self.configure(i, screen)
 
     def clone(self, group):
         """
@@ -75,7 +75,7 @@ class Layout(command.CommandObject):
         """
         pass
 
-    def configure(self, c):
+    def configure(self, c, screen):
         """
             This method should:
 
@@ -121,5 +121,24 @@ class Layout(command.CommandObject):
         """
             Called when layout is being hidden
         """
+
+class SingleWindow(Layout):
+    """Base for layouts with single visible window"""
+
+    def _get_window(self):
+        """Should return either visible window or None"""
+        raise NotImplementedError("abstract method")
+
+    def focus_first(self):
+        return self._get_window()
+
+    def focus_next(self, win):
+        return None
+
+    def focus_last(self):
+        return self._get_window()
+
+    def focus_prev(self, win):
+        return None
 
 

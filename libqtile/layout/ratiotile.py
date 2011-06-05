@@ -118,7 +118,7 @@ class GridInfo(object):
                 results.append((x + xoffset, y + yoffset, w_width, w_height))
                 y += w_height
         return orientation, results
-                
+
     def get_sizes(self, total_width, total_height, xoffset=0, yoffset=0):
         width = 0
         height = 0
@@ -133,13 +133,13 @@ class GridInfo(object):
                     height = total_height/rows
                     if i == rows - 1 and j == 0:
                         # last row
-                        remaining = self.num_windows - len(results) 
+                        remaining = self.num_windows - len(results)
                         width = total_width/remaining
                     elif j == cols - 1 or len(results) + 1 == self.num_windows:
                         # since we are dealing with integers,
                         # make last column (or item) take up remaining space
                         width = total_width - x
-                    
+
                     results.append((x + xoffset, y + yoffset,
                                     width,
                                     height))
@@ -156,7 +156,7 @@ class GridInfo(object):
                     width = total_width/cols
                     # down first
                     if i == cols - 1 and j == 0:
-                        remaining = self.num_windows - len(results) 
+                        remaining = self.num_windows - len(results)
                         height = total_height/remaining
                     elif j == rows -1 or len(results) + 1 == self.num_windows:
                         height = total_height - y
@@ -182,7 +182,7 @@ class RatioTile(Layout):
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width.")
     )
-    
+
     def __init__(self, ratio=GOLDEN_RATIO, ratio_increment=0.1, fancy=False, **config):
         Layout.__init__(self, **config)
         self.windows = []
@@ -202,10 +202,10 @@ class RatioTile(Layout):
 
     def focus(self, c):
         self.focused = c
-    
+
     def blur(self):
         self.focused = None
-            
+
     def add(self, w):
         self.dirty = True
         self.windows.insert(0, w)
@@ -219,26 +219,26 @@ class RatioTile(Layout):
             self.focused = self.windows[0]
         return self.focused
 
-    def configure(self, win):
+    def configure(self, win, screen):
         # force recalc
         if self.last_size and not self.dirty:
-            if self.group.screen.dwidth != self.last_size[0] or  self.group.screen.dheight != self.last_size[1]:
+            if screen.width != self.last_size[0] or screen.height != self.last_size[1]:
                 self.dirty = True
         if self.dirty:
             gi = GridInfo(self.ratio, len(self.windows),
-                          self.group.screen.dwidth,
-                          self.group.screen.dheight)
-            self.last_size = self.group.screen.dwidth, self.group.screen.dheight
+                          screen.width,
+                          screen.height)
+            self.last_size = screen.width, screen.height
             if self.fancy:
                 method = gi.get_sizes_advanced
             else:
                 method = gi.get_sizes
-            
-            self.layout_info = method(self.group.screen.dwidth,
-                                      self.group.screen.dheight,
-                                      self.group.screen.dx,
-                                      self.group.screen.dy)
-            
+
+            self.layout_info = method(screen.width,
+                                      screen.height,
+                                      screen.x,
+                                      screen.y)
+
             self.dirty = False
         try:
             idx = self.windows.index(win)
@@ -270,7 +270,7 @@ class RatioTile(Layout):
         if self.windows:
             utils.shuffleDown(self.windows)
             self.group.layoutAll()
-    
+
     def focus_first(self):
         if self.windows:
             return self.windows[0]
@@ -341,7 +341,7 @@ class RatioTile(Layout):
         return self.info()
 
 
-        
+
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
