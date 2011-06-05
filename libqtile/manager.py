@@ -382,7 +382,7 @@ class Group(command.CommandObject):
 
             warp - warp pointer to win
         """
-        if hasattr(self.qtile, '_drag'):
+        if self.qtile._drag:
             # don't change focus while dragging windows
             return
         if win and not win in self.windows:
@@ -452,6 +452,7 @@ class Group(command.CommandObject):
         self.focus(nextfocus, True)
         self.layoutAll()
         #else: TODO: change focus
+
     def mark_floating(self, win, floating):
         if floating and win in self.floating_layout.clients:
             # already floating
@@ -689,6 +690,7 @@ class Qtile(command.CommandObject):
         self.screens = []
         self._process_screens()
         self.currentScreen = self.screens[0]
+        self._drag = None
 
         self.ignoreEvents = set([
             xcb.xproto.KeyReleaseEvent,
@@ -1183,12 +1185,7 @@ class Qtile(command.CommandObject):
             print >> sys.stderr, "Ignoring unknown button release: %s"%button_code
             return
         if isinstance(m, Drag):
-            try:
-                del self._drag
-            except AttributeError:
-                # Command on drag start is failed to execute
-                # We will ungrab pointer anyway, to be sure
-                pass
+            self._drag = None
             self.root.ungrab_pointer()
 
     def handle_MotionNotify(self, e):
