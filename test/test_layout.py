@@ -2,6 +2,7 @@ import libpry, time, pprint
 from libqtile import layout
 import libqtile.manager
 import utils
+from time import sleep
 
 class MaxConfig:
     main = None
@@ -260,7 +261,7 @@ class RatioTileConfig:
     keys = []
     mouse = []
     screens = []
-    
+
 class uRatioTile(utils.QtileTests):
     config = RatioTileConfig()
     def test_add_windows(self):
@@ -278,10 +279,10 @@ class uRatioTile(utils.QtileTests):
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 160, 600), (160, 0, 160, 600), (320, 0, 160, 600), (480, 0, 160, 600), (640, 0, 160, 600)]
             elif i == 5:
                 assert self.c.layout.info()['layout_info'] ==  [(0, 0, 133, 600), (133, 0, 133, 600), (266, 0, 133, 600), (399, 0, 133, 600), (532, 0, 133, 600), (665, 0, 135, 600)]
-           
+
             elif i == 6:
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 200, 300), (200, 0, 200, 300), (400, 0, 200, 300), (600, 0, 200, 300), (0, 300, 266, 300), (266, 300, 266, 300), (532, 300, 268, 300)]
-           
+
             elif i == 7:
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 200, 300), (200, 0, 200, 300), (400, 0, 200, 300), (600, 0, 200, 300), (0, 300, 200, 300), (200, 300, 200, 300), (400, 300, 200, 300), (600, 300, 200, 300)]
             elif i == 8:
@@ -289,13 +290,13 @@ class uRatioTile(utils.QtileTests):
             elif i == 9:
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 160, 300), (160, 0, 160, 300), (320, 0, 160, 300), (480, 0, 160, 300), (640, 0, 160, 300), (0, 300, 160, 300), (160, 300, 160, 300), (320, 300, 160, 300), (480, 300, 160, 300), (640, 300, 160, 300)]
             elif i == 10:
-                assert self.c.layout.info()['layout_info'] == [(0, 0, 133, 300), (133, 0, 133, 300), (266, 0, 133, 300), (399, 0, 133, 300), (532, 0, 133, 300), (665, 0, 135, 300), (0, 300, 160, 300), (160, 300, 160, 300), (320, 300, 160, 300), (480, 300, 160, 300), (640, 300, 160, 300)] 
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 133, 300), (133, 0, 133, 300), (266, 0, 133, 300), (399, 0, 133, 300), (532, 0, 133, 300), (665, 0, 135, 300), (0, 300, 160, 300), (160, 300, 160, 300), (320, 300, 160, 300), (480, 300, 160, 300), (640, 300, 160, 300)]
             elif i == 11:
-                assert self.c.layout.info()['layout_info'] ==[(0, 0, 133, 300), (133, 0, 133, 300), (266, 0, 133, 300), (399, 0, 133, 300), (532, 0, 133, 300), (665, 0, 135, 300), (0, 300, 133, 300), (133, 300, 133, 300), (266, 300, 133, 300), (399, 300, 133, 300), (532, 300, 133, 300), (665, 300, 135, 300)] 
+                assert self.c.layout.info()['layout_info'] ==[(0, 0, 133, 300), (133, 0, 133, 300), (266, 0, 133, 300), (399, 0, 133, 300), (532, 0, 133, 300), (665, 0, 135, 300), (0, 300, 133, 300), (133, 300, 133, 300), (266, 300, 133, 300), (399, 300, 133, 300), (532, 300, 133, 300), (665, 300, 135, 300)]
             else:
                 assert False
 
-                
+
     def test_add_windows_golden_ratio(self):
         self.c.nextlayout()
         for i in range(12):
@@ -307,18 +308,19 @@ class uRatioTile(utils.QtileTests):
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 400, 200), (0, 200, 400, 200), (0, 400, 400, 200), (400, 0, 400, 300), (400, 300, 400, 300)]
             elif i == 5:
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 400, 200), (0, 200, 400, 200), (0, 400, 400, 200), (400, 0, 400, 200), (400, 200, 400, 200), (400, 400, 400, 200)]
-                
+
             elif i == 9:
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 266, 150), (0, 150, 266, 150), (0, 300, 266, 150), (0, 450, 266, 150), (266, 0, 266, 150), (266, 150, 266, 150), (266, 300, 266, 150), (266, 450, 266, 150), (532, 0, 266, 300), (532, 300, 266, 300)]
             elif i == 10:
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 266, 150), (0, 150, 266, 150), (0, 300, 266, 150), (0, 450, 266, 150), (266, 0, 266, 150), (266, 150, 266, 150), (266, 300, 266, 150), (266, 450, 266, 150), (532, 0, 266, 200), (532, 200, 266, 200), (532, 400, 266, 200)]
             elif i == 11:
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 266, 150), (0, 150, 266, 150), (0, 300, 266, 150), (0, 450, 266, 150), (266, 0, 266, 150), (266, 150, 266, 150), (266, 300, 266, 150), (266, 450, 266, 150), (532, 0, 266, 150), (532, 150, 266, 150), (532, 300, 266, 150), (532, 450, 266, 150)]
-                
+
     def test_basic(self):
         self.testWindow("one")
         self.testWindow("two")
         self.testWindow("three")
+        sleep(0.1)
         assert self.c.window.info()['width'] == 264
         assert self.c.window.info()['height'] == 598
         assert self.c.window.info()['x'] == 0
@@ -338,7 +340,7 @@ class uRatioTile(utils.QtileTests):
         assert self.c.window.info()['x'] == 532
         assert self.c.window.info()['y'] == 0
         assert self.c.window.info()['name'] == 'one'
-        
+
 class TileConfig:
     main = None
     groups = [
