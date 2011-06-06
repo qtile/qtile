@@ -1237,7 +1237,7 @@ class Qtile(command.CommandObject):
     def handle_MapRequest(self, e):
         w = xcbq.Window(self.conn, e.window)
         c = self.manage(w)
-        if c and not c.group.screen:
+        if c and (not c.group or not c.group.screen):
             return
         w.map()
 
