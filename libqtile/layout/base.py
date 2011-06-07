@@ -31,6 +31,7 @@ class Layout(command.CommandObject):
         self.defaults.load(self, config)
 
     def layout(self, windows, screen):
+        assert windows, "let's eliminate unnecessary calls"
         for i in windows:
             self.configure(i, screen)
 
@@ -217,7 +218,7 @@ class Delegate(Layout):
     def focus_next(self, win):
         layouts = self._get_layouts()
         cur = self.layouts[win]
-        focus = lay.focus_next(win)
+        focus = cur.focus_next(win)
         if not focus:
             idx = layouts.index(cur)
             while idx < len(layouts)-1 and not focus:
@@ -228,7 +229,7 @@ class Delegate(Layout):
     def focus_prev(self, win):
         layouts = self._get_layouts()
         cur = self.layouts[win]
-        focus = lay.focus_prev(win)
+        focus = cur.focus_prev(win)
         if not focus:
             idx = layouts.index(cur)
             while idx > 0 and not focus:

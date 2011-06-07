@@ -192,7 +192,7 @@ class _Window(command.CommandObject):
             maximized = self._float_state == MAXIMIZED,
             minimized = self._float_state == MINIMIZED,
             fullscreen = self._float_state == FULLSCREEN
-            
+
         )
 
     @property
@@ -533,7 +533,7 @@ class Window(_Window):
         else:
             if self._float_state == FULLSCREEN:
                 self.disablefloating()
-                
+
     @property
     def maximized(self):
         return self._float_state == MAXIMIZED
@@ -610,7 +610,7 @@ class Window(_Window):
             # TODO - need to kick boxes to update
 
         self._reconfigure_floating()
-        
+
     def getsize(self):
         return self.width, self.height
 
@@ -622,10 +622,10 @@ class Window(_Window):
             self.disablefloating()
         else:
             self.enableminimize()
-            
+
     def enableminimize(self):
         self._enablefloating(new_float_state=MINIMIZED)
-        
+
     def togglemaximize(self, state=MAXIMIZED):
         if self._float_state == state:
             self.disablefloating()
@@ -652,7 +652,7 @@ class Window(_Window):
             self.disablefloating()
         else:
             self.enablefloating()
-            
+
     def _reconfigure_floating(self, new_float_state=FLOATING):
         if new_float_state == MINIMIZED:
             self.state = IconicState
@@ -702,7 +702,7 @@ class Window(_Window):
             self._float_state = NOT_FLOATING
             self.group.mark_floating(self, False)
             hook.fire('float_change')
-            
+
     def togroup(self, groupName):
         """
             Move window to a specified group.
@@ -758,6 +758,12 @@ class Window(_Window):
         return True
 
     def handle_ConfigureRequest(self, e):
+        if self.qtile._drag and self.qtile.currentWindow == self:
+            # ignore requests while user is dragging window
+            return
+        if not getattr(self, 'floating', False):
+            # only obey resize for floating windows
+            return
         cw = xcb.xproto.ConfigWindow
         if e.value_mask & cw.X:
             self.x = e.x

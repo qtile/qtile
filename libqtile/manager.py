@@ -126,13 +126,19 @@ class ScreenRect(object):
         self.width = width
         self.height = height
 
+    def __repr__(self):
+        return '<%s %d,%d %d,%d>' % (self.__class__.__name__,
+            self.x, self.y, self.width, self.height)
+
     def hsplit(self, columnwidth):
+        assert columnwidth > 0
         assert columnwidth < self.width
         return (self.__class__(self.x, self.y, columnwidth, self.height),
                 self.__class__(self.x+columnwidth, self.y,
                                self.width - columnwidth, self.height))
 
     def vsplit(self, rowheight):
+        assert rowheight > 0
         assert rowheight < self.height
         return (self.__class__(self.x, self.y, self.width, rowheight),
                 self.__class__(self.x, self.y + rowheight,
@@ -362,8 +368,10 @@ class Group(command.CommandObject):
                 floating = [x for x in self.windows
                     if x.floating and not x.minimized]
                 screen = self.screen.get_rect()
-                self.layout.layout(normal, screen)
-                self.floating_layout.layout(floating, screen)
+                if normal:
+                    self.layout.layout(normal, screen)
+                if floating:
+                    self.floating_layout.layout(floating, screen)
                 if self.currentWindow:
                     self.currentWindow.focus(warp)
 

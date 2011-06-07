@@ -415,8 +415,112 @@ class uTile(utils.QtileTests):
         self.kill(three)
         assert self.c.layout.info()["master"] == ["two"]
 
+class SliceConfig:
+    main = None
+    groups = [
+        libqtile.manager.Group("a"),
+    ]
+    layouts = [
+        layout.Slice('left', 200, wname='slice',
+            fallback=layout.Stack(stacks=1, border_width=0)),
+        layout.Slice('right', 200, wname='slice',
+            fallback=layout.Stack(stacks=1, border_width=0)),
+        layout.Slice('top', 200, wname='slice',
+            fallback=layout.Stack(stacks=1, border_width=0)),
+        layout.Slice('bottom', 200, wname='slice',
+            fallback=layout.Stack(stacks=1, border_width=0)),
+        ]
+    floating_layout = libqtile.layout.floating.Floating()
+    keys = []
+    mouse = []
+    screens = []
 
+class uSlice(utils.QtileTests):
+    config = SliceConfig()
 
+    def assertDimensions(self, x, y, w, h):
+        """Asserts dimensions of *current* window"""
+        info = self.c.window.info()
+        assert info['x'] == x, info
+        assert info['y'] == y, info
+        assert info['width'] == w, info  # why?
+        assert info['height'] == h, info
+
+    def assertFocused(self, name):
+        """Asserts that window with specified name is currently focused"""
+        info = self.c.window.info()
+        assert info['name']
+
+    def assertFocusPath(self, *names):
+        for i in names:
+            self.c.group.next_window()
+            self.assertFocused(i)
+        # let's check twice for sure
+        for i in names:
+            self.c.group.next_window()
+            self.assertFocused(i)
+        # Ok, let's check backwards now
+        for i in reversed(names):
+            self.assertFocused(i)
+            self.c.group.prev_window()
+        # and twice for sure
+        for i in reversed(names):
+            self.assertFocused(i)
+            self.c.group.prev_window()
+
+    def test_no_slice(self):
+        self.testWindow('one')
+        self.assertDimensions(200, 0, 600, 600)
+        self.testWindow('two')
+        self.assertDimensions(200, 0, 600, 600)
+
+    def test_slice_first(self):
+        self.testWindow('slice')
+        self.assertDimensions(0, 0, 200, 600)
+        self.testWindow('two')
+        self.assertDimensions(200, 0, 600, 600)
+
+    def test_slice_last(self):
+        self.testWindow('one')
+        self.assertDimensions(200, 0, 600, 600)
+        self.testWindow('slice')
+        self.assertDimensions(0, 0, 200, 600)
+
+    def test_focus(self):
+        one = self.testWindow('one')
+        self.assertFocused('one')
+        two = self.testWindow('two')
+        self.assertFocused('two')
+        slice = self.testWindow('slice')
+        self.assertFocused('slice')
+        self.assertFocusPath('one', 'two', 'slice')
+        three = self.testWindow('three')
+        self.assertFocusPath('one', 'two', 'three', 'slice')
+        self.kill(two)
+        self.assertFocusPath('one', 'three', 'slice')
+        self.kill(slice)
+        self.assertFocusPath('one', 'three')
+        slice = self.testWindow('slice')
+        self.assertFocusPath('one', 'three', 'slice')
+
+    def test_all_slices(self):
+        self.testWindow('slice')  # left
+        self.assertDimensions(0, 0, 200, 600)
+        self.c.nextlayout()  # right
+        self.assertDimensions(600, 0, 200, 600)
+        self.c.nextlayout()  # top
+        self.assertDimensions(0, 0, 800, 200)
+        self.c.nextlayout()  # bottom
+        self.assertDimensions(0, 400, 800, 200)
+        self.c.nextlayout()  # left again
+        self.testWindow('one')
+        self.assertDimensions(200, 0, 600, 600)
+        self.c.nextlayout()  # right
+        self.assertDimensions(0, 0, 600, 600)
+        self.c.nextlayout()  # top
+        self.assertDimensions(0, 200, 800, 400)
+        self.c.nextlayout()  # bottom
+        self.assertDimensions(0, 0, 800, 400)
 
 tests = [
     utils.Xephyr(xinerama=False), [
@@ -425,5 +529,6 @@ tests = [
         uTile(),
         uRatioTile(),
         uSelectors(),
+        uSlice(),
     ],
 ]
