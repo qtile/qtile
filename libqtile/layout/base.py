@@ -129,6 +129,18 @@ class SingleWindow(Layout):
         """Should return either visible window or None"""
         raise NotImplementedError("abstract method")
 
+    def configure(self, win, screen):
+        if win is self._get_window():
+            win.place(
+                screen.x, screen.y,
+                screen.width, screen.height,
+                0,
+                None,
+                )
+            win.unhide()
+        else:
+            win.hide()
+
     def focus_first(self):
         return self._get_window()
 
@@ -141,4 +153,91 @@ class SingleWindow(Layout):
     def focus_prev(self, win):
         return None
 
+class Delegate(Layout):
+    """Base for all delegation layouts"""
 
+    def __init__(self, **config):
+        self.layouts = {}
+        Layout.__init__(self, **config)
+
+    def clone(self, group):
+        c = Layout.clone(group)
+        c.layouts = {}
+        return c
+
+    def _get_layouts(self):
+        """Returns all children layouts"""
+        raise NotImplementedError("abstact method")
+
+    def _get_active_layout(self):
+        """Returns layout to which delegate commands to"""
+        raise NotImplementedError("abstrac method")
+
+    def delegate_layout(self, windows, mapping):
+        """Delegates layouting actual windows
+
+        :param windows: windows to layout
+        :param mapping: mapping from layout to ScreenRect for each layout
+        """
+        grouped = {}
+        for w in windows:
+            lay = self.layouts[w]
+            if lay in grouped:
+                grouped[lay].append(w)
+            else:
+                grouped[lay] = [w]
+        for lay, wins in grouped.iteritems():
+            lay.layout(wins, mapping[lay])
+
+    def remove(self, win):
+        lay = self.layouts.pop(win)
+        focus = lay.remove(win)
+        if not focus:
+            layouts = self._get_layouts()
+            idx = layouts.index(lay)
+            while idx < len(layouts)-1 and not focus:
+                idx += 1
+                focus = layouts[idx].focus_first()
+        return focus
+
+    def focus_first(self):
+        layouts = self._get_layouts()
+        for lay in layouts:
+            win = lay.focus_first()
+            if win:
+                return win
+
+    def focus_last(self):
+        layouts = self._get_layouts()
+        for lay in reversed(layouts):
+            win = lay.focus_last()
+            if win:
+                return win
+
+    def focus_next(self, win):
+        layouts = self._get_layouts()
+        cur = self.layouts[win]
+        focus = lay.focus_next(win)
+        if not focus:
+            idx = layouts.index(cur)
+            while idx < len(layouts)-1 and not focus:
+                idx += 1
+                focus = layouts[idx].focus_first()
+        return focus
+
+    def focus_prev(self, win):
+        layouts = self._get_layouts()
+        cur = self.layouts[win]
+        focus = lay.focus_prev(win)
+        if not focus:
+            idx = layouts.index(cur)
+            while idx > 0 and not focus:
+                idx -= 1
+                focus = layouts[idx].focus_last()
+        return focus
+
+    def cmd_up(self):
+        self._get_active_layout().cmd_up()
+
+    def cmd_down(self):
+        self._get_active_layout().cmd_down()
