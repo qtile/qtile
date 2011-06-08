@@ -113,7 +113,7 @@ class Layout(command.CommandObject):
         """
         return self.info()
 
-    def show(self):
+    def show(self, screen):
         """
             Called when layout is being shown
         """

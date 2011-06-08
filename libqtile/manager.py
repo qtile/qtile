@@ -347,13 +347,15 @@ class Group(command.CommandObject):
         self.layout.hide()
         self.currentLayout = (self.currentLayout + 1)%(len(self.layouts))
         self.layoutAll()
-        self.layout.show()
+        screen = self.screen.get_rect()
+        self.layout.show(screen)
 
     def prevLayout(self):
         self.layout.hide()
         self.currentLayout = (self.currentLayout - 1)%(len(self.layouts))
         self.layoutAll()
-        self.layout.show()
+        screen = self.screen.get_rect()
+        self.layout.show(screen)
 
     def layoutAll(self, warp=False):
         """
@@ -386,8 +388,9 @@ class Group(command.CommandObject):
             # move all floating guys offset to new screen
             self.floating_layout.to_screen(self.screen)
             self.layoutAll()
-            self.floating_layout.show()
-            self.layout.show()
+            rect = self.screen.get_rect()
+            self.floating_layout.show(rect)
+            self.layout.show(rect)
         else:
             self.hide()
 

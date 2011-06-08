@@ -326,9 +326,11 @@ class TreeTab(SingleWindow):
         d["sections"] = [i.title for i in self._tree.children]
         return d
 
-    def show(self):
+    def show(self, screen):
         if not self._panel:
             self._create_panel()
+        panel, body = screen.hsplit(self.panel_width)
+        self._resize_panel(panel)
         self._panel.unhide()
 
     def hide(self):
