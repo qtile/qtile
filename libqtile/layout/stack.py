@@ -1,15 +1,15 @@
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -197,17 +197,17 @@ class Stack(Layout):
         for i in self.stacks:
             if c in i:
                 i.focus(c)
-    
+
     def focus_first(self):
         for i in self.stacks:
             if i:
                 return i.focus_first()
-                
+
     def focus_last(self):
         for i in reversed(self.stacks):
             if i:
                 return i.focus_last()
-    
+
     def focus_next(self, c):
         iterator = iter(self.stacks)
         for i in iterator:
@@ -220,7 +220,7 @@ class Stack(Layout):
         for i in iterator:
             if i:
                 return i.focus_first()
-    
+
     def focus_prev(self, c):
         iterator = iter(reversed(self.stacks))
         for i in iterator:
@@ -257,7 +257,7 @@ class Stack(Layout):
             if n:
                 return n.cw
 
-    def configure(self, c):
+    def configure(self, c, screen):
         for i, s in enumerate(self.stacks):
             if c in s:
                 break
@@ -269,14 +269,14 @@ class Stack(Layout):
         else:
             px = self.group.qtile.colorPixel(self.border_normal)
 
-        columnWidth = int(self.group.screen.dwidth/float(len(self.stacks)))
-        xoffset = self.group.screen.dx + i*columnWidth
+        columnWidth = int(screen.width/float(len(self.stacks)))
+        xoffset = screen.x + i*columnWidth
         winWidth = columnWidth - 2*self.border_width
 
         if s.split:
-            columnHeight = int(self.group.screen.dheight/float(len(s)))
+            columnHeight = int(screen.height/float(len(s)))
             winHeight = columnHeight - 2*self.border_width
-            yoffset = self.group.screen.dy + s.index(c)*columnHeight
+            yoffset = screen.y + s.index(c)*columnHeight
             c.place(
                 xoffset,
                 yoffset,
@@ -290,9 +290,9 @@ class Stack(Layout):
             if c == s.cw:
                 c.place(
                     xoffset,
-                    self.group.screen.dy,
+                    screen.y,
                     winWidth,
-                    self.group.screen.dheight - 2*self.border_width,
+                    screen.height - 2*self.border_width,
                     self.border_width,
                     px
                 )

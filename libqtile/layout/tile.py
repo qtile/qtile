@@ -82,7 +82,7 @@ class Tile(Layout):
 
     def focus(self, c):
         self.focused = c
-    
+
     def blur(self):
         self.focused = None
 
@@ -98,9 +98,9 @@ class Tile(Layout):
             self.focused = self.clients[0]
         return self.focused
 
-    def configure(self, c):
-        screenWidth = self.group.screen.dwidth
-        screenHeight = self.group.screen.dheight
+    def configure(self, c, screen):
+        screenWidth = screen.width
+        screenHeight = screen.height
         x = y = w = h = 0
         borderWidth = self.border_width
         if self.clients and c in self.clients:
@@ -110,13 +110,13 @@ class Tile(Layout):
                          if len(self.slave_windows) or not self.expand \
                          else screenWidth)
                 h = screenHeight/self.master
-                x = self.group.screen.dx
-                y = self.group.screen.dy + pos*h
+                x = screen.x
+                y = screen.y + pos*h
             else:
                 w = screenWidth-int(screenWidth*self.ratio)
                 h = screenHeight/(len(self.slave_windows))
-                x = self.group.screen.dx + int(screenWidth*self.ratio)
-                y = self.group.screen.dy + self.clients[self.master:].index(c)*h
+                x = screen.x + int(screenWidth*self.ratio)
+                y = screen.y + self.clients[self.master:].index(c)*h
             if c is self.focused:
                 bc = self.group.qtile.colorPixel(self.border_focus)
             else:

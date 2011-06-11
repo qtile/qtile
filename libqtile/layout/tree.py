@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from base import Layout
+from base import SingleWindow
 from .. import manager
 from .. import window
 from .. import drawer
@@ -203,7 +203,7 @@ class Window(TreeNode):
                 head.add(i)
         del self.children
 
-class TreeTab(Layout):
+class TreeTab(SingleWindow):
     """Tree Tab Layout
 
     This layout works just like Max but displays tree of the windows at the
@@ -241,38 +241,21 @@ class TreeTab(Layout):
     )
 
     def __init__(self, **config):
-        Layout.__init__(self, **config)
+        SingleWindow.__init__(self, **config)
         self._focused = None
         self._panel = None
         self._tree = Root(self.sections)
         self._nodes = {}
 
     def clone(self, group):
-        c = Layout.clone(self, group)
+        c = SingleWindow.clone(self, group)
         c._focused = None
         c._panel = None
         c._tree = Root(self.sections)
         return c
 
-    def focus_first(self):
-        res = self._tree.get_first_window()
-        if res:
-            return res.window
-
-    def focus_last(self):
-        res = self._tree.get_last_window()
-        if res:
-            return res.window
-
-    def focus_next(self, win):
-        res = self._nodes[win].get_next_window()
-        if res:
-            return res.window
-
-    def focus_prev(self, win):
-        res = self._nodes[win].get_prev_window()
-        if res:
-            return res.window
+    def _get_window(self):
+        return self._focused
 
     def focus(self, win):
         self._focused = win
@@ -301,26 +284,14 @@ class TreeTab(Layout):
 
     def _create_panel(self):
         self._panel = window.Internal.create(self.group.qtile,
-            self.group.screen.dx,
-            self.group.screen.dy,
-            self.panel_width,
-            self.group.screen.dheight)
+            0, 0,
+            self.panel_width, 100)
         self._create_drawer()
         self._panel.handle_Expose = self._panel_Expose
         self._panel.handle_ButtonPress = self._panel_ButtonPress
         self.group.qtile.windowMap[self._panel.window.wid] = self._panel
         hook.subscribe.window_name_change(self.draw_panel)
         hook.subscribe.focus_change(self.draw_panel)
-
-    def _show_panel(self):
-        self._panel.place(
-            self.group.screen.dx,
-            self.group.screen.dy,
-            self.panel_width,
-            self.group.screen.dheight,
-            0,
-            None)
-        self._panel.unhide()
 
     def _panel_Expose(self, e):
         self.draw_panel()
@@ -337,13 +308,11 @@ class TreeTab(Layout):
         if node:
             self.group.focus(node.window, False)
 
-    def configure(self, c):
+    def configure(self, c, screen):
         if self._nodes and c is self._focused:
             c.place(
-                self.group.screen.dx + self.panel_width,
-                self.group.screen.dy,
-                self.group.screen.dwidth - self.panel_width,
-                self.group.screen.dheight,
+                screen.x, screen.y,
+                screen.width, screen.height,
                 0,
                 None
             )
@@ -352,16 +321,17 @@ class TreeTab(Layout):
             c.hide()
 
     def info(self):
-        d = Layout.info(self)
+        d = SingleWindow.info(self)
         d["clients"] = [i.name for i in self._nodes]
         d["sections"] = [i.title for i in self._tree.children]
         return d
 
-    def show(self):
+    def show(self, screen):
         if not self._panel:
             self._create_panel()
-        self._show_panel()
-        self.draw_panel()
+        panel, body = screen.hsplit(self.panel_width)
+        self._resize_panel(panel)
+        self._panel.unhide()
 
     def hide(self):
         if self._panel:
@@ -371,19 +341,25 @@ class TreeTab(Layout):
         """
             Switch down in the window list
         """
-        win = self.focus_next(self._focused)
+        win = None
+        if self._focused:
+            win = self._nodes[self._focused].get_next_window()
         if not win:
-            win = self.focus_first()
-        self.group.focus(win, False)
+            win = self._tree.get_first_window()
+        if win:
+            self.group.focus(win.window, False)
 
     def cmd_up(self):
         """
             Switch up in the window list
         """
-        win = self.focus_prev(self._focused)
+        win = None
+        if self._focused:
+            win = self._nodes[self._focused].get_prev_window()
         if not win:
-            win = self.focus_last()
-        self.group.focus(win, False)
+            win = self._tree.get_last_window()
+        if win:
+            self.group.focus(win.window, False)
 
     def cmd_move_up(self):
         win = self._focused
@@ -508,12 +484,10 @@ class TreeTab(Layout):
 
     def cmd_increase_ratio(self):
         self.panel_width += 10
-        self._resize_panel()
         self.group.layoutAll()
 
     def cmd_decrease_ratio(self):
         self.panel_width -= 10
-        self._resize_panel()
         self.group.layoutAll()
 
     def _create_drawer(self):
@@ -523,13 +497,16 @@ class TreeTab(Layout):
         self._layout = self._drawer.textlayout("", "ffffff", self.font,
             self.fontsize, wrap=False)
 
-    def _resize_panel(self):
+    def layout(self, windows, screen):
+        panel, body = screen.hsplit(self.panel_width)
+        self._resize_panel(panel)
+        SingleWindow.layout(self, windows, body)
+
+    def _resize_panel(self, rect):
         if self._panel:
             self._panel.place(
-                self.group.screen.dx,
-                self.group.screen.dy,
-                self.panel_width,
-                self.group.screen.dheight,
+                rect.x, rect.y,
+                rect.width, rect.height,
                 0,
                 None
             )

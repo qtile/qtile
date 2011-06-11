@@ -128,6 +128,11 @@ class _Window(command.CommandObject):
             'icon_mask': 0,
             'window_group': None,
             'urgent': False,
+            # normal or size hints
+            'width_inc': None,
+            'height_inc': None,
+            'base_width': 0,
+            'base_height': 0,
             }
         self.updateHints()
 
@@ -141,6 +146,7 @@ class _Window(command.CommandObject):
             http://tronche.com/gui/x/icccm/sec-4.html#WM_HINTS
         """
         h = self.window.get_wm_hints()
+        normh = self.window.get_wm_normal_hints()
 
         # FIXME
         # h values
@@ -161,12 +167,27 @@ class _Window(command.CommandObject):
         #                  'IconPixmapHint']),
         #}
 
+        if normh:
+            normh.pop('flags')
+            if(not normh['base_width']
+                and normh['min_width'] and normh['width_inc']):
+                # seems xcb does ignore base width :(
+                normh['base_width'] = normh['min_width'] % normh['width_inc']
+            if(not normh['base_height']
+                and normh['min_height'] and normh['height_inc']):
+                # seems xcb does ignore base height :(
+                normh['base_height'] = normh['min_height'] % normh['height_inc']
+            self.hints.update(normh)
+
         if h and 'UrgencyHint' in h['flags']:
             self.hints['urgent'] = True
             hook.fire('client_urgent_hint_changed', self)
         elif self.urgent:
             self.hints['urgent'] = False
             hook.fire('client_urgent_hint_changed', self)
+
+        if getattr(self, 'group', None):
+            self.group.layoutAll()
 
         return
 
@@ -192,7 +213,7 @@ class _Window(command.CommandObject):
             maximized = self._float_state == MAXIMIZED,
             minimized = self._float_state == MINIMIZED,
             fullscreen = self._float_state == FULLSCREEN
-            
+
         )
 
     @property
@@ -310,10 +331,23 @@ class _Window(command.CommandObject):
             eventmask=self._windowMask
         )
 
-    def place(self, x, y, width, height, borderwidth, bordercolor, above=False):
+    def place(self, x, y, width, height, borderwidth, bordercolor,
+        above=False, force=False):
         """
             Places the window at the specified location with the given size.
+
+            if force is false, than it tries to obey hints
         """
+        if self.hints['width_inc']:
+            width = (width -
+                ((width - self.hints['base_width']) % self.hints['width_inc']))
+        if self.hints['height_inc']:
+            height = (height -
+                ((height - self.hints['base_height'])
+                % self.hints['height_inc']))
+        # TODO(tailhook) implement min-size, maybe
+        # TODO(tailhook) implement max-size
+        # TODO(tailhook) implement gravity
         self.x, self.y, self.width, self.height = x, y, width, height
         self.borderwidth, self.bordercolor = borderwidth, bordercolor
 
@@ -533,7 +567,7 @@ class Window(_Window):
         else:
             if self._float_state == FULLSCREEN:
                 self.disablefloating()
-                
+
     @property
     def maximized(self):
         return self._float_state == MAXIMIZED
@@ -610,7 +644,7 @@ class Window(_Window):
             # TODO - need to kick boxes to update
 
         self._reconfigure_floating()
-        
+
     def getsize(self):
         return self.width, self.height
 
@@ -622,10 +656,10 @@ class Window(_Window):
             self.disablefloating()
         else:
             self.enableminimize()
-            
+
     def enableminimize(self):
         self._enablefloating(new_float_state=MINIMIZED)
-        
+
     def togglemaximize(self, state=MAXIMIZED):
         if self._float_state == state:
             self.disablefloating()
@@ -652,7 +686,7 @@ class Window(_Window):
             self.disablefloating()
         else:
             self.enablefloating()
-            
+
     def _reconfigure_floating(self, new_float_state=FLOATING):
         if new_float_state == MINIMIZED:
             self.state = IconicState
@@ -702,7 +736,7 @@ class Window(_Window):
             self._float_state = NOT_FLOATING
             self.group.mark_floating(self, False)
             hook.fire('float_change')
-            
+
     def togroup(self, groupName):
         """
             Move window to a specified group.
@@ -758,6 +792,12 @@ class Window(_Window):
         return True
 
     def handle_ConfigureRequest(self, e):
+        if self.qtile._drag and self.qtile.currentWindow == self:
+            # ignore requests while user is dragging window
+            return
+        if not getattr(self, 'floating', False):
+            # only obey resize for floating windows
+            return
         cw = xcb.xproto.ConfigWindow
         if e.value_mask & cw.X:
             self.x = e.x
