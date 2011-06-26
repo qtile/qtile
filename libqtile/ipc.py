@@ -1,15 +1,15 @@
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,6 +26,7 @@
 """
 import marshal, select, os.path, socket, struct
 import gobject
+import errno
 
 HDRLEN = 4
 BUFSIZE = 1024 * 1024
@@ -49,7 +50,7 @@ class _IPC:
         size = struct.pack("!L", len(msg))
         return size + msg
 
-        
+
     def _write(self, sock, msg):
         sock.sendall(self._pack_reply(msg))
 
@@ -71,11 +72,13 @@ class Client(_IPC):
         self._write(sock, msg)
 
         while 1:
-            fds, _, _ = select.select([sock], [], [], 0)
+            fds, _, _ = select.select([sock], [], [], 1)
             if fds:
                 data = self._read(sock)
                 sock.close()
                 return data
+            else:
+                raise RuntimeError("Server not responding")
 
     def call(self, data):
         return self.send(data)
@@ -113,7 +116,7 @@ class Server(_IPC):
             data = {'buffer': ''} #object which holds connection state
             gobject.io_add_watch(conn, gobject.IO_IN, self._receive, data)
             return True
-    
+
     def _receive(self, conn, cond, data):
         try:
             recv = conn.recv(4096)
@@ -143,8 +146,8 @@ class Server(_IPC):
     def _send(self, conn, cond, data):
         try:
             bytes = conn.send(data['result'])
-        except socket.error as e:
-            if er.errno in (errno.EAGAIN, errno.EINTR):
+        except socket.error as er:
+            if er.errno in (errno.EAGAIN, errno.EINTR, errno.EPIPE):
                 return True
             raise
         else:
