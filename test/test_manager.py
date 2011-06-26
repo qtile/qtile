@@ -1,4 +1,5 @@
 import os, time, cStringIO, subprocess
+import signal
 import libpry
 import libqtile, libqtile.layout, libqtile.bar, libqtile.widget, libqtile.manager
 import libqtile.hook
@@ -195,6 +196,22 @@ class uSingle(utils.QtileTests):
             time.sleep(0.1)
         else:
             raise AssertionError("Window did not die...")
+
+    def test_quickwindow(self):
+        os.kill(self.qtilepid, signal.SIGSTOP)  # let's make qtile slow :)
+        # Just start window and hide immediately
+        # Can't use testWindow because that waits for qtile
+        # to find out if window appeared
+        pid = os.fork()
+        if pid == 0:
+            os.putenv("DISPLAY", self["display"])
+            os.execvp('xclock', ['xclock'])
+            raise RuntimeError("Can't start test window")
+        time.sleep(0.5)
+        os.kill(pid, signal.SIGTERM)
+        time.sleep(0.3)  # let testwindow die
+        os.kill(self.qtilepid, signal.SIGCONT)
+        self.c.log()  # whatever to check it's alive
 
     def test_regression_groupswitch(self):
         self.c.group["c"].toscreen()

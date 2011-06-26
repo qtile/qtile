@@ -773,13 +773,19 @@ class Window(_Window):
         if wname and wname == self.name:
             return True
 
-        cliclass = self.window.get_wm_class()
-        if wmclass and cliclass and wmclass in cliclass:
-            return True
+        try:
 
-        clirole = self.window.get_wm_window_role()
-        if role and clirole and role == clirole:
-            return True
+            cliclass = self.window.get_wm_class()
+            if wmclass and cliclass and wmclass in cliclass:
+                return True
+
+            clirole = self.window.get_wm_window_role()
+            if role and clirole and role == clirole:
+                return True
+
+        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+            return False
+
         return False
 
     def handle_EnterNotify(self, e):

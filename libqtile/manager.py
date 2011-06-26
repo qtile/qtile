@@ -936,8 +936,11 @@ class Qtile(command.CommandObject):
             del self.windowMap[win]
 
     def manage(self, w):
-        attrs = w.get_attributes()
-        internal = w.get_property("QTILE_INTERNAL")
+        try:
+            attrs = w.get_attributes()
+            internal = w.get_property("QTILE_INTERNAL")
+        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+            return
         if attrs and attrs.override_redirect:
             return
 
@@ -1325,21 +1328,14 @@ class Qtile(command.CommandObject):
         self.log.write(f, "\t")
         f.close()
 
-    _ignoreErrors = set([
-        xcb.xproto.BadWindow,
-        xcb.xproto.BadAccess
-    ])
     def errorHandler(self, e):
-        if e.__class__ in self._ignoreErrors:
-            print >> sys.stderr, e
-            return
         if hasattr(e.args[0], "bad_value"):
             m = "\n".join([
                 "Server Error: %s"%e.__class__.__name__,
                 "\tbad_value: %s"%e.args[0].bad_value,
                 "\tmajor_opcode: %s"%e.args[0].major_opcode,
                 "\tminor_opcode: %s"%e.args[0].minor_opcode
-            ])
+            ] + [traceback.format_exc()])
         else:
             m = traceback.format_exc()
 
