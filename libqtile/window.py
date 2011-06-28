@@ -137,7 +137,10 @@ class _Window(command.CommandObject):
         self.updateHints()
 
     def updateName(self):
-        self.name = self.window.get_name()
+        try:
+            self.name = self.window.get_name()
+        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+            return
         hook.fire("window_name_change")
 
     def updateHints(self):
@@ -145,8 +148,11 @@ class _Window(command.CommandObject):
             update the local copy of the window's WM_HINTS
             http://tronche.com/gui/x/icccm/sec-4.html#WM_HINTS
         """
-        h = self.window.get_wm_hints()
-        normh = self.window.get_wm_normal_hints()
+        try:
+            h = self.window.get_wm_hints()
+            normh = self.window.get_wm_normal_hints()
+        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+            return
 
         # FIXME
         # h values
