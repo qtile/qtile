@@ -1,3 +1,5 @@
+import gobject
+
 import libqtile.hook
 from libqtile.manager import Key
 from libqtile.command import lazy
@@ -60,7 +62,7 @@ def simple_key_binder(mod):
 
 class DGroups(object):
     ''' Dynamic Groups '''
-    def __init__(self, qtile, groups, apps, key_binder=None):
+    def __init__(self, qtile, groups, apps, key_binder=None, delay=1):
         self.qtile = qtile
 
         self.groups = groups
@@ -71,6 +73,10 @@ class DGroups(object):
 
         self._setup_hooks()
         self._setup_groups()
+
+        self.delay = delay
+
+        self.timeout = {}
 
     def _setup_groups(self):
         for name, tag in self.groups.iteritems():
@@ -100,6 +106,9 @@ class DGroups(object):
             lst.insert(0, master)
 
     def _add(self, client):
+        if client in self.timeout:
+            gobject.source_remove(self.timeout[client])
+            del(self.timeout[client])
         group_set = False
         intrusive = False
 
@@ -149,11 +158,13 @@ class DGroups(object):
 
     def _del(self, client):
         group = client.group
+        def delete_client():
+            # Delete group if empty and dont persist
+            if group and not (group.name in self.groups and\
+               self.groups[group.name].get('persist')) and\
+                                   len(group.windows) <= 0:
+                self.qtile.delGroup(group.name)
 
-        # Delete group if empty and no persist
-        if group and not (group.name in self.groups and\
-           self.groups[group.name].get('persist')) and\
-                               len(group.windows) == 1:
-
-            client.group.remove(client)
-            self.qtile.delGroup(group.name)
+        # wait the delay until really delete the group
+        self.timeout[client] = gobject.timeout_add_seconds(self.delay,
+                                                         delete_client)
