@@ -142,6 +142,11 @@ class SingleWindow(Layout):
         else:
             win.hide()
 
+    def remove(self, win):
+        cli = self.clients.pop(0)
+        if cli == win:
+            return self.clients[0]
+
     def focus_first(self):
         return self._get_window()
 
