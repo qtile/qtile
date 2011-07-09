@@ -522,6 +522,65 @@ class uSlice(utils.QtileTests):
         self.c.nextlayout()  # bottom
         self.assertDimensions(0, 0, 800, 400)
 
+class ZoomyConfig:
+    main = None
+    groups = [
+        libqtile.manager.Group("a"),
+    ]
+    layouts = [
+        layout.Zoomy(columnwidth=200),
+        ]
+    floating_layout = libqtile.layout.floating.Floating()
+    keys = []
+    mouse = []
+    screens = []
+
+class uZoomy(utils.QtileTests):
+    config = ZoomyConfig()
+
+    def assertDimensions(self, x, y, w, h, win=None):
+        """Asserts dimensions of window"""
+        if win is None:
+            win = self.c.window
+        info = win.info()
+        assert info['x'] == x, info
+        assert info['y'] == y, info
+        assert info['width'] == w, info  # why?
+        assert info['height'] == h, info
+
+    def assertFocused(self, name):
+        """Asserts that window with specified name is currently focused"""
+        info = self.c.window.info()
+        assert info['name']
+
+    def assertFocusPath(self, *names):
+        for i in names:
+            self.c.group.next_window()
+            self.assertFocused(i)
+        # let's check twice for sure
+        for i in names:
+            self.c.group.next_window()
+            self.assertFocused(i)
+        # Ok, let's check backwards now
+        for i in reversed(names):
+            self.assertFocused(i)
+            self.c.group.prev_window()
+        # and twice for sure
+        for i in reversed(names):
+            self.assertFocused(i)
+            self.c.group.prev_window()
+
+    def test_one(self):
+        self.testWindow('one')
+        self.assertDimensions(0, 0, 600, 600)
+        self.testWindow('two')
+        self.assertDimensions(0, 0, 600, 600)
+        self.testWindow('three')
+        self.assertDimensions(0, 0, 600, 600)
+        self.assertFocusPath('one', 'two', 'three')
+        # TODO(pc) find a way to check size of inactive windows
+
+
 tests = [
     utils.Xephyr(xinerama=False), [
         uMax(),
@@ -530,5 +589,6 @@ tests = [
         uRatioTile(),
         uSelectors(),
         uSlice(),
+        uZoomy(),
     ],
 ]
