@@ -197,6 +197,9 @@ class _Window(command.CommandObject):
 
         return
 
+    def updateState(self):
+        self.fullscreen = self.window.get_net_wm_state() == 'fullscreen'
+
     @property
     def urgent(self):
         return self.hints['urgent']
@@ -847,6 +850,8 @@ class Window(_Window):
             self.updateName()
         elif name == "_NET_WM_WINDOW_OPACITY":
             pass
+        elif name == "_NET_WM_STATE":
+            self.updateState()
         elif name == "WM_PROTOCOLS":
             pass
         elif name == "_NET_WM_USER_TIME":
