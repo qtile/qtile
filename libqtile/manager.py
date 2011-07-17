@@ -946,10 +946,16 @@ class Qtile(command.CommandObject):
 
         if not w.wid in self.windowMap:
             if internal:
-                c = window.Internal(w, self)
+                try:
+                    c = window.Internal(w, self)
+                except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+                    return
                 self.windowMap[w.wid] = c
             else:
-                c = window.Window(w, self)
+                try:
+                    c = window.Window(w, self)
+                except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+                    return
                 hook.fire("client_new", c)
                 # Window may be defunct because it's been declared static in hook.
                 if c.defunct:
