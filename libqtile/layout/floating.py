@@ -3,6 +3,7 @@ from .. import manager, window
 
 FLOAT_WM_TYPES = { 'utility':1,
                    'notification':1,
+                   'toolbar':1,
                    'splash':1}
 
 class Floating(Layout):
