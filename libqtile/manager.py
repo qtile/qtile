@@ -374,7 +374,7 @@ class Group(command.CommandObject):
                     self.layout.layout(normal, screen)
                 if floating:
                     self.floating_layout.layout(floating, screen)
-                if self.currentWindow:
+                if self.currentWindow and self.screen == self.qtile.currentScreen:
                     self.currentWindow.focus(warp)
 
     def _setScreen(self, screen):
