@@ -454,10 +454,13 @@ class Group(command.CommandObject):
         hook.fire("group_window_add")
         self.windows.add(win)
         win.group = self
-        if self.floating_layout.match(win):
-            # !!! tell it to float, can't set floating because it's too early
-            # so just set the flag underneath
-            win._float_state = window.FLOATING
+        try:
+            if self.floating_layout.match(win):
+                # !!! tell it to float, can't set floating because it's too early
+                # so just set the flag underneath
+                win._float_state = window.FLOATING
+        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+            pass  # doesn't matter
         if win.floating:
             self.floating_layout.add(win)
         else:
