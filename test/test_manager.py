@@ -506,8 +506,8 @@ class TestFloat(utils.QtileTests):
 
         # change focus to xterm
         self.c.group.next_window()
-        assert self.c.window.info()['width'] == 394
-        assert self.c.window.info()['height'] == 576
+        assert self.c.window.info()['width'] == 398
+        assert self.c.window.info()['height'] == 578
         assert self.c.window.info()['name'] != 'xeyes'
         assert self.c.group.info()['focus'] != 'xeyes'
         # check what stack thinks is focus
