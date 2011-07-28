@@ -318,11 +318,13 @@ class _Window(command.CommandObject):
         )
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
-        above=False, force=False):
+        above=False, force=False, twice=False):
         """
             Places the window at the specified location with the given size.
 
             if force is false, than it tries to obey hints
+            if twice is true, that it does positioning twice (useful for some
+                gtk apps)
         """
         # TODO(tailhook) uncomment resize increments when we'll decide
         #                to obey all those hints
@@ -369,9 +371,10 @@ class _Window(command.CommandObject):
         #
         # TODO(tailhook) may be configure notify event will work for reparented
         # windows
-        kwarg['y'] -= 1
-        self.window.configure(**kwarg)
-        kwarg['y'] += 1
+        if twice:
+            kwarg['y'] -= 1
+            self.window.configure(**kwarg)
+            kwarg['y'] += 1
         self.window.configure(**kwarg)
 
         if bordercolor is not None:
@@ -825,7 +828,8 @@ class Window(_Window):
                 self.width,
                 self.height,
                 self.borderwidth,
-                self.bordercolor
+                self.bordercolor,
+                twice=True,
             )
         return False
 
