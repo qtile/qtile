@@ -255,29 +255,6 @@ class _Window(command.CommandObject):
 
     opacity = property(getOpacity, setOpacity)
 
-    def notify(self):
-        # Having to do it this way is goddamn awful.
-        vals = [
-            22, # ConfigureNotifyEvent
-            0,
-            self.window.wid,
-            self.window.wid,
-            xcb.xproto.Window._None,
-            self.x,
-            self.y,
-            self.width,
-            self.height,
-            self.borderwidth,
-            False
-        ]
-        self.window.send_event(
-            struct.pack(
-                'B1xHLLLhhHHHB5x',
-                *vals
-            ),
-            xcb.xproto.EventMask.StructureNotify
-        )
-
     def kill(self):
         if "WM_DELETE_WINDOW" in self.window.get_wm_protocols():
             #e = event.ClientMessage(
@@ -341,19 +318,23 @@ class _Window(command.CommandObject):
         )
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
-        above=False, force=False):
+        above=False, force=False, twice=False):
         """
             Places the window at the specified location with the given size.
 
             if force is false, than it tries to obey hints
+            if twice is true, that it does positioning twice (useful for some
+                gtk apps)
         """
-        if self.hints['width_inc']:
-            width = (width -
-                ((width - self.hints['base_width']) % self.hints['width_inc']))
-        if self.hints['height_inc']:
-            height = (height -
-                ((height - self.hints['base_height'])
-                % self.hints['height_inc']))
+        # TODO(tailhook) uncomment resize increments when we'll decide
+        #                to obey all those hints
+        #if self.hints['width_inc']:
+        #    width = (width -
+        #        ((width - self.hints['base_width']) % self.hints['width_inc']))
+        #if self.hints['height_inc']:
+        #    height = (height -
+        #        ((height - self.hints['base_height'])
+        #        % self.hints['height_inc']))
         # TODO(tailhook) implement min-size, maybe
         # TODO(tailhook) implement max-size
         # TODO(tailhook) implement gravity
@@ -374,7 +355,28 @@ class _Window(command.CommandObject):
             )
         if above:
             kwarg['stackmode'] = StackMode.Above
+
+        # Oh, yes we do this twice
+        #
+        # This sort of weird thing is because GTK assumes that each it's
+        # configure request is replied with configure notify. But X server
+        # is smarter than that and does not send configure notify if size is
+        # not changed. So we hack this.
+        #
+        # And no, manually sending ConfigureNotifyEvent does nothing, really!
+        #
+        # We use increment position because its more probably will
+        # lead to less calculations on the application side (no word
+        # rewrapping, widget resizing, etc.)
+        #
+        # TODO(tailhook) may be configure notify event will work for reparented
+        # windows
+        if twice:
+            kwarg['y'] -= 1
+            self.window.configure(**kwarg)
+            kwarg['y'] += 1
         self.window.configure(**kwarg)
+
         if bordercolor is not None:
             self.window.set_attribute(
                 borderpixel = bordercolor
@@ -512,7 +514,6 @@ class Static(_Window):
             self.borderwidth,
             self.bordercolor
         )
-        self.notify()
         return False
 
     def __repr__(self):
@@ -715,7 +716,6 @@ class Window(_Window):
                    self.bordercolor,
                    above=True,
                    )
-        self.notify()
         if self._float_state != new_float_state:
             self._float_state = new_float_state
             if self.group: # may be not, if it's called from hook
@@ -810,18 +810,17 @@ class Window(_Window):
         if self.qtile._drag and self.qtile.currentWindow == self:
             # ignore requests while user is dragging window
             return
-        if not getattr(self, 'floating', False):
+        if getattr(self, 'floating', False):
             # only obey resize for floating windows
-            return
-        cw = xcb.xproto.ConfigWindow
-        if e.value_mask & cw.X:
-            self.x = e.x
-        if e.value_mask & cw.Y:
-            self.y = e.y
-        if e.value_mask & cw.Width:
-            self.width = e.width
-        if e.value_mask & cw.Height:
-            self.height = e.height
+            cw = xcb.xproto.ConfigWindow
+            if e.value_mask & cw.X:
+                self.x = e.x
+            if e.value_mask & cw.Y:
+                self.y = e.y
+            if e.value_mask & cw.Width:
+                self.width = e.width
+            if e.value_mask & cw.Height:
+                self.height = e.height
         if self.group and self.group.screen:
             self.place(
                 self.x,
@@ -829,9 +828,9 @@ class Window(_Window):
                 self.width,
                 self.height,
                 self.borderwidth,
-                self.bordercolor
+                self.bordercolor,
+                twice=True,
             )
-            self.notify()
         return False
 
     def handle_PropertyNotify(self, e):
