@@ -32,6 +32,7 @@ class Volume(base._TextBox):
     def __init__(self, **config):
         base._TextBox.__init__(self, '0', width=bar.CALCULATED, **config)
         self.surfaces = {}
+        self.volume = None
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
@@ -52,7 +53,10 @@ class Volume(base._TextBox):
         self.draw()
 
     def update(self):
-        self.bar.draw()
+        vol = self.get_volume()
+        if vol != self.volume:
+            self.volume = vol
+            self.draw()
         return True
 
     def setup_images(self):
@@ -96,7 +100,6 @@ class Volume(base._TextBox):
         if mixerprocess.returncode:
             raise subprocess.CalledProcessError(mixerprocess.returncode,
                                                 'amixer')
-        
         if '[off]' in mixer_out:
             return -1
 
@@ -108,23 +111,22 @@ class Volume(base._TextBox):
             return -1
 
     def draw(self):
-        vol = self.get_volume()
         if self.theme_path:
             self.drawer.clear(self.bar.background)
-            if vol <= 0:
+            if self.volume <= 0:
                 img_name = 'audio-volume-muted'
-            elif vol <= 30:
+            elif self.volume <= 30:
                 img_name = 'audio-volume-low'
-            elif vol < 80:
+            elif self.volume < 80:
                 img_name = 'audio-volume-medium'
-            elif vol >= 80:
+            elif self.volume >= 80:
                 img_name = 'audio-volume-high'
 
             self.drawer.ctx.set_source(self.surfaces[img_name])
             self.drawer.ctx.paint()
             self.drawer.draw(self.offset, self.width)
         else:
-            if vol == -1:
+            if self.volume == -1:
                 self.text = 'M'
             else:
                 self.text = '%s%%' % vol
