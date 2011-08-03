@@ -454,10 +454,13 @@ class Group(command.CommandObject):
         hook.fire("group_window_add")
         self.windows.add(win)
         win.group = self
-        if self.floating_layout.match(win):
-            # !!! tell it to float, can't set floating because it's too early
-            # so just set the flag underneath
-            win._float_state = window.FLOATING
+        try:
+            if self.floating_layout.match(win):
+                # !!! tell it to float, can't set floating because it's too early
+                # so just set the flag underneath
+                win._float_state = window.FLOATING
+        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+            pass  # doesn't matter
         if win.floating:
             self.floating_layout.add(win)
         else:
@@ -936,17 +939,26 @@ class Qtile(command.CommandObject):
             del self.windowMap[win]
 
     def manage(self, w):
-        attrs = w.get_attributes()
-        internal = w.get_property("QTILE_INTERNAL")
+        try:
+            attrs = w.get_attributes()
+            internal = w.get_property("QTILE_INTERNAL")
+        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+            return
         if attrs and attrs.override_redirect:
             return
 
         if not w.wid in self.windowMap:
             if internal:
-                c = window.Internal(w, self)
+                try:
+                    c = window.Internal(w, self)
+                except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+                    return
                 self.windowMap[w.wid] = c
             else:
-                c = window.Window(w, self)
+                try:
+                    c = window.Window(w, self)
+                except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+                    return
                 hook.fire("client_new", c)
                 # Window may be defunct because it's been declared static in hook.
                 if c.defunct:
@@ -1325,21 +1337,14 @@ class Qtile(command.CommandObject):
         self.log.write(f, "\t")
         f.close()
 
-    _ignoreErrors = set([
-        xcb.xproto.BadWindow,
-        xcb.xproto.BadAccess
-    ])
     def errorHandler(self, e):
-        if e.__class__ in self._ignoreErrors:
-            print >> sys.stderr, e
-            return
         if hasattr(e.args[0], "bad_value"):
             m = "\n".join([
                 "Server Error: %s"%e.__class__.__name__,
                 "\tbad_value: %s"%e.args[0].bad_value,
                 "\tmajor_opcode: %s"%e.args[0].major_opcode,
                 "\tminor_opcode: %s"%e.args[0].minor_opcode
-            ])
+            ] + [traceback.format_exc()])
         else:
             m = traceback.format_exc()
 

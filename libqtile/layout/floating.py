@@ -3,6 +3,7 @@ from .. import manager, window
 
 FLOAT_WM_TYPES = { 'utility':1,
                    'notification':1,
+                   'toolbar':1,
                    'splash':1}
 
 class Floating(Layout):
@@ -46,6 +47,9 @@ class Floating(Layout):
         Used to default float some windows.
         """
         if win.window.get_wm_type() in FLOAT_WM_TYPES:
+            return True
+        if win.window.get_net_wm_state() == 'fullscreen':
+            win._float_state = window.FULLSCREEN
             return True
         for rule_dict in self.float_rules:
             if win.match(**rule_dict):

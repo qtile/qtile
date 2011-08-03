@@ -89,6 +89,11 @@ WindowTypes = {
     '_NET_WM_WINDOW_TYPE_NORMAL': "normal",
 }
 
+WindowStates = {
+    None: 'normal',
+    '_NET_WM_STATE_FULLSCREEN': 'fullscreen',
+    }
+
 # Maps property names to types and formats.
 PropertyMap = {
     # ewmh properties
@@ -423,6 +428,12 @@ class Window:
         if r:
             name = self.conn.atoms.get_name(r[0])
             return WindowTypes.get(name, name)
+
+    def get_net_wm_state(self):
+        r = self.get_property('_NET_WM_STATE', "ATOM", unpack='I')
+        if r:
+            name = self.conn.atoms.get_name(r[0])
+            return WindowStates.get(name, name)
 
     def configure(self, **kwargs):
         """
