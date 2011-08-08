@@ -142,6 +142,12 @@ class Subscribe:
         """
         return self._subscribe("client_urgent_hint_changed", func)
 
+    def layout_change(self, func):
+        """
+            Called when layout has been changed.
+        """
+        return self._subscribe("layout_change", func)
+
 subscribe = Subscribe()
 
 class Unsubscribe(Subscribe):
