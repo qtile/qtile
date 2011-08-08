@@ -144,7 +144,7 @@ class Subscribe:
 
     def layout_change(self, func):
         """
-            Called when layout has been changed.
+            Called on layout change.
         """
         return self._subscribe("layout_change", func)
 
