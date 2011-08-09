@@ -32,6 +32,18 @@ class Tile(Layout):
     def down(self):
         self.shuffle(utils.shuffleDown)
 
+    def shift_up(self):
+        if self.clients:
+            currentindex = self.clients.index(self.focused)
+            nextindex = self.get_next_index(currentindex)
+            self.shift(currentindex, nextindex)
+
+    def shift_down(self):
+        if self.clients:
+            currentindex = self.clients.index(self.focused)
+            previndex = self.get_previous_index(currentindex)
+            self.shift(currentindex, previndex)
+
     def focus_first(self):
         if self.clients:
             return self.clients[0]
@@ -50,16 +62,26 @@ class Tile(Layout):
         if idx > 0:
             return self.clients[idx-1]
 
-    def getNextClient(self):
-        nextindex = self.clients.index(self.focused) + 1
+    def get_next_index(self, currentindex):
+        nextindex = currentindex + 1
         if nextindex >= len(self.clients):
             nextindex = 0
+        return nextindex
+
+    def get_previous_index(self, currentindex):
+        previndex = currentindex - 1
+        if previndex < 0:
+            previndex = len(self.clients) - 1;
+        return previndex
+
+    def getNextClient(self):
+        currentindex = self.clients.index(self.focused)
+        nextindex = self.get_next_index(currentindex)
         return self.clients[nextindex]
 
     def getPreviousClient(self):
-        previndex = self.clients.index(self.focused) - 1
-        if previndex < 0:
-            previndex = len(self.clients) - 1;
+        currentindex = self.clients.index(self.focused)
+        previndex = self.get_previous_index(currentindex)
         return self.clients[previndex]
 
     def next(self):
@@ -73,6 +95,11 @@ class Tile(Layout):
     def shuffle(self, function):
         if self.clients:
             function(self.clients)
+            self.group.layoutAll()
+
+    def shift(self, idx1, idx2):
+        if self.clients:
+            self.clients[idx1], self.clients[idx2] = self.clients[idx2], self.clients[idx1]
             self.group.layoutAll()
 
     def clone(self, group):
@@ -145,6 +172,12 @@ class Tile(Layout):
 
     def cmd_up(self):
         self.up()
+
+    def cmd_shift_up(self):
+        self.shift_up()
+
+    def cmd_shift_down(self):
+        self.shift_down()
 
     def cmd_next(self):
         self.next()
