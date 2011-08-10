@@ -96,12 +96,12 @@ class Tile(Layout):
     def shuffle(self, function):
         if self.clients:
             function(self.clients)
-            self.group.layoutAll()
+            self.group.layoutAll(True)
 
     def shift(self, idx1, idx2):
         if self.clients:
             self.clients[idx1], self.clients[idx2] = self.clients[idx2], self.clients[idx1]
-            self.group.layoutAll()
+            self.group.layoutAll(True)
 
     def clone(self, group):
         c = Layout.clone(self, group)
