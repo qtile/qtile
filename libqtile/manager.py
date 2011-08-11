@@ -118,6 +118,31 @@ class Click(object):
     def __repr__(self):
         return "Click(%s, %s)"%(self.modifiers, self.button)
 
+class ScreenRect(object):
+
+    def __init__(self, x, y, width, height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+
+    def __repr__(self):
+        return '<%s %d,%d %d,%d>' % (self.__class__.__name__,
+            self.x, self.y, self.width, self.height)
+
+    def hsplit(self, columnwidth):
+        assert columnwidth > 0
+        assert columnwidth < self.width
+        return (self.__class__(self.x, self.y, columnwidth, self.height),
+                self.__class__(self.x+columnwidth, self.y,
+                               self.width - columnwidth, self.height))
+
+    def vsplit(self, rowheight):
+        assert rowheight > 0
+        assert rowheight < self.height
+        return (self.__class__(self.x, self.y, self.width, rowheight),
+                self.__class__(self.x, self.y + rowheight,
+                               self.width, self.height - rowheight))
 
 class Screen(command.CommandObject):
     """
@@ -187,6 +212,9 @@ class Screen(command.CommandObject):
         if self.bottom:
             val -= self.bottom.size
         return val
+
+    def get_rect(self):
+        return ScreenRect(self.dx, self.dy, self.dwidth, self.dheight)
 
     def setGroup(self, new_group):
         """
@@ -319,13 +347,15 @@ class Group(command.CommandObject):
         self.layout.hide()
         self.currentLayout = (self.currentLayout + 1)%(len(self.layouts))
         self.layoutAll()
-        self.layout.show()
+        screen = self.screen.get_rect()
+        self.layout.show(screen)
 
     def prevLayout(self):
         self.layout.hide()
         self.currentLayout = (self.currentLayout - 1)%(len(self.layouts))
         self.layoutAll()
-        self.layout.show()
+        screen = self.screen.get_rect()
+        self.layout.show(screen)
 
     def layoutAll(self, warp=False):
         """
@@ -336,9 +366,15 @@ class Group(command.CommandObject):
         """
         if self.screen and len(self.windows):
             with self.disableMask(xcb.xproto.EventMask.EnterWindow):
-                self.layout.layout([x for x in self.windows if not x.floating])
-                self.floating_layout.layout([x for x in self.windows if x.floating and not x.minimized])
-                if self.currentWindow:
+                normal = [x for x in self.windows if not x.floating]
+                floating = [x for x in self.windows
+                    if x.floating and not x.minimized]
+                screen = self.screen.get_rect()
+                if normal:
+                    self.layout.layout(normal, screen)
+                if floating:
+                    self.floating_layout.layout(floating, screen)
+                if self.currentWindow and self.screen == self.qtile.currentScreen:
                     self.currentWindow.focus(warp)
 
     def _setScreen(self, screen):
@@ -352,8 +388,9 @@ class Group(command.CommandObject):
             # move all floating guys offset to new screen
             self.floating_layout.to_screen(self.screen)
             self.layoutAll()
-            self.floating_layout.show()
-            self.layout.show()
+            rect = self.screen.get_rect()
+            self.floating_layout.show(rect)
+            self.layout.show(rect)
         else:
             self.hide()
 
@@ -382,7 +419,7 @@ class Group(command.CommandObject):
 
             warp - warp pointer to win
         """
-        if hasattr(self.qtile, '_drag'):
+        if self.qtile._drag:
             # don't change focus while dragging windows
             return
         if win and not win in self.windows:
@@ -401,7 +438,7 @@ class Group(command.CommandObject):
             self.currentWindow = None
         hook.fire("focus_change")
         # !!! note that warp isn't hooked up now
-        self.layoutAll()
+        self.layoutAll(warp)
 
     def info(self):
         return dict(
@@ -417,10 +454,13 @@ class Group(command.CommandObject):
         hook.fire("group_window_add")
         self.windows.add(win)
         win.group = self
-        if self.floating_layout.match(win):
-            # !!! tell it to float, can't set floating because it's too early
-            # so just set the flag underneath
-            win._float_state = window.FLOATING
+        try:
+            if self.floating_layout.match(win):
+                # !!! tell it to float, can't set floating because it's too early
+                # so just set the flag underneath
+                win._float_state = window.FLOATING
+        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+            pass  # doesn't matter
         if win.floating:
             self.floating_layout.add(win)
         else:
@@ -452,6 +492,7 @@ class Group(command.CommandObject):
         self.focus(nextfocus, True)
         self.layoutAll()
         #else: TODO: change focus
+
     def mark_floating(self, win, floating):
         if floating and win in self.floating_layout.clients:
             # already floating
@@ -689,6 +730,7 @@ class Qtile(command.CommandObject):
         self.screens = []
         self._process_screens()
         self.currentScreen = self.screens[0]
+        self._drag = None
 
         self.ignoreEvents = set([
             xcb.xproto.KeyReleaseEvent,
@@ -897,17 +939,26 @@ class Qtile(command.CommandObject):
             del self.windowMap[win]
 
     def manage(self, w):
-        attrs = w.get_attributes()
-        internal = w.get_property("QTILE_INTERNAL")
+        try:
+            attrs = w.get_attributes()
+            internal = w.get_property("QTILE_INTERNAL")
+        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+            return
         if attrs and attrs.override_redirect:
             return
 
         if not w.wid in self.windowMap:
             if internal:
-                c = window.Internal(w, self)
+                try:
+                    c = window.Internal(w, self)
+                except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+                    return
                 self.windowMap[w.wid] = c
             else:
-                c = window.Window(w, self)
+                try:
+                    c = window.Window(w, self)
+                except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+                    return
                 hook.fire("client_new", c)
                 # Window may be defunct because it's been declared static in hook.
                 if c.defunct:
@@ -1183,12 +1234,7 @@ class Qtile(command.CommandObject):
             print >> sys.stderr, "Ignoring unknown button release: %s"%button_code
             return
         if isinstance(m, Drag):
-            try:
-                del self._drag
-            except AttributeError:
-                # Command on drag start is failed to execute
-                # We will ungrab pointer anyway, to be sure
-                pass
+            self._drag = None
             self.root.ungrab_pointer()
 
     def handle_MotionNotify(self, e):
@@ -1240,7 +1286,7 @@ class Qtile(command.CommandObject):
     def handle_MapRequest(self, e):
         w = xcbq.Window(self.conn, e.window)
         c = self.manage(w)
-        if c and not c.group.screen:
+        if c and (not c.group or not c.group.screen):
             return
         w.map()
 
@@ -1291,21 +1337,14 @@ class Qtile(command.CommandObject):
         self.log.write(f, "\t")
         f.close()
 
-    _ignoreErrors = set([
-        xcb.xproto.BadWindow,
-        xcb.xproto.BadAccess
-    ])
     def errorHandler(self, e):
-        if e.__class__ in self._ignoreErrors:
-            print >> sys.stderr, e
-            return
         if hasattr(e.args[0], "bad_value"):
             m = "\n".join([
                 "Server Error: %s"%e.__class__.__name__,
                 "\tbad_value: %s"%e.args[0].bad_value,
                 "\tmajor_opcode: %s"%e.args[0].major_opcode,
                 "\tminor_opcode: %s"%e.args[0].minor_opcode
-            ])
+            ] + [traceback.format_exc()])
         else:
             m = traceback.format_exc()
 

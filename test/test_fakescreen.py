@@ -30,7 +30,7 @@ GRAPH_KW = dict(line_width=1,
 #
 # Notice there is hole in the middle
 # also that D goes down below the others
-            
+
 class FakeScreenConfig:
     main = None
     groups = [
@@ -73,13 +73,13 @@ class FakeScreenConfig:
                     background="#555555"
                 ),
         x=0, y=0, width=600, height=480
-        ), 
+        ),
     Screen(
         top = bar.Bar(
                     [
                         widget.GroupBox(),
                         widget.WindowName(),
-                        widget.Clock() 
+                        widget.Clock()
                     ],
                     30,
                 ),
@@ -90,7 +90,7 @@ class FakeScreenConfig:
                     [
                         widget.GroupBox(),
                         widget.WindowName(),
-                        widget.Clock() 
+                        widget.Clock()
                     ],
                     30,
                 ),
@@ -100,12 +100,12 @@ class FakeScreenConfig:
                     [
                         widget.GroupBox(),
                         widget.WindowName(),
-                        widget.Clock() 
+                        widget.Clock()
                     ],
                     30,
                 ),
            x=500, y=580, width=400, height=400 ),
-                    
+
                     ]
     screens = fake_screens
 class TestFakeScreen(utils.QtileTests):
@@ -114,7 +114,7 @@ class TestFakeScreen(utils.QtileTests):
     def test_basic(self):
         self.testWindow("zero")
         assert self.c.layout.info()["clients"] == ["zero"]
-        assert self.c.screen.info() == {'y': 0, 'x': 0, 'index': 0, 'width': 600, 'height': 480} 
+        assert self.c.screen.info() == {'y': 0, 'x': 0, 'index': 0, 'width': 600, 'height': 480}
         self.c.to_screen(1)
         self.testWindow("one")
         assert self.c.layout.info()["clients"] == ["one"]
@@ -143,14 +143,14 @@ class TestFakeScreen(utils.QtileTests):
         assert self.c.screen.info() == {'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
         assert self.c.group.info()['name'] == 'b'
         self.c.group['a'].toscreen()
-        
+
         assert self.c.window.info()['width'] == 300
         assert self.c.window.info()['height'] == 550
         assert self.c.window.info()['x'] == 600
         assert self.c.window.info()['y'] == 30
         assert self.c.window.info()['group'] == 'a'
 
-        
+
     def test_float_first_on_second_screen(self):
         self.c.to_screen(1)
         assert self.c.screen.info() == {'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
@@ -163,21 +163,21 @@ class TestFakeScreen(utils.QtileTests):
         assert self.c.window.info()['y'] == 0
         assert self.c.window.info()['group'] == 'b'
         assert self.c.window.info()['float_info'] == {'y': 0, 'x': 0, 'w': 164, 'h': 164}
-        
-        
+
+
     def test_float_change_screens(self):
         #add some eyes, and float clock
         self.testXeyes()
         self.testXclock()
         self.c.window.toggle_floating()
-        assert self.c.group.info()['windows'] == ['xeyes', 'xclock']
+        assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
         assert self.c.group.info()['floating_info']['clients'] == ['xclock']
         assert self.c.window.info()['width'] == 164
         assert self.c.window.info()['height'] == 164
         assert self.c.window.info()['x'] == 0
         assert self.c.window.info()['y'] == 0
         assert self.c.window.info()['group'] == 'a'
-        
+
         #put on group b
         assert self.c.screen.info() == {'y': 0, 'x': 0, 'index': 0, 'width': 600, 'height': 480}
         assert self.c.group.info()['name'] == 'a'
@@ -186,7 +186,7 @@ class TestFakeScreen(utils.QtileTests):
         assert self.c.screen.info() == {'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
         self.c.group['a'].toscreen()
         assert self.c.group.info()['name'] == 'a'
-        assert self.c.group.info()['windows'] == ['xeyes', 'xclock']
+        assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
         assert self.c.window.info()['name'] == 'xclock'
         assert self.c.window.info()['width'] == 164
         assert self.c.window.info()['height'] == 164
@@ -197,11 +197,11 @@ class TestFakeScreen(utils.QtileTests):
 
         # move to screen 3
         self.c.to_screen(2)
-        assert self.c.screen.info() == {'y': 480, 'x': 0, 'index': 2, 'width': 500, 'height': 400} 
+        assert self.c.screen.info() == {'y': 480, 'x': 0, 'index': 2, 'width': 500, 'height': 400}
         assert self.c.group.info()['name'] == 'c'
         self.c.group['a'].toscreen()
         assert self.c.group.info()['name'] == 'a'
-        assert self.c.group.info()['windows'] == ['xeyes', 'xclock']
+        assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
         assert self.c.window.info()['name'] == 'xclock'
         assert self.c.window.info()['width'] == 164
         assert self.c.window.info()['height'] == 164
@@ -214,26 +214,26 @@ class TestFakeScreen(utils.QtileTests):
         assert self.c.group.info()['name'] == 'd'
         self.c.group['a'].toscreen()
         assert self.c.group.info()['name'] == 'a'
-        assert self.c.group.info()['windows'] == ['xeyes', 'xclock']
+        assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
         assert self.c.window.info()['name'] == 'xclock'
         assert self.c.window.info()['width'] == 164
         assert self.c.window.info()['height'] == 164
         assert self.c.window.info()['x'] == 500
         assert self.c.window.info()['y'] == 580
-        
+
         # and back to one
         self.c.to_screen(0)
         assert self.c.screen.info() == {'y': 0, 'x': 0, 'index': 0, 'width': 600, 'height': 480}
         assert self.c.group.info()['name'] == 'b'
         self.c.group['a'].toscreen()
         assert self.c.group.info()['name'] == 'a'
-        assert self.c.group.info()['windows'] == ['xeyes', 'xclock']
+        assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
         assert self.c.window.info()['name'] == 'xclock'
         assert self.c.window.info()['width'] == 164
         assert self.c.window.info()['height'] == 164
         assert self.c.window.info()['x'] == 0
         assert self.c.window.info()['y'] == 0
-        
+
 
     def test_float_outside_edges(self):
         self.testXclock()
@@ -275,7 +275,7 @@ class TestFakeScreen(utils.QtileTests):
         assert self.c.window.info()['x'] == -10
         assert self.c.window.info()['y'] == 520
         assert self.c.window.info()['group'] == 'c'
-        
+
         # move above b
         self.c.window.set_position_floating(700, -10)
         assert self.c.window.info()['width'] == 164
@@ -301,7 +301,7 @@ class TestFakeScreen(utils.QtileTests):
                 name = 'c'
             elif old_group == 3:
                 name = 'd'
-                
+
             self.c.to_screen((i+1)%4)
             self.c.group['a'].toscreen()
         assert self.c.group['a'].info()['windows'] == ['xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock']
@@ -322,7 +322,7 @@ class TestFakeScreen(utils.QtileTests):
                 name = 'c'
             elif old_group == 3:
                 name = 'd'
-                
+
             self.c.to_screen((i+1)%4)
             self.c.group['a'].toscreen()
         assert self.c.group['a'].info()['windows'] == ['xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock']
@@ -339,9 +339,9 @@ class TestFakeScreen(utils.QtileTests):
         self.c.to_screen(3)
         self.c.group['a'].toscreen()
         assert self.c.group['a'].info()['windows'] == ['xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock']
-        
-      
-        
+
+
+
 # since we are using fake screens don't have Xephyr put up 2
 tests = [utils.Xephyr(xinerama=False, two_screens=False, width=900, height=980),
          [TestFakeScreen()

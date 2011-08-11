@@ -128,11 +128,19 @@ class _Window(command.CommandObject):
             'icon_mask': 0,
             'window_group': None,
             'urgent': False,
+            # normal or size hints
+            'width_inc': None,
+            'height_inc': None,
+            'base_width': 0,
+            'base_height': 0,
             }
         self.updateHints()
 
     def updateName(self):
-        self.name = self.window.get_name()
+        try:
+            self.name = self.window.get_name()
+        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+            return
         hook.fire("window_name_change")
 
     def updateHints(self):
@@ -140,7 +148,11 @@ class _Window(command.CommandObject):
             update the local copy of the window's WM_HINTS
             http://tronche.com/gui/x/icccm/sec-4.html#WM_HINTS
         """
-        h = self.window.get_wm_hints()
+        try:
+            h = self.window.get_wm_hints()
+            normh = self.window.get_wm_normal_hints()
+        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+            return
 
         # FIXME
         # h values
@@ -161,6 +173,18 @@ class _Window(command.CommandObject):
         #                  'IconPixmapHint']),
         #}
 
+        if normh:
+            normh.pop('flags')
+            if(not normh['base_width']
+                and normh['min_width'] and normh['width_inc']):
+                # seems xcb does ignore base width :(
+                normh['base_width'] = normh['min_width'] % normh['width_inc']
+            if(not normh['base_height']
+                and normh['min_height'] and normh['height_inc']):
+                # seems xcb does ignore base height :(
+                normh['base_height'] = normh['min_height'] % normh['height_inc']
+            self.hints.update(normh)
+
         if h and 'UrgencyHint' in h['flags']:
             self.hints['urgent'] = True
             hook.fire('client_urgent_hint_changed', self)
@@ -168,7 +192,13 @@ class _Window(command.CommandObject):
             self.hints['urgent'] = False
             hook.fire('client_urgent_hint_changed', self)
 
+        if getattr(self, 'group', None):
+            self.group.layoutAll()
+
         return
+
+    def updateState(self):
+        self.fullscreen = self.window.get_net_wm_state() == 'fullscreen'
 
     @property
     def urgent(self):
@@ -192,7 +222,7 @@ class _Window(command.CommandObject):
             maximized = self._float_state == MAXIMIZED,
             minimized = self._float_state == MINIMIZED,
             fullscreen = self._float_state == FULLSCREEN
-            
+
         )
 
     @property
@@ -224,29 +254,6 @@ class _Window(command.CommandObject):
             return as_float
 
     opacity = property(getOpacity, setOpacity)
-
-    def notify(self):
-        # Having to do it this way is goddamn awful.
-        vals = [
-            22, # ConfigureNotifyEvent
-            0,
-            self.window.wid,
-            self.window.wid,
-            xcb.xproto.Window._None,
-            self.x,
-            self.y,
-            self.width,
-            self.height,
-            self.borderwidth,
-            False
-        ]
-        self.window.send_event(
-            struct.pack(
-                'B1xHLLLhhHHHB5x',
-                *vals
-            ),
-            xcb.xproto.EventMask.StructureNotify
-        )
 
     def kill(self):
         if "WM_DELETE_WINDOW" in self.window.get_wm_protocols():
@@ -310,10 +317,27 @@ class _Window(command.CommandObject):
             eventmask=self._windowMask
         )
 
-    def place(self, x, y, width, height, borderwidth, bordercolor, above=False):
+    def place(self, x, y, width, height, borderwidth, bordercolor,
+        above=False, force=False, twice=False):
         """
             Places the window at the specified location with the given size.
+
+            if force is false, than it tries to obey hints
+            if twice is true, that it does positioning twice (useful for some
+                gtk apps)
         """
+        # TODO(tailhook) uncomment resize increments when we'll decide
+        #                to obey all those hints
+        #if self.hints['width_inc']:
+        #    width = (width -
+        #        ((width - self.hints['base_width']) % self.hints['width_inc']))
+        #if self.hints['height_inc']:
+        #    height = (height -
+        #        ((height - self.hints['base_height'])
+        #        % self.hints['height_inc']))
+        # TODO(tailhook) implement min-size, maybe
+        # TODO(tailhook) implement max-size
+        # TODO(tailhook) implement gravity
         self.x, self.y, self.width, self.height = x, y, width, height
         self.borderwidth, self.bordercolor = borderwidth, bordercolor
 
@@ -331,7 +355,28 @@ class _Window(command.CommandObject):
             )
         if above:
             kwarg['stackmode'] = StackMode.Above
+
+        # Oh, yes we do this twice
+        #
+        # This sort of weird thing is because GTK assumes that each it's
+        # configure request is replied with configure notify. But X server
+        # is smarter than that and does not send configure notify if size is
+        # not changed. So we hack this.
+        #
+        # And no, manually sending ConfigureNotifyEvent does nothing, really!
+        #
+        # We use increment position because its more probably will
+        # lead to less calculations on the application side (no word
+        # rewrapping, widget resizing, etc.)
+        #
+        # TODO(tailhook) may be configure notify event will work for reparented
+        # windows
+        if twice:
+            kwarg['y'] -= 1
+            self.window.configure(**kwarg)
+            kwarg['y'] += 1
         self.window.configure(**kwarg)
+
         if bordercolor is not None:
             self.window.set_attribute(
                 borderpixel = bordercolor
@@ -340,8 +385,8 @@ class _Window(command.CommandObject):
     def focus(self, warp):
         if not self.hidden and self.hints['input']:
             self.window.set_input_focus()
-            if warp:
-                self.window.warp_pointer(0, 0)
+            if warp and self.qtile.config.cursor_warp:
+                self.window.warp_pointer(self.width//2, self.height//2)
         hook.fire("client_focus", self)
 
     def _items(self, name, sel):
@@ -469,7 +514,6 @@ class Static(_Window):
             self.borderwidth,
             self.bordercolor
         )
-        self.notify()
         return False
 
     def __repr__(self):
@@ -533,7 +577,7 @@ class Window(_Window):
         else:
             if self._float_state == FULLSCREEN:
                 self.disablefloating()
-                
+
     @property
     def maximized(self):
         return self._float_state == MAXIMIZED
@@ -610,7 +654,7 @@ class Window(_Window):
             # TODO - need to kick boxes to update
 
         self._reconfigure_floating()
-        
+
     def getsize(self):
         return self.width, self.height
 
@@ -622,10 +666,10 @@ class Window(_Window):
             self.disablefloating()
         else:
             self.enableminimize()
-            
+
     def enableminimize(self):
         self._enablefloating(new_float_state=MINIMIZED)
-        
+
     def togglemaximize(self, state=MAXIMIZED):
         if self._float_state == state:
             self.disablefloating()
@@ -652,7 +696,7 @@ class Window(_Window):
             self.disablefloating()
         else:
             self.enablefloating()
-            
+
     def _reconfigure_floating(self, new_float_state=FLOATING):
         if new_float_state == MINIMIZED:
             self.state = IconicState
@@ -672,7 +716,6 @@ class Window(_Window):
                    self.bordercolor,
                    above=True,
                    )
-        self.notify()
         if self._float_state != new_float_state:
             self._float_state = new_float_state
             if self.group: # may be not, if it's called from hook
@@ -702,7 +745,7 @@ class Window(_Window):
             self._float_state = NOT_FLOATING
             self.group.mark_floating(self, False)
             hook.fire('float_change')
-            
+
     def togroup(self, groupName):
         """
             Move window to a specified group.
@@ -739,13 +782,19 @@ class Window(_Window):
         if wname and wname == self.name:
             return True
 
-        cliclass = self.window.get_wm_class()
-        if wmclass and cliclass and wmclass in cliclass:
-            return True
+        try:
 
-        clirole = self.window.get_wm_window_role()
-        if role and clirole and role == clirole:
-            return True
+            cliclass = self.window.get_wm_class()
+            if wmclass and cliclass and wmclass in cliclass:
+                return True
+
+            clirole = self.window.get_wm_window_role()
+            if role and clirole and role == clirole:
+                return True
+
+        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+            return False
+
         return False
 
     def handle_EnterNotify(self, e):
@@ -758,15 +807,20 @@ class Window(_Window):
         return True
 
     def handle_ConfigureRequest(self, e):
-        cw = xcb.xproto.ConfigWindow
-        if e.value_mask & cw.X:
-            self.x = e.x
-        if e.value_mask & cw.Y:
-            self.y = e.y
-        if e.value_mask & cw.Width:
-            self.width = e.width
-        if e.value_mask & cw.Height:
-            self.height = e.height
+        if self.qtile._drag and self.qtile.currentWindow == self:
+            # ignore requests while user is dragging window
+            return
+        if getattr(self, 'floating', False):
+            # only obey resize for floating windows
+            cw = xcb.xproto.ConfigWindow
+            if e.value_mask & cw.X:
+                self.x = e.x
+            if e.value_mask & cw.Y:
+                self.y = e.y
+            if e.value_mask & cw.Width:
+                self.width = e.width
+            if e.value_mask & cw.Height:
+                self.height = e.height
         if self.group and self.group.screen:
             self.place(
                 self.x,
@@ -774,9 +828,9 @@ class Window(_Window):
                 self.width,
                 self.height,
                 self.borderwidth,
-                self.bordercolor
+                self.bordercolor,
+                twice=True,
             )
-            self.notify()
         return False
 
     def handle_PropertyNotify(self, e):
@@ -795,6 +849,8 @@ class Window(_Window):
             self.updateName()
         elif name == "_NET_WM_WINDOW_OPACITY":
             pass
+        elif name == "_NET_WM_STATE":
+            self.updateState()
         elif name == "WM_PROTOCOLS":
             pass
         elif name == "_NET_WM_USER_TIME":

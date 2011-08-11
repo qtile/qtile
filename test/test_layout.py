@@ -2,6 +2,7 @@ import libpry, time, pprint
 from libqtile import layout
 import libqtile.manager
 import utils
+from time import sleep
 
 class MaxConfig:
     main = None
@@ -260,7 +261,7 @@ class RatioTileConfig:
     keys = []
     mouse = []
     screens = []
-    
+
 class uRatioTile(utils.QtileTests):
     config = RatioTileConfig()
     def test_add_windows(self):
@@ -278,10 +279,10 @@ class uRatioTile(utils.QtileTests):
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 160, 600), (160, 0, 160, 600), (320, 0, 160, 600), (480, 0, 160, 600), (640, 0, 160, 600)]
             elif i == 5:
                 assert self.c.layout.info()['layout_info'] ==  [(0, 0, 133, 600), (133, 0, 133, 600), (266, 0, 133, 600), (399, 0, 133, 600), (532, 0, 133, 600), (665, 0, 135, 600)]
-           
+
             elif i == 6:
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 200, 300), (200, 0, 200, 300), (400, 0, 200, 300), (600, 0, 200, 300), (0, 300, 266, 300), (266, 300, 266, 300), (532, 300, 268, 300)]
-           
+
             elif i == 7:
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 200, 300), (200, 0, 200, 300), (400, 0, 200, 300), (600, 0, 200, 300), (0, 300, 200, 300), (200, 300, 200, 300), (400, 300, 200, 300), (600, 300, 200, 300)]
             elif i == 8:
@@ -289,13 +290,13 @@ class uRatioTile(utils.QtileTests):
             elif i == 9:
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 160, 300), (160, 0, 160, 300), (320, 0, 160, 300), (480, 0, 160, 300), (640, 0, 160, 300), (0, 300, 160, 300), (160, 300, 160, 300), (320, 300, 160, 300), (480, 300, 160, 300), (640, 300, 160, 300)]
             elif i == 10:
-                assert self.c.layout.info()['layout_info'] == [(0, 0, 133, 300), (133, 0, 133, 300), (266, 0, 133, 300), (399, 0, 133, 300), (532, 0, 133, 300), (665, 0, 135, 300), (0, 300, 160, 300), (160, 300, 160, 300), (320, 300, 160, 300), (480, 300, 160, 300), (640, 300, 160, 300)] 
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 133, 300), (133, 0, 133, 300), (266, 0, 133, 300), (399, 0, 133, 300), (532, 0, 133, 300), (665, 0, 135, 300), (0, 300, 160, 300), (160, 300, 160, 300), (320, 300, 160, 300), (480, 300, 160, 300), (640, 300, 160, 300)]
             elif i == 11:
-                assert self.c.layout.info()['layout_info'] ==[(0, 0, 133, 300), (133, 0, 133, 300), (266, 0, 133, 300), (399, 0, 133, 300), (532, 0, 133, 300), (665, 0, 135, 300), (0, 300, 133, 300), (133, 300, 133, 300), (266, 300, 133, 300), (399, 300, 133, 300), (532, 300, 133, 300), (665, 300, 135, 300)] 
+                assert self.c.layout.info()['layout_info'] ==[(0, 0, 133, 300), (133, 0, 133, 300), (266, 0, 133, 300), (399, 0, 133, 300), (532, 0, 133, 300), (665, 0, 135, 300), (0, 300, 133, 300), (133, 300, 133, 300), (266, 300, 133, 300), (399, 300, 133, 300), (532, 300, 133, 300), (665, 300, 135, 300)]
             else:
                 assert False
 
-                
+
     def test_add_windows_golden_ratio(self):
         self.c.nextlayout()
         for i in range(12):
@@ -307,18 +308,19 @@ class uRatioTile(utils.QtileTests):
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 400, 200), (0, 200, 400, 200), (0, 400, 400, 200), (400, 0, 400, 300), (400, 300, 400, 300)]
             elif i == 5:
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 400, 200), (0, 200, 400, 200), (0, 400, 400, 200), (400, 0, 400, 200), (400, 200, 400, 200), (400, 400, 400, 200)]
-                
+
             elif i == 9:
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 266, 150), (0, 150, 266, 150), (0, 300, 266, 150), (0, 450, 266, 150), (266, 0, 266, 150), (266, 150, 266, 150), (266, 300, 266, 150), (266, 450, 266, 150), (532, 0, 266, 300), (532, 300, 266, 300)]
             elif i == 10:
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 266, 150), (0, 150, 266, 150), (0, 300, 266, 150), (0, 450, 266, 150), (266, 0, 266, 150), (266, 150, 266, 150), (266, 300, 266, 150), (266, 450, 266, 150), (532, 0, 266, 200), (532, 200, 266, 200), (532, 400, 266, 200)]
             elif i == 11:
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 266, 150), (0, 150, 266, 150), (0, 300, 266, 150), (0, 450, 266, 150), (266, 0, 266, 150), (266, 150, 266, 150), (266, 300, 266, 150), (266, 450, 266, 150), (532, 0, 266, 150), (532, 150, 266, 150), (532, 300, 266, 150), (532, 450, 266, 150)]
-                
+
     def test_basic(self):
         self.testWindow("one")
         self.testWindow("two")
         self.testWindow("three")
+        sleep(0.1)
         assert self.c.window.info()['width'] == 264
         assert self.c.window.info()['height'] == 598
         assert self.c.window.info()['x'] == 0
@@ -338,7 +340,7 @@ class uRatioTile(utils.QtileTests):
         assert self.c.window.info()['x'] == 532
         assert self.c.window.info()['y'] == 0
         assert self.c.window.info()['name'] == 'one'
-        
+
 class TileConfig:
     main = None
     groups = [
@@ -413,8 +415,112 @@ class uTile(utils.QtileTests):
         self.kill(three)
         assert self.c.layout.info()["master"] == ["two"]
 
+class SliceConfig:
+    main = None
+    groups = [
+        libqtile.manager.Group("a"),
+    ]
+    layouts = [
+        layout.Slice('left', 200, wname='slice',
+            fallback=layout.Stack(stacks=1, border_width=0)),
+        layout.Slice('right', 200, wname='slice',
+            fallback=layout.Stack(stacks=1, border_width=0)),
+        layout.Slice('top', 200, wname='slice',
+            fallback=layout.Stack(stacks=1, border_width=0)),
+        layout.Slice('bottom', 200, wname='slice',
+            fallback=layout.Stack(stacks=1, border_width=0)),
+        ]
+    floating_layout = libqtile.layout.floating.Floating()
+    keys = []
+    mouse = []
+    screens = []
 
+class uSlice(utils.QtileTests):
+    config = SliceConfig()
 
+    def assertDimensions(self, x, y, w, h):
+        """Asserts dimensions of *current* window"""
+        info = self.c.window.info()
+        assert info['x'] == x, info
+        assert info['y'] == y, info
+        assert info['width'] == w, info  # why?
+        assert info['height'] == h, info
+
+    def assertFocused(self, name):
+        """Asserts that window with specified name is currently focused"""
+        info = self.c.window.info()
+        assert info['name']
+
+    def assertFocusPath(self, *names):
+        for i in names:
+            self.c.group.next_window()
+            self.assertFocused(i)
+        # let's check twice for sure
+        for i in names:
+            self.c.group.next_window()
+            self.assertFocused(i)
+        # Ok, let's check backwards now
+        for i in reversed(names):
+            self.assertFocused(i)
+            self.c.group.prev_window()
+        # and twice for sure
+        for i in reversed(names):
+            self.assertFocused(i)
+            self.c.group.prev_window()
+
+    def test_no_slice(self):
+        self.testWindow('one')
+        self.assertDimensions(200, 0, 600, 600)
+        self.testWindow('two')
+        self.assertDimensions(200, 0, 600, 600)
+
+    def test_slice_first(self):
+        self.testWindow('slice')
+        self.assertDimensions(0, 0, 200, 600)
+        self.testWindow('two')
+        self.assertDimensions(200, 0, 600, 600)
+
+    def test_slice_last(self):
+        self.testWindow('one')
+        self.assertDimensions(200, 0, 600, 600)
+        self.testWindow('slice')
+        self.assertDimensions(0, 0, 200, 600)
+
+    def test_focus(self):
+        one = self.testWindow('one')
+        self.assertFocused('one')
+        two = self.testWindow('two')
+        self.assertFocused('two')
+        slice = self.testWindow('slice')
+        self.assertFocused('slice')
+        self.assertFocusPath('one', 'two', 'slice')
+        three = self.testWindow('three')
+        self.assertFocusPath('one', 'two', 'three', 'slice')
+        self.kill(two)
+        self.assertFocusPath('one', 'three', 'slice')
+        self.kill(slice)
+        self.assertFocusPath('one', 'three')
+        slice = self.testWindow('slice')
+        self.assertFocusPath('one', 'three', 'slice')
+
+    def test_all_slices(self):
+        self.testWindow('slice')  # left
+        self.assertDimensions(0, 0, 200, 600)
+        self.c.nextlayout()  # right
+        self.assertDimensions(600, 0, 200, 600)
+        self.c.nextlayout()  # top
+        self.assertDimensions(0, 0, 800, 200)
+        self.c.nextlayout()  # bottom
+        self.assertDimensions(0, 400, 800, 200)
+        self.c.nextlayout()  # left again
+        self.testWindow('one')
+        self.assertDimensions(200, 0, 600, 600)
+        self.c.nextlayout()  # right
+        self.assertDimensions(0, 0, 600, 600)
+        self.c.nextlayout()  # top
+        self.assertDimensions(0, 200, 800, 400)
+        self.c.nextlayout()  # bottom
+        self.assertDimensions(0, 0, 800, 400)
 
 tests = [
     utils.Xephyr(xinerama=False), [
@@ -423,5 +529,6 @@ tests = [
         uTile(),
         uRatioTile(),
         uSelectors(),
+        uSlice(),
     ],
 ]

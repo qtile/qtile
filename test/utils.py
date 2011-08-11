@@ -46,6 +46,7 @@ class Xephyr(libpry.TestContainer):
     def setUp(self):
         args = [
             "Xephyr", "-keybd", "evdev",
+            "-name", "qtile_test",
             self["display"], "-ac",
             "-screen", "%sx%s"%(self.width, self.height)]
         if self.two_screens:

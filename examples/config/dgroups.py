@@ -1,3 +1,5 @@
+import gobject
+
 import libqtile.hook
 from libqtile.manager import Key
 from libqtile.command import lazy
@@ -60,7 +62,7 @@ def simple_key_binder(mod):
 
 class DGroups(object):
     ''' Dynamic Groups '''
-    def __init__(self, qtile, groups, apps, key_binder=None):
+    def __init__(self, qtile, groups, apps, key_binder=None, delay=1):
         self.qtile = qtile
 
         self.groups = groups
@@ -71,6 +73,10 @@ class DGroups(object):
 
         self._setup_hooks()
         self._setup_groups()
+
+        self.delay = delay
+
+        self.timeout = {}
 
     def _setup_groups(self):
         for name, tag in self.groups.iteritems():
@@ -100,6 +106,12 @@ class DGroups(object):
             lst.insert(0, master)
 
     def _add(self, client):
+        if client in self.timeout:
+            gobject.source_remove(self.timeout[client])
+            del(self.timeout[client])
+        group_set = False
+        intrusive = False
+
         for app in self.apps:
             # Matching Rules
             if app['match'].compare(client):
@@ -107,6 +119,8 @@ class DGroups(object):
                     group = app['group']
                     self.qtile.addGroup(group)
                     client.togroup(group)
+
+                    group_set = True
 
                     group_obj = self.qtile.groupMap[group]
                     group_opts = self.groups.get(group)
@@ -121,30 +135,36 @@ class DGroups(object):
 
                 if 'float' in app and app['float']:
                     client.floating = True
-                return
 
-        # Unmatched
-        current_group = self.qtile.currentGroup.name
-        if current_group in self.groups and\
-                self.groups[current_group].get('exclusive'):
+                if 'intrusive' in app:
+                    intrusive = app['intrusive']
 
-            wm_class = client.window.get_wm_class()
+        # If app doesn't have a group
+        if not group_set:
+            current_group = self.qtile.currentGroup.name
+            if current_group in self.groups and\
+                    self.groups[current_group].get('exclusive') and\
+                    not intrusive:
 
-            if wm_class:
-                group_name = wm_class[1]
-            else:
-                group_name = client.name
+                wm_class = client.window.get_wm_class()
 
-            self.qtile.addGroup(group_name)
-            client.togroup(group_name)
+                if wm_class:
+                    group_name = wm_class[1]
+                else:
+                    group_name = client.name
+
+                self.qtile.addGroup(group_name)
+                client.togroup(group_name)
 
     def _del(self, client):
         group = client.group
+        def delete_client():
+            # Delete group if empty and dont persist
+            if group and not (group.name in self.groups and\
+               self.groups[group.name].get('persist')) and\
+                                   len(group.windows) <= 0:
+                self.qtile.delGroup(group.name)
 
-        # Delete group if empty and no persist
-        if not (group.name in self.groups and\
-           self.groups[group.name].get('persist')) and\
-                               len(group.windows) == 1:
-
-            client.group.remove(client)
-            self.qtile.delGroup(group.name)
+        # wait the delay until really delete the group
+        self.timeout[client] = gobject.timeout_add_seconds(self.delay,
+                                                         delete_client)

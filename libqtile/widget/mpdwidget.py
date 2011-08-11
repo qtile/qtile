@@ -117,6 +117,8 @@ class Mpd(base._TextBox):
             self.text = playing
             self.bar.draw()
 
+        return True
+
     def click(self, x, y, button):
         if button == 1:
             if not self.client.status():

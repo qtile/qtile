@@ -1,8 +1,10 @@
 import os, time, cStringIO, subprocess
+import signal
 import libpry
 import libqtile, libqtile.layout, libqtile.bar, libqtile.widget, libqtile.manager
 import libqtile.hook
 import utils
+from time import sleep
 
 class TestConfig:
     groups = [
@@ -39,6 +41,7 @@ class TestConfig:
                     ),
     )]
     main = None
+    follow_mouse_focus = True
 
 
 class BareConfig:
@@ -82,7 +85,7 @@ class uMultiScreen(utils.QtileTests):
         assert self.c.screen.info()["width"] == 800
         assert self.c.group.info()["name"] == 'a'
         assert self.c.group.info()["focus"] == 'xclock'
-        
+
         self.c.to_screen(1)
         self.testXeyes()
         assert self.c.screen.info()["index"] == 1
@@ -100,7 +103,7 @@ class uMultiScreen(utils.QtileTests):
         assert self.c.group.info()["name"] == 'a'
         assert self.c.group.info()["focus"] == 'xclock'
 
-        
+
     def test_to_screen(self):
         assert self.c.screen.info()["index"] == 0
         self.c.to_screen(1)
@@ -193,6 +196,22 @@ class uSingle(utils.QtileTests):
             time.sleep(0.1)
         else:
             raise AssertionError("Window did not die...")
+
+    def test_quickwindow(self):
+        os.kill(self.qtilepid, signal.SIGSTOP)  # let's make qtile slow :)
+        # Just start window and hide immediately
+        # Can't use testWindow because that waits for qtile
+        # to find out if window appeared
+        pid = os.fork()
+        if pid == 0:
+            os.putenv("DISPLAY", self["display"])
+            os.execvp('xclock', ['xclock'])
+            raise RuntimeError("Can't start test window")
+        time.sleep(0.5)
+        os.kill(pid, signal.SIGTERM)
+        time.sleep(0.3)  # let testwindow die
+        os.kill(self.qtilepid, signal.SIGCONT)
+        self.c.log()  # whatever to check it's alive
 
     def test_regression_groupswitch(self):
         self.c.group["c"].toscreen()
@@ -296,7 +315,7 @@ class TestFloat(utils.QtileTests):
         self.c.window.toggle_floating()
         assert self.c.window.info()['width'] == 150
         assert self.c.window.info()['height'] == 100
-        # resize 
+        # resize
         self.c.window.set_size_floating(50, 90)
         assert self.c.window.info()['width'] == 50
         assert self.c.window.info()['height'] == 90
@@ -315,7 +334,7 @@ class TestFloat(utils.QtileTests):
         self.c.window.toggle_floating()
         assert self.c.window.info()['width'] == 50
         assert self.c.window.info()['height'] == 90
-        
+
     def test_float_max_min_combo(self):
         # change to 2 col stack
         self.c.nextlayout()
@@ -329,7 +348,7 @@ class TestFloat(utils.QtileTests):
         assert self.c.window.info()['x'] == 400
         assert self.c.window.info()['y'] == 0
         assert self.c.window.info()['floating'] == False
-        
+
         self.c.window.toggle_maximize()
         assert self.c.window.info()['floating'] == True
         assert self.c.window.info()['maximized'] == True
@@ -357,7 +376,7 @@ class TestFloat(utils.QtileTests):
         assert self.c.window.info()['x'] == 400
         assert self.c.window.info()['y'] == 0
 
-        
+
     def test_toggle_fullscreen(self):
         # change to 2 col stack
         self.c.nextlayout()
@@ -368,7 +387,7 @@ class TestFloat(utils.QtileTests):
         assert self.c.group.info()['focus'] == 'xeyes'
         assert self.c.window.info()['width'] == 398
         assert self.c.window.info()['height'] == 578
-        assert self.c.window.info()['float_info'] == {'y': 0, 'x': 0, 'w': 150, 'h': 100}
+        assert self.c.window.info()['float_info'] == {'y': 0, 'x': 400, 'w': 150, 'h': 100}
         assert self.c.window.info()['x'] == 400
         assert self.c.window.info()['y'] == 0
 
@@ -390,7 +409,7 @@ class TestFloat(utils.QtileTests):
         assert self.c.window.info()['x'] == 400
         assert self.c.window.info()['y'] == 0
 
-        
+
     def test_toggle_max(self):
         # change to 2 col stack
         self.c.nextlayout()
@@ -401,7 +420,7 @@ class TestFloat(utils.QtileTests):
         assert self.c.group.info()['focus'] == 'xeyes'
         assert self.c.window.info()['width'] == 398
         assert self.c.window.info()['height'] == 578
-        assert self.c.window.info()['float_info'] == {'y': 0, 'x': 0, 'w': 150, 'h': 100}
+        assert self.c.window.info()['float_info'] == {'y': 0, 'x': 400, 'w': 150, 'h': 100}
         assert self.c.window.info()['x'] == 400
         assert self.c.window.info()['y'] == 0
 
@@ -431,7 +450,7 @@ class TestFloat(utils.QtileTests):
         assert self.c.group.info()['focus'] == 'xeyes'
         assert self.c.window.info()['width'] == 398
         assert self.c.window.info()['height'] == 578
-        assert self.c.window.info()['float_info'] == {'y': 0, 'x': 0, 'w': 150, 'h': 100}
+        assert self.c.window.info()['float_info'] == {'y': 0, 'x': 400, 'w': 150, 'h': 100}
         assert self.c.window.info()['x'] == 400
         assert self.c.window.info()['y'] == 0
 
@@ -484,7 +503,7 @@ class TestFloat(utils.QtileTests):
         assert self.c.group.info()['focus'] == 'xeyes'
         # check what stack thinks is focus
         assert [x['current'] for x in self.c.layout.info()['stacks']] == [0,0]
-        
+
         # change focus to xterm
         self.c.group.next_window()
         assert self.c.window.info()['width'] == 398
@@ -514,8 +533,8 @@ class TestFloat(utils.QtileTests):
         assert self.c.window.info()['name'] == 'xeyes'
         # check what stack thinks is focus
         assert [x['current'] for x in self.c.layout.info()['stacks']] == [0,0]
-        
-        
+
+
 
     def test_move_floating(self):
         self.testXeyes()
@@ -559,9 +578,9 @@ class TestFloat(utils.QtileTests):
         assert self.c.window.info()['x'] == 10
         assert self.c.window.info()['y'] == 20
 
-        
-        
-        
+
+
+
 class uRandr(utils.QtileTests):
     config = TestConfig()
     def test_screens(self):

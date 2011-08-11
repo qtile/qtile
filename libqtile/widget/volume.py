@@ -1,7 +1,7 @@
 import os
 import re
 import time
-from subprocess import call
+import subprocess
 
 import cairo
 
@@ -23,7 +23,7 @@ class Volume(base._TextBox):
         ("channel", "Master", "Channel"),
         ("font", "Arial", "Text font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
-        ("padding", None, "Padding left and right. Calculated if None."),
+        ("padding", 3, "Padding left and right. Calculated if None."),
         ("background", None, "Background colour."),
         ("foreground", "#ffffff", "Foreground colour."),
         ("theme_path", None, "Path of the icons"),
@@ -31,7 +31,11 @@ class Volume(base._TextBox):
     )
     def __init__(self, **config):
         base._TextBox.__init__(self, '0', width=bar.CALCULATED, **config)
+        if self.theme_path:
+            self.width_type = bar.STATIC
+            self.width = 0
         self.surfaces = {}
+        self.volume = None
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
@@ -41,18 +45,21 @@ class Volume(base._TextBox):
 
     def click(self, x, y, button):
         if button == 5:
-            call(['amixer', '-q', '-c', str(self.cardid),
+            subprocess.call(['amixer', '-q', '-c', str(self.cardid),
                               'sset', self.channel, '5%-'])
         elif button == 4:
-            call(['amixer', '-q', '-c', str(self.cardid),
+            subprocess.call(['amixer', '-q', '-c', str(self.cardid),
                               'sset', self.channel, '5%+'])
         elif button == 1:
-            call(['amixer', '-q', '-c', str(self.cardid),
+            subprocess.call(['amixer', '-q', '-c', str(self.cardid),
                            'sset', self.channel, 'toggle'])
         self.draw()
 
     def update(self):
-        self.bar.draw()
+        vol = self.get_volume()
+        if vol != self.volume:
+            self.volume = vol
+            self.draw()
         return True
 
     def setup_images(self):
@@ -75,20 +82,20 @@ class Volume(base._TextBox):
 
             width = input_width / sp
             if width > self.width:
-                self.width = int(width)
+                self.width = int(width) + self.actual_padding * 2
 
             imgpat = cairo.SurfacePattern(img)
 
             scaler = cairo.Matrix()
 
             scaler.scale(sp, sp)
+            scaler.translate(self.actual_padding*-1, 0)
             imgpat.set_matrix(scaler)
 
             imgpat.set_filter(cairo.FILTER_BEST)
             self.surfaces[img_name] = imgpat
 
     def get_volume(self):
-        import subprocess
         mixerprocess = subprocess.Popen(['amixer', '-c', str(self.cardid),
                                          'sget', self.channel],
                                         stdout=subprocess.PIPE)
@@ -96,7 +103,6 @@ class Volume(base._TextBox):
         if mixerprocess.returncode:
             raise subprocess.CalledProcessError(mixerprocess.returncode,
                                                 'amixer')
-        
         if '[off]' in mixer_out:
             return -1
 
@@ -108,24 +114,23 @@ class Volume(base._TextBox):
             return -1
 
     def draw(self):
-        vol = self.get_volume()
         if self.theme_path:
             self.drawer.clear(self.bar.background)
-            if vol <= 0:
+            if self.volume <= 0:
                 img_name = 'audio-volume-muted'
-            elif vol <= 30:
+            elif self.volume <= 30:
                 img_name = 'audio-volume-low'
-            elif vol < 80:
+            elif self.volume < 80:
                 img_name = 'audio-volume-medium'
-            elif vol >= 80:
+            elif self.volume >= 80:
                 img_name = 'audio-volume-high'
 
             self.drawer.ctx.set_source(self.surfaces[img_name])
             self.drawer.ctx.paint()
             self.drawer.draw(self.offset, self.width)
         else:
-            if vol == -1:
+            if self.volume == -1:
                 self.text = 'M'
             else:
-                self.text = '%s%%' % vol
+                self.text = '%s%%' % self.volume
             base._TextBox.draw(self)

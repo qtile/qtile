@@ -18,8 +18,8 @@ def window_sorter(win):
         ('PyYAML', 'Docs'),
         ('documentation', 'Docs'),
         ('-ietf-', 'Docs'),
-        ('ØMQ', 'Docs'),
         ('GNOME Live!', 'Docs'),
+        ('Guide', 'Docs'),
         )
     for k, v in patterns:
         if k in win.name:
@@ -79,10 +79,22 @@ keys = [
     Key([mod, "shift"], "t",
         lazy.window.enable_floating()),
     Key([mod], "p",
-        lazy.spawn("dmenu_run "
+        lazy.spawn("exec dmenu_run "
             "-fn 'Consolas:size=13' -nb '#000000' -nf '#ffffff' -b")),
+    Key([mod], "b",
+        lazy.spawn("~/note/conf/uzbl/open_history")),
+    Key([mod, "shift"], "b",
+        lazy.spawn("~/note/conf/uzbl/open_bookmark")),
+    Key([mod], "s",
+        lazy.spawn("~/note/conf/uzbl/open_ddg")),
+    Key([mod, "shift"], "s",
+        lazy.spawn("~/note/conf/uzbl/open_goog")),
     Key([mod], "q",
         lazy.spawn('xtrlock')),
+    Key([mod], "y",
+        lazy.spawn('xclip -o -selection primary | xclip -selection clipboard')),
+    Key([mod], "u",
+        lazy.spawn('xclip -o -selection clipboard | xclip -selection primary')),
 
     Key([], "XF86AudioRaiseVolume",
         lazy.spawn("amixer sset Master 5%+")),
@@ -111,8 +123,36 @@ mouse = [
     Click([mod], "Button2", lazy.window.bring_to_front())
 ]
 
+border = dict(
+    border_normal='#808080',
+    border_width=2,
+    )
 
-groups = [Group(str(i)) for i in xrange(1, 10)]
+layouts = [
+    layout.Tile(**border),
+    layout.Max(),
+    layout.Stack(**border),
+    layout.TreeTab(sections=['Surfing', 'E-mail', 'Docs', 'Incognito']),
+    layout.Slice('left', 320, wmclass='pino',
+        fallback=layout.Slice('right', 320, role='roster',
+        fallback=layout.Stack(1, **border))),
+    layout.Slice('left', 192, role='gimp-toolbox',
+        fallback=layout.Slice('right', 256, role='gimp-dock',
+        fallback=layout.Stack(1, **border))),
+    ]
+floating_layout = layout.Floating(**border)
+
+groups = [
+    Group('1'),
+    Group('2', layout='max'),
+    Group('3'),
+    Group('4', layout='treetab'),
+    Group('5'),
+    Group('6'),
+    Group('7'),
+    Group('8'),
+    Group('9'),
+    ]
 
 for i in groups:
     keys.append(
@@ -121,18 +161,6 @@ for i in groups:
     keys.append(
         Key([mod, "shift"], i.name, lazy.window.togroup(i.name))
     )
-
-border = dict(
-    border_normal='#808080',
-    border_width=2,
-    )
-layouts = [
-    layout.Tile(**border),
-    layout.Max(),
-    layout.Stack(**border),
-    layout.TreeTab(sections=['Surfing', 'E-mail', 'Incognito']),
-]
-floating_layout = layout.Floating(**border)
 
 screens = [
     Screen(

@@ -89,6 +89,11 @@ WindowTypes = {
     '_NET_WM_WINDOW_TYPE_NORMAL': "normal",
 }
 
+WindowStates = {
+    None: 'normal',
+    '_NET_WM_STATE_FULLSCREEN': 'fullscreen',
+    }
+
 # Maps property names to types and formats.
 PropertyMap = {
     # ewmh properties
@@ -300,6 +305,18 @@ class Window:
             xcb.xproto.Time.CurrentTime
         )
 
+    def warp_pointer(self, x, y):
+        self.conn.conn.core.WarpPointer(
+                0
+                ,self.wid
+                ,0
+                ,0
+                ,0
+                ,0
+                ,x
+                ,y
+        )
+
     def get_name(self):
         """
             Tries to retrieve a canonical window name. We test the following
@@ -423,6 +440,12 @@ class Window:
         if r:
             name = self.conn.atoms.get_name(r[0])
             return WindowTypes.get(name, name)
+
+    def get_net_wm_state(self):
+        r = self.get_property('_NET_WM_STATE', "ATOM", unpack='I')
+        if r:
+            name = self.conn.atoms.get_name(r[0])
+            return WindowStates.get(name, name)
 
     def configure(self, **kwargs):
         """
