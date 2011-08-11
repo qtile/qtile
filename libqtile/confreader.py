@@ -33,6 +33,7 @@ class Config:
     screens = ()
     main = None
     follow_mouse_focus = True
+    cursor_warp = False
 
 
 class File(Config):
@@ -61,6 +62,7 @@ class File(Config):
         self.mouse = globs.get("mouse", [])
         self.groups = globs.get("groups")
         self.follow_mouse_focus = globs.get("follow_mouse_focus", True)
+        self.cursor_warp = globs.get("cursor_warp", False)
         self.layouts = globs.get("layouts")
         self.floating_layout = globs.get('floating_layout', None)
         if self.floating_layout is None:

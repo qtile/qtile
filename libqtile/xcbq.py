@@ -305,6 +305,18 @@ class Window:
             xcb.xproto.Time.CurrentTime
         )
 
+    def warp_pointer(self, x, y):
+        self.conn.conn.core.WarpPointer(
+                0
+                ,self.wid
+                ,0
+                ,0
+                ,0
+                ,0
+                ,x
+                ,y
+        )
+
     def get_name(self):
         """
             Tries to retrieve a canonical window name. We test the following

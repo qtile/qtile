@@ -385,8 +385,8 @@ class _Window(command.CommandObject):
     def focus(self, warp):
         if not self.hidden and self.hints['input']:
             self.window.set_input_focus()
-            if warp:
-                self.window.warp_pointer(0, 0)
+            if warp and self.qtile.config.cursor_warp:
+                self.window.warp_pointer(self.width//2, self.height//2)
         hook.fire("client_focus", self)
 
     def _items(self, name, sel):

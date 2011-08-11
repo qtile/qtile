@@ -442,7 +442,7 @@ class Group(command.CommandObject):
             self.currentWindow = None
         hook.fire("focus_change")
         # !!! note that warp isn't hooked up now
-        self.layoutAll()
+        self.layoutAll(warp)
 
     def info(self):
         return dict(
