@@ -340,10 +340,10 @@ class Group(command.CommandObject):
         for index, obj in enumerate(self.layouts):
             if obj.name == layout:
                 self.currentLayout = index
+                hook.fire("layout_change", self.layouts[self.currentLayout])
                 self.layoutAll()
                 return
         raise ValueError("No such layout: %s"%layout)
-        hook.fire("layout_change", self.layouts[self.currentLayout])
 
     def nextLayout(self):
         self.layout.hide()
