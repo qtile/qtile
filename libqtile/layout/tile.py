@@ -115,12 +115,10 @@ class Tile(Layout):
         self.focused = None
 
     def add(self, c):
-        if not self.add_on_top and self.clients:
-            currentindex = self.clients.index(self.focused)
-            self.clients.insert(currentindex, c)
-
-        else:
-            self.clients.insert(0, c) 
+        index = 0
+        if not self.add_on_top and self.clients and self.focused:
+            index = self.clients.index(self.focused)
+        self.clients.insert(index, c)
 
     def remove(self, c):
         if self.focused is c:
