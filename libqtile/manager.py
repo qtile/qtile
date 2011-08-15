@@ -490,7 +490,6 @@ class Group(command.CommandObject):
             if nextfocus is None:
                 nextfocus = self.layout.focus_first()
         self.focus(nextfocus, True)
-        self.layoutAll()
         #else: TODO: change focus
 
     def mark_floating(self, win, floating):
