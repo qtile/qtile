@@ -763,6 +763,9 @@ class Qtile(command.CommandObject):
             self.mouseMap[i.button_code] = i
 
         self.grabMouse()
+
+        hook.fire("startup")
+
         self.scan()
 
     def _process_fake_screens(self):
