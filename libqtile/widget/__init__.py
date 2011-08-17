@@ -19,3 +19,4 @@ except ImportError:
     pass
 from maildir import Maildir
 from volume import Volume
+from currentlayout import CurrentLayout
