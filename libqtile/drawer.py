@@ -4,7 +4,7 @@ import xcb.xproto
 
 
 class TextLayout(object):
-    def __init__(self, drawer, text, colour, font_family, font_size, wrap=True):
+    def __init__(self, drawer, text, colour, font_family, font_size, wrap=True, markup=False):
         self.drawer, self.colour = drawer, colour
         layout = drawer.ctx.create_layout()
         layout.set_alignment(pango.ALIGN_CENTER)
@@ -15,6 +15,7 @@ class TextLayout(object):
         desc.set_absolute_size(font_size * pango.SCALE)
         layout.set_font_description(desc)
         self.layout = layout
+        self.markup = markup
         self.text = text
         self._width = None
 
@@ -24,6 +25,9 @@ class TextLayout(object):
 
     @text.setter
     def text(self, value):
+        if self.markup :
+            attrlist, value, accel_char = pango.parse_markup(value)
+            self.layout.set_attributes(attrlist)
         return self.layout.set_text(utils.scrub_to_utf8(value))
 
     @property
