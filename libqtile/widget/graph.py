@@ -68,7 +68,7 @@ class _Graph(base._Widget):
             current += step 
         self.drawer.ctx.stroke_preserve()
         self.drawer.ctx.line_to(current, y - 1 + self.line_width/2.0)
-        self.drawer.ctx.line_to(x, y + self.line_width/2.0)
+        self.drawer.ctx.line_to(x, y - 1 + self.line_width/2.0)
         self.drawer.set_source_rgb(self.fill_color)
         self.drawer.ctx.fill()
 
