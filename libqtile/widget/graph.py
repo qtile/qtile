@@ -1,13 +1,13 @@
-import time
 import cairo
 
 from . import base
-from .. import manager, hook
+from .. import manager
 
 __all__ = [
     'CPUGraph',
     'MemoryGraph',
     'SwapGraph',
+    'NetGraph'
 ]
 
 class _Graph(base._Widget):
@@ -193,3 +193,40 @@ class SwapGraph(_Graph):
             self.maxvalue = val['SwapTotal']
             self.fullfill(swap)
         self.push(swap)
+
+class NetGraph(_Graph):
+    defaults = manager.Defaults(
+        ("graph_color", "18BAEB", "Graph color"),
+        ("fill_color", "1667EB.3", "Fill color for linefill graph"),
+        ("background", "000000", "Widget background"),
+        ("border_color", "215578", "Widget border color"),
+        ("border_width", 2, "Widget background"),
+        ("margin_x", 3, "Margin X"),
+        ("margin_y", 3, "Margin Y"),
+        ("samples", 100, "Count of graph samples."),
+        ("frequency", 1, "Update frequency in seconds"),
+        ("type", "linefill", "'box', 'line', 'linefill'"),
+        ("line_width", 3, "Line width"),
+        ("interface", "eth0", "Interface to display info for"),
+        ("bandwidth_type", "down", "down(load)/up(load)")
+    )
+
+    def __init__(self, **config):
+        _Graph.__init__(self, **config)
+        self.filename = '/sys/class/net/{interface}/statistics/{type}'.format(
+            interface = self.interface,
+            type = self.bandwidth_type == 'down' and 'rx_bytes' or 'tx_bytes'
+        )
+        self.bytes = 0
+        self.bytes = self._getValues()
+
+    def _getValues(self):
+        with open(self.filename) as file:
+            val = int(file.read())
+            rval = val - self.bytes
+            self.bytes = val
+            return rval
+
+    def update_graph(self):
+        val = self._getValues()
+        self.push(val)
