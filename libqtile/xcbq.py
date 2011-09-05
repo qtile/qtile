@@ -702,7 +702,8 @@ class Connection:
 
         first_sym_to_code = {}
         for k, s in self.code_to_syms.items():
-            first_sym_to_code[s[0]] = k
+            if s[0] and not s[0] in first_sym_to_code:
+                first_sym_to_code[s[0]] = k
 
         self.first_sym_to_code = first_sym_to_code
 
