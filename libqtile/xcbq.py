@@ -213,6 +213,8 @@ class Screen(_Wrapper):
         _Wrapper.__init__(self, screen)
         self.default_colormap = Colormap(conn, screen.default_colormap)
         self.root = Window(conn, self.root)
+        # FIXME: Where is the right place to set the cursor?
+        self.root.set_cursor("Normal")
 
 
 class PseudoScreen:
@@ -458,6 +460,11 @@ class Window:
         mask, values = AttributeMasks(**kwargs)
         self.conn.conn.core.ChangeWindowAttributesChecked(self.wid, mask, values)
 
+    def set_cursor(self, name):
+       cursorId = self.conn.cursors[name]
+       mask, values = AttributeMasks(cursor=cursorId)
+       self.conn.conn.core.ChangeWindowAttributesChecked(self.wid, mask, values)
+
     def set_property(self, name, value, type=None, format=None):
         """
             name: String Atom name
@@ -643,6 +650,7 @@ class Connection:
     }
     def __init__(self, display):
         self.conn = xcb.xcb.connect(display=display)
+        self.cursors = Cursors(self)
         self.setup = self.conn.get_setup()
         extensions = self.extensions()
         for i in extensions:
@@ -771,3 +779,45 @@ class Connection:
 
     def extensions(self):
         return set([toStr(i).lower() for i in self.conn.core.ListExtensions().reply().names])
+
+# Stolen from samurai-x
+class Cursors(dict):
+    def __init__(self, conn):
+        self.conn = conn    
+
+        FLEUR = 52
+        LEFT_PTR = 68
+        SIZING = 120
+        BOTTOM_LEFT_CORNER = 12
+        BOTTOM_RIGHT_CORNER = 14
+        TOP_LEFT_CORNER = 134
+        TOP_RIGHT_CORNER = 136
+        DOUBLE_ARROW_HORIZ = 108
+        DOUBLE_ARROW_VERT = 116
+
+        cursors = (
+            ('Normal',    LEFT_PTR),
+            ('Resize',    SIZING),
+            ('ResizeH',   DOUBLE_ARROW_HORIZ),
+            ('ResizeV',   DOUBLE_ARROW_VERT),
+            ('Move',      FLEUR),
+            ('TopRight',  TOP_RIGHT_CORNER),
+            ('TopLeft',   TOP_LEFT_CORNER),
+            ('BotRight',  BOTTOM_RIGHT_CORNER),
+            ('BotLeft',   BOTTOM_LEFT_CORNER),
+        )
+
+        for name, cursor_font in cursors:
+            self._new(name, cursor_font)
+
+    def _new(self, name, cursor_font):
+        fid = self.conn.conn.generate_id()
+        self.conn.conn.core.OpenFont(fid, len("cursor"), "cursor")
+	cursor = self.conn.conn.generate_id()
+	self.conn.conn.core.CreateGlyphCursor(cursor,fid,fid, 
+                cursor_font, cursor_font + 1, 
+                0, 0, 0,
+                65535, 65535, 65535)
+        self[name] = cursor
+
+
