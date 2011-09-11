@@ -36,22 +36,28 @@ class Match(object):
 
 
 
-def simple_key_binder(mod):
-    ''' Bind keys to mod+group position '''
+def simple_key_binder(mod, keynames=None):
+    """
+        Bind keys to mod+group position or to the keys specified as
+        second argument.
+    """
     def func(dgroup):
         # unbind all
         for key in dgroup.keys[:]:
             dgroup.qtile.unmapKey(key)
             dgroup.keys.remove(key)
 
-        # keys 1 to 9 and 0
-        keynumbers = range(1,10) + [0]
+        if keynames:
+            keys = keynames
+        else:
+            # keys 1 to 9 and 0
+            keys = range(1,10) + [0]
 
         # bind all keys
-        for num, group in zip(keynumbers, dgroup.qtile.groups[:10]):
+        for keyname, group in zip(keys, dgroup.qtile.groups):
             name = group.name
-            key = Key([mod], str(num), lazy.group[name].toscreen())
-            key_s = Key([mod, "shift"], str(num), lazy.window.togroup(name))
+            key = Key([mod], keyname, lazy.group[name].toscreen())
+            key_s = Key([mod, "shift"], keyname, lazy.window.togroup(name))
             dgroup.keys.append(key)
             dgroup.keys.append(key_s)
             dgroup.qtile.mapKey(key)
