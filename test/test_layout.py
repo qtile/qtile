@@ -261,6 +261,7 @@ class RatioTileConfig:
     keys = []
     mouse = []
     screens = []
+    follow_mouse_focus = False
 
 class uRatioTile(utils.QtileTests):
     config = RatioTileConfig()
@@ -357,6 +358,7 @@ class TileConfig:
     keys = []
     mouse = []
     screens = []
+    follow_mouse_focus = False
 
 class uTile(utils.QtileTests):
     config = TileConfig()
@@ -434,6 +436,7 @@ class SliceConfig:
     keys = []
     mouse = []
     screens = []
+    follow_mouse_focus = False
 
 class uSlice(utils.QtileTests):
     config = SliceConfig()

@@ -25,6 +25,8 @@ class Battery(base._TextBox):
         ("energy_full_file", "energy_full", "Name of file with the maximum energy in /sys/class/power_supply/battery_name"),
         ("power_now_file", "power_now", "Name of file with the current power draw in /sys/class/power_supply/battery_name"),
         ("update_delay",1,"The delay in seconds between updates"),
+        ("charge_char","^","Character to indicate the battery is charging"),
+        ("discharge_char","V","Character to indicate the battery is discharging"),
         
     )
     def __init__(self, width=bar.CALCULATED, **config):
@@ -41,10 +43,10 @@ class Battery(base._TextBox):
         power = float(self._get_param(self.power_now_file))
 
         if stat == DISCHARGING:
-            char = 'V'
+            char = self.discharge_char
             time = now/power
         elif stat == CHARGING:
-            char = '^'
+            char = self.charge_char
             time = (full - now)/power
         else:
             return 'Full'

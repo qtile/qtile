@@ -243,6 +243,7 @@ class Screen(command.CommandObject):
             new_group._setScreen(self)
         hook.fire("setgroup")
         hook.fire("focus_change")
+        hook.fire("layout_change", self.group.layouts[self.group.currentLayout])
 
     def _items(self, name):
         if name == "layout":
@@ -339,6 +340,7 @@ class Group(command.CommandObject):
         for index, obj in enumerate(self.layouts):
             if obj.name == layout:
                 self.currentLayout = index
+                hook.fire("layout_change", self.layouts[self.currentLayout])
                 self.layoutAll()
                 return
         raise ValueError("No such layout: %s"%layout)
@@ -346,6 +348,7 @@ class Group(command.CommandObject):
     def nextLayout(self):
         self.layout.hide()
         self.currentLayout = (self.currentLayout + 1)%(len(self.layouts))
+        hook.fire("layout_change", self.layouts[self.currentLayout])
         self.layoutAll()
         screen = self.screen.get_rect()
         self.layout.show(screen)
@@ -353,6 +356,7 @@ class Group(command.CommandObject):
     def prevLayout(self):
         self.layout.hide()
         self.currentLayout = (self.currentLayout - 1)%(len(self.layouts))
+        hook.fire("layout_change", self.layouts[self.currentLayout])
         self.layoutAll()
         screen = self.screen.get_rect()
         self.layout.show(screen)
@@ -490,7 +494,6 @@ class Group(command.CommandObject):
             if nextfocus is None:
                 nextfocus = self.layout.focus_first()
         self.focus(nextfocus, True)
-        self.layoutAll()
         #else: TODO: change focus
 
     def mark_floating(self, win, floating):
@@ -764,6 +767,9 @@ class Qtile(command.CommandObject):
             self.mouseMap[i.button_code] = i
 
         self.grabMouse()
+
+        hook.fire("startup")
+
         self.scan()
 
     def _process_fake_screens(self):

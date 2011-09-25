@@ -9,7 +9,7 @@ class Tile(Layout):
         ("border_width", 1, "Border width.")
     )
     def __init__(self, ratio=0.618, masterWindows=1, expand=True,
-        ratio_increment=0.05, add_on_top=True, **config):
+        ratio_increment=0.05, add_on_top=True, shift_windows=False, **config):
         Layout.__init__(self, **config)
         self.clients = []
         self.ratio = ratio
@@ -18,6 +18,7 @@ class Tile(Layout):
         self.expand = expand
         self.ratio_increment = ratio_increment
         self.add_on_top = add_on_top
+        self.shift_windows = shift_windows
 
     @property
     def master_windows(self):
@@ -28,10 +29,16 @@ class Tile(Layout):
         return self.clients[self.master:]
 
     def up(self):
-        self.shuffle(utils.shuffleUp)
+        if self.shift_windows:
+            self.shift_up()
+        else:                
+            self.shuffle(utils.shuffleUp)
 
     def down(self):
-        self.shuffle(utils.shuffleDown)
+        if self.shift_windows:
+            self.shift_down()
+        else:
+            self.shuffle(utils.shuffleDown)
 
     def shift_up(self):
         if self.clients:
@@ -115,12 +122,10 @@ class Tile(Layout):
         self.focused = None
 
     def add(self, c):
-        if not self.add_on_top and self.clients:
-            currentindex = self.clients.index(self.focused)
-            self.clients.insert(currentindex, c)
-
-        else:
-            self.clients.insert(0, c) 
+        index = 0
+        if not self.add_on_top and self.clients and self.focused:
+            index = self.clients.index(self.focused)
+        self.clients.insert(index, c)
 
     def remove(self, c):
         if self.focused is c:
@@ -177,12 +182,6 @@ class Tile(Layout):
 
     def cmd_up(self):
         self.up()
-
-    def cmd_shift_up(self):
-        self.shift_up()
-
-    def cmd_shift_down(self):
-        self.shift_down()
 
     def cmd_next(self):
         self.next()

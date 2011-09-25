@@ -25,6 +25,12 @@ class Subscribe:
         if not func in lst:
             lst.append(func)
 
+    def startup(self, func):
+        """
+            Called when Qtile has initialized
+        """
+        return self._subscribe("startup", func)
+
     def setgroup(self, func):
         """
             Called when group is changed.
@@ -141,6 +147,12 @@ class Subscribe:
             Called when the client urgent hint changes.
         """
         return self._subscribe("client_urgent_hint_changed", func)
+
+    def layout_change(self, func):
+        """
+            Called on layout change.
+        """
+        return self._subscribe("layout_change", func)
 
 subscribe = Subscribe()
 
