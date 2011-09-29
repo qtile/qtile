@@ -170,7 +170,6 @@ class MonadTall(SingleWindow):
             for i in range(n):
                 self.sizes.append(height)
         # reset main pane ratio
-        self.ratio = self._med_ratio
         self.group.layoutAll()
 
 
@@ -446,7 +445,7 @@ class MonadTall(SingleWindow):
         elif len(self.clients) == 2:
             self._grow_solo_secondary(self.change_ratio)
         else:
-            self._grow_secondary(self.change_amount)
+            self._grow_secondary(self.change_size)
         self.group.layoutAll()
 
     def grow(self, cidx, amt):
@@ -540,7 +539,7 @@ class MonadTall(SingleWindow):
         elif len(self.clients) == 2:
             self._shrink_solo_secondary(self.change_ratio)
         else:
-            self._shrink_secondary(self.change_amount)
+            self._shrink_secondary(self.change_size)
         self.group.layoutAll()
 
     def cmd_up(self):
