@@ -172,7 +172,7 @@ class MonadTall(SingleWindow):
         if self.clients:
             return self.clients[self.focused]
 
-    def cmd_normalize(self):
+    def cmd_normalize(self, redraw=True):
         "Evenly distribute screen-space among secondary clients"
         n = len(self.clients) - 1 # exclude main client, 0
         if n > 0: # if secondary clients exist
@@ -182,7 +182,8 @@ class MonadTall(SingleWindow):
             for i in range(n):
                 self.sizes.append(height)
         # reset main pane ratio
-        self.group.layoutAll()
+        if redraw:
+            self.group.layoutAll()
 
 
     def _maximize_main(self):
@@ -223,7 +224,7 @@ class MonadTall(SingleWindow):
         "Position client based on order and sizes"
         # if no sizes, normalize
         if not self.sizes:
-            self.cmd_normalize()
+            self.cmd_normalize(False)
         # if client in this layout
         if self.clients and c in self.clients:
             # single client - fullscreen
