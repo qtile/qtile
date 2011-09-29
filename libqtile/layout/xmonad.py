@@ -79,6 +79,18 @@ class MonadTall(SingleWindow):
     To toggle a client window between its minimum and maximum sizes
     simply use the `cmd_maximize' on a focused client.
 
+    Suggested Bindings:
+
+    Key([modkey], "k", lazy.layout.down()),
+    Key([modkey], "j", lazy.layout.up()),
+    Key([modkey, "shift"], "k", lazy.layout.shuffle_down()),
+    Key([modkey, "shift"], "j", lazy.layout.shuffle_up()),
+    Key([modkey], "i", lazy.layout.grow()),
+    Key([modkey], "m", lazy.layout.shrink()),
+    Key([modkey], "n", lazy.layout.normalize()),
+    Key([modkey], "o", lazy.layout.maximize()),
+    Key([modkey, "shift"], "space", lazy.layout.flip()),
+
     """
     name = "xmonad-tall"
     _left = 0
