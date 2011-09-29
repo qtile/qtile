@@ -155,7 +155,7 @@ class MonadTall(SingleWindow):
 
     def add(self, c):
         "Add client to layout"
-        self.clients.insert(self.focused, c)
+        self.clients.insert(self.focused + 1, c)
         if self.group.screen:
             self.cmd_normalize()
 
