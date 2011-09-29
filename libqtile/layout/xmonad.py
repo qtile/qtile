@@ -54,7 +54,7 @@ class MonadTall(SingleWindow):
 
     Panes can be moved with the `cmd_shuffle_up' and `cmd_shuffle_down'
     methods. As mentioned the main pane is considered the top of the
-    stack; moving up is clockwise and moving down is counter-clockwise.
+    stack; moving up is counter-clockwise and moving down is clockwise.
 
     The opposite is true if the layout is "flipped".
 
