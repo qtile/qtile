@@ -11,18 +11,23 @@ class Canto(base._TextBox):
         ("padding", None, "Padding. Calculated if None."),
         ("background", "000000", "Background colour"),
         ("foreground", "ffffff", "Foreground colour"),
-        ("format", "{char} {percent:2.0%} {hour:d}:{min:02d}", "Display format"),
-        ("update_delay",1,"The delay in seconds between updates"),
+        ("fetch", False, "Whether to fetch new items on update"),
+        ("feeds", [], "List of feeds to display, empty for all"),
+        ("format", "{number}", "Display format"),
+        ("update_delay", 600, "The delay in seconds between updates"),
     )
     def __init__(self, width = bar.CALCULATED, **config):
-        base._TextBox.__init__(self, "0", width, **config)
+        base._TextBox.__init__(self, "0", **config)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         self.timeout_add(self.update_delay, self.update)
 
     def _get_info(self):
-        return check_output(["canto", "-a"])
+        arg = "-a"
+        if self.fetch:
+            arg += "u"
+        return self.format.format(number = check_output(["canto", arg]))
 
     def update(self):
         ntext = self._get_info()
