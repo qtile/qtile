@@ -20,3 +20,4 @@ except ImportError:
 from maildir import Maildir
 from volume import Volume
 from currentlayout import CurrentLayout
+from canto import Canto
