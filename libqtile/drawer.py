@@ -89,28 +89,34 @@ class TextFrame:
         self.border_color = border_color
         self.drawer = self.layout.drawer
 
-    def draw(self, x, y):
+    def draw(self, x, y, rounded=True):
         self.drawer.set_source_rgb(self.border_color)
-        self.drawer.rounded_rectangle(
-            x, y,
+        opts = [x, y,
             self.layout.width + self.pad_x * 2,
             self.layout.height + self.pad_y * 2,
             self.border_width
-        )
+        ]
+        if rounded:
+            self.drawer.rounded_rectangle(*opts)
+        else:
+            self.drawer.rectangle(*opts)
         self.drawer.ctx.stroke()
         self.layout.draw(
             x + self.pad_x,
             y + self.pad_y
         )
 
-    def draw_fill(self, x, y):
+    def draw_fill(self, x, y, rounded=True):
         self.drawer.set_source_rgb(self.border_color)
-        self.drawer.rounded_fillrect(
-            x, y,
+        opts = [x, y,
             self.layout.width + self.pad_x * 2,
             self.layout.height + self.pad_y * 2,
             self.border_width
-        )
+        ]
+        if rounded:
+            self.drawer.rounded_fillrect(*opts)
+        else:
+            self.drawer.fillrect(*opts)
         self.layout.draw(
             x + self.pad_x,
             y + self.pad_y
@@ -191,14 +197,14 @@ class Drawer:
         self._rounded_rect(x, y, width, height, linewidth)
         self.ctx.fill()
 
-    def rectangle(self, x, y, width, height):
+    def rectangle(self, x, y, width, height, linewidth = 2):
         self.ctx.set_line_width(linewidth)
         self.ctx.rectangle(x, y, width, height)
         self.ctx.stroke()
 
-    def fillrect(self, x, y, w, h, colour):
-        self.set_source_rgb(colour)
-        self.ctx.rectangle(x, y, w, h)
+    def fillrect(self, x, y, width, height, linewidth = 2):
+        self.ctx.set_line_width(linewidth)
+        self.ctx.rectangle(x, y, width, height)
         self.ctx.fill()
         self.ctx.stroke()
 

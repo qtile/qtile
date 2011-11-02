@@ -39,7 +39,7 @@ class _GroupBase(base._Widget):
         hook.subscribe.setgroup(hook_response)
         hook.subscribe.group_window_add(hook_response)
 
-    def drawbox(self, offset, text, bordercolor, textcolor, width=None):
+    def drawbox(self, offset, text, bordercolor, textcolor, rounded, block=False, width=None):
         self.layout.text = text
         self.layout.font_family = self.font
         self.layout.font_size = self.fontsize
@@ -47,7 +47,10 @@ class _GroupBase(base._Widget):
         if width is not None:
             self.layout.width = width
         framed = self.layout.framed(self.borderwidth, bordercolor, self.padding, self.padding)
-        framed.draw(offset, self.margin_y)
+        if block:
+            framed.draw_fill(offset, self.margin_y, rounded)
+        else:
+            framed.draw(offset, self.margin_y, rounded)
 
 
 class AGroupBox(_GroupBase):
@@ -92,6 +95,9 @@ class GroupBox(_GroupBase):
         ("font", "Arial", "Font face"),
         ("fontsize", None, "Font pixel size - calculated if None"),
         ("background", "000000", "Widget background"),
+        ("highlight_method", "border", "Method of highlighting (one of 'border' or 'block') \
+                                        Uses *_border color settings"),
+        ("rounded", True, "To round or not to round borders"),
         ("this_screen_border", "215578", "Border colour for group on this screen."),
         ("other_screen_border", "404040", "Border colour for group on other screen."),
         ("padding", 5, "Padding inside the box"),
@@ -158,6 +164,8 @@ class GroupBox(_GroupBase):
                 g.name,
                 border,
                 text,
+                self.rounded,
+                self.highlight_method == 'block' and True or False,
                 bw - self.margin_x*2 - self.padding*2
             )
             offset += bw

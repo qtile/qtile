@@ -42,7 +42,8 @@ class _Graph(base._Widget):
     def draw_box(self, x, y, values):
         step = self.graphwidth/float(self.samples)
         for val in values:
-            self.drawer.fillrect(x, y-val, step, val, self.graph_color)
+            self.drawer.set_source_rgb(self.graph_color)
+            self.drawer.fillrect(x, y-val, step, val)
             x += step 
 
     def draw_line(self, x, y, values):

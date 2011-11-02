@@ -64,10 +64,8 @@ class _Widget(command.CommandObject):
         self.bar.draw()
 
     def clear(self):
-        self.drawer.fillrect(
-            self.offset, 0, self.width, self.bar.size,
-            self.bar.background
-        )
+        self.drawer.set_source_rgb(self.bar.background)
+        self.drawer.fillrect(self.offset, 0, self.width, self.bar.size)
 
     def info(self):
         return dict(
