@@ -32,11 +32,11 @@ class Canto(base._TextBox):
                 arg += "u"
             return self.all_format.format(number = check_output(["canto", arg])[:-1])
         else:
-            if self.fGetch:
+            if self.fetch:
                 call(["canto", "-u"])
-            return "".join([self.one_format(
+            return "".join([self.one_format.format(
                 name = feed,
-                number = check_output(["canto", "-n '{1}'".format(feed)])[:-1]
+                number = check_output(["canto", "-n", feed])[:-1]
             ) for feed in self.feeds])
 
     def update(self):
