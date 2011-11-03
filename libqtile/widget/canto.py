@@ -19,7 +19,7 @@ class Canto(base._TextBox):
     )
 
     def __init__(self, width = bar.CALCULATED, **config):
-        base._TextBox.__init__(self, "0", width, **config)
+        base._TextBox.__init__(self, "N/A", width, **config)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
