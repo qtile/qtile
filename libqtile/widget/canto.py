@@ -39,6 +39,9 @@ class Canto(base._TextBox):
                 number = check_output(["canto", "-n", feed])[:-1]
             ) for feed in self.feeds])
 
+    def click(self, x, y, button):
+        self.update()
+
     def update(self):
         ntext = self._get_info()
         if ntext != self.text:
