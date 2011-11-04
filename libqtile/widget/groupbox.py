@@ -165,7 +165,7 @@ class GroupBox(_GroupBase):
                 border,
                 text,
                 self.rounded,
-                self.highlight_method == 'block' and True or False,
+                self.highlight_method == 'block',
                 bw - self.margin_x*2 - self.padding*2
             )
             offset += bw
