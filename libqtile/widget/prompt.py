@@ -188,7 +188,8 @@ class Prompt(base._TextBox):
             KeyPress handler for the minibuffer.
             Currently only supports ASCII characters.
         """
-        keysym = self.qtile.conn.keycode_to_keysym(e.detail, e.state)
+        state = e.state & ~(self.qtile.numlockMask)
+        keysym = self.qtile.conn.keycode_to_keysym(e.detail, state)
         if keysym == xkeysyms.keysyms['Tab']:
             self.userInput = self.completer.complete(self.userInput)
         else:
