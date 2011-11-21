@@ -20,6 +20,7 @@ class _Widget(command.CommandObject):
     offset = None
     name = None
     defaults = manager.Defaults()
+
     def __init__(self, width, **config):
         """
             width: bar.STRETCH, bar.CALCULATED, or a specified width.
@@ -69,9 +70,9 @@ class _Widget(command.CommandObject):
 
     def info(self):
         return dict(
-            name = self.__class__.__name__,
-            offset = self.offset,
-            width = self.width,
+            name=self.__class__.__name__,
+            offset=self.offset,
+            width=self.width,
         )
 
     def click(self, x, y, button):
@@ -83,7 +84,7 @@ class _Widget(command.CommandObject):
         """
         w = q.widgetMap.get(name)
         if not w:
-            raise command.CommandError("No such widget: %s"%name)
+            raise command.CommandError("No such widget: %s" % name)
         return w
 
     def _items(self, name):
@@ -123,8 +124,7 @@ class _Widget(command.CommandObject):
         if int(seconds) == seconds:
             return gobject.timeout_add_seconds(int(seconds), method, *args)
         else:
-            return gobject.timeout_add(int(seconds*1000), method, *args)
-
+            return gobject.timeout_add(int(seconds * 1000), method, *args)
 
 
 UNSPECIFIED = bar.Obj("UNSPECIFIED")
@@ -170,7 +170,7 @@ class _TextBox(_Widget):
     @property
     def fontsize(self):
         if self._fontsize is None:
-            return self.bar.height-self.bar.height/5
+            return self.bar.height - self.bar.height / 5
         else:
             return self._fontsize
 
@@ -183,7 +183,7 @@ class _TextBox(_Widget):
     @property
     def actual_padding(self):
         if self.padding is None:
-            return self.fontsize/2
+            return self.fontsize / 2
         else:
             return self.padding
 
@@ -198,7 +198,8 @@ class _TextBox(_Widget):
 
     def calculate_width(self):
         if self.text:
-            return min(self.layout.width, self.bar.width) + self.actual_padding * 2
+            return min(self.layout.width,
+                       self.bar.width) + self.actual_padding * 2
         else:
             return 0
 
@@ -206,7 +207,7 @@ class _TextBox(_Widget):
         self.drawer.clear(self.background or self.bar.background)
         self.layout.draw(
             self.actual_padding or 0,
-            int(self.bar.height/2.0 - self.layout.height/2.0)
+            int(self.bar.height / 2.0 - self.layout.height / 2.0)
         )
         self.drawer.draw(self.offset, self.width)
 

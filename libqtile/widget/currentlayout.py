@@ -1,6 +1,7 @@
 import base
 from .. import manager, bar, hook
 
+
 class CurrentLayout(base._TextBox):
     defaults = manager.Defaults(
         ("font", "Arial", "Text font"),
@@ -10,7 +11,7 @@ class CurrentLayout(base._TextBox):
         ("foreground", "#ffffff", "Foreground colour.")
     )
 
-    def __init__(self, width = bar.CALCULATED, **config):
+    def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "", width, **config)
 
     def _configure(self, qtile, bar):
