@@ -983,12 +983,19 @@ class Window(_Window):
         return self.match(*args, **kwargs)
 
     def cmd_opacity(self, opacity):
-        self.opacity = opacity
+        if opacity < .1:
+            self.opacity = .1
+        else if opacity > 1:
+            self.opacity = 1
+        else:
+            self.opacity = opacity
 
     def cmd_down_opacity(self):
         if self.opacity > .2:
             # don't go completely clear
             self.opacity -= .1
+        else:
+            self.opacity = .1
 
     def cmd_up_opacity(self):
         if self.opacity < .9:
