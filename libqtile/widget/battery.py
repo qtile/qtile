@@ -11,12 +11,12 @@ UNKNOWN = 'Unknown'
 
 class Battery(base._TextBox):
     """
-        A battery widget.
+        A simple but flexible text-based battery widget.
     """
     defaults = manager.Defaults(
-        ("font", "Arial", "Clock font"),
-        ("fontsize", None, "Clock pixel size. Calculated if None."),
-        ("padding", None, "Clock padding. Calculated if None."),
+        ("font", "Arial", "Battery widget font"),
+        ("fontsize", None, "Battery widget pixel size. Calculated if None."),
+        ("padding", None, "Battery widget padding. Calculated if None."),
         ("background", "000000", "Background colour"),
         ("foreground", "ffffff", "Foreground colour"),
         ("format", "{char} {percent:2.0%} {hour:d}:{min:02d}",
