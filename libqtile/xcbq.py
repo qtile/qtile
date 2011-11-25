@@ -214,7 +214,7 @@ class Screen(_Wrapper):
         self.default_colormap = Colormap(conn, screen.default_colormap)
         self.root = Window(conn, self.root)
         # FIXME: Where is the right place to set the cursor?
-        self.root.set_cursor("Normal")
+        #self.root.set_cursor("Normal")
 
 
 class PseudoScreen:
@@ -781,9 +781,12 @@ class Connection:
         return set([toStr(i).lower() for i in self.conn.core.ListExtensions().reply().names])
 
 # Stolen from samurai-x
+# (Don't know where to put it, so I'll put it here)
+# XCB cursors doesn't want to be themed, libxcursor would be better choice I think
+# and we (indirectly) depend on it anyway...
 class Cursors(dict):
     def __init__(self, conn):
-        self.conn = conn    
+        self.conn = conn
 
         FLEUR = 52
         LEFT_PTR = 68
@@ -813,11 +816,10 @@ class Cursors(dict):
     def _new(self, name, cursor_font):
         fid = self.conn.conn.generate_id()
         self.conn.conn.core.OpenFont(fid, len("cursor"), "cursor")
-	cursor = self.conn.conn.generate_id()
-	self.conn.conn.core.CreateGlyphCursor(cursor,fid,fid, 
-                cursor_font, cursor_font + 1, 
-                0, 0, 0,
-                65535, 65535, 65535)
+        cursor = self.conn.conn.generate_id()
+        self.conn.conn.core.CreateGlyphCursor(cursor,fid,fid,
+            cursor_font, cursor_font + 1,
+            0, 0, 0,
+            65535, 65535, 65535)
         self[name] = cursor
-
 
