@@ -9,3 +9,4 @@ MANIFEST
 # Vim swap files
 *.swp
 /doc
+.DS_Store
