@@ -48,7 +48,8 @@ class File(Config):
     def __init__(self, fname=None):
         if not fname:
             config_directory = os.path.expandvars('$XDG_CONFIG_HOME')
-            if config_directory == '$XDG_CONFIG_HOME': #if variable wasn't set
+            if config_directory == '$XDG_CONFIG_HOME':
+                # if variable wasn't set
                 config_directory = os.path.expanduser("~/.config")
             fname = os.path.join(config_directory, "qtile", "config.py")
         elif fname == "default":
@@ -57,7 +58,7 @@ class File(Config):
         self.fname = fname
 
         if not os.path.isfile(fname):
-            raise ConfigError("Config file does not exist: %s"%fname)
+            raise ConfigError("Config file does not exist: %s" % fname)
         try:
             sys.path.insert(0, os.path.dirname(self.fname))
             config = __import__(os.path.basename(self.fname)[:-3])

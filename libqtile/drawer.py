@@ -1,10 +1,14 @@
-import utils, math
-import pangocairo, cairo, pango
+import utils
+import math
+import pangocairo
+import cairo
+import pango
 import xcb.xproto
 
 
 class TextLayout(object):
-    def __init__(self, drawer, text, colour, font_family, font_size, wrap=True, markup=False):
+    def __init__(self, drawer, text, colour, font_family, font_size,
+                 wrap=True, markup=False):
         self.drawer, self.colour = drawer, colour
         layout = drawer.ctx.create_layout()
         layout.set_alignment(pango.ALIGN_CENTER)
@@ -25,7 +29,7 @@ class TextLayout(object):
 
     @text.setter
     def text(self, value):
-        if self.markup :
+        if self.markup:
             attrlist, value, accel_char = pango.parse_markup(value)
             self.layout.set_attributes(attrlist)
         return self.layout.set_text(utils.scrub_to_utf8(value))
@@ -128,11 +132,12 @@ class TextFrame:
 
     @property
     def height(self):
-        return self.layout.height + self.pad_y*2
+        return self.layout.height + self.pad_y * 2
 
     @property
     def width(self):
-        return self.layout.width + self.pad_x*2
+        return self.layout.width + self.pad_x * 2
+
 
 class Drawer:
     """
@@ -181,15 +186,19 @@ class Drawer:
         aspect = 1.0
         corner_radius = height / 10.0
         radius = corner_radius / aspect
-        degrees = math.pi/180.0
+        degrees = math.pi / 180.0
 
         self.ctx.new_sub_path()
 
-        delta = radius + linewidth/2
-        self.ctx.arc(x + width - delta, y + delta, radius, -90 * degrees, 0 * degrees)
-        self.ctx.arc(x + width - delta, y + height - delta, radius, 0 * degrees, 90 * degrees)
-        self.ctx.arc(x + delta, y + height - delta, radius, 90 * degrees, 180 * degrees)
-        self.ctx.arc(x + delta, y + delta, radius, 180 * degrees, 270 * degrees)
+        delta = radius + linewidth / 2
+        self.ctx.arc(x + width - delta, y + delta, radius,
+                     -90 * degrees, 0 * degrees)
+        self.ctx.arc(x + width - delta, y + height - delta,
+                     radius, 0 * degrees, 90 * degrees)
+        self.ctx.arc(x + delta, y + height - delta, radius,
+                     90 * degrees, 180 * degrees)
+        self.ctx.arc(x + delta, y + delta, radius,
+                     180 * degrees, 270 * degrees)
         self.ctx.close_path()
 
     def rounded_rectangle(self, x, y, width, height, linewidth):
@@ -201,12 +210,12 @@ class Drawer:
         self._rounded_rect(x, y, width, height, linewidth)
         self.ctx.fill()
 
-    def rectangle(self, x, y, width, height, linewidth = 2):
+    def rectangle(self, x, y, width, height, linewidth=2):
         self.ctx.set_line_width(linewidth)
         self.ctx.rectangle(x, y, width, height)
         self.ctx.stroke()
 
-    def fillrect(self, x, y, width, height, linewidth = 2):
+    def fillrect(self, x, y, width, height, linewidth=2):
         self.ctx.set_line_width(linewidth)
         self.ctx.rectangle(x, y, width, height)
         self.ctx.fill()
@@ -221,8 +230,8 @@ class Drawer:
             self.pixmap,
             self.wid,
             self.gc,
-            0, 0, # srcx, srcy
-            offset, 0, # dstx, dsty
+            0, 0,  # srcx, srcy
+            offset, 0,  # dstx, dsty
             width, self.height
         )
 
@@ -257,11 +266,13 @@ class Drawer:
         return TextLayout(self, text, colour, font_family, font_size, **kw)
 
     _sizelayout = None
+
     def max_layout_size(self, texts, font_family, font_size):
-        # FIXME: This is incredibly clumsy, to avoid a memory leak in pygtk. See
-        # comment on textlayout() for details.
+        # FIXME: This is incredibly clumsy, to avoid a memory leak in pygtk.
+        # See comment on textlayout() for details.
         if not self._sizelayout:
-            self._sizelayout = self.textlayout("", "ffffff", font_family, font_size)
+            self._sizelayout = self.textlayout(
+                "", "ffffff", font_family, font_size)
         widths, heights = [], []
         self._sizelayout.font_family = font_family
         self._sizelayout.font_size = font_size
@@ -290,8 +301,9 @@ class Drawer:
             height.
         """
         self.ctx.set_font_size(heightlimit)
-        asc, desc, height, _, _  = self.font_extents()
-        self.ctx.set_font_size(int(heightlimit*(heightlimit/float(height))))
+        asc, desc, height, _, _ = self.font_extents()
+        self.ctx.set_font_size(
+            int(heightlimit * (heightlimit / float(height))))
         return self.font_extents()
 
     def fit_text(self, strings, heightlimit):
@@ -303,7 +315,8 @@ class Drawer:
         _, _, _, maxheight, _, _ = self.ctx.text_extents("".join(strings))
         if not maxheight:
             return 0, 0
-        self.ctx.set_font_size(int(heightlimit*(heightlimit/float(maxheight))))
+        self.ctx.set_font_size(
+            int(heightlimit * (heightlimit / float(maxheight))))
         maxwidth, maxheight = 0, 0
         for i in strings:
             _, _, x, y, _, _ = self.ctx.text_extents(i)
@@ -324,4 +337,3 @@ class Drawer:
         self.ctx.line_to(x2, y)
         self.ctx.set_line_width(linewidth)
         self.ctx.stroke()
-
