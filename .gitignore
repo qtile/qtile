@@ -10,3 +10,5 @@ MANIFEST
 *.swp
 /doc
 /docs/_build
+# some people hack on macs? :-)
+.DS_Store
