@@ -1,6 +1,7 @@
 from base import SingleWindow
 from .. import utils, manager
 
+
 class Zoomy(SingleWindow):
     """
         A layout with single active windows, and few other previews at the
@@ -60,21 +61,21 @@ class Zoomy(SingleWindow):
                 None
             )
         else:
-            h = int(right.width*left.height/left.width)
-            if h * (len(self.clients)-1) < right.height:
+            h = int(right.width * left.height / left.width)
+            if h * (len(self.clients) - 1) < right.height:
                 c.place(
                     right.x,
-                    right.y + h*(self.clients.index(c)-1),
+                    right.y + h * (self.clients.index(c) - 1),
                     right.width,
                     h,
                     0,
                     None
                     )
             else:
-                hh = int((right.height - h) / (len(self.clients)-1))
+                hh = int((right.height - h) / (len(self.clients) - 1))
                 c.place(
                     right.x,
-                    right.y + hh*(self.clients.index(c)-1),
+                    right.y + hh * (self.clients.index(c) - 1),
                     right.width,
                     h,
                     0,
@@ -86,11 +87,6 @@ class Zoomy(SingleWindow):
         d = SingleWindow.info(self)
         d["clients"] = [i.name for i in self.clients]
         return d
-
-    def remove(self, win):
-        if self.lastfocus == win:
-            self.lastfocus = None
-        return SingleWindow.remove(self, win)
 
     def focus(self, win):
         old = self.lastfocus

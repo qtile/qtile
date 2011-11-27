@@ -11,9 +11,10 @@
 from socket import error as SocketError
 import sys
 
-from .. import hook, bar, manager
+from .. import bar, manager
 import base
 from mpd import MPDClient, CommandError, ConnectionError, ProtocolError
+
 
 class Mpd(base._TextBox):
     """
@@ -26,7 +27,9 @@ class Mpd(base._TextBox):
         ("background", "000000", "Background colour"),
         ("foreground", "ffffff", "Foreground colour")
     )
-    def __init__(self, width=bar.CALCULATED, host='localhost', port=6600, password=False, msg_nc='NC', **config):
+
+    def __init__(self, width=bar.CALCULATED, host='localhost', port=6600,
+                 password=False, msg_nc='NC', **config):
         """
             - host: host to connect to
             - port: port to connect to
@@ -44,10 +47,13 @@ class Mpd(base._TextBox):
         self.connected = False
         self.connect()
 
-    def connect (self, ifneeded=False):
+    def connect(self, ifneeded=False):
         if self.connected:
             if not ifneeded:
-                print >> sys.stderr, 'Already connected.  No need to connect again.  maybe you want to disconnect first.'
+                print >> sys.stderr, (
+                    'Already connected. '
+                    ' No need to connect again. '
+                    'Maybe you want to disconnect first.')
             return True
         CON_ID = {'host': self.host, 'port': self.port}
         if not self.mpdConnect(CON_ID):
@@ -75,7 +81,7 @@ class Mpd(base._TextBox):
         """
         try:
             self.client.disconnect()
-        except Exception, e:
+        except Exception:
             return False
         self.connected = False
         return True
@@ -105,12 +111,13 @@ class Mpd(base._TextBox):
                 if 'artist' in song:
                     artist = song['artist']
                 if 'title' in song:
-                    title  = song['title']
+                    title = song['title']
                 playing = "%s - %s" % (artist, title)
             else:
                 playing = ' - '
         except (SocketError, ProtocolError, ConnectionError), e:
-            print "Got error during query.  Disconnecting.  Error was: %s" % str(e)
+            print ("Got error during query. "
+                   " Disconnecting.  Error was: %s" % str(e))
             playing = self.msg_nc
             self.mpdDisconnect()
         if self.text != playing:
@@ -129,4 +136,3 @@ class Mpd(base._TextBox):
             self.client.previous()
         elif button == 5:
             self.client.next()
-

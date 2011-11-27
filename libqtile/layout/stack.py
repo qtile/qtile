@@ -24,12 +24,13 @@ from .. import utils, manager
 class _WinStack(object):
     split = False
     _current = 0
+
     def _getCurrent(self):
         return self._current
 
     def _setCurrent(self, x):
         if len(self):
-            self._current = abs(x%len(self))
+            self._current = abs(x % len(self))
         else:
             self._current = 0
 
@@ -48,7 +49,8 @@ class _WinStack(object):
         self.split = False if self.split else True
 
     def join(self, ws):
-        # FIXME: This buggers up window order - windows should be injected BEFORE
+        # FIXME: This buggers up window order -
+        # windows should be injected BEFORE
         # the current offset.
         self.lst.extend(ws.lst)
 
@@ -65,8 +67,8 @@ class _WinStack(object):
     def focus_next(self, win):
         if self.split:
             idx = self.index(win)
-            if idx+1 < len(self):
-                return self[idx+1]
+            if idx + 1 < len(self):
+                return self[idx + 1]
 
     def focus_last(self):
         if self:
@@ -79,7 +81,7 @@ class _WinStack(object):
         if self.split:
             idx = self.index(win)
             if idx > 0:
-                return self[idx-1]
+                return self[idx - 1]
 
     def add(self, w):
         self.lst.insert(self.current, w)
@@ -107,13 +109,14 @@ class _WinStack(object):
         return x in self.lst
 
     def __repr__(self):
-        return "_WinStack(%s, %s)"%(self.current, str([i.name for i in self]))
+        return "_WinStack(%s, %s)" % (
+            self.current, str([i.name for i in self]))
 
     def info(self):
         return dict(
-            windows = [i.name for i in self],
-            split = self.split,
-            current = self.current,
+            windows=[i.name for i in self],
+            split=self.split,
+            current=self.current,
         )
 
 
@@ -131,6 +134,7 @@ class Stack(Layout):
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width.")
     )
+
     def __init__(self, stacks=2, **config):
         """
             - stacks: Number of stacks to start with.
@@ -156,7 +160,7 @@ class Stack(Layout):
         return c
 
     def _findNext(self, lst, offset):
-        for i in lst[offset+1:]:
+        for i in lst[offset + 1:]:
             if i:
                 return i
         else:
@@ -169,7 +173,7 @@ class Stack(Layout):
             off = self.currentStackOffset or 0
             s = self.stacks[off]
             self.stacks.remove(s)
-            off = min(off, len(self.stacks)-1)
+            off = min(off, len(self.stacks) - 1)
             self.stacks[off].join(s)
             if self.stacks[off]:
                 self.group.focus(
@@ -213,7 +217,8 @@ class Stack(Layout):
         for i in iterator:
             if c in i:
                 next = i.focus_next(c)
-                if next: return next
+                if next:
+                    return next
                 break
         else:
             return
@@ -226,7 +231,8 @@ class Stack(Layout):
         for i in iterator:
             if c in i:
                 next = i.focus_prev(c)
-                if next: return next
+                if next:
+                    return next
                 break
         else:
             return
@@ -269,14 +275,14 @@ class Stack(Layout):
         else:
             px = self.group.qtile.colorPixel(self.border_normal)
 
-        columnWidth = int(screen.width/float(len(self.stacks)))
-        xoffset = screen.x + i*columnWidth
-        winWidth = columnWidth - 2*self.border_width
+        columnWidth = int(screen.width / float(len(self.stacks)))
+        xoffset = screen.x + i * columnWidth
+        winWidth = columnWidth - 2 * self.border_width
 
         if s.split:
-            columnHeight = int(screen.height/float(len(s)))
-            winHeight = columnHeight - 2*self.border_width
-            yoffset = screen.y + s.index(c)*columnHeight
+            columnHeight = int(screen.height / float(len(s)))
+            winHeight = columnHeight - 2 * self.border_width
+            yoffset = screen.y + s.index(c) * columnHeight
             c.place(
                 xoffset,
                 yoffset,
@@ -292,7 +298,7 @@ class Stack(Layout):
                     xoffset,
                     screen.y,
                     winWidth,
-                    screen.height - 2*self.border_width,
+                    screen.height - 2 * self.border_width,
                     self.border_width,
                     px
                 )
@@ -395,7 +401,7 @@ class Stack(Layout):
         """
         if not self.currentStack:
             return
-        next = n%len(self.stacks)
+        next = n % len(self.stacks)
         win = self.currentStack.cw
         self.currentStack.remove(win)
         self.stacks[next].add(win)

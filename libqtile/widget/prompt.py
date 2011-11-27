@@ -1,5 +1,7 @@
-import time, os, glob, string
-from .. import hook, bar, manager, xkeysyms, xcbq
+import glob
+import os
+import string
+from .. import bar, manager, xkeysyms, xcbq
 import base
 
 
@@ -9,6 +11,7 @@ class NullCompleter:
 
     def complete(self, txt):
         return txt
+
 
 class GroupCompleter:
     def __init__(self, qtile):
@@ -28,7 +31,7 @@ class GroupCompleter:
 
     def complete(self, txt):
         """
-            Returns the next completion for txt, or None if there is no completion.
+        Returns the next completion for txt, or None if there is no completion.
         """
         txt = txt.lower()
         if not self.lookup:
@@ -51,9 +54,11 @@ class GroupCompleter:
 
 class CommandCompleter:
     DEFAULTPATH = "/bin:/usr/bin:/usr/local/bin"
+
     def __init__(self, qtile, _testing=False):
         """
-            _testing: disables reloading of the lookup table to make testing possible.
+        _testing: disables reloading of the lookup table
+                  to make testing possible.
         """
         self.lookup, self.offset = None, None
         self.thisfinal = None
@@ -74,7 +79,7 @@ class CommandCompleter:
 
     def complete(self, txt):
         """
-            Returns the next completion for txt, or None if there is no completion.
+        Returns the next completion for txt, or None if there is no completion.
         """
         if not self.lookup:
             if not self._testing:
@@ -86,7 +91,7 @@ class CommandCompleter:
                         files = glob.glob(os.path.join(path, "*"))
                         prefix = txt
                     else:
-                        files = glob.glob(path+"*")
+                        files = glob.glob(path + "*")
                         prefix = os.path.dirname(txt)
                     prefix = prefix.rstrip("/") or "/"
                     for f in files:
@@ -99,14 +104,13 @@ class CommandCompleter:
                     dirs = os.environ.get("PATH", self.DEFAULTPATH).split(":")
                     for didx, d in enumerate(dirs):
                         try:
-                            for cmd in glob.glob(os.path.join(d, "%s*"%txt)):
+                            for cmd in glob.glob(os.path.join(d, "%s*" % txt)):
                                 if self.executable(cmd):
                                     self.lookup.append(
                                         (
                                             os.path.basename(cmd),
                                             cmd
                                         ),
-                                        
                                     )
                         except OSError:
                             pass
@@ -139,6 +143,7 @@ class Prompt(base._TextBox):
         ("foreground", "ffffff", "Foreground colour"),
         ("cursorblink", 0.5, "Cursor blink rate. 0 to disable.")
     )
+
     def __init__(self, name="prompt", **config):
         base._TextBox.__init__(self, "", bar.CALCULATED, **config)
         self.name = name
@@ -174,7 +179,7 @@ class Prompt(base._TextBox):
 
     def _update(self):
         if self.active:
-            self.text = "%s%s"%(self.prompt, self.userInput)
+            self.text = "%s%s" % (self.prompt, self.userInput)
             if self.blink:
                 self.text = self.text + "_"
             else:
@@ -195,9 +200,11 @@ class Prompt(base._TextBox):
         else:
             self.completer.reset()
             if keysym < 127 and chr(keysym) in string.printable:
-                # No LookupString in XCB... oh, the shame! Unicode users beware!
+                # No LookupString in XCB... oh,
+                # the shame! Unicode users beware!
                 self.userInput += chr(keysym)
-            elif keysym == xkeysyms.keysyms['BackSpace'] and len(self.userInput) > 0:
+            elif (keysym == xkeysyms.keysyms['BackSpace'] and
+                  len(self.userInput) > 0):
                 self.userInput = self.userInput[:-1]
             elif keysym == xkeysyms.keysyms['Escape']:
                 self.active = False
@@ -222,9 +229,8 @@ class Prompt(base._TextBox):
             Returns a dictionary of info for this object.
         """
         return dict(
-            name = self.name,
-            width = self.width,
-            text = self.text,
-            active = self.active,
+            name=self.name,
+            width=self.width,
+            text=self.text,
+            active=self.active,
         )
-

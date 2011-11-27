@@ -2,11 +2,14 @@
     A minimal EWMH-aware OO layer over xpyb. This is NOT intended to be
     complete - it only implements the subset of functionalty needed by qtile.
 """
-import struct
-import xcb.xproto, xcb.xinerama, xcb.randr, xcb.xcb
 from xcb.xproto import CW, WindowClass, EventMask
-import utils, xkeysyms
-
+import struct
+import utils
+import xcb.randr
+import xcb.xcb
+import xcb.xinerama
+import xcb.xproto
+import xkeysyms
 
 
 # hack xcb.xproto for negative numbers
@@ -25,16 +28,17 @@ keysyms = xkeysyms.keysyms
 
 # These should be in xpyb:
 ModMasks = {
-    "shift": 1<<0,
-    "lock":  1<<1,
-    "control": 1<<2,
-    "mod1": 1<<3,
-    "mod2": 1<<4,
-    "mod3": 1<<5,
-    "mod4": 1<<6,
-    "mod5": 1<<7,
+    "shift": 1 << 0,
+    "lock":  1 << 1,
+    "control": 1 << 2,
+    "mod1": 1 << 3,
+    "mod2": 1 << 4,
+    "mod3": 1 << 5,
+    "mod4": 1 << 6,
+    "mod5": 1 << 7,
 }
-ModMapOrder = ["shift", "lock", "control", "mod1", "mod2", "mod3", "mod4", "mod5"]
+ModMapOrder = ["shift", "lock", "control",
+               "mod1", "mod2", "mod3", "mod4", "mod5"]
 
 ButtonCodes = {
     "Button1": 1,
@@ -120,6 +124,7 @@ PropertyMap = {
     "QTILE_INTERNAL": ("CARDINAL", 32)
 }
 
+
 def toStr(s):
     return "".join([chr(i) for i in s.name])
 
@@ -154,12 +159,13 @@ class MaskMap:
                     values.append(getattr(val, "_maskvalue", val))
                 del kwargs[s]
         if kwargs:
-            raise ValueError("Unknown mask names: %s"%kwargs.keys())
+            raise ValueError("Unknown mask names: %s" % kwargs.keys())
         return mask, values
 
 ConfigureMasks = MaskMap(xcb.xproto.ConfigWindow)
 AttributeMasks = MaskMap(CW)
 GCMasks = MaskMap(xcb.xproto.GC)
+
 
 class AtomCache:
     def __init__(self, conn):
@@ -175,7 +181,7 @@ class AtomCache:
             if not i.startswith("_"):
                 self.insert(name=i, atom=getattr(xcb.xproto.Atom, i))
 
-    def insert(self, name = None, atom = None):
+    def insert(self, name=None, atom=None):
         assert name or atom
         if atom is None:
             c = self.conn.conn.core.InternAtom(False, len(name), name)
@@ -237,15 +243,17 @@ class Colormap:
         """
         if color.startswith("#"):
             if len(color) != 7:
-                raise ValueError("Invalid color: %s"%color)
+                raise ValueError("Invalid color: %s" % color)
+
             def x8to16(i):
-                return 0xffff * (i&0xff)/0xff
+                return 0xffff * (i & 0xff) / 0xff
             r = x8to16(int(color[1] + color[2], 16))
             g = x8to16(int(color[3] + color[4], 16))
             b = x8to16(int(color[5] + color[6], 16))
             return self.conn.conn.core.AllocColor(self.cid, r, g, b).reply()
         else:
-            return self.conn.conn.core.AllocNamedColor(self.cid, len(color), color).reply()
+            return self.conn.conn.core.AllocNamedColor(
+                self.cid, len(color), color).reply()
 
 
 class Xinerama:
@@ -266,10 +274,10 @@ class RandR:
         for i in self.ext.GetScreenResources(root).reply().crtcs:
             info = self.ext.GetCrtcInfo(i, xcb.xcb.CurrentTime).reply()
             d = dict(
-                x = info.x,
-                y = info.y,
-                width = info.width,
-                height = info.height
+                x=info.x,
+                y=info.y,
+                width=info.width,
+                height=info.height
             )
             l.append(d)
         return l
@@ -309,14 +317,14 @@ class Window:
 
     def warp_pointer(self, x, y):
         self.conn.conn.core.WarpPointer(
-                0
-                ,self.wid
-                ,0
-                ,0
-                ,0
-                ,0
-                ,x
-                ,y
+                0,
+                self.wid,
+                0,
+                0,
+                0,
+                0,
+                x,
+                y
         )
 
     def get_name(self):
@@ -325,7 +333,8 @@ class Window:
             properties in order of preference: _NET_WM_VISIBLE_NAME,
             _NET_WM_NAME, WM_NAME.
         """
-        r = self.get_property("_NET_WM_VISIBLE_NAME", xcb.xproto.GetPropertyType.Any)
+        r = self.get_property(
+            "_NET_WM_VISIBLE_NAME", xcb.xproto.GetPropertyType.Any)
         if r:
             return self._propertyString(r)
 
@@ -333,7 +342,8 @@ class Window:
         if r:
             return self._propertyString(r)
 
-        r = self.get_property(xcb.xproto.Atom.WM_NAME, xcb.xproto.GetPropertyType.Any)
+        r = self.get_property(
+            xcb.xproto.Atom.WM_NAME, xcb.xproto.GetPropertyType.Any)
         if r:
             return self._propertyString(r)
 
@@ -344,49 +354,50 @@ class Window:
             l = struct.unpack_from("=IIIIIIIII", data)
             flags = set()
             for k, v in HintsFlags.items():
-                if l[0]&v:
+                if l[0] & v:
                     flags.add(k)
             return dict(
-                flags = flags,
-                input = l[1],
-                initial_state = l[2],
-                icon_pixmap = l[3],
-                icon_window = l[4],
-                icon_x = l[5],
-                icon_y = l[6],
-                icon_mask = l[7],
-                window_group = l[8]
+                flags=flags,
+                input=l[1],
+                initial_state=l[2],
+                icon_pixmap=l[3],
+                icon_window=l[4],
+                icon_x=l[5],
+                icon_y=l[6],
+                icon_mask=l[7],
+                window_group=l[8]
             )
 
     def get_wm_normal_hints(self):
-        r = self.get_property("WM_NORMAL_HINTS", xcb.xproto.GetPropertyType.Any)
+        r = self.get_property(
+            "WM_NORMAL_HINTS", xcb.xproto.GetPropertyType.Any)
         if r:
             data = struct.pack("B" * len(r.value), *(list(r.value)))
             l = struct.unpack_from("=IIIIIIIIIIIIII", data)
             flags = set()
             for k, v in NormalHintsFlags.items():
-                if l[0]&v:
+                if l[0] & v:
                     flags.add(k)
             return dict(
-                flags = flags,
-                min_width = l[1+4],
-                min_height = l[2+4],
-                max_width = l[3+4],
-                max_height = l[4+4],
-                width_inc = l[5+4],
-                height_inc = l[6+4],
-                min_aspect = l[7+4],
-                max_aspect = l[8+4],
-                base_width = l[9+4],
-                base_height = l[9+4],
-                win_gravity = l[9+4],
+                flags=flags,
+                min_width=l[1 + 4],
+                min_height=l[2 + 4],
+                max_width=l[3 + 4],
+                max_height=l[4 + 4],
+                width_inc=l[5 + 4],
+                height_inc=l[6 + 4],
+                min_aspect=l[7 + 4],
+                max_aspect=l[8 + 4],
+                base_width=l[9 + 4],
+                base_height=l[9 + 4],
+                win_gravity=l[9 + 4],
             )
 
     def get_wm_protocols(self):
         r = self.get_property("WM_PROTOCOLS", xcb.xproto.GetPropertyType.Any)
         if r:
             data = struct.pack("B" * len(r.value), *(list(r.value)))
-            l = struct.unpack_from("=" + "L"*r.value_len, data)
+            l = struct.unpack_from("=" + "L" * r.value_len, data)
             return set([self.conn.atoms.get_name(i) for i in l])
         else:
             return set()
@@ -436,7 +447,7 @@ class Window:
 
     def get_wm_type(self):
         """
-            http://standards.freedesktop.org/wm-spec/wm-spec-latest.html#id2551529
+        http://standards.freedesktop.org/wm-spec/wm-spec-latest.html#id2551529
         """
         r = self.get_property('_NET_WM_WINDOW_TYPE', "ATOM", unpack='I')
         if r:
@@ -458,12 +469,14 @@ class Window:
 
     def set_attribute(self, **kwargs):
         mask, values = AttributeMasks(**kwargs)
-        self.conn.conn.core.ChangeWindowAttributesChecked(self.wid, mask, values)
+        self.conn.conn.core.ChangeWindowAttributesChecked(
+            self.wid, mask, values)
 
     def set_cursor(self, name):
-       cursorId = self.conn.cursors[name]
-       mask, values = AttributeMasks(cursor=cursorId)
-       self.conn.conn.core.ChangeWindowAttributesChecked(self.wid, mask, values)
+        cursorId = self.conn.cursors[name]
+        mask, values = AttributeMasks(cursor=cursorId)
+        self.conn.conn.core.ChangeWindowAttributesChecked(
+            self.wid, mask, values)
 
     def set_property(self, name, value, type=None, format=None):
         """
@@ -473,11 +486,13 @@ class Window:
         """
         if name in PropertyMap:
             if type or format:
-                raise ValueError, "Over-riding default type or format for property."
+                raise ValueError(
+                    "Over-riding default type or format for property.")
             type, format = PropertyMap[name]
         else:
             if None in (type, format):
-                raise ValueError, "Must specify type and format for unknown property."
+                raise ValueError(
+                    "Must specify type and format for unknown property.")
 
         if not utils.isSequenceLike(value):
             value = [value]
@@ -497,7 +512,7 @@ class Window:
                     buf.append(struct.pack("=B", i))
         buf = "".join(buf)
 
-        length = len(buf)/(format/8)
+        length = len(buf) / (format / 8)
 
         # This is a real balls-up interface-wise. As I understand it, each type
         # can have a different associated size.
@@ -521,14 +536,15 @@ class Window:
         """
         if type is None:
             if not prop in PropertyMap:
-                raise ValueError, "Must specify type for unknown property."
+                raise ValueError(
+                    "Must specify type for unknown property.")
             else:
                 type, _ = PropertyMap[prop]
         r = self.conn.conn.core.GetProperty(
             False, self.wid,
             self.conn.atoms[prop] if isinstance(prop, basestring) else prop,
             self.conn.atoms[type] if isinstance(type, basestring) else type,
-            0, (2**32)-1
+            0, (2 ** 32) - 1
         ).reply()
 
         if not r.value_len:
@@ -567,7 +583,8 @@ class Window:
             modifiers = xcb.xproto.ModMask.Any
         self.conn.conn.core.UngrabKey(key, self.wid, modifiers)
 
-    def grab_key(self, key, modifiers, owner_events, pointer_mode, keyboard_mode):
+    def grab_key(self, key, modifiers, owner_events,
+                 pointer_mode, keyboard_mode):
         self.conn.conn.core.GrabKey(
             owner_events,
             self.wid,
@@ -587,7 +604,8 @@ class Window:
             modifiers = xcb.xproto.ModMask.Any
         self.conn.conn.core.UngrabButton(button, self.wid, modifiers)
 
-    def grab_button(self, button, modifiers, owner_events, event_mask, pointer_mode, keyboard_mode):
+    def grab_button(self, button, modifiers, owner_events,
+                    event_mask, pointer_mode, keyboard_mode):
         self.conn.conn.core.GrabButton(
             owner_events,
             self.wid,
@@ -600,7 +618,8 @@ class Window:
             modifiers,
         )
 
-    def grab_pointer(self, owner_events, event_mask, pointer_mode, keyboard_mode, cursor=None):
+    def grab_pointer(self, owner_events, event_mask, pointer_mode,
+                     keyboard_mode, cursor=None):
         self.conn.conn.core.GrabPointer(
             owner_events,
             self.wid,
@@ -648,6 +667,7 @@ class Connection:
         "xinerama": Xinerama,
         "randr": RandR,
     }
+
     def __init__(self, display):
         self.conn = xcb.xcb.connect(display=display)
         self.cursors = Cursors(self)
@@ -698,9 +718,10 @@ class Connection:
 
         l = []
         for i, v in enumerate(q.keysyms):
-            if not i%q.keysyms_per_keycode:
+            if not i % q.keysyms_per_keycode:
                 if l:
-                    self.code_to_syms[(i/q.keysyms_per_keycode) + first - 1] = l
+                    self.code_to_syms[
+                        (i / q.keysyms_per_keycode) + first - 1] = l
                 l = []
                 l.append(v)
             else:
@@ -719,7 +740,7 @@ class Connection:
         q = self.conn.core.GetModifierMapping().reply()
         modmap = {}
         for i, k in enumerate(q.keycodes):
-            l = modmap.setdefault(ModMapOrder[i/q.keycodes_per_modifier], [])
+            l = modmap.setdefault(ModMapOrder[i / q.keycodes_per_modifier], [])
             l.append(k)
         self.modmap = modmap
 
@@ -736,23 +757,24 @@ class Connection:
         return self.first_sym_to_code.get(keysym, 0)
 
     def keycode_to_keysym(self, keycode, modifier):
-        if keycode >= len(self.code_to_syms) or modifier >= len(self.code_to_syms[keycode]):
+        if (keycode >= len(self.code_to_syms) or
+            modifier >= len(self.code_to_syms[keycode])):
             return 0
         return self.code_to_syms[keycode][modifier]
 
     def create_window(self, x, y, width, height):
         wid = self.conn.generate_id()
-        q = self.conn.core.CreateWindow(
+        self.conn.core.CreateWindow(
                 self.default_screen.root_depth,
                 wid,
                 self.default_screen.root.wid,
                 x, y, width, height, 0,
                 WindowClass.InputOutput,
                 self.default_screen.root_visual,
-                CW.BackPixel|CW.EventMask,
+                CW.BackPixel | CW.EventMask,
                 [
                     self.default_screen.black_pixel,
-                    EventMask.StructureNotify|EventMask.Exposure
+                    EventMask.StructureNotify | EventMask.Exposure
                 ]
         )
         return Window(self, wid)
@@ -778,11 +800,14 @@ class Connection:
         return Font(self, fid)
 
     def extensions(self):
-        return set([toStr(i).lower() for i in self.conn.core.ListExtensions().reply().names])
+        return set([toStr(i).lower()
+                    for i in self.conn.core.ListExtensions().reply().names])
+
 
 # Stolen from samurai-x
 # (Don't know where to put it, so I'll put it here)
-# XCB cursors doesn't want to be themed, libxcursor would be better choice I think
+# XCB cursors doesn't want to be themed, libxcursor
+# would be better choice I think
 # and we (indirectly) depend on it anyway...
 class Cursors(dict):
     def __init__(self, conn):
@@ -817,9 +842,9 @@ class Cursors(dict):
         fid = self.conn.conn.generate_id()
         self.conn.conn.core.OpenFont(fid, len("cursor"), "cursor")
         cursor = self.conn.conn.generate_id()
-        self.conn.conn.core.CreateGlyphCursor(cursor,fid,fid,
+        self.conn.conn.core.CreateGlyphCursor(
+            cursor, fid, fid,
             cursor_font, cursor_font + 1,
             0, 0, 0,
             65535, 65535, 65535)
         self[name] = cursor
-

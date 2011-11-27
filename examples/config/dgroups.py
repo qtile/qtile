@@ -35,7 +35,6 @@ class Match(object):
         return False
 
 
-
 def simple_key_binder(mod, keynames=None):
     """
         Bind keys to mod+group position or to the keys specified as
@@ -51,7 +50,7 @@ def simple_key_binder(mod, keynames=None):
             keys = keynames
         else:
             # keys 1 to 9 and 0
-            keys = range(1,10) + [0]
+            keys = range(1, 10) + [0]
 
         # bind all keys
         for keyname, group in zip(keys, dgroup.qtile.groups):
@@ -137,7 +136,8 @@ class DGroups(object):
                             group_obj.layout = layout
                         if master:
                             group_obj.layout.shuffle(
-                                   lambda lst: self.shuffle_groups(lst, master))
+                                   lambda lst: self.shuffle_groups(
+                                       lst, master))
 
                 if 'float' in app and app['float']:
                     client.floating = True
@@ -164,6 +164,7 @@ class DGroups(object):
 
     def _del(self, client):
         group = client.group
+
         def delete_client():
             # Delete group if empty and dont persist
             if group and not (group.name in self.groups and\

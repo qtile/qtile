@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .. import hook, bar, manager
+from .. import bar, manager
 import base
 import urllib
 import urllib2
@@ -16,11 +16,13 @@ QUERY_URL = 'http://query.yahooapis.com/v1/public/yql?'
 WEATHER_URL = 'http://weather.yahooapis.com/forecastrss?'
 WEATHER_NS = 'http://xml.weather.yahoo.com/ns/rss/1.0'
 
+
 class YahooWeather(base._TextBox):
     ''' A weather widget, data provided by the Yahoo! Weather API
         Format options:
             astronomy_sunrise, astronomy_sunset
-            atmosphere_humidity, atmosphere_visibility, atmosphere_pressure, atmosphere_rising
+            atmosphere_humidity, atmosphere_visibility,
+            atmosphere_pressure, atmosphere_rising
             condition_text, condition_code, condition_temp, condition_date
             location_city. location_region, location_country
             units_temperature, units_distance, units_pressure, units_speed
@@ -35,12 +37,16 @@ class YahooWeather(base._TextBox):
         ('foreground', 'ffffff', 'Foreground colour'),
 
         ## One of (location, woeid) must be set.
-        ('location', None, 'Location to fetch weather for. Ignored if woeid is set.'),
-        ('woeid', None, 'Where On Earth ID. Auto-calculated if location is set.'),
-        ('format', '{location_city}: {condition_temp} °{units_temperature}', 'Display format'),
+        ('location', None,
+         'Location to fetch weather for. Ignored if woeid is set.'),
+        ('woeid', None,
+         'Where On Earth ID. Auto-calculated if location is set.'),
+        ('format', '{location_city}: {condition_temp} °{units_temperature}',
+         'Display format'),
         ('metric', True, 'True to use metric/C, False to use imperial/F'),
         ('update_interval', 600, 'Update interval in seconds'),
     )
+
     def __init__(self, **config):
         base._TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
 
@@ -76,7 +82,7 @@ class YahooWeather(base._TextBox):
             if data['query']['count'] > 1:
                 return data['query']['results']['place'][0]['woeid']
             return data['query']['results']['place']['woeid']
-        except Exception, err:
+        except Exception:
             ## HTTPError? JSON Error? KeyError? Doesn't matter, return None
             return None
 

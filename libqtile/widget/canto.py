@@ -4,6 +4,7 @@ from .. import bar, manager
 import base
 from subprocess import check_output, call
 
+
 class Canto(base._TextBox):
     defaults = manager.Defaults(
         ("font", "Arial", "Font"),
@@ -18,7 +19,7 @@ class Canto(base._TextBox):
         ("update_delay", 600, "The delay in seconds between updates"),
     )
 
-    def __init__(self, width = bar.CALCULATED, **config):
+    def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "N/A", width, **config)
 
     def _configure(self, qtile, bar):
@@ -30,13 +31,14 @@ class Canto(base._TextBox):
             arg = "-a"
             if self.fetch:
                 arg += "u"
-            return self.all_format.format(number = check_output(["canto", arg])[:-1])
+            return self.all_format.format(
+                number=check_output(["canto", arg])[:-1])
         else:
             if self.fetch:
                 call(["canto", "-u"])
             return "".join([self.one_format.format(
-                name = feed,
-                number = check_output(["canto", "-n", feed])[:-1]
+                name=feed,
+                number=check_output(["canto", "-n", feed])[:-1]
             ) for feed in self.feeds])
 
     def click(self, x, y, button):

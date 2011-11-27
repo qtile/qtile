@@ -92,9 +92,11 @@ keys = [
     Key([mod], "q",
         lazy.spawn('xtrlock')),
     Key([mod], "y",
-        lazy.spawn('xclip -o -selection primary | xclip -selection clipboard')),
+        lazy.spawn('xclip -o -selection primary | '
+                   'xclip -selection clipboard')),
     Key([mod], "u",
-        lazy.spawn('xclip -o -selection clipboard | xclip -selection primary')),
+        lazy.spawn('xclip -o -selection clipboard | '
+                   'xclip -selection primary')),
 
     Key([], "XF86AudioRaiseVolume",
         lazy.spawn("amixer sset Master 5%+")),
@@ -164,31 +166,32 @@ for i in groups:
 
 screens = [
     Screen(
-        top = bar.Bar(
-                    [
-                        widget.GroupBox(borderwidth=2,
-                            font='Consolas',fontsize=18,
-                            padding=1, margin_x=1, margin_y=1),
-                        widget.Sep(),
-                        widget.WindowName(
-                            font='Consolas',fontsize=18, margin_x=6),
-                        widget.Sep(),
-                        widget.Battery(
-                            font='Consolas',fontsize=18, margin_x=6),
-                        widget.Sep(),
-                        widget.CPUGraph(),
-                        widget.MemoryGraph(),
-                        widget.SwapGraph(foreground='C02020'),
-                        widget.Sep(),
-                        widget.Systray(),
-                        widget.Sep(),
-                        widget.Clock('%H:%M:%S %d.%m.%Y',
-                            font='Consolas', fontsize=18, padding=6),
-                    ],
-                    24,
-                ),
+        top=bar.Bar(
+            [
+                widget.GroupBox(borderwidth=2,
+                                font='Consolas', fontsize=18,
+                                padding=1, margin_x=1, margin_y=1),
+                widget.Sep(),
+                widget.WindowName(
+                    font='Consolas', fontsize=18, margin_x=6),
+                widget.Sep(),
+                widget.Battery(
+                    font='Consolas', fontsize=18, margin_x=6),
+                widget.Sep(),
+                widget.CPUGraph(),
+                widget.MemoryGraph(),
+                widget.SwapGraph(foreground='C02020'),
+                widget.Sep(),
+                widget.Systray(),
+                widget.Sep(),
+                widget.Clock('%H:%M:%S %d.%m.%Y',
+                             font='Consolas', fontsize=18, padding=6),
+            ],
+            24,
+        ),
     ),
 ]
+
 
 @hook.subscribe.client_new
 def dialogs(window):

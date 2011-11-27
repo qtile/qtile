@@ -24,4 +24,3 @@ class CurrentLayout(base._TextBox):
             self.text = layout.name
             self.bar.draw()
         hook.subscribe.layout_change(hook_response)
-
