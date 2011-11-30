@@ -83,7 +83,7 @@ class DGroups(object):
                 self.qtile.addGroup(name)
 
             spawn_cmd = tag.get('spawn')
-            if spawn_cmd:
+            if spawn_cmd and not self.qtile.no_spawn:
                 self.qtile.cmd_spawn(spawn_cmd)
 
     def _setup_hooks(self):

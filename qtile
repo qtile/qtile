@@ -53,6 +53,13 @@ def main():
                         dest="socket",
                         help='Path to Qtile comms socket.'
                     )
+    parser.add_option(
+                        "-n", "--no-spawn",
+                        action="store_true",
+                        default=False,
+                        dest="no_spawn",
+                        help='Avoid spawning apps. (Used for restart)'
+                    )
     options, args = parser.parse_args()
     try:
         c = confreader.File(options.configfile)
@@ -63,7 +70,8 @@ def main():
             c = confreader.File(options.fallback)
         else:
             raise
-    q = manager.Qtile(c, fname=options.socket)
+
+    q = manager.Qtile(c, fname=options.socket, no_spawn=options.no_spawn)
     q.debug = options.debug
     q.loop()
 

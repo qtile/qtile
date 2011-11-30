@@ -693,8 +693,10 @@ class Qtile(command.CommandObject):
     _testing = False
     _logLength = 100
 
-    def __init__(self, config, displayName=None, fname=None, testing=False):
+    def __init__(self, config,
+                 displayName=None, fname=None, testing=False, no_spawn=False):
         self._testing = testing
+        self.no_spawn = no_spawn
         if not displayName:
             displayName = os.environ.get("DISPLAY")
             if not displayName:
@@ -1611,7 +1613,8 @@ class Qtile(command.CommandObject):
         """
             Restart qtile using the execute command.
         """
-        self.cmd_execute(sys.executable, [sys.executable] + sys.argv)
+        self.cmd_execute(sys.executable,
+                         [sys.executable] + sys.argv + ['--no-spawn'])
 
     def cmd_spawn(self, cmd):
         """
