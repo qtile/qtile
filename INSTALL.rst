@@ -12,23 +12,23 @@ in the Qtile documentation.
 Installation
 ============
 
-  #.  Install the Qtile library and executables::
+#.  Install the Qtile library and executables::
 
-        python setup.py install
+      python setup.py install
 
-  #.  Create a Qtile configuration directory and create a configuration file.
-      It is probably easiest to start with one of the configuration files
-      in the ``examples/config`` directory of the Qtile distribution::
+#.  Create a Qtile configuration directory and create a configuration file.
+    It is probably easiest to start with one of the configuration files
+    in the ``examples/config`` directory of the Qtile distribution::
 
-        mkdir ~/.config/qtile
+      mkdir ~/.config/qtile
 
-        cp examples/config/cortesi-config.py ~/.config/qtile/config.py
+      cp examples/config/cortesi-config.py ~/.config/qtile/config.py
 
-  #.  Make Qtile run. On my system, this meant creating an ``.xsession`` file
-      containing the following
+#.  Make Qtile run. On my system, this meant creating an ``.xsession`` file
+    containing the following
 
-      .. code-block:: sh
+    .. code-block:: sh
 
-        #!/bin/sh
-        exec /usr/bin/qtile
+      #!/bin/sh
+      exec /usr/bin/qtile
 
