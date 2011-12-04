@@ -22,12 +22,12 @@ def teardown_func():
 
 
 @raises(libqtile.manager.QtileError)
-def test_firing_unknown_event():
+def test_cannot_fire_unknown_event():
     libqtile.hook.fire("unknown")
 
 
 @with_setup(None, teardown_func)
-def test_subscriber_called():
+def test_hook_calls_subscriber():
     test_list = []
 
     def test(list):
@@ -40,7 +40,7 @@ def test_subscriber_called():
 
 
 @with_setup(None, teardown_func)
-def test_subscriber_addition_removal():
+def test_subscribers_can_be_added_removed():
 
     def test(list):
         pass
@@ -52,7 +52,7 @@ def test_subscriber_addition_removal():
 
 
 @with_setup(None, teardown_func)
-def test_unsubscribe():
+def test_can_unsubscribe_from_hook():
     test_list = []
 
     def test(list):
