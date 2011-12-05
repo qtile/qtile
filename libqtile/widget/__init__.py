@@ -8,6 +8,7 @@ from clock import Clock
 from sep import Sep
 from prompt import Prompt
 from systray import Systray
+from notify import Notify
 from graph import *
 try:
     from mpriswidget import Mpris

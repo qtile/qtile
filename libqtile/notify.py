@@ -3,8 +3,6 @@
     org.freedesktop.Notifications service. This will probably change.
 """
 
-import hook
-
 try:
     import dbus
 except ImportError:
@@ -26,24 +24,13 @@ if dbus:
 
         @dbus.service.method(BUS_NAME, in_signature='', out_signature='as')
         def GetCapabilities(self):
-            # TODO: body, body-markup, icon-static
-            return ()
+            return ('body')
 
-        @dbus.service.method(BUS_NAME, in_signature='susssasa{sv}i',
+        @dbus.service.method(BUS_NAME, in_signature='susssasa{ss}i',
                              out_signature='u')
         def Notify(self, app_name, replaces_id, app_icon, summary,
                    body, actions, hints, timeout):
-
             notif = Notification(summary, body, timeout=timeout)
-
-            # useful hints:
-            # urgency. how about making the notification red when it's urgent?
-            # category. ignore?
-            # image_data/icon_data 
-            # x, y: where to point the notification
-            print "Notification hints:"
-            print dict([(str(x), y) for (x, y) in hints.iteritems()]).keys()
-
             return self.manager.add(notif)
 
         @dbus.service.method(BUS_NAME, in_signature='u', out_signature='')
@@ -54,15 +41,15 @@ if dbus:
         def NotificationClosed(self, id_in, reason_in):
             pass
 
+        @dbus.service.method("org.freedesktop.Notifications",
+                         in_signature='', out_signature='ssss')
+        def GetServerInformation(self):
+            return ("qtile-notify-daemon", "qtile", "1.0", "1")
 
     def init_main_loop():
         DBusGMainLoop(set_as_default=True)
-        mainloop = gobject.MainLoop()
-
-        def poll():
-            mainloop.get_context().iteration(False)
-
-        hook.subscribe.tick(poll)
+        # TODO: I don't think it's a good idea...
+        gobject.MainLoop()
 
 
 class Notification(object):
@@ -77,6 +64,7 @@ class NotificationManager(object):
     def __init__(self):
         self.notifications = {}  # id : notification
         self.last_id = 0
+        self.callbacks = []
 
         if dbus:
             init_main_loop()
@@ -84,9 +72,14 @@ class NotificationManager(object):
         else:
             self.service = None
 
+    def register(self, callback):
+        self.callbacks.append(callback)
+
     def add(self, notif):
         self.last_id += 1
         self.notifications[self.last_id] = notif
+        for callback in self.callbacks:
+            callback(notif)
         return self.last_id
 
     def show(self, *args, **kwargs):
