@@ -253,7 +253,8 @@ class Drawer:
         self.ctx.fill()
         self.ctx.stroke()
 
-    def textlayout(self, text, colour, font_family, font_size, **kw):
+    def textlayout(self, text, colour, font_family, font_size, markup=False,
+                   **kw):
         """
             Get a text layout.
 
@@ -263,7 +264,8 @@ class Drawer:
 
             https://bugzilla.gnome.org/show_bug.cgi?id=625287
         """
-        return TextLayout(self, text, colour, font_family, font_size, **kw)
+        return TextLayout(self, text, colour, font_family, font_size,
+                          markup=markup, **kw)
 
     _sizelayout = None
 

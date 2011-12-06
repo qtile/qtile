@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import sys
 
-from .. import bar, manager
-from libqtile.notify import manager as notifier
+from .. import bar, manager, drawer
+from libqtile.notify import notifier
 import base
 
 
@@ -21,24 +21,45 @@ class Notify(base._TextBox):
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "", width, **config)
         notifier.register(self.update)
+        self.current_id = 0
 
     def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
-        self.timeout_add(1, self.update)
+        base._Widget._configure(self, qtile, bar)
+        self.layout = self.drawer.textlayout(
+            self.text, self.foreground, self.font, self.fontsize,
+            markup=True)
 
-    def update(self, notif):
+    def set_notif_text(self, notif):
         self.text = notif.summary
         if notif.body:
-            self.text = '%s - %s' % (self.text, notif.body)
+            self.text = '<span weight="bold">%s</span> - %s' % (
+                self.text, notif.body)
+
+    def update(self, notif):
+        self.set_notif_text(notif)
+        self.current_id = notif.id - 1
         if notif.timeout and notif.timeout > 0:
             self.timeout_add(notif.timeout / 1000, self.clear)
         self.bar.draw()
         return True
 
+    def diplay(self):
+        self.set_notif_text(notifier.notifications[self.current_id])
+        self.bar.draw()
+
     def clear(self):
         self.text = ''
+        self.current_id = len(notifier.notifications) - 1
         self.bar.draw()
 
     def click(self, x, y, button):
         if button == 1:
             self.clear()
+        elif button == 4:
+            if self.current_id > 0:
+                self.current_id -= 1
+                self.diplay()
+        elif button == 5:
+            if self.current_id < len(notifier.notifications) - 1:
+                self.current_id += 1
+                self.diplay()
