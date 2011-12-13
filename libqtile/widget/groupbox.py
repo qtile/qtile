@@ -43,7 +43,7 @@ class _GroupBase(base._Widget):
         hook.subscribe.setgroup(hook_response)
         hook.subscribe.group_window_add(hook_response)
 
-    def drawbox(self, offset, text, bordercolor, textcolor, rounded,
+    def drawbox(self, offset, text, bordercolor, textcolor, rounded=False,
                 block=False, width=None):
         self.layout.text = text
         self.layout.font_family = self.font
