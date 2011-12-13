@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 import os, os.path, sys
-from libqtile import confreader, manager
+from libqtile import confreader, manager, command
 
 def main():
     from optparse import OptionParser, OptionGroup
@@ -61,6 +61,7 @@ def main():
                         help='Avoid spawning apps. (Used for restart)'
                     )
     options, args = parser.parse_args()
+
     try:
         c = confreader.File(options.configfile)
     except confreader.ConfigError, v:
@@ -76,11 +77,13 @@ def main():
     q.loop()
 
 
+
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
         print "Crashed !"
         print e
-
-    os.execv(sys.executable, [sys.executable] + sys.argv + ['--no-spawn'])
+        print "Restarting"
+        os.execv(sys.executable, [sys.executable] + sys.argv + ['--no-spawn'])
+    print "Exiting cleanly"

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 
-from .. import bar, manager, drawer
+from .. import bar, manager, drawer, utils
 from libqtile.notify import notifier
 import base
 
@@ -15,7 +15,9 @@ class Notify(base._TextBox):
         ("fontsize", None, "Mpd widget pixel size. Calculated if None."),
         ("padding", None, "Mpd widget padding. Calculated if None."),
         ("background", "000000", "Background colour"),
-        ("foreground", "ffffff", "Foreground colour")
+        ("foreground", "ffffff", "Foreground normal priority colour"),
+        ("foreground_urgent", "ff0000", "Foreground urgent priority colour"),
+        ("foreground_low", "dddddd", "Foreground low priority  colour"),
     )
 
     def __init__(self, width=bar.CALCULATED, **config):
@@ -30,10 +32,15 @@ class Notify(base._TextBox):
             markup=True)
 
     def set_notif_text(self, notif):
-        self.text = notif.summary
+        self.text = utils.escape(notif.summary)
+        urgency = notif.hints.get('urgency', 1)
+        if urgency != 1:
+            self.text = '<span color="%s">%s</span>' % (
+                utils.hex(self.foreground_urgent if urgency == 2
+                          else self.foreground_low), self.text)
         if notif.body:
             self.text = '<span weight="bold">%s</span> - %s' % (
-                self.text, notif.body)
+                self.text, utils.escape(notif.body))
 
     def update(self, notif):
         self.set_notif_text(notif)

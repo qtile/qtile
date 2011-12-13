@@ -1458,6 +1458,13 @@ class Qtile(command.CommandObject):
             self.log.debug = sys.stderr
             return "on"
 
+    def cmd_pause(self):
+        """
+            Drops into pdb
+        """
+        import pdb
+        pdb.set_trace()
+
     def cmd_groups(self):
         """
             Return a dictionary containing information for all groups.

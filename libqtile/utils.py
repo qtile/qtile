@@ -20,6 +20,7 @@
 
 import operator
 import functools
+import gobject
 import os
 import xcbq
 
@@ -155,6 +156,11 @@ def rgb(x):
     raise ValueError("Invalid RGB specifier.")
 
 
+def hex(x):
+    r, g, b, _ = rgb(x)
+    return '#%02x%02x%02x' % (r * 255, g * 255, b * 255)
+
+
 class Data:
     def __init__(self, name):
         m = __import__(name)
@@ -188,3 +194,7 @@ def scrub_to_utf8(text):
             # We don't know the provenance of this string
             # - so we scrub it to ASCII.
             return "".join(i for i in text if 31 < ord(i) < 127)
+
+
+def escape(text):
+    return gobject.markup_escape_text(text)
