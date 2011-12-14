@@ -3,8 +3,11 @@
     This program is carefully crafted to exercise a number of corner-cases in
     Qtile.
 """
-import sys, time
+import sys
+import time
 from Xlib import display, error, X, protocol
+from StringIO import StringIO
+
 
 def configure(window):
     window.configure(
@@ -17,7 +20,11 @@ def configure(window):
 
 for i in range(20):
     try:
+        # Remove useless lib print
+        stdout, sys.stdout = sys.stdout, StringIO()
         d = display.Display(sys.argv[1])
+        sys.stdout = stdout
+
     except error.DisplayConnectionError:
         time.sleep(0.1)
         continue
@@ -26,7 +33,7 @@ for i in range(20):
         sys.exit(1)
     break
 else:
-    print >> sys.stderr, "Could not open window on display %s"%(sys.argv[1])
+    print >> sys.stderr, "Could not open window on display %s" % (sys.argv[1])
     sys.exit(1)
 
 
@@ -36,8 +43,8 @@ background = colormap.alloc_named_color("#2883CE").pixel
 window = root.create_window(100, 100, 100, 100, 1,
                             X.CopyFromParent, X.InputOutput,
                             X.CopyFromParent,
-                            background_pixel = background,
-                            event_mask = X.StructureNotifyMask | X.ExposureMask)
+                            background_pixel=background,
+                            event_mask=X.StructureNotifyMask | X.ExposureMask)
 window.set_wm_name(sys.argv[2])
 window.set_wm_protocols([d.intern_atom("WM_DELETE_WINDOW")])
 
