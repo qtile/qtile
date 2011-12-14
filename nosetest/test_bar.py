@@ -3,7 +3,7 @@ import libqtile.layout
 import libqtile.bar
 import libqtile.widget
 import libqtile.manager
-from libqtile.command import _Call
+import libqtile.confreader
 from utils import Xephyr
 
 
@@ -244,10 +244,10 @@ class ErrConf(GeomConf):
     ]
 
 
-# class uBarErr(utils._QtileTruss):
-#     def test_err(self):
-#         config = ErrConf()
-#         self.qtileRaises("top or the bottom of the screen", config)
+@Xephyr(True, ErrConf(), False)
+def test_err(self):
+    config = ErrConf()
+    self.qtileRaises(libqtile.confreader.ConfigError, config)
 
 
 class TestWidget(libqtile.widget.base._Widget):

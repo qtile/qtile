@@ -8,7 +8,7 @@ import time
 import traceback
 import Xlib.X
 import Xlib.display
-from nose.tools import with_setup
+from nose.tools import with_setup, assert_raises
 from functools import wraps
 WIDTH = 800
 HEIGHT = 600
@@ -176,6 +176,11 @@ class Xephyr(object):
             raise AssertionError("Window never appeared...")
         self.testwindows.append(pid)
         return pid
+
+    def qtileRaises(self, exc, config):
+        self._waitForXephyr()
+        assert_raises(exc, libqtile.manager.Qtile,
+                      config, self.display, self.fname)
 
     def testWindow(self, name):
         return self._testProc(
