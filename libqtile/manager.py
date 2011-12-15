@@ -18,7 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from logging import getLogger, StreamHandler
-from logging.handlers import SysLogHandler
 from xcb.xproto import EventMask
 import atexit
 import command
@@ -27,6 +26,7 @@ import gobject
 import hook
 import logging
 import os
+import os.path
 import sys
 import traceback
 import utils
@@ -703,11 +703,16 @@ class Qtile(command.CommandObject):
     def __init__(self, config, log_level=logging.WARNING,
                  displayName=None, fname=None, no_spawn=False):
 
-        handler = SysLogHandler(
-            address='/dev/log', facility=SysLogHandler.LOG_LOCAL1)
+        handler = logging.FileHandler(
+            os.path.expanduser('~/.qtile.log'))
+        handler.setLevel(logging.WARNING)
+        handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s %(name)s %(funcName)s:%(lineno)d %(message)s"))
         self.log = getLogger('qtile')
         self.log.setLevel(log_level)
         self.log.addHandler(handler)
+        self.log.warning('Starting Qtile')
         handler = StreamHandler(sys.stderr)
         handler.setFormatter(
             ColorFormatter(
