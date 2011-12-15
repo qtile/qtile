@@ -103,6 +103,5 @@ def test_complete(self):
 @Xephyr(True, ShConfig())
 def test_help(self):
     self.sh = libqtile.sh.QSh(self.c)
-    assert self.sh.do_help("log")
     assert self.sh.do_help("nonexistent").startswith("No such command")
     assert self.sh.do_help("help")

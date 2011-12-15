@@ -21,8 +21,6 @@ def setup():
     class Dummy:
         pass
     dummy = Dummy()
-    io = cStringIO.StringIO()
-    dummy.log = libqtile.manager.Log(5, io)
     libqtile.hook.init(dummy)
 
 

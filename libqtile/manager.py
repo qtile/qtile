@@ -17,12 +17,15 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from logging import getLogger, StreamHandler
+from logging.handlers import SysLogHandler
+from xcb.xproto import EventMask
 import atexit
 import command
 import contextlib
-import datetime
 import gobject
 import hook
+import logging
 import os
 import sys
 import traceback
@@ -32,7 +35,6 @@ import xcb
 import xcb.xinerama
 import xcb.xproto
 import xcbq
-from xcb.xproto import EventMask
 
 
 class QtileError(Exception):
@@ -656,46 +658,63 @@ class Group(command.CommandObject):
         self.focus(nxt, True)
 
 
-class Log:
+class ColorFormatter(logging.Formatter):
+    """Logging formatter adding console colors to the output.
     """
-        A circular log.
-    """
-    def __init__(self, length, outfile):
-        self.length, self.outfile = length, outfile
-        self.log = []
+    black, red, green, yellow, blue, magenta, cyan, white = range(8)
+    colors = {
+        'WARNING': yellow,
+        'INFO': green,
+        'DEBUG': blue,
+        'CRITICAL': yellow,
+        'ERROR': red,
+        'RED': red,
+        'GREEN': green,
+        'YELLOW': yellow,
+        'BLUE': blue,
+        'MAGENTA': magenta,
+        'CYAN': cyan,
+        'WHITE': white}
+    reset_seq = '\033[0m'
+    color_seq = '\033[%dm'
+    bold_seq = '\033[1m'
 
-    def add(self, itm):
-        if self.outfile:
-            print >> self.outfile, itm
-        self.log.append(itm)
-        if len(self.log) > self.length:
-            self.log.pop(0)
-
-    def write(self, fp, initial):
-        for i in self.log:
-            print >> fp, initial, i
-
-    def setLength(self, l):
-        self.length = l
-        if len(self.log) > l:
-            self.log = self.log[-l:]
-
-    def clear(self):
-        self.log = []
+    def format(self, record):
+        """Format the record with colors."""
+        color = self.color_seq % (30 + self.colors[record.levelname])
+        message = logging.Formatter.format(self, record)
+        message = message.replace('$RESET', self.reset_seq)\
+            .replace('$BOLD', self.bold_seq)\
+            .replace('$COLOR', color)
+        for color, value in self.colors.items():
+            message = message.replace(
+                '$' + color, self.color_seq % (value + 30))\
+                .replace('$BG' + color, self.color_seq % (value + 40))\
+                .replace('$BG-' + color, self.color_seq % (value + 40))
+        return message + self.reset_seq
 
 
 class Qtile(command.CommandObject):
     """
         This object is the __root__ of the command graph.
     """
-    debug = False
     _exit = False
-    _testing = False
-    _logLength = 100
 
-    def __init__(self, config,
-                 displayName=None, fname=None, testing=False, no_spawn=False):
-        self._testing = testing
+    def __init__(self, config, log_level=logging.WARNING,
+                 displayName=None, fname=None, no_spawn=False):
+
+        handler = SysLogHandler(
+            address='/dev/log', facility=SysLogHandler.LOG_LOCAL1)
+        self.log = getLogger('qtile')
+        self.log.setLevel(log_level)
+        self.log.addHandler(handler)
+        handler = StreamHandler(sys.stderr)
+        handler.setFormatter(
+            ColorFormatter(
+                '$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s'
+                ' %(funcName)s:%(lineno)d $RESET %(message)s'))
+        self.log.addHandler(handler)
+
         self.no_spawn = no_spawn
         if not displayName:
             displayName = os.environ.get("DISPLAY")
@@ -712,10 +731,6 @@ class Qtile(command.CommandObject):
 
         self.conn = xcbq.Connection(displayName)
         self.config, self.fname = config, fname
-        self.log = Log(
-                self._logLength,
-                sys.stderr if self.debug else None
-            )
         hook.init(self)
 
         self.keyMap = {}
@@ -771,8 +786,6 @@ class Qtile(command.CommandObject):
 
         self.conn.flush()
         self.conn.xsync()
-        self._prev = None  # for logging
-        self._prev_count = 0
         self._xpoll()
         if self._exit:
             print >> sys.stderr, (
@@ -1068,7 +1081,7 @@ class Qtile(command.CommandObject):
         if hasattr(self, handler):
             chain.append(getattr(self, handler))
         if not chain:
-            self.log.add("Unknown event: %r" % ename)
+            self.log.warning("Unknown event: %r" % ename)
         return chain
 
     def _xpoll(self, conn=None, cond=None):
@@ -1086,23 +1099,15 @@ class Qtile(command.CommandObject):
 
                 if ename.endswith("Event"):
                     ename = ename[:-5]
-                if self.debug:
-                    if ename != self._prev:
-                        print >> sys.stderr, '\n', ename,
-                        self._prev = ename
-                        self._prev_count = 0
-                    else:
-                        self._prev_count += 1
-                        # only print every 10th
-                        if self._prev_count % 20 == 0:
-                            print >> sys.stderr, '.',
+                self.log.debug(ename)
                 if not e.__class__ in self.ignoreEvents:
                     for h in self.get_target_chain(ename, e):
-                        self.log.add("Handling: %s" % ename)
+                        self.log.info("Handling: %s" % ename)
                         r = h(e)
                         if not r:
                             break
             except Exception as v:
+                self.log.exception('Got an exception in poll loop')
                 self.errorHandler(v)
                 if self._exit:
                     return False
@@ -1208,16 +1213,14 @@ class Qtile(command.CommandObject):
             state = e.state | self.numlockMask
         k = self.keyMap.get((keysym, state & self.validMask))
         if not k:
-            print >> sys.stderr, "Ignoring unknown keysym: %s" % keysym
+            self.log.info("Ignoring unknown keysym: %s" % keysym)
             return
         for i in k.commands:
             if i.check(self):
                 status, val = self.server.call(
                     (i.selectors, i.name, i.args, i.kwargs))
                 if status in (command.ERROR, command.EXCEPTION):
-                    s = "KB command error %s: %s" % (i.name, val)
-                    self.log.add(s)
-                    print >> sys.stderr, s
+                    self.log.error("KB command error %s: %s" % (i.name, val))
         else:
             return
 
@@ -1229,7 +1232,7 @@ class Qtile(command.CommandObject):
 
         m = self.mouseMap.get(button_code)
         if not m or m.modmask & self.validMask != state & self.validMask:
-            print >> sys.stderr, "Ignoring unknown button: %s" % button_code
+            self.log.info("Ignoring unknown button: %s" % button_code)
             return
         if isinstance(m, Click):
             for i in m.commands:
@@ -1237,9 +1240,8 @@ class Qtile(command.CommandObject):
                     status, val = self.server.call(
                         (i.selectors, i.name, i.args, i.kwargs))
                     if status in (command.ERROR, command.EXCEPTION):
-                        s = "Mouse command error %s: %s" % (i.name, val)
-                        self.log.add(s)
-                        print >> sys.stderr, s
+                        self.log.error(
+                            "Mouse command error %s: %s" % (i.name, val))
         elif isinstance(m, Drag):
             x = e.event_x
             y = e.event_y
@@ -1248,9 +1250,8 @@ class Qtile(command.CommandObject):
                 status, val = self.server.call(
                     (i.selectors, i.name, i.args, i.kwargs))
                 if status in (command.ERROR, command.EXCEPTION):
-                    s = "Mouse command error %s: %s" % (i.name, val)
-                    self.log.add(s)
-                    print >> sys.stderr, s
+                    self.log.error(
+                        "Mouse command error %s: %s" % (i.name, val))
                     return
             else:
                 val = 0, 0
@@ -1271,7 +1272,7 @@ class Qtile(command.CommandObject):
             state = state | self.numlockMask
         m = self.mouseMap.get(button_code)
         if not m:
-            print >> sys.stderr, (
+            self.log.info(
                 "Ignoring unknown button release: %s" % button_code)
             return
         if isinstance(m, Drag):
@@ -1291,9 +1292,8 @@ class Qtile(command.CommandObject):
                         (i.selectors, i.name, i.args +
                          (rx + dx, ry + dy), i.kwargs))
                     if status in (command.ERROR, command.EXCEPTION):
-                        s = "Mouse command error %s: %s" % (i.name, val)
-                        self.log.add(s)
-                        print >> sys.stderr, s
+                        self.log.error(
+                            "Mouse command error %s: %s" % (i.name, val))
 
     def handle_ConfigureNotify(self, e):
         """
@@ -1360,24 +1360,6 @@ class Qtile(command.CommandObject):
             self.addGroup(group)
             self.currentWindow.togroup(group)
 
-    def writeReport(self, m, path="~/qtile_crashreport", _force=False):
-        if self._testing and not _force:
-            print >> sys.stderr, "Server Error:", m
-            return
-        suffix = 0
-        base = p = os.path.expanduser(path)
-        while 1:
-            if not os.path.exists(p):
-                break
-            p = base + ".%s" % suffix
-            suffix += 1
-        f = open(p, "a+")
-        print >> f, "*** QTILE REPORT", datetime.datetime.now()
-        print >> f, "Message:", m
-        print >> f, "Last %s events:" % self.log.length
-        self.log.write(f, "\t")
-        f.close()
-
     def errorHandler(self, e):
         if hasattr(e.args[0], "bad_value"):
             m = "\n".join([
@@ -1388,11 +1370,7 @@ class Qtile(command.CommandObject):
             ] + [traceback.format_exc()])
         else:
             m = traceback.format_exc()
-
-        if self._testing:
-            print >> sys.stderr, m
-        else:
-            self.writeReport(m)
+        self.log.error(m)
         self._exit = True
 
     def _items(self, name):
@@ -1445,23 +1423,32 @@ class Qtile(command.CommandObject):
         return None
 
     def cmd_debug(self):
-        """
-            Toggle qtile debug logging. Returns "on" or "off" to indicate the
-            resulting debug status.
-        """
-        if self.debug:
-            self.debug = False
-            self.log.debug = None
-            return "off"
-        else:
-            self.debug = True
-            self.log.debug = sys.stderr
-            return "on"
+        """Set log level to DEBUG"""
+        self.log.setLevel(logging.DEBUG)
+        self.log.debug('Switching to DEBUG threshold')
+
+    def cmd_info(self):
+        """Set log level to INFO"""
+        self.log.setLevel(logging.INFO)
+        self.log.info('Switching to INFO threshold')
+
+    def cmd_warning(self):
+        """Set log level to WARNING"""
+        self.log.setLevel(logging.WARNING)
+        self.log.warning('Switching to WARNING threshold')
+
+    def cmd_error(self):
+        """Set log level to ERROR"""
+        self.log.setLevel(logging.ERROR)
+        self.log.error('Switching to ERROR threshold')
+
+    def cmd_critical(self):
+        """Set log level to CRITICAL"""
+        self.log.setLevel(logging.CRITICAL)
+        self.log.critical('Switching to CRITICAL threshold')
 
     def cmd_pause(self):
-        """
-            Drops into pdb
-        """
+        """Drops into pdb"""
         import pdb
         pdb.set_trace()
 
@@ -1483,39 +1470,6 @@ class Qtile(command.CommandObject):
             List of all addressible widget names.
         """
         return self.widgetMap.keys()
-
-    def cmd_log(self, n=None):
-        """
-            Return the last n log records, where n is all by default.
-
-            Examples:
-
-                log(5)
-
-                log()
-        """
-        if n and len(self.log.log) > n:
-            return self.log.log[-n:]
-        else:
-            return self.log.log
-
-    def cmd_log_clear(self):
-        """
-            Clears the internal log.
-        """
-        self.log.clear()
-
-    def cmd_log_getlength(self):
-        """
-            Returns the configured size of the internal log.
-        """
-        return self.log.length
-
-    def cmd_log_setlength(self, n):
-        """
-            Sets the configured size of the internal log.
-        """
-        return self.log.setLength(n)
 
     def cmd_nextlayout(self, group=None):
         """
@@ -1683,7 +1637,7 @@ class Qtile(command.CommandObject):
         return [i.info() for i in self.windowMap.values()
                 if isinstance(i, window.Internal)]
 
-    def cmd_info(self):
+    def cmd_qtile_info(self):
         """
             Returns a dictionary of info on the Qtile instance.
         """
@@ -1705,12 +1659,12 @@ class Qtile(command.CommandObject):
             widget: Name of the prompt widget (default: "prompt").
         """
         if not self.currentWindow:
-            self.log.add("No window to move")
+            self.log.warning("No window to move")
             return
 
         mb = self.widgetMap.get(widget)
         if not mb:
-            self.log.add("No widget named '%s' present." % widget)
+            self.log.error("No widget named '%s' present." % widget)
             return
 
         mb.startInput(prompt, self.moveToGroup, "group")
@@ -1726,7 +1680,7 @@ class Qtile(command.CommandObject):
             mb = self.widgetMap[widget]
             mb.startInput(prompt, self.cmd_spawn, "cmd")
         except:
-            self.log.add("No widget named '%s' present." % widget)
+            self.log.error("No widget named '%s' present." % widget)
 
     def cmd_addgroup(self, group):
         return self.addGroup(group)
@@ -1757,4 +1711,4 @@ class Qtile(command.CommandObject):
             function(self)
         except Exception:
             error = traceback.format_exc().strip().split("\n")[-1]
-            self.log.add('Can\'t call "%s": %s' % (function, error))
+            self.log.error('Can\'t call "%s": %s' % (function, error))

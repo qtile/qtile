@@ -179,7 +179,7 @@ def fire(event, *args, **kwargs):
     if event not in subscribe.hooks:
         raise manager.QtileError("Unknown event: %s" % event)
     if not event in SKIPLOG:
-        qtile.log.add("Internal event: %s(%s, %s)" %
+        qtile.log.info("Internal event: %s(%s, %s)" %
                       (event, args, kwargs))
     for i in subscriptions.get(event, []):
         i(*args, **kwargs)

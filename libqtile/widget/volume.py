@@ -71,10 +71,9 @@ class Volume(base._TextBox):
                 img = cairo.ImageSurface.create_from_png(
                     os.path.join(self.theme_path,
                                  '%s.png' % img_name))
-            except cairo.Error, error:
+            except cairo.Error:
                 self.theme_path = None
-                self.qtile.log.add(error)
-                self.qtile.log.add('Volume switching to text mode')
+                self.qtile.log.exception('Volume switching to text mode')
                 return
             input_width = img.get_width()
             input_height = img.get_height()

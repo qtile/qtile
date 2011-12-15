@@ -86,7 +86,7 @@ class _Server(ipc.Server):
         cmd = obj.command(name)
         if not cmd:
             return ERROR, "No such command."
-        self.qtile.log.add("Command: %s(%s, %s)" % (name, args, kwargs))
+        self.qtile.log.info("Command: %s(%s, %s)" % (name, args, kwargs))
         try:
             return SUCCESS, cmd(*args, **kwargs)
         except CommandError, v:

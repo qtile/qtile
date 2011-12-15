@@ -874,9 +874,8 @@ class Window(_Window):
             if not self.qtile.config.follow_mouse_focus and \
                             self.group.currentWindow != self:
                 self.group.focus(self, False)
-
-        elif self.qtile.debug:
-            print >> sys.stderr, "Unknown window property: ", name
+        else:
+            self.qtile.log.warning("Unknown window property: %s" % name)
         return False
 
     def _items(self, name):

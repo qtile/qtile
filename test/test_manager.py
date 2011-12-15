@@ -264,18 +264,6 @@ def test_nextprevgroup(self):
 
 
 @Xephyr(False, TestConfig())
-def test_log_clear(self):
-    self.testWindow("one")
-    self.c.log_clear()
-
-
-@Xephyr(False, TestConfig())
-def test_log_length(self):
-    self.c.log_setlength(5)
-    assert self.c.log_getlength() == 5
-
-
-@Xephyr(False, TestConfig())
 def test_inspect_xeyes(self):
     self.testXeyes()
     assert self.c.window.inspect()
@@ -753,37 +741,6 @@ def test_init():
         libqtile.manager.Key,
         ["unknown"], "x", libqtile.command._Call("base", None, "foo")
     )
-
-
-def test_all():
-    io = cStringIO.StringIO()
-    l = libqtile.manager.Log(5, io)
-    for i in range(10):
-        l.add(i)
-    assert len(l.log) == 5
-    assert l.log[0] == 5
-    assert l.log[4] == 9
-
-    l.write(io, "\t")
-    assert "\t5" in io.getvalue()
-    l.clear()
-    assert not l.log
-
-    l.setLength(5)
-    assert l.length == 5
-
-
-def test_setLength():
-    io = cStringIO.StringIO()
-    l = libqtile.manager.Log(10, io)
-    for i in range(10):
-        l.add(i)
-    assert l.length == 10
-    assert len(l.log) == 10
-    l.setLength(5)
-    assert l.length == 5
-    assert len(l.log) == 5
-    assert l.log[-1] == 9
 
 
 class TScreen(libqtile.manager.Screen):
