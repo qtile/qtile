@@ -1102,7 +1102,7 @@ class Qtile(command.CommandObject):
                         r = h(e)
                         if not r:
                             break
-            except Exception, v:
+            except Exception as v:
                 self.errorHandler(v)
                 if self._exit:
                     return False

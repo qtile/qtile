@@ -157,7 +157,7 @@ class Mpd(base._TextBox):
             self.client.next()
         elif button == 8:
             if status:
-                self.client.setvol(int(status['volume']) - self.inc)
+                self.client.setvol(max(int(status['volume']) - self.inc, 0))
         elif button == 9:
             if status:
-                self.client.setvol(int(status['volume']) + self.inc)
+                self.client.setvol(min(int(status['volume']) + self.inc, 100))
