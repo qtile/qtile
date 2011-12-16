@@ -521,13 +521,13 @@ class SliceConfig:
         libqtile.manager.Group("a"),
     ]
     layouts = [
-        layout.Slice('left', 200, wname='slice',
+        layout.Slice(side='left', width=200, wname='slice',
             fallback=layout.Stack(stacks=1, border_width=0)),
-        layout.Slice('right', 200, wname='slice',
+        layout.Slice(side='right', width=200, wname='slice',
             fallback=layout.Stack(stacks=1, border_width=0)),
-        layout.Slice('top', 200, wname='slice',
+        layout.Slice(side='top', width=200, wname='slice',
             fallback=layout.Stack(stacks=1, border_width=0)),
-        layout.Slice('bottom', 200, wname='slice',
+        layout.Slice(side='bottom', width=200, wname='slice',
             fallback=layout.Stack(stacks=1, border_width=0)),
         ]
     floating_layout = libqtile.layout.floating.Floating()

@@ -170,15 +170,6 @@ def test_events(self):
     assert self.c.status() == "OK"
 
 
-@Xephyr(False, TestConfig())
-def test_report(self):
-    p = '/tmp/crashreport'
-    self.c.report("msg", p)
-    assert os.path.isfile(p)
-    self.c.report("msg", p)
-    assert os.path.isfile(p + ".0")
-
-
 # FIXME: failing test disabled. For some reason we don't seem
 # to have a keymap in Xnest or Xephyr 99% of the time.
 @Xephyr(False, TestConfig())

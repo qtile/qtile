@@ -93,7 +93,8 @@ def test_complete(self):
     self.sh = libqtile.sh.QSh(self.c)
     assert self.sh._complete("c", "c", 0) == "cd"
     assert self.sh._complete("c", "c", 1) == "commands"
-    assert self.sh._complete("c", "c", 2) is None
+    assert self.sh._complete("c", "c", 2) == "critical"
+    assert self.sh._complete("c", "c", 3) is None
 
     assert self.sh._complete("cd l", "l", 0) == "layout"
     assert self.sh._complete("cd layout/", "layout/", 0) == "layout/group"

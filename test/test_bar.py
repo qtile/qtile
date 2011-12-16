@@ -103,7 +103,6 @@ def test_prompt(self):
 @Xephyr(True, GBConfig())
 def test_event(self):
     self.c.group["bb"].toscreen()
-    self.c.log()
 
 
 @Xephyr(True, GBConfig())

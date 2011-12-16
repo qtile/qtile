@@ -1,6 +1,7 @@
 import libqtile
 import libqtile.hook
 import libqtile.ipc
+import logging
 import os
 import subprocess
 import sys
@@ -139,7 +140,8 @@ class Xephyr(object):
         if pid == 0:
             try:
                 q = libqtile.manager.Qtile(
-                    config, self.display, self.fname)
+                    config, self.display, self.fname,
+                    log=libqtile.manager.init_log(logging.CRITICAL))
                 q.loop()
             except Exception:
                 traceback.print_exc(file=sys.stderr)

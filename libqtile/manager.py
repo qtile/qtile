@@ -720,8 +720,8 @@ class Qtile(command.CommandObject):
     """
     _exit = False
 
-    def __init__(self, config, log=None,
-                 displayName=None, fname=None, no_spawn=False):
+    def __init__(self, config,
+                 displayName=None, fname=None, no_spawn=False, log=None):
         if log == None:
             log = init_log()
         self.log = log

@@ -2,6 +2,7 @@ import time
 import cStringIO
 import libqtile.manager
 import libqtile.hook
+import logging
 from nose.tools import with_setup, raises
 
 
@@ -21,6 +22,7 @@ def setup():
     class Dummy:
         pass
     dummy = Dummy()
+    dummy.log = libqtile.manager.init_log(logging.CRITICAL)
     libqtile.hook.init(dummy)
 
 
