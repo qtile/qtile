@@ -139,7 +139,7 @@ class Xephyr(object):
         if pid == 0:
             try:
                 q = libqtile.manager.Qtile(
-                    config, self.display, self.fname, testing=True)
+                    config, self.display, self.fname)
                 q.loop()
             except Exception:
                 traceback.print_exc(file=sys.stderr)
