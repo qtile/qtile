@@ -875,7 +875,7 @@ class Window(_Window):
                             self.group.currentWindow != self:
                 self.group.focus(self, False)
         else:
-            self.qtile.log.warning("Unknown window property: %s" % name)
+            self.qtile.log.info("Unknown window property: %s" % name)
         return False
 
     def _items(self, name):

@@ -2,6 +2,7 @@
     If dbus is available, this module implements a
     org.freedesktop.Notifications service.
 """
+import logging
 
 try:
     import dbus
@@ -58,8 +59,12 @@ class NotificationManager(object):
         self.callbacks = []
 
         if dbus:
-            DBusGMainLoop(set_as_default=True)
-            self.service = NotificationService(self)
+            try:
+                DBusGMainLoop(set_as_default=True)
+                self.service = NotificationService(self)
+            except Exception:
+                logging.getLogger('qtile').exception('Dbus init failed')
+                self.service = None
         else:
             self.service = None
 

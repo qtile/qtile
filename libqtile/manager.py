@@ -694,32 +694,37 @@ class ColorFormatter(logging.Formatter):
         return message + self.reset_seq
 
 
+def init_log(log_level=logging.WARNING):
+    handler = logging.FileHandler(
+        os.path.expanduser('~/.qtile.log'))
+    handler.setLevel(logging.WARNING)
+    handler.setFormatter(
+        logging.Formatter(
+            "%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s"))
+    log = getLogger('qtile')
+    log.setLevel(log_level)
+    log.addHandler(handler)
+    log.warning('Starting Qtile')
+    handler = StreamHandler(sys.stderr)
+    handler.setFormatter(
+        ColorFormatter(
+            '$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s'
+            ' %(funcName)s:%(lineno)d $RESET %(message)s'))
+    log.addHandler(handler)
+    return log
+
+
 class Qtile(command.CommandObject):
     """
         This object is the __root__ of the command graph.
     """
     _exit = False
 
-    def __init__(self, config, log_level=logging.WARNING,
+    def __init__(self, config, log=None,
                  displayName=None, fname=None, no_spawn=False):
-
-        handler = logging.FileHandler(
-            os.path.expanduser('~/.qtile.log'))
-        handler.setLevel(logging.WARNING)
-        handler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s %(name)s %(funcName)s:%(lineno)d %(message)s"))
-        self.log = getLogger('qtile')
-        self.log.setLevel(log_level)
-        self.log.addHandler(handler)
-        self.log.warning('Starting Qtile')
-        handler = StreamHandler(sys.stderr)
-        handler.setFormatter(
-            ColorFormatter(
-                '$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s'
-                ' %(funcName)s:%(lineno)d $RESET %(message)s'))
-        self.log.addHandler(handler)
-
+        if log == None:
+            log = init_log()
+        self.log = log
         self.no_spawn = no_spawn
         if not displayName:
             displayName = os.environ.get("DISPLAY")
@@ -793,7 +798,7 @@ class Qtile(command.CommandObject):
         self.conn.xsync()
         self._xpoll()
         if self._exit:
-            print >> sys.stderr, (
+            self.log.error(
                 "Access denied: "
                 "Another window manager running?")
             sys.exit(1)
@@ -1086,7 +1091,7 @@ class Qtile(command.CommandObject):
         if hasattr(self, handler):
             chain.append(getattr(self, handler))
         if not chain:
-            self.log.warning("Unknown event: %r" % ename)
+            self.log.info("Unknown event: %r" % ename)
         return chain
 
     def _xpoll(self, conn=None, cond=None):
@@ -1111,12 +1116,10 @@ class Qtile(command.CommandObject):
                         r = h(e)
                         if not r:
                             break
-            except Exception as v:
+            except Exception:
                 self.log.exception('Got an exception in poll loop')
-                self.errorHandler(v)
-                if self._exit:
-                    return False
-                continue
+                self._exit = True
+                return False
         return True
 
     def loop(self):
@@ -1131,6 +1134,7 @@ class Qtile(command.CommandObject):
                     # this seems to be crucial part
                     self.conn.flush()
                 if self._exit:
+                    self.log.info('Breaking main loop')
                     break
         finally:
             gobject.source_remove(display_tag)
@@ -1365,19 +1369,6 @@ class Qtile(command.CommandObject):
             self.addGroup(group)
             self.currentWindow.togroup(group)
 
-    def errorHandler(self, e):
-        if hasattr(e.args[0], "bad_value"):
-            m = "\n".join([
-                "Server Error: %s" % e.__class__.__name__,
-                "\tbad_value: %s" % e.args[0].bad_value,
-                "\tmajor_opcode: %s" % e.args[0].major_opcode,
-                "\tminor_opcode: %s" % e.args[0].minor_opcode
-            ] + [traceback.format_exc()])
-        else:
-            m = traceback.format_exc()
-        self.log.error(m)
-        self._exit = True
-
     def _items(self, name):
         if name == "group":
             return True, self.groupMap.keys()
@@ -1500,23 +1491,6 @@ class Qtile(command.CommandObject):
             group = self.currentGroup
         group.prevLayout()
 
-    def cmd_report(self, msg="None", path="~/qtile_crashreport"):
-        """
-            Write a qtile crash report.
-
-            :msg Message that should head the report
-            :path Path of the file to write to
-
-            Examples:
-
-                report()
-
-                report(msg="My messasge")
-
-                report(msg="My message", path="~/myreport")
-        """
-        self.writeReport(msg, path, True)
-
     def cmd_screens(self):
         """
             Return a list of dictionaries providing information on all screens.
@@ -1579,8 +1553,10 @@ class Qtile(command.CommandObject):
         """
             Restart qtile using the execute command.
         """
-        self.cmd_execute(sys.executable,
-                         [sys.executable] + sys.argv + ['--no-spawn'])
+        argv = [sys.executable] + sys.argv
+        if '--no-spawn' not in argv:
+            argv.append('--no-spawn')
+        self.cmd_execute(sys.executable, argv)
 
     def cmd_spawn(self, cmd):
         """

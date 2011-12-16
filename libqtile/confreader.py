@@ -25,23 +25,31 @@
 # SOFTWARE.
 
 import os
-import sys
-import utils
+import logging
+from imp import new_module
+from libqtile import manager, layout
+from libqtile.command import lazy
+from .layout import Floating
 
 
 class ConfigError(Exception):
     pass
 
 
+# Default / fallback config
 class Config:
-    keys = ()
+    keys = [
+        manager.Key(['mod4'], "Tab", lazy.layout.next()),
+        manager.Key(['mod4'], "q", lazy.restart())
+    ]
     mouse = ()
-    groups = None
-    layouts = None
-    screens = ()
+    groups = [manager.Group('fallback'), manager.Group('fallback2')]
+    layouts = [layout.Tile()]
+    screens = [manager.Screen()]
     main = None
     follow_mouse_focus = True
     cursor_warp = False
+    floating_layout = Floating()
 
 
 class File(Config):
@@ -52,19 +60,24 @@ class File(Config):
                 # if variable wasn't set
                 config_directory = os.path.expanduser("~/.config")
             fname = os.path.join(config_directory, "qtile", "config.py")
-        elif fname == "default":
-            fname = utils.data.path("resources/default-config.py")
 
         self.fname = fname
 
         if not os.path.isfile(fname):
             raise ConfigError("Config file does not exist: %s" % fname)
+
+        config = new_module('config')
+        config.__file__ = fname
+        # try:
+            # sys.path.insert(0, os.path.dirname(self.fname))
+            # config = __import__(os.path.basename(self.fname)[:-3])
         try:
-            sys.path.insert(0, os.path.dirname(self.fname))
-            config = __import__(os.path.basename(self.fname)[:-3])
-            #sys.path = sys.path[1:] # XXX: is it needed?
-        except Exception, v:
-            raise ConfigError(str(v))
+            execfile(config.__file__, config.__dict__)
+        except Exception:
+            logging.getLogger('qtile').exception('Config error')
+            raise ConfigError()
+
+        # except Exception as v:
 
         self.screens = config.screens
         self.layouts = config.layouts

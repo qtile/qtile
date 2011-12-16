@@ -8,12 +8,10 @@
 # TODO: some kind of templating to make shown info configurable
 # TODO: best practice to handle failures? just write to stderr?
 
-from socket import error as SocketError
-import sys
-
 from .. import bar, manager, utils
-import base
 from mpd import MPDClient, CommandError, ConnectionError, ProtocolError
+from socket import error as SocketError
+import base
 
 
 class Mpd(base._TextBox):
@@ -52,17 +50,16 @@ class Mpd(base._TextBox):
     def connect(self, ifneeded=False):
         if self.connected:
             if not ifneeded:
-                print >> sys.stderr, (
-                    'Already connected. '
+                self.log.warning('Already connected. '
                     ' No need to connect again. '
                     'Maybe you want to disconnect first.')
             return True
         CON_ID = {'host': self.host, 'port': self.port}
         if not self.mpdConnect(CON_ID):
-            print >> sys.stderr, 'Cannot connect to MPD server.'
+            self.log.error('Cannot connect to MPD server.')
         if self.password:
             if not self.mpdAuth(self.password):
-                print >> sys.stderr, 'Authentication failed.  Disconnecting'
+                self.log.warning('Authentication failed.  Disconnecting')
                 self.client.disconnect()
         return self.connected
 
@@ -72,7 +69,8 @@ class Mpd(base._TextBox):
         """
         try:
             self.client.connect(**con_id)
-        except SocketError:
+        except Exception:
+            self.log.exception('Error connecting mpd')
             return False
         self.connected = True
         return True
@@ -133,9 +131,8 @@ class Mpd(base._TextBox):
                         volume)
             else:
                 playing = ''
-        except (SocketError, ProtocolError, ConnectionError), e:
-            print ("Got error during query. "
-                   " Disconnecting.  Error was: %s" % str(e))
+        except (SocketError, ProtocolError, ConnectionError):
+            self.log.exception('Mpd error')
             playing = self.msg_nc
             self.mpdDisconnect()
         if self.text != playing:

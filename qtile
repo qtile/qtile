@@ -26,8 +26,9 @@ import os.path
 import sys
 import traceback
 from libqtile import confreader, manager, command
+from time import sleep
 
-def main():
+def make_qtile():
     from optparse import OptionParser, OptionGroup
     parser = OptionParser(version="%prog 0.4")
     parser.add_option(
@@ -37,14 +38,6 @@ def main():
         dest="configfile",
         help='Use specified configuration file,'
         ' "default" will load the system default config.'
-    )
-    parser.add_option(
-        "-f", "--fallback",
-        action="store", type="string",
-        default=None,
-        dest="fallback",
-        help='Use specified fallback configuration file,'
-        ' "default" will load the system default config as fallback.'
     )
     parser.add_option(
         "-s", "--socket",
@@ -68,32 +61,27 @@ def main():
         help='Set qtile log level')
 
     options, args = parser.parse_args()
+    log_level = getattr(logging, options.log_level)
+    log = manager.init_log(log_level)
 
     try:
         c = confreader.File(options.configfile)
-    except confreader.ConfigError, v:
-        if options.fallback:
-            print >> sys.stderr, "Config error: %s" % v.message
-            print >> sys.stderr, "Falling back to config file: %s" % (
-                options.fallback)
-            c = confreader.File(options.fallback)
-        else:
-            raise
+    except confreader.ConfigError:
+        c = confreader.Config()
 
-    log_level = getattr(logging, options.log_level)
-    q = manager.Qtile(c, log_level=log_level,
-                      fname=options.socket, no_spawn=options.no_spawn)
-    q.loop()
-
+    return manager.Qtile(c, log=log, fname=options.socket,
+                      no_spawn=options.no_spawn)
 
 
 if __name__ == "__main__":
+    q = make_qtile()
     try:
-        main()
+        q.loop()
     except Exception:
-
-        print "Crashed ! "
-        traceback.print_exc()
-        print "Trying to restart..."
-        os.execv(sys.executable, [sys.executable] + sys.argv + ['--no-spawn'])
-    print "Exiting cleanly"
+        q.log.exception('Qtile crashed')
+        sleep(2)
+        argv = [sys.executable] + sys.argv
+        if '--no-spawn' not in argv:
+            argv.append('--no-spawn')
+        os.execv(sys.executable, argv)
+    q.log.info('Exiting...')
