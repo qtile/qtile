@@ -29,6 +29,7 @@ class Max(SingleWindow):
         commands to switch to next and previous windows in the stack.
     """
     name = "max"
+
     def __init__(self):
         SingleWindow.__init__(self)
         self.clients = []

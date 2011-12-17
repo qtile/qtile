@@ -8,6 +8,7 @@ from clock import Clock
 from sep import Sep
 from prompt import Prompt
 from systray import Systray
+from notify import Notify
 from graph import *
 try:
     from mpriswidget import Mpris
@@ -20,3 +21,14 @@ except ImportError:
 from maildir import Maildir
 from volume import Volume
 from currentlayout import CurrentLayout
+
+try:
+    from yahoo_weather import YahooWeather
+except ImportError:
+    # Requires Python >= 2.6 or simplejson
+    pass
+
+try:
+    from canto import Canto
+except ImportError:
+    pass

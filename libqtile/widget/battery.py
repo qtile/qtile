@@ -8,27 +8,34 @@ CHARGING = 'Charging'
 DISCHARGING = 'Discharging'
 UNKNOWN = 'Unknown'
 
+
 class Battery(base._TextBox):
     """
-        A simple but flexible text-based clock.
+        A simple but flexible text-based battery widget.
     """
     defaults = manager.Defaults(
-        ("font", "Arial", "Clock font"),
-        ("fontsize", None, "Clock pixel size. Calculated if None."),
-        ("padding", None, "Clock padding. Calculated if None."),
+        ("font", "Arial", "Battery widget font"),
+        ("fontsize", None, "Battery widget pixel size. Calculated if None."),
+        ("padding", None, "Battery widget padding. Calculated if None."),
         ("background", "000000", "Background colour"),
         ("foreground", "ffffff", "Foreground colour"),
-        ("format", "{char} {percent:2.0%} {hour:d}:{min:02d}", "Display format"),
+        ("format", "{char} {percent:2.0%} {hour:d}:{min:02d}",
+         "Display format"),
         ("battery_name", "BAT0", "ACPI name of a battery, usually BAT0"),
-        ("status_file", "status", "Name of status file in /sys/class/power_supply/battery_name"),
-        ("energy_now_file", "energy_now", "Name of file with the current energy in /sys/class/power_supply/battery_name"),
-        ("energy_full_file", "energy_full", "Name of file with the maximum energy in /sys/class/power_supply/battery_name"),
-        ("power_now_file", "power_now", "Name of file with the current power draw in /sys/class/power_supply/battery_name"),
-        ("update_delay",1,"The delay in seconds between updates"),
-        ("charge_char","^","Character to indicate the battery is charging"),
-        ("discharge_char","V","Character to indicate the battery is discharging"),
-        
+        ("status_file", "status", "Name of status file in"
+         " /sys/class/power_supply/battery_name"),
+        ("energy_now_file", "energy_now", "Name of file with the "
+         "current energy in /sys/class/power_supply/battery_name"),
+        ("energy_full_file", "energy_full", "Name of file with the maximum"
+         " energy in /sys/class/power_supply/battery_name"),
+        ("power_now_file", "power_now", "Name of file with the current"
+         " power draw in /sys/class/power_supply/battery_name"),
+        ("update_delay", 1, "The delay in seconds between updates"),
+        ("charge_char", "^", "Character to indicate the battery is charging"),
+        ("discharge_char", "V", "Character to indicate the battery"
+         " is discharging")
     )
+
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "BAT", **config)
 
@@ -44,17 +51,17 @@ class Battery(base._TextBox):
 
         if stat == DISCHARGING:
             char = self.discharge_char
-            time = now/power
+            time = now / power
         elif stat == CHARGING:
             char = self.charge_char
-            time = (full - now)/power
+            time = (full - now) / power
         else:
             return 'Full'
 
         hour = int(time)
-        min = int(time*60) % 60
+        min = int(time * 60) % 60
         return self.format.format(char=char,
-                           percent=now/full,
+                           percent=now / full,
                            hour=hour, min=min)
 
     def update(self):

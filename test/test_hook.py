@@ -1,23 +1,29 @@
-from nose.tools import with_setup, raises
 import cStringIO
-import libqtile.hook
 import libqtile.manager
+import libqtile.hook
+import logging
+from nose.tools import with_setup, raises
 
 # TODO: more tests required.
 # 1. Check all hooks that can be fired
 
+class TestCall(object):
+    def __init__(self, val):
+        self.val = val
 
-def setup_module():
+    def __call__(self, val):
+        self.val = val
+
+def setup():
     class Dummy:
         pass
 
     dummy = Dummy()
-    io = cStringIO.StringIO()
-    dummy.log = libqtile.manager.Log(5, io)
+    dummy.log = libqtile.manager.init_log(logging.CRITICAL)
     libqtile.hook.init(dummy)
 
 
-def teardown_func():
+def teardown():
     libqtile.hook.clear()
 
 
@@ -26,41 +32,31 @@ def test_cannot_fire_unknown_event():
     libqtile.hook.fire("unknown")
 
 
-@with_setup(None, teardown_func)
+@with_setup(setup, teardown)
 def test_hook_calls_subscriber():
-    test_list = []
-
-    def test(list):
-        list.append(1)
-
+    test = TestCall(0)
     libqtile.manager.hook.subscribe.group_window_add(test)
-    libqtile.manager.hook.fire("group_window_add", test_list)
-    assert len(test_list) == 1
-    assert 1 in test_list
+    libqtile.manager.hook.fire("group_window_add", 8)
+    assert test.val == 8
 
 
-@with_setup(None, teardown_func)
+@with_setup(setup, teardown)
 def test_subscribers_can_be_added_removed():
-
-    def test(list):
-        pass
-
+    test = TestCall(0)
     libqtile.manager.hook.subscribe.group_window_add(test)
     assert libqtile.manager.hook.subscriptions
     libqtile.manager.hook.clear()
     assert not libqtile.manager.hook.subscriptions
 
 
-@with_setup(None, teardown_func)
+@with_setup(setup, teardown)
 def test_can_unsubscribe_from_hook():
-    test_list = []
-
-    def test(list):
-        list.append(len(list) + 1)
+    test = TestCall(0)
 
     libqtile.manager.hook.subscribe.group_window_add(test)
-    libqtile.manager.hook.fire("group_window_add", test_list)
+    libqtile.manager.hook.fire("group_window_add", 3)
+    assert test.val == 3
+
     libqtile.manager.hook.unsubscribe.group_window_add(test)
-    libqtile.manager.hook.fire("group_window_add", test_list)
-    assert len(test_list) == 1
-    assert 1 in test_list
+    libqtile.manager.hook.fire("group_window_add", 4)
+    assert test.val == 3

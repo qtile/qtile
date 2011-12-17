@@ -1,4 +1,6 @@
-import sys, os, inspect
+import sys
+import os
+import inspect
 sys.path.insert(0, ".")
 import countershape.widgets
 import countershape.layout
@@ -6,6 +8,7 @@ import countershape.markup
 from countershape.doc import *
 import cubictemp
 import markdown2
+
 
 class Examples:
     def __init__(self, d):
@@ -15,7 +18,7 @@ class Examples:
         f = file(os.path.join(self.d, path)).read()
         if proc:
             f = proc(f)
-        post = "<div class=\"fname\">(%s)</div>"%path
+        post = "<div class=\"fname\">(%s)</div>" % path
         return f + post
 
     def py(self, path, **kwargs):
@@ -35,7 +38,7 @@ class _Obj:
     @property
     def path(self):
         return ".".join(self.parts)
-    
+
     @property
     def name(self):
         return self.parts[-1]
@@ -68,7 +71,7 @@ class _Obj:
                 a = inspect.formatargspec(*aspec)
                 l.append(
                     [
-                        i[4:] + a, 
+                        i[4:] + a,
                         markdown2.markdown(inspect.getdoc(f) or "")
                     ]
                 )
@@ -85,8 +88,9 @@ class _Obj:
                 f = getattr(self.o, i)
                 l.append(
                     dict(
-                        name = i,
-                        doc = markdown2.markdown(inspect.getdoc(f) or "")
+                        name=i,
+                        doc=markdown2.markdown(
+                            inspect.getdoc(f) or "")
                     )
                 )
         return l
@@ -126,7 +130,7 @@ ns.version = "0.4"
 ns.sidebar = countershape.widgets.SiblingPageIndex('/index.html')
 ns.copyright = "Copyright (c) 2010 Aldo Cortesi"
 this.layout = countershape.Layout("_layout.html")
-this.titlePrefix = "Qtile %s - "%ns.version
+this.titlePrefix = "Qtile %s - " % ns.version
 
 
 pages = [

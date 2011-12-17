@@ -16,9 +16,6 @@ class Match(object):
 
     def compare(self, client):
         for _type, rule in self._rules:
-            match_func = getattr(rule, 'match', None) or\
-                         getattr(rule, 'count')
-
             if _type == 'title':
                 value = client.name
             elif _type == 'wm_class':
@@ -30,33 +27,30 @@ class Match(object):
             else:
                 value = client.window.get_wm_window_role()
 
-            if value and match_func(value):
-                return True
+            if value:
+                match_func = getattr(rule, 'match', None)
+                if (match_func and match_func(value) or
+                    getattr(value, 'count')(rule) > 0):
+                    return True
         return False
 
 
-def simple_key_binder(mod, keynames=None):
-    """
-        Bind keys to mod+group position or to the keys specified as
-        second argument.
-    """
+def simple_key_binder(mod):
+    ''' Bind keys to mod+group position '''
     def func(dgroup):
         # unbind all
         for key in dgroup.keys[:]:
             dgroup.qtile.unmapKey(key)
             dgroup.keys.remove(key)
 
-        if keynames:
-            keys = keynames
-        else:
-            # keys 1 to 9 and 0
-            keys = range(1, 10) + [0]
+        # keys 1 to 9 and 0
+        keynumbers = range(1, 10) + [0]
 
         # bind all keys
-        for keyname, group in zip(keys, dgroup.qtile.groups):
+        for num, group in zip(keynumbers, dgroup.qtile.groups[:10]):
             name = group.name
-            key = Key([mod], keyname, lazy.group[name].toscreen())
-            key_s = Key([mod, "shift"], keyname, lazy.window.togroup(name))
+            key = Key([mod], str(num), lazy.group[name].toscreen())
+            key_s = Key([mod, "shift"], str(num), lazy.window.togroup(name))
             dgroup.keys.append(key)
             dgroup.keys.append(key_s)
             dgroup.qtile.mapKey(key)
@@ -89,7 +83,7 @@ class DGroups(object):
                 self.qtile.addGroup(name)
 
             spawn_cmd = tag.get('spawn')
-            if spawn_cmd:
+            if spawn_cmd and not self.qtile.no_spawn:
                 self.qtile.cmd_spawn(spawn_cmd)
 
     def _setup_hooks(self):
@@ -136,8 +130,8 @@ class DGroups(object):
                             group_obj.layout = layout
                         if master:
                             group_obj.layout.shuffle(
-                                   lambda lst: self.shuffle_groups(
-                                       lst, master))
+                                   lambda lst:
+                                self.shuffle_groups(lst, master))
 
                 if 'float' in app and app['float']:
                     client.floating = True

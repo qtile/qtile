@@ -1,4 +1,3 @@
-import gobject
 import dbus
 
 from dbus.mainloop.glib import DBusGMainLoop
@@ -6,10 +5,13 @@ from dbus.mainloop.glib import DBusGMainLoop
 import base
 from .. import bar, manager
 
+
 class Mpris(base._TextBox):
-    """ A widget which displays the current track/artist of your favorite MPRIS
-    player. It should work with all players which implement a reasonably correct
-    version of MPRIS, though I have only tested it with clementine. """
+    """
+    A widget which displays the current track/artist of your favorite MPRIS
+    player. It should work with all players which implement a reasonably
+    correct version of MPRIS, though I have only tested it with clementine.
+    """
 
     defaults = manager.Defaults(
             ("font", "Arial", "Mpd widget font"),
@@ -23,14 +25,16 @@ class Mpris(base._TextBox):
                  objname='org.mpris.clementine', **config):
         base._TextBox.__init__(self, " ", width, **config)
 
-        # we need a main loop to get event signals; we just piggyback on qtile's
-        # main loop
+        # we need a main loop to get event signals
+        # we just piggyback on qtile's main loop
         self.dbus_loop = DBusGMainLoop()
         self.bus = dbus.SessionBus(mainloop=self.dbus_loop)
 
         # watch for our player to start up
-        deebus = self.bus.get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
-        deebus.connect_to_signal("NameOwnerChanged", self.handle_name_owner_change)
+        deebus = self.bus.get_object(
+            'org.freedesktop.DBus', '/org/freedesktop/DBus')
+        deebus.connect_to_signal(
+            "NameOwnerChanged", self.handle_name_owner_change)
 
         self.objname = objname
         self.connected = False
@@ -43,12 +47,14 @@ class Mpris(base._TextBox):
         """ Try to connect to the player if it exists. """
         try:
             self.player = self.bus.get_object(self.objname, '/Player')
-            self.iface = dbus.Interface(self.player, 
-                                        dbus_interface='org.freedesktop.MediaPlayer')
-            
-            # See: http://xmms2.org/wiki/MPRIS for info on signals and what they mean.
-            self.iface.connect_to_signal("TrackChange", self.handle_track_change)
-            self.iface.connect_to_signal("StatusChange", self.handle_status_change)
+            self.iface = dbus.Interface(
+                self.player, dbus_interface='org.freedesktop.MediaPlayer')
+            # See: http://xmms2.org/wiki/MPRIS for info on signals
+            # and what they mean.
+            self.iface.connect_to_signal(
+                "TrackChange", self.handle_track_change)
+            self.iface.connect_to_signal(
+                "StatusChange", self.handle_status_change)
             self.connected = True
         except dbus.exceptions.DBusException:
             self.connected = False
@@ -58,7 +64,7 @@ class Mpris(base._TextBox):
 
     def handle_status_change(self, *args):
         self.update()
-    
+
     def handle_name_owner_change(self, name, old_owner, new_owner):
         if name == self.objname:
             if old_owner == '':
@@ -70,17 +76,18 @@ class Mpris(base._TextBox):
             self.update()
 
     def ensure_connected(f):
-        """ Tries to connect to the player. It *should* be succesful if the player
+        """
+        Tries to connect to the player. It *should* be succesful if the player
         is alive. """
         def wrapper(*args, **kwargs):
             self = args[0]
             try:
                 self.iface.GetMetadata()
             except (dbus.exceptions.DBusException, AttributeError):
-                # except AttributeError because self.iface won't exist if we haven't
+                # except AttributeError because
+                # self.iface won't exist if we haven't
                 # _connect()ed yet
                 self._connect()
-            
             return f(*args, **kwargs)
         return wrapper
 
@@ -113,17 +120,17 @@ class Mpris(base._TextBox):
         """ Returns true if we are connected to the player and it is playing
         something, false otherwise. """
         if self.connected:
-            (playing,random,repeat,stop_after_last) = self.iface.GetStatus()
+            (playing, random, repeat, stop_after_last) = self.iface.GetStatus()
             return playing == 0
         else:
             return False
 
     def cmd_info(self):
         """ What's the current state of the widget? """
-        return dict(connected = self.connected,
-                    nowplaying = self.text, 
-                    isplaying = self.is_playing(),
-                   )
+        return dict(connected=self.connected,
+                    nowplaying=self.text,
+                    isplaying=self.is_playing(),
+                )
 
     def cmd_update(self):
         """ Force the widget to update. Mostly used for testing. """

@@ -8,12 +8,11 @@
 # TODO: some kind of templating to make shown info configurable
 # TODO: best practice to handle failures? just write to stderr?
 
-from socket import error as SocketError
-import sys
-
-from .. import hook, bar, manager
-import base
+from .. import bar, manager, utils
 from mpd import MPDClient, CommandError, ConnectionError, ProtocolError
+from socket import error as SocketError
+import base
+
 
 class Mpd(base._TextBox):
     """
@@ -24,9 +23,12 @@ class Mpd(base._TextBox):
         ("fontsize", None, "Mpd widget pixel size. Calculated if None."),
         ("padding", None, "Mpd widget padding. Calculated if None."),
         ("background", "000000", "Background colour"),
-        ("foreground", "ffffff", "Foreground colour")
+        ("foreground", "cccccc", "Foreground colour"),
+        ("foreground_progress", "ffffff", "Foreground progress colour")
     )
-    def __init__(self, width=bar.CALCULATED, host='localhost', port=6600, password=False, msg_nc='NC', **config):
+
+    def __init__(self, width=bar.CALCULATED, host='localhost', port=6600,
+                 password=False, msg_nc='NC', **config):
         """
             - host: host to connect to
             - port: port to connect to
@@ -39,22 +41,25 @@ class Mpd(base._TextBox):
         self.port = port
         self.password = password
         self.msg_nc = msg_nc
+        self.inc = 2
         base._TextBox.__init__(self, " ", width, **config)
         self.client = MPDClient()
         self.connected = False
         self.connect()
 
-    def connect (self, ifneeded=False):
+    def connect(self, ifneeded=False):
         if self.connected:
             if not ifneeded:
-                print >> sys.stderr, 'Already connected.  No need to connect again.  maybe you want to disconnect first.'
+                self.log.warning('Already connected. '
+                    ' No need to connect again. '
+                    'Maybe you want to disconnect first.')
             return True
         CON_ID = {'host': self.host, 'port': self.port}
         if not self.mpdConnect(CON_ID):
-            print >> sys.stderr, 'Cannot connect to MPD server.'
+            self.log.error('Cannot connect to MPD server.')
         if self.password:
             if not self.mpdAuth(self.password):
-                print >> sys.stderr, 'Authentication failed.  Disconnecting'
+                self.log.warning('Authentication failed.  Disconnecting')
                 self.client.disconnect()
         return self.connected
 
@@ -64,7 +69,8 @@ class Mpd(base._TextBox):
         """
         try:
             self.client.connect(**con_id)
-        except SocketError:
+        except Exception:
+            self.log.exception('Error connecting mpd')
             return False
         self.connected = True
         return True
@@ -75,7 +81,7 @@ class Mpd(base._TextBox):
         """
         try:
             self.client.disconnect()
-        except Exception, e:
+        except Exception:
             return False
         self.connected = False
         return True
@@ -91,13 +97,17 @@ class Mpd(base._TextBox):
         return True
 
     def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
+        base._Widget._configure(self, qtile, bar)
+        self.layout = self.drawer.textlayout(
+            self.text, self.foreground, self.font, self.fontsize,
+            markup=True)
         self.timeout_add(1, self.update)
 
     def update(self):
         if not self.connect(True):
             return False
         try:
+            status = self.client.status()
             song = self.client.currentsong()
             if song:
                 artist = ''
@@ -105,12 +115,24 @@ class Mpd(base._TextBox):
                 if 'artist' in song:
                     artist = song['artist']
                 if 'title' in song:
-                    title  = song['title']
-                playing = "%s - %s" % (artist, title)
+                    title = song['title']
+                if status:
+                    elapsed, total = status['time'].split(':')
+                    percent = float(elapsed) / float(total)
+
+                    volume = status['volume']
+                    total = len(artist) + len(title) + 3
+                    progress = int(percent * total)
+                    playing = '%s - %s' % (artist, title)
+                    playing = '<span color="%s">%s</span>%s [%s%%]' % (
+                        utils.hex(self.foreground_progress),
+                        utils.escape(playing[:progress]),
+                        utils.escape(playing[progress:]),
+                        volume)
             else:
-                playing = ' - '
-        except (SocketError, ProtocolError, ConnectionError), e:
-            print "Got error during query.  Disconnecting.  Error was: %s" % str(e)
+                playing = ''
+        except (SocketError, ProtocolError, ConnectionError):
+            self.log.exception('Mpd error')
             playing = self.msg_nc
             self.mpdDisconnect()
         if self.text != playing:
@@ -120,8 +142,9 @@ class Mpd(base._TextBox):
         return True
 
     def click(self, x, y, button):
+        status = self.client.status()
         if button == 1:
-            if not self.client.status():
+            if not status:
                 self.client.play()
             else:
                 self.client.pause()
@@ -129,4 +152,9 @@ class Mpd(base._TextBox):
             self.client.previous()
         elif button == 5:
             self.client.next()
-
+        elif button == 8:
+            if status:
+                self.client.setvol(max(int(status['volume']) - self.inc, 0))
+        elif button == 9:
+            if status:
+                self.client.setvol(min(int(status['volume']) + self.inc, 100))

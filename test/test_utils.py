@@ -12,7 +12,7 @@ class Foo:
         return x
 
 
-def test_translate_masks_one():
+def test_translate_masks():
     assert utils.translateMasks(["shift", "control"])
     assert utils.translateMasks([]) == 0
 
