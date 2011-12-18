@@ -13,6 +13,7 @@ import libqtile.hook
 import utils
 from utils import Xephyr
 from nose.tools import assert_raises
+from nose.plugins.attrib import attr
 
 
 class TestConfig:
@@ -630,6 +631,10 @@ def test_resize_(self):
     assert d["height"] == 640
 
 
+# Due to https://github.com/nose-devs/nose/issues/478, nose 1.1.2 ignores
+# attributes on yielded functions. Workaround is to attach the attribute
+# to the generator function. Can be removed once the issue is resolved.
+@attr('xephyr')
 def qtile_tests():
     for config in (BareConfig, TestConfig):
         for xinerama in (True, False):

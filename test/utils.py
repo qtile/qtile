@@ -10,6 +10,7 @@ import traceback
 import Xlib.X
 import Xlib.display
 from nose.tools import with_setup, assert_raises
+from nose.plugins.attrib import attr
 from functools import wraps
 WIDTH = 800
 HEIGHT = 600
@@ -92,7 +93,7 @@ class Xephyr(object):
         def wrapped_fun():
             return function(self)
 
-        return with_setup(setup, teardown)(wrapped_fun)
+        return attr('xephyr')(with_setup(setup, teardown)(wrapped_fun))
 
     def _groupconsistency(self):
         groups = self.c.groups()
