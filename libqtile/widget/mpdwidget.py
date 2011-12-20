@@ -113,9 +113,9 @@ class Mpd(base._TextBox):
                 artist = ''
                 title = ''
                 if 'artist' in song:
-                    artist = song['artist']
+                    artist = song['artist'].decode('utf-8')
                 if 'title' in song:
-                    title = song['title']
+                    title = song['title'].decode('utf-8')
                 if status:
                     elapsed, total = status['time'].split(':')
                     percent = float(elapsed) / float(total)
@@ -126,8 +126,8 @@ class Mpd(base._TextBox):
                     playing = '%s - %s' % (artist, title)
                     playing = '<span color="%s">%s</span>%s [%s%%]' % (
                         utils.hex(self.foreground_progress),
-                        utils.escape(playing[:progress]),
-                        utils.escape(playing[progress:]),
+                        utils.escape(playing[:progress].encode('utf-8')),
+                        utils.escape(playing[progress:].encode('utf-8')),
                         volume)
             else:
                 playing = ''

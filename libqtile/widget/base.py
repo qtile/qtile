@@ -122,6 +122,7 @@ class _Widget(command.CommandObject):
             ``gobject.timeout_add_seconds`` with same arguments. Latter is
             better for battery usage, but works only with integer timeouts
         """
+        self.log.info('Adding timer')
         if int(seconds) == seconds:
             return gobject.timeout_add_seconds(int(seconds), method, *args)
         else:

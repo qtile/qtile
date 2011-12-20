@@ -112,6 +112,7 @@ class DGroups(object):
 
     def _add(self, client):
         if client in self.timeout:
+            self.qtile.log.info('Remove dgroup source')
             gobject.source_remove(self.timeout[client])
             del(self.timeout[client])
         group_set = False
@@ -173,5 +174,6 @@ class DGroups(object):
                 self.qtile.delGroup(group.name)
 
         # wait the delay until really delete the group
+        self.qtile.log.info('Add dgroup timer')
         self.timeout[client] = gobject.timeout_add_seconds(self.delay,
                                                          delete_client)
