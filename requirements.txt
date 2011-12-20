@@ -1,0 +1,13 @@
+Jinja2==2.6
+Pygments==1.4
+Sphinx==1.1.2
+distribute==0.6.19
+docutils==0.8.1
+logilab-astng==0.23.0
+logilab-common==0.57.1
+nose==1.1.2
+pep8==0.6.1
+pry==0.2.1
+pylint==0.25.0
+wsgiref==0.1.2
+xpyb==1.3
