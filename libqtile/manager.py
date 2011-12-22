@@ -1652,7 +1652,7 @@ class Qtile(command.CommandObject):
 
         mb.startInput(prompt, self.moveToGroup, "group")
 
-    def cmd_spawncmd(self, prompt="spawn:", widget="prompt"):
+    def cmd_spawncmd(self, prompt="spawn: ", widget="prompt"):
         """
             Spawn a command using a prompt widget, with tab-completion.
 
