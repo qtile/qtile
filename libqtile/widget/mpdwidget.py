@@ -112,6 +112,7 @@ class Mpd(base._TextBox):
         try:
             status = self.client.status()
             song = self.client.currentsong()
+            volume = status.get('volume', '-1')
             if song:
                 artist = ''
                 title = ''
@@ -119,21 +120,24 @@ class Mpd(base._TextBox):
                     artist = song['artist'].decode('utf-8')
                 if 'title' in song:
                     title = song['title'].decode('utf-8')
-                if status:
+
+                playing = u'%s − %s' % (utils.escape(artist),
+                                       utils.escape(title))
+                if status and status.get('time', None):
                     elapsed, total = status['time'].split(':')
                     percent = float(elapsed) / float(total)
 
-                    volume = status['volume']
                     total = len(artist) + len(title) + 3
                     progress = int(percent * total)
-                    playing = '%s - %s' % (artist, title)
-                    playing = '<span color="%s">%s</span>%s [%s%%]' % (
+                    playing = '<span color="%s">%s</span>%s' % (
                         utils.hex(self.foreground_progress),
                         utils.escape(playing[:progress].encode('utf-8')),
-                        utils.escape(playing[progress:].encode('utf-8')),
-                        volume)
+                        utils.escape(playing[progress:].encode('utf-8')))
             else:
-                playing = ''
+                playing = 'Stopped'
+
+            playing = '%s [%s%%]' % (playing,
+                                     volume if volume != '-1' else '?')
         except Exception:
             self.log.exception('Mpd error on update')
             playing = self.msg_nc
