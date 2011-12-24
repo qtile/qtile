@@ -241,11 +241,14 @@ class NetGraph(_Graph):
         self.bytes = self._getValues()
 
     def _getValues(self):
-        with open(self.filename) as file:
-            val = int(file.read())
-            rval = val - self.bytes
-            self.bytes = val
-            return rval
+        try:
+            with open(self.filename) as file:
+                val = int(file.read())
+                rval = val - self.bytes
+                self.bytes = val
+                return rval
+        except IOError:
+            return 0
 
     def update_graph(self):
         val = self._getValues()
