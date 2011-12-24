@@ -1,6 +1,7 @@
-from .. import command, utils, bar, manager, drawer
+from .. import command, bar, manager, drawer
 import gobject
 import logging
+import threading
 
 
 LEFT = object()
@@ -116,17 +117,39 @@ class _Widget(command.CommandObject):
         """
         raise NotImplementedError
 
-    def timeout_add(self, seconds, method, *args):
+    def timeout_add(
+        self, seconds,
+        method, method_args=(),
+        callback=None, callback_args=()
+    ):
         """
             This method calls either ``gobject.timeout_add`` or
             ``gobject.timeout_add_seconds`` with same arguments. Latter is
-            better for battery usage, but works only with integer timeouts
+            better for battery usage, but works only with integer timeouts.
+
+            If callback is supplied, it runs method in a separate thread
+            and then a callback at the end.
+            *_args should be a tuple of arguments to supply to appropriate
+            functions.
         """
         self.log.info('Adding timer')
+        if callable(callback):
+            def _thread(method, callback, args):
+                data = method(*args)
+                gobject.idle_add(callback, data)
+            method = threading.Thread(
+                target=_thread,
+                args=(method, callback, method_args)
+            ).start
+            method_args = ()
         if int(seconds) == seconds:
-            return gobject.timeout_add_seconds(int(seconds), method, *args)
+            return gobject.timeout_add_seconds(
+                int(seconds), method, *method_args
+            )
         else:
-            return gobject.timeout_add(int(seconds * 1000), method, *args)
+            return gobject.timeout_add(
+                int(seconds * 1000), method, *method_args
+            )
 
 
 UNSPECIFIED = bar.Obj("UNSPECIFIED")

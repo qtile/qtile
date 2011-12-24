@@ -52,20 +52,18 @@ class YahooWeather(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        self.timeout_add(self.update_interval, self.update)
+        self.timeout_add(
+            self.update_interval,
+            self.fetch_weather, (self.woeid, self.metric),
+            self.update
+        )
 
     def click(self, x, y, button):
-        self.update()
+        self.update(self.fetch_weather(self.woeid, self.metric))
 
-    def update(self):
-        if not self.woeid and self.location:
-            self.woeid = self.fetch_woeid(self.location)
-        if self.woeid:
-            data = self.fetch_weather(self.woeid, self.metric)
-            if data:
-                self.text = self.format.format(**data)
-            else:
-                self.text = 'N/A'
+    def update(self, data):
+        if data:
+            self.text = self.format.format(**data)
         else:
             self.text = 'N/A'
         self.bar.draw()
@@ -87,6 +85,11 @@ class YahooWeather(base._TextBox):
             return None
 
     def fetch_weather(self, woeid, metric):
+        if not self.woeid:
+            if self.location:
+                self.woeid = self.fetch_woeid(self.location)
+            if not self.woeid:
+                return None
         format = 'c' if metric else 'f'
         url = WEATHER_URL + urllib.urlencode({'w': woeid, 'u': format})
 
