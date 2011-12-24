@@ -67,7 +67,7 @@ class YahooWeather(base._TextBox):
         else:
             self.text = 'N/A'
         self.bar.draw()
-        return True
+        return False
 
     def fetch_woeid(self, location):
         url = QUERY_URL + urllib.urlencode({

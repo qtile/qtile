@@ -131,6 +131,8 @@ class _Widget(command.CommandObject):
             and then a callback at the end.
             *_args should be a tuple of arguments to supply to appropriate
             functions.
+            !Callback function should return False, otherwise it would be
+            re-run forever!
         """
         self.log.info('Adding timer')
         if callable(callback):
