@@ -2,12 +2,14 @@ import cairo
 
 from . import base
 from .. import manager
+from os import statvfs
 
 __all__ = [
     'CPUGraph',
     'MemoryGraph',
     'SwapGraph',
-    'NetGraph'
+    'NetGraph',
+    'HDDGraph'
 ]
 
 
@@ -249,6 +251,44 @@ class NetGraph(_Graph):
                 return rval
         except IOError:
             return 0
+
+    def update_graph(self):
+        val = self._getValues()
+        self.push(val)
+
+
+class HDDGraph(_Graph):
+    fixed_upper_bound = True
+    defaults = manager.Defaults(
+        ("graph_color", "18BAEB", "Graph color"),
+        ("fill_color", "1667EB.3", "Fill color for linefill graph"),
+        ("background", "000000", "Widget background"),
+        ("border_color", "215578", "Widget border color"),
+        ("border_width", 2, "Widget background"),
+        ("margin_x", 3, "Margin X"),
+        ("margin_y", 3, "Margin Y"),
+        ("samples", 100, "Count of graph samples."),
+        ("frequency", 60, "Update frequency in seconds"),
+        ("type", "linefill", "'box', 'line', 'linefill'"),
+        ("line_width", 3, "Line width"),
+        ("start_pos", "bottom", "Drawer starting position ('bottom'/'top')"),
+        ("path", "sda1", "Path at which parition is MOUNTED."),
+        ("space_type", "used", "free/used")
+    )
+
+    def __init__(self, **config):
+        _Graph.__init__(self, **config)
+        stats = statvfs(self.path)
+        self.maxvalue = stats.f_blocks * stats.f_frsize
+        values = self._getValues()
+        self.fullfill(values)
+
+    def _getValues(self):
+        stats = statvfs(self.path)
+        if self.space_type == 'used':
+            return (stats.f_blocks - stats.f_bfree) * stats.f_frsize
+        else:
+            return stats.f_bavail * stats.f_frsize
 
     def update_graph(self):
         val = self._getValues()
