@@ -4,28 +4,33 @@ This removes the need to link to the libraries in the global site-packages and
 allows updating dependencies without affecting the system Qtile install (if
 you're using Qtile).
 
-Note: This script is only intended for use during Qtile development.
-
 
 Usage
 =====
 
 #.  Create a virtual environment for Qtile and activate it. (the script
-    requires the virtual environment to be activated). For example, ::
+    requires the virtual environment to be activated). For example,::
 
       virtualenv --no-site-packages --distribute /some/path/qtile
       source /some/path/qtile/bin/activate
 
-#.  Navigate to your Qtile development directory and run::
+#.  Navigate to your Qtile development directory and run ``develop.py``::
 
+      cd /path/to/development/qtile
       python develop.py
 
     This will download the source, build (when required) and install all the
-    dependencies, including the ones listed in the ``pip`` requirements file.
-    When searching for the requirements file, assumes it's in the same
-    directory as this script.
+    dependencies, excluding some of the ones listed in the ``pip`` requirements
+    file, which will need to be performed separately.
 
     The downloaded source code will be located at $VIRTUAL_ENV/src.
+
+#.  Installing the requirements specified in the ``pip`` requirements file
+    using::
+
+      pip install -r requirements.txt
+      
+    should complete the development environment setup.
 
 
 At least the following tools are required to build the dependencies (I may
@@ -44,12 +49,11 @@ have missed out a few):
 The script has been tested using Python 2.7 on an Arch Linux box. For most of
 the requirements, I used Arch Linux's ABS and AUR PKGBUILDS to obtain the
 required steps.
-
-
 """
 
 import subprocess as sp
 import os
+
 
 VENV = None
 DEST_DIR = None
@@ -202,11 +206,6 @@ def python_xlib():
     pip_install('http://downloads.sourceforge.net/python-xlib/python-xlib-0.15rc1.tar.gz')
 
 
-def pip_requirements_file():
-    os.chdir(os.path.abspath(__file__))
-    pip_install('-r requirements.txt')
-
-
 #==============================================================================
 # Requirements end
 #==============================================================================
@@ -278,11 +277,11 @@ def main():
     pkgconfig = os.path.join(lib, 'pkgconfig')
     aclocal = os.path.join(VENV, 'share', 'aclocal')
 
-    # All of Qtile's requirements, including those in the pip requirements
-    # file. Order matters.
+    # Most of Qtile's requirements. Includes some but not all the requirements
+    # in the pip requirements file. Order matters.
     reqs = [xorg_util_macros, libxau, libxdmcp, pthread_stubs, xcb_proto,
             libxcb, xcb_util, xpyb_ng, pixman, cairo_xcb, py2cairo_xcb,
-            pygobject, pygtk, python_xlib, pip_requirements_file]
+            pygobject, pygtk, python_xlib]
 
     export('ACLOCAL', 'aclocal -I {0}'.format(aclocal))
     export('PKG_CONFIG_PATH', pkgconfig)

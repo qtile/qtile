@@ -7,7 +7,6 @@ logilab-astng==0.23.0
 logilab-common==0.57.1
 nose==1.1.2
 pep8==0.6.1
-pry==0.2.1
 pylint==0.25.0
-wsgiref==0.1.2
-xpyb==1.3
+python-xlib==0.15rc1
+-e git://github.com/dequis/xpyb-ng.git@816304fd44ef5bb8548c09dd4419da0d9e17a1b5#egg=xpyb-dev
