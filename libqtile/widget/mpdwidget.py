@@ -129,6 +129,7 @@ class Mpd(base._TextBox):
 
                     total = len(artist) + len(title) + 3
                     progress = int(percent * total)
+                    playing = u'%s − %s' % (artist, title)
                     playing = '<span color="%s">%s</span>%s' % (
                         utils.hex(self.foreground_progress),
                         utils.escape(playing[:progress].encode('utf-8')),
