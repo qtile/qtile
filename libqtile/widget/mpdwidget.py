@@ -28,7 +28,7 @@ class Mpd(base._TextBox):
     )
 
     def __init__(self, width=bar.CALCULATED, host='localhost', port=6600,
-                 password=False, msg_nc='NC', **config):
+                 password=False, msg_nc='Mpd off', **config):
         """
             - host: host to connect to
             - port: port to connect to
@@ -60,7 +60,10 @@ class Mpd(base._TextBox):
         if self.password:
             if not self.mpdAuth(self.password):
                 self.log.warning('Authentication failed.  Disconnecting')
-                self.client.disconnect()
+                try:
+                    self.client.disconnect()
+                except Exception:
+                    self.log.exception('Error disconnecting mpd')
         return self.connected
 
     def mpdConnect(self, con_id):
@@ -109,30 +112,35 @@ class Mpd(base._TextBox):
         try:
             status = self.client.status()
             song = self.client.currentsong()
+            volume = status.get('volume', '-1')
             if song:
                 artist = ''
                 title = ''
                 if 'artist' in song:
-                    artist = song['artist']
+                    artist = song['artist'].decode('utf-8')
                 if 'title' in song:
-                    title = song['title']
-                if status:
+                    title = song['title'].decode('utf-8')
+
+                playing = u'%s − %s' % (utils.escape(artist),
+                                       utils.escape(title))
+                if status and status.get('time', None):
                     elapsed, total = status['time'].split(':')
                     percent = float(elapsed) / float(total)
 
-                    volume = status['volume']
                     total = len(artist) + len(title) + 3
                     progress = int(percent * total)
-                    playing = '%s - %s' % (artist, title)
-                    playing = '<span color="%s">%s</span>%s [%s%%]' % (
+                    playing = u'%s − %s' % (artist, title)
+                    playing = '<span color="%s">%s</span>%s' % (
                         utils.hex(self.foreground_progress),
-                        utils.escape(playing[:progress]),
-                        utils.escape(playing[progress:]),
-                        volume)
+                        utils.escape(playing[:progress].encode('utf-8')),
+                        utils.escape(playing[progress:].encode('utf-8')))
             else:
-                playing = ''
-        except (SocketError, ProtocolError, ConnectionError):
-            self.log.exception('Mpd error')
+                playing = 'Stopped'
+
+            playing = '%s [%s%%]' % (playing,
+                                     volume if volume != '-1' else '?')
+        except Exception:
+            self.log.exception('Mpd error on update')
             playing = self.msg_nc
             self.mpdDisconnect()
         if self.text != playing:
@@ -142,19 +150,24 @@ class Mpd(base._TextBox):
         return True
 
     def click(self, x, y, button):
-        status = self.client.status()
-        if button == 1:
-            if not status:
-                self.client.play()
-            else:
-                self.client.pause()
-        elif button == 4:
-            self.client.previous()
-        elif button == 5:
-            self.client.next()
-        elif button == 8:
-            if status:
-                self.client.setvol(max(int(status['volume']) - self.inc, 0))
-        elif button == 9:
-            if status:
-                self.client.setvol(min(int(status['volume']) + self.inc, 100))
+        try:
+            status = self.client.status()
+            if button == 1:
+                if not status:
+                    self.client.play()
+                else:
+                    self.client.pause()
+            elif button == 4:
+                self.client.previous()
+            elif button == 5:
+                self.client.next()
+            elif button == 8:
+                if status:
+                    self.client.setvol(
+                        max(int(status['volume']) - self.inc, 0))
+            elif button == 9:
+                if status:
+                    self.client.setvol(
+                        min(int(status['volume']) + self.inc, 100))
+        except Exception:
+            self.log.exception('Mpd error on click')

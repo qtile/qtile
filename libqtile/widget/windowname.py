@@ -34,5 +34,5 @@ class WindowName(base._TextBox):
             state = '_ '
         elif w.floating:
             state = 'V '
-        self.text = "%s%s" % (state,  w.name if w else " ")
+        self.text = "%s%s" % (state,  w.name if w and w.name else " ")
         self.bar.draw()

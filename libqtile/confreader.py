@@ -25,6 +25,7 @@
 # SOFTWARE.
 
 import os
+import sys
 import logging
 from imp import new_module
 from libqtile import manager, layout
@@ -68,10 +69,8 @@ class File(Config):
 
         config = new_module('config')
         config.__file__ = fname
-        # try:
-            # sys.path.insert(0, os.path.dirname(self.fname))
-            # config = __import__(os.path.basename(self.fname)[:-3])
         try:
+            sys.path.insert(0, os.path.dirname(fname))
             execfile(config.__file__, config.__dict__)
         except Exception:
             logging.getLogger('qtile').exception('Config error')

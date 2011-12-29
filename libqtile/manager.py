@@ -1124,6 +1124,7 @@ class Qtile(command.CommandObject):
 
     def loop(self):
         self.server.start()
+        self.log.info('Adding io watch')
         display_tag = gobject.io_add_watch(
             self.conn.conn.get_file_descriptor(),
             gobject.IO_IN, self._xpoll)
@@ -1137,6 +1138,7 @@ class Qtile(command.CommandObject):
                     self.log.info('Breaking main loop')
                     break
         finally:
+            self.log.info('Removing source')
             gobject.source_remove(display_tag)
 
     def find_screen(self, x, y):
@@ -1650,7 +1652,7 @@ class Qtile(command.CommandObject):
 
         mb.startInput(prompt, self.moveToGroup, "group")
 
-    def cmd_spawncmd(self, prompt="spawn:", widget="prompt"):
+    def cmd_spawncmd(self, prompt="spawn: ", widget="prompt"):
         """
             Spawn a command using a prompt widget, with tab-completion.
 

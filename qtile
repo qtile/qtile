@@ -29,38 +29,42 @@ from libqtile import confreader, manager, command
 from time import sleep
 
 def make_qtile():
-    from optparse import OptionParser, OptionGroup
-    parser = OptionParser(version="%prog 0.4")
-    parser.add_option(
+    from argparse import ArgumentParser
+    parser = ArgumentParser(
+        description='A full-featured, pure-Python tiling window manager.',
+        prog='qtile',
+        version="0.5")
+
+    parser.add_argument(
         "-c", "--config",
-        action="store", type="string",
+        action="store",
         default=None,
         dest="configfile",
         help='Use specified configuration file,'
         ' "default" will load the system default config.'
     )
-    parser.add_option(
+    parser.add_argument(
         "-s", "--socket",
-        action="store", type="string",
+        action="store",
         default=None,
         dest="socket",
         help='Path to Qtile comms socket.'
     )
-    parser.add_option(
+    parser.add_argument(
         "-n", "--no-spawn",
         action="store_true",
         default=False,
         dest="no_spawn",
         help='Avoid spawning apps. (Used for restart)'
     )
-    parser.add_option(
+    parser.add_argument(
         '-l', '--log-level',
         default='INFO',
         dest='log_level',
         choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),
         help='Set qtile log level')
 
-    options, args = parser.parse_args()
+    options = parser.parse_args()
     log_level = getattr(logging, options.log_level)
     log = manager.init_log(log_level)
 

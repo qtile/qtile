@@ -48,7 +48,6 @@ class Battery(base._TextBox):
         now = float(self._get_param(self.energy_now_file))
         full = float(self._get_param(self.energy_full_file))
         power = float(self._get_param(self.power_now_file))
-
         if stat == DISCHARGING:
             char = self.discharge_char
             time = now / power
@@ -72,5 +71,9 @@ class Battery(base._TextBox):
         return True
 
     def _get_param(self, name):
-        with open(os.path.join(BAT_DIR, self.battery_name, name), 'r') as f:
-            return f.read().strip()
+        try:
+            with open(
+                os.path.join(BAT_DIR, self.battery_name, name), 'r') as f:
+                return f.read().strip()
+        except Exception:
+            self.log.exception("Failed to get %s" % name)

@@ -197,6 +197,7 @@ class RatioTile(Layout):
         self.dirty = True  # need to recalculate
         self.layout_info = []
         self.last_size = None
+        self.last_screen = None
         self.fancy = fancy
 
     def clone(self, group):
@@ -225,6 +226,9 @@ class RatioTile(Layout):
 
     def configure(self, win, screen):
         # force recalc
+        if not self.last_screen or self.last_screen != screen:
+            self.last_screen = screen
+            self.dirty = True
         if self.last_size and not self.dirty:
             if (screen.width != self.last_size[0] or
                 screen.height != self.last_size[1]):

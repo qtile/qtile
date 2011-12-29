@@ -26,6 +26,7 @@
 """
 import marshal
 import select
+import logging
 import os.path
 import socket
 import struct
@@ -92,6 +93,7 @@ class Client(_IPC):
 
 class Server(_IPC):
     def __init__(self, fname, handler):
+        self.log = logging.getLogger('qtile')
         self.fname, self.handler = fname, handler
         if os.path.exists(fname):
             os.unlink(fname)
@@ -104,10 +106,12 @@ class Server(_IPC):
         self.sock.listen(5)
 
     def close(self):
+        self.log.info('Remove source on server close')
         gobject.source_remove(self.gob_tag)
         self.sock.close()
 
     def start(self):
+        self.log.info('Add io watch on server start')
         self.gob_tag = gobject.io_add_watch(
             self.sock, gobject.IO_IN, self._connection)
 
@@ -121,6 +125,7 @@ class Server(_IPC):
         else:
             conn.setblocking(0)
             data = {'buffer': ''}  # object which holds connection state
+            self.log.info('Add io watch on _connection')
             gobject.io_add_watch(conn, gobject.IO_IN, self._receive, data)
             return True
 
@@ -133,6 +138,7 @@ class Server(_IPC):
             raise
         else:
             if recv == '':
+                self.log.info('Remove source on receive')
                 gobject.source_remove(data['tag'])
                 conn.close()
                 return True
@@ -147,6 +153,7 @@ class Server(_IPC):
 
             req = self._unpack_body(data['buffer'])
             data['result'] = self._pack_reply(self.handler(req))
+            self.log.info('Add io watch on receive')
             gobject.io_add_watch(conn, gobject.IO_OUT, self._send, data)
             return False
 
