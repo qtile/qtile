@@ -44,14 +44,17 @@ class Battery(base._TextBox):
         full = float(self._get_param(self.energy_full_file))
         power = float(self._get_param(self.power_now_file))
 
-        if stat == DISCHARGING:
-            char = self.discharge_char
-            time = now/power
-        elif stat == CHARGING:
-            char = self.charge_char
-            time = (full - now)/power
-        else:
-            return 'Full'
+        try:
+          if stat == DISCHARGING:
+              char = self.discharge_char
+              time = now/power
+          elif stat == CHARGING:
+              char = self.charge_char
+              time = (full - now)/power
+          else:
+              return 'Full'
+        except ZeroDivisonError:
+          return 'Inf'
 
         hour = int(time)
         min = int(time*60) % 60
