@@ -123,6 +123,9 @@ class Mpd(base._TextBox):
 
                 playing = u'%s − %s' % (utils.escape(artist),
                                        utils.escape(title))
+                if playing == u' − ':
+                    playing = song.get('filename', '??')
+
                 if status and status.get('time', None):
                     elapsed, total = status['time'].split(':')
                     percent = float(elapsed) / float(total)

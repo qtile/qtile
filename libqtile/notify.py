@@ -25,7 +25,7 @@ if dbus:
         def GetCapabilities(self):
             return ('body')
 
-        @service.method(BUS_NAME, in_signature='susssasa{ss}i',
+        @service.method(BUS_NAME, in_signature='susssasa{sv}i',
                              out_signature='u')
         def Notify(self, app_name, replaces_id, app_icon, summary,
                    body, actions, hints, timeout):
