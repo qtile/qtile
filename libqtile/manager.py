@@ -101,10 +101,8 @@ class Drag(object):
         self.modifiers = modifiers
         self.button = button
         self.commands = commands
-        if button not in xcbq.ButtonCodes:
-            raise QtileError("Unknown button: %s" % button)
-        self.button_code = xcbq.ButtonCodes[self.button]
         try:
+            self.button_code = int(self.button.replace('Button', ''))
             self.modmask = utils.translateMasks(self.modifiers)
         except KeyError, v:
             raise QtileError(v)
@@ -121,10 +119,8 @@ class Click(object):
         self.modifiers = modifiers
         self.button = button
         self.commands = commands
-        if button not in xcbq.ButtonCodes:
-            raise QtileError("Unknown button: %s" % button)
-        self.button_code = xcbq.ButtonCodes[self.button]
         try:
+            self.button_code = int(self.button.replace('Button', ''))
             self.modmask = utils.translateMasks(self.modifiers)
         except KeyError, v:
             raise QtileError(v)

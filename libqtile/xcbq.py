@@ -40,13 +40,6 @@ ModMasks = {
 ModMapOrder = ["shift", "lock", "control",
                "mod1", "mod2", "mod3", "mod4", "mod5"]
 
-ButtonCodes = {
-    "Button1": 1,
-    "Button2": 2,
-    "Button3": 3,
-    "Button4": 4,
-    "Button5": 5,
-}
 AllButtonsMask = 0b11111 << 8
 ButtonMotionMask = 1 << 13
 ButtonReleaseMask = 1 << 3
@@ -65,15 +58,15 @@ NormalHintsFlags = {
 }
 
 HintsFlags = {
-    "InputHint":	1,      # input
-    "StateHint":	2,      # initial_state
-    "IconPixmapHint":	4,      # icon_pixmap
-    "IconWindowHint":	8,      # icon_window
-    "IconPositionHint":	16,     # icon_x & icon_y
-    "IconMaskHint":	32,     # icon_mask
-    "WindowGroupHint":	64,     # window_group
-    "MessageHint":	128,    # (this bit is obsolete)
-    "UrgencyHint":	256,    # urgency
+    "InputHint":         1,      # input
+    "StateHint":         2,      # initial_state
+    "IconPixmapHint":    4,      # icon_pixmap
+    "IconWindowHint":    8,      # icon_window
+    "IconPositionHint":  16,     # icon_x & icon_y
+    "IconMaskHint":      32,     # icon_mask
+    "WindowGroupHint":   64,     # window_group
+    "MessageHint":       128,    # (this bit is obsolete)
+    "UrgencyHint":       256,    # urgency
 }
 
 WindowTypes = {
