@@ -9,8 +9,8 @@
 # TODO: best practice to handle failures? just write to stderr?
 
 from .. import bar, manager, utils
-from mpd import MPDClient, CommandError, ConnectionError, ProtocolError
-from socket import error as SocketError
+from mpd import MPDClient, CommandError
+import atexit
 import base
 
 
@@ -85,6 +85,7 @@ class Mpd(base._TextBox):
         try:
             self.client.disconnect()
         except Exception:
+            self.log.exception('Error disconnecting mpd')
             return False
         self.connected = False
         return True
@@ -105,10 +106,12 @@ class Mpd(base._TextBox):
             self.text, self.foreground, self.font, self.fontsize,
             markup=True)
         self.timeout_add(1, self.update)
+        atexit.register(self.mpdDisconnect)
 
     def update(self):
         if not self.connect(True):
             return False
+
         try:
             status = self.client.status()
             song = self.client.currentsong()
@@ -121,22 +124,21 @@ class Mpd(base._TextBox):
                 if 'title' in song:
                     title = song['title'].decode('utf-8')
 
-                playing = u'%s − %s' % (utils.escape(artist),
-                                       utils.escape(title))
-                if playing == u' − ':
-                    playing = song.get('filename', '??')
+                if 'artist' not in song and 'title' not in song:
+                    playing = song.get('file', '??')
+                else:
+                    playing = u'%s − %s' % (artist, title)
 
                 if status and status.get('time', None):
                     elapsed, total = status['time'].split(':')
                     percent = float(elapsed) / float(total)
-
-                    total = len(artist) + len(title) + 3
-                    progress = int(percent * total)
-                    playing = u'%s − %s' % (artist, title)
+                    progress = int(percent * len(playing))
                     playing = '<span color="%s">%s</span>%s' % (
                         utils.hex(self.foreground_progress),
                         utils.escape(playing[:progress].encode('utf-8')),
                         utils.escape(playing[progress:].encode('utf-8')))
+                else:
+                    playing = utils.escape(playing)
             else:
                 playing = 'Stopped'
 
@@ -155,7 +157,7 @@ class Mpd(base._TextBox):
     def click(self, x, y, button):
         try:
             status = self.client.status()
-            if button == 1:
+            if button == 3:
                 if not status:
                     self.client.play()
                 else:
