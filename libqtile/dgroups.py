@@ -134,7 +134,7 @@ class DGroups(object):
                                 self.shuffle_groups(lst, master))
 
                 if 'float' in app and app['float']:
-                    client.floating = True
+                    client.enablefloating()
 
                 if 'intrusive' in app:
                     intrusive = app['intrusive']

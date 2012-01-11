@@ -724,6 +724,7 @@ class Window(_Window):
                 screen != self.group.screen):
                 self.x = self.group.screen.x
                 self.y = self.group.screen.y
+
             self.place(self.x,
                    self.y,
                    self.width,
@@ -769,6 +770,7 @@ class Window(_Window):
         group = self.qtile.groupMap.get(groupName)
         if group is None:
             raise command.CommandError("No such group: %s" % groupName)
+
         if self.group is not group:
             self.hide()
             if self.group:
@@ -777,7 +779,7 @@ class Window(_Window):
                     self.x -= self.group.screen.x
                 self.group.remove(self)
 
-            if group.screen:
+            if group.screen and self.x < group.screen.x:
                 self.x += group.screen.x
             group.add(self)
 
