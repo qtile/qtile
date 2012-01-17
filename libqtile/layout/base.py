@@ -21,11 +21,13 @@
 import copy
 from .. import command, manager
 
+
 class Layout(command.CommandObject):
     """
         This class defines the API that should be exposed by all layouts.
     """
     defaults = manager.Defaults()
+
     def __init__(self, **config):
         command.CommandObject.__init__(self)
         self.defaults.load(self, config)
@@ -91,8 +93,8 @@ class Layout(command.CommandObject):
             Returns a dictionary of layout information.
         """
         return dict(
-            name = self.name,
-            group = self.group.name
+            name=self.name,
+            group=self.group.name
         )
 
     def _items(self, name):
@@ -123,6 +125,7 @@ class Layout(command.CommandObject):
             Called when layout is being hidden
         """
 
+
 class SingleWindow(Layout):
     """Base for layouts with single visible window"""
 
@@ -142,6 +145,11 @@ class SingleWindow(Layout):
         else:
             win.hide()
 
+    def remove(self, win):
+        cli = self.clients.pop(0)
+        if cli == win:
+            return self.clients[0]
+
     def focus_first(self):
         return self._get_window()
 
@@ -153,6 +161,7 @@ class SingleWindow(Layout):
 
     def focus_prev(self, win):
         return None
+
 
 class Delegate(Layout):
     """Base for all delegation layouts"""
@@ -196,7 +205,7 @@ class Delegate(Layout):
         if not focus:
             layouts = self._get_layouts()
             idx = layouts.index(lay)
-            while idx < len(layouts)-1 and not focus:
+            while idx < len(layouts) - 1 and not focus:
                 idx += 1
                 focus = layouts[idx].focus_first()
         return focus
@@ -221,7 +230,7 @@ class Delegate(Layout):
         focus = cur.focus_next(win)
         if not focus:
             idx = layouts.index(cur)
-            while idx < len(layouts)-1 and not focus:
+            while idx < len(layouts) - 1 and not focus:
                 idx += 1
                 focus = layouts[idx].focus_first()
         return focus

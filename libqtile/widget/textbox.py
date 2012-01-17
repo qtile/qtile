@@ -1,6 +1,7 @@
 from .. import bar, manager
 import base
 
+
 class TextBox(base._TextBox):
     """
         A flexible textbox that can be updated from bound keys, scripts and
@@ -13,6 +14,7 @@ class TextBox(base._TextBox):
         ("background", None, "Background colour."),
         ("foreground", "#ffffff", "Foreground colour.")
     )
+
     def __init__(self, name, text=" ", width=bar.CALCULATED, **config):
         """
             - name: Name for this widget. Used to address the widget from
@@ -38,4 +40,3 @@ class TextBox(base._TextBox):
             Retrieve the text in a TextBox widget.
         """
         return self.text
-

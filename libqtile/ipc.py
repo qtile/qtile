@@ -24,14 +24,21 @@
     run the same Python version, and that clients must be trusted (as
     un-marshalling untrusted data can result in arbitrary code execution).
 """
-import marshal, select, os.path, socket, struct
+import marshal
+import select
+import logging
+import os.path
+import socket
+import struct
 import gobject
 import errno
 
 HDRLEN = 4
 BUFSIZE = 1024 * 1024
 
-class IPCError(Exception): pass
+
+class IPCError(Exception):
+    pass
 
 
 class _IPC:
@@ -50,9 +57,9 @@ class _IPC:
         size = struct.pack("!L", len(msg))
         return size + msg
 
-
     def _write(self, sock, msg):
         sock.sendall(self._pack_reply(msg))
+
 
 class Client(_IPC):
     def __init__(self, fname):
@@ -67,7 +74,7 @@ class Client(_IPC):
         try:
             sock.connect(self.fname)
         except socket.error:
-            raise IPCError("Could not open %s"%self.fname)
+            raise IPCError("Could not open %s" % self.fname)
 
         self._write(sock, msg)
 
@@ -86,6 +93,7 @@ class Client(_IPC):
 
 class Server(_IPC):
     def __init__(self, fname, handler):
+        self.log = logging.getLogger('qtile')
         self.fname, self.handler = fname, handler
         if os.path.exists(fname):
             os.unlink(fname)
@@ -98,11 +106,14 @@ class Server(_IPC):
         self.sock.listen(5)
 
     def close(self):
+        self.log.info('Remove source on server close')
         gobject.source_remove(self.gob_tag)
         self.sock.close()
 
     def start(self):
-        self.gob_tag = gobject.io_add_watch(self.sock, gobject.IO_IN, self._connection)
+        self.log.info('Add io watch on server start')
+        self.gob_tag = gobject.io_add_watch(
+            self.sock, gobject.IO_IN, self._connection)
 
     def _connection(self, sock, cond):
         try:
@@ -113,19 +124,21 @@ class Server(_IPC):
             raise
         else:
             conn.setblocking(0)
-            data = {'buffer': ''} #object which holds connection state
+            data = {'buffer': ''}  # object which holds connection state
+            self.log.info('Add io watch on _connection')
             gobject.io_add_watch(conn, gobject.IO_IN, self._receive, data)
             return True
 
     def _receive(self, conn, cond, data):
         try:
             recv = conn.recv(4096)
-        except socket.error as e:
+        except socket.error as er:
             if er.errno in (errno.EAGAIN, errno.EINTR):
                 return True
             raise
         else:
             if recv == '':
+                self.log.info('Remove source on receive')
                 gobject.source_remove(data['tag'])
                 conn.close()
                 return True
@@ -140,6 +153,7 @@ class Server(_IPC):
 
             req = self._unpack_body(data['buffer'])
             data['result'] = self._pack_reply(self.handler(req))
+            self.log.info('Add io watch on receive')
             gobject.io_add_watch(conn, gobject.IO_OUT, self._send, data)
             return False
 

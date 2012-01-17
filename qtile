@@ -20,53 +20,72 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os, os.path, sys
-from libqtile import confreader, manager
+import logging
+import os
+import os.path
+import sys
+import traceback
+from libqtile import confreader, manager, command
+from time import sleep
 
-def main():
-    from optparse import OptionParser, OptionGroup
-    parser = OptionParser(version="%prog 0.4")
-    parser.add_option(
-                        "-c", "--config",
-                        action="store", type="string",
-                        default=None,
-                        dest="configfile",
-                        help='Use specified configuration file, "default" will load the system default config.'
-                    )
-    parser.add_option(
-                        "-f", "--fallback",
-                        action="store", type="string",
-                        default=None,
-                        dest="fallback",
-                        help='Use specified fallback configuration file, "default" will load the system default config as fallback.'
-                    )
-    parser.add_option(
-                        "-d", "--debug",
-                        action="store_true", default=False,
-                        dest="debug",
-                        help='Print lots of debugging output.'
-                    )
-    parser.add_option(
-                        "-s", "--socket",
-                        action="store", type="string",
-                        default=None,
-                        dest="socket",
-                        help='Path to Qtile comms socket.'
-                    )
-    options, args = parser.parse_args()
+def make_qtile():
+    from argparse import ArgumentParser
+    parser = ArgumentParser(
+        description='A full-featured, pure-Python tiling window manager.',
+        prog='qtile',
+        version="0.5")
+
+    parser.add_argument(
+        "-c", "--config",
+        action="store",
+        default=None,
+        dest="configfile",
+        help='Use specified configuration file,'
+        ' "default" will load the system default config.'
+    )
+    parser.add_argument(
+        "-s", "--socket",
+        action="store",
+        default=None,
+        dest="socket",
+        help='Path to Qtile comms socket.'
+    )
+    parser.add_argument(
+        "-n", "--no-spawn",
+        action="store_true",
+        default=False,
+        dest="no_spawn",
+        help='Avoid spawning apps. (Used for restart)'
+    )
+    parser.add_argument(
+        '-l', '--log-level',
+        default='INFO',
+        dest='log_level',
+        choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),
+        help='Set qtile log level')
+
+    options = parser.parse_args()
+    log_level = getattr(logging, options.log_level)
+    log = manager.init_log(log_level)
+
     try:
         c = confreader.File(options.configfile)
-    except confreader.ConfigError, v:
-        if options.fallback:
-            print >> sys.stderr, "Config error: %s" % v.message
-            print >> sys.stderr, "Falling back to config file: %s" % options.fallback
-            c = confreader.File(options.fallback)
-        else:
-            raise
-    q = manager.Qtile(c, fname=options.socket)
-    q.debug = options.debug
-    q.loop()
+    except confreader.ConfigError:
+        c = confreader.Config()
+
+    return manager.Qtile(c, log=log, fname=options.socket,
+                      no_spawn=options.no_spawn)
 
 
 if __name__ == "__main__":
-    main()
+    q = make_qtile()
+    try:
+        q.loop()
+    except Exception:
+        q.log.exception('Qtile crashed')
+        sleep(2)
+        argv = [sys.executable] + sys.argv
+        if '--no-spawn' not in argv:
+            argv.append('--no-spawn')
+        os.execv(sys.executable, argv)
+    q.log.info('Exiting...')

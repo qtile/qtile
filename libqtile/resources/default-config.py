@@ -65,13 +65,13 @@ layouts = [
 
 screens = [
     Screen(
-        bottom = bar.Bar(
-                    [
-                        widget.GroupBox(),
-                        widget.WindowName(),
-                        widget.TextBox("default", "default config")
-                    ],
-                    30,
-                ),
+        bottom=bar.Bar(
+            [
+                widget.GroupBox(),
+                widget.WindowName(),
+                widget.TextBox("default", "default config")
+            ],
+            30,
+        ),
     ),
 ]
