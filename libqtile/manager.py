@@ -17,7 +17,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from logging import getLogger, StreamHandler
+
+from libqtile.log_utils import init_log
 from xcb.xproto import EventMask
 import atexit
 import command
@@ -654,67 +655,12 @@ class Group(command.CommandObject):
         self.focus(nxt, True)
 
 
-class ColorFormatter(logging.Formatter):
-    """Logging formatter adding console colors to the output.
-    """
-    black, red, green, yellow, blue, magenta, cyan, white = range(8)
-    colors = {
-        'WARNING': yellow,
-        'INFO': green,
-        'DEBUG': blue,
-        'CRITICAL': yellow,
-        'ERROR': red,
-        'RED': red,
-        'GREEN': green,
-        'YELLOW': yellow,
-        'BLUE': blue,
-        'MAGENTA': magenta,
-        'CYAN': cyan,
-        'WHITE': white}
-    reset_seq = '\033[0m'
-    color_seq = '\033[%dm'
-    bold_seq = '\033[1m'
-
-    def format(self, record):
-        """Format the record with colors."""
-        color = self.color_seq % (30 + self.colors[record.levelname])
-        message = logging.Formatter.format(self, record)
-        message = message.replace('$RESET', self.reset_seq)\
-            .replace('$BOLD', self.bold_seq)\
-            .replace('$COLOR', color)
-        for color, value in self.colors.items():
-            message = message.replace(
-                '$' + color, self.color_seq % (value + 30))\
-                .replace('$BG' + color, self.color_seq % (value + 40))\
-                .replace('$BG-' + color, self.color_seq % (value + 40))
-        return message + self.reset_seq
-
-
-def init_log(log_level=logging.WARNING):
-    handler = logging.FileHandler(
-        os.path.expanduser('~/.qtile.log'))
-    handler.setLevel(logging.WARNING)
-    handler.setFormatter(
-        logging.Formatter(
-            "%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s"))
-    log = getLogger('qtile')
-    log.setLevel(log_level)
-    log.addHandler(handler)
-    log.warning('Starting Qtile')
-    handler = StreamHandler(sys.stderr)
-    handler.setFormatter(
-        ColorFormatter(
-            '$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s'
-            ' %(funcName)s:%(lineno)d $RESET %(message)s'))
-    log.addHandler(handler)
-    return log
-
-
 class Qtile(command.CommandObject):
     """
         This object is the __root__ of the command graph.
     """
     _exit = False
+    _abort = False
 
     def __init__(self, config,
                  displayName=None, fname=None, no_spawn=False, log=None):
@@ -793,7 +739,7 @@ class Qtile(command.CommandObject):
         self.conn.flush()
         self.conn.xsync()
         self._xpoll()
-        if self._exit:
+        if self._abort:
             self.log.error(
                 "Access denied: "
                 "Another window manager running?")
@@ -1114,7 +1060,7 @@ class Qtile(command.CommandObject):
                             break
             except Exception:
                 self.log.exception('Got an exception in poll loop')
-                self._exit = True
+                self._abort = True
                 return False
         return True
 
@@ -1131,8 +1077,11 @@ class Qtile(command.CommandObject):
                     # this seems to be crucial part
                     self.conn.flush()
                 if self._exit:
-                    self.log.info('Breaking main loop')
+                    self.log.info('Got shutdown, Breaking main loop cleanly')
                     break
+                if self._abort:
+                    self.log.warn('Got exception, Breaking main loop')
+                    sys.exit(2)
         finally:
             self.log.info('Removing source')
             gobject.source_remove(display_tag)

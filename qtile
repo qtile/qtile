@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
+# Copyright (c) 2011, Florian Mounier
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +22,8 @@
 # SOFTWARE.
 
 import logging
-import os
-import os.path
-import sys
-import traceback
-from libqtile import confreader, manager, command
-from time import sleep
+from libqtile import confreader, manager
+
 
 def make_qtile():
     from argparse import ArgumentParser
@@ -83,9 +80,4 @@ if __name__ == "__main__":
         q.loop()
     except Exception:
         q.log.exception('Qtile crashed')
-        sleep(2)
-        argv = [sys.executable] + sys.argv
-        if '--no-spawn' not in argv:
-            argv.append('--no-spawn')
-        os.execv(sys.executable, argv)
     q.log.info('Exiting...')

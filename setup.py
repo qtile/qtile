@@ -95,7 +95,7 @@ packages, package_data = findPackages("libqtile")
 
 setup(
         name="qtile",
-        version="0.4",
+        version="0.5",
         description="A pure-Python tiling window manager.",
         author="Aldo Cortesi",
         author_email="aldo@nullcube.com",
@@ -103,7 +103,7 @@ setup(
         url="http://www.qtile.org",
         packages=packages,
         package_data=package_data,
-        scripts=["qtile", "qsh"],
+        scripts=["qtile-session", "qtile", "qsh"],
         classifiers=[
             "Intended Audience :: End Users/Desktop",
             "License :: OSI Approved :: MIT License",
