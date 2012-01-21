@@ -588,26 +588,50 @@ class Group(command.CommandObject):
         nextgroup = (currentgroup + direction) % len(self.qtile.groups)
         return self.qtile.groups[nextgroup]
 
+    def _dirSkipEmptyGroup(self, direction):
+        """
+        Find a non-empty group walking the groups list in the specified
+        direction.
+        """
+        index = currentgroup = self.qtile.groups.index(self)
+        while True:
+            index = (index + direction) % len(self.qtile.groups)
+            group = self.qtile.groups[index]
+            if index == currentgroup or group.windows:
+                return group
+
     def prevGroup(self):
         return self._dirGroup(-1)
 
     def nextGroup(self):
         return self._dirGroup(1)
 
+    def prevEmptyGroup(self):
+        return self._dirSkipEmptyGroup(-1)
+
+    def nextEmptyGroup(self):
+        return self._dirSkipEmptyGroup(1)
+
     # FIXME cmd_nextgroup and cmd_prevgroup should be on the Screen object.
-    def cmd_nextgroup(self):
+    def cmd_nextgroup(self, skip_empty=False):
         """
             Switch to the next group.
         """
-        n = self.nextGroup()
+        if skip_empty:
+            n = self.nextEmptyGroup()
+        else:
+            n = self.nextGroup()
         self.qtile.currentScreen.setGroup(n)
         return n.name
 
-    def cmd_prevgroup(self):
+    def cmd_prevgroup(self, skip_empty=False):
         """
             Switch to the previous group.
         """
-        n = self.prevGroup()
+        if skip_empty:
+            n = self.prevEmptyGroup()
+        else:
+            n = self.prevGroup()
         self.qtile.currentScreen.setGroup(n)
         return n.name
 
