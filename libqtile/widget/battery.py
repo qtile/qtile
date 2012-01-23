@@ -46,10 +46,14 @@ class Battery(base._TextBox):
         self.timeout_add(self.update_delay, self.update)
 
     def _get_info(self):
-        stat = self._get_param(self.status_file)
-        now = float(self._get_param(self.energy_now_file))
-        full = float(self._get_param(self.energy_full_file))
-        power = float(self._get_param(self.power_now_file))
+        try:
+            stat = self._get_param(self.status_file)
+            now = float(self._get_param(self.energy_now_file))
+            full = float(self._get_param(self.energy_full_file))
+            power = float(self._get_param(self.power_now_file))
+        except TypeError:
+            return 'Error'
+
         if stat == DISCHARGING:
             char = self.discharge_char
             time = now / power

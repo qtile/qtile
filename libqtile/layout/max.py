@@ -88,8 +88,12 @@ class Max(SingleWindow):
         """
         self.down()
 
+    cmd_next = cmd_down
+
     def cmd_up(self):
         """
             Switch up in the window list.
         """
         self.up()
+
+    cmd_previous = cmd_up
