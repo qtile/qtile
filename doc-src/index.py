@@ -122,11 +122,11 @@ ns.confobj = ConfObj
 ns.cmdobj = CmdObj
 ns.hookobj = HookObj
 
-ns.docTitle = "Qtile 0.4"
+ns.docTitle = "Qtile 0.5"
 ns.docMaintainer = "Aldo Cortesi"
 ns.docMaintainerEmail = "aldo@nullcube.com"
 ns.foot = "Copyright Aldo Cortesi 2010"
-ns.version = "0.4"
+ns.version = "0.5"
 ns.sidebar = countershape.widgets.SiblingPageIndex('/index.html')
 ns.copyright = "Copyright (c) 2010 Aldo Cortesi"
 this.layout = countershape.Layout("_layout.html")
