@@ -76,8 +76,6 @@ class File(Config):
             logging.getLogger('qtile').exception('Config error')
             raise ConfigError()
 
-        # except Exception as v:
-
         self.screens = config.screens
         self.layouts = config.layouts
         self.keys = config.keys
@@ -90,3 +88,5 @@ class File(Config):
             from .layout import Floating
             self.floating_layout = Floating()
         self.main = getattr(config, "main", None)
+        # Keep it so local vars don't get decref
+        self.config_module = config
