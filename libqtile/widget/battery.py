@@ -86,5 +86,8 @@ class Battery(base._TextBox):
             with open(
                 os.path.join(BAT_DIR, self.battery_name, name), 'r') as f:
                 return f.read().strip()
+        except IOError:
+            if name == 'current_now':
+                return 0
         except Exception:
             self.log.exception("Failed to get %s" % name)
