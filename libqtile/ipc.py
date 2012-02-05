@@ -27,6 +27,7 @@
 import marshal, select, os.path, socket, struct
 import gobject
 import errno
+import fcntl
 
 HDRLEN = 4
 BUFSIZE = 1024 * 1024
@@ -94,6 +95,8 @@ class Server(_IPC):
             socket.SOCK_STREAM,
             0
         )
+        flags = fcntl.fcntl(self.sock, fcntl.F_GETFD)
+        fcntl.fcntl(self.sock, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
         self.sock.bind(self.fname)
         self.sock.listen(5)
 
@@ -112,6 +115,8 @@ class Server(_IPC):
                 return True
             raise
         else:
+            flags = fcntl.fcntl(conn, fcntl.F_GETFD)
+            fcntl.fcntl(conn, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
             conn.setblocking(0)
             data = {'buffer': ''} #object which holds connection state
             gobject.io_add_watch(conn, gobject.IO_IN, self._receive, data)
