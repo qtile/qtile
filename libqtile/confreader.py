@@ -69,8 +69,4 @@ class File(Config):
             from .layout import Floating
             self.floating_layout = Floating()
         self.screens = globs.get("screens")
-
-        if not self.screens:
-            raise ConfigError("Cannot have no screens setup")
-        
         self.main = globs.get("main")

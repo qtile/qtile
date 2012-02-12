@@ -12,6 +12,14 @@ Other dependencies include:
 
 - pygtk_
 - python2_
+
+
+
+
+
+.. _cairo-xcb:
+.. _pycairo-xcb-git:
+.. _xpyb-git: 
 .. _AUR: http://aur.archlinux.org/
 .. _qtile-git: http://aur.archlinux.org/packages.php?ID=20172
 
