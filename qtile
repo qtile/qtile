@@ -1,29 +1,38 @@
 #!/usr/bin/python2 
+'''
+ Copyright (c) 2008, Aldo Cortesi. All rights reserved.
+ 
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ 
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ 
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+'''
 
-# Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-# 
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-# 
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-# 
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
 
-import os, os.path, sys
+import sys
 from libqtile import confreader, manager
 
 def main():
+
+    '''
+    Main function for accessing qtile.
+
+    This file should be chmod +x            
+    '''
+    
     from argparse import ArgumentParser
 
     arger = ArgumentParser(
@@ -60,18 +69,19 @@ def main():
     options = arger.parse_args()
 
     try:
-        c = confreader.File(options.configfile)
+        conf = confreader.File(options.configfile)
         
-    except confreader.ConfigError, v:
+    except confreader.ConfigError, error:
         if options.fallback:
-            print >> sys.stderr, "Config error: %s" % v.message
-            print >> sys.stderr, "Falling back to config file: %s" % options.fallback
-            c = confreader.File(options.fallback)
+            print >> sys.stderr, "Config error: %s" % error.message
+            print >> sys.stderr, "Falling back to config file: %s"  \
+                % options.fallback
+            conf = confreader.File(options.fallback)
         else:
             raise
-    q = manager.Qtile(c, fname=options.socket)
-    q.debug = options.debug
-    q.loop()
+    qtile = manager.Qtile(conf, fname=options.socket)
+    qtile.debug = options.debug
+    qtile.loop()
 
 
 if __name__ == "__main__":
