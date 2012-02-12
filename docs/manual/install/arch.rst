@@ -1,4 +1,17 @@
-Installing on Arch
+Installing on Arch Linux
 ==================
 
-TODO
+In order to install Qtile we need to download several packages from the AUR_.
+
+- qtile-git_
+- cairo-xcb_
+- pycairo-xcb-git_
+- xpyb-git_
+
+Other dependencies include:
+
+- pygtk_
+- python2_
+.. _AUR: http://aur.archlinux.org/
+.. _qtile-git: http://aur.archlinux.org/packages.php?ID=20172
+
