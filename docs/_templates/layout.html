@@ -1,0 +1,13 @@
+{% extends "basic/layout.html" %}
+
+{%- block relbar1 %}
+    <div class="related">
+      <h3>{{ _('Navigation') }}</h3>
+      <ul>
+        <li><a href="{{ pathto(master_doc) }}">Qtile</a></li>
+        <li class="right">a hackable tiling window manager</li>
+      </ul>
+    </div>
+{% endblock %}
+
+{%- block relbar2 %} {% endblock %}
