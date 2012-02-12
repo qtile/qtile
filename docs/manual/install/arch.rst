@@ -29,6 +29,19 @@ Other dependencies may include:
 Installation
 ++++++++++++
 
+Installation via AUR-helper
+---------------------------
+
+The easiest way to install package from AUR is to use one of AUR-helper
+from this `list <https://wiki.archlinux.org/index.php/AUR_Helpers>`
+
+For example, if you use yaourt:
+
+::
+	yaourt -S qtile-git
+
+
+
 Installation via pacman and AUR
 -------------------------------
 
