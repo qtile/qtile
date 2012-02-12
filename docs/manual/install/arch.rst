@@ -8,7 +8,7 @@ Contents
 
 Dependencies
 ++++++++++++
-In order to install Qtile we need to download several packages from the AUR_.
+You can download the dependencies from the AUR_.
 
 - qtile-git_
 - cairo-xcb_
@@ -29,23 +29,77 @@ Other dependencies may include:
 Installation
 ++++++++++++
 
+Installation via pacman and AUR
+-------------------------------
+
 We'll start with the cairo-xcb package:
 
-.. code-block:: bash
+Installing cairo-xcb
+~~~~~~~~~~~~~~~~~~~~
+
+::
 
    tar -xvzf cairo-xcb-{vernum}
    cd cairo-xcb-{vernum}
    makepkg -s
    
-Once it has finished making the package
+Once it has finished making install the package with pacman like so:
 
-.. code-block:: bash
+::
 
    sudo pacman -U <packagename>
 
 Allow the package to install and we can move onto the next packages.
 
+Installing pycairo
+~~~~~~~~~~~~~~~~~~
 
+::
 
+   tar -xvzf pycairo-xcb-git-{vernum}
+   cd pycairo-xcb-git-{vernum}
+   makepkg -s
+   
+Once it has finished making install the package with pacman like so:
 
+::
 
+   sudo pacman -U <packagename>
+
+Allow the package to install and we can move onto the next packages.
+
+Installing xpyb-git
+~~~~~~~~~~~~~~~~~~~
+
+::
+
+   tar -xvzf xpyb-git-{vernum}
+   cd xpyb-git-{vernum}
+   makepkg -s
+   
+Once it has finished making install the package with pacman like so:
+
+::
+
+   sudo pacman -U <packagename>
+
+Allow the package to install and we can move onto installing Qtile proper.
+
+Installing qtile
+~~~~~~~~~~~~~~~~
+
+::
+
+   tar -xvzf qtile-git-{vernum}
+   cd qtile-git-{vernum}
+   makepkg -s
+   
+Once it has finished making install the package with pacman like so:
+
+::
+
+   sudo pacman -U <packagename>
+
+Qtile should now be installed on your ArchLinux system. Please refer to the 
+`configuration`  documentation to see how to configure your installation for 
+first use.
