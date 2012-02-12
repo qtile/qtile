@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python2 
 
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
 # 
@@ -24,38 +24,44 @@ import os, os.path, sys
 from libqtile import confreader, manager
 
 def main():
-    from optparse import OptionParser, OptionGroup
-    parser = OptionParser(version="%prog 0.4")
-    parser.add_option(
-                        "-c", "--config",
-                        action="store", type="string",
-                        default=None,
-                        dest="configfile",
-                        help='Use specified configuration file, "default" will load the system default config.'
-                    )
-    parser.add_option(
-                        "-f", "--fallback",
-                        action="store", type="string",
-                        default=None,
-                        dest="fallback",
-                        help='Use specified fallback configuration file, "default" will load the system default config as fallback.'
-                    )
-    parser.add_option(
-                        "-d", "--debug",
-                        action="store_true", default=False,
-                        dest="debug",
-                        help='Print lots of debugging output.'
-                    )
-    parser.add_option(
-                        "-s", "--socket",
-                        action="store", type="string",
-                        default=None,
-                        dest="socket",
-                        help='Path to Qtile comms socket.'
-                    )
-    options, args = parser.parse_args()
+    from argparse import ArgumentParser
+
+    arger = ArgumentParser(
+                       description="Tiling window manager written in python",
+                       version="%(prog)s 0.4"
+              ) 
+    arger.add_argument("-c", "--config",
+                       type=str,
+                       default=None, # change this to a real default
+                       dest='configfile',
+                       help="""Use specified configuration file, 'default'
+                       will load the system default config."""
+              )
+    arger.add_argument("-f", "--fallback",
+                       type=str,
+                       default=None,
+                       dest="fallback",
+                       help="""Use specified fallback configuration file,
+                       'default' will load the system default config as
+                       fallback."""
+              )
+    arger.add_argument("-d", "--debug",
+                       action="store_true", default=False,
+                       dest="debug",
+                       help='Print lots of debugging output.'
+              )
+    arger.add_argument("-s", "--socket",
+                       type=str,
+                       default=None,
+                       dest="socket",
+                       help='Path to Qtile comms socket.'
+              )
+
+    options = arger.parse_args()
+
     try:
         c = confreader.File(options.configfile)
+        
     except confreader.ConfigError, v:
         if options.fallback:
             print >> sys.stderr, "Config error: %s" % v.message
