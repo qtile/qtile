@@ -126,6 +126,9 @@ class Layout(command.CommandObject):
 class SingleWindow(Layout):
     """Base for layouts with single visible window"""
 
+    def __init__(self, **config):
+        Layout.__init__(self, **config)
+
     def _get_window(self):
         """Should return either visible window or None"""
         raise NotImplementedError("abstract method")

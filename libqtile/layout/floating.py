@@ -16,8 +16,8 @@ class Floating(Layout):
         ("border_width", 1, "Border width."),
         ("max_border_width", 0, "Border width for maximize."),
         ("fullscreen_border_width", 0, "Border width for fullscreen."),
+        ("name", "floating", "Name of this layout."),
     )
-    name = "floating"
     def __init__(self, float_rules=None, **config):
         """
         If you have certain apps that you always want to float you can
