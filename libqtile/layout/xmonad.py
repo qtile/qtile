@@ -103,7 +103,8 @@ class MonadTall(SingleWindow):
     defaults = manager.Defaults(
         ("border_focus", "#ff0000", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
-        ("border_width", 2, "Border width.")
+        ("border_width", 2, "Border width."),
+        ("name", "xmonad-tall", "Name of this layout."),
     )
 
     def __init__(self, ratio=_med_ratio, align=_left, change_ratio=.05, change_size=20, **config):
