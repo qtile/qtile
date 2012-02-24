@@ -44,10 +44,10 @@ class Slice(Delegate):
     and delegates other window placement to other layout
     """
 
-    name = "slice"
     defaults = manager.Defaults(
         ("width", 256, "Slice width"),
         ("side", "left", "Side of the slice (left, right, top, bottom)"),
+        ("name", "max", "Name of this layout."),
         )
 
     def __init__(self,
