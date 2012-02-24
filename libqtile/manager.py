@@ -578,7 +578,7 @@ class Group(command.CommandObject):
             Pull group to screen 0:
                 toscreen(0)
         """
-        if not screen:
+        if screen is None:
             screen = self.qtile.currentScreen
         else:
             screen = self.qtile.screens[screen]
