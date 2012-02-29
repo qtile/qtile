@@ -54,12 +54,12 @@ class YahooWeather(base._TextBox):
         base._TextBox._configure(self, qtile, bar)
         self.timeout_add(
             self.update_interval,
-            self.fetch_weather, (self.woeid, self.metric),
+            self.fetch_weather, (),
             self.update
         )
 
     def click(self, x, y, button):
-        self.update(self.fetch_weather(self.woeid, self.metric))
+        self.update(self.fetch_weather())
 
     def update(self, data):
         if data:
@@ -84,14 +84,14 @@ class YahooWeather(base._TextBox):
             ## HTTPError? JSON Error? KeyError? Doesn't matter, return None
             return None
 
-    def fetch_weather(self, woeid, metric):
+    def fetch_weather(self):
         if not self.woeid:
             if self.location:
                 self.woeid = self.fetch_woeid(self.location)
             if not self.woeid:
                 return None
-        format = 'c' if metric else 'f'
-        url = WEATHER_URL + urllib.urlencode({'w': woeid, 'u': format})
+        format = 'c' if self.metric else 'f'
+        url = WEATHER_URL + urllib.urlencode({'w': self.woeid, 'u': format})
 
         try:
             response = urllib2.urlopen(url).read()
