@@ -103,20 +103,13 @@ class _Window(command.CommandObject):
         self.hidden = True
         self.group = None
         window.set_attribute(eventmask=self._windowMask)
-        g = self.window.get_geometry()
-        self.x, self.y, self.width, self.height = g.x, g.y, g.width, g.height
+        self._x, self._y, self._width, self._height = None, None, None, None
         self.borderwidth = 0
         self.bordercolor = None
         self.name = "<no name>"
         self.state = NormalState
         self.window_type = "normal"
         self._float_state = NOT_FLOATING
-        # note that _float_info x and y are
-        # really offsets, relative to screen x,y
-        self._float_info = {
-            'x': g.x, 'y': g.y,
-            'w': g.width, 'h': g.height
-            }
 
         self.hints = {
             'input': True,
@@ -135,6 +128,29 @@ class _Window(command.CommandObject):
             'base_height': 0,
             }
         self.updateHints()
+
+    def _geometry_getter(attr):
+        def get_attr(self):
+            if getattr(self, attr) is None:
+                g = self.window.get_geometry()
+                self._x, self._y, self._width, self._height = g.x, g.y, g.width, g.height
+                # note that _float_info x and y are
+                # really offsets, relative to screen x,y
+                self._float_info = {
+                    'x': g.x, 'y': g.y,
+                    'w': g.width, 'h': g.height
+                }
+
+            return getattr(self, "_" + attr)
+        return get_attr
+
+    def _geometry_setter(attr):
+        return lambda self, value: setattr(self, "_" + attr, value)
+
+    x = property(fset=_geometry_setter("x"), fget=_geometry_getter("x"))
+    y = property(fset=_geometry_setter("y"), fget=_geometry_getter("y"))
+    width = property(fset=_geometry_setter("width"), fget=_geometry_getter("width"))
+    height = property(fset=_geometry_setter("height"), fget=_geometry_getter("height"))
 
     def updateName(self):
         try:
