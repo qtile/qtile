@@ -132,7 +132,7 @@ class _Window(command.CommandObject):
 
     def _geometry_getter(attr):
         def get_attr(self):
-            if getattr(self, attr) is None:
+            if getattr(self, "_" + attr) is None:
                 g = self.window.get_geometry()
                 self._x, self._y, self._width, self._height = g.x, g.y, g.width, g.height
                 # note that _float_info x and y are
