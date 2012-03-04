@@ -72,6 +72,7 @@ class Systray(base._Widget):
     defaults = manager.Defaults(
                 ('icon_size', 20, 'Icon width'),
                 ('padding', 5, 'Padding between icons'),
+                ('background', None, 'Background colour'),
             )
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
@@ -108,6 +109,7 @@ class Systray(base._Widget):
         atexit.register(self.cleanup)
 
     def draw(self):
+        self.drawer.clear(self.background or self.bar.background)
         self.drawer.draw(self.offset, self.calculate_width())
         for pos, icon in enumerate(self.icons.values()):
             icon.place(
