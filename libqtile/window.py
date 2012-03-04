@@ -110,6 +110,7 @@ class _Window(command.CommandObject):
         self.state = NormalState
         self.window_type = "normal"
         self._float_state = NOT_FLOATING
+        self._float_info = {}
 
         self.hints = {
             'input': True,
