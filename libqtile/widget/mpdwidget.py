@@ -155,6 +155,8 @@ class Mpd(base._TextBox):
         return True
 
     def click(self, x, y, button):
+        if not self.connect(True):
+            return False
         try:
             status = self.client.status()
             if button == 3:

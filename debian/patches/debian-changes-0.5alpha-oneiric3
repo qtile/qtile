@@ -1,0 +1,175 @@
+Description: Upstream changes introduced in version 0.5alpha-oneiric3
+ This patch has been created by dpkg-source during the package build.
+ Here's the last changelog entry, hopefully it gives details on why
+ those changes were made:
+ .
+ qtile (0.5alpha-oneiric3) oneiric; urgency=low
+ .
+   * Initial release
+ .
+ The person named in the Author field signed this changelog entry.
+Author: Tycho Andersen <tycho@tycho.ws>
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: http://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- qtile-0.5alpha.orig/libqtile/layout/max.py
++++ qtile-0.5alpha/libqtile/layout/max.py
+@@ -18,7 +18,7 @@
+ # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ # SOFTWARE.
+ from base import SingleWindow
+-from .. import utils
++from .. import utils, manager
+ 
+ 
+ class Max(SingleWindow):
+@@ -28,9 +28,11 @@ class Max(SingleWindow):
+         small screens. Conceptually, the windows are managed as a stack, with
+         commands to switch to next and previous windows in the stack.
+     """
+-    name = "max"
+-    def __init__(self):
+-        SingleWindow.__init__(self)
++    defaults = manager.Defaults(
++        ("name", "max", "Name of this layout."),
++    )
++    def __init__(self, **config):
++        SingleWindow.__init__(self, **config)
+         self.clients = []
+ 
+     def _get_window(self):
+--- qtile-0.5alpha.orig/libqtile/layout/tile.py
++++ qtile-0.5alpha/libqtile/layout/tile.py
+@@ -2,11 +2,11 @@ from base import Layout
+ from .. import utils, manager
+ 
+ class Tile(Layout):
+-    name="tile"
+     defaults = manager.Defaults(
+         ("border_focus", "#0000ff", "Border colour for the focused window."),
+         ("border_normal", "#000000", "Border colour for un-focused winows."),
+-        ("border_width", 1, "Border width.")
++        ("border_width", 1, "Border width."),
++        ("name", "tile", "Name of this layout."),
+     )
+     def __init__(self, ratio=0.618, masterWindows=1, expand=True,
+         ratio_increment=0.05, add_on_top=True, shift_windows=False, **config):
+--- qtile-0.5alpha.orig/libqtile/layout/base.py
++++ qtile-0.5alpha/libqtile/layout/base.py
+@@ -126,6 +126,9 @@ class Layout(command.CommandObject):
+ class SingleWindow(Layout):
+     """Base for layouts with single visible window"""
+ 
++    def __init__(self, **config):
++        Layout.__init__(self, **config)
++
+     def _get_window(self):
+         """Should return either visible window or None"""
+         raise NotImplementedError("abstract method")
+--- qtile-0.5alpha.orig/libqtile/layout/floating.py
++++ qtile-0.5alpha/libqtile/layout/floating.py
+@@ -1,10 +1,12 @@
+ from base import Layout
+ from .. import manager, window
+ 
+-FLOAT_WM_TYPES = { 'utility':1,
+-                   'notification':1,
+-                   'toolbar':1,
+-                   'splash':1}
++DEFAULT_FLOAT_WM_TYPES = set([
++    'utility',
++    'notification',
++    'toolbar',
++    'splash',
++])
+ 
+ class Floating(Layout):
+     """
+@@ -16,8 +18,10 @@ class Floating(Layout):
+         ("border_width", 1, "Border width."),
+         ("max_border_width", 0, "Border width for maximize."),
+         ("fullscreen_border_width", 0, "Border width for fullscreen."),
++        ("name", "floating", "Name of this layout."),
++        ("auto_float_types", DEFAULT_FLOAT_WM_TYPES,
++            "default wm types to automatically float"),
+     )
+-    name = "floating"
+     def __init__(self, float_rules=None, **config):
+         """
+         If you have certain apps that you always want to float you can
+@@ -46,7 +50,7 @@ class Floating(Layout):
+         """
+         Used to default float some windows.
+         """
+-        if win.window.get_wm_type() in FLOAT_WM_TYPES:
++        if win.window.get_wm_type() in self.auto_float_types:
+             return True
+         if win.window.get_net_wm_state() == 'fullscreen':
+             win._float_state = window.FULLSCREEN
+--- qtile-0.5alpha.orig/libqtile/layout/ratiotile.py
++++ qtile-0.5alpha/libqtile/layout/ratiotile.py
+@@ -176,11 +176,11 @@ class RatioTile(Layout):
+     """
+     Tries to tile all windows in the width/height ratio passed in
+     """
+-    name="ratiotile"
+     defaults = manager.Defaults(
+         ("border_focus", "#0000ff", "Border colour for the focused window."),
+         ("border_normal", "#000000", "Border colour for un-focused winows."),
+-        ("border_width", 1, "Border width.")
++        ("border_width", 1, "Border width."),
++        ("name", "ratiotile", "Name of this layout."),
+     )
+ 
+     def __init__(self, ratio=GOLDEN_RATIO, ratio_increment=0.1, fancy=False, **config):
+--- qtile-0.5alpha.orig/libqtile/layout/stack.py
++++ qtile-0.5alpha/libqtile/layout/stack.py
+@@ -125,11 +125,11 @@ class Stack(Layout):
+         stack, or unsplit it to show only the current window. At the moment,
+         this is the most mature and flexible layout in Qtile.
+     """
+-    name = "stack"
+     defaults = manager.Defaults(
+         ("border_focus", "#0000ff", "Border colour for the focused window."),
+         ("border_normal", "#000000", "Border colour for un-focused winows."),
+-        ("border_width", 1, "Border width.")
++        ("border_width", 1, "Border width."),
++        ("name", "stack", "Name of this layout."),
+     )
+     def __init__(self, stacks=2, **config):
+         """
+--- qtile-0.5alpha.orig/libqtile/layout/tree.py
++++ qtile-0.5alpha/libqtile/layout/tree.py
+@@ -238,6 +238,7 @@ class TreeTab(SingleWindow):
+         ("panel_width", 150, "Width of the left panel"),
+         ("sections", ['Default'],
+             "Foreground color of inactive tab"),
++        ("name", "max", "Name of this layout."),
+     )
+ 
+     def __init__(self, **config):
+--- qtile-0.5alpha.orig/libqtile/layout/slice.py
++++ qtile-0.5alpha/libqtile/layout/slice.py
+@@ -44,10 +44,10 @@ class Slice(Delegate):
+     and delegates other window placement to other layout
+     """
+ 
+-    name = "slice"
+     defaults = manager.Defaults(
+         ("width", 256, "Slice width"),
+         ("side", "left", "Side of the slice (left, right, top, bottom)"),
++        ("name", "max", "Name of this layout."),
+         )
+ 
+     def __init__(self, side, width,

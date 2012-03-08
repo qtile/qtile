@@ -3,11 +3,11 @@ from .. import utils, manager
 
 
 class Tile(Layout):
-    name = "tile"
     defaults = manager.Defaults(
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
-        ("border_width", 1, "Border width.")
+        ("border_width", 1, "Border width."),
+        ("name", "tile", "Name of this layout."),
     )
 
     def __init__(self, ratio=0.618, masterWindows=1, expand=True,

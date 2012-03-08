@@ -1,11 +1,12 @@
 from base import Layout
 from .. import manager, window
 
-FLOAT_WM_TYPES = {'utility': 1,
-                  'notification': 1,
-                  'toolbar': 1,
-                  'splash': 1}
-
+DEFAULT_FLOAT_WM_TYPES = set([
+    'utility',
+    'notification',
+    'toolbar',
+    'splash',
+])
 
 class Floating(Layout):
     """
@@ -17,8 +18,10 @@ class Floating(Layout):
         ("border_width", 1, "Border width."),
         ("max_border_width", 0, "Border width for maximize."),
         ("fullscreen_border_width", 0, "Border width for fullscreen."),
+        ("name", "floating", "Name of this layout."),
+        ("auto_float_types", DEFAULT_FLOAT_WM_TYPES,
+            "default wm types to automatically float"),
     )
-    name = "floating"
 
     def __init__(self, float_rules=None, **config):
         """
@@ -48,7 +51,7 @@ class Floating(Layout):
         """
         Used to default float some windows.
         """
-        if win.window.get_wm_type() in FLOAT_WM_TYPES:
+        if win.window.get_wm_type() in self.auto_float_types:
             return True
         if win.window.get_net_wm_state() == 'fullscreen':
             win._float_state = window.FULLSCREEN

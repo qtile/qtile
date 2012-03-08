@@ -29,6 +29,7 @@ class Layout(command.CommandObject):
     defaults = manager.Defaults()
 
     def __init__(self, **config):
+        self.name = self.__class__.__name__.lower()
         command.CommandObject.__init__(self)
         self.defaults.load(self, config)
 
@@ -128,6 +129,9 @@ class Layout(command.CommandObject):
 
 class SingleWindow(Layout):
     """Base for layouts with single visible window"""
+
+    def __init__(self, **config):
+        Layout.__init__(self, **config)
 
     def _get_window(self):
         """Should return either visible window or None"""
