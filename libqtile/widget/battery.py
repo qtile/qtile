@@ -54,14 +54,17 @@ class Battery(base._TextBox):
         except TypeError:
             return 'Error'
 
-        if stat == DISCHARGING:
-            char = self.discharge_char
-            time = now / power
-        elif stat == CHARGING:
-            char = self.charge_char
-            time = (full - now) / power
-        else:
-            return 'Full'
+        try:
+            if stat == DISCHARGING:
+                char = self.discharge_char
+                time = now / power
+            elif stat == CHARGING:
+                char = self.charge_char
+                time = (full - now) / power
+            else:
+                return 'Full'
+        except ZeroDivisonError:
+            return 'Inf'
 
         hour = int(time)
         min = int(time * 60) % 60
