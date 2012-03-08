@@ -110,7 +110,7 @@ class _Window(command.CommandObject):
         self.state = NormalState
         self.window_type = "normal"
         self._float_state = NOT_FLOATING
-        self._float_info = {}
+        self._float_info = None
 
         self.hints = {
             'input': True,
@@ -152,6 +152,7 @@ class _Window(command.CommandObject):
     y = property(fset=_geometry_setter("y"), fget=_geometry_getter("y"))
     width = property(fset=_geometry_setter("width"), fget=_geometry_getter("width"))
     height = property(fset=_geometry_setter("height"), fget=_geometry_getter("height"))
+    _float_info = property(fset=_geometry_setter("_float_info"), fget=_geometry_getter("_float_info"))
 
     def updateName(self):
         try:
