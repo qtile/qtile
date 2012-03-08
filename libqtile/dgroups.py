@@ -116,14 +116,14 @@ class DGroups(object):
             if app['match'].compare(client):
                 if 'group' in app:
                     group = app['group']
-                    self.qtile.addGroup(group)
+                    group_added = self.qtile.addGroup(group)
                     client.togroup(group)
 
                     group_set = True
 
                     group_obj = self.qtile.groupMap[group]
                     group_opts = self.groups.get(group)
-                    if group_opts:
+                    if group_opts and group_added:
                         layout = group_opts.get('layout')
                         master = group_opts.get('master')
                         if layout:
