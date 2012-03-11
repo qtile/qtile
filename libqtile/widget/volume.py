@@ -18,22 +18,17 @@ class Volume(base._TextBox):
     ''' Widget that display and change volume
         if theme_path is set it draw widget as
         icons '''
-    defaults = manager.Defaults(
+    defaults = [
         ("cardid", 0, "Card Id"),
         ("channel", "Master", "Channel"),
-        ("font", "Arial", "Text font"),
-        ("fontsize", None, "Font pixel size. Calculated if None."),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
         ("padding", 3, "Padding left and right. Calculated if None."),
-        ("background", None, "Background colour."),
-        ("foreground", "#ffffff", "Foreground colour."),
         ("theme_path", None, "Path of the icons"),
         ("update_interval", 0.2, "Update time in seconds."),
-    )
-
+    ]
     def __init__(self, **config):
         base._TextBox.__init__(self, '0', width=bar.CALCULATED, **config)
+        self.add_defaults(Volume.defaults)
+        self.load(config)
         if self.theme_path:
             self.width_type = bar.STATIC
             self.width = 0

@@ -283,19 +283,13 @@ class Prompt(base._TextBox):
         "window": WindowCompleter,
         None: NullCompleter
     }
-    defaults = manager.Defaults(
-        ("font", "Arial", "Font"),
-        ("fontsize", None, "Font pixel size. Calculated if None."),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ("padding", None, "Padding. Calculated if None."),
-        ("background", None, "Background colour"),
-        ("foreground", "ffffff", "Foreground colour"),
+    defaults = [
         ("cursorblink", 0.5, "Cursor blink rate. 0 to disable.")
-    )
-
+    ]
     def __init__(self, name="prompt", **config):
         base._TextBox.__init__(self, "", bar.CALCULATED, **config)
+        self.add_defaults(Prompt.defaults)
+        self.load(config)
         self.name = name
         self.active = False
         self.blink = False

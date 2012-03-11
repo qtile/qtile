@@ -6,16 +6,6 @@ class WindowName(base._TextBox):
     """
         Displays the name of the window that currently has focus.
     """
-    defaults = manager.Defaults(
-        ("font", "Arial", "Font face."),
-        ("fontsize", None, "Font pixel size. Calculated if None."),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ("padding", None, "Padding left and right."),
-        ("background", None, "Background colour."),
-        ("foreground", "ffffff", "Foreground colour."),
-    )
-
     def __init__(self, width=bar.STRETCH, **config):
         base._TextBox.__init__(self, width=width, **config)
 

@@ -1,10 +1,15 @@
 from .. import bar, hook, utils, manager
 import base
 
-
-class _GroupBase(base._Widget):
+class _GroupBase(base._TextBox):
+    defaults = [
+        ("padding", 5, "Padding inside the box"),
+        ("margin_y", 3, "Y margin outside the box"),
+        ("margin_x", 3, "X margin outside the box"),
+    ]
     def __init__(self, **config):
-        base._Widget.__init__(self, bar.CALCULATED, **config)
+        base._TextBox.__init__(self, bar.CALCULATED, **config)
+        self.add_defaults(_GroupBase.defaults)
 
     @property
     def fontsize(self):
@@ -63,19 +68,13 @@ class AGroupBox(_GroupBase):
     """
         A widget that graphically displays the current group.
     """
-    defaults = manager.Defaults(
-        ("margin_y", 3, "Y margin outside the box"),
-        ("margin_x", 3, "X margin outside the box"),
-        ("borderwidth", 3, "Current group border width"),
-        ("font", "Arial", "Font face"),
-        ("fontsize", None, "Font pixel size - calculated if None"),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ("foreground", "aaaaaa", "Font colour"),
-        ("background", None, "Widget background"),
-        ("border", "215578", "Border colour"),
-        ("padding", 5, "Padding inside the box")
-    )
+    defaults = [
+    ]
+
+    def __init__(self, **config):
+        _GroupBase.__init__(self, **config)
+        self.add_defaults(AGroupBox.defaults)
+        self.load(config)
 
     def button_press(self, x, y, button):
         self.bar.screen.group.cmd_nextgroup()
@@ -95,18 +94,11 @@ class GroupBox(_GroupBase):
     """
         A widget that graphically displays the current group.
     """
-    defaults = manager.Defaults(
+    defaults = [
         ("active", "FFFFFF", "Active group font colour"),
         ("inactive", "404040", "Inactive group font colour"),
         ("urgent_text", "FF0000", "Urgent group font color"),
-        ("margin_y", 3, "Y margin outside the box"),
-        ("margin_x", 3, "X margin outside the box"),
         ("borderwidth", 3, "Current group border width"),
-        ("font", "Arial", "Font face"),
-        ("fontsize", None, "Font pixel size - calculated if None"),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ("background", None, "Widget background"),
         ("highlight_method", "border",
          "Method of highlighting (one of 'border' or 'block') "
          "Uses *_border color settings"),
@@ -125,10 +117,18 @@ class GroupBox(_GroupBase):
          "hints (one of 'border', 'text' or 'block')"),
         ("disable_drag", False,
          "Disable dragging and dropping of group names on widget"),
-    )
+        ("this_screen_border", "215578", "Border colour for group on this screen."),
+        ("other_screen_border", "404040", "Border colour for group on other screen."),
+        ("padding", 5, "Padding inside the box"),
+        ("urgent_border", "FF0000", "Urgent border color"),
+        ("urgent_alert_method", "border", "Method for alerting you of WM urgent " \
+                                          "hints (one of 'border' or 'text')"),
+    ]
 
     def __init__(self, **config):
-        base._Widget.__init__(self, bar.CALCULATED, **config)
+        _GroupBase.__init__(self, **config)
+        self.add_defaults(GroupBox.defaults)
+        self.load(config)
         self.clicked = None
 
     def get_clicked_group(self, x, y):

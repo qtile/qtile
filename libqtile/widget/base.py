@@ -8,7 +8,7 @@ LEFT = object()
 CENTER = object()
 
 
-class _Widget(command.CommandObject):
+class _Widget(command.CommandObject, manager.Configurable):
     """
         If width is set to the special value bar.STRETCH, the bar itself
         will set the width to the maximum remaining space, after all other
@@ -19,8 +19,9 @@ class _Widget(command.CommandObject):
         configured.
     """
     offset = None
-    defaults = manager.Defaults()
-
+    defaults = [
+        ("background", "000000", "Widget background color"),
+    ]
     def __init__(self, width, **config):
         """
             width: bar.STRETCH, bar.CALCULATED, or a specified width.
@@ -31,7 +32,10 @@ class _Widget(command.CommandObject):
             self.name = config["name"]
 
         self.log = logging.getLogger('qtile')
-        self.defaults.load(self, config)
+
+        manager.Configurable.__init__(self)
+        self.add_defaults(_Widget.defaults)
+
         if width in (bar.CALCULATED, bar.STRETCH):
             self.width_type = width
             self.width = 0
@@ -161,6 +165,7 @@ UNSPECIFIED = bar.Obj("UNSPECIFIED")
 class _TextBox(_Widget):
     """
         Base class for widgets that are just boxes containing text.
+<<<<<<< HEAD
 
         If you derive from this class, you must add the following defaults:
 
@@ -170,11 +175,21 @@ class _TextBox(_Widget):
             padding
             background
             foreground
+=======
+>>>>>>> Unify the default widget settings.
     """
+    defaults = [
+        ("font", "Arial", "Default font"),
+        ("fontsize", None, "Font size. Calculated if None."),
+        ("padding", None, "Padding. Calculated if None."),
+        ("foreground", "ffffff", "Foreground colour"),
+    ]
+
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
         self.layout = None
         _Widget.__init__(self, width, **config)
         self.text = text
+        self.add_defaults(_TextBox.defaults)
 
     @property
     def text(self):

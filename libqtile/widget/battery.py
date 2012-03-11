@@ -27,14 +27,7 @@ class _Battery(base._TextBox):
 
     filenames = {}
 
-    defaults = manager.Defaults(
-        ('font', 'Arial', 'Text font'),
-        ('fontsize', None, 'Font pixel size. Calculated if None.'),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ('padding', 3, 'Padding left and right. Calculated if None.'),
-        ('background', None, 'Background colour.'),
-        ('foreground', '#ffffff', 'Foreground colour.'),
+    defaults = [
         ('battery_name', 'BAT0', 'ACPI name of a battery, usually BAT0'),
         ('status_file', 'status', 'Name of status file in'
          ' /sys/class/power_supply/battery_name'),
@@ -45,7 +38,11 @@ class _Battery(base._TextBox):
         ('power_now_file', None, 'Name of file with the current'
          ' power draw in /sys/class/power_supply/battery_name'),
         ('update_delay', 1, 'The delay in seconds between updates'),
-    )
+    ]
+
+    def __init__(self, **config):
+        base._TextBox.__init__(self, "BAT", bar.CALCULATED, **config)
+        self.add_defaults(defaults)
 
     def _load_file(self, name):
         try:
@@ -96,26 +93,27 @@ class Battery(_Battery):
     """
         A simple but flexible text-based battery widget.
     """
-    defaults = manager.Defaults(
+    defaults = [
         ('low_foreground', 'FF0000', 'font color when battery is low'),
         ('format', '{char} {percent:2.0%} {hour:d}:{min:02d}',
          'Display format'),
         ('charge_char', '^', 'Character to indicate the battery is charging'),
         ('discharge_char', 'V', 'Character to indicate the battery'
          ' is discharging'),
+        ('low_percentage', 0.10,
+         "0 < x < 1 at which to indicate battery is low with low_foreground"),
         ('hide_threshold', None, 'Hide the text when there is enough energy'),
-        *_Battery.defaults.defaults
-    )
+    ]
 
-    def __init__(self, low_percentage=0.10, **config):
-        base._TextBox.__init__(self, "BAT", bar.CALCULATED, **config)
-        self.low_percentage = low_percentage
+    def __init__(self, **config):
+        _Battery.__init__(self, **config)
+        self.add_defaults(Battery.defaults)
         self.timeout_add(self.update_delay, self.update)
         self.update()
 
     def _get_text(self):
         info = self._get_info()
-        if not info:
+        if info == False:
             return 'Error'
 
         ## Set the charging character
@@ -166,14 +164,15 @@ class Battery(_Battery):
 class BatteryIcon(_Battery):
     ''' Battery life indicator widget '''
 
-    defaults = manager.Defaults(
+    defaults = [
         ('theme_path', default_icon_path(), 'Path of the icons'),
         ('custom_icons', {}, 'dict containing key->filename icon map'),
-        *_Battery.defaults.defaults
-    )
+    ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, '0', width=bar.CALCULATED, **config)
+        _Battery.__init__(self, **config)
+        self.add_defaults(defaults)
+
         if self.theme_path:
             self.width_type = bar.STATIC
             self.width = 0
