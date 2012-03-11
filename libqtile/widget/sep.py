@@ -17,7 +17,6 @@ class Sep(base._Widget):
     def __init__(self, **config):
         base._Widget.__init__(self, bar.STATIC, **config)
         self.add_defaults(Sep.defaults)
-        self.load(config)
         self.width = self.padding + self.linewidth
 
     def draw(self):

@@ -40,7 +40,6 @@ class Mpd(base._TextBox):
         self.inc = 2
         base._TextBox.__init__(self, " ", width, **config)
         self.add_defaults(Mpd.defaults)
-        self.load(config)
         self.client = MPDClient()
         self.connected = False
         self.connect()

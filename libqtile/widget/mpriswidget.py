@@ -16,7 +16,6 @@ class Mpris(base._TextBox):
     def __init__(self, name="clementine", width=bar.CALCULATED,
                  objname='org.mpris.clementine', **config):
         base._TextBox.__init__(self, " ", width, **config)
-        self.load(config)
 
         # we need a main loop to get event signals
         # we just piggyback on qtile's main loop

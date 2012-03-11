@@ -98,7 +98,6 @@ class Systray(base._Widget):
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(Systray.defaults)
-        self.load(config)
         self.traywin = None
         self.icons = {}
 

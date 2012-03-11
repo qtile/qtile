@@ -289,7 +289,6 @@ class Prompt(base._TextBox):
     def __init__(self, name="prompt", **config):
         base._TextBox.__init__(self, "", bar.CALCULATED, **config)
         self.add_defaults(Prompt.defaults)
-        self.load(config)
         self.name = name
         self.active = False
         self.blink = False

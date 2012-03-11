@@ -33,7 +33,7 @@ class _Widget(command.CommandObject, manager.Configurable):
 
         self.log = logging.getLogger('qtile')
 
-        manager.Configurable.__init__(self)
+        manager.Configurable.__init__(self, **config)
         self.add_defaults(_Widget.defaults)
 
         if width in (bar.CALCULATED, bar.STRETCH):
@@ -165,24 +165,14 @@ UNSPECIFIED = bar.Obj("UNSPECIFIED")
 class _TextBox(_Widget):
     """
         Base class for widgets that are just boxes containing text.
-<<<<<<< HEAD
-
-        If you derive from this class, you must add the following defaults:
-
-            font
-            fontsize
-            fontshadow
-            padding
-            background
-            foreground
-=======
->>>>>>> Unify the default widget settings.
     """
     defaults = [
         ("font", "Arial", "Default font"),
         ("fontsize", None, "Font size. Calculated if None."),
         ("padding", None, "Padding. Calculated if None."),
         ("foreground", "ffffff", "Foreground colour"),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
     ]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):

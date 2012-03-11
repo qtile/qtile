@@ -22,8 +22,6 @@ class TextBox(base._TextBox):
             - width: An integer width, bar.STRETCH, or bar.CALCULATED .
         """
         base._TextBox.__init__(self, text, width, **config)
-        self.add_defaults(defaults)
-        self.load(config)
 
     def update(self, text):
         self.text = text

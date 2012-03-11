@@ -46,24 +46,28 @@ import xcbq
 
 class Configurable(object):
     global_defaults = {}
-    def __init__(self):
-        self._defaults = {}
+    def __init__(self, **config):
+        self._widget_defaults = {}
+        self._user_config = config
 
     def add_defaults(self, defaults):
         """
             Add defaults to this object, overwriting any which already exist.
         """
         for (prop, value, _) in defaults:
-            self._defaults[prop] = value
+            self._widget_defaults[prop] = value
 
-    def load(self, config):
-        """
-            Loads a dict of attributes, using specified defaults, onto target.
-            Precedence is: supplied config, global_defaults, local_defaults.
-        """
-        for (k, v) in self._defaults.items():
-            val = config.get(k, self.global_defaults.get(k, v))
-            setattr(self, k, val)
+    def __getattr__(self, name):
+        try:
+            return self._user_config[name]
+        except KeyError:
+            try:
+                return self.global_defaults[name]
+            except KeyError:
+                try:
+                    return self._widget_defaults[name]
+                except KeyError:
+                    raise AttributeError("no attribute: " + name)
 
 class Qtile(command.CommandObject):
     """
@@ -133,6 +137,10 @@ class Qtile(command.CommandObject):
             if hasattr(self.config, 'dgroups_key_binder'):
                 key_binder = self.config.dgroups_key_binder
             DGroups(self, self.config.groups, key_binder)
+
+        if config.widget_defaults:
+            from widget.base import _Widget
+            _Widget.global_defaults = config.widget_defaults
 
         for i in self.groups:
             i._configure(config.layouts, config.floating_layout, self)

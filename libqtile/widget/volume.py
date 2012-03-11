@@ -28,7 +28,6 @@ class Volume(base._TextBox):
     def __init__(self, **config):
         base._TextBox.__init__(self, '0', width=bar.CALCULATED, **config)
         self.add_defaults(Volume.defaults)
-        self.load(config)
         if self.theme_path:
             self.width_type = bar.STATIC
             self.width = 0
