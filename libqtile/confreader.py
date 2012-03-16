@@ -70,8 +70,8 @@ class File(Config):
             fname = utils.data.path("resources/default-config.py")
 
         self.fname = fname
+        
         globs = {}
-
         if not os.path.isfile(fname):
             raise ConfigError("Config file does not exist: %s"%fname)
         try:
@@ -92,17 +92,7 @@ class File(Config):
         self.main = globs.get("main")
 
         # configs without
-
-        self.layouts = globs.get("layouts", self.default_layout())
+        self.layouts = globs.get("layouts")
         self.screens = globs.get("screens")
         self.groups = globs.get("groups")
         self.keys = globs.get("keys")
-
-    def default_layout(self):
-
-        """
-        method in case no defaults were added for the layout in the config
-        """
-        
-        from libqtile.layout import Max
-        return [Max()]

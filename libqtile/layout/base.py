@@ -19,7 +19,11 @@
 # SOFTWARE.
 
 import copy
-from .. import command, manager
+try:
+    from libqtile import command, manager
+except Exception as e:
+    print e
+    from .. import command, manager
 
 class Layout(command.CommandObject):
     """

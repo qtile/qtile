@@ -31,20 +31,24 @@ class QtileError(Exception): pass
 
 
 class Defaults:
+
+    
     def __init__(self, *defaults):
         """
             defaults: A list of (name, value, description) tuples.
         """
+        
         self.defaults = defaults
 
     def load(self, target, config):
         """
             Loads a dict of attributes, using specified defaults, onto target.
         """
+        
         for i in self.defaults:
             val = config.get(i[0], i[1])
             setattr(target, i[0], val)
-
+    
 
 class Key:
     """
@@ -243,7 +247,8 @@ class Screen(command.CommandObject):
             new_group._setScreen(self)
         hook.fire("setgroup")
         hook.fire("focus_change")
-        hook.fire("layout_change", self.group.layouts[self.group.currentLayout])
+        hook.fire("layout_change",
+            self.group.layouts[self.group.currentLayout])
 
     def _items(self, name):
         if name == "layout":
@@ -639,6 +644,32 @@ class Group(command.CommandObject):
         self.focus(nxt, True)
 
 
+    def cmd_swap_groups(self, group=None):
+
+        windows_ = []
+        from_group = []
+
+        other_group = self.qtile.groupMap.get(group)
+        if not other_group:
+            return
+        
+        # for ours in self.windows:
+        #     windows_.append([ours])
+
+        # for other in other_group.windows:
+        #     from_group.append([other])
+        
+        # for item in windows_:
+        #     item[0].togroup(group)
+
+        # for item in from_group:
+        #     item[0].togroup(self.name)
+        
+        [windows_.append([ours]) for ours in self.windows]
+        [from_group.append([other]) for other in other_group.windows]
+        [item[0].togroup(group) for item in windows_]
+        [item[0].togroup(self.name) for item in from_group]
+        
 class Log:
     """
         A circular log.
@@ -899,7 +930,7 @@ class Qtile(command.CommandObject):
             exists, this raises a ConfigError.
         """
         if w.name:
-            if self.widgetMap.has_key(w.name):
+            if self.widgeMap.has_key(w.name):
                 return
             self.widgetMap[w.name] = w
 
