@@ -646,6 +646,11 @@ class Group(command.CommandObject):
 
     def cmd_swap_groups(self, group=None):
 
+        """
+        Swaps all the windows between the current
+        group and the target group
+        """
+        
         windows_ = []
         from_group = []
 
@@ -669,7 +674,7 @@ class Group(command.CommandObject):
         [from_group.append([other]) for other in other_group.windows]
         [item[0].togroup(group) for item in windows_]
         [item[0].togroup(self.name) for item in from_group]
-        
+      
 class Log:
     """
         A circular log.
