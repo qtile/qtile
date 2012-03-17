@@ -935,7 +935,7 @@ class Qtile(command.CommandObject):
             exists, this raises a ConfigError.
         """
         if w.name:
-            if self.widgeMap.has_key(w.name):
+            if self.widgetMap.has_key(w.name):
                 return
             self.widgetMap[w.name] = w
 
