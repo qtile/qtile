@@ -20,3 +20,9 @@ except ImportError:
 from maildir import Maildir
 from volume import Volume
 from currentlayout import CurrentLayout
+
+try:
+    from yahoo_weather import YahooWeather
+except ImportError:
+    # Requires Python >= 2.6 or simplejson
+    pass
