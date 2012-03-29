@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from base import SingleWindow
-from .. import utils
+from .. import utils, manager
 
 
 class Max(SingleWindow):
@@ -28,9 +28,12 @@ class Max(SingleWindow):
         small screens. Conceptually, the windows are managed as a stack, with
         commands to switch to next and previous windows in the stack.
     """
-    name = "max"
-    def __init__(self):
-        SingleWindow.__init__(self)
+    defaults = manager.Defaults(
+        ("name", "max", "Name of this layout."),
+    )
+
+    def __init__(self, **config):
+        SingleWindow.__init__(self, **config)
         self.clients = []
 
     def _get_window(self):
@@ -87,8 +90,12 @@ class Max(SingleWindow):
         """
         self.down()
 
+    cmd_next = cmd_down
+
     def cmd_up(self):
         """
             Switch up in the window list.
         """
         self.up()
+
+    cmd_previous = cmd_up

@@ -44,21 +44,23 @@ class Slice(Delegate):
     and delegates other window placement to other layout
     """
 
-    name = "slice"
     defaults = manager.Defaults(
         ("width", 256, "Slice width"),
         ("side", "left", "Side of the slice (left, right, top, bottom)"),
+        ("name", "max", "Name of this layout."),
         )
 
-    def __init__(self, side, width,
+    def __init__(self,
                  wname=None, wmclass=None, role=None,
                  fallback=Max(), **config):
+        if wname == None and wmclass == None and role == None:
+            wname = 'slice'
         self.match = {
             'wname': wname,
             'wmclass': wmclass,
             'role': role,
             }
-        Delegate.__init__(self, width=width, side=side, **config)
+        Delegate.__init__(self, **config)
         self._slice = Single()
         self._fallback = fallback
 
@@ -101,4 +103,3 @@ class Slice(Delegate):
         else:
             self._fallback.add(win)
             self.layouts[win] = self._fallback
-
