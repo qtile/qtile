@@ -1,4 +1,10 @@
-# Copyright (c) 2008, Aldo Cortesi. All rights reserved.
+#!/usr/bin/env python
+# coding: utf-8
+#
+# Copyright (c) 2008, Aldo Cortesi <aldo@corte.si>
+# Copyright (c) 2011, Andrew Grigorev <andrew@ei-grad.ru>
+#
+# All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,11 +24,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os.path
+import os
 import sys
 import utils
 
-class ConfigError(Exception): pass
+
+class ConfigError(Exception):
+    pass
 
 
 class Config:
@@ -47,26 +55,25 @@ class File(Config):
             fname = utils.data.path("resources/default-config.py")
 
         self.fname = fname
-        globs = {}
 
         if not os.path.isfile(fname):
             raise ConfigError("Config file does not exist: %s"%fname)
         try:
-            sys.path.append(os.path.dirname(self.fname)) #to allow 'import'ing from the config dir
-            execfile(self.fname, {}, globs)
+            sys.path.insert(0, os.path.dirname(self.fname))
+            config = __import__(os.path.basename(self.fname)[:-3])
+            #sys.path = sys.path[1:] # XXX: is it needed?
         except Exception, v:
             raise ConfigError(str(v))
 
-
-        self.keys = globs.get("keys")
-        self.mouse = globs.get("mouse", [])
-        self.groups = globs.get("groups")
-        self.follow_mouse_focus = globs.get("follow_mouse_focus", True)
-        self.cursor_warp = globs.get("cursor_warp", False)
-        self.layouts = globs.get("layouts")
-        self.floating_layout = globs.get('floating_layout', None)
+        self.screens = config.screens
+        self.layouts = config.layouts
+        self.keys = config.keys
+        self.groups = config.groups
+        self.mouse = getattr(config, "mouse", [])
+        self.follow_mouse_focus = getattr(config, "follow_mouse_focus", True)
+        self.cursor_warp = getattr(config, "cursor_warp", False)
+        self.floating_layout = getattr(config, 'floating_layout', None)
         if self.floating_layout is None:
             from .layout import Floating
             self.floating_layout = Floating()
-        self.screens = globs.get("screens")
-        self.main = globs.get("main")
+        self.main = getattr(config, "main", None)
