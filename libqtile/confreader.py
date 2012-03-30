@@ -22,19 +22,64 @@ import os.path
 import sys
 import utils
 
-class ConfigError(Exception): pass
+import layout, bar, widget
+from manager import Screen, Key, Group
+from command import lazy
 
+class ConfigError(Exception):
+    pass
 
-class Config:
-    keys = ()
-    mouse = ()
-    groups = None
-    layouts = None
-    screens = ()
-    main = None
-    follow_mouse_focus = True
-    cursor_warp = False
+class Config(object):
+    """ A reasonable default configuration. """
 
+    def __init__(self):
+        self.screens = [Screen(top = bar.Bar([
+                widget.GroupBox(urgent_alert_method='text'),
+                widget.WindowName(),
+                widget.Systray(),
+                widget.Clock('%Y-%m-%d %a %I:%M %p'),
+            ], 30))
+        ]
+
+        mod = "mod4"
+
+        self.keys = [
+            Key(["shift", "mod1"], "q",  lazy.shutdown()),
+
+            Key([mod], "k",              lazy.layout.down()),
+            Key([mod], "j",              lazy.layout.up()),
+            Key([mod], "h",              lazy.layout.previous()),
+            Key([mod], "l",              lazy.layout.previous()),
+            Key([mod, "shift"], "space", lazy.layout.rotate()),
+            Key([mod, "shift"], "Return",lazy.layout.toggle_split()),
+            Key(["mod1"], "Tab",         lazy.nextlayout()),
+            Key([mod], "x",              lazy.window.kill()),
+
+            # start specific apps
+            Key([mod], "n",              lazy.spawn("firefox")),
+            Key([mod], "Return",         lazy.spawn("xterm")),
+        ]
+
+        self.mouse = ()
+        self.groups = []
+        for i in ["a", "s", "d", "f", "u", "i", "o", "p"]:
+            groups.append(Group(i))
+            keys.append(
+                Key([mod], i, lazy.group[i].toscreen())
+            )
+            keys.append(
+                Key([mod, "mod1"], i, lazy.window.togroup(i))
+            )
+
+        self.layouts = [
+            layout.Stack(stacks=2, border_width=1),
+            layout.Max(),
+        ]
+
+        self.main = None
+        self.follow_mouse_focus = True
+        self.cursor_warp = False
+        self.floating_layout = layout.Floating()
 
 class File(Config):
     def __init__(self, fname=None):
@@ -50,23 +95,27 @@ class File(Config):
         globs = {}
 
         if not os.path.isfile(fname):
-            raise ConfigError("Config file does not exist: %s"%fname)
+            # no config, so use the defaults above
+            return
         try:
             sys.path.append(os.path.dirname(self.fname)) #to allow 'import'ing from the config dir
             execfile(self.fname, {}, globs)
         except Exception, v:
             raise ConfigError(str(v))
 
+        config_options = [
+            "keys",
+            "mouse",
+            "groups",
+            "follow_mouse_focus",
+            "cursor_warp",
+            "layouts",
+            "floating_layout",
+            "screens",
+            "main",
+        ]
 
-        self.keys = globs.get("keys")
-        self.mouse = globs.get("mouse", [])
-        self.groups = globs.get("groups")
-        self.follow_mouse_focus = globs.get("follow_mouse_focus", True)
-        self.cursor_warp = globs.get("cursor_warp", False)
-        self.layouts = globs.get("layouts")
-        self.floating_layout = globs.get('floating_layout', None)
-        if self.floating_layout is None:
-            from .layout import Floating
-            self.floating_layout = Floating()
-        self.screens = globs.get("screens")
-        self.main = globs.get("main")
+        for option in config_options:
+            if option in globs:
+                setattr(self, option, globs[option])
+
