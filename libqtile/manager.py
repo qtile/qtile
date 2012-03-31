@@ -670,6 +670,9 @@ class Group(command.CommandObject):
         # for item in from_group:
         #     item[0].togroup(self.name)
         
+        # swap names
+        self.name, other_group.name = other_group.name, self.name
+
         [windows_.append([ours]) for ours in self.windows]
         [from_group.append([other]) for other in other_group.windows]
         [item[0].togroup(group) for item in windows_]
