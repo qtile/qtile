@@ -1,4 +1,10 @@
-# Copyright (c) 2008, Aldo Cortesi. All rights reserved.
+#!/usr/bin/env python
+# coding: utf-8
+#
+# Copyright (c) 2008, Aldo Cortesi <aldo@corte.si>
+# Copyright (c) 2011, Andrew Grigorev <andrew@ei-grad.ru>
+#
+# All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,7 +24,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os.path
+import os
 import sys
 import utils
 
@@ -92,14 +98,13 @@ class File(Config):
             fname = utils.data.path("resources/default-config.py")
 
         self.fname = fname
-        globs = {}
 
         if not os.path.isfile(fname):
             # no config, so use the defaults above
             return
         try:
-            sys.path.append(os.path.dirname(self.fname)) #to allow 'import'ing from the config dir
-            execfile(self.fname, {}, globs)
+            sys.path.insert(0, os.path.dirname(self.fname))
+            config = __import__(os.path.basename(self.fname)[:-3])
         except Exception, v:
             raise ConfigError(str(v))
 
@@ -116,6 +121,6 @@ class File(Config):
         ]
 
         for option in config_options:
-            if option in globs:
-                setattr(self, option, globs[option])
+            if hasattr(config, option):
+                setattr(self, option, getattr(config, option))
 
