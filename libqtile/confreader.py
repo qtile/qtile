@@ -69,11 +69,11 @@ class Config(object):
         self.mouse = ()
         self.groups = []
         for i in ["a", "s", "d", "f", "u", "i", "o", "p"]:
-            groups.append(Group(i))
-            keys.append(
+            self.groups.append(Group(i))
+            self.keys.append(
                 Key([mod], i, lazy.group[i].toscreen())
             )
-            keys.append(
+            self.keys.append(
                 Key([mod, "mod1"], i, lazy.window.togroup(i))
             )
 
@@ -89,6 +89,7 @@ class Config(object):
 
 class File(Config):
     def __init__(self, fname=None):
+        Config.__init__(self)
         if not fname:
             config_directory = os.path.expandvars('$XDG_CONFIG_HOME')
             if config_directory == '$XDG_CONFIG_HOME': #if variable wasn't set
