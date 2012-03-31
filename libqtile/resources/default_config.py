@@ -69,9 +69,18 @@ screens = [
                     [
                         widget.GroupBox(),
                         widget.WindowName(),
-                        widget.TextBox("default", "default config")
+                        widget.TextBox("default", "default config"),
+                        widget.Systray(),
+                        widget.Clock('%Y-%m-%d %a %I:%M %p'),
                     ],
                     30,
                 ),
     ),
 ]
+
+main = None
+follow_mouse_focus = True
+cursor_warp = False
+floating_layout = layout.Floating()
+mouse = ()
+

@@ -6,7 +6,7 @@ import utils
 import libqtile.confreader, libqtile.manager, libqtile.layout, libqtile.bar, libqtile.widget
 
 
-class CallConfig(libqtile.confreader.Config):
+class CallConfig(object):
     keys = [
         libqtile.manager.Key(
             ["control"], "j",
@@ -37,6 +37,7 @@ class CallConfig(libqtile.confreader.Config):
                     ),
         )
     ]
+    main = None
 
 
 class uCall(utils.QtileTests):
@@ -112,7 +113,7 @@ class u_CommandTree(libpry.AutoTree):
         assert g.selectors == []
 
 
-class ServerConfig(libqtile.confreader.Config):
+class ServerConfig(object):
     keys = []
     mouse = []
     groups = [
@@ -144,6 +145,7 @@ class ServerConfig(libqtile.confreader.Config):
                     ),
         )
     ]
+    main = None
 
 
 class u_Server(utils.QtileTests):
