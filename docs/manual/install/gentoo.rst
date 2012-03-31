@@ -53,6 +53,12 @@ py2cairo
     make
     sudo make install
 
+It's also possible (and recommended) to put this into a virtualenv.
+
+.. code-block:: bash
+
+    ./configure --prefix=/path/to/virtualenv 
+
 
 pygtk
 ~~~~~
@@ -90,6 +96,9 @@ Annotation
 * pycairo in portage gets installed without xpyb support. Maybe, cause
   they use waf for intallation. But i'm quiet new to python so i can't
   say.
+* For pycairo need to specify ./autogen.sh --enable-xcb otherwise you 
+  will get the dreaded TypeError: pycairo was not compiled with xpyb 
+  support error
 
 Test Installation
 -----------------
