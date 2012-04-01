@@ -20,7 +20,7 @@
 import atexit, datetime, subprocess, sys, os, traceback
 import select, contextlib
 import gobject
-import xcb
+import xcbq
 import xcb.xproto, xcb.xinerama
 import xcb
 from xcb.xproto import EventMask
