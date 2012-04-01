@@ -28,7 +28,7 @@ Configuration
   :doc:`screens </manual/config/screens>`
 
 * **Examples**:
-  `Default config <https://github.com/qtile/qtile/blob/master/libqtile/resources/default-config.py>`_ |
+  `Default config <https://github.com/qtile/qtile/blob/master/libqtile/resources/default_config.py>`_ |
   `qtile-examples <https://github.com/qtile/qtile-examples>`_
 
 Commands and scripting
