@@ -66,14 +66,8 @@ def main():
     q = manager.Qtile(c, fname=options.socket)
     q.debug = options.debug
 
-    while 1:
-        from xcb.xproto import WindowError, BadAccess
-        try:
-            q.loop()
-        except (WindowError, BadAccess):
-            # This error can be raised for a lot of reasons
-            # and they're not life-threatening.
-            pass
-
+    # Start the Qtile event loop
+    q.loop()
+    
 if __name__ == "__main__":
     main()
