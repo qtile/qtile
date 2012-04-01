@@ -1098,7 +1098,8 @@ class Qtile(command.CommandObject):
                     # catch all X Exceptions
                     # these aren't life-threatening
                     except (WindowError, BadAccess):
-                        print 'exception caught'
+                        # add some logging for this?
+                        pass
                 if self._exit:
                     break
         finally:
