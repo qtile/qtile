@@ -57,7 +57,7 @@ It's also possible (and recommended) to put this into a virtualenv.
 
 .. code-block:: bash
 
-    ./configure --prefix=/path/to/virtualenv 
+    ./configure --prefix=/path/to/virtualenv
 
 
 pygtk
@@ -83,7 +83,7 @@ Don't forget the config.py
 .. code-block:: bash
 
     mkdir ~/.config/qtile
-    cp build/lib/libqtile/resources/default-config.py ~/.config/qtile/config.py
+    cp build/lib/libqtile/resources/default_config.py ~/.config/qtile/config.py
 
 Annotation
 ----------
@@ -96,8 +96,8 @@ Annotation
 * pycairo in portage gets installed without xpyb support. Maybe, cause
   they use waf for intallation. But i'm quiet new to python so i can't
   say.
-* For pycairo need to specify ./autogen.sh --enable-xcb otherwise you 
-  will get the dreaded TypeError: pycairo was not compiled with xpyb 
+* For pycairo need to specify ./autogen.sh --enable-xcb otherwise you
+  will get the dreaded TypeError: pycairo was not compiled with xpyb
   support error
 
 Test Installation
