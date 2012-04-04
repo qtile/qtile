@@ -1,5 +1,7 @@
-Reference
-=========
+Qtile Reference
+===============
+
+:doc:`/manual/ref/hooks`
 
 :doc:`/manual/ref/layouts`
 

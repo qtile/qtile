@@ -18,7 +18,9 @@ Installing
 Configuration
 -------------
 
-* **The basics**: :doc:`Overview </manual/config/index>`
+* **The basics**:
+  :doc:`Overview </manual/config/index>` |
+  :doc:`Hooks </manual/config/hooks>`
 
 * **Config variables**:
   :doc:`groups </manual/config/groups>` |
@@ -44,6 +46,7 @@ Commands and scripting
 Reference
 ---------
 
+* :doc:`Built-in Hooks</manual/ref/hooks>`
 * :doc:`Built-in Layouts </manual/ref/layouts>`
 * :doc:`Built-in Widgets </manual/ref/widgets>`
 
