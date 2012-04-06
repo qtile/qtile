@@ -1085,14 +1085,28 @@ class Qtile(command.CommandObject):
         return True
 
     def loop(self):
+
         self.server.start()
         display_tag = gobject.io_add_watch(self.conn.conn.get_file_descriptor(), gobject.IO_IN, self._xpoll)
         try:
             context = gobject.main_context_default()
             while True:
                 if context.iteration(True):
-                    # this seems to be crucial part
-                    self.conn.flush()
+                    try:
+                        # this seems to be crucial part
+                        self.conn.flush()
+
+                    # Catch some bad X exceptions. Since X is event based, race
+                    # conditions can occur almost anywhere in the code. For
+                    # example, if a window is created and then immediately
+                    # destroyed (before the event handler is evoked), when the
+                    # event handler tries to examine the window properties, it
+                    # will throw a BadWindow exception. We can essentially
+                    # ignore it, since the window is already dead and we've got
+                    # another event in the queue notifying us to clean it up.
+                    except (BadWindow, BadAccess):
+                        # TODO: add some logging for this?
+                        pass
                 if self._exit:
                     break
         finally:
