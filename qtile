@@ -65,8 +65,9 @@ def main():
             raise
     q = manager.Qtile(c, fname=options.socket)
     q.debug = options.debug
+
+    # Start the Qtile event loop
     q.loop()
-
-
+    
 if __name__ == "__main__":
     main()

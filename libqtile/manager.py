@@ -1085,14 +1085,21 @@ class Qtile(command.CommandObject):
         return True
 
     def loop(self):
+      
         self.server.start()
         display_tag = gobject.io_add_watch(self.conn.conn.get_file_descriptor(), gobject.IO_IN, self._xpoll)
         try:
             context = gobject.main_context_default()
             while True:
                 if context.iteration(True):
-                    # this seems to be crucial part
-                    self.conn.flush()
+                    try:
+                        # this seems to be crucial part
+                        self.conn.flush()
+                    # catch all X Exceptions
+                    # these aren't life-threatening
+                    except (WindowError, BadAccess):
+                        # add some logging for this?
+                        pass
                 if self._exit:
                     break
         finally:
