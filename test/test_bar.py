@@ -47,7 +47,6 @@ class GBConfig:
     ]
     main = None
 
-
 class uPromptCompletion(libpry.AutoTree):
     def test_completion(self):
         c = libqtile.widget.prompt.CommandCompleter(None, True)
@@ -226,17 +225,23 @@ class uBarGeometry(utils.QtileTests):
 
 
 
-class ErrConf(GeomConf):
+class TopBottomConf(GeomConf):
     screens = [
         libqtile.manager.Screen(left=libqtile.bar.Bar([], 10))
     ]
 
+class MultiStretchConf(GeomConf):
+    screens = [
+        libqtile.manager.Screen(top=libqtile.bar.Bar([
+          libqtile.widget.TextBox(txt, width=libqtile.bar.STRETCH)
+          for txt in ["text1", "text2"]
+        ], 10))
+    ]
 
 class uBarErr(utils._QtileTruss):
     def test_err(self):
-        config = ErrConf()
-        self.qtileRaises("top or the bottom of the screen", config)
-
+        self.qtileRaises("top or the bottom of the screen", TopBottomConf())
+        self.qtileRaises("Only one STRETCH widget allowed!", MultiStretchConf())
 
 class TestWidget(libqtile.widget.base._Widget):
     def __init__(self):
