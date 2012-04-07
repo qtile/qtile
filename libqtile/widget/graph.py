@@ -1,13 +1,13 @@
-import time
 import cairo
 
 from . import base
-from .. import manager, hook
+from .. import manager
 
 __all__ = [
     'CPUGraph',
     'MemoryGraph',
     'SwapGraph',
+    'NetGraph'
 ]
 
 class _Graph(base._Widget):
@@ -24,6 +24,7 @@ class _Graph(base._Widget):
         ("frequency", 1, "Update frequency in seconds"),
         ("type", "linefill", "'box', 'line', 'linefill'"),
         ("line_width", 3, "Line width"),
+        ("start_pos", "bottom", "Drawer starting position ('bottom'/'top')")
     )
 
     def __init__(self, width = 100, **config):
@@ -42,6 +43,7 @@ class _Graph(base._Widget):
     def draw_box(self, x, y, values):
         step = self.graphwidth/float(self.samples)
         for val in values:
+            val = self.val(val)
             self.drawer.fillrect(x, y-val, step, val, self.graph_color)
             x += step 
 
@@ -51,7 +53,7 @@ class _Graph(base._Widget):
         self.drawer.set_source_rgb(self.graph_color)
         self.drawer.ctx.set_line_width(self.line_width)
         for val in values:
-            self.drawer.ctx.line_to(x, y-val)
+            self.drawer.ctx.line_to(x, y-self.val(val))
             x += step 
         self.drawer.ctx.stroke()
 
@@ -62,13 +64,21 @@ class _Graph(base._Widget):
         self.drawer.ctx.set_line_width(self.line_width)
         current = x
         for val in values:
-            self.drawer.ctx.line_to(current, y-val)
+            self.drawer.ctx.line_to(current, y-self.val(val))
             current += step 
         self.drawer.ctx.stroke_preserve()
-        self.drawer.ctx.line_to(current, y + self.line_width/2.0)
-        self.drawer.ctx.line_to(x, y + self.line_width/2.0)
+        self.drawer.ctx.line_to(current, y - 1 + self.line_width/2.0)
+        self.drawer.ctx.line_to(x, y - 1 + self.line_width/2.0)
         self.drawer.set_source_rgb(self.fill_color)
         self.drawer.ctx.fill()
+
+    def val(self, val):
+        if self.start_pos == 'bottom':
+            return val
+        elif self.start_pos == 'top':
+            return -val
+        else:
+            raise ValueError("Unknown starting position: %s."%self.start_pos)
 
     def draw(self):
         self.drawer.clear(self.background)
@@ -82,7 +92,11 @@ class _Graph(base._Widget):
             )
             self.drawer.ctx.stroke()
         x = self.margin_x + self.border_width
-        y = self.margin_y + self.graphheight + self.border_width
+        y = self.margin_y + self.border_width
+        if self.start_pos == 'bottom':
+            y += self.graphheight
+        elif not self.start_pos == 'top':
+            raise ValueError("Unknown starting position: %s."%self.start_pos)
         k = 1.0/(self.maxvalue or 1)
         scaled = [self.graphheight * val * k for val in reversed(self.values)]
 
@@ -193,3 +207,41 @@ class SwapGraph(_Graph):
             self.maxvalue = val['SwapTotal']
             self.fullfill(swap)
         self.push(swap)
+
+class NetGraph(_Graph):
+    defaults = manager.Defaults(
+        ("graph_color", "18BAEB", "Graph color"),
+        ("fill_color", "1667EB.3", "Fill color for linefill graph"),
+        ("background", "000000", "Widget background"),
+        ("border_color", "215578", "Widget border color"),
+        ("border_width", 2, "Widget background"),
+        ("margin_x", 3, "Margin X"),
+        ("margin_y", 3, "Margin Y"),
+        ("samples", 100, "Count of graph samples."),
+        ("frequency", 1, "Update frequency in seconds"),
+        ("type", "linefill", "'box', 'line', 'linefill'"),
+        ("line_width", 3, "Line width"),
+        ("interface", "eth0", "Interface to display info for"),
+        ("bandwidth_type", "down", "down(load)/up(load)"),
+        ("start_pos", "bottom", "Drawer starting position ('bottom'/'top')")
+    )
+
+    def __init__(self, **config):
+        _Graph.__init__(self, **config)
+        self.filename = '/sys/class/net/{interface}/statistics/{type}'.format(
+            interface = self.interface,
+            type = self.bandwidth_type == 'down' and 'rx_bytes' or 'tx_bytes'
+        )
+        self.bytes = 0
+        self.bytes = self._getValues()
+
+    def _getValues(self):
+        with open(self.filename) as file:
+            val = int(file.read())
+            rval = val - self.bytes
+            self.bytes = val
+            return rval
+
+    def update_graph(self):
+        val = self._getValues()
+        self.push(val)
