@@ -37,11 +37,14 @@ class IPCError(Exception): pass
 
 class _IPC:
     def _read(self, sock):
-        size = struct.unpack("!L", sock.recv(HDRLEN))[0]
-        data = ""
-        while len(data) < size:
-            data += sock.recv(BUFSIZE)
-        return self._unpack_body(data)
+        try:
+            size = struct.unpack("!L", sock.recv(HDRLEN))[0]
+            data = ""
+            while len(data) < size:
+                data += sock.recv(BUFSIZE)
+            return self._unpack_body(data)
+        except struct.error:
+            raise IPCError("error reading reply! (probably the socket was disconnected)")
 
     def _unpack_body(self, body):
         return marshal.loads(body)
