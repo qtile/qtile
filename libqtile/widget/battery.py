@@ -28,7 +28,7 @@ class Battery(base._TextBox):
         ("update_delay",1,"The delay in seconds between updates"),
         ("charge_char","^","Character to indicate the battery is charging"),
         ("discharge_char","V","Character to indicate the battery is discharging"),
-        
+
     )
     def __init__(self, low_percentage=0.10, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "BAT", **config)
@@ -45,16 +45,16 @@ class Battery(base._TextBox):
         power = float(self._get_param(self.power_now_file))
 
         try:
-          if stat == DISCHARGING:
-              char = self.discharge_char
-              time = now/power
-          elif stat == CHARGING:
-              char = self.charge_char
-              time = (full - now)/power
-          else:
-              return 'Full'
+            if stat == DISCHARGING:
+                char = self.discharge_char
+                time = now/power
+            elif stat == CHARGING:
+                char = self.charge_char
+                time = (full - now)/power
+            else:
+                return 'Full'
         except ZeroDivisonError:
-          return 'Inf'
+            return 'Inf'
 
         hour = int(time)
         min = int(time*60) % 60
