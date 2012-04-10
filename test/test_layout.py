@@ -63,6 +63,7 @@ class StackConfig:
     keys = []
     mouse = []
     screens = []
+    follow_mouse_focus = False
 
 
 class uStack(utils.QtileTests):
