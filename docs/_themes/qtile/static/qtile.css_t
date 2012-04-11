@@ -12,15 +12,21 @@ html {
 }
 
 body {
-    background: #eee;
-    color: #111;
+    background: -webkit-gradient(linear, 50% 0%, 50% 175, color-stop(0%, #999), color-stop(100%, #eee));
+    background: -webkit-linear-gradient(top, #bbb 0%, #eee 175px);
+    background: -moz-linear-gradient(top, #ccc 0%, #eee 175px);
+    background: -o-linear-gradient(top, #ccc 0%, #eee 175px);
+    background: linear-gradient(top, #ccc 0%, #eee 175px);
+    background-color: #eee;
+    background-repeat: no-repeat;
     font-size: 1.5em;
     margin: 0;
     padding: 0;
+    text-shadow: 1px 1px rgba(0, 0, 0, 0.1);
 }
 
 div.document {
-    margin: 20px auto 0 auto;
+    margin: 0px auto;
     width: {{ page_width }};
 }
 
@@ -69,7 +75,7 @@ div.sphinxsidebar .logo a {
 div.sphinxsidebar .logo a:hover,
 div.sphinxsidebar .logo a:focus,
 div.sphinxsidebar .logo a:active {
-    color: #369;
+    color: #036;
 }
 
 div.sphinxsidebar input[type="submit"] {
@@ -85,16 +91,13 @@ div.sphinxsidebar ul ul {
 }
 
 div.body {
-    -webkit-border-top-left-radius: 10px;
-    -webkit-border-top-right-radius: 10px;
-    -moz-border-radius-topleft: 10px;
-    -moz-border-radius-topright: 10px;
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-
-    background: #fff;
-    border: #ddd 1px solid;
-    border-bottom: 0px;
+    /*-webkit-border-top-left-radius: 5px;
+    -webkit-border-top-right-radius: 5px;
+    -moz-border-radius-topleft: 5px;
+    -moz-border-radius-topright: 5px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    background: #fff;*/
     line-height: 1.4;
     padding: 20px;
 }
@@ -124,13 +127,14 @@ div.footer a {
 /* Code highlighting */
 
 tt {
-    background: #f6f6f6;
+    font-size: 1.1em;
 }
 
-div.highlight {2
-    background: #f6f6f6;
-    border: #ddd 1px solid;
+div.highlight {
+    background: #fff;
+    border: #ccc 1px solid;
     border-left-width: 3px;
+    font-size: 1.1em;
     padding: 10px;
 }
 

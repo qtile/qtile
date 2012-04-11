@@ -1,116 +1,62 @@
-Qtile: A Pure-Python Tiling WM
-==============================
+Qtile Documentation
+===================
 
-Qtile is a full-featured, hackable tiling window manager written in Python.
+Everything you need to know about Qtile.
 
-* Simple, small and extensible. It's easy to write your own layouts, widgets
-  and built-in commands.
-* Configured entirely in Python.
-* Command-line shell that allows all aspects of Qtile to be manipulated and inspected.
-* Complete remote scriptability - write scripts to set up workspaces, manipulate
-  windows, update status bar widgets and more.
-* Qtile's scriptability has made thorough unit testing possible, making it one
-  of the best-tested window managers around.
-* Qtile is free and open-source software, distributed under the `MIT License <manual/license.html>`_.
+Installing
+----------
 
-Screenshots
------------
+* **Getting started**:
+  :doc:`Overview </manual/install/index>` |
+  :doc:`From source </manual/install/source>`
 
-.. raw:: html
+* **Distro guides**:
+  :doc:`Arch Linux </manual/install/arch>` |
+  :doc:`Gentoo </manual/install/gentoo>` |
+  :doc:`Ubuntu </manual/install/ubuntu>`
 
-    <ul class="screenshots">
-        <li><a href="_static/screenshots/aeronotix.jpg">
-            <img src="_static/screenshots/aeronotix-thumbnail.jpg" alt="AeroNotix" />
-        </a></li>
-        <li><a href="_static/screenshots/cjbarnes18.jpg">
-            <img src="_static/screenshots/cjbarnes18-thumbnail.jpg" alt="cjbarnes18" />
-        </a></li>
-        <li><a href="_static/screenshots/dmpayton.png">
-            <img src="_static/screenshots/dmpayton-thumbnail.png" alt="dmpayton" />
-        </a></li>
-        <li><a href="_static/screenshots/ldlework.png">
-            <img src="_static/screenshots/ldlework-thumbnail.png" alt="ldlework" />
-        </a></li>
-        <li><a href="_static/screenshots/demo.png">
-            <img src="_static/screenshots/demo-thumbnail.png" alt="demo" />
-        </a></li>
-    </ul>
+Configuration
+-------------
 
+* **The basics**:
+  :doc:`Overview </manual/config/index>` |
+  :doc:`Hooks </manual/config/hooks>`
 
-Community
+* **Config variables**:
+  :doc:`groups </manual/config/groups>` |
+  :doc:`keys </manual/config/keys>` |
+  :doc:`layouts </manual/config/layouts>` |
+  :doc:`mouse </manual/config/mouse>` |
+  :doc:`screens </manual/config/screens>`
+
+* **Examples**:
+  `Default config <https://github.com/qtile/qtile/blob/master/libqtile/resources/default_config.py>`_ |
+  `qtile-examples <https://github.com/qtile/qtile-examples>`_
+
+Commands and scripting
+----------------------
+
+* **The basics**:
+  :doc:`Overview </manual/commands/index>`
+
+* **Diving in**:
+  :doc:`Scripting </manual/commands/scripting>` |
+  :doc:`qsh </manual/commands/qsh>`
+
+Reference
 ---------
 
-.. raw:: html
+* :doc:`Built-in Hooks</manual/ref/hooks>`
+* :doc:`Built-in Layouts </manual/ref/layouts>`
+* :doc:`Built-in Widgets </manual/ref/widgets>`
 
-    <table class="contentstable" align="center" style="margin-left: 30px">
-        <tr>
-            <td width="50%">
-                <p class="biglink">
-                    <a class="biglink" href="irc://irc.oftc.net:6667/qtile">IRC</a><br/>
-                    <span class="linkdescr">#qtile on the OFTC network</span>
-                </p>
-            </td>
-            <td width="50%">
-                <p class="biglink">
-                    <a class="biglink" href="http://groups.google.com/group/qtile-dev">Mailing List</a><br/>
-                    <span class="linkdescr">qtile-dev on Google Groups</span>
-                </p>
-            </td>
-        </tr>
-    </table>
-
-
-Documentation
+Miscellaneous
 -------------
 
-.. raw:: html
+* :doc:`Frequently Asked Questions </manual/faq>`
+* :doc:`Hacking Qtile </manual/hacking>`
+* :doc:`License </manual/license>`
 
-    <table class="contentstable" align="center" style="margin-left: 30px">
-        <tr>
-            <td width="50%">
-                <p class="biglink">
-                    <a class="biglink" href="manual/install/index.html">Installing Qtile</a><br/>
-                    <span class="linkdescr">how to get up and running</span>
-                </p>
-                <p class="biglink">
-                    <a class="biglink" href="manual/faq.html">F.A.Q.</a><br/>
-                    <span class="linkdescr">frequently asked questions</span>
-                </p>
-            </td>
-            <td width="50%">
-                <p class="biglink">
-                    <a class="biglink" href="manual/index.html">Contents</a><br/>
-                    <span class="linkdescr">for a complete overview</span>
-                </p>
-                <p class="biglink">
-                    <a class="biglink" href="https://github.com/qtile/qtile-examples">qtile-examples</a><br/>
-                    <span class="linkdescr">git repo of user configurations</span>
-                </p>
-            </td>
-        </tr>
-    </table>
-
-Get Involved!
--------------
-
-.. raw:: html
-
-    <table class="contentstable" align="center" style="margin-left: 30px">
-        <tr>
-            <td width="50%">
-                <p class="biglink">
-                    <a class="biglink" href="https://github.com/qtile/qtile/issues/">Issue Tracker</a><br/>
-                    <span class="linkdescr">report bugs and request features</span>
-                </p>
-            </td>
-            <td width="50%" style="vertical-align: top;">
-                <p class="biglink">
-                    <a class="biglink" href="manual/hacking.html">Hacking Qtile</a><br/>
-                    <span class="linkdescr">how to get started hacking on the code</span>
-                </p>
-            </td>
-        </tr>
-    </table>
 
 .. toctree::
     :glob:

@@ -11,14 +11,8 @@ The first layout in the list is the default. If you define more than one
 layout, you will probably also want to define key bindings to let you switch to
 the next and previous layouts.
 
-Built-in layouts
-~~~~~~~~~~~~~~~~
-
-$!confobj("libqtile.layout.Max")!$
-
-$!confobj("libqtile.layout.Stack")!$
-
-$!confobj("libqtile.layout.Tile")!$
+A list of available layouts can be found in the
+:doc:`Built-in Layouts </manual/ref/layouts>` reference.
 
 
 Example

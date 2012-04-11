@@ -22,7 +22,7 @@ The Qtile repo includes a tiny helper script to let you quickly pull up a
 nested instance instance of Qtile in Xephyr, using your current configuration.
 Run it from the top-level of the repository, like this:
 
-::
+.. code-block:: bash
 
   ./scripts/xephyr
 
