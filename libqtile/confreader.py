@@ -27,6 +27,7 @@
 import os
 import sys
 import utils
+import traceback
 
 class ConfigError(Exception):
     pass
@@ -48,7 +49,8 @@ class File(object):
                 sys.path.insert(0, os.path.dirname(self.fname))
                 config = __import__(os.path.basename(self.fname)[:-3])
             except Exception, v:
-                raise ConfigError(str(v))
+                tb = traceback.format_exc()
+                raise ConfigError(str(v) + "\n\n" + tb)
         else:
             config = None
 
