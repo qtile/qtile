@@ -818,6 +818,8 @@ class Qtile(command.CommandObject):
             self.currentWindow,
             True
         )
+        currentLayout = self.currentGroup.layouts[self.currentGroup.currentLayout]
+        hook.fire("layout_change", currentLayout)
 
     def moveToGroup(self, group):
         """

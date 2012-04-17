@@ -132,8 +132,22 @@ class _Group(command.CommandObject):
         if self.qtile._drag:
             # don't change focus while dragging windows
             return
+
         if win and not win in self.windows:
             return
+
+        if warp:  # We are chaning screens.
+            for group in self.qtile.groups:
+                # Don't care if there is not Screen
+                if group.screen is None:
+                    continue
+                # Don't want to touch the current screen
+                if group.screen is self.qtile.currentScreen:
+                    continue
+                # Only blur the focused layout.
+                curGroupLayout = group.layouts[group.currentLayout]
+                curGroupLayout.blur()
+
         if win:
             self.currentWindow = win
             if win.floating:
