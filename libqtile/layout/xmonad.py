@@ -238,9 +238,7 @@ class MonadTall(SingleWindow):
         # if client in this layout
         if self.clients and c in self.clients:
             # single client - fullscreen
-            self.log("HERE")
             if len(self.clients) == 1:
-                self.log("HERE2")
                 px = self.group.qtile.colorPixel(self.border_focus)
                 c.place(self.group.screen.dx,
                         self.group.screen.dy,
@@ -251,18 +249,13 @@ class MonadTall(SingleWindow):
                 return
             # multiple clients
             else:
-                self.log("HERE3")
                 # determine focus border-color
                 if self.focused is None:
-                    self.log("HERE4")
                     px = self.group.qtile.colorPixel(self.border_normal)
                 elif self.clients.index(c) == self.focused:
-                    self.log("HERE5")
                     px = self.group.qtile.colorPixel(self.border_focus)
                 else:
-                    self.log("HERE6")
                     px = self.group.qtile.colorPixel(self.border_normal)
-                self.log("px is: {0}".format(px))
     
                 # calculate main/secondary column widths
                 width_main = int(self.group.screen.dwidth * self.ratio)
