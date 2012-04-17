@@ -680,7 +680,8 @@ class Window(_Window):
             self.width = 0
 
         screen = self.qtile.find_closest_screen(self.x, self.y)
-        if screen is not None and screen != self.group.screen:
+        if (screen is not None and screen.group is not None and
+                screen != self.group.screen):
             self.group.remove(self)
             screen.group.add(self)
             self.qtile.toScreen(screen.index)
@@ -832,6 +833,8 @@ class Window(_Window):
 
     def handle_EnterNotify(self, e):
         hook.fire("client_mouse_enter", self)
+        if self.group is None:
+            return True
         if self.qtile.config.follow_mouse_focus and \
                         self.group.currentWindow != self:
             self.group.focus(self, False)
