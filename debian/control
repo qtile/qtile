@@ -1,0 +1,21 @@
+Source: qtile
+Section: universe/x11
+Priority: optional
+Maintainer: Tycho Andersen <tycho@tycho.ws>
+Build-Depends: debhelper (>= 8.0.0), python-xpybng (>= 1.3), python-cairo (>= 1.10.2), xcb-proto, libxcb1-dev, python-xcbgen, libcairo2-dev
+Standards-Version: 3.9.2
+Homepage: <http://qtile.org>
+
+Package: qtile
+Architecture: any
+Depends: python-xpybng (>= 1.3), python-cairo (>= 1.10.2), libxcb1, libcairo2, python (<< 2.8), python (>= 2.6), python-support (>= 0.90.0)
+Description: A full-featured, pure-Python tiling window manager.
+ * Simple, small and extensible. It's easy to write your own layouts, widgets
+   and built-in commands.
+ * Configured entirely in Python.
+ * Command-line shell that allows all aspects of Qtile to be manipulated and
+   inspected.
+ * Complete remote scriptability - write scripts to set up workspaces,
+   manipulate windows, update status bar widgets and more.
+ * Qtile's scriptability has made thorough unit testing possible, making it one
+   of the best-tested window managers around.
