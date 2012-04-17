@@ -426,6 +426,17 @@ class Group(command.CommandObject):
         if self.qtile._drag:
             # don't change focus while dragging windows
             return
+
+        if warp:
+            for group in self.qtile.groups:
+                # Blur everyscreen except for the one that is focused
+                if group.screen is not self.screen:
+                    # Get all the non-null layouts.
+                    for l in [l for l in group.layouts if l]:
+                        # Blur the layout
+                        l.blur()
+
+
         if win and not win in self.windows:
             return
         if win:

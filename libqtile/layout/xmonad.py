@@ -128,6 +128,9 @@ class MonadTall(SingleWindow):
     def _get_focus(self):
         return self._focus
     def _set_focus(self, x):
+        if x is None:
+            self._focus = None
+            return
         if len(self.clients) > 0:
             self._focus = abs(x % len(self.clients))
         else:
@@ -153,8 +156,15 @@ class MonadTall(SingleWindow):
         c._focus = 0
         return c
 
+    def blur(self):
+        self.focused = None
+        for client in self.clients:
+            self.configure(client, None)
+
     def add(self, c):
         "Add client to layout"
+        if self.focused == None:
+            self.focused = 0
         self.clients.insert(self.focused + 1, c)
         if self.group.screen:
             self.cmd_normalize()
@@ -228,7 +238,9 @@ class MonadTall(SingleWindow):
         # if client in this layout
         if self.clients and c in self.clients:
             # single client - fullscreen
+            self.log("HERE")
             if len(self.clients) == 1:
+                self.log("HERE2")
                 px = self.group.qtile.colorPixel(self.border_focus)
                 c.place(self.group.screen.dx,
                         self.group.screen.dy,
@@ -239,11 +251,18 @@ class MonadTall(SingleWindow):
                 return
             # multiple clients
             else:
+                self.log("HERE3")
                 # determine focus border-color
-                if self.clients.index(c) == self.focused:
+                if self.focused is None:
+                    self.log("HERE4")
+                    px = self.group.qtile.colorPixel(self.border_normal)
+                elif self.clients.index(c) == self.focused:
+                    self.log("HERE5")
                     px = self.group.qtile.colorPixel(self.border_focus)
                 else:
+                    self.log("HERE6")
                     px = self.group.qtile.colorPixel(self.border_normal)
+                self.log("px is: {0}".format(px))
     
                 # calculate main/secondary column widths
                 width_main = int(self.group.screen.dwidth * self.ratio)
