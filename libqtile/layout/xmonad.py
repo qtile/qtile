@@ -232,6 +232,8 @@ class MonadTall(SingleWindow):
 
     def configure(self, c, screen):
         "Position client based on order and sizes"
+        if self.group.screen is None:
+            return
         # if no sizes, normalize
         if not self.sizes:
             self.cmd_normalize(False)
