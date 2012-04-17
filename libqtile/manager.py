@@ -431,15 +431,12 @@ class Group(command.CommandObject):
                 # Blur everyscreen except for the one that is focused
                 if group.screen is self.qtile.currentScreen:
                     continue
-                # Get all the non-null layouts.
                 for l in group.layouts:
-                    # Blur the layout
-                    if l:
-                        l.blur()
-
+                    l.blur()
 
         if win and not win in self.windows:
             return
+
         if win:
             self.currentWindow = win
             if win.floating:
