@@ -64,6 +64,10 @@ class Max(SingleWindow):
         if self.clients:
             return self.clients[0]
 
+    def blur(self):
+        # Redraw current window.
+        self.group.layoutAll()
+
     def configure(self, c, screen):
         if self.clients and c is self.clients[0]:
             c.place(
