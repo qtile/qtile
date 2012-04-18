@@ -430,30 +430,28 @@ class Group(command.CommandObject):
         if win and not win in self.windows:
             return
 
-        if warp:
+        if warp:  # We are chaning screens.
             for group in self.qtile.groups:
-                # Blur everyscreen except for the one that is focused
+                # Don't care if there is not Screen
                 if group.screen is None:
                     continue
+                # Don't want to touch the current screen
                 if group.screen is self.qtile.currentScreen:
                     continue
-                for l in group.layouts:
-                    l.blur()
-                # If this isn't here, the last layout in group.layouts is
-                # redrawn and is displayed in the group.
-                if group.currentLayout:
-                    l.blur()
+                # Only blur the focused layout.
+                curGroupLayout = group.layouts[group.currentLayout]
+                curGroupLayout.blur()
 
         if win:
             self.currentWindow = win
             if win.floating:
-                for l in self.layouts:
-                    l.blur()
+                for layout in self.layouts:
+                    layout.blur()
                 self.floating_layout.focus(win)
             else:
                 self.floating_layout.blur()
-                for l in self.layouts:
-                    l.focus(win)
+                for layout in self.layouts:
+                    layout.focus(win)
         else:
             self.currentWindow = None
         hook.fire("focus_change")

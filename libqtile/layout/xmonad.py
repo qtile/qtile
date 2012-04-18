@@ -128,9 +128,6 @@ class MonadTall(SingleWindow):
     def _get_focus(self):
         return self._focus
     def _set_focus(self, x):
-        if x is None:
-            self._focus = None
-            return
         if len(self.clients) > 0:
             self._focus = abs(x % len(self.clients))
         else:
@@ -157,14 +154,11 @@ class MonadTall(SingleWindow):
         return c
 
     def blur(self):
-        self.focused = None
         for client in self.clients:
-            self.configure(client, None)
+            self.configure(client, None, blur=True)
 
     def add(self, c):
         "Add client to layout"
-        if self.focused == None:
-            self.focused = 0
         self.clients.insert(self.focused + 1, c)
         if self.group.screen:
             self.cmd_normalize()
@@ -230,7 +224,7 @@ class MonadTall(SingleWindow):
             self._maximize_secondary()
         self.group.layoutAll()
 
-    def configure(self, c, screen):
+    def configure(self, c, screen, blur=False):
         "Position client based on order and sizes"
         if self.group.screen is None:
             return
@@ -252,7 +246,7 @@ class MonadTall(SingleWindow):
             # multiple clients
             else:
                 # determine focus border-color
-                if self.focused is None:
+                if blur:
                     px = self.group.qtile.colorPixel(self.border_normal)
                 elif self.clients.index(c) == self.focused:
                     px = self.group.qtile.colorPixel(self.border_focus)
