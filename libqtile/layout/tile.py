@@ -31,7 +31,7 @@ class Tile(Layout):
     def up(self):
         if self.shift_windows:
             self.shift_up()
-        else:                
+        else:
             self.shuffle(utils.shuffleUp)
 
     def down(self):
@@ -46,7 +46,13 @@ class Tile(Layout):
             nextindex = self.get_next_index(currentindex)
             self.shift(currentindex, nextindex)
 
-    def shift_down(self):
+    def swap_up(self):
+        if self.clients:
+            currentindex = self.clients.index(self.focused)
+            nextindex = self.get_next_index(currentindex)
+            self.shift(currentindex, nextindex)
+
+    def swap_down(self):
         if self.clients:
             currentindex = self.clients.index(self.focused)
             previndex = self.get_previous_index(currentindex)
@@ -182,6 +188,12 @@ class Tile(Layout):
 
     def cmd_up(self):
         self.up()
+
+    def cmd_swap_down(self):
+        self.swap_down()
+
+    def cmd_swap_up(self):
+        self.swap_up()
 
     def cmd_next(self):
         self.next()
