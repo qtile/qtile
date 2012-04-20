@@ -50,18 +50,24 @@ class TrayWindow(window._Window):
         parent = self.systray.bar.window.window
 
         if opcode == atoms['_NET_SYSTEM_TRAY_OPCODE']:
-            w = xcbq.Window(self.qtile.conn, task)
-            icon = Icon(w, self.qtile, self.systray)
-            self.systray.icons[task] = icon
-            self.qtile.windowMap[task] = icon
+            try:
+                w = xcbq.Window(self.qtile.conn, task)
+                icon = Icon(w, self.qtile, self.systray)
+                self.systray.icons[task] = icon
+                self.qtile.windowMap[task] = icon
 
-            # add icon window to the save-set, so it gets reparented
-            # to the root window when qtile dies
-            conn.core.ChangeSaveSet(SetMode.Insert, task)
+                # add icon window to the save-set, so it gets reparented
+                # to the root window when qtile dies
+                conn.core.ChangeSaveSet(SetMode.Insert, task)
 
-            conn.core.ReparentWindow(task, parent.wid, 0, 0)
-            conn.flush()
-            w.map()
+                conn.core.ReparentWindow(task, parent.wid, 0, 0)
+                conn.flush()
+                w.map()
+            except xcb.xproto.DrawableError:
+                # The icon wasn't ready to be drawn yet... (NetworkManager does
+                # this sometimes), so we just forget about it and wait for the
+                # next event.
+                pass 
         return False
 
 

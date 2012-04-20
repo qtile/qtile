@@ -2,11 +2,11 @@ from base import Layout
 from .. import utils, manager
 
 class Tile(Layout):
-    name="tile"
     defaults = manager.Defaults(
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
-        ("border_width", 1, "Border width.")
+        ("border_width", 1, "Border width."),
+        ("name", "tile", "Name of this layout."),
     )
     def __init__(self, ratio=0.618, masterWindows=1, expand=True,
         ratio_increment=0.05, add_on_top=True, shift_windows=False, **config):
@@ -31,7 +31,7 @@ class Tile(Layout):
     def up(self):
         if self.shift_windows:
             self.shift_up()
-        else:                
+        else:
             self.shuffle(utils.shuffleUp)
 
     def down(self):
@@ -46,7 +46,13 @@ class Tile(Layout):
             nextindex = self.get_next_index(currentindex)
             self.shift(currentindex, nextindex)
 
-    def shift_down(self):
+    def swap_up(self):
+        if self.clients:
+            currentindex = self.clients.index(self.focused)
+            nextindex = self.get_next_index(currentindex)
+            self.shift(currentindex, nextindex)
+
+    def swap_down(self):
         if self.clients:
             currentindex = self.clients.index(self.focused)
             previndex = self.get_previous_index(currentindex)
@@ -119,7 +125,10 @@ class Tile(Layout):
         self.focused = c
 
     def blur(self):
+        if self.focused is not None:
+            self.configure(self.focused, self.group.screen, blur=True)
         self.focused = None
+        self.group.layoutAll()
 
     def add(self, c):
         index = 0
@@ -135,7 +144,7 @@ class Tile(Layout):
             self.focused = self.clients[0]
         return self.focused
 
-    def configure(self, c, screen):
+    def configure(self, c, screen, blur=False):
         screenWidth = screen.width
         screenHeight = screen.height
         x = y = w = h = 0
@@ -154,10 +163,11 @@ class Tile(Layout):
                 h = screenHeight/(len(self.slave_windows))
                 x = screen.x + int(screenWidth*self.ratio)
                 y = screen.y + self.clients[self.master:].index(c)*h
-            if c is self.focused:
-                bc = self.group.qtile.colorPixel(self.border_focus)
-            else:
+            if blur or c is not self.focused:
                 bc = self.group.qtile.colorPixel(self.border_normal)
+            else:
+                bc = self.group.qtile.colorPixel(self.border_focus)
+
             c.place(
                 x,
                 y,
@@ -182,6 +192,12 @@ class Tile(Layout):
 
     def cmd_up(self):
         self.up()
+
+    def cmd_swap_down(self):
+        self.swap_down()
+
+    def cmd_swap_up(self):
+        self.swap_up()
 
     def cmd_next(self):
         self.next()
