@@ -125,8 +125,10 @@ class Tile(Layout):
         self.focused = c
 
     def blur(self):
-        for client in self.clients:
-            self.configure(client, self.group.screen, blur=True)
+        if self.focused is not None:
+            self.configure(self.focused, self.group.screen, blur=True)
+        self.focused = None
+        self.group.layoutAll()
 
     def add(self, c):
         index = 0
