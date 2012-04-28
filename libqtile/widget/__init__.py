@@ -3,7 +3,7 @@ from groupbox import AGroupBox
 from windowname import WindowName
 from textbox import TextBox
 from spacer import Spacer
-from battery import Battery
+from battery import Battery, BatteryIcon
 from clock import Clock
 from sep import Sep
 from prompt import Prompt
