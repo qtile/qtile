@@ -12,12 +12,12 @@ html {
 }
 
 body {
-    background: -webkit-gradient(linear, 50% 0%, 50% 175, color-stop(0%, #999), color-stop(100%, #eee));
-    background: -webkit-linear-gradient(top, #bbb 0%, #eee 175px);
-    background: -moz-linear-gradient(top, #ccc 0%, #eee 175px);
-    background: -o-linear-gradient(top, #ccc 0%, #eee 175px);
-    background: linear-gradient(top, #ccc 0%, #eee 175px);
-    background-color: #eee;
+    background: -webkit-gradient(linear, 50% 0%, 50% 175, color-stop(0%, #ccc), color-stop(100%, #f6f6f6));
+    background: -webkit-linear-gradient(top, #ccc 0%, #f6f6f6 175px);
+    background: -moz-linear-gradient(top, #ccc 0%, #f6f6f6 175px);
+    background: -o-linear-gradient(top, #ccc 0%, #f6f6f6 175px);
+    background: linear-gradient(top, #ccc 0%, #f6f6f6 175px);
+    background-color: #f6f6f6;
     background-repeat: no-repeat;
     font-size: 1.5em;
     margin: 0;
