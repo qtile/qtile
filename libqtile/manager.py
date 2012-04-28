@@ -1104,7 +1104,7 @@ class Qtile(command.CommandObject):
                     # will throw a BadWindow exception. We can essentially
                     # ignore it, since the window is already dead and we've got
                     # another event in the queue notifying us to clean it up.
-                    except (BadWindow, BadAccess):
+                    except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
                         # TODO: add some logging for this?
                         pass
                 if self._exit:
