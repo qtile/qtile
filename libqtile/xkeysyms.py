@@ -6,6 +6,7 @@ keysyms = {
     'XF86AudioStop': 0x1008ff15,
     'XF86AudioPrev': 0x1008ff16,
     'XF86AudioNext': 0x1008ff17,
+    'XF86TouchpadToggle': 0x1008ffa9,
     'VoidSymbol': 0xffffff,
     'BackSpace': 0xff08,
     'Tab': 0xff09,
