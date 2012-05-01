@@ -20,10 +20,11 @@ Example
 ::
 
     from libqtile.manager import Key
+    from libqtile.command import lazy
     keys = [
         Key(
             ["mod1"], "k",
-            command.lazy.layout.down()
+            lazy.layout.down()
         ),
         Key(
             ["mod1"], "j",
