@@ -639,6 +639,46 @@ class Group(command.CommandObject):
         self.focus(nxt, True)
 
 
+    def cmd_swap_groups(self, group=None):
+
+        """
+        Swaps all the windows between the current
+        group and the target group
+
+        Usage: Key([sup, "shift"], NUMBER, lazy.group.swap_groups(grp.name))
+        """
+        
+        windows_ = []
+        from_group = []
+
+        other_group = self.qtile.groupMap.get(group)
+        if not other_group:
+            return
+
+        # Explanation for possible unreadable
+        # list comprehensions
+        # 
+        # for ours in self.windows:
+        #     windows_.append([ours])
+
+        # for other in other_group.windows:
+        #     from_group.append([other])
+        
+        # for item in windows_:
+        #     item[0].togroup(group)
+
+        # for item in from_group:
+        #     item[0].togroup(self.name)
+        
+        # swap names
+        self.name, other_group.name = other_group.name, self.name
+
+        [windows_.append([ours]) for ours in self.windows]
+        [from_group.append([other]) for other in other_group.windows]
+        [item[0].togroup(group) for item in windows_]
+        [item[0].togroup(self.name) for item in from_group]
+
+        
 class Log:
     """
         A circular log.
