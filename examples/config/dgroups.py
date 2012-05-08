@@ -54,10 +54,14 @@ def simple_key_binder(mod):
             name = group.name
             key = Key([mod], str(num), lazy.group[name].toscreen())
             key_s = Key([mod, "shift"], str(num), lazy.window.togroup(name))
+            key_c = Key([mod, "control"], str(num),
+                    lazy.group.switch_groups(name))
             dgroup.keys.append(key)
             dgroup.keys.append(key_s)
+            dgroup.keys.append(key_c)
             dgroup.qtile.mapKey(key)
             dgroup.qtile.mapKey(key_s)
+            dgroup.qtile.mapKey(key_c)
 
     return func
 
@@ -93,6 +97,8 @@ class DGroups(object):
         libqtile.hook.subscribe.client_new(self._add)
         libqtile.hook.subscribe.client_killed(self._del)
         if self.key_binder:
+            libqtile.hook.subscribe.setgroup(
+                    lambda: self.key_binder(self))
             libqtile.hook.subscribe.addgroup(
                     lambda: self.key_binder(self))
             libqtile.hook.subscribe.delgroup(
