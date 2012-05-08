@@ -23,8 +23,10 @@ class Match(object):
                 value = client.name
             elif _type == 'wm_class':
                 value = client.window.get_wm_class()
-                if value:
+                if value and len(value)>1:
                     value = value[1]
+                elif value:
+                    value = value[0]
             elif _type == 'wm_type':
                 value = client.window.get_wm_type()
             else:
@@ -149,7 +151,12 @@ class DGroups(object):
                 wm_class = client.window.get_wm_class()
 
                 if wm_class:
-                    group_name = wm_class[1]
+                    if len(wm_class) > 1:
+                        wm_class = wm_class[1]
+                    else:
+                        wm_class = wm_class[0]
+
+                    group_name = wm_class
                 else:
                     group_name = client.name
 
