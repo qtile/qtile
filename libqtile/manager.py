@@ -680,6 +680,12 @@ class Group(command.CommandObject):
                 nxt = self.layout.focus_last()
         self.focus(nxt, True)
 
+    def cmd_switch_groups(self, name):
+        """
+            Switch position of current group with name
+        """
+        self.qtile.cmd_switch_groups(self.name, name)
+
 
 class Qtile(command.CommandObject):
     """
@@ -1618,6 +1624,20 @@ class Qtile(command.CommandObject):
             Quit Qtile.
         """
         self._exit = True
+
+    def cmd_switch_groups(self, groupa, groupb):
+        """
+            Switch position of groupa to groupb
+        """
+        if groupa not in self.groupMap or groupb not in self.groupMap:
+            return
+
+        indexa = self.groups.index(self.groupMap[groupa])
+        indexb = self.groups.index(self.groupMap[groupb])
+
+        self.groups[indexa], self.groups[indexb] = \
+                self.groups[indexb], self.groups[indexa]
+        hook.fire("setgroup")
 
     def cmd_togroup(self, prompt="group: ", widget="prompt"):
         """
