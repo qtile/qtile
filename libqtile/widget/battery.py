@@ -56,7 +56,7 @@ class Battery(base._TextBox):
                 time = (full - now)/power
             else:
                 return 'Full'
-        except ZeroDivisonError:
+        except ZeroDivisionError:
             return 'Inf'
 
         hour = int(time)
