@@ -68,8 +68,6 @@ class _Battery(base._TextBox):
                 ## If a file is manually specified, check it first
                 file_list.insert(0, getattr(self, name))
 
-            print name, file_list
-
             ## Iterate over the possibilities, and return the first valid value
             for file in file_list:
                 value = self._load_file(file)
