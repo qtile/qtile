@@ -98,7 +98,7 @@ class Battery(_Battery):
                 time = (info['full'] - info['now']) / info['power']
             else:
                 return 'Full'
-        except ZeroDivisonError:
+        except ZeroDivisionError:
             return 'Inf'
 
         ## Calculate the battery percentage and time left
