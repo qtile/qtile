@@ -414,21 +414,24 @@ class _Window(command.CommandObject):
 
     def focus(self, warp):
         if not self.hidden:
-            if "WM_TAKE_FOCUS" in self.window.get_wm_protocols():
-                vals = [
-                    33,
-                    32,
-                    0,
-                    self.window.wid,
-                    self.qtile.conn.atoms["WM_PROTOCOLS"],
-                    self.qtile.conn.atoms["WM_TAKE_FOCUS"],
-                    xcb.xproto.Time.CurrentTime,
-                    0,
-                    0,
-                    0,
-                ]
-                e = struct.pack('BBHII5I', *vals)
-                self.window.send_event(e)
+            try:
+                if "WM_TAKE_FOCUS" in self.window.get_wm_protocols():
+                    vals = [
+                        33,
+                        32,
+                        0,
+                        self.window.wid,
+                        self.qtile.conn.atoms["WM_PROTOCOLS"],
+                        self.qtile.conn.atoms["WM_TAKE_FOCUS"],
+                        xcb.xproto.Time.CurrentTime,
+                        0,
+                        0,
+                        0,
+                    ]
+                    e = struct.pack('BBHII5I', *vals)
+                    self.window.send_event(e)
+            except xcb.xproto.BadWindow, e:
+                pass
             if self.hints['input']:
                 self.window.set_input_focus()
             try:
