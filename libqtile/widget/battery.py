@@ -12,7 +12,7 @@ UNKNOWN = 'Unknown'
 
 BATTERY_INFO_FILES = {
     'energy_now_file': ['energy_now', 'charge_now'],
-    'energy_full_file':['energy_now', 'charge_now'],
+    'energy_full_file':['energy_full', 'charge_full'],
     'power_now_file': ['power_now', 'current_now'],
     'status_file': ['status',],
     }
@@ -233,7 +233,7 @@ class BatteryIcon(_Battery):
                 img = cairo.ImageSurface.create_from_png(path)
             except cairo.Error:
                 self.theme_path = None
-                self.qtile.log.exception('Battery Icon switching to text mode')
+                self.qtile.log.add('Battery Icon switching to text mode')
                 return
             input_width = img.get_width()
             input_height = img.get_height()
