@@ -8,7 +8,7 @@ from utils import Xephyr
 from nose.tools import assert_raises
 
 
-class CallConfig(libqtile.confreader.Config):
+class CallConfig(object):
     keys = [
         libqtile.manager.Key(
             ["control"], "j",
@@ -39,6 +39,7 @@ class CallConfig(libqtile.confreader.Config):
                     ),
         )
     ]
+    main = None
 
 
 @Xephyr(True, CallConfig())
@@ -118,7 +119,7 @@ def test_selectors():
     assert g.selectors == []
 
 
-class ServerConfig(libqtile.confreader.Config):
+class ServerConfig(object):
     keys = []
     mouse = []
     groups = [
@@ -150,6 +151,7 @@ class ServerConfig(libqtile.confreader.Config):
                     ),
         )
     ]
+    main = None
 
 
 @Xephyr(True, ServerConfig())

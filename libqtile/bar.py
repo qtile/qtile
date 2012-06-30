@@ -149,6 +149,9 @@ class Bar(Gap):
             raise confreader.ConfigError(
                     "Bars must be at the top or the bottom of the screen."
                   )
+        if len(filter(lambda w: w.width_type == STRETCH, self.widgets)) > 1:
+            raise confreader.ConfigError("Only one STRETCH widget allowed!")
+
         Gap._configure(self, qtile, screen)
         self.window = window.Internal.create(
                         self.qtile,

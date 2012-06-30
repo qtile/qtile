@@ -8,5 +8,8 @@ MANIFEST
 /dist
 # Vim swap files
 *.swp
+*.swo
 /doc
+/docs/_build
+# some people hack on macs? :-)
 .DS_Store

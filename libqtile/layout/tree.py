@@ -242,7 +242,7 @@ class TreeTab(SingleWindow):
         ("panel_width", 150, "Width of the left panel"),
         ("sections", ['Default'],
             "Foreground color of inactive tab"),
-        ("name", "max", "Name of this layout."),
+        ("name", "treetab", "Name of this layout."),
     )
 
     def __init__(self, **config):

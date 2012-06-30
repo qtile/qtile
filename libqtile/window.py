@@ -106,14 +106,26 @@ class _Window(command.CommandObject):
         self.hidden = True
         self.group = None
         window.set_attribute(eventmask=self._windowMask)
-        self._x, self._y, self._width, self._height = None, None, None, None
+        try:
+            g = self.window.get_geometry()
+            self._x, self._y, self._width, self._height = g.x, g.y, g.width, g.height
+            # note that _float_info x and y are
+            # really offsets, relative to screen x,y
+            self._float_info = {
+                'x': g.x, 'y': g.y,
+                'w': g.width, 'h': g.height
+            }
+        except xcb.xproto.BadDrawable:
+            # Whoops, we were too early, so let's ignore it for now and get the
+            # values on demand.
+            self._x, self._y, self._width, self._height = None, None, None, None
+            self._float_info = None
         self.borderwidth = 0
         self.bordercolor = None
         self.name = "<no name>"
         self.state = NormalState
         self.window_type = "normal"
         self._float_state = NOT_FLOATING
-        self._float_info = None
 
         self.hints = {
             'input': True,

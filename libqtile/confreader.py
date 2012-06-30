@@ -26,34 +26,13 @@
 
 import os
 import sys
-import logging
-from imp import new_module
-from libqtile import manager, layout
-from libqtile.command import lazy
-from .layout import Floating
-
+import utils
+import traceback
 
 class ConfigError(Exception):
     pass
 
-
-# Default / fallback config
-class Config:
-    keys = [
-        manager.Key(['mod4'], "Tab", lazy.layout.next()),
-        manager.Key(['mod4'], "q", lazy.restart())
-    ]
-    mouse = ()
-    groups = [manager.Group('fallback'), manager.Group('fallback2')]
-    layouts = [layout.Tile()]
-    screens = [manager.Screen()]
-    main = None
-    follow_mouse_focus = True
-    cursor_warp = False
-    floating_layout = Floating()
-
-
-class File(Config):
+class File(object):
     def __init__(self, fname=None):
         if not fname:
             config_directory = os.path.expandvars('$XDG_CONFIG_HOME')
@@ -64,29 +43,36 @@ class File(Config):
 
         self.fname = fname
 
-        if not os.path.isfile(fname):
-            raise ConfigError("Config file does not exist: %s" % fname)
+        if os.path.isfile(fname):
+            try:
+                sys.path.insert(0, os.path.dirname(self.fname))
+                config = __import__(os.path.basename(self.fname)[:-3])
+            except Exception, v:
+                tb = traceback.format_exc()
+                raise ConfigError(str(v) + "\n\n" + tb)
+        else:
+            config = None
 
-        config = new_module('config')
-        config.__file__ = fname
-        try:
-            sys.path.insert(0, os.path.dirname(fname))
-            execfile(config.__file__, config.__dict__)
-        except Exception:
-            logging.getLogger('qtile').exception('Config error')
-            raise ConfigError()
+        # if you add something here, be sure to add a reasonable default value
+        # to resources/default-config.py
+        config_options = [
+            "keys",
+            "mouse",
+            "groups",
+            "follow_mouse_focus",
+            "cursor_warp",
+            "layouts",
+            "floating_layout",
+            "screens",
+            "main",
+        ]
 
-        self.screens = config.screens
-        self.layouts = config.layouts
-        self.keys = config.keys
-        self.groups = config.groups
-        self.mouse = getattr(config, "mouse", [])
-        self.follow_mouse_focus = getattr(config, "follow_mouse_focus", True)
-        self.cursor_warp = getattr(config, "cursor_warp", False)
-        self.floating_layout = getattr(config, 'floating_layout', None)
-        if self.floating_layout is None:
-            from .layout import Floating
-            self.floating_layout = Floating()
-        self.main = getattr(config, "main", None)
-        # Keep it so local vars don't get decref
-        self.config_module = config
+        # We delay importing here to avoid a circular import issue when
+        # testing.
+        from resources import default_config
+        for option in config_options:
+            v = getattr(default_config, option)
+            if hasattr(config, option):
+                v = getattr(config, option)
+            setattr(self, option, v)
+

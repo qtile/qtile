@@ -6,7 +6,7 @@ import libqtile.manager
 from utils import Xephyr
 
 
-class ShConfig(libqtile.confreader.Config):
+class ShConfig(object):
     keys = []
     mouse = []
     groups = [
@@ -20,6 +20,7 @@ class ShConfig(libqtile.confreader.Config):
     screens = [
         libqtile.manager.Screen()
     ]
+    main = None
 
 
 @Xephyr(True, ShConfig())

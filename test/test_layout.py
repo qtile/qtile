@@ -101,6 +101,7 @@ class StackConfig:
     keys = []
     mouse = []
     screens = []
+    follow_mouse_focus = False
 
 
 def _stacks(self):

@@ -1,118 +1,73 @@
-.. Qtile documentation master file, created by
-   sphinx-quickstart on Sat Dec  3 13:11:54 2011.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+Qtile Documentation
+===================
 
-=================================
-Welcome to Qtile's documentation!
-=================================
+Everything you need to know about Qtile.
 
-Qtile is a full-featured, hackable tiling window manager written in Python.
+Installing
+----------
 
-Contents:
+* **Getting started**:
+  :doc:`Overview </manual/install/index>` |
+  :doc:`From source </manual/install/source>`
 
-..  toctree::
-    :maxdepth: 2
+* **Distro guides**:
+  :doc:`Arch Linux </manual/install/arch>` |
+  :doc:`Gentoo </manual/install/gentoo>` |
+  :doc:`Ubuntu </manual/install/ubuntu>`
 
-    development
+Configuration
+-------------
 
+* **The basics**:
+  :doc:`Overview </manual/config/index>` |
+  :doc:`Hooks </manual/config/hooks>`
 
-Features
-========
+* **Config variables**:
+  :doc:`groups </manual/config/groups>` |
+  :doc:`keys </manual/config/keys>` |
+  :doc:`layouts </manual/config/layouts>` |
+  :doc:`mouse </manual/config/mouse>` |
+  :doc:`screens </manual/config/screens>`
 
-* Simple, small and extensible. It's easy to write your own layouts,
-  widgets and built-in commands.
-* Configured entirely in Python. 
-* Command-line shell that allows all aspects of Qtile to be manipulated and
-  inspected.
-* Complete remote scriptability - write scripts to set up workspaces,
-  manipulate windows, update status bar widgets and more.
-* Qtile's scriptability has made thorough unit testing possible,
-  making it one of the best-tested window managers around.
+* **Examples**:
+  `Default config <https://github.com/qtile/qtile/blob/master/libqtile/resources/default_config.py>`_ |
+  `qtile-examples <https://github.com/qtile/qtile-examples>`_
 
+Commands and scripting
+----------------------
 
-Dependencies
-============
+* **The basics**:
+  :doc:`Overview </manual/commands/index>`
 
-Qtile relies on some cutting-edge features in PyCairo, XCB, and xpyb. Until the
-latest versions of these projects make it into distros, it's best to use recent
-checkouts from their repositories. Here's a brief step-by-step guide:
+* **Diving in**:
+  :doc:`Scripting </manual/commands/scripting>` |
+  :doc:`qsh </manual/commands/qsh>`
 
+Reference
+---------
 
-libxcb
-------
+* :doc:`Built-in Hooks</manual/ref/hooks>`
+* :doc:`Built-in Layouts </manual/ref/layouts>`
+* :doc:`Built-in Widgets </manual/ref/widgets>`
 
-::
+Miscellaneous
+-------------
 
-  git clone git://anongit.freedesktop.org/git/xcb/libxcb
-  cd libxcb
-  ./autogen.sh
-  make
-  sudo make install
-
-
-xpyb-ng
--------
-
-::
-
-  git clone https://github.com/dequis/xpyb-ng.git
-  python setup.py install
+* :doc:`Frequently Asked Questions </manual/faq>`
+* :doc:`Hacking Qtile </manual/hacking>`
+* :doc:`License </manual/license>`
 
 
-cairo
------
+.. toctree::
+    :glob:
+    :hidden:
 
-The latest cairo release works, but recompiling with xcb support is needed.
-
-::
-
-  wget http://cairographics.org/releases/cairo-1.10.0.tar.gz
-  tar xvzf cairo-1.10.0.tar.gz
-  cd cairo-1.10.0
-  ./autogen.sh --enable-xcb
-  make
-  sudo make install
-
-
-py2cairo
---------
-
-::
-
-  git clone git://git.cairographics.org/git/py2cairo
-  cd py2cairo
-  ./autogen.sh --enable-xcb
-
-Check the configure output to make sure that XPYB is correctly detected.
-
-::
-
-  make
-  sudo make install
-
-
-PyGTK
------
-
-We also require a reasonably recent version of the Python GTK bindings, in
-particular, the ``pango`` module. You should just be able to install this using
-your chosen distribution's package manager.
-
-
-
-If you plan to run the test suite, you will also need nose_, and the
-`Python X Library`_.
-
-..  _nose: http://readthedocs.org/docs/nose/en/latest/
-..  _Python X Library: http://python-xlib.sourceforge.net/
-
-
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
-
+    /manual/install/index
+    /manual/install/*
+    /manual/config/index
+    /manual/config/*
+    /manual/commands/index
+    /manual/commands/*
+    /manual/ref/index
+    /manual/ref/*
+    /manual/*

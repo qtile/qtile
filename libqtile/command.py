@@ -223,6 +223,8 @@ def find_sockfile(display=None):
     if cache_directory == '$XDG_CACHE_HOME':
         # if variable wasn't set
         cache_directory = os.path.expanduser("~/.cache")
+    if not os.path.exists(cache_directory):
+        os.makedirs(cache_directory)
     return os.path.join(cache_directory, SOCKBASE % display)
 
 

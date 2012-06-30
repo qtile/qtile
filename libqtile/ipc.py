@@ -32,6 +32,7 @@ import socket
 import struct
 import gobject
 import errno
+import fcntl
 
 HDRLEN = 4
 BUFSIZE = 1024 * 1024
@@ -43,11 +44,14 @@ class IPCError(Exception):
 
 class _IPC:
     def _read(self, sock):
-        size = struct.unpack("!L", sock.recv(HDRLEN))[0]
-        data = ""
-        while len(data) < size:
-            data += sock.recv(BUFSIZE)
-        return self._unpack_body(data)
+        try:
+            size = struct.unpack("!L", sock.recv(HDRLEN))[0]
+            data = ""
+            while len(data) < size:
+                data += sock.recv(BUFSIZE)
+            return self._unpack_body(data)
+        except struct.error:
+            raise IPCError("error reading reply! (probably the socket was disconnected)")
 
     def _unpack_body(self, body):
         return marshal.loads(body)
@@ -102,6 +106,8 @@ class Server(_IPC):
             socket.SOCK_STREAM,
             0
         )
+        flags = fcntl.fcntl(self.sock, fcntl.F_GETFD)
+        fcntl.fcntl(self.sock, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
         self.sock.bind(self.fname)
         self.sock.listen(5)
 
@@ -123,6 +129,8 @@ class Server(_IPC):
                 return True
             raise
         else:
+            flags = fcntl.fcntl(conn, fcntl.F_GETFD)
+            fcntl.fcntl(conn, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
             conn.setblocking(0)
             data = {'buffer': ''}  # object which holds connection state
             self.log.info('Add io watch on _connection')
