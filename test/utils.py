@@ -188,7 +188,7 @@ class Xephyr(object):
     def testWindow(self, name):
         return self._testProc(
                     "scripts/window.py",
-                    ["scripts/window..py", self.display, name]
+                    ["scripts/window.py", self.display, name]
                 )
 
     def testXclock(self):

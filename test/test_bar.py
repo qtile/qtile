@@ -250,6 +250,9 @@ class MultiStretchConf(GeomConf):
         ], 10))
     ]
 
+class ErrConf:
+    pass
+
 @Xephyr(True, ErrConf(), False)
 def test_err(self):
     config = ErrConf()
