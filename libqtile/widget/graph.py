@@ -272,7 +272,7 @@ class HDDGraph(_Graph):
         ("type", "linefill", "'box', 'line', 'linefill'"),
         ("line_width", 3, "Line width"),
         ("start_pos", "bottom", "Drawer starting position ('bottom'/'top')"),
-        ("path", "sda1", "Path at which parition is MOUNTED."),
+        ("path", "/dev/sda1", "Path at which parition is MOUNTED."),
         ("space_type", "used", "free/used")
     )
 
