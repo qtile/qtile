@@ -9,10 +9,10 @@ import re
 
 class ThermalSensor(base._TextBox):
     '''
-    A thermal sensor widget, you need have installed lm-sensors.
-    For know the tag_sensor available, you can execute "sensors" in your
-    terminal. Then you can choice which you want, otherwise it will display the
-    first available.
+    For using the thermal sensor widget you need to have lm-sensors installed.
+    You can get a list of the tag_sensors executing "sensors" in your terminal.
+    Then you can choose which you want, otherwise it will display the first
+    available.
     '''
     defaults = manager.Defaults(
         ('font', 'Arial', 'Font'),
