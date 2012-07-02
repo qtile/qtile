@@ -251,12 +251,22 @@ class MultiStretchConf(GeomConf):
     ]
 
 class ErrConf:
-    pass
+    main = None
+    keys = []
+    mouse = []
+    groups = [libqtile.manager.Group("a")]
+    layouts = [libqtile.layout.stack.Stack(stacks=1)]
+    floating_layout = libqtile.layout.floating.Floating()
+    screens = [
+        libqtile.manager.Screen(
+            left=libqtile.bar.Bar([], 10),
+        )
+    ]
+
 
 @Xephyr(True, ErrConf(), False)
 def test_err(self):
-    config = ErrConf()
-    self.qtileRaises(libqtile.confreader.ConfigError, config)
+    self.qtileRaises(libqtile.confreader.ConfigError, ErrConf())
 
 
 class TestWidget(libqtile.widget.base._Widget):
