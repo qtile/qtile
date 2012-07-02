@@ -1,15 +1,15 @@
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -18,11 +18,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import inspect, traceback, textwrap, os
+import inspect
+import traceback
+import textwrap
+import os
 import ipc
 
-class CommandError(Exception): pass
-class CommandException(Exception): pass
+
+class CommandError(Exception):
+    pass
+
+
+class CommandException(Exception):
+    pass
+
 
 class _SelectError(Exception):
     def __init__(self, name, sel):
@@ -48,7 +57,7 @@ def formatSelector(lst):
             expr.append(".")
         expr.append(i[0])
         if i[1] is not None:
-            expr.append("[%s]"%repr(i[1]))
+            expr.append("[%s]" % repr(i[1]))
     return "".join(expr)
 
 
@@ -73,11 +82,11 @@ class _Server(ipc.Server):
         except _SelectError, v:
             e = formatSelector([(v.name, v.sel)])
             s = formatSelector(selectors)
-            return ERROR, "No object %s in path '%s'"%(e, s)
+            return ERROR, "No object %s in path '%s'" % (e, s)
         cmd = obj.command(name)
         if not cmd:
             return ERROR, "No such command."
-        self.qtile.log.add("Command: %s(%s, %s)"%(name, args, kwargs))
+        self.qtile.log.info("Command: %s(%s, %s)" % (name, args, kwargs))
         try:
             return SUCCESS, cmd(*args, **kwargs)
         except CommandError, v:
@@ -108,7 +117,9 @@ class _CommandTree(object):
         commands themselves appear on the object as callable attributes.
     """
     def __init__(self, call, selectors, myselector, parent):
-        self.call, self.selectors, self.myselector = call, selectors, myselector
+        self.call = call
+        self.selectors = selectors
+        self.myselector = myselector
         self.parent = parent
 
     @property
@@ -120,7 +131,7 @@ class _CommandTree(object):
 
     def __getitem__(self, select):
         if self.myselector:
-            raise KeyError, "No such key: %s"%select
+            raise KeyError("No such key: %s" % select)
         c = self.__class__(self.call, self.selectors, select, self)
         return c
 
@@ -177,6 +188,7 @@ _TreeMap = {
 class _CommandRoot(_CommandTree):
     name = None
     _contains = ["layout", "widget", "screen", "bar", "window", "group"]
+
     def __init__(self):
         """
             This method constructs the entire hierarchy of callable commands
@@ -185,13 +197,13 @@ class _CommandRoot(_CommandTree):
         _CommandTree.__init__(self, self.call, [], None, None)
 
     def __getitem__(self, select):
-        raise KeyError, "No such key: %s"%select
+        raise KeyError("No such key: %s" % select)
 
     def call(self, selectors, name, *args, **kwargs):
         """
             This method is called for issued commands.
-                
-                :selectors A list of (name, selector) tuples. 
+
+                :selectors A list of (name, selector) tuples.
                 :name Command name.
         """
         pass
@@ -208,11 +220,12 @@ def find_sockfile(display=None):
     if '.' not in display:
         display += '.0'
     cache_directory = os.path.expandvars('$XDG_CACHE_HOME')
-    if cache_directory == '$XDG_CACHE_HOME': #if variable wasn't set
+    if cache_directory == '$XDG_CACHE_HOME':
+        # if variable wasn't set
         cache_directory = os.path.expanduser("~/.cache")
     if not os.path.exists(cache_directory):
         os.makedirs(cache_directory)
-    return os.path.join(cache_directory, SOCKBASE%display)
+    return os.path.join(cache_directory, SOCKBASE % display)
 
 
 class Client(_CommandRoot):
@@ -268,7 +281,7 @@ lazy = _LazyTree()
 class CommandObject(object):
     """
         Base class for objects that expose commands. Each command should be a
-        method named cmd_X, where X is the command name. 
+        method named cmd_X, where X is the command name.
     """
     def select(self, selectors):
         if not selectors:
@@ -294,17 +307,17 @@ class CommandObject(object):
         """
         ret = self._items(name)
         if ret is None:
-            raise CommandError("Unknown item class: %s"%name)
+            raise CommandError("Unknown item class: %s" % name)
         return ret
 
     def _items(self, name):
         """
-            Return (root, items) tuple for the specified item class, with: 
-            
+            Return (root, items) tuple for the specified item class, with:
+
                 root: True if this class accepts a "naked" specification
                 without an item specification (i.e. "layout"), and False if it
-                does not. 
-                
+                does not.
+
                 items is a list of contained items, or None if this object is
                 not a valid container.
 
@@ -337,8 +350,8 @@ class CommandObject(object):
 
     def cmd_commands(self):
         """
-            Returns a list of possible commands for this object. Used by __qsh__
-            for command completion and online help.
+            Returns a list of possible commands for this object.
+            Used by __qsh__ for command completion and online help.
         """
         return self.commands()
 
@@ -372,5 +385,4 @@ class CommandObject(object):
         if name in self.commands():
             return self.doc(name)
         else:
-            raise CommandError("No such command: %s"%name)
-
+            raise CommandError("No such command: %s" % name)

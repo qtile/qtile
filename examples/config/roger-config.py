@@ -42,7 +42,8 @@ keys = [
 
     Key([mod], "w",      lazy.window.kill()),
     Key([mod], "F2",     lazy.spawn(
-        "dmenu_run -p run -nb '#202020' -nf '#ffffff' -fa 'Anonymous Pro-10'")),
+        "dmenu_run -p run -nb '#202020' "
+        "-nf '#ffffff' -fa 'Anonymous Pro-10'")),
 
     Key(
         [mod, "shift"], "k",
@@ -72,7 +73,8 @@ mouse = [
     Click([mod], "Button2", lazy.window.bring_to_front())
 ]
 
-# Next, we specify group names, and use the group name list to generate an appropriate
+# Next, we specify group names, and use the group name
+# list to generate an appropriate
 # set of bindings for group switching.
 groups = [
 #    Group("1"),
@@ -96,45 +98,47 @@ layouts = [
 
 screens = [
     Screen(
-        top = bar.Bar(
-                    [
-                        widget.GroupBox(borderwidth=2,
-                            fontsize=14,
-                            padding=1, margin_y=1),
-                        widget.Sep(),
-                        widget.Prompt(),
-                        widget.WindowName(
-                            fontsize=14, margin_x=6),
-                        #widget.Sep(),
-                        #widget.Mpd(fontsize=16),
-                        #widget.Sep(),
-                        #widget.CPUGraph(width=50, graph_color='0066FF',
-                        #                          fill_color='001188'),
-                        #widget.MemoryGraph(width=50, graph_color='22FF44',
-                        #                             fill_color='11AA11'),
-                        #widget.SwapGraph(width=50, graph_color='FF2020',
-                        #                           fill_color='C01010'),
-                        widget.Sep(),
-                        widget.Volume(theme_path='/usr/share/icons/gnome/256x256/status/'),
-                        widget.Systray(),
-                        widget.Sep(),
-                        widget.Clock('%H:%M %d/%m/%y',
-                            fontsize=18, padding=6),
-                    ],
-                    24
-                ),
+        top=bar.Bar(
+            [
+                widget.GroupBox(borderwidth=2,
+                                fontsize=14,
+                                padding=1, margin_y=1),
+                widget.Sep(),
+                widget.Prompt(),
+                widget.WindowName(
+                    fontsize=14, margin_x=6),
+                #widget.Sep(),
+                #widget.Mpd(fontsize=16),
+                #widget.Sep(),
+                #widget.CPUGraph(width=50, graph_color='0066FF',
+                #                          fill_color='001188'),
+                #widget.MemoryGraph(width=50, graph_color='22FF44',
+                #                             fill_color='11AA11'),
+                #widget.SwapGraph(width=50, graph_color='FF2020',
+                #                           fill_color='C01010'),
+                widget.Sep(),
+                widget.Volume(
+                    theme_path='/usr/share/icons/gnome/256x256/status/'),
+                widget.Systray(),
+                widget.Sep(),
+                widget.Clock('%H:%M %d/%m/%y',
+                             fontsize=18, padding=6),
+            ],
+            24
+        ),
     ),
 ]
 
 # change focus on mouse over
 follow_mouse_focus = True
 
+
 def main(qtile):
     from dgroups import DGroups, Match, simple_key_binder
     global mod
 
     groups = {
-            'h4x':  {'init': True, 'persist': True, 
+            'h4x':  {'init': True, 'persist': True,
                 'spawn': 'guake', 'exclusive': True},
             'design': {},
             'www': {'exclusive': True},
@@ -144,17 +148,18 @@ def main(qtile):
            }
 
     apps = [
-            {'match': Match(wm_class=['Guake.py', 
+            {'match': Match(wm_class=['Guake.py',
                 'MPlayer', 'Exe', 'Gnome-keyring-prompt'],
                wm_type=['dialog', 'utility', 'splash']), 'float': True},
             {'match': Match(wm_class=['Gimp']),
                 'group': 'design', 'float': True},
             {'match': Match(wm_class=['emesene']),
                 'group': 'emesene'},
-            {'match': Match(wm_class=['Chromium-browser', 'Minefield'], 
+            {'match': Match(wm_class=['Chromium-browser', 'Minefield'],
                 role=['browser']), 'group': 'www'},
             {'match': Match(wm_class=['Gajim.py']),
                 'group': 'gajim'},
-            {'match': Match(wm_class=['Wine']), 'float': True, 'group': 'wine'},
+        {'match': Match(wm_class=['Wine']),
+         'float': True, 'group': 'wine'},
            ]
-    dgroups = DGroups(qtile, groups, apps, simple_key_binder(mod))
+    DGroups(qtile, groups, apps, simple_key_binder(mod))
