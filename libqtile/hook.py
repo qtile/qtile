@@ -2,6 +2,8 @@ import manager
 
 subscriptions = {}
 SKIPLOG = set()
+qtile = None
+
 
 def init(q):
     global qtile
@@ -19,7 +21,7 @@ class Subscribe:
             if not i.startswith("_"):
                 hooks.add(i)
         self.hooks = hooks
-        
+
     def _subscribe(self, event, func):
         lst = subscriptions.setdefault(event, [])
         if not func in lst:
@@ -97,7 +99,7 @@ class Subscribe:
             Called after Qtile starts managing a new client. That is, after a
             window is assigned to a group, or when a window is made static.
             This hook is not called for internal windows.
-            
+
             - arguments: window.Window object
         """
         return self._subscribe("client_managed", func)
@@ -156,6 +158,7 @@ class Subscribe:
 
 subscribe = Subscribe()
 
+
 class Unsubscribe(Subscribe):
     """
         This class mirrors subscribe, except the _subscribe member has been
@@ -166,15 +169,17 @@ class Unsubscribe(Subscribe):
         try:
             lst.remove(func)
         except ValueError:
-            raise manager.QtileError("Tried to unsubscribe a hook that was not currently subscribed")
-
+            raise manager.QtileError("Tried to unsubscribe a hook that was not"
+                                     " currently subscribed")
 
 unsubscribe = Unsubscribe()
 
+
 def fire(event, *args, **kwargs):
     if event not in subscribe.hooks:
-        raise manager.QtileError("Unknown event: %s"%event)
+        raise manager.QtileError("Unknown event: %s" % event)
     if not event in SKIPLOG:
-        qtile.log.add("Internal event: %s(%s, %s)"%(event, args, kwargs))
+        qtile.log.info("Internal event: %s(%s, %s)" %
+                      (event, args, kwargs))
     for i in subscriptions.get(event, []):
         i(*args, **kwargs)

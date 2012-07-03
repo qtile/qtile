@@ -1,6 +1,7 @@
 import base
 from .. import manager, bar, hook
 
+
 class CurrentLayout(base._TextBox):
     defaults = manager.Defaults(
         ("font", "Arial", "Text font"),
@@ -10,7 +11,7 @@ class CurrentLayout(base._TextBox):
         ("foreground", "#ffffff", "Foreground colour.")
     )
 
-    def __init__(self, width = bar.CALCULATED, **config):
+    def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "", width, **config)
 
     def _configure(self, qtile, bar):
@@ -24,3 +25,8 @@ class CurrentLayout(base._TextBox):
             self.bar.draw()
         hook.subscribe.layout_change(hook_response)
 
+    def click(self, x, y, button):
+        if button == 1:
+            self.qtile.cmd_nextlayout()
+        elif button == 2:
+            self.qtile.cmd_prevlayout()

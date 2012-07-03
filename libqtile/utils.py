@@ -1,15 +1,15 @@
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -18,8 +18,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import operator, functools, os
+import operator
+import functools
+import gobject
+import logging
+import os
 import xcbq
+
 
 def lget(o, v):
     try:
@@ -30,15 +35,15 @@ def lget(o, v):
 
 def translateMasks(modifiers):
     """
-        Translate a modifier mask specified as a list of strings into an or-ed 
-        bit representation.
+    Translate a modifier mask specified as a list of strings into an or-ed
+    bit representation.
     """
     masks = []
     for i in modifiers:
         try:
             masks.append(xcbq.ModMasks[i])
         except KeyError:
-            raise KeyError("Unknown modifier: %s"%i)
+            raise KeyError("Unknown modifier: %s" % i)
     return reduce(operator.or_, masks) if masks else 0
 
 
@@ -68,8 +73,8 @@ class LRUCache:
         self.size = size
 
     def __call__(self, f):
-        cacheName = "_cached_%s"%f.__name__
-        cacheListName = "_cachelist_%s"%f.__name__
+        cacheName = "_cached_%s" % f.__name__
+        cacheListName = "_cachelist_%s" % f.__name__
         size = self.size
 
         @functools.wraps(f)
@@ -79,7 +84,7 @@ class LRUCache:
                 setattr(self, cacheListName, [])
             cache = getattr(self, cacheName)
             cacheList = getattr(self, cacheListName)
-            if cache.has_key(args):
+            if args in cache:
                 cacheList.remove(args)
                 cacheList.insert(0, args)
                 return cache[args]
@@ -97,7 +102,7 @@ class LRUCache:
 def isStringLike(anobj):
     try:
         # Avoid succeeding expensively if anobj is large.
-        anobj[:0]+''
+        anobj[:0] + ''
     except:
         return 0
     else:
@@ -126,7 +131,7 @@ def rgb(x):
         Here are some valid specifcations:
             #ff0000
             ff0000
-            with alpha: ff0000.5  
+            with alpha: ff0000.5
             (255, 0, 0)
             (255, 0, 0, 0.5)
     """
@@ -135,13 +140,13 @@ def rgb(x):
             alpha = x[3]
         else:
             alpha = 1
-        return (x[0]/255.0, x[1]/255.0, x[2]/255.0, alpha)
+        return (x[0] / 255.0, x[1] / 255.0, x[2] / 255.0, alpha)
     elif isinstance(x, basestring):
         if x.startswith("#"):
             x = x[1:]
         if "." in x:
             x, alpha = x.split(".")
-            alpha = float("0."+alpha)
+            alpha = float("0." + alpha)
         else:
             alpha = 1
         if len(x) != 6:
@@ -150,6 +155,11 @@ def rgb(x):
         vals.append(alpha)
         return rgb(vals)
     raise ValueError("Invalid RGB specifier.")
+
+
+def hex(x):
+    r, g, b, _ = rgb(x)
+    return '#%02x%02x%02x' % (r * 255, g * 255, b * 255)
 
 
 class Data:
@@ -167,7 +177,7 @@ class Data:
         """
         fullpath = os.path.join(self.dirname, path)
         if not os.path.exists(fullpath):
-            raise ValueError, "dataPath: %s does not exist."%fullpath
+            raise ValueError("dataPath: %s does not exist." % fullpath)
         return fullpath
 
 data = Data(__name__)
@@ -182,7 +192,11 @@ def scrub_to_utf8(text):
         try:
             return text.decode("utf-8")
         except UnicodeDecodeError:
-            # We don't know the provenance of this string - so we scrub it to ASCII.
-            return "".join(i for i in text if 31 < ord(i) <  127)
+            # We don't know the provenance of this string
+            # - so we scrub it to ASCII.
+            return "".join(i for i in text if 31 < ord(i) < 127)
 
 
+def escape(text):
+    # logging.getLogger('qtile').info('Escaping %s' % text)
+    return gobject.markup_escape_text(text)

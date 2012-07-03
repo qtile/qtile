@@ -1,15 +1,16 @@
 from base import SingleWindow
 from .. import manager
 
+
 class MonadTall(SingleWindow):
     """
     This layout attempts to emulate the behavior of XMonad's default
-    tiling scheme. 
+    tiling scheme.
 
     Main-Pane:
 
-    A main pane that contains a single window takes up a vertical 
-    portion of the screen based on the ratio setting. This ratio can 
+    A main pane that contains a single window takes up a vertical
+    portion of the screen based on the ratio setting. This ratio can
     be adjusted with the `cmd_grow' and `cmd_shrink' methods while
     the main pane is in focus.
 
@@ -36,17 +37,17 @@ class MonadTall(SingleWindow):
         ---------------------
 
     Secondary-panes:
-    
+
     Occupying the rest of the screen are one or more secondary panes.
     The secondary panes will share the vertical space of the screen
-    however they can be resized at will with the `cmd_grow' and 
+    however they can be resized at will with the `cmd_grow' and
     `cmd_shrink' methods. The other secondary panes will adjust their
     sizes to smoothly fill all of the space.
 
         ---------------------          ---------------------
         |            |      |          |            |______|
         |            |______|          |            |      |
-        |            |      |          |            |      |          
+        |            |      |          |            |      |
         |            |______|          |            |      |
         |            |      |          |            |______|
         |            |      |          |            |      |
@@ -107,7 +108,8 @@ class MonadTall(SingleWindow):
         ("name", "xmonad-tall", "Name of this layout."),
     )
 
-    def __init__(self, ratio=_med_ratio, align=_left, change_ratio=.05, change_size=20, **config):
+    def __init__(self, ratio=_med_ratio, align=_left, change_ratio=.05,
+                 change_size=20, **config):
         """
             - ratio       : The percent of the screen-space the
                             master pane should occupy by default.
@@ -116,7 +118,7 @@ class MonadTall(SingleWindow):
 
             - change_size : Resize change in pixels
         """
-        SingleWindow.__init__( self, **config)
+        SingleWindow.__init__(self, **config)
         self.clients = []
         self.sizes = []
         self.ratio = ratio
@@ -128,6 +130,7 @@ class MonadTall(SingleWindow):
     # track client that has 'focus'
     def _get_focus(self):
         return self._focus
+
     def _set_focus(self, x):
         if len(self.clients) > 0:
             self._focus = abs(x % len(self.clients))
@@ -162,11 +165,11 @@ class MonadTall(SingleWindow):
 
     def remove(self, c):
         "Remove client from layout"
-        # get index of removed client 
+        # get index of removed client
         idx = self.clients.index(c)
         # remove the client
         self.clients.remove(c)
-        # move focus pointer 
+        # move focus pointer
         self.focused = max(0, idx - 1)
         # reposition all clients
         self.cmd_normalize()
@@ -175,9 +178,9 @@ class MonadTall(SingleWindow):
 
     def cmd_normalize(self, redraw=True):
         "Evenly distribute screen-space among secondary clients"
-        n = len(self.clients) - 1 # exclude main client, 0
-        if n > 0: # if secondary clients exist
-            self.sizes = [] 
+        n = len(self.clients) - 1  # exclude main client, 0
+        if n > 0:  # if secondary clients exist
+            self.sizes = []
             height = self.group.screen.dheight / n
             # set all sizes to calculated ratio
             for i in range(n):
@@ -185,7 +188,6 @@ class MonadTall(SingleWindow):
         # reset main pane ratio
         if redraw:
             self.group.layoutAll()
-
 
     def _maximize_main(self):
         "Toggle the main pane between min and max size"
@@ -197,10 +199,10 @@ class MonadTall(SingleWindow):
 
     def _maximize_secondary(self):
         "Toggle the focused secondary pane between min and max size"
-        n = len(self.clients) - 2 # total shrinking clients
+        n = len(self.clients) - 2  # total shrinking clients
         # total height of collapsed secondaries
         collapsed_height = self._min_height * n
-        nidx = self.focused - 1 # focused size index
+        nidx = self.focused - 1  # focused size index
         # total height of maximized secondary
         maxed_size = self.group.screen.dheight - collapsed_height
         # if maximized or nearly maximized
@@ -245,20 +247,20 @@ class MonadTall(SingleWindow):
                     px = self.group.qtile.colorPixel(self.border_focus)
                 else:
                     px = self.group.qtile.colorPixel(self.border_normal)
-    
+
                 # calculate main/secondary column widths
                 width_main = int(self.group.screen.dwidth * self.ratio)
                 width_shared = self.group.screen.dwidth - width_main
-    
+
                 # calculate client's x offset
-                if self.align == self._left: # left orientation
+                if self.align == self._left:  # left orientation
                     if self.clients.index(c) == 0:
                         # main client
-                        xpos = self.group.screen.dx 
+                        xpos = self.group.screen.dx
                     else:
                         # secondary client
                         xpos = self.group.screen.dx + width_main
-                else: # right orientation
+                else:  # right orientation
                     if self.clients.index(c) == 0:
                         # main client
                         xpos = self.group.screen.dx + width_shared
@@ -266,32 +268,31 @@ class MonadTall(SingleWindow):
                         # secondary client
                         xpos = self.group.screen.dx
 
-                # calculate client width 
+                # calculate client width
                 if self.clients.index(c) == 0:
                     # main client
-                    width = width_main - 2*self.border_width
+                    width = width_main - 2 * self.border_width
                 else:
                     # secondary client
-                    width = width_shared - 2*self.border_width
-    
+                    width = width_shared - 2 * self.border_width
+
                 # calculate client height and place
                 cidx = self.clients.index(c)
                 if cidx > 0:
                     # secondary client
-                    n_shared = max(1, len(self.clients)-1)
                     # ypos is the sum of all clients above it
-                    ypos = self.group.screen.dy + sum(self.sizes[:cidx-1])
+                    ypos = self.group.screen.dy + sum(self.sizes[:cidx - 1])
                     # get height from precalculated height list
                     height = self.sizes[cidx - 1]
                     # place client based on calculated dimensions
                     c.place(xpos, ypos,
-                            width, height - 2*self.border_width,
+                            width, height - 2 * self.border_width,
                             self.border_width, px)
                     c.unhide()
                 else:
                     # main client
-                    c.place(xpos, self.group.screen.dy,
-                        width, self.group.screen.dheight - 2*self.border_width,
+                    c.place(xpos, self.group.screen.dy, width,
+                            self.group.screen.dheight - 2 * self.border_width,
                         self.border_width, px)
                     c.unhide()
         else:
@@ -309,23 +310,23 @@ class MonadTall(SingleWindow):
         """
         # get max resizable amount
         margin = self.get_shrink_margin(cidx)
-        if amt > margin: # too much
+        if amt > margin:  # too much
             self.sizes[cidx] -= margin
             return amt - margin
-        else: 
+        else:
             self.sizes[cidx] -= amt
             return 0
 
     def shrink_up(self, cidx, amt):
         """
         Will shrink all secondary clients above the specified
-        index in order. Each client will attempt to shrink as 
+        index in order. Each client will attempt to shrink as
         much as it is able before the next client is resized.
 
         Any amount that was unable to be applied to the
         clients is returned.
         """
-        left = amt # track unused shrink amount
+        left = amt  # track unused shrink amount
         # for each client before specified index
         for idx in range(0, cidx):
             # shrink by whatever is left-over of original amount
@@ -338,7 +339,7 @@ class MonadTall(SingleWindow):
         Will shrink all secondary clients above the specified
         index by an equal share of the provided amount. After
         applying the shared amount to all affected clients,
-        any amount left over will be applied in a 
+        any amount left over will be applied in a
         non-equal manner with `shrink_up'.
 
         Any amount that was unable to be applied to the
@@ -346,7 +347,7 @@ class MonadTall(SingleWindow):
         """
         # split shrink amount among number of clients
         per_amt = amt / cidx
-        left = amt # track unused shrink amount
+        left = amt  # track unused shrink amount
         # for each client before specified index
         for idx in range(0, cidx):
             # shrink by equal amount and track left-over
@@ -360,13 +361,13 @@ class MonadTall(SingleWindow):
     def shrink_down(self, cidx, amt):
         """
         Will shrink all secondary clients below the specified
-        index in order. Each client will attempt to shrink as 
+        index in order. Each client will attempt to shrink as
         much as it is able before the next client is resized.
 
         Any amount that was unable to be applied to the
         clients is returned.
         """
-        left = amt # track unused shrink amount
+        left = amt  # track unused shrink amount
         # for each client after specified index
         for idx in range(cidx + 1, len(self.sizes)):
             # shrink by current total left-over amount
@@ -379,15 +380,15 @@ class MonadTall(SingleWindow):
         Will shrink all secondary clients below the specified
         index by an equal share of the provided amount. After
         applying the shared amount to all affected clients,
-        any amount left over will be applied in a 
+        any amount left over will be applied in a
         non-equal manner with `shrink_down'.
 
         Any amount that was unable to be applied to the
         clients is returned.
-        """        
+        """
         # split shrink amount among number of clients
         per_amt = amt / (len(self.sizes) - 1 - cidx)
-        left = amt # track unused shrink amount
+        left = amt  # track unused shrink amount
         # for each client after specified index
         for idx in range(cidx + 1, len(self.sizes)):
             # shrink by equal amount and track left-over
@@ -421,7 +422,7 @@ class MonadTall(SingleWindow):
         """
         half_change_size = amt / 2
         # track unshrinkable amounts
-        left = amt 
+        left = amt
         # first secondary (top)
         if self.focused == 1:
             # only shrink downwards
@@ -429,21 +430,24 @@ class MonadTall(SingleWindow):
         # last secondary (bottom)
         elif self.focused == len(self.clients) - 1:
             # only shrink upwards
-            left -= amt - self.shrink_up(len(self.sizes)-1, amt)
+            left -= amt - self.shrink_up(len(self.sizes) - 1, amt)
         # middle secondary
         else:
             # get size index
             idx = self.focused - 1
             # shrink up and down
-            left -= half_change_size - self.shrink_up_shared(idx, half_change_size)
-            left -= half_change_size - self.shrink_down_shared(idx, half_change_size)
-            left -= half_change_size - self.shrink_up_shared(idx, half_change_size)
-            left -= half_change_size - self.shrink_down_shared(idx, half_change_size)
+            left -= half_change_size - self.shrink_up_shared(
+                idx, half_change_size)
+            left -= half_change_size - self.shrink_down_shared(
+                idx, half_change_size)
+            left -= half_change_size - self.shrink_up_shared(
+                idx, half_change_size)
+            left -= half_change_size - self.shrink_down_shared(
+                idx, half_change_size)
         # calculate how much shrinkage took place
         diff = amt - left
         # grow client by diff amount
         self.sizes[self.focused - 1] += diff
-
 
     def cmd_grow(self):
         """
@@ -453,7 +457,7 @@ class MonadTall(SingleWindow):
         further.
         """
         # get currently focused client
-        c = self.clients[self.focused]
+        self.clients[self.focused]
         if self.focused == 0:
             self._grow_main(self.change_ratio)
         elif len(self.clients) == 2:
@@ -502,7 +506,6 @@ class MonadTall(SingleWindow):
         self.ratio += amt
         self.ratio = min(self._max_ratio, self.ratio)
 
-
     def _shrink_secondary(self, amt):
         """
         Will shrink the focused client in the
@@ -531,7 +534,7 @@ class MonadTall(SingleWindow):
         # last secondary (bottom)
         elif self.focused == len(self.clients) - 1:
             # only grow upwards
-            self.grow_up_shared(len(self.sizes)-1, change)
+            self.grow_up_shared(len(self.sizes) - 1, change)
         # middle secondary
         else:
             idx = self.focused - 1
@@ -546,8 +549,8 @@ class MonadTall(SingleWindow):
         Will shrink the currently focused client reducing the
         size of those around it. Shrinking will stop when the
         client has reached the minimum size.
-        """        
-        c = self.clients[self.focused]
+        """
+        self.clients[self.focused]
         if self.focused == 0:
             self._shrink_main(self.change_ratio)
         elif len(self.clients) == 2:
@@ -570,7 +573,8 @@ class MonadTall(SingleWindow):
         "Shuffle the client up the stack."
         _oldf = self.focused
         self.focused -= 1
-        self.clients[_oldf], self.clients[self.focused] = self.clients[self.focused], self.clients[_oldf]
+        self.clients[_oldf], self.clients[self.focused] = \
+            self.clients[self.focused], self.clients[_oldf]
         self.group.layoutAll()
         self.group.focus(self.clients[self.focused], False)
 
@@ -578,7 +582,8 @@ class MonadTall(SingleWindow):
         "Shuffle the client down the stack."
         _oldf = self.focused
         self.focused += 1
-        self.clients[_oldf], self.clients[self.focused] = self.clients[self.focused], self.clients[_oldf]
+        self.clients[_oldf], self.clients[self.focused] = \
+            self.clients[self.focused], self.clients[_oldf]
         self.group.layoutAll()
         self.group.focus(self.clients[self.focused], False)
 
