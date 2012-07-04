@@ -1,7 +1,6 @@
 import cairo
 import os
-
-from libqtile import bar, hook, manager
+from libqtile import bar, manager
 import base
 
 BAT_DIR = '/sys/class/power_supply'

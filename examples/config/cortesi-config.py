@@ -66,7 +66,8 @@ keys = [
     ),
 ]
 
-# Next, we specify group names, and use the group name list to generate an appropriate
+# Next, we specify group names, and use the group name
+# list to generate an appropriate
 # set of bindings for group switching.
 groups = [
     Group("a"),
@@ -98,21 +99,21 @@ layouts = [
 # simple widgets - a GroupBox, and a WindowName.
 screens = [
     Screen(
-        bottom = bar.Bar(
-                    [
-                        widget.GroupBox(),
-                        widget.WindowName()
-                    ],
-                    30,
-                ),
+        bottom=bar.Bar(
+            [
+                widget.GroupBox(),
+                widget.WindowName()
+            ],
+            30,
+        ),
     ),
     Screen(
-        bottom = bar.Bar(
-                    [
-                        widget.GroupBox(),
-                        widget.WindowName()
-                    ],
-                    30,
-                ),
+        bottom=bar.Bar(
+            [
+                widget.GroupBox(),
+                widget.WindowName()
+            ],
+            30,
+        ),
     )
 ]

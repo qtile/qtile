@@ -35,23 +35,28 @@ class Match(object):
         return False
 
 
-
-def simple_key_binder(mod):
-    ''' Bind keys to mod+group position '''
+def simple_key_binder(mod, keynames=None):
+    """
+        Bind keys to mod+group position or to the keys specified as
+        second argument.
+    """
     def func(dgroup):
         # unbind all
         for key in dgroup.keys[:]:
             dgroup.qtile.unmapKey(key)
             dgroup.keys.remove(key)
 
-        # keys 1 to 9 and 0
-        keynumbers = range(1,10) + [0]
+        if keynames:
+            keys = keynames
+        else:
+            # keys 1 to 9 and 0
+            keys = range(1, 10) + [0]
 
         # bind all keys
-        for num, group in zip(keynumbers, dgroup.qtile.groups[:10]):
+        for keyname, group in zip(keys, dgroup.qtile.groups):
             name = group.name
-            key = Key([mod], str(num), lazy.group[name].toscreen())
-            key_s = Key([mod, "shift"], str(num), lazy.window.togroup(name))
+            key = Key([mod], keyname, lazy.group[name].toscreen())
+            key_s = Key([mod, "shift"], keyname, lazy.window.togroup(name))
             dgroup.keys.append(key)
             dgroup.keys.append(key_s)
             dgroup.qtile.mapKey(key)
@@ -107,6 +112,7 @@ class DGroups(object):
 
     def _add(self, client):
         if client in self.timeout:
+            self.qtile.log.info('Remove dgroup source')
             gobject.source_remove(self.timeout[client])
             del(self.timeout[client])
         group_set = False
@@ -131,7 +137,8 @@ class DGroups(object):
                             group_obj.layout = layout
                         if master:
                             group_obj.layout.shuffle(
-                                   lambda lst: self.shuffle_groups(lst, master))
+                                   lambda lst: self.shuffle_groups(
+                                       lst, master))
 
                 if 'float' in app and app['float']:
                     client.floating = True
@@ -158,6 +165,7 @@ class DGroups(object):
 
     def _del(self, client):
         group = client.group
+
         def delete_client():
             # Delete group if empty and dont persist
             if group and not (group.name in self.groups and\
@@ -166,5 +174,6 @@ class DGroups(object):
                 self.qtile.delGroup(group.name)
 
         # wait the delay until really delete the group
+        self.qtile.log.info('Add dgroup timer')
         self.timeout[client] = gobject.timeout_add_seconds(self.delay,
                                                          delete_client)
