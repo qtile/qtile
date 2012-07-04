@@ -80,7 +80,7 @@ class CommandCompleter:
             if not self._testing:
                 # Lookup is a set of (display value, actual value) tuples.
                 self.lookup = []
-                if txt[0] in "~/":
+                if txt and txt[0] in "~/":
                     path = os.path.expanduser(txt)
                     if os.path.isdir(path):
                         files = glob.glob(os.path.join(path, "*"))
