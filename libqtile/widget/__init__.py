@@ -32,3 +32,5 @@ try:
     from canto import Canto
 except ImportError:
     pass
+
+from sensors import ThermalSensor
