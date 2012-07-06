@@ -1,3 +1,6 @@
+================
+Developing Qtile
+================
 
 Using Xephyr and the test suite
 ===============================
@@ -11,23 +14,17 @@ enough to allow unit testing in a nested environment.
 
 The Qtile repo includes a tiny helper script to let you quickly pull up a
 nested instance instance of Qtile in Xephyr, using your current configuration.
-Run it from the top-level of the repository, like this:
+Run it from the top-level of the repository, like this::
 
-<pre>
-    ./test/scripts/xephyr                      
-</pre>
+  ./test/scripts/xephyr                      
 
-In practice, the development cyclce looks something like this:
+In practice, the development cycle looks something like this:
 
-<ol>
-
-    <li> make minor code change                         
-    <li> run appropriate test: <strong>pry ./test_module.uMySuite</strong>
-    <li> GOTO 1, until hackage is complete
-    <li> run entire test suite: <strong>pry</strong> 
-    <li> commit                                  
-
-</ol>
+#.  Make minor code change
+#.  Run appropriate tests using ``nosetests``
+#.  GOTO 1, until hackage is complete
+#.  Run entire test suite 
+#.  Commit                   
 
 
 Resources
@@ -36,7 +33,11 @@ Resources
 Here are a number of resources that may come in handy:
 
 
-- <a href="http://tronche.com/gui/x/icccm/">Inter-Client Conventions Manual</a>
-- <a href="http://standards.freedesktop.org/wm-spec/wm-spec-latest.html">Extended Window Manager Hints</a>
-- <a href="http://tronche.com/gui/x/xlib/">A reasonable basic Xlib Manual</a>
+* `Inter-Client Conventions Manual`_
+* `Extended Window Manager Hints`_
+* A reasonable basic `Xlib Manual`_
+
+.. _Inter-Client Conventions Manual: http://tronche.com/gui/x/icccm/
+..  _Extended Window Manager Hints: http://standards.freedesktop.org/wm-spec/wm-spec-latest.html
+.. _Xlib Manual: http://tronche.com/gui/x/xlib/
 
