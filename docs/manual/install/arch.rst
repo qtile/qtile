@@ -32,7 +32,7 @@ If you don't have these already, they can be installed with:
 
 - `cairo-xcb`_
 - `pycairo-xcb-git`_
-- `xpyb-git`_
+- `xorg-xpyb-git`_
 - `qtile-git`_
 
 To install these packages, download the .tar.gz's from the AUR and run the
@@ -56,7 +56,7 @@ http://wiki.archlinux.org/index.php/AUR#Installing_packages
 .. _qtile-git: http://aur.archlinux.org/packages.php?ID=20172
 .. _cairo-xcb: http://aur.archlinux.org/packages.php?ID=40641
 .. _pycairo-xcb-git: http://aur.archlinux.org/packages.php?ID=43939
-.. _xpyb-git: http://aur.archlinux.org/packages.php?ID=40922
+.. _xorg-xpyb-git: http://aur.archlinux.org/packages.php?ID=57865
 .. _pygtk-32: http://www.archlinux.org/packages/extra/i686/pygtk
 .. _pygtk-64: http://www.archlinux.org/packages/extra/x86_64/pygtk/
 .. _python2-32: http://www.archlinux.org/packages/extra/i686/python2/
