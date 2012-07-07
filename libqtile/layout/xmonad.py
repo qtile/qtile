@@ -146,6 +146,7 @@ class MonadTall(SingleWindow):
     def focus(self, c):
         "Set focus to specified client"
         self.focused = self.clients.index(c)
+        self.cmd_normalize()
 
     def clone(self, group):
         "Clone layout for other groups"
@@ -160,8 +161,6 @@ class MonadTall(SingleWindow):
     def add(self, c):
         "Add client to layout"
         self.clients.insert(self.focused + 1, c)
-        if self.group.screen:
-            self.cmd_normalize()
 
     def remove(self, c):
         "Remove client from layout"
@@ -171,8 +170,6 @@ class MonadTall(SingleWindow):
         self.clients.remove(c)
         # move focus pointer
         self.focused = max(0, idx - 1)
-        # reposition all clients
-        self.cmd_normalize()
         if self.clients:
             return self.clients[self.focused]
 
