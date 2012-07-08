@@ -40,6 +40,8 @@ class File(object):
                 # if variable wasn't set
                 config_directory = os.path.expanduser("~/.config")
             fname = os.path.join(config_directory, "qtile", "config.py")
+        elif fname == "default":
+            fname = utils.data.path("resources/default_config.py")
 
         self.fname = fname
 
@@ -75,4 +77,3 @@ class File(object):
             if hasattr(config, option):
                 v = getattr(config, option)
             setattr(self, option, v)
-
