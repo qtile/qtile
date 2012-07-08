@@ -40,7 +40,7 @@ class File(object):
                 config_directory = os.path.expanduser("~/.config")
             fname = os.path.join(config_directory, "qtile", "config.py")
         elif fname == "default":
-            fname = utils.data.path("resources/default-config.py")
+            fname = utils.data.path("resources/default_config.py")
 
         self.fname = fname
 
