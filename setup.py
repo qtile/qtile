@@ -44,5 +44,9 @@ setup(
     license="MIT",
     include_package_data=True,
     packages=find_packages(),
-    scripts=["qtile-session", "qtile", "qsh"],
+    scripts=[
+        "bin/qsh",
+        "bin/qtile",
+        "bin/qtile-session"
+    ],
 )
