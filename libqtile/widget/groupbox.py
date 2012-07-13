@@ -39,7 +39,7 @@ class _GroupBase(base._Widget):
         hook.subscribe.setgroup(hook_response)
         hook.subscribe.group_window_add(hook_response)
 
-    def drawbox(self, offset, text, bordercolor, textcolor, width=None):
+    def drawbox(self, offset, text, bordercolor, textcolor, width=None, fill=False):
         self.layout.text = text
         self.layout.font_family = self.font
         self.layout.font_size = self.fontsize
@@ -47,7 +47,10 @@ class _GroupBase(base._Widget):
         if width is not None:
             self.layout.width = width
         framed = self.layout.framed(self.borderwidth, bordercolor, self.padding, self.padding)
-        framed.draw(offset, self.margin_y)
+        if fill:
+            framed.draw_fill(offset, self.margin_y)
+        else:
+            framed.draw(offset, self.margin_y)
 
 
 class AGroupBox(_GroupBase):
@@ -98,6 +101,8 @@ class GroupBox(_GroupBase):
         ("urgent_border", "FF0000", "Urgent border color"),
         ("urgent_alert_method", "border", "Method for alerting you of WM urgent " \
                                           "hints (one of 'border' or 'text')"),
+        ("fill_boxes", False, "If true, fill boxes with border color, otherwise " \
+                              "only draw border."),
     )
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
@@ -158,7 +163,8 @@ class GroupBox(_GroupBase):
                 g.name,
                 border,
                 text,
-                bw - self.margin_x*2 - self.padding*2
+                bw - self.margin_x*2 - self.padding*2,
+                fill=self.fill_boxes
             )
             offset += bw
         self.drawer.draw(self.offset, self.width)
