@@ -866,6 +866,9 @@ A widget that graphically displays the current group.
     * - urgent_alert_method
       - ``"border"``
       - Method for alerting you of WM urgent hints (one of 'border' or 'text')
+    * - fill_boxes
+      - ``False``
+      - If true, fill boxes with border color, otherwise only draw border.
 
 
 WindowName
