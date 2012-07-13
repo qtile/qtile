@@ -179,7 +179,7 @@ class MemoryGraph(_Graph):
         val = self._getvalues()
         self.maxvalue = val['MemTotal']
 
-        mem = val['MemTotal'] - val['MemFree'] - val['Inactive']
+        mem = val['MemTotal'] - val['MemFree'] - val['Buffers'] - val['Cached']
         self.fullfill(mem)
 
     def _getvalues(self):
@@ -187,7 +187,7 @@ class MemoryGraph(_Graph):
 
     def update_graph(self):
         val = self._getvalues()
-        self.push(val['MemTotal'] - val['MemFree'] - val['Inactive'])
+        self.push(val['MemTotal'] - val['MemFree'] - val['Buffers'] - val['Cached'])
 
 
 class SwapGraph(_Graph):
