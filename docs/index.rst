@@ -15,6 +15,7 @@ Installing
   :doc:`Funtoo </manual/install/funtoo>` |
   :doc:`Gentoo </manual/install/gentoo>` |
   :doc:`Ubuntu </manual/install/ubuntu>`
+  :doc:`Debian </manual/install/debian>`
 
 Configuration
 -------------
