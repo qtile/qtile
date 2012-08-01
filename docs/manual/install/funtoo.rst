@@ -1,56 +1,23 @@
 Installing on Funtoo
 ====================
 
-Introduction
-------------
-
-This doc is a work in progess.
-Python3 will cause errors. Use **Python2** as default or **at the very least** pass PYTHON=python2.7 to py2cairo and xpyb before configuring them.
-Qtile is a full-featured, hackable tilling window manager written in Python. It is simple, small and extensible. It's easy to write your own layouts, widgets and built-in commands.
-Qtile is written and configured entirely in Python, which means you can leverage the full power and flexibility of the language to make it fit your needs. 
-The Qtile community is active and growing, so there's always someone to lend you a hand when you need help.
-Qtile is free and open-source software, distributed under the permissive MIT license.
-
-The Qtile Community
--------------------
-IRC
-~~~
-`irc://irc.oftc.net:6667/qtile <irc://irc.oftc.net:6667/qtile>`_
-
-Mailing List
-~~~~~~~~~~~~
-qtile-dev on Google Groups
-
-Twitter
-~~~~~~~
-@qtile on Twitter
-
-Troubleshooting
-~~~~~~~~~~~~~~~
-`Issues <https://github.com/qtile/qtile/issues>`_
-
-Documentation
-~~~~~~~~~~~~~
-`Qtile Documentation <http://docs.qtile.org/en/latest/index.html>`_
-
-Installation
-------------
-
 Portage
-~~~~~~~
+-------
+
 The ebuild in portage is broken for now, as of missing xpyb support for pycairo, but will be fixed in some future releases.
 
 Manual (Github)
-~~~~~~~~~~~~~~~
+---------------
+
 This section is taken from the documents from Qtile.[#]_.
 
-
 Dependencies
-############
+~~~~~~~~~~~~
+
 USE flags and keyword changes may have to be made for the packages taken from portage.
 
 libxcb
-######
+~~~~~~
 
 libxcb can be emerged from portage.
 
@@ -60,7 +27,7 @@ libxcb can be emerged from portage.
 
 
 xpyb
-####
+~~~~
 
 xpyb can be emerged from portage. Make sure that you are emerging xpyb-1.3.1 or above.
 
@@ -70,7 +37,7 @@ xpyb can be emerged from portage. Make sure that you are emerging xpyb-1.3.1 or 
 
 
 cairo
-#####
+~~~~~
 
 cairo can be emerged from portage. Make sure you have your USE flags set to:
 
@@ -85,16 +52,17 @@ and then emerge cairo:
     # emerge -avt cairo
 
 pygtk
-#####
+~~~~~
 
 pygtk can be merged from portage.
 
 .. code-block:: bash
+
     # emerge pygtk
 
 
 py2cairo
-########
+~~~~~~~~
 
 Needs to be build manually cause of reason above.
 
@@ -115,7 +83,7 @@ As an alternative to virtualenv, you can
 But the virtualenv is the recommended option in installation if you are an advanced user with python, else use the systemwide alternative.
 
 qtile
-#####
+~~~~~
 
 .. code-block:: bash
 
@@ -125,9 +93,11 @@ qtile
 
 Setup
 -----
+
 **Copy** either a config from the examples directory in the cloned qtile **(including a default config)**, a config you have found elsewhere, or create your own config.
 
 .. code-block:: bash
+
     # install -d ~/.config/qtile
     # cp /path/to/cloned-qtile/examples/config/cortesi-config.py ~/.config/qtile/config.py
     # cp /path/to/cloned-qtile/examples/config/dgroups.py ~/.config/qtile/config.py
@@ -138,11 +108,13 @@ Another config is `config.py <https://github.com/akiress/dotfiles/blob/master/qt
 
 Testing Qtile Installation
 --------------------------
+
 If you have a running DE/WM already you can test your qtile config with the following steps:
 
 Examples:
 
 .. code-block:: bash
+
     # Xephyr :1 -screen 800x600 -a -v -noreset
     # Display=:1
     # /path/to/qtile/qtile
@@ -156,6 +128,7 @@ For further information, see the Documentation section.
 
 dmenu
 -----
+
 Qtile uses dmenu as the application launcher
 
 .. code-block:: bash
@@ -163,9 +136,11 @@ Qtile uses dmenu as the application launcher
 
 xinitrc
 -------
+
 An example of preparing Qtile to start with the startup-session script for autostarting apps in the ~/.xinitrc:
 
 .. code-block:: bash
+
     #!/bin/zsh
     xrdb -merge ~/.Xresources
     xcompmgr &
@@ -184,6 +159,7 @@ An example of preparing Qtile to start with the startup-session script for autos
 and the connected ~/.qtile-session
 
 .. code-block:: bash
+
     conky -c ~/.conky/conkyrc_grey &
     sh ~/.fehbg &
     dropbox &
@@ -197,11 +173,13 @@ I use an AMD HD 6870 with 3 monitors (2 DVI and 1 with an AMD validated Mini Dis
 Install xrandr:
 
 .. code-block:: bash
+
     # emerge x11-apps/xrandr
 
 and if you want a GUI with xrandr:
 
 .. code-block:: bash
+
     # emerge x11-misc/arandr
 
 If you do not have X configured yet, follow the link on the `Gentoo Wiki <http://en.gentoo-wiki.com/wiki/X.Org>`_.
@@ -213,27 +191,34 @@ Since the names of the monitors are already known in xrandr, I just use those na
 Once you have X configured however you like, start qtile with either:
 
 .. code-block:: bash
+
     # startx
+
 or, in a case similar to mine,
 
 .. code-block:: bash
+
     # xinit qtile
 
 Starting with CDM
 -----------------
+
 Another good tool for starting qtile is **CDM** (short for Console Display Manager). To make it work, just merge cdm
 
 .. code-block:: bash
+
     # emerge -avt cdm
 
 and add it to autostart with
 
 .. code-block:: bash
+
     # cp /usr/share/cdm/zzz-cdm-profile.sh /etc/profile.d/zzz-cdm-profile.sh
 
 Now add to /etc/X11/cdm/cdmrc the following lines:
 
 .. code-block:: bash
+
     binlist=(
         "/usr/bin/xinit ${HOME}/.start_qtile --:0"
         "/bin/bash --login"
@@ -246,7 +231,8 @@ Now add to /etc/X11/cdm/cdmrc the following lines:
 and check that ${HOME}/.start_qtile contains just the following
 
 .. code-block:: bash
+
     exec qtile
 
 .. [#] `Installation on Gentoo <http://docs.qtile.org/en/latest/manual/install/gentoo.html>`_
-.. [#] `http://www.funtoo.org/index.php?title=Https:_//_groups.google.com/group/qtile-dev/browse_thread/thread/26191253a8190568_qtile-dev_Google_Group&action=edit&redlink=1 <http://www.funtoo.org/index.php?title=Https:_//_groups.google.com/group/qtile-dev/browse_thread/thread/26191253a8190568_qtile-dev_Google_Group&action=edit&redlink=1>`_
+.. [#] `https://groups.google.com/group/qtile-dev/browse_thread/thread/26191253a8190568_qtile-dev_Google_Group <https://groups.google.com/group/qtile-dev/browse_thread/thread/26191253a8190568_qtile-dev_Google_Group>`_
