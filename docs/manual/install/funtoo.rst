@@ -9,7 +9,7 @@ The ebuild in portage is broken for now, as of missing xpyb support for pycairo,
 Manual (Github)
 ---------------
 
-This section is taken from the documents from Qtile.[#]_.
+This section is taken from the documents from Qtile. [#]_.
 
 Dependencies
 ~~~~~~~~~~~~
@@ -119,7 +119,7 @@ Examples:
     # Display=:1
     # /path/to/qtile/qtile
 
-or using the build in code:[#]
+or using the build in code: [#]_
 
 .. code-block:: bash
     # echo "exec qtile" > .start_qtile ; xinit .start_qtile -- :1
