@@ -1,15 +1,15 @@
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -18,7 +18,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import manager, window, confreader, command, hook, drawer
+import command
+import confreader
+import drawer
+import hook
+import manager
+import window
 
 
 class Gap(command.CommandObject):
@@ -118,6 +123,7 @@ STRETCH = Obj("STRETCH")
 CALCULATED = Obj("CALCULATED")
 STATIC = Obj("STATIC")
 
+
 class Bar(Gap):
     """
         A bar, which can contain widgets. Note that bars can only be placed at
@@ -127,6 +133,7 @@ class Bar(Gap):
         ("background", "#000000", "Background colour."),
         ("opacity",  1, "Bar window opacity.")
     )
+
     def __init__(self, widgets, size, **config):
         """
             - widgets: A list of widget objects.
@@ -177,13 +184,14 @@ class Bar(Gap):
     def _resize(self, width, widgets):
         stretches = [i for i in widgets if i.width_type == STRETCH]
         if stretches:
-            stretchspace = width - sum([i.width for i in widgets if i.width_type != STRETCH])
+            stretchspace = width - sum(
+                [i.width for i in widgets if i.width_type != STRETCH])
             stretchspace = max(stretchspace, 0)
-            astretch = stretchspace/len(stretches)
+            astretch = stretchspace / len(stretches)
             for i in stretches:
                 i.width = astretch
             if astretch:
-                i.width += stretchspace%astretch
+                i.width += stretchspace % astretch
 
         offset = 0
         for i in widgets:
@@ -224,25 +232,25 @@ class Bar(Gap):
         if self.widgets:
             end = i.offset + i.width
             if end < self.width:
-                self.drawer.draw(end, self.width-end)
+                self.drawer.draw(end, self.width - end)
 
     def info(self):
         return dict(
-            width = self.width,
-            position = self.position,
-            widgets = [i.info() for i in self.widgets],
-            window = self.window.window.wid
+            width=self.width,
+            position=self.position,
+            widgets=[i.info() for i in self.widgets],
+            window=self.window.window.wid
         )
 
     def cmd_fake_click(self, screen, position, x, y, button=1):
         """
-            Fake a mouse-click on the bar. Co-ordinates are relative 
+            Fake a mouse-click on the bar. Co-ordinates are relative
             to the top-left corner of the bar.
 
             :screen The integer screen offset
             :position One of "top", "bottom", "left", or "right"
         """
-        class _fake: 
+        class _fake:
             pass
         fake = _fake()
         fake.event_x = x

@@ -1,0 +1,80 @@
+#!/usr/bin/env python
+
+# Copyright (c) 2008, Aldo Cortesi. All rights reserved.
+# Copyright (c) 2011, Florian Mounier
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+import logging
+from libqtile import confreader, manager
+
+
+def make_qtile():
+    from argparse import ArgumentParser
+    parser = ArgumentParser(
+        description='A full-featured, pure-Python tiling window manager.',
+        prog='qtile',
+        version="0.5")
+
+    parser.add_argument(
+        "-c", "--config",
+        action="store",
+        default=None,
+        dest="configfile",
+        help='Use specified configuration file,'
+        ' "default" will load the system default config.'
+    )
+    parser.add_argument(
+        "-s", "--socket",
+        action="store",
+        default=None,
+        dest="socket",
+        help='Path to Qtile comms socket.'
+    )
+    parser.add_argument(
+        "-n", "--no-spawn",
+        action="store_true",
+        default=False,
+        dest="no_spawn",
+        help='Avoid spawning apps. (Used for restart)'
+    )
+    parser.add_argument(
+        '-l', '--log-level',
+        default='INFO',
+        dest='log_level',
+        choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),
+        help='Set qtile log level')
+
+    options = parser.parse_args()
+    log_level = getattr(logging, options.log_level)
+    log = manager.init_log(log_level)
+
+    c = confreader.File(options.configfile)
+
+    return manager.Qtile(c, log=log, fname=options.socket,
+                      no_spawn=options.no_spawn)
+
+
+if __name__ == "__main__":
+    q = make_qtile()
+    try:
+        q.loop()
+    except Exception:
+        q.log.exception('Qtile crashed')
+    q.log.info('Exiting...')

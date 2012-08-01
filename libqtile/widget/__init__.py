@@ -1,29 +1,36 @@
-from groupbox import GroupBox
-from groupbox import AGroupBox
-from windowname import WindowName
-from textbox import TextBox
-from spacer import Spacer
-from battery import Battery
+from battery import Battery, BatteryIcon
 from clock import Clock
-from sep import Sep
+from currentlayout import CurrentLayout
+from graph import CPUGraph, MemoryGraph, SwapGraph, NetGraph, HDDGraph
+from groupbox import AGroupBox, GroupBox
+from maildir import Maildir
+from notify import Notify
 from prompt import Prompt
+from sensors import ThermalSensor
+from sep import Sep
+from spacer import Spacer
 from systray import Systray
-from graph import *
+from textbox import TextBox
+from volume import Volume
+from windowname import WindowName
+
+try:
+    from canto import Canto
+except ImportError:
+    pass
+
 try:
     from mpriswidget import Mpris
 except ImportError:
     pass
+
 try:
     from mpdwidget import Mpd
 except ImportError:
     pass
-from maildir import Maildir
-from volume import Volume
-from currentlayout import CurrentLayout
 
 try:
     from yahoo_weather import YahooWeather
 except ImportError:
     # Requires Python >= 2.6 or simplejson
     pass
-from sensors import ThermalSensor
