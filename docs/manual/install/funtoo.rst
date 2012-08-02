@@ -133,6 +133,7 @@ dmenu
 Qtile uses dmenu as the application launcher
 
 .. code-block:: bash
+
     # emerge dmenu
 
 xinitrc
