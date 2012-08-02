@@ -134,7 +134,7 @@ follow_mouse_focus = True
 
 
 def main(qtile):
-    from dgroups import DGroups, Match, simple_key_binder
+    from libqtile.dgroups import DGroups, Match, simple_key_binder
     global mod
 
     groups = {

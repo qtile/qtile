@@ -16,41 +16,49 @@ class Match(object):
 
     def compare(self, client):
         for _type, rule in self._rules:
+            match_func = getattr(rule, 'match', None) or\
+                         getattr(rule, 'count')
+
             if _type == 'title':
                 value = client.name
             elif _type == 'wm_class':
                 value = client.window.get_wm_class()
-                if value:
+                if value and len(value)>1:
                     value = value[1]
+                elif value:
+                    value = value[0]
             elif _type == 'wm_type':
                 value = client.window.get_wm_type()
             else:
                 value = client.window.get_wm_window_role()
 
-            if value:
-                match_func = getattr(rule, 'match', None)
-                if (match_func and match_func(value) or
-                    getattr(value, 'count')(rule) > 0):
-                    return True
+            if value and match_func(value):
+                return True
         return False
 
 
-def simple_key_binder(mod):
-    ''' Bind keys to mod+group position '''
+def simple_key_binder(mod, keynames=None):
+    """
+        Bind keys to mod+group position or to the keys specified as
+        second argument.
+    """
     def func(dgroup):
         # unbind all
         for key in dgroup.keys[:]:
             dgroup.qtile.unmapKey(key)
             dgroup.keys.remove(key)
 
-        # keys 1 to 9 and 0
-        keynumbers = range(1, 10) + [0]
+        if keynames:
+            keys = keynames
+        else:
+            # keys 1 to 9 and 0
+            keys = map(str, range(1, 10) + [0])
 
         # bind all keys
-        for num, group in zip(keynumbers, dgroup.qtile.groups[:10]):
+        for keyname, group in zip(keys, dgroup.qtile.groups):
             name = group.name
-            key = Key([mod], str(num), lazy.group[name].toscreen())
-            key_s = Key([mod, "shift"], str(num), lazy.window.togroup(name))
+            key = Key([mod], keyname, lazy.group[name].toscreen())
+            key_s = Key([mod, "shift"], keyname, lazy.window.togroup(name))
             dgroup.keys.append(key)
             dgroup.keys.append(key_s)
             dgroup.qtile.mapKey(key)
@@ -106,6 +114,7 @@ class DGroups(object):
 
     def _add(self, client):
         if client in self.timeout:
+            self.qtile.log.info('Remove dgroup source')
             gobject.source_remove(self.timeout[client])
             del(self.timeout[client])
         group_set = False
@@ -123,15 +132,16 @@ class DGroups(object):
 
                     group_obj = self.qtile.groupMap[group]
                     group_opts = self.groups.get(group)
-                    if group_opts and group_added:
-                        layout = group_opts.get('layout')
+                    if group_opts:
+                        if group_added:
+                            layout = group_opts.get('layout')
+                            if layout:
+                                group_obj.layout = layout
                         master = group_opts.get('master')
-                        if layout:
-                            group_obj.layout = layout
                         if master:
                             group_obj.layout.shuffle(
-                                   lambda lst:
-                                self.shuffle_groups(lst, master))
+                                   lambda lst: self.shuffle_groups(
+                                       lst, master))
 
                 if 'float' in app and app['float']:
                     client.enablefloating()
@@ -149,7 +159,12 @@ class DGroups(object):
                 wm_class = client.window.get_wm_class()
 
                 if wm_class:
-                    group_name = wm_class[1]
+                    if len(wm_class) > 1:
+                        wm_class = wm_class[1]
+                    else:
+                        wm_class = wm_class[0]
+
+                    group_name = wm_class
                 else:
                     group_name = client.name
 
@@ -167,5 +182,6 @@ class DGroups(object):
                 self.qtile.delGroup(group.name)
 
         # wait the delay until really delete the group
+        self.qtile.log.info('Add dgroup timer')
         self.timeout[client] = gobject.timeout_add_seconds(self.delay,
                                                          delete_client)
