@@ -122,6 +122,7 @@ Examples:
 or using the build in code: [#]_
 
 .. code-block:: bash
+
     # echo "exec qtile" > .start_qtile ; xinit .start_qtile -- :1
 
 For further information, see the Documentation section.
@@ -132,6 +133,7 @@ dmenu
 Qtile uses dmenu as the application launcher
 
 .. code-block:: bash
+
     # emerge dmenu
 
 xinitrc

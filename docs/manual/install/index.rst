@@ -11,6 +11,7 @@ running something else, please see `Installing From Source`_.
 * :doc:`/manual/install/funtoo`
 * :doc:`/manual/install/gentoo`
 * :doc:`/manual/install/ubuntu`
+* :doc:`/manual/install/debian`
 
 Installing From Source
 ----------------------
