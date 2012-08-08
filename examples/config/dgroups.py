@@ -23,8 +23,10 @@ class Match(object):
                 value = client.name
             elif _type == 'wm_class':
                 value = client.window.get_wm_class()
-                if value:
+                if value and len(value)>1:
                     value = value[1]
+                elif value:
+                    value = value[0]
             elif _type == 'wm_type':
                 value = client.window.get_wm_type()
             else:
@@ -52,10 +54,14 @@ def simple_key_binder(mod):
             name = group.name
             key = Key([mod], str(num), lazy.group[name].toscreen())
             key_s = Key([mod, "shift"], str(num), lazy.window.togroup(name))
+            key_c = Key([mod, "control"], str(num),
+                    lazy.group.switch_groups(name))
             dgroup.keys.append(key)
             dgroup.keys.append(key_s)
+            dgroup.keys.append(key_c)
             dgroup.qtile.mapKey(key)
             dgroup.qtile.mapKey(key_s)
+            dgroup.qtile.mapKey(key_c)
 
     return func
 
@@ -91,6 +97,8 @@ class DGroups(object):
         libqtile.hook.subscribe.client_new(self._add)
         libqtile.hook.subscribe.client_killed(self._del)
         if self.key_binder:
+            libqtile.hook.subscribe.setgroup(
+                    lambda: self.key_binder(self))
             libqtile.hook.subscribe.addgroup(
                     lambda: self.key_binder(self))
             libqtile.hook.subscribe.delgroup(
@@ -149,7 +157,12 @@ class DGroups(object):
                 wm_class = client.window.get_wm_class()
 
                 if wm_class:
-                    group_name = wm_class[1]
+                    if len(wm_class) > 1:
+                        wm_class = wm_class[1]
+                    else:
+                        wm_class = wm_class[0]
+
+                    group_name = wm_class
                 else:
                     group_name = client.name
 
