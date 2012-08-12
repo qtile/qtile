@@ -1,7 +1,7 @@
 import glob
 import os
 import string
-from .. import bar, manager, xkeysyms, xcbq
+from .. import bar, manager, xkeysyms, xcbq, command
 import base
 
 
@@ -11,6 +11,60 @@ class NullCompleter:
 
     def complete(self, txt):
         return txt
+
+
+class QshCompleter:
+    def __init__(self, qtile):
+        self.qtile = qtile
+        self.client = command._Client(self.qtile)
+        self.thisfinal = None
+        self.reset()
+
+    def actual(self):
+        return self.thisfinal
+
+    def reset(self):
+        self.lookup = None
+        self.path = ''
+        self.offset = -1
+
+    def complete(self, txt):
+        txt = txt.lower()
+        if not self.lookup:
+            self.lookup = []
+            path = txt.split('.')[:-1]
+            self.path = '.'.join(path)
+            term = txt.split('.')[-1]
+            if len(self.path) > 0:
+                self.path += '.'
+
+            contains_cmd = 'self.client.%s_contains' % self.path
+            try:
+                contains = eval(contains_cmd)
+            except AttributeError:
+                contains = []
+            for obj in contains:
+                if obj.lower().startswith(term):
+                    self.lookup.append((obj, obj))
+
+            commands_cmd = 'self.client.%scommands()' % self.path
+            try:
+                commands = eval(commands_cmd)
+            except (command.CommandError, AttributeError):
+                commands = []
+            for cmd in commands:
+                if cmd.lower().startswith(term):
+                    self.lookup.append((cmd + '()', cmd + '()'))
+
+            self.offset = -1
+            self.lookup.append((term, term))
+
+        self.offset += 1
+        if self.offset >= len(self.lookup):
+            self.offset = 0
+        ret = self.lookup[self.offset]
+        self.thisfinal = self.path + ret[0]
+        return self.path + ret[0]
 
 
 class GroupCompleter:
@@ -131,6 +185,7 @@ class Prompt(base._TextBox):
         .startInput method on this class.
     """
     completers = {
+        "qsh": QshCompleter,
         "cmd": CommandCompleter,
         "group": GroupCompleter,
         None: NullCompleter

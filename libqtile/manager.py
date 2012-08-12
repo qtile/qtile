@@ -1720,6 +1720,39 @@ class Qtile(command.CommandObject):
         except:
             self.log.error("No widget named '%s' present." % widget)
 
+    def cmd_qtilecmd(self, prompt="command: ",
+                     widget="prompt", messenger="xmessage"):
+        def f(cmd):
+            if cmd:
+                c = command._Client(self)
+                try:
+                   cmd_arg = str(cmd).split(' ')
+                except AttributeError:
+                    return
+                cmd_len = len(cmd_arg)
+                if cmd_len == 0:
+                    self.log.info('No command entered.')
+                    return
+                try:
+                    result = eval('c.%s' % (cmd))
+                except (
+                        command.CommandError,
+                        command.CommandException,
+                        AttributeError) as err:
+                    self.log.error(err.message)
+                    result = None
+                if result != None:
+                    from pprint import pformat
+                    message = pformat(result)
+                    self.cmd_spawn('xmessage "%s"' % message)
+                    self.log.info(result)
+
+        mb = self.widgetMap[widget]
+        if not mb:
+            self.log.error("No widget named %s present." % widget)
+            return
+        mb.startInput(prompt, f, "qsh")
+
     def cmd_addgroup(self, group):
         return self.addGroup(group)
 
