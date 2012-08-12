@@ -1,23 +1,129 @@
 import glob
 import os
 import string
-from .. import bar, manager, xkeysyms, xcbq
+from .. import bar, manager, xkeysyms, xcbq, command
 import base
 
 
 class NullCompleter:
+    def __init__(self, qtile):
+        self.qtile = qtile
+        self.thisfinal = ""
+
     def actual(self, qtile):
-        return None
+        return self.thisfinal
+
+    def reset(self):
+        pass
 
     def complete(self, txt):
         return txt
+
+class FileCompleter:
+    def __init__(self, qtile, _testing=False):
+        self._testing = _testing
+        self.qtile = qtile
+        self.thisfinal = None
+        self.reset()
+
+    def actual(self):
+        return self.thisfinal
+
+    def reset(self):
+        self.lookup = None
+
+    def complete(self, txt):
+        """
+        Returns the next completion for txt, or None if there is no completion.
+        """
+        if not self.lookup:
+            self.lookup = []
+            if txt == "" or txt[0] not in "~/":
+                txt = "~/" + txt
+            path = os.path.expanduser(txt)
+            if os.path.isdir(path):
+                files = glob.glob(os.path.join(path, "*"))
+                prefix = txt
+            else:
+                files = glob.glob(path + "*")
+                prefix = os.path.dirname(txt)
+                prefix = prefix.rstrip("/") or "/"
+            for f in files:
+                display = os.path.join(prefix, os.path.basename(f))
+                if os.path.isdir(f):
+                    display += "/"
+                self.lookup.append((display, f))
+                self.lookup.sort()
+            self.offset = -1
+            self.lookup.append((txt, txt))
+        self.offset += 1
+        if self.offset >= len(self.lookup):
+            self.offset = 0
+        ret = self.lookup[self.offset]
+        self.thisfinal = ret[1]
+        return ret[0]
+
+
+class QshCompleter:
+    def __init__(self, qtile):
+        self.qtile = qtile
+        self.client = command.CommandRoot(self.qtile)
+        self.thisfinal = None
+        self.reset()
+
+    def actual(self):
+        return self.thisfinal
+
+    def reset(self):
+        self.lookup = None
+        self.path = ''
+        self.offset = -1
+
+    def complete(self, txt):
+        txt = txt.lower()
+        if not self.lookup:
+            self.lookup = []
+            path = txt.split('.')[:-1]
+            self.path = '.'.join(path)
+            term = txt.split('.')[-1]
+            if len(self.path) > 0:
+                self.path += '.'
+
+            contains_cmd = 'self.client.%s_contains' % self.path
+            try:
+                contains = eval(contains_cmd)
+            except AttributeError:
+                contains = []
+            for obj in contains:
+                if obj.lower().startswith(term):
+                    self.lookup.append((obj, obj))
+
+            commands_cmd = 'self.client.%scommands()' % self.path
+            try:
+                commands = eval(commands_cmd)
+            except (command.CommandError, AttributeError):
+                commands = []
+            for cmd in commands:
+                if cmd.lower().startswith(term):
+                    self.lookup.append((cmd + '()', cmd + '()'))
+
+            self.offset = -1
+            self.lookup.append((term, term))
+
+        self.offset += 1
+        if self.offset >= len(self.lookup):
+            self.offset = 0
+        ret = self.lookup[self.offset]
+        self.thisfinal = self.path + ret[0]
+        return self.path + ret[0]
 
 
 class GroupCompleter:
     def __init__(self, qtile):
         self.qtile = qtile
         self.thisfinal = None
-        self.lookup, self.offset = None, None
+        self.lookup = None
+        self.offset = None
 
     def actual(self):
         """
@@ -131,6 +237,8 @@ class Prompt(base._TextBox):
         .startInput method on this class.
     """
     completers = {
+        "file": FileCompleter,
+        "qsh": QshCompleter,
         "cmd": CommandCompleter,
         "group": GroupCompleter,
         None: NullCompleter

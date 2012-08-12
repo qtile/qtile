@@ -1707,18 +1707,67 @@ class Qtile(command.CommandObject):
 
         mb.startInput(prompt, f, "group")
 
-    def cmd_spawncmd(self, prompt="spawn: ", widget="prompt"):
+    def cmd_spawncmd(self, prompt="spawn: ", widget="prompt",
+                     command="%s", complete="cmd"):
         """
             Spawn a command using a prompt widget, with tab-completion.
 
-            prompt: Text with which to prompt user.
+            prompt: Text with which to prompt user (default: "spawn: ").
             widget: Name of the prompt widget (default: "prompt").
+            command: command template (default: "%s").
+            complete: Tab completion function (default: "cmd")
         """
+        def f(args):
+            if args:
+                self.cmd_spawn(command % args)
         try:
             mb = self.widgetMap[widget]
-            mb.startInput(prompt, self.cmd_spawn, "cmd")
+            mb.startInput(prompt, f, complete)
         except:
-            self.log.error("No widget named '%s' present." % widget)
+            self.log.error("No widget named '%s' present."%widget)
+
+    def cmd_qtilecmd(self, prompt="command: ",
+                     widget="prompt", messenger="xmessage"):
+        """
+            Execute a Qtile command using the client syntax.
+            Tab completeion aids navigation of the command tree.
+
+            prompt: Text to display at the prompt (default: "command: ").
+            widget: Name of the prompt widget (default: "prompt").
+            messenger: command to display output (default: "xmessage").
+                Set this to None to disable.
+        """
+        def f(cmd):
+            if cmd:
+                c = command.CommandRoot(self)
+                try:
+                   cmd_arg = str(cmd).split(' ')
+                except AttributeError:
+                    return
+                cmd_len = len(cmd_arg)
+                if cmd_len == 0:
+                    self.log.info('No command entered.')
+                    return
+                try:
+                    result = eval('c.%s' % (cmd))
+                except (
+                        command.CommandError,
+                        command.CommandException,
+                        AttributeError) as err:
+                    self.log.error(err.message)
+                    result = None
+                if result != None:
+                    from pprint import pformat
+                    message = pformat(result)
+                    if messenger:
+                        self.cmd_spawn('%s "%s"' % (messenger, message))
+                    self.log.info(result)
+
+        mb = self.widgetMap[widget]
+        if not mb:
+            self.log.error("No widget named %s present." % widget)
+            return
+        mb.startInput(prompt, f, "qsh")
 
     def cmd_addgroup(self, group):
         return self.addGroup(group)
