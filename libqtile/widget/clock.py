@@ -1,11 +1,17 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+from time import time
 import datetime
-from .. import hook, bar, manager
+from .. import bar, manager
 import base
+
 
 class Clock(base._TextBox):
     """
         A simple but flexible text-based clock.
     """
+
     defaults = manager.Defaults(
         ("font", "Arial", "Clock font"),
         ("fontsize", None, "Clock pixel size. Calculated if None."),
@@ -25,7 +31,14 @@ class Clock(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
+        self.update()
+        t = time()
+        self.timeout_add((int(t) + 1.) - t, self._adjust)
+
+    def _adjust(self):
         self.timeout_add(1, self.update)
+        self.update()
+        return False
 
     def update(self):
         now = datetime.datetime.now().strftime(self.fmt)
