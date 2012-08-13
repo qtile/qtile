@@ -1,15 +1,16 @@
-# Python object files
-*.py[cd]
-*.py~
-*.so
-*.o
+# Build and temporary files
 MANIFEST
 /build
 /dist
+/doc
+/docs/_build
+*~
+# Python object files
+*.py[cd]
+*.so
+*.o
 # Vim swap files
 *.swp
 *.swo
-/doc
-/docs/_build
 # some people hack on macs? :-)
 .DS_Store
