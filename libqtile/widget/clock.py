@@ -35,15 +35,18 @@ class Clock(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
+        self.ts = int(time()) - 1
         self.update()
 
     def update(self):
-        new_text = datetime.now().strftime(self.fmt)
-        if new_text != self.text:
-            self.text = new_text
-            self.bar.draw()
-        t = int(time() * 1000)
-        gobject.timeout_add(1000 - t % 1000, self.update,
-                            priority=gobject.PRIORITY_HIGH)
+        self.ts += 1
+        t = time()
+        dt = int((float(self.ts + 1) - t) * 1000.)
+        if dt < 0: # there is a trouble in the system, we missed some ticks
+            self.ts = int(t)
+            dt %= 1000
+        gobject.timeout_add(dt, self.update, priority=gobject.PRIORITY_HIGH)
+        self.text = datetime.fromtimestamp(self.ts).strftime(self.fmt)
+        self.bar.draw()
         return False
 
