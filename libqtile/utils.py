@@ -30,7 +30,7 @@ def lget(o, v):
 
 def translateMasks(modifiers):
     """
-        Translate a modifier mask specified as a list of strings into an or-ed 
+        Translate a modifier mask specified as a list of strings into an or-ed
         bit representation.
     """
     masks = []
@@ -126,7 +126,7 @@ def rgb(x):
         Here are some valid specifcations:
             #ff0000
             ff0000
-            with alpha: ff0000.5  
+            with alpha: ff0000.5
             (255, 0, 0)
             (255, 0, 0, 0.5)
     """

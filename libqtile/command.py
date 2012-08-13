@@ -190,8 +190,8 @@ class _CommandRoot(_CommandTree):
     def call(self, selectors, name, *args, **kwargs):
         """
             This method is called for issued commands.
-                
-                :selectors A list of (name, selector) tuples. 
+
+                :selectors A list of (name, selector) tuples.
                 :name Command name.
         """
         pass
@@ -268,7 +268,7 @@ lazy = _LazyTree()
 class CommandObject(object):
     """
         Base class for objects that expose commands. Each command should be a
-        method named cmd_X, where X is the command name. 
+        method named cmd_X, where X is the command name.
     """
     def select(self, selectors):
         if not selectors:
@@ -299,12 +299,12 @@ class CommandObject(object):
 
     def _items(self, name):
         """
-            Return (root, items) tuple for the specified item class, with: 
-            
+            Return (root, items) tuple for the specified item class, with:
+
                 root: True if this class accepts a "naked" specification
                 without an item specification (i.e. "layout"), and False if it
-                does not. 
-                
+                does not.
+
                 items is a list of contained items, or None if this object is
                 not a valid container.
 

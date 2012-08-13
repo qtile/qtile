@@ -236,13 +236,13 @@ class Bar(Gap):
 
     def cmd_fake_click(self, screen, position, x, y, button=1):
         """
-            Fake a mouse-click on the bar. Co-ordinates are relative 
+            Fake a mouse-click on the bar. Co-ordinates are relative
             to the top-left corner of the bar.
 
             :screen The integer screen offset
             :position One of "top", "bottom", "left", or "right"
         """
-        class _fake: 
+        class _fake:
             pass
         fake = _fake()
         fake.event_x = x
