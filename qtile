@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import locale
 import logging
 from optparse import OptionParser
 
@@ -27,6 +28,8 @@ from libqtile import confreader, manager
 
 
 if __name__ == "__main__":
+
+    locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
 
     parser = OptionParser(version="%prog 0.4")
     parser.add_option("-c", "--config", action="store", type="string",
