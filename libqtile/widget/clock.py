@@ -19,7 +19,8 @@ class Clock(base._TextBox):
         ("background", "000000", "Background colour"),
         ("foreground", "ffffff", "Foreground colour")
     )
-    def __init__(self, fmt="%H:%M", width=bar.CALCULATED, **config):
+
+    def __init__(self, fmt="%c", width=bar.CALCULATED, **config):
         """
             - fmt: A Python datetime format string.
 
