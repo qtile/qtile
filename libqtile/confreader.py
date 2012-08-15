@@ -29,10 +29,13 @@ import sys
 import utils
 import traceback
 
+
 class ConfigError(Exception):
     pass
 
+
 class File(object):
+
     def __init__(self, fname=None):
         if not fname:
             config_directory = os.path.expandvars('$XDG_CONFIG_HOME')
@@ -76,4 +79,3 @@ class File(object):
             if hasattr(config, option):
                 v = getattr(config, option)
             setattr(self, option, v)
-

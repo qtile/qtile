@@ -1,11 +1,20 @@
-import datetime
-from .. import hook, bar, manager
+#!/usr/bin/env python
+# coding: utf-8
+
+from time import time
+from datetime import datetime
+
+import gobject
+
+from .. import bar, manager
 import base
+
 
 class Clock(base._TextBox):
     """
         A simple but flexible text-based clock.
     """
+
     defaults = manager.Defaults(
         ("font", "Arial", "Clock font"),
         ("fontsize", None, "Clock pixel size. Calculated if None."),
@@ -25,12 +34,18 @@ class Clock(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        self.timeout_add(1, self.update)
+        self.ts = int(time()) - 1
+        self.update()
 
     def update(self):
-        now = datetime.datetime.now().strftime(self.fmt)
-        if self.text != now:
-            self.text = now
-            self.bar.draw()
-        return True
+        self.ts += 1
+        t = time()
+        dt = int((float(self.ts + 1) - t) * 1000.)
+        if dt < 0: # there is a trouble in the system, we missed some ticks
+            self.ts = int(t)
+            dt %= 1000
+        gobject.timeout_add(dt, self.update, priority=gobject.PRIORITY_HIGH)
+        self.text = datetime.fromtimestamp(self.ts).strftime(self.fmt)
+        self.bar.draw()
+        return False
 
