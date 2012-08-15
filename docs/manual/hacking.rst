@@ -4,9 +4,17 @@ Hacking Qtile
 Requirements
 ------------
 
-If you plan to run the test suite, you will need `the Pry unit testing
-framework <https://github.com/cortesi/pry>`_, and the `Python X Library
-<http://python-xlib.sourceforge.net/>`_.
+* `Nose <http://nose.readthedocs.org/en/latest/>`_
+* `Python X Library <http://python-xlib.sourceforge.net/>`_
+* `Xephyr <http://www.freedesktop.org/wiki/Software/Xephyr>`_
+
+Running the test suite
+----------------------
+
+.. code-block:: bash
+
+   $ cd test
+   $ nosetests
 
 Using Xephyr and the test suite
 -------------------------------
@@ -26,12 +34,12 @@ Run it from the top-level of the repository, like this:
 
   ./scripts/xephyr
 
-In practice, the development cyclce looks something like this:
+In practice, the development cycle looks something like this:
 
 * make minor code change
-* run appropriate test: ``pry ./test_module.uMySuite``
+* run appropriate test: ``nosetests --tests=test_module``
 * GOTO 1, until hackage is complete
-* run entire test suite: ``pry``
+* run entire test suite: ``nosetests``
 * commit
 
 Resources

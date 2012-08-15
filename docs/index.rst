@@ -48,7 +48,7 @@ Commands and scripting
 Reference
 ---------
 
-* :doc:`Built-in Hooks</manual/ref/hooks>`
+* :doc:`Built-in Hooks </manual/ref/hooks>`
 * :doc:`Built-in Layouts </manual/ref/layouts>`
 * :doc:`Built-in Widgets </manual/ref/widgets>`
 
