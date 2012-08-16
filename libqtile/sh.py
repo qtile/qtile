@@ -269,8 +269,9 @@ class QSh:
                 continue
 
             match = re.search(r"\W", line)
-            if match:
-                cmd, args = line[:match.start()].strip(), line[match.start():].strip()
+            if match is not None:
+                cmd = line[:match.start()].strip()
+                args = line[match.start():].strip()
             else:
                 cmd, args = line, ""
 

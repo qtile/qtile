@@ -1,9 +1,12 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# coding: utf-8
+
 from base import SingleWindow
 from .. import manager
 from .. import window
 from .. import drawer
 from .. import hook
+
 
 to_superscript = dict(zip(map(ord, u'0123456789'), map(ord, u'⁰¹²³⁴⁵⁶⁷⁸⁹')))
 
@@ -153,11 +156,11 @@ class Section(TreeNode):
         layout._layout.text = self.add_superscript(self.title)
         layout._layout.colour = layout.section_fg
         del layout._layout.width  # no centering
-        layout._drawer.draw_hbar(layout.section_fg,
-            0, layout.panel_width, top, linewidth=1)
+        layout._drawer.draw_hbar(layout.section_fg, 0, layout.panel_width, top,
+                                 linewidth=1)
         layout._layout.draw(layout.section_left, top + layout.section_top)
-        top += (layout._layout.height +
-            layout.section_top + layout.section_padding)
+        top += (layout._layout.height + layout.section_top +
+                layout.section_padding)
         if self.expanded:
             top = super(Section, self).draw(layout, top, level)
         return top + layout.section_bottom

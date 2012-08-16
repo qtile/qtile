@@ -109,7 +109,8 @@ class _Window(command.CommandObject):
         window.set_attribute(eventmask=self._windowMask)
         try:
             g = self.window.get_geometry()
-            self._x, self._y, self._width, self._height = g.x, g.y, g.width, g.height
+            self._x, self._y = g.x, g.y
+            self._width, self._height = g.width, g.height
             # note that _float_info x and y are
             # really offsets, relative to screen x,y
             self._float_info = {
@@ -117,9 +118,10 @@ class _Window(command.CommandObject):
                 'w': g.width, 'h': g.height
             }
         except xcb.xproto.BadDrawable:
-            # Whoops, we were too early, so let's ignore it for now and get the
-            # values on demand.
-            self._x, self._y, self._width, self._height = None, None, None, None
+            # Whoops, we were too early, so let's ignore it for now and get
+            # the values on demand.
+            self._x, self._y = None, None
+            self._width, self._height = None, None
             self._float_info = None
         self.borderwidth = 0
         self.bordercolor = None
@@ -150,7 +152,8 @@ class _Window(command.CommandObject):
         def get_attr(self):
             if getattr(self, "_" + attr) is None:
                 g = self.window.get_geometry()
-                self._x, self._y, self._width, self._height = g.x, g.y, g.width, g.height
+                self._x, self._y = g.x, g.y
+                self._width, self._height = g.width, g.height
                 # note that _float_info x and y are
                 # really offsets, relative to screen x,y
                 self._float_info = {
@@ -166,9 +169,12 @@ class _Window(command.CommandObject):
 
     x = property(fset=_geometry_setter("x"), fget=_geometry_getter("x"))
     y = property(fset=_geometry_setter("y"), fget=_geometry_getter("y"))
-    width = property(fset=_geometry_setter("width"), fget=_geometry_getter("width"))
-    height = property(fset=_geometry_setter("height"), fget=_geometry_getter("height"))
-    _float_info = property(fset=_geometry_setter("_float_info"), fget=_geometry_getter("_float_info"))
+    width = property(fset=_geometry_setter("width"),
+                     fget=_geometry_getter("width"))
+    height = property(fset=_geometry_setter("height"),
+                      fget=_geometry_getter("height"))
+    _float_info = property(fset=_geometry_setter("_float_info"),
+                           fget=_geometry_getter("_float_info"))
 
     def updateName(self):
         try:
@@ -208,15 +214,25 @@ class _Window(command.CommandObject):
         #}
 
         if normh:
+
             normh.pop('flags')
-            if(not normh['base_width']
-                and normh['min_width'] and normh['width_inc']):
+
+            base_width = normh['base_width']
+            min_width = normh['min_width']
+            width_inc = normh['width_inc']
+
+            if not base_width and min_width and width_inc:
                 # seems xcb does ignore base width :(
-                normh['base_width'] = normh['min_width'] % normh['width_inc']
-            if(not normh['base_height']
-                and normh['min_height'] and normh['height_inc']):
+                normh['base_width'] = min_width % width_inc
+
+            base_height = normh['base_height']
+            min_height = normh['min_height']
+            height_inc = normh['height_inc']
+
+            if not base_height and min_height and height_inc:
                 # seems xcb does ignore base height :(
-                normh['base_height'] = normh['min_height'] % normh['height_inc']
+                normh['base_height'] = min_height % height_inc
+
             self.hints.update(normh)
 
         if h and 'UrgencyHint' in h['flags']:
@@ -276,7 +292,8 @@ class _Window(command.CommandObject):
             return
 
     def getOpacity(self):
-        opacity = self.window.get_property("_NET_WM_WINDOW_OPACITY", unpack="I")
+        opacity = self.window.get_property("_NET_WM_WINDOW_OPACITY",
+                                           unpack="I")
         if not opacity:
             return 1.0
         else:
@@ -307,19 +324,17 @@ class _Window(command.CommandObject):
             #            ]
             #        ]
             #)
-            vals = [
-                33,  # ClientMessageEvent
-                32,  # Format
-                0,
-                self.window.wid,
-                self.qtile.conn.atoms["WM_PROTOCOLS"],
-                self.qtile.conn.atoms["WM_DELETE_WINDOW"],
-                xcb.xproto.Time.CurrentTime,
-                0,
-                0,
-                0,
-            ]
-            e = struct.pack('BBHII5I', *vals)
+            e = struct.pack('BBHII5I',
+                            33,  # ClientMessageEvent
+                            32,  # Format
+                            0,
+                            self.window.wid,
+                            self.qtile.conn.atoms["WM_PROTOCOLS"],
+                            self.qtile.conn.atoms["WM_DELETE_WINDOW"],
+                            xcb.xproto.Time.CurrentTime,
+                            0,
+                            0,
+                            0)
             self.window.send_event(e)
         else:
             self.window.kill_client()
@@ -524,12 +539,14 @@ class Static(_Window):
                   EventMask.FocusChange |\
                   EventMask.Exposure
 
-    def __init__(self, win, qtile, screen, x=None, y=None, width=None, height=None):
+    def __init__(self, win, qtile, screen, x=None, y=None,
+                 width=None, height=None):
         _Window.__init__(self, win, qtile)
         self.updateName()
         self.conf_x, self.conf_y = x, y
         self.conf_width, self.conf_height = width, height
-        self.x, self.y, self.width, self.height = x or 0, y or 0, width or 0, height or 0
+        self.x, self.y = x or 0, y or 0
+        self.width, self.height = width or 0, height or 0
         self.screen = screen
         if None not in (x, y, width, height):
             self.place(x, y, width, height, 0, 0)
@@ -734,31 +751,33 @@ class Window(_Window):
             self.enablefloating()
 
     def _reconfigure_floating(self, new_float_state=FLOATING):
+
         if new_float_state == MINIMIZED:
             self.state = IconicState
             self.hide()
         else:
             # make sure x, y is on the screen
             screen = self.qtile.find_closest_screen(self.x, self.y)
-            if screen is not None and self.group is not None and \
-                  self.group.screen is not None and screen != self.group.screen:
+            if (
+                screen is not None and
+                self.group is not None and
+                self.group.screen is not None and
+                screen != self.group.screen
+            ):
                 self.x = self.group.screen.x
                 self.y = self.group.screen.y
-            self.place(self.x,
-                   self.y,
-                   self.width,
-                   self.height,
-                   self.borderwidth,
-                   self.bordercolor,
-                   above=True,
-                   )
+
+            self.place(self.x, self.y, self.width, self.height,
+                       self.borderwidth, self.bordercolor, above=True)
+
         if self._float_state != new_float_state:
             self._float_state = new_float_state
             if self.group:  # may be not, if it's called from hook
                 self.group.mark_floating(self, True)
             hook.fire('float_change')
 
-    def _enablefloating(self, x=None, y=None, w=None, h=None, new_float_state=FLOATING):
+    def _enablefloating(self, x=None, y=None, w=None, h=None,
+                        new_float_state=FLOATING):
         if new_float_state != MINIMIZED:
             self.x = x
             self.y = y
@@ -812,8 +831,12 @@ class Window(_Window):
 
             - role matches against the `WM_WINDOW_ROLE` property
         """
+
         if not (wname or wmclass or role):
-            raise TypeError("Either a name, a wmclass or a role must be specified")
+            raise TypeError(
+                "Either a name, a wmclass or a role must be specified"
+            )
+
         if wname and wname == self.name:
             return True
 

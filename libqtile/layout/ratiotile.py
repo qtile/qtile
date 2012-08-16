@@ -71,7 +71,8 @@ class GridInfo(object):
                 # also want the reverse test
                 yield cols, rows, COLROW
 
-    def get_sizes_advanced(self, total_width, total_height, xoffset=0, yoffset=0):
+    def get_sizes_advanced(self, total_width, total_height, xoffset=0,
+                           yoffset=0):
         """
         after every row/column recalculate remaining area
         """
@@ -80,7 +81,8 @@ class GridInfo(object):
         height = total_height
         while len(results) < self.num_windows:
             remaining = self.num_windows - len(results)
-            orien, sizes = self._get_row_or_col(remaining, width, height, xoffset, yoffset)
+            orien, sizes = self._get_row_or_col(remaining, width, height,
+                                                xoffset, yoffset)
             results.extend(sizes)
             if orien == ROWCOL:
                 # adjust height/yoffset
@@ -124,7 +126,8 @@ class GridInfo(object):
         width = 0
         height = 0
         results = []
-        rows, cols, orientation = self.calc(self.num_windows, total_width, total_height)
+        rows, cols, orientation = self.calc(self.num_windows, total_width,
+                                            total_height)
         if orientation == ROWCOL:
             y = 0
             for i, row in enumerate(range(rows)):
@@ -184,7 +187,8 @@ class RatioTile(Layout):
         ("name", "ratiotile", "Name of this layout."),
     )
 
-    def __init__(self, ratio=GOLDEN_RATIO, ratio_increment=0.1, fancy=False, **config):
+    def __init__(self, ratio=GOLDEN_RATIO, ratio_increment=0.1, fancy=False,
+                 **config):
         Layout.__init__(self, **config)
         self.windows = []
         self.ratio_increment = ratio_increment
