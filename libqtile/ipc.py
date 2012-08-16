@@ -24,7 +24,11 @@
     run the same Python version, and that clients must be trusted (as
     un-marshalling untrusted data can result in arbitrary code execution).
 """
-import marshal, select, os.path, socket, struct
+import marshal
+import select
+import os.path
+import socket
+import struct
 import gobject
 import errno
 import fcntl
@@ -32,7 +36,9 @@ import fcntl
 HDRLEN = 4
 BUFSIZE = 1024 * 1024
 
-class IPCError(Exception): pass
+
+class IPCError(Exception):
+    pass
 
 
 class _IPC:
@@ -54,9 +60,9 @@ class _IPC:
         size = struct.pack("!L", len(msg))
         return size + msg
 
-
     def _write(self, sock, msg):
         sock.sendall(self._pack_reply(msg))
+
 
 class Client(_IPC):
     def __init__(self, fname):
@@ -71,7 +77,7 @@ class Client(_IPC):
         try:
             sock.connect(self.fname)
         except socket.error:
-            raise IPCError("Could not open %s"%self.fname)
+            raise IPCError("Could not open %s" % self.fname)
 
         self._write(sock, msg)
 
@@ -121,7 +127,7 @@ class Server(_IPC):
             flags = fcntl.fcntl(conn, fcntl.F_GETFD)
             fcntl.fcntl(conn, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
             conn.setblocking(0)
-            data = {'buffer': ''} #object which holds connection state
+            data = {'buffer': ''}  # object which holds connection state
             gobject.io_add_watch(conn, gobject.IO_IN, self._receive, data)
             return True
 

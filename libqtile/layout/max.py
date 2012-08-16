@@ -31,6 +31,7 @@ class Max(SingleWindow):
     defaults = manager.Defaults(
         ("name", "max", "Name of this layout."),
     )
+
     def __init__(self, **config):
         SingleWindow.__init__(self, **config)
         self.clients = []

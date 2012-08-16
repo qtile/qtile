@@ -1,7 +1,12 @@
-import libpry, time
-import libqtile.layout, libqtile.bar, libqtile.widget, libqtile.manager
+import libpry
+import time
+import libqtile.layout
+import libqtile.bar
+import libqtile.widget
+import libqtile.manager
 from libqtile.command import _Call
 import utils
+
 
 class GBConfig:
     keys = []
@@ -17,14 +22,14 @@ class GBConfig:
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
         libqtile.manager.Screen(
-            top = libqtile.bar.Bar(
+            top=libqtile.bar.Bar(
                     [
                         libqtile.widget.CPUGraph(
                             width=libqtile.bar.STRETCH,
                             type="linefill",
                             border_width=20,
-                            margin_x = 1,
-                            margin_y = 1
+                            margin_x=1,
+                            margin_y=1
                         ),
                         libqtile.widget.MemoryGraph(type="line"),
                         libqtile.widget.SwapGraph(type="box"),
@@ -46,6 +51,7 @@ class GBConfig:
         )
     ]
     main = None
+
 
 class uPromptCompletion(libpry.AutoTree):
     def test_completion(self):
@@ -79,6 +85,7 @@ class uPromptCompletion(libpry.AutoTree):
 
 class uWidgets(utils.QtileTests):
     config = GBConfig()
+
     def test_draw(self):
         self.testWindow("one")
         b = self.c.bar["bottom"].info()
@@ -123,7 +130,6 @@ class uWidgets(utils.QtileTests):
         assert self.c.groups()["a"]["screen"] == 0
 
 
-
 class GeomConf:
     main = None
     keys = []
@@ -153,6 +159,7 @@ class DWidget:
 
 class uBarGeometry(utils.QtileTests):
     config = GeomConf()
+
     def test_geometry(self):
         self.testXeyes()
         g = self.c.screens()[0]["gaps"]
@@ -174,6 +181,7 @@ class uBarGeometry(utils.QtileTests):
     def test_resize(self):
         def wd(l):
             return [i.width for i in l]
+
         def off(l):
             return [i.offset for i in l]
 
@@ -224,11 +232,11 @@ class uBarGeometry(utils.QtileTests):
         assert off(l) == [0, 10, 90]
 
 
-
 class TopBottomConf(GeomConf):
     screens = [
         libqtile.manager.Screen(left=libqtile.bar.Bar([], 10))
     ]
+
 
 class MultiStretchConf(GeomConf):
     screens = [
@@ -238,10 +246,12 @@ class MultiStretchConf(GeomConf):
         ], 10))
     ]
 
+
 class uBarErr(utils._QtileTruss):
     def test_err(self):
         self.qtileRaises("top or the bottom of the screen", TopBottomConf())
         self.qtileRaises("Only one STRETCH widget allowed!", MultiStretchConf())
+
 
 class TestWidget(libqtile.widget.base._Widget):
     def __init__(self):
@@ -250,7 +260,8 @@ class TestWidget(libqtile.widget.base._Widget):
     def _configure(self, qtile, bar):
         libqtile.widget.base._Widget._configure(self, qtile, bar)
 
-    def draw(self): pass
+    def draw(self):
+        pass
 
 
 class uOffsetCalculation(utils._QtileTruss):

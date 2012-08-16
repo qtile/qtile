@@ -101,4 +101,3 @@ class Slice(Delegate):
         else:
             self._fallback.add(win)
             self.layouts[win] = self._fallback
-

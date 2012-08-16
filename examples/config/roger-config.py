@@ -96,7 +96,7 @@ layouts = [
 
 screens = [
     Screen(
-        top = bar.Bar(
+        top=bar.Bar(
                     [
                         widget.GroupBox(borderwidth=2,
                             fontsize=14,
@@ -129,12 +129,13 @@ screens = [
 # change focus on mouse over
 follow_mouse_focus = True
 
+
 def main(qtile):
     from dgroups import DGroups, Match, simple_key_binder
     global mod
 
     groups = {
-            'h4x':  {'init': True, 'persist': True, 
+            'h4x':  {'init': True, 'persist': True,
                 'spawn': 'guake', 'exclusive': True},
             'design': {},
             'www': {'exclusive': True},
@@ -144,14 +145,14 @@ def main(qtile):
            }
 
     apps = [
-            {'match': Match(wm_class=['Guake.py', 
+            {'match': Match(wm_class=['Guake.py',
                 'MPlayer', 'Exe', 'Gnome-keyring-prompt'],
                wm_type=['dialog', 'utility', 'splash']), 'float': True},
             {'match': Match(wm_class=['Gimp']),
                 'group': 'design', 'float': True},
             {'match': Match(wm_class=['emesene']),
                 'group': 'emesene'},
-            {'match': Match(wm_class=['Chromium-browser', 'Minefield'], 
+            {'match': Match(wm_class=['Chromium-browser', 'Minefield'],
                 role=['browser']), 'group': 'www'},
             {'match': Match(wm_class=['Gajim.py']),
                 'group': 'gajim'},

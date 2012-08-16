@@ -1,6 +1,11 @@
 import libpry
-import libqtile, libqtile.sh, libqtile.confreader, libqtile.layout, libqtile.manager
+import libqtile
+import libqtile.sh
+import libqtile.confreader
+import libqtile.layout
+import libqtile.manager
 import utils
+
 
 class ShConfig(object):
     keys = []
@@ -21,6 +26,7 @@ class ShConfig(object):
 
 class uQSh(utils.QtileTests):
     config = ShConfig()
+
     def setUp(self):
         utils.QtileTests.setUp(self)
         self.sh = libqtile.sh.QSh(self.c)

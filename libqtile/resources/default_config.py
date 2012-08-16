@@ -65,7 +65,7 @@ layouts = [
 
 screens = [
     Screen(
-        bottom = bar.Bar(
+        bottom=bar.Bar(
                     [
                         widget.GroupBox(),
                         widget.WindowName(),
@@ -83,4 +83,3 @@ follow_mouse_focus = True
 cursor_warp = False
 floating_layout = layout.Floating()
 mouse = ()
-

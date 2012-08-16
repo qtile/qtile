@@ -1,15 +1,15 @@
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,9 +20,16 @@
 """
     A command shell for Qtile.
 """
-import readline, sys, pprint, re, textwrap
-import fcntl, termios, struct
-import command, ipc
+import readline
+import sys
+import pprint
+import re
+import textwrap
+import fcntl
+import termios
+import struct
+import command
+import ipc
 
 
 def terminalWidth():
@@ -36,12 +43,12 @@ def terminalWidth():
 
 
 class QSh:
-    def __init__(self, client, completekey = "tab"):
+    def __init__(self, client, completekey="tab"):
         self.clientroot, self.current = client, client
         self.completekey = completekey
         self.termwidth = terminalWidth()
         readline.set_completer(self.complete)
-        readline.parse_and_bind(self.completekey+": complete")
+        readline.parse_and_bind(self.completekey + ": complete")
         readline.set_completer_delims(" ()|")
         self.builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
 
@@ -74,23 +81,23 @@ class QSh:
 
     @property
     def prompt(self):
-        return "%s> "%self.current.path
+        return "%s> " % self.current.path
 
     def columnize(self, lst):
         ret = []
         if lst:
             lst = [str(i) for i in lst]
             mx = max([len(i) for i in lst])
-            cols = self.termwidth / (mx+2)
+            cols = self.termwidth / (mx + 2)
             if not cols:
                 cols = 1
-            for i in range(len(lst)/cols):
-                sl = lst[i*cols:(i+1)*cols]
-                sl = [x + " "*(mx-len(x)) for x in sl]
+            for i in range(len(lst) / cols):
+                sl = lst[i * cols:(i + 1) * cols]
+                sl = [x + " " * (mx - len(x)) for x in sl]
                 ret.append("  ".join(sl))
-            if len(lst)%cols:
-                sl = lst[-(len(lst)%cols):]
-                sl = [x + " "*(mx-len(x)) for x in sl]
+            if len(lst) % cols:
+                sl = lst[-(len(lst) % cols):]
+                sl = [x + " " * (mx - len(x)) for x in sl]
                 ret.append("  ".join(sl))
         return "\n".join(ret)
 
@@ -152,7 +159,7 @@ class QSh:
     def do_cd(self, arg):
         """
             Change to another path.
-                
+
             Examples:
 
                 cd layout/0
@@ -176,7 +183,7 @@ class QSh:
                 ls ../layout
         """
         l = self._ls(self.current)
-        l = ["%s/"%i for i in l]
+        l = ["%s/" % i for i in l]
         return self.columnize(l)
 
     def do_help(self, arg):
@@ -185,9 +192,9 @@ class QSh:
             help on a specific command or builtin.
 
             Examples:
-                
+
                 help
-                
+
                 help command
         """
         cmds = self._commands()
@@ -208,12 +215,12 @@ class QSh:
                   ]
             return "\n".join(lst)
         elif arg in cmds:
-            return self._call("doc", "(\"%s\")"%arg)
+            return self._call("doc", "(\"%s\")" % arg)
         elif arg in self.builtins:
-            c = getattr(self, "do_"+arg)
+            c = getattr(self, "do_" + arg)
             return textwrap.dedent(c.__doc__).lstrip()
         else:
-            return "No such command: %s"%arg
+            return "No such command: %s" % arg
 
     def do_exit(self, args):
         """
@@ -226,7 +233,7 @@ class QSh:
     def _call(self, cmd_name, args):
         cmds = self._commands()
         if cmd_name not in cmds:
-            return "No such command: %s"%cmd_name
+            return "No such command: %s" % cmd_name
 
         cmd = getattr(self.current, cmd_name)
         if args:
@@ -235,15 +242,15 @@ class QSh:
             args = "()"
         try:
             val = eval(
-                    "cmd%s"%args,
+                    "cmd%s" % args,
                     {},
                     dict(cmd=cmd)
                 )
             return val
         except SyntaxError, v:
-            return "Syntax error in expression: %s"%v.text
+            return "Syntax error in expression: %s" % v.text
         except command.CommandException, val:
-            return "Command exception: %s\n"%val
+            return "Command exception: %s\n" % val
         except ipc.IPCError:
             # on restart, try to reconnect
             if cmd_name == 'restart':
@@ -262,12 +269,13 @@ class QSh:
                 continue
 
             match = re.search(r"\W", line)
-            if match:
-                cmd, args = line[:match.start()].strip(), line[match.start():].strip()
+            if match is not None:
+                cmd = line[:match.start()].strip()
+                args = line[match.start():].strip()
             else:
                 cmd, args = line, ""
 
-            builtin = getattr(self, "do_"+cmd, None)
+            builtin = getattr(self, "do_" + cmd, None)
             if builtin:
                 val = builtin(args)
             else:
@@ -276,4 +284,3 @@ class QSh:
                 print val
             elif val:
                 pprint.pprint(val)
-

@@ -1,10 +1,15 @@
-import os.path, thread, time, socket, Queue
+import os.path
+import thread
+import time
+import socket
+import Queue
 import libpry
 from libqtile import ipc as ipc
 
 
 class TestServer(ipc.Server):
     last = None
+
     def __init__(self, fname):
         ipc.Server.__init__(self, fname, self.command)
 
@@ -52,7 +57,7 @@ class uIPC(libpry.AutoTree):
         fname = os.path.join(self.tmpdir(), "testpath")
         server = TestServer(fname)
         expected = {
-            "one": [1, 2, 3] * 1024  * 5
+            "one": [1, 2, 3] * 1024 * 5
         }
         assert self.response(server, expected) == (expected, "OK")
 

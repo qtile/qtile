@@ -1,11 +1,15 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
+# coding: utf-8
+
 from base import SingleWindow
 from .. import manager
 from .. import window
 from .. import drawer
 from .. import hook
 
+
 to_superscript = dict(zip(map(ord, u'0123456789'), map(ord, u'⁰¹²³⁴⁵⁶⁷⁸⁹')))
+
 
 class TreeNode(object):
 
@@ -21,7 +25,7 @@ class TreeNode(object):
             except ValueError:
                 self.children.append(node)
             else:
-                self.children.insert(idx+1, node)
+                self.children.insert(idx + 1, node)
         else:
             self.children.append(node)
 
@@ -70,7 +74,7 @@ class TreeNode(object):
         while not isinstance(node, Root):
             parent = node.parent
             idx = parent.children.index(node)
-            for i in xrange(idx+1, len(parent.children)):
+            for i in xrange(idx + 1, len(parent.children)):
                 res = parent.children[i].get_first_window()
                 if res:
                     return res
@@ -83,11 +87,12 @@ class TreeNode(object):
             idx = parent.children.index(node)
             if idx == 0 and isinstance(parent, Window):
                 return parent
-            for i in xrange(idx-1, -1, -1):
+            for i in xrange(idx - 1, -1, -1):
                 res = parent.children[i].get_last_window()
                 if res:
                     return res
             node = parent
+
 
 class Root(TreeNode):
 
@@ -133,11 +138,12 @@ class Root(TreeNode):
             else:
                 nsec = self.children[1]
         else:
-            nsec = self.children[idx-1]
+            nsec = self.children[idx - 1]
         del self.children[idx]
         nsec.children.extend(sec.children)
         for i in sec.children:
             i.parent = nsec
+
 
 class Section(TreeNode):
 
@@ -150,14 +156,15 @@ class Section(TreeNode):
         layout._layout.text = self.add_superscript(self.title)
         layout._layout.colour = layout.section_fg
         del layout._layout.width  # no centering
-        layout._drawer.draw_hbar(layout.section_fg,
-            0, layout.panel_width, top, linewidth=1)
+        layout._drawer.draw_hbar(layout.section_fg, 0, layout.panel_width, top,
+                                 linewidth=1)
         layout._layout.draw(layout.section_left, top + layout.section_top)
-        top += (layout._layout.height +
-            layout.section_top + layout.section_padding)
+        top += (layout._layout.height + layout.section_top +
+                layout.section_padding)
         if self.expanded:
             top = super(Section, self).draw(layout, top, level)
         return top + layout.section_bottom
+
 
 class Window(TreeNode):
 
@@ -167,7 +174,7 @@ class Window(TreeNode):
 
     def draw(self, layout, top, level=0):
         self._title_start = 0
-        left = layout.padding_left + level*layout.level_shift
+        left = layout.padding_left + level * layout.level_shift
         layout._layout.font_size = layout.fontsize
         layout._layout.text = self.add_superscript(self.window.name)
         if self.window is layout._focused:
@@ -183,7 +190,7 @@ class Window(TreeNode):
         framed.draw_fill(left, top)
         top += framed.height + layout.vspace + layout.border_width
         if self.expanded:
-            return super(Window, self).draw(layout, top, level+1)
+            return super(Window, self).draw(layout, top, level + 1)
         return top
 
     def click(self, x, y):
@@ -202,6 +209,7 @@ class Window(TreeNode):
             for i in self.children[1:]:
                 head.add(i)
         del self.children
+
 
 class TreeTab(SingleWindow):
     """Tree Tab Layout
@@ -369,8 +377,8 @@ class TreeTab(SingleWindow):
         p = node.parent.children
         idx = p.index(node)
         if idx > 0:
-            p[idx] = p[idx-1]
-            p[idx-1] = node
+            p[idx] = p[idx - 1]
+            p[idx - 1] = node
         self.draw_panel()
 
     def cmd_move_down(self):
@@ -380,9 +388,9 @@ class TreeTab(SingleWindow):
         node = self._nodes[win]
         p = node.parent.children
         idx = p.index(node)
-        if idx < len(p)-1:
-            p[idx] = p[idx+1]
-            p[idx+1] = node
+        if idx < len(p) - 1:
+            p[idx] = p[idx + 1]
+            p[idx + 1] = node
         self.draw_panel()
 
     def cmd_move_left(self):
@@ -416,7 +424,7 @@ class TreeTab(SingleWindow):
         idx = snode.parent.children.index(snode)
         if idx > 0:
             node.parent.children.remove(node)
-            snode.parent.children[idx-1].add(node)
+            snode.parent.children[idx - 1].add(node)
         self.draw_panel()
 
     def cmd_section_down(self):
@@ -428,9 +436,9 @@ class TreeTab(SingleWindow):
         while not isinstance(snode, Section):
             snode = snode.parent
         idx = snode.parent.children.index(snode)
-        if idx < len(snode.parent.children)-1:
+        if idx < len(snode.parent.children) - 1:
             node.parent.children.remove(node)
-            snode.parent.children[idx+1].add(node)
+            snode.parent.children[idx + 1].add(node)
         self.draw_panel()
 
     def cmd_sort_windows(self, sorter, create_sections=True):
@@ -467,7 +475,7 @@ class TreeTab(SingleWindow):
         idx = node.parent.children.index(node)
         if idx > 0:
             node.parent.children.remove(node)
-            node.parent.children[idx-1].add(node)
+            node.parent.children[idx - 1].add(node)
         self.draw_panel()
 
     def cmd_expand_branch(self):

@@ -29,14 +29,16 @@ import sys
 import utils
 import traceback
 
+
 class ConfigError(Exception):
     pass
+
 
 class File(object):
     def __init__(self, fname=None):
         if not fname:
             config_directory = os.path.expandvars('$XDG_CONFIG_HOME')
-            if config_directory == '$XDG_CONFIG_HOME': #if variable wasn't set
+            if config_directory == '$XDG_CONFIG_HOME':  # if variable wasn't set
                 config_directory = os.path.expanduser("~/.config")
             fname = os.path.join(config_directory, "qtile", "config.py")
         elif fname == "default":
@@ -76,4 +78,3 @@ class File(object):
             if hasattr(config, option):
                 v = getattr(config, option)
             setattr(self, option, v)
-

@@ -164,17 +164,17 @@ for i in groups:
 
 screens = [
     Screen(
-        top = bar.Bar(
+        top=bar.Bar(
                     [
                         widget.GroupBox(borderwidth=2,
-                            font='Consolas',fontsize=18,
+                            font='Consolas', fontsize=18,
                             padding=1, margin_x=1, margin_y=1),
                         widget.Sep(),
                         widget.WindowName(
-                            font='Consolas',fontsize=18, margin_x=6),
+                            font='Consolas', fontsize=18, margin_x=6),
                         widget.Sep(),
                         widget.Battery(
-                            font='Consolas',fontsize=18, margin_x=6),
+                            font='Consolas', fontsize=18, margin_x=6),
                         widget.Sep(),
                         widget.CPUGraph(),
                         widget.MemoryGraph(),
@@ -189,6 +189,7 @@ screens = [
                 ),
     ),
 ]
+
 
 @hook.subscribe.client_new
 def dialogs(window):

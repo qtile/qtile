@@ -1,12 +1,21 @@
-import subprocess, os, time, sys, socket, traceback
-import Xlib.display, Xlib.X
+import subprocess
+import os
+import time
+import sys
+import socket
+import traceback
+import Xlib.display
+import Xlib.X
 import libpry
-import libqtile, libqtile.ipc, libqtile.hook
+import libqtile
+import libqtile.ipc
+import libqtile.hook
 
 WIDTH = 800
 HEIGHT = 600
 SECOND_WIDTH = 640
 SECOND_HEIGHT = 480
+
 
 def _find_display():
     """
@@ -48,9 +57,9 @@ class Xephyr(libpry.TestContainer):
             "Xephyr", "-keybd", "evdev",
             "-name", "qtile_test",
             self["display"], "-ac",
-            "-screen", "%sx%s"%(self.width, self.height)]
+            "-screen", "%sx%s" % (self.width, self.height)]
         if self.two_screens:
-            args.extend(["-screen", "%sx%s+800+0"%(SECOND_WIDTH, SECOND_HEIGHT)])
+            args.extend(["-screen", "%sx%s+800+0" % (SECOND_WIDTH, SECOND_HEIGHT)])
 
         if self.xinerama:
             args.extend(["+xinerama"])
@@ -58,8 +67,8 @@ class Xephyr(libpry.TestContainer):
             args.extend(["+extension", "RANDR"])
         self.sub = subprocess.Popen(
                         args,
-                        stdout = subprocess.PIPE,
-                        stderr = subprocess.PIPE,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
                     )
         time.sleep(0.05)
 
@@ -70,6 +79,7 @@ class Xephyr(libpry.TestContainer):
 
 class _QtileTruss(libpry.AutoTree):
     qtilepid = None
+
     def setUp(self):
         self.testwindows = []
 
@@ -82,7 +92,7 @@ class _QtileTruss(libpry.AutoTree):
             except (Xlib.error.DisplayConnectionError, Xlib.error.ConnectionClosedError), v:
                 time.sleep(0.1)
         else:
-            raise AssertionError, "Could not connect to display."
+            raise AssertionError("Could not connect to display.")
         d.close()
         del d
 
@@ -95,7 +105,7 @@ class _QtileTruss(libpry.AutoTree):
                 pass
             time.sleep(0.1)
         else:
-            raise AssertionError, "Timeout waiting for Qtile"
+            raise AssertionError("Timeout waiting for Qtile")
 
     def qtileRaises(self, exc, config):
         self._waitForXephyr()
@@ -199,6 +209,7 @@ class _QtileTruss(libpry.AutoTree):
 
 class QtileTests(_QtileTruss):
     config = None
+
     def setUp(self):
         _QtileTruss.setUp(self)
         self.startQtile(self.config)
@@ -216,7 +227,7 @@ class QtileTests(_QtileTruss):
             scrn = g["screen"]
             if scrn is not None:
                 if scrn in seen:
-                    raise AssertionError, "Screen referenced from more than one group."
+                    raise AssertionError("Screen referenced from more than one group.")
                 seen.add(scrn)
                 assert screens[scrn]["group"] == g["name"]
         assert len(seen) == len(screens), "Not all screens had an attached group."

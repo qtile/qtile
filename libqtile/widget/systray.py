@@ -3,18 +3,20 @@ import base
 
 import xcb
 from xcb.xproto import EventMask, SetMode
-import atexit, struct
+import atexit
+import struct
 
 
 class Icon(window._Window):
     _windowMask = EventMask.StructureNotify |\
                   EventMask.Exposure
+
     def __init__(self, win, qtile, systray):
         window._Window.__init__(self, win, qtile)
         self.systray = systray
 
     def _configure_icon(self, pos):
-        window.configure(x=self.offset+(self.icon_size*pos),
+        window.configure(x=self.offset + (self.icon_size * pos),
                     y=0, width=self.icon_size,
                     height=self.icon_size)
 
@@ -35,6 +37,7 @@ class Icon(window._Window):
 class TrayWindow(window._Window):
     _windowMask = EventMask.StructureNotify |\
                   EventMask.Exposure
+
     def __init__(self, win, qtile, systray):
         window._Window.__init__(self, win, qtile)
         self.systray = systray
@@ -74,6 +77,7 @@ class Systray(base._Widget):
                 ('padding', 5, 'Padding between icons'),
                 ('background', None, 'Background colour'),
             )
+
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
         self.traywin = None
@@ -100,7 +104,7 @@ class Systray(base._Widget):
             xcb.CurrentTime
         )
         event = struct.pack('BBHII5I', 33, 32, 0, qtile.root.wid,
-                            atoms['MANAGER'], 
+                            atoms['MANAGER'],
                             xcb.CurrentTime, atoms['_NET_SYSTEM_TRAY_S0'],
                             win.wid, 0, 0)
         qtile.root.send_event(event, mask=EventMask.StructureNotify)
@@ -113,8 +117,8 @@ class Systray(base._Widget):
         self.drawer.draw(self.offset, self.calculate_width())
         for pos, icon in enumerate(self.icons.values()):
             icon.place(
-                    self.offset + (self.icon_size + self.padding)*pos + self.padding,
-                    self.bar.height/2 - self.icon_size/2, 
+                    self.offset + (self.icon_size + self.padding) * pos + self.padding,
+                    self.bar.height / 2 - self.icon_size / 2,
                     self.icon_size, self.icon_size,
                     0,
                     None

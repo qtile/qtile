@@ -8,6 +8,7 @@ CHARGING = 'Charging'
 DISCHARGING = 'Discharging'
 UNKNOWN = 'Unknown'
 
+
 class Battery(base._TextBox):
     """
         A simple but flexible text-based battery widget.
@@ -25,11 +26,12 @@ class Battery(base._TextBox):
         ("energy_now_file", "energy_now", "Name of file with the current energy in /sys/class/power_supply/battery_name"),
         ("energy_full_file", "energy_full", "Name of file with the maximum energy in /sys/class/power_supply/battery_name"),
         ("power_now_file", "power_now", "Name of file with the current power draw in /sys/class/power_supply/battery_name"),
-        ("update_delay",1,"The delay in seconds between updates"),
-        ("charge_char","^","Character to indicate the battery is charging"),
-        ("discharge_char","V","Character to indicate the battery is discharging"),
+        ("update_delay", 1, "The delay in seconds between updates"),
+        ("charge_char", "^", "Character to indicate the battery is charging"),
+        ("discharge_char", "V", "Character to indicate the battery is discharging"),
 
     )
+
     def __init__(self, low_percentage=0.10, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "BAT", **config)
         self.low_percentage = low_percentage
@@ -50,17 +52,17 @@ class Battery(base._TextBox):
         try:
             if stat == DISCHARGING:
                 char = self.discharge_char
-                time = now/power
+                time = now / power
             elif stat == CHARGING:
                 char = self.charge_char
-                time = (full - now)/power
+                time = (full - now) / power
             else:
                 return 'Full'
         except ZeroDivisionError:
             return 'Inf'
 
         hour = int(time)
-        min = int(time*60) % 60
+        min = int(time * 60) % 60
         percent = now / full
         if stat == DISCHARGING and percent < self.low_percentage:
             self.layout.colour = self.low_foreground

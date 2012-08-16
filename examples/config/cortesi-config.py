@@ -98,7 +98,7 @@ layouts = [
 # simple widgets - a GroupBox, and a WindowName.
 screens = [
     Screen(
-        bottom = bar.Bar(
+        bottom=bar.Bar(
                     [
                         widget.GroupBox(),
                         widget.WindowName()
@@ -107,7 +107,7 @@ screens = [
                 ),
     ),
     Screen(
-        bottom = bar.Bar(
+        bottom=bar.Bar(
                     [
                         widget.GroupBox(),
                         widget.WindowName()

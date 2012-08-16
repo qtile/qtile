@@ -1,22 +1,26 @@
 import time
 import cStringIO
 import libpry
-import libqtile.manager, libqtile.hook
+import libqtile.manager
+import libqtile.hook
 import utils
+
 
 class uHook(libpry.AutoTree):
     def tearDown(self):
         libqtile.hook.clear()
-        
+
     def setUpAll(self):
-        class Dummy: pass
+        class Dummy:
+            pass
         dummy = Dummy()
         io = cStringIO.StringIO()
         dummy.log = libqtile.manager.Log(5, io)
         libqtile.hook.init(dummy)
-        
+
     def test_basic(self):
         self.testVal = None
+
         def test(x):
             self.testVal = x
 
@@ -31,6 +35,7 @@ class uHook(libpry.AutoTree):
 
     def test_unsubscribe(self):
         self.testVal = None
+
         def test(x):
             self.testVal = x
 
@@ -46,8 +51,6 @@ class uHook(libpry.AutoTree):
         assert not libqtile.manager.hook.subscriptions
 
 
-
 tests = [
     uHook(),
 ]
-
