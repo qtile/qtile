@@ -12,6 +12,7 @@ class uLRUCache(libpry.AutoTree):
     def test_one(self):
         class Foo:
             ran = False
+
             @utils.LRUCache(2)
             def one(self, x):
                 self.ran = True
@@ -52,4 +53,3 @@ tests = [
     uLRUCache(),
     uRGB(),
 ]
-

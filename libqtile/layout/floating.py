@@ -1,10 +1,11 @@
 from base import Layout
 from .. import manager, window
 
-FLOAT_WM_TYPES = { 'utility':1,
-                   'notification':1,
-                   'toolbar':1,
-                   'splash':1}
+FLOAT_WM_TYPES = {'utility': 1,
+                   'notification': 1,
+                   'toolbar': 1,
+                   'splash': 1}
+
 
 class Floating(Layout):
     """
@@ -18,6 +19,7 @@ class Floating(Layout):
         ("fullscreen_border_width", 0, "Border width for fullscreen."),
         ("name", "floating", "Name of this layout."),
     )
+
     def __init__(self, float_rules=None, **config):
         """
         If you have certain apps that you always want to float you can
@@ -74,18 +76,18 @@ class Floating(Layout):
             if offset_x > 0:
                 new_x = new_screen.x + offset_x
             else:
-                new_x = new_screen.x + i*10
+                new_x = new_screen.x + i * 10
             if offset_y > 0:
                 new_y = new_screen.y + offset_y
             else:
-                new_y = new_screen.y + i*10
+                new_y = new_screen.y + i * 10
 
             right_edge = new_screen.x + new_screen.width
             bottom_edge = new_screen.y + new_screen.height
             while new_x > right_edge:
-                new_x = (new_x - new_screen.x )/2
+                new_x = (new_x - new_screen.x) / 2
             while new_y > bottom_edge:
-                new_y = (new_y - new_y.y)/2
+                new_y = (new_y - new_y.y) / 2
             win.x = new_x
             win.y = new_y
             win.group = new_screen.group
@@ -96,8 +98,8 @@ class Floating(Layout):
 
     def focus_next(self, win):
         idx = self.clients.index(win)
-        if len(self.clients) > idx+1:
-            return self.clients[idx+1]
+        if len(self.clients) > idx + 1:
+            return self.clients[idx + 1]
 
     def focus_last(self):
         if self.clients:
@@ -106,7 +108,7 @@ class Floating(Layout):
     def focus_prev(self, win):
         idx = self.clients.index(win)
         if idx > 0:
-            return self.clients[idx-1]
+            return self.clients[idx - 1]
 
     def focus(self, c):
         self.focused = c

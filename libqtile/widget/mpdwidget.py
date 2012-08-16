@@ -15,6 +15,7 @@ from .. import hook, bar, manager
 import base
 from mpd import MPDClient, CommandError, ConnectionError, ProtocolError
 
+
 class Mpd(base._TextBox):
     """
         An mpd widget
@@ -26,6 +27,7 @@ class Mpd(base._TextBox):
         ("background", "000000", "Background colour"),
         ("foreground", "ffffff", "Foreground colour")
     )
+
     def __init__(self, width=bar.CALCULATED, host='localhost', port=6600, password=False, msg_nc='NC', **config):
         """
             - host: host to connect to
@@ -44,7 +46,7 @@ class Mpd(base._TextBox):
         self.connected = False
         self.connect()
 
-    def connect (self, ifneeded=False):
+    def connect(self, ifneeded=False):
         if self.connected:
             if not ifneeded:
                 print >> sys.stderr, 'Already connected.  No need to connect again.  maybe you want to disconnect first.'
@@ -105,7 +107,7 @@ class Mpd(base._TextBox):
                 if 'artist' in song:
                     artist = song['artist']
                 if 'title' in song:
-                    title  = song['title']
+                    title = song['title']
                 playing = "%s - %s" % (artist, title)
             else:
                 playing = ' - '
@@ -129,4 +131,3 @@ class Mpd(base._TextBox):
             self.client.previous()
         elif button == 5:
             self.client.next()
-

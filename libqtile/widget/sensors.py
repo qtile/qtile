@@ -29,6 +29,7 @@ class ThermalSensor(base._TextBox):
          'then change to foreground_alert colour'),
         ('foreground_alert', 'ff0000', 'Foreground colour alert'),
     )
+
     def __init__(self, **config):
         base._TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
         self.sensors_temp = re.compile(
@@ -65,7 +66,7 @@ class ThermalSensor(base._TextBox):
         if not self.metric:
             fahrenheit = ["-f"]
         try:
-            cmd_sensors = Popen(["sensors",] + fahrenheit, stdout=PIPE)
+            cmd_sensors = Popen(["sensors", ] + fahrenheit, stdout=PIPE)
         except OSError:
             return None
         cmd_sensors.wait()

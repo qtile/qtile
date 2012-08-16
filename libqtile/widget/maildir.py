@@ -7,6 +7,7 @@ from .. import manager, bar
 import os.path
 import mailbox
 
+
 class Maildir(base._TextBox):
     """
     A simple widget showing the number of new mails in maildir mailboxes.
@@ -20,9 +21,8 @@ class Maildir(base._TextBox):
         ("foreground", "ffffff", "Foreground colour")
         )
 
-
     def __init__(
-        self, maildirPath, subFolders, separator = " ", timeout = 120,
+        self, maildirPath, subFolders, separator=" ", timeout=120,
         **config):
         """
         Constructor.
@@ -39,11 +39,9 @@ class Maildir(base._TextBox):
         self._timeout = timeout
         self.text = self.format_text(self.mailbox_state())
 
-
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         self.timeout_add(self._timeout, self.update)
-
 
     def mailbox_state(self):
         """
@@ -70,7 +68,6 @@ class Maildir(base._TextBox):
 
         return state
 
-
     def format_text(self, state):
         """
         Converts the state of the subfolders to a string.
@@ -80,7 +77,6 @@ class Maildir(base._TextBox):
         """
         return self._separator.join(
                 "{}: {}".format(*item) for item in state.iteritems())
-
 
     def update(self):
         """

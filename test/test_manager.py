@@ -1,10 +1,18 @@
-import os, time, cStringIO, subprocess
+import os
+import time
+import cStringIO
+import subprocess
 import signal
 import libpry
-import libqtile, libqtile.layout, libqtile.bar, libqtile.widget, libqtile.manager
+import libqtile
+import libqtile.layout
+import libqtile.bar
+import libqtile.widget
+import libqtile.manager
 import libqtile.hook
 import utils
 from time import sleep
+
 
 class TestConfig:
     groups = [
@@ -74,7 +82,6 @@ class BareConfig:
     follow_mouse_focus = False
 
 
-
 class uMultiScreen(utils.QtileTests):
     config = TestConfig()
 
@@ -104,7 +111,6 @@ class uMultiScreen(utils.QtileTests):
         assert self.c.group.info()["name"] == 'a'
         assert self.c.group.info()["focus"] == 'xclock'
 
-
     def test_to_screen(self):
         assert self.c.screen.info()["index"] == 0
         self.c.to_screen(1)
@@ -126,9 +132,6 @@ class uMultiScreen(utils.QtileTests):
         assert self.c.window.info()["name"] == "two"
         self.c.to_prev_screen()
         assert self.c.window.info()["name"] == "one"
-
-
-
 
     def test_togroup(self):
         self.testWindow("one")
@@ -152,6 +155,7 @@ class uMultiScreen(utils.QtileTests):
 
 class uMinimal(utils.QtileTests):
     config = BareConfig()
+
     def test_minimal(self):
         assert self.c.status() == "OK"
 
@@ -162,6 +166,7 @@ class uSingle(utils.QtileTests):
         they only have to run under one of the two.
     """
     config = TestConfig()
+
     def test_events(self):
         assert self.c.status() == "OK"
 
@@ -281,6 +286,7 @@ class uSingle(utils.QtileTests):
         assert self.c.window.match(wname="xeyes")
         assert not self.c.window.match(wname="nonexistent")
 
+
 class TestFloat(utils.QtileTests):
     config = TestConfig()
 
@@ -377,7 +383,6 @@ class TestFloat(utils.QtileTests):
         assert self.c.window.info()['x'] == 400
         assert self.c.window.info()['y'] == 0
 
-
     def test_toggle_fullscreen(self):
         # change to 2 col stack
         self.c.nextlayout()
@@ -409,7 +414,6 @@ class TestFloat(utils.QtileTests):
         assert self.c.window.info()['height'] == 578
         assert self.c.window.info()['x'] == 400
         assert self.c.window.info()['y'] == 0
-
 
     def test_toggle_max(self):
         # change to 2 col stack
@@ -473,8 +477,6 @@ class TestFloat(utils.QtileTests):
         assert self.c.window.info()['x'] == 400
         assert self.c.window.info()['y'] == 0
 
-
-
     def test_toggle_floating(self):
         self.testXeyes()
         assert self.c.window.info()['floating'] == False
@@ -503,7 +505,7 @@ class TestFloat(utils.QtileTests):
         assert self.c.window.info()['name'] == 'xeyes'
         assert self.c.group.info()['focus'] == 'xeyes'
         # check what stack thinks is focus
-        assert [x['current'] for x in self.c.layout.info()['stacks']] == [0,0]
+        assert [x['current'] for x in self.c.layout.info()['stacks']] == [0, 0]
 
         # change focus to xterm
         self.c.group.next_window()
@@ -513,13 +515,13 @@ class TestFloat(utils.QtileTests):
         assert self.c.group.info()['focus'] != 'xeyes'
         # check what stack thinks is focus
         # check what stack thinks is focus
-        assert [x['current'] for x in self.c.layout.info()['stacks']] == [0,0]
+        assert [x['current'] for x in self.c.layout.info()['stacks']] == [0, 0]
 
         # focus back to xeyes
         self.c.group.next_window()
         assert self.c.window.info()['name'] == 'xeyes'
         # check what stack thinks is focus
-        assert [x['current'] for x in self.c.layout.info()['stacks']] == [0,0]
+        assert [x['current'] for x in self.c.layout.info()['stacks']] == [0, 0]
 
         # now focusing via layout is borked (won't go to float)
         self.c.layout.up()
@@ -527,15 +529,13 @@ class TestFloat(utils.QtileTests):
         self.c.layout.up()
         assert self.c.window.info()['name'] != 'xeyes'
         # check what stack thinks is focus
-        assert [x['current'] for x in self.c.layout.info()['stacks']] == [0,0]
+        assert [x['current'] for x in self.c.layout.info()['stacks']] == [0, 0]
 
         # focus back to xeyes
         self.c.group.next_window()
         assert self.c.window.info()['name'] == 'xeyes'
         # check what stack thinks is focus
-        assert [x['current'] for x in self.c.layout.info()['stacks']] == [0,0]
-
-
+        assert [x['current'] for x in self.c.layout.info()['stacks']] == [0, 0]
 
     def test_move_floating(self):
         self.testXeyes()
@@ -580,10 +580,9 @@ class TestFloat(utils.QtileTests):
         assert self.c.window.info()['y'] == 20
 
 
-
-
 class uRandr(utils.QtileTests):
     config = TestConfig()
+
     def test_screens(self):
         assert len(self.c.screens())
 
@@ -598,8 +597,8 @@ class uRandr(utils.QtileTests):
                 "-display", utils.DISPLAY,
                 "--rotate", "left"
             ],
-            stderr = subprocess.PIPE,
-            stdout = subprocess.PIPE
+            stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE
         )
         s = self.c.screens()[0]
         assert s["height"] == width
@@ -748,29 +747,30 @@ class uLog(libpry.AutoTree):
 
 
 class TScreen(libqtile.manager.Screen):
-    def setGroup(self, x): pass
+    def setGroup(self, x):
+        pass
 
 
 class uScreenDimensions(libpry.AutoTree):
     def test_dx(self):
-        s = TScreen(left = libqtile.bar.Gap(10))
+        s = TScreen(left=libqtile.bar.Gap(10))
         s._configure(None, 0, 0, 0, 100, 100, None)
         assert s.dx == 10
 
     def test_dwidth(self):
-        s = TScreen(left = libqtile.bar.Gap(10))
+        s = TScreen(left=libqtile.bar.Gap(10))
         s._configure(None, 0, 0, 0, 100, 100, None)
         assert s.dwidth == 90
         s.right = libqtile.bar.Gap(10)
         assert s.dwidth == 80
 
     def test_dy(self):
-        s = TScreen(top = libqtile.bar.Gap(10))
+        s = TScreen(top=libqtile.bar.Gap(10))
         s._configure(None, 0, 0, 0, 100, 100, None)
         assert s.dy == 10
 
     def test_dheight(self):
-        s = TScreen(top = libqtile.bar.Gap(10))
+        s = TScreen(top=libqtile.bar.Gap(10))
         s._configure(None, 0, 0, 0, 100, 100, None)
         assert s.dheight == 90
         s.bottom = libqtile.bar.Gap(10)
@@ -812,11 +812,11 @@ class _Config:
     )]
 
 
-
 class ClientNewStaticConfig(_Config):
     @staticmethod
     def main(c):
         import libqtile.hook
+
         def client_new(c):
             c.static(0)
         libqtile.hook.subscribe.client_new(client_new)
@@ -824,6 +824,7 @@ class ClientNewStaticConfig(_Config):
 
 class uClientNewStatic(utils.QtileTests):
     config = ClientNewStaticConfig()
+
     def test_minimal(self):
         a = self.testWindow("one")
         self.kill(a)
@@ -838,6 +839,7 @@ class ToGroupConfig(_Config):
     @staticmethod
     def main(c):
         import libqtile.hook
+
         def client_new(c):
             c.togroup("d")
         libqtile.hook.subscribe.client_new(client_new)
@@ -845,6 +847,7 @@ class ToGroupConfig(_Config):
 
 class uClientNewToGroup(utils.QtileTests):
     config = ToGroupConfig()
+
     def test_minimal(self):
         self.c.group["d"].toscreen()
         self.c.group["a"].toscreen()

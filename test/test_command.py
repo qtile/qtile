@@ -3,7 +3,11 @@ import libpry
 import libqtile
 import utils
 
-import libqtile.confreader, libqtile.manager, libqtile.layout, libqtile.bar, libqtile.widget
+import libqtile.confreader
+import libqtile.manager
+import libqtile.layout
+import libqtile.bar
+import libqtile.widget
 
 
 class CallConfig(object):
@@ -44,6 +48,7 @@ class uCall(utils.QtileTests):
     config = CallConfig()
     # FIXME: failing test disabled. For some reason we don't seem
     # to have a keymap in Xnest or Xephyr 99% of the time.
+
     def _test_layout_filter(self):
         self.testWindow("one")
         self.testWindow("two")
@@ -56,10 +61,17 @@ class uCall(utils.QtileTests):
 
 class TestCommands(libqtile.command.CommandObject):
     @staticmethod
-    def cmd_one(): pass
-    def cmd_one_self(self): pass
-    def cmd_two(self, a): pass
-    def cmd_three(self, a, b=99): pass
+    def cmd_one():
+        pass
+
+    def cmd_one_self(self):
+        pass
+
+    def cmd_two(self, a):
+        pass
+
+    def cmd_three(self, a, b=99):
+        pass
 
 
 class uCommandObject(libpry.AutoTree):
@@ -150,6 +162,7 @@ class ServerConfig(object):
 
 class u_Server(utils.QtileTests):
     config = ServerConfig()
+
     def test_cmd_commands(self):
         assert self.c.commands()
         assert self.c.layout.commands()

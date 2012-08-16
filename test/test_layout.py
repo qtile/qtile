@@ -1,8 +1,11 @@
-import libpry, time, pprint
+import libpry
+import time
+import pprint
 from libqtile import layout
 import libqtile.manager
 import utils
 from time import sleep
+
 
 class MaxConfig:
     main = None
@@ -23,6 +26,7 @@ class MaxConfig:
 
 class uMax(utils.QtileTests):
     config = MaxConfig()
+
     def test_simple(self):
         self.testWindow("one")
         assert self.c.layout.info()["clients"] == ["one"]
@@ -35,7 +39,7 @@ class uMax(utils.QtileTests):
         self.testWindow("three")
         assert self.c.layout.info()["clients"] == ["three", "two", "one"]
         self.c.layout.down()
-        assert self.c.layout.info()["clients"] == ["two", "one","three"]
+        assert self.c.layout.info()["clients"] == ["two", "one", "three"]
         self.c.layout.up()
         assert self.c.layout.info()["clients"] == ["three", "two", "one"]
 
@@ -68,6 +72,7 @@ class StackConfig:
 
 class uStack(utils.QtileTests):
     config = StackConfig()
+
     def _stacks(self):
         stacks = []
         for i in self.c.layout.info()["stacks"]:
@@ -243,8 +248,10 @@ class SelectorConfig:
 
 class uSelectors(utils.QtileTests):
     config = StackConfig()
+
     def test_simple(self):
         pass
+
 
 class RatioTileConfig:
     main = None
@@ -264,8 +271,10 @@ class RatioTileConfig:
     screens = []
     follow_mouse_focus = False
 
+
 class uRatioTile(utils.QtileTests):
     config = RatioTileConfig()
+
     def test_add_windows(self):
         for i in range(12):
             self.testWindow(str(i))
@@ -280,7 +289,7 @@ class uRatioTile(utils.QtileTests):
             elif i == 4:
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 160, 600), (160, 0, 160, 600), (320, 0, 160, 600), (480, 0, 160, 600), (640, 0, 160, 600)]
             elif i == 5:
-                assert self.c.layout.info()['layout_info'] ==  [(0, 0, 133, 600), (133, 0, 133, 600), (266, 0, 133, 600), (399, 0, 133, 600), (532, 0, 133, 600), (665, 0, 135, 600)]
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 133, 600), (133, 0, 133, 600), (266, 0, 133, 600), (399, 0, 133, 600), (532, 0, 133, 600), (665, 0, 135, 600)]
 
             elif i == 6:
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 200, 300), (200, 0, 200, 300), (400, 0, 200, 300), (600, 0, 200, 300), (0, 300, 266, 300), (266, 300, 266, 300), (532, 300, 268, 300)]
@@ -294,10 +303,9 @@ class uRatioTile(utils.QtileTests):
             elif i == 10:
                 assert self.c.layout.info()['layout_info'] == [(0, 0, 133, 300), (133, 0, 133, 300), (266, 0, 133, 300), (399, 0, 133, 300), (532, 0, 133, 300), (665, 0, 135, 300), (0, 300, 160, 300), (160, 300, 160, 300), (320, 300, 160, 300), (480, 300, 160, 300), (640, 300, 160, 300)]
             elif i == 11:
-                assert self.c.layout.info()['layout_info'] ==[(0, 0, 133, 300), (133, 0, 133, 300), (266, 0, 133, 300), (399, 0, 133, 300), (532, 0, 133, 300), (665, 0, 135, 300), (0, 300, 133, 300), (133, 300, 133, 300), (266, 300, 133, 300), (399, 300, 133, 300), (532, 300, 133, 300), (665, 300, 135, 300)]
+                assert self.c.layout.info()['layout_info'] == [(0, 0, 133, 300), (133, 0, 133, 300), (266, 0, 133, 300), (399, 0, 133, 300), (532, 0, 133, 300), (665, 0, 135, 300), (0, 300, 133, 300), (133, 300, 133, 300), (266, 300, 133, 300), (399, 300, 133, 300), (532, 300, 133, 300), (665, 300, 135, 300)]
             else:
                 assert False
-
 
     def test_add_windows_golden_ratio(self):
         self.c.nextlayout()
@@ -343,6 +351,7 @@ class uRatioTile(utils.QtileTests):
         assert self.c.window.info()['y'] == 0
         assert self.c.window.info()['name'] == 'one'
 
+
 class TileConfig:
     main = None
     groups = [
@@ -361,15 +370,17 @@ class TileConfig:
     screens = []
     follow_mouse_focus = False
 
+
 class uTile(utils.QtileTests):
     config = TileConfig()
+
     def test_updown(self):
         self.testWindow("one")
         self.testWindow("two")
         self.testWindow("three")
         assert self.c.layout.info()["all"] == ["three", "two", "one"]
         self.c.layout.down()
-        assert self.c.layout.info()["all"] == ["two", "one","three"]
+        assert self.c.layout.info()["all"] == ["two", "one", "three"]
         self.c.layout.up()
         assert self.c.layout.info()["all"] == ["three", "two", "one"]
 
@@ -418,6 +429,7 @@ class uTile(utils.QtileTests):
         self.kill(three)
         assert self.c.layout.info()["master"] == ["two"]
 
+
 class SliceConfig:
     main = None
     groups = [
@@ -438,6 +450,7 @@ class SliceConfig:
     mouse = []
     screens = []
     follow_mouse_focus = False
+
 
 class uSlice(utils.QtileTests):
     config = SliceConfig()

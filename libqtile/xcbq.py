@@ -3,10 +3,13 @@
     complete - it only implements the subset of functionalty needed by qtile.
 """
 import struct
-import xcb.xproto, xcb.xinerama, xcb.randr, xcb.xcb
+import xcb.xproto
+import xcb.xinerama
+import xcb.randr
+import xcb.xcb
 from xcb.xproto import CW, WindowClass, EventMask
-import utils, xkeysyms
-
+import utils
+import xkeysyms
 
 
 # hack xcb.xproto for negative numbers
@@ -25,14 +28,14 @@ keysyms = xkeysyms.keysyms
 
 # These should be in xpyb:
 ModMasks = {
-    "shift": 1<<0,
-    "lock":  1<<1,
-    "control": 1<<2,
-    "mod1": 1<<3,
-    "mod2": 1<<4,
-    "mod3": 1<<5,
-    "mod4": 1<<6,
-    "mod5": 1<<7,
+    "shift": 1 << 0,
+    "lock":  1 << 1,
+    "control": 1 << 2,
+    "mod1": 1 << 3,
+    "mod2": 1 << 4,
+    "mod3": 1 << 5,
+    "mod4": 1 << 6,
+    "mod5": 1 << 7,
 }
 ModMapOrder = ["shift", "lock", "control", "mod1", "mod2", "mod3", "mod4", "mod5"]
 
@@ -120,6 +123,7 @@ PropertyMap = {
     "QTILE_INTERNAL": ("CARDINAL", 32)
 }
 
+
 def toStr(s):
     return "".join([chr(i) for i in s.name])
 
@@ -154,12 +158,13 @@ class MaskMap:
                     values.append(getattr(val, "_maskvalue", val))
                 del kwargs[s]
         if kwargs:
-            raise ValueError("Unknown mask names: %s"%kwargs.keys())
+            raise ValueError("Unknown mask names: %s" % kwargs.keys())
         return mask, values
 
 ConfigureMasks = MaskMap(xcb.xproto.ConfigWindow)
 AttributeMasks = MaskMap(CW)
 GCMasks = MaskMap(xcb.xproto.GC)
+
 
 class AtomCache:
     def __init__(self, conn):
@@ -175,7 +180,7 @@ class AtomCache:
             if not i.startswith("_"):
                 self.insert(name=i, atom=getattr(xcb.xproto.Atom, i))
 
-    def insert(self, name = None, atom = None):
+    def insert(self, name=None, atom=None):
         assert name or atom
         if atom is None:
             c = self.conn.conn.core.InternAtom(False, len(name), name)
@@ -235,9 +240,10 @@ class Colormap:
         """
         if color.startswith("#"):
             if len(color) != 7:
-                raise ValueError("Invalid color: %s"%color)
+                raise ValueError("Invalid color: %s" % color)
+
             def x8to16(i):
-                return 0xffff * (i&0xff)/0xff
+                return 0xffff * (i & 0xff) / 0xff
             r = x8to16(int(color[1] + color[2], 16))
             g = x8to16(int(color[3] + color[4], 16))
             b = x8to16(int(color[5] + color[6], 16))
@@ -264,10 +270,10 @@ class RandR:
         for i in self.ext.GetScreenResources(root).reply().crtcs:
             info = self.ext.GetCrtcInfo(i, xcb.xcb.CurrentTime).reply()
             d = dict(
-                x = info.x,
-                y = info.y,
-                width = info.width,
-                height = info.height
+                x=info.x,
+                y=info.y,
+                width=info.width,
+                height=info.height
             )
             l.append(d)
         return l
@@ -308,13 +314,13 @@ class Window:
     def warp_pointer(self, x, y):
         self.conn.conn.core.WarpPointer(
                 0
-                ,self.wid
-                ,0
-                ,0
-                ,0
-                ,0
-                ,x
-                ,y
+                , self.wid
+                , 0
+                , 0
+                , 0
+                , 0
+                , x
+                , y
         )
 
     def get_name(self):
@@ -342,18 +348,18 @@ class Window:
             l = struct.unpack_from("=IIIIIIIII", data)
             flags = set()
             for k, v in HintsFlags.items():
-                if l[0]&v:
+                if l[0] & v:
                     flags.add(k)
             return dict(
-                flags = flags,
-                input = l[1],
-                initial_state = l[2],
-                icon_pixmap = l[3],
-                icon_window = l[4],
-                icon_x = l[5],
-                icon_y = l[6],
-                icon_mask = l[7],
-                window_group = l[8]
+                flags=flags,
+                input=l[1],
+                initial_state=l[2],
+                icon_pixmap=l[3],
+                icon_window=l[4],
+                icon_x=l[5],
+                icon_y=l[6],
+                icon_mask=l[7],
+                window_group=l[8]
             )
 
     def get_wm_normal_hints(self):
@@ -363,28 +369,28 @@ class Window:
             l = struct.unpack_from("=IIIIIIIIIIIIII", data)
             flags = set()
             for k, v in NormalHintsFlags.items():
-                if l[0]&v:
+                if l[0] & v:
                     flags.add(k)
             return dict(
-                flags = flags,
-                min_width = l[1+4],
-                min_height = l[2+4],
-                max_width = l[3+4],
-                max_height = l[4+4],
-                width_inc = l[5+4],
-                height_inc = l[6+4],
-                min_aspect = l[7+4],
-                max_aspect = l[8+4],
-                base_width = l[9+4],
-                base_height = l[9+4],
-                win_gravity = l[9+4],
+                flags=flags,
+                min_width=l[1 + 4],
+                min_height=l[2 + 4],
+                max_width=l[3 + 4],
+                max_height=l[4 + 4],
+                width_inc=l[5 + 4],
+                height_inc=l[6 + 4],
+                min_aspect=l[7 + 4],
+                max_aspect=l[8 + 4],
+                base_width=l[9 + 4],
+                base_height=l[9 + 4],
+                win_gravity=l[9 + 4],
             )
 
     def get_wm_protocols(self):
         r = self.get_property("WM_PROTOCOLS", xcb.xproto.GetPropertyType.Any)
         if r:
             data = struct.pack("B" * len(r.value), *(list(r.value)))
-            l = struct.unpack_from("=" + "L"*r.value_len, data)
+            l = struct.unpack_from("=" + "L" * r.value_len, data)
             return set([self.conn.atoms.get_name(i) for i in l])
         else:
             return set()
@@ -466,11 +472,11 @@ class Window:
         """
         if name in PropertyMap:
             if type or format:
-                raise ValueError, "Over-riding default type or format for property."
+                raise ValueError("Over-riding default type or format for property.")
             type, format = PropertyMap[name]
         else:
             if None in (type, format):
-                raise ValueError, "Must specify type and format for unknown property."
+                raise ValueError("Must specify type and format for unknown property.")
 
         if not utils.isSequenceLike(value):
             value = [value]
@@ -490,7 +496,7 @@ class Window:
                     buf.append(struct.pack("=B", i))
         buf = "".join(buf)
 
-        length = len(buf)/(format/8)
+        length = len(buf) / (format / 8)
 
         # This is a real balls-up interface-wise. As I understand it, each type
         # can have a different associated size.
@@ -514,14 +520,14 @@ class Window:
         """
         if type is None:
             if not prop in PropertyMap:
-                raise ValueError, "Must specify type for unknown property."
+                raise ValueError("Must specify type for unknown property.")
             else:
                 type, _ = PropertyMap[prop]
         r = self.conn.conn.core.GetProperty(
             False, self.wid,
             self.conn.atoms[prop] if isinstance(prop, basestring) else prop,
             self.conn.atoms[type] if isinstance(type, basestring) else type,
-            0, (2**32)-1
+            0, (2 ** 32) - 1
         ).reply()
 
         if not r.value_len:
@@ -641,6 +647,7 @@ class Connection:
         "xinerama": Xinerama,
         "randr": RandR,
     }
+
     def __init__(self, display):
         self.conn = xcb.xcb.connect(display=display)
         self.setup = self.conn.get_setup()
@@ -690,9 +697,9 @@ class Connection:
 
         l = []
         for i, v in enumerate(q.keysyms):
-            if not i%q.keysyms_per_keycode:
+            if not i % q.keysyms_per_keycode:
                 if l:
-                    self.code_to_syms[(i/q.keysyms_per_keycode) + first - 1] = l
+                    self.code_to_syms[(i / q.keysyms_per_keycode) + first - 1] = l
                 l = []
                 l.append(v)
             else:
@@ -710,7 +717,7 @@ class Connection:
         q = self.conn.core.GetModifierMapping().reply()
         modmap = {}
         for i, k in enumerate(q.keycodes):
-            l = modmap.setdefault(ModMapOrder[i/q.keycodes_per_modifier], [])
+            l = modmap.setdefault(ModMapOrder[i / q.keycodes_per_modifier], [])
             l.append(k)
         self.modmap = modmap
 
@@ -740,10 +747,10 @@ class Connection:
                 x, y, width, height, 0,
                 WindowClass.InputOutput,
                 self.default_screen.root_visual,
-                CW.BackPixel|CW.EventMask,
+                CW.BackPixel | CW.EventMask,
                 [
                     self.default_screen.black_pixel,
-                    EventMask.StructureNotify|EventMask.Exposure
+                    EventMask.StructureNotify | EventMask.Exposure
                 ]
         )
         return Window(self, wid)

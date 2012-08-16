@@ -14,8 +14,9 @@ __all__ = [
 
 re_vol = re.compile('\[(\d?\d?\d?)%\]')
 
+
 class Volume(base._TextBox):
-    ''' Widget that display and change volume 
+    ''' Widget that display and change volume
         if theme_path is set it draw widget as
         icons '''
     defaults = manager.Defaults(
@@ -29,6 +30,7 @@ class Volume(base._TextBox):
         ("theme_path", None, "Path of the icons"),
         ("update_interval", 0.2, "Update time in seconds."),
     )
+
     def __init__(self, **config):
         base._TextBox.__init__(self, '0', width=bar.CALCULATED, **config)
         if self.theme_path:
@@ -78,7 +80,7 @@ class Volume(base._TextBox):
             input_width = img.get_width()
             input_height = img.get_height()
 
-            sp = input_height/float(self.bar.height-1)
+            sp = input_height / float(self.bar.height - 1)
 
             width = input_width / sp
             if width > self.width:
@@ -89,7 +91,7 @@ class Volume(base._TextBox):
             scaler = cairo.Matrix()
 
             scaler.scale(sp, sp)
-            scaler.translate(self.actual_padding*-1, 0)
+            scaler.translate(self.actual_padding * -1, 0)
             imgpat.set_matrix(scaler)
 
             imgpat.set_filter(cairo.FILTER_BEST)

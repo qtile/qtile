@@ -1,6 +1,7 @@
 from .. import bar, hook, utils, manager
 import base
 
+
 class _GroupBase(base._Widget):
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
@@ -8,7 +9,7 @@ class _GroupBase(base._Widget):
     @property
     def fontsize(self):
         if self._fontsize is None:
-            calc = self.bar.height - self.margin_y*2 - self.borderwidth*2 - self.padding*2
+            calc = self.bar.height - self.margin_y * 2 - self.borderwidth * 2 - self.padding * 2
             return max(calc, 1)
         else:
             return self._fontsize
@@ -23,7 +24,7 @@ class _GroupBase(base._Widget):
             self.font,
             self.fontsize
         )
-        return width + self.padding*2 + self.margin_x*2 + self.borderwidth*2
+        return width + self.padding * 2 + self.margin_x * 2 + self.borderwidth * 2
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
@@ -65,6 +66,7 @@ class AGroupBox(_GroupBase):
         ("border", "215578", "Border colour"),
         ("padding", 5, "Padding inside the box")
     )
+
     def click(self, x, y, button):
         self.bar.screen.group.cmd_nextgroup()
 
@@ -73,7 +75,7 @@ class AGroupBox(_GroupBase):
 
     def draw(self):
         self.drawer.clear(self.background)
-        e = (i for i in self.qtile.groups if i.name == self.bar.screen.group.name ).next()
+        e = (i for i in self.qtile.groups if i.name == self.bar.screen.group.name).next()
         self.drawbox(self.margin_x, e.name, self.border, self.foreground)
         self.drawer.draw(self.offset, self.width)
 
@@ -99,6 +101,7 @@ class GroupBox(_GroupBase):
         ("urgent_alert_method", "border", "Method for alerting you of WM urgent " \
                                           "hints (one of 'border' or 'text')"),
     )
+
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
 
@@ -158,9 +161,7 @@ class GroupBox(_GroupBase):
                 g.name,
                 border,
                 text,
-                bw - self.margin_x*2 - self.padding*2
+                bw - self.margin_x * 2 - self.padding * 2
             )
             offset += bw
         self.drawer.draw(self.offset, self.width)
-
-

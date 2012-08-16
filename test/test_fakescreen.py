@@ -1,4 +1,6 @@
-import libpry, time, pprint
+import libpry
+import time
+import pprint
 from libqtile import layout, bar, widget, hook
 import libqtile.manager
 from libqtile.manager import Screen
@@ -11,7 +13,7 @@ CHAM1 = '8AE234'
 CHAM3 = '4E9A06'
 GRAPH_KW = dict(line_width=1,
                 graph_color=CHAM3,
-                fill_color=CHAM3+'.3',
+                fill_color=CHAM3 + '.3',
                 border_width=1,
                 border_color=CHAM3
                 )
@@ -31,6 +33,7 @@ GRAPH_KW = dict(line_width=1,
 # Notice there is hole in the middle
 # also that D goes down below the others
 
+
 class FakeScreenConfig:
     main = None
     groups = [
@@ -48,7 +51,7 @@ class FakeScreenConfig:
     keys = []
     mouse = []
     fake_screens = [Screen(
-        bottom = bar.Bar(
+        bottom=bar.Bar(
                     [
                         widget.GroupBox(this_screen_border=CHAM3,
                                         borderwidth=1,
@@ -75,7 +78,7 @@ class FakeScreenConfig:
         x=0, y=0, width=600, height=480
         ),
     Screen(
-        top = bar.Bar(
+        top=bar.Bar(
                     [
                         widget.GroupBox(),
                         widget.WindowName(),
@@ -86,7 +89,7 @@ class FakeScreenConfig:
         x=600, y=0, width=300, height=580
         ),
     Screen(
-            top = bar.Bar(
+            top=bar.Bar(
                     [
                         widget.GroupBox(),
                         widget.WindowName(),
@@ -94,9 +97,9 @@ class FakeScreenConfig:
                     ],
                     30,
                 ),
-           x=0, y=480, width=500, height=400 ),
+           x=0, y=480, width=500, height=400),
     Screen(
-            bottom = bar.Bar(
+            bottom=bar.Bar(
                     [
                         widget.GroupBox(),
                         widget.WindowName(),
@@ -104,10 +107,12 @@ class FakeScreenConfig:
                     ],
                     30,
                 ),
-           x=500, y=580, width=400, height=400 ),
+           x=500, y=580, width=400, height=400),
 
                     ]
     screens = fake_screens
+
+
 class TestFakeScreen(utils.QtileTests):
     config = FakeScreenConfig()
 
@@ -150,7 +155,6 @@ class TestFakeScreen(utils.QtileTests):
         assert self.c.window.info()['y'] == 30
         assert self.c.window.info()['group'] == 'a'
 
-
     def test_float_first_on_second_screen(self):
         self.c.to_screen(1)
         assert self.c.screen.info() == {'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
@@ -163,7 +167,6 @@ class TestFakeScreen(utils.QtileTests):
         assert self.c.window.info()['y'] == 0
         assert self.c.window.info()['group'] == 'b'
         assert self.c.window.info()['float_info'] == {'y': 0, 'x': 0, 'w': 164, 'h': 164}
-
 
     def test_float_change_screens(self):
         #add some eyes, and float clock
@@ -234,7 +237,6 @@ class TestFakeScreen(utils.QtileTests):
         assert self.c.window.info()['x'] == 0
         assert self.c.window.info()['y'] == 0
 
-
     def test_float_outside_edges(self):
         self.testXclock()
         self.c.window.toggle_floating()
@@ -292,7 +294,7 @@ class TestFakeScreen(utils.QtileTests):
             self.testXclock()
         for i in range(30):
 
-            old_group = (i+1)%4
+            old_group = (i + 1) % 4
             if old_group == 0:
                 name = 'a'
             elif old_group == 1:
@@ -302,7 +304,7 @@ class TestFakeScreen(utils.QtileTests):
             elif old_group == 3:
                 name = 'd'
 
-            self.c.to_screen((i+1)%4)
+            self.c.to_screen((i + 1) % 4)
             self.c.group['a'].toscreen()
         assert self.c.group['a'].info()['windows'] == ['xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock']
 
@@ -313,7 +315,7 @@ class TestFakeScreen(utils.QtileTests):
             self.testXclock()
         for i in range(30):
 
-            old_group = (i+1)%4
+            old_group = (i + 1) % 4
             if old_group == 0:
                 name = 'a'
             elif old_group == 1:
@@ -323,9 +325,10 @@ class TestFakeScreen(utils.QtileTests):
             elif old_group == 3:
                 name = 'd'
 
-            self.c.to_screen((i+1)%4)
+            self.c.to_screen((i + 1) % 4)
             self.c.group['a'].toscreen()
         assert self.c.group['a'].info()['windows'] == ['xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock']
+
     def test_ratio_to_fourth_screen(self):
         # change to ratio tile layout
         self.c.nextlayout()
@@ -339,7 +342,6 @@ class TestFakeScreen(utils.QtileTests):
         self.c.to_screen(3)
         self.c.group['a'].toscreen()
         assert self.c.group['a'].info()['windows'] == ['xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock', 'xclock']
-
 
 
 # since we are using fake screens don't have Xephyr put up 2

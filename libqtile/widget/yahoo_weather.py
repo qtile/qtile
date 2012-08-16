@@ -16,6 +16,7 @@ QUERY_URL = 'http://query.yahooapis.com/v1/public/yql?'
 WEATHER_URL = 'http://weather.yahooapis.com/forecastrss?'
 WEATHER_NS = 'http://xml.weather.yahoo.com/ns/rss/1.0'
 
+
 class YahooWeather(base._TextBox):
     ''' A weather widget, data provided by the Yahoo! Weather API
         Format options:
@@ -41,6 +42,7 @@ class YahooWeather(base._TextBox):
         ('metric', True, 'True to use metric/C, False to use imperial/F'),
         ('update_interval', 600, 'Update interval in seconds'),
     )
+
     def __init__(self, **config):
         base._TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
 
