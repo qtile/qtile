@@ -9,7 +9,7 @@ Configuration variables
 -----------------------
 
 :doc:`groups </manual/config/groups>`
-    A list of ``libqtile.manager.Group`` objects which defines the group names.
+    A list of ``libqtile.manager.Group`` objects which defines the group names. A group is a container for a bunch of windows, analogous to workspaces in other window managers. Each client window managed by the window manager belongs to exactly one group.
 
 :doc:`keys </manual/config/keys>`
     A list of ``libqtile.manager.Key`` objects which defines the keybindings.
