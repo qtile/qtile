@@ -135,10 +135,10 @@ layouts = [
     layout.TreeTab(sections=['Surfing', 'E-mail', 'Docs', 'Incognito']),
     layout.Slice('left', 320, wmclass='pino',
         fallback=layout.Slice('right', 320, role='roster',
-        fallback=layout.Stack(1, **border))),
+        fallback=layout.Stack([100], **border))),
     layout.Slice('left', 192, role='gimp-toolbox',
         fallback=layout.Slice('right', 256, role='gimp-dock',
-        fallback=layout.Stack(1, **border))),
+        fallback=layout.Stack([100], **border))),
     ]
 floating_layout = layout.Floating(**border)
 

@@ -41,7 +41,11 @@ class _WinStack(object):
             return None
         return self.lst[self.current]
 
-    def __init__(self):
+    def __init__(self, width):
+        """
+        :param width: float - fraction of the screen to use for this stack
+        """
+        self.width = width
         self.lst = []
 
     def toggleSplit(self):
@@ -131,12 +135,16 @@ class Stack(Layout):
         ("border_width", 1, "Border width."),
         ("name", "stack", "Name of this layout."),
     )
-    def __init__(self, stacks=2, **config):
+
+    def __init__(self, stacks=[50, 50], **config):
         """
-            - stacks: Number of stacks to start with.
+            - stacks: List of the widths of stacks to start with.
+                      The length of the list is the number of stacks.
         """
         Layout.__init__(self, **config)
-        self.stacks = [_WinStack() for i in range(stacks)]
+        total = float(sum(stacks))
+        widths = [float(x) / total for x in stacks]
+        self.stacks = [_WinStack(width) for width in widths]
 
     @property
     def currentStack(self):
@@ -152,7 +160,7 @@ class Stack(Layout):
     def clone(self, group):
         c = Layout.clone(self, group)
         # These are mutable
-        c.stacks = [_WinStack() for i in self.stacks]
+        c.stacks = [_WinStack(s.width) for s in self.stacks]
         return c
 
     def _findNext(self, lst, offset):
@@ -258,9 +266,11 @@ class Stack(Layout):
                 return n.cw
 
     def configure(self, c, screen):
+        offset = 0
         for i, s in enumerate(self.stacks):
             if c in s:
                 break
+            offset += s.width
         else:
             c.hide()
 
@@ -269,8 +279,8 @@ class Stack(Layout):
         else:
             px = self.group.qtile.colorPixel(self.border_normal)
 
-        columnWidth = int(screen.width/float(len(self.stacks)))
-        xoffset = screen.x + i*columnWidth
+        columnWidth = int(screen.width * s.width)
+        xoffset = screen.x + int(screen.width * offset)
         winWidth = columnWidth - 2*self.border_width
 
         if s.split:
@@ -353,7 +363,8 @@ class Stack(Layout):
         """
             Add another stack to the layout.
         """
-        self.stacks.append(_WinStack())
+        width = 1.0 / float(len(self.stacks) + 1)
+        self.stacks.append(_WinStack(width))
         self.group.layoutAll()
 
     def cmd_rotate(self):

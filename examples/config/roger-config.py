@@ -89,7 +89,7 @@ for i in groups:
 
 layouts = [
     layout.Max(),
-    layout.Stack(stacks=2),
+    layout.Stack(stacks=[50, 50]),
     layout.Tile(ratio=0.25),
 ]
 
