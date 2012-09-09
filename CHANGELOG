@@ -1,0 +1,31 @@
+qtile 0.5:
+    * features
+        - Test framework is now nose
+        - Several install guides for various OSes
+        - New widgets: battery based icon, MPRIS1, canto, current layout, yahoo
+          weather, sensors
+        - Several improvements to old widgets (e.g. battery widget displays low
+          battery in red)
+        - More sane way to handle configuration files
+        - Promote dgroups to a first class entity in libqtile
+        - Allow layouts to be named on an instance level, so you can:
+            layouts = [
+                # a layout just for gimp
+                layout.Slice('left', 192, name='gimp', role='gimp-toolbox',
+                    fallback=layout.Slice('right', 256, role='gimp-dock',
+                    fallback=layout.Stack(stacks=1, **border_args)))
+            ]
+            ...
+
+            dynamic_groups = { 'gimp': {'layout': 'gimp'} }
+
+            Dgroups(..., dynamic_groups, ...)
+
+    * bugfixes
+        - Fix X races in a more sane way
+        - Minor typo fixes to most widgets
+        - Fix several crashes when drawing systray icons too early
+        - Create directories for qtile socket as necessary
+        - PEP8 formatting updates
+        - All unit tests pass
+
