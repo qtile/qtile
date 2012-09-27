@@ -14,8 +14,8 @@ class TestConfig:
         libqtile.manager.Group("d")
     ]
     layouts = [
-                libqtile.layout.stack.Stack(stacks=1),
-                libqtile.layout.stack.Stack(2),
+                libqtile.layout.stack.Stack(stacks=[100]),
+                libqtile.layout.stack.Stack([50, 50]),
                 libqtile.layout.max.Max()
             ]
     floating_layout = libqtile.layout.floating.Floating(float_rules=[dict(wmclass="xclock")])
@@ -52,8 +52,8 @@ class BareConfig:
         libqtile.manager.Group("d")
     ]
     layouts = [
-                libqtile.layout.stack.Stack(stacks=1),
-                libqtile.layout.stack.Stack(2)
+                libqtile.layout.stack.Stack(stacks=[100]),
+                libqtile.layout.stack.Stack([50, 50])
             ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = [
@@ -785,8 +785,8 @@ class _Config:
         libqtile.manager.Group("d")
     ]
     layouts = [
-                libqtile.layout.stack.Stack(stacks=1),
-                libqtile.layout.stack.Stack(2)
+                libqtile.layout.stack.Stack(stacks=[100]),
+                libqtile.layout.stack.Stack([50, 50])
             ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = [

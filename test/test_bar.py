@@ -13,7 +13,7 @@ class GBConfig:
         libqtile.manager.Group("dddd"),
         libqtile.manager.Group("Pppy")
     ]
-    layouts = [libqtile.layout.stack.Stack(stacks=1)]
+    layouts = [libqtile.layout.stack.Stack(stacks=[100])]
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
         libqtile.manager.Screen(
@@ -134,7 +134,7 @@ class GeomConf:
         libqtile.manager.Group("c"),
         libqtile.manager.Group("d")
     ]
-    layouts = [libqtile.layout.stack.Stack(stacks=1)]
+    layouts = [libqtile.layout.stack.Stack(stacks=[100])]
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
         libqtile.manager.Screen(

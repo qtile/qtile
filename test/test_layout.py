@@ -56,8 +56,8 @@ class StackConfig:
         libqtile.manager.Group("d")
     ]
     layouts = [
-        layout.Stack(stacks=2),
-        layout.Stack(stacks=1),
+        layout.Stack(stacks=[50, 50]),
+        layout.Stack(stacks=[100]),
     ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = []
@@ -425,13 +425,13 @@ class SliceConfig:
     ]
     layouts = [
         layout.Slice('left', 200, wname='slice',
-            fallback=layout.Stack(stacks=1, border_width=0)),
+            fallback=layout.Stack(stacks=[100], border_width=0)),
         layout.Slice('right', 200, wname='slice',
-            fallback=layout.Stack(stacks=1, border_width=0)),
+            fallback=layout.Stack(stacks=[100], border_width=0)),
         layout.Slice('top', 200, wname='slice',
-            fallback=layout.Stack(stacks=1, border_width=0)),
+            fallback=layout.Stack(stacks=[100], border_width=0)),
         layout.Slice('bottom', 200, wname='slice',
-            fallback=layout.Stack(stacks=1, border_width=0)),
+            fallback=layout.Stack(stacks=[100], border_width=0)),
         ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = []

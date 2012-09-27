@@ -60,7 +60,10 @@ for i in groups:
 
 layouts = [
     layout.Max(),
-    layout.Stack(stacks=2)
+    layout.Stack(stacks=[50, 50]),
+    layout.Stack(stacks=[30, 70]),
+    layout.Stack(stacks=[70, 30]),
+
 ]
 
 screens = [

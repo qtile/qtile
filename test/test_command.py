@@ -23,7 +23,7 @@ class CallConfig(object):
         libqtile.manager.Group("b"),
     ]
     layouts = [
-        libqtile.layout.Stack(stacks=1),
+        libqtile.layout.Stack(stacks=[100]),
         libqtile.layout.Max(),
     ]
     floating_layout = libqtile.layout.floating.Floating()
@@ -122,9 +122,9 @@ class ServerConfig(object):
         libqtile.manager.Group("c"),
     ]
     layouts = [
-        libqtile.layout.Stack(stacks=1),
-        libqtile.layout.Stack(stacks=2),
-        libqtile.layout.Stack(stacks=3),
+        libqtile.layout.Stack(stacks=[100]),
+        libqtile.layout.Stack(stacks=[50, 50]),
+        libqtile.layout.Stack(stacks=[33, 33, 33]),
     ]
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
