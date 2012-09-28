@@ -20,6 +20,8 @@ qtile 0.5:
             dynamic_groups = { 'gimp': {'layout': 'gimp'} }
 
             Dgroups(..., dynamic_groups, ...)
+        - Better indication of which screen you're on with dual monitors (via
+          groups widget)
 
     * bugfixes
         - Fix X races in a more sane way
