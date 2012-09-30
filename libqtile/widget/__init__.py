@@ -27,3 +27,8 @@ except ImportError:
     # Requires Python >= 2.6 or simplejson
     pass
 from sensors import ThermalSensor
+try:
+    from wlan import Wlan
+except ImportError:
+    # Requires python-wifi
+    pass
