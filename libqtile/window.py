@@ -112,8 +112,10 @@ class _Window(command.CommandObject):
             # note that _float_info x and y are
             # really offsets, relative to screen x,y
             self._float_info = {
-                'x': g.x, 'y': g.y,
-                'w': g.width, 'h': g.height
+                'x': g.x - qtile.currentScreen.x,
+                'y': g.y - qtile.currentScreen.y,
+                'w': g.width,
+                'h': g.height,
             }
         except xcb.xproto.BadDrawable:
             # Whoops, we were too early, so let's ignore it for now and get the
