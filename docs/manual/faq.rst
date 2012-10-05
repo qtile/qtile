@@ -34,3 +34,18 @@ command. On my system, the output looks like this:
     mod3
     mod4        Super_L (0xce),  Hyper_L (0xcf)
     mod5        ISO_Level3_Shift (0x5c),  Mode_switch (0xcb)
+
+
+My "pointer mouse cursor" isn't the one I expect it to be!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Append the following to your ``~/.config/qtile/config.py`` file:
+
+.. code-block:: python
+
+    @hook.subscribe.startup
+    def runner():
+        import subprocess
+        subprocess.Popen(['xsetroot', '-cursor_name', 'left_ptr'])
+
+This will change your pointer cursor to the standard "Left Pointer" cursor you chose in your ``~/.Xresources`` file on Qtile startup.
