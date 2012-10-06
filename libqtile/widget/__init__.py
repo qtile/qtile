@@ -34,3 +34,5 @@ try:
 except ImportError:
     # Requires Python >= 2.6 or simplejson
     pass
+    
+from pacman import Pacman
