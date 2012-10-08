@@ -176,7 +176,8 @@ class MonadTall(SingleWindow):
     def cmd_normalize(self, redraw=True):
         "Evenly distribute screen-space among secondary clients"
         n = len(self.clients) - 1  # exclude main client, 0
-        if n > 0:  # if secondary clients exist
+        # if secondary clients exist
+        if n > 0 and self.group.screen is not None:
             self.sizes = []
             height = self.group.screen.dheight / n
             # set all sizes to calculated ratio
