@@ -33,9 +33,10 @@ class Pacman(base._TextBox):
         ('foreground', 'ff0000', 'Foreground Color'),
         ('unavailable', 'ffffff', 'Unavailable Color - no updates.')
     )
-    def __init__(self, interval=60, **config):
+    def __init__(self, execute=None, interval=60, **config):
         base._TextBox.__init__(self, '', bar.CALCULATED, **config)
         self.interval = interval
+        self.execute = execute
         self.text = str(self.updates())
         
 
@@ -60,3 +61,7 @@ class Pacman(base._TextBox):
             self.text = updates
             self.bar.draw()
         return True
+    
+    def click(self, x, y, button):
+        if button == 1 and self.execute is not None:
+            subprocess.Popen([self.execute], shell=True)
