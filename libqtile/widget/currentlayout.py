@@ -20,9 +20,10 @@ class CurrentLayout(base._TextBox):
         self.setup_hooks()
 
     def setup_hooks(self):
-        def hook_response(layout):
-            self.text = layout.name
-            self.bar.draw()
+        def hook_response(layout, group):
+            if group.screen  is not None and group.screen == self.bar.screen:
+                self.text = layout.name
+                self.bar.draw()
         hook.subscribe.layout_change(hook_response)
 
     def click(self, x, y, button):
