@@ -24,7 +24,8 @@ class Mpd(base._TextBox):
         ("padding", None, "Mpd widget padding. Calculated if None."),
         ("background", "000000", "Background colour"),
         ("foreground", "cccccc", "Foreground colour"),
-        ("foreground_progress", "ffffff", "Foreground progress colour")
+        ("foreground_progress", "ffffff", "Foreground progress colour"),
+        ("reconnect", False, "Choose if the widget should try to keep reconnect.")
     )
 
     def __init__(self, width=bar.CALCULATED, host='localhost', port=6600,
@@ -109,45 +110,49 @@ class Mpd(base._TextBox):
         atexit.register(self.mpdDisconnect)
 
     def update(self):
-        if not self.connect(True):
-            return False
+        if self.connect(True):
+            try:
+                status = self.client.status()
+                song = self.client.currentsong()
+                volume = status.get('volume', '-1')
+                if song:
+                    artist = ''
+                    title = ''
+                    if 'artist' in song:
+                        artist = song['artist'].decode('utf-8')
+                    if 'title' in song:
+                        title = song['title'].decode('utf-8')
 
-        try:
-            status = self.client.status()
-            song = self.client.currentsong()
-            volume = status.get('volume', '-1')
-            if song:
-                artist = ''
-                title = ''
-                if 'artist' in song:
-                    artist = song['artist'].decode('utf-8')
-                if 'title' in song:
-                    title = song['title'].decode('utf-8')
+                    if 'artist' not in song and 'title' not in song:
+                        playing = song.get('file', '??')
+                    else:
+                        playing = u'%s − %s' % (artist, title)
 
-                if 'artist' not in song and 'title' not in song:
-                    playing = song.get('file', '??')
+                    if status and status.get('time', None):
+                        elapsed, total = status['time'].split(':')
+                        percent = float(elapsed) / float(total)
+                        progress = int(percent * len(playing))
+                        playing = '<span color="%s">%s</span>%s' % (
+                            utils.hex(self.foreground_progress),
+                            utils.escape(playing[:progress].encode('utf-8')),
+                            utils.escape(playing[progress:].encode('utf-8')))
+                    else:
+                        playing = utils.escape(playing)
                 else:
-                    playing = u'%s − %s' % (artist, title)
+                    playing = 'Stopped'
 
-                if status and status.get('time', None):
-                    elapsed, total = status['time'].split(':')
-                    percent = float(elapsed) / float(total)
-                    progress = int(percent * len(playing))
-                    playing = '<span color="%s">%s</span>%s' % (
-                        utils.hex(self.foreground_progress),
-                        utils.escape(playing[:progress].encode('utf-8')),
-                        utils.escape(playing[progress:].encode('utf-8')))
-                else:
-                    playing = utils.escape(playing)
+                playing = '%s [%s%%]' % (playing,
+                                         volume if volume != '-1' else '?')
+            except Exception:
+                self.log.exception('Mpd error on update')
+                playing = self.msg_nc
+                self.mpdDisconnect()
+        else:
+            if self.reconnect:
+                playing = self.msg_nc
             else:
-                playing = 'Stopped'
+                return False
 
-            playing = '%s [%s%%]' % (playing,
-                                     volume if volume != '-1' else '?')
-        except Exception:
-            self.log.exception('Mpd error on update')
-            playing = self.msg_nc
-            self.mpdDisconnect()
         if self.text != playing:
             self.text = playing
             self.bar.draw()
