@@ -746,6 +746,7 @@ class Qtile(command.CommandObject):
             config.main(self)
 
         self.groups += self.config.groups[:]
+
         for i in self.groups:
             i._configure(config.layouts, config.floating_layout, self)
             self.groupMap[i.name] = i
@@ -792,6 +793,8 @@ class Qtile(command.CommandObject):
         hook.fire("startup")
 
         self.scan()
+        self.update_net_desktops()
+        hook.subscribe.setgroup(self.update_net_desktops)
 
     def _process_fake_screens(self):
         """
@@ -889,6 +892,18 @@ class Qtile(command.CommandObject):
             )
         del(self.keyMap[key_index])
 
+    def update_net_desktops(self):
+        try:
+            index = self.groups.index(self.currentGroup)
+        except:
+            index = 0
+
+        self.root.set_property("_NET_NUMBER_OF_DESKTOPS", len(self.groups))
+        self.root.set_property("_NET_DESKTOP_NAMES", "\0".join(
+                [i.name for i in self.groups])
+            )
+        self.root.set_property("_NET_CURRENT_DESKTOP", index)
+
     def addGroup(self, name):
         if name not in self.groupMap.keys():
             g = Group(name)
@@ -897,6 +912,8 @@ class Qtile(command.CommandObject):
                 self.config.layouts, self.config.floating_layout, self)
             self.groupMap[name] = g
             hook.fire("addgroup")
+            self.update_net_desktops()
+
             return True
         return False
 
@@ -913,6 +930,8 @@ class Qtile(command.CommandObject):
             self.groups.remove(group)
             del(self.groupMap[name])
             hook.fire("delgroup")
+            self.update_net_desktops()
+
 
     def registerWidget(self, w):
         """
@@ -1207,6 +1226,20 @@ class Qtile(command.CommandObject):
         s = self.find_screen(e.root_x, e.root_y)
         if s:
             self.toScreen(s.index)
+
+    def handle_ClientMessage(self, event):
+        atoms = self.conn.atoms
+
+        opcode = xcb.xproto.ClientMessageData(event, 0, 20).data32[2]
+        data = xcb.xproto.ClientMessageData(event, 12, 20)
+
+        # handle change of desktop
+        if atoms["_NET_CURRENT_DESKTOP"] == opcode:
+            index = data.data32[0]
+            try:
+                self.currentScreen.setGroup(self.groups[index])
+            except IndexError:
+                self.log.info("Invalid Desktop Index: %s" % index)
 
     def handle_KeyPress(self, e):
         keysym = self.conn.code_to_syms[e.detail][0]
@@ -1638,6 +1671,7 @@ class Qtile(command.CommandObject):
         self.groups[indexa], self.groups[indexb] = \
                 self.groups[indexb], self.groups[indexa]
         hook.fire("setgroup")
+        self.update_net_desktops()
 
     def cmd_togroup(self, prompt="group: ", widget="prompt"):
         """
