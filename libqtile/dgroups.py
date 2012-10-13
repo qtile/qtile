@@ -146,8 +146,11 @@ class DGroups(object):
                     if group_opts:
                         if group_added:
                             layout = group_opts.get('layout')
+                            ratio = group_opts.get('ratio')
                             if layout:
                                 group_obj.layout = layout
+                            if ratio:
+                                group_obj.ratio = ratio
                         master = group_opts.get('master')
                         if master:
                             group_obj.layout.shuffle(
