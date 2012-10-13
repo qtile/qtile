@@ -123,6 +123,11 @@ class DGroups(object):
             self.qtile.log.info('Remove dgroup source')
             gobject.source_remove(self.timeout[client])
             del(self.timeout[client])
+
+        # ignore static windows
+        if client.defunct:
+            return
+
         group_set = False
         intrusive = False
 
