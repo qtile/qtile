@@ -62,6 +62,7 @@ class File(object):
             "mouse",
             "groups",
             "follow_mouse_focus",
+            "follow_mouse_focus_on_other_screen",
             "cursor_warp",
             "layouts",
             "floating_layout",

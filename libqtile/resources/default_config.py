@@ -96,6 +96,7 @@ screens = [
 
 main = None
 follow_mouse_focus = True
+follow_mouse_focus_on_other_screen = True
 cursor_warp = False
 floating_layout = layout.Floating()
 mouse = ()
