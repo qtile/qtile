@@ -8,6 +8,7 @@ class Tile(Layout):
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width."),
         ("name", "tile", "Name of this layout."),
+        ("margin", 0, "Margin of the layout"),
     )
 
     def __init__(self, ratio=0.618, masterWindows=1, expand=True,
@@ -143,6 +144,7 @@ class Tile(Layout):
         screenHeight = screen.height
         x = y = w = h = 0
         borderWidth = self.border_width
+        margin = self.margin
         if self.clients and c in self.clients:
             pos = self.clients.index(c)
             if c in self.master_windows:
@@ -162,10 +164,10 @@ class Tile(Layout):
             else:
                 bc = self.group.qtile.colorPixel(self.border_normal)
             c.place(
-                x,
-                y,
-                w - borderWidth * 2,
-                h - borderWidth * 2,
+                x+margin,
+                y+margin,
+                w-margin*2-borderWidth*2,
+                h-margin*2-borderWidth*2,
                 borderWidth,
                 bc,
                 )

@@ -73,6 +73,7 @@ class Volume(base._TextBox):
                                  '%s.png' % img_name))
             except cairo.Error:
                 self.theme_path = None
+                self.width_type = bar.CALCULATED
                 self.qtile.log.exception('Volume switching to text mode')
                 return
             input_width = img.get_width()
