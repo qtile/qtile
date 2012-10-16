@@ -875,7 +875,9 @@ class Window(_Window):
         if self.qtile.config.follow_mouse_focus and \
                         self.group.currentWindow != self:
             self.group.focus(self, False)
-        if self.group.screen and self.qtile.currentScreen != self.group.screen:
+        if self.group.screen and \
+            self.qtile.currentScreen != self.group.screen and \
+            self.qtile.config.follow_mouse_focus:
             self.qtile.toScreen(self.group.screen.index)
         return True
 
