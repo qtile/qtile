@@ -6,8 +6,15 @@ import base
 
 
 class NullCompleter:
+    def __init__(self, qtile):
+        self.qtile = qtile
+        self.thisfinal = ""
+
     def actual(self, qtile):
-        return None
+        return self.thisfinal
+
+    def reset(self):
+        pass
 
     def complete(self, txt):
         return txt
