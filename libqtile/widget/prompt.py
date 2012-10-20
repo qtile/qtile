@@ -71,7 +71,8 @@ class GroupCompleter:
     def __init__(self, qtile):
         self.qtile = qtile
         self.thisfinal = None
-        self.lookup, self.offset = None, None
+        self.lookup = None
+        self.offset = None
 
     def actual(self):
         """

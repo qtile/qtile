@@ -1722,6 +1722,15 @@ class Qtile(command.CommandObject):
 
     def cmd_qtilecmd(self, prompt="command: ",
                      widget="prompt", messenger="xmessage"):
+        """
+            Execute a Qtile command using the client syntax.
+            Tab completeion aids navigation of the command tree.
+
+            prompt: Text to display at the prompt (default: "command: ").
+            widget: Name of the prompt widget (default: "prompt").
+            messenger: command to display output (default: "xmessage").
+                Set this to None to disable.
+        """
         def f(cmd):
             if cmd:
                 c = command._Client(self)
@@ -1744,7 +1753,8 @@ class Qtile(command.CommandObject):
                 if result != None:
                     from pprint import pformat
                     message = pformat(result)
-                    self.cmd_spawn('xmessage "%s"' % message)
+                    if messenger:
+                        self.cmd_spawn('%s "%s"' % (messenger, message))
                     self.log.info(result)
 
         mb = self.widgetMap[widget]
