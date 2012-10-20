@@ -1707,18 +1707,24 @@ class Qtile(command.CommandObject):
 
         mb.startInput(prompt, f, "group")
 
-    def cmd_spawncmd(self, prompt="spawn: ", widget="prompt"):
+    def cmd_spawncmd(self, prompt="spawn: ", widget="prompt",
+                     command="%s", complete="cmd"):
         """
             Spawn a command using a prompt widget, with tab-completion.
 
-            prompt: Text with which to prompt user.
+            prompt: Text with which to prompt user (default: "spawn: ").
             widget: Name of the prompt widget (default: "prompt").
+            command: command template (default: "%s").
+            complete: Tab completion function (default: "cmd")
         """
+        def f(args):
+            if args:
+                self.cmd_spawn(command % args)
         try:
             mb = self.widgetMap[widget]
-            mb.startInput(prompt, self.cmd_spawn, "cmd")
+            mb.startInput(prompt, f, complete)
         except:
-            self.log.error("No widget named '%s' present." % widget)
+            self.log.error("No widget named '%s' present."%widget)
 
     def cmd_qtilecmd(self, prompt="command: ",
                      widget="prompt", messenger="xmessage"):
