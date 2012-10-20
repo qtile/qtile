@@ -249,10 +249,10 @@ class Client(_CommandRoot):
             raise CommandException(val)
 
 
-class _Client(_CommandRoot):
+class CommandRoot(_CommandRoot):
     def __init__(self, qtile):
         self.qtile = qtile
-        super(_Client, self).__init__()
+        super(CommandRoot, self).__init__()
 
     def call(self, selectors, name, *args, **kwargs):
         state, val = self.qtile.server.call((selectors, name, args, kwargs))

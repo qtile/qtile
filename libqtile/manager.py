@@ -1739,7 +1739,7 @@ class Qtile(command.CommandObject):
         """
         def f(cmd):
             if cmd:
-                c = command._Client(self)
+                c = command.CommandRoot(self)
                 try:
                    cmd_arg = str(cmd).split(' ')
                 except AttributeError:

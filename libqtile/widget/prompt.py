@@ -67,7 +67,7 @@ class FileCompleter:
 class QshCompleter:
     def __init__(self, qtile):
         self.qtile = qtile
-        self.client = command._Client(self.qtile)
+        self.client = command.CommandRoot(self.qtile)
         self.thisfinal = None
         self.reset()
 
