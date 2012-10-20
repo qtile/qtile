@@ -19,6 +19,50 @@ class NullCompleter:
     def complete(self, txt):
         return txt
 
+class FileCompleter:
+    def __init__(self, qtile, _testing=False):
+        self._testing = _testing
+        self.qtile = qtile
+        self.thisfinal = None
+        self.reset()
+
+    def actual(self):
+        return self.thisfinal
+
+    def reset(self):
+        self.lookup = None
+
+    def complete(self, txt):
+        """
+        Returns the next completion for txt, or None if there is no completion.
+        """
+        if not self.lookup:
+            self.lookup = []
+            if txt == "" or txt[0] not in "~/":
+                txt = "~/" + txt
+            path = os.path.expanduser(txt)
+            if os.path.isdir(path):
+                files = glob.glob(os.path.join(path, "*"))
+                prefix = txt
+            else:
+                files = glob.glob(path + "*")
+                prefix = os.path.dirname(txt)
+                prefix = prefix.rstrip("/") or "/"
+            for f in files:
+                display = os.path.join(prefix, os.path.basename(f))
+                if os.path.isdir(f):
+                    display += "/"
+                self.lookup.append((display, f))
+                self.lookup.sort()
+            self.offset = -1
+            self.lookup.append((txt, txt))
+        self.offset += 1
+        if self.offset >= len(self.lookup):
+            self.offset = 0
+        ret = self.lookup[self.offset]
+        self.thisfinal = ret[1]
+        return ret[0]
+
 
 class QshCompleter:
     def __init__(self, qtile):
@@ -193,6 +237,7 @@ class Prompt(base._TextBox):
         .startInput method on this class.
     """
     completers = {
+        "file": FileCompleter,
         "qsh": QshCompleter,
         "cmd": CommandCompleter,
         "group": GroupCompleter,
