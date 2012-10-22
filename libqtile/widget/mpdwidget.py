@@ -120,13 +120,17 @@ class Mpd(base._TextBox):
         return True
 
     def click(self, x, y, button):
-        if button == 1:
-            if not self.client.status():
-                self.client.play()
-            else:
-                self.client.pause()
-        elif button == 4:
-            self.client.previous()
-        elif button == 5:
-            self.client.next()
-
+        try:
+            if button == 1:
+                if not self.client.status():
+                    self.client.play()
+                else:
+                    self.client.pause()
+            elif button == 4:
+                self.client.previous()
+            elif button == 5:
+                self.client.next()
+        except (SocketError, ProtocolError, ConnectionError), e:
+            print "Got error during query.  Disconnecting.  Error was: %s" % str(e)
+            playing = self.msg_nc
+            self.mpdDisconnect()
