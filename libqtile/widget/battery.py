@@ -108,9 +108,6 @@ class Battery(_Battery):
     def __init__(self, low_percentage=0.10, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "BAT", **config)
         self.low_percentage = low_percentage
-        if not self.calc_time_left and \
-                self.format == '{char}·{percent:2.0%}·{hour:d}:{min:02d}':
-            self.format='{char} {percent:2.0%}'
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
