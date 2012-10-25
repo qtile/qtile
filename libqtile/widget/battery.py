@@ -101,12 +101,15 @@ class Battery(_Battery):
         ('charge_char', '^', 'Character to indicate the battery is charging'),
         ('discharge_char', 'V', 'Character to indicate the battery'
          ' is discharging'),
+        ('calc_time_left', True, 'calculate time left or not'),
         *_Battery.defaults.defaults
     )
 
     def __init__(self, low_percentage=0.10, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "BAT", **config)
         self.low_percentage = low_percentage
+        if not self.calc_time_left:
+            self.format='{char} {percent:2.0%}'
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
@@ -121,18 +124,20 @@ class Battery(_Battery):
         try:
             if info['stat'] == DISCHARGING:
                 char = self.discharge_char
-                time = info['now'] / info['power']
+                if self.calc_time_left:
+                    time = info['now'] / info['power']
             elif info['stat'] == CHARGING:
                 char = self.charge_char
-                time = (info['full'] - info['now']) / info['power']
+                if self.calc_time_left:
+                    time = (info['full'] - info['now']) / info['power']
             else:
                 return 'Full'
         except ZeroDivisionError:
-            time = -1
+            return 'Error: power_now is zero'
 
         ## Calculate the battery percentage and time left
-        if time >= 0:
-            hour = int(time)
+        if self.calc_time_left:
+            hour = int(tatil-ime)
             min = int(time * 60) % 60
         else:
             hour = -1
