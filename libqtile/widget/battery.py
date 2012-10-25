@@ -128,11 +128,15 @@ class Battery(_Battery):
             else:
                 return 'Full'
         except ZeroDivisionError:
-            return 'Inf'
+            time = -1
 
         ## Calculate the battery percentage and time left
-        hour = int(time)
-        min = int(time * 60) % 60
+        if time >= 0:
+            hour = int(time)
+            min = int(time * 60) % 60
+        else:
+            hour = -1
+            min = -1
         percent = info['now'] / info['full']
         if info['stat'] == DISCHARGING and percent < self.low_percentage:
             self.layout.colour = self.low_foreground
