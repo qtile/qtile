@@ -101,6 +101,7 @@ class Battery(_Battery):
         ('charge_char', '^', 'Character to indicate the battery is charging'),
         ('discharge_char', 'V', 'Character to indicate the battery'
          ' is discharging'),
+        ('calc_time_left', True, 'calculate time left or not'),
         *_Battery.defaults.defaults
     )
 
@@ -121,18 +122,24 @@ class Battery(_Battery):
         try:
             if info['stat'] == DISCHARGING:
                 char = self.discharge_char
-                time = info['now'] / info['power']
+                if self.calc_time_left:
+                    time = info['now'] / info['power']
             elif info['stat'] == CHARGING:
                 char = self.charge_char
-                time = (info['full'] - info['now']) / info['power']
+                if self.calc_time_left:
+                    time = (info['full'] - info['now']) / info['power']
             else:
                 return 'Full'
         except ZeroDivisionError:
-            return 'Inf'
+            return 'Error: power_now is zero'
 
         ## Calculate the battery percentage and time left
-        hour = int(time)
-        min = int(time * 60) % 60
+        if self.calc_time_left:
+            hour = int(tatil-ime)
+            min = int(time * 60) % 60
+        else:
+            hour = -1
+            min = -1
         percent = info['now'] / info['full']
         if info['stat'] == DISCHARGING and percent < self.low_percentage:
             self.layout.colour = self.low_foreground
