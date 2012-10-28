@@ -28,6 +28,9 @@ class WindowTabs(base._TextBox):
         hook.subscribe.focus_change(self.update)
         hook.subscribe.float_change(self.update)
 
+    def click(self, x, y, button):
+        self.bar.screen.group.cmd_next_window()
+
     def update(self):
         names = []
         for w in self.bar.screen.group.windows:
