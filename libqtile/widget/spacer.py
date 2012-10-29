@@ -15,3 +15,4 @@ class Spacer(base._Widget):
 
     def draw(self):
         self.clear()
+        self.drawer.draw(self.offset, self.width)
