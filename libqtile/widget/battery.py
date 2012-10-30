@@ -193,7 +193,7 @@ class BatteryIcon(_Battery):
     def _get_icon_key(self):
         key = 'battery'
         info = self._get_info()
-        if info == False:
+        if info == False or not info.get('full'):
             key += '-missing'
         else:
             percent = info['now'] / info['full']
