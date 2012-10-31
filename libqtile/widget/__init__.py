@@ -1,3 +1,4 @@
+from backlight import Backlight
 from battery import Battery, BatteryIcon
 from clock import Clock
 from currentlayout import CurrentLayout
