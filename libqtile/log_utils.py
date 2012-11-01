@@ -43,7 +43,6 @@ class ColorFormatter(logging.Formatter):
 def init_log(log_level=logging.WARNING, logger='qtile'):
     handler = logging.FileHandler(
         os.path.expanduser('~/.%s.log' % logger))
-    handler.setLevel(logging.WARNING)
     handler.setFormatter(
         logging.Formatter(
             "%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s"))
