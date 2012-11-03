@@ -53,9 +53,6 @@ class Floating(Layout):
         """
         if win.window.get_wm_type() in self.auto_float_types:
             return True
-        if win.window.get_net_wm_state() == 'fullscreen':
-            win._float_state = window.FULLSCREEN
-            return True
         for rule_dict in self.float_rules:
             if win.match(**rule_dict):
                 return True
