@@ -112,8 +112,8 @@ class _Window(command.CommandObject):
             # note that _float_info x and y are
             # really offsets, relative to screen x,y
             self._float_info = {
-                'x': g.x - qtile.currentScreen.x,
-                'y': g.y - qtile.currentScreen.y,
+                'x': g.x,
+                'y': g.y,
                 'w': g.width,
                 'h': g.height,
             }
