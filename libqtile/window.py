@@ -882,20 +882,22 @@ class Window(_Window):
         return True
 
     def handle_ConfigureRequest(self, e):
+        self.qtile.log.info(repr(e.__dict__))
         if self.qtile._drag and self.qtile.currentWindow == self:
             # ignore requests while user is dragging window
             return
         if getattr(self, 'floating', False):
             # only obey resize for floating windows
+            screen = self.group.screen
             cw = xcb.xproto.ConfigWindow
-            if e.value_mask & cw.X:
-                self.x = e.x
-            if e.value_mask & cw.Y:
-                self.y = e.y
             if e.value_mask & cw.Width:
                 self.width = e.width
             if e.value_mask & cw.Height:
                 self.height = e.height
+            if e.value_mask & cw.X:
+                self.x = screen.x + ((screen.width - self.width) // 2)
+            if e.value_mask & cw.Y:
+                self.y = screen.y + ((screen.height - self.height) // 2)
         if self.group and self.group.screen:
             self.place(
                 self.x,
