@@ -14,8 +14,8 @@ class WindowName(base._TextBox):
         ("foreground", "ffffff", "Foreground colour."),
     )
 
-    def __init__(self, **config):
-        base._TextBox.__init__(self, width=bar.STRETCH, **config)
+    def __init__(self, width=bar.STRETCH, **config):
+        base._TextBox.__init__(self, width=width, **config)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
