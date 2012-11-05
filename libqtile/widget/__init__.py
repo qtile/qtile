@@ -14,6 +14,7 @@ from systray import Systray
 from textbox import TextBox
 from volume import Volume
 from windowname import WindowName
+from windowtabs import WindowTabs
 
 try:
     from canto import Canto
