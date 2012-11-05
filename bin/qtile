@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import locale
 import logging
 from libqtile import confreader, manager
 
@@ -72,6 +73,7 @@ def make_qtile():
 
 
 if __name__ == "__main__":
+    locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
     q = make_qtile()
     try:
         q.loop()
