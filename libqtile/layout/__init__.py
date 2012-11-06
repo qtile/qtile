@@ -1,6 +1,6 @@
 from stack import Stack
 from max import Max
-from xmonad import MonadTall
+from xmonad import MonadTall, MonadWide
 from tile import Tile
 from floating import Floating
 from ratiotile import RatioTile
