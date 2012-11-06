@@ -28,8 +28,8 @@ class Backlight(base._TextBox):
         ('update_delay', .2, 'The delay in seconds between updates'),
     )
 
-    def __init__(self, width=bar.CALCULATED, **config):
-        base._TextBox.__init__(self, "LIGHT", **config)
+    def __init__(self, **config):
+        base._TextBox.__init__(self, "LIGHT", bar.CALCULATED, **config)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
