@@ -258,6 +258,7 @@ class Prompt(base._TextBox):
         self.active = False
         self.blink = False
         self.completer = None
+        self._blinkwidth = 0
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
@@ -280,6 +281,24 @@ class Prompt(base._TextBox):
         self._update()
         self.bar.widget_grab_keyboard(self)
 
+    def _calculate_real_width(self):
+        if self.blink:
+            return min(self.layout.width,
+                self.bar.width) + self.actual_padding * 2
+        else:
+            _text = self.text
+            self.text = _text + "_"
+            width = min(self.layout.width,
+                self.bar.width) + self.actual_padding * 2
+            self.text = _text
+            return width
+
+    def calculate_width(self):
+        if self.text:
+            return self._calculate_real_width()
+        else:
+            return 0
+
     def _blink(self):
         self.blink = not self.blink
         self._update()
@@ -291,7 +310,7 @@ class Prompt(base._TextBox):
             if self.blink:
                 self.text = self.text + "_"
             else:
-                self.text = self.text + " "
+                self.text = self.text
         else:
             self.text = ""
         self.bar.draw()
