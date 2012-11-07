@@ -104,8 +104,8 @@ class Battery(_Battery):
         *_Battery.defaults.defaults
     )
 
-    def __init__(self, low_percentage=0.10, width=bar.CALCULATED, **config):
-        base._TextBox.__init__(self, "BAT", **config)
+    def __init__(self, low_percentage=0.10, **config):
+        base._TextBox.__init__(self, "BAT", bar.CALCULATED, **config)
         self.low_percentage = low_percentage
 
     def _configure(self, qtile, bar):
