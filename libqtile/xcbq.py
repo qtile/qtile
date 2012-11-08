@@ -533,19 +533,22 @@ class Window:
                     "Must specify type for unknown property.")
             else:
                 type, _ = PropertyMap[prop]
-        r = self.conn.conn.core.GetProperty(
-            False, self.wid,
-            self.conn.atoms[prop] if isinstance(prop, basestring) else prop,
-            self.conn.atoms[type] if isinstance(type, basestring) else type,
-            0, (2 ** 32) - 1
-        ).reply()
+        try:
+            r = self.conn.conn.core.GetProperty(
+                False, self.wid,
+                self.conn.atoms[prop] if isinstance(prop, basestring) else prop,
+                self.conn.atoms[type] if isinstance(type, basestring) else type,
+                0, (2 ** 32) - 1
+            ).reply()
 
-        if not r.value_len:
+            if not r.value_len:
+                return None
+            elif unpack is not None:
+                return struct.unpack_from(unpack, r.value.buf())
+            else:
+                return r
+        except xcb.proto.BadWindow:
             return None
-        elif unpack is not None:
-            return struct.unpack_from(unpack, r.value.buf())
-        else:
-            return r
 
     def list_properties(self):
         r = self.conn.conn.core.ListProperties(self.wid).reply()
