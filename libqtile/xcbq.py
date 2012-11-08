@@ -547,7 +547,7 @@ class Window:
                 return struct.unpack_from(unpack, r.value.buf())
             else:
                 return r
-        except xcb.proto.BadWindow:
+        except xcb.xproto.BadWindow:
             return None
 
     def list_properties(self):
