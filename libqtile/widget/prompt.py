@@ -258,7 +258,6 @@ class Prompt(base._TextBox):
         self.active = False
         self.blink = False
         self.completer = None
-        self._blinkwidth = 0
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
