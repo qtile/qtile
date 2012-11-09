@@ -9,6 +9,7 @@ from notify import Notify
 from prompt import Prompt
 from sensors import ThermalSensor
 from sep import Sep
+from she import She
 from spacer import Spacer
 from systray import Systray
 from textbox import TextBox
