@@ -50,7 +50,7 @@ class Slice(Delegate):
         ("name", "max", "Name of this layout."),
         )
 
-    def __init__(self,
+    def __init__(self, side, width,
                  wname=None, wmclass=None, role=None,
                  fallback=Max(), **config):
         if wname == None and wmclass == None and role == None:
@@ -60,7 +60,7 @@ class Slice(Delegate):
             'wmclass': wmclass,
             'role': role,
             }
-        Delegate.__init__(self, **config)
+        Delegate.__init__(self, width=width, side=side, **config)
         self._slice = Single()
         self._fallback = fallback
 
