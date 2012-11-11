@@ -275,7 +275,7 @@ class _Window(command.CommandObject):
     @state.setter
     def state(self, val):
         if val in (WithdrawnState, NormalState, IconicState):
-            self.window.set_property('WM_STATE', [val, 0])
+            self.window.set_property('_NET_WM_STATE', [val, 0])
 
     def setOpacity(self, opacity):
         if 0.0 <= opacity <= 1.0:
@@ -924,6 +924,12 @@ class Window(_Window):
             self.updateName()
         elif name == "_NET_WM_VISIBLE_NAME":
             self.updateName()
+        elif name == "WM_ICON_NAME":
+            pass
+        elif name == "_NET_WM_ICON_NAME":
+            pass
+        elif name == "ZOOM":
+            pass
         elif name == "_NET_WM_WINDOW_OPACITY":
             pass
         elif name == "_NET_WM_STATE":
