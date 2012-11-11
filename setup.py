@@ -20,8 +20,6 @@ Features
       manipulate windows, update status bar widgets and more.
     * Qtile's remote scriptability makes it one of the most thoroughly
       unit-tested window mangers around.
-
-Qtile depends on the Python X Library (http://python-xlib.sourceforge.net/).
 """
 
 setup(
