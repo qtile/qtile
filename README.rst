@@ -23,6 +23,11 @@ Features
 * Qtile's remote scriptability makes it one of the most thoroughly
   unit-tested window mangers around.
 
+Current Release
+===============
+
+The current stable version of qtile is 0.5, released 2012-11-11.
+
 Community
 =========
 
