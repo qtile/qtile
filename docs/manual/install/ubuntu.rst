@@ -4,8 +4,8 @@ Installing on Ubuntu
 PPA on Launchpad
 ----------------
 
-Packages are available for both 11.10 (Oneiric Ocelot) and 12.04
-(Precise Pangolin):
+Packages are available for 11.10 (Oneiric Ocelot), 12.04 (Precise Pangolin),
+and 12.10 (Quantal Quetzal).
 
 .. code-block:: bash
 
