@@ -72,4 +72,4 @@ You start qtile simply with:
 
 *Contributed by Jonathan Sielhorst*
 
-.. _overlay: http://www.python.org/
+.. _overlay: https://github.com/baudvix/bvix-overlay
