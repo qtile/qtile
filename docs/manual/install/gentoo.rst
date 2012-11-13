@@ -18,6 +18,7 @@ py2cairo
 
 .. code-block:: bash
 
+    echo "dev-python/pycairo ~amd64 > /etc/portage/package.mask"
     echo "dev-python/pycairo xcb > /etc/portage/package.use"
 
 Install
