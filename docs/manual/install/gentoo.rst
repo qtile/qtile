@@ -16,19 +16,14 @@ You may apply these USE-Flags:  X, glib, opengl, svg and xcb to cairo
 py2cairo
 ~~~~~~~~
 
-I fixed the missing xpyb dependency in the portage ebuild. Should be upstream
-soon, but for now use pycairo from my overlay_.
-How to add an overlay is described in the README
-
 .. code-block:: bash
 
-    echo "dev-python/pycairo ~amd64 > /etc/portage/package.mask"
-    emerge -av 
+    echo "dev-python/pycairo xcb > /etc/portage/package.use"
 
 Install
-~~~~~~~
+-------
 
-You can find also a qtile ebuild in my overlay_. Simply unmask and install it
+Simply unmask and install it
 
 .. code-block:: bash
 
@@ -71,5 +66,3 @@ You start qtile simply with:
     qtile
 
 *Contributed by Jonathan Sielhorst*
-
-.. _overlay: https://github.com/baudvix/bvix-overlay
