@@ -275,7 +275,7 @@ class _Window(command.CommandObject):
     @state.setter
     def state(self, val):
         if val in (WithdrawnState, NormalState, IconicState):
-            self.window.set_property('_NET_WM_STATE', [val, 0])
+            self.window.set_property('WM_STATE', [val, 0])
 
     def setOpacity(self, opacity):
         if 0.0 <= opacity <= 1.0:
@@ -882,7 +882,6 @@ class Window(_Window):
         return True
 
     def handle_ConfigureRequest(self, e):
-        self.qtile.log.info(repr(e.__dict__))
         if self.qtile._drag and self.qtile.currentWindow == self:
             # ignore requests while user is dragging window
             return
@@ -932,9 +931,13 @@ class Window(_Window):
             pass
         elif name == "_NET_WM_WINDOW_OPACITY":
             pass
+        elif name == "WM_STATE":
+            pass
         elif name == "_NET_WM_STATE":
             self.updateState()
         elif name == "WM_PROTOCOLS":
+            pass
+        elif name == "_NET_WM_DESKTOP":
             pass
         elif name == "_NET_WM_USER_TIME":
             if not self.qtile.config.follow_mouse_focus and \
