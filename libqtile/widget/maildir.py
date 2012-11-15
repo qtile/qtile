@@ -42,7 +42,7 @@ class Maildir(base._TextBox):
         if isinstance(subFolders[0], basestring):
             for subFolder in subFolders:
                 self._subFolders.append({
-                    "subfolder": subFolder,
+                    "path": subFolder,
                     "label": subFolder
                 })
         else:
@@ -69,13 +69,13 @@ class Maildir(base._TextBox):
                 yield path.rsplit(":")[0]
 
         for subFolder in self._subFolders:
-            path = os.path.join(self._maildirPath, subFolder)
+            path = os.path.join(self._maildirPath, subFolder["path"])
             maildir = mailbox.Maildir(path)
-            state[subFolder] = 0
+            state[subFolder["label"]] = 0
 
             for file in to_maildir_fmt(os.listdir(os.path.join(path, "new"))):
                 if file in maildir:
-                    state[subFolder] += 1
+                    state[subFolder["label"]] += 1
 
         return state
 
