@@ -1,6 +1,7 @@
 from .. import hook, bar, manager
 import base
 
+
 class WindowName(base._TextBox):
     """
         Displays the name of the window that currently has focus.
@@ -12,8 +13,9 @@ class WindowName(base._TextBox):
         ("background", "000000", "Background colour."),
         ("foreground", "ffffff", "Foreground colour."),
     )
-    def __init__(self, **config):
-        base._TextBox.__init__(self, width=bar.STRETCH, **config)
+
+    def __init__(self, width=bar.STRETCH, **config):
+        base._TextBox.__init__(self, width=width, **config)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
@@ -32,7 +34,5 @@ class WindowName(base._TextBox):
             state = '_ '
         elif w.floating:
             state = 'V '
-        self.text = "%s%s" % (state,  w.name if w else " ")
+        self.text = "%s%s" % (state,  w.name if w and w.name else " ")
         self.bar.draw()
-
-

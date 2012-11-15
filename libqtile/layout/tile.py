@@ -1,13 +1,16 @@
 from base import Layout
 from .. import utils, manager
 
+
 class Tile(Layout):
     defaults = manager.Defaults(
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width."),
         ("name", "tile", "Name of this layout."),
+        ("margin", 0, "Margin of the layout"),
     )
+
     def __init__(self, ratio=0.618, masterWindows=1, expand=True,
         ratio_increment=0.05, add_on_top=True, shift_windows=False, **config):
         Layout.__init__(self, **config)
@@ -31,7 +34,7 @@ class Tile(Layout):
     def up(self):
         if self.shift_windows:
             self.shift_up()
-        else:                
+        else:
             self.shuffle(utils.shuffleUp)
 
     def down(self):
@@ -58,8 +61,8 @@ class Tile(Layout):
 
     def focus_next(self, win):
         idx = self.clients.index(win)
-        if len(self.clients) > idx+1:
-            return self.clients[idx+1]
+        if len(self.clients) > idx + 1:
+            return self.clients[idx + 1]
 
     def focus_last(self):
         if self.clients:
@@ -68,7 +71,7 @@ class Tile(Layout):
     def focus_prev(self, win):
         idx = self.clients.index(win)
         if idx > 0:
-            return self.clients[idx-1]
+            return self.clients[idx - 1]
 
     def get_next_index(self, currentindex):
         nextindex = currentindex + 1
@@ -79,7 +82,7 @@ class Tile(Layout):
     def get_previous_index(self, currentindex):
         previndex = currentindex - 1
         if previndex < 0:
-            previndex = len(self.clients) - 1;
+            previndex = len(self.clients) - 1
         return previndex
 
     def getNextClient(self):
@@ -107,7 +110,8 @@ class Tile(Layout):
 
     def shift(self, idx1, idx2):
         if self.clients:
-            self.clients[idx1], self.clients[idx2] = self.clients[idx2], self.clients[idx1]
+            self.clients[idx1], self.clients[idx2] = \
+                self.clients[idx2], self.clients[idx1]
             self.group.layoutAll(True)
 
     def clone(self, group):
@@ -140,29 +144,30 @@ class Tile(Layout):
         screenHeight = screen.height
         x = y = w = h = 0
         borderWidth = self.border_width
+        margin = self.margin
         if self.clients and c in self.clients:
             pos = self.clients.index(c)
             if c in self.master_windows:
-                w = (int(screenWidth*self.ratio) \
+                w = (int(screenWidth * self.ratio) \
                          if len(self.slave_windows) or not self.expand \
                          else screenWidth)
-                h = screenHeight/self.master
+                h = screenHeight / self.master
                 x = screen.x
-                y = screen.y + pos*h
+                y = screen.y + pos * h
             else:
-                w = screenWidth-int(screenWidth*self.ratio)
-                h = screenHeight/(len(self.slave_windows))
-                x = screen.x + int(screenWidth*self.ratio)
-                y = screen.y + self.clients[self.master:].index(c)*h
+                w = screenWidth - int(screenWidth * self.ratio)
+                h = screenHeight / (len(self.slave_windows))
+                x = screen.x + int(screenWidth * self.ratio)
+                y = screen.y + self.clients[self.master:].index(c) * h
             if c is self.focused:
                 bc = self.group.qtile.colorPixel(self.border_focus)
             else:
                 bc = self.group.qtile.colorPixel(self.border_normal)
             c.place(
-                x,
-                y,
-                w-borderWidth*2,
-                h-borderWidth*2,
+                x+margin,
+                y+margin,
+                w-margin*2-borderWidth*2,
+                h-margin*2-borderWidth*2,
                 borderWidth,
                 bc,
                 )
@@ -172,9 +177,9 @@ class Tile(Layout):
 
     def info(self):
         return dict(
-            all = [c.name for c in self.clients],
-            master = [c.name for c in self.master_windows],
-            slave = [c.name for c in self.slave_windows],
+            all=[c.name for c in self.clients],
+            master=[c.name for c in self.master_windows],
+            slave=[c.name for c in self.slave_windows],
             )
 
     def cmd_down(self):

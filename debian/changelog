@@ -1,3 +1,24 @@
+qtile (0.5alpha1-quantal5) quantal; urgency=low
+
+  * Really depend on xpyb instead of xpybng.
+  * Depend on python-setuptools.
+  * Deploy RST versions of docs.
+
+ -- Tycho Andersen <tycho@tycho.ws>  Fri, 19 Oct 2012 16:46:59 -0500
+
+qtile (0.5alpha1-quantal2) quantal; urgency=low
+
+  * Depend on xpyb instead of xpybng.
+
+ -- Tycho Andersen <tycho@tycho.ws>  Fri, 19 Oct 2012 15:52:59 -0500
+
+qtile (0.5alpha1-quantal1) quantal; urgency=low
+
+  * Moved to the develop branch of qtile, which has lots of bugfixes and
+    improvements.
+
+ -- Tycho Andersen <tycho@tycho.ws>  Fri, 19 Oct 2012 15:45:08 -0500
+
 qtile (0.5alpha-precise1) precise; urgency=low
 
   * Version bump for precise

@@ -1,4 +1,10 @@
-# Copyright (c) 2008, Aldo Cortesi. All rights reserved.
+#!/usr/bin/env python
+# coding: utf-8
+#
+# Copyright (c) 2008, Aldo Cortesi <aldo@corte.si>
+# Copyright (c) 2011, Andrew Grigorev <andrew@ei-grad.ru>
+#
+# All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,55 +24,56 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os.path
+import os
 import sys
 import utils
+import traceback
 
-class ConfigError(Exception): pass
+class ConfigError(Exception):
+    pass
 
-
-class Config:
-    keys = ()
-    mouse = ()
-    groups = None
-    layouts = None
-    screens = ()
-    main = None
-    follow_mouse_focus = True
-    cursor_warp = False
-
-
-class File(Config):
+class File(object):
     def __init__(self, fname=None):
         if not fname:
             config_directory = os.path.expandvars('$XDG_CONFIG_HOME')
-            if config_directory == '$XDG_CONFIG_HOME': #if variable wasn't set
+            if config_directory == '$XDG_CONFIG_HOME':
+                # if variable wasn't set
                 config_directory = os.path.expanduser("~/.config")
             fname = os.path.join(config_directory, "qtile", "config.py")
         elif fname == "default":
-            fname = utils.data.path("resources/default-config.py")
+            fname = utils.data.path("resources/default_config.py")
 
         self.fname = fname
-        globs = {}
 
-        if not os.path.isfile(fname):
-            raise ConfigError("Config file does not exist: %s"%fname)
-        try:
-            sys.path.append(os.path.dirname(self.fname)) #to allow 'import'ing from the config dir
-            execfile(self.fname, {}, globs)
-        except Exception, v:
-            raise ConfigError(str(v))
+        if os.path.isfile(fname):
+            try:
+                sys.path.insert(0, os.path.dirname(self.fname))
+                config = __import__(os.path.basename(self.fname)[:-3])
+            except Exception, v:
+                tb = traceback.format_exc()
+                raise ConfigError(str(v) + "\n\n" + tb)
+        else:
+            config = None
 
+        # if you add something here, be sure to add a reasonable default value
+        # to resources/default-config.py
+        config_options = [
+            "keys",
+            "mouse",
+            "groups",
+            "follow_mouse_focus",
+            "cursor_warp",
+            "layouts",
+            "floating_layout",
+            "screens",
+            "main",
+        ]
 
-        self.keys = globs.get("keys")
-        self.mouse = globs.get("mouse", [])
-        self.groups = globs.get("groups")
-        self.follow_mouse_focus = globs.get("follow_mouse_focus", True)
-        self.cursor_warp = globs.get("cursor_warp", False)
-        self.layouts = globs.get("layouts")
-        self.floating_layout = globs.get('floating_layout', None)
-        if self.floating_layout is None:
-            from .layout import Floating
-            self.floating_layout = Floating()
-        self.screens = globs.get("screens")
-        self.main = globs.get("main")
+        # We delay importing here to avoid a circular import issue when
+        # testing.
+        from resources import default_config
+        for option in config_options:
+            v = getattr(default_config, option)
+            if hasattr(config, option):
+                v = getattr(config, option)
+            setattr(self, option, v)

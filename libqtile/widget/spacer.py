@@ -1,6 +1,7 @@
 from .. import bar
 import base
 
+
 class Spacer(base._Widget):
     """
         Just an empty space on the bar. Often used with width equal to
@@ -14,4 +15,4 @@ class Spacer(base._Widget):
 
     def draw(self):
         self.clear()
-
+        self.drawer.draw(self.offset, self.width)

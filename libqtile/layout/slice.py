@@ -53,6 +53,8 @@ class Slice(Delegate):
     def __init__(self, side, width,
                  wname=None, wmclass=None, role=None,
                  fallback=Max(), **config):
+        if wname == None and wmclass == None and role == None:
+            wname = 'slice'
         self.match = {
             'wname': wname,
             'wmclass': wmclass,
@@ -101,4 +103,3 @@ class Slice(Delegate):
         else:
             self._fallback.add(win)
             self.layouts[win] = self._fallback
-

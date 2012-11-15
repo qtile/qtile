@@ -1,12 +1,11 @@
 import os
 import re
-import time
 import subprocess
 
 import cairo
 
 import base
-from .. import manager, bar, hook
+from .. import manager, bar
 
 __all__ = [
     'Volume',
@@ -14,8 +13,9 @@ __all__ = [
 
 re_vol = re.compile('\[(\d?\d?\d?)%\]')
 
+
 class Volume(base._TextBox):
-    ''' Widget that display and change volume 
+    ''' Widget that display and change volume
         if theme_path is set it draw widget as
         icons '''
     defaults = manager.Defaults(
@@ -29,6 +29,7 @@ class Volume(base._TextBox):
         ("theme_path", None, "Path of the icons"),
         ("update_interval", 0.2, "Update time in seconds."),
     )
+
     def __init__(self, **config):
         base._TextBox.__init__(self, '0', width=bar.CALCULATED, **config)
         if self.theme_path:
@@ -70,15 +71,15 @@ class Volume(base._TextBox):
                 img = cairo.ImageSurface.create_from_png(
                     os.path.join(self.theme_path,
                                  '%s.png' % img_name))
-            except cairo.Error, error:
+            except cairo.Error:
                 self.theme_path = None
-                self.qtile.log.add(error)
-                self.qtile.log.add('Volume switching to text mode')
+                self.width_type = bar.CALCULATED
+                self.qtile.log.exception('Volume switching to text mode')
                 return
             input_width = img.get_width()
             input_height = img.get_height()
 
-            sp = input_height/float(self.bar.height-1)
+            sp = input_height / float(self.bar.height - 1)
 
             width = input_width / sp
             if width > self.width:
@@ -89,7 +90,7 @@ class Volume(base._TextBox):
             scaler = cairo.Matrix()
 
             scaler.scale(sp, sp)
-            scaler.translate(self.actual_padding*-1, 0)
+            scaler.translate(self.actual_padding * -1, 0)
             imgpat.set_matrix(scaler)
 
             imgpat.set_filter(cairo.FILTER_BEST)

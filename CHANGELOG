@@ -1,0 +1,49 @@
+qtile 0.5, released 2012-11-11:
+    (Note, this is not complete! Many, many changes have gone in to 0.5, by a
+    large number of contributors. Thanks to everyone who reported a bug or
+    fixed one!)
+    * features
+        - Test framework is now nose
+        - Documentation is now in sphinx
+        - Several install guides for various OSes
+        - New widgets: battery based icon, MPRIS1, canto, current layout, yahoo
+          weather, sensors, screen brightness, notifiy, pacman, windowtabs,
+          she, crashme, wifi.
+        - Several improvements to old widgets (e.g. battery widget displays low
+          battery in red, GroupBox now has a better indication of which screen
+          has focus in multi-screen setups, improvements to Prompt, etc.)
+        - Desktop notification service.
+        - More sane way to handle configuration files
+        - Promote dgroups to a first class entity in libqtile
+        - Allow layouts to be named on an instance level, so you can:
+            layouts = [
+                # a layout just for gimp
+                layout.Slice('left', 192, name='gimp', role='gimp-toolbox',
+                    fallback=layout.Slice('right', 256, role='gimp-dock',
+                    fallback=layout.Stack(stacks=1, **border_args)))
+            ]
+            ...
+
+            dynamic_groups = { 'gimp': {'layout': 'gimp'} }
+
+            Dgroups(..., dynamic_groups, ...)
+        - New Layout: Zoomy
+        - Add a session manager to re-exec qtile if things go south
+        - Support for WM_TAKE_FOCUS protocol
+        - Basic .desktop file for support in login managers
+        - Qsh reconnects after qtile is restarted from within it
+        - Textbox supports pango markup
+        - Examples moved to qtile-examples repository.
+
+    * bugfixes
+        - Fix several classes of X races in a more sane way
+        - Minor typo fixes to most widgets
+        - Fix several crashes when drawing systray icons too early
+        - Create directories for qtile socket as necessary
+        - PEP8 formatting updates (though we're not totally there yet)
+        - All unit tests pass
+        - Lots of bugfixes to MonadTall
+        - Create IPC socket directory if necessary
+        - Better error if two widgets have STRETCH width
+        - Autofloat window classes can now be overridden
+        - xkeysyms updated
