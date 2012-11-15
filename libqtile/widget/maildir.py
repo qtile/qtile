@@ -26,7 +26,7 @@ class Maildir(base._TextBox):
         Constructor.
 
         @param maildirPath: the path to the Maildir (e.g. "~/Mail").
-        @param subFolders: the subfolders to scan (e.g. ["INBOX", "Spam"]).
+        @param subFolders: the subfolders to scan (e.g. [{ "path": "INBOX", "label": "Home mail"}, "Spam"]).
         @param separator: the string to put between the subfolder strings.
         @param timeout: the refresh timeout in seconds.
         """
