@@ -119,3 +119,18 @@ client_type_changed
 -------------------
 
 Called whenever window type changes.
+
+screen_change
+-------------
+
+Called when a screen is added or screen configuration is changed
+(via xrandr). The hook should take two arguments: the root qtile
+object and the ``xproto.randr.ScreenChangeNotify`` event. Common
+usage is simply to call ``qtile.cmd_restart()`` on each event (to
+restart qtile when there is a new monitor):
+
+**Example**::
+
+    def restart_on_randr(qtile, ev):
+        qtile.cmd_restart()
+
