@@ -539,6 +539,11 @@ class Internal(_Window):
     def __repr__(self):
         return "Internal(%s, %s)" % (self.name, self.window.wid)
 
+    def kill(self):
+        self.qtile.conn.conn.core.DestroyWindow(self.window.wid)
+
+    def cmd_kill(self):
+        self.kill()
 
 class Static(_Window):
     """
