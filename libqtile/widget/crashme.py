@@ -28,7 +28,7 @@ class _CrashMe(base._TextBox):
             self.text, self.foreground, self.font, self.fontsize,
             markup=True)
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         if button == 1:
             1 / 0
         elif button == 3:

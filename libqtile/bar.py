@@ -204,7 +204,7 @@ class Bar(Gap):
     def handle_ButtonPress(self, e):
         for i in self.widgets:
             if e.event_x < i.offset + i.width:
-                i.click(e.event_x - i.offset, e.event_y, e.detail)
+                i.button_press(e.event_x - i.offset, e.event_y, e.detail)
                 break
 
     def widget_grab_keyboard(self, widget):
@@ -242,9 +242,9 @@ class Bar(Gap):
             window=self.window.window.wid
         )
 
-    def cmd_fake_click(self, screen, position, x, y, button=1):
+    def cmd_fake_button_press(self, screen, position, x, y, button=1):
         """
-            Fake a mouse-click on the bar. Co-ordinates are relative
+            Fake a mouse-button-press on the bar. Co-ordinates are relative
             to the top-left corner of the bar.
 
             :screen The integer screen offset

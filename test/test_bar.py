@@ -128,10 +128,10 @@ def test_textbox_errors(self):
 
 
 @Xephyr(True, GBConfig())
-def test_groupbox_click(self):
+def test_groupbox_button_press(self):
     self.c.group["ccc"].toscreen()
     assert self.c.groups()["a"]["screen"] == None
-    self.c.bar["bottom"].fake_click(0, "bottom", 10, 10, 1)
+    self.c.bar["bottom"].fake_button_press(0, "bottom", 10, 10, 1)
     assert self.c.groups()["a"]["screen"] == 0
 
 
