@@ -67,6 +67,7 @@ class File(object):
             "floating_layout",
             "screens",
             "main",
+            "auto_fullscreen",
         ]
 
         # We delay importing here to avoid a circular import issue when
