@@ -26,7 +26,7 @@ class CurrentLayout(base._TextBox):
                 self.bar.draw()
         hook.subscribe.layout_change(hook_response)
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         if button == 1:
             self.qtile.cmd_nextlayout()
         elif button == 2:

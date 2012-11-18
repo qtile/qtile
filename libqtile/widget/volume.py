@@ -44,7 +44,7 @@ class Volume(base._TextBox):
             self.setup_images()
         self.timeout_add(self.update_interval, self.update)
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         if button == 5:
             subprocess.call(['amixer', '-q', '-c', str(self.cardid),
                               'sset', self.channel, '5%-'])

@@ -59,7 +59,7 @@ class Notify(base._TextBox):
         self.current_id = len(notifier.notifications) - 1
         self.bar.draw()
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         if button == 1:
             self.clear()
         elif button == 4:

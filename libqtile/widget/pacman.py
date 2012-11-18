@@ -62,6 +62,6 @@ class Pacman(base._TextBox):
             self.bar.draw()
         return True
     
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         if button == 1 and self.execute is not None:
             subprocess.Popen([self.execute], shell=True)
