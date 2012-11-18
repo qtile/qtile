@@ -80,6 +80,9 @@ class _Widget(command.CommandObject):
     def button_press(self, x, y, button):
         pass
 
+    def button_release(self, x, y, button):
+        pass
+
     def get(self, q, name):
         """
             Utility function for quick retrieval of a widget by name.
