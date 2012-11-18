@@ -123,8 +123,21 @@ class GroupBox(_GroupBase):
 
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
+        self.clicked = None
+
+    def get_clicked_group(self, x, y):
+        group = None
+        new_width = width = 0
+        for g in self.qtile.groups:
+            new_width += self.box_width([g])
+            if x >= width and x <= new_width:
+                group = g
+                break
+            width = new_width
+        return group
 
     def button_press(self, x, y, button):
+        self.clicked = None
         group = None
         curGroup = self.qtile.currentGroup
         if button == 5:
@@ -132,16 +145,18 @@ class GroupBox(_GroupBase):
         elif button == 4:
             group = curGroup.nextGroup()
         else:
-            new_width = width = 0
-            for g in self.qtile.groups:
-                new_width += self.box_width([g])
-                if x >= width and x <= new_width:
-                    group = g
-                    break
-                width = new_width
+            group = self.get_clicked_group(x, y)
+            self.clicked = group
 
         if group:
             self.bar.screen.setGroup(group)
+
+    def button_release(self, x, y, button):
+        if button not in (5, 4):
+            group = self.get_clicked_group(x, y)
+            if group and self.clicked:
+                group.cmd_switch_groups(self.clicked.name)
+                self.clicked = None
 
     def calculate_width(self):
         width = 0
