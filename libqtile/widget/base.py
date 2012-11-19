@@ -77,7 +77,10 @@ class _Widget(command.CommandObject):
             width=self.width,
         )
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
+        pass
+
+    def button_release(self, x, y, button):
         pass
 
     def get(self, q, name):

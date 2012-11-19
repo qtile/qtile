@@ -169,6 +169,7 @@ class Bar(Gap):
 
         self.window.handle_Expose = self.handle_Expose
         self.window.handle_ButtonPress = self.handle_ButtonPress
+        self.window.handle_ButtonRelease = self.handle_ButtonRelease
         qtile.windowMap[self.window.window.wid] = self.window
         self.window.unhide()
 
@@ -201,11 +202,22 @@ class Bar(Gap):
     def handle_Expose(self, e):
         self.draw()
 
-    def handle_ButtonPress(self, e):
+    def get_widget_in_position(self, e):
         for i in self.widgets:
             if e.event_x < i.offset + i.width:
-                i.click(e.event_x - i.offset, e.event_y, e.detail)
-                break
+                return i
+
+    def handle_ButtonPress(self, e):
+        widget = self.get_widget_in_position(e)
+        if widget:
+            widget.button_press(e.event_x - widget.offset,
+                                e.event_y, e.detail)
+
+    def handle_ButtonRelease(self, e):
+        widget = self.get_widget_in_position(e)
+        if widget:
+            widget.button_release(e.event_x - widget.offset,
+                                  e.event_y, e.detail)
 
     def widget_grab_keyboard(self, widget):
         """
@@ -242,9 +254,9 @@ class Bar(Gap):
             window=self.window.window.wid
         )
 
-    def cmd_fake_click(self, screen, position, x, y, button=1):
+    def cmd_fake_button_press(self, screen, position, x, y, button=1):
         """
-            Fake a mouse-click on the bar. Co-ordinates are relative
+            Fake a mouse-button-press on the bar. Co-ordinates are relative
             to the top-left corner of the bar.
 
             :screen The integer screen offset

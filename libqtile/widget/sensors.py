@@ -57,7 +57,7 @@ class ThermalSensor(base._TextBox):
         base._TextBox._configure(self, qtile, bar)
         self.timeout_add(self.update_interval, self.update)
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         self.update()
 
     def get_temp_sensors(self):

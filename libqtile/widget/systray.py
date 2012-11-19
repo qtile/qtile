@@ -98,7 +98,7 @@ class Systray(base._Widget):
         self.traywin = None
         self.icons = {}
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         pass
 
     def calculate_width(self):

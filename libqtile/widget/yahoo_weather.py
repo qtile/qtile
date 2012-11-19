@@ -58,7 +58,7 @@ class YahooWeather(base._TextBox):
             self.update
         )
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         self.update(self.fetch_weather())
 
     def update(self, data):

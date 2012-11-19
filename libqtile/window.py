@@ -526,6 +526,7 @@ class Internal(_Window):
                   EventMask.FocusChange |\
                   EventMask.Exposure |\
                   EventMask.ButtonPress |\
+                  EventMask.ButtonRelease |\
                   EventMask.KeyPress
 
     def __init__(self, qtile, x, y, width, height, opacity=1.0):
