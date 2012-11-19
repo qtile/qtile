@@ -43,6 +43,9 @@ class Gap(command.CommandObject):
     def _configure(self, qtile, screen):
         self.qtile, self.screen = qtile, screen
 
+    def draw(self):
+        pass
+
     @property
     def x(self):
         s = self.screen
