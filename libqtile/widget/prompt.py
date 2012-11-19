@@ -247,7 +247,7 @@ class Prompt(base._TextBox):
         ("font", "Arial", "Font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("padding", None, "Padding. Calculated if None."),
-        ("background", "000000", "Background colour"),
+        ("background", None, "Background colour"),
         ("foreground", "ffffff", "Foreground colour"),
         ("cursorblink", 0.5, "Cursor blink rate. 0 to disable.")
     )

@@ -116,7 +116,7 @@ class Volume(base._TextBox):
 
     def draw(self):
         if self.theme_path:
-            self.drawer.clear(self.bar.background)
+            self.drawer.clear(self.background or self.bar.background)
             if self.volume <= 0:
                 img_name = 'audio-volume-muted'
             elif self.volume <= 30:

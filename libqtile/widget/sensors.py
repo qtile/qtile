@@ -18,7 +18,7 @@ class ThermalSensor(base._TextBox):
         ('font', 'Arial', 'Font'),
         ('fontsize', None, 'Pixel size, calculated if None.'),
         ('padding', None, 'Padding, calculated if None.'),
-        ('background', '000000', 'Background colour'),
+        ('background', None, 'Background colour'),
         ('foreground', 'ffffff', 'Foreground colour'),
 
         ('metric', True, 'True to use metric/C, False to use imperial/F'),
