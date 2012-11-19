@@ -10,7 +10,7 @@ class Canto(base._TextBox):
         ("font", "Arial", "Font"),
         ("fontsize", None, "Pixel size. Calculated if None."),
         ("padding", None, "Padding. Calculated if None."),
-        ("background", "000000", "Background colour"),
+        ("background", None, "Background colour"),
         ("foreground", "ffffff", "Foreground colour"),
         ("fetch", False, "Whether to fetch new items on update"),
         ("feeds", [], "List of feeds to display, empty for all"),
@@ -41,7 +41,7 @@ class Canto(base._TextBox):
                 number=check_output(["canto", "-n", feed])[:-1]
             ) for feed in self.feeds])
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         self.update()
 
     def update(self):

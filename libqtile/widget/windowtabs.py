@@ -11,7 +11,7 @@ class WindowTabs(base._TextBox):
         ("font", "Arial", "Font face."),
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("padding", None, "Padding left and right."),
-        ("background", "000000", "Background colour."),
+        ("background", None, "Background colour."),
         ("foreground", "ffffff", "Foreground colour."),
         ("separator", " | ", "Task separator text."),
         ("selected", ("<", ">"), "Selected task indicator"),
@@ -28,7 +28,7 @@ class WindowTabs(base._TextBox):
         hook.subscribe.focus_change(self.update)
         hook.subscribe.float_change(self.update)
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         self.bar.screen.group.cmd_next_window()
 
     def update(self):

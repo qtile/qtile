@@ -70,19 +70,19 @@ class AGroupBox(_GroupBase):
         ("font", "Arial", "Font face"),
         ("fontsize", None, "Font pixel size - calculated if None"),
         ("foreground", "aaaaaa", "Font colour"),
-        ("background", "000000", "Widget background"),
+        ("background", None, "Widget background"),
         ("border", "215578", "Border colour"),
         ("padding", 5, "Padding inside the box")
     )
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         self.bar.screen.group.cmd_nextgroup()
 
     def calculate_width(self):
         return self.box_width(self.qtile.groups)
 
     def draw(self):
-        self.drawer.clear(self.background)
+        self.drawer.clear(self.background or self.bar.background)
         e = (i for i in self.qtile.groups
              if i.name == self.bar.screen.group.name).next()
         self.drawbox(self.margin_x, e.name, self.border, self.foreground)
@@ -102,7 +102,7 @@ class GroupBox(_GroupBase):
         ("borderwidth", 3, "Current group border width"),
         ("font", "Arial", "Font face"),
         ("fontsize", None, "Font pixel size - calculated if None"),
-        ("background", "000000", "Widget background"),
+        ("background", None, "Widget background"),
         ("highlight_method", "border",
          "Method of highlighting (one of 'border' or 'block') "
          "Uses *_border color settings"),
@@ -124,7 +124,7 @@ class GroupBox(_GroupBase):
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         group = None
         curGroup = self.qtile.currentGroup
         if button == 5:
@@ -153,7 +153,7 @@ class GroupBox(_GroupBase):
         return len([w for w in group.windows if w.urgent]) > 0
 
     def draw(self):
-        self.drawer.clear(self.background)
+        self.drawer.clear(self.background or self.bar.background)
 
         offset = 0
         for i, g in enumerate(self.qtile.groups):
@@ -170,7 +170,7 @@ class GroupBox(_GroupBase):
                   self.urgent_alert_method == "border"):
                 border = self.urgent_border
             else:
-                border = self.background
+                border = self.background or self.bar.background
 
             if self.group_has_urgent(g) and self.urgent_alert_method == "text":
                 text = self.urgent_text

@@ -18,7 +18,7 @@ class ThermalSensor(base._TextBox):
         ('font', 'Arial', 'Font'),
         ('fontsize', None, 'Pixel size, calculated if None.'),
         ('padding', None, 'Padding, calculated if None.'),
-        ('background', '000000', 'Background colour'),
+        ('background', None, 'Background colour'),
         ('foreground', 'ffffff', 'Foreground colour'),
 
         ('metric', True, 'True to use metric/C, False to use imperial/F'),
@@ -57,7 +57,7 @@ class ThermalSensor(base._TextBox):
         base._TextBox._configure(self, qtile, bar)
         self.timeout_add(self.update_interval, self.update)
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         self.update()
 
     def get_temp_sensors(self):

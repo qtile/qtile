@@ -289,7 +289,6 @@ class Screen(command.CommandObject):
         y = y or self.y
         w = w or self.width
         h = h or self.height
-        self._configure(self.qtile, self.index, x, y, w, h, self.group)
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
                 bar.draw()
@@ -1375,6 +1374,9 @@ class Qtile(command.CommandObject):
         if e.event != self.root.wid:
             self.unmanage(e.window)
 
+    def handle_ScreenChangeNotify(self, e):
+        self.cmd_restart()
+
     def toScreen(self, n):
         """
         Have Qtile move to screen and put focus there
@@ -1672,6 +1674,11 @@ class Qtile(command.CommandObject):
                 self.groups[indexb], self.groups[indexa]
         hook.fire("setgroup")
         self.update_net_desktops()
+
+        # update window _NET_WM_DESKTOP
+        for group in (self.groups[indexa], self.groups[indexb]):
+            for window in group.windows:
+                window.group = group
 
     def cmd_togroup(self, prompt="group: ", widget="prompt"):
         """

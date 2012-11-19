@@ -10,7 +10,7 @@ class Sep(base._Widget):
         ("padding", 2, "Padding on either side of separator."),
         ("linewidth", 1, "Width of separator line."),
         ("foreground", "888888", "Separator line colour."),
-        ("background", "000000", "Background colour."),
+        ("background", None, "Background colour."),
         ("height_percent", 80,
          "Height as a percentage of bar height (0-100)."),
     )

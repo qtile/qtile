@@ -181,6 +181,8 @@ class DGroups(object):
                     group_name = wm_class
                 else:
                     group_name = client.name
+                    if not group_name:
+                        group_name = "Unnamed"
 
                 self.qtile.addGroup(group_name)
                 client.togroup(group_name)

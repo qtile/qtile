@@ -14,7 +14,7 @@ class Notify(base._TextBox):
         ("font", "Arial", "Mpd widget font"),
         ("fontsize", None, "Mpd widget pixel size. Calculated if None."),
         ("padding", None, "Mpd widget padding. Calculated if None."),
-        ("background", "000000", "Background colour"),
+        ("background", None, "Background colour"),
         ("foreground", "ffffff", "Foreground normal priority colour"),
         ("foreground_urgent", "ff0000", "Foreground urgent priority colour"),
         ("foreground_low", "dddddd", "Foreground low priority  colour"),
@@ -59,7 +59,7 @@ class Notify(base._TextBox):
         self.current_id = len(notifier.notifications) - 1
         self.bar.draw()
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         if button == 1:
             self.clear()
         elif button == 4:

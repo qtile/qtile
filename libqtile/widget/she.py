@@ -12,7 +12,7 @@ class She(base._TextBox):
         ('font', 'Arial', 'Text Font'),
         ('fontsize', None, 'Calculated if None.'),
         ('padding', None, 'Padding Left and Right. Calculated in None.'),
-        ('background', '000000', 'Background Colour'),
+        ('background', None, 'Background Colour'),
         ('foreground', 'ffffff', 'Foreground Colour'),
         ('device', '/sys/devices/platform/eeepc/cpufv', 'sys path to cpufv'),
         ('format', 'speed', 'Type of info to display "speed" or "name"'),

@@ -22,7 +22,7 @@ class Mpd(base._TextBox):
         ("font", "Arial", "Mpd widget font"),
         ("fontsize", None, "Mpd widget pixel size. Calculated if None."),
         ("padding", None, "Mpd widget padding. Calculated if None."),
-        ("background", "000000", "Background colour"),
+        ("background", None, "Background colour"),
         ("foreground", "cccccc", "Foreground colour"),
         ("foreground_progress", "ffffff", "Foreground progress colour"),
         ("reconnect", False, "Choose if the widget should try to keep reconnect.")
@@ -159,7 +159,7 @@ class Mpd(base._TextBox):
 
         return True
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         if not self.connect(True):
             return False
         try:

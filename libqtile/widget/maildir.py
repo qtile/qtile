@@ -7,7 +7,6 @@ from .. import manager, bar
 import os.path
 import mailbox
 
-
 class Maildir(base._TextBox):
     """
     A simple widget showing the number of new mails in maildir mailboxes.
@@ -17,7 +16,7 @@ class Maildir(base._TextBox):
         ("font", "Arial", "Font"),
         ("fontsize", None, "Maildir widget font size. Calculated if None."),
         ("padding", None, "Maildir widget padding. Calculated if None."),
-        ("background", "000000", "Background colour"),
+        ("background", None, "Background colour"),
         ("foreground", "ffffff", "Foreground colour")
     )
 
@@ -27,15 +26,24 @@ class Maildir(base._TextBox):
         Constructor.
 
         @param maildirPath: the path to the Maildir (e.g. "~/Mail").
-        @param subFolders: the subfolders to scan (e.g. ["INBOX", "Spam"]).
+        @param subFolders: the subfolders to scan (e.g. [{"path": "INBOX", "label": "Home mail"}, {"path": "spam", "label": "Home junk"}]).
         @param separator: the string to put between the subfolder strings.
         @param timeout: the refresh timeout in seconds.
         """
         base._TextBox.__init__(self, "", bar.CALCULATED, **config)
         self._maildirPath = os.path.expanduser(maildirPath)
-        self._subFolders = subFolders
         self._separator = separator
         self._timeout = timeout
+
+        self._subFolders = []
+
+        # if it looks like a list of strings then we just convert them
+        # and use the name as the label
+        if isinstance(subFolders[0], basestring):
+            self._subFolders = [{"path": folder, "label": folder } for folder in subFolders]
+        else:
+            self._subFolders = subFolders
+
         self.text = self.format_text(self.mailbox_state())
 
     def _configure(self, qtile, bar):
@@ -57,13 +65,13 @@ class Maildir(base._TextBox):
                 yield path.rsplit(":")[0]
 
         for subFolder in self._subFolders:
-            path = os.path.join(self._maildirPath, subFolder)
+            path = os.path.join(self._maildirPath, subFolder["path"])
             maildir = mailbox.Maildir(path)
-            state[subFolder] = 0
+            state[subFolder["label"]] = 0
 
             for file in to_maildir_fmt(os.listdir(os.path.join(path, "new"))):
                 if file in maildir:
-                    state[subFolder] += 1
+                    state[subFolder["label"]] += 1
 
         return state
 

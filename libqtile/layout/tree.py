@@ -33,7 +33,7 @@ class TreeNode(object):
         self._children_stop = top
         return top
 
-    def click(self, x, y):
+    def button_press(self, x, y):
         """Returns self or sibling which got the click"""
         if y >= self._children_stop or y < self._children_start:
             return
@@ -190,7 +190,7 @@ class Window(TreeNode):
             return super(Window, self).draw(layout, top, level + 1)
         return top
 
-    def click(self, x, y):
+    def button_press(self, x, y):
         """Returns self if clicked on title else returns sibling"""
         if y >= self._title_start and y < self._children_start:
             return self
@@ -288,9 +288,11 @@ class TreeTab(SingleWindow):
         return res
 
     def _create_panel(self):
-        self._panel = window.Internal.create(self.group.qtile,
+        self._panel = window.Internal(
+            self.group.qtile,
             0, 0,
-            self.panel_width, 100)
+            self.panel_width, 100
+        )
         self._create_drawer()
         self._panel.handle_Expose = self._panel_Expose
         self._panel.handle_ButtonPress = self._panel_ButtonPress

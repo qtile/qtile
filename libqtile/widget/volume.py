@@ -44,7 +44,7 @@ class Volume(base._TextBox):
             self.setup_images()
         self.timeout_add(self.update_interval, self.update)
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         if button == 5:
             subprocess.call(['amixer', '-q', '-c', str(self.cardid),
                               'sset', self.channel, '5%-'])
@@ -116,7 +116,7 @@ class Volume(base._TextBox):
 
     def draw(self):
         if self.theme_path:
-            self.drawer.clear(self.bar.background)
+            self.drawer.clear(self.background or self.bar.background)
             if self.volume <= 0:
                 img_name = 'audio-volume-muted'
             elif self.volume <= 30:

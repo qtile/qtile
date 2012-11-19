@@ -275,7 +275,7 @@ class _Window(command.CommandObject):
     @state.setter
     def state(self, val):
         if val in (WithdrawnState, NormalState, IconicState):
-            self.window.set_property('_NET_WM_STATE', [val, 0])
+            self.window.set_property('WM_STATE', [val, 0])
 
     def setOpacity(self, opacity):
         if 0.0 <= opacity <= 1.0:
@@ -526,22 +526,25 @@ class Internal(_Window):
                   EventMask.FocusChange |\
                   EventMask.Exposure |\
                   EventMask.ButtonPress |\
+                  EventMask.ButtonRelease |\
                   EventMask.KeyPress
 
-    @classmethod
-    def create(klass, qtile, x, y, width, height, opacity=1.0):
-        win = qtile.conn.create_window(
-                    x, y, width, height
-              )
+    def __init__(self, qtile, x, y, width, height, opacity=1.0):
+        win = qtile.conn.create_window(x, y, width, height)
         win.set_property("QTILE_INTERNAL", 1)
-        i = Internal(win, qtile)
-        i.place(x, y, width, height, 0, None)
-        i.opacity = opacity
-        return i
+        super(Internal, self).__init__(win, qtile)
+
+        self.place(x, y, width, height, 0, None)
+        self.opacity = opacity
 
     def __repr__(self):
         return "Internal(%s, %s)" % (self.name, self.window.wid)
 
+    def kill(self):
+        self.qtile.conn.conn.core.DestroyWindow(self.window.wid)
+
+    def cmd_kill(self):
+        self.kill()
 
 class Static(_Window):
     """
@@ -882,7 +885,6 @@ class Window(_Window):
         return True
 
     def handle_ConfigureRequest(self, e):
-        self.qtile.log.info(repr(e.__dict__))
         if self.qtile._drag and self.qtile.currentWindow == self:
             # ignore requests while user is dragging window
             return
@@ -932,9 +934,13 @@ class Window(_Window):
             pass
         elif name == "_NET_WM_WINDOW_OPACITY":
             pass
+        elif name == "WM_STATE":
+            pass
         elif name == "_NET_WM_STATE":
             self.updateState()
         elif name == "WM_PROTOCOLS":
+            pass
+        elif name == "_NET_WM_DESKTOP":
             pass
         elif name == "_NET_WM_USER_TIME":
             if not self.qtile.config.follow_mouse_focus and \

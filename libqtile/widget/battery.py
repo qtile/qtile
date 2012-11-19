@@ -221,7 +221,7 @@ class BatteryIcon(_Battery):
 
     def draw(self):
         if self.theme_path:
-            self.drawer.clear(self.bar.background)
+            self.drawer.clear(self.background or self.bar.background)
             self.drawer.ctx.set_source(self.surfaces[self.current_icon])
             self.drawer.ctx.paint()
             self.drawer.draw(self.offset, self.width)
