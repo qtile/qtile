@@ -1,13 +1,10 @@
 Mouse
 =====
 
-The ``mouse`` config file variable defines a set of global mouse actions, and
-is a list of ``Click`` and ``Drag`` objects..
-
-$!confobj("libqtile.manager.Click")!$
-
-$!confobj("libqtile.manager.Drag")!$
-
+The ``mouse`` config file variable defines a set of
+global mouse actions, and is a list of ``Click`` and
+``Drag`` objects, which define what to do when a window
+is clicked or dragged.
 
 Example
 ~~~~~~~

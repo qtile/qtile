@@ -3,8 +3,6 @@ Keys
 
 The ``keys`` variable defines Qtile's key bindings.
 
-$!confobj("libqtile.manager.Key")!$
-
 The command.lazy object
 ~~~~~~~~~~~~~~~~~~~~~~~
 
