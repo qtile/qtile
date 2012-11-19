@@ -11,7 +11,7 @@ class WindowTabs(base._TextBox):
         ("font", "Arial", "Font face."),
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("padding", None, "Padding left and right."),
-        ("background", "000000", "Background colour."),
+        ("background", None, "Background colour."),
         ("foreground", "ffffff", "Foreground colour."),
         ("separator", " | ", "Task separator text."),
         ("selected", ("<", ">"), "Selected task indicator"),

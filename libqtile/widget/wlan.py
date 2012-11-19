@@ -10,7 +10,7 @@ class Wlan(base._TextBox):
         ("font", "Arial", "Font"),
         ("fontsize", None, "Pixel size. Calculated if None."),
         ("padding", None, "Padding. Calculated if None."),
-        ("background", "000000", "Background colour"),
+        ("background", None, "Background colour"),
         ("foreground", "ffffff", "Foreground colour")
     )
     def __init__(self, interface="wlan0", width=bar.CALCULATED, **config):

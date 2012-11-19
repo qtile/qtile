@@ -11,7 +11,7 @@ class Clock(base._TextBox):
         ("font", "Arial", "Clock font"),
         ("fontsize", None, "Clock pixel size. Calculated if None."),
         ("padding", None, "Clock padding. Calculated if None."),
-        ("background", "000000", "Background colour"),
+        ("background", None, "Background colour"),
         ("foreground", "ffffff", "Foreground colour")
     )
 
