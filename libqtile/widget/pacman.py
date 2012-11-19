@@ -29,7 +29,7 @@ class Pacman(base._TextBox):
         ('font', 'Arial', 'Clock font'),
         ('fontsize', None, 'Updates widget font size. Calculated if None.'),
         ('padding', None, 'Updates widget padding. Calculated if None.'),
-        ('background', '000000', 'Background Color'),
+        ('background', None, 'Background Color'),
         ('foreground', 'ff0000', 'Foreground Color'),
         ('unavailable', 'ffffff', 'Unavailable Color - no updates.')
     )

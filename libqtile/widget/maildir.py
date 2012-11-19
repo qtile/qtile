@@ -16,7 +16,7 @@ class Maildir(base._TextBox):
         ("font", "Arial", "Font"),
         ("fontsize", None, "Maildir widget font size. Calculated if None."),
         ("padding", None, "Maildir widget padding. Calculated if None."),
-        ("background", "000000", "Background colour"),
+        ("background", None, "Background colour"),
         ("foreground", "ffffff", "Foreground colour")
     )
 

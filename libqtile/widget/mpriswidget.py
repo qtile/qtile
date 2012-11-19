@@ -17,7 +17,7 @@ class Mpris(base._TextBox):
             ("font", "Arial", "Mpd widget font"),
             ("fontsize", None, "Mpd widget pixel size. Calculated if None."),
             ("padding", None, "Mpd widget padding. Calculated if None."),
-            ("background", "000000", "Background colour"),
+            ("background", None, "Background colour"),
             ("foreground", "ffffff", "Foreground colour")
         )
 

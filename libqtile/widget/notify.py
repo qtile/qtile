@@ -14,7 +14,7 @@ class Notify(base._TextBox):
         ("font", "Arial", "Mpd widget font"),
         ("fontsize", None, "Mpd widget pixel size. Calculated if None."),
         ("padding", None, "Mpd widget padding. Calculated if None."),
-        ("background", "000000", "Background colour"),
+        ("background", None, "Background colour"),
         ("foreground", "ffffff", "Foreground normal priority colour"),
         ("foreground_urgent", "ff0000", "Foreground urgent priority colour"),
         ("foreground_low", "dddddd", "Foreground low priority  colour"),
