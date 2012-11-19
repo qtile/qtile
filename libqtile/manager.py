@@ -1675,6 +1675,11 @@ class Qtile(command.CommandObject):
         hook.fire("setgroup")
         self.update_net_desktops()
 
+        # update window _NET_WM_DESKTOP
+        for group in (self.groups[indexa], self.groups[indexb]):
+            for window in group.windows:
+                window.group = group
+
     def cmd_togroup(self, prompt="group: ", widget="prompt"):
         """
             Move current window to the selected group in a propmt widget
