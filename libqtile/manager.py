@@ -1374,9 +1374,6 @@ class Qtile(command.CommandObject):
         if e.event != self.root.wid:
             self.unmanage(e.window)
 
-    def handle_ScreenChangeNotify(self, e):
-        self.cmd_restart()
-
     def toScreen(self, n):
         """
         Have Qtile move to screen and put focus there
