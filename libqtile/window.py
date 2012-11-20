@@ -529,13 +529,16 @@ class Internal(_Window):
                   EventMask.ButtonRelease |\
                   EventMask.KeyPress
 
-    def __init__(self, qtile, x, y, width, height, opacity=1.0):
-        win = qtile.conn.create_window(x, y, width, height)
+    @classmethod
+    def create(klass, qtile, x, y, width, height, opacity=1.0):
+        win = qtile.conn.create_window(
+                    x, y, width, height
+              )
         win.set_property("QTILE_INTERNAL", 1)
-        super(Internal, self).__init__(win, qtile)
-
-        self.place(x, y, width, height, 0, None)
-        self.opacity = opacity
+        i = Internal(win, qtile)
+        i.place(x, y, width, height, 0, None)
+        i.opacity = opacity
+        return i
 
     def __repr__(self):
         return "Internal(%s, %s)" % (self.name, self.window.wid)

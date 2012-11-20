@@ -288,11 +288,9 @@ class TreeTab(SingleWindow):
         return res
 
     def _create_panel(self):
-        self._panel = window.Internal(
-            self.group.qtile,
+        self._panel = window.Internal.create(self.group.qtile,
             0, 0,
-            self.panel_width, 100
-        )
+            self.panel_width, 100)
         self._create_drawer()
         self._panel.handle_Expose = self._panel_Expose
         self._panel.handle_ButtonPress = self._panel_ButtonPress
