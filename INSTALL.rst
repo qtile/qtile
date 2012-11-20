@@ -6,7 +6,7 @@ repository checkouts. This will become much simpler once the new features we
 depend on make it into distros, but until then, please follow the instructions_
 in the Qtile documentation.
 
-.. _instructions: http://qtile.org/doc-current/index.html
+.. _instructions: http://docs.qtile.org/en/latest/manual/install/index.html
 
 
 Installation
