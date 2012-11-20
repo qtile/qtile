@@ -261,8 +261,6 @@ class Prompt(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        if self.cursorblink:
-            self.timeout_add(self.cursorblink, self._blink)
 
     def startInput(self, prompt, callback, complete=None):
         """
@@ -272,6 +270,10 @@ class Prompt(base._TextBox):
             from the user. When done, calls the callback with the input string
             as argument.
         """
+
+        if self.cursorblink and not self.active:
+            self.timeout_add(self.cursorblink, self._blink)
+
         self.active = True
         self.prompt = prompt
         self.userInput = ""
@@ -301,6 +303,8 @@ class Prompt(base._TextBox):
     def _blink(self):
         self.blink = not self.blink
         self._update()
+        if not self.active:
+            return False
         return True
 
     def _update(self):
