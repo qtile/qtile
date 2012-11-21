@@ -20,7 +20,7 @@ class Sep(base._Widget):
         self.width = self.padding + self.linewidth
 
     def draw(self):
-        self.drawer.clear(self.background)
+        self.drawer.clear(self.background or self.bar.background)
         margin_top = (
             self.bar.height / float(100) * (100 - self.height_percent)) / 2.0
         self.drawer.draw_vbar(self.foreground,
