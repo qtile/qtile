@@ -30,6 +30,7 @@ class Icon(window._Window):
             height = icon_size
             width = new_width
         self.width, self.height = width, height
+        self.window.set_attribute(backpixmap=self.systray.bar.drawer.pixmap)
         self.systray.draw()
         return False
 
