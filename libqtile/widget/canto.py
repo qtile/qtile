@@ -21,9 +21,6 @@ class Canto(base._TextBox):
 
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "N/A", width, **config)
-
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
         self.timeout_add(self.update_delay, self.update)
 
     def _get_info(self):
@@ -45,8 +42,9 @@ class Canto(base._TextBox):
         self.update()
 
     def update(self):
-        ntext = self._get_info()
-        if ntext != self.text:
-            self.text = ntext
-            self.bar.draw()
+        if self.configured:
+            ntext = self._get_info()
+            if ntext != self.text:
+                self.text = ntext
+                self.bar.draw()
         return True
