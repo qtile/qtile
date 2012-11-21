@@ -242,7 +242,14 @@ class _Window(command.CommandObject):
         return
 
     def updateState(self):
-        self.fullscreen = self.window.get_net_wm_state() == 'fullscreen'
+        if not self.qtile.config.auto_fullscreen:
+            return
+        state = self.window.get_net_wm_state()
+        self.qtile.log.debug('_NET_WM_STATE: %s' % state)
+        if state == 'fullscreen':
+            self.fullscreen = True
+        else:
+            self.fullscreen = False
 
     @property
     def urgent(self):
@@ -917,6 +924,7 @@ class Window(_Window):
 
     def handle_PropertyNotify(self, e):
         name = self.qtile.conn.atoms.get_name(e.atom)
+        self.qtile.log.debug("PropertyNotifyEvent: %s" % name)
         if name == "WM_TRANSIENT_FOR":
             pass
         elif name == "WM_HINTS":

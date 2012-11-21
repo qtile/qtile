@@ -99,4 +99,4 @@ follow_mouse_focus = True
 cursor_warp = False
 floating_layout = layout.Floating()
 mouse = ()
-
+auto_fullscreen = True
