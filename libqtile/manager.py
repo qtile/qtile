@@ -289,6 +289,7 @@ class Screen(command.CommandObject):
         y = y or self.y
         w = w or self.width
         h = h or self.height
+        self._configure(self.qtile, self.index, x, y, w, h, self.group)
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
                 bar.draw()

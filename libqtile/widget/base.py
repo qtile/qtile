@@ -35,6 +35,7 @@ class _Widget(command.CommandObject):
         else:
             self.width_type = bar.STATIC
             self.width = width
+        self.configured = False
 
     @property
     def width(self):
@@ -58,6 +59,7 @@ class _Widget(command.CommandObject):
                             self.bar.width,
                             self.bar.height
                       )
+        self.configured = True
 
     def resize(self):
         """

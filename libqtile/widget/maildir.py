@@ -45,9 +45,6 @@ class Maildir(base._TextBox):
             self._subFolders = subFolders
 
         self.text = self.format_text(self.mailbox_state())
-
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
         self.timeout_add(self._timeout, self.update)
 
     def mailbox_state(self):
@@ -91,12 +88,12 @@ class Maildir(base._TextBox):
 
         @return: True, to keep the timeout active.
         """
-        newText = self.format_text(self.mailbox_state())
+        if self.configured:
+            newText = self.format_text(self.mailbox_state())
 
-        if newText != self.text:
-            self.text = newText
-            self.bar.draw()
-
+            if newText != self.text:
+                self.text = newText
+                self.bar.draw()
         # Return True to keep the timeout active (see documentation of
         # gobject.timeout_add()).
         return True

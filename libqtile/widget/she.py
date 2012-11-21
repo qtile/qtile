@@ -28,9 +28,6 @@ class She(base._TextBox):
         }
         self.modes_index = self.modes.keys().sort()
         self.mode = None
-
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
         self.timeout_add(self.update_delay, self.update)
 
     def _get_mode(self):
@@ -39,10 +36,11 @@ class She(base._TextBox):
         return mode
 
     def update(self):
-        mode = self._get_mode()
-        if mode != self.mode:
-            self.mode = mode
-            self.draw()
+        if self.configured:
+            mode = self._get_mode()
+            if mode != self.mode:
+                self.mode = mode
+                self.draw()
         return True
 
     def draw(self):
