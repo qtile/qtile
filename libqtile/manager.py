@@ -475,7 +475,10 @@ class Group(command.CommandObject):
         self.windows.add(win)
         win.group = self
         try:
-            if self.floating_layout.match(win):
+            if (win.window.get_net_wm_state() == 'fullscreen' and
+                self.qtile.config.auto_fullscreen):
+                win._float_state = window.FULLSCREEN
+            elif self.floating_layout.match(win):
                 # !!! tell it to float, can't set floating
                 # because it's too early
                 # so just set the flag underneath
