@@ -38,30 +38,27 @@ class Pacman(base._TextBox):
         self.interval = interval
         self.execute = execute
         self.text = str(self.updates())
-        
-
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
         self.timeout_add(self.interval, self.update)
-    
+
     def draw(self):
         if self.text == '0':
             self.layout.colour = self.unavailable
         else:
             self.layout.colour = self.foreground
         base._TextBox.draw(self)
-    
+
     def updates(self):
         pacman = subprocess.Popen(['pacman', '-Qu'], stdout=subprocess.PIPE)
         return len(pacman.stdout.readlines())
-    
+
     def update(self):
-        updates = str(self.updates())
-        if self.text != updates:
-            self.text = updates
-            self.bar.draw()
+        if self.configured:
+            updates = str(self.updates())
+            if self.text != updates:
+                self.text = updates
+                self.bar.draw()
         return True
-    
+
     def button_press(self, x, y, button):
         if button == 1 and self.execute is not None:
             subprocess.Popen([self.execute], shell=True)

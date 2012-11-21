@@ -37,12 +37,12 @@ class Volume(base._TextBox):
             self.width = 0
         self.surfaces = {}
         self.volume = None
+        self.timeout_add(self.update_interval, self.update)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         if self.theme_path:
             self.setup_images()
-        self.timeout_add(self.update_interval, self.update)
 
     def button_press(self, x, y, button):
         if button == 5:
@@ -57,10 +57,11 @@ class Volume(base._TextBox):
         self.draw()
 
     def update(self):
-        vol = self.get_volume()
-        if vol != self.volume:
-            self.volume = vol
-            self.draw()
+        if self.configured:
+            vol = self.get_volume()
+            if vol != self.volume:
+                self.volume = vol
+                self.draw()
         return True
 
     def setup_images(self):

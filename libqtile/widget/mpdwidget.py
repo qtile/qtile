@@ -47,6 +47,8 @@ class Mpd(base._TextBox):
         self.client = MPDClient()
         self.connected = False
         self.connect()
+        self.timeout_add(1, self.update)
+
 
     def connect(self, ifneeded=False):
         if self.connected:
@@ -106,10 +108,11 @@ class Mpd(base._TextBox):
         self.layout = self.drawer.textlayout(
             self.text, self.foreground, self.font, self.fontsize,
             markup=True)
-        self.timeout_add(1, self.update)
         atexit.register(self.mpdDisconnect)
 
     def update(self):
+        if not self.configured:
+            return True
         if self.connect(True):
             try:
                 status = self.client.status()

@@ -42,6 +42,7 @@ class Mpris(base._TextBox):
 
         # try to connect for grins
         self._connect()
+        self.timeout_add(1, self.update)
 
     def _connect(self):
         """ Try to connect to the player if it exists. """
@@ -91,12 +92,10 @@ class Mpris(base._TextBox):
             return f(*args, **kwargs)
         return wrapper
 
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
-        self.timeout_add(1, self.update)
-
     @ensure_connected
     def update(self):
+        if not self.configured:
+            return True
         if not self.connected:
             playing = ''
         elif not self.is_playing():

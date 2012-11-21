@@ -34,6 +34,7 @@ class _Graph(base._Widget):
         base._Widget.__init__(self, width, **config)
         self.values = [0] * self.samples
         self.maxvalue = 0
+        self.timeout_add(self.frequency, self.update)
 
     @property
     def graphwidth(self):
@@ -122,12 +123,9 @@ class _Graph(base._Widget):
             self.maxvalue = max(self.values)
         self.draw()
 
-    def _configure(self, qtile, bar):
-        base._Widget._configure(self, qtile, bar)
-        self.timeout_add(self.frequency, self.update)
-
     def update(self):
-        self.update_graph()
+        if self.configured:
+            self.update_graph()
         return True
 
     def fullfill(self, value):

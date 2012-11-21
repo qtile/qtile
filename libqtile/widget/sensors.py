@@ -52,9 +52,6 @@ class ThermalSensor(base._TextBox):
             for k in temp_values:
                 self.tag_sensor = k
                 break
-
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
         self.timeout_add(self.update_interval, self.update)
 
     def button_press(self, x, y, button):
@@ -76,8 +73,10 @@ class ThermalSensor(base._TextBox):
         return temp_values
 
     def update(self):
-        temp_values = self.get_temp_sensors()
-        if temp_values is not None:
+        if self.configured:
+            temp_values = self.get_temp_sensors()
+            if temp_values is None:
+                return False
             self.text = ""
             if self.show_tag and self.tag_sensor is not None:
                 self.text = self.tag_sensor + ": "
@@ -88,6 +87,5 @@ class ThermalSensor(base._TextBox):
             else:
                 self.layout.colour = self.foreground_normal
             self.bar.draw()
-            return True
-        else:
-            return False
+        return True
+
