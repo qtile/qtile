@@ -72,7 +72,9 @@ pull requests should be based against.
 While not all of our code follows `PEP8
 <http://www.python.org/dev/peps/pep-0008/>`_, we do try to adhere to it where
 possible, and ideally any new code would be PEP8 compliant. Perhaps the
-biggest issue is tabs vs. spaces: only 4 space tabs, please.
+biggest issue is tabs vs. spaces: only 4 space tabs, please. We also request
+that git commit messages follow the `standard format
+<http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>`_.
 
 Feel free to add your contribution (no matter how small) to the appropriate
 place in the CHANGELOG as well!
