@@ -23,7 +23,7 @@ class Icon(window._Window):
         try:
             width, height = self.hints["min_width"], self.hints["min_height"]
         except KeyError:
-            width, height = icon_size
+            width, height = icon_size, icon_size
 
         if height > icon_size:
             new_width = width / height * icon_size
