@@ -108,6 +108,7 @@ class Battery(_Battery):
         base._TextBox.__init__(self, "BAT", bar.CALCULATED, **config)
         self.low_percentage = low_percentage
         self.timeout_add(self.update_delay, self.update)
+        self.update()
 
     def _get_text(self):
         info = self._get_info()
