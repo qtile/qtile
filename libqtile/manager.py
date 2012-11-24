@@ -253,10 +253,16 @@ class Screen(command.CommandObject):
             s1.group = g2
             g2._setScreen(s1)
         else:
-            if self.group is not None:
-                self.group._setScreen(None)
+            old_group = self.group
             self.group = new_group
+
+            # display clients of the new group and then hide from old group
+            # to remove the screen flickering
             new_group._setScreen(self)
+
+            if old_group is not None:
+                old_group._setScreen(None)
+
         hook.fire("setgroup")
         hook.fire("focus_change")
         hook.fire("layout_change",
