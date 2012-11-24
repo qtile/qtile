@@ -995,11 +995,41 @@ class Qtile(command.CommandObject):
         c = self.windowMap.get(win)
         if c:
             hook.fire("client_killed", c)
+            self.reset_gaps(c)
             if getattr(c, "group", None):
                 c.window.unmap()
                 c.state = window.WithdrawnState
                 c.group.remove(c)
             del self.windowMap[win]
+
+    def reset_gaps(self, c):
+        if c.strut:
+            self.update_gaps((0, 0, 0, 0), c.strut)
+
+    def update_gaps(self, strut, old_strut=None):
+        from libqtile.bar import Gap
+
+        (left, right, top, bottom) = strut[:4]
+        if old_strut:
+            (old_left, old_right, old_top, old_bottom) = old_strut[:4]
+            if not left and old_left:
+                self.currentScreen.left = None
+            elif not right and old_right:
+                self.currentScreen.right = None
+            elif not top and old_top:
+                self.currentScreen.top = None
+            elif not bottom and old_bottom:
+                self.currentScreen.bottom = None
+
+        if top:
+            self.currentScreen.top = Gap(top)
+        elif bottom:
+            self.currentScreen.bottom = Gap(bottom)
+        elif left:
+            self.currentScreen.left = Gap(left)
+        elif right:
+            self.currentScreen.right = Gap(right)
+        self.currentScreen.resize()
 
     def manage(self, w):
         try:
@@ -1022,7 +1052,12 @@ class Qtile(command.CommandObject):
                     c = window.Window(w, self)
                 except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
                     return
-                hook.fire("client_new", c)
+
+                if w.get_wm_type() == "dock" or c.strut:
+                    c.static(self.currentScreen.index)
+                else:
+                    hook.fire("client_new", c)
+
                 # Window may be defunct because
                 # it's been declared static in hook.
                 if c.defunct:
