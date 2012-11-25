@@ -1001,6 +1001,7 @@ class Qtile(command.CommandObject):
                 c.state = window.WithdrawnState
                 c.group.remove(c)
             del self.windowMap[win]
+            self.update_client_list()
 
     def reset_gaps(self, c):
         if c.strut:
@@ -1066,10 +1067,23 @@ class Qtile(command.CommandObject):
                 # Window may have been bound to a group in the hook.
                 if not c.group:
                     self.currentScreen.group.add(c)
+                self.update_client_list()
                 hook.fire("client_managed", c)
             return c
         else:
             return self.windowMap[w.wid]
+
+    def update_client_list(self):
+        """
+        Updates the client stack list
+        this is needed for third party tasklists
+        and drag and drop of tabs in chrome
+        """
+
+        windows = [wid for wid, c in self.windowMap.iteritems() if c.group]
+        self.root.set_property("_NET_CLIENT_LIST", windows)
+        # TODO: check stack order
+        self.root.set_property("_NET_CLIENT_LIST_STACKING",windows)
 
     def grabMouse(self):
         self.root.ungrab_button(None, None)
