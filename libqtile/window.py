@@ -455,12 +455,13 @@ class _Window(command.CommandObject):
                 e = struct.pack('BBHII5I', *vals)
                 self.window.send_event(e)
             if self.hints['input']:
-                    self.window.set_input_focus()
+                self.window.set_input_focus()
             try:
                 if warp and self.qtile.config.cursor_warp:
                     self.window.warp_pointer(self.width // 2, self.height // 2)
             except AttributeError:
                 pass
+        self.qtile.root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
         hook.fire("client_focus", self)
 
     def _items(self, name, sel):
