@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import array
 import struct
 import contextlib
 import xcb.xcb
@@ -105,6 +106,7 @@ class _Window(command.CommandObject):
         self.window, self.qtile = window, qtile
         self.hidden = True
         self.group = None
+        self.icons = {}
         window.set_attribute(eventmask=self._windowMask)
         try:
             g = self.window.get_geometry()
@@ -644,6 +646,7 @@ class Window(_Window):
 
         # add window to the save-set, so it gets mapped when qtile dies
         qtile.conn.conn.core.ChangeSaveSet(SetMode.Insert, self.window.wid)
+        self.update_wm_net_icon()
 
     @property
     def group(self):
@@ -939,6 +942,38 @@ class Window(_Window):
             )
         return False
 
+    def update_wm_net_icon(self):
+        ret = self.window.get_property('_NET_WM_ICON', 'CARDINAL')
+        if not ret:
+            return
+        icon = ret.value
+
+        icons = {}
+        while True:
+            if not icon:
+                break
+            size = icon[:8]
+            if len(size) != 8 or not size[0] or not size[4]:
+                break
+
+            icon = icon[8:]
+
+            width = size[0]
+            height = size[4]
+
+            next_pix = width*height*4
+            data = icon[:next_pix]
+
+            arr = array.array("B", data)
+            for i in range(0, len(arr), 4):
+                mult = (arr[i+3]) / 255.
+                arr[i+0] = int(arr[i+0] * mult)
+                arr[i+1] = int(arr[i+1] * mult)
+                arr[i+2] = int(arr[i+2] * mult)
+            icon = icon[next_pix:]
+            icons["%sx%s" % (width, height)] = arr
+        self.icons = icons
+
     def handle_PropertyNotify(self, e):
         name = self.qtile.conn.atoms.get_name(e.atom)
         self.qtile.log.debug("PropertyNotifyEvent: %s" % name)
@@ -958,6 +993,8 @@ class Window(_Window):
             pass
         elif name == "_NET_WM_ICON_NAME":
             pass
+        elif name == "_NET_WM_ICON":
+            self.update_wm_net_icon()
         elif name == "ZOOM":
             pass
         elif name == "_NET_WM_WINDOW_OPACITY":
