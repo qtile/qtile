@@ -943,6 +943,10 @@ class Window(_Window):
         return False
 
     def update_wm_net_icon(self):
+        """
+            Set a dict with the icons of the window
+        """
+
         ret = self.window.get_property('_NET_WM_ICON', 'CARDINAL')
         if not ret:
             return
@@ -973,6 +977,7 @@ class Window(_Window):
             icon = icon[next_pix:]
             icons["%sx%s" % (width, height)] = arr
         self.icons = icons
+        hook.fire("net_wm_icon_change", self)
 
     def handle_PropertyNotify(self, e):
         name = self.qtile.conn.atoms.get_name(e.atom)
