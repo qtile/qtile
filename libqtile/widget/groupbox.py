@@ -118,7 +118,7 @@ class GroupBox(_GroupBase):
          "Urgent border color"),
         ("urgent_alert_method", "border",
          "Method for alerting you of WM urgent "
-         "hints (one of 'border' or 'text')"),
+         "hints (one of 'border', 'text' or 'block')"),
     )
 
     def __init__(self, **config):
@@ -172,6 +172,8 @@ class GroupBox(_GroupBase):
 
         offset = 0
         for i, g in enumerate(self.qtile.groups):
+            is_block = (self.highlight_method == 'block')
+
             bw = self.box_width([g])
             if g.screen:
                 if self.bar.screen.group.name == g.name:
@@ -182,8 +184,10 @@ class GroupBox(_GroupBase):
                 else:
                     border = self.other_screen_border
             elif (self.group_has_urgent(g) and
-                  self.urgent_alert_method == "border"):
+                  self.urgent_alert_method in ('border', 'block')):
                 border = self.urgent_border
+                if self.urgent_alert_method == 'block':
+                    is_block = True
             else:
                 border = self.background or self.bar.background
 
@@ -200,7 +204,7 @@ class GroupBox(_GroupBase):
                 border,
                 text,
                 self.rounded,
-                self.highlight_method == 'block',
+                is_block,
                 bw - self.margin_x * 2 - self.padding * 2
             )
             offset += bw
