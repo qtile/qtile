@@ -233,8 +233,9 @@ class _Window(command.CommandObject):
             self.hints.update(normh)
 
         if h and 'UrgencyHint' in h['flags']:
-            self.hints['urgent'] = True
-            hook.fire('client_urgent_hint_changed', self)
+            if self.qtile.currentWindow != self:
+                self.hints['urgent'] = True
+                hook.fire('client_urgent_hint_changed', self)
         elif self.urgent:
             self.hints['urgent'] = False
             hook.fire('client_urgent_hint_changed', self)
