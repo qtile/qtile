@@ -106,12 +106,24 @@ PropertyMap = {
     "_NET_DESKTOP_NAMES": ("UTF8_STRING", 8),
     "_NET_WORKAREA": ("CARDINAL", 32),
     "_NET_ACTIVE_WINDOW": ("WINDOW", 32),
-    "_NET_WM_STATE": ("ATOM", 32),
     "_NET_WM_DESKTOP": ("CARDINAL", 32),
     "_NET_WM_STRUT": ("CARDINAL", 32),
     "_NET_WM_STRUT_PARTIAL": ("CARDINAL", 32),
     "_NET_WM_WINDOW_OPACITY": ("CARDINAL", 32),
     "_NET_WM_WINDOW_TYPE": ("CARDINAL", 32),
+    # Net State
+    "_NET_WM_STATE": ("ATOM", 32),
+    "_NET_WM_STATE_STICKY": ("ATOM", 32),
+    "_NET_WM_STATE_SKIP_TASKBAR": ("ATOM", 32),
+    "_NET_WM_STATE_FULLSCREEN": ("ATOM", 32),
+    "_NET_WM_STATE_MAXIMIZED_HORZ": ("ATOM", 32),
+    "_NET_WM_STATE_MAXIMIZED_VERT": ("ATOM", 32),
+    "_NET_WM_STATE_ABOVE": ("ATOM", 32),
+    "_NET_WM_STATE_BELOW": ("ATOM", 32),
+    "_NET_WM_STATE_MODAL": ("ATOM", 32),
+    "_NET_WM_STATE_HIDDEN": ("ATOM", 32),
+    "_NET_WM_STATE_DEMANDS_ATTENTION": ("ATOM", 32),
+
     # ICCCM
     "WM_STATE": ("WM_STATE", 32),
     # Qtile-specific properties
