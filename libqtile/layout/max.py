@@ -40,6 +40,12 @@ class Max(SingleWindow):
         if self.clients:
             return self.clients[0]
 
+    def focus(self, c):
+        if c in self.clients:
+            self.clients.remove(c)
+            self.clients.insert(0, c)
+            self.group.layoutAll()
+
     def up(self):
         if self.clients:
             utils.shuffleUp(self.clients)

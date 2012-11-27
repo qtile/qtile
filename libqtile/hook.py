@@ -156,6 +156,12 @@ class Subscribe:
         """
         return self._subscribe("layout_change", func)
 
+    def net_wm_icon_change(self, func):
+        """
+            Called on _NET_WM_ICON chance.
+        """
+        return self._subscribe("net_wm_icon_change", func)
+
     def screen_change(self, func):
         """
             Called when a screen is added or screen configuration is changed
