@@ -1012,23 +1012,36 @@ class Window(_Window):
         opcode = xcb.xproto.ClientMessageData(event, 0, 20).data32[2]
         data = xcb.xproto.ClientMessageData(event, 12, 20)
         if atoms["_NET_WM_STATE"] == opcode:
-            action = data.data32[0]
-            first_prop = atoms.get_name(data.data32[1])
-            second_prop = atoms.get_name(data.data32[2])
-            if first_prop == "_NET_WM_STATE_FULLSCREEN":
-                if action ==  _NET_WM_STATE_REMOVE:
-                    self.fullscreen = False
-                elif action == _NET_WM_STATE_ADD:
-                    self.fullscreen = not self.fullscreen
-                elif action == _NET_WM_STATE_TOGGLE:
-                    self.fullscreen = not self.fullscreen
-            else:
-                print "WTFPROP 1", first_prop
-                print "WTFPROP 2", second_prop
+            fullscreen_atom = atoms["_NET_WM_STATE_FULLSCREEN"]
 
-            print first_prop
-            print second_prop
-            print action
+            prev_state = self.window.get_property('_NET_WM_STATE',
+                "ATOM", unpack='I')
+            if not prev_state:
+                prev_state = []
+                if self.fullscreen:
+                    prev_state.append(fullscreen_atom)
+
+            current_state = set(prev_state)
+
+            action = data.data32[0]
+            for prop in (data.data32[1], data.data32[2]):
+                if not prop:
+                    # skip 0
+                    continue
+
+                prop_name = atoms.get_name(prop)
+
+                if action == _NET_WM_STATE_REMOVE:
+                    current_state.discard(prop)
+                elif action == _NET_WM_STATE_ADD:
+                    current_state.add(prop)
+                elif action == _NET_WM_STATE_TOGGLE:
+                    current_state ^= set([prop]) # toggle :D
+
+            # add support for additional flags here
+            self.fullscreen = (fullscreen_atom in current_state)
+
+            self.window.set_property('_NET_WM_STATE', list(current_state))
 
     def handle_PropertyNotify(self, e):
         name = self.qtile.conn.atoms.get_name(e.atom)

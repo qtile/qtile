@@ -465,6 +465,10 @@ class Window:
             return WindowTypes.get(name, name)
 
     def get_net_wm_state(self):
+        # TODO: _NET_WM_STATE is a *list* of atoms
+        # We're returning only the first one, but we don't need anything
+        # other than _NET_WM_STATE_FULLSCREEN (at least for now)
+        # Fixing this requires refactoring each call to use a list instead
         r = self.get_property('_NET_WM_STATE', "ATOM", unpack='I')
         if r:
             name = self.conn.atoms.get_name(r[0])
