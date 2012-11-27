@@ -10,6 +10,8 @@ class _CrashMe(base._TextBox):
     defaults = manager.Defaults(
         ("font", "Arial", "Clock font"),
         ("fontsize", None, "Clock pixel size. Calculated if None."),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ("padding", None, "Clock padding. Calculated if None."),
         ("background", None, "Background colour"),
         ("foreground", "ff0000", "Foreground colour")
@@ -26,7 +28,7 @@ class _CrashMe(base._TextBox):
         base._Widget._configure(self, qtile, bar)
         self.layout = self.drawer.textlayout(
             self.text, self.foreground, self.font, self.fontsize,
-            markup=True)
+            self.fontshadow, markup=True)
 
     def button_press(self, x, y, button):
         if button == 1:

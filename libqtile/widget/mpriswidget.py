@@ -16,6 +16,8 @@ class Mpris(base._TextBox):
     defaults = manager.Defaults(
             ("font", "Arial", "Mpd widget font"),
             ("fontsize", None, "Mpd widget pixel size. Calculated if None."),
+            ("fontshadow", None,
+                "font shadow color, default is None(no shadow)"),
             ("padding", None, "Mpd widget padding. Calculated if None."),
             ("background", None, "Background colour"),
             ("foreground", "ffffff", "Foreground colour")

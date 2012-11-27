@@ -13,6 +13,8 @@ class Notify(base._TextBox):
     defaults = manager.Defaults(
         ("font", "Arial", "Mpd widget font"),
         ("fontsize", None, "Mpd widget pixel size. Calculated if None."),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ("padding", None, "Mpd widget padding. Calculated if None."),
         ("background", None, "Background colour"),
         ("foreground", "ffffff", "Foreground normal priority colour"),
@@ -28,8 +30,8 @@ class Notify(base._TextBox):
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
         self.layout = self.drawer.textlayout(
-            self.text, self.foreground, self.font, self.fontsize,
-            markup=True)
+            self.text, self.foreground, self.font,
+            self.fontsize, self.fontshadow, markup=True)
 
     def set_notif_text(self, notif):
         self.text = utils.escape(notif.summary)

@@ -9,7 +9,7 @@ import xcb.xproto
 
 class TextLayout(object):
     def __init__(self, drawer, text, colour, font_family, font_size,
-                 wrap=True, markup=False):
+                 font_shadow, wrap=True, markup=False):
         self.drawer, self.colour = drawer, colour
         layout = drawer.ctx.create_layout()
         layout.set_alignment(pango.ALIGN_CENTER)
@@ -19,6 +19,7 @@ class TextLayout(object):
         desc.set_family(font_family)
         desc.set_absolute_size(font_size * pango.SCALE)
         layout.set_font_description(desc)
+        self.font_shadow = font_shadow
         self.layout = layout
         self.markup = markup
         self.text = text
@@ -83,6 +84,11 @@ class TextLayout(object):
         self.layout.set_font_description(d)
 
     def draw(self, x, y):
+        if self.font_shadow is not None:
+            self.drawer.set_source_rgb(self.font_shadow)
+            self.drawer.ctx.move_to(x+1, y+1)
+            self.drawer.ctx.show_layout(self.layout)
+
         self.drawer.set_source_rgb(self.colour)
         self.drawer.ctx.move_to(x, y)
         self.drawer.ctx.show_layout(self.layout)
@@ -290,8 +296,8 @@ class Drawer:
         self.ctx.fill()
         self.ctx.stroke()
 
-    def textlayout(self, text, colour, font_family, font_size, markup=False,
-                   **kw):
+    def textlayout(self, text, colour, font_family, font_size, font_shadow,
+            markup=False, **kw):
         """
             Get a text layout.
 
@@ -302,7 +308,7 @@ class Drawer:
             https://bugzilla.gnome.org/show_bug.cgi?id=625287
         """
         return TextLayout(self, text, colour, font_family, font_size,
-                          markup=markup, **kw)
+                          font_shadow, markup=markup, **kw)
 
     _sizelayout = None
 
@@ -311,7 +317,7 @@ class Drawer:
         # See comment on textlayout() for details.
         if not self._sizelayout:
             self._sizelayout = self.textlayout(
-                "", "ffffff", font_family, font_size)
+                "", "ffffff", font_family, font_size, None)
         widths, heights = [], []
         self._sizelayout.font_family = font_family
         self._sizelayout.font_size = font_size
