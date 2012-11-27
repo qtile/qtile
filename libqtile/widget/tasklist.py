@@ -92,7 +92,7 @@ class TaskList(base._Widget):
     def drawbox(self, offset, text, bordercolor, textcolor, rounded=False,
                 block=False, width=None):
         self.drawtext(text, textcolor, width)
-        padding_x = [self.padding + self.icon_size, self.padding]
+        padding_x = [self.padding + self.icon_size+4, self.padding]
         framed = self.layout.framed(self.borderwidth, bordercolor,
                                     padding_x, self.padding)
         if block:
@@ -154,7 +154,7 @@ class TaskList(base._Widget):
         if not window.icons:
             return
 
-        x = offset + self.padding + self.borderwidth + 2
+        x = offset + self.padding + self.borderwidth + 2 + self.margin_x
         y = self.padding + self.borderwidth
 
         surface = self.get_window_icon(window)
