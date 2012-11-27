@@ -130,6 +130,12 @@ PropertyMap = {
     "QTILE_INTERNAL": ("CARDINAL", 32)
 }
 
+# TODO add everything required here
+# http://standards.freedesktop.org/wm-spec/1.4/ar01s03.html
+SUPPORTED_ATOMS = ['_NET_SUPPORTED', '_NET_WM_STATE',
+    '_NET_WM_STATE_FULLSCREEN', '_NET_SUPPORTING_WM_CHECK',
+    '_NET_WM_NAME']
+
 
 def toStr(s):
     return "".join([chr(i) for i in s.name])
