@@ -317,7 +317,6 @@ class Prompt(base._TextBox):
         self.active = True
         self.prompt = prompt
         self.userInput = ""
-        self.actual_value = ""
         self.callback = callback
         self.completer = self.completers[complete](self.qtile)
         self._update()
@@ -368,8 +367,8 @@ class Prompt(base._TextBox):
         keysym = self.qtile.conn.keycode_to_keysym(e.detail, state)
         if keysym == xkeysyms.keysyms['Tab']:
             self.userInput = self.completer.complete(self.userInput)
-            self.actual_value = self.completer.actual()
         else:
+            actual_value = self.completer.actual()
             self.completer.reset()
             if keysym < 127 and chr(keysym) in string.printable:
                 # No LookupString in XCB... oh,
@@ -384,8 +383,7 @@ class Prompt(base._TextBox):
             elif keysym == xkeysyms.keysyms['Return']:
                 self.active = False
                 self.bar.widget_ungrab_keyboard()
-                self.callback(self.actual_value and self.actual_value\
-                        or self.userInput)
+                self.callback(actual_value and actual_value or self.userInput)
         self._update()
 
     def cmd_fake_keypress(self, key):
