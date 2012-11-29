@@ -21,6 +21,8 @@ class Mpd(base._TextBox):
     defaults = manager.Defaults(
         ("font", "Arial", "Mpd widget font"),
         ("fontsize", None, "Mpd widget pixel size. Calculated if None."),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ("padding", None, "Mpd widget padding. Calculated if None."),
         ("background", None, "Background colour"),
         ("foreground", "cccccc", "Foreground colour"),
@@ -107,7 +109,7 @@ class Mpd(base._TextBox):
         base._Widget._configure(self, qtile, bar)
         self.layout = self.drawer.textlayout(
             self.text, self.foreground, self.font, self.fontsize,
-            markup=True)
+            self.fontshadow, markup=True)
         atexit.register(self.mpdDisconnect)
 
     def update(self):
