@@ -9,6 +9,8 @@ class TaskList(base._Widget):
         ("borderwidth", 2, "Current group border width"),
         ("font", "Arial", "Font face"),
         ("fontsize", None, "Font pixel size - calculated if None"),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ("foreground", "ffffff", "Font colour"),
         ("background", None, "Widget background"),
         ("border", "215578", "Border colour"),
@@ -55,7 +57,7 @@ class TaskList(base._Widget):
         self.icon_size = self.bar.height - (self.borderwidth+2) * 2
 
         self.layout = self.drawer.textlayout(
-            "", "ffffff", self.font, self.fontsize)
+            "", "ffffff", self.font, self.fontsize, self.fontshadow)
         self.setup_hooks()
 
     def update(self, window=None):
