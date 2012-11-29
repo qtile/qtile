@@ -1753,6 +1753,21 @@ class Qtile(command.CommandObject):
             for window in group.windows:
                 window.group = group
 
+    def find_window(self, wid):
+        window = self.windowMap.get(wid)
+        if window:
+            if not window.group.screen:
+                self.currentScreen.setGroup(window.group)
+            window.group.focus(window, False)
+
+    def cmd_findwindow(self, prompt="window: ", widget="prompt"):
+        mb = self.widgetMap.get(widget)
+        if not mb:
+            self.log.error("No widget named '%s' present." % widget)
+            return
+
+        mb.startInput(prompt, self.find_window, "window")
+
     def cmd_togroup(self, prompt="group: ", widget="prompt"):
         """
             Move current window to the selected group in a propmt widget
