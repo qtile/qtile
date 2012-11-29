@@ -385,7 +385,7 @@ class Prompt(base._TextBox):
             elif keysym == xkeysyms.keysyms['Return']:
                 self.active = False
                 self.bar.widget_ungrab_keyboard()
-                self.callback(actual_value and actual_value or self.userInput)
+                self.callback(actual_value or self.userInput)
         self._update()
 
     def cmd_fake_keypress(self, key):
