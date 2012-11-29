@@ -1768,6 +1768,14 @@ class Qtile(command.CommandObject):
 
         mb.startInput(prompt, self.find_window, "window")
 
+    def cmd_next_urgent(self):
+        try:
+            nxt = filter(lambda w: w.urgent, self.windowMap.values())[0]
+            nxt.group.cmd_toscreen()
+            nxt.group.focus(nxt, False)
+        except IndexError:
+            pass # no window had urgent set
+
     def cmd_togroup(self, prompt="group: ", widget="prompt"):
         """
             Move current window to the selected group in a propmt widget
