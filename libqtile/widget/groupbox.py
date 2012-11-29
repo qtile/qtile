@@ -123,6 +123,8 @@ class GroupBox(_GroupBase):
         ("urgent_alert_method", "border",
          "Method for alerting you of WM urgent "
          "hints (one of 'border', 'text' or 'block')"),
+        ("disable_drag", False,
+         "Disable dragging and dropping of group names on widget"),
     )
 
     def __init__(self, **config):
@@ -150,7 +152,8 @@ class GroupBox(_GroupBase):
             group = curGroup.nextGroup()
         else:
             group = self.get_clicked_group(x, y)
-            self.clicked = group
+            if not self.disable_drag:
+                self.clicked = group
 
         if group:
             self.bar.screen.setGroup(group)
