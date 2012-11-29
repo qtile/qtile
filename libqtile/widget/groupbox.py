@@ -121,8 +121,9 @@ class GroupBox(_GroupBase):
          "hints (one of 'border', 'text' or 'block')"),
     )
 
-    def __init__(self, **config):
+    def __init__(self, IGNORE_OBNOXIOUS_SWITCH=True, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
+        self.IGNORE_OBNOXIOUS_SWITCH = IGNORE_OBNOXIOUS_SWITCH
         self.clicked = None
 
     def get_clicked_group(self, x, y):
@@ -152,6 +153,9 @@ class GroupBox(_GroupBase):
             self.bar.screen.setGroup(group)
 
     def button_release(self, x, y, button):
+        if self.IGNORE_OBNOXIOUS_SWITCH:
+            self.clicked = None
+            return
         if button not in (5, 4):
             group = self.get_clicked_group(x, y)
             if group and self.clicked:
