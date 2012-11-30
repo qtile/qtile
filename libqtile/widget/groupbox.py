@@ -21,7 +21,7 @@ class _GroupBase(base._Widget):
 
     def box_width(self, groups):
         width, height = self.drawer.max_layout_size(
-            [i.name for i in groups],
+            [i.title for i in groups],
             self.font,
             self.fontsize
         )
@@ -87,7 +87,7 @@ class AGroupBox(_GroupBase):
         self.drawer.clear(self.background or self.bar.background)
         e = (i for i in self.qtile.groups
              if i.name == self.bar.screen.group.name).next()
-        self.drawbox(self.margin_x, e.name, self.border, self.foreground)
+        self.drawbox(self.margin_x, e.title, self.border, self.foreground)
         self.drawer.draw(self.offset, self.width)
 
 
@@ -207,7 +207,7 @@ class GroupBox(_GroupBase):
 
             self.drawbox(
                 self.margin_x + offset,
-                g.name,
+                g.title,
                 border,
                 text,
                 self.rounded,
