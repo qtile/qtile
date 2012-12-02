@@ -11,6 +11,8 @@ class She(base._TextBox):
     defaults = manager.Defaults(
         ('font', 'Arial', 'Text Font'),
         ('fontsize', None, 'Calculated if None.'),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ('padding', None, 'Padding Left and Right. Calculated in None.'),
         ('background', None, 'Background Colour'),
         ('foreground', 'ffffff', 'Foreground Colour'),
