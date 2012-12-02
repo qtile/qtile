@@ -10,7 +10,7 @@ class NullCompleter:
         self.qtile = qtile
         self.thisfinal = ""
 
-    def actual(self, qtile):
+    def actual(self):
         return self.thisfinal
 
     def reset(self):
