@@ -9,6 +9,8 @@ class Canto(base._TextBox):
     defaults = manager.Defaults(
         ("font", "Arial", "Font"),
         ("fontsize", None, "Pixel size. Calculated if None."),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ("padding", None, "Padding. Calculated if None."),
         ("background", None, "Background colour"),
         ("foreground", "ffffff", "Foreground colour"),

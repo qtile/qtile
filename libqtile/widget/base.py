@@ -177,7 +177,6 @@ class _TextBox(_Widget):
     """
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
         self.layout = None
-        self._fontshadow = None
         _Widget.__init__(self, width, **config)
         self.text = text
 

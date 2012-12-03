@@ -32,6 +32,8 @@ class YahooWeather(base._TextBox):
     defaults = manager.Defaults(
         ('font', 'Arial', 'Font'),
         ('fontsize', None, 'Pixel size, calculated if None.'),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ('padding', None, 'Padding, calculated if None.'),
         ('background', None, 'Background colour'),
         ('foreground', 'ffffff', 'Foreground colour'),

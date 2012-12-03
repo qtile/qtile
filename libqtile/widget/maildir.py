@@ -15,6 +15,8 @@ class Maildir(base._TextBox):
     defaults = manager.Defaults(
         ("font", "Arial", "Font"),
         ("fontsize", None, "Maildir widget font size. Calculated if None."),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ("padding", None, "Maildir widget padding. Calculated if None."),
         ("background", None, "Background colour"),
         ("foreground", "ffffff", "Foreground colour")

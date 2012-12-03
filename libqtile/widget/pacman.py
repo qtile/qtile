@@ -28,6 +28,8 @@ class Pacman(base._TextBox):
     defaults = manager.Defaults(
         ('font', 'Arial', 'Clock font'),
         ('fontsize', None, 'Updates widget font size. Calculated if None.'),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ('padding', None, 'Updates widget padding. Calculated if None.'),
         ('background', None, 'Background Color'),
         ('foreground', 'ff0000', 'Foreground Color'),
