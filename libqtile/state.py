@@ -56,5 +56,5 @@ class QtileState(object):
             try:
                 g = qtile.groupMap[group]
                 qtile.screens[screen].setGroup(g)
-            except KeyError:
+            except (KeyError, IndexError):
                 pass # group or screen missing
