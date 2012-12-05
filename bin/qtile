@@ -73,7 +73,7 @@ def make_qtile():
     log_level = getattr(logging, options.log_level)
     log = manager.init_log(log_level)
 
-    c = confreader.File(options.configfile)
+    c = confreader.File(options.configfile, is_restart=options.no_spawn)
 
     return manager.Qtile(
         c,
