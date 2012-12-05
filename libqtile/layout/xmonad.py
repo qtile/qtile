@@ -170,6 +170,7 @@ class MonadTall(SingleWindow):
         self.clients.remove(c)
         # move focus pointer
         self.focused = max(0, idx - 1)
+        self.do_normalize = True
         if self.clients:
             return self.clients[self.focused]
 
@@ -186,6 +187,7 @@ class MonadTall(SingleWindow):
         # reset main pane ratio
         if redraw:
             self.group.layoutAll()
+        self.do_normalize = False
 
     def _maximize_main(self):
         "Toggle the main pane between min and max size"
