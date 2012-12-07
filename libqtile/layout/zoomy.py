@@ -7,16 +7,16 @@ class Zoomy(SingleWindow):
         A layout with single active windows, and few other previews at the
         right
     """
-    name = "zoomy"
-    defaults = manager.Defaults(
+    defaults = [
         ("columnwidth", 150, "Width of the right column"),
         ("property_name", "ZOOM", "Property to set on zoomed window"),
         ("property_small", "0.1", "Property value to set on zoomed window"),
         ("property_big", "1.0", "Property value to set on normal window"),
-        )
+    ]
 
     def __init__(self, **config):
         SingleWindow.__init__(self, **config)
+        self.add_defaults(defaults)
         self.clients = []
         self.lastfocus = None
 

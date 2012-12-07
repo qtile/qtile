@@ -22,16 +22,27 @@ import copy
 from .. import command, manager
 
 
-class Layout(command.CommandObject):
+class Layout(command.CommandObject, manager.Configurable):
     """
         This class defines the API that should be exposed by all layouts.
     """
-    defaults = manager.Defaults()
+    @classmethod
+    def _name(cls):
+        return cls.__class__.__name__.lower()
+
+    defaults = [
+        ("name", None, "The name of this layout"
+            "(usually the class' name in lowercase, e.g. 'max'"),
+    ]
 
     def __init__(self, **config):
-        self.name = self.__class__.__name__.lower()
+        # name is a little odd; we can't resolve it until the class is defined
+        # (i.e., we can't figure it out to define it in Layout.defaults), so
+        # we resolve it here instead.
+        name = self.__class__.__name__.lower()
         command.CommandObject.__init__(self)
-        self.defaults.load(self, config)
+        manager.Configurable.__init__(self, name=name, **config)
+        self.add_defaults(Layout.defaults)
 
     def layout(self, windows, screen):
         assert windows, "let's eliminate unnecessary calls"

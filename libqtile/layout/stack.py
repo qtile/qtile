@@ -128,12 +128,12 @@ class Stack(Layout):
         stack, or unsplit it to show only the current window. At the moment,
         this is the most mature and flexible layout in Qtile.
     """
-    defaults = manager.Defaults(
+    defaults = [
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width."),
         ("name", "stack", "Name of this layout."),
-    )
+    ]
 
     def __init__(self, stacks=2, **config):
         """
@@ -141,6 +141,7 @@ class Stack(Layout):
         """
         Layout.__init__(self, **config)
         self.stacks = [_WinStack() for i in range(stacks)]
+        self.add_defaults(Stack.defaults)
 
     @property
     def currentStack(self):
