@@ -29,15 +29,7 @@ class YahooWeather(base._TextBox):
             wind_chill, wind_direction, wind_speed
     '''
 
-    defaults = manager.Defaults(
-        ('font', 'Arial', 'Font'),
-        ('fontsize', None, 'Pixel size, calculated if None.'),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ('padding', None, 'Padding, calculated if None.'),
-        ('background', None, 'Background colour'),
-        ('foreground', 'ffffff', 'Foreground colour'),
-
+    defaults = [
         ## One of (location, woeid) must be set.
         ('location', None,
          'Location to fetch weather for. Ignored if woeid is set.'),
@@ -47,13 +39,14 @@ class YahooWeather(base._TextBox):
          'Display format'),
         ('metric', True, 'True to use metric/C, False to use imperial/F'),
         ('update_interval', 600, 'Update interval in seconds'),
-    )
+    ]
 
     def __init__(self, **config):
         base._TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
+        self.add_defaults(YahooWeather.defaults)
         self.timeout_add(
             self.update_interval,
             self.fetch_weather, (),

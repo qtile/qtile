@@ -6,23 +6,17 @@ from subprocess import check_output, call
 
 
 class Canto(base._TextBox):
-    defaults = manager.Defaults(
-        ("font", "Arial", "Font"),
-        ("fontsize", None, "Pixel size. Calculated if None."),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ("padding", None, "Padding. Calculated if None."),
-        ("background", None, "Background colour"),
-        ("foreground", "ffffff", "Foreground colour"),
+    defaults = [
         ("fetch", False, "Whether to fetch new items on update"),
         ("feeds", [], "List of feeds to display, empty for all"),
         ("one_format", "{name}: {number}", "One feed display format"),
         ("all_format", "{number}", "All feeds display format"),
         ("update_delay", 600, "The delay in seconds between updates"),
-    )
+    ]
 
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "N/A", width, **config)
+        self.add_defaults(Canto.defaults)
         self.timeout_add(self.update_delay, self.update)
 
     def _get_info(self):

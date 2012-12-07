@@ -14,15 +14,7 @@ class ThermalSensor(base._TextBox):
     Then you can choose which you want, otherwise it will display the first
     available.
     '''
-    defaults = manager.Defaults(
-        ('font', 'Arial', 'Font'),
-        ('fontsize', None, 'Pixel size, calculated if None.'),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ('padding', None, 'Padding, calculated if None.'),
-        ('background', None, 'Background colour'),
-        ('foreground', 'ffffff', 'Foreground colour'),
-
+    defaults = [
         ('metric', True, 'True to use metric/C, False to use imperial/F'),
         ('show_tag', False, 'Show tag sensor'),
         ('update_interval', 2, 'Update interval in seconds'),
@@ -30,9 +22,11 @@ class ThermalSensor(base._TextBox):
         ('threshold', 70, 'If the current temperature value is above, '\
          'then change to foreground_alert colour'),
         ('foreground_alert', 'ff0000', 'Foreground colour alert'),
-    )
+    ]
+
     def __init__(self, **config):
         base._TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
+        self.add_defaults(ThermalSensor.defaults)
         self.sensors_temp = re.compile(
             ur"""
             ([a-zA-Z]+        #Tag

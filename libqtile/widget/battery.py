@@ -42,7 +42,7 @@ class _Battery(base._TextBox):
 
     def __init__(self, **config):
         base._TextBox.__init__(self, "BAT", bar.CALCULATED, **config)
-        self.add_defaults(defaults)
+        self.add_defaults(_Battery.defaults)
 
     def _load_file(self, name):
         try:
@@ -171,7 +171,7 @@ class BatteryIcon(_Battery):
 
     def __init__(self, **config):
         _Battery.__init__(self, **config)
-        self.add_defaults(defaults)
+        self.add_defaults(BatteryIcon.defaults)
 
         if self.theme_path:
             self.width_type = bar.STATIC

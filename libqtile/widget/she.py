@@ -8,21 +8,15 @@ class She(base._TextBox):
     ''' Widget to display the Super Hybrid Engine status.
     can display either the mode or CPU speed on eeepc computers.'''
 
-    defaults = manager.Defaults(
-        ('font', 'Arial', 'Text Font'),
-        ('fontsize', None, 'Calculated if None.'),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ('padding', None, 'Padding Left and Right. Calculated in None.'),
-        ('background', None, 'Background Colour'),
-        ('foreground', 'ffffff', 'Foreground Colour'),
+    defaults = [
         ('device', '/sys/devices/platform/eeepc/cpufv', 'sys path to cpufv'),
         ('format', 'speed', 'Type of info to display "speed" or "name"'),
         ('update_delay', 0.5, 'Update Time in seconds.'),
-    )
+    ]
 
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, 'CPU', **config)
+        self.add_defaults(She.defaults)
         self.modes = {
             '0x300': {'name': 'Performance', 'speed': '1.6GHz'},
             '0x301': {'name': 'Normal', 'speed': '1.2GHz'},

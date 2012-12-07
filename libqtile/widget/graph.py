@@ -222,7 +222,7 @@ class NetGraph(_Graph):
 
     def __init__(self, **config):
         _Graph.__init__(self, **config)
-        self.add_defaults(defaults)
+        self.add_defaults(NetGraph.defaults)
         self.filename = '/sys/class/net/{interface}/statistics/{type}'.format(
             interface=self.interface,
             type=self.bandwidth_type == 'down' and 'rx_bytes' or 'tx_bytes'
@@ -254,7 +254,7 @@ class HDDGraph(_Graph):
 
     def __init__(self, **config):
         _Graph.__init__(self, **config)
-        self.add_defaults(defaults)
+        self.add_defaults(HDDGraph.defaults)
         stats = statvfs(self.path)
         self.maxvalue = stats.f_blocks * stats.f_frsize
         values = self._getValues()
