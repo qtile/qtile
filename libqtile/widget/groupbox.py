@@ -127,8 +127,9 @@ class GroupBox(_GroupBase):
          "Disable dragging and dropping of group names on widget"),
     )
 
-    def __init__(self, **config):
+    def __init__(self, ignore_drag=True, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
+        self.ignore_drag = ignore_drag
         self.clicked = None
 
     def get_clicked_group(self, x, y):
@@ -159,6 +160,9 @@ class GroupBox(_GroupBase):
             self.bar.screen.setGroup(group)
 
     def button_release(self, x, y, button):
+        if self.ignore_drag:
+            self.clicked = None
+            return
         if button not in (5, 4):
             group = self.get_clicked_group(x, y)
             if group and self.clicked:
