@@ -22,8 +22,8 @@ class TextBox(base._TextBox):
             - text: Initial widget text.
             - width: An integer width, bar.STRETCH, or bar.CALCULATED .
         """
-        self.name = name
         base._TextBox.__init__(self, text, width, **config)
+        self.name = name
 
     def update(self, text):
         self.text = text
