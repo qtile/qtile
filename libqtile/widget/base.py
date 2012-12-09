@@ -19,7 +19,6 @@ class _Widget(command.CommandObject):
         configured.
     """
     offset = None
-    name = None
     defaults = manager.Defaults()
 
     def __init__(self, width, **config):
@@ -27,6 +26,7 @@ class _Widget(command.CommandObject):
             width: bar.STRETCH, bar.CALCULATED, or a specified width.
         """
         command.CommandObject.__init__(self)
+        self.name = self.__class__.__name__.lower()
         self.log = logging.getLogger('qtile')
         self.defaults.load(self, config)
         if width in (bar.CALCULATED, bar.STRETCH):
