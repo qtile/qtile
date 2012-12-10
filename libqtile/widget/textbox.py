@@ -17,14 +17,11 @@ class TextBox(base._TextBox):
         ("foreground", "#ffffff", "Foreground colour.")
     )
 
-    def __init__(self, name, text=" ", width=bar.CALCULATED, **config):
+    def __init__(self, text=" ", width=bar.CALCULATED, **config):
         """
-            - name: Name for this widget. Used to address the widget from
-            scripts, commands and qsh.
             - text: Initial widget text.
             - width: An integer width, bar.STRETCH, or bar.CALCULATED .
         """
-        self.name = name
         base._TextBox.__init__(self, text, width, **config)
 
     def update(self, text):
