@@ -323,7 +323,7 @@ class Screen(command.CommandObject):
         self.resize(x, y, w, h)
 
 
-class Group(command.CommandObject):
+class _Group(command.CommandObject):
     """
         A group is a container for a bunch of windows, analogous to workspaces
         in other window managers. Each client window managed by the window
@@ -758,7 +758,13 @@ class Qtile(command.CommandObject):
         if config.main:
             config.main(self)
 
-        self.groups += self.config.groups[:]
+        if self.config.groups:
+            # TODO: break some dependencies out of this file (i.e. break more configs)
+            from libqtile.dgroups import DGroups
+            key_binder = None
+            if hasattr(self.config, 'dgroups_key_binder'):
+                key_binder = self.config.dgroups_key_binder
+            DGroups(self, self.config.groups, key_binder)
 
         for i in self.groups:
             i._configure(config.layouts, config.floating_layout, self)
@@ -923,7 +929,7 @@ class Qtile(command.CommandObject):
 
     def addGroup(self, name):
         if name not in self.groupMap.keys():
-            g = Group(name)
+            g = _Group(name)
             self.groups.append(g)
             g._configure(
                 self.config.layouts, self.config.floating_layout, self)

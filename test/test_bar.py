@@ -3,6 +3,7 @@ import libqtile.layout
 import libqtile.bar
 import libqtile.widget
 import libqtile.manager
+import libqtile.dgroups
 import libqtile.confreader
 from utils import Xephyr
 
@@ -11,11 +12,11 @@ class GBConfig:
     keys = []
     mouse = []
     groups = [
-        libqtile.manager.Group("a"),
-        libqtile.manager.Group("bb"),
-        libqtile.manager.Group("ccc"),
-        libqtile.manager.Group("dddd"),
-        libqtile.manager.Group("Pppy")
+        libqtile.dgroups.Group("a"),
+        libqtile.dgroups.Group("bb"),
+        libqtile.dgroups.Group("ccc"),
+        libqtile.dgroups.Group("dddd"),
+        libqtile.dgroups.Group("Pppy")
     ]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
     floating_layout = libqtile.layout.floating.Floating()
@@ -140,10 +141,10 @@ class GeomConf:
     keys = []
     mouse = []
     groups = [
-        libqtile.manager.Group("a"),
-        libqtile.manager.Group("b"),
-        libqtile.manager.Group("c"),
-        libqtile.manager.Group("d")
+        libqtile.dgroups.Group("a"),
+        libqtile.dgroups.Group("b"),
+        libqtile.dgroups.Group("c"),
+        libqtile.dgroups.Group("d")
     ]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
     floating_layout = libqtile.layout.floating.Floating()
@@ -254,7 +255,7 @@ class ErrConf:
     main = None
     keys = []
     mouse = []
-    groups = [libqtile.manager.Group("a")]
+    groups = [libqtile.dgroups.Group("a")]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
     floating_layout = libqtile.layout.floating.Floating()
     screens = [

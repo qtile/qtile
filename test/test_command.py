@@ -1,6 +1,7 @@
 import libqtile
 import libqtile.confreader
 import libqtile.manager
+import libqtile.dgroups
 import libqtile.layout
 import libqtile.bar
 import libqtile.widget
@@ -21,8 +22,8 @@ class CallConfig(object):
     ]
     mouse = []
     groups = [
-        libqtile.manager.Group("a"),
-        libqtile.manager.Group("b"),
+        libqtile.dgroups.Group("a"),
+        libqtile.dgroups.Group("b"),
     ]
     layouts = [
         libqtile.layout.Stack(stacks=1),
@@ -123,9 +124,9 @@ class ServerConfig(object):
     keys = []
     mouse = []
     groups = [
-        libqtile.manager.Group("a"),
-        libqtile.manager.Group("b"),
-        libqtile.manager.Group("c"),
+        libqtile.dgroups.Group("a"),
+        libqtile.dgroups.Group("b"),
+        libqtile.dgroups.Group("c"),
     ]
     layouts = [
         libqtile.layout.Stack(stacks=1),

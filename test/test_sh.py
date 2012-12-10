@@ -3,6 +3,7 @@ import libqtile.sh
 import libqtile.confreader
 import libqtile.layout
 import libqtile.manager
+import libqtile.dgroups
 from utils import Xephyr
 
 
@@ -10,8 +11,8 @@ class ShConfig(object):
     keys = []
     mouse = []
     groups = [
-        libqtile.manager.Group("a"),
-        libqtile.manager.Group("b"),
+        libqtile.dgroups.Group("a"),
+        libqtile.dgroups.Group("b"),
     ]
     layouts = [
         libqtile.layout.Max(),
