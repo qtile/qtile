@@ -3,7 +3,7 @@ import libqtile.layout
 import libqtile.bar
 import libqtile.widget
 import libqtile.manager
-import libqtile.dgroups
+import libqtile.config
 import libqtile.confreader
 from utils import Xephyr
 
@@ -12,16 +12,16 @@ class GBConfig:
     keys = []
     mouse = []
     groups = [
-        libqtile.dgroups.Group("a"),
-        libqtile.dgroups.Group("bb"),
-        libqtile.dgroups.Group("ccc"),
-        libqtile.dgroups.Group("dddd"),
-        libqtile.dgroups.Group("Pppy")
+        libqtile.config.Group("a"),
+        libqtile.config.Group("bb"),
+        libqtile.config.Group("ccc"),
+        libqtile.config.Group("dddd"),
+        libqtile.config.Group("Pppy")
     ]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
-        libqtile.manager.Screen(
+        libqtile.config.Screen(
             top=libqtile.bar.Bar(
                     [
                         libqtile.widget.CPUGraph(
@@ -141,15 +141,15 @@ class GeomConf:
     keys = []
     mouse = []
     groups = [
-        libqtile.dgroups.Group("a"),
-        libqtile.dgroups.Group("b"),
-        libqtile.dgroups.Group("c"),
-        libqtile.dgroups.Group("d")
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b"),
+        libqtile.config.Group("c"),
+        libqtile.config.Group("d")
     ]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
-        libqtile.manager.Screen(
+        libqtile.config.Screen(
             left=libqtile.bar.Gap(10),
             right=libqtile.bar.Gap(10),
             top=libqtile.bar.Bar([], 10),
@@ -240,12 +240,12 @@ def test_resize(self):
 
 class TopBottomConf(GeomConf):
     screens = [
-        libqtile.manager.Screen(left=libqtile.bar.Bar([], 10))
+        libqtile.config.Screen(left=libqtile.bar.Bar([], 10))
     ]
 
 class MultiStretchConf(GeomConf):
     screens = [
-        libqtile.manager.Screen(top=libqtile.bar.Bar([
+        libqtile.config.Screen(top=libqtile.bar.Bar([
           libqtile.widget.TextBox(txt, width=libqtile.bar.STRETCH)
           for txt in ["text1", "text2"]
         ], 10))
@@ -255,11 +255,11 @@ class ErrConf:
     main = None
     keys = []
     mouse = []
-    groups = [libqtile.dgroups.Group("a")]
+    groups = [libqtile.config.Group("a")]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
-        libqtile.manager.Screen(
+        libqtile.config.Screen(
             left=libqtile.bar.Bar([], 10),
         )
     ]
@@ -284,7 +284,7 @@ class TestWidget(libqtile.widget.base._Widget):
 @Xephyr(True, GeomConf(), False)
 def test_basic(self):
     self.config.screens = [
-        libqtile.manager.Screen(
+        libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
                     TestWidget(),
@@ -308,7 +308,7 @@ def test_basic(self):
 @Xephyr(True, GeomConf(), False)
 def test_singlespacer(self):
     self.config.screens = [
-        libqtile.manager.Screen(
+        libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
                     libqtile.widget.Spacer(libqtile.bar.STRETCH),
@@ -328,7 +328,7 @@ def test_singlespacer(self):
 @Xephyr(True, GeomConf(), False)
 def test_nospacer(self):
     self.config.screens = [
-        libqtile.manager.Screen(
+        libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
                     TestWidget(),

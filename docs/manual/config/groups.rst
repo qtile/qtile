@@ -12,10 +12,10 @@ be configured to show and hide themselves when they're not empty, spawn
 applications for them when they start, automatically acquire certain groups,
 and various other options.
 
-.. autoclass:: libqtile.dgroups.Match
+.. autoclass:: libqtile.config.Match
     :members: __init__
 
-.. autoclass:: libqtile.dgroups.Group
+.. autoclass:: libqtile.config.Group
     :members: __init__
 
 .. autofunction:: libqtile.dgroups.simple_key_binder
@@ -25,13 +25,15 @@ Example
 
 ::
 
-    from libqtile.dgroups import Group, simple_key_binder
+    from libqtile.config import Group, Match
     groups = [
         Group("a"),
         Group("b"),
         Group("c", match=Match(wm_title=["Firefox"])),
     ]
 
-    # allow mod3+1 through mod3+0 to bind to groups
+    # allow mod3+1 through mod3+0 to bind to groups; if you bind your groups
+    # by hand in your config, you don't need to do this.
+    from libqtile.dgroups simple_key_binder
     dgroups_key_binder = simple_key_binder("mod3")
 

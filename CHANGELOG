@@ -3,11 +3,19 @@ qtile $NEXT, released $DATE:
     This release breaks your config file in several ways:
         - The Textbox widget no longer takes a ``name'' positional parameter,
           since it was redundant; you can use the ``name'' kwarg to define it.
-        - manager.Group is not used to configure groups any more;
-          dgroups.Group replaces it. For simple configurations (i.e.
+        - manager.Group (now _Group) is not used to configure groups any more;
+          config.Group replaces it. For simple configurations (i.e.
           Group("a") type configs), this should be a drop in replacement.
-          dgroups.Group also provides many more options for showing and hiding
+          config.Group also provides many more options for showing and hiding
           groups, assigning windows to groups by default, etc.
+        - The Key, Screen, Drag, and Click objects have moved from the manager
+          module to the config module.
+        - The Match object has moved from the dgroups module to the config
+          module.
+    For most people, you should be able to just:
+        sed -i -e 's/libqtile.manager/libqtile.config' config.py
+    ...dgroups users will need to go to a bit more work, but hopefully
+    configuration will be much simpler now for new users.
     * features
         - New widgets: task list,
         - Added ability to drag and drop groups on GroupBox

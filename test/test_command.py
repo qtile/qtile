@@ -1,7 +1,7 @@
 import libqtile
 import libqtile.confreader
 import libqtile.manager
-import libqtile.dgroups
+import libqtile.config
 import libqtile.layout
 import libqtile.bar
 import libqtile.widget
@@ -11,19 +11,19 @@ from nose.tools import assert_raises
 
 class CallConfig(object):
     keys = [
-        libqtile.manager.Key(
+        libqtile.config.Key(
             ["control"], "j",
             libqtile.command._Call([("layout", None)], "down")
         ),
-        libqtile.manager.Key(
+        libqtile.config.Key(
             ["control"], "k",
             libqtile.command._Call([("layout", None)], "up"),
         ),
     ]
     mouse = []
     groups = [
-        libqtile.dgroups.Group("a"),
-        libqtile.dgroups.Group("b"),
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b"),
     ]
     layouts = [
         libqtile.layout.Stack(stacks=1),
@@ -31,7 +31,7 @@ class CallConfig(object):
     ]
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
-        libqtile.manager.Screen(
+        libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                         [
                             libqtile.widget.GroupBox(),
@@ -124,9 +124,9 @@ class ServerConfig(object):
     keys = []
     mouse = []
     groups = [
-        libqtile.dgroups.Group("a"),
-        libqtile.dgroups.Group("b"),
-        libqtile.dgroups.Group("c"),
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b"),
+        libqtile.config.Group("c"),
     ]
     layouts = [
         libqtile.layout.Stack(stacks=1),
@@ -135,7 +135,7 @@ class ServerConfig(object):
     ]
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
-        libqtile.manager.Screen(
+        libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                         [
                             libqtile.widget.TextBox("one"),
@@ -143,7 +143,7 @@ class ServerConfig(object):
                         20
                     ),
         ),
-        libqtile.manager.Screen(
+        libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                         [
                             libqtile.widget.TextBox("two"),

@@ -9,7 +9,7 @@ import libqtile.bar
 import libqtile.command
 import libqtile.widget
 import libqtile.manager
-import libqtile.dgroups
+import libqtile.config
 import libqtile.hook
 import utils
 from utils import Xephyr
@@ -19,10 +19,10 @@ from nose.plugins.attrib import attr
 
 class TestConfig:
     groups = [
-        libqtile.dgroups.Group("a"),
-        libqtile.dgroups.Group("b"),
-        libqtile.dgroups.Group("c"),
-        libqtile.dgroups.Group("d")
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b"),
+        libqtile.config.Group("c"),
+        libqtile.config.Group("d")
     ]
     layouts = [
                 libqtile.layout.stack.Stack(stacks=1),
@@ -32,19 +32,19 @@ class TestConfig:
     floating_layout = libqtile.layout.floating.Floating(
         float_rules=[dict(wmclass="xclock")])
     keys = [
-        libqtile.manager.Key(
+        libqtile.config.Key(
             ["control"],
             "k",
             libqtile.command._Call([("layout", None)], "up")
         ),
-        libqtile.manager.Key(
+        libqtile.config.Key(
             ["control"],
             "j",
             libqtile.command._Call([("layout", None)], "down")
         ),
     ]
     mouse = []
-    screens = [libqtile.manager.Screen(
+    screens = [libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                         [
                             libqtile.widget.GroupBox(),
@@ -58,10 +58,10 @@ class TestConfig:
 
 class BareConfig:
     groups = [
-        libqtile.dgroups.Group("a"),
-        libqtile.dgroups.Group("b"),
-        libqtile.dgroups.Group("c"),
-        libqtile.dgroups.Group("d")
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b"),
+        libqtile.config.Group("c"),
+        libqtile.config.Group("d")
     ]
     layouts = [
                 libqtile.layout.stack.Stack(stacks=1),
@@ -69,19 +69,19 @@ class BareConfig:
             ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = [
-        libqtile.manager.Key(
+        libqtile.config.Key(
             ["control"],
             "k",
             libqtile.command._Call([("layout", None)], "up")
         ),
-        libqtile.manager.Key(
+        libqtile.config.Key(
             ["control"],
             "j",
             libqtile.command._Call([("layout", None)], "down")
         ),
     ]
     mouse = []
-    screens = [libqtile.manager.Screen()]
+    screens = [libqtile.config.Screen()]
     main = None
     follow_mouse_focus = False
 
@@ -730,17 +730,17 @@ def qtile_tests():
 def test_init():
     assert_raises(
         libqtile.manager.QtileError,
-        libqtile.manager.Key,
+        libqtile.config.Key,
         [], "unknown", libqtile.command._Call("base", None, "foo")
     )
     assert_raises(
         libqtile.manager.QtileError,
-        libqtile.manager.Key,
+        libqtile.config.Key,
         ["unknown"], "x", libqtile.command._Call("base", None, "foo")
     )
 
 
-class TScreen(libqtile.manager.Screen):
+class TScreen(libqtile.config.Screen):
     def setGroup(self, x):
         pass
 
@@ -775,10 +775,10 @@ def test_dheight():
 
 class _Config:
     groups = [
-        libqtile.dgroups.Group("a"),
-        libqtile.dgroups.Group("b"),
-        libqtile.dgroups.Group("c"),
-        libqtile.dgroups.Group("d")
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b"),
+        libqtile.config.Group("c"),
+        libqtile.config.Group("d")
     ]
     layouts = [
                 libqtile.layout.stack.Stack(stacks=1),
@@ -786,19 +786,19 @@ class _Config:
             ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = [
-        libqtile.manager.Key(
+        libqtile.config.Key(
             ["control"],
             "k",
             libqtile.command._Call([("layout", None)], "up")
         ),
-        libqtile.manager.Key(
+        libqtile.config.Key(
             ["control"],
             "j",
             libqtile.command._Call([("layout", None)], "down")
         ),
     ]
     mouse = []
-    screens = [libqtile.manager.Screen(
+    screens = [libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                         [
                             libqtile.widget.GroupBox(),

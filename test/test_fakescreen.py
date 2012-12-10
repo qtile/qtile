@@ -1,7 +1,7 @@
 import libqtile.manager
-import libqtile.dgroups
+import libqtile.config
 from libqtile import layout, bar, widget
-from libqtile.manager import Screen
+from libqtile.config import Screen
 from utils import Xephyr
 
 LEFT_ALT = 'mod1'
@@ -35,10 +35,10 @@ GRAPH_KW = dict(line_width=1,
 class FakeScreenConfig:
     main = None
     groups = [
-        libqtile.dgroups.Group("a"),
-        libqtile.dgroups.Group("b"),
-        libqtile.dgroups.Group("c"),
-        libqtile.dgroups.Group("d")
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b"),
+        libqtile.config.Group("c"),
+        libqtile.config.Group("d")
     ]
     layouts = [
         layout.Max(),

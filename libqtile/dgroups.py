@@ -2,52 +2,8 @@ import itertools
 import gobject
 
 import libqtile.hook
-from libqtile.manager import Key
+from libqtile.config import Key
 from libqtile.command import lazy
-
-class Match(object):
-    ''' Match for dynamic groups
-        it can match by title, class or role '''
-    def __init__(self, title=[], wm_class=[], role=[], wm_type=[]):
-        """
-
-        ``Match`` supports both regular expression objects (i.e. the result of
-        ``re.compile()``) or strings (match as a "include" match). If a window
-        matches any of the things in any of the lists, it is considered a
-        match.
-
-        :param title: things to match against the title
-        :param wm_classes: things to match against the WM_CLASS atom
-        :param role: things to match against the WM_ROLE atom
-        :param wm_type: things to match against the WM_TYPE atom
-        """
-        self._rules = [('title', t) for t in title]
-        self._rules += [('wm_class', w) for w in wm_class]
-        self._rules += [('role', r) for r in  role]
-        self._rules += [('wm_type', r) for r in  wm_type]
-
-    def compare(self, client):
-        for _type, rule in self._rules:
-            match_func = getattr(rule, 'match', None) or\
-                         getattr(rule, 'count')
-
-            if _type == 'title':
-                value = client.name
-            elif _type == 'wm_class':
-                value = client.window.get_wm_class()
-                if value and len(value)>1:
-                    value = value[1]
-                elif value:
-                    value = value[0]
-            elif _type == 'wm_type':
-                value = client.window.get_wm_type()
-            else:
-                value = client.window.get_wm_window_role()
-
-            if value and match_func(value):
-                return True
-        return False
-
 
 def simple_key_binder(mod, keynames=None):
     """
@@ -99,52 +55,6 @@ class Rule(object):
     def matches(self, w):
         return self.match.compare(w)
 
-class Group(object):
-    """
-    Represents a "dynamic" group. These groups can spawn apps, only allow
-    certain Matched windows to be on them, hide when they're not in use, etc.
-    """
-    def __init__(self, name, matches=None, rules=None, exclusive=False,
-                 spawn=None, layout=None, persist=True, init=True,):
-        """
-        :param name: the name of this group
-        :type name: string
-        :param matches: list of ``Match`` objects whose  windows will be assigned to this group
-        :type matches: default ``None``
-        :param rules: list of ``Rule`` objectes wich are applied to this group
-        :type rules: default ``None``
-        :param exclusive: when other apps are started in this group, should we allow them here or not?
-        :type exclusive: boolean
-        :param spawn: this will be ``exec()`` d when the group is created
-        :type spawn: string
-        :param layout: the default layout for this group (e.g. 'max' or 'stack')
-        :type layout: string
-        :param persist: should this group stay alive with no member windows?
-        :type persist: boolean
-        :param init: is this group alive when qtile starts?
-        :type init: boolean
-
-        """
-        self.name = name
-        self.exclusive = exclusive
-        self.spawn = spawn
-        self.layout = layout
-        self.persist = persist
-        self.init = init
-        self.rules = rules
-        if self.rules is None:
-            self.rules = []
-        for rule in self.rules:
-            rule.group = self.name
-        if matches is None:
-            matches = []
-        self.rules.extend([Rule(match, group=self.name) for match in matches])
-
-        # undocumented, any idea what these do?
-        self.master = None
-        self.ratio = None
-
-
 class DGroups(object):
     ''' Dynamic Groups '''
     def __init__(self, qtile, dgroups, key_binder=None, delay=1):
@@ -155,7 +65,12 @@ class DGroups(object):
         for group in self.groups:
             self.groupMap[group.name] = group
 
-        self.rules = itertools.chain.from_iterable([g.rules for g in dgroups])
+        self.rules = list(itertools.chain.from_iterable([g.rules for g in dgroups]))
+
+        for group in dgroups:
+            rules = [Rule(m, group=group.name) for m in group.matches]
+            self.rules.extend(rules)
+
         self.keys = []
 
         self.key_binder = key_binder

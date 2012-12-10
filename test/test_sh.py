@@ -3,7 +3,7 @@ import libqtile.sh
 import libqtile.confreader
 import libqtile.layout
 import libqtile.manager
-import libqtile.dgroups
+import libqtile.config
 from utils import Xephyr
 
 
@@ -11,15 +11,15 @@ class ShConfig(object):
     keys = []
     mouse = []
     groups = [
-        libqtile.dgroups.Group("a"),
-        libqtile.dgroups.Group("b"),
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b"),
     ]
     layouts = [
         libqtile.layout.Max(),
     ]
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
-        libqtile.manager.Screen()
+        libqtile.config.Screen()
     ]
     main = None
 

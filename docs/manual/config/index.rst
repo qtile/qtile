@@ -9,10 +9,13 @@ Configuration variables
 -----------------------
 
 :doc:`groups </manual/config/groups>`
-    A list of ``libqtile.manager.Group`` objects which defines the group names. A group is a container for a bunch of windows, analogous to workspaces in other window managers. Each client window managed by the window manager belongs to exactly one group.
+    A list of ``libqtile.config.Group`` objects which defines the group names.
+    A group is a container for a bunch of windows, analogous to workspaces in
+    other window managers. Each client window managed by the window manager
+    belongs to exactly one group.
 
 :doc:`keys </manual/config/keys>`
-    A list of ``libqtile.manager.Key`` objects which defines the keybindings.
+    A list of ``libqtile.config.Key`` objects which defines the keybindings.
     At a minimum, this will probably include bindings to switch between
     windows, groups and layouts.
 
@@ -20,11 +23,11 @@ Configuration variables
     A list of layout objects, configuring the layouts you want to use.
 
 :doc:`mouse </manual/config/mouse>`
-    A list of ``libqtile.manager.Drag`` and ``libqtile.manager.Click`` objects
+    A list of ``libqtile.config.Drag`` and ``libqtile.config.Click`` objects
     defining mouse operations.
 
 :doc:`screens </manual/config/screens>`
-    A list of ``libqtile.manager.Screen`` objects, which defines the physical
+    A list of ``libqtile.config.Screen`` objects, which defines the physical
     screens you want to use, and the bars and widgets associated with them.
     Most of the visible "look and feel" configuration will happen in this
     section.
