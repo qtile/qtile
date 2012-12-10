@@ -1,3 +1,27 @@
+qtile $NEXT, released $DATE:
+    !!! Config breakage !!!
+    This release breaks your config file in several ways:
+        - The Textbox widget no longer takes a ``name'' positional parameter,
+          since it was redundant; you can use the ``name'' kwarg to define it.
+        - manager.Group is not used to configure groups any more;
+          dgroups.Group replaces it. For simple configurations (i.e.
+          Group("a") type configs), this should be a drop in replacement.
+          dgroups.Group also provides many more options for showing and hiding
+          groups, assigning windows to groups by default, etc.
+    * features
+        - New widgets: task list,
+        - Added ability to drag and drop groups on GroupBox
+        - added "next urgent window" command
+        - added font shadowing on widgets
+        - maildir widget supports multiple folders
+    * bugfixes
+        - don't crash on restart when the config has errors
+        - save layout and selected group state on restart
+        - varous EWMH properties implemented correctly
+        - fix non-black systray icon backgrounds
+        - drastically reduce the number of timeout_add calls in most widgets
+        - restart on RandR attach events to allow for new screens
+
 qtile 0.5, released 2012-11-11:
     (Note, this is not complete! Many, many changes have gone in to 0.5, by a
     large number of contributors. Thanks to everyone who reported a bug or
