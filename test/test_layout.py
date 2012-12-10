@@ -43,10 +43,10 @@ def assertFocusPath(self, *names):
 class MaxConfig:
     main = None
     groups = [
-        libqtile.dgroups.DGroup("a"),
-        libqtile.dgroups.DGroup("b"),
-        libqtile.dgroups.DGroup("c"),
-        libqtile.dgroups.DGroup("d")
+        libqtile.dgroups.Group("a"),
+        libqtile.dgroups.Group("b"),
+        libqtile.dgroups.Group("c"),
+        libqtile.dgroups.Group("d")
     ]
     layouts = [
         layout.Max()
@@ -89,10 +89,10 @@ def test_max_remove(self):
 class StackConfig:
     main = None
     groups = [
-        libqtile.dgroups.DGroup("a"),
-        libqtile.dgroups.DGroup("b"),
-        libqtile.dgroups.DGroup("c"),
-        libqtile.dgroups.DGroup("d")
+        libqtile.dgroups.Group("a"),
+        libqtile.dgroups.Group("b"),
+        libqtile.dgroups.Group("c"),
+        libqtile.dgroups.Group("d")
     ]
     layouts = [
         layout.Stack(stacks=2),
@@ -283,10 +283,10 @@ def test_stack_info(self):
 class RatioTileConfig:
     main = None
     groups = [
-        libqtile.dgroups.DGroup("a"),
-        libqtile.dgroups.DGroup("b"),
-        libqtile.dgroups.DGroup("c"),
-        libqtile.dgroups.DGroup("d")
+        libqtile.dgroups.Group("a"),
+        libqtile.dgroups.Group("b"),
+        libqtile.dgroups.Group("c"),
+        libqtile.dgroups.Group("d")
     ]
     layouts = [
         layout.RatioTile(ratio=.5),
@@ -438,10 +438,10 @@ def test_ratiotile_basic(self):
 class TileConfig:
     main = None
     groups = [
-        libqtile.dgroups.DGroup("a"),
-        libqtile.dgroups.DGroup("b"),
-        libqtile.dgroups.DGroup("c"),
-        libqtile.dgroups.DGroup("d")
+        libqtile.dgroups.Group("a"),
+        libqtile.dgroups.Group("b"),
+        libqtile.dgroups.Group("c"),
+        libqtile.dgroups.Group("d")
     ]
     layouts = [
         layout.Tile(),
@@ -520,7 +520,7 @@ def test_tile_remove(self):
 class SliceConfig:
     main = None
     groups = [
-        libqtile.dgroups.DGroup("a"),
+        libqtile.dgroups.Group("a"),
     ]
     layouts = [
         layout.Slice(side='left', width=200, wname='slice',
@@ -606,7 +606,7 @@ def test_all_slices(self):
 class ZoomyConfig:
     main = None
     groups = [
-        libqtile.dgroups.DGroup("a"),
+        libqtile.dgroups.Group("a"),
     ]
     layouts = [
         layout.Zoomy(columnwidth=200),

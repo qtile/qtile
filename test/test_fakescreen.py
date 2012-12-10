@@ -35,10 +35,10 @@ GRAPH_KW = dict(line_width=1,
 class FakeScreenConfig:
     main = None
     groups = [
-        libqtile.dgroups.DGroup("a"),
-        libqtile.dgroups.DGroup("b"),
-        libqtile.dgroups.DGroup("c"),
-        libqtile.dgroups.DGroup("d")
+        libqtile.dgroups.Group("a"),
+        libqtile.dgroups.Group("b"),
+        libqtile.dgroups.Group("c"),
+        libqtile.dgroups.Group("d")
     ]
     layouts = [
         layout.Max(),

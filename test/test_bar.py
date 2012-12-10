@@ -12,11 +12,11 @@ class GBConfig:
     keys = []
     mouse = []
     groups = [
-        libqtile.dgroups.DGroup("a"),
-        libqtile.dgroups.DGroup("bb"),
-        libqtile.dgroups.DGroup("ccc"),
-        libqtile.dgroups.DGroup("dddd"),
-        libqtile.dgroups.DGroup("Pppy")
+        libqtile.dgroups.Group("a"),
+        libqtile.dgroups.Group("bb"),
+        libqtile.dgroups.Group("ccc"),
+        libqtile.dgroups.Group("dddd"),
+        libqtile.dgroups.Group("Pppy")
     ]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
     floating_layout = libqtile.layout.floating.Floating()
@@ -141,10 +141,10 @@ class GeomConf:
     keys = []
     mouse = []
     groups = [
-        libqtile.dgroups.DGroup("a"),
-        libqtile.dgroups.DGroup("b"),
-        libqtile.dgroups.DGroup("c"),
-        libqtile.dgroups.DGroup("d")
+        libqtile.dgroups.Group("a"),
+        libqtile.dgroups.Group("b"),
+        libqtile.dgroups.Group("c"),
+        libqtile.dgroups.Group("d")
     ]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
     floating_layout = libqtile.layout.floating.Floating()
@@ -255,7 +255,7 @@ class ErrConf:
     main = None
     keys = []
     mouse = []
-    groups = [libqtile.dgroups.DGroup("a")]
+    groups = [libqtile.dgroups.Group("a")]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
     floating_layout = libqtile.layout.floating.Floating()
     screens = [

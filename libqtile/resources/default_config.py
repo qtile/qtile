@@ -1,4 +1,5 @@
-from libqtile.manager import Key, Screen, Group
+from libqtile.manager import Key, Screen
+from libqtile.dgroups import Group
 from libqtile.command import lazy
 from libqtile import layout, bar, widget
 
