@@ -15,7 +15,7 @@ and various other options.
 .. autoclass:: libqtile.dgroups.Match
     :members: __init__
 
-.. autoclass:: libqtile.dgroups.DGroup
+.. autoclass:: libqtile.dgroups.Group
     :members: __init__
 
 .. autofunction:: libqtile.dgroups.simple_key_binder
@@ -25,11 +25,11 @@ Example
 
 ::
 
-    from libqtile.dgroups import DGroup, simple_key_binder
+    from libqtile.dgroups import Group, simple_key_binder
     groups = [
-        DGroup("a"),
-        DGroup("b"),
-        DGroup("c", match=Match(wm_title=["Firefox"])),
+        Group("a"),
+        Group("b"),
+        Group("c", match=Match(wm_title=["Firefox"])),
     ]
 
     # allow mod3+1 through mod3+0 to bind to groups

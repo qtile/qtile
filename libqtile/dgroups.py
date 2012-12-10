@@ -99,7 +99,7 @@ class Rule(object):
     def matches(self, w):
         return self.match.compare(w)
 
-class DGroup(object):
+class Group(object):
     """
     Represents a "dynamic" group. These groups can spawn apps, only allow
     certain Matched windows to be on them, hide when they're not in use, etc.

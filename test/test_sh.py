@@ -11,8 +11,8 @@ class ShConfig(object):
     keys = []
     mouse = []
     groups = [
-        libqtile.dgroups.DGroup("a"),
-        libqtile.dgroups.DGroup("b"),
+        libqtile.dgroups.Group("a"),
+        libqtile.dgroups.Group("b"),
     ]
     layouts = [
         libqtile.layout.Max(),

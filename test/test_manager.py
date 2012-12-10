@@ -19,10 +19,10 @@ from nose.plugins.attrib import attr
 
 class TestConfig:
     groups = [
-        libqtile.dgroups.DGroup("a"),
-        libqtile.dgroups.DGroup("b"),
-        libqtile.dgroups.DGroup("c"),
-        libqtile.dgroups.DGroup("d")
+        libqtile.dgroups.Group("a"),
+        libqtile.dgroups.Group("b"),
+        libqtile.dgroups.Group("c"),
+        libqtile.dgroups.Group("d")
     ]
     layouts = [
                 libqtile.layout.stack.Stack(stacks=1),
@@ -58,10 +58,10 @@ class TestConfig:
 
 class BareConfig:
     groups = [
-        libqtile.dgroups.DGroup("a"),
-        libqtile.dgroups.DGroup("b"),
-        libqtile.dgroups.DGroup("c"),
-        libqtile.dgroups.DGroup("d")
+        libqtile.dgroups.Group("a"),
+        libqtile.dgroups.Group("b"),
+        libqtile.dgroups.Group("c"),
+        libqtile.dgroups.Group("d")
     ]
     layouts = [
                 libqtile.layout.stack.Stack(stacks=1),
@@ -775,10 +775,10 @@ def test_dheight():
 
 class _Config:
     groups = [
-        libqtile.dgroups.DGroup("a"),
-        libqtile.dgroups.DGroup("b"),
-        libqtile.dgroups.DGroup("c"),
-        libqtile.dgroups.DGroup("d")
+        libqtile.dgroups.Group("a"),
+        libqtile.dgroups.Group("b"),
+        libqtile.dgroups.Group("c"),
+        libqtile.dgroups.Group("d")
     ]
     layouts = [
                 libqtile.layout.stack.Stack(stacks=1),
