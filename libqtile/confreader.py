@@ -67,6 +67,8 @@ class File(object):
             "keys",
             "mouse",
             "groups",
+            "dynamic_groups",
+            "dgroups_key_binder",
             "follow_mouse_focus",
             "cursor_warp",
             "layouts",
