@@ -74,7 +74,6 @@ for i in groups:
         Key(["mod1", "shift"], i.name, lazy.window.togroup(i.name))
     )
 
-dynamic_groups = {}
 dgroups_key_binder = None
 
 layouts = [

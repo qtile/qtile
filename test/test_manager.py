@@ -9,6 +9,7 @@ import libqtile.bar
 import libqtile.command
 import libqtile.widget
 import libqtile.manager
+import libqtile.dgroups
 import libqtile.hook
 import utils
 from utils import Xephyr
@@ -18,10 +19,10 @@ from nose.plugins.attrib import attr
 
 class TestConfig:
     groups = [
-        libqtile.manager.Group("a"),
-        libqtile.manager.Group("b"),
-        libqtile.manager.Group("c"),
-        libqtile.manager.Group("d")
+        libqtile.dgroups.DGroup("a"),
+        libqtile.dgroups.DGroup("b"),
+        libqtile.dgroups.DGroup("c"),
+        libqtile.dgroups.DGroup("d")
     ]
     layouts = [
                 libqtile.layout.stack.Stack(stacks=1),
@@ -57,10 +58,10 @@ class TestConfig:
 
 class BareConfig:
     groups = [
-        libqtile.manager.Group("a"),
-        libqtile.manager.Group("b"),
-        libqtile.manager.Group("c"),
-        libqtile.manager.Group("d")
+        libqtile.dgroups.DGroup("a"),
+        libqtile.dgroups.DGroup("b"),
+        libqtile.dgroups.DGroup("c"),
+        libqtile.dgroups.DGroup("d")
     ]
     layouts = [
                 libqtile.layout.stack.Stack(stacks=1),
@@ -774,10 +775,10 @@ def test_dheight():
 
 class _Config:
     groups = [
-        libqtile.manager.Group("a"),
-        libqtile.manager.Group("b"),
-        libqtile.manager.Group("c"),
-        libqtile.manager.Group("d")
+        libqtile.dgroups.DGroup("a"),
+        libqtile.dgroups.DGroup("b"),
+        libqtile.dgroups.DGroup("c"),
+        libqtile.dgroups.DGroup("d")
     ]
     layouts = [
                 libqtile.layout.stack.Stack(stacks=1),
