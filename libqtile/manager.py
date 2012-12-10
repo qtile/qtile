@@ -758,7 +758,10 @@ class Qtile(command.CommandObject):
         if config.main:
             config.main(self)
 
-        self.groups += self.config.groups[:]
+        if self.config.groups:
+            # TODO: break some dependencies out of this file (i.e. break more configs)
+            from libqtile.dgroups import DGroups
+            DGroups(self, self.config.groups, self.config.dgroups_key_binder)
 
         for i in self.groups:
             i._configure(config.layouts, config.floating_layout, self)
