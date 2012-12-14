@@ -138,7 +138,7 @@ class ServerConfig(object):
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                         [
-                            libqtile.widget.TextBox("one"),
+                            libqtile.widget.TextBox(name="one"),
                         ],
                         20
                     ),
@@ -146,7 +146,7 @@ class ServerConfig(object):
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                         [
-                            libqtile.widget.TextBox("two"),
+                            libqtile.widget.TextBox(name="two"),
                         ],
                         20
                     ),

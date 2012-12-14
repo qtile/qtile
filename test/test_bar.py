@@ -33,7 +33,7 @@ class GBConfig:
                         ),
                         libqtile.widget.MemoryGraph(type="line"),
                         libqtile.widget.SwapGraph(type="box"),
-                        libqtile.widget.TextBox("text", background="333333"),
+                        libqtile.widget.TextBox(name="text", background="333333"),
                     ],
                     50,
                 ),
@@ -246,7 +246,7 @@ class TopBottomConf(GeomConf):
 class MultiStretchConf(GeomConf):
     screens = [
         libqtile.config.Screen(top=libqtile.bar.Bar([
-          libqtile.widget.TextBox(txt, width=libqtile.bar.STRETCH)
+          libqtile.widget.TextBox(name=txt, width=libqtile.bar.STRETCH)
           for txt in ["text1", "text2"]
         ], 10))
     ]
