@@ -1,7 +1,7 @@
-from libqtile import manager
+from libqtile import config
 
 keys = [
-    manager.Key(["control"], "k", "focusnext")
+    config.Key(["control"], "k", "focusnext")
 ]
 
 screens = []

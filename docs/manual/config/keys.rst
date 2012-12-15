@@ -17,7 +17,7 @@ Example
 
 ::
 
-    from libqtile.manager import Key
+    from libqtile.config import Key
     from libqtile.command import lazy
     keys = [
         Key(

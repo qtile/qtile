@@ -1,4 +1,4 @@
-from libqtile.manager import Key, Screen, Group
+from libqtile.config import Key, Screen, Group
 from libqtile.command import lazy
 from libqtile import layout, bar, widget
 
@@ -73,6 +73,8 @@ for i in groups:
     keys.append(
         Key(["mod1", "shift"], i.name, lazy.window.togroup(i.name))
     )
+
+dgroups_key_binder = None
 
 layouts = [
     layout.Max(),

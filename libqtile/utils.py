@@ -25,6 +25,8 @@ import logging
 import os
 import xcbq
 
+class QtileError(Exception):
+    pass
 
 def lget(o, v):
     try:
