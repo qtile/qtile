@@ -183,9 +183,10 @@ class DGroups(object):
 
         def delete_client():
             # Delete group if empty and dont persist
-            if group and group.name in self.groups and\
-                self.groupMap[group.name].persist and\
-                len(group.windows) <= 0:
+            if group and \
+               self.groupMap[group.name] in self.groups and \
+               not self.groupMap[group.name].persist and \
+               len(group.windows) <= 0:
                 self.qtile.delGroup(group.name)
 
         # wait the delay until really delete the group
