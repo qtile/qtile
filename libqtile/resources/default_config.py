@@ -87,7 +87,7 @@ screens = [
                     [
                         widget.GroupBox(),
                         widget.WindowName(),
-                        widget.TextBox("default", "default config"),
+                        widget.TextBox("default config", name="default"),
                         widget.Systray(),
                         widget.Clock('%Y-%m-%d %a %I:%M %p'),
                     ],
