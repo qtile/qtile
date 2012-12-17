@@ -39,9 +39,11 @@ class Layout(command.CommandObject, manager.Configurable):
         # name is a little odd; we can't resolve it until the class is defined
         # (i.e., we can't figure it out to define it in Layout.defaults), so
         # we resolve it here instead.
-        name = self.__class__.__name__.lower()
+        if "name" not in config:
+            config["name"] = self.__class__.__name__.lower()
+
         command.CommandObject.__init__(self)
-        manager.Configurable.__init__(self, name=name, **config)
+        manager.Configurable.__init__(self, **config)
         self.add_defaults(Layout.defaults)
 
     def layout(self, windows, screen):

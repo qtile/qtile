@@ -138,9 +138,11 @@ class Qtile(command.CommandObject):
                 key_binder = self.config.dgroups_key_binder
             DGroups(self, self.config.groups, key_binder)
 
-        if config.widget_defaults:
-            from widget.base import _Widget
+        from widget.base import _Widget
+        if hasattr(config, "widget_defaults") and config.widget_defaults:
             _Widget.global_defaults = config.widget_defaults
+        else:
+            _Widget.global_defaults = {}
 
         for i in self.groups:
             i._configure(config.layouts, config.floating_layout, self)

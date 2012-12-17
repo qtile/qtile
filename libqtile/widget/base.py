@@ -168,7 +168,7 @@ class _TextBox(_Widget):
     """
     defaults = [
         ("font", "Arial", "Default font"),
-        ("fontsize", None, "Font size. Calculated if None."),
+        ("_fontsize", None, "Font size. Calculated if None."),
         ("padding", None, "Padding. Calculated if None."),
         ("foreground", "ffffff", "Foreground colour"),
         ("fontshadow", None,
