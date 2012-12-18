@@ -1,5 +1,6 @@
 import cStringIO
 import libqtile.manager
+import libqtile.utils
 import libqtile.hook
 import logging
 from nose.tools import with_setup, raises
@@ -27,7 +28,7 @@ def teardown():
     libqtile.hook.clear()
 
 
-@raises(libqtile.manager.QtileError)
+@raises(libqtile.utils.QtileError)
 def test_cannot_fire_unknown_event():
     libqtile.hook.fire("unknown")
 

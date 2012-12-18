@@ -10,7 +10,7 @@ class NullCompleter:
         self.qtile = qtile
         self.thisfinal = ""
 
-    def actual(self, qtile):
+    def actual(self):
         return self.thisfinal
 
     def reset(self):
@@ -158,6 +158,45 @@ class GroupCompleter:
         return ret[0]
 
 
+class WindowCompleter:
+    def __init__(self, qtile):
+        self.qtile = qtile
+        self.thisfinal = None
+        self.lookup = None
+        self.offset = None
+
+    def actual(self):
+        """
+            Returns the current actual value.
+        """
+        return self.thisfinal
+
+    def reset(self):
+        self.lookup = None
+        self.offset = -1
+
+    def complete(self, txt):
+        """
+        Returns the next completion for txt, or None if there is no completion.
+        """
+        if not self.lookup:
+            self.lookup = []
+            for wid, window in self.qtile.windowMap.iteritems():
+                if window.group and window.name.lower().startswith(txt):
+                    self.lookup.append((window.name, wid))
+
+            self.lookup.sort()
+            self.offset = -1
+            self.lookup.append((txt, txt))
+
+        self.offset += 1
+        if self.offset >= len(self.lookup):
+            self.offset = 0
+        ret = self.lookup[self.offset]
+        self.thisfinal = ret[1]
+        return ret[0]
+
+
 class CommandCompleter:
     DEFAULTPATH = "/bin:/usr/bin:/usr/local/bin"
 
@@ -241,13 +280,16 @@ class Prompt(base._TextBox):
         "qsh": QshCompleter,
         "cmd": CommandCompleter,
         "group": GroupCompleter,
+        "window": WindowCompleter,
         None: NullCompleter
     }
     defaults = manager.Defaults(
         ("font", "Arial", "Font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ("padding", None, "Padding. Calculated if None."),
-        ("background", "000000", "Background colour"),
+        ("background", None, "Background colour"),
         ("foreground", "ffffff", "Foreground colour"),
         ("cursorblink", 0.5, "Cursor blink rate. 0 to disable.")
     )
@@ -261,8 +303,6 @@ class Prompt(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        if self.cursorblink:
-            self.timeout_add(self.cursorblink, self._blink)
 
     def startInput(self, prompt, callback, complete=None):
         """
@@ -272,6 +312,10 @@ class Prompt(base._TextBox):
             from the user. When done, calls the callback with the input string
             as argument.
         """
+
+        if self.cursorblink and not self.active:
+            self.timeout_add(self.cursorblink, self._blink)
+
         self.active = True
         self.prompt = prompt
         self.userInput = ""
@@ -301,6 +345,8 @@ class Prompt(base._TextBox):
     def _blink(self):
         self.blink = not self.blink
         self._update()
+        if not self.active:
+            return False
         return True
 
     def _update(self):
@@ -324,6 +370,7 @@ class Prompt(base._TextBox):
         if keysym == xkeysyms.keysyms['Tab']:
             self.userInput = self.completer.complete(self.userInput)
         else:
+            actual_value = self.completer.actual()
             self.completer.reset()
             if keysym < 127 and chr(keysym) in string.printable:
                 # No LookupString in XCB... oh,
@@ -338,7 +385,7 @@ class Prompt(base._TextBox):
             elif keysym == xkeysyms.keysyms['Return']:
                 self.active = False
                 self.bar.widget_ungrab_keyboard()
-                self.callback(self.userInput)
+                self.callback(actual_value or self.userInput)
         self._update()
 
     def cmd_fake_keypress(self, key):

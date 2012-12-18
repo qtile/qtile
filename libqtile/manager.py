@@ -18,16 +18,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from config import Drag, Click, Screen
+from utils import QtileError
 from libqtile.log_utils import init_log
+from libqtile.dgroups import DGroups
+from state import QtileState
+from group import _Group
+from StringIO import StringIO
 from xcb.xproto import EventMask
 import atexit
 import command
-import contextlib
 import gobject
 import hook
 import logging
 import os
 import os.path
+import pickle
 import sys
 import traceback
 import utils
@@ -36,11 +42,6 @@ import xcb
 import xcb.xinerama
 import xcb.xproto
 import xcbq
-
-
-class QtileError(Exception):
-    pass
-
 
 class Defaults:
     def __init__(self, *defaults):
@@ -57,636 +58,6 @@ class Defaults:
             val = config.get(i[0], i[1])
             setattr(target, i[0], val)
 
-
-class Key:
-    """
-        Defines a keybinding.
-    """
-    def __init__(self, modifiers, key, *commands):
-        """
-            - modifiers: A list of modifier specifications. Modifier
-            specifications are one of: "shift", "lock", "control", "mod1",
-            "mod2", "mod3", "mod4", "mod5".
-
-            - key: A key specification, e.g. "a", "Tab", "Return", "space".
-
-            - *commands: A list of lazy command objects generated with the
-            command.lazy helper. If multiple Call objects are specified, they
-            are run in sequence.
-        """
-        self.modifiers, self.key, self.commands = modifiers, key, commands
-        if key not in xcbq.keysyms:
-            raise QtileError("Unknown key: %s" % key)
-        self.keysym = xcbq.keysyms[key]
-        try:
-            self.modmask = utils.translateMasks(self.modifiers)
-        except KeyError, v:
-            raise QtileError(v)
-
-    def __repr__(self):
-        return "Key(%s, %s)" % (self.modifiers, self.key)
-
-
-class Drag(object):
-    """
-        Defines binding of a mouse to some dragging action
-
-        On each motion event command is executed
-        with two extra parameters added
-        x and y offset from previous move
-    """
-    def __init__(self, modifiers, button, *commands, **kw):
-        self.start = kw.pop('start', None)
-        if kw:
-            raise TypeError("Unexpected arguments: %s" % ', '.join(kw))
-        self.modifiers = modifiers
-        self.button = button
-        self.commands = commands
-        try:
-            self.button_code = int(self.button.replace('Button', ''))
-            self.modmask = utils.translateMasks(self.modifiers)
-        except KeyError, v:
-            raise QtileError(v)
-
-    def __repr__(self):
-        return "Drag(%s, %s)" % (self.modifiers, self.button)
-
-
-class Click(object):
-    """
-        Defines binding of a mouse click
-    """
-    def __init__(self, modifiers, button, *commands):
-        self.modifiers = modifiers
-        self.button = button
-        self.commands = commands
-        try:
-            self.button_code = int(self.button.replace('Button', ''))
-            self.modmask = utils.translateMasks(self.modifiers)
-        except KeyError, v:
-            raise QtileError(v)
-
-    def __repr__(self):
-        return "Click(%s, %s)" % (self.modifiers, self.button)
-
-
-class ScreenRect(object):
-
-    def __init__(self, x, y, width, height):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-
-    def __repr__(self):
-        return '<%s %d,%d %d,%d>' % (self.__class__.__name__,
-            self.x, self.y, self.width, self.height)
-
-    def hsplit(self, columnwidth):
-        assert columnwidth > 0
-        assert columnwidth < self.width
-        return (self.__class__(self.x, self.y, columnwidth, self.height),
-                self.__class__(self.x + columnwidth, self.y,
-                               self.width - columnwidth, self.height))
-
-    def vsplit(self, rowheight):
-        assert rowheight > 0
-        assert rowheight < self.height
-        return (self.__class__(self.x, self.y, self.width, rowheight),
-                self.__class__(self.x, self.y + rowheight,
-                               self.width, self.height - rowheight))
-
-
-class Screen(command.CommandObject):
-    """
-        A physical screen, and its associated paraphernalia.
-    """
-    group = None
-
-    def __init__(self, top=None, bottom=None, left=None, right=None,
-                 x=None, y=None, width=None, height=None):
-        """
-            - top, bottom, left, right: Instances of bar objects, or None.
-
-            Note that bar.Bar objects can only be placed at the top or the
-            bottom of the screen (bar.Gap objects can be placed anywhere).
-
-            x,y,width and height aren't specified usually unless you are
-            using 'fake screens'.
-        """
-        self.top, self.bottom = top, bottom
-        self.left, self.right = left, right
-        self.qtile = None
-        self.index = None
-        self.x = x  # x position of upper left corner can be > 0
-                    # if one screen is "right" of the other
-        self.y = y
-        self.width = width
-        self.height = height
-
-    def _configure(self, qtile, index, x, y, width, height, group):
-        self.qtile = qtile
-        self.index, self.x, self.y = index, x, y,
-        self.width, self.height = width, height
-        self.setGroup(group)
-        for i in self.gaps:
-            i._configure(qtile, self)
-
-    @property
-    def gaps(self):
-        lst = []
-        for i in [self.top, self.bottom, self.left, self.right]:
-            if i:
-                lst.append(i)
-        return lst
-
-    @property
-    def dx(self):
-        return self.x + self.left.size if self.left else self.x
-
-    @property
-    def dy(self):
-        return self.y + self.top.size if self.top else self.y
-
-    @property
-    def dwidth(self):
-        val = self.width
-        if self.left:
-            val -= self.left.size
-        if self.right:
-            val -= self.right.size
-        return val
-
-    @property
-    def dheight(self):
-        val = self.height
-        if self.top:
-            val -= self.top.size
-        if self.bottom:
-            val -= self.bottom.size
-        return val
-
-    def get_rect(self):
-        return ScreenRect(self.dx, self.dy, self.dwidth, self.dheight)
-
-    def setGroup(self, new_group):
-        """
-        Put group on this screen
-        """
-        if new_group.screen == self:
-            return
-        elif new_group.screen:
-            # g1 <-> s1 (self)
-            # g2 (new_group)<-> s2 to
-            # g1 <-> s2
-            # g2 <-> s1
-            g1 = self.group
-            s1 = self
-            g2 = new_group
-            s2 = new_group.screen
-
-            s2.group = g1
-            g1._setScreen(s2)
-            s1.group = g2
-            g2._setScreen(s1)
-        else:
-            if self.group is not None:
-                self.group._setScreen(None)
-            self.group = new_group
-            new_group._setScreen(self)
-        hook.fire("setgroup")
-        hook.fire("focus_change")
-        hook.fire("layout_change",
-                  self.group.layouts[self.group.currentLayout],
-                  self.group)
-
-    def _items(self, name):
-        if name == "layout":
-            return True, range(len(self.group.layouts))
-        elif name == "window":
-            return True, [i.window.wid for i in self.group.windows]
-        elif name == "bar":
-            return False, [x.position for x in self.gaps]
-
-    def _select(self, name, sel):
-        if name == "layout":
-            if sel is None:
-                return self.group.layout
-            else:
-                return utils.lget(self.group.layouts, sel)
-        elif name == "window":
-            if sel is None:
-                return self.group.currentWindow
-            else:
-                for i in self.group.windows:
-                    if i.window.wid == sel:
-                        return i
-        elif name == "bar":
-            return getattr(self, sel)
-
-    def resize(self, x=None, y=None, w=None, h=None):
-        x = x or self.x
-        y = y or self.y
-        w = w or self.width
-        h = h or self.height
-        self._configure(self.qtile, self.index, x, y, w, h, self.group)
-        for bar in [self.top, self.bottom, self.left, self.right]:
-            if bar:
-                bar.draw()
-        self.group.layoutAll()
-
-    def cmd_info(self):
-        """
-            Returns a dictionary of info for this screen.
-        """
-        return dict(
-            index=self.index,
-            width=self.width,
-            height=self.height,
-            x=self.x,
-            y=self.y
-        )
-
-    def cmd_resize(self, x=None, y=None, w=None, h=None):
-        """
-            Resize the screen.
-        """
-        self.resize(x, y, w, h)
-
-
-class Group(command.CommandObject):
-    """
-        A group is a container for a bunch of windows, analogous to workspaces
-        in other window managers. Each client window managed by the window
-        manager belongs to exactly one group.
-    """
-    def __init__(self, name, layout=None):
-        self.name = name
-        self.customLayout = layout  # will be set on _configure
-        self.windows = set()
-        self.qtile = None
-        self.layouts = []
-        self.floating_layout = None
-        self.currentWindow = None
-        self.screen = None
-        self.currentLayout = None
-
-    def _configure(self, layouts, floating_layout, qtile):
-        self.screen = None
-        self.currentLayout = 0
-        self.currentWindow = None
-        self.windows = set()
-        self.qtile = qtile
-        self.layouts = [i.clone(self) for i in layouts]
-        self.floating_layout = floating_layout.clone(self)
-        if self.customLayout is not None:
-            self.layout = self.customLayout
-            self.customLayout = None
-
-    @property
-    def layout(self):
-        return self.layouts[self.currentLayout]
-
-    @layout.setter
-    def layout(self, layout):
-        """
-            "layout" is a string with matching the name of a Layout object.
-        """
-        for index, obj in enumerate(self.layouts):
-            if obj.name == layout:
-                self.currentLayout = index
-                hook.fire("layout_change",
-                          self.layouts[self.currentLayout], self)
-                self.layoutAll()
-                return
-        raise ValueError("No such layout: %s" % layout)
-
-    def nextLayout(self):
-        self.layout.hide()
-        self.currentLayout = (self.currentLayout + 1) % (len(self.layouts))
-        hook.fire("layout_change", self.layouts[self.currentLayout], self)
-        self.layoutAll()
-        screen = self.screen.get_rect()
-        self.layout.show(screen)
-
-    def prevLayout(self):
-        self.layout.hide()
-        self.currentLayout = (self.currentLayout - 1) % (len(self.layouts))
-        hook.fire("layout_change", self.layouts[self.currentLayout], self)
-        self.layoutAll()
-        screen = self.screen.get_rect()
-        self.layout.show(screen)
-
-    def layoutAll(self, warp=False):
-        """
-        Layout the floating layer, then the current layout.
-
-        If we have have a currentWindow give it focus, optionally
-        moving warp to it.
-        """
-        if self.screen and len(self.windows):
-            with self.disableMask(xcb.xproto.EventMask.EnterWindow):
-                normal = [x for x in self.windows if not x.floating]
-                floating = [x for x in self.windows
-                    if x.floating and not x.minimized]
-                screen = self.screen.get_rect()
-                if normal:
-                    self.layout.layout(normal, screen)
-                if floating:
-                    self.floating_layout.layout(floating, screen)
-                if (self.currentWindow and
-                    self.screen == self.qtile.currentScreen):
-                    self.currentWindow.focus(warp)
-
-    def _setScreen(self, screen):
-        """
-        Set this group's screen to new_screen
-        """
-        if screen == self.screen:
-            return
-        self.screen = screen
-        if self.screen:
-            # move all floating guys offset to new screen
-            self.floating_layout.to_screen(self.screen)
-            self.layoutAll()
-            rect = self.screen.get_rect()
-            self.floating_layout.show(rect)
-            self.layout.show(rect)
-        else:
-            self.hide()
-
-    def hide(self):
-        self.screen = None
-        with self.disableMask(xcb.xproto.EventMask.EnterWindow |
-                              xcb.xproto.EventMask.FocusChange |
-                              xcb.xproto.EventMask.LeaveWindow):
-            for i in self.windows:
-                i.hide()
-            self.layout.hide()
-
-    @contextlib.contextmanager
-    def disableMask(self, mask):
-        for i in self.windows:
-            i._disableMask(mask)
-        yield
-        for i in self.windows:
-            i._resetMask()
-
-    def focus(self, win, warp):
-        """
-            if win is in the group, blur any windows and call
-            ``focus`` on the layout (in case it wants to track
-            anything), fire focus_change hook and invoke layoutAll.
-
-            warp - warp pointer to win
-        """
-        if self.qtile._drag:
-            # don't change focus while dragging windows
-            return
-        if win and not win in self.windows:
-            return
-        if win:
-            self.currentWindow = win
-            if win.floating:
-                for l in self.layouts:
-                    l.blur()
-                self.floating_layout.focus(win)
-            else:
-                self.floating_layout.blur()
-                for l in self.layouts:
-                    l.focus(win)
-        else:
-            self.currentWindow = None
-        hook.fire("focus_change")
-        # !!! note that warp isn't hooked up now
-        self.layoutAll(warp)
-
-    def info(self):
-        return dict(
-            name=self.name,
-            focus=self.currentWindow.name if self.currentWindow else None,
-            windows=[i.name for i in self.windows],
-            layout=self.layout.name,
-            floating_info=self.floating_layout.info(),
-            screen=self.screen.index if self.screen else None
-        )
-
-    def add(self, win):
-        hook.fire("group_window_add")
-        self.windows.add(win)
-        win.group = self
-        try:
-            if self.floating_layout.match(win):
-                # !!! tell it to float, can't set floating
-                # because it's too early
-                # so just set the flag underneath
-                win._float_state = window.FLOATING
-        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
-            pass  # doesn't matter
-        if win.floating:
-            self.floating_layout.add(win)
-        else:
-            for i in self.layouts:
-                i.add(win)
-        self.focus(win, True)
-
-    def remove(self, win):
-        self.windows.remove(win)
-        win.group = None
-        nextfocus = None
-        if win.floating:
-            nextfocus = self.floating_layout.remove(win)
-            if nextfocus is None:
-                nextfocus = self.layout.focus_first()
-            if nextfocus is None:
-                nextfocus = self.floating_layout.focus_first()
-        else:
-            for i in self.layouts:
-                if i is self.layout:
-                    nextfocus = i.remove(win)
-                else:
-                    i.remove(win)
-            if nextfocus is None:
-                nextfocus = self.floating_layout.focus_first()
-            if nextfocus is None:
-                nextfocus = self.layout.focus_first()
-        self.focus(nextfocus, True)
-        #else: TODO: change focus
-
-    def mark_floating(self, win, floating):
-        if floating and win in self.floating_layout.clients:
-            # already floating
-            pass
-        elif floating:
-            for i in self.layouts:
-                i.remove(win)
-                if win is self.currentWindow:
-                    i.blur()
-            self.floating_layout.add(win)
-            if win is self.currentWindow:
-                self.floating_layout.focus(win)
-        else:
-            self.floating_layout.remove(win)
-            self.floating_layout.blur()
-            for i in self.layouts:
-                i.add(win)
-                if win is self.currentWindow:
-                    i.focus(win)
-        self.layoutAll()
-
-    def _items(self, name):
-        if name == "layout":
-            return True, range(len(self.layouts))
-        elif name == "window":
-            return True, [i.window.wid for i in self.windows]
-        elif name == "screen":
-            return True, None
-
-    def _select(self, name, sel):
-        if name == "layout":
-            if sel is None:
-                return self.layout
-            else:
-                return utils.lget(self.layouts, sel)
-        elif name == "window":
-            if sel is None:
-                return self.currentWindow
-            else:
-                for i in self.windows:
-                    if i.window.wid == sel:
-                        return i
-        elif name == "screen":
-            return self.screen
-
-    def cmd_setlayout(self, layout):
-        self.layout = layout
-
-    def cmd_info(self):
-        """
-            Returns a dictionary of info for this group.
-        """
-        return self.info()
-
-    def cmd_toscreen(self, screen=None):
-        """
-            Pull a group to a specified screen.
-
-            - screen: Screen offset. If not specified,
-                      we assume the current screen.
-
-            Pull group to the current screen:
-                toscreen()
-
-            Pull group to screen 0:
-                toscreen(0)
-        """
-        if screen is None:
-            screen = self.qtile.currentScreen
-        else:
-            screen = self.qtile.screens[screen]
-        screen.setGroup(self)
-
-    def _dirGroup(self, direction):
-        currentgroup = self.qtile.groups.index(self)
-        nextgroup = (currentgroup + direction) % len(self.qtile.groups)
-        return self.qtile.groups[nextgroup]
-
-    def _dirSkipEmptyGroup(self, direction):
-        """
-        Find a non-empty group walking the groups list in the specified
-        direction.
-        """
-        index = currentgroup = self.qtile.groups.index(self)
-        while True:
-            index = (index + direction) % len(self.qtile.groups)
-            group = self.qtile.groups[index]
-            if index == currentgroup or group.windows:
-                return group
-
-    def prevGroup(self):
-        return self._dirGroup(-1)
-
-    def nextGroup(self):
-        return self._dirGroup(1)
-
-    def prevEmptyGroup(self):
-        return self._dirSkipEmptyGroup(-1)
-
-    def nextEmptyGroup(self):
-        return self._dirSkipEmptyGroup(1)
-
-    # FIXME cmd_nextgroup and cmd_prevgroup should be on the Screen object.
-    def cmd_nextgroup(self, skip_empty=False):
-        """
-            Switch to the next group.
-        """
-        if skip_empty:
-            n = self.nextEmptyGroup()
-        else:
-            n = self.nextGroup()
-        self.qtile.currentScreen.setGroup(n)
-        return n.name
-
-    def cmd_prevgroup(self, skip_empty=False):
-        """
-            Switch to the previous group.
-        """
-        if skip_empty:
-            n = self.prevEmptyGroup()
-        else:
-            n = self.prevGroup()
-        self.qtile.currentScreen.setGroup(n)
-        return n.name
-
-    def cmd_unminimise_all(self):
-        """
-            Unminimise all windows in this group.
-        """
-        for w in self.windows:
-            w.minimised = False
-        self.layoutAll()
-
-    def cmd_next_window(self):
-        if not self.windows:
-            return
-        if self.currentWindow.floating:
-            nxt = self.floating_layout.focus_next(self.currentWindow)
-            if not nxt:
-                nxt = self.layout.focus_first()
-            if not nxt:
-                nxt = self.floating_layout.focus_first()
-        else:
-            nxt = self.layout.focus_next(self.currentWindow)
-            if not nxt:
-                nxt = self.floating_layout.focus_first()
-            if not nxt:
-                nxt = self.layout.focus_first()
-        self.focus(nxt, True)
-
-    def cmd_prev_window(self):
-        if not self.windows:
-            return
-        if self.currentWindow.floating:
-            nxt = self.floating_layout.focus_prev(self.currentWindow)
-            if not nxt:
-                nxt = self.layout.focus_last()
-            if not nxt:
-                nxt = self.floating_layout.focus_last()
-        else:
-            nxt = self.layout.focus_prev(self.currentWindow)
-            if not nxt:
-                nxt = self.floating_layout.focus_last()
-            if not nxt:
-                nxt = self.layout.focus_last()
-        self.focus(nxt, True)
-
-    def cmd_switch_groups(self, name):
-        """
-            Switch position of current group with name
-        """
-        self.qtile.cmd_switch_groups(self.name, name)
-
-
 class Qtile(command.CommandObject):
     """
         This object is the __root__ of the command graph.
@@ -695,7 +66,8 @@ class Qtile(command.CommandObject):
     _abort = False
 
     def __init__(self, config,
-                 displayName=None, fname=None, no_spawn=False, log=None):
+                 displayName=None, fname=None, no_spawn=False, log=None,
+                 state=None):
         if log == None:
             log = init_log()
         self.log = log
@@ -745,7 +117,11 @@ class Qtile(command.CommandObject):
         if config.main:
             config.main(self)
 
-        self.groups += self.config.groups[:]
+        if self.config.groups:
+            key_binder = None
+            if hasattr(self.config, 'dgroups_key_binder'):
+                key_binder = self.config.dgroups_key_binder
+            DGroups(self, self.config.groups, key_binder)
 
         for i in self.groups:
             i._configure(config.layouts, config.floating_layout, self)
@@ -795,6 +171,10 @@ class Qtile(command.CommandObject):
         self.scan()
         self.update_net_desktops()
         hook.subscribe.setgroup(self.update_net_desktops)
+
+        if state:
+            st = pickle.load(StringIO(state))
+            st.apply(self)
 
     def _process_fake_screens(self):
         """
@@ -906,7 +286,7 @@ class Qtile(command.CommandObject):
 
     def addGroup(self, name):
         if name not in self.groupMap.keys():
-            g = Group(name)
+            g = _Group(name)
             self.groups.append(g)
             g._configure(
                 self.config.layouts, self.config.floating_layout, self)
@@ -978,11 +358,42 @@ class Qtile(command.CommandObject):
         c = self.windowMap.get(win)
         if c:
             hook.fire("client_killed", c)
+            self.reset_gaps(c)
             if getattr(c, "group", None):
                 c.window.unmap()
                 c.state = window.WithdrawnState
                 c.group.remove(c)
             del self.windowMap[win]
+            self.update_client_list()
+
+    def reset_gaps(self, c):
+        if c.strut:
+            self.update_gaps((0, 0, 0, 0), c.strut)
+
+    def update_gaps(self, strut, old_strut=None):
+        from libqtile.bar import Gap
+
+        (left, right, top, bottom) = strut[:4]
+        if old_strut:
+            (old_left, old_right, old_top, old_bottom) = old_strut[:4]
+            if not left and old_left:
+                self.currentScreen.left = None
+            elif not right and old_right:
+                self.currentScreen.right = None
+            elif not top and old_top:
+                self.currentScreen.top = None
+            elif not bottom and old_bottom:
+                self.currentScreen.bottom = None
+
+        if top:
+            self.currentScreen.top = Gap(top)
+        elif bottom:
+            self.currentScreen.bottom = Gap(bottom)
+        elif left:
+            self.currentScreen.left = Gap(left)
+        elif right:
+            self.currentScreen.right = Gap(right)
+        self.currentScreen.resize()
 
     def manage(self, w):
         try:
@@ -1005,7 +416,12 @@ class Qtile(command.CommandObject):
                     c = window.Window(w, self)
                 except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
                     return
-                hook.fire("client_new", c)
+
+                if w.get_wm_type() == "dock" or c.strut:
+                    c.static(self.currentScreen.index)
+                else:
+                    hook.fire("client_new", c)
+
                 # Window may be defunct because
                 # it's been declared static in hook.
                 if c.defunct:
@@ -1014,10 +430,23 @@ class Qtile(command.CommandObject):
                 # Window may have been bound to a group in the hook.
                 if not c.group:
                     self.currentScreen.group.add(c)
+                self.update_client_list()
                 hook.fire("client_managed", c)
             return c
         else:
             return self.windowMap[w.wid]
+
+    def update_client_list(self):
+        """
+        Updates the client stack list
+        this is needed for third party tasklists
+        and drag and drop of tabs in chrome
+        """
+
+        windows = [wid for wid, c in self.windowMap.iteritems() if c.group]
+        self.root.set_property("_NET_CLIENT_LIST", windows)
+        # TODO: check stack order
+        self.root.set_property("_NET_CLIENT_LIST_STACKING",windows)
 
     def grabMouse(self):
         self.root.ungrab_button(None, None)
@@ -1375,6 +804,9 @@ class Qtile(command.CommandObject):
         if e.event != self.root.wid:
             self.unmanage(e.window)
 
+    def handle_ScreenChangeNotify(self, e):
+        hook.fire("screen_change", self, e)
+
     def toScreen(self, n):
         """
         Have Qtile move to screen and put focus there
@@ -1386,6 +818,8 @@ class Qtile(command.CommandObject):
             self.currentWindow,
             True
         )
+        currentLayout = self.currentGroup.layouts[self.currentGroup.currentLayout]
+        hook.fire("layout_change", currentLayout)
 
     def moveToGroup(self, group):
         """
@@ -1582,6 +1016,12 @@ class Qtile(command.CommandObject):
         argv = [sys.executable] + sys.argv
         if '--no-spawn' not in argv:
             argv.append('--no-spawn')
+
+        buf = StringIO()
+        pickle.dump(QtileState(self), buf)
+        argv = filter(lambda s: not s.startswith('--with-state'), argv)
+        argv.append('--with-state=' + buf.getvalue())
+
         self.cmd_execute(sys.executable, argv)
 
     def cmd_spawn(self, cmd):
@@ -1673,6 +1113,34 @@ class Qtile(command.CommandObject):
         hook.fire("setgroup")
         self.update_net_desktops()
 
+        # update window _NET_WM_DESKTOP
+        for group in (self.groups[indexa], self.groups[indexb]):
+            for window in group.windows:
+                window.group = group
+
+    def find_window(self, wid):
+        window = self.windowMap.get(wid)
+        if window:
+            if not window.group.screen:
+                self.currentScreen.setGroup(window.group)
+            window.group.focus(window, False)
+
+    def cmd_findwindow(self, prompt="window: ", widget="prompt"):
+        mb = self.widgetMap.get(widget)
+        if not mb:
+            self.log.error("No widget named '%s' present." % widget)
+            return
+
+        mb.startInput(prompt, self.find_window, "window")
+
+    def cmd_next_urgent(self):
+        try:
+            nxt = filter(lambda w: w.urgent, self.windowMap.values())[0]
+            nxt.group.cmd_toscreen()
+            nxt.group.focus(nxt, False)
+        except IndexError:
+            pass # no window had urgent set
+
     def cmd_togroup(self, prompt="group: ", widget="prompt"):
         """
             Move current window to the selected group in a propmt widget
@@ -1741,7 +1209,7 @@ class Qtile(command.CommandObject):
             if cmd:
                 c = command.CommandRoot(self)
                 try:
-                   cmd_arg = str(cmd).split(' ')
+                    cmd_arg = str(cmd).split(' ')
                 except AttributeError:
                     return
                 cmd_len = len(cmd_arg)

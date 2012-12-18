@@ -108,6 +108,7 @@ PropertyMap = {
     "_NET_ACTIVE_WINDOW": ("WINDOW", 32),
     "_NET_WM_STATE": ("ATOM", 32),
     "_NET_WM_DESKTOP": ("CARDINAL", 32),
+    "_NET_WM_STRUT": ("CARDINAL", 32),
     "_NET_WM_STRUT_PARTIAL": ("CARDINAL", 32),
     "_NET_WM_WINDOW_OPACITY": ("CARDINAL", 32),
     "_NET_WM_WINDOW_TYPE": ("CARDINAL", 32),
@@ -261,6 +262,10 @@ class Xinerama:
 class RandR:
     def __init__(self, conn):
         self.ext = conn.conn(xcb.randr.key)
+        self.ext.SelectInput(
+            conn.default_screen.root.wid,
+            xcb.randr.NotifyMask.ScreenChange
+        )
 
     def query_crtcs(self, root):
         l = []
@@ -669,11 +674,12 @@ class Connection:
         self.cursors = Cursors(self)
         self.setup = self.conn.get_setup()
         extensions = self.extensions()
+        self.screens = [Screen(self, i) for i in self.setup.roots]
+        self.default_screen = self.screens[self.conn.pref_screen]
         for i in extensions:
             if i in self._extmap:
                 setattr(self, i, self._extmap[i](self))
 
-        self.screens = [Screen(self, i) for i in self.setup.roots]
         self.pseudoscreens = []
         if "xinerama" in extensions:
             for i, s in enumerate(self.xinerama.query_screens()):
@@ -696,7 +702,6 @@ class Connection:
                 )
                 self.pseudoscreens.append(scr)
 
-        self.default_screen = self.screens[self.conn.pref_screen]
         self.atoms = AtomCache(self)
 
         self.code_to_syms = {}

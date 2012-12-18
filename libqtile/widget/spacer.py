@@ -14,5 +14,5 @@ class Spacer(base._Widget):
         base._Widget.__init__(self, width)
 
     def draw(self):
-        self.clear()
+        self.drawer.clear(self.bar.background)
         self.drawer.draw(self.offset, self.width)

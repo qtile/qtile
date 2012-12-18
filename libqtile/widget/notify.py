@@ -13,8 +13,10 @@ class Notify(base._TextBox):
     defaults = manager.Defaults(
         ("font", "Arial", "Mpd widget font"),
         ("fontsize", None, "Mpd widget pixel size. Calculated if None."),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ("padding", None, "Mpd widget padding. Calculated if None."),
-        ("background", "000000", "Background colour"),
+        ("background", None, "Background colour"),
         ("foreground", "ffffff", "Foreground normal priority colour"),
         ("foreground_urgent", "ff0000", "Foreground urgent priority colour"),
         ("foreground_low", "dddddd", "Foreground low priority  colour"),
@@ -28,8 +30,8 @@ class Notify(base._TextBox):
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
         self.layout = self.drawer.textlayout(
-            self.text, self.foreground, self.font, self.fontsize,
-            markup=True)
+            self.text, self.foreground, self.font,
+            self.fontsize, self.fontshadow, markup=True)
 
     def set_notif_text(self, notif):
         self.text = utils.escape(notif.summary)
@@ -59,7 +61,7 @@ class Notify(base._TextBox):
         self.current_id = len(notifier.notifications) - 1
         self.bar.draw()
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         if button == 1:
             self.clear()
         elif button == 4:

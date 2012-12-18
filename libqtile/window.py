@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import array
 import struct
 import contextlib
 import xcb.xcb
@@ -105,6 +106,7 @@ class _Window(command.CommandObject):
         self.window, self.qtile = window, qtile
         self.hidden = True
         self.group = None
+        self.icons = {}
         window.set_attribute(eventmask=self._windowMask)
         try:
             g = self.window.get_geometry()
@@ -125,6 +127,7 @@ class _Window(command.CommandObject):
         self.borderwidth = 0
         self.bordercolor = None
         self.name = "<no name>"
+        self.strut = None
         self.state = NormalState
         self.window_type = "normal"
         self._float_state = NOT_FLOATING
@@ -230,8 +233,9 @@ class _Window(command.CommandObject):
             self.hints.update(normh)
 
         if h and 'UrgencyHint' in h['flags']:
-            self.hints['urgent'] = True
-            hook.fire('client_urgent_hint_changed', self)
+            if self.qtile.currentWindow != self:
+                self.hints['urgent'] = True
+                hook.fire('client_urgent_hint_changed', self)
         elif self.urgent:
             self.hints['urgent'] = False
             hook.fire('client_urgent_hint_changed', self)
@@ -242,7 +246,14 @@ class _Window(command.CommandObject):
         return
 
     def updateState(self):
-        self.fullscreen = self.window.get_net_wm_state() == 'fullscreen'
+        if not self.qtile.config.auto_fullscreen:
+            return
+        state = self.window.get_net_wm_state()
+        self.qtile.log.debug('_NET_WM_STATE: %s' % state)
+        if state == 'fullscreen':
+            self.fullscreen = True
+        else:
+            self.fullscreen = False
 
     @property
     def urgent(self):
@@ -275,7 +286,7 @@ class _Window(command.CommandObject):
     @state.setter
     def state(self, val):
         if val in (WithdrawnState, NormalState, IconicState):
-            self.window.set_property('_NET_WM_STATE', [val, 0])
+            self.window.set_property('WM_STATE', [val, 0])
 
     def setOpacity(self, opacity):
         if 0.0 <= opacity <= 1.0:
@@ -447,12 +458,13 @@ class _Window(command.CommandObject):
                 e = struct.pack('BBHII5I', *vals)
                 self.window.send_event(e)
             if self.hints['input']:
-                    self.window.set_input_focus()
+                self.window.set_input_focus()
             try:
                 if warp and self.qtile.config.cursor_warp:
                     self.window.warp_pointer(self.width // 2, self.height // 2)
             except AttributeError:
                 pass
+        self.qtile.root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
         hook.fire("client_focus", self)
 
     def _items(self, name, sel):
@@ -526,6 +538,7 @@ class Internal(_Window):
                   EventMask.FocusChange |\
                   EventMask.Exposure |\
                   EventMask.ButtonPress |\
+                  EventMask.ButtonRelease |\
                   EventMask.KeyPress
 
     @classmethod
@@ -542,6 +555,11 @@ class Internal(_Window):
     def __repr__(self):
         return "Internal(%s, %s)" % (self.name, self.window.wid)
 
+    def kill(self):
+        self.qtile.conn.conn.core.DestroyWindow(self.window.wid)
+
+    def cmd_kill(self):
+        self.kill()
 
 class Static(_Window):
     """
@@ -566,6 +584,7 @@ class Static(_Window):
         self.screen = screen
         if None not in (x, y, width, height):
             self.place(x, y, width, height, 0, 0)
+        self.update_strut()
 
     def handle_ConfigureRequest(self, e):
         cw = xcb.xproto.ConfigWindow
@@ -587,6 +606,20 @@ class Static(_Window):
             self.bordercolor
         )
         return False
+
+    def update_strut(self):
+        strut = self.window.get_property("_NET_WM_STRUT_PARTIAL", unpack="I"*12)
+        if not strut:
+            strut = self.window.get_property("_NET_WM_STRUT", unpack="I"*4)
+        if not strut:
+            strut = (0, 0, 0, 0)
+        self.qtile.update_gaps(strut, self.strut)
+        self.strut = strut
+
+    def handle_PropertyNotify(self, e):
+        name = self.qtile.conn.atoms.get_name(e.atom)
+        if name in ("_NET_WM_STRUT_PARTIAL", "_NET_WM_STRUT"):
+            self.update_strut()
 
     def __repr__(self):
         return "Static(%s)" % self.name
@@ -614,6 +647,7 @@ class Window(_Window):
 
         # add window to the save-set, so it gets mapped when qtile dies
         qtile.conn.conn.core.ChangeSaveSet(SetMode.Insert, self.window.wid)
+        self.update_wm_net_icon()
 
     @property
     def group(self):
@@ -716,7 +750,8 @@ class Window(_Window):
             self.width = 0
 
         screen = self.qtile.find_closest_screen(self.x, self.y)
-        if screen is not None and screen != self.group.screen:
+        if (screen is not None and screen.group is not None and
+                screen != self.group.screen):
             self.group.remove(self)
             screen.group.add(self)
             self.qtile.toScreen(screen.index)
@@ -872,6 +907,8 @@ class Window(_Window):
 
     def handle_EnterNotify(self, e):
         hook.fire("client_mouse_enter", self)
+        if self.group is None:
+            return True
         if self.qtile.config.follow_mouse_focus and \
                         self.group.currentWindow != self:
             self.group.focus(self, False)
@@ -882,7 +919,6 @@ class Window(_Window):
         return True
 
     def handle_ConfigureRequest(self, e):
-        self.qtile.log.info(repr(e.__dict__))
         if self.qtile._drag and self.qtile.currentWindow == self:
             # ignore requests while user is dragging window
             return
@@ -910,8 +946,46 @@ class Window(_Window):
             )
         return False
 
+    def update_wm_net_icon(self):
+        """
+            Set a dict with the icons of the window
+        """
+
+        ret = self.window.get_property('_NET_WM_ICON', 'CARDINAL')
+        if not ret:
+            return
+        icon = ret.value
+
+        icons = {}
+        while True:
+            if not icon:
+                break
+            size = icon[:8]
+            if len(size) != 8 or not size[0] or not size[4]:
+                break
+
+            icon = icon[8:]
+
+            width = size[0]
+            height = size[4]
+
+            next_pix = width*height*4
+            data = icon[:next_pix]
+
+            arr = array.array("B", data)
+            for i in range(0, len(arr), 4):
+                mult = (arr[i+3]) / 255.
+                arr[i+0] = int(arr[i+0] * mult)
+                arr[i+1] = int(arr[i+1] * mult)
+                arr[i+2] = int(arr[i+2] * mult)
+            icon = icon[next_pix:]
+            icons["%sx%s" % (width, height)] = arr
+        self.icons = icons
+        hook.fire("net_wm_icon_change", self)
+
     def handle_PropertyNotify(self, e):
         name = self.qtile.conn.atoms.get_name(e.atom)
+        self.qtile.log.debug("PropertyNotifyEvent: %s" % name)
         if name == "WM_TRANSIENT_FOR":
             pass
         elif name == "WM_HINTS":
@@ -928,13 +1002,19 @@ class Window(_Window):
             pass
         elif name == "_NET_WM_ICON_NAME":
             pass
+        elif name == "_NET_WM_ICON":
+            self.update_wm_net_icon()
         elif name == "ZOOM":
             pass
         elif name == "_NET_WM_WINDOW_OPACITY":
             pass
+        elif name == "WM_STATE":
+            pass
         elif name == "_NET_WM_STATE":
             self.updateState()
         elif name == "WM_PROTOCOLS":
+            pass
+        elif name == "_NET_WM_DESKTOP":
             pass
         elif name == "_NET_WM_USER_TIME":
             if not self.qtile.config.follow_mouse_focus and \

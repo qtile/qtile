@@ -17,6 +17,8 @@ class Backlight(base._TextBox):
     defaults = manager.Defaults(
         ('font', 'Arial', 'Text font'),
         ('fontsize', None, 'Font pixel size. Calculated if None.'),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ('padding', 3, 'Padding left and right. Calculated if None.'),
         ('background', None, 'Background colour.'),
         ('foreground', '#ffffff', 'Foreground colour.'),
@@ -30,9 +32,6 @@ class Backlight(base._TextBox):
 
     def __init__(self, **config):
         base._TextBox.__init__(self, "LIGHT", bar.CALCULATED, **config)
-
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
         self.timeout_add(self.update_delay, self.update)
 
     def _load_file(self, name):
@@ -64,8 +63,9 @@ class Backlight(base._TextBox):
         return FORMAT.format(percent=percent)
 
     def update(self):
-        ntext = self._get_text()
-        if ntext != self.text:
-            self.text = ntext
-            self.bar.draw()
+        if self.configured:
+            ntext = self._get_text()
+            if ntext != self.text:
+                self.text = ntext
+                self.bar.draw()
         return True

@@ -17,6 +17,8 @@ from volume import Volume
 from windowname import WindowName
 from windowtabs import WindowTabs
 
+from tasklist import TaskList
+
 try:
     from canto import Canto
 except ImportError:

@@ -6,6 +6,8 @@ class CurrentLayout(base._TextBox):
     defaults = manager.Defaults(
         ("font", "Arial", "Text font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ("padding", None, "Padding left and right. Calculated if None."),
         ("background", None, "Background colour."),
         ("foreground", "#ffffff", "Foreground colour.")
@@ -26,7 +28,7 @@ class CurrentLayout(base._TextBox):
                 self.bar.draw()
         hook.subscribe.layout_change(hook_response)
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         if button == 1:
             self.qtile.cmd_nextlayout()
         elif button == 2:

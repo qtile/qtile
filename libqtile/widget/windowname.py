@@ -9,8 +9,10 @@ class WindowName(base._TextBox):
     defaults = manager.Defaults(
         ("font", "Arial", "Font face."),
         ("fontsize", None, "Font pixel size. Calculated if None."),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ("padding", None, "Padding left and right."),
-        ("background", "000000", "Background colour."),
+        ("background", None, "Background colour."),
         ("foreground", "ffffff", "Foreground colour."),
     )
 

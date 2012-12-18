@@ -1,4 +1,4 @@
-import manager
+import utils
 
 subscriptions = {}
 SKIPLOG = set()
@@ -156,6 +156,27 @@ class Subscribe:
         """
         return self._subscribe("layout_change", func)
 
+    def net_wm_icon_change(self, func):
+        """
+            Called on _NET_WM_ICON chance.
+        """
+        return self._subscribe("net_wm_icon_change", func)
+
+    def screen_change(self, func):
+        """
+            Called when a screen is added or screen configuration is changed
+            (via xrandr). The hook should take two arguments: the root qtile
+            object and the ``xproto.randr.ScreenChangeNotify`` event. Common
+            usage is simply to call ``qtile.cmd_restart()`` on each event (to
+            restart qtile when there is a new monitor):
+
+            ## Example:
+
+                def restart_on_randr(qtile, ev):
+                    qtile.cmd_restart()
+        """
+        return self._subscribe("screen_change", func)
+
 subscribe = Subscribe()
 
 
@@ -169,7 +190,7 @@ class Unsubscribe(Subscribe):
         try:
             lst.remove(func)
         except ValueError:
-            raise manager.QtileError("Tried to unsubscribe a hook that was not"
+            raise utils.QtileError("Tried to unsubscribe a hook that was not"
                                      " currently subscribed")
 
 unsubscribe = Unsubscribe()
@@ -177,7 +198,7 @@ unsubscribe = Unsubscribe()
 
 def fire(event, *args, **kwargs):
     if event not in subscribe.hooks:
-        raise manager.QtileError("Unknown event: %s" % event)
+        raise utils.QtileError("Unknown event: %s" % event)
     if not event in SKIPLOG:
         qtile.log.info("Internal event: %s(%s, %s)" %
                       (event, args, kwargs))

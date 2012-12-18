@@ -1,4 +1,4 @@
-from libqtile.manager import Key, Screen, Group
+from libqtile.config import Key, Screen, Group
 from libqtile.command import lazy
 from libqtile import layout, bar, widget
 
@@ -74,6 +74,8 @@ for i in groups:
         Key(["mod1", "shift"], i.name, lazy.window.togroup(i.name))
     )
 
+dgroups_key_binder = None
+
 layouts = [
     layout.Max(),
     layout.Stack(stacks=2)
@@ -85,7 +87,7 @@ screens = [
                     [
                         widget.GroupBox(),
                         widget.WindowName(),
-                        widget.TextBox("default", "default config"),
+                        widget.TextBox("default config", name="default"),
                         widget.Systray(),
                         widget.Clock('%Y-%m-%d %a %I:%M %p'),
                     ],
@@ -99,4 +101,4 @@ follow_mouse_focus = True
 cursor_warp = False
 floating_layout = layout.Floating()
 mouse = ()
-
+auto_fullscreen = True

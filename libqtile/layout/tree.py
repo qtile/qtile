@@ -33,7 +33,7 @@ class TreeNode(object):
         self._children_stop = top
         return top
 
-    def click(self, x, y):
+    def button_press(self, x, y):
         """Returns self or sibling which got the click"""
         if y >= self._children_stop or y < self._children_start:
             return
@@ -190,7 +190,7 @@ class Window(TreeNode):
             return super(Window, self).draw(layout, top, level + 1)
         return top
 
-    def click(self, x, y):
+    def button_press(self, x, y):
         """Returns self if clicked on title else returns sibling"""
         if y >= self._title_start and y < self._children_start:
             return self
@@ -233,6 +233,8 @@ class TreeTab(SingleWindow):
         ("level_shift", 8, "Shift for children tabs"),
         ("font", "Arial", "Font"),
         ("fontsize", 14, "Font pixel size."),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ("section_fontsize", 11, "Font pixel size of section label"),
         ("section_fg", "ffffff", "Color of section label"),
         ("section_top", 4, "Top margin of section label"),
@@ -500,7 +502,7 @@ class TreeTab(SingleWindow):
             self.panel_width, self.group.screen.dheight)
         self._drawer.clear(self.bg_color)
         self._layout = self._drawer.textlayout("", "ffffff", self.font,
-            self.fontsize, wrap=False)
+            self.fontsize, self.fontshadow, wrap=False)
 
     def layout(self, windows, screen):
         panel, body = screen.hsplit(self.panel_width)

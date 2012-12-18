@@ -3,8 +3,6 @@ Keys
 
 The ``keys`` variable defines Qtile's key bindings.
 
-$!confobj("libqtile.manager.Key")!$
-
 The command.lazy object
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -19,7 +17,7 @@ Example
 
 ::
 
-    from libqtile.manager import Key
+    from libqtile.config import Key
     from libqtile.command import lazy
     keys = [
         Key(

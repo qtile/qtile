@@ -3,6 +3,7 @@ import libqtile.layout
 import libqtile.bar
 import libqtile.widget
 import libqtile.manager
+import libqtile.config
 import libqtile.confreader
 from utils import Xephyr
 
@@ -11,16 +12,16 @@ class GBConfig:
     keys = []
     mouse = []
     groups = [
-        libqtile.manager.Group("a"),
-        libqtile.manager.Group("bb"),
-        libqtile.manager.Group("ccc"),
-        libqtile.manager.Group("dddd"),
-        libqtile.manager.Group("Pppy")
+        libqtile.config.Group("a"),
+        libqtile.config.Group("bb"),
+        libqtile.config.Group("ccc"),
+        libqtile.config.Group("dddd"),
+        libqtile.config.Group("Pppy")
     ]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
-        libqtile.manager.Screen(
+        libqtile.config.Screen(
             top=libqtile.bar.Bar(
                     [
                         libqtile.widget.CPUGraph(
@@ -32,7 +33,7 @@ class GBConfig:
                         ),
                         libqtile.widget.MemoryGraph(type="line"),
                         libqtile.widget.SwapGraph(type="box"),
-                        libqtile.widget.TextBox("text", background="333333"),
+                        libqtile.widget.TextBox(name="text", background="333333"),
                     ],
                     50,
                 ),
@@ -128,10 +129,10 @@ def test_textbox_errors(self):
 
 
 @Xephyr(True, GBConfig())
-def test_groupbox_click(self):
+def test_groupbox_button_press(self):
     self.c.group["ccc"].toscreen()
     assert self.c.groups()["a"]["screen"] == None
-    self.c.bar["bottom"].fake_click(0, "bottom", 10, 10, 1)
+    self.c.bar["bottom"].fake_button_press(0, "bottom", 10, 10, 1)
     assert self.c.groups()["a"]["screen"] == 0
 
 
@@ -140,15 +141,15 @@ class GeomConf:
     keys = []
     mouse = []
     groups = [
-        libqtile.manager.Group("a"),
-        libqtile.manager.Group("b"),
-        libqtile.manager.Group("c"),
-        libqtile.manager.Group("d")
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b"),
+        libqtile.config.Group("c"),
+        libqtile.config.Group("d")
     ]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
-        libqtile.manager.Screen(
+        libqtile.config.Screen(
             left=libqtile.bar.Gap(10),
             right=libqtile.bar.Gap(10),
             top=libqtile.bar.Bar([], 10),
@@ -239,13 +240,13 @@ def test_resize(self):
 
 class TopBottomConf(GeomConf):
     screens = [
-        libqtile.manager.Screen(left=libqtile.bar.Bar([], 10))
+        libqtile.config.Screen(left=libqtile.bar.Bar([], 10))
     ]
 
 class MultiStretchConf(GeomConf):
     screens = [
-        libqtile.manager.Screen(top=libqtile.bar.Bar([
-          libqtile.widget.TextBox(txt, width=libqtile.bar.STRETCH)
+        libqtile.config.Screen(top=libqtile.bar.Bar([
+          libqtile.widget.TextBox(name=txt, width=libqtile.bar.STRETCH)
           for txt in ["text1", "text2"]
         ], 10))
     ]
@@ -254,11 +255,11 @@ class ErrConf:
     main = None
     keys = []
     mouse = []
-    groups = [libqtile.manager.Group("a")]
+    groups = [libqtile.config.Group("a")]
     layouts = [libqtile.layout.stack.Stack(stacks=1)]
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
-        libqtile.manager.Screen(
+        libqtile.config.Screen(
             left=libqtile.bar.Bar([], 10),
         )
     ]
@@ -283,7 +284,7 @@ class TestWidget(libqtile.widget.base._Widget):
 @Xephyr(True, GeomConf(), False)
 def test_basic(self):
     self.config.screens = [
-        libqtile.manager.Screen(
+        libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
                     TestWidget(),
@@ -307,7 +308,7 @@ def test_basic(self):
 @Xephyr(True, GeomConf(), False)
 def test_singlespacer(self):
     self.config.screens = [
-        libqtile.manager.Screen(
+        libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
                     libqtile.widget.Spacer(libqtile.bar.STRETCH),
@@ -327,7 +328,7 @@ def test_singlespacer(self):
 @Xephyr(True, GeomConf(), False)
 def test_nospacer(self):
     self.config.screens = [
-        libqtile.manager.Screen(
+        libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
                     TestWidget(),

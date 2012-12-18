@@ -146,6 +146,11 @@ class Stack(Layout):
     def currentStack(self):
         return self.stacks[self.currentStackOffset]
 
+    def blur(self):
+        w = self.currentStack.cw
+        if w:
+            self.configure(w, self.group.screen.get_rect())
+
     @property
     def currentStackOffset(self):
         for i, s in enumerate(self.stacks):
@@ -270,7 +275,8 @@ class Stack(Layout):
         else:
             c.hide()
 
-        if c is self.group.currentWindow:
+        if self.group.screen == self.group.qtile.currentScreen and \
+            c is self.group.currentWindow:
             px = self.group.qtile.colorPixel(self.border_focus)
         else:
             px = self.group.qtile.colorPixel(self.border_normal)

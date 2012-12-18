@@ -17,7 +17,7 @@ Tying together screens, bars and widgets, we get something like this:
 
 ::
 
-    from libqtile.manager import Screen
+    from libqtile.config import Screen
     from libqtile import bar, widget
 
     screens = [

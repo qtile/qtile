@@ -10,19 +10,18 @@ class TextBox(base._TextBox):
     defaults = manager.Defaults(
         ("font", "Arial", "Text font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ("padding", None, "Padding left and right. Calculated if None."),
         ("background", None, "Background colour."),
         ("foreground", "#ffffff", "Foreground colour.")
     )
 
-    def __init__(self, name, text=" ", width=bar.CALCULATED, **config):
+    def __init__(self, text=" ", width=bar.CALCULATED, **config):
         """
-            - name: Name for this widget. Used to address the widget from
-            scripts, commands and qsh.
             - text: Initial widget text.
             - width: An integer width, bar.STRETCH, or bar.CALCULATED .
         """
-        self.name = name
         base._TextBox.__init__(self, text, width, **config)
 
     def update(self, text):

@@ -33,7 +33,7 @@ class ConfigError(Exception):
     pass
 
 class File(object):
-    def __init__(self, fname=None):
+    def __init__(self, fname=None, is_restart=False):
         if not fname:
             config_directory = os.path.expandvars('$XDG_CONFIG_HOME')
             if config_directory == '$XDG_CONFIG_HOME':
@@ -50,8 +50,14 @@ class File(object):
                 sys.path.insert(0, os.path.dirname(self.fname))
                 config = __import__(os.path.basename(self.fname)[:-3])
             except Exception, v:
-                tb = traceback.format_exc()
-                raise ConfigError(str(v) + "\n\n" + tb)
+                # On restart, user potentially has some windows open, but they
+                # screwed up their config. So as not to lose their apps, we
+                # just load the default config here.
+                if is_restart:
+                    config = None
+                else:
+                    tb = traceback.format_exc()
+                    raise ConfigError(str(v) + "\n\n" + tb)
         else:
             config = None
 
@@ -61,12 +67,14 @@ class File(object):
             "keys",
             "mouse",
             "groups",
+            "dgroups_key_binder",
             "follow_mouse_focus",
             "cursor_warp",
             "layouts",
             "floating_layout",
             "screens",
             "main",
+            "auto_fullscreen",
         ]
 
         # We delay importing here to avoid a circular import issue when

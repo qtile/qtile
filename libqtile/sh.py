@@ -265,6 +265,7 @@ class QSh:
             try:
                 line = raw_input(self.prompt)
             except (EOFError, KeyboardInterrupt):
+                print
                 return
             if not line:
                 continue

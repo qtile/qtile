@@ -1,3 +1,4 @@
+import collections
 import utils
 import math
 import pangocairo
@@ -8,7 +9,7 @@ import xcb.xproto
 
 class TextLayout(object):
     def __init__(self, drawer, text, colour, font_family, font_size,
-                 wrap=True, markup=False):
+                 font_shadow, wrap=True, markup=False):
         self.drawer, self.colour = drawer, colour
         layout = drawer.ctx.create_layout()
         layout.set_alignment(pango.ALIGN_CENTER)
@@ -18,6 +19,7 @@ class TextLayout(object):
         desc.set_family(font_family)
         desc.set_absolute_size(font_size * pango.SCALE)
         layout.set_font_description(desc)
+        self.font_shadow = font_shadow
         self.layout = layout
         self.markup = markup
         self.text = text
@@ -82,6 +84,11 @@ class TextLayout(object):
         self.layout.set_font_description(d)
 
     def draw(self, x, y):
+        if self.font_shadow is not None:
+            self.drawer.set_source_rgb(self.font_shadow)
+            self.drawer.ctx.move_to(x+1, y+1)
+            self.drawer.ctx.show_layout(self.layout)
+
         self.drawer.set_source_rgb(self.colour)
         self.drawer.ctx.move_to(x, y)
         self.drawer.ctx.show_layout(self.layout)
@@ -92,16 +99,28 @@ class TextLayout(object):
 
 class TextFrame:
     def __init__(self, layout, border_width, border_color, pad_x, pad_y):
-        self.layout, self.pad_x = layout, pad_x
-        self.pad_y, self.border_width = pad_y, border_width
+        self.layout = layout
+        self.border_width = border_width
         self.border_color = border_color
         self.drawer = self.layout.drawer
+
+        if isinstance(pad_x, collections.Iterable):
+            self.pad_left = pad_x[0]
+            self.pad_right = pad_x[1]
+        else:
+            self.pad_left = self.pad_right = pad_x
+
+        if isinstance(pad_y, collections.Iterable):
+            self.pad_top = pad_y[0]
+            self.pad_bottom = pad_y[1]
+        else:
+            self.pad_top = self.pad_bottom = pad_y
 
     def draw(self, x, y, rounded=True):
         self.drawer.set_source_rgb(self.border_color)
         opts = [x, y,
-            self.layout.width + self.pad_x * 2,
-            self.layout.height + self.pad_y * 2,
+            self.layout.width + self.pad_left + self.pad_right,
+            self.layout.height + self.pad_top + self.pad_bottom,
             self.border_width
         ]
         if rounded:
@@ -110,15 +129,15 @@ class TextFrame:
             self.drawer.rectangle(*opts)
         self.drawer.ctx.stroke()
         self.layout.draw(
-            x + self.pad_x,
-            y + self.pad_y
+            x + self.pad_left,
+            y + self.pad_top
         )
 
     def draw_fill(self, x, y, rounded=True):
         self.drawer.set_source_rgb(self.border_color)
         opts = [x, y,
-            self.layout.width + self.pad_x * 2,
-            self.layout.height + self.pad_y * 2,
+            self.layout.width + self.pad_left + self.pad_right,
+            self.layout.height + self.pad_top + self.pad_bottom,
             self.border_width
         ]
         if rounded:
@@ -126,17 +145,17 @@ class TextFrame:
         else:
             self.drawer.fillrect(*opts)
         self.layout.draw(
-            x + self.pad_x,
-            y + self.pad_y
+            x + self.pad_left,
+            y + self.pad_top
         )
 
     @property
     def height(self):
-        return self.layout.height + self.pad_y * 2
+        return self.layout.height + self.pad_top + self.pad_bottom
 
     @property
     def width(self):
-        return self.layout.width + self.pad_x * 2
+        return self.layout.width + self.pad_left + self.pad_right
 
 
 class Drawer:
@@ -245,16 +264,40 @@ class Drawer:
         return pangocairo.CairoContext(cairo.Context(self.surface))
 
     def set_source_rgb(self, colour):
-        self.ctx.set_source_rgba(*utils.rgb(colour))
+        if type(colour) == list:
+            linear = cairo.LinearGradient(0.0, 0.0, 0.0, self.height)
+            c1 = utils.rgb(colour[0])
+            c2 = utils.rgb(colour[1])
+            if len(c1) < 4:
+                c1[3] = 1
+            if len(c2) < 4:
+                c2[3] = 1
+            linear.add_color_stop_rgba(0.0, c1[0], c1[1], c1[2], c1[3])
+            linear.add_color_stop_rgba(1.0, c2[0], c2[1], c2[2], c2[3])
+            self.ctx.set_source(linear)
+        else:
+            self.ctx.set_source_rgba(*utils.rgb(colour))
 
     def clear(self, colour):
-        self.set_source_rgb(colour)
+        if type(colour) == list:
+            linear = cairo.LinearGradient(0.0, 0.0, 0.0, self.height)
+            c1 = utils.rgb(colour[0])
+            c2 = utils.rgb(colour[1])
+            if len(c1) < 4:
+                c1[3] = 1
+            if len(c2) < 4:
+                c2[3] = 1
+            linear.add_color_stop_rgba(0.0, c1[0], c1[1], c1[2], c1[3])
+            linear.add_color_stop_rgba(1.0, c2[0], c2[1], c2[2], c2[3])
+            self.ctx.set_source(linear)
+        else:
+            self.set_source_rgb(colour)
         self.ctx.rectangle(0, 0, self.width, self.height)
         self.ctx.fill()
         self.ctx.stroke()
 
-    def textlayout(self, text, colour, font_family, font_size, markup=False,
-                   **kw):
+    def textlayout(self, text, colour, font_family, font_size, font_shadow,
+            markup=False, **kw):
         """
             Get a text layout.
 
@@ -265,7 +308,7 @@ class Drawer:
             https://bugzilla.gnome.org/show_bug.cgi?id=625287
         """
         return TextLayout(self, text, colour, font_family, font_size,
-                          markup=markup, **kw)
+                          font_shadow, markup=markup, **kw)
 
     _sizelayout = None
 
@@ -274,7 +317,7 @@ class Drawer:
         # See comment on textlayout() for details.
         if not self._sizelayout:
             self._sizelayout = self.textlayout(
-                "", "ffffff", font_family, font_size)
+                "", "ffffff", font_family, font_size, None)
         widths, heights = [], []
         self._sizelayout.font_family = font_family
         self._sizelayout.font_size = font_size

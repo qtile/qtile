@@ -18,7 +18,7 @@ class _Graph(base._Widget):
     defaults = manager.Defaults(
         ("graph_color", "18BAEB", "Graph color"),
         ("fill_color", "1667EB.3", "Fill color for linefill graph"),
-        ("background", "000000", "Widget background"),
+        ("background", None, "Widget background"),
         ("border_color", "215578", "Widget border color"),
         ("border_width", 2, "Widget background"),
         ("margin_x", 3, "Margin X"),
@@ -34,6 +34,7 @@ class _Graph(base._Widget):
         base._Widget.__init__(self, width, **config)
         self.values = [0] * self.samples
         self.maxvalue = 0
+        self.timeout_add(self.frequency, self.update)
 
     @property
     def graphwidth(self):
@@ -84,7 +85,7 @@ class _Graph(base._Widget):
             raise ValueError("Unknown starting position: %s." % self.start_pos)
 
     def draw(self):
-        self.drawer.clear(self.background)
+        self.drawer.clear(self.background or self.bar.background)
         if self.border_width:
             self.drawer.set_source_rgb(self.border_color)
             self.drawer.ctx.set_line_width(self.border_width)
@@ -122,12 +123,9 @@ class _Graph(base._Widget):
             self.maxvalue = max(self.values)
         self.draw()
 
-    def _configure(self, qtile, bar):
-        base._Widget._configure(self, qtile, bar)
-        self.timeout_add(self.frequency, self.update)
-
     def update(self):
-        self.update_graph()
+        if self.configured:
+            self.update_graph()
         return True
 
     def fullfill(self, value):
@@ -219,7 +217,7 @@ class NetGraph(_Graph):
     defaults = manager.Defaults(
         ("graph_color", "18BAEB", "Graph color"),
         ("fill_color", "1667EB.3", "Fill color for linefill graph"),
-        ("background", "000000", "Widget background"),
+        ("background", None, "Widget background"),
         ("border_color", "215578", "Widget border color"),
         ("border_width", 2, "Widget background"),
         ("margin_x", 3, "Margin X"),
@@ -262,7 +260,7 @@ class HDDGraph(_Graph):
     defaults = manager.Defaults(
         ("graph_color", "18BAEB", "Graph color"),
         ("fill_color", "1667EB.3", "Fill color for linefill graph"),
-        ("background", "000000", "Widget background"),
+        ("background", None, "Widget background"),
         ("border_color", "215578", "Widget border color"),
         ("border_width", 2, "Widget background"),
         ("margin_x", 3, "Margin X"),

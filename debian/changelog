@@ -1,3 +1,9 @@
+qtile (0.5.0-quantal1) quantal; urgency=low
+
+  * Upgrade to the 0.5 release
+
+ -- Tycho Andersen <tycho@tycho.ws>  Sun, 11 Nov 2012 16:46:59 -0500
+
 qtile (0.5alpha1-quantal5) quantal; urgency=low
 
   * Really depend on xpyb instead of xpybng.

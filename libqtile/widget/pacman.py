@@ -28,8 +28,10 @@ class Pacman(base._TextBox):
     defaults = manager.Defaults(
         ('font', 'Arial', 'Clock font'),
         ('fontsize', None, 'Updates widget font size. Calculated if None.'),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ('padding', None, 'Updates widget padding. Calculated if None.'),
-        ('background', '000000', 'Background Color'),
+        ('background', None, 'Background Color'),
         ('foreground', 'ff0000', 'Foreground Color'),
         ('unavailable', 'ffffff', 'Unavailable Color - no updates.')
     )
@@ -38,30 +40,27 @@ class Pacman(base._TextBox):
         self.interval = interval
         self.execute = execute
         self.text = str(self.updates())
-        
-
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
         self.timeout_add(self.interval, self.update)
-    
+
     def draw(self):
         if self.text == '0':
             self.layout.colour = self.unavailable
         else:
             self.layout.colour = self.foreground
         base._TextBox.draw(self)
-    
+
     def updates(self):
         pacman = subprocess.Popen(['pacman', '-Qu'], stdout=subprocess.PIPE)
         return len(pacman.stdout.readlines())
-    
+
     def update(self):
-        updates = str(self.updates())
-        if self.text != updates:
-            self.text = updates
-            self.bar.draw()
+        if self.configured:
+            updates = str(self.updates())
+            if self.text != updates:
+                self.text = updates
+                self.bar.draw()
         return True
-    
-    def click(self, x, y, button):
+
+    def button_press(self, x, y, button):
         if button == 1 and self.execute is not None:
             subprocess.Popen([self.execute], shell=True)

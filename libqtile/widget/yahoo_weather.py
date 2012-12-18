@@ -32,8 +32,10 @@ class YahooWeather(base._TextBox):
     defaults = manager.Defaults(
         ('font', 'Arial', 'Font'),
         ('fontsize', None, 'Pixel size, calculated if None.'),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
         ('padding', None, 'Padding, calculated if None.'),
-        ('background', '000000', 'Background colour'),
+        ('background', None, 'Background colour'),
         ('foreground', 'ffffff', 'Foreground colour'),
 
         ## One of (location, woeid) must be set.
@@ -58,7 +60,7 @@ class YahooWeather(base._TextBox):
             self.update
         )
 
-    def click(self, x, y, button):
+    def button_press(self, x, y, button):
         self.update(self.fetch_weather())
 
     def update(self, data):

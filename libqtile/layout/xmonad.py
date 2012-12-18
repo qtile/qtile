@@ -146,7 +146,6 @@ class MonadTall(SingleWindow):
     def focus(self, c):
         "Set focus to specified client"
         self.focused = self.clients.index(c)
-        self.cmd_normalize()
 
     def clone(self, group):
         "Clone layout for other groups"
@@ -158,9 +157,14 @@ class MonadTall(SingleWindow):
         c._focus = 0
         return c
 
+    def blur(self):
+        for client in self.clients:
+            self.configure(client, None, blur=True)
+
     def add(self, c):
         "Add client to layout"
         self.clients.insert(self.focused + 1, c)
+        self.do_normalize = True
 
     def remove(self, c):
         "Remove client from layout"
@@ -170,6 +174,7 @@ class MonadTall(SingleWindow):
         self.clients.remove(c)
         # move focus pointer
         self.focused = max(0, idx - 1)
+        self.do_normalize = True
         if self.clients:
             return self.clients[self.focused]
 
@@ -186,6 +191,7 @@ class MonadTall(SingleWindow):
         # reset main pane ratio
         if redraw:
             self.group.layoutAll()
+        self.do_normalize = False
 
     def _maximize_main(self):
         "Toggle the main pane between min and max size"
@@ -221,10 +227,12 @@ class MonadTall(SingleWindow):
             self._maximize_secondary()
         self.group.layoutAll()
 
-    def configure(self, c, screen):
+    def configure(self, c, screen, blur=False):
         "Position client based on order and sizes"
-        # if no sizes, normalize
-        if not self.sizes:
+        if self.group.screen is None:
+            return
+        # if no sizes or normalize flag is set, normalize
+        if not self.sizes or self.do_normalize:
             self.cmd_normalize(False)
         # if client in this layout
         if self.clients and c in self.clients:
@@ -241,7 +249,9 @@ class MonadTall(SingleWindow):
             # multiple clients
             else:
                 # determine focus border-color
-                if self.clients.index(c) == self.focused:
+                if blur:
+                    px = self.group.qtile.colorPixel(self.border_normal)
+                elif self.clients.index(c) == self.focused:
                     px = self.group.qtile.colorPixel(self.border_focus)
                 else:
                     px = self.group.qtile.colorPixel(self.border_normal)
