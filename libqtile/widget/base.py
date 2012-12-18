@@ -27,6 +27,9 @@ class _Widget(command.CommandObject):
         """
         command.CommandObject.__init__(self)
         self.name = self.__class__.__name__.lower()
+        if "name" in config:
+            self.name = config["name"]
+
         self.log = logging.getLogger('qtile')
         self.defaults.load(self, config)
         if width in (bar.CALCULATED, bar.STRETCH):
