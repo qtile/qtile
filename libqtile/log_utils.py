@@ -40,7 +40,7 @@ class ColorFormatter(logging.Formatter):
         return message + self.reset_seq
 
 
-def init_log(log_level=logging.WARNING, logger='qtile'):
+def init_log(log_level=logging.ERROR, logger='qtile'):
     handler = logging.FileHandler(
         os.path.expanduser('~/.%s.log' % logger))
     handler.setFormatter(

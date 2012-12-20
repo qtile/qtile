@@ -22,6 +22,8 @@ qtile $NEXT, released $DATE:
         - added "next urgent window" command
         - added font shadowing on widgets
         - maildir widget supports multiple folders
+        - new config option log_level to set logging level (any of
+          logging.{DEBUG, INFO, WARNING, ERROR, CRITICAL})
     * bugfixes
         - don't crash on restart when the config has errors
         - save layout and selected group state on restart
@@ -29,6 +31,7 @@ qtile $NEXT, released $DATE:
         - fix non-black systray icon backgrounds
         - drastically reduce the number of timeout_add calls in most widgets
         - restart on RandR attach events to allow for new screens
+        - log level defaults to ERROR
 
 qtile 0.5, released 2012-11-11:
     (Note, this is not complete! Many, many changes have gone in to 0.5, by a

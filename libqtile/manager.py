@@ -71,7 +71,11 @@ class Qtile(command.CommandObject):
         if log == None:
             log = init_log()
         self.log = log
+        if hasattr(config, "log_level"):
+            self.log.setLevel(config.log_level)
+
         self.no_spawn = no_spawn
+
         if not displayName:
             displayName = os.environ.get("DISPLAY")
             if not displayName:
