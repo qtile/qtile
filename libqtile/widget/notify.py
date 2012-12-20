@@ -52,7 +52,7 @@ class Notify(base._TextBox):
         self.bar.draw()
         return True
 
-    def diplay(self):
+    def display(self):
         self.set_notif_text(notifier.notifications[self.current_id])
         self.bar.draw()
 
@@ -61,14 +61,38 @@ class Notify(base._TextBox):
         self.current_id = len(notifier.notifications) - 1
         self.bar.draw()
 
+    def prev(self):
+        if self.current_id > 0:
+            self.current_id -= 1
+        self.display()
+
+    def next(self):
+        if self.current_id < len(notifier.notifications) - 1:
+            self.current_id += 1
+            self.display()
+
     def button_press(self, x, y, button):
         if button == 1:
             self.clear()
         elif button == 4:
-            if self.current_id > 0:
-                self.current_id -= 1
-                self.diplay()
+            self.prev()
         elif button == 5:
-            if self.current_id < len(notifier.notifications) - 1:
-                self.current_id += 1
-                self.diplay()
+            self.next()
+
+    def cmd_display(self):
+        self.display()
+
+    def cmd_clear(self):
+        self.clear()
+
+    def cmd_toggle(self):
+        if self.text == '':
+            self.display()
+        else:
+            self.clear()
+
+    def cmd_prev(self):
+        self.prev()
+
+    def cmd_next(self):
+        self.next()
