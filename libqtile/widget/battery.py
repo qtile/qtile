@@ -7,6 +7,7 @@ BAT_DIR = '/sys/class/power_supply'
 CHARGED = 'Full'
 CHARGING = 'Charging'
 DISCHARGING = 'Discharging'
+FULL = 'Full'
 UNKNOWN = 'Unknown'
 
 BATTERY_INFO_FILES = {
@@ -103,6 +104,7 @@ class Battery(_Battery):
         ('charge_char', '^', 'Character to indicate the battery is charging'),
         ('discharge_char', 'V', 'Character to indicate the battery'
          ' is discharging'),
+        ('hide_threshold', 100.0, 'Hide the text when there is enough energy'),
         *_Battery.defaults.defaults
     )
 
@@ -114,12 +116,17 @@ class Battery(_Battery):
 
     def _get_text(self):
         info = self._get_info()
-        if info == False:
+        if not info:
             return 'Error'
 
         ## Set the charging character
         try:
-            if info['stat'] == DISCHARGING:
+            # hide the text when it's higher than threshold, but still
+            # display `full` when the battery is fully charged.
+            if info['now'] / info['full'] * 100 >= self.hide_threshold and \
+               info['stat'] != FULL:
+                return ''
+            elif info['stat'] == DISCHARGING:
                 char = self.discharge_char
                 time = info['now'] / info['power']
             elif info['stat'] == CHARGING:
