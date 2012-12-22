@@ -295,7 +295,8 @@ class Qtile(command.CommandObject):
             g._configure(
                 self.config.layouts, self.config.floating_layout, self)
             self.groupMap[name] = g
-            hook.fire("addgroup")
+            hook.fire("addgroup", self, name)
+            hook.fire("changegroup")
             self.update_net_desktops()
 
             return True
@@ -313,7 +314,8 @@ class Qtile(command.CommandObject):
                 self.currentGroup.cmd_prevgroup()
             self.groups.remove(group)
             del(self.groupMap[name])
-            hook.fire("delgroup")
+            hook.fire("delgroup", self, name)
+            hook.fire("changegroup")
             self.update_net_desktops()
 
 
