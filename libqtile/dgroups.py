@@ -96,9 +96,7 @@ class DGroups(object):
         if self.key_binder:
             libqtile.hook.subscribe.setgroup(
                     lambda: self.key_binder(self))
-            libqtile.hook.subscribe.addgroup(
-                    lambda: self.key_binder(self))
-            libqtile.hook.subscribe.delgroup(
+            libqtile.hook.subscribe.changegroup(
                     lambda: self.key_binder(self))
 
     def shuffle_groups(self, lst, match):

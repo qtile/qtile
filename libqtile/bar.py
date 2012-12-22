@@ -182,8 +182,7 @@ class Bar(Gap):
 
         # FIXME: These should be targeted better.
         hook.subscribe.setgroup(self.draw)
-        hook.subscribe.delgroup(self.draw)
-        hook.subscribe.addgroup(self.draw)
+        hook.subscribe.changegroup(self.draw)
 
     def _resize(self, width, widgets):
         stretches = [i for i in widgets if i.width_type == STRETCH]
