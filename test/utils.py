@@ -149,7 +149,7 @@ class Xephyr(object):
             sys.exit(0)
         else:
             self.qtilepid = pid
-            self.c = libqtile.command.Client(self.fname, config)
+            self.c = libqtile.command.Client(self.fname)
             self._waitForQtile()
 
     def stopQtile(self):
