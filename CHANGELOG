@@ -12,6 +12,11 @@ qtile $NEXT, released $DATE:
           module to the config module.
         - The Match object has moved from the dgroups module to the config
           module.
+        - The addgroup hook now takes two parameters: the qtile object and the
+          name of the group added:
+              @hook.subscribe
+              def addgroup_hook(qtile, name):
+                  pass
     For most people, you should be able to just:
         sed -i -e 's/libqtile.manager/libqtile.config' config.py
     ...dgroups users will need to go to a bit more work, but hopefully
@@ -24,6 +29,8 @@ qtile $NEXT, released $DATE:
         - maildir widget supports multiple folders
         - new config option log_level to set logging level (any of
           logging.{DEBUG, INFO, WARNING, ERROR, CRITICAL})
+        - add option to battery widget to hide while level is above a certain
+          amount
     * bugfixes
         - don't crash on restart when the config has errors
         - save layout and selected group state on restart
@@ -32,6 +39,9 @@ qtile $NEXT, released $DATE:
         - drastically reduce the number of timeout_add calls in most widgets
         - restart on RandR attach events to allow for new screens
         - log level defaults to ERROR
+        - default config options are no longer initialized when users define
+          their corresponding option (preventing duplicate widgets, etc.)
+        - don't try to load config in qsh (not used)
 
 qtile 0.5, released 2012-11-11:
     (Note, this is not complete! Many, many changes have gone in to 0.5, by a
