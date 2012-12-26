@@ -51,6 +51,12 @@ class Subscribe:
         """
         return self._subscribe("delgroup", func)
 
+    def changegroup(self, func):
+        """
+            Called whenever a group change occurs.
+        """
+        return self._subscribe("changegroup", func)
+
     def focus_change(self, func):
         """
             Called when focus is changed.
