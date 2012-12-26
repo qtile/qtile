@@ -20,38 +20,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os, os.path
-from libqtile import confreader, sh, command
+from libqtile import sh, command
 
 def main():
-    from optparse import OptionParser, OptionGroup
+
+    from optparse import OptionParser
+
     parser = OptionParser(version="%prog 0.2")
-    parser.add_option(
-                        "-c", "--config",
-                        action="store", type="string",
-                        default=None,
-                        dest="configfile",
-                        help='Use specified configuration file.'
-                    )
-    parser.add_option(
-                        "-s", "--socket",
-                        action="store", type="string",
-                        default=None,
-                        dest="socket",
-                        help='Use specified comms socket.'
-                    )
+    parser.add_option("-s", "--socket",
+                      action="store", type="string",
+                      default=None,
+                      dest="socket",
+                      help='Use specified socket to connect to qtile.')
     options, args = parser.parse_args()
 
-    try:
-        c = confreader.File(options.configfile)
-    except confreader.ConfigError, v:
-        parser.error(v.message)
-    client = command.Client(options.socket, c)
+    client = command.Client(options.socket)
     qsh = sh.QSh(client)
     qsh.loop()
 
 
 if __name__ == "__main__":
     main()
-
-
