@@ -233,7 +233,7 @@ class Client(_CommandRoot):
         Exposes a command tree used to communicate with a running instance of
         Qtile.
     """
-    def __init__(self, fname=None, conf=None):
+    def __init__(self, fname=None):
         if not fname:
             fname = find_sockfile()
         self.client = ipc.Client(fname)
