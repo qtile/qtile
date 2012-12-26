@@ -81,7 +81,5 @@ class File(object):
         # testing.
         from resources import default_config
         for option in config_options:
-            v = getattr(default_config, option)
-            if hasattr(config, option):
-                v = getattr(config, option)
+            v = getattr(config, option, getattr(default_config, option))
             setattr(self, option, v)
