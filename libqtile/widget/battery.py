@@ -103,7 +103,7 @@ class Battery(_Battery):
         ('charge_char', '^', 'Character to indicate the battery is charging'),
         ('discharge_char', 'V', 'Character to indicate the battery'
          ' is discharging'),
-        ('hide_threshold', 100.0, 'Hide the text when there is enough energy'),
+        ('hide_threshold', None, 'Hide the text when there is enough energy'),
         *_Battery.defaults.defaults
     )
 
@@ -122,7 +122,8 @@ class Battery(_Battery):
         try:
             # hide the text when it's higher than threshold, but still
             # display `full` when the battery is fully charged.
-            if info['now'] / info['full'] * 100 >= self.hide_threshold and \
+            if self.hide_threshold and \
+               info['now'] / info['full'] * 100.0 >= self.hide_threshold and \
                info['stat'] != CHARGED:
                 return ''
             elif info['stat'] == DISCHARGING:
