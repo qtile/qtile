@@ -16,7 +16,7 @@ class Zoomy(SingleWindow):
 
     def __init__(self, **config):
         SingleWindow.__init__(self, **config)
-        self.add_defaults(defaults)
+        self.add_defaults(Zoomy.defaults)
         self.clients = []
         self.lastfocus = None
 
