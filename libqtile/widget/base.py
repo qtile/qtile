@@ -64,13 +64,6 @@ class _Widget(command.CommandObject):
                       )
         self.configured = True
 
-    def resize(self):
-        """
-            Should be called whenever widget changes size.
-        """
-        self.bar.resize()
-        self.bar.draw()
-
     def clear(self):
         self.drawer.set_source_rgb(self.bar.background)
         self.drawer.fillrect(self.offset, 0, self.width, self.bar.size)
