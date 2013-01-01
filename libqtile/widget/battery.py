@@ -245,7 +245,7 @@ class BatteryIcon(_Battery):
                 img = cairo.ImageSurface.create_from_png(path)
             except cairo.Error:
                 self.theme_path = None
-                self.qtile.log.add('Battery Icon switching to text mode')
+                self.qtile.log.warning('Battery Icon switching to text mode')
                 return
             input_width = img.get_width()
             input_height = img.get_height()

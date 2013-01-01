@@ -1169,12 +1169,12 @@ class Qtile(command.CommandObject):
                 try:
                     self.groupMap[group].cmd_toscreen()
                 except KeyError:
-                    self.log.add("No group named '%s' present." % group)
+                    self.log.info("No group named '%s' present." % group)
                     pass
 
         mb = self.widgetMap.get(widget)
         if not mb:
-            self.log.add("No widget named '%s' present." % widget)
+            self.log.warning("No widget named '%s' present." % widget)
             return
 
         mb.startInput(prompt, f, "group")
