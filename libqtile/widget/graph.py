@@ -19,7 +19,6 @@ class _Graph(base._Widget):
         ("graph_color", "18BAEB", "Graph color"),
         ("fill_color", "1667EB.3", "Fill color for linefill graph"),
         ("border_color", "215578", "Widget border color"),
-        ("background", None, "Widget background"),
         ("border_width", 2, "Widget border width"),
         ("margin_x", 3, "Margin X"),
         ("margin_y", 3, "Margin Y"),

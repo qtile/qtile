@@ -20,7 +20,7 @@ class _Widget(command.CommandObject, manager.Configurable):
     """
     offset = None
     defaults = [
-        ("background", "000000", "Widget background color"),
+        ("background", None, "Widget background color"),
     ]
     def __init__(self, width, **config):
         """
