@@ -1135,7 +1135,7 @@ class Qtile(command.CommandObject):
             self.log.error("No widget named '%s' present." % widget)
             return
 
-        mb.startInput(prompt, self.find_window, "window")
+        mb.startInput(prompt, self.find_window, "window", strict_completer=True)
 
     def cmd_next_urgent(self):
         try:
@@ -1161,7 +1161,7 @@ class Qtile(command.CommandObject):
             self.log.error("No widget named '%s' present." % widget)
             return
 
-        mb.startInput(prompt, self.moveToGroup, "group")
+        mb.startInput(prompt, self.moveToGroup, "group", strict_completer=True)
 
     def cmd_switchgroup(self, prompt="group: ", widget="prompt"):
         def f(group):
@@ -1177,7 +1177,7 @@ class Qtile(command.CommandObject):
             self.log.warning("No widget named '%s' present." % widget)
             return
 
-        mb.startInput(prompt, f, "group")
+        mb.startInput(prompt, f, "group", strict_completer=True)
 
     def cmd_spawncmd(self, prompt="spawn: ", widget="prompt",
                      command="%s", complete="cmd"):
