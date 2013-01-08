@@ -23,7 +23,8 @@ Configuration
 * **The basics**:
   :doc:`Overview </manual/config/index>` |
   :doc:`Starting Qtile </manual/config/starting>` |
-  :doc:`Hooks </manual/config/hooks>`
+  :doc:`Hooks </manual/config/hooks>` |
+  :doc:`Running inside Gnome </manual/config/gnome>`
 
 * **Config variables**:
   :doc:`groups </manual/config/groups>` |
