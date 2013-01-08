@@ -304,13 +304,19 @@ class Prompt(base._TextBox):
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
 
-    def startInput(self, prompt, callback, complete=None):
+    def startInput(self, prompt, callback, complete=None, strict_completer=False):
         """
             complete: Tab-completion. Can be None, or "cmd".
 
             Displays a prompt and starts to take one line of keyboard input
             from the user. When done, calls the callback with the input string
             as argument.
+
+            prompt = text displayed at the prompt, e.g. "spawn: "
+            callback = function to call with returned value.
+            complete = completer to use.
+            strict_completer = When True the retuen value wil be the exact
+                               completer result where available.
         """
 
         if self.cursorblink and not self.active:
@@ -321,6 +327,7 @@ class Prompt(base._TextBox):
         self.userInput = ""
         self.callback = callback
         self.completer = self.completers[complete](self.qtile)
+        self.strict_completer = strict_completer
         self._update()
         self.bar.widget_grab_keyboard(self)
 
@@ -385,7 +392,10 @@ class Prompt(base._TextBox):
             elif keysym == xkeysyms.keysyms['Return']:
                 self.active = False
                 self.bar.widget_ungrab_keyboard()
-                self.callback(actual_value or self.userInput)
+                if self.strict_completer:
+                    self.callback(actual_value or self.userInput)
+                else:
+                    self.callback(self.userInput)
         self._update()
 
     def cmd_fake_keypress(self, key):
