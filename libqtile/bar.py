@@ -257,3 +257,77 @@ class Bar(Gap):
         fake.event_y = y
         fake.detail = button
         self.handle_ButtonPress(fake)
+
+class _AnywhereDrawer(Bar):
+    """
+        A base class of a widget area for use anywhere on screen
+    """
+    defaults = manager.Defaults(
+        ("background", "#33cc33", "Background colour."),
+        ("opacity",  1, "Bar window opacity.")
+    )
+    def destroy(self):
+        pass
+    def show(self):
+        self.screen.gaps.append(self)
+    def y(self):
+        return self.y
+    def x(self):
+        return self.x
+    def height(self):
+        return self.height
+    def width(self):
+        return self.width
+    def __init__(self, x, y, width, height, widgets=None, **config):
+        self.x, self.y, self.width, self.height = x, y, width, height
+        self.widgets = widgets or []
+        self.visible = True
+        self.defaults.load(self, config)
+    def addwidgets(self, widgets):
+        for i in widgets:
+            self.widgets.append(i)
+            i._configure(self.qtile, self)
+    def set_visible(self, boo):
+        if boo==False:
+            self.visible = False
+            self.window.hide()
+        if boo==True:
+            self.visible = True
+            self.window.unhide()
+    def _configure(self, qtile, screen):
+        print "here we are, configureing an _AnywhereDrawer"
+        Gap._configure(self, qtile, screen)
+        self.window = window.Internal.create(
+                        self.qtile,
+                        self.x, self.y, self.width, self.height,
+                        self.opacity
+                     )
+        self.drawer = drawer.Drawer(
+                            self.qtile,
+                            self.window.window.wid,
+                            self.width,
+                            self.height
+                      )
+        self.drawer.clear("004400")#self.background)
+
+        self.window.handle_Expose = self.handle_Expose
+        self.window.handle_ButtonPress = self.handle_ButtonPress
+        qtile.windowMap[self.window.window.wid] = self.window
+        self.window.unhide()
+        
+        # FIXME: These should be targeted better.
+        hook.subscribe.setgroup(self.draw)
+        hook.subscribe.delgroup(self.draw)
+        hook.subscribe.addgroup(self.draw)
+    def handle_ButtonPress(self, e):
+        raise NotImplementedError
+    def draw(self):
+        try:
+            for i in self.widgets:
+                i.draw()
+            if self.widgets:
+                end = i.offset + i.width
+                if end < self.width:
+                    self.drawer.draw(end, self.width - end)
+        except:
+            self.drawer.clear("004400.0")

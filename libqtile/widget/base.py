@@ -160,7 +160,7 @@ UNSPECIFIED = bar.Obj("UNSPECIFIED")
 class _TextBox(_Widget):
     """
         Base class for widgets that are just boxes containing text.
-
+class _TextBox(_Widget):
         If you derive from this class, you must add the following defaults:
 
             font

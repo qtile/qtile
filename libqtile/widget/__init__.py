@@ -15,6 +15,8 @@ from textbox import TextBox
 from volume import Volume
 from windowname import WindowName
 from windowtabs import WindowTabs
+from button import SampleButton, ExitButton
+from menu import SampleMenu
 
 try:
     from canto import Canto

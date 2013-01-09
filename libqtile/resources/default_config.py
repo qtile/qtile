@@ -81,13 +81,22 @@ layouts = [
 
 screens = [
     Screen(
+        top = bar.Bar(
+                    [
+            #            widget.Wlan(),
+                        widget.SampleMenu(),
+                        widget.Clock('%I:%M'),
+                        widget.ExitButton()
+                    ],
+                    30,
+                ),
         bottom = bar.Bar(
                     [
                         widget.GroupBox(),
                         widget.WindowName(),
-                        widget.TextBox("default", "default config"),
+                        widget.SampleButton(),
                         widget.Systray(),
-                        widget.Clock('%Y-%m-%d %a %I:%M %p'),
+            #            widget.Clock('%Y-%m-%d %a %I:%M %p'),
                     ],
                     30,
                 ),
