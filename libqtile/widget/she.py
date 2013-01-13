@@ -1,5 +1,5 @@
 from libqtile.widget import base
-from libqtile import manager, bar, hook
+from libqtile import bar, hook
 
 __all__ = ['She']
 

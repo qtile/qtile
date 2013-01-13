@@ -1,4 +1,4 @@
-from .. import hook, bar, manager
+from .. import hook, bar
 import base
 from pythonwifi.iwlibs import Wireless, Iwstats
 

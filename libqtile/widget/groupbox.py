@@ -1,4 +1,4 @@
-from .. import bar, hook, utils, manager
+from .. import bar, hook, utils
 import base
 
 class _GroupBase(base._TextBox):

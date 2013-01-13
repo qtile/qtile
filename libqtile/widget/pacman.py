@@ -17,7 +17,7 @@
 
 import base
 
-from .. import bar, manager
+from .. import bar
 
 import subprocess
 

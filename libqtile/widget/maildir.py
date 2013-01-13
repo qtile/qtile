@@ -2,7 +2,7 @@
 # vim: set sw=4 et tw=80:
 
 import base
-from .. import manager, bar
+from .. import bar
 
 import os.path
 import mailbox

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .. import bar, manager
+from .. import bar
 import base
 from subprocess import check_output, call
 

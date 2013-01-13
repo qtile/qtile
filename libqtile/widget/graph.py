@@ -1,7 +1,6 @@
 import cairo
 
 from . import base
-from .. import manager
 from os import statvfs
 
 __all__ = [

@@ -3,7 +3,7 @@ import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 
 import base
-from .. import bar, manager
+from .. import bar
 
 
 class Mpris(base._TextBox):

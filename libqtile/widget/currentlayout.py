@@ -1,5 +1,5 @@
 import base
-from .. import manager, bar, hook
+from .. import bar, hook
 
 
 class CurrentLayout(base._TextBox):

@@ -1,5 +1,5 @@
 import cairo
-from .. import bar, hook, manager
+from .. import bar, hook
 import base
 
 class TaskList(base._Widget):

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .. import bar, manager
+from .. import bar
 import base
 import urllib
 import urllib2

@@ -1,4 +1,4 @@
-from .. import bar, manager, xcbq, window
+from .. import bar, xcbq, window
 import base
 
 import xcb

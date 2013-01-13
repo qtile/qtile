@@ -1,7 +1,7 @@
 from time import time
 from datetime import datetime
 
-from .. import bar, manager
+from .. import bar
 import base
 
 

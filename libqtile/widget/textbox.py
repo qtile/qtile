@@ -1,4 +1,4 @@
-from .. import bar, manager
+from .. import bar
 import base
 
 

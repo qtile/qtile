@@ -5,7 +5,7 @@ import subprocess
 import cairo
 
 import base
-from .. import manager, bar
+from .. import bar
 
 __all__ = [
     'Volume',

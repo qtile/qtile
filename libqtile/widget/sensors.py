@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from .. import bar, manager
+from .. import bar
 import base
 from subprocess import Popen, PIPE
 import re

@@ -8,7 +8,7 @@
 # TODO: some kind of templating to make shown info configurable
 # TODO: best practice to handle failures? just write to stderr?
 
-from .. import bar, manager, utils
+from .. import bar, utils
 from mpd import MPDClient, CommandError
 import atexit
 import base

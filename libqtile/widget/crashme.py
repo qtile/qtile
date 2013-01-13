@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from .. import bar, manager
+from .. import bar
 import base
 
 
