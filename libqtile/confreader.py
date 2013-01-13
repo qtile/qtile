@@ -86,4 +86,5 @@ class File(object):
                 v = getattr(config, option)
             else:
                 v = getattr(default_config, option)
-            setattr(self, option, v)
+            if not hasattr(self, option):
+                setattr(self, option, v)
