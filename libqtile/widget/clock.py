@@ -23,9 +23,6 @@ class Clock(base._TextBox):
         base._TextBox._configure(self, qtile, bar)
         self.update()
 
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
-
     def update(self):
 
         ts = time()
