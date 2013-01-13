@@ -37,13 +37,13 @@ class TaskList(base._Widget):
         base._Widget._configure(self, qtile, bar)
         self.icon_size = self.bar.height - (self.borderwidth+2) * 2
 
-        self.layout = self.drawer.textlayout(
-            "", "ffffff", self.font, self.fontsize, self.fontshadow)
-        self.setup_hooks()
         if self.fontsize is None:
             calc = (self.bar.height - self.margin_y * 2 -
                     self.borderwidth * 2 - self.padding * 2)
             self.fontsize = max(calc, 1)
+        self.layout = self.drawer.textlayout(
+            "", "ffffff", self.font, self.fontsize, self.fontshadow)
+        self.setup_hooks()
 
     def update(self, window=None):
         group = self.bar.screen.group

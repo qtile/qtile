@@ -190,6 +190,7 @@ class RatioTile(Layout):
     def __init__(self, ratio=GOLDEN_RATIO, ratio_increment=0.1,
                  fancy=False, **config):
         Layout.__init__(self, **config)
+        self.add_defaults(RatioTile.defaults)
         self.windows = []
         self.ratio_increment = ratio_increment
         self.ratio = ratio

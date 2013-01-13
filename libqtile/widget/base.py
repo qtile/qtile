@@ -220,6 +220,8 @@ class _TextBox(_Widget):
 
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
+        if self.fontsize is None:
+            self.fontsize = self.bar.height - self.bar.height / 5
         self.layout = self.drawer.textlayout(
                     self.text,
                     self.foreground,
@@ -227,8 +229,6 @@ class _TextBox(_Widget):
                     self.fontsize,
                     self.fontshadow,
                  )
-        if self.fontsize is None:
-            self.fontsize = self.bar.height - self.bar.height / 5
 
     def calculate_width(self):
         if self.text:

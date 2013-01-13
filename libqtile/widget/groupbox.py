@@ -6,6 +6,7 @@ class _GroupBase(base._TextBox):
         ("padding", 5, "Padding inside the box"),
         ("margin_y", 3, "Y margin outside the box"),
         ("margin_x", 3, "X margin outside the box"),
+        ("borderwidth", 3, "Current group border width"),
     ]
     def __init__(self, **config):
         base._TextBox.__init__(self, bar.CALCULATED, **config)
@@ -22,13 +23,13 @@ class _GroupBase(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
-        self.layout = self.drawer.textlayout(
-            "", "ffffff", self.font, self.fontsize, self.fontshadow)
-        self.setup_hooks()
         if self.fontsize is None:
             calc = (self.bar.height - self.margin_y * 2 -
                     self.borderwidth * 2 - self.padding * 2)
             self.fontsize = max(calc, 1)
+        self.layout = self.drawer.textlayout(
+            "", "ffffff", self.font, self.fontsize, self.fontshadow)
+        self.setup_hooks()
 
     def setup_hooks(self):
         def hook_response(*args, **kwargs):
@@ -60,6 +61,7 @@ class AGroupBox(_GroupBase):
         A widget that graphically displays the current group.
     """
     defaults = [
+        ("border", "000000", "group box border color"),
     ]
 
     def __init__(self, **config):
@@ -88,7 +90,6 @@ class GroupBox(_GroupBase):
         ("active", "FFFFFF", "Active group font colour"),
         ("inactive", "404040", "Inactive group font colour"),
         ("urgent_text", "FF0000", "Urgent group font color"),
-        ("borderwidth", 3, "Current group border width"),
         ("highlight_method", "border",
          "Method of highlighting (one of 'border' or 'block') "
          "Uses *_border color settings"),
