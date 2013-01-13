@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from config import Drag, Click, Screen
+from config import Key, Drag, Click, ScreenRect, Screen
 from utils import QtileError
 from libqtile.log_utils import init_log
 from libqtile.dgroups import DGroups

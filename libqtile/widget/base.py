@@ -135,7 +135,7 @@ class _Widget(command.CommandObject):
             !Callback function should return False, otherwise it would be
             re-run forever!
         """
-        self.log.info('Adding timer')
+        self.log.debug('Adding timer for %r in %.2fs', method, seconds)
         if callable(callback):
             def _thread(method, callback, args):
                 data = method(*args)
