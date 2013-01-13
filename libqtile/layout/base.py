@@ -19,10 +19,9 @@
 # SOFTWARE.
 
 import copy
-from .. import command, manager
+from .. import command, configurable
 
-
-class Layout(command.CommandObject, manager.Configurable):
+class Layout(command.CommandObject, configurable.Configurable):
     """
         This class defines the API that should be exposed by all layouts.
     """
@@ -43,7 +42,7 @@ class Layout(command.CommandObject, manager.Configurable):
             config["name"] = self.__class__.__name__.lower()
 
         command.CommandObject.__init__(self)
-        manager.Configurable.__init__(self, **config)
+        configurable.Configurable.__init__(self, **config)
         self.add_defaults(Layout.defaults)
 
     def layout(self, windows, screen):

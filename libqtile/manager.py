@@ -44,30 +44,7 @@ import xcb.xinerama
 import xcb.xproto
 import xcbq
 
-class Configurable(object):
-    global_defaults = {}
-    def __init__(self, **config):
-        self._widget_defaults = {}
-        self._user_config = config
-
-    def add_defaults(self, defaults):
-        """
-            Add defaults to this object, overwriting any which already exist.
-        """
-        for (prop, value, _) in defaults:
-            self._widget_defaults[prop] = value
-
-    def __getattr__(self, name):
-        try:
-            return self._user_config[name]
-        except KeyError:
-            try:
-                return self.global_defaults[name]
-            except KeyError:
-                try:
-                    return self._widget_defaults[name]
-                except KeyError:
-                    raise AttributeError("no attribute: " + name)
+from widget.base import _Widget
 
 class Qtile(command.CommandObject):
     """
@@ -138,7 +115,6 @@ class Qtile(command.CommandObject):
                 key_binder = self.config.dgroups_key_binder
             DGroups(self, self.config.groups, key_binder)
 
-        from widget.base import _Widget
         if hasattr(config, "widget_defaults") and config.widget_defaults:
             _Widget.global_defaults = config.widget_defaults
         else:

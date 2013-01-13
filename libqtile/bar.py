@@ -22,7 +22,7 @@ import command
 import confreader
 import drawer
 import hook
-import manager
+import configurable
 import window
 
 
@@ -127,7 +127,7 @@ CALCULATED = Obj("CALCULATED")
 STATIC = Obj("STATIC")
 
 
-class Bar(Gap, manager.Configurable):
+class Bar(Gap, configurable.Configurable):
     """
         A bar, which can contain widgets. Note that bars can only be placed at
         the top or bottom of the screen.
@@ -143,7 +143,7 @@ class Bar(Gap, manager.Configurable):
             - size: The height of the bar.
         """
         Gap.__init__(self, size)
-        manager.Configurable.__init__(self, **config)
+        configurable.Configurable.__init__(self, **config)
         self.add_defaults(Bar.defaults)
         self.widgets = widgets
         self.saved_focus = None

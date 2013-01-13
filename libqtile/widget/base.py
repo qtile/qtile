@@ -1,4 +1,4 @@
-from .. import command, bar, manager, drawer
+from .. import command, bar, configurable, drawer
 import gobject
 import logging
 import threading
@@ -8,7 +8,7 @@ LEFT = object()
 CENTER = object()
 
 
-class _Widget(command.CommandObject, manager.Configurable):
+class _Widget(command.CommandObject, configurable.Configurable):
     """
         If width is set to the special value bar.STRETCH, the bar itself
         will set the width to the maximum remaining space, after all other
@@ -33,7 +33,7 @@ class _Widget(command.CommandObject, manager.Configurable):
 
         self.log = logging.getLogger('qtile')
 
-        manager.Configurable.__init__(self, **config)
+        configurable.Configurable.__init__(self, **config)
         self.add_defaults(_Widget.defaults)
 
         if width in (bar.CALCULATED, bar.STRETCH):
