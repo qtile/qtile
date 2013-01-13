@@ -22,7 +22,7 @@ class Notify(base._TextBox):
         self.current_id = 0
 
     def _configure(self, qtile, bar):
-        base._Widget._configure(self, qtile, bar)
+        base._TextBox._configure(self, qtile, bar)
         self.layout = self.drawer.textlayout(
             self.text, self.foreground, self.font,
             self.fontsize, self.fontshadow, markup=True)
