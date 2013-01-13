@@ -168,7 +168,7 @@ class _TextBox(_Widget):
     """
     defaults = [
         ("font", "Arial", "Default font"),
-        ("_fontsize", None, "Font size. Calculated if None."),
+        ("fontsize", None, "Font size. Calculated if None."),
         ("padding", None, "Padding. Calculated if None."),
         ("foreground", "ffffff", "Foreground colour"),
         ("fontshadow", None,
@@ -202,19 +202,6 @@ class _TextBox(_Widget):
             self.layout.font = value
 
     @property
-    def fontsize(self):
-        if self._fontsize is None:
-            return self.bar.height - self.bar.height / 5
-        else:
-            return self._fontsize
-
-    @fontsize.setter
-    def fontsize(self, value):
-        self._fontsize = value
-        if self.layout:
-            self.layout.font_size = value
-
-    @property
     def fontshadow(self):
         return self._fontshadow
 
@@ -240,6 +227,8 @@ class _TextBox(_Widget):
                     self.fontsize,
                     self.fontshadow,
                  )
+        if self.fontsize is None:
+            self.fontsize = self.bar.height - self.bar.height / 5
 
     def calculate_width(self):
         if self.text:

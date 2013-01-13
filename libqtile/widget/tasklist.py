@@ -24,19 +24,6 @@ class TaskList(base._Widget):
         self.add_defaults(TaskList.defaults)
         self._icons_cache = {}
 
-    @property
-    def fontsize(self):
-        if self._fontsize is None:
-            calc = (self.bar.height - self.margin_y * 2 -
-                    self.borderwidth * 2 - self.padding * 2)
-            return max(calc, 1)
-        else:
-            return self._fontsize
-
-    @fontsize.setter
-    def fontsize(self, value):
-        self._fontsize = value
-
     def box_width(self, text):
         width, _ = self.drawer.max_layout_size(
             [text],
@@ -53,6 +40,10 @@ class TaskList(base._Widget):
         self.layout = self.drawer.textlayout(
             "", "ffffff", self.font, self.fontsize, self.fontshadow)
         self.setup_hooks()
+        if self.fontsize is None:
+            calc = (self.bar.height - self.margin_y * 2 -
+                    self.borderwidth * 2 - self.padding * 2)
+            self.fontsize = max(calc, 1)
 
     def update(self, window=None):
         group = self.bar.screen.group

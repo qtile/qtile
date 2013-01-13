@@ -11,19 +11,6 @@ class _GroupBase(base._TextBox):
         base._TextBox.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(_GroupBase.defaults)
 
-    @property
-    def fontsize(self):
-        if self._fontsize is None:
-            calc = (self.bar.height - self.margin_y * 2 -
-                    self.borderwidth * 2 - self.padding * 2)
-            return max(calc, 1)
-        else:
-            return self._fontsize
-
-    @fontsize.setter
-    def fontsize(self, value):
-        self._fontsize = value
-
     def box_width(self, groups):
         width, height = self.drawer.max_layout_size(
             [i.name for i in groups],
@@ -38,6 +25,10 @@ class _GroupBase(base._TextBox):
         self.layout = self.drawer.textlayout(
             "", "ffffff", self.font, self.fontsize, self.fontshadow)
         self.setup_hooks()
+        if self.fontsize is None:
+            calc = (self.bar.height - self.margin_y * 2 -
+                    self.borderwidth * 2 - self.padding * 2)
+            self.fontsize = max(calc, 1)
 
     def setup_hooks(self):
         def hook_response(*args, **kwargs):
