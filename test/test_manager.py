@@ -18,7 +18,7 @@ from nose.tools import assert_raises
 from nose.plugins.attrib import attr
 
 
-class TestConfig(libqtile.confreader.File):
+class TestConfig:
     groups = [
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
@@ -57,7 +57,7 @@ class TestConfig(libqtile.confreader.File):
     follow_mouse_focus = True
 
 
-class BareConfig(libqtile.confreader.File):
+class BareConfig:
     groups = [
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
@@ -774,7 +774,7 @@ def test_dheight():
     assert s.dheight == 80
 
 
-class _Config(libqtile.confreader.File):
+class _Config:
     groups = [
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
