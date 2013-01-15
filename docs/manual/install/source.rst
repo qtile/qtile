@@ -3,7 +3,8 @@ Installing from Source
 
 Qtile relies on some cutting-edge features in PyCairo, XCB, and xpyb. Until the
 latest versions of these projects make it into distros, it's best to use recent
-checkouts from their repositories. Here's a brief step-by-step guide:
+checkouts from their repositories. You'll need python's ``setuptools``
+installed. Here's a brief step-by-step guide:
 
 
 libxcb
@@ -18,13 +19,13 @@ libxcb
     sudo make install
 
 
-xpyb-ng
+xpyb
 -------
 
 .. code-block:: bash
 
-    git clone https://github.com/qtile/xpyb-ng.git
-    cd xpyb-ng
+    git clone git://anongit.freedesktop.org/xcb/xpyb
+    cd xpyb
     python setup.py install
 
 
