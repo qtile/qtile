@@ -2,7 +2,7 @@
 # vim: set sw=4 et tw=80:
 
 import base
-from .. import manager, bar
+from .. import bar
 
 import os.path
 import mailbox
@@ -11,16 +11,6 @@ class Maildir(base._TextBox):
     """
     A simple widget showing the number of new mails in maildir mailboxes.
     """
-
-    defaults = manager.Defaults(
-        ("font", "Arial", "Font"),
-        ("fontsize", None, "Maildir widget font size. Calculated if None."),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ("padding", None, "Maildir widget padding. Calculated if None."),
-        ("background", None, "Background colour"),
-        ("foreground", "ffffff", "Foreground colour")
-    )
 
     def __init__(self, maildirPath, subFolders,
                  separator=" ", timeout=120, **config):
@@ -36,7 +26,6 @@ class Maildir(base._TextBox):
         self._maildirPath = os.path.expanduser(maildirPath)
         self._separator = separator
         self._timeout = timeout
-
         self._subFolders = []
 
         # if it looks like a list of strings then we just convert them

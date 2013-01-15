@@ -3,7 +3,7 @@ import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 
 import base
-from .. import bar, manager
+from .. import bar
 
 
 class Mpris(base._TextBox):
@@ -12,16 +12,6 @@ class Mpris(base._TextBox):
     player. It should work with all players which implement a reasonably
     correct version of MPRIS, though I have only tested it with clementine.
     """
-
-    defaults = manager.Defaults(
-            ("font", "Arial", "Mpd widget font"),
-            ("fontsize", None, "Mpd widget pixel size. Calculated if None."),
-            ("fontshadow", None,
-                "font shadow color, default is None(no shadow)"),
-            ("padding", None, "Mpd widget padding. Calculated if None."),
-            ("background", None, "Background colour"),
-            ("foreground", "ffffff", "Foreground colour")
-        )
 
     def __init__(self, name="clementine", width=bar.CALCULATED,
                  objname='org.mpris.clementine', **config):

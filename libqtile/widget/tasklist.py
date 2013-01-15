@@ -1,20 +1,13 @@
 import cairo
-from .. import bar, hook, manager
+from .. import bar, hook
 import base
 
 class TaskList(base._Widget):
-    defaults = manager.Defaults(
+    defaults = [
         ("margin_y", 3, "Y margin outside the box"),
         ("margin_x", 3, "X margin outside the box"),
         ("borderwidth", 2, "Current group border width"),
-        ("font", "Arial", "Font face"),
-        ("fontsize", None, "Font pixel size - calculated if None"),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ("foreground", "ffffff", "Font colour"),
-        ("background", None, "Widget background"),
         ("border", "215578", "Border colour"),
-        ("padding", 5, "Padding inside the box"),
         ("rounded", True, "To round or not to round borders"),
         ("highlight_method", "border",
          "Method of highlighting (one of 'border' or 'block') "
@@ -24,24 +17,12 @@ class TaskList(base._Widget):
         ("urgent_alert_method", "border",
          "Method for alerting you of WM urgent "
          "hints (one of 'border' or 'text')"),
-    )
+    ]
 
     def __init__(self, **config):
         base._Widget.__init__(self, bar.STRETCH, **config)
+        self.add_defaults(TaskList.defaults)
         self._icons_cache = {}
-
-    @property
-    def fontsize(self):
-        if self._fontsize is None:
-            calc = (self.bar.height - self.margin_y * 2 -
-                    self.borderwidth * 2 - self.padding * 2)
-            return max(calc, 1)
-        else:
-            return self._fontsize
-
-    @fontsize.setter
-    def fontsize(self, value):
-        self._fontsize = value
 
     def box_width(self, text):
         width, _ = self.drawer.max_layout_size(
@@ -56,6 +37,10 @@ class TaskList(base._Widget):
         base._Widget._configure(self, qtile, bar)
         self.icon_size = self.bar.height - (self.borderwidth+2) * 2
 
+        if self.fontsize is None:
+            calc = (self.bar.height - self.margin_y * 2 -
+                    self.borderwidth * 2 - self.padding * 2)
+            self.fontsize = max(calc, 1)
         self.layout = self.drawer.textlayout(
             "", "ffffff", self.font, self.fontsize, self.fontshadow)
         self.setup_hooks()

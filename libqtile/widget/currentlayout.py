@@ -1,18 +1,8 @@
 import base
-from .. import manager, bar, hook
+from .. import bar, hook
 
 
 class CurrentLayout(base._TextBox):
-    defaults = manager.Defaults(
-        ("font", "Arial", "Text font"),
-        ("fontsize", None, "Font pixel size. Calculated if None."),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ("padding", None, "Padding left and right. Calculated if None."),
-        ("background", None, "Background colour."),
-        ("foreground", "#ffffff", "Foreground colour.")
-    )
-
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "", width, **config)
 

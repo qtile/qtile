@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from .. import bar, manager
+from .. import bar
 import base
 
 
@@ -7,16 +7,6 @@ class _CrashMe(base._TextBox):
     """
         A developper widget to force a crash in qtile
     """
-    defaults = manager.Defaults(
-        ("font", "Arial", "Clock font"),
-        ("fontsize", None, "Clock pixel size. Calculated if None."),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ("padding", None, "Clock padding. Calculated if None."),
-        ("background", None, "Background colour"),
-        ("foreground", "ff0000", "Foreground colour")
-    )
-
     def __init__(self, width=bar.CALCULATED, **config):
         """
             - width: A fixed width, or bar.CALCULATED to calculate the width

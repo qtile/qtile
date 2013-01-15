@@ -1,4 +1,4 @@
-from .. import bar, manager
+from .. import bar
 import base
 
 
@@ -6,17 +6,17 @@ class Sep(base._Widget):
     """
         A visible widget separator.
     """
-    defaults = manager.Defaults(
+    defaults = [
         ("padding", 2, "Padding on either side of separator."),
         ("linewidth", 1, "Width of separator line."),
         ("foreground", "888888", "Separator line colour."),
-        ("background", None, "Background colour."),
         ("height_percent", 80,
          "Height as a percentage of bar height (0-100)."),
-    )
+    ]
 
     def __init__(self, **config):
         base._Widget.__init__(self, bar.STATIC, **config)
+        self.add_defaults(Sep.defaults)
         self.width = self.padding + self.linewidth
 
     def draw(self):

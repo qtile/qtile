@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -43,20 +44,7 @@ import xcb.xinerama
 import xcb.xproto
 import xcbq
 
-class Defaults:
-    def __init__(self, *defaults):
-        """
-            defaults: A list of (name, value, description) tuples.
-        """
-        self.defaults = defaults
-
-    def load(self, target, config):
-        """
-            Loads a dict of attributes, using specified defaults, onto target.
-        """
-        for i in self.defaults:
-            val = config.get(i[0], i[1])
-            setattr(target, i[0], val)
+from widget.base import _Widget
 
 class Qtile(command.CommandObject):
     """
@@ -126,6 +114,11 @@ class Qtile(command.CommandObject):
             if hasattr(self.config, 'dgroups_key_binder'):
                 key_binder = self.config.dgroups_key_binder
             DGroups(self, self.config.groups, key_binder)
+
+        if hasattr(config, "widget_defaults") and config.widget_defaults:
+            _Widget.global_defaults = config.widget_defaults
+        else:
+            _Widget.global_defaults = {}
 
         for i in self.groups:
             i._configure(config.layouts, config.floating_layout, self)
@@ -322,7 +315,13 @@ class Qtile(command.CommandObject):
     def registerWidget(self, w):
         """
             Register a bar widget. If a widget with the same name already
-            exists, this raises a ConfigError.
+            exists, this will silently ignore that widget. However, this is
+            not necessarily a bug. By default a widget's name is just
+            self.__class__.lower(), so putting multiple widgets of the same
+            class will alias and one will be inaccessable. Since more than one
+            groupbox widget is useful when you have more than one screen, this
+            is a not uncommon occurrence. If you want to use the debug
+            info for widgets with the same name, set the name yourself.
         """
         if w.name:
             if w.name in self.widgetMap:
