@@ -247,7 +247,7 @@ class _TextBox(_Widget):
         self.drawer.clear(self.background or self.bar.background)
         self.layout.draw(
             self.actual_padding or 0,
-            int(self.bar.height / 2.0 - self.layout.height / 2.0)
+            int(self.bar.height / 2.0 - self.layout.height / 2.0) + 1
         )
         self.drawer.draw(self.offset, self.width)
 
