@@ -76,3 +76,5 @@ Miscellaneous
     /manual/ref/index
     /manual/ref/*
     /manual/*
+    /releases/index
+    /releases/*
