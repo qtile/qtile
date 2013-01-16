@@ -47,6 +47,9 @@ class YahooWeather(base._TextBox):
          'Display format'),
         ('metric', True, 'True to use metric/C, False to use imperial/F'),
         ('update_interval', 600, 'Update interval in seconds'),
+        ('up', '^', 'symbol for rising atmospheric pressure'),
+        ('down', 'v', 'symbol for falling atmospheric pressure'),
+        ('steady', 's', 'symbol for steady atmospheric pressure'),
     )
 
     def __init__(self, **config):
@@ -116,4 +119,12 @@ class YahooWeather(base._TextBox):
             element = dom.getElementsByTagNameNS(WEATHER_NS, tag)[0]
             for attr in attrs:
                 data['%s_%s' % (tag, attr)] = element.getAttribute(attr)
+
+        if data['atmosphere_rising'] == '0':
+            data['atmosphere_rising'] = self.steady
+        elif data['atmosphere_rising'] == '1':
+            data['atmosphere_rising'] = self.up
+        elif data['atmosphere_rising'] == '2':
+            data['atmosphere_rising'] = self.down
+
         return data
