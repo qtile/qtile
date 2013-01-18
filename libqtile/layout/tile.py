@@ -3,17 +3,18 @@ from .. import utils, manager
 
 
 class Tile(Layout):
-    defaults = manager.Defaults(
+    defaults = [
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width."),
         ("name", "tile", "Name of this layout."),
         ("margin", 0, "Margin of the layout"),
-    )
+    ]
 
     def __init__(self, ratio=0.618, masterWindows=1, expand=True,
         ratio_increment=0.05, add_on_top=True, shift_windows=False, **config):
         Layout.__init__(self, **config)
+        self.add_defaults(Tile.defaults)
         self.clients = []
         self.ratio = ratio
         self.master = masterWindows

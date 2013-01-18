@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 
-from .. import bar, manager, drawer, utils
+from .. import bar, drawer, utils
 from libqtile.notify import notifier
 import base
 
@@ -10,25 +10,19 @@ class Notify(base._TextBox):
     """
         An notify widget
     """
-    defaults = manager.Defaults(
-        ("font", "Arial", "Mpd widget font"),
-        ("fontsize", None, "Mpd widget pixel size. Calculated if None."),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ("padding", None, "Mpd widget padding. Calculated if None."),
-        ("background", None, "Background colour"),
-        ("foreground", "ffffff", "Foreground normal priority colour"),
+    defaults = [
         ("foreground_urgent", "ff0000", "Foreground urgent priority colour"),
         ("foreground_low", "dddddd", "Foreground low priority  colour"),
-    )
+    ]
 
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "", width, **config)
+        self.add_defaults(Notify.defaults)
         notifier.register(self.update)
         self.current_id = 0
 
     def _configure(self, qtile, bar):
-        base._Widget._configure(self, qtile, bar)
+        base._TextBox._configure(self, qtile, bar)
         self.layout = self.drawer.textlayout(
             self.text, self.foreground, self.font,
             self.fontsize, self.fontshadow, markup=True)

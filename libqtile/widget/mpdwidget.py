@@ -8,7 +8,7 @@
 # TODO: some kind of templating to make shown info configurable
 # TODO: best practice to handle failures? just write to stderr?
 
-from .. import bar, manager, utils
+from .. import bar, utils
 from mpd import MPDClient, CommandError
 import atexit
 import base
@@ -18,17 +18,10 @@ class Mpd(base._TextBox):
     """
         An mpd widget
     """
-    defaults = manager.Defaults(
-        ("font", "Arial", "Mpd widget font"),
-        ("fontsize", None, "Mpd widget pixel size. Calculated if None."),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ("padding", None, "Mpd widget padding. Calculated if None."),
-        ("background", None, "Background colour"),
-        ("foreground", "cccccc", "Foreground colour"),
+    defaults = [
         ("foreground_progress", "ffffff", "Foreground progress colour"),
         ("reconnect", False, "Choose if the widget should try to keep reconnect.")
-    )
+    ]
 
     def __init__(self, width=bar.CALCULATED, host='localhost', port=6600,
                  password=False, msg_nc='Mpd off', **config):
@@ -46,6 +39,7 @@ class Mpd(base._TextBox):
         self.msg_nc = msg_nc
         self.inc = 2
         base._TextBox.__init__(self, " ", width, **config)
+        self.add_defaults(Mpd.defaults)
         self.client = MPDClient()
         self.connected = False
         self.connect()
