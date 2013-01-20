@@ -315,6 +315,10 @@ class _AnywhereDrawer(Bar):
         qtile.windowMap[self.window.window.wid] = self.window
         self.window.unhide()
         
+        for i in self.widgets:
+            qtile.registerWidget(i)
+            i._configure(qtile, self)
+
         # FIXME: These should be targeted better.
         hook.subscribe.setgroup(self.draw)
         hook.subscribe.delgroup(self.draw)
