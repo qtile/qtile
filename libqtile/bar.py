@@ -313,7 +313,7 @@ class _AnywhereDrawer(Bar):
         self.window.handle_Expose = self.handle_Expose
         self.window.handle_ButtonPress = self.handle_ButtonPress
         qtile.windowMap[self.window.window.wid] = self.window
-        self.window.unhide()
+        self.window.hide()
         
         for i in self.widgets:
             qtile.registerWidget(i)

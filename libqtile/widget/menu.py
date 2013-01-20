@@ -79,22 +79,22 @@ class _MenuButton(button._Button):
 		for i in self.submenu:
 			k = _MenuEntry(i)
 			self.buttons.append(k)
-		self.p = _MenuDrawer(0,0,0,0)
+		self.mdrawer = _MenuDrawer(0,0,0,0)
 		self.b = False
 	def set_draweroffset(self, x):
-		self.p = _MenuDrawer(x, 30, 200, 100)
-		self.p._configure(self.qtile, self.bar.screen)
+		self.mdrawer = _MenuDrawer(x, 30, 200, 100)
+		self.mdrawer._configure(self.qtile, self.bar.screen)
 		for i in self.buttons:
-			i._configure(self.qtile, self.p)
-		self.p.addwidgets(self.buttons)
+			i._configure(self.qtile, self.mdrawer)
+		self.mdrawer.addwidgets(self.buttons)
 	def open_submenu(self, x, y, butto):
 		print self.info()
 		for i in self.parent.buttons:
-			if i!=self and hasattr(i, 'p') and i.p.visible:
+			if i!=self and hasattr(i, 'mdrawer') and i.mdrawer.visible:
 				self.b = True
 				i.b = not i.b
-				i.p.set_visible(False)
-		self.p.set_visible(self.b)
+				i.mdrawer.set_visible(False)
+		self.mdrawer.set_visible(self.b)
 		self.b = not self.b
 	def draw(self):
 		self.drawer.clear(self.background or self.bar.background)
