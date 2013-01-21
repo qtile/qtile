@@ -120,6 +120,6 @@ class SampleMenu(_Menu):
 	def __init__(self):
 		_Menu.__init__(self, _MenuMarkup(["ab","b"],["a","b"]))
 
-class _MenuDrawer(bar._AnywhereDrawer):
+class _MenuDrawer(bar._AnywhereBar):
 	def handle_ButtonPress(self, e):
 		print self.widgets

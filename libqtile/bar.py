@@ -258,7 +258,7 @@ class Bar(Gap):
         fake.detail = button
         self.handle_ButtonPress(fake)
 
-class _AnywhereDrawer(Bar):
+class _AnywhereBar(Bar):
     """
         A base class of a widget area for use anywhere on screen
     """
@@ -295,7 +295,7 @@ class _AnywhereDrawer(Bar):
             self.visible = True
             self.window.unhide()
     def _configure(self, qtile, screen):
-        print "here we are, configureing an _AnywhereDrawer"
+        print "here we are, configureing an _AnywhereBar"
         Gap._configure(self, qtile, screen)
         self.window = window.Internal.create(
                         self.qtile,
