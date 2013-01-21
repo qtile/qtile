@@ -46,3 +46,7 @@ try:
 except ImportError:
     # Requires python-wifi
     pass
+try:
+    from google_calendar import GoogleCalendar
+except ImportError:
+    pass
