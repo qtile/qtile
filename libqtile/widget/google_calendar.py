@@ -9,7 +9,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#      http://www.apache.org/licenses/LICENSE-2.0
+#            http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,8 +20,8 @@
 # INSTRUCTIONS:
 #
 # This widget will display the next appointment on your calendar in
-# the qtile status bar. Appointments with the "reminder" time will be
-# highlighted.  Authentication credentials can be stored in a
+# the qtile status bar. Appointments within the "reminder" time will be
+# highlighted. Authentication credentials can be stored in a
 # keyring or on disk depending on the setting of the 'keyring'
 # parameter (default is to store in the keyring).
 #
@@ -32,18 +32,18 @@
 # easy_install --upgrade google-api-python-client
 #
 # You will also need to pre-authenticate your access to your Google
-# calendar before using the widget.  This is because the widget currently
-# updates in the main qtile thread.  As a result, if you do not
+# calendar before using the widget. This is because the widget currently
+# updates in the main qtile thread. As a result, if you do not
 # pre-authenticate, qtile will hang while waiting for the authentication
 # process to complete.
 #
-# Pre-authentication is easy, and only needs to be done once.  Download
+# Pre-authentication is easy, and only needs to be done once. Download
 # and unzip the pre-authentication archive at:
 #
 # http://dave.tycho.ws/pre-auth.zip
 #
 # Edit the pre-auth.py script to reflect whether you want to store
-# your credentials in a keyring or on disk.  Default is to store
+# your credentials in a keyring or on disk. Default is to store
 # your credentials in a keyring.
 #
 # Change into the calendar-v3-python-cmd-line directory and run the 
@@ -52,7 +52,7 @@
 # ./pre-auth.py
 #
 # This will pop a web page to the Google calendar authentication server.
-# Enter your login credentials.  Google will return a page that says
+# Enter your login credentials. Google will return a page that says
 # "Authentication process complete" and the pre-auth.py script
 # will store your credentials in either your keyring or on disk, depending
 # on how you configured it.
@@ -62,7 +62,7 @@
 #
 # Other packages that this widget requires are dateutil and getpass
 # If you get a strange "AttributeError: 'module' object has no attribute
-# GoogleCalendar" error, you are probably missing a package.  Check
+# GoogleCalendar" error, you are probably missing a package. Check
 # carefully.
 #
 # If you choose to store your authentication credentials on disk rather
@@ -92,100 +92,111 @@ from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.tools import run
 
 class GoogleCalendar(base._TextBox):
+    ''' This widget will display the next appointment on your Google calendar in
+        the qtile status bar. Appointments within the "reminder" time will be
+        highlighted. Authentication credentials can be stored in a
+        keyring or on disk depending on the setting of the 'keyring'
+        parameter (default is to store in the keyring).
+    '''
 
-  defaults = [
-        ('calendar', 'primary', 'calendar to use'),
-        ('update_interval', 900, 'update interval'),
-        ('format', '{next_event}',
-         'calendar output - leave this at the default for now...'),
-        ('keyring', True,
-         'use keyring to store credentials - if false, storage must be set'),
-        ('storage', None, 'absolute path of secrets file if keyring=False'),
-  ]
+    defaults = [
+                 ('calendar', 'primary', 'calendar to use'),
+                 ('update_interval', 900, 'update interval'),
+                 ('format', '{next_event}',
+                  'calendar output - leave this at the default for now...'),
+                 ('keyring', True,
+                  'use keyring to store credentials - if false, storage must be set'),
+                 ('storage', None, 'absolute path of secrets file if keyring=False'),
+    ]
 
-  def __init__(self, **config):
-    base._TextBox.__init__(self, 'Calendar not initialized', width=bar.CALCULATED, **config)
+    def __init__(self, **config):
+        base._TextBox.__init__(self, 'Calendar not initialized', width=bar.CALCULATED, **config)
 
-  def _configure(self, qtile, bar):
-    base._TextBox._configure(self, qtile, bar)
-    self.add_defaults(GoogleCalendar.defaults)
-    self.timeout_add(self.update_interval, self.cal_update)
-    #self.timeout_add(
-    #  self.update_interval,
-    #  self.fetch_calendar, (),
-    #  self.update
-    #)
+    def _configure(self, qtile, bar):
+        base._TextBox._configure(self, qtile, bar)
+        self.add_defaults(GoogleCalendar.defaults)
+        self.timeout_add(self.update_interval, self.cal_update)
+        #self.timeout_add(
+        #    self.update_interval,
+        #    self.fetch_calendar, (),
+        #    self.update
+        #)
 
-  def button_press(self, x, y, button):
-    self.update(self.fetch_calendar())
+    def button_press(self, x, y, button):
+        self.update(self.fetch_calendar())
 
-  def cal_update(self):
-    self.update(self.fetch_calendar())
-    return True
+    def cal_update(self):
+        self.update(self.fetch_calendar())
+        return True
 
-  def update(self, data):
-    if data:
-      self.text = self.format.format(**data)
-    else:
-      self.text = 'No calendar data available'
-    self.bar.draw()
-    return False
+    def update(self, data):
+        if data:
+            self.text = self.format.format(**data)
+        else:
+            self.text = 'No calendar data available'
+        self.bar.draw()
+        return False
 
-  def fetch_calendar(self):
+    def fetch_calendar(self):
 
-    # Set up a Flow object to be used for authentication.
-    # Add one or more of the following scopes. PLEASE ONLY ADD THE SCOPES YOU
-    # NEED. For more information on using scopes please see
-    # <https://developers.google.com/+/best-practices>.
-    FLOW = OAuth2WebServerFlow(
-        client_id='196949979762-5m3j4orcn9heesoh6td942gb2bph424q.apps.googleusercontent.com',
-        client_secret='3H1-w_9gX4DFx3bC9c-whEBs',
-        scope='https://www.googleapis.com/auth/calendar',
-        user_agent='Qtile Google Calendar Widget/Version 0.2')
+        # Set up a Flow object to be used for authentication.
+        # Add one or more of the following scopes. PLEASE ONLY ADD THE SCOPES YOU
+        # NEED. For more information on using scopes please see
+        # <https://developers.google.com/+/best-practices>.
+        FLOW = OAuth2WebServerFlow(
+                client_id='196949979762-5m3j4orcn9heesoh6td942gb2bph424q.apps.googleusercontent.com',
+                client_secret='3H1-w_9gX4DFx3bC9c-whEBs',
+                scope='https://www.googleapis.com/auth/calendar',
+                user_agent='Qtile Google Calendar Widget/Version 0.2')
 
 
-    # storage is the location of your authentication credentials
-    if self.keyring:
-      from oauth2client.keyring_storage import Storage
-      storage = Storage('qtile_cal', getpass.getuser())
-    else:
-      from oauth2client.file import Storage
-      storage = Storage(self.storage)
+        # storage is the location of your authentication credentials
+        if self.keyring:
+            from oauth2client.keyring_storage import Storage
+            storage = Storage('qtile_cal', getpass.getuser())
+        else:
+            from oauth2client.file import Storage
+            storage = Storage(self.storage)
 
-    credentials = storage.get()
+        credentials = storage.get()
 
-    if credentials is None or credentials.invalid:
-      credentials = run(FLOW, storage)
+        if credentials is None or credentials.invalid:
+            credentials = run(FLOW, storage)
 
-    # Create an httplib2.Http object to handle our HTTP requests and authorize it
-    # with our good Credentials.
-    http = httplib2.Http()
-    http = credentials.authorize(http)
+        # Create an httplib2.Http object to handle our HTTP requests and authorize it
+        # with our good Credentials.
+        http = httplib2.Http()
+        http = credentials.authorize(http)
 
-    service = build('calendar', 'v3', http=http)
+        service = build('calendar', 'v3', http=http)
 
-    # end of authentication code
-    #############################################################################
-    # beginning of widget code
+        # end of authentication code
+        #############################################################################
+        # beginning of widget code
 
-    now = datetime.datetime.utcnow().isoformat('T')+'Z'
-    data = {}
+        now = datetime.datetime.utcnow().isoformat('T')+'Z'
+        data = {}
 
-    events = service.events().list(calendarId=self.calendar, singleEvents=True, timeMin=now, maxResults='1',orderBy='startTime').execute()
-    try:
-      event = events.get('items', [])[0]
-    except (IndexError):
-      data = {'next_event': 'No appointments scheduled'}
-      return data
-    try:
-      remindertime = datetime.timedelta(0, int(event.get('reminders').get('overrides')[0].get('minutes')) * 60)
-    except:
-      pass
-    if dateutil.parser.parse(event['start']['dateTime'],ignoretz=True)-remindertime <= datetime.datetime.now():
-      data = {'next_event': u'\u25a9\u25a9'+event['summary']+' '+re.sub(':.{2}-.*$',
-              '', event['start']['dateTime'].replace('T', ' '))+u'\u25a9\u25a9'}
-    else:
-      data = {'next_event': event['summary']+' '+re.sub(':.{2}-.*$',
-              '', event['start']['dateTime'].replace('T', ' '))}
+        events = service.events().list(calendarId=self.calendar,
+                 singleEvents=True, timeMin=now, maxResults='1',
+                 orderBy='startTime').execute()
+        try:
+            event = events.get('items', [])[0]
+        except (IndexError):
+            data = {'next_event': 'No appointments scheduled'}
+            return data
+        try:
+            remindertime = datetime.timedelta(0,
+            int(event.get('reminders').get('overrides')[0].get('minutes')) * 60)
+        except:
+            remindertime = datetime.timedelta(0,0)
 
-    return data
+        if dateutil.parser.parse(event['start']['dateTime'],
+                ignoretz=True)-remindertime <= datetime.datetime.now():
+            data = {'next_event': u'\u25a9\u25a9'+event['summary']+' '+re.sub(':.{2}-.*$',
+                            '', event['start']['dateTime'].replace('T', ' '))+u'\u25a9\u25a9'}
+        else:
+            data = {'next_event': event['summary']+' '+re.sub(':.{2}-.*$',
+                            '', event['start']['dateTime'].replace('T', ' '))}
+
+        return data
