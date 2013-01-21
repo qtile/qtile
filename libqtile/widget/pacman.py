@@ -17,7 +17,7 @@
 
 import base
 
-from .. import bar, manager
+from .. import bar
 
 import subprocess
 
@@ -25,18 +25,13 @@ class Pacman(base._TextBox):
     """
     Shows number of available updates.
     """
-    defaults = manager.Defaults(
-        ('font', 'Arial', 'Clock font'),
-        ('fontsize', None, 'Updates widget font size. Calculated if None.'),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ('padding', None, 'Updates widget padding. Calculated if None.'),
-        ('background', None, 'Background Color'),
-        ('foreground', 'ff0000', 'Foreground Color'),
+    defaults = [
         ('unavailable', 'ffffff', 'Unavailable Color - no updates.')
-    )
+    ]
+
     def __init__(self, execute=None, interval=60, **config):
         base._TextBox.__init__(self, '', bar.CALCULATED, **config)
+        self.add_defaults(Pacman.defaults)
         self.interval = interval
         self.execute = execute
         self.text = str(self.updates())

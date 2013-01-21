@@ -1,4 +1,4 @@
-from .. import hook, bar, manager
+from .. import hook, bar
 import base
 
 
@@ -7,20 +7,14 @@ class WindowTabs(base._TextBox):
         Displays the name of each window in the current group.
         The window that currently has focus is highlighted.
     """
-    defaults = manager.Defaults(
-        ("font", "Arial", "Font face."),
-        ("fontsize", None, "Font pixel size. Calculated if None."),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ("padding", None, "Padding left and right."),
-        ("background", None, "Background colour."),
-        ("foreground", "ffffff", "Foreground colour."),
+    defaults = [
         ("separator", " | ", "Task separator text."),
         ("selected", ("<", ">"), "Selected task indicator"),
-    )
+    ]
 
     def __init__(self, **config):
         base._TextBox.__init__(self, width=bar.STRETCH, **config)
+        self.add_defaults(WindowTabs.defaults)
         if not isinstance(self.selected, (tuple, list)):
             self.selected = (self.selected, self.selected)
 

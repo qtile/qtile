@@ -1,7 +1,6 @@
 import cairo
 
 from . import base
-from .. import manager
 from os import statvfs
 
 __all__ = [
@@ -15,24 +14,24 @@ __all__ = [
 
 class _Graph(base._Widget):
     fixed_upper_bound = False
-    defaults = manager.Defaults(
+    defaults = [
         ("graph_color", "18BAEB", "Graph color"),
         ("fill_color", "1667EB.3", "Fill color for linefill graph"),
-        ("background", None, "Widget background"),
         ("border_color", "215578", "Widget border color"),
-        ("border_width", 2, "Widget background"),
+        ("border_width", 2, "Widget border width"),
         ("margin_x", 3, "Margin X"),
         ("margin_y", 3, "Margin Y"),
         ("samples", 100, "Count of graph samples."),
         ("frequency", 1, "Update frequency in seconds"),
         ("type", "linefill", "'box', 'line', 'linefill'"),
         ("line_width", 3, "Line width"),
-        ("start_pos", "bottom", "Drawer starting position ('bottom'/'top')")
-    )
+        ("start_pos", "bottom", "Drawer starting position ('bottom'/'top')"),
+    ]
 
     def __init__(self, width=100, **config):
         base._Widget.__init__(self, width, **config)
-        self.values = [0] * self.samples
+        self.add_defaults(_Graph.defaults)
+        self.values = [0]*self.samples
         self.maxvalue = 0
         self.timeout_add(self.frequency, self.update)
 
@@ -214,25 +213,14 @@ class SwapGraph(_Graph):
 
 
 class NetGraph(_Graph):
-    defaults = manager.Defaults(
-        ("graph_color", "18BAEB", "Graph color"),
-        ("fill_color", "1667EB.3", "Fill color for linefill graph"),
-        ("background", None, "Widget background"),
-        ("border_color", "215578", "Widget border color"),
-        ("border_width", 2, "Widget background"),
-        ("margin_x", 3, "Margin X"),
-        ("margin_y", 3, "Margin Y"),
-        ("samples", 100, "Count of graph samples."),
-        ("frequency", 1, "Update frequency in seconds"),
-        ("type", "linefill", "'box', 'line', 'linefill'"),
-        ("line_width", 3, "Line width"),
+    defaults = [
         ("interface", "eth0", "Interface to display info for"),
         ("bandwidth_type", "down", "down(load)/up(load)"),
-        ("start_pos", "bottom", "Drawer starting position ('bottom'/'top')")
-    )
+    ]
 
     def __init__(self, **config):
         _Graph.__init__(self, **config)
+        self.add_defaults(NetGraph.defaults)
         self.filename = '/sys/class/net/{interface}/statistics/{type}'.format(
             interface=self.interface,
             type=self.bandwidth_type == 'down' and 'rx_bytes' or 'tx_bytes'
@@ -257,25 +245,14 @@ class NetGraph(_Graph):
 
 class HDDGraph(_Graph):
     fixed_upper_bound = True
-    defaults = manager.Defaults(
-        ("graph_color", "18BAEB", "Graph color"),
-        ("fill_color", "1667EB.3", "Fill color for linefill graph"),
-        ("background", None, "Widget background"),
-        ("border_color", "215578", "Widget border color"),
-        ("border_width", 2, "Widget background"),
-        ("margin_x", 3, "Margin X"),
-        ("margin_y", 3, "Margin Y"),
-        ("samples", 100, "Count of graph samples."),
-        ("frequency", 60, "Update frequency in seconds"),
-        ("type", "linefill", "'box', 'line', 'linefill'"),
-        ("line_width", 3, "Line width"),
-        ("start_pos", "bottom", "Drawer starting position ('bottom'/'top')"),
+    defaults = [
         ("path", "/", "Partition mount point."),
         ("space_type", "used", "free/used")
-    )
+    ]
 
     def __init__(self, **config):
         _Graph.__init__(self, **config)
+        self.add_defaults(HDDGraph.defaults)
         stats = statvfs(self.path)
         self.maxvalue = stats.f_blocks * stats.f_frsize
         values = self._getValues()

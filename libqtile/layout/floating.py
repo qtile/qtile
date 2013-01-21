@@ -12,7 +12,7 @@ class Floating(Layout):
     """
     Floating layout, which does nothing with windows but handles focus order
     """
-    defaults = manager.Defaults(
+    defaults = [
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width."),
@@ -21,7 +21,7 @@ class Floating(Layout):
         ("name", "floating", "Name of this layout."),
         ("auto_float_types", DEFAULT_FLOAT_WM_TYPES,
             "default wm types to automatically float"),
-    )
+    ]
 
     def __init__(self, float_rules=None, **config):
         """
@@ -46,6 +46,7 @@ class Floating(Layout):
         self.clients = []
         self.focused = None
         self.float_rules = float_rules or []
+        self.add_defaults(Floating.defaults)
 
     def match(self, win):
         """

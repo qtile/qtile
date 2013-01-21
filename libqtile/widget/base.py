@@ -1,4 +1,4 @@
-from .. import command, bar, manager, drawer
+from .. import command, bar, configurable, drawer
 import gobject
 import logging
 import threading
@@ -8,7 +8,7 @@ LEFT = object()
 CENTER = object()
 
 
-class _Widget(command.CommandObject):
+class _Widget(command.CommandObject, configurable.Configurable):
     """
         If width is set to the special value bar.STRETCH, the bar itself
         will set the width to the maximum remaining space, after all other
@@ -19,8 +19,9 @@ class _Widget(command.CommandObject):
         configured.
     """
     offset = None
-    defaults = manager.Defaults()
-
+    defaults = [
+        ("background", None, "Widget background color"),
+    ]
     def __init__(self, width, **config):
         """
             width: bar.STRETCH, bar.CALCULATED, or a specified width.
@@ -31,7 +32,10 @@ class _Widget(command.CommandObject):
             self.name = config["name"]
 
         self.log = logging.getLogger('qtile')
-        self.defaults.load(self, config)
+
+        configurable.Configurable.__init__(self, **config)
+        self.add_defaults(_Widget.defaults)
+
         if width in (bar.CALCULATED, bar.STRETCH):
             self.width_type = width
             self.width = 0
@@ -161,20 +165,21 @@ UNSPECIFIED = bar.Obj("UNSPECIFIED")
 class _TextBox(_Widget):
     """
         Base class for widgets that are just boxes containing text.
-
-        If you derive from this class, you must add the following defaults:
-
-            font
-            fontsize
-            fontshadow
-            padding
-            background
-            foreground
     """
+    defaults = [
+        ("font", "Arial", "Default font"),
+        ("fontsize", None, "Font size. Calculated if None."),
+        ("padding", None, "Padding. Calculated if None."),
+        ("foreground", "ffffff", "Foreground colour"),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
+    ]
+
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
         self.layout = None
         _Widget.__init__(self, width, **config)
         self.text = text
+        self.add_defaults(_TextBox.defaults)
 
     @property
     def text(self):
@@ -197,19 +202,6 @@ class _TextBox(_Widget):
             self.layout.font = value
 
     @property
-    def fontsize(self):
-        if self._fontsize is None:
-            return self.bar.height - self.bar.height / 5
-        else:
-            return self._fontsize
-
-    @fontsize.setter
-    def fontsize(self, value):
-        self._fontsize = value
-        if self.layout:
-            self.layout.font_size = value
-
-    @property
     def fontshadow(self):
         return self._fontshadow
 
@@ -228,6 +220,8 @@ class _TextBox(_Widget):
 
     def _configure(self, qtile, bar):
         _Widget._configure(self, qtile, bar)
+        if self.fontsize is None:
+            self.fontsize = self.bar.height - self.bar.height / 5
         self.layout = self.drawer.textlayout(
                     self.text,
                     self.foreground,

@@ -217,7 +217,7 @@ class TreeTab(SingleWindow):
     too.
     """
 
-    defaults = manager.Defaults(
+    defaults = [
         ("bg_color", "000000", "Background color of tabs"),
         ("active_bg", "000080", "Background color of active tab"),
         ("active_fg", "ffffff", "Foreground color of active tab"),
@@ -245,10 +245,11 @@ class TreeTab(SingleWindow):
         ("sections", ['Default'],
             "Foreground color of inactive tab"),
         ("name", "treetab", "Name of this layout."),
-    )
+    ]
 
     def __init__(self, **config):
         SingleWindow.__init__(self, **config)
+        self.add_defaults(TreeTab.defaults)
         self._focused = None
         self._panel = None
         self._tree = Root(self.sections)

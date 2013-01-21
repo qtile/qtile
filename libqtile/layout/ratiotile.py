@@ -180,16 +180,17 @@ class RatioTile(Layout):
     """
     Tries to tile all windows in the width/height ratio passed in
     """
-    defaults = manager.Defaults(
+    defaults = [
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width."),
         ("name", "ratiotile", "Name of this layout."),
-    )
+    ]
 
     def __init__(self, ratio=GOLDEN_RATIO, ratio_increment=0.1,
                  fancy=False, **config):
         Layout.__init__(self, **config)
+        self.add_defaults(RatioTile.defaults)
         self.windows = []
         self.ratio_increment = ratio_increment
         self.ratio = ratio

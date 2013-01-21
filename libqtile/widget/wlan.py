@@ -1,4 +1,4 @@
-from .. import hook, bar, manager
+from .. import hook, bar
 import base
 from pythonwifi.iwlibs import Wireless, Iwstats
 
@@ -6,15 +6,6 @@ class Wlan(base._TextBox):
     """
         Displays Wifi ssid and quality.
     """
-    defaults = manager.Defaults(
-        ("font", "Arial", "Font"),
-        ("fontsize", None, "Pixel size. Calculated if None."),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
-        ("padding", None, "Padding. Calculated if None."),
-        ("background", None, "Background colour"),
-        ("foreground", "ffffff", "Foreground colour")
-    )
     def __init__(self, interface="wlan0", width=bar.CALCULATED, **config):
         """
             - interface: Wlan interface name.

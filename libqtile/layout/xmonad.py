@@ -101,12 +101,12 @@ class MonadTall(SingleWindow):
     _med_ratio = .5
     _max_ratio = .75
 
-    defaults = manager.Defaults(
+    defaults = [
         ("border_focus", "#ff0000", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 2, "Border width."),
         ("name", "xmonad-tall", "Name of this layout."),
-    )
+    ]
 
     def __init__(self, ratio=_med_ratio, align=_left, change_ratio=.05,
                  change_size=20, **config):
@@ -119,6 +119,7 @@ class MonadTall(SingleWindow):
             - change_size : Resize change in pixels
         """
         SingleWindow.__init__(self, **config)
+        self.add_defaults(MonadTall.defaults)
         self.clients = []
         self.sizes = []
         self.ratio = ratio
