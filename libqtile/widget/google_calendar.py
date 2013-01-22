@@ -187,6 +187,7 @@ class GoogleCalendar(base._TextBox):
         except:
             remindertime = datetime.timedelta(0,0)
 
+        if dateutil.parser.parse(event['start']['dateTime'],
                 ignoretz=True)-remindertime <= datetime.datetime.now():
             data = {'next_event': u'\u25a9\u25a9'+event['summary']+' '+re.sub(':.{2}-.*$',
                     '', event['start']['dateTime'].replace('T', ' '))+u'\u25a9\u25a9'}
