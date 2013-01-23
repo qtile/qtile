@@ -85,13 +85,11 @@ import datetime
 import re
 import getpass
 import dateutil.parser
-import subprocess
 
 from apiclient.discovery import build
 from oauth2client.client import AccessTokenRefreshError
 from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.tools import run
-from libqtile import command
 
 class GoogleCalendar(base._TextBox):
     ''' This widget will display the next appointment on your Google calendar in
@@ -102,27 +100,23 @@ class GoogleCalendar(base._TextBox):
     '''
 
     defaults = [
-                 ('calendar', 'primary', 'calendar to use'),
-                 ('update_interval', 900, 'update interval'),
-                 ('format', '{next_event}',
-                  'calendar output - leave this at the default for now...'),
-                 ('keyring', True,
-                  'use keyring to store credentials - if false, storage must be set'),
-                 ('storage', None, 'absolute path of secrets file if keyring=False'),
+        ('calendar', 'primary', 'calendar to use'),
+        ('update_interval', 900, 'update interval'),
+        ('format', '{next_event}',
+         'calendar output - leave this at the default for now...'),
+        ('keyring', True,
+         'use keyring to store credentials - if false, storage must be set'),
+        ('storage', None, 'absolute path of secrets file if keyring=False'),
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, 'Calendar not initialized', width=bar.CALCULATED, **config)
+        base._TextBox.__init__(self, 'Calendar not initialized',
+                               width=bar.CALCULATED, **config)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         self.add_defaults(GoogleCalendar.defaults)
         self.timeout_add(self.update_interval, self.cal_update)
-        #self.timeout_add(
-        #    self.update_interval,
-        #    self.fetch_calendar, (),
-        #    self.update
-        #)
 
     def button_press(self, x, y, button):
         self.update(self.fetch_calendar())
@@ -168,15 +162,15 @@ class GoogleCalendar(base._TextBox):
         if credentials is None or credentials.invalid:
             credentials = run(FLOW, storage)
 
-        # Create an httplib2.Http object to handle our HTTP requests and authorize it
-        # with our good Credentials.
+        # Create an httplib2.Http object to handle our HTTP requests and
+        # authorize it with our good Credentials.
         http = httplib2.Http()
         http = credentials.authorize(http)
 
         service = build('calendar', 'v3', http=http)
 
         # end of authentication code
-        #############################################################################
+        #######################################################
         # beginning of widget code
 
         now = datetime.datetime.utcnow().isoformat('T')+'Z'
@@ -199,9 +193,9 @@ class GoogleCalendar(base._TextBox):
         if dateutil.parser.parse(event['start']['dateTime'],
                 ignoretz=True)-remindertime <= datetime.datetime.now():
             data = {'next_event': u'\u25a9\u25a9'+event['summary']+' '+re.sub(':.{2}-.*$',
-                            '', event['start']['dateTime'].replace('T', ' '))+u'\u25a9\u25a9'}
+                    '', event['start']['dateTime'].replace('T', ' '))+u'\u25a9\u25a9'}
         else:
             data = {'next_event': event['summary']+' '+re.sub(':.{2}-.*$',
-                            '', event['start']['dateTime'].replace('T', ' '))}
+                    '', event['start']['dateTime'].replace('T', ' '))}
 
         return data
