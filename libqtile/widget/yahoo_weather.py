@@ -50,14 +50,19 @@ class YahooWeather(base._TextBox):
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         self.add_defaults(YahooWeather.defaults)
-        self.timeout_add(
-            self.update_interval,
-            self.fetch_weather, (),
-            self.update
-        )
+        self.timeout_add(self.update_interval, self.wx_update)
+        #self.timeout_add(
+        #    self.update_interval,
+        #    self.fetch_weather, (),
+        #    self.update
+        #)
 
     def button_press(self, x, y, button):
         self.update(self.fetch_weather())
+
+    def wx_update(self):
+        self.update(self.fetch_weather())
+        return True
 
     def update(self, data):
         if data:
