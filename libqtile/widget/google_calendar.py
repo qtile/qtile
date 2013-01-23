@@ -85,11 +85,13 @@ import datetime
 import re
 import getpass
 import dateutil.parser
+import subprocess
 
 from apiclient.discovery import build
 from oauth2client.client import AccessTokenRefreshError
 from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.tools import run
+from libqtile import command
 
 class GoogleCalendar(base._TextBox):
     ''' This widget will display the next appointment on your Google calendar in
@@ -124,6 +126,9 @@ class GoogleCalendar(base._TextBox):
 
     def button_press(self, x, y, button):
         self.update(self.fetch_calendar())
+        self.qtile.addGroup('www')
+        self.qtile.groupMap['www'].cmd_toscreen(1)
+        self.qtile.cmd_spawn('/usr/bin/firefox -url calendar.google.com')
 
     def cal_update(self):
         self.update(self.fetch_calendar())
