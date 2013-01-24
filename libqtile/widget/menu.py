@@ -41,8 +41,7 @@ class _Menu(base._Widget):
 			w+=i.calculate_width()
 		return w
 	def draw(self):
-		#self.drawer.clear(self.bar.background)
-		self.drawer.clear("dd34cc")
+		self.drawer.clear(self.bar.background)
 		off = 0
 		for i in self.buttons:
 			i.drawer.clear(i.background)
@@ -78,6 +77,7 @@ class _MenuButton(button._Button):
 		button._Button.__init__(self, self.name, bar.CALCULATED, self.open_submenu)
 		for i in self.submenu:
 			k = _MenuEntry(i)
+			k.height = 30
 			self.buttons.append(k)
 		self.mdrawer = _MenuDrawer(0,0,0,0)
 		self.b = False
@@ -88,7 +88,6 @@ class _MenuButton(button._Button):
 			i._configure(self.qtile, self.mdrawer)
 		self.mdrawer.addwidgets(self.buttons)
 	def open_submenu(self, x, y, butto):
-		print self.bar.screen.x, self.bar.screen.y, self.bar.screen.width, self.bar.screen.height
 		for i in self.parent.buttons:
 			if i!=self and hasattr(i, 'mdrawer') and i.mdrawer.visible:
 				self.b = True
@@ -115,11 +114,24 @@ class _MenuEntry(base._TextBox):
 	def click(self, x, y, button):
 		print "clicked"
 
-##Make a debian/gnome menu class which opens programs like the gnome2 menu##
-class SampleMenu(_Menu):
-	def __init__(self):
-		_Menu.__init__(self, _MenuMarkup(["ab","b"],["a","b"]))
-
 class _MenuDrawer(bar._AnywhereBar):
 	def handle_ButtonPress(self, e):
 		print self.widgets
+
+
+######################################
+#									 #
+#     Specific Menus start here      #
+#									 #
+######################################
+
+
+
+class SampleMenu(_Menu):
+	def __init__(self):
+		_Menu.__init__(self, _MenuMarkup(["ab","cats"],["a","b"]))
+
+
+##Make a debian/gnome menu class which opens programs like the gnome2 menu##
+
+##Make a global menu##

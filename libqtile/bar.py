@@ -261,6 +261,9 @@ class Bar(Gap):
 class _AnywhereBar(Bar):
     """
         A base class of a widget area for use anywhere on screen
+
+        currently assumes that widgets should be packed from top to bottom, not left to right
+        Should make some sort of layout class for layouts
     """
     defaults = manager.Defaults(
         ("background", "#33cc33", "Background colour."),
@@ -287,6 +290,11 @@ class _AnywhereBar(Bar):
         for i in widgets:
             self.widgets.append(i)
             i._configure(self.qtile, self)
+        k = 0
+        for i in self.widgets:
+            i.width = self.width
+            i.offset = k
+            k += i.height
     def set_visible(self, boo):
         if boo==False:
             self.visible = False
@@ -295,7 +303,6 @@ class _AnywhereBar(Bar):
             self.visible = True
             self.window.unhide()
     def _configure(self, qtile, screen):
-        print "here we are, configureing an _AnywhereBar"
         Gap._configure(self, qtile, screen)
         self.window = window.Internal.create(
                         self.qtile,
@@ -308,7 +315,7 @@ class _AnywhereBar(Bar):
                             self.width,
                             self.height
                       )
-        self.drawer.clear("004400")#self.background)
+        self.drawer.clear(self.background)
 
         self.window.handle_Expose = self.handle_Expose
         self.window.handle_ButtonPress = self.handle_ButtonPress
@@ -326,12 +333,9 @@ class _AnywhereBar(Bar):
     def handle_ButtonPress(self, e):
         raise NotImplementedError
     def draw(self):
-        try:
-            for i in self.widgets:
-                i.draw()
-            if self.widgets:
-                end = i.offset + i.width
-                if end < self.width:
-                    self.drawer.draw(end, self.width - end)
-        except:
-            self.drawer.clear("004400.0")
+        for i in self.widgets:
+            i.draw()
+        if self.widgets:
+            end = i.offset + i.width
+            if end < self.width:
+                self.drawer.draw(end, self.width - end)
