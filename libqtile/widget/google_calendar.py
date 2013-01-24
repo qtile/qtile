@@ -111,7 +111,7 @@ class GoogleCalendar(base._TextBox):
         ('www_group', 'www', 'group to open browser into'),
         ('www_screen', 0, 'screen to open group on'),
         ('browser_cmd', '/usr/bin/firefox -url calendar.google.com',
-         'browser command to execute on click'),
+         'command or script to execute on click'),
     ]
 
     def __init__(self, **config):
