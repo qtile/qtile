@@ -3,7 +3,7 @@ import base
 import button
 
 class _MenuMarkup():
-	def __init__(self, names, entries):
+	def __init__(self, names, *entries):
 		self.names = names
 		self.entries = entries
 
@@ -111,17 +111,61 @@ class _MenuEntry(base._TextBox):
 		("background", "000000", "Background colour"),
 		("foreground", "ffffff", "Foreground colour")
 	)
+	def __init__(self, text=" ", width=bar.CALCULATED, height=None, **config):
+		self.layout = None
+		base._Widget.__init__(self, width, **config)
+		self.text = text
+		self.height = height
 	def click(self, x, y, button):
-		print "clicked"
+		print self.text
+	def _configure(self, qtile, bar):
+		self.qtile, self.bar = qtile, bar
+		self.height = self.height or bar.height
+		self.drawer = drawer.OffsetDrawer(
+							self.qtile,
+							self.win.wid,
+							self.bar.width,
+							self.height,
+							drawer.OFFSET_Y
+					  )
+		self.layout = self.drawer.textlayout(
+					self.text,
+					self.foreground,
+					self.font,
+					self.fontsize
+				 )
+	def draw(self):
+		self.drawer.clear(self.background or self.bar.background)
+		self.layout.draw(
+			self.actual_padding or 0,
+			int(self.height / 2.0 - self.layout.height / 2.0)
+		)
+		self.drawer.draw(self.offset, self.width)
+	@property
+	def fontsize(self):
+		if self._fontsize is None:
+			return self.height - self.height / 5
+		else:
+			return self._fontsize
+
+	@fontsize.setter
+	def fontsize(self, value):
+		self._fontsize = value
+		if self.layout:
+			self.layout.font_size = value
+
 
 class _MenuDrawer(bar._AnywhereBar):
 	def handle_ButtonPress(self, e):
-		print self.widgets
+		for i in self.widgets:
+			if e.event_y < i.offset + i.height:
+				i.click(e.event_x, e.event_y-i.offset, e.detail)
+				break
 
 
 ######################################
 #									 #
-#     Specific Menus start here      #
+#	 Specific Menus start here	  #
 #									 #
 ######################################
 
@@ -129,7 +173,7 @@ class _MenuDrawer(bar._AnywhereBar):
 
 class SampleMenu(_Menu):
 	def __init__(self):
-		_Menu.__init__(self, _MenuMarkup(["ab","cats"],["a","b"]))
+		_Menu.__init__(self, _MenuMarkup(["ab","cats"],["a","b","c"],[]))
 
 
 ##Make a debian/gnome menu class which opens programs like the gnome2 menu##

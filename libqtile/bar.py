@@ -262,8 +262,6 @@ class _AnywhereBar(Bar):
     """
         A base class of a widget area for use anywhere on screen
 
-        currently assumes that widgets should be packed from top to bottom, not left to right
-        Should make some sort of layout class for layouts
     """
     defaults = manager.Defaults(
         ("background", "#33cc33", "Background colour."),

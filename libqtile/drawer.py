@@ -339,3 +339,43 @@ class Drawer:
         self.ctx.line_to(x2, y)
         self.ctx.set_line_width(linewidth)
         self.ctx.stroke()
+class Obj:
+    def __init__(self, name):
+        self.name = name
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return self.name
+        
+OFFSET_X = Obj("OFFSET_X")
+OFFSET_Y = Obj("OFFSET_Y")
+
+class OffsetDrawer(Drawer):
+    def __init__(self, qtile, wid, width, height, offset = OFFSET_X):
+        Drawer.__init__(self, qtile, wid, width, height)
+        self.off = offset
+    def draw(self, offset, width):
+        """
+            offset: the X offset to start drawing at.
+            width: the portion of the canvas to draw at the starting point.
+        """
+        if self.off == OFFSET_X:
+            self.qtile.conn.conn.core.CopyArea(
+                self.pixmap,
+                self.wid,
+                self.gc,
+                0, 0,  # srcx, srcy
+                offset, 0,  # dstx, dsty
+                width, self.height
+            )
+        if self.off == OFFSET_Y:
+            self.qtile.conn.conn.core.CopyArea(
+                self.pixmap,
+                self.wid,
+                self.gc,
+                0, 0,  # srcx, srcy
+                0, offset,  # dstx, dsty
+                width, self.height
+            )
