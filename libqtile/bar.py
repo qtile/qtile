@@ -264,7 +264,7 @@ class _AnywhereBar(Bar):
 
     """
     defaults = manager.Defaults(
-        ("background", "#33cc33", "Background colour."),
+        ("background", "#000000", "Background colour."),
         ("opacity",  1, "Bar window opacity.")
     )
     def destroy(self):

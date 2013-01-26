@@ -76,8 +76,7 @@ class _MenuButton(button._Button):
 		self.buttons = []
 		button._Button.__init__(self, self.name, bar.CALCULATED, self.open_submenu)
 		for i in self.submenu:
-			k = _MenuEntry(i)
-			k.height = 30
+			k = _MenuEntry(i,100, 20)
 			self.buttons.append(k)
 		self.mdrawer = _MenuDrawer(0,0,0,0)
 		self.b = False
@@ -173,7 +172,7 @@ class _MenuDrawer(bar._AnywhereBar):
 
 class SampleMenu(_Menu):
 	def __init__(self):
-		_Menu.__init__(self, _MenuMarkup(["ab","cats"],["a","b","c"],[]))
+		_Menu.__init__(self, _MenuMarkup(["ab","cats"],["a","b","c"],["doop", "loop", "hoop"]))
 
 
 ##Make a debian/gnome menu class which opens programs like the gnome2 menu##
