@@ -8,16 +8,17 @@ class _MenuMarkup():
 
 	For example _MenuMarkup(["File",["New",[[".py",newpyfunc],[".c",newcfunc]]],["Quit",quitfunc]],
 		["Edit",["Copy",copyfunc],["Paste",pastefunc]])
-	Represents the menu with File and Edit as top level entries where file has New and Quit as submenu entries,
-	and Edit has Copy and Paste as submenu entries. In addition, New has .py and .c as submenu entries.
+	Represents the menu with File and Edit as top level entries where file has New and Quit as
+	submenu entries, and Edit has Copy and Paste as submenu entries.
+
+	In addition, New has .py and .c as submenu entries.
 
 	All of the submenu entries, when clicked, call their corresponding functions.
 	"""
 	def __init__(self, *entries):
 		self.tree = entries
 		self.names = [i[0] for i in entries]
-		self.entries = [i[1:] for i in entries]
-		print self.entries
+		self.entries = [i[1:] for i in entries] #misnomer
 
 class _Menu(base._Widget):
 	defaults = manager.Defaults()
@@ -183,7 +184,7 @@ class SampleMenu(_Menu):
 	"""
 	def __init__(self):
 		_Menu.__init__(self, _MenuMarkup(["ab",["a"],["b"],["c"]],["cats",["doop"], ["loop"], ["hoop"]]))
-
+	
 
 ##Make a debian/gnome menu class which opens programs like the gnome2 menu##
 
