@@ -3,14 +3,21 @@ import base
 import button
 
 class _MenuMarkup():
-	def __init__(self, names, *entries):
-		self.names = names
-		self.entries = entries
+	"""
+	An object representing a menu's structure, and (soon) what to do with entries when clicked
 
-class _MenuCommand():
-	def __init__(self, name, function):
-		self.name = name
-		self.function = function
+	For example _MenuMarkup(["File",["New",[[".py",newpyfunc],[".c",newcfunc]]],["Quit",quitfunc]],
+		["Edit",["Copy",copyfunc],["Paste",pastefunc]])
+	Represents the menu with File and Edit as top level entries where file has New and Quit as submenu entries,
+	and Edit has Copy and Paste as submenu entries. In addition, New has .py and .c as submenu entries.
+
+	All of the submenu entries, when clicked, call their corresponding functions.
+	"""
+	def __init__(self, *entries):
+		self.tree = entries
+		self.names = [i[0] for i in entries]
+		self.entries = [i[1:] for i in entries]
+		print self.entries
 
 class _Menu(base._Widget):
 	defaults = manager.Defaults()
@@ -70,13 +77,13 @@ class _MenuButton(button._Button):
 		("foreground", "ffffff", "Foreground colour")
 	)
 	def __init__(self, name=None, submenu=None, parent=None):
+		button._Button.__init__(self, self.name, bar.CALCULATED, self.open_submenu)
 		self.name = name
 		self.submenu = submenu
 		self.parent = parent or []
 		self.buttons = []
-		button._Button.__init__(self, self.name, bar.CALCULATED, self.open_submenu)
 		for i in self.submenu:
-			k = _MenuEntry(i,100, 20)
+			k = _MenuEntry(i[0],100, 20)
 			self.buttons.append(k)
 		self.mdrawer = _MenuDrawer(0,0,0,0)
 		self.b = False
@@ -171,8 +178,11 @@ class _MenuDrawer(bar._AnywhereBar):
 
 
 class SampleMenu(_Menu):
+	"""
+	Shitty example
+	"""
 	def __init__(self):
-		_Menu.__init__(self, _MenuMarkup(["ab","cats"],["a","b","c"],["doop", "loop", "hoop"]))
+		_Menu.__init__(self, _MenuMarkup(["ab",["a"],["b"],["c"]],["cats",["doop"], ["loop"], ["hoop"]]))
 
 
 ##Make a debian/gnome menu class which opens programs like the gnome2 menu##
