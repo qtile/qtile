@@ -85,6 +85,8 @@ import datetime
 import re
 import getpass
 import dateutil.parser
+import threading
+import gobject
 
 from apiclient.discovery import build
 from oauth2client.client import AccessTokenRefreshError
@@ -117,6 +119,7 @@ class GoogleCalendar(base._TextBox):
     def __init__(self, **config):
         base._TextBox.__init__(self, 'Calendar not initialized',
                                width=bar.CALCULATED, **config)
+        self.timeout_add(self.update_interval, self.cal_updater)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
@@ -124,7 +127,6 @@ class GoogleCalendar(base._TextBox):
         self.layout = self.drawer.textlayout(
             self.text, self.foreground, self.font,
             self.fontsize, self.fontshadow, markup=True)
-        self.timeout_add(self.update_interval, self.cal_update)
 
     def button_press(self, x, y, button):
         self.update(self.fetch_calendar())
@@ -132,8 +134,12 @@ class GoogleCalendar(base._TextBox):
         self.qtile.groupMap[self.www_group].cmd_toscreen(self.www_screen)
         self.qtile.cmd_spawn(self.browser_cmd)
 
-    def cal_update(self):
-        self.update(self.fetch_calendar())
+    def cal_updater(self):
+        self.log.info('adding GC widget timer')
+        def worker():
+            data = self.fetch_calendar()
+            gobject.idle_add(self.update, data)
+        threading.Thread(target=worker).start()
         return True
 
     def update(self, data):
