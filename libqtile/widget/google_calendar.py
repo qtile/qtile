@@ -31,34 +31,8 @@
 #
 # easy_install --upgrade google-api-python-client
 #
-# You will also need to pre-authenticate your access to your Google
-# calendar before using the widget. This is because the widget currently
-# updates in the main qtile thread. As a result, if you do not
-# pre-authenticate, qtile will hang while waiting for the authentication
-# process to complete.
-#
-# Pre-authentication is easy, and only needs to be done once. Download
-# and unzip the pre-authentication archive at:
-#
-# http://dave.tycho.ws/pre-auth.zip
-#
-# Edit the pre-auth.py script to reflect whether you want to store
-# your credentials in a keyring or on disk. Default is to store
-# your credentials in a keyring.
-#
-# Change into the calendar-v3-python-cmd-line directory and run the 
-# pre-auth script:
-#
-# ./pre-auth.py
-#
-# This will pop a web page to the Google calendar authentication server.
-# Enter your login credentials. Google will return a page that says
-# "Authentication process complete" and the pre-auth.py script
-# will store your credentials in either your keyring or on disk, depending
-# on how you configured it.
-#
-# Installing the Google API oauth2 dependencies and pre-authentication
-# should both be done before running the widget.
+# Installing the Google API oauth2 dependencies should be done before
+# running the widget.
 #
 # Other packages that this widget requires are dateutil and getpass
 # If you get a strange "AttributeError: 'module' object has no attribute
@@ -68,6 +42,11 @@
 # If you choose to store your authentication credentials on disk rather
 # than in a keyring, the widget 'storage' parameter must be an absolute
 # path to the file that you store your authentication credentials in.
+#
+# Also, note that the first time you run the widget, you will need to
+# authenticate - the widget will pop a web page for this purpose.  
+# Add your calendar login/password and authorize the widget to access your
+# calendar data and you are good to go.
 #
 # Thanks to the creator of the YahooWeather widget (dmpayton). This code
 # borrows liberally from that one.
