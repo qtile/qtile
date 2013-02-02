@@ -70,7 +70,9 @@ import gobject
 from apiclient.discovery import build
 from oauth2client.client import AccessTokenRefreshError
 from oauth2client.client import OAuth2WebServerFlow
-from oauth2client.tools import run
+from custom_tools import run
+import oauth2client.keyring_storage
+import oauth2client.file
 
 class GoogleCalendar(base._TextBox):
     ''' This widget will display the next appointment on your Google calendar in
@@ -86,9 +88,11 @@ class GoogleCalendar(base._TextBox):
         ('format', '{next_event}',
          'calendar output - leave this at the default for now...'),
         ('keyring', True,
-         'use keyring to store credentials - if false, storage must be set'),
-        ('storage', None, 'absolute path of secrets file if keyring=False'),
-        ('reminder_color', 'FF0000', 'color of calendar entries during reminder time'),
+         'use keyring to store credentials - if false, storage_file must be set'),
+        ('storage_file', None,
+         'absolute path of secrets file if keyring=False'),
+        ('reminder_color', 'FF0000',
+         'color of calendar entries during reminder time'),
         ('www_group', 'www', 'group to open browser into'),
         ('www_screen', 0, 'screen to open group on'),
         ('browser_cmd', '/usr/bin/firefox -url calendar.google.com',
@@ -98,6 +102,7 @@ class GoogleCalendar(base._TextBox):
     def __init__(self, **config):
         base._TextBox.__init__(self, 'Calendar not initialized',
                                width=bar.CALCULATED, **config)
+        self.timeout_add(3600, self.cred_updater) # update credentials once per hour
         self.timeout_add(self.update_interval, self.cal_updater)
 
     def _configure(self, qtile, bar):
@@ -107,18 +112,49 @@ class GoogleCalendar(base._TextBox):
             self.text, self.foreground, self.font,
             self.fontsize, self.fontshadow, markup=True)
 
-    def button_press(self, x, y, button):
-        self.update(self.fetch_calendar())
-        self.qtile.addGroup(self.www_group)
-        self.qtile.groupMap[self.www_group].cmd_toscreen(self.www_screen)
-        self.qtile.cmd_spawn(self.browser_cmd)
+    def cred_updater(self):
+        def updater(): # get credentials in thread, save them in main loop
+            (creds, storage) = self.cred_init()
+            gobject.idle_add(self.cred_save, creds, storage)
+        threading.Thread(target=updater).start()
+        return True
+
+    def cred_init(self):
+        #this is the main method for obtaining credentials
+
+        # Set up a Flow object to be used for authentication.
+        FLOW = OAuth2WebServerFlow(
+                   client_id=
+                   '196949979762-5m3j4orcn9heesoh6td942gb2bph424q.apps.googleusercontent.com',
+                   client_secret='3H1-w_9gX4DFx3bC9c-whEBs',
+                   scope='https://www.googleapis.com/auth/calendar',
+                   user_agent='Qtile Google Calendar Widget/Version 0.3')
+
+        # storage is the location of our authentication credentials
+        self.log.info('Keyring: %s' % self.keyring)
+        if self.keyring:
+            storage = oauth2client.keyring_storage.Storage('qtile_cal', getpass.getuser())
+        else:
+            storage = oauth2client.file.Storage(self.storage_file)
+
+        creds = storage.get()
+
+        if creds is None or creds.invalid:
+            creds = run(FLOW, storage) # must be run in different thread or it blocks qtile
+
+        return creds, storage
+
+    def cred_save(self, creds, storage):
+        storage.put(creds)
+        self.credentials = creds
+        return False
 
     def cal_updater(self):
         self.log.info('adding GC widget timer')
-        def worker():
+        def cal_getter(): # get cal data in thread, write it in main loop
             data = self.fetch_calendar()
             gobject.idle_add(self.update, data)
-        threading.Thread(target=worker).start()
+        threading.Thread(target=cal_getter).start()
         return True
 
     def update(self, data):
@@ -129,60 +165,52 @@ class GoogleCalendar(base._TextBox):
         self.bar.draw()
         return False
 
+    def button_press(self, x, y, button):
+        self.update(self.fetch_calendar())
+        self.qtile.addGroup(self.www_group)
+        self.qtile.groupMap[self.www_group].cmd_toscreen(self.www_screen)
+        self.qtile.cmd_spawn(self.browser_cmd)
+
     def fetch_calendar(self):
-
-        # Set up a Flow object to be used for authentication.
-        # Add one or more of the following scopes. PLEASE ONLY ADD THE SCOPES YOU
-        # NEED. For more information on using scopes please see
-        # <https://developers.google.com/+/best-practices>.
-        FLOW = OAuth2WebServerFlow(
-                client_id='196949979762-5m3j4orcn9heesoh6td942gb2bph424q.apps.googleusercontent.com',
-                client_secret='3H1-w_9gX4DFx3bC9c-whEBs',
-                scope='https://www.googleapis.com/auth/calendar',
-                user_agent='Qtile Google Calendar Widget/Version 0.2')
-
-
-        # storage is the location of your authentication credentials
-        if self.keyring:
-            from oauth2client.keyring_storage import Storage
-            storage = Storage('qtile_cal', getpass.getuser())
-        else:
-            from oauth2client.file import Storage
-            storage = Storage(self.storage)
-
-        credentials = storage.get()
-
-        if credentials is None or credentials.invalid:
-            credentials = run(FLOW, storage)
+        # if we don't have valid credentials, update them
+        self.log.info('fetch_calendar: before')
+        if not hasattr(self, 'credentials') or self.credentials.invalid:
+            self.cred_updater()
+            self.log.info('fetch_calendar: after')
+            data = {'next_event': 'Credentials updating'}
+            return data
 
         # Create an httplib2.Http object to handle our HTTP requests and
-        # authorize it with our good Credentials.
+        # authorize it with our credentials from self.cred_init
         http = httplib2.Http()
-        http = credentials.authorize(http)
+        http = self.credentials.authorize(http)
 
         service = build('calendar', 'v3', http=http)
 
-        # end of authentication code
-        #######################################################
-        # beginning of widget code
-
+        # current timestamp
         now = datetime.datetime.utcnow().isoformat('T')+'Z'
         data = {}
 
+        # grab the next event
         events = service.events().list(calendarId=self.calendar,
                  singleEvents=True, timeMin=now, maxResults='1',
                  orderBy='startTime').execute()
+
+        # get items list
         try:
             event = events.get('items', [])[0]
         except (IndexError):
             data = {'next_event': 'No appointments scheduled'}
             return data
+
+        # get reminder time
         try:
             remindertime = datetime.timedelta(0,
             int(event.get('reminders').get('overrides')[0].get('minutes')) * 60)
         except:
             remindertime = datetime.timedelta(0,0)
 
+        #format the data
         data = {'next_event': event['summary']+' '+re.sub(':.{2}-.*$',
                 '', event['start']['dateTime'].replace('T', ' '))}
         if dateutil.parser.parse(event['start']['dateTime'],
@@ -190,4 +218,5 @@ class GoogleCalendar(base._TextBox):
             data = {'next_event': '<span color="'+utils.hex(self.reminder_color)+
                     '">'+data['next_event']+'</span>'}
 
+        # return the data
         return data
