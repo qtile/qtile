@@ -40,13 +40,26 @@
 # carefully.
 #
 # If you choose to store your authentication credentials on disk rather
-# than in a keyring, the widget 'storage' parameter must be an absolute
-# path to the file that you store your authentication credentials in.
+# than in a keyring, the widget 'storage_file' parameter must be an
+# absolute path to the file that you store your authentication
+# credentials in.
 #
 # Also, note that the first time you run the widget, you will need to
-# authenticate - the widget will pop a web page for this purpose.  
-# Add your calendar login/password and authorize the widget to access your
-# calendar data and you are good to go.
+# authenticate. Do this by clicking on the "Calendar not initialized"
+# text in the status bar. The widget will pop an authentication  web
+# page. Add your calendar login/password and authorize the widget to
+# access your calendar data and you are good to go. Depending on the
+# lifetime of the Google refresh_token, you may be required to
+# re-authenticate periodically (shouldn't be more than every two weeks
+# or so).
+#
+# When the authentication page opens, the status bar will show the text:
+# 'Credentials updating.'  Wait for a few seconds (10 or so, depending
+# on your network speed) after you complete the authentication web page
+# process, and click the widget again - your calendar should now be
+# authenticated and you will see real calendar data. After you are
+# authenticated, the calendar data will be refreshed every
+# 'update_interval' seconds.
 #
 # Thanks to the creator of the YahooWeather widget (dmpayton). This code
 # borrows liberally from that one.
@@ -66,10 +79,19 @@ import getpass
 import dateutil.parser
 import threading
 import gobject
+import time
 
 from apiclient.discovery import build
 from oauth2client.client import AccessTokenRefreshError
 from oauth2client.client import OAuth2WebServerFlow
+# from oauth2client.tools import run # here we use a modified custom_tools
+                                     # module instead.  The custom_tools
+                                     # module has the run class modified
+                                     # to make it thread-safe by removing
+                                     # the storage.put() code.  As a result,
+                                     # we have to remember to write our
+                                     # credentials to storage separately
+                                     # in the main qtile loop.
 from custom_tools import run
 import oauth2client.keyring_storage
 import oauth2client.file
@@ -102,7 +124,7 @@ class GoogleCalendar(base._TextBox):
     def __init__(self, **config):
         base._TextBox.__init__(self, 'Calendar not initialized',
                                width=bar.CALCULATED, **config)
-        self.timeout_add(3600, self.cred_updater) # update credentials once per hour
+        self.timeout_add(600, self.cred_init) # confirm credentials every 10 minutes
         self.timeout_add(self.update_interval, self.cal_updater)
 
     def _configure(self, qtile, bar):
@@ -112,15 +134,9 @@ class GoogleCalendar(base._TextBox):
             self.text, self.foreground, self.font,
             self.fontsize, self.fontshadow, markup=True)
 
-    def cred_updater(self):
-        def updater(): # get credentials in thread, save them in main loop
-            (creds, storage) = self.cred_init()
-            gobject.idle_add(self.cred_save, creds, storage)
-        threading.Thread(target=updater).start()
-        return True
-
     def cred_init(self):
         #this is the main method for obtaining credentials
+        self.log.info('refreshing GC credentials')
 
         # Set up a Flow object to be used for authentication.
         FLOW = OAuth2WebServerFlow(
@@ -131,7 +147,6 @@ class GoogleCalendar(base._TextBox):
                    user_agent='Qtile Google Calendar Widget/Version 0.3')
 
         # storage is the location of our authentication credentials
-        self.log.info('Keyring: %s' % self.keyring)
         if self.keyring:
             storage = oauth2client.keyring_storage.Storage('qtile_cal', getpass.getuser())
         else:
@@ -139,12 +154,20 @@ class GoogleCalendar(base._TextBox):
 
         creds = storage.get()
 
-        if creds is None or creds.invalid:
-            creds = run(FLOW, storage) # must be run in different thread or it blocks qtile
+        # FLOW must be run in a different thread or it blocks qtile
+        def get_from_flow(creds, storage):
+            if creds is None or creds.invalid:
+                creds = run(FLOW, storage)
+            gobject.idle_add(self.cred_save, creds, storage)
+        threading.Thread(target=get_from_flow, args=(creds, storage)).start()
 
-        return creds, storage
+        return True
 
     def cred_save(self, creds, storage):
+        # We must save the creds ourselves since we removed saving
+        # from the Google oauth2client.tools module in order to
+        # make that module thread-safe. Note that cred_save MUST
+        # be run in the main qtile loop.
         storage.put(creds)
         self.credentials = creds
         return False
@@ -167,16 +190,15 @@ class GoogleCalendar(base._TextBox):
 
     def button_press(self, x, y, button):
         self.update(self.fetch_calendar())
-        self.qtile.addGroup(self.www_group)
-        self.qtile.groupMap[self.www_group].cmd_toscreen(self.www_screen)
-        self.qtile.cmd_spawn(self.browser_cmd)
+        if hasattr(self, 'credentials'):
+            self.qtile.addGroup(self.www_group)
+            self.qtile.groupMap[self.www_group].cmd_toscreen(self.www_screen)
+            self.qtile.cmd_spawn(self.browser_cmd)
 
     def fetch_calendar(self):
         # if we don't have valid credentials, update them
-        self.log.info('fetch_calendar: before')
         if not hasattr(self, 'credentials') or self.credentials.invalid:
-            self.cred_updater()
-            self.log.info('fetch_calendar: after')
+            self.cred_init()
             data = {'next_event': 'Credentials updating'}
             return data
 
