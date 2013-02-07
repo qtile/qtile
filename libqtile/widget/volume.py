@@ -99,8 +99,8 @@ class Volume(base._TextBox):
                                         stdout=subprocess.PIPE)
         mixer_out = mixerprocess.communicate()[0]
         if mixerprocess.returncode:
-            raise subprocess.CalledProcessError(mixerprocess.returncode,
-                                                'amixer')
+            return -1
+
         if '[off]' in mixer_out:
             return -1
 

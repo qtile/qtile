@@ -56,6 +56,7 @@ class Qtile(command.CommandObject):
     def __init__(self, config,
                  displayName=None, fname=None, no_spawn=False, log=None,
                  state=None):
+        gobject.threads_init()
         if log == None:
             log = init_log()
         self.log = log

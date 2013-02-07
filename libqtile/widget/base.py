@@ -140,15 +140,6 @@ class _Widget(command.CommandObject, configurable.Configurable):
             re-run forever!
         """
         self.log.info('Adding timer')
-        if callable(callback):
-            def _thread(method, callback, args):
-                data = method(*args)
-                gobject.idle_add(callback, data)
-            method = threading.Thread(
-                target=_thread,
-                args=(method, callback, method_args)
-            ).start
-            method_args = ()
         if int(seconds) == seconds:
             return gobject.timeout_add_seconds(
                 int(seconds), method, *method_args

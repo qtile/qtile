@@ -6,6 +6,8 @@ import base
 import urllib
 import urllib2
 from xml.dom import minidom
+import gobject
+import threading
 
 try:
     import json
@@ -50,19 +52,19 @@ class YahooWeather(base._TextBox):
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         self.add_defaults(YahooWeather.defaults)
-        self.timeout_add(self.update_interval, self.wx_update)
-        #self.timeout_add(
-        #    self.update_interval,
-        #    self.fetch_weather, (),
-        #    self.update
-        #)
+        self.timeout_add(self.update_interval, self.wx_updater)
 
     def button_press(self, x, y, button):
         self.update(self.fetch_weather())
 
-    def wx_update(self):
-        self.update(self.fetch_weather())
+    def wx_updater(self):
+        self.log.info('adding WX widget timer')
+        def worker():
+            data = self.fetch_weather()
+            gobject.idle_add(self.update, data)
+        threading.Thread(target=worker).start()
         return True
+
 
     def update(self, data):
         if data:
