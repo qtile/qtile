@@ -1017,6 +1017,10 @@ class Window(_Window):
             if not self.qtile.config.follow_mouse_focus and \
                             self.group.currentWindow != self:
                 self.group.focus(self, False)
+            if self.group.screen and \
+                self.qtile.currentScreen != self.group.screen:
+                self.qtile.toScreen(self.group.screen.index)
+
         else:
             self.qtile.log.info("Unknown window property: %s" % name)
         return False
