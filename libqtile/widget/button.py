@@ -5,6 +5,7 @@ import base
 def defaultfunc():
     return
 
+
 class _Button(base._TextBox):
     """
     Base class for button widgets
@@ -22,22 +23,32 @@ class _Button(base._TextBox):
         ("background", "000000", "Background colour"),
         ("foreground", "ffffff", "Foreground colour")
     )
-    def __init__(self, text=" ", width=bar.CALCULATED, function=defaultfunc, **config):
+
+    def __init__(self, text=" ", width=bar.CALCULATED,
+                        function=defaultfunc, **config
+        ):
         base._TextBox.__init__(self, text, width, **config)
         self.function = function
+
     def click(self, x, y, button):
         self.function(x, y, button)
+
+
 class SampleButton(_Button):
     def __init__(self):
         _Button.__init__(self, text="Click Here", function=self.function)
+
     def function(self, x, y, button):
-        if self.background=="000fff":
-            self.background="cc33cc"
+        if self.background == "000fff":
+            self.background = "cc33cc"
         else:
-            self.background="000fff"
+            self.background = "000fff"
         self.draw()
+
+
 class ExitButton(_Button):
     def __init__(self):
         _Button.__init__(self, text="Logout", function=self.function)
+
     def function(self, x, y, button):
         self.qtile.cmd_shutdown()
