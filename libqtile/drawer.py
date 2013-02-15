@@ -361,21 +361,12 @@ class OffsetDrawer(Drawer):
             offset: the X offset to start drawing at.
             width: the portion of the canvas to draw at the starting point.
         """
-        if self.off == OFFSET_X:
-            self.qtile.conn.conn.core.CopyArea(
-                self.pixmap,
-                self.wid,
-                self.gc,
-                0, 0,  # srcx, srcy
-                offset, 0,  # dstx, dsty
-                width, self.height
-            )
-        if self.off == OFFSET_Y:
-            self.qtile.conn.conn.core.CopyArea(
-                self.pixmap,
-                self.wid,
-                self.gc,
-                0, 0,  # srcx, srcy
-                0, offset,  # dstx, dsty
-                width, self.height
-            )
+        a = [offset,0] if (self.off == OFFSET_X) else [0,offset]
+        self.qtile.conn.conn.core.CopyArea(
+            self.pixmap,
+            self.wid,
+            self.gc,
+            0, 0,  # srcx, srcy
+            *a,  # dstx, dsty
+            width = width, height = self.height
+        )
