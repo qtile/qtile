@@ -4,6 +4,7 @@ from datetime import datetime
 from .. import bar
 import base
 
+import gobject
 
 class Clock(base._TextBox):
     """
