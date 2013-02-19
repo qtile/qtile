@@ -4,7 +4,7 @@ Frequently Asked Questions
 When I first start xterm/urxvt/rxvt containing an instance of Vim, I see text and layout corruption. What gives?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Vim is not handling terminal resizes correctly. You can fix the probelm by
+Vim is not handling terminal resizes correctly. You can fix the problem by
 starting your xterm with the "-wf" option, like so:
 
 .. code-block:: bash
