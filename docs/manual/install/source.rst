@@ -22,10 +22,25 @@ libxcb
 xpyb
 -------
 
+Either ``xpyb-ng`` or ``xpyb`` versions >= 1.3.1 should work. The ``xpyb``
+build itself has historically had some package config issues, so we provide
+xpyb-ng for people who want to use setuptools. (The implementations are also
+slightly different, but users have reported that qtile is stable on either
+fork.) For users with a system version of ``xcb-proto`` < 1.7, xpyb will not
+build correctly (you get an ``AttributeError: 'ListType' object has no
+attribute 'parent'``). However, xpyb-ng provides a branch called
+``pre-1.7-xproto`` which has a hack to fix this issue.
+
 .. code-block:: bash
 
     git clone git://anongit.freedesktop.org/xcb/xpyb
-    cd xpyb
+    cd xpyb && ./autogen.sh
+    ./configure
+    make install
+
+.. clode-block:: bash
+    git clone git@github.com:tych0/xpyb-ng.git
+    cd xpyb-ng
     python setup.py install
 
 

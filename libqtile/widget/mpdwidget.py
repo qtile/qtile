@@ -100,9 +100,7 @@ class Mpd(base._TextBox):
         return True
 
     def _configure(self, qtile, bar):
-        base._Widget._configure(self, qtile, bar)
-        if self.fontsize is None:
-            self.fontsize = self.bar.height - self.bar.height / 5
+        base._TextBox._configure(self, qtile, bar)
         self.layout = self.drawer.textlayout(
             self.text, self.foreground, self.font, self.fontsize,
             self.fontshadow, markup=True)
