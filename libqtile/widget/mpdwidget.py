@@ -24,19 +24,24 @@ class Mpd(base._TextBox):
     ]
 
     def __init__(self, width=bar.CALCULATED, host='localhost', port=6600,
-                 password=False, msg_nc='Mpd off', **config):
+                 password=False, fmt_playing="%a - %t [%v%%]", fmt_stopped="Stopped [%v%%]", 
+                 msg_nc='Mpd off', do_color_progress=True, **config):
         """
             - host: host to connect to
             - port: port to connect to
             - password: password to use
+            - fmt_playing, fmt_stopped: format strings to display when playing/paused and when stopped, respectively
             - msg_nc: which message to show when we're not connected
+            - do_color_progress: whether to indicate progress in song by altering message color
             - width: A fixed width, or bar.CALCULATED to calculate the width
             automatically (which is recommended).
         """
         self.host = host
         self.port = port
         self.password = password
+        self.fmt_playing, self.fmt_stopped = fmt_playing, fmt_stopped
         self.msg_nc = msg_nc
+        self.do_color_progress = do_color_progress
         self.inc = 2
         base._TextBox.__init__(self, " ", width, **config)
         self.add_defaults(Mpd.defaults)
@@ -106,42 +111,115 @@ class Mpd(base._TextBox):
             self.fontshadow, markup=True)
         atexit.register(self.mpdDisconnect)
 
+    def to_minutes_seconds(self, stime):
+        """Takes an integer time in seconds, transforms it into
+        (HH:)?MM:SS. HH portion is only visible if total time is greater
+        than an hour."""
+        if type(stime) != int:
+            stime = int(stime)
+        mm = stime // 60
+        ss = stime % 60
+        if mm >= 60:
+            hh = mm // 60
+            mm = mm % 60
+            rv = "{}:{:02}:{:02}".format(hh, mm, ss)
+        else:
+            rv = "{}:{:02}".format(mm, ss)
+        return rv
+
+    def get_artist(self):
+        return self.song['artist']
+
+    def get_album(self):
+        return self.song['album']
+
+    def get_elapsed(self):
+        elapsed = self.status['time'].split(':')[0]
+        return self.to_minutes_seconds(elapsed)
+
+    def get_file(self):
+        return self.song['file']
+
+    def get_length(self):
+        return self.to_minutes_seconds(self.song['time'])
+
+    def get_number(self):
+        return self.status['song']
+
+    def get_playlistlength(self):
+        return self.status['playlistlength']
+
+    def get_status(self):
+        n = self.status['state']
+        if n == "play":
+            return "->"
+        elif n == "pause":
+            return "||"
+        elif n == "stop":
+            return "[]"
+
+    def get_longstatus(self):
+        n = self.status['state']
+        if n == "play":
+            return "Playing"
+        elif n == "pause":
+            return "Paused"
+        elif n == "stop":
+            return "Stopped"
+
+    def get_title(self):
+        return self.song['title']
+
+    def get_track(self):
+        # This occasionally has leading zeros we don't want.
+        return str(int(self.song['track'].split('/')[0])) 
+
+    def get_volume(self):
+        return self.status['volume']
+
+    formats = {'a': get_artist, 'A': get_album, 'e': get_elapsed, 
+               'f': get_file, 'l': get_length, 'n': get_number, 
+               'p': get_playlistlength, 's': get_status, 'S': get_longstatus, 
+               't': get_title, 'T': get_track, 'v': get_volume, '%': lambda x: '^$^'}
+
+    def do_format(self, string):
+        """Format strings interpret two-character sequences of "%c",
+        where c is any character. The supported sequences are in
+        formats; notably, "%%" inserts a literal "%"."""
+        while 1:
+            i = string.find('%')
+            if i == -1:
+                break
+            try:
+                repl = self.formats[string[i+1:i+2]](self)
+            except KeyError:
+                repl = "(nil)"
+            string = string[:i] + repl + string[i+2:]
+        return string.replace('^$^', '%')
+
     def update(self):
         if not self.configured:
             return True
         if self.connect(True):
             try:
-                status = self.client.status()
-                song = self.client.currentsong()
-                volume = status.get('volume', '-1')
-                if song:
-                    artist = ''
-                    title = ''
-                    if 'artist' in song:
-                        artist = song['artist'].decode('utf-8')
-                    if 'title' in song:
-                        title = song['title'].decode('utf-8')
+                self.status = self.client.status()
+                self.song = self.client.currentsong()
+                if self.status['state'] != 'stop':
+                    playing = self.do_format(self.fmt_playing)
 
-                    if 'artist' not in song and 'title' not in song:
-                        playing = song.get('file', '??')
-                    else:
-                        playing = u'%s − %s' % (artist, title)
-
-                    if status and status.get('time', None):
-                        elapsed, total = status['time'].split(':')
+                    if self.do_color_progress and self.status and self.status.get('time', None):
+                        elapsed, total = self.status['time'].split(':')
                         percent = float(elapsed) / float(total)
                         progress = int(percent * len(playing))
                         playing = '<span color="%s">%s</span>%s' % (
                             utils.hex(self.foreground_progress),
-                            utils.escape(playing[:progress].encode('utf-8')),
-                            utils.escape(playing[progress:].encode('utf-8')))
+                            utils.escape(playing[:progress]),
+                            utils.escape(playing[progress:]))
                     else:
                         playing = utils.escape(playing)
                 else:
-                    playing = 'Stopped'
+                    playing = self.do_format(self.fmt_stopped)
 
-                playing = '%s [%s%%]' % (playing,
-                                         volume if volume != '-1' else '?')
             except Exception:
                 self.log.exception('Mpd error on update')
                 playing = self.msg_nc
