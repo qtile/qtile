@@ -1,5 +1,6 @@
 from base import SingleWindow
 from .. import manager
+import math
 
 
 class MonadTall(SingleWindow):
@@ -82,10 +83,14 @@ class MonadTall(SingleWindow):
 
     Suggested Bindings:
 
-    Key([modkey], "k", lazy.layout.down()),
-    Key([modkey], "j", lazy.layout.up()),
-    Key([modkey, "shift"], "k", lazy.layout.shuffle_down()),
-    Key([modkey, "shift"], "j", lazy.layout.shuffle_up()),
+    Key([modkey], "h", lazy.layout.left()),
+    Key([modkey], "l", lazy.layout.right()),
+    Key([modkey], "j", lazy.layout.down()),
+    Key([modkey], "k", lazy.layout.up()),
+    Key([modkey, "shift"], "h", lazy.function(swapLeft)),
+    Key([modkey, "shift"], "l", lazy.function(swapRight)),
+    Key([modkey, "shift"], "j", lazy.layout.shuffle_down()),
+    Key([modkey, "shift"], "k", lazy.layout.shuffle_up()),
     Key([modkey], "i", lazy.layout.grow()),
     Key([modkey], "m", lazy.layout.shrink()),
     Key([modkey], "n", lazy.layout.normalize()),
@@ -592,3 +597,69 @@ class MonadTall(SingleWindow):
         "Flip the layout horizontally."
         self.align = self._left if self.align == self._right else self._right
         self.group.layoutAll()
+
+    def _get_closest(self, x1, y2, clients):
+        target = clients[0]
+        mind = math.hypot(target.info()['x'] - x1, target.info()['y'] - y2)
+        for client in clients:
+            d = math.hypot(client.info()['x'] - x1, client.info()['y'] - y2)
+            if d < mind:
+                mind = d
+                target = client
+        return target
+
+    def cmd_swap(self, window1, window2):
+        "Swap two windows."
+        index1 = self.clients.index(window1)
+        index2 = self.clients.index(window2)
+        self.clients[index1], self.clients[index2] = \
+        self.clients[index2], self.clients[index1]
+        self.group.layoutAll()
+        self.focused = index1
+        self.group.focus(window1, False)
+
+    def cmd_swap_left(self):
+        "Swap current window with closest window to the left."
+        x1 = self._get_window().x
+        y1 = self._get_window().y
+        candidates = [c for c in self.clients if c.info()['x'] < x1]
+        target = self._get_closest(
+            self._get_window().x,
+            self._get_window().y,
+            candidates)
+        self.cmd_swap(self._get_window(), target)
+
+    def cmd_swap_right(self):
+        "Swap current window with closest window to the right."
+        x1 = self._get_window().x
+        y1 = self. _get_window().y
+        candidates = [c for c in self.clients if c.info()['x'] > x1]
+        target = self._get_closest(
+            self._get_window().x,
+            self._get_window().y,
+            candidates)
+        self.cmd_swap(self._get_window(), target)
+
+    def cmd_left(self):
+        "Focus on the closest window to the left of the current window."
+        x1 = self._get_window().x
+        y1 = self._get_window().y
+        candidates = [c for c in self.clients if c.info()['x'] < x1]
+        target = self._get_closest(
+            self._get_window().x,
+            self._get_window().y,
+            candidates)
+        self.focused = self.clients.index(target)
+        self.group.focus(self.clients[self.focused], False)
+
+    def cmd_right(self):
+        "Focus on the closest window to the right of the current window."
+        x1 = self._get_window().x
+        y1 = self._get_window().y
+        candidates = [c for c in self.clients if c.info()['x'] > x1]
+        target = self._get_closest(
+            self._get_window().x,
+            self._get_window().y,
+            candidates)
+        self.focused = self.clients.index(target)
+        self.group.focus(self.clients[self.focused], False)
