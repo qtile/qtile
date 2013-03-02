@@ -598,14 +598,11 @@ class MonadTall(SingleWindow):
         self.align = self._left if self.align == self._right else self._right
         self.group.layoutAll()
 
-    def _get_closest(self, x1, y2, clients):
-        target = clients[0]
-        mind = math.hypot(target.info()['x'] - x1, target.info()['y'] - y2)
-        for client in clients:
-            d = math.hypot(client.info()['x'] - x1, client.info()['y'] - y2)
-            if d < mind:
-                mind = d
-                target = client
+    def _get_closest(self, x, y, clients):
+        "Get closest window to a point x,y"
+        target = min(
+            clients,
+            key=lambda c: math.hypot(c.info()['x'] - x, c.info()['y'] - y))
         return target
 
     def cmd_swap(self, window1, window2):
@@ -620,46 +617,34 @@ class MonadTall(SingleWindow):
 
     def cmd_swap_left(self):
         "Swap current window with closest window to the left."
-        x1 = self._get_window().x
-        y1 = self._get_window().y
-        candidates = [c for c in self.clients if c.info()['x'] < x1]
-        target = self._get_closest(
-            self._get_window().x,
-            self._get_window().y,
-            candidates)
+        x = self._get_window().x
+        y = self._get_window().y
+        candidates = [c for c in self.clients if c.info()['x'] < x]
+        target = self._get_closest(x, y, candidates)
         self.cmd_swap(self._get_window(), target)
 
     def cmd_swap_right(self):
         "Swap current window with closest window to the right."
-        x1 = self._get_window().x
-        y1 = self. _get_window().y
-        candidates = [c for c in self.clients if c.info()['x'] > x1]
-        target = self._get_closest(
-            self._get_window().x,
-            self._get_window().y,
-            candidates)
+        x = self._get_window().x
+        y = self. _get_window().y
+        candidates = [c for c in self.clients if c.info()['x'] > x]
+        target = self._get_closest(x, y, candidates)
         self.cmd_swap(self._get_window(), target)
 
     def cmd_left(self):
         "Focus on the closest window to the left of the current window."
-        x1 = self._get_window().x
-        y1 = self._get_window().y
-        candidates = [c for c in self.clients if c.info()['x'] < x1]
-        target = self._get_closest(
-            self._get_window().x,
-            self._get_window().y,
-            candidates)
+        x = self._get_window().x
+        y = self._get_window().y
+        candidates = [c for c in self.clients if c.info()['x'] < x]
+        target = self._get_closest(x, y, candidates)
         self.focused = self.clients.index(target)
         self.group.focus(self.clients[self.focused], False)
 
     def cmd_right(self):
         "Focus on the closest window to the right of the current window."
-        x1 = self._get_window().x
-        y1 = self._get_window().y
-        candidates = [c for c in self.clients if c.info()['x'] > x1]
-        target = self._get_closest(
-            self._get_window().x,
-            self._get_window().y,
-            candidates)
+        x = self._get_window().x
+        y = self._get_window().y
+        candidates = [c for c in self.clients if c.info()['x'] > x]
+        target = self._get_closest(x, y, candidates)
         self.focused = self.clients.index(target)
         self.group.focus(self.clients[self.focused], False)
