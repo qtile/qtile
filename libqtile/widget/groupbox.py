@@ -110,7 +110,6 @@ class GroupBox(_GroupBase):
          "Disable dragging and dropping of group names on widget"),
         ("this_screen_border", "215578", "Border colour for group on this screen."),
         ("other_screen_border", "404040", "Border colour for group on other screen."),
-        ("padding", 5, "Padding inside the box"),
         ("urgent_border", "FF0000", "Urgent border color"),
         ("urgent_alert_method", "border", "Method for alerting you of WM urgent " \
                                           "hints (one of 'border' or 'text')"),
