@@ -280,13 +280,13 @@ class MonadTall(SingleWindow):
             if cidx == 0:
                 # main client
                 width = width_main - 2 * self.border_width
+                c.place(xpos, self.group.screen.dy, width,
+                        self.group.screen.dheight - 2 * self.border_width,
+                    self.border_width, px)
+                c.unhide()
             else:
                 # secondary client
                 width = width_shared - 2 * self.border_width
-
-            # calculate client height and place
-            if cidx > 0:
-                # secondary client
                 # ypos is the sum of all clients above it
                 ypos = self.group.screen.dy + sum(self.sizes[:cidx - 1])
                 # get height from precalculated height list
@@ -295,12 +295,6 @@ class MonadTall(SingleWindow):
                 c.place(xpos, ypos,
                         width, height - 2 * self.border_width,
                         self.border_width, px)
-                c.unhide()
-            else:
-                # main client
-                c.place(xpos, self.group.screen.dy, width,
-                        self.group.screen.dheight - 2 * self.border_width,
-                    self.border_width, px)
                 c.unhide()
 
     def get_shrink_margin(self, cidx):
