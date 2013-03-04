@@ -229,75 +229,77 @@ class MonadTall(SingleWindow):
         # if no sizes or normalize flag is set, normalize
         if not self.sizes or self.do_normalize:
             self.cmd_normalize(False)
-        # if client in this layout
-        if self.clients and c in self.clients:
-            # single client - fullscreen
-            if len(self.clients) == 1:
+
+        # if client **not** in this layout
+        if not (self.clients and c in self.clients):
+            c.hide()
+            return
+
+        # single client - fullscreen
+        if len(self.clients) == 1:
+            px = self.group.qtile.colorPixel(self.border_focus)
+            c.place(self.group.screen.dx,
+                    self.group.screen.dy,
+                    self.group.screen.dwidth,
+                    self.group.screen.dheight,
+                    0, px)
+            c.unhide()
+            return
+        # multiple clients
+        else:
+            # determine focus border-color
+            if self.clients.index(c) == self.focused:
                 px = self.group.qtile.colorPixel(self.border_focus)
-                c.place(self.group.screen.dx,
-                        self.group.screen.dy,
-                        self.group.screen.dwidth,
-                        self.group.screen.dheight,
-                        0, px)
-                c.unhide()
-                return
-            # multiple clients
             else:
-                # determine focus border-color
-                if self.clients.index(c) == self.focused:
-                    px = self.group.qtile.colorPixel(self.border_focus)
-                else:
-                    px = self.group.qtile.colorPixel(self.border_normal)
+                px = self.group.qtile.colorPixel(self.border_normal)
 
-                # calculate main/secondary column widths
-                width_main = int(self.group.screen.dwidth * self.ratio)
-                width_shared = self.group.screen.dwidth - width_main
+            # calculate main/secondary column widths
+            width_main = int(self.group.screen.dwidth * self.ratio)
+            width_shared = self.group.screen.dwidth - width_main
 
-                # calculate client's x offset
-                if self.align == self._left:  # left orientation
-                    if self.clients.index(c) == 0:
-                        # main client
-                        xpos = self.group.screen.dx
-                    else:
-                        # secondary client
-                        xpos = self.group.screen.dx + width_main
-                else:  # right orientation
-                    if self.clients.index(c) == 0:
-                        # main client
-                        xpos = self.group.screen.dx + width_shared
-                    else:
-                        # secondary client
-                        xpos = self.group.screen.dx
-
-                # calculate client width
+            # calculate client's x offset
+            if self.align == self._left:  # left orientation
                 if self.clients.index(c) == 0:
                     # main client
-                    width = width_main - 2 * self.border_width
+                    xpos = self.group.screen.dx
                 else:
                     # secondary client
-                    width = width_shared - 2 * self.border_width
-
-                # calculate client height and place
-                cidx = self.clients.index(c)
-                if cidx > 0:
-                    # secondary client
-                    # ypos is the sum of all clients above it
-                    ypos = self.group.screen.dy + sum(self.sizes[:cidx - 1])
-                    # get height from precalculated height list
-                    height = self.sizes[cidx - 1]
-                    # place client based on calculated dimensions
-                    c.place(xpos, ypos,
-                            width, height - 2 * self.border_width,
-                            self.border_width, px)
-                    c.unhide()
-                else:
+                    xpos = self.group.screen.dx + width_main
+            else:  # right orientation
+                if self.clients.index(c) == 0:
                     # main client
-                    c.place(xpos, self.group.screen.dy, width,
-                            self.group.screen.dheight - 2 * self.border_width,
+                    xpos = self.group.screen.dx + width_shared
+                else:
+                    # secondary client
+                    xpos = self.group.screen.dx
+
+            # calculate client width
+            if self.clients.index(c) == 0:
+                # main client
+                width = width_main - 2 * self.border_width
+            else:
+                # secondary client
+                width = width_shared - 2 * self.border_width
+
+            # calculate client height and place
+            cidx = self.clients.index(c)
+            if cidx > 0:
+                # secondary client
+                # ypos is the sum of all clients above it
+                ypos = self.group.screen.dy + sum(self.sizes[:cidx - 1])
+                # get height from precalculated height list
+                height = self.sizes[cidx - 1]
+                # place client based on calculated dimensions
+                c.place(xpos, ypos,
+                        width, height - 2 * self.border_width,
                         self.border_width, px)
-                    c.unhide()
-        else:
-            c.hide()
+                c.unhide()
+            else:
+                # main client
+                c.place(xpos, self.group.screen.dy, width,
+                        self.group.screen.dheight - 2 * self.border_width,
+                    self.border_width, px)
+                c.unhide()
 
     def get_shrink_margin(self, cidx):
         "Return how many remaining pixels a client can shrink"
