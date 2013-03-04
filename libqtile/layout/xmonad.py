@@ -235,6 +235,9 @@ class MonadTall(SingleWindow):
             c.hide()
             return
 
+        # precompute client index
+        cidx = self.clients.index(c)
+
         # single client - fullscreen
         if len(self.clients) == 1:
             px = self.group.qtile.colorPixel(self.border_focus)
@@ -248,7 +251,7 @@ class MonadTall(SingleWindow):
         # multiple clients
         else:
             # determine focus border-color
-            if self.clients.index(c) == self.focused:
+            if cidx == self.focused:
                 px = self.group.qtile.colorPixel(self.border_focus)
             else:
                 px = self.group.qtile.colorPixel(self.border_normal)
@@ -259,14 +262,14 @@ class MonadTall(SingleWindow):
 
             # calculate client's x offset
             if self.align == self._left:  # left orientation
-                if self.clients.index(c) == 0:
+                if cidx == 0:
                     # main client
                     xpos = self.group.screen.dx
                 else:
                     # secondary client
                     xpos = self.group.screen.dx + width_main
             else:  # right orientation
-                if self.clients.index(c) == 0:
+                if cidx == 0:
                     # main client
                     xpos = self.group.screen.dx + width_shared
                 else:
@@ -274,7 +277,7 @@ class MonadTall(SingleWindow):
                     xpos = self.group.screen.dx
 
             # calculate client width
-            if self.clients.index(c) == 0:
+            if cidx == 0:
                 # main client
                 width = width_main - 2 * self.border_width
             else:
@@ -282,7 +285,6 @@ class MonadTall(SingleWindow):
                 width = width_shared - 2 * self.border_width
 
             # calculate client height and place
-            cidx = self.clients.index(c)
             if cidx > 0:
                 # secondary client
                 # ypos is the sum of all clients above it
