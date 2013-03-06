@@ -308,7 +308,7 @@ class Group(object):
 class Match(object):
     ''' Match for dynamic groups
         it can match by title, class or role '''
-    def __init__(self, title=[], wm_class=[], role=[], wm_type=[]):
+    def __init__(self, title=None, wm_class=None, role=None, wm_type=None):
         """
 
         ``Match`` supports both regular expression objects (i.e. the result of
@@ -321,6 +321,14 @@ class Match(object):
         :param role: things to match against the WM_ROLE atom
         :param wm_type: things to match against the WM_TYPE atom
         """
+        if not title:
+            title = []
+        if not wm_class:
+            wm_class = []
+        if not role:
+            role = []
+        if not wm_type:
+            wm_type = []
         self._rules = [('title', t) for t in title]
         self._rules += [('wm_class', w) for w in wm_class]
         self._rules += [('role', r) for r in  role]
