@@ -282,13 +282,12 @@ class TreeTab(SingleWindow):
         self._nodes[win] = node
 
     def remove(self, win):
-        res = self.focus_next(win)
         if self._focused is win:
             self._focused = None
         self._nodes[win].remove()
         del self._nodes[win]
+        self.cmd_up()
         self.draw_panel()
-        return res
 
     def _create_panel(self):
         self._panel = window.Internal.create(self.group.qtile,
