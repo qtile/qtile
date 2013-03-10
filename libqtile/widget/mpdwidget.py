@@ -199,22 +199,31 @@ class Mpd(base._TextBox):
                'f': get_file, 'l': get_length, 'n': get_number, 
                'p': get_playlistlength, 's': get_status, 'S': get_longstatus, 
                't': get_title, 'T': get_track, 'v': get_volume, '1': get_single,
-               'r': get_repeat, 'h': get_shuffle, '%': lambda x: '^$^'}
+               'r': get_repeat, 'h': get_shuffle, }
 
     def do_format(self, string):
-        """Format strings interpret two-character sequences of "%c",
-        where c is any character. The supported sequences are in
-        formats; notably, "%%" inserts a literal "%"."""
-        while 1:
-            i = string.find('%')
-            if i == -1:
-                break
-            try:
-                repl = self.formats[string[i+1:i+2]](self)
-            except KeyError:
-                repl = "(nil)"
-            string = string[:i] + repl + string[i+2:]
-        return string.replace('^$^', '%')
+        """Interpret a format string containing "%c" sequences. The
+        matched sequences are in self.formats. The format "%%" is
+        hardcoded to insert a single % sign."""
+        l = string.split('%')
+        rv = l[0]
+        ln = False
+        # Any % in the input produces a new string in the split; %% produces an empty one
+        for i in l[1:]:
+            if ln:
+                rv += i
+                ln = False
+                continue
+            if len(i) == 0:
+                rv += "%"
+                ln = True
+                continue
+            a = self.formats[i[0]](self)
+            # if a == None:
+            #     a = ""
+            rv += a
+            rv += i[1:]
+        return rv
 
     def update(self):
         if not self.configured:
