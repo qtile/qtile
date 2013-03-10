@@ -144,7 +144,7 @@ class Mpd(base._TextBox):
         return self.to_minutes_seconds(self.song['time'])
 
     def get_number(self):
-        return self.status['song']
+        return str(int(self.status['song'])+1)
 
     def get_playlistlength(self):
         return self.status['playlistlength']
@@ -177,10 +177,29 @@ class Mpd(base._TextBox):
     def get_volume(self):
         return self.status['volume']
 
+    def get_single(self):
+        if self.status['single'] == '1':
+            return '1'
+        else:
+            return '_'
+
+    def get_repeat(self):
+        if self.status['repeat'] == '1':
+            return 'R'
+        else:
+            return '_'
+
+    def get_shuffle(self):
+        if self.status['random'] == '1':
+            return 'S'
+        else:
+            return '_'
+
     formats = {'a': get_artist, 'A': get_album, 'e': get_elapsed, 
                'f': get_file, 'l': get_length, 'n': get_number, 
                'p': get_playlistlength, 's': get_status, 'S': get_longstatus, 
-               't': get_title, 'T': get_track, 'v': get_volume, '%': lambda x: '^$^'}
+               't': get_title, 'T': get_track, 'v': get_volume, '1': get_single,
+               'r': get_repeat, 'h': get_shuffle, '%': lambda x: '^$^'}
 
     def do_format(self, string):
         """Format strings interpret two-character sequences of "%c",
