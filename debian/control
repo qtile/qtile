@@ -7,7 +7,7 @@ Standards-Version: 3.9.2
 Homepage: <http://qtile.org>
 
 Package: qtile
-Architecture: any
+Architecture: all
 Depends: python-xpyb (>= 1.3.1), python-cairo (>= 1.10.2), libxcb1, xinit, python-gobject, libcairo2, python (<< 2.8), python (>= 2.6), python-support (>= 0.90.0)
 Description: A full-featured, pure-Python tiling window manager.
  * Simple, small and extensible. It's easy to write your own layouts, widgets
