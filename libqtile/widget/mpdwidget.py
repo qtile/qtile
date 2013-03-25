@@ -12,6 +12,7 @@ from .. import bar, utils
 from mpd import MPDClient, CommandError
 import atexit
 import base
+import re
 
 
 class Mpd(base._TextBox):
@@ -144,7 +145,7 @@ class Mpd(base._TextBox):
         return self.to_minutes_seconds(self.song['time'])
 
     def get_number(self):
-        return self.status['song']
+        return str(int(self.status['song'])+1)
 
     def get_playlistlength(self):
         return self.status['playlistlength']
@@ -177,25 +178,35 @@ class Mpd(base._TextBox):
     def get_volume(self):
         return self.status['volume']
 
+    def get_single(self):
+        if self.status['single'] == '1':
+            return '1'
+        else:
+            return '_'
+
+    def get_repeat(self):
+        if self.status['repeat'] == '1':
+            return 'R'
+        else:
+            return '_'
+
+    def get_shuffle(self):
+        if self.status['random'] == '1':
+            return 'S'
+        else:
+            return '_'
+
     formats = {'a': get_artist, 'A': get_album, 'e': get_elapsed, 
                'f': get_file, 'l': get_length, 'n': get_number, 
                'p': get_playlistlength, 's': get_status, 'S': get_longstatus, 
-               't': get_title, 'T': get_track, 'v': get_volume, '%': lambda x: '^$^'}
+               't': get_title, 'T': get_track, 'v': get_volume, '1': get_single,
+               'r': get_repeat, 'h': get_shuffle, '%': lambda x: '%', }
+
+    def match_check(self, m):
+        return self.formats[m.group(1)](self)
 
     def do_format(self, string):
-        """Format strings interpret two-character sequences of "%c",
-        where c is any character. The supported sequences are in
-        formats; notably, "%%" inserts a literal "%"."""
-        while 1:
-            i = string.find('%')
-            if i == -1:
-                break
-            try:
-                repl = self.formats[string[i+1:i+2]](self)
-            except KeyError:
-                repl = "(nil)"
-            string = string[:i] + repl + string[i+2:]
-        return string.replace('^$^', '%')
+        return re.sub("%(.)", self.match_check, string)
 
     def update(self):
         if not self.configured:
