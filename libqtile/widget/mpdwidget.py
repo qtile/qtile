@@ -12,6 +12,7 @@ from .. import bar, utils
 from mpd import MPDClient, CommandError
 import atexit
 import base
+import re
 
 
 class Mpd(base._TextBox):
@@ -199,31 +200,13 @@ class Mpd(base._TextBox):
                'f': get_file, 'l': get_length, 'n': get_number, 
                'p': get_playlistlength, 's': get_status, 'S': get_longstatus, 
                't': get_title, 'T': get_track, 'v': get_volume, '1': get_single,
-               'r': get_repeat, 'h': get_shuffle, }
+               'r': get_repeat, 'h': get_shuffle, '%': lambda x: '%', }
+
+    def match_check(self, m):
+        return self.formats[m.group(1)](self)
 
     def do_format(self, string):
-        """Interpret a format string containing "%c" sequences. The
-        matched sequences are in self.formats. The format "%%" is
-        hardcoded to insert a single % sign."""
-        l = string.split('%')
-        rv = l[0]
-        ln = False
-        # Any % in the input produces a new string in the split; %% produces an empty one
-        for i in l[1:]:
-            if ln:
-                rv += i
-                ln = False
-                continue
-            if len(i) == 0:
-                rv += "%"
-                ln = True
-                continue
-            a = self.formats[i[0]](self)
-            # if a == None:
-            #     a = ""
-            rv += a
-            rv += i[1:]
-        return rv
+        return re.sub("%(.)", self.match_check, string)
 
     def update(self):
         if not self.configured:
