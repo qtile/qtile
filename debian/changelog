@@ -1,3 +1,9 @@
+qtile (0.5.0-raring1) raring; urgency=low
+
+  * Version bump for new verison of ubuntu
+
+ -- Tycho Andersen <tycho@tycho.ws>  Fri, 01 Mar 2013 16:46:59 -0500
+
 qtile (0.5.0-quantal1) quantal; urgency=low
 
   * Upgrade to the 0.5 release

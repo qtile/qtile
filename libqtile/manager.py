@@ -297,15 +297,20 @@ class Qtile(command.CommandObject):
         return False
 
     def delGroup(self, name):
-        if len(self.groups) == 1:
+        if len(self.groups) == len(self.screens) + 1:
             raise ValueError("Can't delete all groups.")
         if name in self.groupMap.keys():
             group = self.groupMap[name]
-            prev = group.prevGroup()
+            target = group.prevGroup()
+
+            # Find a group that's not currently on a screen to bring to the
+            # front. This will terminate because of our check above.
+            while target.screen:
+                target = target.prevGroup()
             for i in list(group.windows):
-                i.togroup(prev.name)
+                i.togroup(target.name)
             if self.currentGroup.name == name:
-                self.currentGroup.cmd_prevgroup()
+                self.currentScreen.setGroup(target)
             self.groups.remove(group)
             del(self.groupMap[name])
             hook.fire("delgroup", self, name)

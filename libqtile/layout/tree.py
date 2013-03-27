@@ -38,7 +38,7 @@ class TreeNode(object):
         if y >= self._children_stop or y < self._children_start:
             return
         for i in self.children:
-            res = i.click(x, y)
+            res = i.button_press(x, y)
             if res is not None:
                 return res
 
@@ -194,7 +194,7 @@ class Window(TreeNode):
         """Returns self if clicked on title else returns sibling"""
         if y >= self._title_start and y < self._children_start:
             return self
-        return super(Window, self).click(x, y)
+        return super(Window, self).button_press(x, y)
 
     def remove(self):
         self.parent.children.remove(self)
@@ -282,13 +282,12 @@ class TreeTab(SingleWindow):
         self._nodes[win] = node
 
     def remove(self, win):
-        res = self.focus_next(win)
         if self._focused is win:
             self._focused = None
         self._nodes[win].remove()
         del self._nodes[win]
+        self.cmd_up()
         self.draw_panel()
-        return res
 
     def _create_panel(self):
         self._panel = window.Internal.create(self.group.qtile,
@@ -312,7 +311,7 @@ class TreeTab(SingleWindow):
         self._drawer.draw(0, self.panel_width)
 
     def _panel_ButtonPress(self, event):
-        node = self._tree.click(event.event_x, event.event_y)
+        node = self._tree.button_press(event.event_x, event.event_y)
         if node:
             self.group.focus(node.window, False)
 

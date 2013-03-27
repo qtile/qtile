@@ -191,12 +191,7 @@ def scrub_to_utf8(text):
     elif isinstance(text, unicode):
         return text
     else:
-        try:
-            return text.decode("utf-8")
-        except UnicodeDecodeError:
-            # We don't know the provenance of this string
-            # - so we scrub it to ASCII.
-            return "".join(i for i in text if 31 < ord(i) < 127)
+        return text.decode("utf-8", "ignore")
 
 
 def escape(text):

@@ -4,6 +4,7 @@ from datetime import datetime
 from .. import bar
 import base
 
+import gobject
 
 class Clock(base._TextBox):
     """
@@ -18,10 +19,13 @@ class Clock(base._TextBox):
         """
         base._TextBox.__init__(self, " ", width, **config)
         self.fmt = fmt
+        self.configured = False
 
     def _configure(self, qtile, bar):
+        if not self.configured:
+            self.configured = True
+            gobject.idle_add(self.update)
         base._TextBox._configure(self, qtile, bar)
-        self.update()
 
     def update(self):
 

@@ -139,7 +139,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
             !Callback function should return False, otherwise it would be
             re-run forever!
         """
-        self.log.info('Adding timer')
+        self.log.debug('Adding timer for %r in %.2fs', method, seconds)
         if int(seconds) == seconds:
             return gobject.timeout_add_seconds(
                 int(seconds), method, *method_args
