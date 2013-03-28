@@ -53,6 +53,7 @@ keys = [
     Key([mod], "w",      lazy.window.kill()),
 
     Key([mod, "control"], "r", lazy.restart()),
+    Key([mod], "r", lazy.spawncmd()),
 ]
 
 groups = [
@@ -88,6 +89,7 @@ screens = [
         bottom = bar.Bar(
                     [
                         widget.GroupBox(),
+                        widget.Prompt(),
                         widget.WindowName(),
                         widget.TextBox("default config", name="default"),
                         widget.Systray(),
