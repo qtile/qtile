@@ -1,3 +1,6 @@
+Running Inside Gnome
+====================
+
 Add the following snippet to your Qtile configuration. As per `this
 page <https://live.gnome.org/SessionManagement/GnomeSession#A3._Register>`_,
 it registers Qtile with gnome-session. Without it, a "Something has gone

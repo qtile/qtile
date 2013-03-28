@@ -21,6 +21,7 @@ Configuration
 -------------
 
 * **The basics**:
+  :doc:`Default Configuration </manual/config/default>` |
   :doc:`Overview </manual/config/index>` |
   :doc:`Starting Qtile </manual/config/starting>` |
   :doc:`Hooks </manual/config/hooks>` |
