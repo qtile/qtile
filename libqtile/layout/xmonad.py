@@ -282,17 +282,10 @@ class MonadTall(SingleWindow):
                 # secondary client
                 xpos = self.group.screen.dx
 
-        # calculate client width
-        if cidx == 0:
-            # main client
-            width = width_main - 2 * self.border_width
-        else:
-            # secondary client
-            width = width_shared - 2 * self.border_width
-
         # calculate client height and place
         if cidx > 0:
             # secondary client
+            width = width_shared - 2 * self.border_width
             # ypos is the sum of all clients above it
             ypos = self.group.screen.dy + self._get_absolute_size_from_relative(sum(self.relative_sizes[:cidx - 1]))
             # get height from precalculated height list
@@ -304,6 +297,7 @@ class MonadTall(SingleWindow):
             c.unhide()
         else:
             # main client
+            width = width_main - 2 * self.border_width
             c.place(xpos, self.group.screen.dy, width,
                     self.group.screen.dheight - 2 * self.border_width,
                 self.border_width, px)
