@@ -455,10 +455,13 @@ class _Window(command.CommandObject):
 
         cls = self.window.get_wm_class() or ''
         is_java_main = 'sun-awt-X11-XFramePeer' in cls
-        is_java = is_java_main or 'sun-awt-X11-XDialogPeer' in cls
+        is_java_dialog = 'sun-awt-X11-XDialogPeer' in cls
+        is_java = is_java_main or is_java_dialog
 
-        if is_java_main and not self.hidden:
-            if "WM_TAKE_FOCUS" in self.window.get_wm_protocols():
+        if not self.hidden:
+            # Never send TAKE_FOCUS on java *dialogs*
+            if (not is_java_dialog and
+                    "WM_TAKE_FOCUS" in self.window.get_wm_protocols()):
                 vals = [
                     33,
                     32,
@@ -474,6 +477,7 @@ class _Window(command.CommandObject):
                 e = struct.pack('BBHII5I', *vals)
                 self.window.send_event(e)
 
+            # Never send FocusIn to java windows
             if not is_java and self.hints['input']:
                 self.window.set_input_focus()
             try:
