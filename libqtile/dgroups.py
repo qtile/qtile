@@ -62,14 +62,7 @@ class DGroups(object):
 
         self.groups = dgroups
         self.groupMap = {}
-        for group in self.groups:
-            self.groupMap[group.name] = group
-
-        self.rules = list(itertools.chain.from_iterable([g.rules for g in dgroups]))
-
-        for group in dgroups:
-            rules = [Rule(m, group=group.name) for m in group.matches]
-            self.rules.extend(rules)
+        self.rules = list(itertools.chain.from_iterable([g.rules for g in self.groups]))
 
         self.keys = []
 
@@ -82,10 +75,16 @@ class DGroups(object):
 
         self.timeout = {}
 
+    def add_dgroup(self, group, start=False):
+        self.groupMap[group.name] = group
+        rules = [Rule(m, group=group.name) for m in group.matches]
+        self.rules.extend(rules)
+        if start:
+            self.qtile.addGroup(group.name)
+
     def _setup_groups(self):
         for group in self.groups:
-            if group.init:
-                self.qtile.addGroup(group.name)
+            self.add_dgroup(group, group.init)
 
             if group.spawn and not self.qtile.no_spawn:
                 self.qtile.cmd_spawn(group.spawn)
