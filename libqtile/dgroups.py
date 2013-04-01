@@ -4,6 +4,7 @@ import gobject
 import libqtile.hook
 from libqtile.config import Key
 from libqtile.command import lazy
+from libqtile.config import Group, Rule
 
 def simple_key_binder(mod, keynames=None):
     """
@@ -38,23 +39,6 @@ def simple_key_binder(mod, keynames=None):
 
     return func
 
-class Rule(object):
-    """ A Rule contains a Match object, and a specification about what to do
-    when that object is matched. """
-    def __init__(self, match, group=None, float=False, intrusive=False):
-        """
-        :param match: ``Match`` object associated with this ``Rule``
-        :param float: auto float this window?
-        :param intrusive: override the group's exclusive setting?
-        """
-        self.match = match
-        self.group = group
-        self.float = float
-        self.intrusive = intrusive
-
-    def matches(self, w):
-        return self.match.compare(w)
-
 class DGroups(object):
     ''' Dynamic Groups '''
     def __init__(self, qtile, dgroups, key_binder=None, delay=1):
@@ -62,7 +46,7 @@ class DGroups(object):
 
         self.groups = dgroups
         self.groupMap = {}
-        self.rules = list(itertools.chain.from_iterable([g.rules for g in self.groups]))
+        self.rules = getattr(qtile.config, 'dgroups_app_rules', [])
 
         self.keys = []
 

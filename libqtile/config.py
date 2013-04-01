@@ -265,7 +265,7 @@ class Group(object):
     Represents a "dynamic" group. These groups can spawn apps, only allow
     certain Matched windows to be on them, hide when they're not in use, etc.
     """
-    def __init__(self, name, matches=None, rules=None, exclusive=False,
+    def __init__(self, name, matches=None, exclusive=False,
                  spawn=None, layout=None, persist=True, init=True,
                  master=None, ratio=None):
         """
@@ -273,8 +273,6 @@ class Group(object):
         :type name: string
         :param matches: list of ``Match`` objects whose  windows will be assigned to this group
         :type matches: default ``None``
-        :param rules: list of ``Rule`` objectes wich are applied to this group
-        :type rules: default ``None``
         :param exclusive: when other apps are started in this group, should we allow them here or not?
         :type exclusive: boolean
         :param spawn: this will be ``exec()`` d when the group is created
@@ -293,11 +291,6 @@ class Group(object):
         self.layout = layout
         self.persist = persist
         self.init = init
-        self.rules = rules
-        if self.rules is None:
-            self.rules = []
-        for rule in self.rules:
-            rule.group = self.name
         if matches is None:
             matches = []
         self.matches = matches
@@ -357,3 +350,20 @@ class Match(object):
             if value and match_func(value):
                 return True
         return False
+
+class Rule(object):
+    """ A Rule contains a Match object, and a specification about what to do
+    when that object is matched. """
+    def __init__(self, match, group=None, float=False, intrusive=False):
+        """
+        :param match: ``Match`` object associated with this ``Rule``
+        :param float: auto float this window?
+        :param intrusive: override the group's exclusive setting?
+        """
+        self.match = match
+        self.group = group
+        self.float = float
+        self.intrusive = intrusive
+
+    def matches(self, w):
+        return self.match.compare(w)
