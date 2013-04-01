@@ -4,6 +4,12 @@ import base
 
 class TaskList(base._Widget):
     defaults = [
+        ("font", "Arial", "Default font"),
+        ("fontsize", None, "Font size. Calculated if None."),
+        ("foreground", "ffffff", "Foreground colour"),
+        ("fontshadow", None,
+            "font shadow color, default is None(no shadow)"),
+        ("padding", 0, "Padding. default 0"),
         ("margin_y", 3, "Y margin outside the box"),
         ("margin_x", 3, "X margin outside the box"),
         ("borderwidth", 2, "Current group border width"),
