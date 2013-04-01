@@ -297,7 +297,8 @@ class Qtile(command.CommandObject):
         return False
 
     def delGroup(self, name):
-        if len(self.groups) == len(self.screens) + 1:
+        # one group per screen is needed
+        if len(self.groups) == len(self.screens):
             raise ValueError("Can't delete all groups.")
         if name in self.groupMap.keys():
             group = self.groupMap[name]
