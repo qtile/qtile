@@ -78,6 +78,7 @@ for i in groups:
     )
 
 dgroups_key_binder = None
+dgroups_app_rules = []
 
 layouts = [
     layout.Max(),
