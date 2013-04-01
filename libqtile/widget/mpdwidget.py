@@ -203,7 +203,10 @@ class Mpd(base._TextBox):
                'r': get_repeat, 'h': get_shuffle, '%': lambda x: '%', }
 
     def match_check(self, m):
-        return self.formats[m.group(1)](self)
+        try:
+            return self.formats[m.group(1)](self)
+        except KeyError:
+            return "(nil)"
 
     def do_format(self, string):
         return re.sub("%(.)", self.match_check, string)
