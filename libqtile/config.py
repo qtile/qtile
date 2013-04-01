@@ -266,7 +266,8 @@ class Group(object):
     certain Matched windows to be on them, hide when they're not in use, etc.
     """
     def __init__(self, name, matches=None, rules=None, exclusive=False,
-                 spawn=None, layout=None, persist=True, init=True,):
+                 spawn=None, layout=None, persist=True, init=True,
+                 master=None, ratio=None):
         """
         :param name: the name of this group
         :type name: string
@@ -301,9 +302,10 @@ class Group(object):
             matches = []
         self.matches = matches
 
-        # undocumented, any idea what these do?
-        self.master = None
-        self.ratio = None
+        # set the master window of the tile layout
+        self.master = master
+        # set the rario of the tile layout
+        self.ratio = ratio
 
 class Match(object):
     ''' Match for dynamic groups
