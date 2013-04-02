@@ -82,15 +82,6 @@ class DGroups(object):
             libqtile.hook.subscribe.changegroup(
                     lambda: self.key_binder(self))
 
-    def shuffle_groups(self, lst, match):
-        masters = []
-        for client in lst:
-            if match.compare(client):
-                masters.append(client)
-        for master in masters:
-            lst.remove(master)
-            lst.insert(0, master)
-
     def _add(self, client):
         if client in self.timeout:
             self.qtile.log.info('Remove dgroup source')
@@ -117,17 +108,11 @@ class DGroups(object):
                     group = self.groupMap.get(rule.group)
                     if group:
                         if group_added:
-                            layout = group.layout
-                            ratio = group.ratio
-                            if layout:
-                                group_obj.layout = layout
-                            if ratio:
-                                group_obj.ratio = ratio
-                        master = group.master
-                        if master:
-                            group_obj.layout.shuffle(
-                                   lambda lst: self.shuffle_groups(
-                                       lst, master))
+                            for k, v in group.layout_opts:
+                                if callable(v):
+                                    v(group_obj.layout)
+                                else:
+                                    setattr(group_obj.layout, k, v)
 
                 if rule.float:
                     client.enablefloating()

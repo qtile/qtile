@@ -267,7 +267,7 @@ class Group(object):
     """
     def __init__(self, name, matches=None, exclusive=False,
                  spawn=None, layout=None, persist=True, init=True,
-                 master=None, ratio=None):
+                 layout_opts=None):
         """
         :param name: the name of this group
         :type name: string
@@ -294,11 +294,7 @@ class Group(object):
         if matches is None:
             matches = []
         self.matches = matches
-
-        # set the master window of the tile layout
-        self.master = master
-        # set the rario of the tile layout
-        self.ratio = ratio
+        self.layout_opts = layout_opts or {}
 
 class Match(object):
     ''' Match for dynamic groups

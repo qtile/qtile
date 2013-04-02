@@ -109,6 +109,11 @@ class Tile(Layout):
             function(self.clients)
             self.group.layoutAll(True)
 
+    def shuffleMatch(self, match):
+        if self.clients:
+            masters = [c for c in self.clients if match.compare(c)]
+            self.clients = masters + [c for c in self.clients if c not in masters]
+
     def shift(self, idx1, idx2):
         if self.clients:
             self.clients[idx1], self.clients[idx2] = \
