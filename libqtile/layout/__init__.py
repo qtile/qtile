@@ -7,3 +7,4 @@ from ratiotile import RatioTile
 from slice import Slice
 from tree import TreeTab
 from zoomy import Zoomy
+from matrix import Matrix
