@@ -45,7 +45,7 @@ class Pacman(base._TextBox):
         base._TextBox.draw(self)
 
     def updates(self):
-        pacman = subprocess.Popen(['pacman', '-Qu'], stdout=subprocess.PIPE)
+        pacman = subprocess.Popen(['checkupdates'], stdout=subprocess.PIPE)
         return len(pacman.stdout.readlines())
 
     def update(self):
