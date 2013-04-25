@@ -103,6 +103,7 @@ class Screen(command.CommandObject):
         A physical screen, and its associated paraphernalia.
     """
     group = None
+    previous_group = None
 
     def __init__(self, top=None, bottom=None, left=None, right=None,
                  x=None, y=None, width=None, height=None):
@@ -175,8 +176,14 @@ class Screen(command.CommandObject):
         Put group on this screen
         """
         if new_group.screen == self:
-            return
-        elif new_group.screen:
+          return
+
+        self.previous_group = self.group
+
+        if new_group is None:
+          return
+
+        if new_group.screen:
             # g1 <-> s1 (self)
             # g2 (new_group)<-> s2 to
             # g1 <-> s2
@@ -259,6 +266,38 @@ class Screen(command.CommandObject):
             Resize the screen.
         """
         self.resize(x, y, w, h)
+
+    def cmd_nextgroup(self, skip_empty=False):
+        """
+            Switch to the next group.
+        """
+        if skip_empty:
+            n = self.group.nextEmptyGroup()
+        else:
+            n = self.group.nextGroup()
+        self.setGroup(n)
+        return n.name
+
+    def cmd_prevgroup(self, skip_empty=False):
+        """
+            Switch to the previous group.
+        """
+        if skip_empty:
+            n = self.group.prevEmptyGroup()
+        else:
+            n = self.group.prevGroup()
+        self.setGroup(n)
+        return n.name
+
+    def cmd_grouptoggle(self, groupName=None):
+        """
+            Switch to the selected group or to the previously active one.
+        """
+        group = self.qtile.groupMap.get(groupName)
+        if group in (self.group, None):
+          group = self.previous_group
+        self.setGroup(group)
+
 
 class Group(object):
     """
