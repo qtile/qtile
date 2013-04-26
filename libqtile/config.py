@@ -289,7 +289,7 @@ class Screen(command.CommandObject):
         self.setGroup(n)
         return n.name
 
-    def cmd_grouptoggle(self, groupName=None):
+    def cmd_togglegroup(self, groupName=None):
         """
             Switch to the selected group or to the previously active one.
         """
