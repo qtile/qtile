@@ -302,7 +302,10 @@ class Qtile(command.CommandObject):
             raise ValueError("Can't delete all groups.")
         if name in self.groupMap.keys():
             group = self.groupMap[name]
-            target = group.prevGroup()
+            if group.screen.previous_group:
+                target = group.screen.previous_group
+            else:
+                target = group.prevGroup()
 
             # Find a group that's not currently on a screen to bring to the
             # front. This will terminate because of our check above.
