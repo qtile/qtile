@@ -307,29 +307,6 @@ class _Group(command.CommandObject):
     def nextEmptyGroup(self):
         return self._dirSkipEmptyGroup(1)
 
-    # FIXME cmd_nextgroup and cmd_prevgroup should be on the Screen object.
-    def cmd_nextgroup(self, skip_empty=False):
-        """
-            Switch to the next group.
-        """
-        if skip_empty:
-            n = self.nextEmptyGroup()
-        else:
-            n = self.nextGroup()
-        self.qtile.currentScreen.setGroup(n)
-        return n.name
-
-    def cmd_prevgroup(self, skip_empty=False):
-        """
-            Switch to the previous group.
-        """
-        if skip_empty:
-            n = self.prevEmptyGroup()
-        else:
-            n = self.prevGroup()
-        self.qtile.currentScreen.setGroup(n)
-        return n.name
-
     def cmd_unminimise_all(self):
         """
             Unminimise all windows in this group.
@@ -377,3 +354,4 @@ class _Group(command.CommandObject):
             Switch position of current group with name
         """
         self.qtile.cmd_switch_groups(self.name, name)
+

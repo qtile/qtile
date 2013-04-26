@@ -251,11 +251,23 @@ def test_adddelgroup(self):
 @Xephyr(False, TestConfig())
 def test_nextprevgroup(self):
     start = self.c.group.info()["name"]
-    ret = self.c.group.nextgroup()
+    ret = self.c.screen.nextgroup()
     assert self.c.group.info()["name"] != start
     assert self.c.group.info()["name"] == ret
-    ret = self.c.group.prevgroup()
+    ret = self.c.screen.prevgroup()
     assert self.c.group.info()["name"] == start
+
+
+@Xephyr(False, TestConfig())
+def test_togglegroup(self):
+    self.c.group["a"].toscreen()
+    self.c.group["b"].toscreen()
+    self.c.screen.togglegroup("c")
+    assert self.c.group.info()["name"] == "c"
+    self.c.screen.togglegroup("c")
+    assert self.c.group.info()["name"] == "b"
+    self.c.screen.togglegroup()
+    assert self.c.group.info()["name"] == "c"
 
 
 @Xephyr(False, TestConfig())
