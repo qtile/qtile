@@ -302,7 +302,7 @@ class Qtile(command.CommandObject):
             raise ValueError("Can't delete all groups.")
         if name in self.groupMap.keys():
             group = self.groupMap[name]
-            if group.screen.previous_group:
+            if group.screen and group.screen.previous_group:
                 target = group.screen.previous_group
             else:
                 target = group.prevGroup()
