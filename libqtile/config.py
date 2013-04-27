@@ -176,12 +176,12 @@ class Screen(command.CommandObject):
         Put group on this screen
         """
         if new_group.screen == self:
-          return
+            return
 
         self.previous_group = self.group
 
         if new_group is None:
-          return
+            return
 
         if new_group.screen:
             # g1 <-> s1 (self)
