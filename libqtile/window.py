@@ -1011,7 +1011,8 @@ class Window(_Window):
 
         opcode = xcb.xproto.ClientMessageData(event, 0, 20).data32[2]
         data = xcb.xproto.ClientMessageData(event, 12, 20)
-        if atoms["_NET_WM_STATE"] == opcode:
+        if (atoms["_NET_WM_STATE"] == opcode and 
+                self.qtile.config.auto_fullscreen):
             fullscreen_atom = atoms["_NET_WM_STATE_FULLSCREEN"]
 
             prev_state = self.window.get_property('_NET_WM_STATE',
