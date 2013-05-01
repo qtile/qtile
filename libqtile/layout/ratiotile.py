@@ -271,12 +271,12 @@ class RatioTile(Layout):
                 'layout_info': self.layout_info
         }
 
-    def up(self):
+    def shuffleUp(self):
         if self.windows:
             utils.shuffleUp(self.windows)
             self.group.layoutAll()
 
-    def down(self):
+    def shuffleDown(self):
         if self.windows:
             utils.shuffleDown(self.windows)
             self.group.layoutAll()
@@ -300,16 +300,16 @@ class RatioTile(Layout):
             return self.windows[idx - 1]
 
     def getNextClient(self):
-        nextindex = self.windows.index(self.focused) + 1
-        if nextindex >= len(self.windows):
-            nextindex = 0
-        return self.windows[nextindex]
-
-    def getPreviousClient(self):
         previndex = self.windows.index(self.focused) - 1
         if previndex < 0:
             previndex = len(self.windows) - 1
         return self.windows[previndex]
+
+    def getPreviousClient(self):
+        nextindex = self.windows.index(self.focused) + 1
+        if nextindex >= len(self.windows):
+            nextindex = 0
+        return self.windows[nextindex]
 
     def next(self):
         n = self.getPreviousClient()
@@ -325,16 +325,22 @@ class RatioTile(Layout):
             self.group.layoutAll()
 
     def cmd_down(self):
-        self.down()
+        self.previous()
 
     def cmd_up(self):
-        self.up()
+        self.next()
 
     def cmd_next(self):
         self.next()
 
     def cmd_previous(self):
         self.previous()
+
+    def cmd_shuffle_down(self):
+        self.shuffleDown()
+
+    def cmd_shuffle_up(self):
+        self.shuffleUp()
 
     def cmd_decrease_ratio(self):
         new_ratio = self.ratio - self.ratio_increment
