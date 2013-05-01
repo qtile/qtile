@@ -69,7 +69,7 @@ class AGroupBox(_GroupBase):
         self.add_defaults(AGroupBox.defaults)
 
     def button_press(self, x, y, button):
-        self.bar.screen.group.cmd_nextgroup()
+        self.bar.screen.cmd_nextgroup()
 
     def calculate_width(self):
         return self.box_width(self.qtile.groups)
