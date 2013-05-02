@@ -100,6 +100,10 @@ FULLSCREEN = 4
 TOP = 5
 MINIMIZED = 6
 
+_NET_WM_STATE_REMOVE = 0
+_NET_WM_STATE_ADD = 1
+_NET_WM_STATE_TOGGLE = 2
+
 
 class _Window(command.CommandObject):
     def __init__(self, window, qtile):
@@ -134,7 +138,7 @@ class _Window(command.CommandObject):
 
         self.hints = {
             'input': True,
-            'state': NormalState,  # Normal state
+            'state': self.state,
             'icon_pixmap': None,
             'icon_window': None,
             'icon_x': 0,
@@ -962,6 +966,7 @@ class Window(_Window):
                 self.bordercolor,
                 twice=True,
             )
+        self.updateState()
         return False
 
     def update_wm_net_icon(self):
@@ -1001,6 +1006,44 @@ class Window(_Window):
         self.icons = icons
         hook.fire("net_wm_icon_change", self)
 
+    def handle_ClientMessage(self, event):
+        atoms = self.qtile.conn.atoms
+
+        opcode = xcb.xproto.ClientMessageData(event, 0, 20).data32[2]
+        data = xcb.xproto.ClientMessageData(event, 12, 20)
+        if (atoms["_NET_WM_STATE"] == opcode and 
+                self.qtile.config.auto_fullscreen):
+            fullscreen_atom = atoms["_NET_WM_STATE_FULLSCREEN"]
+
+            prev_state = self.window.get_property('_NET_WM_STATE',
+                "ATOM", unpack='I')
+            if not prev_state:
+                prev_state = []
+                if self.fullscreen:
+                    prev_state.append(fullscreen_atom)
+
+            current_state = set(prev_state)
+
+            action = data.data32[0]
+            for prop in (data.data32[1], data.data32[2]):
+                if not prop:
+                    # skip 0
+                    continue
+
+                prop_name = atoms.get_name(prop)
+
+                if action == _NET_WM_STATE_REMOVE:
+                    current_state.discard(prop)
+                elif action == _NET_WM_STATE_ADD:
+                    current_state.add(prop)
+                elif action == _NET_WM_STATE_TOGGLE:
+                    current_state ^= set([prop]) # toggle :D
+
+            # add support for additional flags here
+            self.fullscreen = (fullscreen_atom in current_state)
+
+            self.window.set_property('_NET_WM_STATE', list(current_state))
+
     def handle_PropertyNotify(self, e):
         name = self.qtile.conn.atoms.get_name(e.atom)
         self.qtile.log.debug("PropertyNotifyEvent: %s" % name)
@@ -1009,7 +1052,7 @@ class Window(_Window):
         elif name == "WM_HINTS":
             self.updateHints()
         elif name == "WM_NORMAL_HINTS":
-            pass
+            self.updateHints()
         elif name == "WM_NAME":
             self.updateName()
         elif name == "_NET_WM_NAME":
@@ -1033,7 +1076,11 @@ class Window(_Window):
         elif name == "WM_PROTOCOLS":
             pass
         elif name == "_NET_WM_DESKTOP":
-            pass
+            # Some windows set the state(fullscreen) when starts,
+            # updateState is here because the group and the screen
+            # are set when the property is emitted
+            #self.updateState()
+            self.updateState()
         elif name == "_NET_WM_USER_TIME":
             if not self.qtile.config.follow_mouse_focus and \
                             self.group.currentWindow != self:

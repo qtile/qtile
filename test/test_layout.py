@@ -41,6 +41,7 @@ def assertFocusPath(self, *names):
 
 
 class MatrixConfig:
+    auto_fullscreen = True
     main = None
     groups = [
         libqtile.config.Group("a"),
@@ -110,6 +111,7 @@ def test_matrix_add_remove_columns(self):
 
 
 class MaxConfig:
+    auto_fullscreen = True
     main = None
     groups = [
         libqtile.config.Group("a"),
@@ -156,6 +158,7 @@ def test_max_remove(self):
 
 
 class StackConfig:
+    auto_fullscreen = True
     main = None
     groups = [
         libqtile.config.Group("a"),
@@ -350,6 +353,7 @@ def test_stack_info(self):
 
 
 class RatioTileConfig:
+    auto_fullscreen = True
     main = None
     groups = [
         libqtile.config.Group("a"),
@@ -505,6 +509,7 @@ def test_ratiotile_basic(self):
 
 
 class TileConfig:
+    auto_fullscreen = True
     main = None
     groups = [
         libqtile.config.Group("a"),
@@ -587,6 +592,7 @@ def test_tile_remove(self):
 
 
 class SliceConfig:
+    auto_fullscreen = True
     main = None
     groups = [
         libqtile.config.Group("a"),
@@ -673,6 +679,7 @@ def test_all_slices(self):
 
 
 class ZoomyConfig:
+    auto_fullscreen = True
     main = None
     groups = [
         libqtile.config.Group("a"),

@@ -9,6 +9,7 @@ from utils import Xephyr
 
 
 class GBConfig:
+    auto_fullscreen = True
     keys = []
     mouse = []
     groups = [
@@ -137,6 +138,7 @@ def test_groupbox_button_press(self):
 
 
 class GeomConf:
+    auto_fullscreen = False
     main = None
     keys = []
     mouse = []

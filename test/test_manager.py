@@ -19,6 +19,7 @@ from nose.plugins.attrib import attr
 
 
 class TestConfig:
+    auto_fullscreen = True
     groups = [
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
@@ -58,6 +59,7 @@ class TestConfig:
 
 
 class BareConfig:
+    auto_fullscreen = True
     groups = [
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
@@ -820,6 +822,7 @@ class _Config:
                         20
                     ),
     )]
+    auto_fullscreen = True
 
 
 class ClientNewStaticConfig(_Config):

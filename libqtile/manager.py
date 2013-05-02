@@ -107,6 +107,18 @@ class Qtile(command.CommandObject):
                 EventMask.LeaveWindow)
         )
 
+        self.root.set_property('_NET_SUPPORTED',
+            [self.conn.atoms[x] for x in xcbq.SUPPORTED_ATOMS])
+
+        self.supporting_wm_check_window = self.conn.create_window(-1, -1, 1, 1)
+        self.root.set_property('_NET_SUPPORTING_WM_CHECK',
+            self.supporting_wm_check_window.wid)
+
+        # TODO: maybe allow changing the name without external tools?
+        self.supporting_wm_check_window.set_property('_NET_WM_NAME', "qtile")
+        self.supporting_wm_check_window.set_property('_NET_SUPPORTING_WM_CHECK',
+            self.supporting_wm_check_window.wid)
+
         if config.main:
             config.main(self)
 

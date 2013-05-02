@@ -41,6 +41,7 @@ class CallConfig(object):
         )
     ]
     main = None
+    auto_fullscreen = True
 
 
 @Xephyr(True, CallConfig())
@@ -121,6 +122,7 @@ def test_selectors():
 
 
 class ServerConfig(object):
+    auto_fullscreen = True
     keys = []
     mouse = []
     groups = [
