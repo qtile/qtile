@@ -57,8 +57,31 @@ class Volume(base._TextBox):
             vol = self.get_volume()
             if vol != self.volume:
                 self.volume = vol
-                self.draw()
+                # Update the underlying canvas size before actually attempting
+                # to figure out how big it is and draw it.
+                self._update_drawer()
+                self.bar.draw()
         return True
+
+    def _update_drawer(self):
+        if self.theme_path:
+            self.drawer.clear(self.background or self.bar.background)
+            if self.volume <= 0:
+                img_name = 'audio-volume-muted'
+            elif self.volume <= 30:
+                img_name = 'audio-volume-low'
+            elif self.volume < 80:
+                img_name = 'audio-volume-medium'
+            elif self.volume >= 80:
+                img_name = 'audio-volume-high'
+
+            self.drawer.ctx.set_source(self.surfaces[img_name])
+            self.drawer.ctx.paint()
+        else:
+            if self.volume == -1:
+                self.text = 'M'
+            else:
+                self.text = '%s%%' % self.volume
 
     def setup_images(self):
         for img_name in ('audio-volume-high', 'audio-volume-low',
@@ -113,22 +136,6 @@ class Volume(base._TextBox):
 
     def draw(self):
         if self.theme_path:
-            self.drawer.clear(self.background or self.bar.background)
-            if self.volume <= 0:
-                img_name = 'audio-volume-muted'
-            elif self.volume <= 30:
-                img_name = 'audio-volume-low'
-            elif self.volume < 80:
-                img_name = 'audio-volume-medium'
-            elif self.volume >= 80:
-                img_name = 'audio-volume-high'
-
-            self.drawer.ctx.set_source(self.surfaces[img_name])
-            self.drawer.ctx.paint()
             self.drawer.draw(self.offset, self.width)
         else:
-            if self.volume == -1:
-                self.text = 'M'
-            else:
-                self.text = '%s%%' % self.volume
             base._TextBox.draw(self)
