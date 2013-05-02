@@ -76,17 +76,13 @@ class _Group(command.CommandObject):
         if self.screen and len(self.windows):
             with self.disableMask(xcb.xproto.EventMask.EnterWindow):
                 normal = [x for x in self.windows if not x.floating]
-                normalFloating = [x for x in self.windows
-                    if x.floating and not x.minimized and (x.fullscreen or x.maximized)]
-                alwaysFloating = [x for x in self.windows
-                    if x.floating and not x.minimized and not (x.fullscreen or x.maximized)]
+                floating = [x for x in self.windows
+                    if x.floating and not x.minimized]
                 screen = self.screen.get_rect()
                 if normal:
                     self.layout.layout(normal, screen)
-                if normalFloating:
-                    self.floating_layout.layout(normalFloating, screen)
-                if alwaysFloating:
-                    self.floating_layout.layout(alwaysFloating, screen)
+                if floating:
+                    self.floating_layout.layout(floating, screen)
                 if (self.currentWindow and
                     self.screen == self.qtile.currentScreen):
                     self.currentWindow.focus(warp)
