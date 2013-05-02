@@ -1156,10 +1156,7 @@ class Window(_Window):
         self.disablefloating()
 
     def cmd_bring_to_front(self):
-        if self.floating:
-            self.window.configure(stackmode=StackMode.Above)
-        else:
-            self._reconfigure_floating()  # atomatically above
+        self.window.configure(stackmode=StackMode.Above)
 
     def cmd_match(self, *args, **kwargs):
         return self.match(*args, **kwargs)
