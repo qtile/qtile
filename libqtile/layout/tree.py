@@ -286,7 +286,6 @@ class TreeTab(SingleWindow):
             self._focused = None
         self._nodes[win].remove()
         del self._nodes[win]
-        self.cmd_up()
         self.draw_panel()
 
     def _create_panel(self):
