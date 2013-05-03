@@ -13,6 +13,8 @@ class Notify(base._TextBox):
     defaults = [
         ("foreground_urgent", "ff0000", "Foreground urgent priority colour"),
         ("foreground_low", "dddddd", "Foreground low priority  colour"),
+        ("default_timeout", None,
+            "Default timeout (seconds) for notifications"),
     ]
 
     def __init__(self, width=bar.CALCULATED, **config):
@@ -43,6 +45,8 @@ class Notify(base._TextBox):
         self.current_id = notif.id - 1
         if notif.timeout and notif.timeout > 0:
             self.timeout_add(notif.timeout / 1000, self.clear)
+        elif self.default_timeout:
+            self.timeout_add(self.default_timeout, self.clear)
         self.bar.draw()
         return True
 
