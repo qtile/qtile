@@ -34,6 +34,6 @@ Example
 
     # allow mod3+1 through mod3+0 to bind to groups; if you bind your groups
     # by hand in your config, you don't need to do this.
-    from libqtile.dgroups simple_key_binder
+    from libqtile.dgroups import simple_key_binder
     dgroups_key_binder = simple_key_binder("mod3")
 
