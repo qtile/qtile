@@ -185,7 +185,7 @@ class Screen(command.CommandObject):
 
         if new_group.screen:
             # g1 <-> s1 (self)
-            # g2 (new_group)<-> s2 to
+            # g2 (new_group) <-> s2 to
             # g1 <-> s2
             # g2 <-> s1
             g1 = self.group
@@ -295,7 +295,7 @@ class Screen(command.CommandObject):
         """
         group = self.qtile.groupMap.get(groupName)
         if group in (self.group, None):
-          group = self.previous_group
+            group = self.previous_group
         self.setGroup(group)
 
 
@@ -336,8 +336,10 @@ class Group(object):
         self.layout_opts = layout_opts or {}
 
 class Match(object):
-    ''' Match for dynamic groups
-        it can match by title, class or role '''
+    """
+        Match for dynamic groups
+        It can match by title, class or role.
+    """
     def __init__(self, title=None, wm_class=None, role=None, wm_type=None):
         """
 
@@ -387,8 +389,10 @@ class Match(object):
         return False
 
 class Rule(object):
-    """ A Rule contains a Match object, and a specification about what to do
-    when that object is matched. """
+    """
+        A Rule contains a Match object, and a specification about what to do
+        when that object is matched.
+    """
     def __init__(self, match, group=None, float=False, intrusive=False):
         """
         :param match: ``Match`` object associated with this ``Rule``
