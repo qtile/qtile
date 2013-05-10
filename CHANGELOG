@@ -1,4 +1,4 @@
-qtile $NEXT, released $DATE:
+qtile 0.6, released 2013-05-11:
     !!! Config breakage !!!
     This release breaks your config file in several ways:
         - The Textbox widget no longer takes a ``name'' positional parameter,
