@@ -388,6 +388,12 @@ class Match(object):
                 return True
         return False
 
+    def map(callback, clients):
+        """ Apply callback to each client that matches this Match """
+        for c in clients:
+            if self.compare(c):
+                callback(c)
+
 class Rule(object):
     """
         A Rule contains a Match object, and a specification about what to do
