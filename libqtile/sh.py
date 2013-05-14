@@ -109,9 +109,9 @@ class QSh:
         if obj.parent and obj.myselector is None:
             t, itms = obj.parent.items(obj.name)
             attrs = obj._contains if t else None
-            return attrs, itms
+            return (attrs, itms)
         else:
-            return obj._contains, []
+            return (obj._contains, [])
 
     def _ls(self, obj):
         attrs, itms = self._inspect(obj)
@@ -201,19 +201,19 @@ class QSh:
         cmds = self._commands()
         if not arg:
             lst = [
-                    "help command   -- Help for a specific command.",
-                    "",
-                    "Builtins:",
-                    "=========",
-                    self.columnize(self.builtins),
-                  ]
+                "help command   -- Help for a specific command.",
+                "",
+                "Builtins:",
+                "=========",
+                self.columnize(self.builtins),
+            ]
             if cmds:
                 lst += [
                     "",
                     "Commands for this object:",
                     "=========================",
                     self.columnize(cmds),
-                  ]
+                ]
             return "\n".join(lst)
         elif arg in cmds:
             return self._call("doc", "(\"%s\")" % arg)
@@ -234,7 +234,7 @@ class QSh:
     def _call(self, cmd_name, args):
         cmds = self._commands()
         if cmd_name not in cmds:
-            return "No such command: %s"%cmd_name
+            return "No such command: %s" % cmd_name
 
         cmd = getattr(self.current, cmd_name)
         if args:
@@ -256,7 +256,8 @@ class QSh:
             # on restart, try to reconnect
             if cmd_name == 'restart':
                 client = command.Client(self.clientroot.client.fname)
-                self.clientroot, self.current = client, client
+                self.clientroot = client
+                self.current = client
             else:
                 raise
 
@@ -272,10 +273,11 @@ class QSh:
 
             match = re.search(r"\W", line)
             if match:
-                cmd, args = line[:match.start()].strip(), line[
-                    match.start():].strip()
+                cmd = line[:match.start()].strip()
+                args = line[match.start():].strip()
             else:
-                cmd, args = line, ""
+                cmd = line
+                args = ""
 
             builtin = getattr(self, "do_" + cmd, None)
             if builtin:

@@ -57,7 +57,7 @@ class Qtile(command.CommandObject):
                  displayName=None, fname=None, no_spawn=False, log=None,
                  state=None):
         gobject.threads_init()
-        if log == None:
+        if not log:
             log = init_log()
         self.log = log
         if hasattr(config, "log_level"):
@@ -116,8 +116,10 @@ class Qtile(command.CommandObject):
 
         # TODO: maybe allow changing the name without external tools?
         self.supporting_wm_check_window.set_property('_NET_WM_NAME', "qtile")
-        self.supporting_wm_check_window.set_property('_NET_SUPPORTING_WM_CHECK',
-            self.supporting_wm_check_window.wid)
+        self.supporting_wm_check_window.set_property(
+                '_NET_SUPPORTING_WM_CHECK',
+                self.supporting_wm_check_window.wid
+        )
 
         if config.main:
             config.main(self)
@@ -289,9 +291,10 @@ class Qtile(command.CommandObject):
             index = 0
 
         self.root.set_property("_NET_NUMBER_OF_DESKTOPS", len(self.groups))
-        self.root.set_property("_NET_DESKTOP_NAMES", "\0".join(
-                [i.name for i in self.groups])
-            )
+        self.root.set_property(
+                "_NET_DESKTOP_NAMES",
+                "\0".join([i.name for i in self.groups])
+        )
         self.root.set_property("_NET_CURRENT_DESKTOP", index)
 
     def addGroup(self, name):
@@ -488,7 +491,7 @@ class Qtile(command.CommandObject):
                 eventmask,
                 xcb.xproto.GrabMode.Async,
                 xcb.xproto.GrabMode.Async,
-                )
+            )
             if self.numlockMask:
                 self.root.grab_button(
                     i.button_code,
@@ -497,7 +500,7 @@ class Qtile(command.CommandObject):
                     eventmask,
                     xcb.xproto.GrabMode.Async,
                     xcb.xproto.GrabMode.Async,
-                    )
+                )
                 self.root.grab_button(
                     i.button_code,
                     i.modmask | self.numlockMask | xcbq.ModMasks["lock"],
@@ -505,7 +508,7 @@ class Qtile(command.CommandObject):
                     eventmask,
                     xcb.xproto.GrabMode.Async,
                     xcb.xproto.GrabMode.Async,
-                    )
+                )
 
     def grabKeys(self):
         self.root.ungrab_key(None, None)
@@ -577,7 +580,8 @@ class Qtile(command.CommandObject):
         self.log.info('Adding io watch')
         display_tag = gobject.io_add_watch(
             self.conn.conn.get_file_descriptor(),
-            gobject.IO_IN, self._xpoll)
+            gobject.IO_IN, self._xpoll
+        )
         try:
             context = gobject.main_context_default()
             while True:
@@ -613,8 +617,8 @@ class Qtile(command.CommandObject):
         """
         result = []
         for i in self.screens:
-            if (x >= i.x and x <= i.x + i.width and
-                y >= i.y and y <= i.y + i.height):
+            if x >= i.x and x <= i.x + i.width and \
+                    y >= i.y and y <= i.y + i.height:
                 result.append(i)
         if len(result) == 1:
             return result[0]
@@ -633,7 +637,7 @@ class Qtile(command.CommandObject):
         having leftmost corner above viewport.
         """
         normal = self.find_screen(x, y)
-        if normal is not None:
+        if normal:
             return normal
         x_match = []
         y_match = []
@@ -745,7 +749,7 @@ class Qtile(command.CommandObject):
                         "Mouse command error %s: %s" % (i.name, val))
                     return
             else:
-                val = 0, 0
+                val = (0, 0)
             self._drag = x, y, val[0], val[1], m.commands
             self.root.grab_pointer(
                 True,
@@ -754,7 +758,7 @@ class Qtile(command.CommandObject):
                 xcbq.ButtonReleaseMask,
                 xcb.xproto.GrabMode.Async,
                 xcb.xproto.GrabMode.Async,
-                )
+            )
 
     def handle_ButtonRelease(self, e):
         button_code = e.detail
@@ -780,19 +784,26 @@ class Qtile(command.CommandObject):
             for i in cmd:
                 if i.check(self):
                     status, val = self.server.call(
-                        (i.selectors, i.name, i.args +
-                         (rx + dx, ry + dy), i.kwargs))
+                        (
+                            i.selectors,
+                            i.name,
+                            i.args + (rx + dx, ry + dy),
+                            i.kwargs
+                        )
+                    )
                     if status in (command.ERROR, command.EXCEPTION):
                         self.log.error(
-                            "Mouse command error %s: %s" % (i.name, val))
+                            "Mouse command error %s: %s" % (i.name, val)
+                        )
 
     def handle_ConfigureNotify(self, e):
         """
             Handle xrandr events.
         """
         screen = self.currentScreen
-        if (e.window == self.root.wid and
-            e.width != screen.width and e.height != screen.height):
+        if e.window == self.root.wid and \
+                e.width != screen.width and \
+                e.height != screen.height:
             screen.resize(0, 0, e.width, e.height)
 
     def handle_ConfigureRequest(self, e):
@@ -856,17 +867,17 @@ class Qtile(command.CommandObject):
 
     def _items(self, name):
         if name == "group":
-            return True, self.groupMap.keys()
+            return (True, self.groupMap.keys())
         elif name == "layout":
-            return True, range(len(self.currentGroup.layouts))
+            return (True, range(len(self.currentGroup.layouts)))
         elif name == "widget":
-            return False, self.widgetMap.keys()
+            return (False, self.widgetMap.keys())
         elif name == "bar":
-            return False, [x.position for x in self.currentScreen.gaps]
+            return (False, [x.position for x in self.currentScreen.gaps])
         elif name == "window":
-            return True, self.listWID()
+            return (True, self.listWID())
         elif name == "screen":
-            return True, range(len(self.screens))
+            return (True, range(len(self.screens)))
 
     def _select(self, name, sel):
         if name == "group":
@@ -984,7 +995,7 @@ class Qtile(command.CommandObject):
         for i in self.screens:
             lst.append(dict(
                 index=i.index,
-                group=i.group.name if i.group is not None else None,
+                group=i.group.name if i.group else None,
                 x=i.x,
                 y=i.y,
                 width=i.width,
@@ -1086,28 +1097,34 @@ class Qtile(command.CommandObject):
             Move to next screen
         """
         return self.toScreen(
-            (self.screens.index(self.currentScreen) + 1) % len(self.screens))
+            (self.screens.index(self.currentScreen) + 1) % len(self.screens)
+        )
 
     def cmd_to_prev_screen(self):
         """
             Move to the previous screen
         """
         return self.toScreen(
-            (self.screens.index(self.currentScreen) - 1) % len(self.screens))
+            (self.screens.index(self.currentScreen) - 1) % len(self.screens)
+        )
 
     def cmd_windows(self):
         """
             Return info for each client window.
         """
-        return [i.info() for i in self.windowMap.values()
-                if not isinstance(i, window.Internal)]
+        return [
+            i.info() for i in self.windowMap.values() \
+                    if not isinstance(i, window.Internal)
+        ]
 
     def cmd_internal_windows(self):
         """
             Return info for each internal window (bars, for example).
         """
-        return [i.info() for i in self.windowMap.values()
-                if isinstance(i, window.Internal)]
+        return [
+            i.info() for i in self.windowMap.values() \
+                    if isinstance(i, window.Internal)
+        ]
 
     def cmd_qtile_info(self):
         """
@@ -1133,8 +1150,9 @@ class Qtile(command.CommandObject):
         indexa = self.groups.index(self.groupMap[groupa])
         indexb = self.groups.index(self.groupMap[groupb])
 
-        self.groups[indexa], self.groups[indexb] = \
-                self.groups[indexb], self.groups[indexa]
+        temp = self.groups[indexa]
+        self.groups[indexa] = self.groups[indexb]
+        self.groups[indexb] = temp
         hook.fire("setgroup")
         self.update_net_desktops()
 
@@ -1156,7 +1174,12 @@ class Qtile(command.CommandObject):
             self.log.error("No widget named '%s' present." % widget)
             return
 
-        mb.startInput(prompt, self.find_window, "window", strict_completer=True)
+        mb.startInput(
+                prompt,
+                self.find_window,
+                "window",
+                strict_completer=True
+        )
 
     def cmd_next_urgent(self):
         try:

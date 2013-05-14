@@ -116,8 +116,10 @@ class Screen(command.CommandObject):
             x,y,width and height aren't specified usually unless you are
             using 'fake screens'.
         """
-        self.top, self.bottom = top, bottom
-        self.left, self.right = left, right
+        self.top = top
+        self.bottom = bottom
+        self.left = left
+        self.right = right
         self.qtile = None
         self.index = None
         self.x = x  # x position of upper left corner can be > 0
@@ -128,8 +130,11 @@ class Screen(command.CommandObject):
 
     def _configure(self, qtile, index, x, y, width, height, group):
         self.qtile = qtile
-        self.index, self.x, self.y = index, x, y,
-        self.width, self.height = width, height
+        self.index = index
+        self.x = x
+        self.y = y
+        self.width = width
+        sekf.height = height
         self.setGroup(group)
         for i in self.gaps:
             i._configure(qtile, self)
@@ -205,7 +210,7 @@ class Screen(command.CommandObject):
             # to remove the screen flickering
             new_group._setScreen(self)
 
-            if old_group is not None:
+            if old_group:
                 old_group._setScreen(None)
 
         hook.fire("setgroup")
@@ -304,14 +309,14 @@ class Group(object):
     Represents a "dynamic" group. These groups can spawn apps, only allow
     certain Matched windows to be on them, hide when they're not in use, etc.
     """
-    def __init__(self, name, matches=None, exclusive=False,
+    def __init__(self, name, matches=[], exclusive=False,
                  spawn=None, layout=None, persist=True, init=True,
-                 layout_opts=None):
+                 layout_opts={}):
         """
         :param name: the name of this group
         :type name: string
         :param matches: list of ``Match`` objects whose  windows will be assigned to this group
-        :type matches: default ``None``
+        :type matches: default []
         :param exclusive: when other apps are started in this group, should we allow them here or not?
         :type exclusive: boolean
         :param spawn: this will be ``exec()`` d when the group is created
@@ -330,17 +335,15 @@ class Group(object):
         self.layout = layout
         self.persist = persist
         self.init = init
-        if matches is None:
-            matches = []
         self.matches = matches
-        self.layout_opts = layout_opts or {}
+        self.layout_opts = layout_opts
 
 class Match(object):
     """
         Match for dynamic groups
         It can match by title, class or role.
     """
-    def __init__(self, title=None, wm_class=None, role=None, wm_type=None):
+    def __init__(self, title=[], wm_class=[], role=[], wm_type=[]):
         """
 
         ``Match`` supports both regular expression objects (i.e. the result of
@@ -349,18 +352,14 @@ class Match(object):
         match.
 
         :param title: things to match against the title
+        :type title: list
         :param wm_classes: things to match against the WM_CLASS atom
+        :type wm_classes: list
         :param role: things to match against the WM_ROLE atom
+        :type role: list
         :param wm_type: things to match against the WM_TYPE atom
+        :type wm_type: list
         """
-        if not title:
-            title = []
-        if not wm_class:
-            wm_class = []
-        if not role:
-            role = []
-        if not wm_type:
-            wm_type = []
         self._rules = [('title', t) for t in title]
         self._rules += [('wm_class', w) for w in wm_class]
         self._rules += [('role', r) for r in  role]
@@ -368,14 +367,14 @@ class Match(object):
 
     def compare(self, client):
         for _type, rule in self._rules:
-            match_func = getattr(rule, 'match', None) or\
+            match_func = getattr(rule, 'match', None) or \
                          getattr(rule, 'count')
 
             if _type == 'title':
                 value = client.name
             elif _type == 'wm_class':
                 value = client.window.get_wm_class()
-                if value and len(value)>1:
+                if value and len(value) > 1:
                     value = value[1]
                 elif value:
                     value = value[0]

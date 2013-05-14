@@ -10,10 +10,12 @@ import xcb.xproto
 class TextLayout(object):
     def __init__(self, drawer, text, colour, font_family, font_size,
                  font_shadow, wrap=True, markup=False):
-        self.drawer, self.colour = drawer, colour
+        self.drawer = drawer
+        self.colour = colour
         layout = drawer.ctx.create_layout()
         layout.set_alignment(pango.ALIGN_CENTER)
-        if not wrap:  # pango wraps by default
+        # Pango wraps by default
+        if not wrap:
             layout.set_ellipsize(pango.ELLIPSIZE_END)
         desc = pango.FontDescription()
         desc.set_family(font_family)
@@ -38,10 +40,9 @@ class TextLayout(object):
 
     @property
     def width(self):
-        if self._width is not None:
+        if self._width:
             return self._width
-        else:
-            return self.layout.get_pixel_size()[0]
+        return self.layout.get_pixel_size()[0]
 
     @width.setter
     def width(self, value):
@@ -84,9 +85,9 @@ class TextLayout(object):
         self.layout.set_font_description(d)
 
     def draw(self, x, y):
-        if self.font_shadow is not None:
+        if self.font_shadow:
             self.drawer.set_source_rgb(self.font_shadow)
-            self.drawer.ctx.move_to(x+1, y+1)
+            self.drawer.ctx.move_to(x + 1, y + 1)
             self.drawer.ctx.show_layout(self.layout)
 
         self.drawer.set_source_rgb(self.colour)
@@ -108,17 +109,20 @@ class TextFrame:
             self.pad_left = pad_x[0]
             self.pad_right = pad_x[1]
         else:
-            self.pad_left = self.pad_right = pad_x
+            self.pad_left = pad_x
+            self.pad_right = pad_x
 
         if isinstance(pad_y, collections.Iterable):
             self.pad_top = pad_y[0]
             self.pad_bottom = pad_y[1]
         else:
-            self.pad_top = self.pad_bottom = pad_y
+            self.pad_top = pad_y
+            self.pad_bottom = pad_y
 
     def draw(self, x, y, rounded=True):
         self.drawer.set_source_rgb(self.border_color)
-        opts = [x, y,
+        opts = [
+            x, y,
             self.layout.width + self.pad_left + self.pad_right,
             self.layout.height + self.pad_top + self.pad_bottom,
             self.border_width
@@ -135,7 +139,8 @@ class TextFrame:
 
     def draw_fill(self, x, y, rounded=True):
         self.drawer.set_source_rgb(self.border_color)
-        opts = [x, y,
+        opts = [
+            x, y,
             self.layout.width + self.pad_left + self.pad_right,
             self.layout.height + self.pad_top + self.pad_bottom,
             self.border_width
@@ -170,7 +175,9 @@ class Drawer:
     """
     def __init__(self, qtile, wid, width, height):
         self.qtile = qtile
-        self.wid, self.width, self.height = wid, width, height
+        self.wid = wid
+        self.width = width
+        self.height = height
 
         self.pixmap = self.qtile.conn.conn.generate_id()
         self.gc = self.qtile.conn.conn.generate_id()
@@ -317,15 +324,17 @@ class Drawer:
         # See comment on textlayout() for details.
         if not self._sizelayout:
             self._sizelayout = self.textlayout(
-                "", "ffffff", font_family, font_size, None)
-        widths, heights = [], []
+                "", "ffffff", font_family, font_size, None
+            )
+        widths = []
+        heights = []
         self._sizelayout.font_family = font_family
         self._sizelayout.font_size = font_size
         for i in texts:
             self._sizelayout.text = i
             widths.append(self._sizelayout.width)
             heights.append(self._sizelayout.height)
-        return max(widths), max(heights)
+        return (max(widths), max(heights))
 
     # Old text layout functions, to be deprectated.
     def set_font(self, fontface, size, antialias=True):
@@ -348,7 +357,8 @@ class Drawer:
         self.ctx.set_font_size(heightlimit)
         asc, desc, height, _, _ = self.font_extents()
         self.ctx.set_font_size(
-            int(heightlimit * (heightlimit / float(height))))
+            int(heightlimit * (heightlimit / float(height)))
+        )
         return self.font_extents()
 
     def fit_text(self, strings, heightlimit):
@@ -359,15 +369,17 @@ class Drawer:
         self.ctx.set_font_size(heightlimit)
         _, _, _, maxheight, _, _ = self.ctx.text_extents("".join(strings))
         if not maxheight:
-            return 0, 0
+            return (0, 0)
         self.ctx.set_font_size(
-            int(heightlimit * (heightlimit / float(maxheight))))
-        maxwidth, maxheight = 0, 0
+            int(heightlimit * (heightlimit / float(maxheight)))
+        )
+        maxwidth = 0
+        maxheight = 0
         for i in strings:
             _, _, x, y, _, _ = self.ctx.text_extents(i)
             maxwidth = max(maxwidth, x)
             maxheight = max(maxheight, y)
-        return maxwidth, maxheight
+        return (maxwidth, maxheight)
 
     def draw_vbar(self, color, x, y1, y2, linewidth=1):
         self.set_source_rgb(color)

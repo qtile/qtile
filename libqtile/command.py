@@ -35,8 +35,9 @@ class CommandException(Exception):
 
 class _SelectError(Exception):
     def __init__(self, name, sel):
-        Exception.__init__(self)
-        self.name, self.sel = name, sel
+        super(_SelectError, self).__init__()
+        self.name = name
+        self.sel = sel
 
 
 SUCCESS = 0
@@ -56,7 +57,7 @@ def formatSelector(lst):
         if expr:
             expr.append(".")
         expr.append(i[0])
-        if i[1] is not None:
+        if i[1]:
             expr.append("[%s]" % repr(i[1]))
     return "".join(expr)
 
@@ -65,7 +66,7 @@ class _Server(ipc.Server):
     def __init__(self, fname, qtile, conf):
         if os.path.exists(fname):
             os.unlink(fname)
-        ipc.Server.__init__(self, fname, self.call)
+        super(_Server, self).__init__(fname, self.call)
         self.qtile = qtile
         self.widgets = {}
         for i in conf.screens:
@@ -103,7 +104,8 @@ class _Command:
             :*args Arguments to be passed to the specified command
             :*kwargs Arguments to be passed to the specified command
         """
-        self.selectors, self.name = selectors, name
+        self.selectors = selectors
+        self.name = name
         self.call = call
 
     def __call__(self, *args, **kwargs):
@@ -124,7 +126,7 @@ class _CommandTree(object):
 
     @property
     def path(self):
-        s = self.selectors[:]
+        s = self.selectors
         if self.name:
             s += [(self.name, self.myselector)]
         return formatSelector(s)
@@ -132,8 +134,7 @@ class _CommandTree(object):
     def __getitem__(self, select):
         if self.myselector:
             raise KeyError("No such key: %s" % select)
-        c = self.__class__(self.call, self.selectors, select, self)
-        return c
+        return self.__class__(self.call, self.selectors, select, self)
 
     def __getattr__(self, name):
         nextSelector = self.selectors[:]
@@ -141,8 +142,7 @@ class _CommandTree(object):
             nextSelector.append((self.name, self.myselector))
         if name in self._contains:
             return _TreeMap[name](self.call, nextSelector, None, self)
-        else:
-            return _Command(self.call, nextSelector, name)
+        return _Command(self.call, nextSelector, name)
 
 
 class _TLayout(_CommandTree):
@@ -194,7 +194,7 @@ class _CommandRoot(_CommandTree):
             This method constructs the entire hierarchy of callable commands
             from a conf object.
         """
-        _CommandTree.__init__(self, self.call, [], None, None)
+        super(_CommandRoot, self).__init__(self.call, [], None, None)
 
     def __getitem__(self, select):
         raise KeyError("No such key: %s" % select)
@@ -237,7 +237,7 @@ class Client(_CommandRoot):
         if not fname:
             fname = find_sockfile()
         self.client = ipc.Client(fname)
-        _CommandRoot.__init__(self)
+        super(Client, self).__init__()
 
     def call(self, selectors, name, *args, **kwargs):
         state, val = self.client.call((selectors, name, args, kwargs))
@@ -270,8 +270,10 @@ class _Call:
             :*args Arguments to be passed to the specified command
             :*kwargs Arguments to be passed to the specified command
         """
-        self.selectors, self.name = selectors, name
-        self.args, self.kwargs = args, kwargs
+        self.selectors = selectors
+        self.name = name
+        self.args = args
+        self.kwargs = kwargs
         # Conditionals
         self.layout = None
 
@@ -304,10 +306,10 @@ class CommandObject(object):
         selectors = selectors[1:]
 
         r = self.items(name)
-        if (r is None) or\
-            (r[1] is None and sel is not None) or\
-                (r[1] is not None and sel and sel not in r[1]) or\
-                    (r[0] is False and sel is None):
+        if r is None or \
+                (r[1] is None and sel) or \
+                (r[1] and self and not self in r[1]) or \
+                (r[0] is False and not sel):
             raise _SelectError(name, sel)
 
         obj = self._select(name, sel)
@@ -359,7 +361,7 @@ class CommandObject(object):
         lst = []
         for i in dir(self):
             if i.startswith("cmd_"):
-                lst.append(i[4:])
+                lst.append(i[len("cmd_"):])
         return lst
 
     def cmd_commands(self):
