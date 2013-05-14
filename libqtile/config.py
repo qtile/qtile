@@ -116,8 +116,10 @@ class Screen(command.CommandObject):
             x,y,width and height aren't specified usually unless you are
             using 'fake screens'.
         """
-        self.top, self.bottom = top, bottom
-        self.left, self.right = left, right
+        self.top = top
+        self.bottom = bottom
+        self.left = left
+        self.right = right
         self.qtile = None
         self.index = None
         self.x = x  # x position of upper left corner can be > 0
@@ -128,8 +130,11 @@ class Screen(command.CommandObject):
 
     def _configure(self, qtile, index, x, y, width, height, group):
         self.qtile = qtile
-        self.index, self.x, self.y = index, x, y,
-        self.width, self.height = width, height
+        self.index = index
+        self.x = x
+        self.y = y
+        self.width = width
+        sekf.height = height
         self.setGroup(group)
         for i in self.gaps:
             i._configure(qtile, self)
@@ -353,6 +358,7 @@ class Match(object):
         :param role: things to match against the WM_ROLE atom
         :param wm_type: things to match against the WM_TYPE atom
         """
+
         if not title:
             title = []
         if not wm_class:
@@ -368,14 +374,14 @@ class Match(object):
 
     def compare(self, client):
         for _type, rule in self._rules:
-            match_func = getattr(rule, 'match', None) or\
+            match_func = getattr(rule, 'match', None) or \
                          getattr(rule, 'count')
 
             if _type == 'title':
                 value = client.name
             elif _type == 'wm_class':
                 value = client.window.get_wm_class()
-                if value and len(value)>1:
+                if value and len(value) > 1:
                     value = value[1]
                 elif value:
                     value = value[0]

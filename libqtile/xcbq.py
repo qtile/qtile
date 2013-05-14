@@ -20,8 +20,12 @@ def ConfigureWindow(self, window, value_mask, value_list):
     buf = cStringIO.StringIO()
     buf.write(pack('xx2xIH2x', window, value_mask))
     buf.write(str(buffer(array('i', value_list))))
-    return self.send_request(xcb.Request(buf.getvalue(), 12, True, False),
-                                 xcb.VoidCookie())
+    return self.send_request(
+            xcb.Request(
+                buf.getvalue(), 12, True, False
+            ),
+            xcb.VoidCookie()
+    )
 xcb.xproto.xprotoExtension.ConfigureWindow = ConfigureWindow
 
 keysyms = xkeysyms.keysyms
@@ -37,8 +41,16 @@ ModMasks = {
     "mod4": 1 << 6,
     "mod5": 1 << 7,
 }
-ModMapOrder = ["shift", "lock", "control",
-               "mod1", "mod2", "mod3", "mod4", "mod5"]
+ModMapOrder = [
+    "shift",
+    "lock",
+    "control",
+    "mod1",
+    "mod2",
+    "mod3",
+    "mod4",
+    "mod5"
+]
 
 AllButtonsMask = 0b11111 << 8
 ButtonMotionMask = 1 << 13
@@ -89,7 +101,7 @@ WindowTypes = {
 WindowStates = {
     None: 'normal',
     '_NET_WM_STATE_FULLSCREEN': 'fullscreen',
-    }
+}
 
 # Maps property names to types and formats.
 PropertyMap = {
@@ -132,9 +144,13 @@ PropertyMap = {
 
 # TODO add everything required here
 # http://standards.freedesktop.org/wm-spec/1.4/ar01s03.html
-SUPPORTED_ATOMS = ['_NET_SUPPORTED', '_NET_WM_STATE',
-    '_NET_WM_STATE_FULLSCREEN', '_NET_SUPPORTING_WM_CHECK',
-    '_NET_WM_NAME']
+SUPPORTED_ATOMS = [
+    '_NET_SUPPORTED',
+    '_NET_WM_STATE',
+    '_NET_WM_STATE_FULLSCREEN',
+    '_NET_SUPPORTING_WM_CHECK',
+    '_NET_WM_NAME'
+]
 
 
 def toStr(s):
@@ -172,7 +188,7 @@ class MaskMap:
                 del kwargs[s]
         if kwargs:
             raise ValueError("Unknown mask names: %s" % kwargs.keys())
-        return mask, values
+        return (mask, values)
 
 ConfigureMasks = MaskMap(xcb.xproto.ConfigWindow)
 AttributeMasks = MaskMap(CW)
@@ -242,12 +258,16 @@ class PseudoScreen:
     """
     def __init__(self, conn, x, y, width, height):
         self.conn = conn
-        self.x, self.y, self.width, self.height = x, y, width, height
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
 
 
 class Colormap:
     def __init__(self, conn, cid):
-        self.conn, self.cid = conn, cid
+        self.conn = conn
+        self.cid = cid
 
     def alloc_color(self, color):
         """
@@ -265,7 +285,8 @@ class Colormap:
             return self.conn.conn.core.AllocColor(self.cid, r, g, b).reply()
         else:
             return self.conn.conn.core.AllocNamedColor(
-                self.cid, len(color), color).reply()
+                self.cid, len(color), color
+            ).reply()
 
 
 class Xinerama:
@@ -301,7 +322,8 @@ class RandR:
 
 class GC:
     def __init__(self, conn, gid):
-        self.conn, self.gid = conn, gid
+        self.conn = conn
+        self.gid = gid
 
     def change(self, **kwargs):
         mask, values = GCMasks(**kwargs)
@@ -310,7 +332,8 @@ class GC:
 
 class Window:
     def __init__(self, conn, wid):
-        self.conn, self.wid = conn, wid
+        self.conn = conn
+        self.wid = wid
 
     def _propertyString(self, r):
         """
@@ -350,7 +373,8 @@ class Window:
             _NET_WM_NAME, WM_NAME.
         """
         r = self.get_property(
-            "_NET_WM_VISIBLE_NAME", xcb.xproto.GetPropertyType.Any)
+            "_NET_WM_VISIBLE_NAME", xcb.xproto.GetPropertyType.Any
+        )
         if r:
             return self._propertyString(r)
 
@@ -359,7 +383,8 @@ class Window:
             return self._propertyString(r)
 
         r = self.get_property(
-            xcb.xproto.Atom.WM_NAME, xcb.xproto.GetPropertyType.Any)
+            xcb.xproto.Atom.WM_NAME, xcb.xproto.GetPropertyType.Any
+        )
         if r:
             return self._propertyString(r)
 
@@ -386,7 +411,8 @@ class Window:
 
     def get_wm_normal_hints(self):
         r = self.get_property(
-            "WM_NORMAL_HINTS", xcb.xproto.GetPropertyType.Any)
+            "WM_NORMAL_HINTS", xcb.xproto.GetPropertyType.Any
+        )
         if r:
             data = struct.pack("B" * len(r.value), *(list(r.value)))
             l = struct.unpack_from("=IIIIIIIIIIIIII", data)
@@ -490,13 +516,15 @@ class Window:
     def set_attribute(self, **kwargs):
         mask, values = AttributeMasks(**kwargs)
         self.conn.conn.core.ChangeWindowAttributesChecked(
-            self.wid, mask, values)
+            self.wid, mask, values
+        )
 
     def set_cursor(self, name):
         cursorId = self.conn.cursors[name]
         mask, values = AttributeMasks(cursor=cursorId)
         self.conn.conn.core.ChangeWindowAttributesChecked(
-            self.wid, mask, values)
+            self.wid, mask, values
+        )
 
     def set_property(self, name, value, type=None, format=None):
         """
@@ -507,12 +535,14 @@ class Window:
         if name in PropertyMap:
             if type or format:
                 raise ValueError(
-                    "Over-riding default type or format for property.")
+                    "Over-riding default type or format for property."
+                )
             type, format = PropertyMap[name]
         else:
             if None in (type, format):
                 raise ValueError(
-                    "Must specify type and format for unknown property.")
+                    "Must specify type and format for unknown property."
+                )
 
         if not utils.isSequenceLike(value):
             value = [value]
@@ -557,7 +587,8 @@ class Window:
         if type is None:
             if not prop in PropertyMap:
                 raise ValueError(
-                    "Must specify type for unknown property.")
+                    "Must specify type for unknown property."
+                )
             else:
                 type, _ = PropertyMap[prop]
         try:
@@ -661,17 +692,19 @@ class Window:
 
     def query_tree(self):
         q = self.conn.conn.core.QueryTree(self.wid).reply()
-        root, parent = None, None
+        root = None
+        parent = None
         if q.root:
             root = Window(self.conn, q.root)
         if q.parent:
             parent = Window(self.conn, q.root)
-        return root, parent, [Window(self.conn, i) for i in q.children]
+        return (root, parent, [Window(self.conn, i) for i in q.children])
 
 
 class Font:
     def __init__(self, conn, fid):
-        self.conn, self.fid = conn, fid
+        self.conn = conn
+        self.fid = fid
 
     @property
     def _maskvalue(self):
@@ -744,7 +777,8 @@ class Connection:
             if not i % q.keysyms_per_keycode:
                 if l:
                     self.code_to_syms[
-                        (i / q.keysyms_per_keycode) + first - 1] = l
+                        (i / q.keysyms_per_keycode) + first - 1
+                    ] = l
                 l = []
                 l.append(v)
             else:
@@ -780,8 +814,8 @@ class Connection:
         return self.first_sym_to_code.get(keysym, 0)
 
     def keycode_to_keysym(self, keycode, modifier):
-        if (keycode >= len(self.code_to_syms) or
-            modifier >= len(self.code_to_syms[keycode])):
+        if keycode >= len(self.code_to_syms) or \
+                modifier >= len(self.code_to_syms[keycode]):
             return 0
         return self.code_to_syms[keycode][modifier]
 
@@ -823,8 +857,10 @@ class Connection:
         return Font(self, fid)
 
     def extensions(self):
-        return set([toStr(i).lower()
-                    for i in self.conn.core.ListExtensions().reply().names])
+        return set([
+            toStr(i).lower() \
+                    for i in self.conn.core.ListExtensions().reply().names
+        ])
 
 
 # Stolen from samurai-x
@@ -869,5 +905,6 @@ class Cursors(dict):
             cursor, fid, fid,
             cursor_font, cursor_font + 1,
             0, 0, 0,
-            65535, 65535, 65535)
+            65535, 65535, 65535
+        )
         self[name] = cursor

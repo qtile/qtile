@@ -38,10 +38,12 @@ class Gap(command.CommandObject):
             size: The width of the gap.
         """
         self.size = size
-        self.qtile, self.screen = None, None
+        self.qtile = None
+        self.screen = None
 
     def _configure(self, qtile, screen):
-        self.qtile, self.screen = qtile, screen
+        self.qtile = qtile
+        self.screen = screen
 
     def draw(self):
         pass
@@ -87,7 +89,8 @@ class Gap(command.CommandObject):
 
     def _items(self, name):
         if name == "screen":
-            return True, None
+            return (True, None)
+        return (False, None)
 
     def _select(self, name, sel):
         if name == "screen":
@@ -237,7 +240,7 @@ class Bar(Gap, configurable.Configurable):
             Removes the widget's keyboard handler.
         """
         del self.window.handle_KeyPress
-        if not self.saved_focus == None:
+        if self.saved_focus is not None:
             self.saved_focus.window.set_input_focus()
 
     def draw(self):

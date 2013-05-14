@@ -106,13 +106,12 @@ class DGroups(object):
 
                     group_obj = self.qtile.groupMap[rule.group]
                     group = self.groupMap.get(rule.group)
-                    if group:
-                        if group_added:
-                            for k, v in group.layout_opts:
-                                if callable(v):
-                                    v(group_obj.layout)
-                                else:
-                                    setattr(group_obj.layout, k, v)
+                    if group and group_added:
+                        for k, v in group.layout_opts:
+                            if callable(v):
+                                v(group_obj.layout)
+                            else:
+                                setattr(group_obj.layout, k, v)
 
                 if rule.float:
                     client.enablefloating()
@@ -123,8 +122,8 @@ class DGroups(object):
         # If app doesn't have a group
         if not group_set:
             current_group = self.qtile.currentGroup.name
-            if current_group in self.groupMap and\
-                    self.groupMap[current_group].exclusive and\
+            if current_group in self.groupMap and \
+                    self.groupMap[current_group].exclusive and \
                     not intrusive:
 
                 wm_class = client.window.get_wm_class()
@@ -150,8 +149,8 @@ class DGroups(object):
         def delete_client():
             # Delete group if empty and dont persist
             if group and group.name in self.groupMap and \
-               not self.groupMap[group.name].persist and \
-               len(group.windows) <= 0:
+                    not self.groupMap[group.name].persist and \
+                    len(group.windows) <= 0:
                 self.qtile.delGroup(group.name)
 
         # wait the delay until really delete the group

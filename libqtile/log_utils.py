@@ -29,14 +29,27 @@ class ColorFormatter(logging.Formatter):
         """Format the record with colors."""
         color = self.color_seq % (30 + self.colors[record.levelname])
         message = logging.Formatter.format(self, record)
-        message = message.replace('$RESET', self.reset_seq)\
-            .replace('$BOLD', self.bold_seq)\
-            .replace('$COLOR', color)
+        message = message.replace(
+                    '$RESET',
+                    self.reset_seq
+                ).replace(
+                    '$BOLD',
+                    self.bold_seq
+                ).replace(
+                    '$COLOR',
+                    color
+                )
         for color, value in self.colors.items():
             message = message.replace(
-                '$' + color, self.color_seq % (value + 30))\
-                .replace('$BG' + color, self.color_seq % (value + 40))\
-                .replace('$BG-' + color, self.color_seq % (value + 40))
+                        '$' + color,
+                        self.color_seq % (value + 30)
+                    ).replace(
+                        '$BG' + color,
+                        self.color_seq % (value + 40)
+                    ).replace(
+                        '$BG-' + color,
+                        self.color_seq % (value + 40)
+                    )
         return message + self.reset_seq
 
 

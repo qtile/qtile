@@ -82,7 +82,7 @@ class Client(_IPC):
 
         self._write(sock, msg)
 
-        while 1:
+        while True:
             fds, _, _ = select.select([sock], [], [], 1)
             if fds:
                 data = self._read(sock)
@@ -98,7 +98,8 @@ class Client(_IPC):
 class Server(_IPC):
     def __init__(self, fname, handler):
         self.log = logging.getLogger('qtile')
-        self.fname, self.handler = fname, handler
+        self.fname = fname
+        self.handler = handler
         if os.path.exists(fname):
             os.unlink(fname)
         self.sock = socket.socket(
@@ -119,7 +120,10 @@ class Server(_IPC):
     def start(self):
         self.log.info('Add io watch on server start')
         self.gob_tag = gobject.io_add_watch(
-            self.sock, gobject.IO_IN, self._connection)
+            self.sock,
+            gobject.IO_IN,
+            self._connection
+        )
 
     def _connection(self, sock, cond):
         try:
