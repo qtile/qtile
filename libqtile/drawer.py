@@ -40,9 +40,10 @@ class TextLayout(object):
 
     @property
     def width(self):
-        if self._width:
+        if self._width is not None:
             return self._width
-        return self.layout.get_pixel_size()[0]
+        else:
+            return self.layout.get_pixel_size()[0]
 
     @width.setter
     def width(self, value):
@@ -85,7 +86,7 @@ class TextLayout(object):
         self.layout.set_font_description(d)
 
     def draw(self, x, y):
-        if self.font_shadow:
+        if self.font_shadow is not None:
             self.drawer.set_source_rgb(self.font_shadow)
             self.drawer.ctx.move_to(x + 1, y + 1)
             self.drawer.ctx.show_layout(self.layout)

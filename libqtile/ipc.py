@@ -121,7 +121,8 @@ class Server(_IPC):
         self.log.info('Add io watch on server start')
         self.gob_tag = gobject.io_add_watch(
             self.sock,
-            gobject.IO_IN, self._connection
+            gobject.IO_IN,
+            self._connection
         )
 
     def _connection(self, sock, cond):

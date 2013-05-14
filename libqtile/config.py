@@ -210,7 +210,7 @@ class Screen(command.CommandObject):
             # to remove the screen flickering
             new_group._setScreen(self)
 
-            if old_group:
+            if old_group is not None:
                 old_group._setScreen(None)
 
         hook.fire("setgroup")
@@ -309,14 +309,14 @@ class Group(object):
     Represents a "dynamic" group. These groups can spawn apps, only allow
     certain Matched windows to be on them, hide when they're not in use, etc.
     """
-    def __init__(self, name, matches=[], exclusive=False,
+    def __init__(self, name, matches=None, exclusive=False,
                  spawn=None, layout=None, persist=True, init=True,
-                 layout_opts={}):
+                 layout_opts=None):
         """
         :param name: the name of this group
         :type name: string
         :param matches: list of ``Match`` objects whose  windows will be assigned to this group
-        :type matches: default []
+        :type matches: default ``None``
         :param exclusive: when other apps are started in this group, should we allow them here or not?
         :type exclusive: boolean
         :param spawn: this will be ``exec()`` d when the group is created
@@ -335,15 +335,17 @@ class Group(object):
         self.layout = layout
         self.persist = persist
         self.init = init
+        if matches is None:
+            matches = []
         self.matches = matches
-        self.layout_opts = layout_opts
+        self.layout_opts = layout_opts or {}
 
 class Match(object):
     """
         Match for dynamic groups
         It can match by title, class or role.
     """
-    def __init__(self, title=[], wm_class=[], role=[], wm_type=[]):
+    def __init__(self, title=None, wm_class=None, role=None, wm_type=None):
         """
 
         ``Match`` supports both regular expression objects (i.e. the result of
@@ -352,14 +354,19 @@ class Match(object):
         match.
 
         :param title: things to match against the title
-        :type title: list
         :param wm_classes: things to match against the WM_CLASS atom
-        :type wm_classes: list
         :param role: things to match against the WM_ROLE atom
-        :type role: list
         :param wm_type: things to match against the WM_TYPE atom
-        :type wm_type: list
         """
+
+        if not title:
+            title = []
+        if not wm_class:
+            wm_class = []
+        if not role:
+            role = []
+        if not wm_type:
+            wm_type = []
         self._rules = [('title', t) for t in title]
         self._rules += [('wm_class', w) for w in wm_class]
         self._rules += [('role', r) for r in  role]

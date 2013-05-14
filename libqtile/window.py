@@ -417,7 +417,7 @@ class _Window(command.CommandObject):
         self.borderwidth, self.bordercolor = borderwidth, bordercolor
 
         # save x and y float offset
-        if self.group and self.group.screen:
+        if self.group is not None and self.group.screen is not None:
             self._float_info['x'] = x - self.group.screen.x
             self._float_info['y'] = y - self.group.screen.y
 
@@ -452,7 +452,7 @@ class _Window(command.CommandObject):
             kwarg['y'] += 1
         self.window.configure(**kwarg)
 
-        if bordercolor:
+        if bordercolor is not None:
             self.window.set_attribute(
                 borderpixel=bordercolor
             )
@@ -611,7 +611,7 @@ class Static(_Window):
 
     def __init__(self, win, qtile, screen,
                  x=None, y=None, width=None, height=None):
-        super(Static, self).__init__(win, qtile)
+        _Window.__init__(self, win, qtile)
         self.updateName()
         self.conf_x = x
         self.conf_y = y
@@ -678,7 +678,7 @@ class Window(_Window):
     _group = None
 
     def __init__(self, window, qtile):
-        super(Window, self).__init__(window, qtile)
+        _Window.__init__(self, window, qtile)
         self.updateName()
         # add to group by position according to _NET_WM_DESKTOP property
         index = window.get_wm_desktop()
@@ -772,19 +772,19 @@ class Window(_Window):
 
     def tweak_float(self, x=None, y=None, dx=0, dy=0,
                     w=None, h=None, dw=0, dh=0):
-        if x:
+        if x is not None:
             self.x = x
         self.x += dx
 
-        if y:
+        if y is not None:
             self.y = y
         self.y += dy
 
-        if w:
+        if w is not None:
             self.width = w
         self.width += dw
 
-        if h:
+        if h is not None:
             self.height = h
         self.height += dh
 
@@ -794,7 +794,7 @@ class Window(_Window):
             self.width = 0
 
         screen = self.qtile.find_closest_screen(self.x, self.y)
-        if screen and screen != self.group.screen:
+        if screen is not None and screen != self.group.screen:
             self.group.remove(self)
             screen.group.add(self)
             self.qtile.toScreen(screen.index)
@@ -855,8 +855,9 @@ class Window(_Window):
         else:
             # make sure x, y is on the screen
             screen = self.qtile.find_closest_screen(self.x, self.y)
-            if screen and self.group and \
-                    self.group.screen and screen != self.group.screen:
+            if screen is not None and self.group is not None and \
+                    self.group.screen is not None and \
+                    screen != self.group.screen:
                 self.x = self.group.screen.x
                 self.y = self.group.screen.y
 

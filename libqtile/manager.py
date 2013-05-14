@@ -57,7 +57,7 @@ class Qtile(command.CommandObject):
                  displayName=None, fname=None, no_spawn=False, log=None,
                  state=None):
         gobject.threads_init()
-        if not log:
+        if log is None:
             log = init_log()
         self.log = log
         if hasattr(config, "log_level"):
@@ -637,7 +637,7 @@ class Qtile(command.CommandObject):
         having leftmost corner above viewport.
         """
         normal = self.find_screen(x, y)
-        if normal:
+        if normal is not None:
             return normal
         x_match = []
         y_match = []
@@ -995,7 +995,7 @@ class Qtile(command.CommandObject):
         for i in self.screens:
             lst.append(dict(
                 index=i.index,
-                group=i.group.name if i.group else None,
+                group=i.group.name if i.group is not None else None,
                 x=i.x,
                 y=i.y,
                 width=i.width,

@@ -53,7 +53,8 @@ class Gap(command.CommandObject):
         s = self.screen
         if s.right is self:
             return s.dx + s.dwidth
-        return s.x
+        else:
+            return s.x
 
     @property
     def y(self):
@@ -72,14 +73,16 @@ class Gap(command.CommandObject):
         s = self.screen
         if self in [s.top, s.bottom]:
             return s.width
-        return self.size
+        else:
+            return self.size
 
     @property
     def height(self):
         s = self.screen
         if self in [s.top, s.bottom]:
             return self.size
-        return s.dheight
+        else:
+            return s.dheight
 
     def geometry(self):
         return self.x, self.y, self.width, self.height
@@ -92,7 +95,6 @@ class Gap(command.CommandObject):
     def _select(self, name, sel):
         if name == "screen":
             return self.screen
-        return None
 
     @property
     def position(self):
@@ -238,7 +240,7 @@ class Bar(Gap, configurable.Configurable):
             Removes the widget's keyboard handler.
         """
         del self.window.handle_KeyPress
-        if self.saved_focus:
+        if self.saved_focus is not None:
             self.saved_focus.window.set_input_focus()
 
     def draw(self):

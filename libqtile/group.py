@@ -29,7 +29,7 @@ class _Group(command.CommandObject):
         self.qtile = qtile
         self.layouts = [i.clone(self) for i in layouts]
         self.floating_layout = floating_layout.clone(self)
-        if self.customLayout:
+        if self.customLayout is not None:
             self.layout = self.customLayout
             self.customLayout = None
 
@@ -84,8 +84,8 @@ class _Group(command.CommandObject):
                     self.layout.layout(normal, screen)
                 if floating:
                     self.floating_layout.layout(floating, screen)
-                if (self.currentWindow and \
-                        self.screen == self.qtile.currentScreen):
+                if self.currentWindow and \
+                        self.screen == self.qtile.currentScreen:
                     self.currentWindow.focus(warp)
 
     def _setScreen(self, screen):

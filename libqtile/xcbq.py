@@ -182,7 +182,7 @@ class MaskMap:
         for m, s in self.mmap:
             if s in kwargs:
                 val = kwargs.get(s)
-                if val:
+                if val is not None:
                     mask |= m
                     values.append(getattr(val, "_maskvalue", val))
                 del kwargs[s]
@@ -244,7 +244,7 @@ class Screen(_Wrapper):
         This represents an actual X screen.
     """
     def __init__(self, conn, screen):
-        super(Screen, self).__init__(screen)
+        _Wrapper.__init__(self, screen)
         self.default_colormap = Colormap(conn, screen.default_colormap)
         self.root = Window(conn, self.root)
         # FIXME: Where is the right place to set the cursor?
@@ -601,7 +601,7 @@ class Window:
 
             if not r.value_len:
                 return None
-            elif unpack:
+            elif unpack is not None:
                 return struct.unpack_from(unpack, r.value.buf())
             else:
                 return r

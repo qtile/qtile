@@ -18,10 +18,7 @@ if dbus:
     class NotificationService(service.Object):
         def __init__(self, manager):
             bus_name = service.BusName(BUS_NAME, bus=dbus.SessionBus())
-            super(NotificationServer, self).__init__(
-                    bus_name,
-                    SERVICE_PATH
-            )
+            service.Object.__init__(self, bus_name, SERVICE_PATH)
             self.manager = manager
 
         @service.method(BUS_NAME, in_signature='', out_signature='as')
@@ -49,9 +46,9 @@ if dbus:
 
 
 class Notification(object):
-    def __init__(self, summary, body='', timeout=-1, hints={}):
+    def __init__(self, summary, body='', timeout=-1, hints=None):
         self.summary = summary
-        self.hints = hints
+        self.hints = hints or {}
         self.body = body
         self.timeout = timeout
 

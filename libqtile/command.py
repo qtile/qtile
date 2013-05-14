@@ -35,7 +35,7 @@ class CommandException(Exception):
 
 class _SelectError(Exception):
     def __init__(self, name, sel):
-        super(_SelectError, self).__init__()
+        Exception.__init__(self)
         self.name = name
         self.sel = sel
 
@@ -57,7 +57,7 @@ def formatSelector(lst):
         if expr:
             expr.append(".")
         expr.append(i[0])
-        if i[1]:
+        if i[1] is not None:
             expr.append("[%s]" % repr(i[1]))
     return "".join(expr)
 
@@ -66,7 +66,7 @@ class _Server(ipc.Server):
     def __init__(self, fname, qtile, conf):
         if os.path.exists(fname):
             os.unlink(fname)
-        super(_Server, self).__init__(fname, self.call)
+        ipc.Server.__init__(self, fname, self.call)
         self.qtile = qtile
         self.widgets = {}
         for i in conf.screens:
@@ -126,7 +126,7 @@ class _CommandTree(object):
 
     @property
     def path(self):
-        s = self.selectors
+        s = self.selectors[:]
         if self.name:
             s += [(self.name, self.myselector)]
         return formatSelector(s)
@@ -142,7 +142,8 @@ class _CommandTree(object):
             nextSelector.append((self.name, self.myselector))
         if name in self._contains:
             return _TreeMap[name](self.call, nextSelector, None, self)
-        return _Command(self.call, nextSelector, name)
+        else:
+            return _Command(self.call, nextSelector, name)
 
 
 class _TLayout(_CommandTree):
@@ -194,7 +195,7 @@ class _CommandRoot(_CommandTree):
             This method constructs the entire hierarchy of callable commands
             from a conf object.
         """
-        super(_CommandRoot, self).__init__(self.call, [], None, None)
+        _CommandTree.__init__(self, self.call, [], None, None)
 
     def __getitem__(self, select):
         raise KeyError("No such key: %s" % select)
@@ -237,7 +238,7 @@ class Client(_CommandRoot):
         if not fname:
             fname = find_sockfile()
         self.client = ipc.Client(fname)
-        super(Client, self).__init__()
+        _CommandRoot.__init__(self)
 
     def call(self, selectors, name, *args, **kwargs):
         state, val = self.client.call((selectors, name, args, kwargs))
@@ -361,7 +362,7 @@ class CommandObject(object):
         lst = []
         for i in dir(self):
             if i.startswith("cmd_"):
-                lst.append(i[len("cmd_"):])
+                lst.append(i[4:])
         return lst
 
     def cmd_commands(self):
