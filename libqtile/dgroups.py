@@ -64,7 +64,7 @@ class DGroups(object):
         rules = [Rule(m, group=group.name) for m in group.matches]
         self.rules.extend(rules)
         if start:
-            self.qtile.addGroup(group.name)
+            self.qtile.addGroup(group.name, group.layout)
 
     def _setup_groups(self):
         for group in self.groups:
@@ -99,7 +99,11 @@ class DGroups(object):
             # Matching Rules
             if rule.matches(client):
                 if rule.group:
-                    group_added = self.qtile.addGroup(rule.group)
+                    try:
+                        layout = self.groupMap[rule.group].layout
+                    except KeyError:
+                        layout = None
+                    group_added = self.qtile.addGroup(rule.group, layout)
                     client.togroup(rule.group)
 
                     group_set = True

@@ -134,7 +134,6 @@ class Qtile(command.CommandObject):
             _Widget.global_defaults = {}
 
         for i in self.groups:
-            i._configure(config.layouts, config.floating_layout, self)
             self.groupMap[i.name] = i
 
         self.currentScreen = None
@@ -294,9 +293,9 @@ class Qtile(command.CommandObject):
             )
         self.root.set_property("_NET_CURRENT_DESKTOP", index)
 
-    def addGroup(self, name):
+    def addGroup(self, name, layout=None):
         if name not in self.groupMap.keys():
-            g = _Group(name)
+            g = _Group(name, layout)
             self.groups.append(g)
             g._configure(
                 self.config.layouts, self.config.floating_layout, self)
