@@ -1,0 +1,25 @@
+=======================
+Qtile 0.7 release notes
+=======================
+
+*Unreleased*
+
+Config Breakage!
+================
+
+This release breaks your config file in several ways:
+
+* Tile's shuffleMatch is renamed to resetMaster
+
+Changelog
+=========
+
+Features
+--------
+
+* Tile now supports automatically managing master windows via the
+  ``master_match`` parameter.
+
+Bug fixes
+---------
+

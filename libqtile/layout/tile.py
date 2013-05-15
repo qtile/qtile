@@ -12,7 +12,8 @@ class Tile(Layout):
     ]
 
     def __init__(self, ratio=0.618, masterWindows=1, expand=True,
-        ratio_increment=0.05, add_on_top=True, shift_windows=False, **config):
+        ratio_increment=0.05, add_on_top=True, shift_windows=False,
+        master_match=None, **config):
         Layout.__init__(self, **config)
         self.add_defaults(Tile.defaults)
         self.clients = []
@@ -23,6 +24,7 @@ class Tile(Layout):
         self.ratio_increment = ratio_increment
         self.add_on_top = add_on_top
         self.shift_windows = shift_windows
+        self.master_match = master_match
 
     @property
     def master_windows(self):
@@ -109,7 +111,11 @@ class Tile(Layout):
             function(self.clients)
             self.group.layoutAll(True)
 
-    def shuffleMatch(self, match):
+    def resetMaster(self, match=None):
+        if not match and self.master_match:
+            match = self.master_match
+        else:
+            return
         if self.clients:
             masters = [c for c in self.clients if match.compare(c)]
             self.clients = masters + [c for c in self.clients if c not in masters]
@@ -136,6 +142,7 @@ class Tile(Layout):
         if not self.add_on_top and self.clients and self.focused:
             index = self.clients.index(self.focused)
         self.clients.insert(index, c)
+        self.resetMaster()
 
     def remove(self, c):
         if self.focused is c:
