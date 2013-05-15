@@ -112,7 +112,7 @@ class DGroups(object):
                     group = self.groupMap.get(rule.group)
                     if group:
                         if group_added:
-                            for k, v in group.layout_opts:
+                            for k, v in group.layout_opts.iteritems():
                                 if callable(v):
                                     v(group_obj.layout)
                                 else:
