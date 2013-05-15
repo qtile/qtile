@@ -98,7 +98,7 @@ class MonadTall(SingleWindow):
     Key([modkey, "shift"], "space", lazy.layout.flip()),
 
     """
-    name = "xmonad-tall"
+    
     _left = 0
     _right = 1
     _min_height = 85
