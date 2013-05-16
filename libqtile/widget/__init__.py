@@ -2,7 +2,7 @@ from backlight import Backlight
 from battery import Battery, BatteryIcon
 from clock import Clock
 from currentlayout import CurrentLayout
-from graph import CPUGraph, MemoryGraph, SwapGraph, NetGraph, HDDGraph
+from graph import CPUGraph, MemoryGraph, SwapGraph, NetGraph, HDDGraph, HDDBusyGraph
 from groupbox import AGroupBox, GroupBox
 from maildir import Maildir
 from notify import Notify

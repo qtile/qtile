@@ -8,7 +8,8 @@ __all__ = [
     'MemoryGraph',
     'SwapGraph',
     'NetGraph',
-    'HDDGraph'
+    'HDDGraph',
+    'HDDBusyGraph',
 ]
 
 
@@ -264,6 +265,42 @@ class HDDGraph(_Graph):
             return (stats.f_blocks - stats.f_bfree) * stats.f_frsize
         else:
             return stats.f_bavail * stats.f_frsize
+
+    def update_graph(self):
+        val = self._getValues()
+        self.push(val)
+
+
+class HDDBusyGraph(_Graph):
+    """
+    Parses /sys/block/<dev>/stat file and extracts overall device
+    IO usage, based on `io_ticks`'s value
+    See https://www.kernel.org/doc/Documentation/block/stat.txt
+    """
+    defaults = [
+        ("device", "sda", "Block device to display info for")
+    ]
+
+    def __init__(self, **config):
+        _Graph.__init__(self, **config)
+        self.add_defaults(HDDBusyGraph.defaults)
+        self.path = '/sys/block/{dev}/stat'.format(
+            dev=self.device
+        )
+        self.bytes = 0
+        self.bytes = self._getValues()
+
+    def _getValues(self):
+        try:
+            with open(self.path) as f:
+                data = f.read().split()
+                value = int(data[9])  # `io_ticks`
+                tmp = value
+                value -= self.bytes
+                self.bytes = tmp
+                return value
+        except IOError:
+            return 0
 
     def update_graph(self):
         val = self._getValues()
