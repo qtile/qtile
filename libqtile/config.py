@@ -300,7 +300,7 @@ class Group(object):
     """
     def __init__(self, name, matches=None, exclusive=False,
                  spawn=None, layout=None, persist=True, init=True,
-                 layout_opts=None):
+                 layout_opts=None, screen_affinity=None):
         """
         :param name: the name of this group
         :type name: string
@@ -328,6 +328,8 @@ class Group(object):
             matches = []
         self.matches = matches
         self.layout_opts = layout_opts or {}
+
+        self.screen_affinity = screen_affinity
 
 class Match(object):
     """
