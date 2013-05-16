@@ -138,7 +138,6 @@ class _Window(command.CommandObject):
 
         self.hints = {
             'input': True,
-            'state': self.state,
             'icon_pixmap': None,
             'icon_window': None,
             'icon_x': 0,
