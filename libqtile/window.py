@@ -672,6 +672,7 @@ class Window(_Window):
         # add window to the save-set, so it gets mapped when qtile dies
         qtile.conn.conn.core.ChangeSaveSet(SetMode.Insert, self.window.wid)
         self.update_wm_net_icon()
+        self.first_float_configure = False
 
     @property
     def group(self):
@@ -861,10 +862,12 @@ class Window(_Window):
         self._reconfigure_floating(new_float_state=new_float_state)
 
     def enablefloating(self):
+        self.first_float_configure = True
         fi = self._float_info
         self._enablefloating(fi['x'], fi['y'], fi['w'], fi['h'])
 
     def disablefloating(self):
+        self.first_float_configure = False
         if self._float_state != NOT_FLOATING:
             if self._float_state == FLOATING:
                 # store last size
@@ -945,16 +948,23 @@ class Window(_Window):
             return
         if getattr(self, 'floating', False):
             # only obey resize for floating windows
-            screen = self.group.screen
             cw = xcb.xproto.ConfigWindow
             if e.value_mask & cw.Width:
                 self.width = e.width
             if e.value_mask & cw.Height:
                 self.height = e.height
             if e.value_mask & cw.X:
-                self.x = screen.x + ((screen.width - self.width) // 2)
+                self.x = e.x
             if e.value_mask & cw.Y:
-                self.y = screen.y + ((screen.height - self.height) // 2)
+                self.y = e.y
+
+            # Center things on first ConfigureRequest
+            if self.group.screen and self.first_float_configure:
+                screen = self.group.screen
+                self.first_float_configure = False
+                self.x = self.x + ((screen.width - self.width) // 2)
+                self.y = self.y + ((screen.height - self.width) // 2)
+
         if self.group and self.group.screen:
             self.place(
                 self.x,
