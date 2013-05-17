@@ -278,34 +278,36 @@ class _Group(command.CommandObject):
             screen = self.qtile.screens[screen]
         screen.setGroup(self)
 
-    def _dirGroup(self, direction):
-        currentgroup = self.qtile.groups.index(self)
-        nextgroup = (currentgroup + direction) % len(self.qtile.groups)
-        return self.qtile.groups[nextgroup]
-
-    def _dirSkipEmptyGroup(self, direction):
+    def _dirGroup(self, direction, skip_empty=False, skip_managed=False):
         """
-        Find a non-empty group walking the groups list in the specified
+        Find a group walking the groups list in the specified
         direction.
+
+        skip_empty skips the empty groups
+        skip_managed skips the groups that have a screen
         """
         index = currentgroup = self.qtile.groups.index(self)
         while True:
             index = (index + direction) % len(self.qtile.groups)
             group = self.qtile.groups[index]
-            if index == currentgroup or group.windows:
+
+            matches = False
+            if skip_empty and skip_managed and\
+                    group.windows and not group.screen:
+                matches = True
+            elif skip_empty and group.windows:
+                matches = True
+            elif skip_managed and not group.screen:
+                matches = True
+
+            if index == currentgroup or matches:
                 return group
 
-    def prevGroup(self):
-        return self._dirGroup(-1)
+    def prevGroup(self, skip_empty=False, skip_managed=False):
+        return self._dirGroup(-1, skip_empty, skip_managed)
 
-    def nextGroup(self):
-        return self._dirGroup(1)
-
-    def prevEmptyGroup(self):
-        return self._dirSkipEmptyGroup(-1)
-
-    def nextEmptyGroup(self):
-        return self._dirSkipEmptyGroup(1)
+    def nextGroup(self, skip_empty=False, skip_managed=False):
+        return self._dirGroup(1, skip_empty, skip_managed)
 
     def cmd_unminimise_all(self):
         """

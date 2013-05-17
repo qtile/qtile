@@ -267,25 +267,19 @@ class Screen(command.CommandObject):
         """
         self.resize(x, y, w, h)
 
-    def cmd_nextgroup(self, skip_empty=False):
+    def cmd_nextgroup(self, skip_empty=False, skip_managed=False):
         """
             Switch to the next group.
         """
-        if skip_empty:
-            n = self.group.nextEmptyGroup()
-        else:
-            n = self.group.nextGroup()
+        n = self.group.nextGroup(skip_empty, skip_managed)
         self.setGroup(n)
         return n.name
 
-    def cmd_prevgroup(self, skip_empty=False):
+    def cmd_prevgroup(self, skip_empty=False, skip_managed=False):
         """
             Switch to the previous group.
         """
-        if skip_empty:
-            n = self.group.prevEmptyGroup()
-        else:
-            n = self.group.prevGroup()
+        n = self.group.prevGroup(skip_empty, skip_managed)
         self.setGroup(n)
         return n.name
 
