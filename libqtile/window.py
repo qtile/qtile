@@ -806,6 +806,9 @@ class Window(_Window):
 
     def enablemaximize(self, state=MAXIMIZED):
         screen = self.group.screen
+        if not screen:
+            screen = self.qtile.find_closest_screen(self.x, self.y)
+
         if state == MAXIMIZED:
             self._enablefloating(screen.dx,
                              screen.dy,
