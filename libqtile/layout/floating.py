@@ -29,7 +29,7 @@ class Floating(Layout):
         provide ``float_rules`` to do so.
         ``float_rules`` is a list of dictionaries containing:
 
-        {wmname: WM_NAME, wmclass: WM_CLASS
+        {wname: WM_NAME, wmclass: WM_CLASS
         role: WM_WINDOW_ROLE}
 
         The keys must be specified as above.  You only need one, but
