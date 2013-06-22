@@ -36,6 +36,7 @@ except ImportError:
 
 try:
     from yahoo_weather import YahooWeather
+    from bitcoin_ticker import BitcoinTicker
 except ImportError:
     # Requires Python >= 2.6 or simplejson
     pass
