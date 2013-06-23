@@ -286,22 +286,15 @@ class _Group(command.CommandObject):
         skip_empty skips the empty groups
         skip_managed skips the groups that have a screen
         """
-        index = currentgroup = self.qtile.groups.index(self)
-        while True:
-            index = (index + direction) % len(self.qtile.groups)
-            group = self.qtile.groups[index]
+        def match(group):
+            if group is self: return True
+            if skip_empty and not group.windows: return False
+            if skip_managed and group.screen: return False
+            return True
 
-            matches = False
-            if skip_empty and skip_managed and\
-                    group.windows and not group.screen:
-                matches = True
-            elif skip_empty and group.windows:
-                matches = True
-            elif skip_managed and not group.screen:
-                matches = True
-
-            if index == currentgroup or matches:
-                return group
+        groups = [ group for group in self.qtile.groups if match(group) ]
+        index = (groups.index(self) + direction) % len(groups)
+        return groups[index]
 
     def prevGroup(self, skip_empty=False, skip_managed=False):
         return self._dirGroup(-1, skip_empty, skip_managed)
