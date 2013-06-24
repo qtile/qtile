@@ -47,11 +47,11 @@ Run it from the top-level of the repository, like this:
 
 In practice, the development cycle looks something like this:
 
-* make minor code change
-* run appropriate test: ``nosetests --tests=test_module``
-* GOTO 1, until hackage is complete
-* run entire test suite: ``nosetests``
-* commit
+1. make minor code change
+#. run appropriate test: ``nosetests --tests=test_module``
+#. GOTO 1, until hackage is complete
+#. run entire test suite: ``nosetests``
+#. commit
 
 Second X Session
 ----------------
