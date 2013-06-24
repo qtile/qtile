@@ -45,7 +45,8 @@ def terminalWidth():
 class QSh:
 
     def __init__(self, client, completekey="tab"):
-        self.clientroot, self.current = client, client
+        self.clientroot = client
+        self.current = client
         self.completekey = completekey
         self.termwidth = terminalWidth()
         readline.set_completer(self.complete)
@@ -54,16 +55,18 @@ class QSh:
         self.builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
 
     def _complete(self, buf, arg, state):
-        if (not re.search(r" |\(", buf)) or buf.startswith("help "):
+        if not re.search(r" |\(", buf) or buf.startswith("help "):
             options = self.builtins + self._commands()
             lst = [i for i in options if i.startswith(arg)]
-            return lst[state] if lst and state < len(lst) else None
+            if lst and state < len(lst):
+                return lst[state]
         elif buf.startswith("cd ") or buf.startswith("ls "):
             path = [i for i in arg.split("/") if i]
             if arg.endswith("/"):
                 last = ""
             else:
-                path, last = path[:-1], path[-1]
+                path = path[:-1]
+                last = path[-1]
             node = self._findNode(self.current, *path)
             options = [str(i) for i in self._ls(node)]
             lst = []
@@ -89,9 +92,7 @@ class QSh:
         if lst:
             lst = [str(i) for i in lst]
             mx = max([len(i) for i in lst])
-            cols = self.termwidth / (mx + 2)
-            if not cols:
-                cols = 1
+            cols = self.termwidth / (mx + 2) or 1
             for i in range(len(lst) / cols):
                 sl = lst[i * cols: (i + 1) * cols]
                 sl = [x + " " * (mx - len(x)) for x in sl]
@@ -109,9 +110,9 @@ class QSh:
         if obj.parent and obj.myselector is None:
             t, itms = obj.parent.items(obj.name)
             attrs = obj._contains if t else None
-            return attrs, itms
+            return (attrs, itms)
         else:
-            return obj._contains, []
+            return (obj._contains, [])
 
     def _ls(self, obj):
         attrs, itms = self._inspect(obj)
@@ -201,19 +202,19 @@ class QSh:
         cmds = self._commands()
         if not arg:
             lst = [
-                    "help command   -- Help for a specific command.",
-                    "",
-                    "Builtins:",
-                    "=========",
-                    self.columnize(self.builtins),
-                  ]
+                "help command   -- Help for a specific command.",
+                "",
+                "Builtins:",
+                "=========",
+                self.columnize(self.builtins),
+            ]
             if cmds:
                 lst += [
                     "",
                     "Commands for this object:",
                     "=========================",
                     self.columnize(cmds),
-                  ]
+                ]
             return "\n".join(lst)
         elif arg in cmds:
             return self._call("doc", "(\"%s\")" % arg)
@@ -234,7 +235,7 @@ class QSh:
     def _call(self, cmd_name, args):
         cmds = self._commands()
         if cmd_name not in cmds:
-            return "No such command: %s"%cmd_name
+            return "No such command: %s" % cmd_name
 
         cmd = getattr(self.current, cmd_name)
         if args:
@@ -243,20 +244,21 @@ class QSh:
             args = "()"
         try:
             val = eval(
-                    "cmd%s" % args,
-                    {},
-                    dict(cmd=cmd)
-                )
+                "cmd%s" % args,
+                {},
+                dict(cmd=cmd)
+            )
             return val
-        except SyntaxError, v:
+        except (SyntaxError, v):
             return "Syntax error in expression: %s" % v.text
-        except command.CommandException, val:
+        except (command.CommandException, val):
             return "Command exception: %s\n" % val
         except ipc.IPCError:
             # on restart, try to reconnect
             if cmd_name == 'restart':
                 client = command.Client(self.clientroot.client.fname)
-                self.clientroot, self.current = client, client
+                self.clientroot = client
+                self.current = client
             else:
                 raise
 
@@ -272,10 +274,11 @@ class QSh:
 
             match = re.search(r"\W", line)
             if match:
-                cmd, args = line[:match.start()].strip(), line[
-                    match.start():].strip()
+                cmd = line[:match.start()].strip()
+                args = line[match.start():].strip()
             else:
-                cmd, args = line, ""
+                cmd = line
+                args = ''
 
             builtin = getattr(self, "do_" + cmd, None)
             if builtin:

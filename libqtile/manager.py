@@ -787,10 +787,12 @@ class Qtile(command.CommandObject):
         if dx or dy:
             for i in cmd:
                 if i.check(self):
-                    status, val = self.server.call(
-                        (i.selectors, i.name, i.args +
-                        (rx + dx, ry + dy), i.kwargs)
-                    )
+                    status, val = self.server.call((
+                        i.selectors,
+                        i.name,
+                        i.args + (rx + dx, ry + dy),
+                        i.kwargs
+                    ))
                     if status in (command.ERROR, command.EXCEPTION):
                         self.log.error(
                             "Mouse command error %s: %s" % (i.name, val)

@@ -298,9 +298,12 @@ class _Group(command.CommandObject):
         """
 
         def match(group):
-            if group is self: return True
-            if skip_empty and not group.windows: return False
-            if skip_managed and group.screen: return False
+            if group is self:
+                return True
+            if skip_empty and not group.windows:
+                return False
+            if skip_managed and group.screen:
+                return False
             return True
 
         groups = [group for group in self.qtile.groups if match(group)]
