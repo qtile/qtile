@@ -36,7 +36,8 @@ class CommandException(Exception):
 class _SelectError(Exception):
     def __init__(self, name, sel):
         Exception.__init__(self)
-        self.name, self.sel = name, sel
+        self.name = name
+        self.sel = sel
 
 
 SUCCESS = 0
@@ -103,7 +104,8 @@ class _Command:
             :*args Arguments to be passed to the specified command
             :*kwargs Arguments to be passed to the specified command
         """
-        self.selectors, self.name = selectors, name
+        self.selectors = selectors
+        self.name = name
         self.call = call
 
     def __call__(self, *args, **kwargs):
@@ -132,8 +134,7 @@ class _CommandTree(object):
     def __getitem__(self, select):
         if self.myselector:
             raise KeyError("No such key: %s" % select)
-        c = self.__class__(self.call, self.selectors, select, self)
-        return c
+        return self.__class__(self.call, self.selectors, select, self)
 
     def __getattr__(self, name):
         nextSelector = self.selectors[:]
@@ -215,8 +216,8 @@ def find_sockfile(display=None):
     """
     if not display:
         display = os.environ.get("DISPLAY")
-    if not display:
-        display = ":0.0"
+        if not display:
+            display = ":0.0"
     if '.' not in display:
         display += '.0'
     cache_directory = os.path.expandvars('$XDG_CACHE_HOME')
@@ -270,8 +271,10 @@ class _Call:
             :*args Arguments to be passed to the specified command
             :*kwargs Arguments to be passed to the specified command
         """
-        self.selectors, self.name = selectors, name
-        self.args, self.kwargs = args, kwargs
+        self.selectors = selectors
+        self.name = name
+        self.args = args
+        self.kwargs = kwargs
         # Conditionals
         self.layout = None
 
@@ -304,9 +307,9 @@ class CommandObject(object):
         selectors = selectors[1:]
 
         r = self.items(name)
-        if (r is None) or\
-            (r[1] is None and sel is not None) or\
-                (r[1] is not None and sel and sel not in r[1]) or\
+        if (r is None) or \
+            (r[1] is None and sel is not None) or \
+                (r[1] is not None and sel and sel not in r[1]) or \
                     (r[0] is False and sel is None):
             raise _SelectError(name, sel)
 
