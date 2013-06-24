@@ -38,10 +38,12 @@ class Gap(command.CommandObject):
             size: The width of the gap.
         """
         self.size = size
-        self.qtile, self.screen = None, None
+        self.qtile = None
+        self.screen = None
 
     def _configure(self, qtile, screen):
-        self.qtile, self.screen = qtile, screen
+        self.qtile = qtile
+        self.screen = screen
 
     def draw(self):
         pass
@@ -83,11 +85,11 @@ class Gap(command.CommandObject):
             return s.dheight
 
     def geometry(self):
-        return self.x, self.y, self.width, self.height
+        return (self.x, self.y, self.width, self.height)
 
     def _items(self, name):
         if name == "screen":
-            return True, None
+            return (True, None)
 
     def _select(self, name, sel):
         if name == "screen":
@@ -100,9 +102,7 @@ class Gap(command.CommandObject):
                 return i
 
     def info(self):
-        return dict(
-            position=self.position
-        )
+        return dict(position=self.position)
 
     def cmd_info(self):
         """
@@ -213,14 +213,20 @@ class Bar(Gap, configurable.Configurable):
     def handle_ButtonPress(self, e):
         widget = self.get_widget_in_position(e)
         if widget:
-            widget.button_press(e.event_x - widget.offset,
-                                e.event_y, e.detail)
+            widget.button_press(
+                    e.event_x - widget.offset,
+                    e.event_y,
+                    e.detail
+            )
 
     def handle_ButtonRelease(self, e):
         widget = self.get_widget_in_position(e)
         if widget:
-            widget.button_release(e.event_x - widget.offset,
-                                  e.event_y, e.detail)
+            widget.button_release(
+                    e.event_x - widget.offset,
+                    e.event_y,
+                    e.detail
+            )
 
     def widget_grab_keyboard(self, widget):
         """
