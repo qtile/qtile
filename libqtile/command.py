@@ -307,10 +307,10 @@ class CommandObject(object):
         selectors = selectors[1:]
 
         r = self.items(name)
-        if (r is None) or \
-            (r[1] is None and sel is not None) or \
-                (r[1] is not None and sel and sel not in r[1]) or \
-                    (r[0] is False and sel is None):
+        if (r is None or
+                (r[0] is False and sel is None) or
+                (r[1] is None and sel is not None) or
+                (r[1] is not None and sel and sel not in r[1])):
             raise _SelectError(name, sel)
 
         obj = self._select(name, sel)
