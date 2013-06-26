@@ -381,8 +381,7 @@ class Match(object):
 
     def compare(self, client):
         for _type, rule in self._rules:
-            match_func = getattr(rule, 'match', None) or \
-                         getattr(rule, 'count')
+            match_func = getattr(rule, 'match', None) or getattr(rule, 'count')
 
             if _type == 'title':
                 value = client.name
