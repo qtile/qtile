@@ -177,12 +177,12 @@ class _TGroup(_CommandTree):
 
 
 _TreeMap = {
-    "layout":   _TLayout,
-    "widget":   _TWidget,
-    "bar":      _TBar,
-    "window":   _TWindow,
-    "screen":   _TScreen,
-    "group":    _TGroup,
+    "layout": _TLayout,
+    "widget": _TWidget,
+    "bar": _TBar,
+    "window": _TWindow,
+    "screen": _TScreen,
+    "group": _TGroup,
 }
 
 
