@@ -214,10 +214,7 @@ def find_sockfile(display=None):
     """
         Finds the appropriate socket file.
     """
-    if not display:
-        display = os.environ.get("DISPLAY")
-        if not display:
-            display = ":0.0"
+    display = display or os.environ.get('DISPLAY') or ':0.0'
     if '.' not in display:
         display += '.0'
     cache_directory = os.path.expandvars('$XDG_CACHE_HOME')
