@@ -53,12 +53,12 @@ def formatSelector(lst):
         selector expression.
     """
     expr = []
-    for i in lst:
+    for name, sel in iter(lst):
         if expr:
             expr.append(".")
-        expr.append(i[0])
-        if i[1] is not None:
-            expr.append("[%s]" % repr(i[1]))
+        expr.append(name)
+        if sel is not None:
+            expr.append("[%s]" % repr(sel))
     return "".join(expr)
 
 
