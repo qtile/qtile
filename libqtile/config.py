@@ -83,30 +83,31 @@ class ScreenRect(object):
 
     def __repr__(self):
         return '<%s %d,%d %d,%d>' % (
-                self.__class__.__name__,
-                self.x, self.y, self.width, self.height
+            self.__class__.__name__,
+            self.x, self.y,
+            self.width, self.height
         )
 
     def hsplit(self, columnwidth):
         assert columnwidth > 0
         assert columnwidth < self.width
         return (
-                self.__class__(self.x, self.y, columnwidth, self.height),
-                self.__class__(
-                    self.x + columnwidth, self.y,
-                    self.width - columnwidth, self.height
-                )
+            self.__class__(self.x, self.y, columnwidth, self.height),
+            self.__class__(
+                self.x + columnwidth, self.y,
+                self.width - columnwidth, self.height
+            )
         )
 
     def vsplit(self, rowheight):
         assert rowheight > 0
         assert rowheight < self.height
         return (
-                self.__class__(self.x, self.y, self.width, rowheight),
-                self.__class__(
-                    self.x, self.y + rowheight,
-                    self.width, self.height - rowheight
-                )
+            self.__class__(self.x, self.y, self.width, rowheight),
+            self.__class__(
+                self.x, self.y + rowheight,
+                self.width, self.height - rowheight
+            )
         )
 
 
@@ -134,8 +135,9 @@ class Screen(command.CommandObject):
         self.right = right
         self.qtile = None
         self.index = None
-        self.x = x  # x position of upper left corner can be > 0
-                    # if one screen is "right" of the other
+        # x position of upper left corner can be > 0
+        # if one screen is "right" of the other
+        self.x = x
         self.y = y
         self.width = width
         self.height = height
@@ -154,9 +156,9 @@ class Screen(command.CommandObject):
     @property
     def gaps(self):
         lst = []
-        for i in [self.top, self.bottom, self.left, self.right]:
-            if i:
-                lst.append(i)
+        lst.extend([
+            i for i in [self.top, self.bottom, self.left, self.right] if i
+        ])
         return lst
 
     @property
