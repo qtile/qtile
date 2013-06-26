@@ -229,17 +229,19 @@ class Screen(command.CommandObject):
 
         hook.fire("setgroup")
         hook.fire("focus_change")
-        hook.fire("layout_change",
-                  self.group.layouts[self.group.currentLayout],
-                  self.group)
+        hook.fire(
+            "layout_change",
+            self.group.layouts[self.group.currentLayout],
+            self.group
+        )
 
     def _items(self, name):
         if name == "layout":
-            return True, range(len(self.group.layouts))
+            return (True, range(len(self.group.layouts)))
         elif name == "window":
-            return True, [i.window.wid for i in self.group.windows]
+            return (True, [i.window.wid for i in self.group.windows])
         elif name == "bar":
-            return False, [x.position for x in self.gaps]
+            return (False, [x.position for x in self.gaps])
 
     def _select(self, name, sel):
         if name == "layout":
@@ -343,9 +345,7 @@ class Group(object):
         self.layout = layout
         self.persist = persist
         self.init = init
-        if matches is None:
-            matches = []
-        self.matches = matches
+        self.matches = matches or []
         self.layout_opts = layout_opts or {}
 
         self.screen_affinity = screen_affinity
