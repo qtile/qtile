@@ -83,17 +83,17 @@ class _Server(ipc.Server):
         except _SelectError, v:
             e = formatSelector([(v.name, v.sel)])
             s = formatSelector(selectors)
-            return ERROR, "No object %s in path '%s'" % (e, s)
+            return (ERROR, "No object %s in path '%s'" % (e, s))
         cmd = obj.command(name)
         if not cmd:
             return ERROR, "No such command."
         self.qtile.log.info("Command: %s(%s, %s)" % (name, args, kwargs))
         try:
-            return SUCCESS, cmd(*args, **kwargs)
+            return (SUCCESS, cmd(*args, **kwargs))
         except CommandError, v:
-            return ERROR, v.args[0]
+            return (ERROR, v.args[0])
         except Exception, v:
-            return EXCEPTION, traceback.format_exc()
+            return (EXCEPTION, traceback.format_exc())
         self.qtile.conn.flush()
 
 
@@ -303,11 +303,10 @@ class CommandObject(object):
         name, sel = selectors[0]
         selectors = selectors[1:]
 
-        r = self.items(name)
-        if (r is None or
-                (r[0] is False and sel is None) or
-                (r[1] is None and sel is not None) or
-                (r[1] is not None and sel and sel not in r[1])):
+        root, items = self.items(name)
+        if (root is False and sel is None) or \
+                (items is None and sel is not None) or \
+                (items is not None and sel and sel not in items):
             raise _SelectError(name, sel)
 
         obj = self._select(name, sel)
