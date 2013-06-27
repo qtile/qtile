@@ -261,6 +261,7 @@ class CommandRoot(_CommandRoot):
         else:
             raise CommandException(val)
 
+
 class _Call:
     def __init__(self, selectors, name, *args, **kwargs):
         """

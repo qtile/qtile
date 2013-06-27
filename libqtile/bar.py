@@ -244,7 +244,7 @@ class Bar(Gap, configurable.Configurable):
             Removes the widget's keyboard handler.
         """
         del self.window.handle_KeyPress
-        if not self.saved_focus == None:
+        if not self.saved_focus is None:
             self.saved_focus.window.set_input_focus()
 
     def draw(self):

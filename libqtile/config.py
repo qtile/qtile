@@ -3,6 +3,7 @@ import hook
 import utils
 import xcbq
 
+
 class Key:
     """
         Defines a keybinding.
@@ -32,6 +33,7 @@ class Key:
 
     def __repr__(self):
         return "Key(%s, %s)" % (self.modifiers, self.key)
+
 
 class Drag(object):
     """
@@ -353,6 +355,7 @@ class Group(object):
 
         self.screen_affinity = screen_affinity
 
+
 class Match(object):
     """
         Match for dynamic groups
@@ -381,8 +384,8 @@ class Match(object):
             wm_type = []
         self._rules = [('title', t) for t in title]
         self._rules += [('wm_class', w) for w in wm_class]
-        self._rules += [('role', r) for r in  role]
-        self._rules += [('wm_type', r) for r in  wm_type]
+        self._rules += [('role', r) for r in role]
+        self._rules += [('wm_type', r) for r in wm_type]
 
     def compare(self, client):
         for _type, rule in self._rules:
@@ -410,6 +413,7 @@ class Match(object):
         for c in clients:
             if self.compare(c):
                 callback(c)
+
 
 class Rule(object):
     """
