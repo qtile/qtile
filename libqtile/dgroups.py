@@ -4,7 +4,8 @@ import gobject
 import libqtile.hook
 from libqtile.config import Key
 from libqtile.command import lazy
-from libqtile.config import Group, Rule
+from libqtile.config import Group
+from libqtile.config import Rule
 
 def simple_key_binder(mod, keynames=None):
     """
@@ -115,16 +116,15 @@ class DGroups(object):
 
                     group_obj = self.qtile.groupMap[rule.group]
                     group = self.groupMap.get(rule.group)
-                    if group:
-                        if group_added:
-                            for k, v in group.layout_opts.iteritems():
-                                if callable(v):
-                                    v(group_obj.layout)
-                                else:
-                                    setattr(group_obj.layout, k, v)
-                            affinity = group.screen_affinity
-                            if affinity and len(self.qtile.screens) > affinity:
-                                self.qtile.screens[affinity].setGroup(group_obj)
+                    if group and group_added:
+                       for k, v in group.layout_opts.iteritems():
+                           if callable(v):
+                               v(group_obj.layout)
+                           else:
+                               setattr(group_obj.layout, k, v)
+                       affinity = group.screen_affinity
+                       if affinity and len(self.qtile.screens) > affinity:
+                           self.qtile.screens[affinity].setGroup(group_obj)
 
                 if rule.float:
                     client.enablefloating()
@@ -149,9 +149,7 @@ class DGroups(object):
 
                     group_name = wm_class
                 else:
-                    group_name = client.name
-                    if not group_name:
-                        group_name = "Unnamed"
+                    group_name = client.name or 'Unnamed'
 
                 self.add_dgroup(Group(group_name, persist=False), start=True)
                 client.togroup(group_name)
