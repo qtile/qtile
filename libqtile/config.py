@@ -1,4 +1,7 @@
-import command, hook, utils, xcbq
+import command
+import hook
+import utils
+import xcbq
 
 class Key:
     """
