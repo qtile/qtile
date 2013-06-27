@@ -158,17 +158,17 @@ class Bar(Gap, configurable.Configurable):
 
         Gap._configure(self, qtile, screen)
         self.window = window.Internal.create(
-                        self.qtile,
-                        self.x, self.y, self.width, self.height,
-                        self.opacity
-                     )
+            self.qtile,
+            self.x, self.y, self.width, self.height,
+            self.opacity
+        )
 
         self.drawer = drawer.Drawer(
-                        self.qtile,
-                        self.window.window.wid,
-                        self.width,
-                        self.height
-                    )
+            self.qtile,
+            self.window.window.wid,
+            self.width,
+            self.height
+        )
         self.drawer.clear(self.background)
 
         self.window.handle_Expose = self.handle_Expose

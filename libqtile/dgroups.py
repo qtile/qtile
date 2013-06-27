@@ -7,6 +7,7 @@ from libqtile.command import lazy
 from libqtile.config import Group
 from libqtile.config import Rule
 
+
 def simple_key_binder(mod, keynames=None):
     """
         Bind keys to mod+group position or to the keys specified as
@@ -42,6 +43,7 @@ def simple_key_binder(mod, keynames=None):
             dgroup.qtile.mapKey(key_c)
 
     return func
+
 
 class DGroups(object):
     """ Dynamic Groups """
@@ -117,14 +119,14 @@ class DGroups(object):
                     group_obj = self.qtile.groupMap[rule.group]
                     group = self.groupMap.get(rule.group)
                     if group and group_added:
-                       for k, v in group.layout_opts.iteritems():
-                           if callable(v):
-                               v(group_obj.layout)
-                           else:
-                               setattr(group_obj.layout, k, v)
-                       affinity = group.screen_affinity
-                       if affinity and len(self.qtile.screens) > affinity:
-                           self.qtile.screens[affinity].setGroup(group_obj)
+                        for k, v in group.layout_opts.iteritems():
+                            if callable(v):
+                                v(group_obj.layout)
+                            else:
+                                setattr(group_obj.layout, k, v)
+                        affinity = group.screen_affinity
+                        if affinity and len(self.qtile.screens) > affinity:
+                            self.qtile.screens[affinity].setGroup(group_obj)
 
                 if rule.float:
                     client.enablefloating()
@@ -136,8 +138,8 @@ class DGroups(object):
         if not group_set:
             current_group = self.qtile.currentGroup.name
             if current_group in self.groupMap and \
-                self.groupMap[current_group].exclusive and \
-                not intrusive:
+                    self.groupMap[current_group].exclusive and \
+                    not intrusive:
 
                 wm_class = client.window.get_wm_class()
 
@@ -160,13 +162,13 @@ class DGroups(object):
         def delete_client():
             # Delete group if empty and dont persist
             if group and group.name in self.groupMap and \
-                not self.groupMap[group.name].persist and \
-                len(group.windows) <= 0:
+                    not self.groupMap[group.name].persist and \
+                    len(group.windows) <= 0:
                 self.qtile.delGroup(group.name)
 
         # wait the delay until really delete the group
         self.qtile.log.info('Add dgroup timer')
         self.timeout[client] = gobject.timeout_add_seconds(
-                                self.delay,
-                                delete_client
-                            )
+            self.delay,
+            delete_client
+        )

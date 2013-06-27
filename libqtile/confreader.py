@@ -29,8 +29,10 @@ import sys
 import utils
 import traceback
 
+
 class ConfigError(Exception):
     pass
+
 
 class File(object):
     def __init__(self, fname=None, is_restart=False):

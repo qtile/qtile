@@ -18,8 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+
 class Configurable(object):
     global_defaults = {}
+
     def __init__(self, **config):
         self._widget_defaults = {}
         self._user_config = config
@@ -42,4 +44,3 @@ class Configurable(object):
                     return self._widget_defaults[name]
                 except KeyError:
                     raise AttributeError("no attribute: %s" % name)
-
