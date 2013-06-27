@@ -28,8 +28,11 @@ def simple_key_binder(mod, keynames=None):
             name = group.name
             key = Key([mod], keyname, lazy.group[name].toscreen())
             key_s = Key([mod, "shift"], keyname, lazy.window.togroup(name))
-            key_c = Key([mod, "control"], keyname,
-                    lazy.group.switch_groups(name))
+            key_c = Key(
+                [mod, "control"],
+                keyname,
+                lazy.group.switch_groups(name)
+            )
             dgroup.keys.append(key)
             dgroup.keys.append(key_s)
             dgroup.keys.append(key_c)
@@ -40,7 +43,7 @@ def simple_key_binder(mod, keynames=None):
     return func
 
 class DGroups(object):
-    ''' Dynamic Groups '''
+    """ Dynamic Groups """
     def __init__(self, qtile, dgroups, key_binder=None, delay=1):
         self.qtile = qtile
 
@@ -78,9 +81,11 @@ class DGroups(object):
         libqtile.hook.subscribe.client_killed(self._del)
         if self.key_binder:
             libqtile.hook.subscribe.setgroup(
-                    lambda: self.key_binder(self))
+                lambda: self.key_binder(self)
+            )
             libqtile.hook.subscribe.changegroup(
-                    lambda: self.key_binder(self))
+                lambda: self.key_binder(self)
+            )
 
     def _add(self, client):
         if client in self.timeout:
@@ -130,9 +135,9 @@ class DGroups(object):
         # If app doesn't have a group
         if not group_set:
             current_group = self.qtile.currentGroup.name
-            if current_group in self.groupMap and\
-                    self.groupMap[current_group].exclusive and\
-                    not intrusive:
+            if current_group in self.groupMap and \
+                self.groupMap[current_group].exclusive and \
+                not intrusive:
 
                 wm_class = client.window.get_wm_class()
 
@@ -157,11 +162,13 @@ class DGroups(object):
         def delete_client():
             # Delete group if empty and dont persist
             if group and group.name in self.groupMap and \
-               not self.groupMap[group.name].persist and \
-               len(group.windows) <= 0:
+                not self.groupMap[group.name].persist and \
+                len(group.windows) <= 0:
                 self.qtile.delGroup(group.name)
 
         # wait the delay until really delete the group
         self.qtile.log.info('Add dgroup timer')
-        self.timeout[client] = gobject.timeout_add_seconds(self.delay,
-                                                         delete_client)
+        self.timeout[client] = gobject.timeout_add_seconds(
+                                self.delay,
+                                delete_client
+                            )
