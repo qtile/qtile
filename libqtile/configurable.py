@@ -41,5 +41,5 @@ class Configurable(object):
                 try:
                     return self._widget_defaults[name]
                 except KeyError:
-                    raise AttributeError("no attribute: " + name)
+                    raise AttributeError("no attribute: %s" % name)
 
