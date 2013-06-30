@@ -214,13 +214,16 @@ class SwapGraph(_Graph):
 
 class NetGraph(_Graph):
     defaults = [
-        ("interface", "eth0", "Interface to display info for"),
+        ("interface", "auto",
+         "Interface to display info for (auto for detection)"),
         ("bandwidth_type", "down", "down(load)/up(load)"),
     ]
 
     def __init__(self, **config):
         _Graph.__init__(self, **config)
         self.add_defaults(NetGraph.defaults)
+        if self.interface == "auto":
+            self.interface = self.get_main_iface()
         self.filename = '/sys/class/net/{interface}/statistics/{type}'.format(
             interface=self.interface,
             type=self.bandwidth_type == 'down' and 'rx_bytes' or 'tx_bytes'
@@ -241,6 +244,22 @@ class NetGraph(_Graph):
     def update_graph(self):
         val = self._getValues()
         self.push(val)
+
+    @staticmethod
+    def get_main_iface():
+        filename = "/proc/net/route"
+        data = list()
+        with open(filename) as f:
+            for line in list(f)[1:]:
+                iface, dest, gw, _, _, _, _, _, _, _, _ = line.split()
+                data.append({'iface': iface, 'dest': dest, 'gw': gw})
+        for route in data:
+            if int(route['dest']) == 0:
+                return route['iface']
+        if any(data):
+            return data[0]['iface']
+        else:
+            raise RuntimeError('No valid interfaces available')
 
 
 class HDDGraph(_Graph):
