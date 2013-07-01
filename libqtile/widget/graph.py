@@ -223,7 +223,11 @@ class NetGraph(_Graph):
         _Graph.__init__(self, **config)
         self.add_defaults(NetGraph.defaults)
         if self.interface == "auto":
-            self.interface = self.get_main_iface()
+            try:
+                self.interface = self.get_main_iface()
+            except RuntimeError:
+                self.log.warning("NetGraph - Automatic interface detection failed, falling back to 'eth0'")
+                self.interface = "eth0"
         self.filename = '/sys/class/net/{interface}/statistics/{type}'.format(
             interface=self.interface,
             type=self.bandwidth_type == 'down' and 'rx_bytes' or 'tx_bytes'
@@ -251,7 +255,7 @@ class NetGraph(_Graph):
         make_route = lambda line: dict(zip(['iface', 'dest'], line.split()))
         routes = [make_route(line) for line in list(open(filename))[1:]]
         try:
-            return next((r for r in routes if int(r['dest'], 16)), routes[0])['iface']
+            return next((r for r in routes if not int(r['dest'], 16)), routes[0])['iface']
         except:
             raise RuntimeError('No valid interfaces available')
 
