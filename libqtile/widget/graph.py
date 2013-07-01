@@ -214,7 +214,7 @@ class SwapGraph(_Graph):
 
 class NetGraph(_Graph):
     defaults = [
-        ("interface", "auto",
+        ("interface", 'auto',
          "Interface to display info for (auto for detection)"),
         ("bandwidth_type", "down", "down(load)/up(load)"),
     ]
@@ -248,17 +248,11 @@ class NetGraph(_Graph):
     @staticmethod
     def get_main_iface():
         filename = "/proc/net/route"
-        data = list()
-        with open(filename) as f:
-            for line in list(f)[1:]:
-                iface, dest, gw, _, _, _, _, _, _, _, _ = line.split()
-                data.append({'iface': iface, 'dest': dest, 'gw': gw})
-        for route in data:
-            if int(route['dest']) == 0:
-                return route['iface']
-        if any(data):
-            return data[0]['iface']
-        else:
+        make_route = lambda line: dict(zip(['iface', 'dest'], line.split()))
+        routes = [make_route(line) for line in list(open(filename))[1:]]
+        try:
+            return next((r for r in routes if int(r['dest'], 16)), routes[0])['iface']
+        except:
             raise RuntimeError('No valid interfaces available')
 
 
