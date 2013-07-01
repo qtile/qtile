@@ -214,8 +214,8 @@ class SwapGraph(_Graph):
 
 class NetGraph(_Graph):
     defaults = [
-        ("interface", 'auto',
-         "Interface to display info for (auto for detection)"),
+        ("interface", "auto",
+         "Interface to display info for ('auto' for detection)"),
         ("bandwidth_type", "down", "down(load)/up(load)"),
     ]
 
