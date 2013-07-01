@@ -274,7 +274,7 @@ class HDDGraph(_Graph):
 class HDDBusyGraph(_Graph):
     """
     Parses /sys/block/<dev>/stat file and extracts overall device
-    IO usage, based on `io_ticks`'s value
+    IO usage, based on `io_ticks`'s value.
     See https://www.kernel.org/doc/Documentation/block/stat.txt
     """
     defaults = [
@@ -287,21 +287,17 @@ class HDDBusyGraph(_Graph):
         self.path = '/sys/block/{dev}/stat'.format(
             dev=self.device
         )
-        self.bytes = 0
-        self.bytes = self._getValues()
+        self._prev = 0
 
-    def _getValues(self):
+    def _getActivity(self):
         try:
-            with open(self.path) as f:
-                data = f.read().split()
-                value = int(data[9])  # `io_ticks`
-                tmp = value
-                value -= self.bytes
-                self.bytes = tmp
-                return value
+            # io_ticks is field number 9
+            io_ticks = int(open(self.path).read().split()[9])
         except IOError:
             return 0
+        activity = io_ticks - self._prev
+        self._prev = io_ticks
+        return activity
 
     def update_graph(self):
-        val = self._getValues()
-        self.push(val)
+        self.push(self._getActivity())
