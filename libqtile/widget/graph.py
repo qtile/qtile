@@ -32,7 +32,7 @@ class _Graph(base._Widget):
     def __init__(self, width=100, **config):
         base._Widget.__init__(self, width, **config)
         self.add_defaults(_Graph.defaults)
-        self.values = [0]*self.samples
+        self.values = [0] * self.samples
         self.maxvalue = 0
         self.timeout_add(self.frequency, self.update)
 
@@ -70,8 +70,10 @@ class _Graph(base._Widget):
         for index, val in enumerate(values):
             self.drawer.ctx.line_to(x + index * step, y - self.val(val))
         self.drawer.ctx.stroke_preserve()
-        self.drawer.ctx.line_to(x + (len(values) - 1) * step,
-                                y - 1 + self.line_width / 2.0)
+        self.drawer.ctx.line_to(
+            x + (len(values) - 1) * step,
+            y - 1 + self.line_width / 2.0
+        )
         self.drawer.ctx.line_to(x, y - 1 + self.line_width / 2.0)
         self.drawer.set_source_rgb(self.fill_color)
         self.drawer.ctx.fill()
@@ -144,7 +146,7 @@ class CPUGraph(_Graph):
         with open('/proc/stat') as file:
             all_cpus = next(file)
             name, user, nice, sys, idle, iowait, tail = all_cpus.split(None, 6)
-            return int(user), int(nice), int(sys), int(idle)
+            return (int(user), int(nice), int(sys), int(idle))
 
     def update_graph(self):
         nval = self._getvalues()
@@ -185,7 +187,9 @@ class MemoryGraph(_Graph):
 
     def update_graph(self):
         val = self._getvalues()
-        self.push(val['MemTotal'] - val['MemFree'] - val['Buffers'] - val['Cached'])
+        self.push(
+            val['MemTotal'] - val['MemFree'] - val['Buffers'] - val['Cached']
+        )
 
 
 class SwapGraph(_Graph):
@@ -215,8 +219,11 @@ class SwapGraph(_Graph):
 
 class NetGraph(_Graph):
     defaults = [
-        ("interface", "auto",
-         "Interface to display info for ('auto' for detection)"),
+        (
+            "interface",
+            "auto",
+            "Interface to display info for ('auto' for detection)"
+        ),
         ("bandwidth_type", "down", "down(load)/up(load)"),
     ]
 
@@ -227,7 +234,10 @@ class NetGraph(_Graph):
             try:
                 self.interface = self.get_main_iface()
             except RuntimeError:
-                self.log.warning("NetGraph - Automatic interface detection failed, falling back to 'eth0'")
+                self.log.warning(
+                    "NetGraph - Automatic interface detection failed, "
+                    "falling back to 'eth0'"
+                )
                 self.interface = "eth0"
         self.filename = '/sys/class/net/{interface}/statistics/{type}'.format(
             interface=self.interface,
@@ -256,7 +266,10 @@ class NetGraph(_Graph):
         make_route = lambda line: dict(zip(['iface', 'dest'], line.split()))
         routes = [make_route(line) for line in list(open(filename))[1:]]
         try:
-            return next((r for r in routes if not int(r['dest'], 16)), routes[0])['iface']
+            return next(
+                (r for r in routes if not int(r['dest'], 16)),
+                routes[0]
+            )['iface']
         except:
             raise RuntimeError('No valid interfaces available')
 

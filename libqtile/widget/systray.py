@@ -8,31 +8,36 @@ import struct
 
 
 class Icon(window._Window):
-    _windowMask = EventMask.StructureNotify |\
-                  EventMask.Exposure
+    _windowMask = EventMask.StructureNotify | \
+        EventMask.Exposure
 
     def __init__(self, win, qtile, systray):
         window._Window.__init__(self, win, qtile)
         self.systray = systray
-        self.width = self.height = systray.icon_size
+        self.width = systray.icon_size
+        self.height = systray.icon_size
 
     def handle_ConfigureNotify(self, event):
         icon_size = self.systray.icon_size
         self.updateHints()
 
         try:
-            width, height = self.hints["min_width"], self.hints["min_height"]
+            width = self.hints["min_width"]
+            height = self.hints["min_height"]
         except KeyError:
-            width, height = icon_size, icon_size
+            width = icon_size
+            height = icon_size
 
         if height > icon_size:
             new_width = width / height * icon_size
             height = icon_size
             width = new_width
         if height <= 0:
-            width, height = icon_size, icon_size
+            width = icon_size
+            height = icon_size
 
-        self.width, self.height = width, height
+        self.width = width
+        self.height = height
         self.window.set_attribute(backpixmap=self.systray.drawer.pixmap)
         self.systray.draw()
         return False
@@ -48,8 +53,8 @@ class Icon(window._Window):
 
 
 class TrayWindow(window._Window):
-    _windowMask = EventMask.StructureNotify |\
-                  EventMask.Exposure
+    _windowMask = EventMask.StructureNotify | \
+        EventMask.Exposure
 
     def __init__(self, win, qtile, systray):
         window._Window.__init__(self, win, qtile)
@@ -95,6 +100,7 @@ class Systray(base._Widget):
         ('icon_size', 20, 'Icon width'),
         ('padding', 5, 'Padding between icons'),
     ]
+
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(Systray.defaults)
@@ -122,10 +128,12 @@ class Systray(base._Widget):
             atoms['_NET_SYSTEM_TRAY_S0'],
             xcb.CurrentTime
         )
-        event = struct.pack('BBHII5I', 33, 32, 0, qtile.root.wid,
-                            atoms['MANAGER'],
-                            xcb.CurrentTime, atoms['_NET_SYSTEM_TRAY_S0'],
-                            win.wid, 0, 0)
+        event = struct.pack(
+            'BBHII5I', 33, 32, 0, qtile.root.wid,
+            atoms['MANAGER'],
+            xcb.CurrentTime, atoms['_NET_SYSTEM_TRAY_S0'],
+            win.wid, 0, 0
+        )
         qtile.root.send_event(event, mask=EventMask.StructureNotify)
 
         # cleanup before exit
@@ -137,11 +145,11 @@ class Systray(base._Widget):
         xoffset = self.padding
         for pos, icon in enumerate(self.icons.values()):
             icon.place(
-                    self.offset + xoffset,
-                    self.bar.height / 2 - self.icon_size / 2,
-                    icon.width, self.icon_size,
-                    0,
-                    None
+                self.offset + xoffset,
+                self.bar.height / 2 - self.icon_size / 2,
+                icon.width, self.icon_size,
+                0,
+                None
             )
             xoffset += icon.width + self.padding
 

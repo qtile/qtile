@@ -11,10 +11,11 @@ UNKNOWN = 'Unknown'
 
 BATTERY_INFO_FILES = {
     'energy_now_file': ['energy_now', 'charge_now'],
-    'energy_full_file':['energy_full', 'charge_full'],
+    'energy_full_file': ['energy_full', 'charge_full'],
     'power_now_file': ['power_now', 'current_now'],
-    'status_file': ['status',],
-    }
+    'status_file': ['status'],
+}
+
 
 def default_icon_path():
     # default icons are in libqtile/resources/battery-icons
@@ -29,14 +30,30 @@ class _Battery(base._TextBox):
 
     defaults = [
         ('battery_name', 'BAT0', 'ACPI name of a battery, usually BAT0'),
-        ('status_file', 'status', 'Name of status file in'
-         ' /sys/class/power_supply/battery_name'),
-        ('energy_now_file', None, 'Name of file with the '
-         'current energy in /sys/class/power_supply/battery_name'),
-        ('energy_full_file', None, 'Name of file with the maximum'
-         ' energy in /sys/class/power_supply/battery_name'),
-        ('power_now_file', None, 'Name of file with the current'
-         ' power draw in /sys/class/power_supply/battery_name'),
+        (
+            'status_file',
+            'status',
+            'Name of status file in'
+            ' /sys/class/power_supply/battery_name'
+        ),
+        (
+            'energy_now_file',
+            None,
+            'Name of file with the '
+            'current energy in /sys/class/power_supply/battery_name'
+        ),
+        (
+            'energy_full_file',
+            None,
+            'Name of file with the maximum'
+            ' energy in /sys/class/power_supply/battery_name'
+        ),
+        (
+            'power_now_file',
+            None,
+            'Name of file with the current'
+            ' power draw in /sys/class/power_supply/battery_name'
+        ),
         ('update_delay', 1, 'The delay in seconds between updates'),
     ]
 
@@ -83,7 +100,7 @@ class _Battery(base._TextBox):
                 'now': float(self._get_param('energy_now_file')),
                 'full': float(self._get_param('energy_full_file')),
                 'power': float(self._get_param('power_now_file')),
-                }
+            }
         except TypeError:
             return False
         return info
@@ -95,13 +112,23 @@ class Battery(_Battery):
     """
     defaults = [
         ('low_foreground', 'FF0000', 'font color when battery is low'),
-        ('format', '{char} {percent:2.0%} {hour:d}:{min:02d}',
-         'Display format'),
+        (
+            'format',
+            '{char} {percent:2.0%} {hour:d}:{min:02d}',
+            'Display format'
+        ),
         ('charge_char', '^', 'Character to indicate the battery is charging'),
-        ('discharge_char', 'V', 'Character to indicate the battery'
-         ' is discharging'),
-        ('low_percentage', 0.10,
-         "0 < x < 1 at which to indicate battery is low with low_foreground"),
+        (
+            'discharge_char',
+            'V',
+            'Character to indicate the battery'
+            ' is discharging'
+        ),
+        (
+            'low_percentage',
+            0.10,
+            "0 < x < 1 at which to indicate battery is low with low_foreground"
+        ),
         ('hide_threshold', None, 'Hide the text when there is enough energy'),
     ]
 
@@ -113,7 +140,7 @@ class Battery(_Battery):
 
     def _get_text(self):
         info = self._get_info()
-        if info == False:
+        if info is False:
             return 'Error'
 
         ## Set the charging character
@@ -121,8 +148,9 @@ class Battery(_Battery):
             # hide the text when it's higher than threshold, but still
             # display `full` when the battery is fully charged.
             if self.hide_threshold and \
-               info['now'] / info['full'] * 100.0 >= self.hide_threshold and \
-               info['stat'] != CHARGED:
+                    info['now'] / info['full'] * 100.0 >= \
+                    self.hide_threshold and \
+                    info['stat'] != CHARGED:
                 return ''
             elif info['stat'] == DISCHARGING:
                 char = self.discharge_char
@@ -148,9 +176,12 @@ class Battery(_Battery):
         else:
             self.layout.colour = self.foreground
 
-        return self.format.format(char=char,
-                           percent=percent,
-                           hour=hour, min=min)
+        return self.format.format(
+            char=char,
+            percent=percent,
+            hour=hour,
+            min=min
+        )
 
     def update(self):
         if self.configured:
@@ -200,7 +231,7 @@ class BatteryIcon(_Battery):
     def _get_icon_key(self):
         key = 'battery'
         info = self._get_info()
-        if info == False or not info.get('full'):
+        if info is False or not info.get('full'):
             key += '-missing'
         else:
             percent = info['now'] / info['full']

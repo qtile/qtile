@@ -2,6 +2,7 @@ from .. import hook, bar
 import base
 from pythonwifi.iwlibs import Wireless, Iwstats
 
+
 class Wlan(base._TextBox):
     """
         Displays Wifi ssid and quality.

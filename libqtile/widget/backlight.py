@@ -5,7 +5,8 @@ import base
 
 BACKLIGHT_DIR = '/sys/class/backlight'
 
-FORMAT = '{percent:2.0%}'
+FORMAT = '{percent: 2.0%}'
+
 
 class Backlight(base._TextBox):
     """
@@ -16,10 +17,18 @@ class Backlight(base._TextBox):
 
     defaults = [
         ('backlight_name', 'acpi_video0', 'ACPI name of a backlight device'),
-        ('brightness_file', 'brightness', 'Name of file with the '
-         'current brightness in /sys/class/backlight/backlight_name'),
-        ('max_brightness_file', 'max_brightness', 'Name of file with the '
-         'maximum brightness in /sys/class/backlight/backlight_name'),
+        (
+            'brightness_file',
+            'brightness',
+            'Name of file with the '
+            'current brightness in /sys/class/backlight/backlight_name'
+        ),
+        (
+            'max_brightness_file',
+            'max_brightness',
+            'Name of file with the '
+            'maximum brightness in /sys/class/backlight/backlight_name'
+        ),
         ('update_delay', .2, 'The delay in seconds between updates'),
     ]
 
@@ -43,14 +52,14 @@ class Backlight(base._TextBox):
             info = {
                 'brightness': float(self._load_file(self.brightness_file)),
                 'max': float(self._load_file(self.max_brightness_file)),
-                }
+            }
         except TypeError:
             return False
         return info
 
     def _get_text(self):
         info = self._get_info()
-        if info == False:
+        if info is False:
             return 'Error'
 
         percent = info['brightness'] / info['max']

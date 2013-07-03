@@ -25,6 +25,7 @@ class Volume(base._TextBox):
         ("theme_path", None, "Path of the icons"),
         ("update_interval", 0.2, "Update time in seconds."),
     ]
+
     def __init__(self, **config):
         base._TextBox.__init__(self, '0', width=bar.CALCULATED, **config)
         self.add_defaults(Volume.defaults)
@@ -42,14 +43,35 @@ class Volume(base._TextBox):
 
     def button_press(self, x, y, button):
         if button == 5:
-            subprocess.call(['amixer', '-q', '-c', str(self.cardid),
-                              'sset', self.channel, '5%-'])
+            subprocess.call([
+                'amixer',
+                '-q',
+                '-c',
+                str(self.cardid),
+                'sset',
+                self.channel,
+                '5%-'
+            ])
         elif button == 4:
-            subprocess.call(['amixer', '-q', '-c', str(self.cardid),
-                              'sset', self.channel, '5%+'])
+            subprocess.call([
+                'amixer',
+                '-q',
+                '-c',
+                str(self.cardid),
+                'sset',
+                self.channel,
+                '5%+'
+            ])
         elif button == 1:
-            subprocess.call(['amixer', '-q', '-c', str(self.cardid),
-                           'sset', self.channel, 'toggle'])
+            subprocess.call([
+                'amixer',
+                '-q',
+                '-c',
+                str(self.cardid),
+                'sset',
+                self.channel,
+                'toggle'
+            ])
         self.draw()
 
     def update(self):
@@ -84,13 +106,17 @@ class Volume(base._TextBox):
                 self.text = '%s%%' % self.volume
 
     def setup_images(self):
-        for img_name in ('audio-volume-high', 'audio-volume-low',
-                      'audio-volume-medium', 'audio-volume-muted'):
+        for img_name in (
+            'audio-volume-high',
+            'audio-volume-low',
+            'audio-volume-medium',
+            'audio-volume-muted'
+        ):
 
             try:
                 img = cairo.ImageSurface.create_from_png(
-                    os.path.join(self.theme_path,
-                                 '%s.png' % img_name))
+                    os.path.join(self.theme_path, '%s.png' % img_name)
+                )
             except cairo.Error:
                 self.theme_path = None
                 self.width_type = bar.CALCULATED
@@ -117,9 +143,16 @@ class Volume(base._TextBox):
             self.surfaces[img_name] = imgpat
 
     def get_volume(self):
-        mixerprocess = subprocess.Popen(['amixer', '-c', str(self.cardid),
-                                         'sget', self.channel],
-                                        stdout=subprocess.PIPE)
+        mixerprocess = subprocess.Popen(
+            [
+                'amixer',
+                '-c',
+                str(self.cardid),
+                'sget',
+                self.channel
+            ],
+            stdout=subprocess.PIPE
+        )
         mixer_out = mixerprocess.communicate()[0]
         if mixerprocess.returncode:
             return -1
