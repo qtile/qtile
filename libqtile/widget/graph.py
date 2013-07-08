@@ -8,7 +8,8 @@ __all__ = [
     'MemoryGraph',
     'SwapGraph',
     'NetGraph',
-    'HDDGraph'
+    'HDDGraph',
+    'HDDBusyGraph',
 ]
 
 
@@ -214,13 +215,20 @@ class SwapGraph(_Graph):
 
 class NetGraph(_Graph):
     defaults = [
-        ("interface", "eth0", "Interface to display info for"),
+        ("interface", "auto",
+         "Interface to display info for ('auto' for detection)"),
         ("bandwidth_type", "down", "down(load)/up(load)"),
     ]
 
     def __init__(self, **config):
         _Graph.__init__(self, **config)
         self.add_defaults(NetGraph.defaults)
+        if self.interface == "auto":
+            try:
+                self.interface = self.get_main_iface()
+            except RuntimeError:
+                self.log.warning("NetGraph - Automatic interface detection failed, falling back to 'eth0'")
+                self.interface = "eth0"
         self.filename = '/sys/class/net/{interface}/statistics/{type}'.format(
             interface=self.interface,
             type=self.bandwidth_type == 'down' and 'rx_bytes' or 'tx_bytes'
@@ -241,6 +249,16 @@ class NetGraph(_Graph):
     def update_graph(self):
         val = self._getValues()
         self.push(val)
+
+    @staticmethod
+    def get_main_iface():
+        filename = "/proc/net/route"
+        make_route = lambda line: dict(zip(['iface', 'dest'], line.split()))
+        routes = [make_route(line) for line in list(open(filename))[1:]]
+        try:
+            return next((r for r in routes if not int(r['dest'], 16)), routes[0])['iface']
+        except:
+            raise RuntimeError('No valid interfaces available')
 
 
 class HDDGraph(_Graph):
@@ -268,3 +286,35 @@ class HDDGraph(_Graph):
     def update_graph(self):
         val = self._getValues()
         self.push(val)
+
+
+class HDDBusyGraph(_Graph):
+    """
+    Parses /sys/block/<dev>/stat file and extracts overall device
+    IO usage, based on `io_ticks`'s value.
+    See https://www.kernel.org/doc/Documentation/block/stat.txt
+    """
+    defaults = [
+        ("device", "sda", "Block device to display info for")
+    ]
+
+    def __init__(self, **config):
+        _Graph.__init__(self, **config)
+        self.add_defaults(HDDBusyGraph.defaults)
+        self.path = '/sys/block/{dev}/stat'.format(
+            dev=self.device
+        )
+        self._prev = 0
+
+    def _getActivity(self):
+        try:
+            # io_ticks is field number 9
+            io_ticks = int(open(self.path).read().split()[9])
+        except IOError:
+            return 0
+        activity = io_ticks - self._prev
+        self._prev = io_ticks
+        return activity
+
+    def update_graph(self):
+        self.push(self._getActivity())
