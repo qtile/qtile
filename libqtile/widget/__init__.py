@@ -16,6 +16,7 @@ from textbox import TextBox
 from volume import Volume
 from windowname import WindowName
 from windowtabs import WindowTabs
+from keyboardlayout import KeyboardLayout
 
 from tasklist import TaskList
 
