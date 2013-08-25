@@ -65,8 +65,8 @@ class QSh:
             if arg.endswith("/"):
                 last = ""
             else:
-                path = path[:-1]
                 last = path[-1]
+                path = path[:-1]
             node = self._findNode(self.current, *path)
             options = [str(i) for i in self._ls(node)]
             lst = []
@@ -249,9 +249,9 @@ class QSh:
                 dict(cmd=cmd)
             )
             return val
-        except (SyntaxError, v):
+        except SyntaxError, v:
             return "Syntax error in expression: %s" % v.text
-        except (command.CommandException, val):
+        except command.CommandException, val:
             return "Command exception: %s\n" % val
         except ipc.IPCError:
             # on restart, try to reconnect
