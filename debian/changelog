@@ -1,3 +1,9 @@
+qtile (0.6.0-saucy2) saucy; urgency=low
+
+  * Take TODO out of debian docs
+
+ -- Tycho Andersen <tycho@tycho.ws>  Sat, 07 Sept 2013 23:14:59 -0500
+
 qtile (0.6.0-saucy1) saucy; urgency=low
 
   * Version bump for saucy salamander
