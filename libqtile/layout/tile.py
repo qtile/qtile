@@ -12,8 +12,8 @@ class Tile(Layout):
     ]
 
     def __init__(self, ratio=0.618, masterWindows=1, expand=True,
-        ratio_increment=0.05, add_on_top=True, shift_windows=False,
-        master_match=None, **config):
+                 ratio_increment=0.05, add_on_top=True, shift_windows=False,
+                 master_match=None, **config):
         Layout.__init__(self, **config)
         self.add_defaults(Tile.defaults)
         self.clients = []
@@ -118,7 +118,9 @@ class Tile(Layout):
             return
         if self.clients:
             masters = [c for c in self.clients if match.compare(c)]
-            self.clients = masters + [c for c in self.clients if c not in masters]
+            self.clients = masters + [
+                c for c in self.clients if c not in masters
+            ]
 
     def shift(self, idx1, idx2):
         if self.clients:
@@ -155,15 +157,18 @@ class Tile(Layout):
     def configure(self, c, screen):
         screenWidth = screen.width
         screenHeight = screen.height
-        x = y = w = h = 0
+        x = 0
+        y = 0
+        w = 0
+        h = 0
         borderWidth = self.border_width
         margin = self.margin
         if self.clients and c in self.clients:
             pos = self.clients.index(c)
             if c in self.master_windows:
-                w = (int(screenWidth * self.ratio) \
-                         if len(self.slave_windows) or not self.expand \
-                         else screenWidth)
+                w = int(screenWidth * self.ratio) \
+                    if len(self.slave_windows) or not self.expand \
+                    else screenWidth
                 h = screenHeight / self.master
                 x = screen.x
                 y = screen.y + pos * h
@@ -177,13 +182,13 @@ class Tile(Layout):
             else:
                 bc = self.group.qtile.colorPixel(self.border_normal)
             c.place(
-                x+margin,
-                y+margin,
-                w-margin*2-borderWidth*2,
-                h-margin*2-borderWidth*2,
+                x + margin,
+                y + margin,
+                w - margin * 2 - borderWidth * 2,
+                h - margin * 2 - borderWidth * 2,
                 borderWidth,
                 bc,
-                )
+            )
             c.unhide()
         else:
             c.hide()
@@ -193,7 +198,7 @@ class Tile(Layout):
             all=[c.name for c in self.clients],
             master=[c.name for c in self.master_windows],
             slave=[c.name for c in self.slave_windows],
-            )
+        )
 
     def cmd_down(self):
         self.down()

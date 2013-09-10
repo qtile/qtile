@@ -19,6 +19,7 @@ class NullCompleter:
     def complete(self, txt):
         return txt
 
+
 class FileCompleter:
     def __init__(self, qtile, _testing=False):
         self._testing = _testing
@@ -205,7 +206,8 @@ class CommandCompleter:
         _testing: disables reloading of the lookup table
                   to make testing possible.
         """
-        self.lookup, self.offset = None, None
+        self.lookup = None
+        self.offset = None
         self.thisfinal = None
         self._testing = _testing
 
@@ -283,9 +285,8 @@ class Prompt(base._TextBox):
         "window": WindowCompleter,
         None: NullCompleter
     }
-    defaults = [
-        ("cursorblink", 0.5, "Cursor blink rate. 0 to disable.")
-    ]
+    defaults = [("cursorblink", 0.5, "Cursor blink rate. 0 to disable.")]
+
     def __init__(self, name="prompt", **config):
         base._TextBox.__init__(self, "", bar.CALCULATED, **config)
         self.add_defaults(Prompt.defaults)
@@ -297,7 +298,8 @@ class Prompt(base._TextBox):
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
 
-    def startInput(self, prompt, callback, complete=None, strict_completer=False):
+    def startInput(self, prompt, callback,
+                   complete=None, strict_completer=False):
         """
             complete: Tab-completion. Can be None, or "cmd".
 
@@ -326,13 +328,17 @@ class Prompt(base._TextBox):
 
     def _calculate_real_width(self):
         if self.blink:
-            return min(self.layout.width,
-                self.bar.width) + self.actual_padding * 2
+            return min(
+                self.layout.width,
+                self.bar.width
+            ) + self.actual_padding * 2
         else:
             _text = self.text
             self.text = _text + "_"
-            width = min(self.layout.width,
-                self.bar.width) + self.actual_padding * 2
+            width = min(
+                self.layout.width,
+                self.bar.width
+            ) + self.actual_padding * 2
             self.text = _text
             return width
 

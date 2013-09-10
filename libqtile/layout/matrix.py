@@ -25,8 +25,10 @@ class Matrix(Layout):
 
     def info(self):
         d = Layout.info(self)
-        d["rows"] = [[win.name for win in self.get_row(i)]
-                     for i in xrange(self.get_num_rows())]
+        d["rows"] = [
+            [win.name for win in self.get_row(i)]
+            for i in xrange(self.get_num_rows())
+        ]
         d["current_window"] = self.current_window
         return d
 
@@ -44,13 +46,16 @@ class Matrix(Layout):
 
     def get_row(self, row):
         assert row < self.get_num_rows()
-        return self.windows[row * self.columns:
-                            row * self.columns + self.columns]
+        return self.windows[
+            row * self.columns: row * self.columns + self.columns
+        ]
 
     def get_column(self, column):
         assert column < self.columns
-        return [self.windows[i] for i in xrange(column, len(self.windows),
-                                                self.columns)]
+        return [
+            self.windows[i]
+            for i in xrange(column, len(self.windows), self.columns)
+        ]
 
     def add(self, c):
         self.windows.append(c)
@@ -84,12 +89,14 @@ class Matrix(Layout):
         win_width = column_width - 2 * self.border_width
         win_height = row_height - 2 * self.border_width
 
-        c.place(xoffset,
-                yoffset,
-                win_width,
-                win_height,
-                self.border_width,
-                px)
+        c.place(
+            xoffset,
+            yoffset,
+            win_width,
+            win_height,
+            self.border_width,
+            px
+        )
         c.unhide()
 
     def cmd_next(self):
@@ -97,7 +104,7 @@ class Matrix(Layout):
             Switch to the next window on current row
         """
         column, row = self.current_window
-        self.current_window = (column + 1) % len(self.get_row(row)), row
+        self.current_window = ((column + 1) % len(self.get_row(row)), row)
         self.group.focus(self.get_current_window(), False)
 
     def cmd_down(self):
@@ -105,7 +112,10 @@ class Matrix(Layout):
             Switch to the next window in current column
         """
         column, row = self.current_window
-        self.current_window = column, (row + 1) % len(self.get_column(column))
+        self.current_window = (
+            column,
+            (row + 1) % len(self.get_column(column))
+        )
         self.group.focus(self.get_current_window(), False)
 
     def cmd_up(self):
@@ -113,7 +123,10 @@ class Matrix(Layout):
             Switch to the previous window in current column
         """
         column, row = self.current_window
-        self.current_window = column, (row - 1) % len(self.get_column(column))
+        self.current_window = (
+            column,
+            (row - 1) % len(self.get_column(column))
+        )
         self.group.focus(self.get_current_window(), False)
 
     def cmd_delete(self):

@@ -98,7 +98,7 @@ class MonadTall(SingleWindow):
     Key([modkey, "shift"], "space", lazy.layout.flip()),
 
     """
-    
+
     _left = 0
     _right = 1
     _min_height = 85
@@ -215,9 +215,16 @@ class MonadTall(SingleWindow):
         # total height of maximized secondary
         maxed_size = self.group.screen.dheight - collapsed_height
         # if maximized or nearly maximized
-        if abs(self._get_absolute_size_from_relative(self.relative_sizes[nidx]) - maxed_size) < self.change_size:
+        if abs(
+            self._get_absolute_size_from_relative(self.relative_sizes[nidx]) -
+            maxed_size
+        ) < self.change_size:
             # minimize
-            self._shrink_secondary(self._get_absolute_size_from_relative(self.relative_sizes[nidx]) - self._min_height)
+            self._shrink_secondary(
+                self._get_absolute_size_from_relative(
+                    self.relative_sizes[nidx]
+                ) - self._min_height
+            )
         # otherwise maximize
         else:
             self._grow_secondary(maxed_size)
@@ -225,7 +232,7 @@ class MonadTall(SingleWindow):
     def cmd_maximize(self):
         "Grow the currently focused client to the max size"
         # if we have 1 or 2 panes or main pane is focused
-        if (len(self.clients) < 3 or self.focused == 0):
+        if len(self.clients) < 3 or self.focused == 0:
             self._maximize_main()
         # secondary is focused
         else:
@@ -246,11 +253,14 @@ class MonadTall(SingleWindow):
         # single client - fullscreen
         if len(self.clients) == 1:
             px = self.group.qtile.colorPixel(self.border_focus)
-            c.place(self.group.screen.dx,
-                    self.group.screen.dy,
-                    self.group.screen.dwidth,
-                    self.group.screen.dheight,
-                    0, px)
+            c.place(
+                self.group.screen.dx,
+                self.group.screen.dy,
+                self.group.screen.dwidth,
+                self.group.screen.dheight,
+                0,
+                px
+            )
             c.unhide()
             return
 
@@ -287,25 +297,44 @@ class MonadTall(SingleWindow):
             # secondary client
             width = width_shared - 2 * self.border_width
             # ypos is the sum of all clients above it
-            ypos = self.group.screen.dy + self._get_absolute_size_from_relative(sum(self.relative_sizes[:cidx - 1]))
+            ypos = self.group.screen.dy + \
+                self._get_absolute_size_from_relative(
+                    sum(self.relative_sizes[:cidx - 1])
+                )
             # get height from precalculated height list
-            height = self._get_absolute_size_from_relative(self.relative_sizes[cidx - 1])
+            height = self._get_absolute_size_from_relative(
+                self.relative_sizes[cidx - 1]
+            )
             # place client based on calculated dimensions
-            c.place(xpos, ypos,
-                    width, height - 2 * self.border_width,
-                    self.border_width, px)
+            c.place(
+                xpos,
+                ypos,
+                width,
+                height - 2 * self.border_width,
+                self.border_width,
+                px
+            )
             c.unhide()
         else:
             # main client
             width = width_main - 2 * self.border_width
-            c.place(xpos, self.group.screen.dy, width,
-                    self.group.screen.dheight - 2 * self.border_width,
-                self.border_width, px)
+            c.place(
+                xpos, self.group.screen.dy,
+                width,
+                self.group.screen.dheight - 2 * self.border_width,
+                self.border_width,
+                px
+            )
             c.unhide()
 
     def get_shrink_margin(self, cidx):
         "Return how many remaining pixels a client can shrink"
-        return max(0, self._get_absolute_size_from_relative(self.relative_sizes[cidx]) - self._min_height)
+        return max(
+            0,
+            self._get_absolute_size_from_relative(
+                self.relative_sizes[cidx]
+            ) - self._min_height
+        )
 
     def shrink(self, cidx, amt):
         """
@@ -316,10 +345,12 @@ class MonadTall(SingleWindow):
         # get max resizable amount
         margin = self.get_shrink_margin(cidx)
         if amt > margin:  # too much
-            self.relative_sizes[cidx] -= self._get_relative_size_from_absolute(margin)
+            self.relative_sizes[cidx] -= \
+                self._get_relative_size_from_absolute(margin)
             return amt - margin
         else:
-            self.relative_sizes[cidx] -= self._get_relative_size_from_absolute(amt)
+            self.relative_sizes[cidx] -= \
+                self._get_relative_size_from_absolute(amt)
             return 0
 
     def shrink_up(self, cidx, amt):
@@ -442,17 +473,26 @@ class MonadTall(SingleWindow):
             idx = self.focused - 1
             # shrink up and down
             left -= half_change_size - self.shrink_up_shared(
-                idx, half_change_size)
+                idx,
+                half_change_size
+            )
             left -= half_change_size - self.shrink_down_shared(
-                idx, half_change_size)
+                idx,
+                half_change_size
+            )
             left -= half_change_size - self.shrink_up_shared(
-                idx, half_change_size)
+                idx,
+                half_change_size
+            )
             left -= half_change_size - self.shrink_down_shared(
-                idx, half_change_size)
+                idx,
+                half_change_size
+            )
         # calculate how much shrinkage took place
         diff = amt - left
         # grow client by diff amount
-        self.relative_sizes[self.focused - 1] += self._get_relative_size_from_absolute(diff)
+        self.relative_sizes[self.focused - 1] += \
+            self._get_relative_size_from_absolute(diff)
 
     def cmd_grow(self):
         """
@@ -547,7 +587,8 @@ class MonadTall(SingleWindow):
             self.grow_up_shared(idx, half_change)
             self.grow_down_shared(idx, half_change)
         # shrink client by total change
-        self.relative_sizes[self.focused - 1] -= self._get_relative_size_from_absolute(change)
+        self.relative_sizes[self.focused - 1] -= \
+            self._get_relative_size_from_absolute(change)
 
     def cmd_shrink(self):
         """
@@ -601,7 +642,8 @@ class MonadTall(SingleWindow):
         "Get closest window to a point x,y"
         target = min(
             clients,
-            key=lambda c: math.hypot(c.info()['x'] - x, c.info()['y'] - y))
+            key=lambda c: math.hypot(c.info()['x'] - x, c.info()['y'] - y)
+        )
         return target
 
     def cmd_swap(self, window1, window2):
@@ -609,7 +651,7 @@ class MonadTall(SingleWindow):
         index1 = self.clients.index(window1)
         index2 = self.clients.index(window2)
         self.clients[index1], self.clients[index2] = \
-        self.clients[index2], self.clients[index1]
+            self.clients[index2], self.clients[index1]
         self.group.layoutAll()
         self.focused = index1
         self.group.focus(window1, False)

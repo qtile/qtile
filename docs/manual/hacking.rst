@@ -38,7 +38,7 @@ scriptable Qtile is. In fact, Qtile is designed expressly to be scriptable
 enough to allow unit testing in a nested environment.
 
 The Qtile repo includes a tiny helper script to let you quickly pull up a
-nested instance instance of Qtile in Xephyr, using your current configuration.
+nested instance of Qtile in Xephyr, using your current configuration.
 Run it from the top-level of the repository, like this:
 
 .. code-block:: bash
@@ -47,11 +47,11 @@ Run it from the top-level of the repository, like this:
 
 In practice, the development cycle looks something like this:
 
-* make minor code change
-* run appropriate test: ``nosetests --tests=test_module``
-* GOTO 1, until hackage is complete
-* run entire test suite: ``nosetests``
-* commit
+1. make minor code change
+#. run appropriate test: ``nosetests --tests=test_module``
+#. GOTO 1, until hackage is complete
+#. run entire test suite: ``nosetests``
+#. commit
 
 Second X Session
 ----------------

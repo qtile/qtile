@@ -7,6 +7,7 @@ from .. import bar
 import os.path
 import mailbox
 
+
 class Maildir(base._TextBox):
     """
     A simple widget showing the number of new mails in maildir mailboxes.
@@ -31,7 +32,10 @@ class Maildir(base._TextBox):
         # if it looks like a list of strings then we just convert them
         # and use the name as the label
         if isinstance(subFolders[0], basestring):
-            self._subFolders = [{"path": folder, "label": folder } for folder in subFolders]
+            self._subFolders = [
+                {"path": folder, "label": folder}
+                for folder in subFolders
+            ]
         else:
             self._subFolders = subFolders
 
@@ -71,7 +75,8 @@ class Maildir(base._TextBox):
         @return: a string representation of the given state.
         """
         return self._separator.join(
-                "{}: {}".format(*item) for item in state.iteritems())
+            "{}: {}".format(*item) for item in state.iteritems()
+        )
 
     def update(self):
         """
