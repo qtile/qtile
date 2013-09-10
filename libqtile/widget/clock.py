@@ -62,6 +62,10 @@ class Clock(base._TextBox):
     def pointer_over(self, x, y, detail):
         """ action to do if the mouse if over the widget: display a calendar """
         if not self.popup:
+            # clean if there are some popups form other widget alive
+            for w in self.bar.popup_window.keys():
+                w.leave_window(x, y, detail)
+
             # create the calendar popup window
             self.today = datetime.today()
             w = TextBox(calendar.month(self.today.year, self.today.month), fontsize=self.fontsize, font="monospace")

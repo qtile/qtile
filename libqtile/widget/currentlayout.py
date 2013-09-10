@@ -118,6 +118,10 @@ class CurrentLayoutIcon(_CurrentLayout):
 
     def pointer_over(self, x, y, detail):
         if not self.popup:
+            # clean if there are some popups form other widget alive
+            for w in self.bar.popup_window.keys():
+                w.leave_window(x, y, detail)
+
             self.popup = notify_window.NotifyWindow(self, [TextBox(self.bar.screen.group.layout.name, fontsize=self.fontsize)])
             self.bar.popup_window[self] = self.popup
             self.popup._configure(self.qtile, self.bar.screen)
