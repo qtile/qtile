@@ -24,7 +24,7 @@ import drawer
 import hook
 import configurable
 import window
-
+from xcb.xproto import EventMask
 
 class Gap(command.CommandObject):
     """
@@ -147,6 +147,8 @@ class Bar(Gap, configurable.Configurable):
         self.add_defaults(Bar.defaults)
         self.widgets = widgets
         self.saved_focus = None
+        # contains the widgets with a popup window open
+        self.popup_window = dict() 
 
     def _configure(self, qtile, screen):
         if not self in [screen.top, screen.bottom]:
@@ -163,6 +165,12 @@ class Bar(Gap, configurable.Configurable):
                         self.opacity
                      )
 
+        # add a PointerMotion event handler to get position inside the bar and allow
+        # "over" widget action 
+        self.window._windowMask = self.window._windowMask | EventMask.PointerMotion
+        self.window.window.set_attribute(eventmask=self.window._windowMask)
+
+
         self.drawer = drawer.Drawer(
                             self.qtile,
                             self.window.window.wid,
@@ -174,6 +182,9 @@ class Bar(Gap, configurable.Configurable):
         self.window.handle_Expose = self.handle_Expose
         self.window.handle_ButtonPress = self.handle_ButtonPress
         self.window.handle_ButtonRelease = self.handle_ButtonRelease
+        self.window.handle_MotionNotify = self.handle_PointerMotion
+        self.window.handle_LeaveNotify = self.handle_LeaveWindow
+
         qtile.windowMap[self.window.window.wid] = self.window
         self.window.unhide()
 
@@ -209,6 +220,26 @@ class Bar(Gap, configurable.Configurable):
         for i in self.widgets:
             if e.event_x < i.offset + i.width:
                 return i
+
+    def handle_PointerMotion(self, e):
+        widget = self.get_widget_in_position(e)
+        if widget:
+            widget.pointer_over(e.event_x - widget.offset,
+                                e.event_y, e.detail)
+
+
+
+    def handle_EnterWindow(self, e):
+        widget = self.get_widget_in_position(e)
+        if widget:
+            widget.enter_window(e.event_x - widget.offset,
+                                e.event_y, e.detail)
+             
+    def handle_LeaveWindow(self, e):
+        widget = self.get_widget_in_position(e)
+        if widget:
+            widget.leave_window(e.event_x - widget.offset,
+                                e.event_y, e.detail)
 
     def handle_ButtonPress(self, e):
         widget = self.get_widget_in_position(e)
