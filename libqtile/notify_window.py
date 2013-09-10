@@ -53,7 +53,7 @@ class NotifyWindow(configurable.Configurable):
 
     def _configure(self, qtile, screen):
         # no STRETCH widget are allowed
-        if len(filter(lambda w: w.width_type == STRETCH, self.widgets)) > 0:
+        if any([w.width_type == STRETCH for w in self.widgets]):
             raise confreader.ConfigError("No STRETCH widget allowed!")
 
         self.qtile = qtile
