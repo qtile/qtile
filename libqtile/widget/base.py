@@ -22,7 +22,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
     defaults = [
         ("background", None, "Widget background color"),
     ]
-    def __init__(self, width, **config):
+    def __init__(self, width, height=bar.CALCULATED, **config):
         """
             width: bar.STRETCH, bar.CALCULATED, or a specified width.
         """
@@ -42,6 +42,17 @@ class _Widget(command.CommandObject, configurable.Configurable):
         else:
             self.width_type = bar.STATIC
             self.width = width
+
+
+        if height in (bar.CALCULATED, bar.STRETCH):
+            self.height_type = height
+            self.height = 0
+        else:
+            self.height_type = bar.STATIC
+            self.height = height
+
+
+            
         self.configured = False
 
     @property
@@ -53,6 +64,18 @@ class _Widget(command.CommandObject, configurable.Configurable):
     @width.setter
     def width(self, value):
         self._width = value
+
+    @property
+    def height(self):
+        if self.height_type == bar.CALCULATED:
+            return self.calculate_height()
+        return self._height
+
+    @width.setter
+    def height(self, value):
+        self._height = value
+
+
 
     @property
     def win(self):
@@ -78,6 +101,19 @@ class _Widget(command.CommandObject, configurable.Configurable):
             offset=self.offset,
             width=self.width,
         )
+
+    def pointer_over(self, x, y, detail):
+        if self.bar:
+            if len(self.bar.popup_window):
+                # It should be only one item but ...
+                for w in self.bar.popup_window.keys():
+                    w.leave_window(x, y, detail)
+        
+    def enter_window(self, x, y, detail):
+        pass
+
+    def leave_window(self, x, y, detail):
+        pass
 
     def button_press(self, x, y, button):
         pass
@@ -121,6 +157,13 @@ class _Widget(command.CommandObject, configurable.Configurable):
             Must be implemented if the widget can take CALCULATED for width.
         """
         raise NotImplementedError
+
+    def calculate_height(self):
+        """
+            Must be implemented if the widget can take CALCULATED for height.
+        """
+        raise NotImplementedError
+
 
     def timeout_add(
         self, seconds,
@@ -166,9 +209,9 @@ class _TextBox(_Widget):
             "font shadow color, default is None(no shadow)"),
     ]
 
-    def __init__(self, text=" ", width=bar.CALCULATED, **config):
+    def __init__(self, text=" ", width=bar.CALCULATED, height=bar.CALCULATED, **config):
         self.layout = None
-        _Widget.__init__(self, width, **config)
+        _Widget.__init__(self, width, height, **config)
         self.text = text
         self.add_defaults(_TextBox.defaults)
 
@@ -225,6 +268,13 @@ class _TextBox(_Widget):
         if self.text:
             return min(self.layout.width,
                        self.bar.width) + self.actual_padding * 2
+        else:
+            return 0
+
+    def calculate_height(self):
+        if self.text:
+            return min(self.layout.height,
+                       self.bar.height) + self.actual_padding * 2
         else:
             return 0
 
