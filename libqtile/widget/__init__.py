@@ -1,7 +1,7 @@
 from backlight import Backlight
 from battery import Battery, BatteryIcon
 from clock import Clock
-from currentlayout import CurrentLayout, CurrentLayoutIcon
+from currentlayout import CurrentLayout
 from graph import CPUGraph, MemoryGraph, SwapGraph, NetGraph, HDDGraph, HDDBusyGraph
 from groupbox import AGroupBox, GroupBox
 from maildir import Maildir
@@ -16,7 +16,7 @@ from textbox import TextBox
 from volume import Volume
 from windowname import WindowName
 from windowtabs import WindowTabs
-from keyboardlayout import KeyboardLayout, KeyboardLayoutIcon
+from keyboardlayout import KeyboardLayout
 
 from tasklist import TaskList
 
