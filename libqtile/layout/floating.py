@@ -8,6 +8,7 @@ DEFAULT_FLOAT_WM_TYPES = set([
     'splash',
 ])
 
+
 class Floating(Layout):
     """
     Floating layout, which does nothing with windows but handles focus order
@@ -19,8 +20,11 @@ class Floating(Layout):
         ("max_border_width", 0, "Border width for maximize."),
         ("fullscreen_border_width", 0, "Border width for fullscreen."),
         ("name", "floating", "Name of this layout."),
-        ("auto_float_types", DEFAULT_FLOAT_WM_TYPES,
-            "default wm types to automatically float"),
+        (
+            "auto_float_types",
+            DEFAULT_FLOAT_WM_TYPES,
+            "default wm types to automatically float"
+        ),
     ]
 
     def __init__(self, float_rules=None, **config):
@@ -128,12 +132,14 @@ class Floating(Layout):
             bw = self.fullscreen_border_width
         else:
             bw = self.border_width
-        c.place(c.x,
-                c.y,
-                c.width,
-                c.height,
-                bw,
-                bc)
+        c.place(
+            c.x,
+            c.y,
+            c.width,
+            c.height,
+            bw,
+            bc
+        )
         c.unhide()
 
     def clone(self, group):

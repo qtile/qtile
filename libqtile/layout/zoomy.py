@@ -70,7 +70,7 @@ class Zoomy(SingleWindow):
                     h,
                     0,
                     None
-                    )
+                )
             else:
                 hh = int((right.height - h) / (len(self.clients) - 1))
                 c.place(
@@ -80,7 +80,7 @@ class Zoomy(SingleWindow):
                     h,
                     0,
                     None
-                    )
+                )
         c.unhide()
 
     def info(self):
@@ -91,13 +91,21 @@ class Zoomy(SingleWindow):
     def focus(self, win):
         old = self.lastfocus
         if old and self.property_name:
-            old.window.set_property(self.property_name,
-                self.property_small, "STRING", format=8)
+            old.window.set_property(
+                self.property_name,
+                self.property_small,
+                "STRING",
+                format=8
+            )
         SingleWindow.focus(self, win)
         if self.property_name:
             win = self.clients[0]
-            win.window.set_property(self.property_name,
-                self.property_big, "STRING", format=8)
+            win.window.set_property(
+                self.property_name,
+                self.property_big,
+                "STRING",
+                format=8
+            )
         self.lastfocus = win
 
     def cmd_down(self):

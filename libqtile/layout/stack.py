@@ -110,7 +110,8 @@ class _WinStack(object):
 
     def __repr__(self):
         return "_WinStack(%s, %s)" % (
-            self.current, str([i.name for i in self]))
+            self.current, str([i.name for i in self])
+        )
 
     def info(self):
         return dict(
@@ -184,17 +185,17 @@ class Stack(Layout):
 
     def nextStack(self):
         n = self._findNext(
-                self.stacks,
-                self.currentStackOffset
-            )
+            self.stacks,
+            self.currentStackOffset
+        )
         if n:
             self.group.focus(n.cw, True)
 
     def previousStack(self):
         n = self._findNext(
-                list(reversed(self.stacks)),
-                len(self.stacks) - self.currentStackOffset - 1
-            )
+            list(reversed(self.stacks)),
+            len(self.stacks) - self.currentStackOffset - 1
+        )
         if n:
             self.group.focus(n.cw, True)
 
@@ -258,9 +259,9 @@ class Stack(Layout):
             return self.stacks[currentOffset].cw
         else:
             n = self._findNext(
-                    list(reversed(self.stacks)),
-                    len(self.stacks) - currentOffset - 1
-                )
+                list(reversed(self.stacks)),
+                len(self.stacks) - currentOffset - 1
+            )
             if n:
                 return n.cw
 

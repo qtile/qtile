@@ -12,7 +12,6 @@ from libqtile import notify_window
 from textbox import TextBox
 import pango
 
-
 class Clock(base._TextBox):
     """
         A simple but flexible text-based clock, with ability to display 

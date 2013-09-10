@@ -21,12 +21,17 @@ class Mpd(base._TextBox):
     """
     defaults = [
         ("foreground_progress", "ffffff", "Foreground progress colour"),
-        ("reconnect", False, "Choose if the widget should try to keep reconnect.")
+        (
+            "reconnect",
+            False,
+            "Choose if the widget should try to keep reconnect."
+        )
     ]
 
     def __init__(self, width=bar.CALCULATED, host='localhost', port=6600,
-                 password=False, fmt_playing="%a - %t [%v%%]", fmt_stopped="Stopped [%v%%]", 
-                 msg_nc='Mpd off', do_color_progress=True, **config):
+                 password=False, fmt_playing="%a - %t [%v%%]",
+                 fmt_stopped="Stopped [%v%%]", msg_nc='Mpd off',
+                 do_color_progress=True, **config):
         """
             - host: host to connect to
             - port: port to connect to
@@ -51,13 +56,14 @@ class Mpd(base._TextBox):
         self.connect()
         self.timeout_add(1, self.update)
 
-
     def connect(self, ifneeded=False):
         if self.connected:
             if not ifneeded:
-                self.log.warning('Already connected. '
-                    ' No need to connect again. '
-                    'Maybe you want to disconnect first.')
+                self.log.warning(
+                    'Already connected. '
+                    'No need to connect again. '
+                    'Maybe you want to disconnect first.'
+                )
             return True
         CON_ID = {'host': self.host, 'port': self.port}
         if not self.mpdConnect(CON_ID):
@@ -108,14 +114,20 @@ class Mpd(base._TextBox):
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         self.layout = self.drawer.textlayout(
-            self.text, self.foreground, self.font, self.fontsize,
-            self.fontshadow, markup=True)
+            self.text,
+            self.foreground,
+            self.font,
+            self.fontsize,
+            self.fontshadow,
+            markup=True
+        )
         atexit.register(self.mpdDisconnect)
 
     def to_minutes_seconds(self, stime):
         """Takes an integer time in seconds, transforms it into
         (HH:)?MM:SS. HH portion is only visible if total time is greater
-        than an hour."""
+        than an hour.
+        """
         if type(stime) != int:
             stime = int(stime)
         mm = stime // 60
@@ -173,7 +185,7 @@ class Mpd(base._TextBox):
 
     def get_track(self):
         # This occasionally has leading zeros we don't want.
-        return str(int(self.song['track'].split('/')[0])) 
+        return str(int(self.song['track'].split('/')[0]))
 
     def get_volume(self):
         return self.status['volume']
@@ -196,11 +208,13 @@ class Mpd(base._TextBox):
         else:
             return '_'
 
-    formats = {'a': get_artist, 'A': get_album, 'e': get_elapsed, 
-               'f': get_file, 'l': get_length, 'n': get_number, 
-               'p': get_playlistlength, 's': get_status, 'S': get_longstatus, 
-               't': get_title, 'T': get_track, 'v': get_volume, '1': get_single,
-               'r': get_repeat, 'h': get_shuffle, '%': lambda x: '%', }
+    formats = {
+        'a': get_artist, 'A': get_album, 'e': get_elapsed,
+        'f': get_file, 'l': get_length, 'n': get_number,
+        'p': get_playlistlength, 's': get_status, 'S': get_longstatus,
+        't': get_title, 'T': get_track, 'v': get_volume, '1': get_single,
+        'r': get_repeat, 'h': get_shuffle, '%': lambda x: '%',
+    }
 
     def match_check(self, m):
         try:
@@ -221,14 +235,17 @@ class Mpd(base._TextBox):
                 if self.status['state'] != 'stop':
                     playing = self.do_format(self.fmt_playing)
 
-                    if self.do_color_progress and self.status and self.status.get('time', None):
+                    if self.do_color_progress and \
+                            self.status and \
+                            self.status.get('time', None):
                         elapsed, total = self.status['time'].split(':')
                         percent = float(elapsed) / float(total)
                         progress = int(percent * len(playing))
                         playing = '<span color="%s">%s</span>%s' % (
                             utils.hex(self.foreground_progress),
                             utils.escape(playing[:progress]),
-                            utils.escape(playing[progress:]))
+                            utils.escape(playing[progress:])
+                        )
                     else:
                         playing = utils.escape(playing)
                 else:
@@ -267,10 +284,12 @@ class Mpd(base._TextBox):
             elif button == 8:
                 if status:
                     self.client.setvol(
-                        max(int(status['volume']) - self.inc, 0))
+                        max(int(status['volume']) - self.inc, 0)
+                    )
             elif button == 9:
                 if status:
                     self.client.setvol(
-                        min(int(status['volume']) + self.inc, 100))
+                        min(int(status['volume']) + self.inc, 100)
+                    )
         except Exception:
             self.log.exception('Mpd error on click')

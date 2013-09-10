@@ -19,8 +19,12 @@ class ThermalSensor(base._TextBox):
         ('show_tag', False, 'Show tag sensor'),
         ('update_interval', 2, 'Update interval in seconds'),
         ('tag_sensor', None, 'Tag of the temperature sensor'),
-        ('threshold', 70, 'If the current temperature value is above, '\
-         'then change to foreground_alert colour'),
+        (
+            'threshold',
+            70,
+            'If the current temperature value is above, '
+            'then change to foreground_alert colour'
+        ),
         ('foreground_alert', 'ff0000', 'Foreground colour alert'),
     ]
 
@@ -36,7 +40,8 @@ class ThermalSensor(base._TextBox):
             (\xc2\xb0         #° match
             [CF])             #Celsius or Fahrenheit
             """,
-            re.UNICODE | re.VERBOSE)
+            re.UNICODE | re.VERBOSE
+        )
         self.value_temp = re.compile("[0-9]+\.[0-9]+")
         temp_values = self.get_temp_sensors()
         self.foreground_normal = self.foreground
@@ -58,7 +63,7 @@ class ThermalSensor(base._TextBox):
         if not self.metric:
             fahrenheit = ["-f"]
         try:
-            cmd_sensors = Popen(["sensors",] + fahrenheit, stdout=PIPE)
+            cmd_sensors = Popen(["sensors", ] + fahrenheit, stdout=PIPE)
         except OSError:
             return None
         cmd_sensors.wait()
@@ -84,4 +89,3 @@ class ThermalSensor(base._TextBox):
                 self.layout.colour = self.foreground_normal
             self.bar.draw()
         return True
-

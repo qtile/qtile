@@ -53,13 +53,13 @@ class Slice(Delegate):
     def __init__(self, side, width,
                  wname=None, wmclass=None, role=None,
                  fallback=Max(), **config):
-        if wname == None and wmclass == None and role == None:
+        if wname is None and wmclass is None and role is None:
             wname = 'slice'
         self.match = {
             'wname': wname,
             'wmclass': wmclass,
             'role': role,
-            }
+        }
         Delegate.__init__(self, width=width, side=side, **config)
         self.add_defaults(Slice.defaults)
         self._slice = Single()
@@ -83,16 +83,19 @@ class Slice(Delegate):
             sub, win = screen.vsplit(screen.height - self.width)
         else:
             raise NotImplementedError(self.side)
-        self.delegate_layout(windows, {
-            self._slice: win,
-            self._fallback: sub,
-            })
+        self.delegate_layout(
+            windows,
+            {
+                self._slice: win,
+                self._fallback: sub,
+            }
+        )
 
     def configure(self, win, screen):
         raise NotImplementedError("Should not be called")
 
     def _get_layouts(self):
-        return self._slice, self._fallback
+        return (self._slice, self._fallback)
 
     def _get_active_layout(self):
         return self._fallback  # always

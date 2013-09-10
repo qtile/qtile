@@ -13,6 +13,7 @@ try:
 except ImportError:
     import simplejson as json
 
+
 class BitcoinTicker(base._TextBox):
     ''' A bitcoin ticker widget, data provided by the MtGox API
         Format options:
@@ -20,12 +21,15 @@ class BitcoinTicker(base._TextBox):
     '''
 
     QUERY_URL = "http://data.mtgox.com/api/1/BTC%s/ticker_fast"
-    currency_code = {'dollar' : 'USD', 'euro': 'EUR'}
+    currency_code = {'dollar': 'USD', 'euro': 'EUR'}
 
     defaults = [
         ## One of (location, woeid) must be set.
-        ('currency', 'dollar', 
-         'The currency the value of bitcoin is displayed in'),
+        (
+            'currency',
+            'dollar',
+            'The currency the value of bitcoin is displayed in'
+        ),
         ('format', 'BTC Buy: {buy}, Sell: {sell}', 'Display format'),
         ('update_interval', 600, 'Update interval in seconds')
     ]
@@ -43,6 +47,7 @@ class BitcoinTicker(base._TextBox):
 
     def wx_updater(self):
         self.log.info('adding WX widget timer')
+
         def worker():
             data = self.fetch_data()
             gobject.idle_add(self.update, data)
@@ -50,10 +55,14 @@ class BitcoinTicker(base._TextBox):
         return True
 
     def fetch_data(self):
-        res = urllib2.urlopen(self.QUERY_URL % self.currency_code[self.currency])
+        res = urllib2.urlopen(
+            self.QUERY_URL % self.currency_code[self.currency]
+        )
         raw = json.loads(res.read())
-        data = {'sell': raw['return']['sell']['display'], 
-                'buy': raw['return']['buy']['display']}
+        data = {
+            'sell': raw['return']['sell']['display'],
+            'buy': raw['return']['buy']['display']
+        }
         return data
 
     def update(self, data):

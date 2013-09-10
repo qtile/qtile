@@ -25,8 +25,9 @@ if dbus:
         def GetCapabilities(self):
             return ('body')
 
-        @service.method(BUS_NAME, in_signature='susssasa{sv}i',
-                             out_signature='u')
+        @service.method(
+            BUS_NAME, in_signature='susssasa{sv}i', out_signature='u'
+        )
         def Notify(self, app_name, replaces_id, app_icon, summary,
                    body, actions, hints, timeout):
             notif = Notification(summary, body, timeout, hints)
@@ -87,7 +88,7 @@ class NotificationManager(object):
 
     def show(self, *args, **kwargs):
         notif = Notification(*args, **kwargs)
-        return notif, self.add(notif)
+        return (notif, self.add(notif))
 
 
 notifier = NotificationManager()
