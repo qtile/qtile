@@ -21,13 +21,12 @@ from .. import bar
 
 import subprocess
 
+
 class Pacman(base._TextBox):
     """
     Shows number of available updates.
     """
-    defaults = [
-        ('unavailable', 'ffffff', 'Unavailable Color - no updates.')
-    ]
+    defaults = [('unavailable', 'ffffff', 'Unavailable Color - no updates.')]
 
     def __init__(self, execute=None, interval=60, **config):
         base._TextBox.__init__(self, '', bar.CALCULATED, **config)

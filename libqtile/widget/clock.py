@@ -6,6 +6,7 @@ import base
 
 import gobject
 
+
 class Clock(base._TextBox):
     """
         A simple but flexible text-based clock.

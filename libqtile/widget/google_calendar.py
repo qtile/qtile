@@ -71,40 +71,60 @@ from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.tools import run
 import oauth2client.file
 
+
 class GoogleCalendar(base._TextBox):
-    ''' This widget will display the next appointment on your Google calendar in
-        the qtile status bar. Appointments within the "reminder" time will be
-        highlighted. Authentication credentials are stored in a file on disk.
+    ''' This widget will display the next appointment on your Google calendar
+        in the qtile status bar. Appointments within the "reminder" time will
+        be highlighted. Authentication credentials are stored in a file on
+        disk.
     '''
 
     defaults = [
         ('calendar', 'primary', 'calendar to use'),
         ('update_interval', 900, 'update interval'),
-        ('format', ' {next_event} ',
-         'calendar output - leave this at the default for now...'),
-        ('storage_file', None,
-         'absolute path of secrets file - must be set'),
-        ('reminder_color', 'FF0000',
-         'color of calendar entries during reminder time'),
+        (
+            'format',
+            ' {next_event} ',
+            'calendar output - leave this at the default for now...'
+        ),
+        (
+            'storage_file',
+            None,
+            'absolute path of secrets file - must be set'
+        ),
+        (
+            'reminder_color',
+            'FF0000',
+            'color of calendar entries during reminder time'
+        ),
         ('www_group', 'www', 'group to open browser into'),
         ('www_screen', 0, 'screen to open group on'),
-        ('browser_cmd', '/usr/bin/firefox -url calendar.google.com',
-         'command or script to execute on click'),
+        (
+            'browser_cmd',
+            '/usr/bin/firefox -url calendar.google.com',
+            'command or script to execute on click'
+        ),
     ]
 
     def __init__(self, **config):
         base._TextBox.__init__(self, 'Calendar not initialized',
                                width=bar.CALCULATED, **config)
         self.cred_init()
-        self.timeout_add(3600, self.cred_init) # confirm credentials every hour
+        # confirm credentials every hour
+        self.timeout_add(3600, self.cred_init)
         self.timeout_add(self.update_interval, self.cal_updater)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         self.add_defaults(GoogleCalendar.defaults)
         self.layout = self.drawer.textlayout(
-            self.text, self.foreground, self.font,
-            self.fontsize, self.fontshadow, markup=True)
+            self.text,
+            self.foreground,
+            self.font,
+            self.fontsize,
+            self.fontshadow,
+            markup=True
+        )
 
     def cred_init(self):
         #this is the main method for obtaining credentials
@@ -112,11 +132,12 @@ class GoogleCalendar(base._TextBox):
 
         # Set up a Flow object to be used for authentication.
         FLOW = OAuth2WebServerFlow(
-                   client_id=
-                   '196949979762-5m3j4orcn9heesoh6td942gb2bph424q.apps.googleusercontent.com',
-                   client_secret='3H1-w_9gX4DFx3bC9c-whEBs',
-                   scope='https://www.googleapis.com/auth/calendar',
-                   user_agent='Qtile Google Calendar Widget/Version 0.3')
+            client_id='196949979762-5m3j4orcn9heesoh6td942gb2bph424q.'
+            'apps.googleusercontent.com',
+            client_secret='3H1-w_9gX4DFx3bC9c-whEBs',
+            scope='https://www.googleapis.com/auth/calendar',
+            user_agent='Qtile Google Calendar Widget/Version 0.3'
+        )
 
         # storage is the location of our authentication credentials
         storage = oauth2client.file.Storage(self.storage_file)
@@ -131,14 +152,17 @@ class GoogleCalendar(base._TextBox):
         def get_from_flow(creds, storage):
             if creds is None or creds.invalid:
                 self.credentials = run(FLOW, storage)
-        threading.Thread(target=get_from_flow,
-                         args=(self.credentials, storage)).start()
+        threading.Thread(
+            target=get_from_flow,
+            args=(self.credentials, storage)
+        ).start()
 
         return True
 
     def cal_updater(self):
         self.log.info('adding GC widget timer')
-        def cal_getter(): # get cal data in thread, write it in main loop
+
+        def cal_getter():  # get cal data in thread, write it in main loop
             data = self.fetch_calendar()
             gobject.idle_add(self.update, data)
         threading.Thread(target=cal_getter).start()
@@ -178,9 +202,13 @@ class GoogleCalendar(base._TextBox):
         data = {}
 
         # grab the next event
-        events = service.events().list(calendarId=self.calendar,
-                 singleEvents=True, timeMin=now, maxResults='1',
-                 orderBy='startTime').execute()
+        events = service.events().list(
+            calendarId=self.calendar,
+            singleEvents=True,
+            timeMin=now,
+            maxResults='1',
+            orderBy='startTime'
+        ).execute()
 
         # get items list
         try:
@@ -191,18 +219,36 @@ class GoogleCalendar(base._TextBox):
 
         # get reminder time
         try:
-            remindertime = datetime.timedelta(0,
-            int(event.get('reminders').get('overrides')[0].get('minutes')) * 60)
+            remindertime = datetime.timedelta(
+                0,
+                int(
+                    event.get('reminders').get('overrides')[0].get('minutes')
+                ) * 60
+            )
         except:
-            remindertime = datetime.timedelta(0,0)
+            remindertime = datetime.timedelta(0, 0)
 
         #format the data
-        data = {'next_event': event['summary']+' '+re.sub(':.{2}-.*$',
-                '', event['start']['dateTime'].replace('T', ' '))}
-        if dateutil.parser.parse(event['start']['dateTime'],
-                ignoretz=True)-remindertime <= datetime.datetime.now():
-            data = {'next_event': '<span color="'+utils.hex(self.reminder_color)+
-                    '">'+data['next_event']+'</span>'}
+        data = {
+            'next_event': event['summary'] +
+            ' ' +
+            re.sub(
+                ':.{2}-.*$',
+                '',
+                event['start']['dateTime'].replace('T', ' ')
+            )
+        }
+        if dateutil.parser.parse(
+                event['start']['dateTime'],
+                ignoretz=True
+                ) - remindertime <= datetime.datetime.now():
+            data = {
+                'next_event': '<span color="' +
+                utils.hex(self.reminder_color) +
+                '">' +
+                data['next_event'] +
+                '</span>'
+            }
 
         # return the data
         return data

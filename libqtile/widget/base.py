@@ -19,9 +19,8 @@ class _Widget(command.CommandObject, configurable.Configurable):
         configured.
     """
     offset = None
-    defaults = [
-        ("background", None, "Widget background color"),
-    ]
+    defaults = [("background", None, "Widget background color")]
+
     def __init__(self, width, **config):
         """
             width: bar.STRETCH, bar.CALCULATED, or a specified width.
@@ -59,13 +58,14 @@ class _Widget(command.CommandObject, configurable.Configurable):
         return self.bar.window.window
 
     def _configure(self, qtile, bar):
-        self.qtile, self.bar = qtile, bar
+        self.qtile = qtile
+        self.bar = bar
         self.drawer = drawer.Drawer(
-                            qtile,
-                            self.win.wid,
-                            self.bar.width,
-                            self.bar.height
-                      )
+            qtile,
+            self.win.wid,
+            self.bar.width,
+            self.bar.height
+        )
         self.configured = True
 
     def clear(self):
@@ -96,7 +96,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
 
     def _items(self, name):
         if name == "bar":
-            return True, None
+            return (True, None)
 
     def _select(self, name, sel):
         if name == "bar":
@@ -122,11 +122,8 @@ class _Widget(command.CommandObject, configurable.Configurable):
         """
         raise NotImplementedError
 
-    def timeout_add(
-        self, seconds,
-        method, method_args=(),
-        callback=None, callback_args=()
-    ):
+    def timeout_add(self, seconds, method, method_args=(),
+                    callback=None, callback_args=()):
         """
             This method calls either ``gobject.timeout_add`` or
             ``gobject.timeout_add_seconds`` with same arguments. Latter is
@@ -162,8 +159,11 @@ class _TextBox(_Widget):
         ("fontsize", None, "Font size. Calculated if None."),
         ("padding", None, "Padding. Calculated if None."),
         ("foreground", "ffffff", "Foreground colour"),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
+        (
+            "fontshadow",
+            None,
+            "font shadow color, default is None(no shadow)"
+        ),
     ]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -214,17 +214,19 @@ class _TextBox(_Widget):
         if self.fontsize is None:
             self.fontsize = self.bar.height - self.bar.height / 5
         self.layout = self.drawer.textlayout(
-                    self.text,
-                    self.foreground,
-                    self.font,
-                    self.fontsize,
-                    self.fontshadow,
-                 )
+            self.text,
+            self.foreground,
+            self.font,
+            self.fontsize,
+            self.fontshadow,
+        )
 
     def calculate_width(self):
         if self.text:
-            return min(self.layout.width,
-                       self.bar.width) + self.actual_padding * 2
+            return min(
+                self.layout.width,
+                self.bar.width
+            ) + self.actual_padding * 2
         else:
             return 0
 
@@ -237,7 +239,7 @@ class _TextBox(_Widget):
         self.drawer.draw(self.offset, self.width)
 
     def cmd_set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED,
-            fontshadow=UNSPECIFIED):
+                     fontshadow=UNSPECIFIED):
         """
             Change the font used by this widget. If font is None, the current
             font is used.

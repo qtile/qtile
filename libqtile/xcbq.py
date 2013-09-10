@@ -20,8 +20,10 @@ def ConfigureWindow(self, window, value_mask, value_list):
     buf = cStringIO.StringIO()
     buf.write(pack('xx2xIH2x', window, value_mask))
     buf.write(str(buffer(array('i', value_list))))
-    return self.send_request(xcb.Request(buf.getvalue(), 12, True, False),
-                                 xcb.VoidCookie())
+    return self.send_request(
+        xcb.Request(buf.getvalue(), 12, True, False),
+        xcb.VoidCookie()
+    )
 xcb.xproto.xprotoExtension.ConfigureWindow = ConfigureWindow
 
 keysyms = xkeysyms.keysyms
@@ -37,36 +39,44 @@ ModMasks = {
     "mod4": 1 << 6,
     "mod5": 1 << 7,
 }
-ModMapOrder = ["shift", "lock", "control",
-               "mod1", "mod2", "mod3", "mod4", "mod5"]
+ModMapOrder = [
+    "shift",
+    "lock",
+    "control",
+    "mod1",
+    "mod2",
+    "mod3",
+    "mod4",
+    "mod5"
+]
 
 AllButtonsMask = 0b11111 << 8
 ButtonMotionMask = 1 << 13
 ButtonReleaseMask = 1 << 3
 
 NormalHintsFlags = {
-    "USPosition":  1,          # User-specified x, y
-    "USSize":      2,          # User-specified width, height
-    "PPosition":   4,          # Program-specified position
-    "PSize":       8,          # Program-specified size
-    "PMinSize":    16,         # Program-specified minimum size
-    "PMaxSize":    32,         # Program-specified maximum size
-    "PResizeInc":  64,         # Program-specified resize increments
-    "PAspect":     128,        # Program-specified min and max aspect ratios
-    "PBaseSize":   256,        # Program-specified base size
-    "PWinGravity": 512,        # Program-specified window gravity
+    "USPosition": 1,     # User-specified x, y
+    "USSize": 2,         # User-specified width, height
+    "PPosition": 4,      # Program-specified position
+    "PSize": 8,          # Program-specified size
+    "PMinSize": 16,      # Program-specified minimum size
+    "PMaxSize": 32,      # Program-specified maximum size
+    "PResizeInc": 64,    # Program-specified resize increments
+    "PAspect": 128,      # Program-specified min and max aspect ratios
+    "PBaseSize": 256,    # Program-specified base size
+    "PWinGravity": 512,  # Program-specified window gravity
 }
 
 HintsFlags = {
-    "InputHint":         1,      # input
-    "StateHint":         2,      # initial_state
-    "IconPixmapHint":    4,      # icon_pixmap
-    "IconWindowHint":    8,      # icon_window
-    "IconPositionHint":  16,     # icon_x & icon_y
-    "IconMaskHint":      32,     # icon_mask
-    "WindowGroupHint":   64,     # window_group
-    "MessageHint":       128,    # (this bit is obsolete)
-    "UrgencyHint":       256,    # urgency
+    "InputHint": 1,          # input
+    "StateHint": 2,          # initial_state
+    "IconPixmapHint": 4,     # icon_pixmap
+    "IconWindowHint": 8,     # icon_window
+    "IconPositionHint": 16,  # icon_x & icon_y
+    "IconMaskHint": 32,      # icon_mask
+    "WindowGroupHint": 64,   # window_group
+    "MessageHint": 128,      # (this bit is obsolete)
+    "UrgencyHint": 256,      # urgency
 }
 
 WindowTypes = {
@@ -132,9 +142,13 @@ PropertyMap = {
 
 # TODO add everything required here
 # http://standards.freedesktop.org/wm-spec/1.4/ar01s03.html
-SUPPORTED_ATOMS = ['_NET_SUPPORTED', '_NET_WM_STATE',
-    '_NET_WM_STATE_FULLSCREEN', '_NET_SUPPORTING_WM_CHECK',
-    '_NET_WM_NAME']
+SUPPORTED_ATOMS = [
+    '_NET_SUPPORTED',
+    '_NET_WM_STATE',
+    '_NET_WM_STATE_FULLSCREEN',
+    '_NET_SUPPORTING_WM_CHECK',
+    '_NET_WM_NAME'
+]
 
 
 def toStr(s):
@@ -242,12 +256,16 @@ class PseudoScreen:
     """
     def __init__(self, conn, x, y, width, height):
         self.conn = conn
-        self.x, self.y, self.width, self.height = x, y, width, height
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
 
 
 class Colormap:
     def __init__(self, conn, cid):
-        self.conn, self.cid = conn, cid
+        self.conn = conn
+        self.cid = cid
 
     def alloc_color(self, color):
         """
@@ -265,7 +283,8 @@ class Colormap:
             return self.conn.conn.core.AllocColor(self.cid, r, g, b).reply()
         else:
             return self.conn.conn.core.AllocNamedColor(
-                self.cid, len(color), color).reply()
+                self.cid, len(color), color
+            ).reply()
 
 
 class Xinerama:
@@ -301,7 +320,8 @@ class RandR:
 
 class GC:
     def __init__(self, conn, gid):
-        self.conn, self.gid = conn, gid
+        self.conn = conn
+        self.gid = gid
 
     def change(self, **kwargs):
         mask, values = GCMasks(**kwargs)
@@ -310,7 +330,8 @@ class GC:
 
 class Window:
     def __init__(self, conn, wid):
-        self.conn, self.wid = conn, wid
+        self.conn = conn
+        self.wid = wid
 
     def _propertyString(self, r):
         """
@@ -333,14 +354,14 @@ class Window:
 
     def warp_pointer(self, x, y):
         self.conn.conn.core.WarpPointer(
-                0,
-                self.wid,
-                0,
-                0,
-                0,
-                0,
-                x,
-                y
+            0,
+            self.wid,
+            0,
+            0,
+            0,
+            0,
+            x,
+            y
         )
 
     def get_name(self):
@@ -350,7 +371,9 @@ class Window:
             _NET_WM_NAME, WM_NAME.
         """
         r = self.get_property(
-            "_NET_WM_VISIBLE_NAME", xcb.xproto.GetPropertyType.Any)
+            "_NET_WM_VISIBLE_NAME",
+            xcb.xproto.GetPropertyType.Any
+        )
         if r:
             return self._propertyString(r)
 
@@ -359,7 +382,9 @@ class Window:
             return self._propertyString(r)
 
         r = self.get_property(
-            xcb.xproto.Atom.WM_NAME, xcb.xproto.GetPropertyType.Any)
+            xcb.xproto.Atom.WM_NAME,
+            xcb.xproto.GetPropertyType.Any
+        )
         if r:
             return self._propertyString(r)
 
@@ -386,7 +411,9 @@ class Window:
 
     def get_wm_normal_hints(self):
         r = self.get_property(
-            "WM_NORMAL_HINTS", xcb.xproto.GetPropertyType.Any)
+            "WM_NORMAL_HINTS",
+            xcb.xproto.GetPropertyType.Any
+        )
         if r:
             data = struct.pack("B" * len(r.value), *(list(r.value)))
             l = struct.unpack_from("=IIIIIIIIIIIIII", data)
@@ -490,13 +517,15 @@ class Window:
     def set_attribute(self, **kwargs):
         mask, values = AttributeMasks(**kwargs)
         self.conn.conn.core.ChangeWindowAttributesChecked(
-            self.wid, mask, values)
+            self.wid, mask, values
+        )
 
     def set_cursor(self, name):
         cursorId = self.conn.cursors[name]
         mask, values = AttributeMasks(cursor=cursorId)
         self.conn.conn.core.ChangeWindowAttributesChecked(
-            self.wid, mask, values)
+            self.wid, mask, values
+        )
 
     def set_property(self, name, value, type=None, format=None):
         """
@@ -507,12 +536,14 @@ class Window:
         if name in PropertyMap:
             if type or format:
                 raise ValueError(
-                    "Over-riding default type or format for property.")
+                    "Over-riding default type or format for property."
+                )
             type, format = PropertyMap[name]
         else:
             if None in (type, format):
                 raise ValueError(
-                    "Must specify type and format for unknown property.")
+                    "Must specify type and format for unknown property."
+                )
 
         if not utils.isSequenceLike(value):
             value = [value]
@@ -557,14 +588,19 @@ class Window:
         if type is None:
             if not prop in PropertyMap:
                 raise ValueError(
-                    "Must specify type for unknown property.")
+                    "Must specify type for unknown property."
+                )
             else:
                 type, _ = PropertyMap[prop]
         try:
             r = self.conn.conn.core.GetProperty(
                 False, self.wid,
-                self.conn.atoms[prop] if isinstance(prop, basestring) else prop,
-                self.conn.atoms[type] if isinstance(type, basestring) else type,
+                self.conn.atoms[prop]
+                if isinstance(prop, basestring)
+                else prop,
+                self.conn.atoms[type]
+                if isinstance(type, basestring)
+                else type,
                 0, (2 ** 32) - 1
             ).reply()
 
@@ -655,13 +691,12 @@ class Window:
         )
 
     def ungrab_pointer(self):
-        self.conn.conn.core.UngrabPointer(
-            xcb.xproto.Atom._None,
-        )
+        self.conn.conn.core.UngrabPointer(xcb.xproto.Atom._None)
 
     def query_tree(self):
         q = self.conn.conn.core.QueryTree(self.wid).reply()
-        root, parent = None, None
+        root = None
+        parent = None
         if q.root:
             root = Window(self.conn, q.root)
         if q.parent:
@@ -671,7 +706,8 @@ class Window:
 
 class Font:
     def __init__(self, conn, fid):
-        self.conn, self.fid = conn, fid
+        self.conn = conn
+        self.fid = fid
 
     @property
     def _maskvalue(self):
@@ -744,7 +780,8 @@ class Connection:
             if not i % q.keysyms_per_keycode:
                 if l:
                     self.code_to_syms[
-                        (i / q.keysyms_per_keycode) + first - 1] = l
+                        (i / q.keysyms_per_keycode) + first - 1
+                    ] = l
                 l = []
                 l.append(v)
             else:
@@ -780,25 +817,25 @@ class Connection:
         return self.first_sym_to_code.get(keysym, 0)
 
     def keycode_to_keysym(self, keycode, modifier):
-        if (keycode >= len(self.code_to_syms) or
-            modifier >= len(self.code_to_syms[keycode])):
+        if keycode >= len(self.code_to_syms) or \
+                modifier >= len(self.code_to_syms[keycode]):
             return 0
         return self.code_to_syms[keycode][modifier]
 
     def create_window(self, x, y, width, height):
         wid = self.conn.generate_id()
         self.conn.core.CreateWindow(
-                self.default_screen.root_depth,
-                wid,
-                self.default_screen.root.wid,
-                x, y, width, height, 0,
-                WindowClass.InputOutput,
-                self.default_screen.root_visual,
-                CW.BackPixel | CW.EventMask,
-                [
-                    self.default_screen.black_pixel,
-                    EventMask.StructureNotify | EventMask.Exposure
-                ]
+            self.default_screen.root_depth,
+            wid,
+            self.default_screen.root.wid,
+            x, y, width, height, 0,
+            WindowClass.InputOutput,
+            self.default_screen.root_visual,
+            CW.BackPixel | CW.EventMask,
+            [
+                self.default_screen.black_pixel,
+                EventMask.StructureNotify | EventMask.Exposure
+            ]
         )
         return Window(self, wid)
 
@@ -823,8 +860,10 @@ class Connection:
         return Font(self, fid)
 
     def extensions(self):
-        return set([toStr(i).lower()
-                    for i in self.conn.core.ListExtensions().reply().names])
+        return set([
+            toStr(i).lower()
+            for i in self.conn.core.ListExtensions().reply().names
+        ])
 
 
 # Stolen from samurai-x
@@ -847,15 +886,15 @@ class Cursors(dict):
         DOUBLE_ARROW_VERT = 116
 
         cursors = (
-            ('Normal',    LEFT_PTR),
-            ('Resize',    SIZING),
-            ('ResizeH',   DOUBLE_ARROW_HORIZ),
-            ('ResizeV',   DOUBLE_ARROW_VERT),
-            ('Move',      FLEUR),
-            ('TopRight',  TOP_RIGHT_CORNER),
-            ('TopLeft',   TOP_LEFT_CORNER),
-            ('BotRight',  BOTTOM_RIGHT_CORNER),
-            ('BotLeft',   BOTTOM_LEFT_CORNER),
+            ('Normal', LEFT_PTR),
+            ('Resize', SIZING),
+            ('ResizeH', DOUBLE_ARROW_HORIZ),
+            ('ResizeV', DOUBLE_ARROW_VERT),
+            ('Move', FLEUR),
+            ('TopRight', TOP_RIGHT_CORNER),
+            ('TopLeft', TOP_LEFT_CORNER),
+            ('BotRight', BOTTOM_RIGHT_CORNER),
+            ('BotLeft', BOTTOM_LEFT_CORNER),
         )
 
         for name, cursor_font in cursors:
@@ -869,5 +908,6 @@ class Cursors(dict):
             cursor, fid, fid,
             cursor_font, cursor_font + 1,
             0, 0, 0,
-            65535, 65535, 65535)
+            65535, 65535, 65535
+        )
         self[name] = cursor
