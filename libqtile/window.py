@@ -559,6 +559,7 @@ class Internal(_Window):
     _windowMask = EventMask.StructureNotify |\
                   EventMask.PropertyChange |\
                   EventMask.EnterWindow |\
+                  EventMask.LeaveWindow |\
                   EventMask.FocusChange |\
                   EventMask.Exposure |\
                   EventMask.ButtonPress |\
@@ -584,6 +585,7 @@ class Internal(_Window):
 
     def cmd_kill(self):
         self.kill()
+
 
 class Static(_Window):
     """
