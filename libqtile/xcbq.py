@@ -43,6 +43,7 @@ ModMapOrder = ["shift", "lock", "control",
 AllButtonsMask = 0b11111 << 8
 ButtonMotionMask = 1 << 13
 ButtonReleaseMask = 1 << 3
+PointerMotionMask = 1 << 5
 
 NormalHintsFlags = {
     "USPosition":  1,          # User-specified x, y
