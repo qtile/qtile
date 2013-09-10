@@ -26,7 +26,7 @@ from libqtile.dgroups import DGroups
 from state import QtileState
 from group import _Group
 from StringIO import StringIO
-from xcb.xproto import EventMask
+from xcb.xproto import EventMask, BadWindow, BadAccess, BadDrawable
 import atexit
 import command
 import gobject
@@ -565,10 +565,9 @@ class Qtile(command.CommandObject):
                         r = h(e)
                         if not r:
                             break
-            except Exception:
-                self.log.exception('Got an exception in poll loop')
-                self._abort = True
-                return False
+            except Exception as e:
+                s = 'Got an exception in poll loop:\n' + traceback.format_exc()
+                self.log.exception(s)
         return True
 
     def loop(self):
@@ -595,8 +594,7 @@ class Qtile(command.CommandObject):
                     # will throw a BadWindow exception. We can essentially
                     # ignore it, since the window is already dead and we've got
                     # another event in the queue notifying us to clean it up.
-                    except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
-                        # TODO: add some logging for this?
+                    except (BadWindow, BadAccess, BadDrawable):
                         pass
                 if self._exit:
                     self.log.info('Got shutdown, Breaking main loop cleanly')
