@@ -148,7 +148,6 @@ class Qtile(command.CommandObject):
             xcb.xproto.CreateNotifyEvent,
             # DWM handles this to help "broken focusing windows".
             xcb.xproto.MapNotifyEvent,
-            xcb.xproto.LeaveNotifyEvent,
             xcb.xproto.FocusOutEvent,
             xcb.xproto.FocusInEvent,
             xcb.xproto.NoExposureEvent
@@ -521,7 +520,9 @@ class Qtile(command.CommandObject):
         handler = "handle_%s" % ename
         # Certain events expose the affected window id as an "event" attribute.
         eventEvents = [
+            "MotionNotify",
             "EnterNotify",
+            "LeaveNotify",
             "ButtonPress",
             "ButtonRelease",
             "KeyPress",
@@ -554,7 +555,6 @@ class Qtile(command.CommandObject):
                     e = xcb.xproto.ClientMessageEvent(e)
 
                 ename = e.__class__.__name__
-
                 if ename.endswith("Event"):
                     ename = ename[:-5]
                 self.log.debug(ename)
@@ -681,6 +681,10 @@ class Qtile(command.CommandObject):
         s = self.find_screen(e.root_x, e.root_y)
         if s:
             self.toScreen(s.index)
+
+    def handle_LeaveNotify(self, e):
+        pass
+
 
     def handle_ClientMessage(self, event):
         atoms = self.conn.atoms
