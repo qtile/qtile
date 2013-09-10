@@ -183,6 +183,9 @@ class Subscribe:
         """
         return self._subscribe("screen_change", func)
 
+    def keyboard_layout_change(self, func):
+        return self._subscribe("keyboard_layout_change", func)
+        
 subscribe = Subscribe()
 
 
