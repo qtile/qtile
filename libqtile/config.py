@@ -408,7 +408,7 @@ class Match(object):
                 return True
         return False
 
-    def map(callback, clients):
+    def map(self, callback, clients):
         """ Apply callback to each client that matches this Match """
         for c in clients:
             if self.compare(c):
