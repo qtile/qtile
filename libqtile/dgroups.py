@@ -134,6 +134,8 @@ class DGroups(object):
                 if rule.intrusive:
                     intrusive = rule.intrusive
 
+                break
+
         # If app doesn't have a group
         if not group_set:
             current_group = self.qtile.currentGroup.name
@@ -166,7 +168,7 @@ class DGroups(object):
                     len(group.windows) <= 0:
                 self.qtile.delGroup(group.name)
 
-        # wait the delay until really delete the group
+        # Wait the delay until really delete the group
         self.qtile.log.info('Add dgroup timer')
         self.timeout[client] = gobject.timeout_add_seconds(
             self.delay,
