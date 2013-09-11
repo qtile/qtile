@@ -860,7 +860,7 @@ class Qtile(command.CommandObject):
 
     def moveToGroup(self, group):
         """
-            Create a group if it dosn't exist and move a windows there
+            Create a group if it doesn't exist and move a windows there
         """
         if self.currentWindow and group:
             self.addGroup(group)
