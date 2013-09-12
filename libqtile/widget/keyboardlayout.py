@@ -47,6 +47,23 @@ class _KeyboardLayout(base._TextBox):
         self.configured_keyboards = configured_keyboards
         self.with_variant = with_variant
 
+    def _other_keyboard(self, direction):
+        """
+            Set the previous or next layout in the list of configured keyboard
+            layouts as then new current layout in use.
+            If the current keyboard layout is not in the list, it will set as
+            new layout the first one in the list.
+        """
+        current_keyboard = self._get_keyboard().layout
+        if current_keyboard in self.configured_keyboards:
+            # iterate the list circularly
+            next_keyboard = self.configured_keyboards[
+                (self.configured_keyboards.index(current_keyboard) + direction) %
+                len(self.configured_keyboards)]
+        else:
+            next_keyboard = self.configured_keyboards[0]
+        self._set_keyboard(next_keyboard)
+
 
     def next_keyboard(self):
         """
@@ -55,15 +72,17 @@ class _KeyboardLayout(base._TextBox):
             If the current keyboard layout is not in the list, it will set as
             new layout the first one in the list.
         """
-        current_keyboard = self._get_keyboard().layout
-        if current_keyboard in self.configured_keyboards:
-            # iterate the list circularly
-            next_keyboard = self.configured_keyboards[
-                (self.configured_keyboards.index(current_keyboard) + 1) %
-                len(self.configured_keyboards)]
-        else:
-            next_keyboard = self.configured_keyboards[0]
-        self._set_keyboard(next_keyboard)
+        self._other_keyboard(1)
+
+
+    def previous_keyboard(self):
+        """
+            Set the previous layout in the list of configured keyboard layouts as
+            new current layout in use.
+            If the current keyboard layout is not in the list, it will set as
+            new layout the first one in the list.
+        """
+        self._other_keyboard(-1)
 
 
     def _get_keyboard(self):
@@ -134,7 +153,11 @@ class KeyboardLayout(_KeyboardLayout):
         """
         if button == 1:
             self.next_keyboard()
+        elif button == 3:
+            self.previous_keyboard()
+        if button in [1, 3]:
             hook.fire("keyboard_layout_change", None)
+        
 
 
     def setup_hook(self):
@@ -199,11 +222,13 @@ class KeyboardLayoutIcon(_KeyboardLayout):
     def button_press(self, x, y, button):
         if button == 1:
             self.next_keyboard()
+        elif button == 3:
+            self.previous_keyboard()
+        if button in [1, 3]:
             hook.fire("keyboard_layout_change", None)
             if self.popup:
                 self.popup.widgets[0].text = str(self._get_keyboard())
                 self.popup.draw()
-
 
     def pointer_over(self, x, y, detail):
         if not self.popup:
