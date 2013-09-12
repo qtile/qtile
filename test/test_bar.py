@@ -1,6 +1,7 @@
 import time
 import libqtile.layout
 import libqtile.bar
+import libqtile.gap
 import libqtile.widget
 import libqtile.manager
 import libqtile.config
@@ -152,8 +153,8 @@ class GeomConf:
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
         libqtile.config.Screen(
-            left=libqtile.bar.Gap(10),
-            right=libqtile.bar.Gap(10),
+            left=libqtile.gap.Gap(10),
+            right=libqtile.gap.Gap(10),
             top=libqtile.bar.Bar([], 10),
             bottom=libqtile.bar.Bar([], 10),
         )
