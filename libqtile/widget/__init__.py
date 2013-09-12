@@ -17,6 +17,7 @@ from volume import Volume
 from windowname import WindowName
 from windowtabs import WindowTabs
 from keyboardlayout import KeyboardLayout, KeyboardLayoutIcon
+from df import DF
 
 from tasklist import TaskList
 
