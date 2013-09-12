@@ -1,4 +1,4 @@
-from .. import command, bar, configurable, drawer
+from .. import command, bar, configurable, drawer, pane
 import gobject
 import logging
 import threading
@@ -190,7 +190,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
             )
 
 
-UNSPECIFIED = bar.Obj("UNSPECIFIED")
+UNSPECIFIED = pane.Obj("UNSPECIFIED")
 
 
 class _TextBox(_Widget):
