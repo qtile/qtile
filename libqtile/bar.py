@@ -1,152 +1,39 @@
-# Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-# SOFTWARE.
-
-import command
-import confreader
-import drawer
-import hook
 import configurable
-import window
+from libqtile import pane
 from xcb.xproto import EventMask
+#import command
+import confreader
+#import drawer
+#import hook
+#import window
+#from pane import Obj
 
-class Gap(command.CommandObject):
-    """
-        A gap, placed along one of the edges of the screen. If a gap has been
-        defined, Qtile will avoid covering it with windows. The most probable
-        reason for configuring a gap is to make space for a third-party bar or
-        other static window.
-    """
-    def __init__(self, size):
-        """
-            size: The width of the gap.
-        """
-        self.size = size
-        self.qtile = None
-        self.screen = None
+STRETCH = pane.STRETCH
+CALCULATED = pane.CALCULATED
+STATIC = pane.STATIC
 
-    def _configure(self, qtile, screen):
-        self.qtile = qtile
-        self.screen = screen
-
-    def draw(self):
-        pass
-
-    @property
-    def x(self):
-        screen = self.screen
-        if screen.right is self:
-            return screen.dx + screen.dwidth
-        else:
-            return screen.x
-
-    @property
-    def y(self):
-        screen = self.screen
-        if screen.top is self:
-            return screen.y
-        elif screen.bottom is self:
-            return screen.dy + screen.dheight
-        elif screen.left is self:
-            return screen.dy
-        elif screen.right is self:
-            return screen.y + screen.dy
-
-    @property
-    def width(self):
-        screen = self.screen
-        if self in [screen.top, screen.bottom]:
-            return screen.width
-        else:
-            return self.size
-
-    @property
-    def height(self):
-        screen = self.screen
-        if self in [screen.top, screen.bottom]:
-            return self.size
-        else:
-            return screen.dheight
-
-    def geometry(self):
-        return (self.x, self.y, self.width, self.height)
-
-    def _items(self, name):
-        if name == "screen":
-            return (True, None)
-
-    def _select(self, name, sel):
-        if name == "screen":
-            return self.screen
-
-    @property
-    def position(self):
-        for i in ["top", "bottom", "left", "right"]:
-            if getattr(self.screen, i) is self:
-                return i
-
-    def info(self):
-        return dict(position=self.position)
-
-    def cmd_info(self):
-        """
-            Info for this object.
-        """
-        return self.info()
-
-
-class Obj:
-    def __init__(self, name):
-        self.name = name
-
-    def __str__(self):
-        return self.name
-
-    def __repr__(self):
-        return self.name
-
-
-STRETCH = Obj("STRETCH")
-CALCULATED = Obj("CALCULATED")
-STATIC = Obj("STATIC")
-
-
-class Bar(Gap, configurable.Configurable):
+class Bar(pane.Pane, configurable.Configurable):
     """
         A bar, which can contain widgets. Note that bars can only be placed at
         the top or bottom of the screen.
+    """
     """
     defaults = [
         ("background", "#000000", "Background colour."),
         ("opacity",  1, "Bar window opacity.")
     ]
-
+    """
     def __init__(self, widgets, size, **config):
         """
-            - widgets: A list of widget objects.
-            - size: The height of the bar.
+        - widgets: A list of widget objects.
+        - size: The height of the bar.
         """
-        Gap.__init__(self, size)
-        configurable.Configurable.__init__(self, **config)
-        self.add_defaults(Bar.defaults)
-        self.widgets = widgets
-        self.saved_focus = None
+        pane.Pane.__init__(self, widgets, None, None)
+        self.size = size
+#        configurable.Configurable.__init__(self, **config)
+#        self.add_defaults(Bar.defaults)
+#        self.widgets = widgets
+#        self.saved_focus = None
         # contains the widgets with a popup window open
         self.popup_window = dict() 
 
@@ -155,10 +42,14 @@ class Bar(Gap, configurable.Configurable):
             raise confreader.ConfigError(
                 "Bars must be at the top or the bottom of the screen."
             )
-        if len(filter(lambda w: w.width_type == STRETCH, self.widgets)) > 1:
+        if len(filter(lambda w: w.width_type == pane.STRETCH, self.widgets)) > 1:
             raise confreader.ConfigError("Only one STRETCH widget allowed!")
 
-        Gap._configure(self, qtile, screen)
+        pane.Pane._configure(self, qtile, screen)
+        
+        for i in self.widgets:
+            qtile.registerWidget(i)
+        """
         self.window = window.Internal.create(
             self.qtile,
             self.x, self.y, self.width, self.height,
@@ -195,12 +86,25 @@ class Bar(Gap, configurable.Configurable):
         # FIXME: These should be targeted better.
         hook.subscribe.setgroup(self.draw)
         hook.subscribe.changegroup(self.draw)
+        """
+
+    def _configure_window_handle(self):
+        self.window.handle_Expose = self.handle_Expose
+        self.window.handle_ButtonPress = self.handle_ButtonPress
+        self.window.handle_ButtonRelease = self.handle_ButtonRelease
+        self.window.handle_MotionNotify = self.handle_PointerMotion
+        self.window.handle_LeaveNotify = self.handle_LeaveWindow
+        # add a PointerMotion event handler to get position inside the bar and allow
+        # "over" widget action 
+        self.window._windowMask = self.window._windowMask | EventMask.PointerMotion
+        self.window.window.set_attribute(eventmask=self.window._windowMask)
+
 
     def _resize(self, width, widgets):
-        stretches = [i for i in widgets if i.width_type == STRETCH]
+        stretches = [i for i in widgets if i.width_type == pane.STRETCH]
         if stretches:
             stretchspace = width - sum(
-                [i.width for i in widgets if i.width_type != STRETCH]
+                [i.width for i in widgets if i.width_type != pane.STRETCH]
             )
             stretchspace = max(stretchspace, 0)
             astretch = stretchspace / len(stretches)
@@ -214,13 +118,6 @@ class Bar(Gap, configurable.Configurable):
             i.offset = offset
             offset += i.width
 
-    def handle_Expose(self, e):
-        self.draw()
-
-    def get_widget_in_position(self, e):
-        for i in self.widgets:
-            if e.event_x < i.offset + i.width:
-                return i
 
     def handle_PointerMotion(self, e):
         widget = self.get_widget_in_position(e)
@@ -278,15 +175,6 @@ class Bar(Gap, configurable.Configurable):
         if not self.saved_focus is None:
             self.saved_focus.window.set_input_focus()
 
-    def draw(self):
-        self._resize(self.width, self.widgets)
-        for i in self.widgets:
-            i.draw()
-        if self.widgets:
-            end = i.offset + i.width
-            if end < self.width:
-                self.drawer.draw(end, self.width - end)
-
     def info(self):
         return dict(
             width=self.width,
@@ -310,3 +198,45 @@ class Bar(Gap, configurable.Configurable):
         fake.event_y = y
         fake.detail = button
         self.handle_ButtonPress(fake)
+
+    @property
+    def x(self):
+        screen = self.screen
+        if screen.right is self:
+            return screen.dx + screen.dwidth
+        else:
+            return screen.x
+
+    @property
+    def y(self):
+        screen = self.screen
+        if screen.top is self:
+            return screen.y
+        elif screen.bottom is self:
+            return screen.dy + screen.dheight
+        elif screen.left is self:
+            return screen.dy
+        elif screen.right is self:
+            return screen.y + screen.dy
+
+    @property
+    def width(self):
+        screen = self.screen
+        if self in [screen.top, screen.bottom]:
+            return screen.width
+        else:
+            return self.size
+
+    @property
+    def height(self):
+        screen = self.screen
+        if self in [screen.top, screen.bottom]:
+            return self.size
+        else:
+            return screen.dheight
+        
+    @property
+    def position(self):
+        for i in ["top", "bottom", "left", "right"]:
+            if getattr(self.screen, i) is self:
+                return i
