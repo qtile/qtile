@@ -50,7 +50,7 @@ class Volume(base._TextBox):
                 str(self.cardid),
                 'sset',
                 self.channel,
-                '5%-'
+                '2dB-'
             ])
         elif button == 4:
             subprocess.call([
@@ -60,7 +60,7 @@ class Volume(base._TextBox):
                 str(self.cardid),
                 'sset',
                 self.channel,
-                '5%+'
+                '2dB+'
             ])
         elif button == 1:
             subprocess.call([
