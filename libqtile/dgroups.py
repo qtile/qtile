@@ -134,7 +134,8 @@ class DGroups(object):
                 if rule.intrusive:
                     intrusive = rule.intrusive
 
-                break
+                if rule.break_on_match:
+                    break
 
         # If app doesn't have a group
         if not group_set:

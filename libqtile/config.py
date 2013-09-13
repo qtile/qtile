@@ -420,7 +420,8 @@ class Rule(object):
         A Rule contains a Match object, and a specification about what to do
         when that object is matched.
     """
-    def __init__(self, match, group=None, float=False, intrusive=False):
+    def __init__(self, match, group=None, float=False, intrusive=False,
+                 break_on_match=True):
         """
         :param match: ``Match`` object associated with this ``Rule``
         :param float: auto float this window?
