@@ -6,6 +6,7 @@ import signal
 import libqtile
 import libqtile.layout
 import libqtile.bar
+import libqtile.gap
 import libqtile.command
 import libqtile.widget
 import libqtile.manager
@@ -762,30 +763,30 @@ class TScreen(libqtile.config.Screen):
 
 
 def test_dx():
-    s = TScreen(left=libqtile.bar.Gap(10))
+    s = TScreen(left=libqtile.gap.Gap(10))
     s._configure(None, 0, 0, 0, 100, 100, None)
     assert s.dx == 10
 
 
 def test_dwidth():
-    s = TScreen(left=libqtile.bar.Gap(10))
+    s = TScreen(left=libqtile.gap.Gap(10))
     s._configure(None, 0, 0, 0, 100, 100, None)
     assert s.dwidth == 90
-    s.right = libqtile.bar.Gap(10)
+    s.right = libqtile.gap.Gap(10)
     assert s.dwidth == 80
 
 
 def test_dy():
-    s = TScreen(top=libqtile.bar.Gap(10))
+    s = TScreen(top=libqtile.gap.Gap(10))
     s._configure(None, 0, 0, 0, 100, 100, None)
     assert s.dy == 10
 
 
 def test_dheight():
-    s = TScreen(top=libqtile.bar.Gap(10))
+    s = TScreen(top=libqtile.gap.Gap(10))
     s._configure(None, 0, 0, 0, 100, 100, None)
     assert s.dheight == 90
-    s.bottom = libqtile.bar.Gap(10)
+    s.bottom = libqtile.gap.Gap(10)
     assert s.dheight == 80
 
 

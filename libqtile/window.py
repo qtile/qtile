@@ -573,13 +573,14 @@ class Internal(_Window):
         An internal window, that should not be managed by qtile.
     """
     _windowMask = EventMask.StructureNotify | \
-        EventMask.PropertyChange | \
-        EventMask.EnterWindow | \
-        EventMask.FocusChange | \
-        EventMask.Exposure | \
-        EventMask.ButtonPress | \
-        EventMask.ButtonRelease | \
-        EventMask.KeyPress
+                  EventMask.PropertyChange | \
+                  EventMask.EnterWindow | \
+                  EventMask.LeaveWindow | \
+                  EventMask.FocusChange | \
+                  EventMask.Exposure | \
+                  EventMask.ButtonPress | \
+                  EventMask.ButtonRelease | \
+                  EventMask.KeyPress
 
     @classmethod
     def create(klass, qtile, x, y, width, height, opacity=1.0):
