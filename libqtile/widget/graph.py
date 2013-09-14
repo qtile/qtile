@@ -135,17 +135,36 @@ class _Graph(base._Widget):
 
 
 class CPUGraph(_Graph):
+    defaults = [
+        ("core", "all", "Which core to show (all/0/1/2/...)"),
+    ]
+
     fixed_upper_bound = True
 
     def __init__(self, **config):
         _Graph.__init__(self, **config)
+        self.add_defaults(CPUGraph.defaults)
         self.maxvalue = 100
         self.oldvalues = self._getvalues()
 
     def _getvalues(self):
         with open('/proc/stat') as file:
-            all_cpus = next(file)
-            name, user, nice, sys, idle, iowait, tail = all_cpus.split(None, 6)
+            lines = file.readlines()
+
+            # default to all cores (first line)
+            line = lines.pop(0)
+
+            # core specified, grab the corresponding line
+            if isinstance(self.core, int):
+                # we already removed the first line from the list,
+                # so it's 0 indexed now :D
+                line = lines[self.core]
+
+                if not line.startswith("cpu%s" % self.core):
+                    raise ValueError("No such core: %s" % self.core)
+
+            name, user, nice, sys, idle, iowait, tail = line.split(None, 6)
+
             return (int(user), int(nice), int(sys), int(idle))
 
     def update_graph(self):
