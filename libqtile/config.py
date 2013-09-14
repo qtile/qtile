@@ -426,11 +426,14 @@ class Rule(object):
         :param match: ``Match`` object associated with this ``Rule``
         :param float: auto float this window?
         :param intrusive: override the group's exclusive setting?
+        :param break_on_match: Should we stop applying rules if this rule is
+               matched?
         """
         self.match = match
         self.group = group
         self.float = float
         self.intrusive = intrusive
+        self.break_on_match = break_on_match
 
     def matches(self, w):
         return self.match.compare(w)
