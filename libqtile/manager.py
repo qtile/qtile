@@ -398,7 +398,7 @@ class Qtile(command.CommandObject):
             self.update_gaps((0, 0, 0, 0), c.strut)
 
     def update_gaps(self, strut, old_strut=None):
-        from libqtile.bar import Gap
+        from libqtile.gap import Gap
 
         (left, right, top, bottom) = strut[:4]
         if old_strut:
