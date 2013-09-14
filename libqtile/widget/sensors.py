@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from .. import bar
+from .. import bar, obj
 import base
 from subprocess import Popen, PIPE
 import re
@@ -29,7 +29,7 @@ class ThermalSensor(base._TextBox):
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
+        base._TextBox.__init__(self, 'N/A', width=obj.CALCULATED, **config)
         self.add_defaults(ThermalSensor.defaults)
         self.sensors_temp = re.compile(
             ur"""

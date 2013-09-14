@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 
-from .. import bar, drawer, utils
+from .. import bar, drawer, utils, obj
 from libqtile.notify import notifier
 import base
 
@@ -20,7 +20,7 @@ class Notify(base._TextBox):
         ),
     ]
 
-    def __init__(self, width=bar.CALCULATED, **config):
+    def __init__(self, width=obj.CALCULATED, **config):
         base._TextBox.__init__(self, "", width, **config)
         self.add_defaults(Notify.defaults)
         notifier.register(self.update)

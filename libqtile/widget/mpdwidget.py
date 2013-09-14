@@ -8,7 +8,7 @@
 # TODO: some kind of templating to make shown info configurable
 # TODO: best practice to handle failures? just write to stderr?
 
-from .. import bar, utils
+from .. import bar, utils, obj
 from mpd import MPDClient, CommandError
 import atexit
 import base
@@ -28,7 +28,7 @@ class Mpd(base._TextBox):
         )
     ]
 
-    def __init__(self, width=bar.CALCULATED, host='localhost', port=6600,
+    def __init__(self, width=obj.CALCULATED, host='localhost', port=6600,
                  password=False, fmt_playing="%a - %t [%v%%]",
                  fmt_stopped="Stopped [%v%%]", msg_nc='Mpd off',
                  do_color_progress=True, **config):
@@ -39,7 +39,7 @@ class Mpd(base._TextBox):
             - fmt_playing, fmt_stopped: format strings to display when playing/paused and when stopped, respectively
             - msg_nc: which message to show when we're not connected
             - do_color_progress: whether to indicate progress in song by altering message color
-            - width: A fixed width, or bar.CALCULATED to calculate the width
+            - width: A fixed width, or obj.CALCULATED to calculate the width
             automatically (which is recommended).
         """
         self.host = host

@@ -1,15 +1,14 @@
-from .. import bar
+from .. import bar, obj
 import base
-
 
 class Spacer(base._Widget):
     """
         Just an empty space on the bar. Often used with width equal to
-        bar.STRETCH to push bar widgets to the right edge of the screen.
+        obj.STRETCH to push bar widgets to the right edge of the screen.
     """
-    def __init__(self, width=bar.STRETCH):
+    def __init__(self, width=obj.STRETCH):
         """
-            - width: bar.STRETCH, or a pixel width.
+            - width: obj.STRETCH, or a pixel width.
         """
         base._Widget.__init__(self, width)
 

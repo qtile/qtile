@@ -1,7 +1,7 @@
 import glob
 import os
 import string
-from .. import bar, xkeysyms, xcbq, command
+from .. import bar, xkeysyms, xcbq, command, obj
 import base
 
 
@@ -288,7 +288,7 @@ class Prompt(base._TextBox):
     defaults = [("cursorblink", 0.5, "Cursor blink rate. 0 to disable.")]
 
     def __init__(self, name="prompt", **config):
-        base._TextBox.__init__(self, "", bar.CALCULATED, **config)
+        base._TextBox.__init__(self, "", obj.CALCULATED, **config)
         self.add_defaults(Prompt.defaults)
         self.name = name
         self.active = False

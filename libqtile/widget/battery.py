@@ -1,6 +1,6 @@
 import cairo
 import os
-from libqtile import bar
+from libqtile import bar, obj
 import base
 
 BAT_DIR = '/sys/class/power_supply'
@@ -58,7 +58,7 @@ class _Battery(base._TextBox):
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, "BAT", bar.CALCULATED, **config)
+        base._TextBox.__init__(self, "BAT", obj.CALCULATED, **config)
         self.add_defaults(_Battery.defaults)
 
     def _load_file(self, name):
@@ -205,7 +205,7 @@ class BatteryIcon(_Battery):
         self.add_defaults(BatteryIcon.defaults)
 
         if self.theme_path:
-            self.width_type = bar.STATIC
+            self.width_type = obj.STATIC
             self.width = 0
         self.surfaces = {}
         self.current_icon = 'battery-missing'

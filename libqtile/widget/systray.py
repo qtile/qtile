@@ -1,4 +1,4 @@
-from .. import bar, xcbq, window
+from .. import bar, xcbq, window, obj
 import base
 
 import xcb
@@ -102,7 +102,7 @@ class Systray(base._Widget):
     ]
 
     def __init__(self, **config):
-        base._Widget.__init__(self, bar.CALCULATED, **config)
+        base._Widget.__init__(self, obj.CALCULATED, **config)
         self.add_defaults(Systray.defaults)
         self.traywin = None
         self.icons = {}

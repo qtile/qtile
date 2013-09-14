@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .. import bar
+from .. import bar, obj
 import base
 from subprocess import check_output, call
 
@@ -14,7 +14,7 @@ class Canto(base._TextBox):
         ("update_delay", 600, "The delay in seconds between updates"),
     ]
 
-    def __init__(self, width=bar.CALCULATED, **config):
+    def __init__(self, width=obj.CALCULATED, **config):
         base._TextBox.__init__(self, "N/A", width, **config)
         self.add_defaults(Canto.defaults)
         self.timeout_add(self.update_delay, self.update)
