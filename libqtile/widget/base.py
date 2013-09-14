@@ -1,8 +1,7 @@
-from .. import command, bar, configurable, drawer
+from .. import command, bar, configurable, drawer, obj
 import gobject
 import logging
 import threading
-
 
 LEFT = object()
 CENTER = object()
@@ -10,10 +9,10 @@ CENTER = object()
 
 class _Widget(command.CommandObject, configurable.Configurable):
     """
-        If width is set to the special value bar.STRETCH, the bar itself
+        If width is set to the special value obj.STRETCH, the bar itself
         will set the width to the maximum remaining space, after all other
         widgets have been configured. Only ONE widget per bar can have the
-        bar.STRETCH width set.
+        obj.STRETCH width set.
 
         The offset attribute is set by the Bar after all widgets have been
         configured.
@@ -21,9 +20,10 @@ class _Widget(command.CommandObject, configurable.Configurable):
     offset = None
     defaults = [("background", None, "Widget background color")]
 
-    def __init__(self, width, **config):
+    def __init__(self, width, height=obj.CALCULATED, **config):
         """
-            width: bar.STRETCH, bar.CALCULATED, or a specified width.
+            width: obj.STRETCH, obj.CALCULATED, or a specified width.
+            height: obj.STRETCH, obj.CALCULATED, or a specified height.
         """
         command.CommandObject.__init__(self)
         self.name = self.__class__.__name__.lower()
@@ -35,23 +35,41 @@ class _Widget(command.CommandObject, configurable.Configurable):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(_Widget.defaults)
 
-        if width in (bar.CALCULATED, bar.STRETCH):
+        if width in (obj.CALCULATED, obj.STRETCH):
             self.width_type = width
             self.width = 0
         else:
-            self.width_type = bar.STATIC
+            self.width_type = obj.STATIC
             self.width = width
+
+        if height in (obj.CALCULATED, obj.STRETCH):
+            self.height_type = height
+            self.height = 0
+        else:
+            self.height_type = obj.STATIC
+            self.height = height
+ 
         self.configured = False
 
     @property
     def width(self):
-        if self.width_type == bar.CALCULATED:
+        if self.width_type == obj.CALCULATED:
             return self.calculate_width()
         return self._width
 
     @width.setter
     def width(self, value):
         self._width = value
+
+    @property
+    def height(self):
+        if self.height_type == bar.CALCULATED:
+            return self.calculate_height()
+        return self._height
+ 
+    @height.setter
+    def height(self, value):
+        self._height = value
 
     @property
     def win(self):
@@ -122,6 +140,12 @@ class _Widget(command.CommandObject, configurable.Configurable):
         """
         raise NotImplementedError
 
+    def calculate_height(self):
+        """
+           Must be implemented if the widget can take CALCULATED for height.
+        """
+        raise NotImplementedError
+
     def timeout_add(self, seconds, method, method_args=(),
                     callback=None, callback_args=()):
         """
@@ -147,8 +171,6 @@ class _Widget(command.CommandObject, configurable.Configurable):
             )
 
 
-UNSPECIFIED = bar.Obj("UNSPECIFIED")
-
 
 class _TextBox(_Widget):
     """
@@ -166,9 +188,9 @@ class _TextBox(_Widget):
         ),
     ]
 
-    def __init__(self, text=" ", width=bar.CALCULATED, **config):
+    def __init__(self, text=" ", width=obj.CALCULATED, height=obj.CALCULATED, **config):
         self.layout = None
-        _Widget.__init__(self, width, **config)
+        _Widget.__init__(self, width, height, **config)
         self.text = text
         self.add_defaults(_TextBox.defaults)
 
@@ -230,6 +252,13 @@ class _TextBox(_Widget):
         else:
             return 0
 
+    def calculate_height(self):
+        if self.text:
+            return min(self.layout.height,
+                       self.bar.height) + self.actual_padding * 2
+        else:
+            return 0
+
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
         self.layout.draw(
@@ -238,16 +267,16 @@ class _TextBox(_Widget):
         )
         self.drawer.draw(self.offset, self.width)
 
-    def cmd_set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED,
-                     fontshadow=UNSPECIFIED):
+    def cmd_set_font(self, font=obj.UNSPECIFIED, fontsize=obj.UNSPECIFIED,
+                     fontshadow=obj.UNSPECIFIED):
         """
             Change the font used by this widget. If font is None, the current
             font is used.
         """
-        if font is not UNSPECIFIED:
+        if font is not obj.UNSPECIFIED:
             self.font = font
-        if fontsize is not UNSPECIFIED:
+        if fontsize is not obj.UNSPECIFIED:
             self.fontsize = fontsize
-        if fontshadow is not UNSPECIFIED:
+        if fontshadow is not obj.UNSPECIFIED:
             self.fontshadow = fontshadow
         self.bar.draw()
