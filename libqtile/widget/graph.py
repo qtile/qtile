@@ -2,6 +2,7 @@ import cairo
 
 from . import base
 from os import statvfs
+import time
 
 __all__ = [
     'CPUGraph',
@@ -146,6 +147,7 @@ class CPUGraph(_Graph):
         self.add_defaults(CPUGraph.defaults)
         self.maxvalue = 100
         self.oldvalues = self._getvalues()
+        self.oldtime = time.time()
 
     def _getvalues(self):
         with open('/proc/stat') as file:
@@ -168,6 +170,11 @@ class CPUGraph(_Graph):
             return (int(user), int(nice), int(sys), int(idle))
 
     def update_graph(self):
+        # lag detection
+        newtime = time.time()
+        lag_cycles = int((newtime - self.oldtime) / self.frequency)
+        self.oldtime = newtime
+
         nval = self._getvalues()
         oval = self.oldvalues
         busy = (nval[0] + nval[1] + nval[2] - oval[0] - oval[1] - oval[2])
@@ -176,7 +183,15 @@ class CPUGraph(_Graph):
             # sometimes this value is zero for unknown reason (time shift?)
             # we just skip the value, because it gives us no info about
             # cpu load, if it's zero
-            self.push(busy * 100.0 / total)
+            push_value = busy * 100.0 / total
+            if lag_cycles > 1:
+                # compensate lag by sending the same value several times
+                for i in xrange(lag_cycles):
+                    self.push(push_value)
+            else:
+                # no lag - send this only once
+                self.push(push_value)
+
         self.oldvalues = nval
 
 
