@@ -1,6 +1,8 @@
 import time
 import libqtile.layout
+import libqtile.gap
 import libqtile.bar
+import libqtile.obj
 import libqtile.widget
 import libqtile.manager
 import libqtile.config
@@ -26,7 +28,7 @@ class GBConfig:
             top=libqtile.bar.Bar(
                     [
                         libqtile.widget.CPUGraph(
-                            width=libqtile.bar.STRETCH,
+                            width=libqtile.obj.STRETCH,
                             type="linefill",
                             border_width=20,
                             margin_x=1,
@@ -152,8 +154,8 @@ class GeomConf:
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
         libqtile.config.Screen(
-            left=libqtile.bar.Gap(10),
-            right=libqtile.bar.Gap(10),
+            left=libqtile.gap.Gap(10),
+            right=libqtile.gap.Gap(10),
             top=libqtile.bar.Bar([], 10),
             bottom=libqtile.bar.Bar([], 10),
         )
@@ -196,10 +198,10 @@ def test_resize(self):
     b = libqtile.bar.Bar([], 100)
 
     l = [
-        DWidget(10, libqtile.bar.CALCULATED),
-        DWidget(None, libqtile.bar.STRETCH),
-        DWidget(None, libqtile.bar.STRETCH),
-        DWidget(10, libqtile.bar.CALCULATED),
+        DWidget(10, libqtile.obj.CALCULATED),
+        DWidget(None, libqtile.obj.STRETCH),
+        DWidget(None, libqtile.obj.STRETCH),
+        DWidget(10, libqtile.obj.CALCULATED),
     ]
     b._resize(100, l)
     assert wd(l) == [10, 40, 40, 10]
@@ -208,32 +210,32 @@ def test_resize(self):
     assert wd(l) == [10, 40, 41, 10]
 
     l = [
-        DWidget(10, libqtile.bar.CALCULATED)
+        DWidget(10, libqtile.obj.CALCULATED)
     ]
     b._resize(100, l)
     assert wd(l) == [10]
     assert off(l) == [0]
 
     l = [
-        DWidget(10, libqtile.bar.CALCULATED),
-        DWidget(None, libqtile.bar.STRETCH)
+        DWidget(10, libqtile.obj.CALCULATED),
+        DWidget(None, libqtile.obj.STRETCH)
     ]
     b._resize(100, l)
     assert wd(l) == [10, 90]
     assert off(l) == [0, 10]
 
     l = [
-        DWidget(None, libqtile.bar.STRETCH),
-        DWidget(10, libqtile.bar.CALCULATED),
+        DWidget(None, libqtile.obj.STRETCH),
+        DWidget(10, libqtile.obj.CALCULATED),
     ]
     b._resize(100, l)
     assert wd(l) == [90, 10]
     assert off(l) == [0, 90]
 
     l = [
-        DWidget(10, libqtile.bar.CALCULATED),
-        DWidget(None, libqtile.bar.STRETCH),
-        DWidget(10, libqtile.bar.CALCULATED),
+        DWidget(10, libqtile.obj.CALCULATED),
+        DWidget(None, libqtile.obj.STRETCH),
+        DWidget(10, libqtile.obj.CALCULATED),
     ]
     b._resize(100, l)
     assert wd(l) == [10, 80, 10]
@@ -248,7 +250,7 @@ class TopBottomConf(GeomConf):
 class MultiStretchConf(GeomConf):
     screens = [
         libqtile.config.Screen(top=libqtile.bar.Bar([
-          libqtile.widget.TextBox(name=txt, width=libqtile.bar.STRETCH)
+          libqtile.widget.TextBox(name=txt, width=libqtile.obj.STRETCH)
           for txt in ["text1", "text2"]
         ], 10))
     ]
@@ -290,7 +292,7 @@ def test_basic(self):
             bottom=libqtile.bar.Bar(
                 [
                     TestWidget(),
-                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
+                    libqtile.widget.Spacer(libqtile.obj.STRETCH),
                     TestWidget()
                 ],
                 10
@@ -313,7 +315,7 @@ def test_singlespacer(self):
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
-                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
+                    libqtile.widget.Spacer(libqtile.obj.STRETCH),
                 ],
                 10
             )

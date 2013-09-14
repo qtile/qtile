@@ -18,7 +18,7 @@
 import os
 import base
 
-from .. import bar
+from .. import bar, obj
 
 class DF(base._TextBox):
     """
@@ -41,7 +41,7 @@ class DF(base._TextBox):
                 "M": 1024*1024,
                 "B": 1024}
     def __init__(self, interval=60, **config):
-        base._TextBox.__init__(self, '', bar.CALCULATED, **config)
+        base._TextBox.__init__(self, '', obj.CALCULATED, **config)
         self.add_defaults(DF.defaults)
         self.interval = interval
         self.user_free = 0

@@ -1,4 +1,4 @@
-from .. import bar
+from .. import bar, obj
 import base
 
 
@@ -15,10 +15,10 @@ class TextBox(base._TextBox):
         ("foreground", "#ffffff", "Foreground colour.")
     ]
 
-    def __init__(self, text=" ", width=bar.CALCULATED, **config):
+    def __init__(self, text=" ", width=obj.CALCULATED, **config):
         """
             - text: Initial widget text.
-            - width: An integer width, bar.STRETCH, or bar.CALCULATED .
+            - width: An integer width, obj.STRETCH, or obj.CALCULATED .
         """
         base._TextBox.__init__(self, text, width, **config)
 

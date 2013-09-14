@@ -17,7 +17,7 @@
 
 import base
 
-from .. import bar
+from .. import bar, obj
 
 import subprocess
 
@@ -29,7 +29,7 @@ class Pacman(base._TextBox):
     defaults = [('unavailable', 'ffffff', 'Unavailable Color - no updates.')]
 
     def __init__(self, execute=None, interval=60, **config):
-        base._TextBox.__init__(self, '', bar.CALCULATED, **config)
+        base._TextBox.__init__(self, '', obj.CALCULATED, **config)
         self.add_defaults(Pacman.defaults)
         self.interval = interval
         self.execute = execute

@@ -1,4 +1,4 @@
-from .. import hook, bar
+from .. import hook, bar, obj
 import base
 from pythonwifi.iwlibs import Wireless, Iwstats
 
@@ -7,11 +7,11 @@ class Wlan(base._TextBox):
     """
         Displays Wifi ssid and quality.
     """
-    def __init__(self, interface="wlan0", width=bar.CALCULATED, **config):
+    def __init__(self, interface="wlan0", width=obj.CALCULATED, **config):
         """
             - interface: Wlan interface name.
 
-            - width: A fixed width, or bar.CALCULATED to calculate the width
+            - width: A fixed width, or obj.CALCULATED to calculate the width
             automatically (which is recommended).
         """
         self.interface = interface

@@ -5,7 +5,7 @@ import subprocess
 import cairo
 
 import base
-from .. import bar
+from .. import bar, obj
 
 __all__ = [
     'Volume',
@@ -27,10 +27,10 @@ class Volume(base._TextBox):
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, '0', width=bar.CALCULATED, **config)
+        base._TextBox.__init__(self, '0', width=obj.CALCULATED, **config)
         self.add_defaults(Volume.defaults)
         if self.theme_path:
-            self.width_type = bar.STATIC
+            self.width_type = obj.STATIC
             self.width = 0
         self.surfaces = {}
         self.volume = None
@@ -119,7 +119,7 @@ class Volume(base._TextBox):
                 )
             except cairo.Error:
                 self.theme_path = None
-                self.width_type = bar.CALCULATED
+                self.width_type = obj.CALCULATED
                 self.qtile.log.exception('Volume switching to text mode')
                 return
             input_width = img.get_width()

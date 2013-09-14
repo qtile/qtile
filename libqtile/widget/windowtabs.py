@@ -1,4 +1,4 @@
-from .. import hook, bar
+from .. import hook, bar, obj
 import base
 
 
@@ -13,7 +13,7 @@ class WindowTabs(base._TextBox):
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, width=bar.STRETCH, **config)
+        base._TextBox.__init__(self, width=obj.STRETCH, **config)
         self.add_defaults(WindowTabs.defaults)
         if not isinstance(self.selected, (tuple, list)):
             self.selected = (self.selected, self.selected)

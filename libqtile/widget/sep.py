@@ -1,4 +1,4 @@
-from .. import bar
+from .. import bar, obj
 import base
 
 
@@ -18,7 +18,7 @@ class Sep(base._Widget):
     ]
 
     def __init__(self, **config):
-        base._Widget.__init__(self, bar.STATIC, **config)
+        base._Widget.__init__(self, obj.STATIC, **config)
         self.add_defaults(Sep.defaults)
         self.width = self.padding + self.linewidth
 

@@ -1,6 +1,6 @@
 import cairo
 import os
-from libqtile import bar
+from libqtile import bar, obj
 import base
 
 BACKLIGHT_DIR = '/sys/class/backlight'
@@ -33,7 +33,7 @@ class Backlight(base._TextBox):
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, "LIGHT", bar.CALCULATED, **config)
+        base._TextBox.__init__(self, "LIGHT", obj.CALCULATED, **config)
         self.add_defaults(Backlight.defaults)
         self.timeout_add(self.update_delay, self.update)
 

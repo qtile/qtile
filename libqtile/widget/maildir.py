@@ -2,7 +2,7 @@
 # vim: set sw=4 et tw=80:
 
 import base
-from .. import bar
+from .. import bar, obj
 
 import os.path
 import mailbox
@@ -23,7 +23,7 @@ class Maildir(base._TextBox):
         @param separator: the string to put between the subfolder strings.
         @param timeout: the refresh timeout in seconds.
         """
-        base._TextBox.__init__(self, "", bar.CALCULATED, **config)
+        base._TextBox.__init__(self, "", obj.CALCULATED, **config)
         self._maildirPath = os.path.expanduser(maildirPath)
         self._separator = separator
         self._timeout = timeout

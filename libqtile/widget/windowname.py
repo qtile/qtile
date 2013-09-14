@@ -1,4 +1,4 @@
-from .. import hook, bar
+from .. import hook, bar, obj
 import base
 
 
@@ -6,7 +6,7 @@ class WindowName(base._TextBox):
     """
         Displays the name of the window that currently has focus.
     """
-    def __init__(self, width=bar.STRETCH, **config):
+    def __init__(self, width=obj.STRETCH, **config):
         base._TextBox.__init__(self, width=width, **config)
 
     def _configure(self, qtile, bar):

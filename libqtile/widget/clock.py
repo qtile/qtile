@@ -1,7 +1,7 @@
 from time import time
 from datetime import datetime
 
-from .. import bar
+from .. import bar, obj
 import base
 
 import gobject
@@ -11,7 +11,7 @@ class Clock(base._TextBox):
     """
         A simple but flexible text-based clock.
     """
-    def __init__(self, fmt="%H:%M", width=bar.CALCULATED, **config):
+    def __init__(self, fmt="%H:%M", width=obj.CALCULATED, **config):
         """
             - fmt: A Python datetime format string.
 

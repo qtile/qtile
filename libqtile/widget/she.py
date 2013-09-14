@@ -1,5 +1,5 @@
 from libqtile.widget import base
-from libqtile import bar, hook
+from libqtile import bar, hook, obj
 
 __all__ = ['She']
 
@@ -14,7 +14,7 @@ class She(base._TextBox):
         ('update_delay', 0.5, 'Update Time in seconds.'),
     ]
 
-    def __init__(self, width=bar.CALCULATED, **config):
+    def __init__(self, width=obj.CALCULATED, **config):
         base._TextBox.__init__(self, 'CPU', **config)
         self.add_defaults(She.defaults)
         self.modes = {

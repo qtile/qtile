@@ -1,9 +1,9 @@
 import base
-from .. import bar, hook
+from .. import bar, hook, obj
 
 
 class CurrentLayout(base._TextBox):
-    def __init__(self, width=bar.CALCULATED, **config):
+    def __init__(self, width=obj.CALCULATED, **config):
         base._TextBox.__init__(self, "", width, **config)
 
     def _configure(self, qtile, bar):

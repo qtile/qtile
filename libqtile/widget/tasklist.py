@@ -1,5 +1,5 @@
 import cairo
-from .. import bar, hook
+from .. import bar, hook, obj
 import base
 
 
@@ -35,7 +35,7 @@ class TaskList(base._Widget):
     ]
 
     def __init__(self, **config):
-        base._Widget.__init__(self, bar.STRETCH, **config)
+        base._Widget.__init__(self, obj.STRETCH, **config)
         self.add_defaults(TaskList.defaults)
         self._icons_cache = {}
 

@@ -1,7 +1,7 @@
 import subprocess
 from subprocess import CalledProcessError
 import base
-from .. import bar
+from .. import bar, obj
 
 
 class KeyboardLayout(base._TextBox):
@@ -14,7 +14,7 @@ class KeyboardLayout(base._TextBox):
     ]
 
     def __init__(self, configured_keyboards=['us'],
-                 width=bar.CALCULATED, **config):
+                 width=obj.CALCULATED, **config):
         """
             :configured_keyboards A list of predefined keyboard layouts
             represented as strings. For example: ['us', 'us colemak', 'es', 'fr'].

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .. import bar
+from .. import bar, obj
 import base
 import urllib
 import urllib2
@@ -56,7 +56,7 @@ class YahooWeather(base._TextBox):
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
+        base._TextBox.__init__(self, 'N/A', width=obj.CALCULATED, **config)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)

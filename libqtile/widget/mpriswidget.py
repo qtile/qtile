@@ -3,7 +3,7 @@ import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 
 import base
-from .. import bar
+from .. import bar, obj
 
 
 class Mpris(base._TextBox):
@@ -13,7 +13,7 @@ class Mpris(base._TextBox):
     correct version of MPRIS, though I have only tested it with clementine.
     """
 
-    def __init__(self, name="clementine", width=bar.CALCULATED,
+    def __init__(self, name="clementine", width=obj.CALCULATED,
                  objname='org.mpris.clementine', **config):
         base._TextBox.__init__(self, " ", width, **config)
 

@@ -52,7 +52,7 @@
 # borrows liberally from that one.
 ###################################################################
 
-from .. import bar, utils
+from .. import bar, utils, obj
 import base
 import httplib2
 import logging
@@ -108,7 +108,7 @@ class GoogleCalendar(base._TextBox):
 
     def __init__(self, **config):
         base._TextBox.__init__(self, 'Calendar not initialized',
-                               width=bar.CALCULATED, **config)
+                               width=obj.CALCULATED, **config)
         self.cred_init()
         # confirm credentials every hour
         self.timeout_add(3600, self.cred_init)

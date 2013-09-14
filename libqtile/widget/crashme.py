@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from .. import bar
+from .. import bar, obj
 import base
 
 
@@ -7,9 +7,9 @@ class _CrashMe(base._TextBox):
     """
         A developper widget to force a crash in qtile
     """
-    def __init__(self, width=bar.CALCULATED, **config):
+    def __init__(self, width=obj.CALCULATED, **config):
         """
-            - width: A fixed width, or bar.CALCULATED to calculate the width
+            - width: A fixed width, or obj.CALCULATED to calculate the width
             automatically (which is recommended).
         """
         base._TextBox.__init__(self, "Crash me !", width, **config)

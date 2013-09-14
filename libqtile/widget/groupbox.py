@@ -1,4 +1,4 @@
-from .. import bar, hook, utils
+from .. import bar, hook, utils, obj
 import base
 
 
@@ -11,7 +11,7 @@ class _GroupBase(base._TextBox):
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, bar.CALCULATED, **config)
+        base._TextBox.__init__(self, obj.CALCULATED, **config)
         self.add_defaults(_GroupBase.defaults)
 
     def box_width(self, groups):
