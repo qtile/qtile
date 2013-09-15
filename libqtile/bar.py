@@ -25,6 +25,9 @@ import hook
 import configurable
 import window
 
+import gobject
+
+USE_BAR_DRAW_QUEUE = True
 
 class Gap(command.CommandObject):
     """
@@ -148,6 +151,8 @@ class Bar(Gap, configurable.Configurable):
         self.widgets = widgets
         self.saved_focus = None
 
+        self.queued_draws = 0
+
     def _configure(self, qtile, screen):
         if not self in [screen.top, screen.bottom]:
             raise confreader.ConfigError(
@@ -248,6 +253,15 @@ class Bar(Gap, configurable.Configurable):
             self.saved_focus.window.set_input_focus()
 
     def draw(self):
+        if USE_BAR_DRAW_QUEUE:
+            if self.queued_draws == 0:
+                gobject.idle_add(self._actual_draw)
+            self.queued_draws += 1
+        else:
+            self._actual_draw()
+
+    def _actual_draw(self):
+        self.queued_draws = 0
         self._resize(self.width, self.widgets)
         for i in self.widgets:
             i.draw()
@@ -255,6 +269,9 @@ class Bar(Gap, configurable.Configurable):
             end = i.offset + i.width
             if end < self.width:
                 self.drawer.draw(end, self.width - end)
+
+        # have to return False here to avoid getting called again
+        return False
 
     def info(self):
         return dict(
