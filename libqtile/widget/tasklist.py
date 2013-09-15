@@ -13,9 +13,12 @@ class TaskList(base._Widget):
             None,
             "font shadow color, default is None(no shadow)"
         ),
-        ("padding", 0, "Padding. default 0"),
-        ("margin_y", 3, "Y margin outside the box"),
-        ("margin_x", 3, "X margin outside the box"),
+        ("padding", 0, "Padding inside the box"),
+        ("padding_x", None, "X Padding. Overrides 'padding' if set"),
+        ("padding_y", None, "Y Padding. Overrides 'padding' if set"),
+        ("margin", 3, "Margin outside the box"),
+        ("margin_x", None, "X margin. Overrides 'margin' if set"),
+        ("margin_y", None, "Y margin. Overrides 'margin' if set"),
         ("borderwidth", 2, "Current group border width"),
         ("border", "215578", "Border colour"),
         ("rounded", True, "To round or not to round borders"),
@@ -45,16 +48,21 @@ class TaskList(base._Widget):
             self.font,
             self.fontsize
         )
-        return width + self.padding * 2 + \
+        return width + self.padding_x * 2 + \
             self.margin_x * 2 + self.borderwidth * 2
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
         self.icon_size = self.bar.height - (self.borderwidth + 2) * 2
 
+        # handle margin/padding overrides
+        for key in ('padding_x', 'padding_y', 'margin_x', 'margin_y'):
+            if getattr(self, key) is None:
+                setattr(self, key, getattr(self, key.split("_")[0]))
+
         if self.fontsize is None:
             calc = self.bar.height - self.margin_y * 2 - \
-                self.borderwidth * 2 - self.padding * 2
+                self.borderwidth * 2 - self.padding_y * 2
             self.fontsize = max(calc, 1)
         self.layout = self.drawer.textlayout(
             "",
@@ -99,12 +107,12 @@ class TaskList(base._Widget):
     def drawbox(self, offset, text, bordercolor, textcolor, rounded=False,
                 block=False, width=None):
         self.drawtext(text, textcolor, width)
-        padding_x = [self.padding + self.icon_size + 4, self.padding]
+        padding_x = [self.padding_x + self.icon_size + 4, self.padding_x]
         framed = self.layout.framed(
             self.borderwidth,
             bordercolor,
             padding_x,
-            self.padding
+            self.padding_y
         )
         if block:
             framed.draw_fill(offset, self.margin_y, rounded)
@@ -171,8 +179,8 @@ class TaskList(base._Widget):
         if not window.icons:
             return
 
-        x = offset + self.padding + self.borderwidth + 2 + self.margin_x
-        y = self.padding + self.borderwidth
+        x = offset + self.padding_x + self.borderwidth + 2 + self.margin_x
+        y = self.padding_y + self.borderwidth
 
         surface = self.get_window_icon(window)
 
@@ -213,7 +221,7 @@ class TaskList(base._Widget):
                 self.foreground,
                 self.rounded,
                 self.highlight_method == 'block',
-                bw - self.margin_x * 2 - self.padding * 2
+                bw - self.margin_x * 2 - self.padding_x * 2
             )
             self.draw_icon(w, offset)
 
