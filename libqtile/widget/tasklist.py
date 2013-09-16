@@ -3,7 +3,7 @@ from .. import bar, hook
 import base
 
 
-class TaskList(base._Widget):
+class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     defaults = [
         ("font", "Arial", "Default font"),
         ("fontsize", None, "Font size. Calculated if None."),
@@ -13,9 +13,6 @@ class TaskList(base._Widget):
             None,
             "font shadow color, default is None(no shadow)"
         ),
-        ("padding", 0, "Padding. default 0"),
-        ("margin_y", 3, "Y margin outside the box"),
-        ("margin_x", 3, "X margin outside the box"),
         ("borderwidth", 2, "Current group border width"),
         ("border", "215578", "Border colour"),
         ("rounded", True, "To round or not to round borders"),
@@ -37,6 +34,8 @@ class TaskList(base._Widget):
     def __init__(self, **config):
         base._Widget.__init__(self, bar.STRETCH, **config)
         self.add_defaults(TaskList.defaults)
+        self.add_defaults(base.PaddingMixin.defaults)
+        self.add_defaults(base.MarginMixin.defaults)
         self._icons_cache = {}
 
     def box_width(self, text):
@@ -45,7 +44,7 @@ class TaskList(base._Widget):
             self.font,
             self.fontsize
         )
-        return width + self.padding * 2 + \
+        return width + self.padding_x * 2 + \
             self.margin_x * 2 + self.borderwidth * 2
 
     def _configure(self, qtile, bar):
@@ -54,7 +53,7 @@ class TaskList(base._Widget):
 
         if self.fontsize is None:
             calc = self.bar.height - self.margin_y * 2 - \
-                self.borderwidth * 2 - self.padding * 2
+                self.borderwidth * 2 - self.padding_y * 2
             self.fontsize = max(calc, 1)
         self.layout = self.drawer.textlayout(
             "",
@@ -99,12 +98,12 @@ class TaskList(base._Widget):
     def drawbox(self, offset, text, bordercolor, textcolor, rounded=False,
                 block=False, width=None):
         self.drawtext(text, textcolor, width)
-        padding_x = [self.padding + self.icon_size + 4, self.padding]
+        padding_x = [self.padding_x + self.icon_size + 4, self.padding_x]
         framed = self.layout.framed(
             self.borderwidth,
             bordercolor,
             padding_x,
-            self.padding
+            self.padding_y
         )
         if block:
             framed.draw_fill(offset, self.margin_y, rounded)
@@ -171,8 +170,8 @@ class TaskList(base._Widget):
         if not window.icons:
             return
 
-        x = offset + self.padding + self.borderwidth + 2 + self.margin_x
-        y = self.padding + self.borderwidth
+        x = offset + self.padding_x + self.borderwidth + 2 + self.margin_x
+        y = self.padding_y + self.borderwidth
 
         surface = self.get_window_icon(window)
 
@@ -213,7 +212,7 @@ class TaskList(base._Widget):
                 self.foreground,
                 self.rounded,
                 self.highlight_method == 'block',
-                bw - self.margin_x * 2 - self.padding * 2
+                bw - self.margin_x * 2 - self.padding_x * 2
             )
             self.draw_icon(w, offset)
 

@@ -2,17 +2,16 @@ from .. import bar, hook, utils
 import base
 
 
-class _GroupBase(base._TextBox):
+class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
     defaults = [
-        ("padding", 5, "Padding inside the box"),
-        ("margin_y", 3, "Y margin outside the box"),
-        ("margin_x", 3, "X margin outside the box"),
         ("borderwidth", 3, "Current group border width"),
     ]
 
     def __init__(self, **config):
         base._TextBox.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(_GroupBase.defaults)
+        self.add_defaults(base.PaddingMixin.defaults)
+        self.add_defaults(base.MarginMixin.defaults)
 
     def box_width(self, groups):
         width, height = self.drawer.max_layout_size(
@@ -20,15 +19,17 @@ class _GroupBase(base._TextBox):
             self.font,
             self.fontsize
         )
-        return width + self.padding * 2 + self.margin_x * 2 + \
+        return width + self.padding_x * 2 + self.margin_x * 2 + \
             self.borderwidth * 2
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
+
         if self.fontsize is None:
             calc = self.bar.height - self.margin_y * 2 - \
-                self.borderwidth * 2 - self.padding * 2
+                self.borderwidth * 2 - self.padding_y * 2
             self.fontsize = max(calc, 1)
+
         self.layout = self.drawer.textlayout(
             "",
             "ffffff",
@@ -58,8 +59,8 @@ class _GroupBase(base._TextBox):
         framed = self.layout.framed(
             self.borderwidth,
             bordercolor,
-            self.padding,
-            self.padding
+            self.padding_x,
+            self.padding_y
         )
         if block:
             framed.draw_fill(offset, self.margin_y, rounded)
@@ -123,7 +124,6 @@ class GroupBox(_GroupBase):
             "404040",
             "Border colour for group on other screen."
         ),
-        ("padding", 5, "Padding inside the box"),
         (
             "urgent_border",
             "FF0000",
@@ -246,7 +246,7 @@ class GroupBox(_GroupBase):
                 text,
                 self.rounded,
                 is_block,
-                bw - self.margin_x * 2 - self.padding * 2
+                bw - self.margin_x * 2 - self.padding_x * 2
             )
             offset += bw
         self.drawer.draw(self.offset, self.width)
