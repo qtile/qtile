@@ -18,6 +18,7 @@ from windowname import WindowName
 from windowtabs import WindowTabs
 from keyboardlayout import KeyboardLayout
 from df import DF
+from image import Image
 
 from tasklist import TaskList
 
