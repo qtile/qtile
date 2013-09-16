@@ -2,20 +2,16 @@ from .. import bar, hook, utils
 import base
 
 
-class _GroupBase(base._TextBox):
+class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
     defaults = [
-        ("padding", 5, "Padding inside the box"),
-        ("padding_x", None, "X Padding. Overrides 'padding' if set"),
-        ("padding_y", None, "Y Padding. Overrides 'padding' if set"),
-        ("margin", 3, "Margin outside the box"),
-        ("margin_x", None, "X margin. Overrides 'margin' if set"),
-        ("margin_y", None, "Y margin. Overrides 'margin' if set"),
         ("borderwidth", 3, "Current group border width"),
     ]
 
     def __init__(self, **config):
         base._TextBox.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(_GroupBase.defaults)
+        self.add_defaults(base.PaddingMixin.defaults)
+        self.add_defaults(base.MarginMixin.defaults)
 
     def box_width(self, groups):
         width, height = self.drawer.max_layout_size(
@@ -28,11 +24,6 @@ class _GroupBase(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
-
-        # handle margin/padding overrides
-        for key in ('padding_x', 'padding_y', 'margin_x', 'margin_y'):
-            if getattr(self, key) is None:
-                setattr(self, key, getattr(self, key.split("_")[0]))
 
         if self.fontsize is None:
             calc = self.bar.height - self.margin_y * 2 - \

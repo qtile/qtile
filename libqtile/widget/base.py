@@ -251,3 +251,43 @@ class _TextBox(_Widget):
         if fontshadow is not UNSPECIFIED:
             self.fontshadow = fontshadow
         self.bar.draw()
+
+
+# these two classes below look SUSPICIOUSLY similar
+
+class PaddingMixin(object):
+    """
+        Mixin that provides padding(_x|_y|)
+
+        To use it, subclass and add this to __init__:
+
+            self.add_defaults(base.PaddingMixin.defaults)
+    """
+
+    defaults = [
+        ("padding", 3, "Padding inside the box"),
+        ("padding_x", None, "X Padding. Overrides 'padding' if set"),
+        ("padding_y", None, "Y Padding. Overrides 'padding' if set"),
+    ]
+
+    padding_x = configurable.ExtraFallback('padding_x', 'padding')
+    padding_y = configurable.ExtraFallback('padding_y', 'padding')
+
+
+class MarginMixin(object):
+    """
+        Mixin that provides margin(_x|_y|)
+
+        To use it, subclass and add this to __init__:
+
+            self.add_defaults(base.MarginMixin.defaults)
+    """
+
+    defaults = [
+        ("margin", 3, "Margin inside the box"),
+        ("margin_x", None, "X Margin. Overrides 'margin' if set"),
+        ("margin_y", None, "Y Margin. Overrides 'margin' if set"),
+    ]
+
+    margin_x = configurable.ExtraFallback('margin_x', 'margin')
+    margin_y = configurable.ExtraFallback('margin_y', 'margin')

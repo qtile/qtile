@@ -3,7 +3,7 @@ from .. import bar, hook
 import base
 
 
-class TaskList(base._Widget):
+class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
     defaults = [
         ("font", "Arial", "Default font"),
         ("fontsize", None, "Font size. Calculated if None."),
@@ -13,12 +13,6 @@ class TaskList(base._Widget):
             None,
             "font shadow color, default is None(no shadow)"
         ),
-        ("padding", 0, "Padding inside the box"),
-        ("padding_x", None, "X Padding. Overrides 'padding' if set"),
-        ("padding_y", None, "Y Padding. Overrides 'padding' if set"),
-        ("margin", 3, "Margin outside the box"),
-        ("margin_x", None, "X margin. Overrides 'margin' if set"),
-        ("margin_y", None, "Y margin. Overrides 'margin' if set"),
         ("borderwidth", 2, "Current group border width"),
         ("border", "215578", "Border colour"),
         ("rounded", True, "To round or not to round borders"),
@@ -40,6 +34,8 @@ class TaskList(base._Widget):
     def __init__(self, **config):
         base._Widget.__init__(self, bar.STRETCH, **config)
         self.add_defaults(TaskList.defaults)
+        self.add_defaults(base.PaddingMixin.defaults)
+        self.add_defaults(base.MarginMixin.defaults)
         self._icons_cache = {}
 
     def box_width(self, text):
@@ -54,11 +50,6 @@ class TaskList(base._Widget):
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
         self.icon_size = self.bar.height - (self.borderwidth + 2) * 2
-
-        # handle margin/padding overrides
-        for key in ('padding_x', 'padding_y', 'margin_x', 'margin_y'):
-            if getattr(self, key) is None:
-                setattr(self, key, getattr(self, key.split("_")[0]))
 
         if self.fontsize is None:
             calc = self.bar.height - self.margin_y * 2 - \

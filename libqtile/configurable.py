@@ -44,3 +44,23 @@ class Configurable(object):
                     return self._widget_defaults[name]
                 except KeyError:
                     raise AttributeError("no attribute: %s" % name)
+
+class ExtraFallback(object):
+    """
+        Adds another layer of fallback to attributes - to look up
+        a different attribute name
+    """
+
+    def __init__(self, name, fallback):
+        self.name = name
+        self.fallback = fallback
+
+    def __get__(self, instance, owner=None):
+        try:
+            retval = Configurable.__getattr__(instance, self.name)
+        except AttributeError:
+            retval = None
+
+        if retval is None:
+            retval = Configurable.__getattr__(instance, self.fallback)
+        return retval
