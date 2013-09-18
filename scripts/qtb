@@ -15,13 +15,6 @@ def main():
                       action="store_true", dest="list",
                       help="List addressible widgets.")
     parser.add_option(
-                        "-c", "--config",
-                        action="store", type="string",
-                        default=None,
-                        dest="configfile",
-                        help='Use specified configuration file.'
-                    )
-    parser.add_option(
                         "-s", "--socket",
                         action="store", type="string",
                         default=None,
@@ -29,12 +22,8 @@ def main():
                         help='Use specified communication socket.'
                     )
     (options, args) = parser.parse_args()
-    try:
-        c = confreader.File(options.configfile)
-    except confreader.ConfigError, v:
-        parser.error(v.message)
 
-    client = command.Client(options.socket, c)
+    client = command.Client(options.socket)
 
     if options.list:
         for i in client.list_widgets():
