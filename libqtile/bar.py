@@ -185,6 +185,7 @@ class Bar(Gap, configurable.Configurable):
         for i in self.widgets:
             qtile.registerWidget(i)
             i._configure(qtile, self)
+        self._resize(self.width, self.widgets)
 
         # FIXME: These should be targeted better.
         hook.subscribe.setgroup(self.draw)
