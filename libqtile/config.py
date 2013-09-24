@@ -326,7 +326,7 @@ class Group(object):
     """
     def __init__(self, name, matches=None, exclusive=False,
                  spawn=None, layout=None, persist=True, init=True,
-                 layout_opts=None, screen_affinity=None):
+                 layout_opts=None, screen_affinity=None, position=None):
         """
         :param name: the name of this group
         :type name: string
@@ -342,6 +342,8 @@ class Group(object):
         :type persist: boolean
         :param init: is this group alive when qtile starts?
         :type init: boolean
+        :param position: group position
+        :type position: int
 
         """
         self.name = name
@@ -354,6 +356,7 @@ class Group(object):
         self.layout_opts = layout_opts or {}
 
         self.screen_affinity = screen_affinity
+        self.position = position
 
 
 class Match(object):
