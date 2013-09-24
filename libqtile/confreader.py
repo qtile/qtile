@@ -56,6 +56,7 @@ class File(object):
                 # screwed up their config. So as not to lose their apps, we
                 # just load the default config here.
                 if is_restart:
+                    traceback.print_exc()
                     config = None
                 else:
                     tb = traceback.format_exc()
