@@ -45,8 +45,6 @@ keys = [
         [mod, "shift"], "Return",
         lazy.layout.toggle_split()
     ),
-    Key([mod], "h",      lazy.to_screen(1)),
-    Key([mod], "l",      lazy.to_screen(0)),
     Key([mod], "Return", lazy.spawn("xterm")),
 
     # Toggle between different layouts as defined below
