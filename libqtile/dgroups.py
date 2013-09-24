@@ -7,6 +7,7 @@ from libqtile.command import lazy
 from libqtile.config import Group
 from libqtile.config import Rule
 
+LAST_GROUP = 999999
 
 def simple_key_binder(mod, keynames=None):
     """
@@ -158,6 +159,15 @@ class DGroups(object):
 
                 self.add_dgroup(Group(group_name, persist=False), start=True)
                 client.togroup(group_name)
+        self.sort_groups()
+
+    def sort_groups(self):
+        def get_key(group):
+            position = self.groupMap[group.name].position
+            return LAST_GROUP if position is None else position
+
+        self.qtile.groups.sort(key=get_key)
+        libqtile.hook.fire("setgroup")
 
     def _del(self, client):
         group = client.group
@@ -168,6 +178,7 @@ class DGroups(object):
                     not self.groupMap[group.name].persist and \
                     len(group.windows) <= 0:
                 self.qtile.delGroup(group.name)
+                self.sort_groups()
 
         # Wait the delay until really delete the group
         self.qtile.log.info('Add dgroup timer')

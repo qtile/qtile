@@ -1145,7 +1145,6 @@ class Qtile(command.CommandObject):
         self.groups[indexa], self.groups[indexb] = \
             self.groups[indexb], self.groups[indexa]
         hook.fire("setgroup")
-        self.update_net_desktops()
 
         # update window _NET_WM_DESKTOP
         for group in (self.groups[indexa], self.groups[indexb]):
