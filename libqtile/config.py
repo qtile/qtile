@@ -1,5 +1,6 @@
 import command
 import hook
+import sys
 import utils
 import xcbq
 
@@ -326,7 +327,7 @@ class Group(object):
     """
     def __init__(self, name, matches=None, exclusive=False,
                  spawn=None, layout=None, persist=True, init=True,
-                 layout_opts=None, screen_affinity=None, position=None):
+                 layout_opts=None, screen_affinity=None, position=sys.maxint):
         """
         :param name: the name of this group
         :type name: string

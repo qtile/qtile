@@ -7,8 +7,6 @@ from libqtile.command import lazy
 from libqtile.config import Group
 from libqtile.config import Rule
 
-LAST_GROUP = 999999
-
 def simple_key_binder(mod, keynames=None):
     """
         Bind keys to mod+group position or to the keys specified as
@@ -162,11 +160,7 @@ class DGroups(object):
         self.sort_groups()
 
     def sort_groups(self):
-        def get_key(group):
-            position = self.groupMap[group.name].position
-            return LAST_GROUP if position is None else position
-
-        self.qtile.groups.sort(key=get_key)
+        self.qtile.groups.sort(key=lambda g: self.groupMap[g.name].position)
         libqtile.hook.fire("setgroup")
 
     def _del(self, client):
