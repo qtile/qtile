@@ -45,7 +45,7 @@ class Image(base._Widget, base.MarginMixin):
                 scaler = cairo.Matrix()
                 sp = self.image_height / float(new_height)
                 self.image_height = new_height
-                self.image_width = self.image_width / sp
+                self.image_width = int(self.image_width / sp)
                 scaler.scale(sp, sp)
                 self.pattern.set_matrix(scaler)
 

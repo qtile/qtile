@@ -46,7 +46,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
     @property
     def width(self):
         if self.width_type == bar.CALCULATED:
-            return self.calculate_width()
+            return int(self.calculate_width())
         return self._width
 
     @width.setter
