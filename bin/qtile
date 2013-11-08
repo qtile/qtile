@@ -31,7 +31,7 @@ def make_qtile():
     parser = ArgumentParser(
         description='A full-featured, pure-Python tiling window manager.',
         prog='qtile',
-        version="0.5")
+        version="0.7-dev")
 
     parser.add_argument(
         "-c", "--config",
