@@ -28,8 +28,8 @@ to your needs.
     case "$choice" in
       lock) gnome-screensaver-command --lock ;;
       logout) gksu kill $(pgrep X) & ;;
-      shutdown) gksu shutdown -h now & ;;
-      reboot) gksu shutdown -r now & ;;
+      shutdown) gksu "shutdown -h now" & ;;
+      reboot) gksu "shutdown -r now" & ;;
       suspend) gksu pm-suspend && gnome-screensaver-command --lock ;;
       hibernate) gksu pm-hibernate && gnome-screensaver-command --lock ;;
     esac
