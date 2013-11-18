@@ -297,6 +297,9 @@ class TreeTab(SingleWindow):
         del self._nodes[win]
         self.draw_panel()
 
+        # select 1st window in the list
+        self.cmd_down()
+
     def _create_panel(self):
         self._panel = window.Internal.create(
             self.group.qtile,
