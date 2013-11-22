@@ -149,6 +149,10 @@ class CPUGraph(_Graph):
         self.oldvalues = self._getvalues()
         self.oldtime = time.time()
 
+    def restart(self):
+        self.oldvalues = self._getvalues()
+        self.oldtime = time.time()
+
     def _getvalues(self):
         with open('/proc/stat') as file:
             lines = file.readlines()
@@ -177,6 +181,12 @@ class CPUGraph(_Graph):
 
         nval = self._getvalues()
         oval = self.oldvalues
+
+        # after suspend we got here some bug - start from the beginning
+        if lag_cycles > 100:
+            self.restart()
+            return
+
         busy = (nval[0] + nval[1] + nval[2] - oval[0] - oval[1] - oval[2])
         total = busy + nval[3] - oval[3]
         if total:
