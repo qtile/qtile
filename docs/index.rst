@@ -60,6 +60,7 @@ Miscellaneous
 
 * :doc:`Frequently Asked Questions </manual/faq>`
 * :doc:`Hacking Qtile </manual/hacking>`
+* :doc:`Snippets for the system </manual/snippets>`
 * :doc:`Release notes </releases/index>`
 * :doc:`License </manual/license>`
 
