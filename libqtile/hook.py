@@ -1,3 +1,4 @@
+import traceback
 import utils
 
 subscriptions = {}
@@ -213,4 +214,8 @@ def fire(event, *args, **kwargs):
             (event, args, kwargs)
         )
     for i in subscriptions.get(event, []):
-        i(*args, **kwargs)
+        try:
+            i(*args, **kwargs)
+        except Exception as e:
+            qtile.log.error("Error in hook %s:\n%s" % (
+                event, traceback.format_exc()))
