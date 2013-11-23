@@ -36,6 +36,7 @@ class _Graph(base._Widget):
         self.values = [0] * self.samples
         self.maxvalue = 0
         self.timeout_add(self.frequency, self.update)
+        self.oldtime = time.time()
 
     @property
     def graphwidth(self):
@@ -120,8 +121,20 @@ class _Graph(base._Widget):
         self.drawer.draw(self.offset, self.width)
 
     def push(self, value):
-        self.values.insert(0, value)
-        self.values.pop()
+        # lag detection
+        newtime = time.time()
+        lag_cycles = int((newtime - self.oldtime) / self.frequency)
+        self.oldtime = newtime
+
+        if lag_cycles > 100:
+            # compensate lag by sending the same value several times
+            # but only if we miss up to 100 cycles in case of suspend
+            lag_cycles = 1
+
+        for i in xrange(lag_cycles):
+            self.values.insert(0, value)
+            self.values.pop()
+
         if not self.fixed_upper_bound:
             self.maxvalue = max(self.values)
         self.draw()
@@ -147,7 +160,6 @@ class CPUGraph(_Graph):
         self.add_defaults(CPUGraph.defaults)
         self.maxvalue = 100
         self.oldvalues = self._getvalues()
-        self.oldtime = time.time()
 
     def _getvalues(self):
         with open('/proc/stat') as file:
@@ -170,27 +182,17 @@ class CPUGraph(_Graph):
             return (int(user), int(nice), int(sys), int(idle))
 
     def update_graph(self):
-        # lag detection
-        newtime = time.time()
-        lag_cycles = int((newtime - self.oldtime) / self.frequency)
-        self.oldtime = newtime
-
         nval = self._getvalues()
         oval = self.oldvalues
         busy = (nval[0] + nval[1] + nval[2] - oval[0] - oval[1] - oval[2])
         total = busy + nval[3] - oval[3]
+        # sometimes this value is zero for unknown reason (time shift?)
+        # we just skip the value, because it gives us no info about
+        # cpu load, if it's zero
+        push_value = busy * 100.0 / total
+
         if total:
-            # sometimes this value is zero for unknown reason (time shift?)
-            # we just skip the value, because it gives us no info about
-            # cpu load, if it's zero
-            push_value = busy * 100.0 / total
-            if lag_cycles > 1:
-                # compensate lag by sending the same value several times
-                for i in xrange(lag_cycles):
-                    self.push(push_value)
-            else:
-                # no lag - send this only once
-                self.push(push_value)
+            self.push(push_value)
 
         self.oldvalues = nval
 
