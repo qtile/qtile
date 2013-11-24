@@ -37,6 +37,7 @@ class _Graph(base._Widget):
         self.maxvalue = 0
         self.timeout_add(self.frequency, self.update)
         self.oldtime = time.time()
+        self.lag_cycles = 0
 
     @property
     def graphwidth(self):
@@ -121,17 +122,12 @@ class _Graph(base._Widget):
         self.drawer.draw(self.offset, self.width)
 
     def push(self, value):
-        # lag detection
-        newtime = time.time()
-        lag_cycles = int((newtime - self.oldtime) / self.frequency)
-        self.oldtime = newtime
+        if self.lag_cycles > self.samples:
+            # compensate lag by sending the same value up to
+            # the graph samples limit
+            self.lag_cycles = 1
 
-        if lag_cycles > 100:
-            # compensate lag by sending the same value several times
-            # but only if we miss up to 100 cycles in case of suspend
-            lag_cycles = 1
-
-        for i in xrange(lag_cycles):
+        for i in xrange(self.lag_cycles):
             self.values.insert(0, value)
             self.values.pop()
 
@@ -140,6 +136,11 @@ class _Graph(base._Widget):
         self.draw()
 
     def update(self):
+        # lag detection
+        newtime = time.time()
+        self.lag_cycles = int((newtime - self.oldtime) / self.frequency)
+        self.oldtime = newtime
+
         if self.configured:
             self.update_graph()
         return True
@@ -184,16 +185,17 @@ class CPUGraph(_Graph):
     def update_graph(self):
         nval = self._getvalues()
         oval = self.oldvalues
-        busy = (nval[0] + nval[1] + nval[2] - oval[0] - oval[1] - oval[2])
+        busy = nval[0] + nval[1] + nval[2] - oval[0] - oval[1] - oval[2]
         total = busy + nval[3] - oval[3]
         # sometimes this value is zero for unknown reason (time shift?)
-        # we just skip the value, because it gives us no info about
-        # cpu load, if it's zero
+        # we just sent the previous value, because it gives us no info about
+        # cpu load, if it's zero.
         push_value = busy * 100.0 / total
 
         if total:
             self.push(push_value)
-
+        else:
+            self.push(self.values[0])
         self.oldvalues = nval
 
 
