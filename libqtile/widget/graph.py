@@ -127,9 +127,8 @@ class _Graph(base._Widget):
             # the graph samples limit
             self.lag_cycles = 1
 
-        for i in xrange(self.lag_cycles):
-            self.values.insert(0, value)
-            self.values.pop()
+        self.values = ([value] * min(self.samples, self.lag_cycles)) + self.values
+        self.values = self.values[:self.samples]
 
         if not self.fixed_upper_bound:
             self.maxvalue = max(self.values)
