@@ -112,23 +112,7 @@ class GroupBox(_GroupBase):
         (
             "this_current_screen_border",
             "215578",
-            "Border colour for group on this screen when focused."
-        ),
-        (
-            "this_screen_border",
-            "113358",
-            "Border colour for group on this screen."
-        ),
-        (
-            "other_screen_border",
-            "404040",
-            "Border colour for group on other screen."
-        ),
-        (
-            "urgent_border",
-            "FF0000",
-            "Urgent border color"
-        ),
+            "Border colour for group on this screen when focu
         (
             "urgent_alert_method",
             "border",
