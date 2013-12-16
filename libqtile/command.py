@@ -276,13 +276,21 @@ class _Call:
         # Conditionals
         self.layout = None
 
-    def when(self, layout=None):
+    def when(self, layout=None, not_when_floating_window=False):
         self.layout = layout
+        self.not_w_ft = not_when_floating_window
         return self
 
     def check(self, q):
-        if self.layout and q.currentLayout.name != self.layout:
-            return False
+        if self.layout:
+            if self.layout == 'floating':
+                if q.currentWindow.floating:
+                    return True
+                return False
+            if q.currentLayout.name != self.layout:
+                return False
+            if q.currentWindow and q.currentWindow.floating and self.not_w_ft:
+                return False
         return True
 
 
