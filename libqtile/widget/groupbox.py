@@ -136,12 +136,6 @@ class GroupBox(_GroupBase):
             "Border colour for group on other screen."
         ),
         ("urgent_border", "FF0000", "Urgent border color"),
-        (
-            "urgent_alert_method",
-            "border",
-            "Method for alerting you of WM urgent "
-            "hints (one of 'border' or 'text')"
-        ),
     ]
 
     def __init__(self, **config):
