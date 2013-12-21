@@ -79,6 +79,7 @@ class DGroups(object):
                 self.qtile.cmd_spawn(group.spawn)
 
     def _setup_hooks(self):
+        libqtile.hook.subscribe.addgroup(self._addgroup)
         libqtile.hook.subscribe.client_new(self._add)
         libqtile.hook.subscribe.client_killed(self._del)
         if self.key_binder:
@@ -88,6 +89,10 @@ class DGroups(object):
             libqtile.hook.subscribe.changegroup(
                 lambda: self.key_binder(self)
             )
+
+    def _addgroup(self, qtile, group_name):
+        if group_name not in self.groupMap:
+            self.add_dgroup(Group(group_name, persist=False))
 
     def _add(self, client):
         if client in self.timeout:
