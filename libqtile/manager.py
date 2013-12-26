@@ -177,7 +177,16 @@ class Qtile(command.CommandObject):
         for key in self.config.keys:
             self.mapKey(key)
 
-        self.mouseMap = dict({i.button_code: i for i in self.config.mouse})
+        # It fixes problems with focus when clicking windows of some specific clients like xterm
+        def noop(qtile):
+            pass
+        self.config.mouse += (Click([], "Button1", command.lazy.function(noop), focus="after"),)
+
+        self.mouseMap = {}
+        for i in self.config.mouse:
+            if self.mouseMap.get(i.button_code) is None:
+                self.mouseMap[i.button_code] = []
+            self.mouseMap[i.button_code].append(i)
 
         self.grabMouse()
 
@@ -478,6 +487,12 @@ class Qtile(command.CommandObject):
     def grabMouse(self):
         self.root.ungrab_button(None, None)
         for i in self.config.mouse:
+            if isinstance(i, Click) and i.focus:
+                # Make a freezing grab on mouse button to gain focus
+                # Event will propagate to target window
+                grabmode = xcb.xproto.GrabMode.Sync
+            else:
+                grabmode = xcb.xproto.GrabMode.Async
             eventmask = EventMask.ButtonPress
             if isinstance(i, Drag):
                 eventmask |= EventMask.ButtonRelease
@@ -486,7 +501,7 @@ class Qtile(command.CommandObject):
                 i.modmask,
                 True,
                 eventmask,
-                xcb.xproto.GrabMode.Async,
+                grabmode,
                 xcb.xproto.GrabMode.Async,
             )
             if self.numlockMask:
@@ -495,7 +510,7 @@ class Qtile(command.CommandObject):
                     i.modmask | self.numlockMask,
                     True,
                     eventmask,
-                    xcb.xproto.GrabMode.Async,
+                    grabmode,
                     xcb.xproto.GrabMode.Async,
                 )
                 self.root.grab_button(
@@ -503,7 +518,7 @@ class Qtile(command.CommandObject):
                     i.modmask | self.numlockMask | xcbq.ModMasks["lock"],
                     True,
                     eventmask,
-                    xcb.xproto.GrabMode.Async,
+                    grabmode,
                     xcb.xproto.GrabMode.Async,
                 )
 
@@ -717,64 +732,93 @@ class Qtile(command.CommandObject):
         else:
             return
 
+    def cmd_focus_by_click(self, e):
+        wnd = e.child or e.root
+
+        # Additional option for config.py
+        # Brings clicked window to front
+        if self.config.bring_front_click:
+            self.conn.conn.core.ConfigureWindow(
+                wnd,
+                xcb.xproto.ConfigWindow.StackMode,
+                [xcb.xproto.StackMode.Above]
+            )
+
+        if self.windowMap.get(wnd):
+            self.currentGroup.focus(self.windowMap.get(wnd), False)
+            self.windowMap.get(wnd).focus(False)
+
+        self.conn.conn.core.AllowEvents(xcb.xproto.Allow.ReplayPointer, e.time)
+        self.conn.conn.flush()
+
     def handle_ButtonPress(self, e):
         button_code = e.detail
         state = e.state
         if self.numlockMask:
             state = e.state | self.numlockMask
 
-        m = self.mouseMap.get(button_code)
-        if not m or m.modmask & self.validMask != state & self.validMask:
-            self.log.info("Ignoring unknown button: %s" % button_code)
-            return
-        if isinstance(m, Click):
-            for i in m.commands:
-                if i.check(self):
+        k = self.mouseMap.get(button_code)
+        for m in k:
+            if not m or m.modmask & self.validMask != state & self.validMask:
+                self.log.info("Ignoring unknown button: %s" % button_code)
+                continue
+            if isinstance(m, Click):
+                for i in m.commands:
+                    if i.check(self):
+                        if m.focus == "before":
+                            self.cmd_focus_by_click(e)
+                        status, val = self.server.call(
+                            (i.selectors, i.name, i.args, i.kwargs))
+                        if m.focus == "after":
+                            self.cmd_focus_by_click(e)
+                        if status in (command.ERROR, command.EXCEPTION):
+                            self.log.error(
+                                "Mouse command error %s: %s" % (i.name, val)
+                            )
+            elif isinstance(m, Drag):
+                x = e.event_x
+                y = e.event_y
+                if m.start:
+                    i = m.start
+                    if m.focus == "before":
+                        self.cmd_focus_by_click(e)
                     status, val = self.server.call(
                         (i.selectors, i.name, i.args, i.kwargs))
                     if status in (command.ERROR, command.EXCEPTION):
                         self.log.error(
                             "Mouse command error %s: %s" % (i.name, val)
                         )
-        elif isinstance(m, Drag):
-            x = e.event_x
-            y = e.event_y
-            if m.start:
-                i = m.start
-                status, val = self.server.call(
-                    (i.selectors, i.name, i.args, i.kwargs)
+                        continue
+                else:
+                    val = (0, 0)
+                if m.focus == "after":
+                    self.cmd_focus_by_click(e)
+                self._drag = (x, y, val[0], val[1], m.commands)
+                self.root.grab_pointer(
+                    True,
+                    xcbq.ButtonMotionMask |
+                    xcbq.AllButtonsMask |
+                    xcbq.ButtonReleaseMask,
+                    xcb.xproto.GrabMode.Async,
+                    xcb.xproto.GrabMode.Async,
                 )
-                if status in (command.ERROR, command.EXCEPTION):
-                    self.log.error(
-                        "Mouse command error %s: %s" % (i.name, val)
-                    )
-                    return
-            else:
-                val = (0, 0)
-            self._drag = (x, y, val[0], val[1], m.commands)
-            self.root.grab_pointer(
-                True,
-                xcbq.ButtonMotionMask |
-                xcbq.AllButtonsMask |
-                xcbq.ButtonReleaseMask,
-                xcb.xproto.GrabMode.Async,
-                xcb.xproto.GrabMode.Async,
-            )
+
 
     def handle_ButtonRelease(self, e):
         button_code = e.detail
         state = e.state & ~xcbq.AllButtonsMask
         if self.numlockMask:
             state = state | self.numlockMask
-        m = self.mouseMap.get(button_code)
-        if not m:
-            self.log.info(
-                "Ignoring unknown button release: %s" % button_code
-            )
-            return
-        if isinstance(m, Drag):
-            self._drag = None
-            self.root.ungrab_pointer()
+        k = self.mouseMap.get(button_code)
+        for m in k:
+            if not m:
+                self.log.info(
+                    "Ignoring unknown button release: %s" % button_code
+                )
+                continue
+            if isinstance(m, Drag):
+                self._drag = None
+                self.root.ungrab_pointer()
 
     def handle_MotionNotify(self, e):
         if self._drag is None:
