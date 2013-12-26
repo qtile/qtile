@@ -181,6 +181,10 @@ class Qtile(command.CommandObject):
 
         self.grabMouse()
 
+        # Make a freezing grab on left mouse button
+        # It fixes problems with focus when clicking windows of some specific clients like xterm
+        self.root.grab_button(1, 0, True, EventMask.ButtonPress, xcb.xproto.GrabMode.Sync, xcb.xproto.GrabMode.Async)
+
         hook.fire("startup")
 
         self.scan()
@@ -722,6 +726,21 @@ class Qtile(command.CommandObject):
         state = e.state
         if self.numlockMask:
             state = e.state | self.numlockMask
+
+        if button_code == xcb.xproto.ButtonIndex._1:
+            # Additional option for config.py
+            # Brings clicked window to front
+            if self.config.bring_front_click:
+                self.conn.conn.core.ConfigureWindow(
+                    e.child,
+                    xcb.xproto.ConfigWindow.StackMode,
+                    [xcb.xproto.StackMode.Above]
+                )
+
+            self.currentGroup.focus(self.windowMap.get(e.child), False)
+            self.conn.conn.core.SetInputFocus(xcb.xproto.InputFocus.Parent, e.child, xcb.xproto.Time.CurrentTime)
+            self.conn.conn.core.AllowEvents(xcb.xproto.Allow.ReplayPointer, e.time)
+            self.conn.conn.flush()
 
         m = self.mouseMap.get(button_code)
         if not m or m.modmask & self.validMask != state & self.validMask:

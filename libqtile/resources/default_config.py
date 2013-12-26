@@ -102,6 +102,7 @@ screens = [
 
 main = None
 follow_mouse_focus = True
+bring_front_click = False
 cursor_warp = False
 floating_layout = layout.Floating()
 mouse = ()
