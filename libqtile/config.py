@@ -43,11 +43,13 @@ class Drag(object):
         On each motion event command is executed
         with two extra parameters added
         x and y offset from previous move
+
+        It focuses clicked window by default
+        If you want to prevent it pass focus=None as an argument
     """
-    def __init__(self, modifiers, button, *commands, **kw):
-        self.start = kw.pop('start', None)
-        if kw:
-            raise TypeError("Unexpected arguments: %s" % ', '.join(kw))
+    def __init__(self, modifiers, button, *commands, **kwargs):
+        self.start = kwargs.get("start", None)
+        self.focus = kwargs.get("focus", "before")
         self.modifiers = modifiers
         self.button = button
         self.commands = commands
@@ -64,8 +66,12 @@ class Drag(object):
 class Click(object):
     """
         Defines binding of a mouse click
+
+        It focuses clicked window by default
+        If you want to prevent it pass focus=None as an argument
     """
-    def __init__(self, modifiers, button, *commands):
+    def __init__(self, modifiers, button, *commands, **kwargs):
+        self.focus = kwargs.get("focus", "before")
         self.modifiers = modifiers
         self.button = button
         self.commands = commands
