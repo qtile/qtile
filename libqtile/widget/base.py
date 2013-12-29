@@ -122,19 +122,11 @@ class _Widget(command.CommandObject, configurable.Configurable):
         """
         raise NotImplementedError
 
-    def timeout_add(self, seconds, method, method_args=(),
-                    callback=None, callback_args=()):
+    def timeout_add(self, seconds, method, method_args=()):
         """
             This method calls either ``gobject.timeout_add`` or
             ``gobject.timeout_add_seconds`` with same arguments. Latter is
             better for battery usage, but works only with integer timeouts.
-
-            If callback is supplied, it runs method in a separate thread
-            and then a callback at the end.
-            *_args should be a tuple of arguments to supply to appropriate
-            functions.
-            !Callback function should return False, otherwise it would be
-            re-run forever!
         """
         self.log.debug('Adding timer for %r in %.2fs', method, seconds)
         if int(seconds) == seconds:
