@@ -80,6 +80,7 @@ class File(object):
             "main",
             "auto_fullscreen",
             "widget_defaults",
+            "bring_front_click",
         ]
 
         # We delay importing here to avoid a circular import issue when
