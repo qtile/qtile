@@ -29,6 +29,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             "Method for alerting you of WM urgent "
             "hints (one of 'border' or 'text')"
         ),
+        ("max_title_width", 200, "size in pixels of task title")
     ]
 
     def __init__(self, **config):
@@ -44,8 +45,11 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             self.font,
             self.fontsize
         )
-        return width + self.padding_x * 2 + \
+        width = width + self.padding_x * 2 + \
             self.margin_x * 2 + self.borderwidth * 2
+        if width > self.max_title_width:
+            width = self.max_title_width
+        return width
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
@@ -60,7 +64,8 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             "ffffff",
             self.font,
             self.fontsize,
-            self.fontshadow
+            self.fontshadow,
+            wrap=False
         )
         self.setup_hooks()
 
