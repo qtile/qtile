@@ -189,9 +189,9 @@ class CPUGraph(_Graph):
         # sometimes this value is zero for unknown reason (time shift?)
         # we just sent the previous value, because it gives us no info about
         # cpu load, if it's zero.
-        push_value = busy * 100.0 / total
 
         if total:
+            push_value = busy * 100.0 / total
             self.push(push_value)
         else:
             self.push(self.values[0])
