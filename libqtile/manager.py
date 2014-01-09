@@ -1303,5 +1303,5 @@ class Qtile(command.CommandObject):
         try:
             function(self)
         except Exception:
-            error = traceback.format_exc().strip().split("\n")[-1]
-            self.log.error('Can\'t call "%s": %s' % (function, error))
+            error = traceback.format_exc()
+            self.log.error('Exception calling "%s":\n%s' % (function, error))
