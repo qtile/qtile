@@ -38,7 +38,8 @@ attribute 'parent'``). However, xpyb-ng provides a branch called
     ./configure
     make install
 
-.. clode-block:: bash
+.. code-block:: bash
+
     git clone git@github.com:tych0/xpyb-ng.git
     cd xpyb-ng
     python setup.py install
