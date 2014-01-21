@@ -30,20 +30,19 @@ class Configurable(object):
         """
             Add defaults to this object, overwriting any which already exist.
         """
-        for (prop, value, _) in defaults:
-            self._widget_defaults[prop] = value
+        self._widget_defaults.update({d[0]: d[1] for d in defaults})
 
     def __getattr__(self, name):
-        try:
-            return self._user_config[name]
-        except KeyError:
-            try:
-                return self.global_defaults[name]
-            except KeyError:
-                try:
-                    return self._widget_defaults[name]
-                except KeyError:
-                    raise AttributeError("no attribute: %s" % name)
+        defaults = self._widget_defaults.copy()
+        defaults.update(self.global_defaults)
+        defaults.update(self._user_config)
+
+        if name in defaults.iterkeys():
+            setattr(self, name, defaults[name])
+            return getattr(self, name)
+        else:
+            raise AttributeError("no attribute: %s" % name)
+
 
 class ExtraFallback(object):
     """
@@ -57,10 +56,9 @@ class ExtraFallback(object):
 
     def __get__(self, instance, owner=None):
         try:
-            retval = Configurable.__getattr__(instance, self.name)
-        except AttributeError:
-            retval = None
-
-        if retval is None:
+            retval = instance.__dict__[self.name]
+        except KeyError:
             retval = Configurable.__getattr__(instance, self.fallback)
+            setattr(instance, self.name, retval)
+
         return retval
