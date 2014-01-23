@@ -25,6 +25,9 @@ import hook
 import configurable
 import window
 
+import gobject
+
+USE_BAR_DRAW_QUEUE = True
 
 class Gap(command.CommandObject):
     """
@@ -38,56 +41,58 @@ class Gap(command.CommandObject):
             size: The width of the gap.
         """
         self.size = size
-        self.qtile, self.screen = None, None
+        self.qtile = None
+        self.screen = None
 
     def _configure(self, qtile, screen):
-        self.qtile, self.screen = qtile, screen
+        self.qtile = qtile
+        self.screen = screen
 
     def draw(self):
         pass
 
     @property
     def x(self):
-        s = self.screen
-        if s.right is self:
-            return s.dx + s.dwidth
+        screen = self.screen
+        if screen.right is self:
+            return screen.dx + screen.dwidth
         else:
-            return s.x
+            return screen.x
 
     @property
     def y(self):
-        s = self.screen
-        if s.top is self:
-            return s.y
-        elif s.bottom is self:
-            return s.dy + s.dheight
-        elif s.left is self:
-            return s.dy
-        elif s.right is self:
-            return s.y + s.dy
+        screen = self.screen
+        if screen.top is self:
+            return screen.y
+        elif screen.bottom is self:
+            return screen.dy + screen.dheight
+        elif screen.left is self:
+            return screen.dy
+        elif screen.right is self:
+            return screen.y + screen.dy
 
     @property
     def width(self):
-        s = self.screen
-        if self in [s.top, s.bottom]:
-            return s.width
+        screen = self.screen
+        if self in [screen.top, screen.bottom]:
+            return screen.width
         else:
             return self.size
 
     @property
     def height(self):
-        s = self.screen
-        if self in [s.top, s.bottom]:
+        screen = self.screen
+        if self in [screen.top, screen.bottom]:
             return self.size
         else:
-            return s.dheight
+            return screen.dheight
 
     def geometry(self):
-        return self.x, self.y, self.width, self.height
+        return (self.x, self.y, self.width, self.height)
 
     def _items(self, name):
         if name == "screen":
-            return True, None
+            return (True, None)
 
     def _select(self, name, sel):
         if name == "screen":
@@ -100,9 +105,7 @@ class Gap(command.CommandObject):
                 return i
 
     def info(self):
-        return dict(
-            position=self.position
-        )
+        return dict(position=self.position)
 
     def cmd_info(self):
         """
@@ -148,27 +151,29 @@ class Bar(Gap, configurable.Configurable):
         self.widgets = widgets
         self.saved_focus = None
 
+        self.queued_draws = 0
+
     def _configure(self, qtile, screen):
         if not self in [screen.top, screen.bottom]:
             raise confreader.ConfigError(
-                    "Bars must be at the top or the bottom of the screen."
-                  )
+                "Bars must be at the top or the bottom of the screen."
+            )
         if len(filter(lambda w: w.width_type == STRETCH, self.widgets)) > 1:
             raise confreader.ConfigError("Only one STRETCH widget allowed!")
 
         Gap._configure(self, qtile, screen)
         self.window = window.Internal.create(
-                        self.qtile,
-                        self.x, self.y, self.width, self.height,
-                        self.opacity
-                     )
+            self.qtile,
+            self.x, self.y, self.width, self.height,
+            self.opacity
+        )
 
         self.drawer = drawer.Drawer(
-                            self.qtile,
-                            self.window.window.wid,
-                            self.width,
-                            self.height
-                      )
+            self.qtile,
+            self.window.window.wid,
+            self.width,
+            self.height
+        )
         self.drawer.clear(self.background)
 
         self.window.handle_Expose = self.handle_Expose
@@ -180,6 +185,7 @@ class Bar(Gap, configurable.Configurable):
         for i in self.widgets:
             qtile.registerWidget(i)
             i._configure(qtile, self)
+        self._resize(self.width, self.widgets)
 
         # FIXME: These should be targeted better.
         hook.subscribe.setgroup(self.draw)
@@ -189,7 +195,8 @@ class Bar(Gap, configurable.Configurable):
         stretches = [i for i in widgets if i.width_type == STRETCH]
         if stretches:
             stretchspace = width - sum(
-                [i.width for i in widgets if i.width_type != STRETCH])
+                [i.width for i in widgets if i.width_type != STRETCH]
+            )
             stretchspace = max(stretchspace, 0)
             astretch = stretchspace / len(stretches)
             for i in stretches:
@@ -213,14 +220,20 @@ class Bar(Gap, configurable.Configurable):
     def handle_ButtonPress(self, e):
         widget = self.get_widget_in_position(e)
         if widget:
-            widget.button_press(e.event_x - widget.offset,
-                                e.event_y, e.detail)
+            widget.button_press(
+                e.event_x - widget.offset,
+                e.event_y,
+                e.detail
+            )
 
     def handle_ButtonRelease(self, e):
         widget = self.get_widget_in_position(e)
         if widget:
-            widget.button_release(e.event_x - widget.offset,
-                                  e.event_y, e.detail)
+            widget.button_release(
+                e.event_x - widget.offset,
+                e.event_y,
+                e.detail
+            )
 
     def widget_grab_keyboard(self, widget):
         """
@@ -237,10 +250,19 @@ class Bar(Gap, configurable.Configurable):
             Removes the widget's keyboard handler.
         """
         del self.window.handle_KeyPress
-        if not self.saved_focus == None:
+        if not self.saved_focus is None:
             self.saved_focus.window.set_input_focus()
 
     def draw(self):
+        if USE_BAR_DRAW_QUEUE:
+            if self.queued_draws == 0:
+                gobject.idle_add(self._actual_draw)
+            self.queued_draws += 1
+        else:
+            self._actual_draw()
+
+    def _actual_draw(self):
+        self.queued_draws = 0
         self._resize(self.width, self.widgets)
         for i in self.widgets:
             i.draw()
@@ -248,6 +270,9 @@ class Bar(Gap, configurable.Configurable):
             end = i.offset + i.width
             if end < self.width:
                 self.drawer.draw(end, self.width - end)
+
+        # have to return False here to avoid getting called again
+        return False
 
     def info(self):
         return dict(

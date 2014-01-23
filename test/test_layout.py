@@ -40,7 +40,78 @@ def assertFocusPath(self, *names):
         self.c.group.prev_window()
 
 
+class MatrixConfig:
+    auto_fullscreen = True
+    main = None
+    groups = [
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b"),
+        libqtile.config.Group("c"),
+        libqtile.config.Group("d")
+    ]
+    layouts = [
+        layout.Matrix(columns=2)
+    ]
+    floating_layout = libqtile.layout.floating.Floating()
+    keys = []
+    mouse = []
+    screens = []
+
+
+@Xephyr(False, MatrixConfig())
+def test_matrix_simple(self):
+    self.testWindow("one")
+    assert self.c.layout.info()["rows"] == [["one"]]
+    self.testWindow("two")
+    assert self.c.layout.info()["rows"] == [["one", "two"]]
+    self.testWindow("three")
+    assert self.c.layout.info()["rows"] == [["one", "two"],
+                                            ["three"]]
+
+
+@Xephyr(False, MatrixConfig())
+def test_matrix_navigation(self):
+    self.testWindow("one")
+    self.testWindow("two")
+    self.testWindow("three")
+    self.testWindow("four")
+    self.testWindow("five")
+    self.c.layout.next()
+    assert self.c.layout.info()["current_window"] == (0, 2)
+    self.c.layout.up()
+    assert self.c.layout.info()["current_window"] == (0, 1)
+    self.c.layout.up()
+    assert self.c.layout.info()["current_window"] == (0, 0)
+    self.c.layout.up()
+    assert self.c.layout.info()["current_window"] == (0, 2)
+    self.c.layout.down()
+    assert self.c.layout.info()["current_window"] == (0, 0)
+    self.c.layout.down()
+    assert self.c.layout.info()["current_window"] == (0, 1)
+    self.c.layout.next()
+    assert self.c.layout.info()["current_window"] == (1, 1)
+    self.c.layout.next()
+    assert self.c.layout.info()["current_window"] == (0, 1)
+
+
+@Xephyr(False, MatrixConfig())
+def test_matrix_add_remove_columns(self):
+    self.testWindow("one")
+    self.testWindow("two")
+    self.testWindow("three")
+    self.testWindow("four")
+    self.testWindow("five")
+    self.c.layout.add()
+    assert self.c.layout.info()["rows"] == [["one", "two", "three"],
+                                            ["four", "five"]]
+    self.c.layout.delete()
+    assert self.c.layout.info()["rows"] == [["one", "two"],
+                                            ["three", "four"],
+                                            ["five"]]
+
+
 class MaxConfig:
+    auto_fullscreen = True
     main = None
     groups = [
         libqtile.config.Group("a"),
@@ -87,6 +158,7 @@ def test_max_remove(self):
 
 
 class StackConfig:
+    auto_fullscreen = True
     main = None
     groups = [
         libqtile.config.Group("a"),
@@ -281,6 +353,7 @@ def test_stack_info(self):
 
 
 class RatioTileConfig:
+    auto_fullscreen = True
     main = None
     groups = [
         libqtile.config.Group("a"),
@@ -436,6 +509,7 @@ def test_ratiotile_basic(self):
 
 
 class TileConfig:
+    auto_fullscreen = True
     main = None
     groups = [
         libqtile.config.Group("a"),
@@ -518,6 +592,7 @@ def test_tile_remove(self):
 
 
 class SliceConfig:
+    auto_fullscreen = True
     main = None
     groups = [
         libqtile.config.Group("a"),
@@ -604,6 +679,7 @@ def test_all_slices(self):
 
 
 class ZoomyConfig:
+    auto_fullscreen = True
     main = None
     groups = [
         libqtile.config.Group("a"),

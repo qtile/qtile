@@ -24,9 +24,13 @@ class Mpris(base._TextBox):
 
         # watch for our player to start up
         deebus = self.bus.get_object(
-            'org.freedesktop.DBus', '/org/freedesktop/DBus')
+            'org.freedesktop.DBus',
+            '/org/freedesktop/DBus'
+        )
         deebus.connect_to_signal(
-            "NameOwnerChanged", self.handle_name_owner_change)
+            "NameOwnerChanged",
+            self.handle_name_owner_change
+        )
 
         self.objname = objname
         self.connected = False
@@ -41,13 +45,19 @@ class Mpris(base._TextBox):
         try:
             self.player = self.bus.get_object(self.objname, '/Player')
             self.iface = dbus.Interface(
-                self.player, dbus_interface='org.freedesktop.MediaPlayer')
+                self.player,
+                dbus_interface='org.freedesktop.MediaPlayer'
+            )
             # See: http://xmms2.org/wiki/MPRIS for info on signals
             # and what they mean.
             self.iface.connect_to_signal(
-                "TrackChange", self.handle_track_change)
+                "TrackChange",
+                self.handle_track_change
+            )
             self.iface.connect_to_signal(
-                "StatusChange", self.handle_status_change)
+                "StatusChange",
+                self.handle_status_change
+            )
             self.connected = True
         except dbus.exceptions.DBusException:
             self.connected = False
@@ -118,10 +128,11 @@ class Mpris(base._TextBox):
 
     def cmd_info(self):
         """ What's the current state of the widget? """
-        return dict(connected=self.connected,
-                    nowplaying=self.text,
-                    isplaying=self.is_playing(),
-                )
+        return dict(
+            connected=self.connected,
+            nowplaying=self.text,
+            isplaying=self.is_playing(),
+        )
 
     def cmd_update(self):
         """ Force the widget to update. Mostly used for testing. """

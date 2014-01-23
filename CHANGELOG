@@ -1,4 +1,4 @@
-qtile $NEXT, released $DATE:
+qtile 0.6, released 2013-05-11:
     !!! Config breakage !!!
     This release breaks your config file in several ways:
         - The Textbox widget no longer takes a ``name'' positional parameter,
@@ -17,12 +17,15 @@ qtile $NEXT, released $DATE:
               @hook.subscribe
               def addgroup_hook(qtile, name):
                   pass
+        - The nextgroup and prevgroup commands are now on Screen instead of
+          Group.
     For most people, you should be able to just:
         sed -i -e 's/libqtile.manager/libqtile.config' config.py
     ...dgroups users will need to go to a bit more work, but hopefully
     configuration will be much simpler now for new users.
     * features
         - New widgets: task list,
+        - New layout: Matrix
         - Added ability to drag and drop groups on GroupBox
         - added "next urgent window" command
         - added font shadowing on widgets
@@ -31,6 +34,8 @@ qtile $NEXT, released $DATE:
           logging.{DEBUG, INFO, WARNING, ERROR, CRITICAL})
         - add option to battery widget to hide while level is above a certain
           amount
+        - vastly simplify configuration of dynamic groups
+        - MPD widget now supports lots of metadata options
     * bugfixes
         - don't crash on restart when the config has errors
         - save layout and selected group state on restart
@@ -42,6 +47,7 @@ qtile $NEXT, released $DATE:
         - default config options are no longer initialized when users define
           their corresponding option (preventing duplicate widgets, etc.)
         - don't try to load config in qsh (not used)
+        - fix font alignment across Textbox based widgets
 
 qtile 0.5, released 2012-11-11:
     (Note, this is not complete! Many, many changes have gone in to 0.5, by a

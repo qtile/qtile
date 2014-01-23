@@ -2,13 +2,15 @@ import cairo
 
 from . import base
 from os import statvfs
+import time
 
 __all__ = [
     'CPUGraph',
     'MemoryGraph',
     'SwapGraph',
     'NetGraph',
-    'HDDGraph'
+    'HDDGraph',
+    'HDDBusyGraph',
 ]
 
 
@@ -31,9 +33,11 @@ class _Graph(base._Widget):
     def __init__(self, width=100, **config):
         base._Widget.__init__(self, width, **config)
         self.add_defaults(_Graph.defaults)
-        self.values = [0]*self.samples
+        self.values = [0] * self.samples
         self.maxvalue = 0
         self.timeout_add(self.frequency, self.update)
+        self.oldtime = time.time()
+        self.lag_cycles = 0
 
     @property
     def graphwidth(self):
@@ -69,8 +73,10 @@ class _Graph(base._Widget):
         for index, val in enumerate(values):
             self.drawer.ctx.line_to(x + index * step, y - self.val(val))
         self.drawer.ctx.stroke_preserve()
-        self.drawer.ctx.line_to(x + (len(values) - 1) * step,
-                                y - 1 + self.line_width / 2.0)
+        self.drawer.ctx.line_to(
+            x + (len(values) - 1) * step,
+            y - 1 + self.line_width / 2.0
+        )
         self.drawer.ctx.line_to(x, y - 1 + self.line_width / 2.0)
         self.drawer.set_source_rgb(self.fill_color)
         self.drawer.ctx.fill()
@@ -116,13 +122,24 @@ class _Graph(base._Widget):
         self.drawer.draw(self.offset, self.width)
 
     def push(self, value):
-        self.values.insert(0, value)
-        self.values.pop()
+        if self.lag_cycles > self.samples:
+            # compensate lag by sending the same value up to
+            # the graph samples limit
+            self.lag_cycles = 1
+
+        self.values = ([value] * min(self.samples, self.lag_cycles)) + self.values
+        self.values = self.values[:self.samples]
+
         if not self.fixed_upper_bound:
             self.maxvalue = max(self.values)
         self.draw()
 
     def update(self):
+        # lag detection
+        newtime = time.time()
+        self.lag_cycles = int((newtime - self.oldtime) / self.frequency)
+        self.oldtime = newtime
+
         if self.configured:
             self.update_graph()
         return True
@@ -132,29 +149,52 @@ class _Graph(base._Widget):
 
 
 class CPUGraph(_Graph):
+    defaults = [
+        ("core", "all", "Which core to show (all/0/1/2/...)"),
+    ]
+
     fixed_upper_bound = True
 
     def __init__(self, **config):
         _Graph.__init__(self, **config)
+        self.add_defaults(CPUGraph.defaults)
         self.maxvalue = 100
         self.oldvalues = self._getvalues()
 
     def _getvalues(self):
         with open('/proc/stat') as file:
-            all_cpus = next(file)
-            name, user, nice, sys, idle, iowait, tail = all_cpus.split(None, 6)
-            return int(user), int(nice), int(sys), int(idle)
+            lines = file.readlines()
+
+            # default to all cores (first line)
+            line = lines.pop(0)
+
+            # core specified, grab the corresponding line
+            if isinstance(self.core, int):
+                # we already removed the first line from the list,
+                # so it's 0 indexed now :D
+                line = lines[self.core]
+
+                if not line.startswith("cpu%s" % self.core):
+                    raise ValueError("No such core: %s" % self.core)
+
+            name, user, nice, sys, idle, iowait, tail = line.split(None, 6)
+
+            return (int(user), int(nice), int(sys), int(idle))
 
     def update_graph(self):
         nval = self._getvalues()
         oval = self.oldvalues
-        busy = (nval[0] + nval[1] + nval[2] - oval[0] - oval[1] - oval[2])
+        busy = nval[0] + nval[1] + nval[2] - oval[0] - oval[1] - oval[2]
         total = busy + nval[3] - oval[3]
+        # sometimes this value is zero for unknown reason (time shift?)
+        # we just sent the previous value, because it gives us no info about
+        # cpu load, if it's zero.
+
         if total:
-            # sometimes this value is zero for unknown reason (time shift?)
-            # we just skip the value, because it gives us no info about
-            # cpu load, if it's zero
-            self.push(busy * 100.0 / total)
+            push_value = busy * 100.0 / total
+            self.push(push_value)
+        else:
+            self.push(self.values[0])
         self.oldvalues = nval
 
 
@@ -184,7 +224,9 @@ class MemoryGraph(_Graph):
 
     def update_graph(self):
         val = self._getvalues()
-        self.push(val['MemTotal'] - val['MemFree'] - val['Buffers'] - val['Cached'])
+        self.push(
+            val['MemTotal'] - val['MemFree'] - val['Buffers'] - val['Cached']
+        )
 
 
 class SwapGraph(_Graph):
@@ -214,13 +256,26 @@ class SwapGraph(_Graph):
 
 class NetGraph(_Graph):
     defaults = [
-        ("interface", "eth0", "Interface to display info for"),
+        (
+            "interface",
+            "auto",
+            "Interface to display info for ('auto' for detection)"
+        ),
         ("bandwidth_type", "down", "down(load)/up(load)"),
     ]
 
     def __init__(self, **config):
         _Graph.__init__(self, **config)
         self.add_defaults(NetGraph.defaults)
+        if self.interface == "auto":
+            try:
+                self.interface = self.get_main_iface()
+            except RuntimeError:
+                self.log.warning(
+                    "NetGraph - Automatic interface detection failed, "
+                    "falling back to 'eth0'"
+                )
+                self.interface = "eth0"
         self.filename = '/sys/class/net/{interface}/statistics/{type}'.format(
             interface=self.interface,
             type=self.bandwidth_type == 'down' and 'rx_bytes' or 'tx_bytes'
@@ -241,6 +296,19 @@ class NetGraph(_Graph):
     def update_graph(self):
         val = self._getValues()
         self.push(val)
+
+    @staticmethod
+    def get_main_iface():
+        filename = "/proc/net/route"
+        make_route = lambda line: dict(zip(['iface', 'dest'], line.split()))
+        routes = [make_route(line) for line in list(open(filename))[1:]]
+        try:
+            return next(
+                (r for r in routes if not int(r['dest'], 16)),
+                routes[0]
+            )['iface']
+        except:
+            raise RuntimeError('No valid interfaces available')
 
 
 class HDDGraph(_Graph):
@@ -268,3 +336,35 @@ class HDDGraph(_Graph):
     def update_graph(self):
         val = self._getValues()
         self.push(val)
+
+
+class HDDBusyGraph(_Graph):
+    """
+    Parses /sys/block/<dev>/stat file and extracts overall device
+    IO usage, based on `io_ticks`'s value.
+    See https://www.kernel.org/doc/Documentation/block/stat.txt
+    """
+    defaults = [
+        ("device", "sda", "Block device to display info for")
+    ]
+
+    def __init__(self, **config):
+        _Graph.__init__(self, **config)
+        self.add_defaults(HDDBusyGraph.defaults)
+        self.path = '/sys/block/{dev}/stat'.format(
+            dev=self.device
+        )
+        self._prev = 0
+
+    def _getActivity(self):
+        try:
+            # io_ticks is field number 9
+            io_ticks = int(open(self.path).read().split()[9])
+        except IOError:
+            return 0
+        activity = io_ticks - self._prev
+        self._prev = io_ticks
+        return activity
+
+    def update_graph(self):
+        self.push(self._getActivity())

@@ -1,0 +1,74 @@
+=======================
+Qtile 0.6 release notes
+=======================
+
+*May 11th, 2013*
+
+Download `qtile-0.6.tar.gz <https://github.com/qtile/qtile/archive/v0.6.tar.gz>`_
+
+Config Breakage!
+================
+
+This release breaks your config file in several ways:
+
+* The Textbox widget no longer takes a ``name`` positional parameter,
+  since it was redundant; you can use the ``name`` kwarg to define it.
+* manager.Group (now _Group) is not used to configure groups any more;
+  config.Group replaces it. For simple configurations (i.e.
+  Group("a") type configs), this should be a drop in replacement.
+  config.Group also provides many more options for showing and hiding
+  groups, assigning windows to groups by default, etc.
+* The Key, Screen, Drag, and Click objects have moved from the manager
+  module to the config module.
+* The Match object has moved from the dgroups module to the config
+  module.
+* The addgroup hook now takes two parameters: the qtile object and the
+  name of the group added:
+  ::
+      @hook.subscribe
+      def addgroup_hook(qtile, name):
+          pass
+* The nextgroup and prevgroup commands are now on Screen instead of
+  Group.
+
+For most people with basic configs, you should be able to just:
+
+    ``sed -i -e 's/libqtile.manager/libqtile.config/' config.py``
+
+...dgroups users will need to go to a bit more work, but hopefully
+configuration will be much simpler now for new users.
+
+Changelog
+=========
+
+Features
+--------
+
+* New widgets: task list,
+* New layout: Matrix
+* Added ability to drag and drop groups on GroupBox
+* added "next urgent window" command
+* added font shadowing on widgets
+* maildir widget supports multiple folders
+* new config option log_level to set logging level (any of
+  logging.{DEBUG, INFO, WARNING, ERROR, CRITICAL})
+* add option to battery widget to hide while level is above a certain
+  amount
+* vastly simplify configuration of dynamic groups
+* MPD widget now supports lots of metadata options
+
+Bug fixes
+---------
+
+* don't crash on restart when the config has errors
+* save layout and selected group state on restart
+* varous EWMH properties implemented correctly
+* fix non-black systray icon backgrounds
+* drastically reduce the number of timeout_add calls in most widgets
+* restart on RandR attach events to allow for new screens
+* log level defaults to ERROR
+* default config options are no longer initialized when users define
+  their corresponding option (preventing duplicate widgets, etc.)
+* don't try to load config in qsh (not used)
+* fix font alignment across Textbox based widgets
+

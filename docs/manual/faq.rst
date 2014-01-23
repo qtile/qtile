@@ -43,6 +43,7 @@ Append the following to your ``~/.config/qtile/config.py`` file:
 
 .. code-block:: python
 
+    from libqtile import hook
     @hook.subscribe.startup
     def runner():
         import subprocess

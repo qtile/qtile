@@ -23,7 +23,8 @@ Example
 Below is a very minimal example script that inspects the current qtile
 instance, and returns the integer offset of the current screen.
 
-**examples/scripts/minimal-client.py:**
+.. code-block:: python
 
-.. literalinclude:: ../../../examples/scripts/minimal-client.py
-    :language: python
+    from libqtile.command import Client
+    c = Client()
+    print c.screen.info()["index"]

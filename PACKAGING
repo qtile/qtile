@@ -1,0 +1,5 @@
+To create a debian package:
+
+VERSION=0.6.0
+git archive -o ../qtile_$VERSION.orig.tar.gz v$VERSION
+git buildpackage -S # -sd disables uploading of orig.tar.gz

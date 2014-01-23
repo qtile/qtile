@@ -1,16 +1,17 @@
 from .. import bar, hook, utils
 import base
 
-class _GroupBase(base._TextBox):
+
+class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
     defaults = [
-        ("padding", 5, "Padding inside the box"),
-        ("margin_y", 3, "Y margin outside the box"),
-        ("margin_x", 3, "X margin outside the box"),
         ("borderwidth", 3, "Current group border width"),
     ]
+
     def __init__(self, **config):
         base._TextBox.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(_GroupBase.defaults)
+        self.add_defaults(base.PaddingMixin.defaults)
+        self.add_defaults(base.MarginMixin.defaults)
 
     def box_width(self, groups):
         width, height = self.drawer.max_layout_size(
@@ -18,17 +19,24 @@ class _GroupBase(base._TextBox):
             self.font,
             self.fontsize
         )
-        return (width + self.padding * 2 +
-                self.margin_x * 2 + self.borderwidth * 2)
+        return width + self.padding_x * 2 + self.margin_x * 2 + \
+            self.borderwidth * 2
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
+
         if self.fontsize is None:
-            calc = (self.bar.height - self.margin_y * 2 -
-                    self.borderwidth * 2 - self.padding * 2)
+            calc = self.bar.height - self.margin_y * 2 - \
+                self.borderwidth * 2 - self.padding_y * 2
             self.fontsize = max(calc, 1)
+
         self.layout = self.drawer.textlayout(
-            "", "ffffff", self.font, self.fontsize, self.fontshadow)
+            "",
+            "ffffff",
+            self.font,
+            self.fontsize,
+            self.fontshadow
+        )
         self.setup_hooks()
 
     def setup_hooks(self):
@@ -48,8 +56,12 @@ class _GroupBase(base._TextBox):
         self.layout.colour = textcolor
         if width is not None:
             self.layout.width = width
-        framed = self.layout.framed(self.borderwidth, bordercolor,
-                                    self.padding, self.padding)
+        framed = self.layout.framed(
+            self.borderwidth,
+            bordercolor,
+            self.padding_x,
+            self.padding_y
+        )
         if block:
             framed.draw_fill(offset, self.margin_y, rounded)
         else:
@@ -60,24 +72,24 @@ class AGroupBox(_GroupBase):
     """
         A widget that graphically displays the current group.
     """
-    defaults = [
-        ("border", "000000", "group box border color"),
-    ]
+    defaults = [("border", "000000", "group box border color")]
 
     def __init__(self, **config):
         _GroupBase.__init__(self, **config)
         self.add_defaults(AGroupBox.defaults)
 
     def button_press(self, x, y, button):
-        self.bar.screen.group.cmd_nextgroup()
+        self.bar.screen.cmd_nextgroup()
 
     def calculate_width(self):
         return self.box_width(self.qtile.groups)
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
-        e = (i for i in self.qtile.groups
-             if i.name == self.bar.screen.group.name).next()
+        e = (
+            i for i in self.qtile.groups
+            if i.name == self.bar.screen.group.name
+        ).next()
         self.drawbox(self.margin_x, e.name, self.border, self.foreground)
         self.drawer.draw(self.offset, self.width)
 
@@ -90,29 +102,40 @@ class GroupBox(_GroupBase):
         ("active", "FFFFFF", "Active group font colour"),
         ("inactive", "404040", "Inactive group font colour"),
         ("urgent_text", "FF0000", "Urgent group font color"),
-        ("highlight_method", "border",
-         "Method of highlighting (one of 'border' or 'block') "
-         "Uses *_border color settings"),
+        (
+            "highlight_method",
+            "border",
+            "Method of highlighting (one of 'border' or 'block') "
+            "Uses *_border color settings"
+        ),
         ("rounded", True, "To round or not to round borders"),
-        ("this_current_screen_border", "215578",
-         "Border colour for group on this screen when focused."),
-        ("this_screen_border", "113358",
-         "Border colour for group on this screen."),
-        ("other_screen_border", "404040",
-         "Border colour for group on other screen."),
-        ("padding", 5, "Padding inside the box"),
-        ("urgent_border", "FF0000",
-         "Urgent border color"),
-        ("urgent_alert_method", "border",
-         "Method for alerting you of WM urgent "
-         "hints (one of 'border', 'text' or 'block')"),
-        ("disable_drag", False,
-         "Disable dragging and dropping of group names on widget"),
-        ("this_screen_border", "215578", "Border colour for group on this screen."),
-        ("other_screen_border", "404040", "Border colour for group on other screen."),
+        (
+            "this_current_screen_border",
+            "215578",
+            "Border colour for group on this screen when focused."
+        ),
+        (
+            "urgent_alert_method",
+            "border",
+            "Method for alerting you of WM urgent "
+            "hints (one of 'border', 'text' or 'block')"
+        ),
+        (
+            "disable_drag",
+            False,
+            "Disable dragging and dropping of group names on widget"
+        ),
+        (
+            "this_screen_border",
+            "215578",
+            "Border colour for group on this screen."
+        ),
+        (
+            "other_screen_border",
+            "404040",
+            "Border colour for group on other screen."
+        ),
         ("urgent_border", "FF0000", "Urgent border color"),
-        ("urgent_alert_method", "border", "Method for alerting you of WM urgent " \
-                                          "hints (one of 'border' or 'text')"),
     ]
 
     def __init__(self, **config):
@@ -122,7 +145,8 @@ class GroupBox(_GroupBase):
 
     def get_clicked_group(self, x, y):
         group = None
-        new_width = width = 0
+        new_width = 0
+        width = 0
         for g in self.qtile.groups:
             new_width += self.box_width([g])
             if x >= width and x <= new_width:
@@ -179,8 +203,8 @@ class GroupBox(_GroupBase):
                         border = self.this_screen_border
                 else:
                     border = self.other_screen_border
-            elif (self.group_has_urgent(g) and
-                  self.urgent_alert_method in ('border', 'block')):
+            elif self.group_has_urgent(g) and \
+                    self.urgent_alert_method in ('border', 'block'):
                 border = self.urgent_border
                 if self.urgent_alert_method == 'block':
                     is_block = True
@@ -201,7 +225,7 @@ class GroupBox(_GroupBase):
                 text,
                 self.rounded,
                 is_block,
-                bw - self.margin_x * 2 - self.padding * 2
+                bw - self.margin_x * 2 - self.padding_x * 2
             )
             offset += bw
         self.drawer.draw(self.offset, self.width)

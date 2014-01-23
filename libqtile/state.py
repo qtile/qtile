@@ -23,6 +23,7 @@ from collections import defaultdict
 import command
 import hook
 
+
 class QtileState(object):
     """
         Represents the state of the qtile object. Primarily used for restoring
@@ -36,8 +37,8 @@ class QtileState(object):
         self.groups = {}
         self.screens = {}
 
-        for g in qtile.groups:
-            self.groups[g.name] = g.layout.name
+        for group in qtile.groups:
+            self.groups[group.name] = group.layout.name
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
 
@@ -50,11 +51,11 @@ class QtileState(object):
             try:
                 qtile.groupMap[group].layout = layout
             except KeyError:
-                pass # group missing
+                pass  # group missing
 
         for (screen, group) in self.screens.iteritems():
             try:
-                g = qtile.groupMap[group]
-                qtile.screens[screen].setGroup(g)
+                group = qtile.groupMap[group]
+                qtile.screens[screen].setGroup(group)
             except (KeyError, IndexError):
-                pass # group or screen missing
+                pass  # group or screen missing

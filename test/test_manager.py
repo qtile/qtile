@@ -19,6 +19,7 @@ from nose.plugins.attrib import attr
 
 
 class TestConfig:
+    auto_fullscreen = True
     groups = [
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
@@ -58,6 +59,7 @@ class TestConfig:
 
 
 class BareConfig:
+    auto_fullscreen = True
     groups = [
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
@@ -242,7 +244,7 @@ def test_adddelgroup(self):
     assert not "testgroup" in self.c.groups().keys()
     # Assert that the test window is still a member of some group.
     assert sum([len(i["windows"]) for i in self.c.groups().values()])
-    for i in self.c.groups().keys()[:-2]:
+    for i in self.c.groups().keys()[:len(self.c.groups())-1]:
         self.c.delgroup(i)
     assert_raises(libqtile.command.CommandException,
                   self.c.delgroup, self.c.groups().keys()[0])
@@ -251,11 +253,23 @@ def test_adddelgroup(self):
 @Xephyr(False, TestConfig())
 def test_nextprevgroup(self):
     start = self.c.group.info()["name"]
-    ret = self.c.group.nextgroup()
+    ret = self.c.screen.nextgroup()
     assert self.c.group.info()["name"] != start
     assert self.c.group.info()["name"] == ret
-    ret = self.c.group.prevgroup()
+    ret = self.c.screen.prevgroup()
     assert self.c.group.info()["name"] == start
+
+
+@Xephyr(False, TestConfig())
+def test_togglegroup(self):
+    self.c.group["a"].toscreen()
+    self.c.group["b"].toscreen()
+    self.c.screen.togglegroup("c")
+    assert self.c.group.info()["name"] == "c"
+    self.c.screen.togglegroup("c")
+    assert self.c.group.info()["name"] == "b"
+    self.c.screen.togglegroup()
+    assert self.c.group.info()["name"] == "c"
 
 
 @Xephyr(False, TestConfig())
@@ -808,6 +822,7 @@ class _Config:
                         20
                     ),
     )]
+    auto_fullscreen = True
 
 
 class ClientNewStaticConfig(_Config):

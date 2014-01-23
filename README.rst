@@ -26,7 +26,7 @@ Features
 Current Release
 ===============
 
-The current stable version of qtile is 0.5, released 2012-11-11.
+The current stable version of qtile is 0.6, released 2013-05-11.
 
 Community
 =========

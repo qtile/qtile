@@ -44,8 +44,9 @@ class TreeNode(object):
 
     def add_superscript(self, title):
         if not self.expanded and self.children:
-            return (unicode(len(self.children))
-                .translate(to_superscript).encode('utf-8') + title)
+            return unicode(
+                len(self.children)
+            ).translate(to_superscript).encode('utf-8') + title
         return title
 
     def get_first_window(self):
@@ -153,11 +154,17 @@ class Section(TreeNode):
         layout._layout.text = self.add_superscript(self.title)
         layout._layout.colour = layout.section_fg
         del layout._layout.width  # no centering
-        layout._drawer.draw_hbar(layout.section_fg,
-            0, layout.panel_width, top, linewidth=1)
+        layout._drawer.draw_hbar(
+            layout.section_fg,
+            0,
+            layout.panel_width,
+            top,
+            linewidth=1
+        )
         layout._layout.draw(layout.section_left, top + layout.section_top)
-        top += (layout._layout.height +
-            layout.section_top + layout.section_padding)
+        top += layout._layout.height + \
+            layout.section_top + \
+            layout.section_padding
         if self.expanded:
             top = super(Section, self).draw(layout, top, level)
         return top + layout.section_bottom
@@ -182,8 +189,12 @@ class Window(TreeNode):
             bg = layout.inactive_bg
         layout._layout.colour = fg
         layout._layout.width = layout.panel_width - left
-        framed = layout._layout.framed(layout.border_width, bg,
-            layout.padding_x, layout.padding_y)
+        framed = layout._layout.framed(
+            layout.border_width,
+            bg,
+            layout.padding_x,
+            layout.padding_y
+        )
         framed.draw_fill(left, top)
         top += framed.height + layout.vspace + layout.border_width
         if self.expanded:
@@ -233,8 +244,7 @@ class TreeTab(SingleWindow):
         ("level_shift", 8, "Shift for children tabs"),
         ("font", "Arial", "Font"),
         ("fontsize", 14, "Font pixel size."),
-        ("fontshadow", None,
-            "font shadow color, default is None(no shadow)"),
+        ("fontshadow", None, "font shadow color, default is None (no shadow)"),
         ("section_fontsize", 11, "Font pixel size of section label"),
         ("section_fg", "ffffff", "Color of section label"),
         ("section_top", 4, "Top margin of section label"),
@@ -242,8 +252,7 @@ class TreeTab(SingleWindow):
         ("section_padding", 4, "Bottom of magin section label"),
         ("section_left", 4, "Left margin of section label"),
         ("panel_width", 150, "Width of the left panel"),
-        ("sections", ['Default'],
-            "Foreground color of inactive tab"),
+        ("sections", ['Default'], "Foreground color of inactive tab"),
         ("name", "treetab", "Name of this layout."),
     ]
 
@@ -286,13 +295,19 @@ class TreeTab(SingleWindow):
             self._focused = None
         self._nodes[win].remove()
         del self._nodes[win]
-        self.cmd_up()
         self.draw_panel()
 
+        # select 1st window in the list
+        self.cmd_down()
+
     def _create_panel(self):
-        self._panel = window.Internal.create(self.group.qtile,
-            0, 0,
-            self.panel_width, 100)
+        self._panel = window.Internal.create(
+            self.group.qtile,
+            0,
+            0,
+            self.panel_width,
+            100
+        )
         self._create_drawer()
         self._panel.handle_Expose = self._panel_Expose
         self._panel.handle_ButtonPress = self._panel_ButtonPress
@@ -498,11 +513,21 @@ class TreeTab(SingleWindow):
         self.group.layoutAll()
 
     def _create_drawer(self):
-        self._drawer = drawer.Drawer(self.group.qtile, self._panel.window.wid,
-            self.panel_width, self.group.screen.dheight)
+        self._drawer = drawer.Drawer(
+            self.group.qtile,
+            self._panel.window.wid,
+            self.panel_width,
+            self.group.screen.dheight
+        )
         self._drawer.clear(self.bg_color)
-        self._layout = self._drawer.textlayout("", "ffffff", self.font,
-            self.fontsize, self.fontshadow, wrap=False)
+        self._layout = self._drawer.textlayout(
+            "",
+            "ffffff",
+            self.font,
+            self.fontsize,
+            self.fontshadow,
+            wrap=False
+        )
 
     def layout(self, windows, screen):
         panel, body = screen.hsplit(self.panel_width)
