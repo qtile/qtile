@@ -54,3 +54,7 @@ try:
     from google_calendar import GoogleCalendar
 except ImportError:
     pass
+try:
+    from imapwidget import ImapWidget
+except ImportError:
+    pass
