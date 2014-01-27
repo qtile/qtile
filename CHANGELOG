@@ -1,3 +1,19 @@
+qtile 0.7, released 2014-MM-DD:
+    * features
+        - new disk free percentage widget
+        - new widget to display static image
+        - per core CPU graphs
+        - add "screen affinity" in dynamic groups
+        - volume widget changes volume linear-ly instead of log-ly
+        - only draw bar when idle, vastly reducing the number of bar draws and
+          speeding things up
+    * bugfixes
+        - don't crash on any exception in main loop
+        - don't crash on exceptions in hooks
+        - CPU widget lag detection doesn't lag
+        - fix a ZeroDivisionError in CPU graph
+        - remove a lot of duplicate and unused code
+
 qtile 0.6, released 2013-05-11:
     !!! Config breakage !!!
     This release breaks your config file in several ways:
