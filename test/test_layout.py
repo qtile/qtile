@@ -8,7 +8,8 @@ from .utils import Xephyr
 def assertFocused(self, name):
     """Asserts that window with specified name is currently focused"""
     info = self.c.window.info()
-    assert info['name']
+    assert info['name'] == name, 'Got {0!r}, expected {1!r}'.format(
+        info['name'], name)
 
 
 def assertDimensions(self, x, y, w, h, win=None):
