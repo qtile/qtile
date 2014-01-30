@@ -65,12 +65,6 @@ class Slice(Delegate):
         self._slice = Single()
         self._fallback = fallback
 
-    def __getattr__(self, name):
-        "Proxy command calls to fallback layout"
-        if name.startswith('cmd_'):
-            return getattr(self._fallback, name)
-        return super(Slice, self).__getattr__(name)
-
     def clone(self, group):
         res = Layout.clone(self, group)
         res._slice = self._slice.clone(group)

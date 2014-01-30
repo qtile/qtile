@@ -265,8 +265,12 @@ class Delegate(Layout):
                 focus = layouts[idx].focus_last()
         return focus
 
-    def cmd_up(self):
-        self._get_active_layout().cmd_up()
+    def __getattr__(self, name):
+        """Delegate unimplemented command calls to active layout.
 
-    def cmd_down(self):
-        self._get_active_layout().cmd_down()
+        For `cmd_`-methods that don't exist on the Delegate subclass, this
+        looks for an implementation on the active layout.
+        """
+        if name.startswith('cmd_'):
+            return getattr(self._get_active_layout(), name)
+        return super(Delegate, self).__getattr__(name)
