@@ -678,6 +678,18 @@ def test_all_slices(self):
     assertDimensions(self, 0, 0, 800, 400)
 
 
+@Xephyr(False, SliceConfig())
+def test_command_propagation(self):
+    self.testWindow('slice')
+    self.testWindow('one')
+    self.testWindow('two')
+    info = self.c.layout.info()
+    assert info['name'] == 'slice', info['name']
+    org_height = self.c.window.info()['height']
+    self.c.layout.toggle_split()
+    assert self.c.window.info()['height'] != org_height
+
+
 class ZoomyConfig:
     auto_fullscreen = True
     main = None
