@@ -578,8 +578,8 @@ class Qtile(command.CommandObject):
 
                 if ename.endswith("Event"):
                     ename = ename[:-5]
-                self.log.debug(ename)
                 if not e.__class__ in self.ignoreEvents:
+                    self.log.debug(ename)
                     for h in self.get_target_chain(ename, e):
                         self.log.info("Handling: %s" % ename)
                         r = h(e)
