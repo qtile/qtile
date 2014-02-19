@@ -1,5 +1,5 @@
 from base import SingleWindow
-from .. import utils, manager
+from .. import utils
 
 
 class Zoomy(SingleWindow):
@@ -41,18 +41,18 @@ class Zoomy(SingleWindow):
         c.clients = []
         return c
 
-    def add(self, c):
-        self.clients.insert(0, c)
+    def add(self, client):
+        self.clients.insert(0, client)
 
-    def remove(self, c):
-        self.clients.remove(c)
+    def remove(self, client):
+        self.clients.remove(client)
         if self.clients:
             return self.clients[0]
 
-    def configure(self, c, screen):
+    def configure(self, client, screen):
         left, right = screen.hsplit(screen.width - self.columnwidth)
-        if self.clients and c is self.clients[0]:
-            c.place(
+        if self.clients and client is self.clients[0]:
+            client.place(
                 left.x,
                 left.y,
                 left.width,
@@ -63,9 +63,9 @@ class Zoomy(SingleWindow):
         else:
             h = int(right.width * left.height / left.width)
             if h * (len(self.clients) - 1) < right.height:
-                c.place(
+                client.place(
                     right.x,
-                    right.y + h * (self.clients.index(c) - 1),
+                    right.y + h * (self.clients.index(client) - 1),
                     right.width,
                     h,
                     0,
@@ -73,19 +73,19 @@ class Zoomy(SingleWindow):
                 )
             else:
                 hh = int((right.height - h) / (len(self.clients) - 1))
-                c.place(
+                client.place(
                     right.x,
-                    right.y + hh * (self.clients.index(c) - 1),
+                    right.y + hh * (self.clients.index(client) - 1),
                     right.width,
                     h,
                     0,
                     None
                 )
-        c.unhide()
+        client.unhide()
 
     def info(self):
         d = SingleWindow.info(self)
-        d["clients"] = [i.name for i in self.clients]
+        d["clients"] = [x.name for x in self.clients]
         return d
 
     def focus(self, win):

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from base import SingleWindow
-from .. import manager
 from .. import window
 from .. import drawer
 from .. import hook
@@ -330,22 +329,22 @@ class TreeTab(SingleWindow):
         if node:
             self.group.focus(node.window, False)
 
-    def configure(self, c, screen):
-        if self._nodes and c is self._focused:
-            c.place(
+    def configure(self, client, screen):
+        if self._nodes and client is self._focused:
+            client.place(
                 screen.x, screen.y,
                 screen.width, screen.height,
                 0,
                 None
             )
-            c.unhide()
+            client.unhide()
         else:
-            c.hide()
+            client.hide()
 
     def info(self):
         d = SingleWindow.info(self)
-        d["clients"] = [i.name for i in self._nodes]
-        d["sections"] = [i.title for i in self._tree.children]
+        d["clients"] = [x.name for x in self._nodes]
+        d["sections"] = [x.title for x in self._tree.children]
         return d
 
     def show(self, screen):
