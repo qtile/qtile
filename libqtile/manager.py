@@ -386,7 +386,12 @@ class Qtile(command.CommandObject):
 
             if attrs and attrs.map_state == xcb.xproto.MapState.Unmapped:
                 continue
+
             if state and state[0] == window.WithdrawnState:
+                # Withdrawn windows might get mapped after a restart.
+                # They aren't managed, so they should be hidden,
+                # otherwise they appear to be stuck and unusuable.
+                item.unmap()
                 continue
             self.manage(item)
 
