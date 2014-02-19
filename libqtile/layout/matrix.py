@@ -62,9 +62,13 @@ class Matrix(Layout):
         self.clients.append(client)
 
     def remove(self, client):
+        if client not in self.clients:
+            return
         self.clients.remove(client)
 
     def focus(self, client):
+        if client not in self.clients:
+            return
         idx = self.clients.index(client)
         self.current_window = (idx % self.columns, idx / self.columns)
 
@@ -75,6 +79,8 @@ class Matrix(Layout):
             return None
 
     def configure(self, client, screen):
+        if client not in self.clients:
+            return
         idx = self.clients.index(client)
         column = idx % self.columns
         row = idx / self.columns

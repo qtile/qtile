@@ -63,6 +63,8 @@ class Tile(Layout):
             return self.clients[0]
 
     def focus_next(self, client):
+        if client not in self.clients:
+            return
         idx = self.clients.index(client)
         if len(self.clients) > idx + 1:
             return self.clients[idx + 1]
@@ -72,6 +74,8 @@ class Tile(Layout):
             return self.clients[-1]
 
     def focus_prev(self, client):
+        if client not in self.clients:
+            return
         idx = self.clients.index(client)
         if idx > 0:
             return self.clients[idx - 1]
@@ -147,6 +151,9 @@ class Tile(Layout):
         self.resetMaster()
 
     def remove(self, client):
+        if client not in self.clients:
+            return
+
         if self.focused is client:
             self.focused = None
 

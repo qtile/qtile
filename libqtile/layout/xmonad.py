@@ -176,6 +176,8 @@ class MonadTall(SingleWindow):
 
     def remove(self, client):
         "Remove client from layout"
+        if client not in self.clients:
+            return
         # get index of removed client
         idx = self.clients.index(client)
         # remove the client

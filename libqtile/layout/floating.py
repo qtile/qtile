@@ -102,6 +102,8 @@ class Floating(Layout):
             return self.clients[0]
 
     def focus_next(self, win):
+        if win not in self.clients:
+            return
         idx = self.clients.index(win)
         if len(self.clients) > idx + 1:
             return self.clients[idx + 1]
@@ -151,6 +153,8 @@ class Floating(Layout):
         self.clients.append(client)
 
     def remove(self, client):
+        if client not in self.clients:
+            return
         res = self.focus_next(client)
         self.clients.remove(client)
         return res

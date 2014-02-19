@@ -45,6 +45,8 @@ class Zoomy(SingleWindow):
         self.clients.insert(0, client)
 
     def remove(self, client):
+        if client not in self.clients:
+            return
         self.clients.remove(client)
         if self.clients:
             return self.clients[0]
