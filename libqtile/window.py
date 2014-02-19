@@ -234,6 +234,8 @@ class _Window(command.CommandObject):
 
         if normh:
             normh.pop('flags')
+            normh['min_width'] = max(0, normh.get('min_width', 0))
+            normh['min_height'] = max(0, normh.get('min_height', 0))
             if not normh['base_width'] and \
                     normh['min_width'] and \
                     normh['width_inc']:
@@ -400,19 +402,6 @@ class _Window(command.CommandObject):
             if twice is true, that it does positioning twice (useful for some
                 gtk apps)
         """
-        # TODO(tailhook) uncomment resize increments when we'll decide
-        #                to obey all those hints
-        #if self.hints['width_inc']:
-        #    width = (width -
-        #        ((width - self.hints['base_width']) %
-        #        self.hints['width_inc']))
-        #if self.hints['height_inc']:
-        #    height = (height -
-        #        ((height - self.hints['base_height'])
-        #        % self.hints['height_inc']))
-        # TODO(tailhook) implement min-size, maybe
-        # TODO(tailhook) implement max-size
-        # TODO(tailhook) implement gravity
         self.x = x
         self.y = y
         self.width = width
@@ -869,11 +858,30 @@ class Window(_Window):
                 self.x = self.group.screen.x
                 self.y = self.group.screen.y
 
+            if self.width < self.hints.get('min_width', 0):
+                self.width = self.hints['min_width']
+
+            if self.height < self.hints.get('min_height', 0):
+                self.height = self.hints['min_height']
+
+            width = self.width
+            if self.hints.get('width_inc', 0):
+                width = (width -
+                    ((width - self.hints['base_width']) %
+                    self.hints['width_inc']))
+
+            height = self.height
+            if self.hints.get('height_inc', 0):
+                height = (height -
+                    ((height - self.hints['base_height'])
+                    % self.hints['height_inc']))
+
+
             self.place(
                 self.x,
                 self.y,
-                self.width,
-                self.height,
+                width,
+                height,
                 self.borderwidth,
                 self.bordercolor,
                 above=True,
