@@ -394,13 +394,11 @@ class _Window(command.CommandObject):
         )
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, force=False, twice=False):
+              above=False, force=False):
         """
             Places the window at the specified location with the given size.
 
             if force is false, than it tries to obey hints
-            if twice is true, that it does positioning twice (useful for some
-                gtk apps)
         """
         self.x = x
         self.y = y
@@ -424,25 +422,6 @@ class _Window(command.CommandObject):
         if above:
             kwarg['stackmode'] = StackMode.Above
 
-        # Oh, yes we do this twice
-        #
-        # This sort of weird thing is because GTK assumes that each it's
-        # configure request is replied with configure notify. But X server
-        # is smarter than that and does not send configure notify if size is
-        # not changed. So we hack this.
-        #
-        # And no, manually sending ConfigureNotifyEvent does nothing, really!
-        #
-        # We use increment position because its more probably will
-        # lead to less calculations on the application side (no word
-        # rewrapping, widget resizing, etc.)
-        #
-        # TODO(tailhook) may be configure notify event will work for reparented
-        # windows
-        if twice:
-            kwarg['y'] -= 1
-            self.window.configure(**kwarg)
-            kwarg['y'] += 1
         self.window.configure(**kwarg)
 
         if bordercolor is not None:
@@ -682,7 +661,6 @@ class Window(_Window):
         # add window to the save-set, so it gets mapped when qtile dies
         qtile.conn.conn.core.ChangeSaveSet(SetMode.Insert, self.window.wid)
         self.update_wm_net_icon()
-        self.first_float_configure = False
 
     @property
     def group(self):
@@ -902,12 +880,10 @@ class Window(_Window):
         self._reconfigure_floating(new_float_state=new_float_state)
 
     def enablefloating(self):
-        self.first_float_configure = True
         fi = self._float_info
         self._enablefloating(fi['x'], fi['y'], fi['w'], fi['h'])
 
     def disablefloating(self):
-        self.first_float_configure = False
         if self._float_state != NOT_FLOATING:
             if self._float_state == FLOATING:
                 # store last size
@@ -997,13 +973,6 @@ class Window(_Window):
             if e.value_mask & cw.Y:
                 self.y = e.y
 
-            # Center things on first ConfigureRequest
-            if self.group.screen and self.first_float_configure:
-                screen = self.group.screen
-                self.first_float_configure = False
-                self.x = self.x + ((screen.width - self.width) // 2)
-                self.y = self.y + ((screen.height - self.width) // 2)
-
         if self.group and self.group.screen:
             self.place(
                 self.x,
@@ -1012,7 +981,6 @@ class Window(_Window):
                 self.height,
                 self.borderwidth,
                 self.bordercolor,
-                twice=True,
             )
         self.updateState()
         return False
