@@ -25,6 +25,20 @@ import locale
 import logging
 from libqtile import confreader, manager
 
+def rename_process():
+    """
+    Try to rename the qtile process if py-setproctitle is installed:
+
+    http://code.google.com/p/py-setproctitle/
+
+    Will fail silently if it's not installed. Setting the title lets you do
+    stuff like "killall qtile".
+    """
+    try:
+        import setproctitle
+        setproctitle.setproctitle("qtile")
+    except:
+        pass
 
 def make_qtile():
     from argparse import ArgumentParser
@@ -95,6 +109,7 @@ def make_qtile():
 
 if __name__ == "__main__":
     locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
+    rename_process()
     q = make_qtile()
     try:
         q.loop()
