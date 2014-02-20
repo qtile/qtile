@@ -64,7 +64,7 @@ class Layout(command.CommandObject, configurable.Configurable):
         c.group = group
         return c
 
-    def focus(self, c):
+    def focus(self, client):
         """
             Called whenever the focus changes.
         """
@@ -76,7 +76,7 @@ class Layout(command.CommandObject, configurable.Configurable):
         """
         pass
 
-    def add(self, c):
+    def add(self, client):
         """
             Called whenever a window is added to the group, whether the layout
             is current or not. The layout should just add the window to its
@@ -84,7 +84,7 @@ class Layout(command.CommandObject, configurable.Configurable):
         """
         pass
 
-    def remove(self, c):
+    def remove(self, client):
         """
             Called whenever a window is removed from the group, whether the
             layout is current or not. The layout should just de-register the
@@ -94,7 +94,7 @@ class Layout(command.CommandObject, configurable.Configurable):
         """
         pass
 
-    def configure(self, c, screen):
+    def configure(self, client, screen):
         """
             This method should:
 

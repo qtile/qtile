@@ -234,6 +234,8 @@ class _Window(command.CommandObject):
 
         if normh:
             normh.pop('flags')
+            normh['min_width'] = max(0, normh.get('min_width', 0))
+            normh['min_height'] = max(0, normh.get('min_height', 0))
             if not normh['base_width'] and \
                     normh['min_width'] and \
                     normh['width_inc']:
@@ -392,27 +394,12 @@ class _Window(command.CommandObject):
         )
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, force=False, twice=False):
+              above=False, force=False):
         """
             Places the window at the specified location with the given size.
 
             if force is false, than it tries to obey hints
-            if twice is true, that it does positioning twice (useful for some
-                gtk apps)
         """
-        # TODO(tailhook) uncomment resize increments when we'll decide
-        #                to obey all those hints
-        #if self.hints['width_inc']:
-        #    width = (width -
-        #        ((width - self.hints['base_width']) %
-        #        self.hints['width_inc']))
-        #if self.hints['height_inc']:
-        #    height = (height -
-        #        ((height - self.hints['base_height'])
-        #        % self.hints['height_inc']))
-        # TODO(tailhook) implement min-size, maybe
-        # TODO(tailhook) implement max-size
-        # TODO(tailhook) implement gravity
         self.x = x
         self.y = y
         self.width = width
@@ -435,25 +422,6 @@ class _Window(command.CommandObject):
         if above:
             kwarg['stackmode'] = StackMode.Above
 
-        # Oh, yes we do this twice
-        #
-        # This sort of weird thing is because GTK assumes that each it's
-        # configure request is replied with configure notify. But X server
-        # is smarter than that and does not send configure notify if size is
-        # not changed. So we hack this.
-        #
-        # And no, manually sending ConfigureNotifyEvent does nothing, really!
-        #
-        # We use increment position because its more probably will
-        # lead to less calculations on the application side (no word
-        # rewrapping, widget resizing, etc.)
-        #
-        # TODO(tailhook) may be configure notify event will work for reparented
-        # windows
-        if twice:
-            kwarg['y'] -= 1
-            self.window.configure(**kwarg)
-            kwarg['y'] += 1
         self.window.configure(**kwarg)
 
         if bordercolor is not None:
@@ -693,7 +661,6 @@ class Window(_Window):
         # add window to the save-set, so it gets mapped when qtile dies
         qtile.conn.conn.core.ChangeSaveSet(SetMode.Insert, self.window.wid)
         self.update_wm_net_icon()
-        self.first_float_configure = False
 
     @property
     def group(self):
@@ -797,7 +764,7 @@ class Window(_Window):
             self.width = 0
 
         screen = self.qtile.find_closest_screen(self.x, self.y)
-        if screen is not None and screen != self.group.screen:
+        if self.group and screen is not None and screen != self.group.screen:
             self.group.remove(self)
             screen.group.add(self)
             self.qtile.toScreen(screen.index)
@@ -869,11 +836,30 @@ class Window(_Window):
                 self.x = self.group.screen.x
                 self.y = self.group.screen.y
 
+            if self.width < self.hints.get('min_width', 0):
+                self.width = self.hints['min_width']
+
+            if self.height < self.hints.get('min_height', 0):
+                self.height = self.hints['min_height']
+
+            width = self.width
+            if self.hints.get('width_inc', 0):
+                width = (width -
+                    ((width - self.hints['base_width']) %
+                    self.hints['width_inc']))
+
+            height = self.height
+            if self.hints.get('height_inc', 0):
+                height = (height -
+                    ((height - self.hints['base_height'])
+                    % self.hints['height_inc']))
+
+
             self.place(
                 self.x,
                 self.y,
-                self.width,
-                self.height,
+                width,
+                height,
                 self.borderwidth,
                 self.bordercolor,
                 above=True,
@@ -894,12 +880,10 @@ class Window(_Window):
         self._reconfigure_floating(new_float_state=new_float_state)
 
     def enablefloating(self):
-        self.first_float_configure = True
         fi = self._float_info
         self._enablefloating(fi['x'], fi['y'], fi['w'], fi['h'])
 
     def disablefloating(self):
-        self.first_float_configure = False
         if self._float_state != NOT_FLOATING:
             if self._float_state == FLOATING:
                 # store last size
@@ -989,13 +973,6 @@ class Window(_Window):
             if e.value_mask & cw.Y:
                 self.y = e.y
 
-            # Center things on first ConfigureRequest
-            if self.group.screen and self.first_float_configure:
-                screen = self.group.screen
-                self.first_float_configure = False
-                self.x = self.x + ((screen.width - self.width) // 2)
-                self.y = self.y + ((screen.height - self.width) // 2)
-
         if self.group and self.group.screen:
             self.place(
                 self.x,
@@ -1004,7 +981,6 @@ class Window(_Window):
                 self.height,
                 self.borderwidth,
                 self.bordercolor,
-                twice=True,
             )
         self.updateState()
         return False

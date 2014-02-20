@@ -25,6 +25,20 @@ import locale
 import logging
 from libqtile import confreader, manager
 
+def rename_process():
+    """
+    Try to rename the qtile process if py-setproctitle is installed:
+
+    http://code.google.com/p/py-setproctitle/
+
+    Will fail silently if it's not installed. Setting the title lets you do
+    stuff like "killall qtile".
+    """
+    try:
+        import setproctitle
+        setproctitle.setproctitle("qtile")
+    except:
+        pass
 
 def make_qtile():
     from argparse import ArgumentParser
@@ -73,19 +87,29 @@ def make_qtile():
     log_level = getattr(logging, options.log_level)
     log = manager.init_log(log_level)
 
-    c = confreader.File(options.configfile, is_restart=options.no_spawn)
+    try:
+        c = confreader.File(options.configfile, is_restart=options.no_spawn)
+    except:
+        log.exception('Error while reading config file')
+        raise
 
-    return manager.Qtile(
-        c,
-        log=log,
-        fname=options.socket,
-        no_spawn=options.no_spawn,
-        state=options.state,
-    )
+    try:
+        return manager.Qtile(
+            c,
+            log=log,
+            fname=options.socket,
+            no_spawn=options.no_spawn,
+            state=options.state,
+        )
+    except:
+        log.exception('Qtile crashed during startup')
+        raise
+
 
 
 if __name__ == "__main__":
     locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
+    rename_process()
     q = make_qtile()
     try:
         q.loop()

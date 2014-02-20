@@ -5,7 +5,6 @@ Slice layout. Serves as example of delegating layouts (or sublayouts)
 
 from base import Layout, SingleWindow, Delegate
 from max import Max
-from .. import manager
 
 
 class Single(SingleWindow):
