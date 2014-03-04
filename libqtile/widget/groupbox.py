@@ -136,6 +136,7 @@ class GroupBox(_GroupBase):
             "Border colour for group on other screen."
         ),
         ("urgent_border", "FF0000", "Urgent border color"),
+        ("invert_mouse_wheel", False, "Whether to invert mouse wheel group movement")
     ]
 
     def __init__(self, **config):
@@ -159,9 +160,10 @@ class GroupBox(_GroupBase):
         self.clicked = None
         group = None
         curGroup = self.qtile.currentGroup
-        if button == 5:
+
+        if button == (5 if not self.invert_mouse_wheel else 4):
             group = curGroup.prevGroup()
-        elif button == 4:
+        elif button == (4 if not self.invert_mouse_wheel else 5):
             group = curGroup.nextGroup()
         else:
             group = self.get_clicked_group(x, y)
