@@ -180,7 +180,7 @@ class StackConfig:
 def _stacks(self):
     stacks = []
     for i in self.c.layout.info()["stacks"]:
-        windows = i["windows"]
+        windows = i["clients"]
         current = i["current"]
         stacks.append(windows[current:] + windows[:current])
     return stacks
@@ -321,29 +321,29 @@ def test_stack_shuffle(self):
     three = self.testWindow("three")
 
     stack = self.c.layout.info()["stacks"][0]
-    assert stack["windows"][stack["current"]] == "three"
+    assert stack["clients"][stack["current"]] == "three"
     for i in range(5):
         self.c.layout.shuffle_up()
         stack = self.c.layout.info()["stacks"][0]
-        assert stack["windows"][stack["current"]] == "three"
+        assert stack["clients"][stack["current"]] == "three"
     for i in range(5):
         self.c.layout.shuffle_down()
         stack = self.c.layout.info()["stacks"][0]
-        assert stack["windows"][stack["current"]] == "three"
+        assert stack["clients"][stack["current"]] == "three"
 
 
 @Xephyr(False, StackConfig())
 def test_stack_client_to(self):
     one = self.testWindow("one")
     two = self.testWindow("two")
-    assert self.c.layout.info()["stacks"][0]["windows"] == ["one"]
+    assert self.c.layout.info()["stacks"][0]["clients"] == ["one"]
     self.c.layout.client_to_previous()
-    assert self.c.layout.info()["stacks"][0]["windows"] == ["two", "one"]
+    assert self.c.layout.info()["stacks"][0]["clients"] == ["two", "one"]
     self.c.layout.client_to_previous()
-    assert self.c.layout.info()["stacks"][0]["windows"] == ["one"]
-    assert self.c.layout.info()["stacks"][1]["windows"] == ["two"]
+    assert self.c.layout.info()["stacks"][0]["clients"] == ["one"]
+    assert self.c.layout.info()["stacks"][1]["clients"] == ["two"]
     self.c.layout.client_to_next()
-    assert self.c.layout.info()["stacks"][0]["windows"] == ["two", "one"]
+    assert self.c.layout.info()["stacks"][0]["clients"] == ["two", "one"]
 
 
 @Xephyr(False, StackConfig())
@@ -533,11 +533,11 @@ def test_tile_updown(self):
     self.testWindow("one")
     self.testWindow("two")
     self.testWindow("three")
-    assert self.c.layout.info()["all"] == ["three", "two", "one"]
+    assert self.c.layout.info()["clients"] == ["three", "two", "one"]
     self.c.layout.down()
-    assert self.c.layout.info()["all"] == ["two", "one", "three"]
+    assert self.c.layout.info()["clients"] == ["two", "one", "three"]
     self.c.layout.up()
-    assert self.c.layout.info()["all"] == ["three", "two", "one"]
+    assert self.c.layout.info()["clients"] == ["three", "two", "one"]
 
 
 @Xephyr(False, TileConfig())
@@ -546,7 +546,7 @@ def test_tile_nextprev(self):
     self.testWindow("two")
     self.testWindow("three")
 
-    assert self.c.layout.info()["all"] == ["three", "two", "one"]
+    assert self.c.layout.info()["clients"] == ["three", "two", "one"]
     assert self.c.groups()["a"]["focus"] == "three"
 
     self.c.layout.previous()
