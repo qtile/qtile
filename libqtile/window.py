@@ -400,6 +400,20 @@ class _Window(command.CommandObject):
 
             if force is false, than it tries to obey hints
         """
+
+        # TODO: self.x/y/height/width are updated BEFORE
+        # place is called, so there's no way to know if only
+        # the position is changed, so we are sending
+        # the ConfigureNotify every time place is called
+
+        ## if position change and size don't
+        ## send a configure notify. See ICCCM 4.2.3
+        #send_notify = False
+        #if (self.x != x or self.y != y) and \
+        #   (self.width == width and self.height == height):
+        #    send_notify = True
+        send_notify = True
+
         self.x = x
         self.y = y
         self.width = width
@@ -424,8 +438,28 @@ class _Window(command.CommandObject):
 
         self.window.configure(**kwarg)
 
+        if send_notify:
+            self.send_configure_notify(x, y, width, height)
+
         if bordercolor is not None:
             self.window.set_attribute(borderpixel=bordercolor)
+
+    def send_configure_notify(self, x, y, width, height):
+        """
+        Send a synthetic ConfigureNotify
+        """
+
+        window = self.window.wid
+        above_sibling = False
+        override_redirect = False
+        event_type = 22  # ConfigureNotify
+
+        event = struct.pack('bx2xIIIhhHHHB5x', event_type,
+                            window, window, above_sibling,
+                            x, y, width, height, self.borderwidth,
+                            override_redirect)
+
+        self.window.send_event(event, mask=EventMask.StructureNotify)
 
     def focus(self, warp):
 
