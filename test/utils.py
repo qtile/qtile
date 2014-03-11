@@ -186,9 +186,11 @@ class Xephyr(object):
                       config, self.display, self.fname)
 
     def testWindow(self, name):
+        d = os.path.dirname(os.path.realpath(__file__))
+        path = os.path.join(d, "scripts", "window.py")
         return self._testProc(
-                    "scripts/window.py",
-                    ["scripts/window.py", self.display, name]
+                    path,
+                    [path, self.display, name]
                 )
 
     def testXclock(self):
