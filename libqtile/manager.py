@@ -210,7 +210,14 @@ class Qtile(command.CommandObject):
         if hasattr(self.config, 'fake_screens'):
             self._process_fake_screens()
             return
-        for i, s in enumerate(self.conn.pseudoscreens):
+
+        xywh = {}
+        for s in self.conn.pseudoscreens:
+            pos = (s.x, s.y)
+            (w, h) = xywh.get(pos, (0, 0))
+            xywh[pos] = (max(s.width, w), max(s.height, h))
+
+        for i, ((x, y), (w, h)) in enumerate(xywh.items()):
             if i + 1 > len(self.config.screens):
                 scr = Screen()
             else:
@@ -220,10 +227,10 @@ class Qtile(command.CommandObject):
             scr._configure(
                 self,
                 i,
-                s.x,
-                s.y,
-                s.width,
-                s.height,
+                x,
+                y,
+                w,
+                h,
                 self.groups[i],
             )
             self.screens.append(scr)
