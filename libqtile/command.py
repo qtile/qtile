@@ -321,7 +321,9 @@ class CommandObject(object):
         """
         ret = self._items(name)
         if ret is None:
-            raise CommandError("Unknown item class: %s" % name)
+            # Not finding information for a particular item class is OK here;
+            # we don't expect layouts to have a window, etc.
+            return ([], [])
         return ret
 
     def _items(self, name):
