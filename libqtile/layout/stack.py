@@ -58,11 +58,10 @@ class _WinStack(object):
         self.current = self.lst.index(client)
 
     def focus_first(self):
-        if self:
-            if self.split:
-                return self[0]
-            else:
-                return self.cw
+        if self.split:
+            return self[0]
+        else:
+            return self.cw
 
     def focus_next(self, win):
         if self.split:
@@ -71,11 +70,10 @@ class _WinStack(object):
                 return self[idx + 1]
 
     def focus_last(self):
-        if self:
-            if self.split:
-                return self[-1]
-            else:
-                return self.cw
+        if self.split:
+            return self[-1]
+        else:
+            return self.cw
 
     def focus_prev(self, win):
         if self.split:
