@@ -316,9 +316,9 @@ class Prompt(base._TextBox):
 
         if self.cursorblink and not self.active:
             self.timeout_add(self.cursorblink, self._blink)
-
+        if self.prompt is None:
+            self.prompt = prompt
         self.active = True
-        self.prompt = prompt
         self.userInput = ""
         self.callback = callback
         self.completer = self.completers[complete](self.qtile)
