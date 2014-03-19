@@ -1207,7 +1207,7 @@ class Qtile(command.CommandObject):
                 self.currentScreen.setGroup(window.group)
             window.group.focus(window, False)
 
-    def cmd_findwindow(self, prompt="window: ", widget="prompt"):
+    def cmd_findwindow(self, prompt="window", widget="prompt"):
         mb = self.widgetMap.get(widget)
         if not mb:
             self.log.error("No widget named '%s' present." % widget)
@@ -1228,7 +1228,7 @@ class Qtile(command.CommandObject):
         except IndexError:
             pass  # no window had urgent set
 
-    def cmd_togroup(self, prompt="group: ", widget="prompt"):
+    def cmd_togroup(self, prompt="group", widget="prompt"):
         """
             Move current window to the selected group in a propmt widget
 
@@ -1246,7 +1246,7 @@ class Qtile(command.CommandObject):
 
         mb.startInput(prompt, self.moveToGroup, "group", strict_completer=True)
 
-    def cmd_switchgroup(self, prompt="group: ", widget="prompt"):
+    def cmd_switchgroup(self, prompt="group", widget="prompt"):
         def f(group):
             if group:
                 try:
@@ -1262,7 +1262,7 @@ class Qtile(command.CommandObject):
 
         mb.startInput(prompt, f, "group", strict_completer=True)
 
-    def cmd_spawncmd(self, prompt="spawn: ", widget="prompt",
+    def cmd_spawncmd(self, prompt="spawn", widget="prompt",
                      command="%s", complete="cmd"):
         """
             Spawn a command using a prompt widget, with tab-completion.
@@ -1281,7 +1281,7 @@ class Qtile(command.CommandObject):
         except:
             self.log.error("No widget named '%s' present." % widget)
 
-    def cmd_qtilecmd(self, prompt="command: ",
+    def cmd_qtilecmd(self, prompt="command",
                      widget="prompt", messenger="xmessage"):
         """
             Execute a Qtile command using the client syntax.
