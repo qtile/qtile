@@ -285,7 +285,8 @@ class Prompt(base._TextBox):
         "window": WindowCompleter,
         None: NullCompleter
     }
-    defaults = [("cursorblink", 0.5, "Cursor blink rate. 0 to disable.")]
+    defaults = [("cursorblink", 0.5, "Cursor blink rate. 0 to disable."),
+                ("prompt", "{prompt}: ", "Text displayed at the prompt")]
 
     def __init__(self, name="prompt", **config):
         base._TextBox.__init__(self, "", bar.CALCULATED, **config)
@@ -316,9 +317,9 @@ class Prompt(base._TextBox):
 
         if self.cursorblink and not self.active:
             self.timeout_add(self.cursorblink, self._blink)
-
+        if prompt:
+            self.prompt = self.prompt.format(prompt=prompt)
         self.active = True
-        self.prompt = prompt
         self.userInput = ""
         self.callback = callback
         self.completer = self.completers[complete](self.qtile)
