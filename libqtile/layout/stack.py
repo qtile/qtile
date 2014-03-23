@@ -223,7 +223,7 @@ class Stack(Layout):
 
     def focus_next(self, client):
         iterator = iter(self.stacks)
-        for i in self.stacks:
+        for i in iterator:
             if client in i:
                 next = i.focus_next(client)
                 if next:
