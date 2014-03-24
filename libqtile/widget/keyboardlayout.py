@@ -63,8 +63,7 @@ class KeyboardLayout(base._TextBox):
             In case of error returns "unknown".
         """
         try:
-            setxkbmap_out = subprocess.check_output(['setxkbmap', '-query'])
-            keyboard = _Keyboard().from_setxkbmap_query(setxkbmap_out)
+            keyboard = subprocess.check_output(["python", "kb.py"]).strip().upper()
             return keyboard.__str__()
         except CalledProcessError as e:
             self.log.error('Can not change the keyboard layout: {0}'
@@ -85,37 +84,3 @@ class KeyboardLayout(base._TextBox):
         except OSError as e:
             self.log.error('Please, check that setxkbmap is available: {0}'
                            .format(e))
-
-
-class _Keyboard(object):
-    """
-        Canonical representation of a keyboard layout. It provides some utility
-        methods to build/transform it from/to some other representations.
-    """
-    def __init__(self):
-        pass
-
-    def __str__(self):
-        if not self.variant:
-            return self.layout
-        else:
-            return self.layout + " " + self.variant
-
-    def from_dict(self, dictionary):
-        """
-            Accept a dict containing as keys the layout and variant of a
-            keyboard layout.
-        """
-        self.layout = dictionary['layout']
-        self.variant = dictionary.get('variant')
-        return self
-
-    def from_setxkbmap_query(self, setxkbmap_out):
-        """
-            Accept a setxkbmap query represented as a string.
-        """
-        return self.from_dict(
-            dict((a, b.strip()) for a, b in
-                 (item.split(":") for item in
-                  setxkbmap_out.splitlines()))
-            )
