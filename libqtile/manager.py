@@ -52,7 +52,6 @@ class Qtile(command.CommandObject):
         This object is the __root__ of the command graph.
     """
     _exit = False
-    _abort = False
 
     def __init__(self, config,
                  displayName=None, fname=None, no_spawn=False, log=None,
@@ -164,12 +163,6 @@ class Qtile(command.CommandObject):
         self.conn.flush()
         self.conn.xsync()
         self._xpoll()
-        if self._abort:
-            self.log.error(
-                "Access denied: "
-                "Another window manager running?"
-            )
-            sys.exit(1)
 
         self.server = command._Server(self.fname, self, config)
 
@@ -619,9 +612,6 @@ class Qtile(command.CommandObject):
                 if self._exit:
                     self.log.info('Got shutdown, Breaking main loop cleanly')
                     break
-                if self._abort:
-                    self.log.warn('Got exception, Breaking main loop')
-                    sys.exit(2)
         finally:
             self.log.info('Removing source')
             gobject.source_remove(display_tag)
