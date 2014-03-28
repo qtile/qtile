@@ -2,6 +2,7 @@ import subprocess
 from subprocess import CalledProcessError
 import base
 from .. import bar
+import re
 
 
 class KeyboardLayout(base._TextBox):
@@ -63,9 +64,9 @@ class KeyboardLayout(base._TextBox):
             In case of error returns "unknown".
         """
         try:
-            setxkbmap_out = subprocess.check_output(['setxkbmap', '-query'])
-            keyboard = _Keyboard().from_setxkbmap_query(setxkbmap_out)
-            return keyboard.__str__()
+            xset_output = subprocess.check_output(["xset", "-q"])
+            keyboard = _Keyboard(self.configured_keyboards).get_keyboard_layout(xset_output).upper()
+            return str(keyboard)
         except CalledProcessError as e:
             self.log.error('Can not change the keyboard layout: {0}'
                            .format(e))
@@ -88,34 +89,50 @@ class KeyboardLayout(base._TextBox):
 
 
 class _Keyboard(object):
-    """
-        Canonical representation of a keyboard layout. It provides some utility
-        methods to build/transform it from/to some other representations.
-    """
-    def __init__(self):
-        pass
 
-    def __str__(self):
-        if not self.variant:
-            return self.layout
+    def __init__(self, configured_keyboards):
+        if len(configured_keyboards) == 1:
+            self.languages = {
+                'first': configured_keyboards[0],
+                'second': 'None',
+            }
         else:
-            return self.layout + " " + self.variant
+            self.languages = {
+                'first': configured_keyboards[0],
+                'second': configured_keyboards[1],
+            }
+        self.regular_strings = {
+            'hexadecimal': {
+                'first': """\w{4}e\w{3}""",
+                'second': """\w{4}f\w{3}""",
+            },
+            'binary': {
+                'first': """\w{4}0\w{3}""",
+                'second': """\w{4}1\w{3}""",
+            },
+            "inetger": "\d{8}",
+            "led_mask": """LED mask:\s\s\w{8}""",
+        }
 
-    def from_dict(self, dictionary):
-        """
-            Accept a dict containing as keys the layout and variant of a
-            keyboard layout.
-        """
-        self.layout = dictionary['layout']
-        self.variant = dictionary.get('variant')
-        return self
+    def get_keyboard_layout(self, xset_output):
+        raw_list = []
 
-    def from_setxkbmap_query(self, setxkbmap_out):
-        """
-            Accept a setxkbmap query represented as a string.
-        """
-        return self.from_dict(
-            dict((a, b.strip()) for a, b in
-                 (item.split(":") for item in
-                  setxkbmap_out.splitlines()))
-            )
+        for item in xset_output.strip().splitlines():
+            if re.search(self.regular_strings['led_mask'], item):
+                raw_led_mask = re.search(self.regular_strings['led_mask'], item).group()
+                raw_list = raw_led_mask.split(':')
+                led_mask = raw_list[1].strip()
+                break
+
+        if not re.search(self.regular_strings['inetger'], led_mask):
+            cur_regular_strings = self.regular_strings['hexadecimal']
+        else:
+            cur_regular_strings = self.regular_strings['binary']
+
+        if re.search(cur_regular_strings['first'], led_mask):
+            result = self.languages['first']
+        elif re.search(cur_regular_strings['second'], led_mask):
+            result = self.languages['second']
+        else:
+            result = "ERR"
+        return result
