@@ -18,17 +18,19 @@ Installation
 
 #.  Create a Qtile configuration directory and create a configuration file.
     It is probably easiest to start with one of the configuration files
-    in the ``examples/config`` directory of the Qtile distribution::
+    in the ``qtile-examples`` repository::
 
       mkdir ~/.config/qtile
+      git clone https://github.com/qtile/qtile-examples.git
+      cp qtile-examples/config/config.py ~/.config/qtile/config.py
 
-      cp examples/config/cortesi-config.py ~/.config/qtile/config.py
+#.  Make Qtile run as your window manager. If you are using a login manager,
+    you can just do::
 
-#.  Make Qtile run. On my system, this meant creating an ``.xsession`` file
-    containing the following
+      sudo cp resources/qtile.desktop /usr/share/xsessions
 
-    .. code-block:: sh
+    and select 'Qtile' as your session type. More information on starting qtile
+    is available in the documentation_.
 
-      #!/bin/sh
-      exec /usr/bin/qtile
+.. _documentation: http://qtile.readthedocs.org/en/latest/manual/config/starting.html
 

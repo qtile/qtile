@@ -7,18 +7,6 @@ checkouts from their repositories. You'll need python's ``setuptools``
 installed. Here's a brief step-by-step guide:
 
 
-libxcb
-------
-
-.. code-block:: bash
-
-    git clone git://anongit.freedesktop.org/git/xcb/libxcb
-    cd libxcb
-    ./autogen.sh
-    make
-    sudo make install
-
-
 xpyb
 -------
 
