@@ -1,3 +1,9 @@
+qtile (0.6.0-trusty1) trusty; urgency=low
+
+  * Version bump for trusty tahr.
+
+ -- Tycho Andersen <tycho@tycho.ws>  Sat, 29 Mar 2014 17:05:36 -0500
+
 qtile (0.6.0-saucy2) saucy; urgency=low
 
   * Take TODO out of debian docs
