@@ -24,7 +24,7 @@ Features
 
 setup(
     name="qtile",
-    version="0.6",
+    version="0.7-dev",
     description="A pure-Python tiling window manager.",
     long_description=long_description,
     classifiers=[

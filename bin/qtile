@@ -25,6 +25,12 @@ import locale
 import logging
 from libqtile import confreader, manager
 
+import pkg_resources
+try:
+    VERSION = pkg_resources.require("qtile")[0].version
+except pkg_resources.DistributionNotFound:
+    VERSION = 'dev'
+
 def rename_process():
     """
     Try to rename the qtile process if py-setproctitle is installed:
@@ -45,7 +51,7 @@ def make_qtile():
     parser = ArgumentParser(
         description='A full-featured, pure-Python tiling window manager.',
         prog='qtile',
-        version="0.7-dev")
+        version=VERSION)
 
     parser.add_argument(
         "-c", "--config",
