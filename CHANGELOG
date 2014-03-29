@@ -13,6 +13,11 @@ qtile 0.7, released 2014-MM-DD:
         - CPU widget lag detection doesn't lag
         - fix a ZeroDivisionError in CPU graph
         - remove a lot of duplicate and unused code
+        - Steam windows are placed more correctly
+        - Fixed several crashes in qsh
+        - performance improvements for some layouts
+        - keyboard layout widget behaves better with multiple keyboard
+          configurations
 
 qtile 0.6, released 2013-05-11:
     !!! Config breakage !!!
