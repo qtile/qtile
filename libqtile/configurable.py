@@ -33,15 +33,22 @@ class Configurable(object):
         self._widget_defaults.update({d[0]: d[1] for d in defaults})
 
     def __getattr__(self, name):
+        found, value = self._find_default(name)
+        if found:
+            setattr(self, name, value)
+            return value
+        else:
+            raise AttributeError("no attribute: %s" % name)
+
+    def _find_default(self, name):
+        """Returns a tuple (found, value)"""
         defaults = self._widget_defaults.copy()
         defaults.update(self.global_defaults)
         defaults.update(self._user_config)
-
-        if name in defaults.iterkeys():
-            setattr(self, name, defaults[name])
-            return getattr(self, name)
+        if name in defaults:
+            return (True, defaults[name])
         else:
-            raise AttributeError("no attribute: %s" % name)
+            return (False, None)
 
 
 class ExtraFallback(object):
@@ -52,13 +59,20 @@ class ExtraFallback(object):
 
     def __init__(self, name, fallback):
         self.name = name
+        self.hidden_attribute = "_" + name
         self.fallback = fallback
 
     def __get__(self, instance, owner=None):
-        try:
-            retval = instance.__dict__[self.name]
-        except KeyError:
-            retval = Configurable.__getattr__(instance, self.fallback)
-            setattr(instance, self.name, retval)
+        retval = getattr(instance, self.hidden_attribute, None)
+
+        if not retval:
+            _found, retval = Configurable._find_default(instance, self.name)
+
+        if not retval:
+            retval = getattr(instance, self.fallback, None)
 
         return retval
+
+    def __set__(self, instance, value):
+        """Set own value to a hidden attribute of the object"""
+        setattr(instance, self.hidden_attribute, value)
