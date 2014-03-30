@@ -1,4 +1,4 @@
-qtile 0.7, released 2014-MM-DD:
+qtile 0.7.0, released 2014-03-30:
     * features
         - new disk free percentage widget
         - new widget to display static image
@@ -7,10 +7,13 @@ qtile 0.7, released 2014-MM-DD:
         - volume widget changes volume linear-ly instead of log-ly
         - only draw bar when idle, vastly reducing the number of bar draws and
           speeding things up
+        - new Gmail widget
+        - Tile now supports automatically managing master windows via the
+          `master_match` parameter.
+        - include support for minimum height, width, size increment hints
     * bugfixes
         - don't crash on any exception in main loop
         - don't crash on exceptions in hooks
-        - CPU widget lag detection doesn't lag
         - fix a ZeroDivisionError in CPU graph
         - remove a lot of duplicate and unused code
         - Steam windows are placed more correctly
@@ -18,6 +21,8 @@ qtile 0.7, released 2014-MM-DD:
         - performance improvements for some layouts
         - keyboard layout widget behaves better with multiple keyboard
           configurations
+    * config breakage
+        - Tile's shuffleMatch is renamed to resetMaster
 
 qtile 0.6, released 2013-05-11:
     !!! Config breakage !!!
