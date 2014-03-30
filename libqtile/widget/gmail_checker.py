@@ -85,8 +85,12 @@ class GmailChecker(base._TextBox):
                     else:
                         self.text = self.settings['fmt'] % (messages, unseen)
                 else:
+                    _logger.exception(
+                        'GmailChecker UNKNOWN error, answer: %s, raw_data: %s'
+                        % (str(answer), str(raw_data)))
                     self.text = "UNKNOWN ERROR"
-            except Exception:
+            except Exception, _error:
+                _logger.exception('GmailChecker error: %s' % str(_error))
                 self.text = "ERROR"
         self.bar.draw()
         return True
