@@ -33,12 +33,21 @@ class YahooWeather(base._TextBox):
 
     defaults = [
         ## One of (location, woeid) must be set.
-        ('location', None,
-         'Location to fetch weather for. Ignored if woeid is set.'),
-        ('woeid', None,
-         'Where On Earth ID. Auto-calculated if location is set.'),
-        ('format', '{location_city}: {condition_temp} °{units_temperature}',
-         'Display format'),
+        (
+            'location',
+            None,
+            'Location to fetch weather for. Ignored if woeid is set.'
+        ),
+        (
+            'woeid',
+            None,
+            'Where On Earth ID. Auto-calculated if location is set.'
+        ),
+        (
+            'format',
+            '{location_city}: {condition_temp} °{units_temperature}',
+            'Display format'
+        ),
         ('metric', True, 'True to use metric/C, False to use imperial/F'),
         ('update_interval', 600, 'Update interval in seconds'),
         ('up', '^', 'symbol for rising atmospheric pressure'),
@@ -59,12 +68,12 @@ class YahooWeather(base._TextBox):
 
     def wx_updater(self):
         self.log.info('adding WX widget timer')
+
         def worker():
             data = self.fetch_weather()
             gobject.idle_add(self.update, data)
         threading.Thread(target=worker).start()
         return True
-
 
     def update(self, data):
         if data:
@@ -78,7 +87,7 @@ class YahooWeather(base._TextBox):
         url = QUERY_URL + urllib.urlencode({
             'q': 'select woeid from geo.places where text="%s"' % location,
             'format': 'json'
-            })
+        })
         try:
             response = urllib2.urlopen(url)
             data = json.loads(response.read())
@@ -112,7 +121,7 @@ class YahooWeather(base._TextBox):
             ('atmosphere', ('humidity', 'visibility', 'pressure', 'rising')),
             ('astronomy', ('sunrise', 'sunset')),
             ('condition', ('text', 'code', 'temp', 'date'))
-            )
+        )
 
         data = {}
         for tag, attrs in structure:

@@ -21,6 +21,7 @@
 import copy
 from .. import command, configurable
 
+
 class Layout(command.CommandObject, configurable.Configurable):
     """
         This class defines the API that should be exposed by all layouts.
@@ -29,10 +30,12 @@ class Layout(command.CommandObject, configurable.Configurable):
     def _name(cls):
         return cls.__class__.__name__.lower()
 
-    defaults = [
-        ("name", None, "The name of this layout"
-            "(usually the class' name in lowercase, e.g. 'max'"),
-    ]
+    defaults = [(
+        "name",
+        None,
+        "The name of this layout"
+        " (usually the class' name in lowercase, e.g. 'max')"
+    )]
 
     def __init__(self, **config):
         # name is a little odd; we can't resolve it until the class is defined
@@ -61,7 +64,7 @@ class Layout(command.CommandObject, configurable.Configurable):
         c.group = group
         return c
 
-    def focus(self, c):
+    def focus(self, client):
         """
             Called whenever the focus changes.
         """
@@ -73,7 +76,7 @@ class Layout(command.CommandObject, configurable.Configurable):
         """
         pass
 
-    def add(self, c):
+    def add(self, client):
         """
             Called whenever a window is added to the group, whether the layout
             is current or not. The layout should just add the window to its
@@ -81,7 +84,7 @@ class Layout(command.CommandObject, configurable.Configurable):
         """
         pass
 
-    def remove(self, c):
+    def remove(self, client):
         """
             Called whenever a window is removed from the group, whether the
             layout is current or not. The layout should just de-register the
@@ -91,7 +94,7 @@ class Layout(command.CommandObject, configurable.Configurable):
         """
         pass
 
-    def configure(self, c, screen):
+    def configure(self, client, screen):
         """
             This method should:
 
@@ -112,9 +115,9 @@ class Layout(command.CommandObject, configurable.Configurable):
 
     def _items(self, name):
         if name == "screen":
-            return True, None
+            return (True, None)
         elif name == "group":
-            return True, None
+            return (True, None)
 
     def _select(self, name, sel):
         if name == "screen":
@@ -156,7 +159,7 @@ class SingleWindow(Layout):
                 screen.width, screen.height,
                 0,
                 None,
-                )
+            )
             win.unhide()
         else:
             win.hide()
@@ -197,7 +200,7 @@ class Delegate(Layout):
 
     def _get_active_layout(self):
         """Returns layout to which delegate commands to"""
-        raise NotImplementedError("abstrac method")
+        raise NotImplementedError("abstract method")
 
     def delegate_layout(self, windows, mapping):
         """Delegates layouting actual windows
@@ -262,8 +265,12 @@ class Delegate(Layout):
                 focus = layouts[idx].focus_last()
         return focus
 
-    def cmd_up(self):
-        self._get_active_layout().cmd_up()
+    def __getattr__(self, name):
+        """Delegate unimplemented command calls to active layout.
 
-    def cmd_down(self):
-        self._get_active_layout().cmd_down()
+        For `cmd_`-methods that don't exist on the Delegate subclass, this
+        looks for an implementation on the active layout.
+        """
+        if name.startswith('cmd_'):
+            return getattr(self._get_active_layout(), name)
+        return super(Delegate, self).__getattr__(name)

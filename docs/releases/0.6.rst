@@ -33,7 +33,7 @@ This release breaks your config file in several ways:
 
 For most people with basic configs, you should be able to just:
 
-    ``sed -i -e 's/libqtile.manager/libqtile.config' config.py``
+    ``sed -i -e 's/libqtile.manager/libqtile.config/' config.py``
 
 ...dgroups users will need to go to a bit more work, but hopefully
 configuration will be much simpler now for new users.

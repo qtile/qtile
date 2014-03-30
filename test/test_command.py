@@ -188,7 +188,6 @@ def test_items_qtile(self):
     assert len(lst) == 2
     assert self.c.window[lst[0]]
     assert self.c.items("screen") == (True, [0, 1])
-    assert_raises(libqtile.command.CommandError, self.c.items, "wibble")
 
 
 @Xephyr(True, ServerConfig())

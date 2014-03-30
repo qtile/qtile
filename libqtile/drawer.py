@@ -118,7 +118,8 @@ class TextFrame:
 
     def draw(self, x, y, rounded=True):
         self.drawer.set_source_rgb(self.border_color)
-        opts = [x, y,
+        opts = [
+            x, y,
             self.layout.width + self.pad_left + self.pad_right,
             self.layout.height + self.pad_top + self.pad_bottom,
             self.border_width
@@ -135,7 +136,8 @@ class TextFrame:
 
     def draw_fill(self, x, y, rounded=True):
         self.drawer.set_source_rgb(self.border_color)
-        opts = [x, y,
+        opts = [
+            x, y,
             self.layout.width + self.pad_left + self.pad_right,
             self.layout.height + self.pad_top + self.pad_bottom,
             self.border_width
@@ -192,12 +194,12 @@ class Drawer:
             ]
         )
         self.surface = cairo.XCBSurface(
-                            qtile.conn.conn,
-                            self.pixmap,
-                            self.find_root_visual(),
-                            self.width,
-                            self.height,
-                        )
+            qtile.conn.conn,
+            self.pixmap,
+            self.find_root_visual(),
+            self.width,
+            self.height,
+        )
         self.ctx = self.new_ctx()
         self.clear((0, 0, 1))
 
@@ -297,7 +299,7 @@ class Drawer:
         self.ctx.stroke()
 
     def textlayout(self, text, colour, font_family, font_size, font_shadow,
-            markup=False, **kw):
+                   markup=False, **kw):
         """
             Get a text layout.
 

@@ -25,8 +25,9 @@ if dbus:
         def GetCapabilities(self):
             return ('body')
 
-        @service.method(BUS_NAME, in_signature='susssasa{sv}i',
-                             out_signature='u')
+        @service.method(
+            BUS_NAME, in_signature='susssasa{sv}i', out_signature='u'
+        )
         def Notify(self, app_name, replaces_id, app_icon, summary,
                    body, actions, hints, timeout):
             notif = Notification(summary, body, timeout, hints)
@@ -57,18 +58,25 @@ class NotificationManager(object):
     def __init__(self):
         self.notifications = []
         self.callbacks = []
+        self._service = None
 
-        if dbus:
+    @property
+    def service(self):
+        if dbus and self._service is None:
             try:
                 DBusGMainLoop(set_as_default=True)
-                self.service = NotificationService(self)
+                self._service = NotificationService(self)
             except Exception:
-                logging.getLogger('qtile').exception('Dbus init failed')
-                self.service = None
-        else:
-            self.service = None
+                logging.getLogger('qtile').exception('Dbus connection failed')
+                self._service = None
+        return self._service
 
     def register(self, callback):
+        if not self.service:
+            logging.getLogger('qtile').warning(
+                'Registering %s without any dbus connection existing',
+                callback.__name__,
+            )
         self.callbacks.append(callback)
 
     def add(self, notif):
@@ -80,7 +88,7 @@ class NotificationManager(object):
 
     def show(self, *args, **kwargs):
         notif = Notification(*args, **kwargs)
-        return notif, self.add(notif)
+        return (notif, self.add(notif))
 
 
 notifier = NotificationManager()

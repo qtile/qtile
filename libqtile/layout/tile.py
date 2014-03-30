@@ -1,5 +1,5 @@
 from base import Layout
-from .. import utils, manager
+from .. import utils
 
 
 class Tile(Layout):
@@ -12,7 +12,8 @@ class Tile(Layout):
     ]
 
     def __init__(self, ratio=0.618, masterWindows=1, expand=True,
-        ratio_increment=0.05, add_on_top=True, shift_windows=False, **config):
+                 ratio_increment=0.05, add_on_top=True, shift_windows=False,
+                 master_match=None, **config):
         Layout.__init__(self, **config)
         self.add_defaults(Tile.defaults)
         self.clients = []
@@ -23,6 +24,7 @@ class Tile(Layout):
         self.ratio_increment = ratio_increment
         self.add_on_top = add_on_top
         self.shift_windows = shift_windows
+        self.master_match = master_match
 
     @property
     def master_windows(self):
@@ -60,8 +62,10 @@ class Tile(Layout):
         if self.clients:
             return self.clients[0]
 
-    def focus_next(self, win):
-        idx = self.clients.index(win)
+    def focus_next(self, client):
+        if client not in self.clients:
+            return
+        idx = self.clients.index(client)
         if len(self.clients) > idx + 1:
             return self.clients[idx + 1]
 
@@ -69,8 +73,10 @@ class Tile(Layout):
         if self.clients:
             return self.clients[-1]
 
-    def focus_prev(self, win):
-        idx = self.clients.index(win)
+    def focus_prev(self, client):
+        if client not in self.clients:
+            return
+        idx = self.clients.index(client)
         if idx > 0:
             return self.clients[idx - 1]
 
@@ -109,10 +115,16 @@ class Tile(Layout):
             function(self.clients)
             self.group.layoutAll(True)
 
-    def shuffleMatch(self, match):
+    def resetMaster(self, match=None):
+        if not match and self.master_match:
+            match = self.master_match
+        else:
+            return
         if self.clients:
             masters = [c for c in self.clients if match.compare(c)]
-            self.clients = masters + [c for c in self.clients if c not in masters]
+            self.clients = masters + [
+                c for c in self.clients if c not in masters
+            ]
 
     def shift(self, idx1, idx2):
         if self.clients:
@@ -125,38 +137,46 @@ class Tile(Layout):
         c.clients = []
         return c
 
-    def focus(self, c):
-        self.focused = c
+    def focus(self, client):
+        self.focused = client
 
     def blur(self):
         self.focused = None
 
-    def add(self, c):
+    def add(self, client):
         index = 0
         if not self.add_on_top and self.clients and self.focused:
             index = self.clients.index(self.focused)
-        self.clients.insert(index, c)
+        self.clients.insert(index, client)
+        self.resetMaster()
 
-    def remove(self, c):
-        if self.focused is c:
+    def remove(self, client):
+        if client not in self.clients:
+            return
+
+        if self.focused is client:
             self.focused = None
-        self.clients.remove(c)
-        if self.clients and c is self.focused:
+
+        self.clients.remove(client)
+        if self.clients and client is self.focused:
             self.focused = self.clients[0]
         return self.focused
 
-    def configure(self, c, screen):
+    def configure(self, client, screen):
         screenWidth = screen.width
         screenHeight = screen.height
-        x = y = w = h = 0
+        x = 0
+        y = 0
+        w = 0
+        h = 0
         borderWidth = self.border_width
         margin = self.margin
-        if self.clients and c in self.clients:
-            pos = self.clients.index(c)
-            if c in self.master_windows:
-                w = (int(screenWidth * self.ratio) \
-                         if len(self.slave_windows) or not self.expand \
-                         else screenWidth)
+        if self.clients and client in self.clients:
+            pos = self.clients.index(client)
+            if client in self.master_windows:
+                w = int(screenWidth * self.ratio) \
+                    if len(self.slave_windows) or not self.expand \
+                    else screenWidth
                 h = screenHeight / self.master
                 x = screen.x
                 y = screen.y + pos * h
@@ -164,29 +184,29 @@ class Tile(Layout):
                 w = screenWidth - int(screenWidth * self.ratio)
                 h = screenHeight / (len(self.slave_windows))
                 x = screen.x + int(screenWidth * self.ratio)
-                y = screen.y + self.clients[self.master:].index(c) * h
-            if c is self.focused:
+                y = screen.y + self.clients[self.master:].index(client) * h
+            if client is self.focused:
                 bc = self.group.qtile.colorPixel(self.border_focus)
             else:
                 bc = self.group.qtile.colorPixel(self.border_normal)
-            c.place(
-                x+margin,
-                y+margin,
-                w-margin*2-borderWidth*2,
-                h-margin*2-borderWidth*2,
+            client.place(
+                x + margin,
+                y + margin,
+                w - margin * 2 - borderWidth * 2,
+                h - margin * 2 - borderWidth * 2,
                 borderWidth,
                 bc,
-                )
-            c.unhide()
+            )
+            client.unhide()
         else:
-            c.hide()
+            client.hide()
 
     def info(self):
         return dict(
-            all=[c.name for c in self.clients],
+            clients=[c.name for c in self.clients],
             master=[c.name for c in self.master_windows],
             slave=[c.name for c in self.slave_windows],
-            )
+        )
 
     def cmd_down(self):
         self.down()

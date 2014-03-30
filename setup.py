@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 
-try:
-    from setuptools import setup, find_packages
-except ImportError:
-    from distutils.core import setup, find_packages
+from distutils.core import setup
 
 long_description = """
 A pure-Python tiling window manager.
@@ -24,7 +21,7 @@ Features
 
 setup(
     name="qtile",
-    version="0.6",
+    version="0.7-dev",
     description="A pure-Python tiling window manager.",
     long_description=long_description,
     classifiers=[
@@ -38,10 +35,16 @@ setup(
     keywords="qtile tiling window manager",
     author="Aldo Cortesi",
     author_email="aldo@nullcube.com",
+    maintainer="Tycho Andersen",
+    maintainer_email="tycho@tycho.ws",
     url="http://qtile.org",
     license="MIT",
-    include_package_data=True,
-    packages=find_packages(),
+    packages=['libqtile',
+              'libqtile.layout',
+              'libqtile.widget',
+              'libqtile.resources'
+    ],
+    package_data={'libqtile.resources': ['battery-icons/*.png']},
     scripts=[
         "bin/qsh",
         "bin/qtile",

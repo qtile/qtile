@@ -25,8 +25,10 @@ import logging
 import os
 import xcbq
 
+
 class QtileError(Exception):
     pass
+
 
 def lget(o, v):
     try:
@@ -46,7 +48,10 @@ def translateMasks(modifiers):
             masks.append(xcbq.ModMasks[i])
         except KeyError:
             raise KeyError("Unknown modifier: %s" % i)
-    return reduce(operator.or_, masks) if masks else 0
+    if masks:
+        return reduce(operator.or_, masks)
+    else:
+        return 0
 
 
 def shuffleUp(lst):

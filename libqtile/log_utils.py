@@ -5,8 +5,7 @@ from logging import getLogger, StreamHandler
 
 
 class ColorFormatter(logging.Formatter):
-    """Logging formatter adding console colors to the output.
-    """
+    """Logging formatter adding console colors to the output."""
     black, red, green, yellow, blue, magenta, cyan, white = range(8)
     colors = {
         'WARNING': yellow,
@@ -20,7 +19,8 @@ class ColorFormatter(logging.Formatter):
         'BLUE': blue,
         'MAGENTA': magenta,
         'CYAN': cyan,
-        'WHITE': white}
+        'WHITE': white
+    }
     reset_seq = '\033[0m'
     color_seq = '\033[%dm'
     bold_seq = '\033[1m'
@@ -42,10 +42,13 @@ class ColorFormatter(logging.Formatter):
 
 def init_log(log_level=logging.ERROR, logger='qtile'):
     handler = logging.FileHandler(
-        os.path.expanduser('~/.%s.log' % logger))
+        os.path.expanduser('~/.%s.log' % logger)
+    )
     handler.setFormatter(
         logging.Formatter(
-            "%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s"))
+            "%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s"
+        )
+    )
     log = getLogger(logger)
     log.setLevel(log_level)
     log.addHandler(handler)
@@ -54,6 +57,8 @@ def init_log(log_level=logging.ERROR, logger='qtile'):
     handler.setFormatter(
         ColorFormatter(
             '$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s'
-            ' %(funcName)s:%(lineno)d $RESET %(message)s'))
+            ' %(funcName)s:%(lineno)d $RESET %(message)s'
+        )
+    )
     log.addHandler(handler)
     return log

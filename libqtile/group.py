@@ -1,7 +1,11 @@
-import command, hook, window, utils
+import command
+import hook
+import window
+import utils
 import contextlib
 import xcb
 import xcb.xproto
+
 
 class _Group(command.CommandObject):
     """
@@ -44,8 +48,11 @@ class _Group(command.CommandObject):
         for index, obj in enumerate(self.layouts):
             if obj.name == layout:
                 self.currentLayout = index
-                hook.fire("layout_change",
-                          self.layouts[self.currentLayout], self)
+                hook.fire(
+                    "layout_change",
+                    self.layouts[self.currentLayout],
+                    self
+                )
                 self.layoutAll()
                 return
         raise ValueError("No such layout: %s" % layout)
@@ -76,15 +83,17 @@ class _Group(command.CommandObject):
         if self.screen and len(self.windows):
             with self.disableMask(xcb.xproto.EventMask.EnterWindow):
                 normal = [x for x in self.windows if not x.floating]
-                floating = [x for x in self.windows
-                    if x.floating and not x.minimized]
+                floating = [
+                    x for x in self.windows
+                    if x.floating and not x.minimized
+                ]
                 screen = self.screen.get_rect()
                 if normal:
                     self.layout.layout(normal, screen)
                 if floating:
                     self.floating_layout.layout(floating, screen)
-                if (self.currentWindow and
-                    self.screen == self.qtile.currentScreen):
+                if self.currentWindow and \
+                        self.screen == self.qtile.currentScreen:
                     self.currentWindow.focus(warp)
 
     def _setScreen(self, screen):
@@ -132,18 +141,19 @@ class _Group(command.CommandObject):
         if self.qtile._drag:
             # don't change focus while dragging windows
             return
-        if win and not win in self.windows:
-            return
         if win:
-            self.currentWindow = win
-            if win.floating:
-                for l in self.layouts:
-                    l.blur()
-                self.floating_layout.focus(win)
+            if not win in self.windows:
+                return
             else:
-                self.floating_layout.blur()
-                for l in self.layouts:
-                    l.focus(win)
+                self.currentWindow = win
+                if win.floating:
+                    for l in self.layouts:
+                        l.blur()
+                    self.floating_layout.focus(win)
+                else:
+                    self.floating_layout.blur()
+                    for l in self.layouts:
+                        l.focus(win)
         else:
             self.currentWindow = None
         hook.fire("focus_change")
@@ -165,8 +175,8 @@ class _Group(command.CommandObject):
         self.windows.add(win)
         win.group = self
         try:
-            if (win.window.get_net_wm_state() == 'fullscreen' and
-                self.qtile.config.auto_fullscreen):
+            if win.window.get_net_wm_state() == 'fullscreen' and \
+                    self.qtile.config.auto_fullscreen:
                 win._float_state = window.FULLSCREEN
             elif self.floating_layout.match(win):
                 # !!! tell it to float, can't set floating
@@ -228,11 +238,11 @@ class _Group(command.CommandObject):
 
     def _items(self, name):
         if name == "layout":
-            return True, range(len(self.layouts))
+            return (True, range(len(self.layouts)))
         elif name == "window":
-            return True, [i.window.wid for i in self.windows]
+            return (True, [i.window.wid for i in self.windows])
         elif name == "screen":
-            return True, None
+            return (True, None)
 
     def _select(self, name, sel):
         if name == "layout":
@@ -278,34 +288,33 @@ class _Group(command.CommandObject):
             screen = self.qtile.screens[screen]
         screen.setGroup(self)
 
-    def _dirGroup(self, direction):
-        currentgroup = self.qtile.groups.index(self)
-        nextgroup = (currentgroup + direction) % len(self.qtile.groups)
-        return self.qtile.groups[nextgroup]
-
-    def _dirSkipEmptyGroup(self, direction):
+    def _dirGroup(self, direction, skip_empty=False, skip_managed=False):
         """
-        Find a non-empty group walking the groups list in the specified
+        Find a group walking the groups list in the specified
         direction.
+
+        skip_empty skips the empty groups
+        skip_managed skips the groups that have a screen
         """
-        index = currentgroup = self.qtile.groups.index(self)
-        while True:
-            index = (index + direction) % len(self.qtile.groups)
-            group = self.qtile.groups[index]
-            if index == currentgroup or group.windows:
-                return group
 
-    def prevGroup(self):
-        return self._dirGroup(-1)
+        def match(group):
+            if group is self:
+                return True
+            if skip_empty and not group.windows:
+                return False
+            if skip_managed and group.screen:
+                return False
+            return True
 
-    def nextGroup(self):
-        return self._dirGroup(1)
+        groups = [group for group in self.qtile.groups if match(group)]
+        index = (groups.index(self) + direction) % len(groups)
+        return groups[index]
 
-    def prevEmptyGroup(self):
-        return self._dirSkipEmptyGroup(-1)
+    def prevGroup(self, skip_empty=False, skip_managed=False):
+        return self._dirGroup(-1, skip_empty, skip_managed)
 
-    def nextEmptyGroup(self):
-        return self._dirSkipEmptyGroup(1)
+    def nextGroup(self, skip_empty=False, skip_managed=False):
+        return self._dirGroup(1, skip_empty, skip_managed)
 
     def cmd_unminimise_all(self):
         """
@@ -319,34 +328,26 @@ class _Group(command.CommandObject):
         if not self.windows:
             return
         if self.currentWindow.floating:
-            nxt = self.floating_layout.focus_next(self.currentWindow)
-            if not nxt:
-                nxt = self.layout.focus_first()
-            if not nxt:
-                nxt = self.floating_layout.focus_first()
+            nxt = self.floating_layout.focus_next(self.currentWindow) or \
+                self.layout.focus_first() or \
+                self.floating_layout.focus_first()
         else:
-            nxt = self.layout.focus_next(self.currentWindow)
-            if not nxt:
-                nxt = self.floating_layout.focus_first()
-            if not nxt:
-                nxt = self.layout.focus_first()
+            nxt = self.layout.focus_next(self.currentWindow) or \
+                self.floating_layout.focus_first() or \
+                self.layout.focus_first()
         self.focus(nxt, True)
 
     def cmd_prev_window(self):
         if not self.windows:
             return
         if self.currentWindow.floating:
-            nxt = self.floating_layout.focus_prev(self.currentWindow)
-            if not nxt:
-                nxt = self.layout.focus_last()
-            if not nxt:
-                nxt = self.floating_layout.focus_last()
+            nxt = self.floating_layout.focus_prev(self.currentWindow) or \
+                self.layout.focus_last() or \
+                self.floating_layout.focus_last()
         else:
-            nxt = self.layout.focus_prev(self.currentWindow)
-            if not nxt:
-                nxt = self.floating_layout.focus_last()
-            if not nxt:
-                nxt = self.layout.focus_last()
+            nxt = self.layout.focus_prev(self.currentWindow) or \
+                self.floating_layout.focus_last() or \
+                self.layout.focus_last()
         self.focus(nxt, True)
 
     def cmd_switch_groups(self, name):
@@ -354,4 +355,3 @@ class _Group(command.CommandObject):
             Switch position of current group with name
         """
         self.qtile.cmd_switch_groups(self.name, name)
-

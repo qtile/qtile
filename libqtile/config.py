@@ -1,4 +1,9 @@
-import command, hook, utils, xcbq
+import command
+import hook
+import sys
+import utils
+import xcbq
+
 
 class Key:
     """
@@ -16,7 +21,9 @@ class Key:
             command.lazy helper. If multiple Call objects are specified, they
             are run in sequence.
         """
-        self.modifiers, self.key, self.commands = modifiers, key, commands
+        self.modifiers = modifiers
+        self.key = key
+        self.commands = commands
         if key not in xcbq.keysyms:
             raise utils.QtileError("Unknown key: %s" % key)
         self.keysym = xcbq.keysyms[key]
@@ -28,6 +35,7 @@ class Key:
     def __repr__(self):
         return "Key(%s, %s)" % (self.modifiers, self.key)
 
+
 class Drag(object):
     """
         Defines binding of a mouse to some dragging action
@@ -35,11 +43,13 @@ class Drag(object):
         On each motion event command is executed
         with two extra parameters added
         x and y offset from previous move
+
+        It focuses clicked window by default
+        If you want to prevent it pass focus=None as an argument
     """
-    def __init__(self, modifiers, button, *commands, **kw):
-        self.start = kw.pop('start', None)
-        if kw:
-            raise TypeError("Unexpected arguments: %s" % ', '.join(kw))
+    def __init__(self, modifiers, button, *commands, **kwargs):
+        self.start = kwargs.get("start", None)
+        self.focus = kwargs.get("focus", "before")
         self.modifiers = modifiers
         self.button = button
         self.commands = commands
@@ -56,8 +66,12 @@ class Drag(object):
 class Click(object):
     """
         Defines binding of a mouse click
+
+        It focuses clicked window by default
+        If you want to prevent it pass focus=None as an argument
     """
-    def __init__(self, modifiers, button, *commands):
+    def __init__(self, modifiers, button, *commands, **kwargs):
+        self.focus = kwargs.get("focus", "before")
         self.modifiers = modifiers
         self.button = button
         self.commands = commands
@@ -80,22 +94,33 @@ class ScreenRect(object):
         self.height = height
 
     def __repr__(self):
-        return '<%s %d,%d %d,%d>' % (self.__class__.__name__,
-            self.x, self.y, self.width, self.height)
+        return '<%s %d,%d %d,%d>' % (
+            self.__class__.__name__,
+            self.x, self.y,
+            self.width, self.height
+        )
 
     def hsplit(self, columnwidth):
         assert columnwidth > 0
         assert columnwidth < self.width
-        return (self.__class__(self.x, self.y, columnwidth, self.height),
-                self.__class__(self.x + columnwidth, self.y,
-                               self.width - columnwidth, self.height))
+        return (
+            self.__class__(self.x, self.y, columnwidth, self.height),
+            self.__class__(
+                self.x + columnwidth, self.y,
+                self.width - columnwidth, self.height
+            )
+        )
 
     def vsplit(self, rowheight):
         assert rowheight > 0
         assert rowheight < self.height
-        return (self.__class__(self.x, self.y, self.width, rowheight),
-                self.__class__(self.x, self.y + rowheight,
-                               self.width, self.height - rowheight))
+        return (
+            self.__class__(self.x, self.y, self.width, rowheight),
+            self.__class__(
+                self.x, self.y + rowheight,
+                self.width, self.height - rowheight
+            )
+        )
 
 
 class Screen(command.CommandObject):
@@ -116,20 +141,26 @@ class Screen(command.CommandObject):
             x,y,width and height aren't specified usually unless you are
             using 'fake screens'.
         """
-        self.top, self.bottom = top, bottom
-        self.left, self.right = left, right
+        self.top = top
+        self.bottom = bottom
+        self.left = left
+        self.right = right
         self.qtile = None
         self.index = None
-        self.x = x  # x position of upper left corner can be > 0
-                    # if one screen is "right" of the other
+        # x position of upper left corner can be > 0
+        # if one screen is "right" of the other
+        self.x = x
         self.y = y
         self.width = width
         self.height = height
 
     def _configure(self, qtile, index, x, y, width, height, group):
         self.qtile = qtile
-        self.index, self.x, self.y = index, x, y,
-        self.width, self.height = width, height
+        self.index = index
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
         self.setGroup(group)
         for i in self.gaps:
             i._configure(qtile, self)
@@ -137,9 +168,9 @@ class Screen(command.CommandObject):
     @property
     def gaps(self):
         lst = []
-        for i in [self.top, self.bottom, self.left, self.right]:
-            if i:
-                lst.append(i)
+        lst.extend([
+            i for i in [self.top, self.bottom, self.left, self.right] if i
+        ])
         return lst
 
     @property
@@ -210,17 +241,19 @@ class Screen(command.CommandObject):
 
         hook.fire("setgroup")
         hook.fire("focus_change")
-        hook.fire("layout_change",
-                  self.group.layouts[self.group.currentLayout],
-                  self.group)
+        hook.fire(
+            "layout_change",
+            self.group.layouts[self.group.currentLayout],
+            self.group
+        )
 
     def _items(self, name):
         if name == "layout":
-            return True, range(len(self.group.layouts))
+            return (True, range(len(self.group.layouts)))
         elif name == "window":
-            return True, [i.window.wid for i in self.group.windows]
+            return (True, [i.window.wid for i in self.group.windows])
         elif name == "bar":
-            return False, [x.position for x in self.gaps]
+            return (False, [x.position for x in self.gaps])
 
     def _select(self, name, sel):
         if name == "layout":
@@ -267,25 +300,19 @@ class Screen(command.CommandObject):
         """
         self.resize(x, y, w, h)
 
-    def cmd_nextgroup(self, skip_empty=False):
+    def cmd_nextgroup(self, skip_empty=False, skip_managed=False):
         """
             Switch to the next group.
         """
-        if skip_empty:
-            n = self.group.nextEmptyGroup()
-        else:
-            n = self.group.nextGroup()
+        n = self.group.nextGroup(skip_empty, skip_managed)
         self.setGroup(n)
         return n.name
 
-    def cmd_prevgroup(self, skip_empty=False):
+    def cmd_prevgroup(self, skip_empty=False, skip_managed=False):
         """
             Switch to the previous group.
         """
-        if skip_empty:
-            n = self.group.prevEmptyGroup()
-        else:
-            n = self.group.prevGroup()
+        n = self.group.prevGroup(skip_empty, skip_managed)
         self.setGroup(n)
         return n.name
 
@@ -306,7 +333,7 @@ class Group(object):
     """
     def __init__(self, name, matches=None, exclusive=False,
                  spawn=None, layout=None, persist=True, init=True,
-                 layout_opts=None):
+                 layout_opts=None, screen_affinity=None, position=sys.maxint):
         """
         :param name: the name of this group
         :type name: string
@@ -322,6 +349,8 @@ class Group(object):
         :type persist: boolean
         :param init: is this group alive when qtile starts?
         :type init: boolean
+        :param position: group position
+        :type position: int
 
         """
         self.name = name
@@ -330,10 +359,12 @@ class Group(object):
         self.layout = layout
         self.persist = persist
         self.init = init
-        if matches is None:
-            matches = []
-        self.matches = matches
+        self.matches = matches or []
         self.layout_opts = layout_opts or {}
+
+        self.screen_affinity = screen_affinity
+        self.position = position
+
 
 class Match(object):
     """
@@ -363,19 +394,18 @@ class Match(object):
             wm_type = []
         self._rules = [('title', t) for t in title]
         self._rules += [('wm_class', w) for w in wm_class]
-        self._rules += [('role', r) for r in  role]
-        self._rules += [('wm_type', r) for r in  wm_type]
+        self._rules += [('role', r) for r in role]
+        self._rules += [('wm_type', r) for r in wm_type]
 
     def compare(self, client):
         for _type, rule in self._rules:
-            match_func = getattr(rule, 'match', None) or\
-                         getattr(rule, 'count')
+            match_func = getattr(rule, 'match', None) or getattr(rule, 'count')
 
             if _type == 'title':
                 value = client.name
             elif _type == 'wm_class':
                 value = client.window.get_wm_class()
-                if value and len(value)>1:
+                if value and len(value) > 1:
                     value = value[1]
                 elif value:
                     value = value[0]
@@ -388,21 +418,32 @@ class Match(object):
                 return True
         return False
 
+    def map(self, callback, clients):
+        """ Apply callback to each client that matches this Match """
+        for c in clients:
+            if self.compare(c):
+                callback(c)
+
+
 class Rule(object):
     """
         A Rule contains a Match object, and a specification about what to do
         when that object is matched.
     """
-    def __init__(self, match, group=None, float=False, intrusive=False):
+    def __init__(self, match, group=None, float=False, intrusive=False,
+                 break_on_match=True):
         """
         :param match: ``Match`` object associated with this ``Rule``
         :param float: auto float this window?
         :param intrusive: override the group's exclusive setting?
+        :param break_on_match: Should we stop applying rules if this rule is
+               matched?
         """
         self.match = match
         self.group = group
         self.float = float
         self.intrusive = intrusive
+        self.break_on_match = break_on_match
 
     def matches(self, w):
         return self.match.compare(w)

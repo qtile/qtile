@@ -1,5 +1,5 @@
 from base import Layout
-from .. import manager, window
+from .. import window
 
 DEFAULT_FLOAT_WM_TYPES = set([
     'utility',
@@ -7,6 +7,7 @@ DEFAULT_FLOAT_WM_TYPES = set([
     'toolbar',
     'splash',
 ])
+
 
 class Floating(Layout):
     """
@@ -19,8 +20,11 @@ class Floating(Layout):
         ("max_border_width", 0, "Border width for maximize."),
         ("fullscreen_border_width", 0, "Border width for fullscreen."),
         ("name", "floating", "Name of this layout."),
-        ("auto_float_types", DEFAULT_FLOAT_WM_TYPES,
-            "default wm types to automatically float"),
+        (
+            "auto_float_types",
+            DEFAULT_FLOAT_WM_TYPES,
+            "default wm types to automatically float"
+        ),
     ]
 
     def __init__(self, float_rules=None, **config):
@@ -29,7 +33,7 @@ class Floating(Layout):
         provide ``float_rules`` to do so.
         ``float_rules`` is a list of dictionaries containing:
 
-        {wmname: WM_NAME, wmclass: WM_CLASS
+        {wname: WM_NAME, wmclass: WM_CLASS
         role: WM_WINDOW_ROLE}
 
         The keys must be specified as above.  You only need one, but
@@ -98,6 +102,8 @@ class Floating(Layout):
             return self.clients[0]
 
     def focus_next(self, win):
+        if win not in self.clients:
+            return
         idx = self.clients.index(win)
         if len(self.clients) > idx + 1:
             return self.clients[idx + 1]
@@ -111,45 +117,49 @@ class Floating(Layout):
         if idx > 0:
             return self.clients[idx - 1]
 
-    def focus(self, c):
-        self.focused = c
+    def focus(self, client):
+        self.focused = client
 
     def blur(self):
         self.focused = None
 
-    def configure(self, c, screen):
-        if c is self.focused:
+    def configure(self, client, screen):
+        if client is self.focused:
             bc = self.group.qtile.colorPixel(self.border_focus)
         else:
             bc = self.group.qtile.colorPixel(self.border_normal)
-        if c.maximized:
+        if client.maximized:
             bw = self.max_border_width
-        elif c.fullscreen:
+        elif client.fullscreen:
             bw = self.fullscreen_border_width
         else:
             bw = self.border_width
-        c.place(c.x,
-                c.y,
-                c.width,
-                c.height,
-                bw,
-                bc)
-        c.unhide()
+        client.place(
+            client.x,
+            client.y,
+            client.width,
+            client.height,
+            bw,
+            bc
+        )
+        client.unhide()
 
     def clone(self, group):
         c = Layout.clone(self, group)
         c.clients = []
         return c
 
-    def add(self, c):
-        self.clients.append(c)
+    def add(self, client):
+        self.clients.append(client)
 
-    def remove(self, c):
-        res = self.focus_next(c)
-        self.clients.remove(c)
+    def remove(self, client):
+        if client not in self.clients:
+            return
+        res = self.focus_next(client)
+        self.clients.remove(client)
         return res
 
     def info(self):
         d = Layout.info(self)
-        d["clients"] = [i.name for i in self.clients]
+        d["clients"] = [x.name for x in self.clients]
         return d

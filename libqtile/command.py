@@ -36,7 +36,8 @@ class CommandException(Exception):
 class _SelectError(Exception):
     def __init__(self, name, sel):
         Exception.__init__(self)
-        self.name, self.sel = name, sel
+        self.name = name
+        self.sel = sel
 
 
 SUCCESS = 0
@@ -52,12 +53,12 @@ def formatSelector(lst):
         selector expression.
     """
     expr = []
-    for i in lst:
+    for name, sel in iter(lst):
         if expr:
             expr.append(".")
-        expr.append(i[0])
-        if i[1] is not None:
-            expr.append("[%s]" % repr(i[1]))
+        expr.append(name)
+        if sel is not None:
+            expr.append("[%s]" % repr(sel))
     return "".join(expr)
 
 
@@ -82,17 +83,17 @@ class _Server(ipc.Server):
         except _SelectError, v:
             e = formatSelector([(v.name, v.sel)])
             s = formatSelector(selectors)
-            return ERROR, "No object %s in path '%s'" % (e, s)
+            return (ERROR, "No object %s in path '%s'" % (e, s))
         cmd = obj.command(name)
         if not cmd:
-            return ERROR, "No such command."
+            return (ERROR, "No such command.")
         self.qtile.log.info("Command: %s(%s, %s)" % (name, args, kwargs))
         try:
-            return SUCCESS, cmd(*args, **kwargs)
+            return (SUCCESS, cmd(*args, **kwargs))
         except CommandError, v:
-            return ERROR, v.args[0]
+            return (ERROR, v.args[0])
         except Exception, v:
-            return EXCEPTION, traceback.format_exc()
+            return (EXCEPTION, traceback.format_exc())
         self.qtile.conn.flush()
 
 
@@ -103,7 +104,8 @@ class _Command:
             :*args Arguments to be passed to the specified command
             :*kwargs Arguments to be passed to the specified command
         """
-        self.selectors, self.name = selectors, name
+        self.selectors = selectors
+        self.name = name
         self.call = call
 
     def __call__(self, *args, **kwargs):
@@ -132,8 +134,7 @@ class _CommandTree(object):
     def __getitem__(self, select):
         if self.myselector:
             raise KeyError("No such key: %s" % select)
-        c = self.__class__(self.call, self.selectors, select, self)
-        return c
+        return self.__class__(self.call, self.selectors, select, self)
 
     def __getattr__(self, name):
         nextSelector = self.selectors[:]
@@ -176,12 +177,12 @@ class _TGroup(_CommandTree):
 
 
 _TreeMap = {
-    "layout":   _TLayout,
-    "widget":   _TWidget,
-    "bar":      _TBar,
-    "window":   _TWindow,
-    "screen":   _TScreen,
-    "group":    _TGroup,
+    "layout": _TLayout,
+    "widget": _TWidget,
+    "bar": _TBar,
+    "window": _TWindow,
+    "screen": _TScreen,
+    "group": _TGroup,
 }
 
 
@@ -213,10 +214,7 @@ def find_sockfile(display=None):
     """
         Finds the appropriate socket file.
     """
-    if not display:
-        display = os.environ.get("DISPLAY")
-    if not display:
-        display = ":0.0"
+    display = display or os.environ.get('DISPLAY') or ':0.0'
     if '.' not in display:
         display += '.0'
     cache_directory = os.path.expandvars('$XDG_CACHE_HOME')
@@ -263,6 +261,7 @@ class CommandRoot(_CommandRoot):
         else:
             raise CommandException(val)
 
+
 class _Call:
     def __init__(self, selectors, name, *args, **kwargs):
         """
@@ -270,18 +269,29 @@ class _Call:
             :*args Arguments to be passed to the specified command
             :*kwargs Arguments to be passed to the specified command
         """
-        self.selectors, self.name = selectors, name
-        self.args, self.kwargs = args, kwargs
+        self.selectors = selectors
+        self.name = name
+        self.args = args
+        self.kwargs = kwargs
         # Conditionals
         self.layout = None
 
-    def when(self, layout=None):
+    def when(self, layout=None, when_floating=True):
         self.layout = layout
+        self.when_floating = when_floating
         return self
 
     def check(self, q):
-        if self.layout and q.currentLayout.name != self.layout:
-            return False
+        if self.layout:
+            if self.layout == 'floating':
+                if q.currentWindow.floating:
+                    return True
+                return False
+            if q.currentLayout.name != self.layout:
+                return False
+            if q.currentWindow and q.currentWindow.floating \
+                and not self.when_floating:
+                return False
         return True
 
 
@@ -303,11 +313,10 @@ class CommandObject(object):
         name, sel = selectors[0]
         selectors = selectors[1:]
 
-        r = self.items(name)
-        if (r is None) or\
-            (r[1] is None and sel is not None) or\
-                (r[1] is not None and sel and sel not in r[1]) or\
-                    (r[0] is False and sel is None):
+        root, items = self.items(name)
+        if (root is False and sel is None) or \
+                (items is None and sel is not None) or \
+                (items is not None and sel and sel not in items):
             raise _SelectError(name, sel)
 
         obj = self._select(name, sel)
@@ -321,7 +330,9 @@ class CommandObject(object):
         """
         ret = self._items(name)
         if ret is None:
-            raise CommandError("Unknown item class: %s" % name)
+            # Not finding information for a particular item class is OK here;
+            # we don't expect layouts to have a window, etc.
+            return ([], [])
         return ret
 
     def _items(self, name):
