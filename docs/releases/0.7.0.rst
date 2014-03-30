@@ -1,5 +1,5 @@
 =======================
-Qtile 0.7 release notes
+Qtile 0.7.0 release notes
 =======================
 
 *March 30, 2014*
