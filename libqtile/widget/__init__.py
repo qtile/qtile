@@ -20,6 +20,7 @@ from keyboardlayout import KeyboardLayout
 from df import DF
 from image import Image
 from gmail_checker import GmailChecker
+from launchbar import LaunchBar
 
 from tasklist import TaskList
 
