@@ -136,12 +136,17 @@ class Stack(Layout):
         ("name", "stack", "Name of this layout."),
     ]
 
-    def __init__(self, stacks=2, **config):
+    def __init__(self, stacks=2, autosplit=False, **config):
         """
             - stacks: Number of stacks to start with.
+            - autosplit: Auto split all new stacks.
         """
         Layout.__init__(self, **config)
+        self.autosplit = autosplit
         self.stacks = [_WinStack() for i in range(stacks)]
+        for stack in self.stacks:
+            if self.autosplit:
+                stack.split = True
         self.add_defaults(Stack.defaults)
 
     @property
@@ -166,6 +171,9 @@ class Stack(Layout):
         c = Layout.clone(self, group)
         # These are mutable
         c.stacks = [_WinStack() for i in self.stacks]
+        for stack in c.stacks:
+            if self.autosplit:
+                stack.split = True
         return c
 
     def _findNext(self, lst, offset):
@@ -369,7 +377,10 @@ class Stack(Layout):
         """
             Add another stack to the layout.
         """
-        self.stacks.append(_WinStack())
+        newstack = _WinStack()
+        if self.autosplit:
+            newstack.split = True
+        self.stacks.append(newstack)
         self.group.layoutAll()
 
     def cmd_rotate(self):
