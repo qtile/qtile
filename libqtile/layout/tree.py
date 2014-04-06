@@ -255,9 +255,13 @@ class TreeTab(SingleWindow):
         ("name", "treetab", "Name of this layout."),
     ]
 
-    def __init__(self, **config):
+    def __init__(self, previous_on_rm=False, **config):
+        """
+            - previous_on_rm: Focus previous window on close instead of first.
+        """
         SingleWindow.__init__(self, **config)
         self.add_defaults(TreeTab.defaults)
+        self._previous_on_rm = previous_on_rm
         self._focused = None
         self._panel = None
         self._tree = Root(self.sections)
@@ -291,13 +295,20 @@ class TreeTab(SingleWindow):
 
     def remove(self, win):
         if self._focused is win:
-            self._focused = None
+            if self._previous_on_rm:
+                # select previous window in the list
+                self.cmd_up()
+                if self._focused is win:
+                    self._focused = None
+            else:
+                self._focused = None
         self._nodes[win].remove()
         del self._nodes[win]
         self.draw_panel()
 
-        # select 1st window in the list
-        self.cmd_down()
+        # select first window in the list
+        if not self._previous_on_rm:
+            self.cmd_down()
 
     def _create_panel(self):
         self._panel = window.Internal.create(
