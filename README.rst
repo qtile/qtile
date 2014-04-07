@@ -21,7 +21,7 @@ Features
 * Complete remote scriptability - write scripts to set up workspaces,
   manipulate windows, update status bar widgets and more.
 * Qtile's remote scriptability makes it one of the most thoroughly
-  unit-tested window mangers around.
+  unit-tested window managers around.
 
 Current Release
 ===============
