@@ -253,12 +253,11 @@ class TreeTab(SingleWindow):
         ("panel_width", 150, "Width of the left panel"),
         ("sections", ['Default'], "Foreground color of inactive tab"),
         ("name", "treetab", "Name of this layout."),
+        ("previous_on_rm", False,
+            "Focus previous window on close instead of first."),
     ]
 
-    def __init__(self, previous_on_rm=False, **config):
-        """
-            - previous_on_rm: Focus previous window on close instead of first.
-        """
+    def __init__(self, **config):
         SingleWindow.__init__(self, **config)
         self.add_defaults(TreeTab.defaults)
         self._previous_on_rm = previous_on_rm

@@ -1,3 +1,7 @@
+qtile *.*.*, released YYYY-MM-DD:
+    * config breakage
+        - libqtile.layout.Stack's `stacks` parameter is now `num_stacks`
+
 qtile 0.7.0, released 2014-03-30:
     * features
         - new disk free percentage widget

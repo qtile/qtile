@@ -27,8 +27,8 @@ class TestConfig:
         libqtile.config.Group("d")
     ]
     layouts = [
-                libqtile.layout.stack.Stack(stacks=1),
-                libqtile.layout.stack.Stack(2),
+                libqtile.layout.stack.Stack(num_stacks=1),
+                libqtile.layout.stack.Stack(num_stacks=2),
                 libqtile.layout.max.Max()
             ]
     floating_layout = libqtile.layout.floating.Floating(
@@ -67,8 +67,8 @@ class BareConfig:
         libqtile.config.Group("d")
     ]
     layouts = [
-                libqtile.layout.stack.Stack(stacks=1),
-                libqtile.layout.stack.Stack(2)
+                libqtile.layout.stack.Stack(num_stacks=1),
+                libqtile.layout.stack.Stack(num_stacks=2)
             ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = [
@@ -797,8 +797,8 @@ class _Config:
         libqtile.config.Group("d")
     ]
     layouts = [
-                libqtile.layout.stack.Stack(stacks=1),
-                libqtile.layout.stack.Stack(2)
+                libqtile.layout.stack.Stack(num_stacks=1),
+                libqtile.layout.stack.Stack(num_stacks=2)
             ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = [

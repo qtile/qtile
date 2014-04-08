@@ -134,20 +134,17 @@ class Stack(Layout):
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width."),
         ("name", "stack", "Name of this layout."),
+        ("autosplit", False, "Auto split all new stacks."),
+        ("num_stacks", 2, "Number of stacks."),
     ]
 
-    def __init__(self, stacks=2, autosplit=False, **config):
-        """
-            - stacks: Number of stacks to start with.
-            - autosplit: Auto split all new stacks.
-        """
+    def __init__(self, **config):
         Layout.__init__(self, **config)
-        self.autosplit = autosplit
-        self.stacks = [_WinStack() for i in range(stacks)]
+        self.add_defaults(Stack.defaults)
+        self.stacks = [_WinStack() for i in range(self.num_stacks)]
         for stack in self.stacks:
             if self.autosplit:
                 stack.split = True
-        self.add_defaults(Stack.defaults)
 
     @property
     def currentStack(self):
