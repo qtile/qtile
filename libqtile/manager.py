@@ -574,8 +574,16 @@ class Qtile(command.CommandObject):
                         if not r:
                             break
             except Exception as e:
-                s = 'Got an exception in poll loop:\n' + traceback.format_exc()
-                self.log.exception(s)
+                error_code = self.conn.conn.has_error()
+                if error_code:
+                    error_string = xcbq.XCB_CONN_ERRORS[error_code]
+                    self.log.exception("Shutting down due to X connection error %s (%s)" %
+                        (error_string, error_code))
+                    self.conn.disconnect()
+                    self._exit = True
+                    return False
+
+                self.log.exception("Got an exception in poll loop")
         return True
 
     def loop(self):
