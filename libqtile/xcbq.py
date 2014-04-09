@@ -152,6 +152,15 @@ SUPPORTED_ATOMS = [
     '_NET_WM_STRUT_PARTIAL',
 ]
 
+XCB_CONN_ERRORS = {
+    1: 'XCB_CONN_ERROR',
+    2: 'XCB_CONN_CLOSED_EXT_NOTSUPPORTED',
+    3: 'XCB_CONN_CLOSED_MEM_INSUFFICIENT',
+    4: 'XCB_CONN_CLOSED_REQ_LEN_EXCEED',
+    5: 'XCB_CONN_CLOSED_PARSE_ERR',
+    6: 'XCB_CONN_CLOSED_INVALID_SCREEN',
+    7: 'XCB_CONN_CLOSED_FDPASSING_FAILED',
+}
 
 def toStr(s):
     return "".join([chr(i) for i in s.name])
@@ -731,6 +740,7 @@ class Connection:
 
     def __init__(self, display):
         self.conn = xcb.xcb.connect(display=display)
+        self._connected = True
         self.cursors = Cursors(self)
         self.setup = self.conn.get_setup()
         extensions = self.extensions()
@@ -841,8 +851,13 @@ class Connection:
         )
         return Window(self, wid)
 
+    def disconnect(self):
+        self.conn.disconnect()
+        self._connected = False
+
     def flush(self):
-        return self.conn.flush()
+        if self._connected:
+            return self.conn.flush()
 
     def xsync(self):
         # The idea here is that pushing an innocuous request through
