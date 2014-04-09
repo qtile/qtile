@@ -296,13 +296,13 @@ class Qtile(command.CommandObject):
         )
         self.root.set_property("_NET_CURRENT_DESKTOP", index)
 
-    def addGroup(self, name, layout=None):
+    def addGroup(self, name, layout=None, layouts=None):
         if name not in self.groupMap.keys():
             g = _Group(name, layout)
             self.groups.append(g)
-            g._configure(
-                self.config.layouts, self.config.floating_layout, self
-            )
+            if not layouts:
+                layouts = self.config.layouts
+            g._configure(layouts, self.config.floating_layout, self)
             self.groupMap[name] = g
             hook.fire("addgroup", self, name)
             hook.fire("changegroup")
