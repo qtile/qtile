@@ -21,7 +21,11 @@ from keyboardlayout import KeyboardLayout
 from df import DF
 from image import Image
 from gmail_checker import GmailChecker
-from launchbar import LaunchBar
+
+try:
+    from launchbar import LaunchBar
+except ImportError:
+    pass
 
 from tasklist import TaskList
 
