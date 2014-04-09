@@ -166,6 +166,7 @@ class _Group(command.CommandObject):
             focus=self.currentWindow.name if self.currentWindow else None,
             windows=[i.name for i in self.windows],
             layout=self.layout.name,
+            layouts=[l.name for l in self.layouts],
             floating_info=self.floating_layout.info(),
             screen=self.screen.index if self.screen else None
         )
