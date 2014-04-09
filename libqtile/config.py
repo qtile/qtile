@@ -345,6 +345,8 @@ class Group(object):
         :type spawn: string
         :param layout: the default layout for this group (e.g. 'max' or 'stack')
         :type layout: string
+        :param layouts: the group layouts list overriding global layouts
+        :type layouts: list
         :param persist: should this group stay alive with no member windows?
         :type persist: boolean
         :param init: is this group alive when qtile starts?
