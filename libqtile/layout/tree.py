@@ -260,7 +260,6 @@ class TreeTab(SingleWindow):
     def __init__(self, **config):
         SingleWindow.__init__(self, **config)
         self.add_defaults(TreeTab.defaults)
-        self._previous_on_rm = previous_on_rm
         self._focused = None
         self._panel = None
         self._tree = Root(self.sections)
@@ -294,7 +293,7 @@ class TreeTab(SingleWindow):
 
     def remove(self, win):
         if self._focused is win:
-            if self._previous_on_rm:
+            if self.previous_on_rm:
                 # select previous window in the list
                 self.cmd_up()
                 if self._focused is win:
@@ -306,7 +305,7 @@ class TreeTab(SingleWindow):
         self.draw_panel()
 
         # select first window in the list
-        if not self._previous_on_rm:
+        if not self.previous_on_rm:
             self.cmd_down()
 
     def _create_panel(self):
