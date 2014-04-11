@@ -115,6 +115,18 @@ def test_screen_dim(self):
     assert self.c.group.info()["focus"] == 'xclock'
 
 
+@Xephyr(True, TestConfig(), xoffset=0)
+def test_clone_dim(self):
+    self.testXclock()
+    assert self.c.screen.info()["index"] == 0
+    assert self.c.screen.info()["x"] == 0
+    assert self.c.screen.info()["width"] == 800
+    assert self.c.group.info()["name"] == 'a'
+    assert self.c.group.info()["focus"] == 'xclock'
+
+    assert len(self.c.screens()) == 1
+
+
 @Xephyr(True, TestConfig())
 def test_to_screen(self):
     assert self.c.screen.info()["index"] == 0
