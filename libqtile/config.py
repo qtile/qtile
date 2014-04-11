@@ -371,7 +371,8 @@ class Match(object):
         Match for dynamic groups
         It can match by title, class or role.
     """
-    def __init__(self, title=None, wm_class=None, role=None, wm_type=None):
+    def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
+                 wm_instance_class=None):
         """
 
         ``Match`` supports both regular expression objects (i.e. the result of
@@ -380,9 +381,12 @@ class Match(object):
         match.
 
         :param title: things to match against the title
-        :param wm_classes: things to match against the WM_CLASS atom
+        :param wm_class: things to match against the second string in
+                         WM_CLASS atom
         :param role: things to match against the WM_ROLE atom
         :param wm_type: things to match against the WM_TYPE atom
+        :param wm_instance_class: things to match against the first string in
+               WM_CLASS atom
         """
         if not title:
             title = []
@@ -392,10 +396,14 @@ class Match(object):
             role = []
         if not wm_type:
             wm_type = []
+        if not wm_instance_class:
+            wm_instance_class = []
+
         self._rules = [('title', t) for t in title]
         self._rules += [('wm_class', w) for w in wm_class]
         self._rules += [('role', r) for r in role]
         self._rules += [('wm_type', r) for r in wm_type]
+        self._rules += [('wm_instance_class', w) for w in wm_instance_class]
 
     def compare(self, client):
         for _type, rule in self._rules:
@@ -404,10 +412,13 @@ class Match(object):
             if _type == 'title':
                 value = client.name
             elif _type == 'wm_class':
+                value = None
+                _value = client.window.get_wm_class()
+                if _value and len(_value) > 1:
+                    value = _value[1]
+            elif _type == 'wm_instance_class':
                 value = client.window.get_wm_class()
-                if value and len(value) > 1:
-                    value = value[1]
-                elif value:
+                if value:
                     value = value[0]
             elif _type == 'wm_type':
                 value = client.window.get_wm_type()
