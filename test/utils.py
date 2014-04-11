@@ -40,7 +40,7 @@ def whereis(program):
 
 class Xephyr(object):
     def __init__(self, xinerama, config, start_qtile=True,
-                 randr=False, two_screens=True,
+                 randr=False, two_screens=True, xoffset=WIDTH,
                  width=WIDTH, height=HEIGHT):
         self.xinerama, self.randr = xinerama, randr
         self.config = config
@@ -51,6 +51,7 @@ class Xephyr(object):
         if randr:
             self.name += "_randr"
         self.two_screens = two_screens
+        self.xoffset = xoffset
         self.display = DISPLAY
         self.xinerama = xinerama
         self.width = width
@@ -65,8 +66,8 @@ class Xephyr(object):
                 self.display, "-ac",
                 "-screen", "%sx%s" % (self.width, self.height)]
             if self.two_screens:
-                args.extend(["-origin", "800,0", "-screen", "%sx%s" % (
-                    SECOND_WIDTH, SECOND_HEIGHT)])
+                args.extend(["-origin", "%s,0" % self.xoffset, "-screen",
+                    "%sx%s" % (SECOND_WIDTH, SECOND_HEIGHT)])
 
             if self.xinerama:
                 args.extend(["+xinerama"])
