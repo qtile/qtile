@@ -65,7 +65,7 @@ class Xephyr(object):
                 self.display, "-ac",
                 "-screen", "%sx%s" % (self.width, self.height)]
             if self.two_screens:
-                args.extend(["-screen", "%sx%s+800+0" % (
+                args.extend(["-origin", "800,0", "-screen", "%sx%s" % (
                     SECOND_WIDTH, SECOND_HEIGHT)])
 
             if self.xinerama:

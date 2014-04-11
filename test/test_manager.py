@@ -102,9 +102,7 @@ def test_screen_dim(self):
     self.c.to_screen(1)
     self.testXeyes()
     assert self.c.screen.info()["index"] == 1
-    # !!! note that the following wrong!
-    # x offset would be 800 on real screens
-    assert self.c.screen.info()["x"] == 0
+    assert self.c.screen.info()["x"] == 800
     assert self.c.screen.info()["width"] == 640
     assert self.c.group.info()["name"] == 'b'
     assert self.c.group.info()["focus"] == 'xeyes'
