@@ -3,6 +3,7 @@
 
 from .. import bar
 import base
+import locale
 import urllib
 import urllib2
 import gobject
@@ -15,23 +16,19 @@ except ImportError:
 
 
 class BitcoinTicker(base._TextBox):
-    ''' A bitcoin ticker widget, data provided by the MtGox API
-        Format options:
-            buy, sell
+    ''' A bitcoin ticker widget, data provided by the btc-e.com API. Defaults to
+        displaying currency in whatever the current locale is.
     '''
 
-    QUERY_URL = "http://data.mtgox.com/api/1/BTC%s/ticker_fast"
-    currency_code = {'dollar': 'USD', 'euro': 'EUR'}
+    QUERY_URL = "https://btc-e.com/api/2/btc_%s/ticker"
 
     defaults = [
-        ## One of (location, woeid) must be set.
-        (
-            'currency',
-            'dollar',
-            'The currency the value of bitcoin is displayed in'
-        ),
-        ('format', 'BTC Buy: {buy}, Sell: {sell}', 'Display format'),
-        ('update_interval', 600, 'Update interval in seconds')
+        ('currency', locale.localeconv()['int_curr_symbol'].strip(),
+            'The currency the value of bitcoin is displayed in'),
+        ('format', 'BTC Buy: {buy}, Sell: {sell}',
+            'Display format, allows buy, sell, high, low, avg, '
+            'vol, vol_cur, last, variables.'),
+        ('update_interval', 20, 'Update interval in seconds')
     ]
 
     def __init__(self, **config):
@@ -40,14 +37,12 @@ class BitcoinTicker(base._TextBox):
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         self.add_defaults(BitcoinTicker.defaults)
-        self.timeout_add(self.update_interval, self.wx_updater)
+        self.timeout_add(self.update_interval, self.updater)
 
     def button_press(self, x, y, button):
         self.update(self.fetch_data())
 
-    def wx_updater(self):
-        self.log.info('adding WX widget timer')
-
+    def updater(self):
         def worker():
             data = self.fetch_data()
             gobject.idle_add(self.update, data)
@@ -55,15 +50,11 @@ class BitcoinTicker(base._TextBox):
         return True
 
     def fetch_data(self):
-        res = urllib2.urlopen(
-            self.QUERY_URL % self.currency_code[self.currency]
-        )
-        raw = json.loads(res.read())
-        data = {
-            'sell': raw['return']['sell']['display'],
-            'buy': raw['return']['buy']['display']
-        }
-        return data
+        res = urllib2.urlopen(self.QUERY_URL % self.currency.lower())
+        formatted = {}
+        for k, v in json.loads(res.read())[u'ticker'].iteritems():
+            formatted[k.encode('ascii')] = locale.currency(v)
+        return formatted
 
     def update(self, data):
         if data:
