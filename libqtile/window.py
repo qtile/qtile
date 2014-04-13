@@ -1280,3 +1280,21 @@ class Window(_Window):
             self.opacity += .1
         else:
             self.opacity = 1
+
+    def _isinwindow(self, x, y, window):
+        return window.getposition()[0] <= x <= window.getposition()[0] + window.getsize()[0] and window.getposition()[1] <= y <= window.getposition()[1] + window.getsize()[1]
+
+    def cmd_set_position(self, dx, dy, curx, cury):
+        if self.qtile.currentWindow.floating:
+            self.tweak_float(dx, dy)
+            return
+        for window in self.group.windows:
+            if window == self.qtile.currentWindow or window.floating:
+                continue
+            if self._isinwindow(curx, cury, window) is True:
+                window1 = self.group.layout.clients.index(self.qtile.currentWindow)
+                window2 = self.group.layout.clients.index(window)
+                self.group.layout.clients[window1], self.group.layout.clients[window2] = self.group.layout.clients[window2], self.group.layout.clients[window1]
+                self.group.layoutAll()
+                self.group.layout.focused = window1
+                break
