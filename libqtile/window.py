@@ -1282,7 +1282,10 @@ class Window(_Window):
             self.opacity = 1
 
     def _isinwindow(self, x, y, window):
-        return window.getposition()[0] <= x <= window.getposition()[0] + window.getsize()[0] and window.getposition()[1] <= y <= window.getposition()[1] + window.getsize()[1]
+        return window.getposition()[0] <= x <= window.getposition()[0]\
+            + window.getsize()[0]\
+            and window.getposition()[1] <= y <= window.getposition()[1]\
+            + window.getsize()[1]
 
     def cmd_set_position(self, dx, dy, curx, cury):
         if self.qtile.currentWindow.floating:
