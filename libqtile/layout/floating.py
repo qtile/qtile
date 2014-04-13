@@ -151,15 +151,52 @@ class Floating(Layout):
 
     def add(self, client):
         self.clients.append(client)
+        self.focused = client
 
     def remove(self, client):
         if client not in self.clients:
             return
-        res = self.focus_next(client)
+        self.focused = self.focus_next(client)
         self.clients.remove(client)
-        return res
+        return self.focused
 
     def info(self):
         d = Layout.info(self)
         d["clients"] = [x.name for x in self.clients]
         return d
+
+    def get_next_index(self, currentindex):
+        nextindex = currentindex + 1
+        if nextindex >= len(self.clients):
+            nextindex = 0
+        return nextindex
+
+    def get_previous_index(self, currentindex):
+        previndex = currentindex - 1
+        if previndex < 0:
+            previndex = len(self.clients) - 1
+        return previndex
+
+    def getNextClient(self):
+        currentindex = self.clients.index(self.focused)
+        nextindex = self.get_next_index(currentindex)
+        return self.clients[nextindex]
+
+    def getPreviousClient(self):
+        currentindex = self.clients.index(self.focused)
+        previndex = self.get_previous_index(currentindex)
+        return self.clients[previndex]
+
+    def next(self):
+        n = self.getPreviousClient()
+        self.group.focus(n, True)
+
+    def previous(self):
+        n = self.getNextClient()
+        self.group.focus(n, True)
+
+    def cmd_next(self):
+        self.next()
+
+    def cmd_previous(self):
+        self.previous()
