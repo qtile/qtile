@@ -107,15 +107,19 @@ class Floating(Layout):
         idx = self.clients.index(win)
         if len(self.clients) > idx + 1:
             return self.clients[idx + 1]
+        return self.focus_first()
 
     def focus_last(self):
         if self.clients:
             return self.clients[-1]
 
     def focus_prev(self, win):
+        if win not in self.clients:
+            return
         idx = self.clients.index(win)
         if idx > 0:
             return self.clients[idx - 1]
+        return self.focus_last()
 
     def focus(self, client):
         self.focused = client
@@ -165,35 +169,17 @@ class Floating(Layout):
         d["clients"] = [x.name for x in self.clients]
         return d
 
-    def get_next_index(self, currentindex):
-        nextindex = currentindex + 1
-        if nextindex >= len(self.clients):
-            nextindex = 0
-        return nextindex
-
-    def get_previous_index(self, currentindex):
-        previndex = currentindex - 1
-        if previndex < 0:
-            previndex = len(self.clients) - 1
-        return previndex
-
-    def getNextClient(self):
-        currentindex = self.clients.index(self.focused)
-        nextindex = self.get_next_index(currentindex)
-        return self.clients[nextindex]
-
-    def getPreviousClient(self):
-        currentindex = self.clients.index(self.focused)
-        previndex = self.get_previous_index(currentindex)
-        return self.clients[previndex]
-
     def next(self):
-        n = self.getPreviousClient()
-        self.group.focus(n, True)
+        client = self.focus_next(self.focused)
+        if client:
+            self.focused = client
+            self.group.focus(client, True)
 
     def previous(self):
-        n = self.getNextClient()
-        self.group.focus(n, True)
+        client = self.focus_prev(self.focused)
+        if client:
+            self.focused = client
+            self.group.focus(client, True)
 
     def cmd_next(self):
         self.next()
