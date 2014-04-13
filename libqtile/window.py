@@ -1297,4 +1297,5 @@ class Window(_Window):
                 self.group.layout.clients[window1], self.group.layout.clients[window2] = self.group.layout.clients[window2], self.group.layout.clients[window1]
                 self.group.layoutAll()
                 self.group.layout.focused = window1
+                self.group.focus(self.qtile.currentWindow, False)
                 break
