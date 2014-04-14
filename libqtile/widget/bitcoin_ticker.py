@@ -28,15 +28,15 @@ class BitcoinTicker(base._TextBox):
         ('format', 'BTC Buy: {buy}, Sell: {sell}',
             'Display format, allows buy, sell, high, low, avg, '
             'vol, vol_cur, last, variables.'),
-        ('update_interval', 20, 'Update interval in seconds')
+        ('update_interval', 600, 'Update interval in seconds')
     ]
 
     def __init__(self, **config):
         base._TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
+        self.add_defaults(BitcoinTicker.defaults)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        self.add_defaults(BitcoinTicker.defaults)
         self.timeout_add(self.update_interval, self.updater)
 
     def button_press(self, x, y, button):
