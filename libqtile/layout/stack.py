@@ -75,7 +75,7 @@ class _WinStack(object):
         else:
             return self.cw
 
-    def focus_prev(self, win):
+    def focus_previous(self, win):
         if self.split:
             idx = self.index(win)
             if idx > 0:
@@ -240,11 +240,11 @@ class Stack(Layout):
             if i:
                 return i.focus_first()
 
-    def focus_prev(self, client):
+    def focus_previous(self, client):
         iterator = iter(reversed(self.stacks))
         for i in iterator:
             if client in i:
-                next = i.focus_prev(client)
+                next = i.focus_previous(client)
                 if next:
                     return next
                 break

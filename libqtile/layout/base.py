@@ -19,6 +19,8 @@
 # SOFTWARE.
 
 import copy
+from abc import ABCMeta, abstractmethod
+
 from .. import command, configurable
 
 
@@ -26,6 +28,8 @@ class Layout(command.CommandObject, configurable.Configurable):
     """
         This class defines the API that should be exposed by all layouts.
     """
+    __metaclass__ = ABCMeta
+
     @classmethod
     def _name(cls):
         return cls.__class__.__name__.lower()
@@ -64,55 +68,6 @@ class Layout(command.CommandObject, configurable.Configurable):
         c.group = group
         return c
 
-    def focus(self, client):
-        """
-            Called whenever the focus changes.
-        """
-        pass
-
-    def blur(self):
-        """
-            Called whenever focus is gone from this layout.
-        """
-        pass
-
-    def add(self, client):
-        """
-            Called whenever a window is added to the group, whether the layout
-            is current or not. The layout should just add the window to its
-            internal datastructures, without mapping or configuring.
-        """
-        pass
-
-    def remove(self, client):
-        """
-            Called whenever a window is removed from the group, whether the
-            layout is current or not. The layout should just de-register the
-            window from its data structures, without unmapping the window.
-
-            Returns the "next" window that should gain focus or None.
-        """
-        pass
-
-    def configure(self, client, screen):
-        """
-            This method should:
-
-                - Configure the dimensions and borders of a window using the
-                  .place() method.
-                - Call either .hide or .unhide on the window.
-        """
-        raise NotImplementedError
-
-    def info(self):
-        """
-            Returns a dictionary of layout information.
-        """
-        return dict(
-            name=self.name,
-            group=self.group.name
-        )
-
     def _items(self, name):
         if name == "screen":
             return (True, None)
@@ -125,21 +80,101 @@ class Layout(command.CommandObject, configurable.Configurable):
         elif name == "group":
             return self.group
 
+    def show(self, screen):
+        """
+            Called when layout is being shown
+        """
+        pass
+
+    def hide(self):
+        """
+            Called when layout is being hidden
+        """
+        pass
+
+    def focus(self, client):
+        """
+            Called whenever the focus changes.
+        """
+        pass
+
+
+    def blur(self):
+        """
+            Called whenever focus is gone from this layout.
+        """
+        pass
+
+
+    def info(self):
+        """
+            Returns a dictionary of layout information.
+        """
+        return dict(
+            name=self.name,
+            group=self.group.name
+        )
+
     def cmd_info(self):
         """
             Return a dictionary of info for this object.
         """
         return self.info()
 
-    def show(self, screen):
+    @abstractmethod
+    def add(self, client):
         """
-            Called when layout is being shown
+            Called whenever a window is added to the group, whether the layout
+            is current or not. The layout should just add the window to its
+            internal datastructures, without mapping or configuring.
         """
+        pass
 
-    def hide(self):
+    @abstractmethod
+    def remove(self, client):
         """
-            Called when layout is being hidden
+            Called whenever a window is removed from the group, whether the
+            layout is current or not. The layout should just de-register the
+            window from its data structures, without unmapping the window.
+
+            Returns the "next" window that should gain focus or None.
         """
+        pass
+
+    @abstractmethod
+    def configure(self, client, screen):
+        """
+            This method should:
+
+                - Configure the dimensions and borders of a window using the
+                  .place() method.
+                - Call either .hide or .unhide on the window.
+        """
+        pass
+
+    @abstractmethod
+    def focus_first(self, win):
+        pass
+
+    @abstractmethod
+    def focus_last(self, win):
+        pass
+
+    @abstractmethod
+    def focus_next(self, win):
+        pass
+
+    @abstractmethod
+    def focus_previous(self, win):
+        pass
+
+    @abstractmethod
+    def cmd_next(self):
+        pass
+
+    @abstractmethod
+    def cmd_previous(self):
+        pass
 
 
 class SingleWindow(Layout):
@@ -148,9 +183,10 @@ class SingleWindow(Layout):
     def __init__(self, **config):
         Layout.__init__(self, **config)
 
+    @abstractmethod
     def _get_window(self):
         """Should return either visible window or None"""
-        raise NotImplementedError("abstract method")
+        pass
 
     def configure(self, win, screen):
         if win is self._get_window():
@@ -172,14 +208,8 @@ class SingleWindow(Layout):
     def focus_first(self):
         return self._get_window()
 
-    def focus_next(self, win):
-        return None
-
     def focus_last(self):
         return self._get_window()
-
-    def focus_prev(self, win):
-        return None
 
 
 class Delegate(Layout):
@@ -194,13 +224,15 @@ class Delegate(Layout):
         c.layouts = {}
         return c
 
+    @abstractmethod
     def _get_layouts(self):
         """Returns all children layouts"""
-        raise NotImplementedError("abstact method")
+        pass
 
+    @abstractmethod
     def _get_active_layout(self):
         """Returns layout to which delegate commands to"""
-        raise NotImplementedError("abstract method")
+        pass
 
     def delegate_layout(self, windows, mapping):
         """Delegates layouting actual windows

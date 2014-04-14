@@ -313,7 +313,7 @@ class RatioTile(Layout):
         if self.clients:
             return self.clients[-1]
 
-    def focus_prev(self, win):
+    def focus_previous(self, win):
         idx = self.clients.index(win)
         if idx > 0:
             return self.clients[idx - 1]

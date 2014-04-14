@@ -591,6 +591,16 @@ class MonadTall(SingleWindow):
         self.relative_sizes[self.focused - 1] -= \
             self._get_relative_size_from_absolute(change)
 
+    def focus_next(self, window):
+        if self.focused != self.clients.index(window):
+            self.focus(window)
+        return self.cmd_next()
+
+    def focus_previous(self, window):
+        if self.focused != self.clients.index(window):
+            self.focus(window)
+        return self.cmd_previous()
+
     def cmd_shrink(self):
         """
         Will shrink the currently focused client reducing the
@@ -611,10 +621,14 @@ class MonadTall(SingleWindow):
         self.focused -= 1
         self.group.focus(self.clients[self.focused], False)
 
+    cmd_previous = cmd_up
+
     def cmd_down(self):
         "Focus on the less prominent client on the stack"
         self.focused += 1
         self.group.focus(self.clients[self.focused], False)
+
+    cmd_next = cmd_down
 
     def cmd_shuffle_up(self):
         "Shuffle the client up the stack."

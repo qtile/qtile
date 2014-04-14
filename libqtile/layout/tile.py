@@ -68,17 +68,19 @@ class Tile(Layout):
         idx = self.clients.index(client)
         if len(self.clients) > idx + 1:
             return self.clients[idx + 1]
+        return self.clients[0]
 
     def focus_last(self):
         if self.clients:
             return self.clients[-1]
 
-    def focus_prev(self, client):
+    def focus_previous(self, client):
         if client not in self.clients:
             return
         idx = self.clients.index(client)
         if idx > 0:
             return self.clients[idx - 1]
+        return self.clients[-1]
 
     def get_next_index(self, currentindex):
         nextindex = currentindex + 1

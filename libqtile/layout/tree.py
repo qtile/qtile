@@ -278,6 +278,16 @@ class TreeTab(SingleWindow):
     def focus(self, win):
         self._focused = win
 
+    def focus_next(self, win):
+        if win != self._focused:
+            self.focus(win)
+        self.cmd_next()
+
+    def focus_previous(self, win):
+        if win != self._focused:
+            self.focus(win)
+        self.cmd_previous()
+
     def blur(self):
         # Does not clear current window, will change if new one
         # will be focused. This works better when floating window
@@ -379,6 +389,8 @@ class TreeTab(SingleWindow):
         if win:
             self.group.focus(win.window, False)
 
+    cmd_next = cmd_down
+
     def cmd_up(self):
         """
             Switch up in the window list
@@ -390,6 +402,8 @@ class TreeTab(SingleWindow):
             win = self._tree.get_last_window()
         if win:
             self.group.focus(win.window, False)
+
+    cmd_previous = cmd_up
 
     def cmd_move_up(self):
         win = self._focused
