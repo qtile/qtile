@@ -112,7 +112,7 @@ class Floating(Layout):
         if self.clients:
             return self.clients[-1]
 
-    def focus_prev(self, win):
+    def focus_previous(self, win):
         idx = self.clients.index(win)
         if idx > 0:
             return self.clients[idx - 1]
@@ -163,3 +163,9 @@ class Floating(Layout):
         d = Layout.info(self)
         d["clients"] = [x.name for x in self.clients]
         return d
+
+    def cmd_next(self):
+        self.focus_next(self.focused)
+
+    def cmd_previous(self):
+        self.focus_previous(self.focused)

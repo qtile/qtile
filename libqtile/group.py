@@ -341,11 +341,11 @@ class _Group(command.CommandObject):
         if not self.windows:
             return
         if self.currentWindow.floating:
-            nxt = self.floating_layout.focus_prev(self.currentWindow) or \
+            nxt = self.floating_layout.focus_previous(self.currentWindow) or \
                 self.layout.focus_last() or \
                 self.floating_layout.focus_last()
         else:
-            nxt = self.layout.focus_prev(self.currentWindow) or \
+            nxt = self.layout.focus_previous(self.currentWindow) or \
                 self.floating_layout.focus_last() or \
                 self.layout.focus_last()
         self.focus(nxt, True)

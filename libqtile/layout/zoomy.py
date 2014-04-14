@@ -116,8 +116,26 @@ class Zoomy(SingleWindow):
         """
         self.down()
 
+    cmd_next = cmd_down
+
     def cmd_up(self):
         """
             Switch up in the window list.
         """
         self.up()
+
+    cmd_previous = cmd_up
+
+    def focus_next(self, window):
+        if window != self.lastfocus:
+            self.focus(window)
+        if self.clients:
+            utils.shuffleDown(self.clients)
+            return self.clients[0]
+
+    def focus_previous(self, window):
+        if window != self.lastfocus:
+            self.focus(window)
+        if self.clients:
+            utils.shuffleUp(self.clients)
+            return self.clients[0]

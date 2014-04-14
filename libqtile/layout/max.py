@@ -111,8 +111,10 @@ class Max(SingleWindow):
         if window != self._get_window():
             self.focus(window)
         self.down()
+        return self.clients[0]
 
-    def focus_prev(self, window):
+    def focus_previous(self, window):
         if window != self._get_window():
             self.focus(window)
         self.up()
+        return self.clients[0]
