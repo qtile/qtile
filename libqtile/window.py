@@ -711,6 +711,10 @@ class Window(_Window):
         self._group = group
 
     @property
+    def edges(self):
+        return (self.x, self.y, self.x + self.width, self.y + self.height)
+
+    @property
     def floating(self):
         return self._float_state != NOT_FLOATING
 
@@ -1281,21 +1285,24 @@ class Window(_Window):
         else:
             self.opacity = 1
 
-    def _isinwindow(self, x, y, window):
-        return window.getposition()[0] <= x <= window.getposition()[0] + window.getsize()[0] and window.getposition()[1] <= y <= window.getposition()[1] + window.getsize()[1]
+
+    def _is_in_window(self, x, y, window):
+        return (window.edges[0] <= x <= window.edges[2] and
+                window.edges[1] <= y <= window.edges[3]))
 
     def cmd_set_position(self, dx, dy, curx, cury):
-        if self.qtile.currentWindow.floating:
+        if self.floating:
             self.tweak_float(dx, dy)
             return
         for window in self.group.windows:
-            if window == self.qtile.currentWindow or window.floating:
+            if window == self or window.floating:
                 continue
-            if self._isinwindow(curx, cury, window) is True:
-                window1 = self.group.layout.clients.index(self.qtile.currentWindow)
-                window2 = self.group.layout.clients.index(window)
-                self.group.layout.clients[window1], self.group.layout.clients[window2] = self.group.layout.clients[window2], self.group.layout.clients[window1]
+            if self._is_in_window(curx, cury, window):
+                clients = self.group.layout.clients
+                index1 = clients.index(self)
+                index2 = clients.index(window)
+                clients[index1], clients[index2] = clients[index2], clients[index1]
                 self.group.layoutAll()
-                self.group.layout.focused = window1
-                self.group.focus(self.qtile.currentWindow, False)
+                self.group.layout.focused = self
+                self.group.focus(self, True)
                 break
