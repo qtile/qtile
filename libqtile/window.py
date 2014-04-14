@@ -1301,7 +1301,6 @@ class Window(_Window):
                 index1 = clients.index(self)
                 index2 = clients.index(window)
                 clients[index1], clients[index2] = clients[index2], clients[index1]
+                self.group.layout.focused = index2
                 self.group.layoutAll()
-                self.group.layout.focused = self
-                self.group.focus(self, True)
                 break
