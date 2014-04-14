@@ -286,10 +286,10 @@ class Delegate(Layout):
                 focus = layouts[idx].focus_first()
         return focus
 
-    def focus_prev(self, win):
+    def focus_previous(self, win):
         layouts = self._get_layouts()
         cur = self.layouts[win]
-        focus = cur.focus_prev(win)
+        focus = cur.focus_previous(win)
         if not focus:
             idx = layouts.index(cur)
             while idx > 0 and not focus:
