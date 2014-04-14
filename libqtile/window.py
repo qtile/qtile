@@ -1288,7 +1288,7 @@ class Window(_Window):
 
     def _is_in_window(self, x, y, window):
         return (window.edges[0] <= x <= window.edges[2] and
-                window.edges[1] <= y <= window.edges[3]))
+                window.edges[1] <= y <= window.edges[3])
 
     def cmd_set_position(self, dx, dy, curx, cury):
         if self.floating:
