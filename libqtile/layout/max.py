@@ -106,3 +106,13 @@ class Max(SingleWindow):
         self.up()
 
     cmd_previous = cmd_up
+
+    def focus_next(self, window):
+        if window != self._get_window():
+            self.focus(window)
+        self.down()
+
+    def focus_prev(self, window):
+        if window != self._get_window():
+            self.focus(window)
+        self.up()
