@@ -312,7 +312,7 @@ def test_default_float(self):
     assert self.c.window.info()['y'] == 0
     assert self.c.window.info()['floating'] == True
 
-    self.c.window.move_floating(10, 20)
+    self.c.window.move_floating(10, 20, 42, 42)
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == 10
@@ -334,7 +334,7 @@ def test_last_float_size(self):
     assert self.c.window.info()['width'] == 150
     assert self.c.window.info()['height'] == 100
     # resize
-    self.c.window.set_size_floating(50, 90)
+    self.c.window.set_size_floating(50, 90, 42, 42)
     assert self.c.window.info()['width'] == 50
     assert self.c.window.info()['height'] == 90
     self.c.window.toggle_floating()
@@ -527,7 +527,7 @@ def test_floating_focus(self):
     assert self.c.window.info()['width'] == 398
     assert self.c.window.info()['height'] == 578
     self.c.window.toggle_floating()
-    self.c.window.move_floating(10, 20)
+    self.c.window.move_floating(10, 20, 42, 42)
     assert self.c.window.info()['name'] == 'xeyes'
     assert self.c.group.info()['focus'] == 'xeyes'
     # check what stack thinks is focus
@@ -576,25 +576,25 @@ def test_move_floating(self):
     self.c.window.toggle_floating()
     assert self.c.window.info()['floating'] == True
 
-    self.c.window.move_floating(10, 20)
+    self.c.window.move_floating(10, 20, 42, 42)
     assert self.c.window.info()['width'] == 150
     assert self.c.window.info()['height'] == 100
     assert self.c.window.info()['x'] == 10
     assert self.c.window.info()['y'] == 20
 
-    self.c.window.set_size_floating(50, 90)
+    self.c.window.set_size_floating(50, 90, 42, 42)
     assert self.c.window.info()['width'] == 50
     assert self.c.window.info()['height'] == 90
     assert self.c.window.info()['x'] == 10
     assert self.c.window.info()['y'] == 20
 
-    self.c.window.resize_floating(10, 20)
+    self.c.window.resize_floating(10, 20, 42, 42)
     assert self.c.window.info()['width'] == 60
     assert self.c.window.info()['height'] == 110
     assert self.c.window.info()['x'] == 10
     assert self.c.window.info()['y'] == 20
 
-    self.c.window.set_size_floating(10, 20)
+    self.c.window.set_size_floating(10, 20, 42, 42)
     assert self.c.window.info()['width'] == 10
     assert self.c.window.info()['height'] == 20
     assert self.c.window.info()['x'] == 10
