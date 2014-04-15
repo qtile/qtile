@@ -1189,25 +1189,25 @@ class Window(_Window):
         """
         self.togroup(groupName)
 
-    def cmd_move_floating(self, dx, dy):
+    def cmd_move_floating(self, dx, dy, curx, cury):
         """
             Move window by dx and dy
         """
         self.tweak_float(dx=dx, dy=dy)
 
-    def cmd_resize_floating(self, dw, dh):
+    def cmd_resize_floating(self, dw, dh, curx, cury):
         """
             Add dw and dh to size of window
         """
         self.tweak_float(dw=dw, dh=dh)
 
-    def cmd_set_position_floating(self, x, y):
+    def cmd_set_position_floating(self, x, y, curx, cury):
         """
             Move window to x and y
         """
         self.tweak_float(x=x, y=y)
 
-    def cmd_set_size_floating(self, w, h):
+    def cmd_set_size_floating(self, w, h, curx, cury):
         """
             Set window dimensions to w and h
         """
