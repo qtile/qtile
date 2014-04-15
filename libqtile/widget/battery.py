@@ -90,8 +90,8 @@ class _Battery(base._TextBox):
                     self.filenames[name] = file
                     return value
 
-        ## If we made it this far, we don't have a valid file. Just return 0.
-        return 0
+        ## If we made it this far, we don't have a valid file. Just return None.
+        return None
 
     def _get_info(self):
         try:
