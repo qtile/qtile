@@ -35,6 +35,12 @@ class Single(SingleWindow):
         """
         return self.window is None
 
+    def focus_first(self):
+        return self.window
+
+    def focus_last(self):
+        return self.window
+
     def focus_next(self, window):
         return self.window
 

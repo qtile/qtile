@@ -76,7 +76,7 @@ def test_matrix_navigation(self):
     self.testWindow("three")
     self.testWindow("four")
     self.testWindow("five")
-    self.c.layout.next()
+    self.c.layout.right()
     assert self.c.layout.info()["current_window"] == (0, 2)
     self.c.layout.up()
     assert self.c.layout.info()["current_window"] == (0, 1)
@@ -88,9 +88,9 @@ def test_matrix_navigation(self):
     assert self.c.layout.info()["current_window"] == (0, 0)
     self.c.layout.down()
     assert self.c.layout.info()["current_window"] == (0, 1)
-    self.c.layout.next()
+    self.c.layout.right()
     assert self.c.layout.info()["current_window"] == (1, 1)
-    self.c.layout.next()
+    self.c.layout.right()
     assert self.c.layout.info()["current_window"] == (0, 1)
 
 
@@ -143,9 +143,9 @@ def test_max_updown(self):
     self.testWindow("three")
     assert self.c.layout.info()["clients"] == ["three", "two", "one"]
     self.c.layout.down()
-    assert self.c.layout.info()["clients"] == ["two", "one", "three"]
+    assert self.c.groups()["a"]["focus"] == "two"
     self.c.layout.up()
-    assert self.c.layout.info()["clients"] == ["three", "two", "one"]
+    assert self.c.groups()["a"]["focus"] == "three"
 
 
 @Xephyr(False, MaxConfig())
@@ -549,13 +549,13 @@ def test_tile_nextprev(self):
     assert self.c.layout.info()["clients"] == ["three", "two", "one"]
     assert self.c.groups()["a"]["focus"] == "three"
 
-    self.c.layout.previous()
+    self.c.layout.next()
     assert self.c.groups()["a"]["focus"] == "two"
 
-    self.c.layout.next()
+    self.c.layout.previous()
     assert self.c.groups()["a"]["focus"] == "three"
 
-    self.c.layout.next()
+    self.c.layout.previous()
     assert self.c.groups()["a"]["focus"] == "one"
 
     self.c.layout.next()
