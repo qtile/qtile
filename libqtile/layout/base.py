@@ -98,13 +98,11 @@ class Layout(command.CommandObject, configurable.Configurable):
         """
         pass
 
-
     def blur(self):
         """
             Called whenever focus is gone from this layout.
         """
         pass
-
 
     def info(self):
         """
