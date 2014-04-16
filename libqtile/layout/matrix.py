@@ -81,22 +81,22 @@ class Matrix(Layout):
             return self.clients[-1]
 
     def focus_next(self, window):
+        if not self.clients:
+            return
         if self.get_current_window != window:
             self.focus(window)
         idx = self.clients.index(window)
         if idx + 1 < len(self.clients):
             return self.clients[idx + 1]
-        else:
-            return self.focus_first()
 
     def focus_previous(self, window):
+        if not self.clients:
+            return
         if self.get_current_window != window:
             self.focus(window)
         idx = self.clients.index(window)
         if idx > 0:
             return self.clients[idx - 1]
-        else:
-            return self.focus_last()
 
     def configure(self, client, screen):
         if client not in self.clients:
@@ -127,24 +127,14 @@ class Matrix(Layout):
         client.unhide()
 
     def cmd_next(self):
-        column, row = self.current_window
-        if column < self.columns:
-            return self.cmd_right()
-        if row < self.get_num_rows:
-            self.current_window = (0, row + 1)
-        else:
-            self.current_window = (0, 0)
-        self.group.focus(self.get_current_window(), False)
+        client = self.focus_next(self.get_current_window()) or \
+                 self.focus_first()
+        self.group.focus(client, False)
 
     def cmd_previous(self):
-        column, row = self.current_window
-        if column > 0:
-            return self.cmd_left()
-        if row > 0:
-            self.current_window = (self.columns, row - 1)
-        else:
-            self.current_window = (self.columns, self.get_num_rows)
-        self.group.focus(self.get_current_window(), False)
+        client = self.focus_previous(self.get_current_window()) or \
+                 self.focus_last()
+        self.group.focus(client, False)
 
     def cmd_left(self):
         """

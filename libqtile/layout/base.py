@@ -153,11 +153,11 @@ class Layout(command.CommandObject, configurable.Configurable):
         pass
 
     @abstractmethod
-    def focus_first(self, win):
+    def focus_first(self):
         pass
 
     @abstractmethod
-    def focus_last(self, win):
+    def focus_last(self):
         pass
 
     @abstractmethod
@@ -204,12 +204,6 @@ class SingleWindow(Layout):
         cli = self.clients.pop(0)
         if cli == win:
             return self.clients[0]
-
-    def focus_first(self):
-        return self._get_window()
-
-    def focus_last(self):
-        return self._get_window()
 
 
 class Delegate(Layout):

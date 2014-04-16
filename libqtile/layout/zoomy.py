@@ -18,23 +18,32 @@ class Zoomy(SingleWindow):
         SingleWindow.__init__(self, **config)
         self.add_defaults(Zoomy.defaults)
         self.clients = []
-        self.lastfocus = None
+        self.focused = None
 
     def _get_window(self):
+        return self.focused
+
+    def focus_first(self):
         if self.clients:
             return self.clients[0]
 
-    def up(self):
+    def focus_last(self):
         if self.clients:
-            utils.shuffleUp(self.clients)
-            self.group.layoutAll()
-            self.group.focus(self.clients[0], False)
+            return self.clients[len(self.clients) - 1]
 
-    def down(self):
-        if self.clients:
-            utils.shuffleDown(self.clients)
-            self.group.layoutAll()
-            self.group.focus(self.clients[0], False)
+    def focus_next(self, client):
+        if client not in self.clients:
+            return
+        idx = self.clients.index(client)
+        if len(self.clients) > idx + 1:
+            return self.clients[idx + 1]
+
+    def focus_previous(self, client):
+        if not self.clients:
+            return
+        idx = self.clients.index(client)
+        if idx > 0:
+            return self.clients[idx - 1]
 
     def clone(self, group):
         c = SingleWindow.clone(self, group)
@@ -43,17 +52,19 @@ class Zoomy(SingleWindow):
 
     def add(self, client):
         self.clients.insert(0, client)
+        self.focus(client)
 
     def remove(self, client):
         if client not in self.clients:
             return
+        if self.focused == client:
+            self.cmd_previous()
         self.clients.remove(client)
-        if self.clients:
-            return self.clients[0]
+        return self.focused
 
     def configure(self, client, screen):
         left, right = screen.hsplit(screen.width - self.columnwidth)
-        if self.clients and client is self.clients[0]:
+        if client is self.focused:
             client.place(
                 left.x,
                 left.y,
@@ -64,10 +75,15 @@ class Zoomy(SingleWindow):
             )
         else:
             h = int(right.width * left.height / left.width)
+            client_index = self.clients.index(client)
+            focused_index = self.clients.index(self.focused)
+            offset = client_index - focused_index - 1
+            if offset < 0:
+                offset += len(self.clients)
             if h * (len(self.clients) - 1) < right.height:
                 client.place(
                     right.x,
-                    right.y + h * (self.clients.index(client) - 1),
+                    right.y + h * offset,
                     right.width,
                     h,
                     0,
@@ -77,7 +93,7 @@ class Zoomy(SingleWindow):
                 hh = int((right.height - h) / (len(self.clients) - 1))
                 client.place(
                     right.x,
-                    right.y + hh * (self.clients.index(client) - 1),
+                    right.y + hh * offset,
                     right.width,
                     h,
                     0,
@@ -91,9 +107,8 @@ class Zoomy(SingleWindow):
         return d
 
     def focus(self, win):
-        old = self.lastfocus
-        if old and self.property_name:
-            old.window.set_property(
+        if self.focused and self.property_name:
+            self.focused.window.set_property(
                 self.property_name,
                 self.property_small,
                 "STRING",
@@ -101,41 +116,28 @@ class Zoomy(SingleWindow):
             )
         SingleWindow.focus(self, win)
         if self.property_name:
-            win = self.clients[0]
+            self.focused = win
             win.window.set_property(
                 self.property_name,
                 self.property_big,
                 "STRING",
                 format=8
             )
-        self.lastfocus = win
 
-    def cmd_down(self):
-        """
-            Switch down in the window list.
-        """
-        self.down()
+    def cmd_next(self):
+        client = self.focus_next(self.focused) or \
+                 self.focus_first()
+        self.focus(client)
+        self.group.focus(client, False)
+        self.group.layoutAll()
 
-    cmd_next = cmd_down
+    cmd_down = cmd_next
 
-    def cmd_up(self):
-        """
-            Switch up in the window list.
-        """
-        self.up()
+    def cmd_previous(self):
+        client = self.focus_previous(self.focused) or \
+                 self.focus_last()
+        self.focus(client)
+        self.group.focus(client, False)
+        self.group.layoutAll()
 
-    cmd_previous = cmd_up
-
-    def focus_next(self, window):
-        if window != self.lastfocus:
-            self.focus(window)
-        if self.clients:
-            utils.shuffleDown(self.clients)
-            return self.clients[0]
-
-    def focus_previous(self, window):
-        if window != self.lastfocus:
-            self.focus(window)
-        if self.clients:
-            utils.shuffleUp(self.clients)
-            return self.clients[0]
+    cmd_up = cmd_previous

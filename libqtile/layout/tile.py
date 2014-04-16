@@ -68,7 +68,6 @@ class Tile(Layout):
         idx = self.clients.index(client)
         if len(self.clients) > idx + 1:
             return self.clients[idx + 1]
-        return self.clients[0]
 
     def focus_last(self):
         if self.clients:
@@ -80,37 +79,6 @@ class Tile(Layout):
         idx = self.clients.index(client)
         if idx > 0:
             return self.clients[idx - 1]
-        return self.clients[-1]
-
-    def get_next_index(self, currentindex):
-        nextindex = currentindex + 1
-        if nextindex >= len(self.clients):
-            nextindex = 0
-        return nextindex
-
-    def get_previous_index(self, currentindex):
-        previndex = currentindex - 1
-        if previndex < 0:
-            previndex = len(self.clients) - 1
-        return previndex
-
-    def getNextClient(self):
-        currentindex = self.clients.index(self.focused)
-        nextindex = self.get_next_index(currentindex)
-        return self.clients[nextindex]
-
-    def getPreviousClient(self):
-        currentindex = self.clients.index(self.focused)
-        previndex = self.get_previous_index(currentindex)
-        return self.clients[previndex]
-
-    def next(self):
-        n = self.getPreviousClient()
-        self.group.focus(n, True)
-
-    def previous(self):
-        n = self.getNextClient()
-        self.group.focus(n, True)
 
     def shuffle(self, function):
         if self.clients:
@@ -217,10 +185,14 @@ class Tile(Layout):
         self.up()
 
     def cmd_next(self):
-        self.next()
+        client = self.focus_next(self.focused) or \
+                 self.focus_first()
+        self.group.focus(client, False)
 
     def cmd_previous(self):
-        self.previous()
+        client = self.focus_previous(self.focused) or \
+                 self.focus_last()
+        self.group.focus(client, False)
 
     def cmd_decrease_ratio(self):
         self.ratio -= self.ratio_increment

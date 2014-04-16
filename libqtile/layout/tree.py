@@ -278,15 +278,25 @@ class TreeTab(SingleWindow):
     def focus(self, win):
         self._focused = win
 
-    def focus_next(self, win):
-        if win != self._focused:
-            self.focus(win)
-        self.cmd_next()
+    def focus_first(self):
+        win = self._tree.get_first_window()
+        if win:
+            return win.window
 
-    def focus_previous(self, win):
-        if win != self._focused:
-            self.focus(win)
-        self.cmd_previous()
+    def focus_last(self):
+        win = self._tree.get_last_window()
+        if win:
+            return win.window
+
+    def focus_next(self, client):
+        win = self._nodes[client].get_next_window()
+        if win:
+            return win.window
+
+    def focus_previous(self, client):
+        win = self._nodes[client].get_prev_window()
+        if win:
+            return win.window
 
     def blur(self):
         # Does not clear current window, will change if new one

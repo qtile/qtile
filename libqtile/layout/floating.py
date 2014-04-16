@@ -113,6 +113,8 @@ class Floating(Layout):
             return self.clients[-1]
 
     def focus_previous(self, win):
+        if win not in self.clients:
+            return
         idx = self.clients.index(win)
         if idx > 0:
             return self.clients[idx - 1]
@@ -151,13 +153,14 @@ class Floating(Layout):
 
     def add(self, client):
         self.clients.append(client)
+        self.focused = client
 
     def remove(self, client):
         if client not in self.clients:
             return
-        res = self.focus_next(client)
+        self.focused = self.focus_next(client)
         self.clients.remove(client)
-        return res
+        return self.focused
 
     def info(self):
         d = Layout.info(self)
@@ -165,7 +168,13 @@ class Floating(Layout):
         return d
 
     def cmd_next(self):
-        self.focus_next(self.focused)
+        client = self.focus_next(self.focused) or \
+                 self.focus_first()
+        self.focused = client
+        self.group.focus(client, False)
 
     def cmd_previous(self):
-        self.focus_previous(self.focused)
+        client = self.focus_previous(self.focused) or \
+                 self.focus_last()
+        self.focused = client
+        self.group.focus(client, False)
