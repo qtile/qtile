@@ -127,17 +127,13 @@ class Zoomy(SingleWindow):
     def cmd_next(self):
         client = self.focus_next(self.focused) or \
                  self.focus_first()
-        self.focus(client)
         self.group.focus(client, False)
-        self.group.layoutAll()
 
     cmd_down = cmd_next
 
     def cmd_previous(self):
         client = self.focus_previous(self.focused) or \
                  self.focus_last()
-        self.focus(client)
         self.group.focus(client, False)
-        self.group.layoutAll()
 
     cmd_up = cmd_previous

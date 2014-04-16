@@ -170,11 +170,9 @@ class Floating(Layout):
     def cmd_next(self):
         client = self.focus_next(self.focused) or \
                  self.focus_first()
-        self.focused = client
         self.group.focus(client, False)
 
     def cmd_previous(self):
         client = self.focus_previous(self.focused) or \
                  self.focus_last()
-        self.focused = client
         self.group.focus(client, False)
