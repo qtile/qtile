@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+# Import python libs
+import os
+
+if os.environ.get('USE_SETUPTOOLS', '0') == '1':
+    from setuptools import setup
+else:
+    from distutils.core import setup
 
 long_description = """
 A pure-Python tiling window manager.
