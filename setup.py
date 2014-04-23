@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
 # Import python libs
-import os
-
-if os.environ.get('USE_SETUPTOOLS', '0') == '1':
+try:
     from setuptools import setup
-else:
+except ImportError:
+    # Let's not fail if setuptools is not available
     from distutils.core import setup
 
 long_description = """
