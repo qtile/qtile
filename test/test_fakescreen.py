@@ -266,7 +266,7 @@ def test_float_outside_edges(self):
         'clients': [], 'group': 'a', 'name': 'max'}
 
     # move left, but some still on screen 0
-    self.c.window.move_floating(-10, 20)
+    self.c.window.move_floating(-10, 20, 42, 42)
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == -10
@@ -274,7 +274,7 @@ def test_float_outside_edges(self):
     assert self.c.window.info()['group'] == 'a'
 
     # move up, but some still on screen 0
-    self.c.window.set_position_floating(-10, -20)
+    self.c.window.set_position_floating(-10, -20, 42, 42)
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == -10
@@ -282,7 +282,7 @@ def test_float_outside_edges(self):
     assert self.c.window.info()['group'] == 'a'
 
     # move above a
-    self.c.window.set_position_floating(50, -20)
+    self.c.window.set_position_floating(50, -20, 42, 42)
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == 50
@@ -290,14 +290,14 @@ def test_float_outside_edges(self):
     assert self.c.window.info()['group'] == 'a'
 
     # move down so still left, but next to screen c
-    self.c.window.set_position_floating(-10, 520)
+    self.c.window.set_position_floating(-10, 520, 42, 42)
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == -10
     assert self.c.window.info()['y'] == 520
     assert self.c.window.info()['group'] == 'c'
 
     # move above b
-    self.c.window.set_position_floating(700, -10)
+    self.c.window.set_position_floating(700, -10, 42, 42)
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == 700

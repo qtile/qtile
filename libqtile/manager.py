@@ -830,7 +830,7 @@ class Qtile(command.CommandObject):
                     status, val = self.server.call((
                         i.selectors,
                         i.name,
-                        i.args + (rx + dx, ry + dy),
+                        i.args + (rx + dx, ry + dy, e.event_x, e.event_y),
                         i.kwargs
                     ))
                     if status in (command.ERROR, command.EXCEPTION):

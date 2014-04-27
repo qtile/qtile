@@ -711,6 +711,10 @@ class Window(_Window):
         self._group = group
 
     @property
+    def edges(self):
+        return (self.x, self.y, self.x + self.width, self.y + self.height)
+
+    @property
     def floating(self):
         return self._float_state != NOT_FLOATING
 
@@ -1185,25 +1189,25 @@ class Window(_Window):
         """
         self.togroup(groupName)
 
-    def cmd_move_floating(self, dx, dy):
+    def cmd_move_floating(self, dx, dy, curx, cury):
         """
             Move window by dx and dy
         """
         self.tweak_float(dx=dx, dy=dy)
 
-    def cmd_resize_floating(self, dw, dh):
+    def cmd_resize_floating(self, dw, dh, curx, cury):
         """
             Add dw and dh to size of window
         """
         self.tweak_float(dw=dw, dh=dh)
 
-    def cmd_set_position_floating(self, x, y):
+    def cmd_set_position_floating(self, x, y, curx, cury):
         """
             Move window to x and y
         """
         self.tweak_float(x=x, y=y)
 
-    def cmd_set_size_floating(self, w, h):
+    def cmd_set_size_floating(self, w, h, curx, cury):
         """
             Set window dimensions to w and h
         """
@@ -1280,3 +1284,23 @@ class Window(_Window):
             self.opacity += .1
         else:
             self.opacity = 1
+
+    def _is_in_window(self, x, y, window):
+        return (window.edges[0] <= x <= window.edges[2] and
+                window.edges[1] <= y <= window.edges[3])
+
+    def cmd_set_position(self, dx, dy, curx, cury):
+        if self.floating:
+            self.tweak_float(dx, dy)
+            return
+        for window in self.group.windows:
+            if window == self or window.floating:
+                continue
+            if self._is_in_window(curx, cury, window):
+                clients = self.group.layout.clients
+                index1 = clients.index(self)
+                index2 = clients.index(window)
+                clients[index1], clients[index2] = clients[index2], clients[index1]
+                self.group.layout.focused = index2
+                self.group.layoutAll()
+                break
