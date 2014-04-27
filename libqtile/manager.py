@@ -296,7 +296,7 @@ class Qtile(command.CommandObject):
         )
         self.root.set_property("_NET_CURRENT_DESKTOP", index)
 
-    def addGroup(self, name, layout=None, layouts=None):
+    def addGroup(self, name, layout=None, layouts=[]):
         if name not in self.groupMap.keys():
             g = _Group(name, layout)
             self.groups.append(g)

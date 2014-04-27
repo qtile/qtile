@@ -332,7 +332,7 @@ class Group(object):
     certain Matched windows to be on them, hide when they're not in use, etc.
     """
     def __init__(self, name, matches=None, exclusive=False,
-                 spawn=None, layout=None, layouts=None, persist=True, init=True,
+                 spawn=None, layout=None, layouts=[], persist=True, init=True,
                  layout_opts=None, screen_affinity=None, position=sys.maxint):
         """
         :param name: the name of this group
