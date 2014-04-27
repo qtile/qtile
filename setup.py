@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+# Import python libs
+try:
+    from setuptools import setup
+except ImportError:
+    # Let's not fail if setuptools is not available
+    from distutils.core import setup
 
 long_description = """
 A pure-Python tiling window manager.
