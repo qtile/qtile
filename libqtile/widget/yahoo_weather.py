@@ -1,13 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .. import bar
 import base
 import urllib
 import urllib2
 from xml.dom import minidom
-import gobject
-import threading
 
 try:
     import json
@@ -19,7 +16,7 @@ WEATHER_URL = 'http://weather.yahooapis.com/forecastrss?'
 WEATHER_NS = 'http://xml.weather.yahoo.com/ns/rss/1.0'
 
 
-class YahooWeather(base._TextBox):
+class YahooWeather(base.ThreadedPollText):
     ''' A weather widget, data provided by the Yahoo! Weather API
         Format options:
             astronomy_sunrise, astronomy_sunset
@@ -49,39 +46,14 @@ class YahooWeather(base._TextBox):
             'Display format'
         ),
         ('metric', True, 'True to use metric/C, False to use imperial/F'),
-        ('update_interval', 600, 'Update interval in seconds'),
         ('up', '^', 'symbol for rising atmospheric pressure'),
         ('down', 'v', 'symbol for falling atmospheric pressure'),
         ('steady', 's', 'symbol for steady atmospheric pressure'),
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
-
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
+        base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(YahooWeather.defaults)
-        self.timeout_add(self.update_interval, self.wx_updater)
-
-    def button_press(self, x, y, button):
-        self.update(self.fetch_weather())
-
-    def wx_updater(self):
-        self.log.info('adding WX widget timer')
-
-        def worker():
-            data = self.fetch_weather()
-            gobject.idle_add(self.update, data)
-        threading.Thread(target=worker).start()
-        return True
-
-    def update(self, data):
-        if data:
-            self.text = self.format.format(**data)
-        else:
-            self.text = 'N/A'
-        self.bar.draw()
-        return False
 
     def fetch_woeid(self, location):
         url = QUERY_URL + urllib.urlencode({
@@ -98,7 +70,7 @@ class YahooWeather(base._TextBox):
             ## HTTPError? JSON Error? KeyError? Doesn't matter, return None
             return None
 
-    def fetch_weather(self):
+    def poll(self):
         if not self.woeid:
             if self.location:
                 self.woeid = self.fetch_woeid(self.location)
@@ -136,4 +108,4 @@ class YahooWeather(base._TextBox):
         elif data['atmosphere_rising'] == '2':
             data['atmosphere_rising'] = self.down
 
-        return data
+        return self.format.format(**data)

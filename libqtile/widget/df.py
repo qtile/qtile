@@ -18,9 +18,7 @@
 import os
 import base
 
-from .. import bar
-
-class DF(base._TextBox):
+class DF(base.ThreadedPollText):
     """
     Disk Free Widget
 
@@ -35,19 +33,17 @@ class DF(base._TextBox):
         ('format', '{p} ({uf}{m})',
                     'String format (p: partition, s: size, '\
                     'f: free space, uf: user free space, m: measure)'),
+        ('update_interval', 60, 'The update inteval.'),
     ]
 
     measures = {"G": 1024*1024*1024,
                 "M": 1024*1024,
                 "B": 1024}
-    def __init__(self, interval=60, **config):
-        base._TextBox.__init__(self, '', bar.CALCULATED, **config)
+    def __init__(self, **config):
+        base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(DF.defaults)
-        self.interval = interval
         self.user_free = 0
         self.calc = self.measures[self.measure]
-        self.update()
-        self.timeout_add(self.interval, self.update)
 
     def draw(self):
         if self.user_free <= self.warn_space:
@@ -55,9 +51,9 @@ class DF(base._TextBox):
         else:
             self.layout.colour = self.foreground
 
-        base._TextBox.draw(self)
+        base.ThreadedPollText.draw(self)
 
-    def update(self):
+    def poll(self):
         statvfs = os.statvfs(self.partition)
 
         size = statvfs.f_frsize * statvfs.f_blocks / self.calc
@@ -70,9 +66,4 @@ class DF(base._TextBox):
             text = self.format.format(p=self.partition, s=size, f=free,
                     uf=self.user_free, m=self.measure)
 
-        if self.text != text:
-            self.text = text
-            if self.configured:
-                self.bar.draw()
-
-        return True
+        return text

@@ -245,6 +245,78 @@ class _TextBox(_Widget):
         self.bar.draw()
 
 
+class InLoopPollText(_TextBox):
+    """ A common interface for polling some 'fast' information, munging it, and
+    rendering the result in a text box. You probably want to use
+    ThreadedPollText instead.
+
+    ('fast' here means that this runs /in/ the event loop, so don't block! If
+    you want to run something nontrivial, use ThreadedPollWidget.) """
+
+    defaults = [
+        ("update_interval", 600, "Update interval in seconds, if none, the "
+            "widget updates whenever the event loop is idle."),
+    ]
+
+    def __init__(self, **config):
+        _TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
+        self.add_defaults(InLoopPollText.defaults)
+
+    def _configure(self, qtile, bar):
+        self.qtile = qtile
+        if not self.configured:
+            if self.update_interval is None:
+                gobject.idle_add(self.tick)
+            else:
+                self.timeout_add(self.update_interval, self.tick)
+        _TextBox._configure(self, qtile, bar)
+
+        # Update when we are configured.
+        self.tick()
+
+    def button_press(self, x, y, button):
+        self.tick()
+
+    def poll(self):
+        return 'N/A'
+
+    def _poll(self):
+        try:
+            return self.poll()
+        except:
+            self.log.exception('got exception while polling')
+
+    def tick(self):
+        text = self._poll()
+        self.update(text)
+        return True
+
+    def update(self, text):
+        old_width = self.layout.width
+        if self.text != text:
+            self.text = text
+            # If our width hasn't changed, we just draw ourselves. Otherwise,
+            # we draw the whole bar.
+            if self.layout.width == old_width:
+                self.draw()
+            else:
+                self.bar.draw()
+        return False
+
+
+class ThreadedPollText(InLoopPollText):
+    """ A common interface for polling some REST URL, munging the data, and
+    rendering the result in a text box. """
+    def __init__(self, **config):
+        InLoopPollText.__init__(self, **config)
+
+    def tick(self):
+        def worker():
+            text = self._poll()
+            gobject.idle_add(self.update, text)
+        threading.Thread(target=worker).start()
+        return True
+
 # these two classes below look SUSPICIOUSLY similar
 
 class PaddingMixin(object):

@@ -2,19 +2,18 @@
 # vim: set sw=4 et tw=80:
 
 import base
-from .. import bar
 
 import os.path
 import mailbox
 
 
-class Maildir(base._TextBox):
+class Maildir(base.ThreadedPollText):
     """
     A simple widget showing the number of new mails in maildir mailboxes.
     """
 
-    def __init__(self, maildirPath, subFolders,
-                 separator=" ", timeout=120, **config):
+    # TODO: make this use our settings framework
+    def __init__(self, maildirPath, subFolders, separator=" ", **config):
         """
         Constructor.
 
@@ -23,10 +22,9 @@ class Maildir(base._TextBox):
         @param separator: the string to put between the subfolder strings.
         @param timeout: the refresh timeout in seconds.
         """
-        base._TextBox.__init__(self, "", bar.CALCULATED, **config)
+        base.ThreadedPollText.__init__(self, **config)
         self._maildirPath = os.path.expanduser(maildirPath)
         self._separator = separator
-        self._timeout = timeout
         self._subFolders = []
 
         # if it looks like a list of strings then we just convert them
@@ -39,16 +37,11 @@ class Maildir(base._TextBox):
         else:
             self._subFolders = subFolders
 
-        self.text = self.format_text(self.mailbox_state())
-        self.timeout_add(self._timeout, self.update)
-
-    def mailbox_state(self):
+    def poll(self):
         """
         Scans the mailbox for new messages.
 
-        @return: A dictionary mapping the entries from the subFolders parameter
-                 passed to the constructor to the number of new mails in that
-                 subfolder.
+        @return: A string representing the current mailbox state.
         """
         state = {}
 
@@ -65,7 +58,7 @@ class Maildir(base._TextBox):
                 if file in maildir:
                     state[subFolder["label"]] += 1
 
-        return state
+        return self.format_text(state)
 
     def format_text(self, state):
         """
@@ -77,19 +70,3 @@ class Maildir(base._TextBox):
         return self._separator.join(
             "{}: {}".format(*item) for item in state.iteritems()
         )
-
-    def update(self):
-        """
-        Updates the widget using mailbox_state and format_text.
-
-        @return: True, to keep the timeout active.
-        """
-        if self.configured:
-            newText = self.format_text(self.mailbox_state())
-
-            if newText != self.text:
-                self.text = newText
-                self.bar.draw()
-        # Return True to keep the timeout active (see documentation of
-        # gobject.timeout_add()).
-        return True

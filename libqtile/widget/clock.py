@@ -1,49 +1,37 @@
 from time import time
 from datetime import datetime
 
-from .. import bar
 import base
+import warnings
+import exceptions
 
-import gobject
-
-
-class Clock(base._TextBox):
+class Clock(base.InLoopPollText):
     """
         A simple but flexible text-based clock.
     """
-    def __init__(self, fmt="%H:%M", width=bar.CALCULATED, **config):
-        """
-            - fmt: A Python datetime format string.
+    defaults = [
+        ('format', '%H:%M', 'A Python datetime format string'),
 
-            - width: A fixed width, or bar.CALCULATED to calculate the width
-            automatically (which is recommended).
-        """
-        base._TextBox.__init__(self, " ", width, **config)
-        self.fmt = fmt
-        self.configured = False
+        ('update_interval', 1., 'Update interval for the clock'),
+    ]
+    def __init__(self, fmt=None, **config):
+        base.InLoopPollText.__init__(self, **config)
+        self.add_defaults(Clock.defaults)
+        if fmt is not None:
+            warnings.warn('fmt kwarg or positional argument is deprecated. '
+                          'Please use format.', exceptions.DeprecationWarning)
+            self.format = fmt
 
-    def _configure(self, qtile, bar):
-        if not self.configured:
-            self.configured = True
-            gobject.idle_add(self.update)
-        base._TextBox._configure(self, qtile, bar)
-
-    def update(self):
-
+    def tick(self):
         ts = time()
+        self.timeout_add(self.update_interval - ts % self.update_interval,
+                         self.tick)
+        self.update(self.poll())
+        return False
 
-        self.timeout_add(1. - ts % 1., self.update)
-
-        old_layout_width = self.layout.width
-
+    def poll(self):
+        ts = time()
         # adding .5 to get a proper seconds value because glib could
         # theoreticaly call our method too early and we could get something
         # like (x-1).999 instead of x.000
-        self.text = datetime.fromtimestamp(int(ts + .5)).strftime(self.fmt)
-
-        if self.layout.width != old_layout_width:
-            self.bar.draw()
-        else:
-            self.draw()
-
-        return False
+        return datetime.fromtimestamp(int(ts + .5)).strftime(self.format)
