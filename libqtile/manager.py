@@ -217,7 +217,7 @@ class Qtile(command.CommandObject):
             (w, h) = xywh.get(pos, (0, 0))
             xywh[pos] = (max(s.width, w), max(s.height, h))
 
-        for i, ((x, y), (w, h)) in enumerate(xywh.items()):
+        for i, ((x, y), (w, h)) in enumerate(sorted(xywh.items())):
             if i + 1 > len(self.config.screens):
                 scr = Screen()
             else:
