@@ -106,7 +106,7 @@ class Max(SingleWindow):
                 screen.height,
                 0,
                 None,
-                client is self.focused
+                client is self.group.currentWindow
             )
             client.unhide()
 
