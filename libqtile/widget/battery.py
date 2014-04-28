@@ -55,6 +55,7 @@ class _Battery(base._TextBox):
             ' power draw in /sys/class/power_supply/battery_name'
         ),
         ('update_delay', 1, 'The delay in seconds between updates'),
+        ('label', '', 'Label to display before volume percentage'),
     ]
 
     def __init__(self, **config):
@@ -140,8 +141,9 @@ class Battery(_Battery):
 
     def _get_text(self):
         info = self._get_info()
+        label = '{0} '.format(self.label) if self.label else ''
         if info is False:
-            return 'Error'
+            return '{0}Error'.format(label)
 
         ## Set the charging character
         try:
@@ -159,7 +161,7 @@ class Battery(_Battery):
                 char = self.charge_char
                 time = (info['full'] - info['now']) / info['power']
             else:
-                return 'Full'
+                return '{0}Full'.format(label)
         except ZeroDivisionError:
             time = -1
 
@@ -176,7 +178,7 @@ class Battery(_Battery):
         else:
             self.layout.colour = self.foreground
 
-        return self.format.format(
+        return label + self.format.format(
             char=char,
             percent=percent,
             hour=hour,

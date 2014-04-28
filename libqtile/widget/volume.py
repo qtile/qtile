@@ -24,6 +24,7 @@ class Volume(base._TextBox):
         ("padding", 3, "Padding left and right. Calculated if None."),
         ("theme_path", None, "Path of the icons"),
         ("update_interval", 0.2, "Update time in seconds."),
+        ("label", '', "Label to display before volume percentage, if not using a theme"),
     ]
 
     def __init__(self, **config):
@@ -100,10 +101,11 @@ class Volume(base._TextBox):
             self.drawer.ctx.set_source(self.surfaces[img_name])
             self.drawer.ctx.paint()
         else:
+            self.text = '{0} '.format(self.label) if self.label else ''
             if self.volume == -1:
-                self.text = 'M'
+                self.text += 'M'
             else:
-                self.text = '%s%%' % self.volume
+                self.text += '{0}%'.format(self.volume)
 
     def setup_images(self):
         for img_name in (
