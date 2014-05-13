@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from config import Drag, Click, Screen
+from config import Drag, Click, Screen, Match, Rule
 from utils import QtileError
 from libqtile.log_utils import init_log
 from libqtile.dgroups import DGroups
@@ -128,11 +128,12 @@ class Qtile(command.CommandObject):
         if config.main:
             config.main(self)
 
+        self.dgroups = None
         if self.config.groups:
             key_binder = None
             if hasattr(self.config, 'dgroups_key_binder'):
                 key_binder = self.config.dgroups_key_binder
-            DGroups(self, self.config.groups, key_binder)
+            self.dgroups = DGroups(self, self.config.groups, key_binder)
 
         if hasattr(config, "widget_defaults") and config.widget_defaults:
             _Widget.global_defaults = config.widget_defaults
@@ -1354,3 +1355,21 @@ class Qtile(command.CommandObject):
         except Exception:
             error = traceback.format_exc()
             self.log.error('Exception calling "%s":\n%s' % (function, error))
+
+    def cmd_add_rule(self, match_args, rule_args, min_priorty=False):
+        """
+            Add a dgroup rule, returns rule_id needed to remove it
+            param: match_args (config.Match arguments)
+            param: rule_args (config.Rule arguments)
+            param: min_priorty if the rule is added with minimun prioriry(last)
+        """
+        if not self.dgroups:
+            self.log.warning('No dgroups created')
+            return
+
+        match = Match(**match_args)
+        rule = Rule(match, **rule_args)
+        return self.dgroups.add_rule(rule, min_priorty)
+
+    def cmd_remove_rule(self, rule_id):
+        self.dgroups.remove_rule(rule_id)
