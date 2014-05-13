@@ -375,7 +375,7 @@ class Match(object):
         It can match by title, class or role.
     """
     def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
-                 wm_instance_class=None):
+                 wm_instance_class=None, net_wm_pid=None):
         """
 
         ``Match`` supports both regular expression objects (i.e. the result of
@@ -390,6 +390,8 @@ class Match(object):
         :param wm_type: things to match against the WM_TYPE atom
         :param wm_instance_class: things to match against the first string in
                WM_CLASS atom
+        :param net_wm_pid: things to match against the _NET_WM_PID atom
+              (only int allowed in this rule)
         """
         if not title:
             title = []
@@ -401,16 +403,28 @@ class Match(object):
             wm_type = []
         if not wm_instance_class:
             wm_instance_class = []
+        if not net_wm_pid:
+            net_wm_pid = []
 
         self._rules = [('title', t) for t in title]
         self._rules += [('wm_class', w) for w in wm_class]
         self._rules += [('role', r) for r in role]
         self._rules += [('wm_type', r) for r in wm_type]
         self._rules += [('wm_instance_class', w) for w in wm_instance_class]
+        self._rules += [('net_wm_pid', w) for w in net_wm_pid]
 
     def compare(self, client):
         for _type, rule in self._rules:
-            match_func = getattr(rule, 'match', None) or getattr(rule, 'count')
+            if _type == "net_wm_pid":
+                if not isinstance(rule, int):
+                    error = 'Invalid rule for net_wm_pid: "%s" '\
+                            'only ints allowed' % rule
+                    client.qtile.log.warning(error)
+                    continue
+                match_func = lambda value: rule == value
+            else:
+                match_func = getattr(rule, 'match', None) or \
+                    getattr(rule, 'count')
 
             if _type == 'title':
                 value = client.name
@@ -425,6 +439,8 @@ class Match(object):
                     value = value[0]
             elif _type == 'wm_type':
                 value = client.window.get_wm_type()
+            elif _type == 'net_wm_pid':
+                value = client.window.get_net_wm_pid()
             else:
                 value = client.window.get_wm_window_role()
 
