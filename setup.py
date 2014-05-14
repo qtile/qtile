@@ -53,6 +53,7 @@ setup(
     scripts=[
         "bin/qsh",
         "bin/qtile",
+        "bin/qtile-run",
         "bin/qtile-session"
     ],
 )

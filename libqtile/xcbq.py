@@ -518,6 +518,11 @@ class Window:
             name = self.conn.atoms.get_name(r[0])
             return WindowStates.get(name, name)
 
+    def get_net_wm_pid(self):
+        r = self.get_property("_NET_WM_PID", unpack="I")
+        if r:
+            return r[0]
+
     def configure(self, **kwargs):
         """
             Arguments can be: x, y, width, height, border, sibling, stackmode

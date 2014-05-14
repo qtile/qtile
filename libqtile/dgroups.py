@@ -51,7 +51,13 @@ class DGroups(object):
 
         self.groups = dgroups
         self.groupMap = {}
-        self.rules = getattr(qtile.config, 'dgroups_app_rules', [])
+
+        self.rules = []
+        self.rules_map = {}
+        self.last_rule_id = 0
+
+        for rule in getattr(qtile.config, 'dgroups_app_rules', []):
+            self.add_rule(rule)
 
         self.keys = []
 
@@ -63,6 +69,20 @@ class DGroups(object):
         self.delay = delay
 
         self.timeout = {}
+
+    def add_rule(self, rule, last=True):
+        self.rules_map[self.last_rule_id] = rule
+        if last:
+            self.rules.append(rule)
+        else:
+            self.rules.insert(0, rule)
+        self.last_rule_id += 1
+        return self.last_rule_id
+
+    def remove_rule(self, rule_id=None):
+        rule = self.rules[rule_id]
+        self.rules.remove(rule)
+        del self.rules[rule_id]
 
     def add_dgroup(self, group, start=False):
         self.groupMap[group.name] = group
