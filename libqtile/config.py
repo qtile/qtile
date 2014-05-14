@@ -406,6 +406,12 @@ class Match(object):
         if not net_wm_pid:
             net_wm_pid = []
 
+        for rule in net_wm_pid:
+            if not isinstance(rule, int):
+                error = 'Invalid rule for net_wm_pid: "%s" '\
+                        'only ints allowed' % rule
+                raise utils.QtileError(error)
+
         self._rules = [('title', t) for t in title]
         self._rules += [('wm_class', w) for w in wm_class]
         self._rules += [('role', r) for r in role]
@@ -416,11 +422,6 @@ class Match(object):
     def compare(self, client):
         for _type, rule in self._rules:
             if _type == "net_wm_pid":
-                if not isinstance(rule, int):
-                    error = 'Invalid rule for net_wm_pid: "%s" '\
-                            'only ints allowed' % rule
-                    client.qtile.log.warning(error)
-                    continue
                 match_func = lambda value: rule == value
             else:
                 match_func = getattr(rule, 'match', None) or \
