@@ -697,6 +697,23 @@ def test_resize_(self):
         raise AssertionError("Screen did not resize")
 
 
+@Xephyr(False, TestConfig())
+def test_focus_stays_on_layout_switch(xephyr):
+    xephyr.testWindow("one")
+    xephyr.testWindow("two")
+
+    # switch to a double stack layout
+    xephyr.c.nextlayout()
+
+    # focus on a different window than the default
+    xephyr.c.layout.next()
+
+    # toggle the layout
+    xephyr.c.nextlayout()
+    xephyr.c.prevlayout()
+
+    assert xephyr.c.window.info()['name'] == 'one'
+
 # Due to https://github.com/nose-devs/nose/issues/478, nose 1.1.2 ignores
 # attributes on yielded functions. Workaround is to attach the attribute
 # to the generator function. Can be removed once the issue is resolved.
