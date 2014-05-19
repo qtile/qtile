@@ -6,6 +6,7 @@ DEFAULT_FLOAT_WM_TYPES = set([
     'notification',
     'toolbar',
     'splash',
+    'dialog',
 ])
 
 
