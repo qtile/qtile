@@ -41,7 +41,6 @@ class Max(SingleWindow):
         return self.focused
 
     def focus(self, client):
-        self.group.layoutAll()
         self.focused = client
 
     def focus_first(self):

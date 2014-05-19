@@ -143,7 +143,7 @@ class Floating(Layout):
             client.height,
             bw,
             bc,
-            client is self.focused
+            True
         )
         client.unhide()
 
