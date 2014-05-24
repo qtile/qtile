@@ -37,17 +37,23 @@ class Mpris(base._TextBox, object):
         'org.freedesktop.DBus.Properties', self.objname,
         '/org/mpris/MediaPlayer2')
 
+        self.scrolltext = None
+        self.playing = ''
+        self.is_playing = False
+
     def update(self, *args):
+        '''http://specifications.freedesktop.org/
+        pris-spec/latest/Track_List_Interface.html#Mapping:Metadata_Map'''
         if not self.configured:
             return True
         metadata = None
         playing = None
         playbackstatus = None
-        if(args and len(args) >= 2):
+        for item in args:
             try:
-                metadata = args[1].get('Metadata', None)
-                playbackstatus = args[1].get('PlaybackStatus', None)
-            except IndexError as e:
+                metadata = item.get('Metadata', None)
+                playbackstatus = item.get('PlaybackStatus', None)
+            except AttributeError:
                 pass
         if(metadata):
             self.is_playing = True
@@ -80,7 +86,7 @@ class Mpris(base._TextBox, object):
                 self.timeout_add(self.scroll_interval, self.scroll_text)
 
     def scroll_text(self):
-        if(getattr(self, 'scrolltext', None)):
+        if(self.scrolltext):
             self.text = self.scrolltext[:self.scroll_chars]
             self.scrolltext = self.scrolltext[1:]
             self.bar.draw()
@@ -92,6 +98,6 @@ class Mpris(base._TextBox, object):
     def cmd_info(self):
         '''What's the current state of the widget?'''
         return dict(
-            nowplaying=getattr(self, 'playing', ''),
-            isplaying=getattr(self, 'is_playing', False),
+            nowplaying=self.playing,
+            isplaying=self.is_playing,
         )
