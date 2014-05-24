@@ -1,141 +1,88 @@
 import dbus
-
 from dbus.mainloop.glib import DBusGMainLoop
+import gobject
 
 import base
 from .. import bar
 
-
-class Mpris(base._TextBox):
-    """
+class Mpris(base._TextBox, object):
+    ''''
     A widget which displays the current track/artist of your favorite MPRIS
     player. It should work with all players which implement a reasonably
     correct version of MPRIS, though I have only tested it with clementine.
-    """
+    '''
+    defaults = [
+                ('name', 'audacious', 'Name of the MPRIS widget.'),
+                ('objname', 'org.mpris.MediaPlayer2.audacious', 'DBUS MPRIS compatible player identifier - Find it out with dbus-monitor, grepping for RequestName'),
+                ('display_metadata', ['xesam:title', 'xesam:album', 'xesam:artist'], 'Which metadata identifiers to display.'),
+                ('scroll_chars', 30, 'How many chars to display. If too many it will scroll.'),
+                ('scroll_interval', 1, 'Scroll delay interval.'),
+               ]
 
-    def __init__(self, name="clementine", width=bar.CALCULATED,
-                 objname='org.mpris.clementine', **config):
-        base._TextBox.__init__(self, " ", width, **config)
+    def __init__(self, **config):
+        super(self.__class__, self).__init__(self, **config)
+        base._TextBox.__init__(self, '', **config)
+        self.add_defaults(self.__class__.defaults)
 
-        # we need a main loop to get event signals
-        # we just piggyback on qtile's main loop
-        self.dbus_loop = DBusGMainLoop()
-        self.bus = dbus.SessionBus(mainloop=self.dbus_loop)
+        dbus_loop = DBusGMainLoop()
+        bus = dbus.SessionBus(mainloop=dbus_loop)
+        bus.add_signal_receiver(self.update, 'PropertiesChanged',
+        'org.freedesktop.DBus.Properties', 'org.mpris.MediaPlayer2.audacious',
+        '/org/mpris/MediaPlayer2')
 
-        # watch for our player to start up
-        deebus = self.bus.get_object(
-            'org.freedesktop.DBus',
-            '/org/freedesktop/DBus'
-        )
-        deebus.connect_to_signal(
-            "NameOwnerChanged",
-            self.handle_name_owner_change
-        )
-
-        self.objname = objname
-        self.connected = False
-        self.name = name
-
-        # try to connect for grins
-        self._connect()
-        self.timeout_add(1, self.update)
-
-    def _connect(self):
-        """ Try to connect to the player if it exists. """
-        try:
-            self.player = self.bus.get_object(self.objname, '/Player')
-            self.iface = dbus.Interface(
-                self.player,
-                dbus_interface='org.freedesktop.MediaPlayer'
-            )
-            # See: http://xmms2.org/wiki/MPRIS for info on signals
-            # and what they mean.
-            self.iface.connect_to_signal(
-                "TrackChange",
-                self.handle_track_change
-            )
-            self.iface.connect_to_signal(
-                "StatusChange",
-                self.handle_status_change
-            )
-            self.connected = True
-        except dbus.exceptions.DBusException:
-            self.connected = False
-
-    def handle_track_change(self, metadata):
-        self.update()
-
-    def handle_status_change(self, *args):
-        self.update()
-
-    def handle_name_owner_change(self, name, old_owner, new_owner):
-        if name == self.objname:
-            if old_owner == '':
-                # Our player started, so connect to it
-                self._connect()
-            elif new_owner == '':
-                # It disconnected :-(
-                self.connected = False
-            self.update()
-
-    def ensure_connected(f):
-        """
-        Tries to connect to the player. It *should* be succesful if the player
-        is alive. """
-        def wrapper(*args, **kwargs):
-            self = args[0]
-            try:
-                self.iface.GetMetadata()
-            except (dbus.exceptions.DBusException, AttributeError):
-                # except AttributeError because
-                # self.iface won't exist if we haven't
-                # _connect()ed yet
-                self._connect()
-            return f(*args, **kwargs)
-        return wrapper
-
-    @ensure_connected
-    def update(self):
+    def update(self, *args):
         if not self.configured:
             return True
-        if not self.connected:
+        metadata = None
+        playing = None
+        playbackstatus = None
+        try:
+            metadata = args[1].get('Metadata', None)
+            playbackstatus = args[1].get('PlaybackStatus', None)
+        except IndexError as e:
+            pass
+        if(metadata):
+            self.is_playing = True
+            playing = ' - '.join([metadata.get(x)
+                                  if isinstance(metadata.get(x), dbus.String)
+                                  else ' + '.join(metadata.get(x))
+                                  for x in self.display_metadata if metadata.get(x)])
+        else:
+            self.is_playing = False
             playing = ''
-        elif not self.is_playing():
-            playing = 'Stopped'
+        if(playbackstatus):
+            if playbackstatus == 'Playing' and not metadata and self.playing:
+                self.is_playing = True
+                playing = self.playing.lstrip('Paused: ')
+            if playbackstatus == '':
+                self.is_playing = False
+                playing = playbackstatus
+            if playbackstatus == 'Paused' and self.playing:
+                self.is_playing = False
+                playing = 'Paused: {}'.format(self.playing)
+        self.playing = playing
+        if not self.scroll_chars or not self.scroll_interval:
+            if self.text != playing:
+                self.text = playing
+                self.bar.draw()
         else:
-            try:
-                metadata = self.iface.GetMetadata()
+            if(playing):
+                self.scrolltext = '{}{}{}'.format(' ' * self.scroll_chars, playing, ' ' * self.scroll_chars)
+                self.timeout_add(self.scroll_interval, self.scroll_text)
 
-                # TODO: Make this configurable?
-                playing = metadata["title"] + ' - ' + metadata["artist"]
-            except dbus.exceptions.DBusException:
-                self.connected = False
-                playing = ''
-
-        if playing != self.text:
-            self.text = playing
+    def scroll_text(self):
+        if(getattr(self, 'scrolltext', None)):
+            self.text = self.scrolltext[:self.scroll_chars]
+            self.scrolltext = self.scrolltext[1:]
             self.bar.draw()
-
-    @ensure_connected
-    def is_playing(self):
-        """ Returns true if we are connected to the player and it is playing
-        something, false otherwise. """
-        if self.connected:
-            (playing, random, repeat, stop_after_last) = self.iface.GetStatus()
-            return playing == 0
-        else:
-            return False
+            return True
+        self.text = ''
+        self.bar.draw()
+        return False
 
     def cmd_info(self):
-        """ What's the current state of the widget? """
+        '''What's the current state of the widget?'''
         return dict(
-            connected=self.connected,
-            nowplaying=self.text,
-            isplaying=self.is_playing(),
+            nowplaying=getattr(self, 'playing', ''),
+            isplaying=getattr(self, 'is_playing', False),
         )
-
-    def cmd_update(self):
-        """ Force the widget to update. Mostly used for testing. """
-        self.update()
-
-# vim: tabstop=4 shiftwidth=4 expandtab
