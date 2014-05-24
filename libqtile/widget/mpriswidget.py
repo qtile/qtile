@@ -43,7 +43,7 @@ class Mpris(base._TextBox):
         self.displaytext = ''
         self.is_playing = False
 
-    def update(self, *args):
+    def update(self, interface_name, changed_properties, invalidated_properties):
         '''http://specifications.freedesktop.org/
         mpris-spec/latest/Track_List_Interface.html#Mapping:Metadata_Map'''
         if not self.configured:
@@ -53,12 +53,8 @@ class Mpris(base._TextBox):
 
         metadata = None
         playbackstatus = None
-        for item in args:
-            try:
-                metadata = item.get('Metadata', None)
-                playbackstatus = item.get('PlaybackStatus', None)
-            except AttributeError:
-                pass
+        metadata = changed_properties.get('Metadata', None)
+        playbackstatus = changed_properties.get('PlaybackStatus', None)
         if metadata:
             self.is_playing = True
             self.displaytext = ' - '.join([metadata.get(x)
