@@ -135,7 +135,11 @@ class DGroups(object):
                         layout = self.groupMap[rule.group].layout
                     except KeyError:
                         layout = None
-                    group_added = self.qtile.addGroup(rule.group, layout)
+                    try:
+                        layouts = self.groupMap[rule.group].layouts
+                    except KeyError:
+                        layouts = None
+                    group_added = self.qtile.addGroup(rule.group, layout, layouts)
                     client.togroup(rule.group)
 
                     group_set = True
