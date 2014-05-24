@@ -51,13 +51,12 @@ class Mpris(base._TextBox):
         metadata = None
         playing = None
         playbackstatus = None
-        if args:
-            for item in args:
-                try:
-                    metadata = item.get('Metadata', None)
-                    playbackstatus = item.get('PlaybackStatus', None)
-                except AttributeError:
-                    pass
+        for item in args:
+            try:
+                metadata = item.get('Metadata', None)
+                playbackstatus = item.get('PlaybackStatus', None)
+            except AttributeError:
+                pass
         if(metadata):
             self.is_playing = True
             playing = ' - '.join([metadata.get(x)
