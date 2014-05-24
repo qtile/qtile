@@ -5,7 +5,7 @@ import gobject
 import base
 from .. import bar
 
-class Mpris(base._TextBox, object):
+class Mpris(base._TextBox):
     ''''
     A widget which displays the current track/artist of your favorite MPRIS
     player. It should work with all players which implement a reasonably
