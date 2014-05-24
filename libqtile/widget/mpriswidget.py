@@ -40,7 +40,7 @@ class Mpris(base._TextBox):
         '/org/mpris/MediaPlayer2')
 
         self.scrolltext = None
-        self.playing = ''
+        self.displaytext = ''
         self.is_playing = False
 
     def update(self, *args):
@@ -48,8 +48,10 @@ class Mpris(base._TextBox):
         mpris-spec/latest/Track_List_Interface.html#Mapping:Metadata_Map'''
         if not self.configured:
             return True
+        olddisplaytext = self.displaytext
+        self.displaytext = ''
+
         metadata = None
-        playing = None
         playbackstatus = None
         for item in args:
             try:
@@ -57,38 +59,48 @@ class Mpris(base._TextBox):
                 playbackstatus = item.get('PlaybackStatus', None)
             except AttributeError:
                 pass
-        if(metadata):
+        if metadata:
             self.is_playing = True
-            playing = ' - '.join([metadata.get(x)
+            self.displaytext = ' - '.join([metadata.get(x)
                           if isinstance(metadata.get(x), dbus.String)
-                          else ' + '.join(str(metadata.get(x))
+                          else ' + '.join([y for y in metadata.get(x)
+                          if isinstance(y, dbus.String)])
                           for x in self.display_metadata if metadata.get(x)])
-        else:
-            self.is_playing = False
-            playing = ''
-        if(playbackstatus):
-            if playbackstatus == 'Playing' and not metadata and self.playing:
+            self.displaytext.replace('\n', '')
+        if playbackstatus:
+            if playbackstatus == 'Paused' and  olddisplaytext:
+                self.is_playing = False
+                self.displaytext = 'Paused: {}'.format(olddisplaytext)
+            elif playbackstatus == 'Paused':
+                self.is_playing = False
+                self.displaytext = 'Paused'
+            elif playbackstatus == 'Playing' and not self.displaytext and olddisplaytext:
                 self.is_playing = True
-                playing = self.playing.lstrip('Paused: ')
-            if playbackstatus == '':
+                self.displaytext = olddisplaytext.replace('Paused: ', '')
+            elif playbackstatus == 'Playing' and not self.displaytext and not olddisplaytext:
+                self.is_playing = True
+                self.displaytext = 'No metadata for current track'
+            elif playbackstatus == 'Playing' and self.displaytext:
+                self.playbackstatus = True
+            else:
                 self.is_playing = False
-                playing = playbackstatus
-            if playbackstatus == 'Paused' and self.playing:
-                self.is_playing = False
-                playing = 'Paused: {}'.format(self.playing)
-        self.playing = playing if playing else ''
+                self.displaytext = ''
+
         if not self.scroll_chars or not self.scroll_interval:
-            if self.text != playing:
-                self.text = playing
+            if self.text != self.displaytext:
+                self.text = self.displaytext
                 self.bar.draw()
         else:
-            if(playing is not None):
-                self.scrolltext = '{}{}{}'.format(' ' * self.scroll_chars,
-                                        playing, ' ' * self.scroll_chars)
-                self.timeout_add(self.scroll_interval, self.scroll_text)
+            if self.displaytext != '' or self.displaytext is None:
+                self.scrolltext = '{}{}{}'.format(' ' *\
+                        self.scroll_chars, self.displaytext,
+                        ' ' * self.scroll_chars)
+            else:
+                self.scrolltext = ''
+            self.timeout_add(self.scroll_interval, self.scroll_text)
 
     def scroll_text(self):
-        if(self.scrolltext):
+        if self.scrolltext:
             self.text = self.scrolltext[:self.scroll_chars]
             self.scrolltext = self.scrolltext[1:]
             self.bar.draw()
@@ -100,6 +112,7 @@ class Mpris(base._TextBox):
     def cmd_info(self):
         '''What's the current state of the widget?'''
         return dict(
-            nowplaying=self.playing,
+            displaytext=self.displaytext,
             isplaying=self.is_playing,
         )
+# vim: tabstop=4 shiftwidth=4 expandtab
