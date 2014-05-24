@@ -61,7 +61,7 @@ class Mpris(base._TextBox):
             self.is_playing = True
             playing = ' - '.join([metadata.get(x)
                           if isinstance(metadata.get(x), dbus.String)
-                          else ' + '.join(metadata.get(x))
+                          else ' + '.join(str(metadata.get(x))
                           for x in self.display_metadata if metadata.get(x)])
         else:
             self.is_playing = False
