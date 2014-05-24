@@ -45,7 +45,7 @@ class Mpris(base._TextBox):
 
     def update(self, *args):
         '''http://specifications.freedesktop.org/
-        mpris-spec/latest/Track_List_Interface.html#Mapping:Metadata_Map'''
+        pris-spec/latest/Track_List_Interface.html#Mapping:Metadata_Map'''
         if not self.configured:
             return True
         metadata = None
