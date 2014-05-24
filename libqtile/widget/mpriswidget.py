@@ -13,9 +13,16 @@ class Mpris(base._TextBox, object):
     '''
     defaults = [
                 ('name', 'audacious', 'Name of the MPRIS widget.'),
-                ('objname', 'org.mpris.MediaPlayer2.audacious', 'DBUS MPRIS compatible player identifier - Find it out with dbus-monitor, grepping for RequestName'),
-                ('display_metadata', ['xesam:title', 'xesam:album', 'xesam:artist'], 'Which metadata identifiers to display.'),
-                ('scroll_chars', 30, 'How many chars to display. If too many it will scroll.'),
+
+                ('objname', 'org.mpris.MediaPlayer2.audacious',
+                'DBUS MPRIS compatible player identifier'
+                '- Find it out with dbus-monitor,'
+                'grepping for RequestName'),
+
+                ('display_metadata', ['xesam:title', 'xesam:album', 'xesam:artist'],
+                 'Which metadata identifiers to display.'),
+
+                ('scroll_chars', 30, 'How many chars at once to display.'),
                 ('scroll_interval', 1, 'Scroll delay interval.'),
                ]
 
@@ -27,7 +34,7 @@ class Mpris(base._TextBox, object):
         dbus_loop = DBusGMainLoop()
         bus = dbus.SessionBus(mainloop=dbus_loop)
         bus.add_signal_receiver(self.update, 'PropertiesChanged',
-        'org.freedesktop.DBus.Properties', 'org.mpris.MediaPlayer2.audacious',
+        'org.freedesktop.DBus.Properties', self.objname,
         '/org/mpris/MediaPlayer2')
 
     def update(self, *args):
@@ -36,17 +43,18 @@ class Mpris(base._TextBox, object):
         metadata = None
         playing = None
         playbackstatus = None
-        try:
-            metadata = args[1].get('Metadata', None)
-            playbackstatus = args[1].get('PlaybackStatus', None)
-        except IndexError as e:
-            pass
+        if(args and len(args) >= 2):
+            try:
+                metadata = args[1].get('Metadata', None)
+                playbackstatus = args[1].get('PlaybackStatus', None)
+            except IndexError as e:
+                pass
         if(metadata):
             self.is_playing = True
             playing = ' - '.join([metadata.get(x)
-                                  if isinstance(metadata.get(x), dbus.String)
-                                  else ' + '.join(metadata.get(x))
-                                  for x in self.display_metadata if metadata.get(x)])
+                          if isinstance(metadata.get(x), dbus.String)
+                          else ' + '.join(metadata.get(x))
+                          for x in self.display_metadata if metadata.get(x)])
         else:
             self.is_playing = False
             playing = ''
@@ -60,14 +68,15 @@ class Mpris(base._TextBox, object):
             if playbackstatus == 'Paused' and self.playing:
                 self.is_playing = False
                 playing = 'Paused: {}'.format(self.playing)
-        self.playing = playing
+        self.playing = playing if playing else ''
         if not self.scroll_chars or not self.scroll_interval:
             if self.text != playing:
                 self.text = playing
                 self.bar.draw()
         else:
-            if(playing):
-                self.scrolltext = '{}{}{}'.format(' ' * self.scroll_chars, playing, ' ' * self.scroll_chars)
+            if(playing is not None):
+                self.scrolltext = '{}{}{}'.format(' ' * self.scroll_chars,
+                                        playing, ' ' * self.scroll_chars)
                 self.timeout_add(self.scroll_interval, self.scroll_text)
 
     def scroll_text(self):
