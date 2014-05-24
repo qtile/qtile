@@ -8,16 +8,18 @@ from .. import bar
 class Mpris(base._TextBox):
     ''''
     A widget which displays the current track/artist of your favorite MPRIS
-    player. It should work with all players which implement a reasonably
-    correct version of MPRIS, though I have only tested it with clementine.
+    player. It should work with all MPRIS 2 compatible players
+    which implement a reasonably correct version of MPRIS,
+    though I have only tested it with audacious.
     '''
     defaults = [
                 ('name', 'audacious', 'Name of the MPRIS widget.'),
 
                 ('objname', 'org.mpris.MediaPlayer2.audacious',
-                'DBUS MPRIS compatible player identifier'
-                '- Find it out with dbus-monitor,'
-                'grepping for RequestName'),
+                'DBUS MPRIS 2 compatible player identifier'
+                '- Find it out with dbus-monitor - '
+                'Also see: http://specifications.freedesktop.org/'
+                'mpris-spec/latest/#Bus-Name-Policy'),
 
                 ('display_metadata', ['xesam:title', 'xesam:album', 'xesam:artist'],
                  'Which metadata identifiers to display.'),
