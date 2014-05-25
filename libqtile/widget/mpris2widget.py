@@ -97,10 +97,11 @@ class Mpris2(base._TextBox):
 
     def scroll_text(self):
         if self.scrolltext:
-            self.text = self.scrolltext[:self.scroll_chars]
-            self.scrolltext = self.scrolltext[1:]
-            self.bar.draw()
-            return True
+            if len(self.scrolltext) >= self.scroll_chars:
+                self.text = self.scrolltext[:self.scroll_chars]
+                self.scrolltext = self.scrolltext[1:]
+                self.bar.draw()
+                return True
         self.text = ''
         self.bar.draw()
         return False
