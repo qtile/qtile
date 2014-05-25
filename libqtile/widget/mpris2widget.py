@@ -26,6 +26,8 @@ class Mpris2(base._TextBox):
 
                 ('scroll_chars', 30, 'How many chars at once to display.'),
                 ('scroll_interval', 1, 'Scroll delay interval.'),
+                ('scroll_wait_intervals', 3, 'Wait x scroll_interval before'
+                 'scrolling/removing text'),
                ]
 
     def __init__(self, **config):
@@ -42,6 +44,7 @@ class Mpris2(base._TextBox):
         self.scrolltext = None
         self.displaytext = ''
         self.is_playing = False
+        self.scroll_timer = None
 
     def update(self, interface_name, changed_properties, invalidated_properties):
         '''http://specifications.freedesktop.org/
@@ -82,26 +85,30 @@ class Mpris2(base._TextBox):
                 self.is_playing = False
                 self.displaytext = ''
 
-        if not self.scroll_chars or not self.scroll_interval:
-            if self.text != self.displaytext:
-                self.text = self.displaytext
-                self.bar.draw()
-        else:
-            if self.displaytext != '' or self.displaytext is None:
-                self.scrolltext = '{}{}{}'.format(' ' *\
-                        self.scroll_chars, self.displaytext,
-                        ' ' * self.scroll_chars)
-            else:
-                self.scrolltext = ''
-            self.timeout_add(self.scroll_interval, self.scroll_text)
+        if self.scroll_chars and self.scroll_interval:
+            if(self.scroll_timer):
+                gobject.source_remove(self.scroll_timer)
+            counter = [self.scroll_wait_intervals]
+            self.scrolltext = self.displaytext
+            self.scroll_timer = self.timeout_add(self.scroll_interval,
+                    self.scroll_text, (counter,))
+            return
+        if self.text != self.displaytext:
+            self.text = self.displaytext
+            self.bar.draw()
 
-    def scroll_text(self):
-        if self.scrolltext:
-            if len(self.scrolltext) >= self.scroll_chars:
-                self.text = self.scrolltext[:self.scroll_chars]
-                self.scrolltext = self.scrolltext[1:]
-                self.bar.draw()
-                return True
+    def scroll_text(self, counter):
+        if self.text != self.scrolltext[:self.scroll_chars]:
+            self.text = self.scrolltext[:self.scroll_chars]
+            self.bar.draw()
+        if counter[0]:
+            counter[0] -= 1
+            return True
+        if len(self.scrolltext) >= self.scroll_chars:
+            self.scrolltext = self.scrolltext[1:]
+            if len(self.scrolltext) == self.scroll_chars:
+                counter[0] += self.scroll_wait_intervals
+            return True
         self.text = ''
         self.bar.draw()
         return False
