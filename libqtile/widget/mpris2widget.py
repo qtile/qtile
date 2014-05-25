@@ -103,7 +103,8 @@ class Mpris2(base._TextBox):
             self.bar.draw()
         if counter[0]:
             counter[0] -= 1
-            return True
+            if counter[0]:
+                return True
         if len(self.scrolltext) >= self.scroll_chars:
             self.scrolltext = self.scrolltext[1:]
             if len(self.scrolltext) == self.scroll_chars:
