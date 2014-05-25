@@ -6,7 +6,7 @@ import base
 from .. import bar
 
 class Mpris2(base._TextBox):
-    ''''
+    '''
     A widget which displays the current track/artist of your favorite MPRIS
     player. It should work with all MPRIS 2 compatible players
     which implement a reasonably correct version of MPRIS,
@@ -28,7 +28,7 @@ class Mpris2(base._TextBox):
                 ('scroll_interval', 1, 'Scroll delay interval.'),
                 ('scroll_wait_intervals', 3, 'Wait x scroll_interval before'
                  'scrolling/removing text'),
-               ]
+       ]
 
     def __init__(self, **config):
         super(self.__class__, self).__init__(self, **config)
