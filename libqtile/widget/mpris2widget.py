@@ -25,8 +25,8 @@ class Mpris2(base._TextBox):
                  'Which metadata identifiers to display.'),
 
                 ('scroll_chars', 30, 'How many chars at once to display.'),
-                ('scroll_interval', 1, 'Scroll delay interval.'),
-                ('scroll_wait_intervals', 3, 'Wait x scroll_interval before'
+                ('scroll_interval', 0.5, 'Scroll delay interval.'),
+                ('scroll_wait_intervals', 6, 'Wait x scroll_interval before'
                  'scrolling/removing text'),
        ]
 
