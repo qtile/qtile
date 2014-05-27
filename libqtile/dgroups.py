@@ -86,8 +86,8 @@ class DGroups(object):
 
     def add_dgroup(self, group, start=False):
         self.groupMap[group.name] = group
-        rules = [Rule(m, group=group.name) for m in group.matches]
-        self.rules.extend(rules)
+        rule = Rule(group.match, group=group.name)
+        self.rules.append(rule)
         if start:
             self.qtile.addGroup(group.name, group.layout, group.layouts)
 

@@ -106,14 +106,17 @@ class MonadTall(SingleWindow):
     _max_ratio = .75
 
     defaults = [
+        ("name", "xmonad-tall", "Name of this layout."),
         ("border_focus", "#ff0000", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 2, "Border width."),
-        ("name", "xmonad-tall", "Name of this layout."),
+        ("align", _left, "Alignment."),
+        ("ratio", _med_ratio, "Ratio."),
+        ("change_ratio", .05, "Change ratio."),
+        ("change_size", 20, "Change size"),
     ]
 
-    def __init__(self, ratio=_med_ratio, align=_left, change_ratio=.05,
-                 change_size=20, **config):
+    def __init__(self, **config):
         """
             - ratio       : The percent of the screen-space the
                             master pane should occupy by default.
@@ -126,10 +129,6 @@ class MonadTall(SingleWindow):
         self.add_defaults(MonadTall.defaults)
         self.clients = []
         self.relative_sizes = []
-        self.ratio = ratio
-        self.align = align
-        self.change_size = change_size
-        self.change_ratio = change_ratio
         self._focus = 0
 
     # track client that has 'focus'

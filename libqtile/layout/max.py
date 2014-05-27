@@ -28,13 +28,15 @@ class Max(SingleWindow):
         small screens. Conceptually, the windows are managed as a stack, with
         commands to switch to next and previous windows in the stack.
     """
-    defaults = [("name", "max", "Name of this layout."),
-                ("only_focused", False, "Only draw the focused window")]
+    defaults = [
+                ("name", "max", "Name of this layout."),
+                ("only_focused", False, "Only draw the focused window"),
+    ]
 
     def __init__(self, **config):
         SingleWindow.__init__(self, **config)
-        self.clients = []
         self.add_defaults(Max.defaults)
+        self.clients = []
         self.focused = None
 
     def _get_window(self):

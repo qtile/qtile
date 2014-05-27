@@ -8,6 +8,7 @@ class Zoomy(SingleWindow):
         right
     """
     defaults = [
+        ("name", "zoomy", "Name of this layout."),
         ("columnwidth", 150, "Width of the right column"),
         ("property_name", "ZOOM", "Property to set on zoomed window"),
         ("property_small", "0.1", "Property value to set on zoomed window"),

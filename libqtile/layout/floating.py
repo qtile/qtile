@@ -1,68 +1,43 @@
 from base import Layout
 from .. import window
-
-DEFAULT_FLOAT_WM_TYPES = set([
-    'utility',
-    'notification',
-    'toolbar',
-    'splash',
-    'dialog',
-])
-
+from ..config import Match
 
 class Floating(Layout):
     """
     Floating layout, which does nothing with windows but handles focus order
     """
+    DEFAULT_FLOAT_WM_TYPES = Match(
+    wm_type=[
+        'utility',
+        'notification',
+        'toolbar',
+        'splash',
+        'dialog',]
+    )
+
     defaults = [
+        ("name", "floating", "Name of this layout."),
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width."),
         ("max_border_width", 0, "Border width for maximize."),
         ("fullscreen_border_width", 0, "Border width for fullscreen."),
-        ("name", "floating", "Name of this layout."),
-        (
-            "auto_float_types",
-            DEFAULT_FLOAT_WM_TYPES,
-            "default wm types to automatically float"
-        ),
+        ("match",DEFAULT_FLOAT_WM_TYPES,
+         "Match object. Windows matching it will float."
+         "Concatenate Floating.DEFAULT_FLOAT_WM_TYPES with your own"
+         "Match object to add windows to match. Or insert into a MatchList."),
     ]
 
-    def __init__(self, float_rules=None, **config):
+    def __init__(self, **config):
         """
-        If you have certain apps that you always want to float you can
-        provide ``float_rules`` to do so.
-        ``float_rules`` is a list of dictionaries containing:
-
-        {wname: WM_NAME, wmclass: WM_CLASS
-        role: WM_WINDOW_ROLE}
-
-        The keys must be specified as above.  You only need one, but
-        you need to provide the value for it.  When a new window is
-        opened it's ``match`` method is called with each of these
-        rules.  If one matches, the window will float.  The following
-        will float gimp and skype:
-
-        float_rules=[dict(wmclass="skype"), dict(wmclass="gimp")]
-
-        Specify these in the ``floating_layout`` in your config.
+        If you have certain applications which should float,
+        you can concatenate a Match object containing matches
+        for those applications with Floating.DEFAULT_FLOAT_WM_TYPES.
         """
         Layout.__init__(self, **config)
+        self.add_defaults(Floating.defaults)
         self.clients = []
         self.focused = None
-        self.float_rules = float_rules or []
-        self.add_defaults(Floating.defaults)
-
-    def match(self, win):
-        """
-        Used to default float some windows.
-        """
-        if win.window.get_wm_type() in self.auto_float_types:
-            return True
-        for rule_dict in self.float_rules:
-            if win.match(**rule_dict):
-                return True
-        return False
 
     def to_screen(self, new_screen):
         """
