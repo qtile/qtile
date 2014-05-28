@@ -56,7 +56,7 @@ class DGroups(object):
         self.rules_map = {}
         self.last_rule_id = 0
 
-        for rule in getattr(qtile.config, 'dgroups_app_rules', []):
+        for rule in getattr(qtile.config, 'app_rules', []):
             self.add_rule(rule)
 
         self.keys = []

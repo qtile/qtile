@@ -407,7 +407,8 @@ class Match(object):
 
     def _match_func_decorator(func, *args, **kwargs):
         """ Decorator
-        
+            Raises Match or NoMatch depending on match_all.
+            To prevent wasteful processing in compare().
         """
         def wrapper(self, *args, **kwargs):
             result = func(self, *args, **kwargs)
@@ -445,7 +446,6 @@ class Match(object):
     def compare(self, client):
         """ Return True if client matches this Match object """
         wm_class = client.window.get_wm_class()
-
         try:
             self._match_func(self.title, client.name)
             self._match_func(self.role, client.window.get_wm_window_role())

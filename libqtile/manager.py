@@ -1362,6 +1362,7 @@ class Qtile(command.CommandObject):
             param: match_args (config.Match arguments)
             param: rule_args (config.Rule arguments)
             param: min_priorty if the rule is added with minimun prioriry(last)
+            param: match_all if the match_args must be all matched
         """
         if not self.dgroups:
             self.log.warning('No dgroups created')
