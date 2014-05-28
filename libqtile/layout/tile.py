@@ -173,6 +173,7 @@ class Tile(Layout):
 
     def info(self):
         return dict(
+            name=self.name,
             clients=[c.name for c in self.clients],
             master=[c.name for c in self.master_windows],
             slave=[c.name for c in self.slave_windows],
