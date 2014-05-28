@@ -491,10 +491,7 @@ class Match(object):
         l.append('%s(' %(self.__class__.__name__,))
         for item in ('title', 'wm_class', 'role', 'wm_type', 'wm_instance_class', 'net_wm_pid'):
             if getattr(self, item, None):
-                l.append(item)
-                l.append('=')
-                l.append(str(getattr(self, item)))
-                l.append(',')
+                l.append('%s=%s%s' %(item, repr(getattr(self, item)), ','))
         l.append(')')
         return ''.join(l).strip()
 
@@ -571,3 +568,13 @@ class Rule(object):
 
     def __call__(self, client):
         return self.matches(client)
+
+    def __repr__(self):
+        l = []
+        l.append('%s(' %self.__class__.__name__)
+        for item in ('match', 'group', 'float', 'intrusive', 'break_on_match'):
+            if getattr(self, item, None):
+                l.append('%s=%s%s' %(item, repr(getattr(self, item)), ','))
+        l.append(')')
+        return ''.join(l)
+
