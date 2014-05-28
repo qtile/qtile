@@ -570,23 +570,28 @@ class MatchList(list):
     provide comparision on these objects."""
     def __init__(self, *args):
         super(MatchList, self).__init__()
+        self.has_matcheverything = False
+        self.has_matchnothing    = False
         for item in args:
             if isinstance(item, Match) or \
                isinstance(item, MatchAll) or \
-               isinstance(item, MatchList) or \
-               isinstance(item, MatchEverything) or \
-               isinstance(item, MatchNothing):
+               isinstance(item, MatchList):
+                self.append(item)
+            elif isinstance(item, MatchEverything):
+                self.has_matcheverything = True
+                self.append(item)
+            elif isinstance(item, MatchNothing):
+                self.has_matchnothing = True
                 self.append(item)
             else:
                 raise utils.QtileError(
                 "Invalid object put into %s" %self.__class__.__name__)
 
     def compare(self, client):
-        for match in self:
-            if match == MatchEverything():
-                return True
-            if match == MatchNothing():
-                return
+        if self.has_matcheverything:
+            return True
+        if self.has_matchnothing:
+            return False
         for match in self:
             if match.compare(client):
                 return True
