@@ -488,7 +488,7 @@ class Match(object):
 
     def __repr__(self):
         l = []
-        l.append('Match(')
+        l.append('%s(' %(self.__class__.__name__,))
         for item in ('title', 'wm_class', 'role', 'wm_type', 'wm_instance_class', 'net_wm_pid'):
             if getattr(self, item, None):
                 l.append(item)
