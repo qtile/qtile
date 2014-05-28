@@ -143,7 +143,7 @@ class Tile(Layout):
         margin = self.margin
         if self.clients and client in self.clients:
             pos = self.clients.index(client)
-            if client in self.num_masterwindows:
+            if client in self.master_windows:
                 w = int(screenWidth * self.ratio) \
                     if len(self.slave_windows) or not self.expand \
                     else screenWidth
