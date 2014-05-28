@@ -368,24 +368,22 @@ class Group(object):
         self.screen_affinity = screen_affinity
         self.position = position
 
-
 class Match(object):
     """
-        Match for dynamic groups
-        It can match by title, class or role.
+        Match object for usage in dynamic groups but also in
+        ordinary groups, rules and layouts
+
+        ``Match`` supports both regular expression objects
+        (``re.compile()``) or strings (match as a "include" match).
+        If a window matches any of the things in any of the lists,
+        it is considered a match.
     """
     class Match(Exception): pass
     class NoMatch(Exception): pass
 
     def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
                  wm_instance_class=None, net_wm_pid=None):
-        """
-
-        ``Match`` supports both regular expression objects
-        (``re.compile()``) or strings (match as a "include" match).
-        If a window matches any of the things in any of the lists,
-        it is considered a match.
-
+        """"
         :param title: things to match against the title
         :param wm_class: things to match against the second string in
                          WM_CLASS atom
@@ -460,10 +458,14 @@ class Match(object):
             return True
 
     def map(self, callback, clients):
-        """ Apply callback to each client that matches this Match """
+        """
+        Apply callback to each client that matches this Match.
+        Callback must return False to continue processing.
+        """
         for c in clients:
             if self.compare(c):
-                callback(c)
+                if callback(c):
+                    break
 
     def __add__(self, match):
         """ Concatenate Match objects - ``Match()+Match()``"""
@@ -496,14 +498,16 @@ class Match(object):
         return ''.join(l).strip()
 
 class MatchAll(Match):
+    """
+
+    ``Match`` supports both regular expression objects
+    (``re.compile()``) or strings (match as a "include" match).
+    If a window matches all of the things in any of the lists,
+    it is considered a match.
+
+    """
     def __init__(self, *args, **kwargs):
         """
-
-        ``Match`` supports both regular expression objects
-        (``re.compile()``) or strings (match as a "include" match).
-        If a window matches all of the things in any of the lists,
-        it is considered a match.
-
         :param title: things to match against the title
         :param wm_class: things to match against the second string in
                          WM_CLASS atom
@@ -517,6 +521,50 @@ class MatchAll(Match):
         super(MatchAll, self).__init__(*args, **kwargs)
         self.match_all = True
 
+class MatchEverything(Match):
+    """
+    Everything is considered a match.
+    """
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def compare(self, client):
+        return True
+
+    def map(self, callback, clients):
+        """
+        Apply callback to each client that matches this Match.
+        Callback must return False to continue processing.
+        """
+        for c in clients:
+            if callback(c):
+                break
+
+    def __add__(self, match):
+        return self
+
+    def __repr__(self):
+        return '%s()' %self.__class__.__name__
+
+class MatchNothing(Match):
+    """
+    Nothing is considered a match.
+    """
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def compare(self, client):
+        return False
+
+    def map(self, callback, clients):
+        pass
+
+    def __add__(self, match):
+        return self
+
+    def __repr__(self):
+        return '%s()' %self.__class__.__name__
+
 class MatchList(list):
     """Container for Match objects and
     provide comparision on these objects."""
@@ -525,7 +573,9 @@ class MatchList(list):
         for item in args:
             if isinstance(item, Match) or \
                isinstance(item, MatchAll) or \
-               isinstance(item, MatchList):
+               isinstance(item, MatchList) or \
+               isinstance(item, MatchEverything) or \
+               isinstance(item, MatchNothing):
                 self.append(item)
             else:
                 raise utils.QtileError(
@@ -533,8 +583,23 @@ class MatchList(list):
 
     def compare(self, client):
         for match in self:
+            if match == MatchEverything():
+                return True
+            if match == MatchNothing():
+                return
+        for match in self:
             if match.compare(client):
                 return True
+
+    def map(self, callback, clients):
+        """
+        Apply callback to each client that matches this MatchList.
+        Callback must return False to continue processing.
+        """
+        for c in clients:
+            if self.compare(c):
+                if callback(c):
+                    break
 
     def __call__(self, client):
         return self.compare(client)
