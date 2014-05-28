@@ -578,10 +578,12 @@ class MatchList(list):
                isinstance(item, MatchList):
                 self.append(item)
             elif isinstance(item, MatchEverything):
-                self.has_matcheverything = True
+                if not self.has_matcheverything:
+                    self.has_matcheverything = True
                 self.append(item)
             elif isinstance(item, MatchNothing):
-                self.has_matchnothing = True
+                if not self.has_matchnothing:
+                    self.has_matchnothing = True
                 self.append(item)
             else:
                 raise utils.QtileError(
