@@ -522,8 +522,14 @@ class MatchList(list):
     provide comparision on these objects."""
     def __init__(self, *args):
         super(MatchList, self).__init__()
-        for arg in args:
-            self.append(arg)
+        for item in args:
+            if isinstance(item, Match) or \
+               isinstance(item, MatchAll) or \
+               isinstance(item, MatchList):
+                self.append(item)
+            else:
+                raise utils.QtileError(
+                "Invalid object put into %s" %self.__class__.__name__)
 
     def compare(self, client):
         for match in self:
@@ -559,15 +565,11 @@ class Rule(object):
         self.intrusive = intrusive
         self.break_on_match = break_on_match
 
-    def matches(self, client):
-        if isinstance(self.match, MatchList):
-            return self.match.compare(client)
-        elif isinstance(self.match, Match) \
-        or isinstance(self.match, MatchAll):
-            return self.match.compare(client)
+    def compare(self, client):
+        return self.match.compare(client)
 
     def __call__(self, client):
-        return self.matches(client)
+        return self.compare(client)
 
     def __repr__(self):
         l = []

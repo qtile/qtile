@@ -129,7 +129,7 @@ class DGroups(object):
 
         for rule in self.rules:
             # Matching Rules
-            if rule.matches(client):
+            if rule.compare(client):
                 if rule.group:
                     try:
                         layout = self.groupMap[rule.group].layout
