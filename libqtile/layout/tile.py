@@ -15,7 +15,7 @@ class Tile(Layout):
         ("expand", True, "Whether to expand."),
         ("add_on_top", True, "Add on top."),
         ("shift_windows", False, "Shift windows."),
-        ("num_num_masterwindows", 1, "Number of master windows."),
+        ("num_masterwindows", 1, "Number of master windows."),
         ("match", None, "Match object."
          "Matching windows will become a master window."),
     ]
