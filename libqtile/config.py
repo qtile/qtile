@@ -535,6 +535,12 @@ class MatchList(list):
 
     def __call__(self, client):
         return self.compare(client)
+    
+    def __repr__(self):
+        string = super(MatchList, self).__repr__()
+        string = string.lstrip('[').rstrip(']')
+        string = '%s(%s)' %(self.__class__.__name__, string)
+        return string
 
 class Rule(object):
     """
