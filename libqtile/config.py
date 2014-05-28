@@ -570,16 +570,14 @@ class MatchList(list):
     provide comparision on these objects."""
     def __init__(self, *args):
         super(MatchList, self).__init__()
-        self.has_matcheverything = False
-        self.has_matchnothing    = False
+        self.has_matcheverything = 0
+        self.has_matchnothing    = 0
         for item in args:
             if isinstance(item, MatchEverything):
-                if not self.has_matcheverything:
-                    self.has_matcheverything = True
+                self.has_matcheverything += 1
                 self.append(item)
             elif isinstance(item, MatchNothing):
-                if not self.has_matchnothing:
-                    self.has_matchnothing = True
+                self.has_matchnothing += 1
                 self.append(item)
             elif isinstance(item, Match):
                 self.append(item)
@@ -588,9 +586,9 @@ class MatchList(list):
                 "Invalid object put into %s" %self.__class__.__name__)
 
     def compare(self, client):
-        if self.has_matcheverything:
+        if self.has_matcheverything > self.has_matchnothing:
             return True
-        if self.has_matchnothing:
+        elif self.has_matchnothing > self.has_matcheverything:
             return False
         for match in self:
             if match.compare(client):
