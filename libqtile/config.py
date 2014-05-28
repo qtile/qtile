@@ -573,17 +573,15 @@ class MatchList(list):
         self.has_matcheverything = False
         self.has_matchnothing    = False
         for item in args:
-            if isinstance(item, Match) or \
-               isinstance(item, MatchAll) or \
-               isinstance(item, MatchList):
-                self.append(item)
-            elif isinstance(item, MatchEverything):
+            if isinstance(item, MatchEverything):
                 if not self.has_matcheverything:
                     self.has_matcheverything = True
                 self.append(item)
             elif isinstance(item, MatchNothing):
                 if not self.has_matchnothing:
                     self.has_matchnothing = True
+                self.append(item)
+            elif isinstance(item, Match):
                 self.append(item)
             else:
                 raise utils.QtileError(
