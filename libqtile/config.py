@@ -486,6 +486,18 @@ class Match(object):
     def __call__(self, client):
         return self.compare(client)
 
+    def __repr__(self):
+        l = []
+        l.append('Match(')
+        for item in ('title', 'wm_class', 'role', 'wm_type', 'wm_instance_class', 'net_wm_pid'):
+            if getattr(self, item, None):
+                l.append(item)
+                l.append('=')
+                l.append(str(getattr(self, item)))
+                l.append(',')
+        l.append(')')
+        return ''.join(l).strip()
+
 class MatchAll(Match):
     def __init__(self, *args, **kwargs):
         """
