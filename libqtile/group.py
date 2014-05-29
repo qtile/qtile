@@ -155,10 +155,11 @@ class _Group(command.CommandObject):
                         self.floating_layout.blur()
                         for l in self.layouts:
                             l.focus(win)
-                        for transient in self.windows:
-                            if transient.window.get_wm_transient_for() == \
-                            win.window.wid:
-                                self.floating_layout.focus(transient)
+                        if self.qtile.config.raise_transients:
+                            for transient in self.windows:
+                                if transient.window.get_wm_transient_for() == \
+                                win.window.wid:
+                                    self.floating_layout.focus(transient)
         else:
             self.currentWindow = None
         hook.fire("focus_change")
