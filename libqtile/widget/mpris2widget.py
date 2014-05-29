@@ -31,7 +31,6 @@ class Mpris2(base._TextBox):
        ]
 
     def __init__(self, **config):
-        super(self.__class__, self).__init__(self, **config)
         base._TextBox.__init__(self, '', **config)
         self.add_defaults(self.__class__.defaults)
 
