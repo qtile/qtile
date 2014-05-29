@@ -145,15 +145,20 @@ class _Group(command.CommandObject):
             if not win in self.windows:
                 return
             else:
-                self.currentWindow = win
-                if win.floating:
-                    for l in self.layouts:
-                        l.blur()
-                    self.floating_layout.focus(win)
-                else:
-                    self.floating_layout.blur()
-                    for l in self.layouts:
-                        l.focus(win)
+                with self.disableMask(xcb.xproto.EventMask.FocusChange):
+                    self.currentWindow = win
+                    if win.floating:
+                        for l in self.layouts:
+                            l.blur()
+                        self.floating_layout.focus(win)
+                    else:
+                        self.floating_layout.blur()
+                        for l in self.layouts:
+                            l.focus(win)
+                        for transient in self.windows:
+                            if transient.window.get_wm_transient_for() == \
+                            win.window.wid:
+                                self.floating_layout.focus(transient)
         else:
             self.currentWindow = None
         hook.fire("focus_change")

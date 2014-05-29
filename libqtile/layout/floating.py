@@ -37,7 +37,7 @@ class Floating(Layout):
         Layout.__init__(self, **config)
         self.add_defaults(Floating.defaults)
         self._clients = []
-        self._focused = None
+        self._focused = []
 
     def to_screen(self, new_screen):
         """
@@ -75,6 +75,8 @@ class Floating(Layout):
 
     def focus_first(self):
         if self._clients:
+            if not self._clients[0] in self._focused:
+                self._focused.append(self._clients[0])
             return self._clients[0]
 
     def focus_next(self, win):
@@ -82,10 +84,14 @@ class Floating(Layout):
             return
         idx = self._clients.index(win)
         if len(self._clients) > idx + 1:
+            if not self._clients[idx +1] in self._focused:
+                self._focused.append(self._clients[idx + 1])
             return self._clients[idx + 1]
 
     def focus_last(self):
         if self._clients:
+            if not self._clients[-1] in self._focused:
+                self._focused.append(self._clients[-1])
             return self._clients[-1]
 
     def focus_previous(self, win):
@@ -93,16 +99,35 @@ class Floating(Layout):
             return
         idx = self._clients.index(win)
         if idx > 0:
+            if not self._clients[idx -1] in self._focused:
+                self._focused.append(self._clients[idx -1])
             return self._clients[idx - 1]
 
     def focus(self, client):
-        self._focused = client
+        if not client in self._focused:
+            self._focused.append(client)
 
-    def blur(self):
-        self._focused = None
+    def focus_toggle(self, client):
+        if client not in self._focused:
+            self.focus(client)
+        else:
+            self.blur(client)
+
+    def blur(self, group = None, client = None):
+        if(group):
+            for focused in self._focused:
+                if getattr(focused, 'group', None) == group:
+                    self._focused.remove(focused)
+        elif(client):
+            if client in self._focused:
+                self._focused.remove(client)
+        else:
+            self._focused = []
 
     def configure(self, client, screen):
-        if client is self._focused:
+        clientinlist = False
+        if client in self._focused:
+            clientinlist = True
             bc = self.group.qtile.colorPixel(self.border_focus)
         else:
             bc = self.group.qtile.colorPixel(self.border_normal)
@@ -119,29 +144,34 @@ class Floating(Layout):
             client.height,
             bw,
             bc,
-            client is self._focused
+            clientinlist,
         )
         client.unhide()
 
     def clone(self, group):
         c = Layout.clone(self, group)
         c._clients = []
+        c._focused = []
         return c
 
     def add(self, client):
         self._clients.append(client)
-        self._focused = client
+        if not client in self._focused:
+            self._focused.append(client)
 
     def remove(self, client):
         if client not in self._clients:
             return
-        self._focused = self.focus_next(client)
+        nextclient = self.focus_next(client)
         self._clients.remove(client)
+        if client in self._focused:
+            self._focused.remove(client)
         return self._focused
 
     def info(self):
         d = Layout.info(self)
         d["clients"] = [x.name for x in self._clients]
+        d["focused"] = [x.name for x in self._focused]
         return d
 
     @property
@@ -151,6 +181,11 @@ class Floating(Layout):
     @property
     def focused(self):
         return self._focused
+
+    @focused.setter
+    def focused(self, client):
+        if not client in self._focused:
+            self._focused.append(client)
 
     def cmd_next(self):
         client = self.focus_next(self._focused) or \
