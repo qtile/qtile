@@ -16,18 +16,18 @@ class Mpris2(base._TextBox):
                 ('name', 'audacious', 'Name of the MPRIS widget.'),
 
                 ('objname', 'org.mpris.MediaPlayer2.audacious',
-                'DBUS MPRIS 2 compatible player identifier'
-                '- Find it out with dbus-monitor - '
-                'Also see: http://specifications.freedesktop.org/'
-                'mpris-spec/latest/#Bus-Name-Policy'),
+                    'DBUS MPRIS 2 compatible player identifier'
+                    '- Find it out with dbus-monitor - '
+                    'Also see: http://specifications.freedesktop.org/'
+                    'mpris-spec/latest/#Bus-Name-Policy'),
 
                 ('display_metadata', ['xesam:title', 'xesam:album', 'xesam:artist'],
-                 'Which metadata identifiers to display.'),
+                     'Which metadata identifiers to display.'),
 
                 ('scroll_chars', 30, 'How many chars at once to display.'),
                 ('scroll_interval', 0.5, 'Scroll delay interval.'),
-                ('scroll_wait_intervals', 6, 'Wait x scroll_interval before'
-                 'scrolling/removing text'),
+                ('scroll_wait_intervals', 8, 'Wait x scroll_interval before'
+                     'scrolling/removing text'),
        ]
 
     def __init__(self, **config):
@@ -37,13 +37,14 @@ class Mpris2(base._TextBox):
         dbus_loop = DBusGMainLoop()
         bus = dbus.SessionBus(mainloop=dbus_loop)
         bus.add_signal_receiver(self.update, 'PropertiesChanged',
-        'org.freedesktop.DBus.Properties', self.objname,
-        '/org/mpris/MediaPlayer2')
+            'org.freedesktop.DBus.Properties', self.objname,
+            '/org/mpris/MediaPlayer2')
 
         self.scrolltext = None
         self.displaytext = ''
         self.is_playing = False
         self.scroll_timer = None
+        self.scroll_counter = None
 
     def update(self, interface_name, changed_properties, invalidated_properties):
         '''http://specifications.freedesktop.org/
@@ -72,10 +73,12 @@ class Mpris2(base._TextBox):
             elif playbackstatus == 'Paused':
                 self.is_playing = False
                 self.displaytext = 'Paused'
-            elif playbackstatus == 'Playing' and not self.displaytext and olddisplaytext:
+            elif playbackstatus == 'Playing' and not self.displaytext and \
+                    olddisplaytext:
                 self.is_playing = True
                 self.displaytext = olddisplaytext.replace('Paused: ', '')
-            elif playbackstatus == 'Playing' and not self.displaytext and not olddisplaytext:
+            elif playbackstatus == 'Playing' and not self.displaytext and \
+                    not olddisplaytext:
                 self.is_playing = True
                 self.displaytext = 'No metadata for current track'
             elif playbackstatus == 'Playing' and self.displaytext:
@@ -87,27 +90,27 @@ class Mpris2(base._TextBox):
         if self.scroll_chars and self.scroll_interval:
             if(self.scroll_timer):
                 gobject.source_remove(self.scroll_timer)
-            counter = [self.scroll_wait_intervals]
             self.scrolltext = self.displaytext
+            self.scroll_counter = self.scroll_wait_intervals
             self.scroll_timer = self.timeout_add(self.scroll_interval,
-                    self.scroll_text, (counter,))
+                    self.scroll_text)
             return
         if self.text != self.displaytext:
             self.text = self.displaytext
             self.bar.draw()
 
-    def scroll_text(self, counter):
+    def scroll_text(self):
         if self.text != self.scrolltext[:self.scroll_chars]:
             self.text = self.scrolltext[:self.scroll_chars]
             self.bar.draw()
-        if counter[0]:
-            counter[0] -= 1
-            if counter[0]:
+        if self.scroll_counter:
+            self.scroll_counter -= 1
+            if self.scroll_counter:
                 return True
         if len(self.scrolltext) >= self.scroll_chars:
             self.scrolltext = self.scrolltext[1:]
             if len(self.scrolltext) == self.scroll_chars:
-                counter[0] += self.scroll_wait_intervals
+                self.scroll_counter += self.scroll_wait_intervals
             return True
         self.text = ''
         self.bar.draw()
