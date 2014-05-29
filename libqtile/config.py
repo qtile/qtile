@@ -477,14 +477,15 @@ class Match(object):
         for item in ('title', 'wm_class', 'role', 'wm_type', 'wm_instance_class', 'net_wm_pid'):
             if getattr(match, item, None) and getattr(self, item, None):
                try:
-                   params[item]  = getattr(self, item)[:].extend(getattr(match, item))
+                   params[item] = getattr(self, item)[:]
+                   params[item].extend(getattr(match, item))
                except TypeError:
                    params[item] = [getattr(self, item), getattr(match, item)]
             elif getattr(self, item, None):
                 params[item] = getattr(self, item)
             elif getattr(match, item, None):
                 params[item] = getattr(match, item)
-        return Match(**params)
+        return self.__class__(**params)
 
     def __call__(self, client):
         return self.compare(client)
