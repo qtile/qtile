@@ -571,8 +571,6 @@ class MatchNothing(Match):
         return self
 
     def __sub__(self, match):
-        if isinstance(match, MatchNothing):
-            return MatchEverything()
         return self
 
     def __repr__(self):
