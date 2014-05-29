@@ -127,9 +127,6 @@ class Screen(command.CommandObject):
     """
         A physical screen, and its associated paraphernalia.
     """
-    group = None
-    previous_group = None
-
     def __init__(self, top=None, bottom=None, left=None, right=None,
                  x=None, y=None, width=None, height=None):
         """
@@ -141,6 +138,10 @@ class Screen(command.CommandObject):
             x,y,width and height aren't specified usually unless you are
             using 'fake screens'.
         """
+
+        self.group = None
+        self.previous_group = None
+
         self.top = top
         self.bottom = bottom
         self.left = left
