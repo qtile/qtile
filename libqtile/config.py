@@ -544,6 +544,11 @@ class MatchEverything(Match):
     def __add__(self, match):
         return self
 
+    def __sub__(self, match):
+        if isinstance(match, MatchEverything):
+            return Match()
+        return self
+
     def __repr__(self):
         return '%s()' %self.__class__.__name__
 
@@ -561,6 +566,13 @@ class MatchNothing(Match):
         pass
 
     def __add__(self, match):
+        if isinstance(match, MatchEverything):
+            return MatchEverything()
+        return self
+
+    def __sub__(self, match):
+        if isinstance(match, MatchNothing):
+            return MatchEverything()
         return self
 
     def __repr__(self):
