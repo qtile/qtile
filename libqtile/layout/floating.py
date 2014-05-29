@@ -1,6 +1,7 @@
 from base import Layout
 from .. import window
 from ..config import Match
+from .. import hook
 
 class Floating(Layout):
     """
@@ -36,8 +37,11 @@ class Floating(Layout):
         """
         Layout.__init__(self, **config)
         self.add_defaults(Floating.defaults)
-        self._clients = []
-        self._focused = []
+
+        self._clients    = []
+        self._focused    = []
+        self._save       = []
+        self._transients = dict()
 
     def to_screen(self, new_screen):
         """
@@ -69,65 +73,68 @@ class Floating(Layout):
                 new_x = (new_x - new_screen.x) / 2
             while new_y > bottom_edge:
                 new_y = (new_y - new_screen.y) / 2
-            win.x = new_x
-            win.y = new_y
+            win.x     = new_x
+            win.y     = new_y
             win.group = new_screen.group
 
     def focus_first(self):
-        if self._clients:
-            if not self._clients[0] in self._focused:
-                self._focused.append(self._clients[0])
+        if self._clients and \
+        self._clients[0] not in \
+        self._focused:
+            self._focused.append(self._clients[0])
             return self._clients[0]
+
+    def focus_last(self):
+        if self._clients and \
+        self._clients[-1] not in \
+        self._focused:
+            self._focused.append(self._clients[-1])
+            return self._clients[-1]
 
     def focus_next(self, win):
         if win not in self._clients:
             return
         idx = self._clients.index(win)
         if len(self._clients) > idx + 1:
-            if not self._clients[idx +1] in self._focused:
+            if self._clients[idx + 1] not in self._focused:
                 self._focused.append(self._clients[idx + 1])
             return self._clients[idx + 1]
-
-    def focus_last(self):
-        if self._clients:
-            if not self._clients[-1] in self._focused:
-                self._focused.append(self._clients[-1])
-            return self._clients[-1]
 
     def focus_previous(self, win):
         if win not in self._clients:
             return
         idx = self._clients.index(win)
         if idx > 0:
-            if not self._clients[idx -1] in self._focused:
+            if self._clients[idx -1] not in self._focused:
                 self._focused.append(self._clients[idx -1])
             return self._clients[idx - 1]
 
     def focus(self, client):
-        if not client in self._focused:
+        if client not in self._focused:
             self._focused.append(client)
 
-    def focus_toggle(self, client):
-        if client not in self._focused:
-            self.focus(client)
-        else:
-            self.blur(client)
+    def focus_transients(self, client):
+        if client.window.wid in self._transients:
+            self._focused = self._transients[client.window.wid]
 
-    def blur(self, group = None, client = None):
-        if(group):
-            for focused in self._focused:
-                if getattr(focused, 'group', None) == group:
-                    self._focused.remove(focused)
-        elif(client):
+    def save_focused(self):
+        self._save = self._focused
+
+    def restore_focused(self):
+        self._focused = self._save
+        self._save = []
+
+    def blur(self, client = None):
+        if(client):
             if client in self._focused:
                 self._focused.remove(client)
         else:
             self._focused = []
 
     def configure(self, client, screen):
-        clientinlist = False
+        client_in_list = False
         if client in self._focused:
-            clientinlist = True
+            client_in_list = True
             bc = self.group.qtile.colorPixel(self.border_focus)
         else:
             bc = self.group.qtile.colorPixel(self.border_normal)
@@ -144,48 +151,74 @@ class Floating(Layout):
             client.height,
             bw,
             bc,
-            clientinlist,
+            client_in_list,
         )
         client.unhide()
 
     def clone(self, group):
         c = Layout.clone(self, group)
-        c._clients = []
-        c._focused = []
+        c._clients    = []
+        c._focused    = []
+        c._save       = []
+        c._transients = dict()
         return c
 
     def add(self, client):
-        self._clients.append(client)
-        if not client in self._focused:
+        if client not in self._clients:
+            self._clients.append(client)
+        if client not in self._focused:
             self._focused.append(client)
+
+        wm_transient_for = client.window.get_wm_transient_for()
+        if wm_transient_for:
+            if not self._transients.get(wm_transient_for, None):
+                self._transients[wm_transient_for] = [client]
+            else:
+                self._transients[wm_transient_for].append(client)
 
     def remove(self, client):
         if client not in self._clients:
             return
-        nextclient = self.focus_next(client)
-        self._clients.remove(client)
         if client in self._focused:
             self._focused.remove(client)
+
+        remove = []
+        for k,v in self._transients.items():
+            if client in v:
+                v.remove(client)
+            if not v:
+                remove.append(k)
+        for k in remove:
+            self._transients.pop(k)
+
+        nextclient = self.focus_next(client)
+        self._clients.remove(client)
+        return nextclient
+
+    @property
+    def clients(self):
+        """Clients which are being managed by this layout"""
+        return self._clients
+
+    @property
+    def focused(self):
+        """Clients which are currently focused"""
         return self._focused
+
+    @property
+    def transients(self):
+        return self._transients
+
+    @focused.setter
+    def focused(self, client):
+        """Set focus on clients"""
+        self.add(client)
 
     def info(self):
         d = Layout.info(self)
         d["clients"] = [x.name for x in self._clients]
         d["focused"] = [x.name for x in self._focused]
         return d
-
-    @property
-    def clients(self):
-        return self._clients
-
-    @property
-    def focused(self):
-        return self._focused
-
-    @focused.setter
-    def focused(self, client):
-        if not client in self._focused:
-            self._focused.append(client)
 
     def cmd_next(self):
         client = self.focus_next(self._focused) or \
