@@ -71,7 +71,7 @@ class File(object):
             "mouse",
             "groups",
             "dgroups_key_binder",
-            "dgroups_app_rules",
+            "app_rules",
             "follow_mouse_focus",
             "cursor_warp",
             "layouts",
