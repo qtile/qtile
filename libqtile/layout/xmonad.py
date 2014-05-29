@@ -106,7 +106,7 @@ class MonadTall(SingleWindow):
     _max_ratio = .75
 
     defaults = [
-        ("name", "xmonad-tall", "Name of this layout."),
+        ("name", "monadtall", "Name of this layout."),
         ("border_focus", "#ff0000", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 2, "Border width."),

@@ -62,7 +62,7 @@ class Slice(Delegate):
     """
 
     defaults = [
-        ("name", "max", "Name of this layout."),
+        ("name", "slice", "Name of this layout."),
         ("side", "left", "Side of the slice (left, right, top, bottom)"),
         ("width", 256, "Slice width"),
         ("match", Match(title=['slice']), "Match object."
