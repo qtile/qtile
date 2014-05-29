@@ -56,7 +56,7 @@ class DGroups(object):
         self.rules_map = {}
         self.last_rule_id = 0
 
-        for rule in getattr(qtile.config, 'dgroups_app_rules', []):
+        for rule in getattr(qtile.config, 'app_rules', []):
             self.add_rule(rule)
 
         self.keys = []
@@ -86,8 +86,8 @@ class DGroups(object):
 
     def add_dgroup(self, group, start=False):
         self.groupMap[group.name] = group
-        rules = [Rule(m, group=group.name) for m in group.matches]
-        self.rules.extend(rules)
+        rule = Rule(group.match, group=group.name)
+        self.rules.append(rule)
         if start:
             self.qtile.addGroup(group.name, group.layout, group.layouts)
 
@@ -129,7 +129,7 @@ class DGroups(object):
 
         for rule in self.rules:
             # Matching Rules
-            if rule.matches(client):
+            if rule.compare(client):
                 if rule.group:
                     try:
                         layout = self.groupMap[rule.group].layout

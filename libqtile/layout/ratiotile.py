@@ -3,13 +3,6 @@ import math
 from base import Layout
 from .. import utils
 
-
-ROWCOL = 1  # do rows at a time left to right top down
-COLROW = 2  # do cols top to bottom, left to right
-
-GOLDEN_RATIO = 1.618
-
-
 class GridInfo(object):
     """
     Calculates sizes for grids
@@ -27,14 +20,22 @@ class GridInfo(object):
 
     >>> foo = GridInfo(1.6, 7, 400,370)
     >>> foo.get_sizes(500,580)
-
-
     """
-    def __init__(self, ratio, num_windows, width, height):
-        self.ratio = ratio
-        self.num_windows = num_windows
-        self.width = width
-        self.height = height
+
+    ROWCOL = 1  # do rows at a time left to right top down
+    COLROW = 2  # do cols top to bottom, left to right
+
+    defaults = [
+            ("name", "ratiotile", "Name of this layout."),
+            ("width", None, "Width. Must be specified."),
+            ("height", None, "Height. Must be specified."),
+            ("ratio", None, "Ratio. Must be specified."),
+            ("num_windows", None, "Number of windows. Must be specified."),
+    ]
+
+
+    def __init__(self, **config):
+        self.add_defaults(GridInfo.defaults)
         self.num_rows = 0
         self.num_cols = 0
 
@@ -66,10 +67,10 @@ class GridInfo(object):
             end = num_windows / 2 + 1
         for rows in range(1, end):
             cols = int(math.ceil(float(num_windows) / rows))
-            yield (rows, cols, ROWCOL)
+            yield (rows, cols, self.ROWCOL)
             if rows != cols:
                 # also want the reverse test
-                yield (cols, rows, COLROW)
+                yield (cols, rows, self.COLROW)
 
     def get_sizes_advanced(self, total_width, total_height,
                            xoffset=0, yoffset=0):
@@ -85,7 +86,7 @@ class GridInfo(object):
                 remaining, width, height, xoffset, yoffset
             )
             results.extend(sizes)
-            if orien == ROWCOL:
+            if orien == self.ROWCOL:
                 # adjust height/yoffset
                 height -= sizes[-1][-1]
                 yoffset += sizes[-1][-1]
@@ -101,7 +102,7 @@ class GridInfo(object):
         """
         rows, cols, orientation = self.calc(num_windows, width, height)
         results = []
-        if orientation == ROWCOL:
+        if orientation == self.ROWCOL:
             x = 0
             y = 0
             for i, col in enumerate(range(cols)):
@@ -111,7 +112,7 @@ class GridInfo(object):
                     w_width = width - x
                 results.append((x + xoffset, y + yoffset, w_width, w_height))
                 x += w_width
-        elif orientation == COLROW:
+        elif orientation == self.COLROW:
             x = 0
             y = 0
             for i, col in enumerate(range(rows)):
@@ -130,7 +131,7 @@ class GridInfo(object):
         rows, cols, orientation = self.calc(
             self.num_windows, total_width, total_height
         )
-        if orientation == ROWCOL:
+        if orientation == self.ROWCOL:
             y = 0
             for i, row in enumerate(range(rows)):
                 x = 0
@@ -187,26 +188,27 @@ class RatioTile(Layout):
     """
     Tries to tile all windows in the width/height ratio passed in
     """
+    GOLDEN_RATIO = 1.618
+
     defaults = [
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width."),
         ("name", "ratiotile", "Name of this layout."),
+        ("ratio", GOLDEN_RATIO, "Ratio."),
+        ("ratio_increment", 0.1, "Ratio increment."),
+        ("fancy", False, "Fancy."),
     ]
 
-    def __init__(self, ratio=GOLDEN_RATIO, ratio_increment=0.1,
-                 fancy=False, **config):
+    def __init__(self, **config):
         Layout.__init__(self, **config)
         self.add_defaults(RatioTile.defaults)
         self.clients = []
-        self.ratio_increment = ratio_increment
-        self.ratio = ratio
         self.focused = None
         self.dirty = True  # need to recalculate
         self.layout_info = []
         self.last_size = None
         self.last_screen = None
-        self.fancy = fancy
 
     def clone(self, group):
         c = Layout.clone(self, group)

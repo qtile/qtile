@@ -1,74 +1,49 @@
 from base import Layout
 from .. import window
-
-DEFAULT_FLOAT_WM_TYPES = set([
-    'utility',
-    'notification',
-    'toolbar',
-    'splash',
-    'dialog',
-])
-
+from ..config import Match
 
 class Floating(Layout):
     """
     Floating layout, which does nothing with windows but handles focus order
     """
+    DEFAULT_FLOAT_WM_TYPES = Match(
+    wm_type=[
+        'utility',
+        'notification',
+        'toolbar',
+        'splash',
+        'dialog',]
+    )
+
     defaults = [
+        ("name", "floating", "Name of this layout."),
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width."),
         ("max_border_width", 0, "Border width for maximize."),
         ("fullscreen_border_width", 0, "Border width for fullscreen."),
-        ("name", "floating", "Name of this layout."),
-        (
-            "auto_float_types",
-            DEFAULT_FLOAT_WM_TYPES,
-            "default wm types to automatically float"
-        ),
+        ("match",DEFAULT_FLOAT_WM_TYPES,
+         "Match object. Windows matching it will float."
+         "Concatenate Floating.DEFAULT_FLOAT_WM_TYPES with your own"
+         "Match object to add windows to match. Or insert into a MatchList."),
     ]
 
-    def __init__(self, float_rules=None, **config):
+    def __init__(self, **config):
         """
-        If you have certain apps that you always want to float you can
-        provide ``float_rules`` to do so.
-        ``float_rules`` is a list of dictionaries containing:
-
-        {wname: WM_NAME, wmclass: WM_CLASS
-        role: WM_WINDOW_ROLE}
-
-        The keys must be specified as above.  You only need one, but
-        you need to provide the value for it.  When a new window is
-        opened it's ``match`` method is called with each of these
-        rules.  If one matches, the window will float.  The following
-        will float gimp and skype:
-
-        float_rules=[dict(wmclass="skype"), dict(wmclass="gimp")]
-
-        Specify these in the ``floating_layout`` in your config.
+        If you have certain applications which should float,
+        you can concatenate a Match object containing matches
+        for those applications with Floating.DEFAULT_FLOAT_WM_TYPES.
         """
         Layout.__init__(self, **config)
-        self.clients = []
-        self.focused = None
-        self.float_rules = float_rules or []
         self.add_defaults(Floating.defaults)
-
-    def match(self, win):
-        """
-        Used to default float some windows.
-        """
-        if win.window.get_wm_type() in self.auto_float_types:
-            return True
-        for rule_dict in self.float_rules:
-            if win.match(**rule_dict):
-                return True
-        return False
+        self._clients = []
+        self._focused = None
 
     def to_screen(self, new_screen):
         """
         Adjust offsets of clients within current screen
         """
-        for i, win in enumerate(self.clients):
+        for i, win in enumerate(self._clients):
             if win.maximized:
                 win.enablemaximize()
                 continue
@@ -99,35 +74,35 @@ class Floating(Layout):
             win.group = new_screen.group
 
     def focus_first(self):
-        if self.clients:
-            return self.clients[0]
+        if self._clients:
+            return self._clients[0]
 
     def focus_next(self, win):
-        if win not in self.clients:
+        if win not in self._clients:
             return
-        idx = self.clients.index(win)
-        if len(self.clients) > idx + 1:
-            return self.clients[idx + 1]
+        idx = self._clients.index(win)
+        if len(self._clients) > idx + 1:
+            return self._clients[idx + 1]
 
     def focus_last(self):
-        if self.clients:
-            return self.clients[-1]
+        if self._clients:
+            return self._clients[-1]
 
     def focus_previous(self, win):
-        if win not in self.clients:
+        if win not in self._clients:
             return
-        idx = self.clients.index(win)
+        idx = self._clients.index(win)
         if idx > 0:
-            return self.clients[idx - 1]
+            return self._clients[idx - 1]
 
     def focus(self, client):
-        self.focused = client
+        self._focused = client
 
     def blur(self):
-        self.focused = None
+        self._focused = None
 
     def configure(self, client, screen):
-        if client is self.focused:
+        if client is self._focused:
             bc = self.group.qtile.colorPixel(self.border_focus)
         else:
             bc = self.group.qtile.colorPixel(self.border_normal)
@@ -144,37 +119,45 @@ class Floating(Layout):
             client.height,
             bw,
             bc,
-            client is self.focused
+            client is self._focused
         )
         client.unhide()
 
     def clone(self, group):
         c = Layout.clone(self, group)
-        c.clients = []
+        c._clients = []
         return c
 
     def add(self, client):
-        self.clients.append(client)
-        self.focused = client
+        self._clients.append(client)
+        self._focused = client
 
     def remove(self, client):
-        if client not in self.clients:
+        if client not in self._clients:
             return
-        self.focused = self.focus_next(client)
-        self.clients.remove(client)
-        return self.focused
+        self._focused = self.focus_next(client)
+        self._clients.remove(client)
+        return self._focused
 
     def info(self):
         d = Layout.info(self)
-        d["clients"] = [x.name for x in self.clients]
+        d["clients"] = [x.name for x in self._clients]
         return d
 
+    @property
+    def clients(self):
+        return self._clients
+
+    @property
+    def focused(self):
+        return self._focused
+
     def cmd_next(self):
-        client = self.focus_next(self.focused) or \
+        client = self.focus_next(self._focused) or \
                  self.focus_first()
         self.group.focus(client, False)
 
     def cmd_previous(self):
-        client = self.focus_previous(self.focused) or \
+        client = self.focus_previous(self._focused) or \
                  self.focus_last()
         self.group.focus(client, False)

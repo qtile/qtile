@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from config import Drag, Click, Screen, Match, Rule
+from config import Drag, Click, Screen, Match, MatchAll, Rule
 from utils import QtileError
 from libqtile.log_utils import init_log
 from libqtile.dgroups import DGroups
@@ -1356,18 +1356,22 @@ class Qtile(command.CommandObject):
             error = traceback.format_exc()
             self.log.error('Exception calling "%s":\n%s' % (function, error))
 
-    def cmd_add_rule(self, match_args, rule_args, min_priorty=False):
+    def cmd_add_rule(self, match_args, rule_args, min_priorty=False, match_all=False):
         """
             Add a dgroup rule, returns rule_id needed to remove it
             param: match_args (config.Match arguments)
             param: rule_args (config.Rule arguments)
             param: min_priorty if the rule is added with minimun prioriry(last)
+            param: match_all if the match_args must be all matched
         """
         if not self.dgroups:
             self.log.warning('No dgroups created')
             return
 
-        match = Match(**match_args)
+        if match_all:
+            match = MatchAll(**match_args)
+        else:
+            match = Match(**match_args)
         rule = Rule(match, **rule_args)
         return self.dgroups.add_rule(rule, min_priorty)
 
