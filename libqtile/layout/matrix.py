@@ -10,17 +10,17 @@ class Matrix(Layout):
         configurable and can also be changed interactively.
     """
     defaults = [
+        ("name", "matrix", "Name of this layout."),
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width."),
-        ("name", "matrix", "Name of this layout."),
+        ("columns", 2, "Number of columns"),
     ]
 
-    def __init__(self, columns=2, **config):
+    def __init__(self, **config):
         Layout.__init__(self, **config)
         self.add_defaults(Matrix.defaults)
         self.current_window = None
-        self.columns = columns
         self.clients = []
 
     def info(self):

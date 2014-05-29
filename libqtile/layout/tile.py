@@ -1,38 +1,38 @@
 from base import Layout
+from ..config import Match
 from .. import utils
 
 
 class Tile(Layout):
     defaults = [
+        ("name", "tile", "Name of this layout."),
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width."),
-        ("name", "tile", "Name of this layout."),
-        ("margin", 0, "Margin of the layout"),
+        ("margin", 0, "Margin of the layout."),
+        ("ratio", 0.618, "Ratio of the layout."),
+        ("ratio_increment", 0.05, "Ratio increment value."),
+        ("expand", True, "Whether to expand."),
+        ("add_on_top", True, "Add on top."),
+        ("shift_windows", False, "Shift windows."),
+        ("num_masterwindows", 1, "Number of master windows."),
+        ("match", None, "Match object."
+         "Matching windows will become a master window."),
     ]
 
-    def __init__(self, ratio=0.618, masterWindows=1, expand=True,
-                 ratio_increment=0.05, add_on_top=True, shift_windows=False,
-                 master_match=None, **config):
+    def __init__(self, **config):
         Layout.__init__(self, **config)
         self.add_defaults(Tile.defaults)
         self.clients = []
-        self.ratio = ratio
-        self.master = masterWindows
         self.focused = None
-        self.expand = expand
-        self.ratio_increment = ratio_increment
-        self.add_on_top = add_on_top
-        self.shift_windows = shift_windows
-        self.master_match = master_match
 
     @property
     def master_windows(self):
-        return self.clients[:self.master]
+        return self.clients[:self.num_masterwindows]
 
     @property
     def slave_windows(self):
-        return self.clients[self.master:]
+        return self.clients[self.num_masterwindows:]
 
     def up(self):
         if self.shift_windows:
@@ -86,8 +86,8 @@ class Tile(Layout):
             self.group.layoutAll(True)
 
     def resetMaster(self, match=None):
-        if not match and self.master_match:
-            match = self.master_match
+        if not match and self.match:
+            match = self.match
         else:
             return
         if self.clients:
@@ -147,14 +147,14 @@ class Tile(Layout):
                 w = int(screenWidth * self.ratio) \
                     if len(self.slave_windows) or not self.expand \
                     else screenWidth
-                h = screenHeight / self.master
+                h = screenHeight / self.num_masterwindows
                 x = screen.x
                 y = screen.y + pos * h
             else:
                 w = screenWidth - int(screenWidth * self.ratio)
                 h = screenHeight / (len(self.slave_windows))
                 x = screen.x + int(screenWidth * self.ratio)
-                y = screen.y + self.clients[self.master:].index(client) * h
+                y = screen.y + self.clients[self.num_masterwindows:].index(client) * h
             if client is self.focused:
                 bc = self.group.qtile.colorPixel(self.border_focus)
             else:
@@ -173,6 +173,7 @@ class Tile(Layout):
 
     def info(self):
         return dict(
+            name=self.name,
             clients=[c.name for c in self.clients],
             master=[c.name for c in self.master_windows],
             slave=[c.name for c in self.slave_windows],
@@ -203,11 +204,11 @@ class Tile(Layout):
         self.group.layoutAll()
 
     def cmd_decrease_nmaster(self):
-        self.master -= 1
-        if self.master <= 0:
-            self.master = 1
+        self.num_masterwindows -= 1
+        if self.num_masterwindows <= 0:
+            self.num_masterwindows = 1
         self.group.layoutAll()
 
     def cmd_increase_nmaster(self):
-        self.master += 1
+        self.num_masterwindows += 1
         self.group.layoutAll()
