@@ -149,11 +149,17 @@ class _Group(command.CommandObject):
                 if win.floating:
                     for l in self.layouts:
                         l.blur()
+                    if self.qtile.config.raise_transients:
+                        self.floating_layout.restore_focused()
                     self.floating_layout.focus(win)
                 else:
+                    if self.qtile.config.raise_transients:
+                        self.floating_layout.save_focused()
                     self.floating_layout.blur()
                     for l in self.layouts:
                         l.focus(win)
+                    if self.qtile.config.raise_transients:
+                        self.floating_layout.focus_transients(win)
         else:
             self.currentWindow = None
         hook.fire("focus_change")

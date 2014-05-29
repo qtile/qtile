@@ -71,7 +71,7 @@ class File(object):
             "mouse",
             "groups",
             "dgroups_key_binder",
-            "dgroups_app_rules",
+            "app_rules",
             "follow_mouse_focus",
             "cursor_warp",
             "layouts",
@@ -81,6 +81,7 @@ class File(object):
             "auto_fullscreen",
             "widget_defaults",
             "bring_front_click",
+            "raise_transients",
         ]
 
         # We delay importing here to avoid a circular import issue when

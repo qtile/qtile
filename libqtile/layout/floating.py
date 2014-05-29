@@ -1,74 +1,53 @@
 from base import Layout
 from .. import window
-
-DEFAULT_FLOAT_WM_TYPES = set([
-    'utility',
-    'notification',
-    'toolbar',
-    'splash',
-    'dialog',
-])
-
+from ..config import Match
+from .. import hook
 
 class Floating(Layout):
     """
     Floating layout, which does nothing with windows but handles focus order
     """
+    DEFAULT_FLOAT_WM_TYPES = Match(
+    wm_type=[
+        'utility',
+        'notification',
+        'toolbar',
+        'splash',
+        'dialog',]
+    )
+
     defaults = [
+        ("name", "floating", "Name of this layout."),
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width."),
         ("max_border_width", 0, "Border width for maximize."),
         ("fullscreen_border_width", 0, "Border width for fullscreen."),
-        ("name", "floating", "Name of this layout."),
-        (
-            "auto_float_types",
-            DEFAULT_FLOAT_WM_TYPES,
-            "default wm types to automatically float"
-        ),
+        ("match",DEFAULT_FLOAT_WM_TYPES,
+         "Match object. Windows matching it will float."
+         "Concatenate Floating.DEFAULT_FLOAT_WM_TYPES with your own"
+         "Match object to add windows to match. Or insert into a MatchList."),
     ]
 
-    def __init__(self, float_rules=None, **config):
+    def __init__(self, **config):
         """
-        If you have certain apps that you always want to float you can
-        provide ``float_rules`` to do so.
-        ``float_rules`` is a list of dictionaries containing:
-
-        {wname: WM_NAME, wmclass: WM_CLASS
-        role: WM_WINDOW_ROLE}
-
-        The keys must be specified as above.  You only need one, but
-        you need to provide the value for it.  When a new window is
-        opened it's ``match`` method is called with each of these
-        rules.  If one matches, the window will float.  The following
-        will float gimp and skype:
-
-        float_rules=[dict(wmclass="skype"), dict(wmclass="gimp")]
-
-        Specify these in the ``floating_layout`` in your config.
+        If you have certain applications which should float,
+        you can concatenate a Match object containing matches
+        for those applications with Floating.DEFAULT_FLOAT_WM_TYPES.
         """
         Layout.__init__(self, **config)
-        self.clients = []
-        self.focused = None
-        self.float_rules = float_rules or []
         self.add_defaults(Floating.defaults)
 
-    def match(self, win):
-        """
-        Used to default float some windows.
-        """
-        if win.window.get_wm_type() in self.auto_float_types:
-            return True
-        for rule_dict in self.float_rules:
-            if win.match(**rule_dict):
-                return True
-        return False
+        self._clients    = []
+        self._focused    = []
+        self._save       = []
+        self._transients = dict()
 
     def to_screen(self, new_screen):
         """
         Adjust offsets of clients within current screen
         """
-        for i, win in enumerate(self.clients):
+        for i, win in enumerate(self._clients):
             if win.maximized:
                 win.enablemaximize()
                 continue
@@ -94,40 +73,68 @@ class Floating(Layout):
                 new_x = (new_x - new_screen.x) / 2
             while new_y > bottom_edge:
                 new_y = (new_y - new_screen.y) / 2
-            win.x = new_x
-            win.y = new_y
+            win.x     = new_x
+            win.y     = new_y
             win.group = new_screen.group
 
     def focus_first(self):
-        if self.clients:
-            return self.clients[0]
-
-    def focus_next(self, win):
-        if win not in self.clients:
-            return
-        idx = self.clients.index(win)
-        if len(self.clients) > idx + 1:
-            return self.clients[idx + 1]
+        if self._clients and \
+        self._clients[0] not in \
+        self._focused:
+            self._focused.append(self._clients[0])
+            return self._clients[0]
 
     def focus_last(self):
-        if self.clients:
-            return self.clients[-1]
+        if self._clients and \
+        self._clients[-1] not in \
+        self._focused:
+            self._focused.append(self._clients[-1])
+            return self._clients[-1]
+
+    def focus_next(self, win):
+        if win not in self._clients:
+            return
+        idx = self._clients.index(win)
+        if len(self._clients) > idx + 1:
+            if self._clients[idx + 1] not in self._focused:
+                self._focused.append(self._clients[idx + 1])
+            return self._clients[idx + 1]
 
     def focus_previous(self, win):
-        if win not in self.clients:
+        if win not in self._clients:
             return
-        idx = self.clients.index(win)
+        idx = self._clients.index(win)
         if idx > 0:
-            return self.clients[idx - 1]
+            if self._clients[idx -1] not in self._focused:
+                self._focused.append(self._clients[idx -1])
+            return self._clients[idx - 1]
 
     def focus(self, client):
-        self.focused = client
+        if client not in self._focused:
+            self._focused.append(client)
 
-    def blur(self):
-        self.focused = None
+    def focus_transients(self, client):
+        if client.window.wid in self._transients:
+            self._focused = self._transients[client.window.wid]
+
+    def save_focused(self):
+        self._save = self._focused
+
+    def restore_focused(self):
+        self._focused = self._save
+        self._save = []
+
+    def blur(self, client = None):
+        if(client):
+            if client in self._focused:
+                self._focused.remove(client)
+        else:
+            self._focused = []
 
     def configure(self, client, screen):
-        if client is self.focused:
+        client_in_list = False
+        if client in self._focused:
+            client_in_list = True
             bc = self.group.qtile.colorPixel(self.border_focus)
         else:
             bc = self.group.qtile.colorPixel(self.border_normal)
@@ -144,37 +151,81 @@ class Floating(Layout):
             client.height,
             bw,
             bc,
-            client is self.focused
+            client_in_list,
         )
         client.unhide()
 
     def clone(self, group):
         c = Layout.clone(self, group)
-        c.clients = []
+        c._clients    = []
+        c._focused    = []
+        c._save       = []
+        c._transients = dict()
         return c
 
     def add(self, client):
-        self.clients.append(client)
-        self.focused = client
+        if client not in self._clients:
+            self._clients.append(client)
+        if client not in self._focused:
+            self._focused.append(client)
+
+        wm_transient_for = client.window.get_wm_transient_for()
+        if wm_transient_for:
+            if not self._transients.get(wm_transient_for, None):
+                self._transients[wm_transient_for] = [client]
+            else:
+                self._transients[wm_transient_for].append(client)
 
     def remove(self, client):
-        if client not in self.clients:
+        if client not in self._clients:
             return
-        self.focused = self.focus_next(client)
-        self.clients.remove(client)
-        return self.focused
+        if client in self._focused:
+            self._focused.remove(client)
+
+        remove = []
+        for k,v in self._transients.items():
+            if client in v:
+                v.remove(client)
+            if not v:
+                remove.append(k)
+        for k in remove:
+            self._transients.pop(k)
+
+        nextclient = self.focus_next(client)
+        self._clients.remove(client)
+        return nextclient
+
+    @property
+    def clients(self):
+        """Clients which are being managed by this layout"""
+        return self._clients
+
+    @property
+    def focused(self):
+        """Clients which are currently focused"""
+        return self._focused
+
+    @property
+    def transients(self):
+        return self._transients
+
+    @focused.setter
+    def focused(self, client):
+        """Set focus on clients"""
+        self.add(client)
 
     def info(self):
         d = Layout.info(self)
-        d["clients"] = [x.name for x in self.clients]
+        d["clients"] = [x.name for x in self._clients]
+        d["focused"] = [x.name for x in self._focused]
         return d
 
     def cmd_next(self):
-        client = self.focus_next(self.focused) or \
+        client = self.focus_next(self._focused) or \
                  self.focus_first()
         self.group.focus(client, False)
 
     def cmd_previous(self):
-        client = self.focus_previous(self.focused) or \
+        client = self.focus_previous(self._focused) or \
                  self.focus_last()
         self.group.focus(client, False)
