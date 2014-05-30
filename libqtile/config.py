@@ -647,7 +647,8 @@ class MatchList(list, Match):
             elif isinstance(item, MatchNothing):
                 self.has_matchnothing += 1
                 self.append(item)
-            elif isinstance(item, Match):
+            elif hasattr(match, 'compare') and \
+                 hasattr(match, 'map'):
                 self.append(item)
             else:
                 raise utils.QtileError(
@@ -676,7 +677,8 @@ class MatchList(list, Match):
         return self.compare(client)
 
     def __add__(self, match):
-        if isinstance(match, Match):
+        if hasattr(match, 'compare') and \
+           hasattr(match, 'map'):
             x = self[:]
             if match not in x:
                 x.append(match)
@@ -684,7 +686,8 @@ class MatchList(list, Match):
         return MatchList()
     
     def __sub__(self, match):
-        if isinstance(match, Match):
+        if hasattr(match, 'compare') and \
+           hasattr(match, 'map'):
             x = [x for x in self if x != match]
             return self.__class__(*x)
         return MatchList()
@@ -733,14 +736,16 @@ class Rule(object):
         return ''.join(l)
 
     def __add__(self, obj):
-        if isinstance(obj, Match):
+        if hasattr(match, 'compare') and \
+           hasattr(match, 'map'):
             params = []
             for item in self.personality[1:]:
                 params.append(getattr(self, item, None))
             return self.__class__(self.match + obj, *params)
 
     def __sub__(self, obj):
-        if isinstance(obj, Match):
+        if hasattr(match, 'compare') and \
+           hasattr(match, 'map'):
             params = []
             for item in self.personality[1:]:
                 params.append(getattr(self, item, None))
