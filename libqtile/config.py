@@ -484,7 +484,7 @@ class Match(object):
                try:
                    params[item] = getattr(self, item)[:]
                    params[item].extend(getattr(match, item))
-               except TypeError:
+               except TypeError, AttributeError:
                    params[item] = [getattr(self, item), getattr(match, item)]
             elif getattr(self, item, None):
                 params[item] = getattr(self, item)
@@ -641,6 +641,8 @@ class Rule(object):
         :param break_on_match: Should we stop applying rules if this rule is
                matched?
         """
+        self.personality = ('match', 'group', 'float',
+                            'intrusive', 'break_on_match')
         self.match = match
         self.group = group
         self.float = float
@@ -656,9 +658,8 @@ class Rule(object):
     def __repr__(self):
         l = []
         l.append('%s(' %self.__class__.__name__)
-        for item in ('match', 'group', 'float', 'intrusive', 'break_on_match'):
+        for item in self.personality:
             if getattr(self, item, None):
                 l.append('%s=%s%s' %(item, repr(getattr(self, item)), ','))
         l.append(')')
         return ''.join(l)
-
