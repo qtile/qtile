@@ -317,8 +317,7 @@ class Prompt(base._TextBox):
 
         if self.cursorblink and not self.active:
             self.timeout_add(self.cursorblink, self._blink)
-        if prompt:
-            self.prompt = self.prompt.format(prompt=prompt)
+        self.display = self.prompt.format(prompt=prompt)
         self.active = True
         self.userInput = ""
         self.callback = callback
@@ -358,7 +357,7 @@ class Prompt(base._TextBox):
 
     def _update(self):
         if self.active:
-            self.text = "%s%s" % (self.prompt, self.userInput)
+            self.text = "%s%s" % (self.display, self.userInput)
             if self.blink:
                 self.text = self.text + "_"
             else:
