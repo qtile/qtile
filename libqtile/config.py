@@ -379,8 +379,8 @@ class Match(object):
         If a window matches any of the things in any of the lists,
         it is considered a match.
     """
-    class Match(Exception): pass
-    class NoMatch(Exception): pass
+    class CompareMatch(Exception): pass
+    class CompareNoMatch(Exception): pass
 
     def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
                  wm_instance_class=None, net_wm_pid=None):
@@ -395,6 +395,8 @@ class Match(object):
         :param net_wm_pid: things to match against the
                _NET_WM_PID (Integer) atom
         """
+        self.personality = ('title', 'wm_class', 'role', 'wm_type',
+                                 'wm_instance_class', 'net_wm_pid')
         self.title = title
         self.wm_class = wm_class
         self.role = role
@@ -453,9 +455,9 @@ class Match(object):
             if wm_class:
                 self._match_func(self.wm_class, wm_class[1])
                 self._match_func(self.wm_instance_class, wm_class[0])
-        except self.NoMatch:
+        except self.CompareNoMatch:
             return False
-        except self.Match:
+        except self.CompareMatch:
             return True
 
     def map(self, callback, clients):
@@ -470,11 +472,11 @@ class Match(object):
 
     def __add__(self, match):
         """ Concatenate Match objects - ``Match()+Match()``"""
-        if not isinstance(match, self.__class__):
-            raise utils.QtileError('Can not concatenate Match object. '
-            'Only concatenate of same type.')
+        if self.__class__ != match.__class__:
+            raise utils.QtileError('%s: '
+            'Only concatenation of same type!' %self.__class__.__name__)
         params = {}
-        for item in ('title', 'wm_class', 'role', 'wm_type', 'wm_instance_class', 'net_wm_pid'):
+        for item in self.personality:
             if getattr(match, item, None) and getattr(self, item, None):
                try:
                    params[item] = getattr(self, item)[:]
@@ -493,7 +495,7 @@ class Match(object):
     def __repr__(self):
         l = []
         l.append('%s(' %(self.__class__.__name__,))
-        for item in ('title', 'wm_class', 'role', 'wm_type', 'wm_instance_class', 'net_wm_pid'):
+        for item in self.personality:
             if getattr(self, item, None):
                 l.append('%s=%s%s' %(item, repr(getattr(self, item)), ','))
         l.append(')')
@@ -528,7 +530,7 @@ class MatchEverything(Match):
     Everything is considered a match.
     """
     def __init__(self, *args, **kwargs):
-        pass
+        self.personality = ()
 
     def compare(self, client):
         return True
@@ -550,15 +552,12 @@ class MatchEverything(Match):
             return Match()
         return self
 
-    def __repr__(self):
-        return '%s()' %self.__class__.__name__
-
 class MatchNothing(Match):
     """
     Nothing is considered a match.
     """
     def __init__(self, *args, **kwargs):
-        pass
+        self.personality = ()
 
     def compare(self, client):
         return False
@@ -574,10 +573,7 @@ class MatchNothing(Match):
     def __sub__(self, match):
         return self
 
-    def __repr__(self):
-        return '%s()' %self.__class__.__name__
-
-class MatchList(list):
+class MatchList(list, Match):
     """Container for Match objects and
     provide comparision on these objects."""
     def __init__(self, *args):
@@ -618,7 +614,10 @@ class MatchList(list):
 
     def __call__(self, client):
         return self.compare(client)
-    
+
+    def __add__(self, matchlist):
+        return self.__class__(*super(MatchList, self).__add__(matchlist))
+
     def __repr__(self):
         string = super(MatchList, self).__repr__()
         string = string.lstrip('[').rstrip(']')
