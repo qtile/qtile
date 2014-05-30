@@ -683,7 +683,8 @@ class MatchList(list, Match):
     def __add__(self, match):
         if isinstance(match, Match):
             x = self[:]
-            x.append(match)
+            if match not in x:
+                x.append(match)
             return self.__class__(*x)
         return MatchList()
     
