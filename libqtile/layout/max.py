@@ -36,8 +36,6 @@ class Max(SingleWindow):
     def __init__(self, **config):
         SingleWindow.__init__(self, **config)
         self.add_defaults(Max.defaults)
-        self.clients = []
-        self.focused = None
 
     def _get_window(self):
         return self.focused
