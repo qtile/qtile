@@ -35,12 +35,12 @@ except ImportError:
     pass
 
 try:
-    from mpris2widget import Mpris
+    from mpriswidget import Mpris
 except ImportError:
     pass
 
 try:
-    from mpriswidget import Mpris2
+    from mpris2widget import Mpris2
 except ImportError:
     pass
 
