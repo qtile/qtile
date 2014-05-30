@@ -673,6 +673,14 @@ class MonadTall(SingleWindow):
         self.align = self._left if self.align == self._right else self._right
         self.group.layoutAll()
 
+    def cmd_client_to_previous(self):
+        "Provide keybindings interoperability with Stack layout."
+        self.cmd_flip()
+
+    def cmd_client_to_next(self):
+        "Provide keybindings interoperability with Stack layout."
+        self.cmd_flip()
+
     def _get_closest(self, x, y, clients):
         "Get closest window to a point x,y"
         target = min(
