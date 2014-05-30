@@ -256,6 +256,12 @@ this is the most mature and flexible layout in Qtile.
     * - name
       - ``"stack"``
       - Name of this layout.
+    * - autosplit
+      - ``False``
+      - Autosplit all new stacks.
+    * - num_stacks
+      - ``2``
+      - Number of stacks
 
 
 Tile

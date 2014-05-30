@@ -12,9 +12,7 @@ class Wlan(base.InLoopPollText):
     ]
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
-
-    def _configure(self, qtile, bar):
-        base.InLoopPollText._configure(self, qtile, bar)
+        self.add_defaults(Wlan.defaults)
 
     def poll(self):
         interface = Wireless(self.interface)

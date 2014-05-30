@@ -1,7 +1,5 @@
 from libqtile.widget import base
 
-__all__ = ['She']
-
 
 class She(base.InLoopPollText):
     ''' Widget to display the Super Hybrid Engine status.
@@ -14,7 +12,7 @@ class She(base.InLoopPollText):
     ]
 
     def __init__(self, **config):
-        base.InLoopPollText.__init__(self, 'CPU', **config)
+        base.InLoopPollText.__init__(self, **config)
         self.add_defaults(She.defaults)
         self.modes = {
             '0x300': {'name': 'Performance', 'speed': '1.6GHz'},
@@ -25,7 +23,7 @@ class She(base.InLoopPollText):
     def poll(self):
         with open(self.device) as f:
             mode = f.read().strip()
-        if self.mode in self.modes:
+        if mode in self.modes:
             return self.modes[mode][self.format]
         else:
             return mode
