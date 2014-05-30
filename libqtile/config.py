@@ -647,8 +647,8 @@ class MatchList(list, Match):
             elif isinstance(item, MatchNothing):
                 self.has_matchnothing += 1
                 self.append(item)
-            elif hasattr(match, 'compare') and \
-                 hasattr(match, 'map'):
+            elif hasattr(item, 'compare') and \
+                 hasattr(item, 'map'):
                 self.append(item)
             else:
                 raise utils.QtileError(
