@@ -475,6 +475,8 @@ class Match(object):
 
     def __add__(self, match):
         """ Concatenate Match objects - ``Match()+Match()``"""
+        if isinstance(match, MatchEverything) or isinstance(match, MatchNothing):
+            return match
         if self.__class__ != match.__class__:
             raise utils.QtileError('%s: '
             'Only concatenation of same type!' %self.__class__.__name__)
@@ -483,13 +485,37 @@ class Match(object):
             if getattr(match, item, None) and getattr(self, item, None):
                try:
                    params[item] = getattr(self, item)[:]
-                   params[item].extend(getattr(match, item))
+                   params[item].extend([x for x in getattr(match, item)
+                                   if x not in params[item]])
                except TypeError, AttributeError:
-                   params[item] = [getattr(self, item), getattr(match, item)]
-            elif getattr(self, item, None):
+                   if getattr(self, item) != getattr(match, item):
+                       params[item] = [getattr(self, item), getattr(match, item)]
+            if not params.get(item, None):
+                if getattr(self, item, None):
+                    params[item] = getattr(self, item)
+                elif getattr(match, item, None):
+                    params[item] = getattr(match, item)
+        return self.__class__(**params)
+
+    def __sub__(self, match):
+        """ Subtract Match objects - ``Match()+Match()``"""
+        if isinstance(match, MatchEverything) or isinstance(match, MatchNothing):
+            return match
+        if self.__class__ != match.__class__:
+            raise utils.QtileError('%s: '
+            'Only subtraction of same type!' %self.__class__.__name__)
+        params = {}
+        for item in self.personality:
+            if getattr(self, item, None):
                 params[item] = getattr(self, item)
-            elif getattr(match, item, None):
-                params[item] = getattr(match, item)
+            if getattr(match, item, None) and getattr(self, item, None):
+               try:
+                    params[item] = [x for x in getattr(self, item)
+                                    if x not in getattr(match, item)]
+               except TypeError, AttributeError:
+                   if getattr(self, item) == getattr(match, item) and \
+                        params.get(item, None):
+                           del(params[item])
         return self.__class__(**params)
 
     def __call__(self, client):
@@ -503,6 +529,24 @@ class Match(object):
                 l.append('%s=%s%s' %(item, repr(getattr(self, item)), ','))
         l.append(')')
         return ''.join(l).strip()
+
+    def __eq__(self, match):
+        if not self.__class__ == match.__class__:
+            return False
+        for item in self.personality:
+            if getattr(self, item, None) != \
+                getattr(match, item, None):
+                    return False
+        return True
+
+    def __ne__(self, match):
+        return not self.__eq__(match)
+
+    def __nonzero__(self):
+        for item in self.personality:
+            if getattr(self, item, None):
+                return True
+        return False
 
 class MatchAll(Match):
     """
@@ -555,6 +599,15 @@ class MatchEverything(Match):
             return Match()
         return self
 
+    def __eq__(self, match):
+        return self.__class__ == match.__class__
+
+    def __ne__(self, match):
+        return not self.__eq__(match)
+
+    def __nonzero__(self):
+        return True
+
 class MatchNothing(Match):
     """
     Nothing is considered a match.
@@ -575,6 +628,15 @@ class MatchNothing(Match):
 
     def __sub__(self, match):
         return self
+
+    def __eq__(self, match):
+        return self.__class__ == match.__class__
+
+    def __ne__(self, match):
+        return not self.__eq__(match)
+
+    def __nonzero__(self):
+        return False
 
 class MatchList(list, Match):
     """Container for Match objects and
@@ -618,8 +680,18 @@ class MatchList(list, Match):
     def __call__(self, client):
         return self.compare(client)
 
-    def __add__(self, matchlist):
-        return self.__class__(*super(MatchList, self).__add__(matchlist))
+    def __add__(self, match):
+        if isinstance(match, Match):
+            x = self[:]
+            x.append(match)
+            return self.__class__(*x)
+        return MatchList()
+    
+    def __sub__(self, match):
+        if isinstance(match, Match):
+            x = [x for x in self if x != match]
+            return self.__class__(*x)
+        return MatchList()
 
     def __repr__(self):
         string = super(MatchList, self).__repr__()
@@ -663,3 +735,22 @@ class Rule(object):
                 l.append('%s=%s%s' %(item, repr(getattr(self, item)), ','))
         l.append(')')
         return ''.join(l)
+
+    def __add__(self, obj):
+        if isinstance(obj, Match):
+            params = []
+            for item in self.personality[1:]:
+                params.append(getattr(self, item, None))
+            return self.__class__(self.match + obj, *params)
+
+    def __sub__(self, obj):
+        if isinstance(obj, Match):
+            params = []
+            for item in self.personality[1:]:
+                params.append(getattr(self, item, None))
+            return self.__class__(self.match - obj, *params)
+    
+    def __nonzero__(self):
+        for item in self.personality:
+            if getattr(self, item, None):
+                return True
