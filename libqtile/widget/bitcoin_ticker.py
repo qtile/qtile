@@ -34,14 +34,11 @@ class BitcoinTicker(base.ThreadedPollText):
         res = urllib2.urlopen(self.QUERY_URL % self.currency.lower())
         formatted = {}
         res = json.loads(res.read())
-        try:
-            old_locale = locale.getlocale(locale.LC_MONETARY)
-            if u'error' in res and res[u'error'] == u"invalid pair":
-                locale.setlocale(locale.LC_MONETARY, "en_US.UTF-8")
-                res = urllib2.urlopen(self.QUERY_URL % 'usd')
-                res = json.loads(res.read())
-            for k, v in res[u'ticker'].iteritems():
-                formatted[k.encode('ascii')] = locale.currency(v)
-        finally:
-            locale.setlocale(locale.LC_MONETARY, old_locale)
+        if u'error' in res and res[u'error'] == u"invalid pair":
+            locale.setlocale(locale.LC_MONETARY, "en_US.UTF-8")
+            self.currency = locale.localeconv()['int_curr_symbol'].strip()
+            res = urllib2.urlopen(self.QUERY_URL % self.currency.lower())
+            res = json.loads(res.read())
+        for k, v in res[u'ticker'].iteritems():
+            formatted[k.encode('ascii')] = locale.currency(v)
         return self.format.format(**formatted)
