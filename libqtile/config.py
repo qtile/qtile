@@ -379,8 +379,6 @@ class Match(object):
         If a window matches any of the things in any of the lists,
         it is considered a match.
     """
-    class CompareMatch(Exception): pass
-    class CompareNoMatch(Exception): pass
 
     def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
                  wm_instance_class=None, net_wm_pid=None):
@@ -406,23 +404,6 @@ class Match(object):
 
         self.match_all = False
 
-    def _match_func_decorator(func, *args, **kwargs):
-        """ Decorator
-            Raises Match or NoMatch depending on match_all.
-            To prevent wasteful processing in compare().
-        """
-        def wrapper(self, *args, **kwargs):
-            result = func(self, *args, **kwargs)
-            if result is True:
-                if not self.match_all:
-                    raise self.CompareMatch
-            if result is False:
-                if self.match_all:
-                    raise self.CompareNoMatch
-            return result
-        return wrapper
-
-    @_match_func_decorator
     def _match_func(self, matchitem, matchsubject):
         """ Test matchitem is equal or contains items equal matchsubject """
         if matchitem:
@@ -444,24 +425,38 @@ class Match(object):
                     pass
             return False
 
+    def _compare_shortcircuit(compare):
+        """ Decorator
+            Analyzes result of comparision and causes
+            corresponding return result depending on
+            match_all.
+            To prevent wasteful processing in compare().
+        """
+        def shortcircuit(self, client):
+            for result in compare(self, client):
+                if result is True:
+                    if not self.match_all:
+                        return True
+                if result is False:
+                    if self.match_all:
+                        return False
+            else:
+                if self.match_all:
+                    return True
+                return False
+        return shortcircuit
+
+    @_compare_shortcircuit
     def compare(self, client):
         """ Return True if client matches this Match object """
         wm_class = client.window.get_wm_class()
-        try:
-            self._match_func(self.title, client.name)
-            self._match_func(self.role, client.window.get_wm_window_role())
-            self._match_func(self.wm_type, client.window.get_wm_type())
-            self._match_func(self.net_wm_pid, client.window.get_net_wm_pid())
-            if wm_class:
-                self._match_func(self.wm_class, wm_class[1])
-                self._match_func(self.wm_instance_class, wm_class[0])
-        except self.CompareNoMatch:
-            return False
-        except self.CompareMatch:
-            return True
-        else:
-            if self.match_all:
-                return True
+        if wm_class:
+            yield self._match_func(self.wm_class, wm_class[1])
+            yield self._match_func(self.wm_instance_class, wm_class[0])
+        yield self._match_func(self.title, client.name)
+        yield self._match_func(self.role, client.window.get_wm_window_role())
+        yield self._match_func(self.wm_type, client.window.get_wm_type())
+        yield self._match_func(self.net_wm_pid, client.window.get_net_wm_pid())
 
     def map(self, callback, clients):
         """
