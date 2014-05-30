@@ -414,11 +414,11 @@ class Match(object):
         def wrapper(self, *args, **kwargs):
             result = func(self, *args, **kwargs)
             if result is True:
-                if(not self.match_all):
-                    raise self.Match
+                if not self.match_all:
+                    raise self.CompareMatch
             if result is False:
-                if(self.match_all):
-                    raise self.NoMatch
+                if self.match_all:
+                    raise self.CompareNoMatch
             return result
         return wrapper
 
@@ -459,6 +459,9 @@ class Match(object):
             return False
         except self.CompareMatch:
             return True
+        else:
+            if self.match_all:
+                return True
 
     def map(self, callback, clients):
         """
