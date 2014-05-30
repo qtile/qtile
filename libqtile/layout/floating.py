@@ -36,14 +36,14 @@ class Floating(Layout):
         """
         Layout.__init__(self, **config)
         self.add_defaults(Floating.defaults)
-        self._clients = []
+        self.clients = []
         self._focused = None
 
     def to_screen(self, new_screen):
         """
         Adjust offsets of clients within current screen
         """
-        for i, win in enumerate(self._clients):
+        for i, win in enumerate(self.clients):
             if win.maximized:
                 win.enablemaximize()
                 continue
@@ -74,26 +74,26 @@ class Floating(Layout):
             win.group = new_screen.group
 
     def focus_first(self):
-        if self._clients:
-            return self._clients[0]
+        if self.clients:
+            return self.clients[0]
 
     def focus_next(self, win):
-        if win not in self._clients:
+        if win not in self.clients:
             return
-        idx = self._clients.index(win)
-        if len(self._clients) > idx + 1:
-            return self._clients[idx + 1]
+        idx = self.clients.index(win)
+        if len(self.clients) > idx + 1:
+            return self.clients[idx + 1]
 
     def focus_last(self):
-        if self._clients:
-            return self._clients[-1]
+        if self.clients:
+            return self.clients[-1]
 
     def focus_previous(self, win):
-        if win not in self._clients:
+        if win not in self.clients:
             return
-        idx = self._clients.index(win)
+        idx = self.clients.index(win)
         if idx > 0:
-            return self._clients[idx - 1]
+            return self.clients[idx - 1]
 
     def focus(self, client):
         self._focused = client
@@ -125,32 +125,24 @@ class Floating(Layout):
 
     def clone(self, group):
         c = Layout.clone(self, group)
-        c._clients = []
+        c.clients = []
         return c
 
     def add(self, client):
-        self._clients.append(client)
+        self.clients.append(client)
         self._focused = client
 
     def remove(self, client):
-        if client not in self._clients:
+        if client not in self.clients:
             return
         self._focused = self.focus_next(client)
-        self._clients.remove(client)
+        self.clients.remove(client)
         return self._focused
 
     def info(self):
         d = Layout.info(self)
-        d["clients"] = [x.name for x in self._clients]
+        d["clients"] = [x.name for x in self.clients]
         return d
-
-    @property
-    def clients(self):
-        return self._clients
-
-    @property
-    def focused(self):
-        return self._focused
 
     def cmd_next(self):
         client = self.focus_next(self._focused) or \
