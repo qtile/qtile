@@ -40,6 +40,11 @@ except ImportError:
     pass
 
 try:
+    from mpriswidget import Mpris2
+except ImportError:
+    pass
+
+try:
     from mpdwidget import Mpd
 except ImportError:
     pass
