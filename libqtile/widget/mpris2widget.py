@@ -1,9 +1,7 @@
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 import gobject
-
 import base
-from .. import bar
 
 class Mpris2(base._TextBox):
     '''
