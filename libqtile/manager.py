@@ -212,13 +212,24 @@ class Qtile(command.CommandObject):
             self._process_fake_screens()
             return
 
+        # What's going on here is a little funny. What we really want is only
+        # screens that don't overlap here; overlapping screens should see the
+        # same parts of the root window (i.e. for people doing xrandr
+        # --same-as). However, the order that X gives us psuedoscreens in is
+        # important, because it indicates what people have chosen via xrandr
+        # --primary or whatever. So we need to alias screens that should be
+        # aliased, but preserve order as well. See #383.
         xywh = {}
+        screenpos = []
         for s in self.conn.pseudoscreens:
             pos = (s.x, s.y)
             (w, h) = xywh.get(pos, (0, 0))
-            xywh[pos] = (max(s.width, w), max(s.height, h))
+            if pos not in xywh or s.width > w or s.height > h:
+                xywh[pos] = (s.width, s.height)
+                screenpos.append(pos)
 
-        for i, ((x, y), (w, h)) in enumerate(sorted(xywh.items())):
+        for i, (x, y) in enumerate(screenpos):
+            (w, h) = xywh[(x, y)]
             if i + 1 > len(self.config.screens):
                 scr = Screen()
             else:
