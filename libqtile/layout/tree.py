@@ -228,6 +228,7 @@ class TreeTab(SingleWindow):
     """
 
     defaults = [
+        ("name", "treetab", "Name of this layout."),
         ("bg_color", "000000", "Background color of tabs"),
         ("active_bg", "000080", "Background color of active tab"),
         ("active_fg", "ffffff", "Foreground color of active tab"),
@@ -252,7 +253,6 @@ class TreeTab(SingleWindow):
         ("section_left", 4, "Left margin of section label"),
         ("panel_width", 150, "Width of the left panel"),
         ("sections", ['Default'], "Foreground color of inactive tab"),
-        ("name", "treetab", "Name of this layout."),
         ("previous_on_rm", False,
             "Focus previous window on close instead of first."),
     ]
