@@ -83,7 +83,7 @@ class _WinStack(object):
 
     def add(self, client):
         self.lst.insert(self.current+1, client)
-        self.focus(client)
+        self.group.focus(client, False)
 
     def remove(self, client):
         if client not in self.lst:
