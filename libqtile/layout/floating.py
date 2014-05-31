@@ -1,4 +1,5 @@
 from base import Layout
+from max import Max
 from .. import window
 
 DEFAULT_FLOAT_WM_TYPES = set([
@@ -144,7 +145,7 @@ class Floating(Layout):
             client.height,
             bw,
             bc,
-            client is self.focused
+            above=(isinstance(self.group.layout, Max))
         )
         client.unhide()
 
