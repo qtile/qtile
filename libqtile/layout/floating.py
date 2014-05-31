@@ -1,6 +1,4 @@
 from base import Layout
-from .. import window
-
 DEFAULT_FLOAT_WM_TYPES = set([
     'utility',
     'notification',
@@ -8,7 +6,8 @@ DEFAULT_FLOAT_WM_TYPES = set([
     'splash',
     'dialog',
 ])
-
+from .. import window, hook
+import gobject
 
 class Floating(Layout):
     """
@@ -26,6 +25,10 @@ class Floating(Layout):
             DEFAULT_FLOAT_WM_TYPES,
             "default wm types to automatically float"
         ),
+        ("float_rules", None, "Float rules."),
+        ("sloppyfocus", 3, "Time to keep top windows on top"),
+        ("raisetransients", False, "Whether to raise transient windows"),
+        ("raisetopwindows", True, "Whether to raise top windows"),
     ]
 
     def __init__(self, float_rules=None, **config):
@@ -48,21 +51,13 @@ class Floating(Layout):
         Specify these in the ``floating_layout`` in your config.
         """
         Layout.__init__(self, **config)
-        self.clients = []
-        self.focused = None
-        self.float_rules = float_rules or []
         self.add_defaults(Floating.defaults)
 
-    def match(self, win):
-        """
-        Used to default float some windows.
-        """
-        if win.window.get_wm_type() in self.auto_float_types:
-            return True
-        for rule_dict in self.float_rules:
-            if win.match(**rule_dict):
-                return True
-        return False
+        self.clients = []
+        self.raised  = []
+        self.focused = None
+
+        self.timer = 0
 
     def to_screen(self, new_screen):
         """
@@ -102,29 +97,51 @@ class Floating(Layout):
         if self.clients:
             return self.clients[0]
 
-    def focus_next(self, win):
-        if win not in self.clients:
-            return
-        idx = self.clients.index(win)
-        if len(self.clients) > idx + 1:
-            return self.clients[idx + 1]
-
     def focus_last(self):
         if self.clients:
             return self.clients[-1]
 
-    def focus_previous(self, win):
-        if win not in self.clients:
-            return
-        idx = self.clients.index(win)
-        if idx > 0:
-            return self.clients[idx - 1]
+    def focus_next(self, client):
+        try:
+            index = self.clients.index(client)
+            try:
+                return self.clients[index+1]
+            except IndexError:
+                pass
+        except ValueError:
+            pass
+
+    def focus_previous(self, client):
+        try:
+            index = self.clients.index(client)
+            if index > 0:
+                return self.clients[index-1]
+        except ValueError:
+            pass
 
     def focus(self, client):
         self.focused = client
 
     def blur(self):
+        if not self.sloppyfocus and not \
+               (self.raisetransients or self.raisetopwindows):
+            self.focused = None
+            self.raised = []
+
+    def blur_sloppy(self):
+        self.timer = gobject.source_remove(self.timer)
+        x = self.raised
+        self.raised = []
+        for client in x:
+            self.configure(client, None)
+        if self.focused:
+            self.configure(self.focused, None)
         self.focused = None
+
+    @hook.subscribe.setgroup
+    def stop_timer(self):
+        if self.timer:
+            self.timer = gobject.source_remove(self.timer)
 
     def configure(self, client, screen):
         if client is self.focused:
@@ -143,9 +160,30 @@ class Floating(Layout):
             client.width,
             client.height,
             bw,
-            bc
+            bc,
+            client in self.raised or client is self.focused
         )
         client.unhide()
+
+    def layout(self, clients, screen):
+        for client in clients:
+            if self.raisetransients:
+                wm_transient_for = client.window.get_wm_transient_for()
+            else:
+                wm_transient_for = False
+            if self.raisetopwindows:
+                wm_client_leader = client.window.get_wm_client_leader()
+            else:
+                wm_client_leader = False
+
+            parentwid = self.group.currentWindow.window.wid
+            parentmatch = parentwid == wm_transient_for or \
+                               parentwid == wm_client_leader
+            if parentmatch:
+                self.raised.append(client)
+            self.configure(client, screen)
+        if self.sloppyfocus:
+            self.timer = gobject.timeout_add_seconds(self.sloppyfocus, self.blur_sloppy)
 
     def clone(self, group):
         c = Layout.clone(self, group)
@@ -157,10 +195,11 @@ class Floating(Layout):
         self.focused = client
 
     def remove(self, client):
-        if client not in self.clients:
-            return
         self.focused = self.focus_next(client)
-        self.clients.remove(client)
+        try:
+            self.clients.remove(client)
+        except ValueError:
+            return
         return self.focused
 
     def info(self):
@@ -169,11 +208,9 @@ class Floating(Layout):
         return d
 
     def cmd_next(self):
-        client = self.focus_next(self.focused) or \
-                 self.focus_first()
+        client = self.focus_next(self.focused)
         self.group.focus(client, False)
 
     def cmd_previous(self):
-        client = self.focus_previous(self.focused) or \
-                 self.focus_last()
+        client = self.focus_previous(self.focused)
         self.group.focus(client, False)

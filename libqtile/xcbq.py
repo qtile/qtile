@@ -476,9 +476,14 @@ class Window:
             return self._propertyString(r)
 
     def get_wm_transient_for(self):
-        r = self.get_property("WM_TRANSIENT_FOR", "ATOM")
+        r = self.get_property("WM_TRANSIENT_FOR", xcb.xproto.GetPropertyType.Any)
         if r:
-            return list(r.value)
+            return struct.unpack('=L', r.value.buf())[0]
+
+    def get_wm_client_leader(self):
+        r = self.get_property("WM_CLIENT_LEADER", xcb.xproto.GetPropertyType.Any)
+        if r:
+            return struct.unpack('=L', r.value.buf())[0]
 
     def get_wm_icon_name(self):
         r = self.get_property("WM_ICON_NAME", "UTF8_STRING")
