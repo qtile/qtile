@@ -37,7 +37,7 @@ class Floating(Layout):
         Layout.__init__(self, **config)
         self.add_defaults(Floating.defaults)
         self.clients = []
-        self._focused = None
+        self.focused = None
 
     def to_screen(self, new_screen):
         """
