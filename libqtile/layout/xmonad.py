@@ -673,11 +673,7 @@ class MonadTall(SingleWindow):
         self.align = self._left if self.align == self._right else self._right
         self.group.layoutAll()
 
-    def cmd_client_to_previous(self):
-        "Provide keybindings interoperability with Stack layout."
-        self.cmd_flip()
-
-    def cmd_client_to_next(self):
+    def cmd_rotate(self):
         "Provide keybindings interoperability with Stack layout."
         self.cmd_flip()
 
@@ -707,6 +703,10 @@ class MonadTall(SingleWindow):
         target = self._get_closest(x, y, candidates)
         self.cmd_swap(self._get_window(), target)
 
+    def cmd_client_to_next(self):
+        "Provide keybindings interoperability with Stack layout."
+        self.cmd_swap_left()
+
     def cmd_swap_right(self):
         "Swap current window with closest window to the right."
         x = self._get_window().x
@@ -714,6 +714,10 @@ class MonadTall(SingleWindow):
         candidates = [c for c in self.clients if c.info()['x'] > x]
         target = self._get_closest(x, y, candidates)
         self.cmd_swap(self._get_window(), target)
+
+    def cmd_client_to_previous(self):
+        "Provide keybindings interoperability with Stack layout."
+        self.cmd_swap_right()
 
     def cmd_left(self):
         "Focus on the closest window to the left of the current window."
