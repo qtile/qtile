@@ -561,6 +561,7 @@ class _Window(command.CommandObject):
             wm_window_role=self.window.get_wm_window_role(),
             wm_type=self.window.get_wm_type(),
             wm_transient_for=self.window.get_wm_transient_for(),
+            wm_client_leader=self.window.get_wm_client_leader(),
             protocols=protocols,
             wm_icon_name=self.window.get_wm_icon_name(),
             wm_client_machine=self.window.get_wm_client_machine(),
@@ -1106,6 +1107,8 @@ class Window(_Window):
         name = self.qtile.conn.atoms.get_name(e.atom)
         self.qtile.log.debug("PropertyNotifyEvent: %s" % name)
         if name == "WM_TRANSIENT_FOR":
+            pass
+        elif name == "WM_CLIENT_LEADER":
             pass
         elif name == "WM_HINTS":
             self.updateHints()
