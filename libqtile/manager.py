@@ -174,8 +174,8 @@ class Qtile(command.CommandObject):
         # It fixes problems with focus when clicking windows of some specific clients like xterm
         def noop(qtile):
             pass
-        self.config.mouse += (Click([], "Button1", command.lazy.function(noop), focus="after"),)
         self.config.mouse += Click([], 'Button1', command.lazy.group.float_blur()),
+        self.config.mouse += (Click([], "Button1", command.lazy.function(noop), focus="after"),)
 
         self.mouseMap = {}
         for i in self.config.mouse:
