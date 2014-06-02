@@ -27,7 +27,7 @@ class Floating(Layout):
             DEFAULT_FLOAT_WM_TYPES,
             "default wm types to automatically float"
         ),
-        ("sloppyfocus", 5, "After many seconds to allow float windows to hide"),
+        ("sloppyfocus", 0, "After many seconds to allow float windows to hide"),
     ]
 
     def __init__(self, float_rules=None, **config):
