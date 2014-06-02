@@ -27,7 +27,7 @@ class Floating(Layout):
             DEFAULT_FLOAT_WM_TYPES,
             "default wm types to automatically float"
         ),
-        ("sloppyfocus", 0, "After many seconds to allow float windows to hide"),
+        ("sloppyfocus", 3, "After many seconds to allow float windows to hide"),
     ]
 
     def __init__(self, float_rules=None, **config):
@@ -140,7 +140,7 @@ class Floating(Layout):
                 self.time = None
                 self.focused = None
                 self.raised = []
-            elif self.sloppyfocus and not self.time:
+            elif self.sloppyfocus:
                 self.time = time()
 
     def float_blur(self):
