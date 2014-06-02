@@ -130,6 +130,7 @@ class Floating(Layout):
             return self.clients[index - 1]
 
     def focus(self, client):
+        self.time = time()
         self.focused = client
 
     def blur(self):
@@ -139,8 +140,6 @@ class Floating(Layout):
                 self.time = None
                 self.focused = None
                 self.raised = []
-            elif not self.time:
-                self.time = time()
 
     def float_blur(self):
         self.focused = None
