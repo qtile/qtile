@@ -356,3 +356,6 @@ class _Group(command.CommandObject):
             Switch position of current group with name
         """
         self.qtile.cmd_switch_groups(self.name, name)
+
+    def cmd_float_blur(self):
+        self.floating_layout.float_blur()

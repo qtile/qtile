@@ -1,5 +1,6 @@
 from base import Layout
 from .. import window
+from time import time
 
 DEFAULT_FLOAT_WM_TYPES = set([
     'utility',
@@ -26,6 +27,7 @@ class Floating(Layout):
             DEFAULT_FLOAT_WM_TYPES,
             "default wm types to automatically float"
         ),
+        ("sloppyfocus", 1, "After many seconds to allow float windows to hide"),
     ]
 
     def __init__(self, float_rules=None, **config):
@@ -48,10 +50,13 @@ class Floating(Layout):
         Specify these in the ``floating_layout`` in your config.
         """
         Layout.__init__(self, **config)
-        self.clients = []
-        self.focused = None
-        self.float_rules = float_rules or []
         self.add_defaults(Floating.defaults)
+        self.float_rules = float_rules or []
+
+        self.clients = []
+        self.raised = []
+        self.focused = None
+        self.time = None
 
     def match(self, win):
         """
@@ -102,29 +107,62 @@ class Floating(Layout):
         if self.clients:
             return self.clients[0]
 
-    def focus_next(self, win):
-        if win not in self.clients:
-            return
-        idx = self.clients.index(win)
-        if len(self.clients) > idx + 1:
-            return self.clients[idx + 1]
-
     def focus_last(self):
         if self.clients:
             return self.clients[-1]
 
-    def focus_previous(self, win):
-        if win not in self.clients:
+    def focus_next(self, client):
+        try:
+            index = self.clients.index(client)
+        except ValueError:
             return
-        idx = self.clients.index(win)
-        if idx > 0:
-            return self.clients[idx - 1]
+        try:
+            return self.clients[index + 1]
+        except IndexError:
+            return
+
+    def focus_previous(self, win):
+        try:
+            index = self.clients.index(client)
+        except ValueError:
+            return
+        if index:
+            return self.clients[index - 1]
 
     def focus(self, client):
         self.focused = client
 
     def blur(self):
+        if not self.group.currentWindow in \
+        self.raised:
+            if self.time and time() - self.time > self.sloppyfocus:
+                self.time = None
+                self.focused = None
+                self.raised = []
+            elif not self.time:
+                self.time = time()
+
+    def float_blur(self):
         self.focused = None
+        self.raised = []
+
+    def raisedecider(self, client):
+        wm_transient_for = client.window.get_wm_transient_for()
+        wm_client_leader = client.window.get_wm_client_leader()
+        current_focused_wid = self.group.currentWindow.window.wid
+        current_focused = self.group.currentWindow
+
+        if current_focused_wid == (wm_transient_for or wm_client_leader) or \
+            current_focused.window.get_wm_transient_for() == \
+            wm_transient_for or \
+            current_focused.window.get_wm_client_leader() == \
+            wm_client_leader:
+                if self.focused:
+                    if client not in self.raised:
+                        self.raised.append(client)
+                    return True
+                elif client in self.raised:
+                    return True
 
     def configure(self, client, screen):
         if client is self.focused:
@@ -143,9 +181,13 @@ class Floating(Layout):
             client.width,
             client.height,
             bw,
-            bc
+            bc,
+            self.raisedecider(client)
         )
-        client.unhide()
+        if self.raisedecider(client):
+            client.unhide()
+        else:
+            client.hide()
 
     def clone(self, group):
         c = Layout.clone(self, group)
@@ -157,10 +199,11 @@ class Floating(Layout):
         self.focused = client
 
     def remove(self, client):
-        if client not in self.clients:
-            return
         self.focused = self.focus_next(client)
-        self.clients.remove(client)
+        try:
+            self.clients.remove(client)
+        except ValueError:
+            return
         return self.focused
 
     def info(self):
