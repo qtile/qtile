@@ -1,5 +1,6 @@
 from base import Layout
 from .. import window
+from time import time
 
 DEFAULT_FLOAT_WM_TYPES = set([
     'utility',
@@ -26,7 +27,7 @@ class Floating(Layout):
             DEFAULT_FLOAT_WM_TYPES,
             "default wm types to automatically float"
         ),
-        ("sloppyfocus", 3, "After many seconds to allow float windows to hide"),
+        ("sloppyfocus", 1, "After many seconds to allow float windows to hide"),
     ]
 
     def __init__(self, float_rules=None, **config):
@@ -53,6 +54,7 @@ class Floating(Layout):
         self.float_rules = float_rules or []
 
         self.clients = []
+        self.raised = []
         self.focused = None
         self.time = None
 
@@ -132,10 +134,16 @@ class Floating(Layout):
         self.focused = client
 
     def blur(self):
-        pass
+        if not self.group.currentWindow in \
+        self.raised:
+            if self.time and time() - self.time > self.sloppyfocus:
+                self.time = None
+                self.focused = None
+                self.raised = []
 
     def float_blur(self):
         self.focused = None
+        self.raised = []
 
     def raisedecider(self, client):
         wm_transient_for = client.window.get_wm_transient_for()
@@ -149,6 +157,10 @@ class Floating(Layout):
             current_focused.window.get_wm_client_leader() == \
             wm_client_leader:
                 if self.focused:
+                    if client not in self.raised:
+                        self.raised.append(client)
+                    return True
+                elif client in self.raised:
                     return True
 
     def configure(self, client, screen):
