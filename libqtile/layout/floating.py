@@ -135,7 +135,8 @@ class Floating(Layout):
     def blur(self):
         if not self.group.currentWindow in \
         self.raised:
-            if self.time and time() - self.time > self.sloppyfocus:
+            if self.sloppyfocus and \
+            self.time and time() - self.time > self.sloppyfocus:
                 self.time = None
                 self.focused = None
                 self.raised = []
