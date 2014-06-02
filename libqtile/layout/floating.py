@@ -140,7 +140,7 @@ class Floating(Layout):
                 self.time = None
                 self.focused = None
                 self.raised = []
-            elif not self.time:
+            elif self.sloppyfocus and not self.time:
                 self.time = time()
 
     def float_blur(self):
