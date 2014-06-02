@@ -1,6 +1,5 @@
 from base import Layout
 from .. import window
-from time import time
 
 DEFAULT_FLOAT_WM_TYPES = set([
     'utility',
