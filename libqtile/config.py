@@ -332,14 +332,14 @@ class Group(object):
     Represents a "dynamic" group. These groups can spawn apps, only allow
     certain Matched windows to be on them, hide when they're not in use, etc.
     """
-    def __init__(self, name, matches=None, exclusive=False,
+    def __init__(self, name, match=None, exclusive=False,
                  spawn=None, layout=None, layouts=None, persist=True, init=True,
                  layout_opts=None, screen_affinity=None, position=sys.maxint):
         """
         :param name: the name of this group
         :type name: string
-        :param matches: list of ``Match`` objects whose  windows will be assigned to this group
-        :type matches: default ``None``
+        :param match: Windows matching this ``Match`` or ``MatchList`` object will be assigned to the group
+        :type match: default ``None``
         :param exclusive: when other apps are started in this group, should we allow them here or not?
         :type exclusive: boolean
         :param spawn: this will be ``exec()`` d when the group is created
@@ -363,27 +363,26 @@ class Group(object):
         self.layouts = layouts or []
         self.persist = persist
         self.init = init
-        self.matches = matches or []
+        self.match = match or Match()
         self.layout_opts = layout_opts or {}
 
         self.screen_affinity = screen_affinity
         self.position = position
 
-
 class Match(object):
     """
-        Match for dynamic groups
-        It can match by title, class or role.
+        Match object for usage in dynamic groups but also in
+        ordinary groups, rules and layouts
+
+        ``Match`` supports both regular expression objects
+        (``re.compile()``) or strings (match as a "include" match).
+        If a window matches any of the things in any of the lists,
+        it is considered a match.
     """
+
     def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
                  wm_instance_class=None, net_wm_pid=None):
-        """
-
-        ``Match`` supports both regular expression objects (i.e. the result of
-        ``re.compile()``) or strings (match as a "include" match). If a window
-        matches any of the things in any of the lists, it is considered a
-        match.
-
+        """"
         :param title: things to match against the title
         :param wm_class: things to match against the second string in
                          WM_CLASS atom
@@ -391,91 +390,362 @@ class Match(object):
         :param wm_type: things to match against the WM_TYPE atom
         :param wm_instance_class: things to match against the first string in
                WM_CLASS atom
-        :param net_wm_pid: things to match against the _NET_WM_PID atom
-              (only int allowed in this rule)
+        :param net_wm_pid: things to match against the
+               _NET_WM_PID (Integer) atom
         """
-        if not title:
-            title = []
-        if not wm_class:
-            wm_class = []
-        if not role:
-            role = []
-        if not wm_type:
-            wm_type = []
-        if not wm_instance_class:
-            wm_instance_class = []
-        if not net_wm_pid:
-            net_wm_pid = []
+        self.personality = ('title', 'wm_class', 'role', 'wm_type',
+                                 'wm_instance_class', 'net_wm_pid')
+        self.title = title
+        self.wm_class = wm_class
+        self.role = role
+        self.wm_type = wm_type
+        self.wm_instance_class = wm_instance_class
+        self.net_wm_pid = net_wm_pid
 
-        for rule in net_wm_pid:
-            if not isinstance(rule, int):
-                error = 'Invalid rule for net_wm_pid: "%s" '\
-                        'only ints allowed' % rule
-                raise utils.QtileError(error)
+        self.match_all = False
 
-        self._rules = [('title', t) for t in title]
-        self._rules += [('wm_class', w) for w in wm_class]
-        self._rules += [('role', r) for r in role]
-        self._rules += [('wm_type', r) for r in wm_type]
-        self._rules += [('wm_instance_class', w) for w in wm_instance_class]
-        self._rules += [('net_wm_pid', w) for w in net_wm_pid]
+    def _match_func(self, matchitem, matchsubject):
+        """ Test matchitem is equal or contains items equal matchsubject """
+        if matchitem:
+            try:
+                if matchitem.match(matchsubject):
+                    return True
+            except AttributeError:
+                if matchitem == matchsubject:
+                    return True
+                try:
+                    for item in matchitem:
+                        try:
+                            if item.match(matchsubject):
+                                return True
+                        except AttributeError:
+                            if item == matchsubject:
+                                return True
+                except TypeError:
+                    pass
+            return False
+
+    def _compare_shortcircuit(compare):
+        """ Decorator
+            Analyzes result of comparision and causes
+            corresponding return result depending on
+            match_all.
+            To prevent wasteful processing in compare().
+        """
+        def shortcircuit(self, client):
+            for result in compare(self, client):
+                if result is True:
+                    if not self.match_all:
+                        return True
+                if result is False:
+                    if self.match_all:
+                        return False
+            else:
+                if self.match_all:
+                    return True
+                return False
+        return shortcircuit
+
+    @_compare_shortcircuit
+    def compare(self, client):
+        """ Return True if client matches this Match object """
+        wm_class = client.window.get_wm_class()
+        if wm_class:
+            yield self._match_func(self.wm_class, wm_class[1])
+            yield self._match_func(self.wm_instance_class, wm_class[0])
+        yield self._match_func(self.title, client.name)
+        yield self._match_func(self.role, client.window.get_wm_window_role())
+        yield self._match_func(self.wm_type, client.window.get_wm_type())
+        yield self._match_func(self.net_wm_pid, client.window.get_net_wm_pid())
+
+    def map(self, callback, clients):
+        """
+        Apply callback to each client that matches this Match.
+        Callback must return False to continue processing.
+        """
+        for c in clients:
+            if self.compare(c):
+                if callback(c):
+                    break
+
+    def __add__(self, match):
+        """ Concatenate Match objects - ``Match()+Match()``"""
+        if isinstance(match, MatchEverything) or isinstance(match, MatchNothing):
+            return match
+        if self.__class__ != match.__class__:
+            raise utils.QtileError('%s: '
+            'Only concatenation of same type!' %self.__class__.__name__)
+        params = {}
+        for item in self.personality:
+            if getattr(match, item, None) and getattr(self, item, None):
+               try:
+                   params[item] = getattr(self, item)[:]
+                   params[item].extend([x for x in getattr(match, item)
+                                   if x not in params[item]])
+               except TypeError, AttributeError:
+                   if getattr(self, item) != getattr(match, item):
+                       params[item] = [getattr(self, item), getattr(match, item)]
+            if not params.get(item, None):
+                if getattr(self, item, None):
+                    params[item] = getattr(self, item)
+                elif getattr(match, item, None):
+                    params[item] = getattr(match, item)
+        return self.__class__(**params)
+
+    def __sub__(self, match):
+        """ Subtract Match objects - ``Match()+Match()``"""
+        if isinstance(match, MatchEverything) or isinstance(match, MatchNothing):
+            return match
+        if self.__class__ != match.__class__:
+            raise utils.QtileError('%s: '
+            'Only subtraction of same type!' %self.__class__.__name__)
+        params = {}
+        for item in self.personality:
+            if getattr(self, item, None):
+                params[item] = getattr(self, item)
+            if getattr(match, item, None) and getattr(self, item, None):
+               try:
+                    params[item] = [x for x in getattr(self, item)
+                                    if x not in getattr(match, item)]
+               except TypeError, AttributeError:
+                   if getattr(self, item) == getattr(match, item) and \
+                        params.get(item, None):
+                           del(params[item])
+        return self.__class__(**params)
+
+    def __call__(self, client):
+        return self.compare(client)
+
+    def __repr__(self):
+        l = []
+        l.append('%s(' %(self.__class__.__name__,))
+        for item in self.personality:
+            if getattr(self, item, None):
+                l.append('%s=%s%s' %(item, repr(getattr(self, item)), ','))
+        l.append(')')
+        return ''.join(l).strip()
+
+    def __eq__(self, match):
+        if not self.__class__ == match.__class__:
+            return False
+        for item in self.personality:
+            if getattr(self, item, None) != \
+                getattr(match, item, None):
+                    return False
+        return True
+
+    def __ne__(self, match):
+        return not self.__eq__(match)
+
+class MatchAll(Match):
+    """
+
+    ``Match`` supports both regular expression objects
+    (``re.compile()``) or strings (match as a "include" match).
+    If a window matches all of the things in any of the lists,
+    it is considered a match.
+
+    """
+    def __init__(self, *args, **kwargs):
+        """
+        :param title: things to match against the title
+        :param wm_class: things to match against the second string in
+                         WM_CLASS atom
+        :param role: things to match against the WM_ROLE atom
+        :param wm_type: things to match against the WM_TYPE atom
+        :param wm_instance_class: things to match against the first string in
+               WM_CLASS atom
+        :param net_wm_pid: things to match against the
+               _NET_WM_PID (Integer) atom
+        """
+        super(MatchAll, self).__init__(*args, **kwargs)
+        self.match_all = True
+
+class MatchEverything(Match):
+    """
+    Everything is considered a match.
+    """
+    def __init__(self, *args, **kwargs):
+        self.personality = ()
 
     def compare(self, client):
-        for _type, rule in self._rules:
-            if _type == "net_wm_pid":
-                match_func = lambda value: rule == value
-            else:
-                match_func = getattr(rule, 'match', None) or \
-                    getattr(rule, 'count')
+        return True
 
-            if _type == 'title':
-                value = client.name
-            elif _type == 'wm_class':
-                value = None
-                _value = client.window.get_wm_class()
-                if _value and len(_value) > 1:
-                    value = _value[1]
-            elif _type == 'wm_instance_class':
-                value = client.window.get_wm_class()
-                if value:
-                    value = value[0]
-            elif _type == 'wm_type':
-                value = client.window.get_wm_type()
-            elif _type == 'net_wm_pid':
-                value = client.window.get_net_wm_pid()
-            else:
-                value = client.window.get_wm_window_role()
+    def map(self, callback, clients):
+        """
+        Apply callback to each client that matches this Match.
+        Callback must return False to continue processing.
+        """
+        for c in clients:
+            if callback(c):
+                break
 
-            if value and match_func(value):
-                return True
+    def __add__(self, match):
+        return self
+
+    def __sub__(self, match):
+        if isinstance(match, MatchEverything):
+            return Match()
+        return self
+
+    def __eq__(self, match):
+        return self.__class__ == match.__class__
+
+    def __ne__(self, match):
+        return not self.__eq__(match)
+
+    def __nonzero__(self):
+        return True
+
+class MatchNothing(Match):
+    """
+    Nothing is considered a match.
+    """
+    def __init__(self, *args, **kwargs):
+        self.personality = ()
+
+    def compare(self, client):
         return False
 
     def map(self, callback, clients):
-        """ Apply callback to each client that matches this Match """
+        pass
+
+    def __add__(self, match):
+        if isinstance(match, MatchEverything):
+            return MatchEverything()
+        return self
+
+    def __sub__(self, match):
+        return self
+
+    def __eq__(self, match):
+        return self.__class__ == match.__class__
+
+    def __ne__(self, match):
+        return not self.__eq__(match)
+
+    def __nonzero__(self):
+        return False
+
+class MatchList(list, Match):
+    """Container for Match objects and
+    provide comparision on these objects."""
+    def __init__(self, *args):
+        super(MatchList, self).__init__()
+        self.has_matcheverything = 0
+        self.has_matchnothing    = 0
+        for item in args:
+            if isinstance(item, MatchEverything):
+                self.has_matcheverything += 1
+                self.append(item)
+            elif isinstance(item, MatchNothing):
+                self.has_matchnothing += 1
+                self.append(item)
+            elif hasattr(item, 'compare') and \
+                 hasattr(item, 'map'):
+                self.append(item)
+            else:
+                raise utils.QtileError(
+                "Invalid object put into %s" %self.__class__.__name__)
+
+    def compare(self, client):
+        if self.has_matcheverything > self.has_matchnothing:
+            return True
+        elif self.has_matchnothing > self.has_matcheverything:
+            return False
+        for match in self:
+            if match.compare(client):
+                return True
+
+    def map(self, callback, clients):
+        """
+        Apply callback to each client that matches this MatchList.
+        Callback must return False to continue processing.
+        """
         for c in clients:
             if self.compare(c):
-                callback(c)
+                if callback(c):
+                    break
 
+    def __call__(self, client):
+        return self.compare(client)
+
+    def __add__(self, match):
+        if hasattr(match, 'compare') and \
+           hasattr(match, 'map'):
+            x = self[:]
+            if match not in x:
+                x.append(match)
+            return self.__class__(*x)
+        return MatchList()
+    
+    def __sub__(self, match):
+        if hasattr(match, 'compare') and \
+           hasattr(match, 'map'):
+            x = [x for x in self if x != match]
+            return self.__class__(*x)
+        return MatchList()
+
+    def __repr__(self):
+        string = super(MatchList, self).__repr__()
+        string = string.lstrip('[').rstrip(']')
+        string = '%s(%s)' %(self.__class__.__name__, string)
+        return string
 
 class Rule(object):
     """
         A Rule contains a Match object, and a specification about what to do
         when that object is matched.
     """
-    def __init__(self, match, group=None, float=False, intrusive=False,
-                 break_on_match=True):
+    def __init__(self, match, group=None, float=False,
+                 intrusive=False, break_on_match=True):
         """
-        :param match: ``Match`` object associated with this ``Rule``
+        :param match: ``MatchList`` or ``Match`` object associated with this ``Rule``
         :param float: auto float this window?
         :param intrusive: override the group's exclusive setting?
         :param break_on_match: Should we stop applying rules if this rule is
                matched?
         """
+        self.personality = ('match', 'group', 'float',
+                            'intrusive', 'break_on_match')
         self.match = match
         self.group = group
         self.float = float
         self.intrusive = intrusive
         self.break_on_match = break_on_match
 
-    def matches(self, w):
-        return self.match.compare(w)
+    def compare(self, client):
+        return self.match.compare(client)
+
+    def __call__(self, client):
+        return self.compare(client)
+
+    def __repr__(self):
+        l = []
+        l.append('%s(' %self.__class__.__name__)
+        for item in self.personality:
+            if getattr(self, item, None):
+                l.append('%s=%s%s' %(item, repr(getattr(self, item)), ','))
+        l.append(')')
+        return ''.join(l)
+
+    def __add__(self, obj):
+        if hasattr(match, 'compare') and \
+           hasattr(match, 'map'):
+            params = []
+            for item in self.personality[1:]:
+                params.append(getattr(self, item, None))
+            return self.__class__(self.match + obj, *params)
+
+    def __sub__(self, obj):
+        if hasattr(match, 'compare') and \
+           hasattr(match, 'map'):
+            params = []
+            for item in self.personality[1:]:
+                params.append(getattr(self, item, None))
+            return self.__class__(self.match - obj, *params)
+    
+    def __nonzero__(self):
+        for item in self.personality:
+            if getattr(self, item, None):
+                return True

@@ -20,7 +20,6 @@
 from base import Layout
 from .. import utils
 
-
 class _WinStack(object):
     split = False
     _current = 0
@@ -130,10 +129,10 @@ class Stack(Layout):
         this is the most mature and flexible layout in Qtile.
     """
     defaults = [
+        ("name", "stack", "Name of this layout."),
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width."),
-        ("name", "stack", "Name of this layout."),
         ("autosplit", False, "Auto split all new stacks."),
         ("num_stacks", 2, "Number of stacks."),
     ]
