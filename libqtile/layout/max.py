@@ -95,7 +95,7 @@ class Max(SingleWindow):
             return self.clients[0]
 
     def configure(self, client, screen):
-        if self.clients and client is self.focused:
+        if hasattr(self, 'clients') and self.clients:
             client.place(
                 screen.x,
                 screen.y,
@@ -105,8 +105,6 @@ class Max(SingleWindow):
                 None
             )
             client.unhide()
-        else:
-            client.hide()
 
     def info(self):
         d = SingleWindow.info(self)
