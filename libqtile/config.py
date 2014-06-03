@@ -537,12 +537,6 @@ class Match(object):
     def __ne__(self, match):
         return not self.__eq__(match)
 
-    def __nonzero__(self):
-        for item in self.personality:
-            if getattr(self, item, None):
-                return True
-        return False
-
 class MatchAll(Match):
     """
 
