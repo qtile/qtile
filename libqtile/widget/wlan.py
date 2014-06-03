@@ -16,7 +16,10 @@ class Wlan(base.InLoopPollText):
 
     def poll(self):
         interface = Wireless(self.interface)
-        stats = Iwstats(self.interface)
-        quality = stats.qual.quality
-        essid = interface.getEssid()
-        return "{} {}/70".format(essid, quality)
+        try:
+            stats = Iwstats(self.interface)
+            quality = stats.qual.quality
+            essid = interface.getEssid()
+            return "{} {}/70".format(essid, quality)
+        except IOError:
+            pass
