@@ -224,9 +224,9 @@ class Qtile(command.CommandObject):
         for s in self.conn.pseudoscreens:
             pos = (s.x, s.y)
             (w, h) = xywh.get(pos, (0, 0))
-            if pos not in xywh or s.width > w or s.height > h:
-                xywh[pos] = (s.width, s.height)
+            if pos not in xywh:
                 screenpos.append(pos)
+            xywh[pos] = (max(w, s.width), max(h, s.height))
 
         for i, (x, y) in enumerate(screenpos):
             (w, h) = xywh[(x, y)]
