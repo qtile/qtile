@@ -6,6 +6,7 @@ from libqtile.config import Key
 from libqtile.command import lazy
 from libqtile.config import Group
 from libqtile.config import Rule
+from libqtile.config import Match
 
 def simple_key_binder(mod, keynames=None):
     """
@@ -96,7 +97,8 @@ class DGroups(object):
             self.add_dgroup(group, group.init)
 
             if group.spawn and not self.qtile.no_spawn:
-                self.qtile.cmd_spawn(group.spawn)
+                pid, _, _, _ = self.qtile.cmd_spawn(group.spawn)
+                self.add_rule(Rule(Match(net_wm_pid=[pid]), group.name))
 
     def _setup_hooks(self):
         libqtile.hook.subscribe.addgroup(self._addgroup)
