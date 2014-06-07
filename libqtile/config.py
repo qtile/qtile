@@ -384,7 +384,7 @@ class Match(object):
         matches any of the things in any of the lists, it is considered a
         match.
 
-        :param title: things to match against the title
+        :param title: things to match against the title (WM_NAME)
         :param wm_class: things to match against the second string in
                          WM_CLASS atom
         :param role: things to match against the WM_ROLE atom
