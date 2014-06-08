@@ -1,4 +1,5 @@
 import base
+import logging
 from pythonwifi.iwlibs import Wireless, Iwstats
 
 
@@ -16,7 +17,12 @@ class Wlan(base.InLoopPollText):
 
     def poll(self):
         interface = Wireless(self.interface)
-        stats = Iwstats(self.interface)
-        quality = stats.qual.quality
-        essid = interface.getEssid()
-        return "{} {}/70".format(essid, quality)
+        try:
+            stats = Iwstats(self.interface)
+            quality = stats.qual.quality
+            essid = interface.getEssid()
+            return "{} {}/70".format(essid, quality)
+        except IOError as e:
+            logging.getLogger('qtile').error('%s: Probably your wlan device '
+                    'is switched off or otherwise not present in your system.',
+                    self.__class__.__name__)
