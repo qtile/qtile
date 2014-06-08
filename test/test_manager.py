@@ -200,7 +200,8 @@ def test_keypress(self):
 
 @Xephyr(False, TestConfig())
 def test_spawn(self):
-    assert self.c.spawn("true") == None
+    # Spawn something with a pid greater than init's
+    assert int(self.c.spawn("true")) > 1
 
 
 @Xephyr(False, TestConfig())

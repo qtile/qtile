@@ -97,7 +97,7 @@ class DGroups(object):
             self.add_dgroup(group, group.init)
 
             if group.spawn and not self.qtile.no_spawn:
-                pid, _, _, _ = self.qtile.cmd_spawn(group.spawn)
+                pid = self.qtile.cmd_spawn(group.spawn)
                 self.add_rule(Rule(Match(net_wm_pid=[pid]), group.name))
 
     def _setup_hooks(self):

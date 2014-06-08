@@ -1123,7 +1123,8 @@ class Qtile(command.CommandObject):
 
                 spawn("firefox")
         """
-        return gobject.spawn_async([os.environ['SHELL'], '-c', cmd])
+        pid, _, _, _ = gobject.spawn_async([os.environ['SHELL'], '-c', cmd])
+        return str(pid)
 
     def cmd_status(self):
         """

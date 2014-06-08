@@ -407,11 +407,12 @@ class Match(object):
         if not net_wm_pid:
             net_wm_pid = []
 
-        for rule in net_wm_pid:
-            if not isinstance(rule, int):
-                error = 'Invalid rule for net_wm_pid: "%s" '\
-                        'only ints allowed' % rule
-                raise utils.QtileError(error)
+        try:
+            net_wm_pid = map(int, net_wm_pid)
+        except ValueError:
+            error = 'Invalid rule for net_wm_pid: "%s" '\
+                    'only ints allowed' % str(net_wm_pid)
+            raise utils.QtileError(error)
 
         self._rules = [('title', t) for t in title]
         self._rules += [('wm_class', w) for w in wm_class]
