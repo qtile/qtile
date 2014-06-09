@@ -21,9 +21,8 @@
 import array
 import struct
 import contextlib
-import xcb.xcb
-from xcb.xproto import EventMask, StackMode, SetMode
-import xcb.xproto
+from xcffib.xproto import EventMask, StackMode, SetMode
+import xcffib.xproto
 import command
 import utils
 import hook
@@ -126,7 +125,7 @@ class _Window(command.CommandObject):
                 'w': g.width,
                 'h': g.height,
             }
-        except xcb.xproto.BadDrawable:
+        except xcffib.xproto.DrawableError:
             # Whoops, we were too early, so let's ignore it for now and get the
             # values on demand.
             self._x = None
@@ -198,7 +197,7 @@ class _Window(command.CommandObject):
     def updateName(self):
         try:
             self.name = self.window.get_name()
-        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             return
         hook.fire("window_name_change")
 
@@ -210,7 +209,7 @@ class _Window(command.CommandObject):
         try:
             h = self.window.get_wm_hints()
             normh = self.window.get_wm_normal_hints()
-        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             return
 
         # FIXME
@@ -239,14 +238,14 @@ class _Window(command.CommandObject):
             if not normh['base_width'] and \
                     normh['min_width'] and \
                     normh['width_inc']:
-                # seems xcb does ignore base width :(
+                # seems xcffib does ignore base width :(
                 normh['base_width'] = (
                     normh['min_width'] % normh['width_inc']
                 )
             if not normh['base_height'] and \
                     normh['min_height'] and \
                     normh['height_inc']:
-                # seems xcb does ignore base height :(
+                # seems xcffib does ignore base height :(
                 normh['base_height'] = (
                     normh['min_height'] % normh['height_inc']
                 )
@@ -356,7 +355,7 @@ class _Window(command.CommandObject):
                 self.window.wid,
                 self.qtile.conn.atoms["WM_PROTOCOLS"],
                 self.qtile.conn.atoms["WM_DELETE_WINDOW"],
-                xcb.xproto.Time.CurrentTime,
+                xcffib.xproto.Time.CurrentTime,
                 0,
                 0,
                 0,
@@ -368,7 +367,7 @@ class _Window(command.CommandObject):
 
     def hide(self):
         # We don't want to get the UnmapNotify for this unmap
-        with self.disableMask(xcb.xproto.EventMask.StructureNotify):
+        with self.disableMask(xcffib.xproto.EventMask.StructureNotify):
             self.window.unmap()
         self.hidden = True
 
@@ -491,7 +490,7 @@ class _Window(command.CommandObject):
                     self.window.wid,
                     self.qtile.conn.atoms["WM_PROTOCOLS"],
                     self.qtile.conn.atoms["WM_TAKE_FOCUS"],
-                    xcb.xproto.Time.CurrentTime,
+                    xcffib.xproto.Time.CurrentTime,
                     0,
                     0,
                     0,
@@ -631,7 +630,7 @@ class Static(_Window):
         self.update_strut()
 
     def handle_ConfigureRequest(self, e):
-        cw = xcb.xproto.ConfigWindow
+        cw = xcffib.xproto.ConfigWindow
         if self.conf_x is None and e.value_mask & cw.X:
             self.x = e.x
         if self.conf_y is None and e.value_mask & cw.Y:
@@ -980,7 +979,7 @@ class Window(_Window):
             clirole = self.window.get_wm_window_role()
             if role and clirole and role == clirole:
                 return True
-        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             return False
 
         return False
@@ -1002,7 +1001,7 @@ class Window(_Window):
             return
         if getattr(self, 'floating', False):
             # only obey resize for floating windows
-            cw = xcb.xproto.ConfigWindow
+            cw = xcffib.xproto.ConfigWindow
             if e.value_mask & cw.Width:
                 self.width = e.width
             if e.value_mask & cw.Height:
@@ -1064,8 +1063,8 @@ class Window(_Window):
     def handle_ClientMessage(self, event):
         atoms = self.qtile.conn.atoms
 
-        opcode = xcb.xproto.ClientMessageData(event, 0, 20).data32[2]
-        data = xcb.xproto.ClientMessageData(event, 12, 20)
+        opcode = xcffib.xproto.ClientMessageData(event, 0, 20).data32[2]
+        data = xcffib.xproto.ClientMessageData(event, 12, 20)
         if atoms["_NET_WM_STATE"] == opcode and \
                 self.qtile.config.auto_fullscreen:
             fullscreen_atom = atoms["_NET_WM_STATE_FULLSCREEN"]

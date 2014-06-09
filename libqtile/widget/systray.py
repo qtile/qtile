@@ -1,8 +1,8 @@
 from .. import bar, xcbq, window
 import base
 
-import xcb
-from xcb.xproto import EventMask, SetMode
+import xcffib
+from xcffib.xproto import EventMask, SetMode
 import atexit
 import struct
 
@@ -63,8 +63,8 @@ class TrayWindow(window._Window):
     def handle_ClientMessage(self, event):
         atoms = self.qtile.conn.atoms
 
-        opcode = xcb.xproto.ClientMessageData(event, 0, 20).data32[2]
-        data = xcb.xproto.ClientMessageData(event, 12, 20)
+        opcode = xcffib.xproto.ClientMessageData(event, 0, 20).data32[2]
+        data = xcffib.xproto.ClientMessageData(event, 12, 20)
         task = data.data32[2]
 
         conn = self.qtile.conn.conn
@@ -84,7 +84,7 @@ class TrayWindow(window._Window):
                 conn.core.ReparentWindow(task, parent.wid, 0, 0)
                 conn.flush()
                 w.map()
-            except xcb.xproto.DrawableError:
+            except xcffib.xproto.DrawableError:
                 # The icon wasn't ready to be drawn yet... (NetworkManager does
                 # this sometimes), so we just forget about it and wait for the
                 # next event.
@@ -126,12 +126,12 @@ class Systray(base._Widget):
         qtile.conn.conn.core.SetSelectionOwner(
             win.wid,
             atoms['_NET_SYSTEM_TRAY_S0'],
-            xcb.CurrentTime
+            xcffib.CurrentTime
         )
         event = struct.pack(
             'BBHII5I', 33, 32, 0, qtile.root.wid,
             atoms['MANAGER'],
-            xcb.CurrentTime, atoms['_NET_SYSTEM_TRAY_S0'],
+            xcffib.CurrentTime, atoms['_NET_SYSTEM_TRAY_S0'],
             win.wid, 0, 0
         )
         qtile.root.send_event(event, mask=EventMask.StructureNotify)
@@ -158,6 +158,6 @@ class Systray(base._Widget):
         self.qtile.conn.conn.core.SetSelectionOwner(
             0,
             atoms['_NET_SYSTEM_TRAY_S0'],
-            xcb.CurrentTime,
+            xcffib.CurrentTime,
         )
         self.traywin.hide()

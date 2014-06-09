@@ -2,9 +2,9 @@ import collections
 import utils
 import math
 import pangocairo
-import cairo
+import cairocffi
 import pango
-import xcb.xproto
+import xcffib.xproto
 
 
 class TextLayout(object):
@@ -187,13 +187,13 @@ class Drawer:
         self.qtile.conn.conn.core.CreateGC(
             self.gc,
             self.wid,
-            xcb.xproto.GC.Foreground | xcb.xproto.GC.Background,
+            xcffib.xproto.GC.Foreground | xcffib.xproto.GC.Background,
             [
                 self.qtile.conn.default_screen.black_pixel,
                 self.qtile.conn.default_screen.white_pixel
             ]
         )
-        self.surface = cairo.XCBSurface(
+        self.surface = cairocffi.XCBSurface(
             qtile.conn.conn,
             self.pixmap,
             self.find_root_visual(),
@@ -263,11 +263,11 @@ class Drawer:
                     return v
 
     def new_ctx(self):
-        return pangocairo.CairoContext(cairo.Context(self.surface))
+        return pangocairo.CairoContext(cairocffi.Context(self.surface))
 
     def set_source_rgb(self, colour):
         if type(colour) == list:
-            linear = cairo.LinearGradient(0.0, 0.0, 0.0, self.height)
+            linear = cairocffi.LinearGradient(0.0, 0.0, 0.0, self.height)
             c1 = utils.rgb(colour[0])
             c2 = utils.rgb(colour[1])
             if len(c1) < 4:
@@ -282,7 +282,7 @@ class Drawer:
 
     def clear(self, colour):
         if type(colour) == list:
-            linear = cairo.LinearGradient(0.0, 0.0, 0.0, self.height)
+            linear = cairocffi.LinearGradient(0.0, 0.0, 0.0, self.height)
             c1 = utils.rgb(colour[0])
             c2 = utils.rgb(colour[1])
             if len(c1) < 4:
@@ -334,7 +334,7 @@ class Drawer:
         self.ctx.select_font_face(fontface)
         self.ctx.set_font_size(size)
         fo = self.ctx.get_font_options()
-        fo.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
+        fo.set_antialias(cairocffi.ANTIALIAS_SUBPIXEL)
 
     def text_extents(self, text):
         return self.ctx.text_extents(utils.scrub_to_utf8(text))

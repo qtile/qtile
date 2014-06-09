@@ -3,8 +3,8 @@ import hook
 import window
 import utils
 import contextlib
-import xcb
-import xcb.xproto
+import xfffib
+import xcffib.xproto
 
 
 class _Group(command.CommandObject):
@@ -81,7 +81,7 @@ class _Group(command.CommandObject):
         moving warp to it.
         """
         if self.screen and len(self.windows):
-            with self.disableMask(xcb.xproto.EventMask.EnterWindow):
+            with self.disableMask(xcffib.xproto.EventMask.EnterWindow):
                 normal = [x for x in self.windows if not x.floating]
                 floating = [
                     x for x in self.windows
@@ -115,9 +115,9 @@ class _Group(command.CommandObject):
 
     def hide(self):
         self.screen = None
-        with self.disableMask(xcb.xproto.EventMask.EnterWindow |
-                              xcb.xproto.EventMask.FocusChange |
-                              xcb.xproto.EventMask.LeaveWindow):
+        with self.disableMask(xcffib.xproto.EventMask.EnterWindow |
+                              xcffib.xproto.EventMask.FocusChange |
+                              xcffib.xproto.EventMask.LeaveWindow):
             for i in self.windows:
                 i.hide()
             self.layout.hide()
@@ -184,7 +184,7 @@ class _Group(command.CommandObject):
                 # because it's too early
                 # so just set the flag underneath
                 win._float_state = window.FLOATING
-        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             pass  # doesn't matter
         if win.floating:
             self.floating_layout.add(win)

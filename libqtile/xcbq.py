@@ -2,17 +2,16 @@
     A minimal EWMH-aware OO layer over xpyb. This is NOT intended to be
     complete - it only implements the subset of functionalty needed by qtile.
 """
-from xcb.xproto import CW, WindowClass, EventMask
+from xcffib.xproto import CW, WindowClass, EventMask
 import struct
 import utils
-import xcb.randr
-import xcb.xcb
-import xcb.xinerama
-import xcb.xproto
+import xcffib.randr
+import xcffib.xinerama
+import xcffib.xproto
 import xkeysyms
 
 
-# hack xcb.xproto for negative numbers
+# hack xcffib.xproto for negative numbers
 def ConfigureWindow(self, window, value_mask, value_list):
     import cStringIO
     from struct import pack
@@ -20,11 +19,8 @@ def ConfigureWindow(self, window, value_mask, value_list):
     buf = cStringIO.StringIO()
     buf.write(pack('xx2xIH2x', window, value_mask))
     buf.write(str(buffer(array('i', value_list))))
-    return self.send_request(
-        xcb.Request(buf.getvalue(), 12, True, False),
-        xcb.VoidCookie()
-    )
-xcb.xproto.xprotoExtension.ConfigureWindow = ConfigureWindow
+    return self.send_request(12, buf)
+xcffib.xproto.xprotoExtension.ConfigureWindow = ConfigureWindow
 
 keysyms = xkeysyms.keysyms
 
@@ -199,9 +195,9 @@ class MaskMap:
             raise ValueError("Unknown mask names: %s" % kwargs.keys())
         return mask, values
 
-ConfigureMasks = MaskMap(xcb.xproto.ConfigWindow)
+ConfigureMasks = MaskMap(xcffib.xproto.ConfigWindow)
 AttributeMasks = MaskMap(CW)
-GCMasks = MaskMap(xcb.xproto.GC)
+GCMasks = MaskMap(xcffib.xproto.GC)
 
 
 class AtomCache:
@@ -214,9 +210,9 @@ class AtomCache:
         for name in WindowTypes.keys():
             self.insert(name=name)
 
-        for i in dir(xcb.xproto.Atom):
+        for i in dir(xcffib.xproto.Atom):
             if not i.startswith("_"):
-                self.insert(name=i, atom=getattr(xcb.xproto.Atom, i))
+                self.insert(name=i, atom=getattr(xcffib.xproto.Atom, i))
 
     def insert(self, name=None, atom=None):
         assert name or atom
@@ -300,7 +296,7 @@ class Colormap:
 
 class Xinerama:
     def __init__(self, conn):
-        self.ext = conn.conn(xcb.xinerama.key)
+        self.ext = conn.conn(xcffib.xinerama.key)
 
     def query_screens(self):
         r = self.ext.QueryScreens().reply()
@@ -309,16 +305,16 @@ class Xinerama:
 
 class RandR:
     def __init__(self, conn):
-        self.ext = conn.conn(xcb.randr.key)
+        self.ext = conn.conn(xcffib.randr.key)
         self.ext.SelectInput(
             conn.default_screen.root.wid,
-            xcb.randr.NotifyMask.ScreenChange
+            xcffib.randr.NotifyMask.ScreenChange
         )
 
     def query_crtcs(self, root):
         l = []
         for i in self.ext.GetScreenResources(root).reply().crtcs:
-            info = self.ext.GetCrtcInfo(i, xcb.xcb.CurrentTime).reply()
+            info = self.ext.GetCrtcInfo(i, xcffib.xcb.CurrentTime).reply()
             d = dict(
                 x=info.x,
                 y=info.y,
@@ -358,9 +354,9 @@ class Window:
 
     def set_input_focus(self):
         self.conn.conn.core.SetInputFocus(
-            xcb.xproto.InputFocus.PointerRoot,
+            xcffib.xproto.InputFocus.PointerRoot,
             self.wid,
-            xcb.xproto.Time.CurrentTime
+            xcffib.xproto.Time.CurrentTime
         )
 
     def warp_pointer(self, x, y):
@@ -383,24 +379,24 @@ class Window:
         """
         r = self.get_property(
             "_NET_WM_VISIBLE_NAME",
-            xcb.xproto.GetPropertyType.Any
+            xcffib.xproto.GetPropertyType.Any
         )
         if r:
             return self._propertyString(r)
 
-        r = self.get_property("_NET_WM_NAME", xcb.xproto.GetPropertyType.Any)
+        r = self.get_property("_NET_WM_NAME", xcffib.xproto.GetPropertyType.Any)
         if r:
             return self._propertyString(r)
 
         r = self.get_property(
-            xcb.xproto.Atom.WM_NAME,
-            xcb.xproto.GetPropertyType.Any
+            xcffib.xproto.Atom.WM_NAME,
+            xcffib.xproto.GetPropertyType.Any
         )
         if r:
             return self._propertyString(r)
 
     def get_wm_hints(self):
-        r = self.get_property("WM_HINTS", xcb.xproto.GetPropertyType.Any)
+        r = self.get_property("WM_HINTS", xcffib.xproto.GetPropertyType.Any)
         if r:
             data = struct.pack("B" * len(r.value), *(list(r.value)))
             l = struct.unpack_from("=IIIIIIIII", data)
@@ -423,7 +419,7 @@ class Window:
     def get_wm_normal_hints(self):
         r = self.get_property(
             "WM_NORMAL_HINTS",
-            xcb.xproto.GetPropertyType.Any
+            xcffib.xproto.GetPropertyType.Any
         )
         if r:
             data = struct.pack("B" * len(r.value), *(list(r.value)))
@@ -448,7 +444,7 @@ class Window:
             )
 
     def get_wm_protocols(self):
-        r = self.get_property("WM_PROTOCOLS", xcb.xproto.GetPropertyType.Any)
+        r = self.get_property("WM_PROTOCOLS", xcffib.xproto.GetPropertyType.Any)
         if r:
             data = struct.pack("B" * len(r.value), *(list(r.value)))
             l = struct.unpack_from("=" + "L" * r.value_len, data)
@@ -457,7 +453,7 @@ class Window:
             return set()
 
     def get_wm_state(self):
-        r = self.get_property("WM_STATE", xcb.xproto.GetPropertyType.Any)
+        r = self.get_property("WM_STATE", xcffib.xproto.GetPropertyType.Any)
         if r:
             return struct.unpack('=LL', r.value.buf())
 
@@ -586,7 +582,7 @@ class Window:
         #  - value is a string of bytes.
         #  - length is the length of the data in terms of the specified format.
         self.conn.conn.core.ChangeProperty(
-            xcb.xproto.PropMode.Replace,
+            xcffib.xproto.PropMode.Replace,
             self.wid,
             self.conn.atoms[name],
             self.conn.atoms[type],
@@ -626,7 +622,7 @@ class Window:
                 return struct.unpack_from(unpack, r.value.buf())
             else:
                 return r
-        except xcb.xproto.BadWindow:
+        except xcffib.xproto.WindowError:
             return None
 
     def list_properties(self):
@@ -653,9 +649,9 @@ class Window:
             Passing None means any key, or any modifier.
         """
         if key is None:
-            key = xcb.xproto.Atom.Any
+            key = xcffib.xproto.Atom.Any
         if modifiers is None:
-            modifiers = xcb.xproto.ModMask.Any
+            modifiers = xcffib.xproto.ModMask.Any
         self.conn.conn.core.UngrabKey(key, self.wid, modifiers)
 
     def grab_key(self, key, modifiers, owner_events,
@@ -674,9 +670,9 @@ class Window:
             Passing None means any key, or any modifier.
         """
         if button is None:
-            button = xcb.xproto.Atom.Any
+            button = xcffib.xproto.Atom.Any
         if modifiers is None:
-            modifiers = xcb.xproto.ModMask.Any
+            modifiers = xcffib.xproto.ModMask.Any
         self.conn.conn.core.UngrabButton(button, self.wid, modifiers)
 
     def grab_button(self, button, modifiers, owner_events,
@@ -687,8 +683,8 @@ class Window:
             event_mask,
             pointer_mode,
             keyboard_mode,
-            xcb.xproto.Atom._None,
-            xcb.xproto.Atom._None,
+            xcffib.xproto.Atom._None,
+            xcffib.xproto.Atom._None,
             button,
             modifiers,
         )
@@ -701,13 +697,13 @@ class Window:
             event_mask,
             pointer_mode,
             keyboard_mode,
-            xcb.xproto.Atom._None,
-            cursor or xcb.xproto.Atom._None,
-            xcb.xproto.Atom._None,
+            xcffib.xproto.Atom._None,
+            cursor or xcffib.xproto.Atom._None,
+            xcffib.xproto.Atom._None,
         )
 
     def ungrab_pointer(self):
-        self.conn.conn.core.UngrabPointer(xcb.xproto.Atom._None)
+        self.conn.conn.core.UngrabPointer(xcffib.xproto.Atom._None)
 
     def query_tree(self):
         q = self.conn.conn.core.QueryTree(self.wid).reply()
@@ -744,7 +740,7 @@ class Connection:
     }
 
     def __init__(self, display):
-        self.conn = xcb.xcb.connect(display=display)
+        self.conn = xcffib.xcb.connect(display=display)
         self._connected = True
         self.cursors = Cursors(self)
         self.setup = self.conn.get_setup()

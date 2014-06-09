@@ -26,7 +26,7 @@ from libqtile.dgroups import DGroups
 from state import QtileState
 from group import _Group
 from StringIO import StringIO
-from xcb.xproto import EventMask, BadWindow, BadAccess, BadDrawable
+from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
 import atexit
 import command
 import gobject
@@ -39,9 +39,9 @@ import sys
 import traceback
 import utils
 import window
-import xcb
-import xcb.xinerama
-import xcb.xproto
+import xcffib
+import xcffib.xinerama
+import xcffib.xproto
 import xcbq
 
 from widget.base import _Widget
@@ -150,15 +150,15 @@ class Qtile(command.CommandObject):
         self._drag = None
 
         self.ignoreEvents = set([
-            xcb.xproto.KeyReleaseEvent,
-            xcb.xproto.ReparentNotifyEvent,
-            xcb.xproto.CreateNotifyEvent,
+            xcffib.xproto.KeyReleaseEvent,
+            xcffib.xproto.ReparentNotifyEvent,
+            xcffib.xproto.CreateNotifyEvent,
             # DWM handles this to help "broken focusing windows".
-            xcb.xproto.MapNotifyEvent,
-            xcb.xproto.LeaveNotifyEvent,
-            xcb.xproto.FocusOutEvent,
-            xcb.xproto.FocusInEvent,
-            xcb.xproto.NoExposureEvent
+            xcffib.xproto.MapNotifyEvent,
+            xcffib.xproto.LeaveNotifyEvent,
+            xcffib.xproto.FocusOutEvent,
+            xcffib.xproto.FocusInEvent,
+            xcffib.xproto.NoExposureEvent
         ])
 
         self.conn.flush()
@@ -269,23 +269,23 @@ class Qtile(command.CommandObject):
             code,
             key.modmask,
             True,
-            xcb.xproto.GrabMode.Async,
-            xcb.xproto.GrabMode.Async,
+            xcffib.xproto.GrabMode.Async,
+            xcffib.xproto.GrabMode.Async,
         )
         if self.numlockMask:
             self.root.grab_key(
                 code,
                 key.modmask | self.numlockMask,
                 True,
-                xcb.xproto.GrabMode.Async,
-                xcb.xproto.GrabMode.Async,
+                xcffib.xproto.GrabMode.Async,
+                xcffib.xproto.GrabMode.Async,
             )
             self.root.grab_key(
                 code,
                 key.modmask | self.numlockMask | xcbq.ModMasks["lock"],
                 True,
-                xcb.xproto.GrabMode.Async,
-                xcb.xproto.GrabMode.Async,
+                xcffib.xproto.GrabMode.Async,
+                xcffib.xproto.GrabMode.Async,
             )
 
     def unmapKey(self, key):
@@ -393,10 +393,10 @@ class Qtile(command.CommandObject):
             try:
                 attrs = item.get_attributes()
                 state = item.get_wm_state()
-            except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+            except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
                 continue
 
-            if attrs and attrs.map_state == xcb.xproto.MapState.Unmapped:
+            if attrs and attrs.map_state == xcffib.xproto.MapState.Unmapped:
                 continue
             if state and state[0] == window.WithdrawnState:
                 continue
@@ -447,7 +447,7 @@ class Qtile(command.CommandObject):
         try:
             attrs = w.get_attributes()
             internal = w.get_property("QTILE_INTERNAL")
-        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             return
         if attrs and attrs.override_redirect:
             return
@@ -456,13 +456,13 @@ class Qtile(command.CommandObject):
             if internal:
                 try:
                     c = window.Internal(w, self)
-                except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+                except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
                     return
                 self.windowMap[w.wid] = c
             else:
                 try:
                     c = window.Window(w, self)
-                except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+                except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
                     return
 
                 if w.get_wm_type() == "dock" or c.strut:
@@ -502,9 +502,9 @@ class Qtile(command.CommandObject):
             if isinstance(i, Click) and i.focus:
                 # Make a freezing grab on mouse button to gain focus
                 # Event will propagate to target window
-                grabmode = xcb.xproto.GrabMode.Sync
+                grabmode = xcffib.xproto.GrabMode.Sync
             else:
-                grabmode = xcb.xproto.GrabMode.Async
+                grabmode = xcffib.xproto.GrabMode.Async
             eventmask = EventMask.ButtonPress
             if isinstance(i, Drag):
                 eventmask |= EventMask.ButtonRelease
@@ -514,7 +514,7 @@ class Qtile(command.CommandObject):
                 True,
                 eventmask,
                 grabmode,
-                xcb.xproto.GrabMode.Async,
+                xcffib.xproto.GrabMode.Async,
             )
             if self.numlockMask:
                 self.root.grab_button(
@@ -523,7 +523,7 @@ class Qtile(command.CommandObject):
                     True,
                     eventmask,
                     grabmode,
-                    xcb.xproto.GrabMode.Async,
+                    xcffib.xproto.GrabMode.Async,
                 )
                 self.root.grab_button(
                     i.button_code,
@@ -531,7 +531,7 @@ class Qtile(command.CommandObject):
                     True,
                     eventmask,
                     grabmode,
-                    xcb.xproto.GrabMode.Async,
+                    xcffib.xproto.GrabMode.Async,
                 )
 
     def grabKeys(self):
@@ -579,7 +579,7 @@ class Qtile(command.CommandObject):
                 # This should be done in xpyb
                 # client mesages start at 128
                 if e.response_type >= 128:
-                    e = xcb.xproto.ClientMessageEvent(e)
+                    e = xcffib.xproto.ClientMessageEvent(e)
 
                 ename = e.__class__.__name__
 
@@ -626,10 +626,10 @@ class Qtile(command.CommandObject):
                     # example, if a window is created and then immediately
                     # destroyed (before the event handler is evoked), when the
                     # event handler tries to examine the window properties, it
-                    # will throw a BadWindow exception. We can essentially
+                    # will throw a WindowError exception. We can essentially
                     # ignore it, since the window is already dead and we've got
                     # another event in the queue notifying us to clean it up.
-                    except (BadWindow, BadAccess, BadDrawable):
+                    except (WindowError, AccessError, DrawableError):
                         pass
                 if self._exit:
                     self.log.info('Got shutdown, Breaking main loop cleanly')
@@ -719,8 +719,8 @@ class Qtile(command.CommandObject):
     def handle_ClientMessage(self, event):
         atoms = self.conn.atoms
 
-        opcode = xcb.xproto.ClientMessageData(event, 0, 20).data32[2]
-        data = xcb.xproto.ClientMessageData(event, 12, 20)
+        opcode = xcffib.xproto.ClientMessageData(event, 0, 20).data32[2]
+        data = xcffib.xproto.ClientMessageData(event, 12, 20)
 
         # handle change of desktop
         if atoms["_NET_CURRENT_DESKTOP"] == opcode:
@@ -757,15 +757,15 @@ class Qtile(command.CommandObject):
         if self.config.bring_front_click:
             self.conn.conn.core.ConfigureWindow(
                 wnd,
-                xcb.xproto.ConfigWindow.StackMode,
-                [xcb.xproto.StackMode.Above]
+                xcffib.xproto.ConfigWindow.StackMode,
+                [xcffib.xproto.StackMode.Above]
             )
 
         if self.windowMap.get(wnd):
             self.currentGroup.focus(self.windowMap.get(wnd), False)
             self.windowMap.get(wnd).focus(False)
 
-        self.conn.conn.core.AllowEvents(xcb.xproto.Allow.ReplayPointer, e.time)
+        self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
         self.conn.conn.flush()
 
     def handle_ButtonPress(self, e):
@@ -816,8 +816,8 @@ class Qtile(command.CommandObject):
                     xcbq.ButtonMotionMask |
                     xcbq.AllButtonsMask |
                     xcbq.ButtonReleaseMask,
-                    xcb.xproto.GrabMode.Async,
-                    xcb.xproto.GrabMode.Async,
+                    xcffib.xproto.GrabMode.Async,
+                    xcffib.xproto.GrabMode.Async,
                 )
 
 
@@ -869,7 +869,7 @@ class Qtile(command.CommandObject):
 
     def handle_ConfigureRequest(self, e):
         # It's not managed, or not mapped, so we just obey it.
-        cw = xcb.xproto.ConfigWindow
+        cw = xcffib.xproto.ConfigWindow
         args = {}
         if e.value_mask & cw.X:
             args["x"] = max(e.x, 0)
@@ -886,7 +886,7 @@ class Qtile(command.CommandObject):
 
     def handle_MappingNotify(self, e):
         self.conn.refresh_keymap()
-        if e.request == xcb.xproto.Mapping.Keyboard:
+        if e.request == xcffib.xproto.Mapping.Keyboard:
             self.grabKeys()
 
     def handle_MapRequest(self, e):
