@@ -5,6 +5,7 @@
 from xcffib.xproto import CW, WindowClass, EventMask
 import struct
 import utils
+import xcffib.xcb
 import xcffib.randr
 import xcffib.xinerama
 import xcffib.xproto
@@ -159,7 +160,8 @@ XCB_CONN_ERRORS = {
 }
 
 def toStr(s):
-    return "".join([chr(i) for i in s.name])
+    #return "".join([chr(i) for i in s.name])
+    return s.name.to_string()
 
 
 class MaskMap:

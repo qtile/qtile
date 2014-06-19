@@ -3,7 +3,7 @@ import hook
 import window
 import utils
 import contextlib
-import xfffib
+import xcffib
 import xcffib.xproto
 
 
