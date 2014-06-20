@@ -1,9 +1,8 @@
 import collections
 import utils
 import math
-import pangocairo
+import pangocffi
 import cairocffi
-import pango
 import xcffib.xproto
 
 
@@ -12,12 +11,12 @@ class TextLayout(object):
                  font_shadow, wrap=True, markup=False):
         self.drawer, self.colour = drawer, colour
         layout = drawer.ctx.create_layout()
-        layout.set_alignment(pango.ALIGN_CENTER)
+        layout.set_alignment(pangocffi.ALIGN_CENTER)
         if not wrap:  # pango wraps by default
-            layout.set_ellipsize(pango.ELLIPSIZE_END)
-        desc = pango.FontDescription()
+            layout.set_ellipsize(pangocffi.ELLIPSIZE_END)
+        desc = pangocffi.FontDescription()
         desc.set_family(font_family)
-        desc.set_absolute_size(font_size * pango.SCALE)
+        desc.set_absolute_size(font_size * pangocffi.SCALE)
         layout.set_font_description(desc)
         self.font_shadow = font_shadow
         self.layout = layout
@@ -32,7 +31,7 @@ class TextLayout(object):
     @text.setter
     def text(self, value):
         if self.markup:
-            attrlist, value, accel_char = pango.parse_markup(value)
+            attrlist, value, accel_char = pangocffi.parse_markup(value)
             self.layout.set_attributes(attrlist)
         return self.layout.set_text(utils.scrub_to_utf8(value))
 
@@ -46,7 +45,7 @@ class TextLayout(object):
     @width.setter
     def width(self, value):
         self._width = value
-        self.layout.set_width(value * pango.SCALE)
+        self.layout.set_width(value * pangocffi.SCALE)
 
     @width.deleter
     def width(self):
@@ -80,7 +79,7 @@ class TextLayout(object):
     def font_size(self, size):
         d = self.fontdescription()
         d.set_size(size)
-        d.set_absolute_size(size * pango.SCALE)
+        d.set_absolute_size(size * pangocffi.SCALE)
         self.layout.set_font_description(d)
 
     def draw(self, x, y):
@@ -263,7 +262,7 @@ class Drawer:
                     return v
 
     def new_ctx(self):
-        return pangocairo.CairoContext(cairocffi.Context(self.surface))
+        return pangocffi.CairoContext(cairocffi.Context(self.surface))
 
     def set_source_rgb(self, colour):
         if type(colour) == list:

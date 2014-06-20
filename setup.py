@@ -24,6 +24,8 @@ Features
       unit-tested window mangers around.
 """
 
+import libqtile.pangocffi
+
 setup(
     name="qtile",
     version="0.7.0",
@@ -56,4 +58,5 @@ setup(
         "bin/qtile-run",
         "bin/qtile-session"
     ],
+    ext_modules=[libqtile.pangocffi.ffi.verifier.get_extension()],
 )
