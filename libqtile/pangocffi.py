@@ -49,6 +49,7 @@ ffi.cdef("""
     typedef int gboolean;
     typedef ... gunichar;
     typedef ... GError;
+    typedef int gint;
 
     void
     pango_cairo_show_layout (cairo_t *cr,
@@ -105,6 +106,12 @@ ffi.cdef("""
     pango_font_description_set_absolute_size
                                    (PangoFontDescription *desc,
                                     double size);
+    void
+    pango_font_description_set_size (PangoFontDescription *desc,
+                                     gint size);
+
+    gint
+    pango_font_description_get_size (const PangoFontDescription *desc);
 """)
 
 def pkgconfig(*packages, **kw):
@@ -212,6 +219,12 @@ class FontDescription(object):
 
     def set_absolute_size(self, size):
         C.pango_font_description_set_absolute_size(self._pointer, size)
+
+    def set_size(self, size):
+        C.pango_font_description_set_size(self._pointer, size)
+
+    def get_size(self, size):
+        return C.pango_font_description_get_size(self._pointer, size)
 
 def _free_deref(thing):
     C.free(thing[0])

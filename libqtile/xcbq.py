@@ -223,7 +223,7 @@ class AtomCache:
             atom = c.reply().atom
         if name is None:
             c = self.conn.conn.core.GetAtomName(atom)
-            name = str(c.reply().name.buf())
+            name = c.reply().name.to_string()
         self.atoms[name] = atom
         self.reverse[atom] = name
 
@@ -346,7 +346,7 @@ class Window:
         """
             Extract a string from a window property reply message.
         """
-        return "".join(chr(i) for i in r.value)
+        return r.value.to_string()
 
     def send_event(self, eventbuf, mask=EventMask.NoEvent):
         self.conn.conn.core.SendEvent(False, self.wid, mask, eventbuf)
@@ -400,7 +400,7 @@ class Window:
     def get_wm_hints(self):
         r = self.get_property("WM_HINTS", xcffib.xproto.GetPropertyType.Any)
         if r:
-            data = struct.pack("B" * len(r.value), *(list(r.value)))
+            data = struct.pack("c" * len(r.value), *(list(r.value)))
             l = struct.unpack_from("=IIIIIIIII", data)
             flags = set()
             for k, v in HintsFlags.items():
@@ -424,7 +424,7 @@ class Window:
             xcffib.xproto.GetPropertyType.Any
         )
         if r:
-            data = struct.pack("B" * len(r.value), *(list(r.value)))
+            data = struct.pack("c" * len(r.value), *(list(r.value)))
             l = struct.unpack_from("=IIIIIIIIIIIIII", data)
             flags = set()
             for k, v in NormalHintsFlags.items():
@@ -448,7 +448,7 @@ class Window:
     def get_wm_protocols(self):
         r = self.get_property("WM_PROTOCOLS", xcffib.xproto.GetPropertyType.Any)
         if r:
-            data = struct.pack("B" * len(r.value), *(list(r.value)))
+            data = struct.pack("c" * len(r.value), *(list(r.value)))
             l = struct.unpack_from("=" + "L" * r.value_len, data)
             return set([self.conn.atoms.get_name(i) for i in l])
         else:
@@ -457,7 +457,7 @@ class Window:
     def get_wm_state(self):
         r = self.get_property("WM_STATE", xcffib.xproto.GetPropertyType.Any)
         if r:
-            return struct.unpack('=LL', r.value.buf())
+            return struct.unpack('=LL', ''.join(r.value))
 
     def get_wm_class(self):
         """
