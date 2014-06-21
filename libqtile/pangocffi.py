@@ -44,6 +44,7 @@ ffi.cdef("""
     typedef ... PangoFontDescription;
     typedef ... PangoAttrList;
     typedef int PangoAlignment;
+    typedef int PangoEllipsizeMode;
 
     typedef void* gpointer;
     typedef int gboolean;
@@ -95,6 +96,13 @@ ffi.cdef("""
     void
     pango_layout_set_width (PangoLayout *layout,
                             int width);
+
+    void
+    pango_layout_set_ellipsize (PangoLayout *layout,
+                                PangoEllipsizeMode  ellipsize);
+
+    PangoEllipsizeMode
+    pango_layout_get_ellipsize (PangoLayout *layout);
 
     // https://developer.gnome.org/pango/stable/pango-Fonts.html#PangoFontDescription
     PangoFontDescription *pango_font_description_new (void);
@@ -197,6 +205,12 @@ class PangoLayout(object):
     def get_text(self):
         ret = C.pango_layout_get_text(self._pointer)
         return _const_char_to_py_str(ret)
+
+    def set_ellipsize(self, ellipzize):
+        C.pango_layout_set_ellipsize(self._pointer, ellipzize)
+
+    def get_ellipsize(self):
+        return C.pango_layout_get_ellipsize(self._pointer)
 
     def get_pixel_size(self):
         width = ffi.new("int[1]")
