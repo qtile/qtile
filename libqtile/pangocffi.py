@@ -92,6 +92,10 @@ ffi.cdef("""
                                  int *width,
                                  int *height);
 
+    void
+    pango_layout_set_width (PangoLayout *layout,
+                            int width);
+
     // https://developer.gnome.org/pango/stable/pango-Fonts.html#PangoFontDescription
     PangoFontDescription *pango_font_description_new (void);
     void pango_font_description_free (PangoFontDescription *desc);
@@ -201,6 +205,9 @@ class PangoLayout(object):
         C.pango_layout_get_pixel_size(self._pointer, width, height)
 
         return width[0], height[0]
+
+    def set_width(self, width):
+        C.pango_layout_set_width(self._pointer, width)
 
 class FontDescription(object):
     def __init__(self, pointer=None):
