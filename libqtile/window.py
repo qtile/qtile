@@ -1031,7 +1031,7 @@ class Window(_Window):
         ret = self.window.get_property('_NET_WM_ICON', 'CARDINAL')
         if not ret:
             return
-        icon = ret.value
+        icon = map(ord, ret.value)
 
         icons = {}
         while True:
