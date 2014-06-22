@@ -5,7 +5,7 @@
 from xcffib.xproto import CW, WindowClass, EventMask
 import struct
 import utils
-import xcffib.xcb
+import xcffib
 import xcffib.randr
 import xcffib.xinerama
 import xcffib.xproto
@@ -316,7 +316,7 @@ class RandR:
     def query_crtcs(self, root):
         l = []
         for i in self.ext.GetScreenResources(root).reply().crtcs:
-            info = self.ext.GetCrtcInfo(i, xcffib.xcb.CurrentTime).reply()
+            info = self.ext.GetCrtcInfo(i, xcffib.CurrentTime).reply()
             d = dict(
                 x=info.x,
                 y=info.y,
@@ -742,7 +742,7 @@ class Connection:
     }
 
     def __init__(self, display):
-        self.conn = xcffib.xcb.connect(display=display)
+        self.conn = xcffib.connect(display=display)
         self._connected = True
         self.cursors = Cursors(self)
         self.setup = self.conn.get_setup()

@@ -3,7 +3,6 @@ import base
 
 import xcffib
 from xcffib.xproto import EventMask, SetMode
-import xcffib.xcb
 import atexit
 import struct
 
@@ -127,12 +126,12 @@ class Systray(base._Widget):
         qtile.conn.conn.core.SetSelectionOwner(
             win.wid,
             atoms['_NET_SYSTEM_TRAY_S0'],
-            xcffib.xcb.CurrentTime
+            xcffib.CurrentTime
         )
         event = struct.pack(
             'BBHII5I', 33, 32, 0, qtile.root.wid,
             atoms['MANAGER'],
-            xcffib.xcb.CurrentTime, atoms['_NET_SYSTEM_TRAY_S0'],
+            xcffib.CurrentTime, atoms['_NET_SYSTEM_TRAY_S0'],
             win.wid, 0, 0
         )
         qtile.root.send_event(event, mask=EventMask.StructureNotify)
@@ -159,6 +158,6 @@ class Systray(base._Widget):
         self.qtile.conn.conn.core.SetSelectionOwner(
             0,
             atoms['_NET_SYSTEM_TRAY_S0'],
-            xcffib.xcb.CurrentTime,
+            xcffib.CurrentTime,
         )
         self.traywin.hide()
