@@ -89,7 +89,11 @@ class _Group(command.CommandObject):
                 ]
                 screen = self.screen.get_rect()
                 if normal:
-                    self.layout.layout(normal, screen)
+                    try:
+                        self.layout.layout(normal, screen)
+                    except:
+                        self.qtile.log.exception("Exception in layout %s"
+                            % (self.layout.name))
                 if floating:
                     self.floating_layout.layout(floating, screen)
                 if self.currentWindow and \
