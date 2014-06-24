@@ -715,8 +715,8 @@ class Qtile(command.CommandObject):
     def handle_ClientMessage(self, event):
         atoms = self.conn.atoms
 
-        opcode = xcffib.xproto.ClientMessageData(event, 0, 20).data32[2]
-        data = xcffib.xproto.ClientMessageData(event, 12, 20)
+        opcode = event.type
+        data = event.data
 
         # handle change of desktop
         if atoms["_NET_CURRENT_DESKTOP"] == opcode:

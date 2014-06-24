@@ -1063,8 +1063,8 @@ class Window(_Window):
     def handle_ClientMessage(self, event):
         atoms = self.qtile.conn.atoms
 
-        opcode = xcffib.xproto.ClientMessageData(event, 0, 20).data32[2]
-        data = xcffib.xproto.ClientMessageData(event, 12, 20)
+        opcode = event.type
+        data = event.data
         if atoms["_NET_WM_STATE"] == opcode and \
                 self.qtile.config.auto_fullscreen:
             fullscreen_atom = atoms["_NET_WM_STATE_FULLSCREEN"]

@@ -63,8 +63,8 @@ class TrayWindow(window._Window):
     def handle_ClientMessage(self, event):
         atoms = self.qtile.conn.atoms
 
-        opcode = xcffib.xproto.ClientMessageData(event, 0, 20).data32[2]
-        data = xcffib.xproto.ClientMessageData(event, 12, 20)
+        opcode = event.type
+        data = event.data
         task = data.data32[2]
 
         conn = self.qtile.conn.conn
