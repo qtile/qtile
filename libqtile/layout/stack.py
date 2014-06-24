@@ -283,6 +283,7 @@ class Stack(Layout):
                 break
         else:
             client.hide()
+            return
 
         if client is self.group.currentWindow:
             px = self.group.qtile.colorPixel(self.border_focus)
