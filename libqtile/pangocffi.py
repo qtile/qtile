@@ -232,7 +232,7 @@ class FontDescription(object):
             self._pointer = pointer
 
     def set_family(self, family):
-        C.pango_font_description_set_family(self._pointer, family)
+        C.pango_font_description_set_family(self._pointer, family.encode())
 
     def get_family(self):
         ret = C.pango_font_description_get_family(self._pointer)
