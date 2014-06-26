@@ -1,4 +1,4 @@
-from base import SingleWindow
+from .base import SingleWindow
 from .. import utils
 
 

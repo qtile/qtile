@@ -1,6 +1,6 @@
 import subprocess
 from subprocess import CalledProcessError
-import base
+from . import base
 import re
 
 

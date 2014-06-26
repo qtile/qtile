@@ -1,12 +1,16 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 """
     This program is carefully crafted to exercise a number of corner-cases in
     Qtile.
 """
+from __future__ import print_function
 import sys
 import time
 from Xlib import display, error, X, protocol
-from StringIO import StringIO
+try:
+    from StringIO import StringIO # Python 2
+except ImportError:
+    from io import StringIO # Python 3
 
 
 def configure(window):
@@ -29,11 +33,11 @@ for i in range(20):
         time.sleep(0.1)
         continue
     except Exception as v:
-        print >> sys.stderr, "Error opening test window: ", type(v), v
+        print("Error opening test window: ", type(v), v, file=sys.stderr)
         sys.exit(1)
     break
 else:
-    print >> sys.stderr, "Could not open window on display %s" % (sys.argv[1])
+    print("Could not open window on display %s" % (sys.argv[1]), file=sys.stderr)
     sys.exit(1)
 
 

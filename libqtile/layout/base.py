@@ -239,7 +239,7 @@ class Delegate(Layout):
                 grouped[lay].append(w)
             else:
                 grouped[lay] = [w]
-        for lay, wins in grouped.iteritems():
+        for lay, wins in grouped.items():
             lay.layout(wins, mapping[lay])
 
     def remove(self, win):

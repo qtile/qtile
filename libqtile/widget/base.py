@@ -1,5 +1,5 @@
 from .. import command, bar, configurable, drawer
-import gobject
+from ..compat import gobject
 import logging
 import threading
 

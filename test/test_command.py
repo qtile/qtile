@@ -5,7 +5,7 @@ import libqtile.config
 import libqtile.layout
 import libqtile.bar
 import libqtile.widget
-from utils import Xephyr
+from .utils import Xephyr
 from nose.tools import assert_raises
 
 

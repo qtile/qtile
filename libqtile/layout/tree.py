@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from base import SingleWindow
+from .base import SingleWindow
 from .. import window
 from .. import drawer
 from .. import hook
@@ -42,6 +42,7 @@ class TreeNode(object):
                 return res
 
     def add_superscript(self, title):
+        from ..compat import unicode
         if not self.expanded and self.children:
             return unicode(
                 len(self.children)
@@ -71,7 +72,7 @@ class TreeNode(object):
         while not isinstance(node, Root):
             parent = node.parent
             idx = parent.children.index(node)
-            for i in xrange(idx + 1, len(parent.children)):
+            for i in range(idx + 1, len(parent.children)):
                 res = parent.children[i].get_first_window()
                 if res:
                     return res
@@ -84,7 +85,7 @@ class TreeNode(object):
             idx = parent.children.index(node)
             if idx == 0 and isinstance(parent, Window):
                 return parent
-            for i in xrange(idx - 1, -1, -1):
+            for i in range(idx - 1, -1, -1):
                 res = parent.children[i].get_last_window()
                 if res:
                     return res

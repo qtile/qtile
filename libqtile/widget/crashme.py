@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from .. import bar
-import base
+from . import base
 
 
 class _CrashMe(base._TextBox):

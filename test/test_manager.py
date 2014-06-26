@@ -1,6 +1,5 @@
 import os
 import time
-import cStringIO
 import subprocess
 import signal
 import libqtile
@@ -12,11 +11,11 @@ import libqtile.manager
 import libqtile.config
 import libqtile.hook
 import libqtile.confreader
-import utils
-from utils import Xephyr
 from nose.tools import assert_raises
 from nose.plugins.attrib import attr
 
+from . import utils
+from .utils import Xephyr
 
 class TestConfig:
     auto_fullscreen = True
@@ -255,10 +254,10 @@ def test_adddelgroup(self):
     assert not "testgroup" in self.c.groups().keys()
     # Assert that the test window is still a member of some group.
     assert sum([len(i["windows"]) for i in self.c.groups().values()])
-    for i in self.c.groups().keys()[:len(self.c.groups())-1]:
+    for i in list(self.c.groups().keys())[:len(self.c.groups())-1]:
         self.c.delgroup(i)
     assert_raises(libqtile.command.CommandException,
-                  self.c.delgroup, self.c.groups().keys()[0])
+                  self.c.delgroup, list(self.c.groups().keys())[0])
 
 
 @Xephyr(False, TestConfig())

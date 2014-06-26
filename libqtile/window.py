@@ -23,9 +23,10 @@ import struct
 import contextlib
 from xcffib.xproto import EventMask, StackMode, SetMode
 import xcffib.xproto
-import command
-import utils
-import hook
+
+from . import command
+from . import utils
+from . import hook
 
 
 # ICCM Constants
@@ -1031,7 +1032,7 @@ class Window(_Window):
         ret = self.window.get_property('_NET_WM_ICON', 'CARDINAL')
         if not ret:
             return
-        icon = map(ord, ret.value)
+        icon = list(map(ord, ret.value))
 
         icons = {}
         while True:
@@ -1150,7 +1151,7 @@ class Window(_Window):
         if name == "group":
             return (True, None)
         elif name == "layout":
-            return (True, range(len(self.group.layouts)))
+            return (True, list(range(len(self.group.layouts))))
         elif name == "screen":
             return (True, None)
 

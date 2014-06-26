@@ -1,9 +1,8 @@
 from time import time
 from datetime import datetime
+from . import base
 
-import base
 import warnings
-import exceptions
 
 class Clock(base.InLoopPollText):
     """
@@ -19,7 +18,7 @@ class Clock(base.InLoopPollText):
         self.add_defaults(Clock.defaults)
         if fmt is not None:
             warnings.warn('fmt kwarg or positional argument is deprecated. '
-                          'Please use format.', exceptions.DeprecationWarning)
+                          'Please use format.', DeprecationWarning)
             self.format = fmt
 
     def tick(self):

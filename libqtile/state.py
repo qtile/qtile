@@ -20,8 +20,8 @@
 
 from collections import defaultdict
 
-import command
-import hook
+from . import command
+from . import hook
 
 
 class QtileState(object):
@@ -47,13 +47,13 @@ class QtileState(object):
             Rearrange the windows in the specified Qtile object according to
             this QtileState.
         """
-        for (group, layout) in self.groups.iteritems():
+        for (group, layout) in self.groups.items():
             try:
                 qtile.groupMap[group].layout = layout
             except KeyError:
                 pass  # group missing
 
-        for (screen, group) in self.screens.iteritems():
+        for (screen, group) in self.screens.items():
             try:
                 group = qtile.groupMap[group]
                 qtile.screens[screen].setGroup(group)

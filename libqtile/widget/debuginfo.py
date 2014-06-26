@@ -1,5 +1,5 @@
 from .. import hook, bar, group, layout
-import base
+from . import base
 import logging
 
 class DebugInfo(base._TextBox):

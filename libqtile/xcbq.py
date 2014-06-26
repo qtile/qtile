@@ -2,24 +2,27 @@
     A minimal EWMH-aware OO layer over xpyb. This is NOT intended to be
     complete - it only implements the subset of functionalty needed by qtile.
 """
+from __future__ import print_function, division
+
 from xcffib.xproto import CW, WindowClass, EventMask
 import struct
-import utils
 import xcffib
 import xcffib.randr
 import xcffib.xinerama
 import xcffib.xproto
-import xkeysyms
+
+from . import xkeysyms
+from .compat import string_type
 
 
 # hack xcffib.xproto for negative numbers
 def ConfigureWindow(self, window, value_mask, value_list):
-    import cStringIO
     from struct import pack
     from array import array
-    buf = cStringIO.StringIO()
+    from .compat import BytesIO
+    buf = BytesIO()
     buf.write(pack('xx2xIH2x', window, value_mask))
-    buf.write(str(buffer(array('i', value_list))))
+    buf.write(array('i', value_list).tostring())
     return self.send_request(12, buf)
 xcffib.xproto.xprotoExtension.ConfigureWindow = ConfigureWindow
 
@@ -194,7 +197,7 @@ class MaskMap:
                     values.append(getattr(val, "_maskvalue", val))
                 del kwargs[s]
         if kwargs:
-            raise ValueError("Unknown mask names: %s" % kwargs.keys())
+            raise ValueError("Unknown mask names: %s" % list(kwargs.keys()))
         return mask, values
 
 ConfigureMasks = MaskMap(xcffib.xproto.ConfigWindow)
@@ -285,7 +288,7 @@ class Colormap:
                 raise ValueError("Invalid color: %s" % color)
 
             def x8to16(i):
-                return 0xffff * (i & 0xff) / 0xff
+                return 0xffff * (i & 0xff) // 0xff
             r = x8to16(int(color[1] + color[2], 16))
             g = x8to16(int(color[3] + color[4], 16))
             b = x8to16(int(color[5] + color[6], 16))
@@ -457,7 +460,7 @@ class Window:
     def get_wm_state(self):
         r = self.get_property("WM_STATE", xcffib.xproto.GetPropertyType.Any)
         if r:
-            return struct.unpack('=LL', ''.join(r.value))
+            return struct.unpack('=LL', ''.encode().join(r.value))
 
     def get_wm_class(self):
         """
@@ -549,6 +552,8 @@ class Window:
             type: String Atom name
             format: 8, 16, 32
         """
+        from . import utils
+
         if name in PropertyMap:
             if type or format:
                 raise ValueError(
@@ -573,13 +578,12 @@ class Window:
                 buf.append(struct.pack("=H", i))
             elif format == 8:
                 if utils.isStringLike(i):
-                    # FIXME: Unicode -> bytes conversion needed here
-                    buf.append(i)
+                    buf.append(i.encode())
                 else:
                     buf.append(struct.pack("=B", i))
-        buf = "".join(buf)
+        buf = "".encode().join(buf)
 
-        length = len(buf) / (format / 8)
+        length = len(buf) // (format // 8)
 
         # This is a real balls-up interface-wise. As I understand it, each type
         # can have a different associated size.
@@ -612,10 +616,10 @@ class Window:
             r = self.conn.conn.core.GetProperty(
                 False, self.wid,
                 self.conn.atoms[prop]
-                if isinstance(prop, basestring)
+                if isinstance(prop, string_type)
                 else prop,
                 self.conn.atoms[type]
-                if isinstance(type, basestring)
+                if isinstance(type, string_type)
                 else type,
                 0, (2 ** 32) - 1
             ).reply()
@@ -731,9 +735,9 @@ class Font:
 
     def text_extents(self, s):
         s = s + "aaa"
-        print s
+        print(s)
         x = self.conn.conn.core.QueryTextExtents(self.fid, len(s), s).reply()
-        print x
+        print(x)
         return x
 
 
@@ -797,7 +801,7 @@ class Connection:
             if not i % q.keysyms_per_keycode:
                 if l:
                     self.code_to_syms[
-                        (i / q.keysyms_per_keycode) + first - 1
+                        (i // q.keysyms_per_keycode) + first - 1
                     ] = l
                 l = []
                 l.append(v)
@@ -817,7 +821,7 @@ class Connection:
         q = self.conn.core.GetModifierMapping().reply()
         modmap = {}
         for i, k in enumerate(q.keycodes):
-            l = modmap.setdefault(ModMapOrder[i / q.keycodes_per_modifier], [])
+            l = modmap.setdefault(ModMapOrder[i // q.keycodes_per_modifier], [])
             l.append(k)
         self.modmap = modmap
 

@@ -1,5 +1,5 @@
 from .. import hook, bar
-import base
+from . import base
 
 
 class WindowName(base._TextBox):
