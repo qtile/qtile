@@ -33,7 +33,7 @@ import xcffib
 import xcffib.xinerama
 import xcffib.xproto
 
-from .compat import gobject, StringIO
+from .compat import gobject, BytesIO
 from .config import Drag, Click, Screen, Match, Rule
 from .group import _Group
 from .state import QtileState
@@ -190,7 +190,7 @@ class Qtile(command.CommandObject):
         hook.subscribe.setgroup(self.update_net_desktops)
 
         if state:
-            st = pickle.load(StringIO(state))
+            st = pickle.load(BytesIO(state.encode()))
             st.apply(self)
 
     def _process_fake_screens(self):
@@ -1103,10 +1103,10 @@ class Qtile(command.CommandObject):
         if '--no-spawn' not in argv:
             argv.append('--no-spawn')
 
-        buf = StringIO()
-        pickle.dump(QtileState(self), buf)
+        buf = BytesIO()
+        pickle.dump(QtileState(self), buf, protocol=0)
         argv = [s for s in argv if not s.startswith('--with-state')]
-        argv.append('--with-state=' + buf.getvalue())
+        argv.append('--with-state=' + buf.getvalue().decode())
 
         self.cmd_execute(sys.executable, argv)
 
