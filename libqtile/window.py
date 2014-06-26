@@ -686,7 +686,7 @@ class Window(_Window):
         self.updateName()
         # add to group by position according to _NET_WM_DESKTOP property
         index = window.get_wm_desktop()
-        if index and index < len(qtile.groups):
+        if index is not None and index < len(qtile.groups):
             group = qtile.groups[index]
             group.add(self)
             if group != qtile.currentScreen.group:

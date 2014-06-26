@@ -493,9 +493,11 @@ class Window:
         return q.reply()
 
     def get_wm_desktop(self):
-        r = self.get_property("_NET_WM_DESKTOP", "CARDINAL")
+        r = self.get_property("_NET_WM_DESKTOP", "CARDINAL", unpack='I')
+
         if r:
-            return r.value[0]
+            #return r[0]
+            pass
 
     def get_wm_type(self):
         """
