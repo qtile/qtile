@@ -5,8 +5,9 @@
 """
 import sys
 import time
-from Xlib import display, error, X, protocol
-from StringIO import StringIO
+import struct
+import xcb
+import xcb.xproto
 
 
 def configure(window):
@@ -20,12 +21,8 @@ def configure(window):
 
 for i in range(20):
     try:
-        # Remove useless lib print
-        stdout, sys.stdout = sys.stdout, StringIO()
-        d = display.Display(sys.argv[1])
-        sys.stdout = stdout
-
-    except error.DisplayConnectionError:
+        conn = xcb.xcb.connect(display=sys.argv[1])
+    except xcb.ConnectException:
         time.sleep(0.1)
         continue
     except Exception as v:
@@ -37,28 +34,46 @@ else:
     sys.exit(1)
 
 
-root = d.screen().root
-colormap = d.screen().default_colormap
-background = colormap.alloc_named_color("#2883CE").pixel
-window = root.create_window(100, 100, 100, 100, 1,
-                            X.CopyFromParent, X.InputOutput,
-                            X.CopyFromParent,
-                            background_pixel=background,
-                            event_mask=X.StructureNotifyMask | X.ExposureMask)
-window.set_wm_name(sys.argv[2])
-window.set_wm_protocols([d.intern_atom("WM_DELETE_WINDOW")])
+screen = conn.get_setup().roots[conn.pref_screen]
 
-configure(window)
-window.map()
-d.sync()
-configure(window)
+window = conn.generate_id()
+background = conn.core.AllocColor(screen.default_colormap, 0x2828, 0x8383, 0xCECE).reply().pixel # Color "#2883ce"
+conn.core.CreateWindow(xcb.CopyFromParent, window, screen.root,
+        100, 100, 100, 100, 1,
+        xcb.xproto.WindowClass.InputOutput, screen.root_visual,
+        xcb.xproto.CW.BackPixel | xcb.xproto.CW.EventMask,
+        [background, xcb.xproto.EventMask.StructureNotify | xcb.xproto.EventMask.Exposure])
 
+conn.core.ChangeProperty(xcb.xproto.PropMode.Replace,
+        window, xcb.xproto.Atom.WM_NAME,
+        xcb.xproto.Atom.STRING, 8, len(sys.argv[2]),
+        sys.argv[2])
+
+wm_protocols = conn.core.InternAtom(0, len("WM_PROTOCOLS"), "WM_PROTOCOLS").reply().atom
+delete_window = conn.core.InternAtom(0, len("WM_DELETE_WINDOW"), "WM_DELETE_WINDOW").reply().atom
+conn.core.ChangeProperty(xcb.xproto.PropMode.Replace,
+        window, wm_protocols,
+        xcb.xproto.Atom.ATOM, 32, 4,
+        struct.pack("=L", delete_window))
+
+conn.core.ConfigureWindow(window,
+        xcb.xproto.ConfigWindow.X | xcb.xproto.ConfigWindow.Y |
+        xcb.xproto.ConfigWindow.Width | xcb.xproto.ConfigWindow.Height |
+        xcb.xproto.ConfigWindow.BorderWidth,
+        [0, 0, 100, 100, 1])
+conn.core.MapWindow(window)
+conn.flush()
+conn.core.ConfigureWindow(window,
+        xcb.xproto.ConfigWindow.X | xcb.xproto.ConfigWindow.Y |
+        xcb.xproto.ConfigWindow.Width | xcb.xproto.ConfigWindow.Height |
+        xcb.xproto.ConfigWindow.BorderWidth,
+        [0, 0, 100, 100, 1])
 
 try:
     while 1:
-        event = d.next_event()
-        if event.__class__ == protocol.event.ClientMessage:
-            if d.get_atom_name(event.data[1][0]) == "WM_DELETE_WINDOW":
+        event = conn.wait_for_event()
+        if event.__class__ == xcb.xproto.ClientMessageEvent:
+            if conn.core.GetAtomName(event.type).reply().name == "WM_DELETE_WINDOW":
                 sys.exit(1)
-except error.ConnectionClosedError:
+except (IOError, xcb.Exception):
     pass
