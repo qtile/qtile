@@ -24,6 +24,7 @@ class Volume(base._TextBox):
         ("padding", 3, "Padding left and right. Calculated if None."),
         ("theme_path", None, "Path of the icons"),
         ("update_interval", 0.2, "Update time in seconds."),
+        ("emoji", False, "Use emoji to display volume states"),
     ]
 
     def __init__(self, **config):
@@ -99,6 +100,15 @@ class Volume(base._TextBox):
 
             self.drawer.ctx.set_source(self.surfaces[img_name])
             self.drawer.ctx.paint()
+        elif self.emoji:
+            if self.volume <= 0:
+                self.text = u'\U0001f507'
+            elif self.volume <= 30:
+                self.text = u'\U0001f508'
+            elif self.volume < 80:
+                self.text = u'\U0001f509'
+            elif self.volume >= 80:
+                self.text = u'\U0001f50a'
         else:
             if self.volume == -1:
                 self.text = 'M'
