@@ -1343,31 +1343,6 @@ class Qtile(command.CommandObject):
     def cmd_delgroup(self, group):
         return self.delGroup(group)
 
-    def cmd_eval(self, code):
-        """
-            Evaluates code in the same context as this function.
-            Return value is (success, result), success being a boolean and
-            result being a string representing the return value of eval, or
-            None if exec was used instead.
-        """
-        try:
-            try:
-                return (True, str(eval(code)))
-            except SyntaxError:
-                exec code
-                return (True, None)
-        except:
-            error = traceback.format_exc().strip().split("\n")[-1]
-            return (False, error)
-
-    def cmd_function(self, function):
-        """ Call a function with qtile instance as argument """
-        try:
-            function(self)
-        except Exception:
-            error = traceback.format_exc()
-            self.log.error('Exception calling "%s":\n%s' % (function, error))
-
     def cmd_add_rule(self, match_args, rule_args, min_priorty=False):
         """
             Add a dgroup rule, returns rule_id needed to remove it
