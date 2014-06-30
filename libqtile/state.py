@@ -18,12 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from collections import defaultdict
-
-import command
-import hook
-
-
 class QtileState(object):
     """
         Represents the state of the qtile object. Primarily used for restoring

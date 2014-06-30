@@ -36,7 +36,6 @@ import os
 import os.path
 import pickle
 import sys
-import traceback
 import utils
 import window
 import xcb

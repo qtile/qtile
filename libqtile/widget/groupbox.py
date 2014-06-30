@@ -1,4 +1,4 @@
-from .. import bar, hook, utils
+from .. import bar, hook
 import base
 
 

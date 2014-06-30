@@ -1,4 +1,4 @@
-from .. import hook, bar, group, layout
+from .. import hook, bar, layout
 import base
 import logging
 
