@@ -1,5 +1,5 @@
 import os
-import cairo
+import cairocffi
 
 import base
 from .. import bar
@@ -28,12 +28,12 @@ class Image(base._Widget, base.MarginMixin):
         self.filename = os.path.expanduser(self.filename)
 
         try:
-            self.image = cairo.ImageSurface.create_from_png(self.filename)
+            self.image = cairocffi.ImageSurface.create_from_png(self.filename)
         except MemoryError:
             raise ValueError("The image '%s' doesn't seem to be a valid PNG"
                 % (self.filename))
 
-        self.pattern = cairo.SurfacePattern(self.image)
+        self.pattern = cairocffi.SurfacePattern(self.image)
 
         self.image_width = self.image.get_width()
         self.image_height = self.image.get_height()
@@ -42,7 +42,7 @@ class Image(base._Widget, base.MarginMixin):
             new_height = self.bar.height - (self.margin_y * 2)
 
             if new_height and self.image_height != new_height:
-                scaler = cairo.Matrix()
+                scaler = cairocffi.Matrix()
                 sp = self.image_height / float(new_height)
                 self.image_height = new_height
                 self.image_width = int(self.image_width / sp)

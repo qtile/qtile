@@ -2,7 +2,7 @@ import os
 import re
 import subprocess
 
-import cairo
+import cairocffi
 
 import base
 from .. import bar
@@ -114,10 +114,10 @@ class Volume(base._TextBox):
         ):
 
             try:
-                img = cairo.ImageSurface.create_from_png(
+                img = cairocffi.ImageSurface.create_from_png(
                     os.path.join(self.theme_path, '%s.png' % img_name)
                 )
-            except cairo.Error:
+            except cairocffi.Error:
                 self.theme_path = None
                 self.width_type = bar.CALCULATED
                 self.qtile.log.exception('Volume switching to text mode')
@@ -131,15 +131,15 @@ class Volume(base._TextBox):
             if width > self.width:
                 self.width = int(width) + self.actual_padding * 2
 
-            imgpat = cairo.SurfacePattern(img)
+            imgpat = cairocffi.SurfacePattern(img)
 
-            scaler = cairo.Matrix()
+            scaler = cairocffi.Matrix()
 
             scaler.scale(sp, sp)
             scaler.translate(self.actual_padding * -1, 0)
             imgpat.set_matrix(scaler)
 
-            imgpat.set_filter(cairo.FILTER_BEST)
+            imgpat.set_filter(cairocffi.FILTER_BEST)
             self.surfaces[img_name] = imgpat
 
     def get_volume(self):
