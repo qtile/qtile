@@ -33,6 +33,8 @@ class Configurable(object):
         self._widget_defaults.update(dict((d[0], d[1]) for d in defaults))
 
     def __getattr__(self, name):
+        if name == "_widget_defaults":
+            raise AttributeError
         found, value = self._find_default(name)
         if found:
             setattr(self, name, value)
