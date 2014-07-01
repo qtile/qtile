@@ -3,64 +3,97 @@ language: python
 python:
   - 2.6
   - 2.7
+  - 3.2
+  - 3.3
+  - 3.4
 
-script:
-  nosetests
+# Python 3.2 can't use u'' literals
+matrix:
+  allow_failures:
+    - python: 3.2
+
+script: nosetests
 
 before_install:
 # Environment setup
   - sudo apt-get update -qq
-  - sudo apt-get install xserver-xephyr x11-apps
+  - sudo apt-get install -qqy xserver-xephyr x11-apps
 # Setup XvFB
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
 
 install:
 # Installation environment variables
-  - export VIRT_ROOT=/home/travis/virtualenv/python$TRAVIS_PYTHON_VERSION
-  - export CONFIG_OPTS="--prefix=$VIRT_ROOT --includedir=/usr/include  --libdir=/usr/lib --datarootdir=/usr/share"
-# Ubuntu 12.04 needs updated xcb-proto (>=1.7.1) to install latest xpyb
+  - export VIRT_ROOT=/home/travis/virtualenv/python${TRAVIS_PYTHON_VERSION}
+  - export PKG_CONFIG_PATH=${VIRT_ROOT}/lib/pkgconfig
+  - export LD_LIBRARY_PATH=${VIRT_ROOT}/lib
+  - export CONFIG_OPTS="--prefix=${VIRT_ROOT} --includedir=/usr/include  --libdir=/usr/lib --datarootdir=/usr/share"
+  - export PY_MAJOR=${TRAVIS_PYTHON_VERSION:0:1}
+# Ubuntu 12.04 uses old xcb-proto (xcb-proto 1.7)
 # See https://github.com/travis-ci/travis-ci/issues/2046
   - wget http://xcb.freedesktop.org/dist/xcb-proto-1.10.tar.bz2
   - tar xjf xcb-proto-1.10.tar.bz2
   - pushd xcb-proto-1.10
-  - ./configure $CONFIG_OPTS
+  - ./configure ${CONFIG_OPTS}
   - make -j3
   - sudo make install
   - popd
-# Install xpyb (xcb module)
-  - wget http://xcb.freedesktop.org/dist/xpyb-1.3.1.tar.bz2
-  - tar xjf xpyb-1.3.1.tar.bz2
-  - pushd xpyb-1.3.1
-  - ./configure $CONFIG_OPTS
-  - make -j3
-  - sudo make install
-  - popd
+# Ubuntu 12.04 uses old Glib (libglib2.0 2.24.0)
+# pygobject-3.12.0 needs glib-2.0 >=2.38
+  - if [[ ${PY_MAJOR} == "3" ]]; then
+      wget http://ftp.gnome.org/pub/gnome/sources/glib/2.40/glib-2.40.0.tar.xz;
+      tar xJf glib-2.40.0.tar.xz;
+      pushd glib-2.40.0;
+      ./configure --prefix=${VIRT_ROOT};
+      make -j3;
+      sudo make install;
+      popd;
+    fi
+# Ubuntu 12.04 uses old GObject introspection (libgirepository1.0-dev 1.32.0)
+# pygobject-3.12.0 needs gobject-introspection-1.0 >=1.38.0
+# gobject-introspection compiles against Python 2 headers
+  - if [[ ${PY_MAJOR} == "3" ]]; then
+      sudo apt-get -qqy install python-dev libpython2.7;
+      wget http://ftp.gnome.org/pub/GNOME/sources/gobject-introspection/1.40/gobject-introspection-1.40.0.tar.xz;
+      tar xJf gobject-introspection-1.40.0.tar.xz;
+      pushd gobject-introspection-1.40.0;
+      PYTHON=/usr/bin/python ./configure --prefix=${VIRT_ROOT} --disable-static;
+      make -j3;
+      sudo make install;
+      popd;
+    fi
 # Install pygobject (gobject module)
-  - wget http://ftp.gnome.org/pub/GNOME/sources/pygobject/2.28/pygobject-2.28.6.tar.bz2
-  - tar xjf pygobject-2.28.6.tar.bz2
-  - pushd pygobject-2.28.6
-  - ./configure $CONFIG_OPTS --disable-introspection
+  - if [[ ${PY_MAJOR} == "2" ]]; then
+      export GOBJ_SRC="pygobject-2.28.6.tar.bz2";
+      export GOBJ_OPTS="--disable-introspection";
+    else
+      export GOBJ_SRC="pygobject-3.12.0.tar.xz";
+      export GOBJ_OPTS="--disable-cairo";
+    fi
+  - GOBJ_DIR=${GOBJ_SRC%.tar.*}
+  - GOBJ_VER=${GOBJ_DIR#*-}
+  - wget http://ftp.gnome.org/pub/GNOME/sources/pygobject/${GOBJ_VER%.*}/${GOBJ_SRC}
+  - tar xf ${GOBJ_SRC}
+  - pushd ${GOBJ_DIR}
+  - ./configure --prefix=${VIRT_ROOT} ${GOBJ_OPTS}
   - make -j3
   - sudo make install
   - popd
-# Install pycairo (cairo module)
-  - wget http://www.cairographics.org/releases/py2cairo-1.10.0.tar.bz2
-  - tar xjf py2cairo-1.10.0.tar.bz2
-  - pushd py2cairo-1.10.0
-# Need to use autotools for xpyb support?
-  - touch ChangeLog && autoreconf -fi
-  - ./configure $CONFIG_OPTS
+# Update cairo (currently needed to use libqtile/pangocffi.py, see tycho/qtile#5)
+  - git clone git://anongit.freedesktop.org/cairo
+  - pushd cairo
+  - git reset --hard 39b7d5138eb83cc2d4f3ab6039894cc61c7fe4c7 # Use same git HEAD as current 14.04
+  - ./autogen.sh
+  - ./configure --prefix=/usr
   - make -j3
   - sudo make install
   - popd
-# Install pygtk (pango and pangocairo modules)
-  - wget http://ftp.gnome.org/pub/GNOME/sources/pygtk/2.24/pygtk-2.24.0.tar.bz2
-  - tar xjf pygtk-2.24.0.tar.bz2
-  - pushd pygtk-2.24.0
-  - ./configure $CONFIG_OPTS
-  - make -j3
-  - sudo make install
+# Installl git xcffib
+  - pip install xcffib
+# Install cairocffi w/xcffib support
+  - git clone -b xcffib https://github.com/tych0/cairocffi.git
+  - pushd cairocffi
+  - pip install .
   - popd
 
 notifications:
