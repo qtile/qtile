@@ -49,13 +49,13 @@ class Tile(Layout):
     def shift_up(self):
         if self.clients:
             currentindex = self.clients.index(self.focused)
-            nextindex = self.get_next_index(currentindex)
+            nextindex = (currentindex + 1) % len(self.clients)
             self.shift(currentindex, nextindex)
 
     def shift_down(self):
         if self.clients:
             currentindex = self.clients.index(self.focused)
-            previndex = self.get_previous_index(currentindex)
+            previndex = (currentindex - 1) % len(self.clients)
             self.shift(currentindex, previndex)
 
     def focus_first(self):

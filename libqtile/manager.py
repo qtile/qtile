@@ -36,7 +36,6 @@ import os
 import os.path
 import pickle
 import sys
-import traceback
 import utils
 import window
 import xcffib
@@ -1006,7 +1005,7 @@ class Qtile(command.CommandObject):
 
                 groups()
         """
-        return dict({i.name: i.info() for i in self.groups})
+        return dict((i.name, i.info()) for i in self.groups)
 
     def cmd_list_widgets(self):
         """
@@ -1338,31 +1337,6 @@ class Qtile(command.CommandObject):
 
     def cmd_delgroup(self, group):
         return self.delGroup(group)
-
-    def cmd_eval(self, code):
-        """
-            Evaluates code in the same context as this function.
-            Return value is (success, result), success being a boolean and
-            result being a string representing the return value of eval, or
-            None if exec was used instead.
-        """
-        try:
-            try:
-                return (True, str(eval(code)))
-            except SyntaxError:
-                exec code
-                return (True, None)
-        except:
-            error = traceback.format_exc().strip().split("\n")[-1]
-            return (False, error)
-
-    def cmd_function(self, function):
-        """ Call a function with qtile instance as argument """
-        try:
-            function(self)
-        except Exception:
-            error = traceback.format_exc()
-            self.log.error('Exception calling "%s":\n%s' % (function, error))
 
     def cmd_add_rule(self, match_args, rule_args, min_priorty=False):
         """

@@ -1,5 +1,4 @@
 from base import SingleWindow
-from .. import utils
 
 
 class Zoomy(SingleWindow):

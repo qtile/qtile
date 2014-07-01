@@ -7,8 +7,8 @@ import subprocess
 import sys
 import time
 import traceback
-import Xlib.X
-import Xlib.display
+import xcb
+import xcb.xproto
 from nose.tools import with_setup, assert_raises
 from nose.plugins.attrib import attr
 from functools import wraps
@@ -115,15 +115,14 @@ class Xephyr(object):
         # Try until Xephyr is up
         for i in range(50):
             try:
-                d = Xlib.display.Display(self.display)
+                conn = xcb.xcb.connect(self.display)
                 break
-            except (Xlib.error.DisplayConnectionError,
-                    Xlib.error.ConnectionClosedError):
+            except xcb.ConnectException:
                 time.sleep(0.1)
         else:
             raise AssertionError("Could not connect to display.")
-        d.close()
-        del d
+        conn.disconnect()
+        del conn
 
     def _waitForQtile(self):
         for i in range(20):

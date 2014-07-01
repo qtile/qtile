@@ -82,7 +82,7 @@ dgroups_app_rules = []
 
 layouts = [
     layout.Max(),
-    layout.Stack(stacks=2)
+    layout.Stack(num_stacks=2)
 ]
 
 screens = [

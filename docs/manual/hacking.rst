@@ -8,12 +8,11 @@ Any reasonably recent version of these should work, so you can probably just
 install them from your package manager.
 
 * `Nose <http://nose.readthedocs.org/en/latest/>`_
-* `Python X Library <http://python-xlib.sourceforge.net/>`_
 * `Xephyr <http://www.freedesktop.org/wiki/Software/Xephyr>`_
 * ``xeyes`` and ``xclock``
 
 On ubuntu, this can be done with ``sudo apt-get install python-nose
-python-xlib xserver-xephyr x11-apps``.
+xserver-xephyr x11-apps``.
 
 Running the test suite
 ----------------------

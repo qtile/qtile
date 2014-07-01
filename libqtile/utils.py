@@ -21,7 +21,6 @@
 import operator
 import functools
 import gobject
-import logging
 import os
 import xcbq
 
