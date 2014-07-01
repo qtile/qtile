@@ -236,7 +236,7 @@ class SwapGraph(_Graph):
         _Graph.__init__(self, **config)
         val = self._getvalues()
         self.maxvalue = val['SwapTotal']
-        swap = val['SwapTotal'] - val['SwapFree'] - val['SwapCached']
+        swap = val['SwapTotal'] - val['SwapFree'] - val.get('SwapCached', 0)
         self.fullfill(swap)
 
     def _getvalues(self):
@@ -245,7 +245,7 @@ class SwapGraph(_Graph):
     def update_graph(self):
         val = self._getvalues()
 
-        swap = val['SwapTotal'] - val['SwapFree'] - val['SwapCached']
+        swap = val['SwapTotal'] - val['SwapFree'] - val.get('SwapCached', 0)
 
         # can change, swapon/off
         if self.maxvalue != val['SwapTotal']:

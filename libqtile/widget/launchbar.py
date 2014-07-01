@@ -48,7 +48,7 @@ class LaunchBar(base._Widget):
         self.icons_widths = {}
         self.icons_offsets = {}
         # For now, ignore the comments but may be one day it will be useful
-        self.commands = {prg[0]: prg[1] for prg in progs}
+        self.commands = dict((prg[0], prg[1]) for prg in progs)
 
     def _configure(self, qtile, pbar):
         base._Widget._configure(self, qtile, pbar)

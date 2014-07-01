@@ -1009,7 +1009,7 @@ class Qtile(command.CommandObject):
 
                 groups()
         """
-        return dict({i.name: i.info() for i in self.groups})
+        return dict((i.name, i.info()) for i in self.groups)
 
     def cmd_list_widgets(self):
         """

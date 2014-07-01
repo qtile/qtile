@@ -1,6 +1,6 @@
-=====
-Qtile
-=====
+==============
+Qtile |travis|
+==============
 
 A full-featured, pure-Python tiling window manager
 ==================================================
@@ -45,3 +45,6 @@ Please report any suggestions, feature requests, bug reports, or annoyances to
 the Github `issue tracker`_.
 
 .. _`issue tracker`: https://github.com/qtile/qtile/issues
+.. |travis| image:: https://travis-ci.org/qtile/qtile.svg?branch=develop
+    :alt: Build Status
+    :target: https://travis-ci.org/qtile/qtile

@@ -80,7 +80,7 @@ def test_doc():
 
 def test_commands():
     c = TestCommands()
-    assert len(c.commands()) == 7
+    assert len(c.commands()) == 9
 
 
 def test_command():

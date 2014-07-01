@@ -183,7 +183,7 @@ def test_float_change_screens(self):
     self.testXeyes()
     self.testXclock()
     self.c.window.toggle_floating()
-    assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
+    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.group.info()['floating_info']['clients'] == ['xclock']
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
@@ -201,7 +201,7 @@ def test_float_change_screens(self):
         'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
     self.c.group['a'].toscreen()
     assert self.c.group.info()['name'] == 'a'
-    assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
+    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.window.info()['name'] == 'xclock'
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
@@ -217,7 +217,7 @@ def test_float_change_screens(self):
     assert self.c.group.info()['name'] == 'c'
     self.c.group['a'].toscreen()
     assert self.c.group.info()['name'] == 'a'
-    assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
+    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.window.info()['name'] == 'xclock'
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
@@ -231,7 +231,7 @@ def test_float_change_screens(self):
     assert self.c.group.info()['name'] == 'd'
     self.c.group['a'].toscreen()
     assert self.c.group.info()['name'] == 'a'
-    assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
+    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.window.info()['name'] == 'xclock'
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
@@ -245,7 +245,7 @@ def test_float_change_screens(self):
     assert self.c.group.info()['name'] == 'b'
     self.c.group['a'].toscreen()
     assert self.c.group.info()['name'] == 'a'
-    assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
+    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.window.info()['name'] == 'xclock'
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
