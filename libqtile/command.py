@@ -424,7 +424,7 @@ class CommandObject(object):
             try:
                 return (True, str(eval(code)))
             except SyntaxError:
-                exec code
+                exec(code)
                 return (True, None)
         except:
             error = traceback.format_exc().strip().split("\n")[-1]
