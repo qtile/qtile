@@ -17,7 +17,7 @@ class TextLayout(object):
             layout.set_ellipsize(pangocffi.ELLIPSIZE_END)
         desc = pangocffi.FontDescription()
         desc.set_family(font_family)
-        desc.set_absolute_size(font_size * pangocffi.SCALE)
+        desc.set_absolute_size(pangocffi.units_from_double(font_size))
         layout.set_font_description(desc)
         self.font_shadow = font_shadow
         self.layout = layout
@@ -46,7 +46,7 @@ class TextLayout(object):
     @width.setter
     def width(self, value):
         self._width = value
-        self.layout.set_width(value * pangocffi.SCALE)
+        self.layout.set_width(pangocffi.units_from_double(value))
 
     @width.deleter
     def width(self):
@@ -80,7 +80,7 @@ class TextLayout(object):
     def font_size(self, size):
         d = self.fontdescription()
         d.set_size(size)
-        d.set_absolute_size(size * pangocffi.SCALE)
+        d.set_absolute_size(pangocffi.units_from_double(size))
         self.layout.set_font_description(d)
 
     def draw(self, x, y):
