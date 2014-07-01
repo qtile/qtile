@@ -4,7 +4,7 @@ import subprocess
 
 import cairocffi
 
-import base
+from . import base
 from .. import bar
 
 __all__ = [

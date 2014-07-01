@@ -1,4 +1,6 @@
-from base import Layout
+from __future__ import division
+
+from .base import Layout
 from .. import utils
 
 
@@ -147,12 +149,12 @@ class Tile(Layout):
                 w = int(screenWidth * self.ratio) \
                     if len(self.slave_windows) or not self.expand \
                     else screenWidth
-                h = screenHeight / self.master
+                h = screenHeight // self.master
                 x = screen.x
                 y = screen.y + pos * h
             else:
                 w = screenWidth - int(screenWidth * self.ratio)
-                h = screenHeight / (len(self.slave_windows))
+                h = screenHeight // (len(self.slave_windows))
                 x = screen.x + int(screenWidth * self.ratio)
                 y = screen.y + self.clients[self.master:].index(client) * h
             if client is self.focused:

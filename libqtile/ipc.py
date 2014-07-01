@@ -30,9 +30,10 @@ import logging
 import os.path
 import socket
 import struct
-import gobject
 import errno
 import fcntl
+
+from .compat import gobject
 
 HDRLEN = 4
 BUFSIZE = 1024 * 1024
@@ -46,7 +47,7 @@ class _IPC:
     def _read(self, sock):
         try:
             size = struct.unpack("!L", sock.recv(HDRLEN))[0]
-            data = ""
+            data = "".encode()
             while len(data) < size:
                 data += sock.recv(BUFSIZE)
             return self._unpack_body(data)
@@ -137,7 +138,7 @@ class Server(_IPC):
             flags = fcntl.fcntl(conn, fcntl.F_GETFD)
             fcntl.fcntl(conn, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
             conn.setblocking(0)
-            data = {'buffer': ''}  # object which holds connection state
+            data = {'buffer': ''.encode()}  # object which holds connection state
             self.log.info('Add io watch on _connection')
             gobject.io_add_watch(conn, gobject.IO_IN, self._receive, data)
             return True

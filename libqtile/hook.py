@@ -1,4 +1,4 @@
-import utils
+from . import utils
 
 subscriptions = {}
 SKIPLOG = set()

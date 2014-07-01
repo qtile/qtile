@@ -1,4 +1,4 @@
-import base
+from . import base
 import logging
 from pythonwifi.iwlibs import Wireless, Iwstats
 

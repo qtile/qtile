@@ -1,4 +1,4 @@
-import base
+from . import base
 import imaplib
 import re
 import logging
@@ -85,6 +85,6 @@ class GmailChecker(base.ThreadedPollText):
                         'GmailChecker UNKNOWN error, answer: %s, raw_data: %s'
                         % (str(answer), str(raw_data)))
                     return "UNKNOWN ERROR"
-            except Exception, _error:
+            except Exception as _error:
                 _logger.exception('GmailChecker error: %s' % str(_error))
                 return "ERROR"

@@ -2,7 +2,7 @@ import libqtile.manager
 import libqtile.config
 from libqtile import layout, bar, widget
 from libqtile.config import Screen
-from utils import Xephyr
+from .utils import Xephyr
 
 LEFT_ALT = 'mod1'
 WINDOWS = 'mod4'

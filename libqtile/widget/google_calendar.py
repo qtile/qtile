@@ -52,13 +52,13 @@
 # borrows liberally from that one.
 ###################################################################
 
-import base
+from . import base
 import httplib2
 import datetime
 import re
 import dateutil.parser
 import threading
-import gobject
+from ..compat import gobject
 
 from apiclient.discovery import build
 from oauth2client.client import OAuth2WebServerFlow

@@ -1,10 +1,11 @@
-import command
-import hook
-import window
-import utils
 import contextlib
 import xcffib
 import xcffib.xproto
+
+from . import command
+from . import hook
+from . import window
+from . import utils
 
 
 class _Group(command.CommandObject):
@@ -243,7 +244,7 @@ class _Group(command.CommandObject):
 
     def _items(self, name):
         if name == "layout":
-            return (True, range(len(self.layouts)))
+            return (True, list(range(len(self.layouts))))
         elif name == "window":
             return (True, [i.window.wid for i in self.windows])
         elif name == "screen":

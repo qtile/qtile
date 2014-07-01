@@ -1,9 +1,10 @@
 import collections
-import utils
 import math
-import pangocffi
 import cairocffi
 import xcffib.xproto
+
+from . import pangocffi
+from . import utils
 
 
 class TextLayout(object):

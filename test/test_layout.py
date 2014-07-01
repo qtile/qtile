@@ -2,7 +2,7 @@ from libqtile import layout
 import libqtile.manager
 import libqtile.config
 from time import sleep
-from utils import Xephyr
+from .utils import Xephyr
 
 
 def assertFocused(self, name):

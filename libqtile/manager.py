@@ -19,31 +19,30 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from config import Drag, Click, Screen, Match, Rule
-from utils import QtileError
 from libqtile.log_utils import init_log
 from libqtile.dgroups import DGroups
-from state import QtileState
-from group import _Group
-from StringIO import StringIO
 from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
 import atexit
-import command
-import gobject
-import hook
 import logging
 import os
 import os.path
 import pickle
 import sys
-import utils
-import window
 import xcffib
 import xcffib.xinerama
 import xcffib.xproto
-import xcbq
 
-from widget.base import _Widget
+from .compat import gobject, BytesIO
+from .config import Drag, Click, Screen, Match, Rule
+from .group import _Group
+from .state import QtileState
+from .utils import QtileError
+from .widget.base import _Widget
+from . import command
+from . import hook
+from . import utils
+from . import window
+from . import xcbq
 
 
 class Qtile(command.CommandObject):
@@ -190,7 +189,7 @@ class Qtile(command.CommandObject):
         hook.subscribe.setgroup(self.update_net_desktops)
 
         if state:
-            st = pickle.load(StringIO(state))
+            st = pickle.load(BytesIO(state.encode()))
             st.apply(self)
 
     def _process_fake_screens(self):
@@ -490,7 +489,7 @@ class Qtile(command.CommandObject):
         and drag and drop of tabs in chrome
         """
 
-        windows = [wid for wid, c in self.windowMap.iteritems() if c.group]
+        windows = [wid for wid, c in self.windowMap.items() if c.group]
         self.root.set_property("_NET_CLIENT_LIST", windows)
         # TODO: check stack order
         self.root.set_property("_NET_CLIENT_LIST_STACKING", windows)
@@ -920,17 +919,17 @@ class Qtile(command.CommandObject):
 
     def _items(self, name):
         if name == "group":
-            return True, self.groupMap.keys()
+            return True, list(self.groupMap.keys())
         elif name == "layout":
-            return True, range(len(self.currentGroup.layouts))
+            return True, list(range(len(self.currentGroup.layouts)))
         elif name == "widget":
-            return False, self.widgetMap.keys()
+            return False, list(self.widgetMap.keys())
         elif name == "bar":
             return False, [x.position for x in self.currentScreen.gaps]
         elif name == "window":
             return True, self.listWID()
         elif name == "screen":
-            return True, range(len(self.screens))
+            return True, list(range(len(self.screens)))
 
     def _select(self, name, sel):
         if name == "group":
@@ -1011,7 +1010,7 @@ class Qtile(command.CommandObject):
         """
             List of all addressible widget names.
         """
-        return self.widgetMap.keys()
+        return list(self.widgetMap.keys())
 
     def cmd_nextlayout(self, group=None):
         """
@@ -1084,7 +1083,7 @@ class Qtile(command.CommandObject):
         d.detail = keycode
         try:
             d.state = utils.translateMasks(modifiers)
-        except KeyError, v:
+        except KeyError as v:
             return v.args[0]
         self.handle_KeyPress(d)
 
@@ -1103,10 +1102,10 @@ class Qtile(command.CommandObject):
         if '--no-spawn' not in argv:
             argv.append('--no-spawn')
 
-        buf = StringIO()
-        pickle.dump(QtileState(self), buf)
-        argv = filter(lambda s: not s.startswith('--with-state'), argv)
-        argv.append('--with-state=' + buf.getvalue())
+        buf = BytesIO()
+        pickle.dump(QtileState(self), buf, protocol=0)
+        argv = [s for s in argv if not s.startswith('--with-state')]
+        argv.append('--with-state=' + buf.getvalue().decode())
 
         self.cmd_execute(sys.executable, argv)
 
@@ -1230,7 +1229,7 @@ class Qtile(command.CommandObject):
 
     def cmd_next_urgent(self):
         try:
-            nxt = filter(lambda w: w.urgent, self.windowMap.values())[0]
+            nxt = [w for w in self.windowMap.values() if w.urgent][0]
             nxt.group.cmd_toscreen()
             nxt.group.focus(nxt, False)
         except IndexError:
@@ -1337,6 +1336,31 @@ class Qtile(command.CommandObject):
 
     def cmd_delgroup(self, group):
         return self.delGroup(group)
+
+    def cmd_eval(self, code):
+        """
+            Evaluates code in the same context as this function.
+            Return value is (success, result), success being a boolean and
+            result being a string representing the return value of eval, or
+            None if exec was used instead.
+        """
+        try:
+            try:
+                return (True, str(eval(code)))
+            except SyntaxError:
+                exec(code)
+                return (True, None)
+        except:
+            error = traceback.format_exc().strip().split("\n")[-1]
+            return (False, error)
+
+    def cmd_function(self, function):
+        """ Call a function with qtile instance as argument """
+        try:
+            function(self)
+        except Exception:
+            error = traceback.format_exc()
+            self.log.error('Exception calling "%s":\n%s' % (function, error))
 
     def cmd_add_rule(self, match_args, rule_args, min_priorty=False):
         """

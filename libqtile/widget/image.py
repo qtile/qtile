@@ -1,7 +1,7 @@
 import os
 import cairocffi
 
-import base
+from . import base
 from .. import bar
 
 class Image(base._Widget, base.MarginMixin):

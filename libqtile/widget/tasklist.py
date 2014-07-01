@@ -1,6 +1,6 @@
 import cairocffi
 from .. import bar, hook
-import base
+from . import base
 
 
 class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
@@ -145,7 +145,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             return cache
 
         icons = sorted(
-            window.icons.iteritems(),
+            iter(window.icons.items()),
             key=lambda x: abs(self.icon_size-int(x[0].split("x")[0]))
         )
         icon = icons[0]

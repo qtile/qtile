@@ -26,8 +26,9 @@
 
 import os
 import sys
-import utils
 import traceback
+
+from . import utils
 
 
 class ConfigError(Exception):
@@ -51,7 +52,7 @@ class File(object):
             try:
                 sys.path.insert(0, os.path.dirname(self.fname))
                 config = __import__(os.path.basename(self.fname)[:-3])
-            except Exception, v:
+            except Exception as v:
                 # On restart, user potentially has some windows open, but they
                 # screwed up their config. So as not to lose their apps, we
                 # just load the default config here.
@@ -85,7 +86,7 @@ class File(object):
 
         # We delay importing here to avoid a circular import issue when
         # testing.
-        from resources import default_config
+        from .resources import default_config
         for option in config_options:
             if hasattr(config, option):
                 v = getattr(config, option)

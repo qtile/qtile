@@ -1,15 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import base
-import urllib
-import urllib2
+from . import base
 from xml.dom import minidom
 
 try:
     import json
 except ImportError:
     import simplejson as json
+
+try:
+    from urllib.request import urlopen # Python 3
+    from urllib.parse import urlencode
+except ImportError:
+    from urllib import urlencode # Python 2
+    from urllib2 import urlopen
 
 QUERY_URL = 'http://query.yahooapis.com/v1/public/yql?'
 WEATHER_URL = 'http://weather.yahooapis.com/forecastrss?'
@@ -56,7 +61,7 @@ class YahooWeather(base.ThreadedPollText):
         self.add_defaults(YahooWeather.defaults)
 
     def fetch_woeid(self, location):
-        url = QUERY_URL + urllib.urlencode({
+        url = QUERY_URL + urlencode({
             'q': 'select woeid from geo.places where text="%s"' % location,
             'format': 'json'
         })
@@ -77,7 +82,7 @@ class YahooWeather(base.ThreadedPollText):
             if not self.woeid:
                 return None
         format = 'c' if self.metric else 'f'
-        url = WEATHER_URL + urllib.urlencode({'w': self.woeid, 'u': format})
+        url = WEATHER_URL + urlencode({'w': self.woeid, 'u': format})
 
         try:
             response = urllib2.urlopen(url).read()

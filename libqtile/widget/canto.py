@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import base
+from . import base
 from subprocess import check_output, call
 
 

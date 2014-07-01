@@ -11,7 +11,7 @@
 from .. import utils
 from mpd import MPDClient, CommandError
 import atexit
-import base
+from . import base
 import re
 
 

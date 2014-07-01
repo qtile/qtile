@@ -16,7 +16,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import base
+from . import base
 
 class DF(base.ThreadedPollText):
     """

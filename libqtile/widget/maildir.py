@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 et tw=80:
 
-import base
+from . import base
+from ..compat import string_type
 
 import os.path
 import mailbox
@@ -29,7 +30,7 @@ class Maildir(base.ThreadedPollText):
 
         # if it looks like a list of strings then we just convert them
         # and use the name as the label
-        if isinstance(subFolders[0], basestring):
+        if isinstance(subFolders[0], string_type):
             self._subFolders = [
                 {"path": folder, "label": folder}
                 for folder in subFolders
@@ -68,5 +69,5 @@ class Maildir(base.ThreadedPollText):
         @return: a string representation of the given state.
         """
         return self._separator.join(
-            "{}: {}".format(*item) for item in state.iteritems()
+            "{}: {}".format(*item) for item in state.items()
         )

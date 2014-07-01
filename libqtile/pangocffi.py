@@ -26,7 +26,8 @@
 from cffi import FFI
 import xcffib
 import cairocffi
-import commands
+
+from .compat import getoutput
 
 ffi = FFI()
 
@@ -128,14 +129,14 @@ ffi.cdef("""
 
 def pkgconfig(*packages, **kw):
     flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries'}
-    for token in commands.getoutput("pkg-config --libs --cflags %s" % ' '.join(packages)).split():
-        if flag_map.has_key(token[:2]):
+    for token in getoutput("pkg-config --libs --cflags %s" % ' '.join(packages)).split():
+        if token[:2] in flag_map:
             kw.setdefault(flag_map.get(token[:2]), []).append(token[2:])
         else:
             # no need to -lpthread, we already have those symbols
             assert token == '-pthread'
 
-    for k, v in kw.iteritems(): # remove duplicated
+    for k, v in list(kw.items()): # remove duplicated
         kw[k] = list(set(v))
     return kw
 
@@ -232,7 +233,7 @@ class FontDescription(object):
             self._pointer = pointer
 
     def set_family(self, family):
-        C.pango_font_description_set_family(self._pointer, family)
+        C.pango_font_description_set_family(self._pointer, family.encode())
 
     def get_family(self):
         ret = C.pango_font_description_get_family(self._pointer)

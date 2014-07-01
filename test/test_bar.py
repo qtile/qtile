@@ -5,7 +5,7 @@ import libqtile.widget
 import libqtile.manager
 import libqtile.config
 import libqtile.confreader
-from utils import Xephyr
+from .utils import Xephyr
 
 
 class GBConfig:

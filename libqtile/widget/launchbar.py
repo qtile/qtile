@@ -58,7 +58,7 @@ class LaunchBar(base._Widget):
 
     def setup_images(self):
         """ Create image structures for each icon files. """
-        for img_name, iconfile in self.icons_files.iteritems():
+        for img_name, iconfile in self.icons_files.items():
             try:
                 img = cairocffi.ImageSurface.create_from_png(iconfile)
             except cairocffi.Error:

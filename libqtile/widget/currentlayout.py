@@ -1,4 +1,4 @@
-import base
+from . import base
 from .. import bar, hook
 
 

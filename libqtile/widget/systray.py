@@ -1,5 +1,5 @@
 from .. import bar, xcbq, window
-import base
+from . import base
 
 import xcffib
 from xcffib.xproto import EventMask, SetMode

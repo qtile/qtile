@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import base
+from . import base
 from subprocess import Popen, PIPE
 import re
 
@@ -31,7 +31,7 @@ class ThermalSensor(base.InLoopPollText):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(ThermalSensor.defaults)
         self.sensors_temp = re.compile(
-            ur"""
+            r"""
             ([a-zA-Z]+        #Tag
             \s?[0-9]+):       #Tag number
             \s+[+-]           #Temp signed

@@ -20,9 +20,12 @@
 
 import operator
 import functools
-import gobject
+import logging
 import os
-import xcbq
+
+from .compat import gobject, reduce, string_type, unicode
+
+from . import xcbq
 
 
 class QtileError(Exception):
@@ -147,7 +150,7 @@ def rgb(x):
         else:
             alpha = 1
         return (x[0] / 255.0, x[1] / 255.0, x[2] / 255.0, alpha)
-    elif isinstance(x, basestring):
+    elif isinstance(x, string_type):
         if x.startswith("#"):
             x = x[1:]
         if "." in x:
