@@ -53,8 +53,8 @@ wm_protocols = conn.core.InternAtom(0, len("WM_PROTOCOLS"), "WM_PROTOCOLS").repl
 delete_window = conn.core.InternAtom(0, len("WM_DELETE_WINDOW"), "WM_DELETE_WINDOW").reply().atom
 conn.core.ChangeProperty(xcb.xproto.PropMode.Replace,
         window, wm_protocols,
-        xcb.xproto.Atom.ATOM, 32, 4,
-        struct.pack("=L", delete_window))
+        xcb.xproto.Atom.ATOM, 32, 1,
+        struct.pack("=I", delete_window))
 
 conn.core.ConfigureWindow(window,
         xcb.xproto.ConfigWindow.X | xcb.xproto.ConfigWindow.Y |
