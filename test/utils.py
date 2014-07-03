@@ -5,6 +5,7 @@ import logging
 import os
 import subprocess
 import sys
+import tempfile
 import time
 import traceback
 import xcb
@@ -56,7 +57,7 @@ class Xephyr(object):
         self.xinerama = xinerama
         self.width = width
         self.height = height
-        self.fname = '/tmp/qtilesocket'
+        _, self.fname = tempfile.mkstemp()
 
     def __call__(self, function):
         def setup():
@@ -146,7 +147,8 @@ class Xephyr(object):
                 q.loop()
             except Exception:
                 traceback.print_exc(file=sys.stderr)
-            sys.exit(0)
+            finally:
+                os._exit(0)
         else:
             self.qtilepid = pid
             self.c = libqtile.command.Client(self.fname)
@@ -169,8 +171,10 @@ class Xephyr(object):
         start = len(self.c.windows())
         pid = os.fork()
         if pid == 0:
-            os.putenv("DISPLAY", self.display)
-            os.execv(path, args)
+            try:
+                os.execve(path, args, {"DISPLAY": self.display})
+            finally:
+                os._exit(1)
         for i in range(20):
             if len(self.c.windows()) > start:
                 break
