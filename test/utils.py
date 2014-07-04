@@ -121,7 +121,8 @@ class Xephyr(object):
 
     def _waitForXephyr(self):
         # Try until Xephyr is up
-        while True:
+        start = time.time()
+        while time.time() < start + 10:
             try:
                 conn = xcb.xcb.connect(self.display)
                 break
@@ -135,7 +136,8 @@ class Xephyr(object):
         del conn
 
     def _waitForQtile(self, errfile):
-        while True:
+        start = time.time()
+        while time.time() < start + 10:
             try:
                 if self.c.status() == "OK":
                     break
