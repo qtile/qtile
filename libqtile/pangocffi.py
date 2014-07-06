@@ -133,6 +133,10 @@ def pkgconfig(*packages, **kw):
         if token[:2] in flag_map:
             kw.setdefault(flag_map.get(token[:2]), []).append(token[2:])
         else:
+            if token == 'Package':
+                print "looks like you don't have one of %s installed" % str(packages)
+                import sys
+                sys.exit(1)
             # no need to -lpthread, we already have those symbols
             assert token == '-pthread'
 
