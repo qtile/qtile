@@ -575,10 +575,6 @@ class Qtile(command.CommandObject):
                 e = self.conn.conn.poll_for_event()
                 if not e:
                     break
-                # This should be done in xpyb
-                # client mesages start at 128
-                if e.response_type >= 128:
-                    e = xcb.xproto.ClientMessageEvent(e)
 
                 ename = e.__class__.__name__
 
