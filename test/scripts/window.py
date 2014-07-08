@@ -6,14 +6,8 @@
 from __future__ import print_function
 import sys
 import time
-import struct
 import xcffib
 import xcffib.xproto
-try:
-    from StringIO import StringIO # Python 2
-except ImportError:
-    from io import StringIO # Python 3
-
 
 def configure(window):
     window.configure(
