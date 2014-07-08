@@ -407,8 +407,6 @@ class Qtile(command.CommandObject):
             hook.fire("client_killed", c)
             self.reset_gaps(c)
             if getattr(c, "group", None):
-                c.window.unmap()
-                c.state = window.WithdrawnState
                 c.group.remove(c)
             del self.windowMap[win]
             self.update_client_list()
