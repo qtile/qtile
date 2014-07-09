@@ -85,6 +85,12 @@ layouts = [
     layout.Stack(num_stacks=2)
 ]
 
+widget_defaults = dict(
+    font = 'Arial',
+    fontsize = 16,
+    padding = 3,
+)
+
 screens = [
     Screen(
         bottom=bar.Bar(
@@ -108,4 +114,3 @@ cursor_warp = False
 floating_layout = layout.Floating()
 mouse = ()
 auto_fullscreen = True
-widget_defaults = {}
