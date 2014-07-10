@@ -638,6 +638,7 @@ def test_rotate(self):
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE
     )
+    time.sleep(0.1)
     s = self.c.screens()[0]
     assert s["height"] == width
     assert s["width"] == height
@@ -653,6 +654,7 @@ def test_resize_(self):
             "-display", utils.DISPLAY
         ]
     )
+    time.sleep(0.1)
     d = self.c.screen.info()
     assert d["width"] == 480
     assert d["height"] == 640

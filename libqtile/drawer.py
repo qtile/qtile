@@ -260,32 +260,20 @@ class Drawer:
     def set_source_rgb(self, colour):
         if type(colour) == list:
             linear = cairocffi.LinearGradient(0.0, 0.0, 0.0, self.height)
-            c1 = utils.rgb(colour[0])
-            c2 = utils.rgb(colour[1])
-            if len(c1) < 4:
-                c1[3] = 1
-            if len(c2) < 4:
-                c2[3] = 1
-            linear.add_color_stop_rgba(0.0, c1[0], c1[1], c1[2], c1[3])
-            linear.add_color_stop_rgba(1.0, c2[0], c2[1], c2[2], c2[3])
+            step_size = 1.0 / (len(colour)-1)
+            step = 0.0
+            for c in colour:
+                rgb_col = utils.rgb(c)
+                if len(rgb_col) < 4:
+                    rgb_col[3] = 1
+                linear.add_color_stop_rgba(step, *rgb_col)
+                step += step_size
             self.ctx.set_source(linear)
         else:
             self.ctx.set_source_rgba(*utils.rgb(colour))
 
     def clear(self, colour):
-        if type(colour) == list:
-            linear = cairocffi.LinearGradient(0.0, 0.0, 0.0, self.height)
-            c1 = utils.rgb(colour[0])
-            c2 = utils.rgb(colour[1])
-            if len(c1) < 4:
-                c1[3] = 1
-            if len(c2) < 4:
-                c2[3] = 1
-            linear.add_color_stop_rgba(0.0, c1[0], c1[1], c1[2], c1[3])
-            linear.add_color_stop_rgba(1.0, c2[0], c2[1], c2[2], c2[3])
-            self.ctx.set_source(linear)
-        else:
-            self.set_source_rgb(colour)
+        self.set_source_rgb(colour)
         self.ctx.rectangle(0, 0, self.width, self.height)
         self.ctx.fill()
         self.ctx.stroke()

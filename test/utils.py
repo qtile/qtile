@@ -3,6 +3,7 @@ import libqtile.hook
 import libqtile.ipc
 import logging
 import os
+import select
 import subprocess
 import sys
 import tempfile
@@ -79,10 +80,16 @@ class Xephyr(object):
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE,
                         )
-            time.sleep(0.05)
+
             self.testwindows = []
             if self.start_qtile:
-                self.startQtile(self.config)
+                try:
+                    self.startQtile(self.config)
+                except:
+                    # if qtile can't start, kill Xephyr
+                    os.kill(self.sub.pid, 9)
+                    os.waitpid(self.sub.pid, 0)
+                    raise
 
         def teardown():
             if self.start_qtile:
@@ -114,45 +121,61 @@ class Xephyr(object):
 
     def _waitForXephyr(self):
         # Try until Xephyr is up
-        for i in range(50):
+        start = time.time()
+        while time.time() < start + 10:
             try:
                 conn = xcb.xcb.connect(self.display)
                 break
             except xcb.ConnectException:
-                time.sleep(0.1)
-        else:
-            raise AssertionError("Could not connect to display.")
+                pass
+
+            ret = self.sub.poll()
+            if ret is not None:
+                raise AssertionError("Xephyr closed with return code: %d" % ret)
         conn.disconnect()
         del conn
 
-    def _waitForQtile(self):
-        for i in range(20):
+    def _waitForQtile(self, errfile):
+        start = time.time()
+        while time.time() < start + 10:
             try:
                 if self.c.status() == "OK":
                     break
             except libqtile.ipc.IPCError:
                 pass
-            time.sleep(0.1)
-        else:
-            raise AssertionError("Timeout waiting for Qtile")
+
+            err, _, _ = select.select([errfile], [], [], 0.1)
+            if err:
+                error = errfile.read()
+                if error:
+                    raise AssertionError("Error launching Qtile, traceback:\n%s" % error)
+                else:
+                    raise AssertionError("Qtile quit without exception")
 
     def startQtile(self, config):
         self._waitForXephyr()
+        rpipe, wpipe = os.pipe()
         pid = os.fork()
         if pid == 0:
+            os.close(rpipe)
             try:
                 q = libqtile.manager.Qtile(
                     config, self.display, self.fname,
                     log=libqtile.manager.init_log(logging.CRITICAL))
                 q.loop()
             except Exception:
-                traceback.print_exc(file=sys.stderr)
+                with os.fdopen(wpipe, 'w') as f:
+                    traceback.print_exc(file=f)
+                os._exit(0)
             finally:
+                os.close(wpipe)
                 os._exit(0)
         else:
+            os.close(wpipe)
             self.qtilepid = pid
             self.c = libqtile.command.Client(self.fname)
-            self._waitForQtile()
+            with os.fdopen(rpipe, 'r') as f:
+                self._waitForQtile(f)
 
     def stopQtile(self):
         assert self.c.status()

@@ -29,9 +29,8 @@ class Icon(window._Window):
             height = icon_size
 
         if height > icon_size:
-            new_width = width / height * icon_size
+            width = width * icon_size / height
             height = icon_size
-            width = new_width
         if height <= 0:
             width = icon_size
             height = icon_size
@@ -39,7 +38,6 @@ class Icon(window._Window):
         self.width = width
         self.height = height
         self.window.set_attribute(backpixmap=self.systray.drawer.pixmap)
-        self.systray.draw()
         return False
 
     def handle_DestroyNotify(self, event):
@@ -64,24 +62,27 @@ class TrayWindow(window._Window):
         atoms = self.qtile.conn.atoms
 
         opcode = event.type
-        data = event.data
-        task = data.data32[2]
+        data = event.data.data32
+        message = data[1]
+        wid = data[2]
 
         conn = self.qtile.conn.conn
         parent = self.systray.bar.window.window
 
-        if opcode == atoms['_NET_SYSTEM_TRAY_OPCODE']:
+        # message == 0 corresponds to SYSTEM_TRAY_REQUEST_DOCK
+        # TODO: handle system tray messages http://standards.freedesktop.org/systemtray-spec/systemtray-spec-latest.html
+        if opcode == atoms['_NET_SYSTEM_TRAY_OPCODE'] and message == 0:
             try:
-                w = xcbq.Window(self.qtile.conn, task)
+                w = xcbq.Window(self.qtile.conn, wid)
                 icon = Icon(w, self.qtile, self.systray)
-                self.systray.icons[task] = icon
-                self.qtile.windowMap[task] = icon
+                self.systray.icons[wid] = icon
+                self.qtile.windowMap[wid] = icon
 
                 # add icon window to the save-set, so it gets reparented
                 # to the root window when qtile dies
-                conn.core.ChangeSaveSet(SetMode.Insert, task)
+                conn.core.ChangeSaveSet(SetMode.Insert, wid)
 
-                conn.core.ReparentWindow(task, parent.wid, 0, 0)
+                conn.core.ReparentWindow(wid, parent.wid, 0, 0)
                 conn.flush()
                 w.map()
             except xcffib.xproto.DrawableError:
