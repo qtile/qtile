@@ -1,3 +1,5 @@
+from __future__ import division
+
 from .. import bar, xcbq, window
 from . import base
 
@@ -29,7 +31,7 @@ class Icon(window._Window):
             height = icon_size
 
         if height > icon_size:
-            width = width * icon_size / height
+            width = width * icon_size // height
             height = icon_size
         if height <= 0:
             width = icon_size
