@@ -80,7 +80,6 @@ class Qtile(command.CommandObject):
         self.fname = fname
         hook.init(self)
 
-        self.keyMap = {}
         self.windowMap = {}
         self.widgetMap = {}
         self.groupMap = {}
