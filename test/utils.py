@@ -9,8 +9,8 @@ import sys
 import tempfile
 import time
 import traceback
-import xcb
-import xcb.xproto
+import xcffib
+import xcffib.xproto
 from nose.tools import with_setup, assert_raises
 from nose.plugins.attrib import attr
 from functools import wraps
@@ -124,9 +124,9 @@ class Xephyr(object):
         start = time.time()
         while time.time() < start + 10:
             try:
-                conn = xcb.xcb.connect(self.display)
+                conn = xcffib.connect(self.display)
                 break
-            except xcb.ConnectException:
+            except xcffib.ConnectionException:
                 pass
 
             ret = self.sub.poll()
