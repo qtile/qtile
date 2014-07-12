@@ -195,6 +195,13 @@ class Subscribe:
         """
         return self._subscribe("screen_change", func)
 
+    def current_screen_change(self, func):
+        """
+            Called when the current screen (i.e. the screen with focus)
+            changes; no arguments.
+        """
+        return self._subscribe("current_screen_change", func)
+
 subscribe = Subscribe()
 
 

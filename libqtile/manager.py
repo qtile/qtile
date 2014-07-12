@@ -963,8 +963,11 @@ class Qtile(command.CommandObject):
         """
         if len(self.screens) < n - 1:
             return
+        old = self.currentScreen
         self.currentScreen = self.screens[n]
-        self.currentGroup.focus(self.currentWindow, True)
+        if old != self.currentScreen:
+            hook.fire("current_screen_change")
+            self.currentGroup.focus(self.currentWindow, True)
 
     def moveToGroup(self, group):
         """
