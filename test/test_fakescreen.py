@@ -68,7 +68,7 @@ class FakeScreenConfig:
                 widget.Sep(),
                 widget.Systray(),
                 widget.Sep(),
-                widget.Clock('%H:%M:%S %d.%m.%Y',
+                widget.Clock(format='%H:%M:%S %d.%m.%Y',
                              fontsize=FONTSIZE, padding=6),
             ],
                     24,
