@@ -81,7 +81,8 @@ class TrayWindow(window._Window):
 
                 # add icon window to the save-set, so it gets reparented
                 # to the root window when qtile dies
-                conn.core.ChangeSaveSet(SetMode.Insert, wid)
+                # TODO: figure out why this gives a BadMatch with xcffib.
+                # conn.core.ChangeSaveSet(SetMode.Insert, wid)
 
                 conn.core.ReparentWindow(wid, parent.wid, 0, 0)
                 conn.flush()
