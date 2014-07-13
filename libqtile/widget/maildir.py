@@ -12,30 +12,34 @@ class Maildir(base.ThreadedPollText):
     A simple widget showing the number of new mails in maildir mailboxes.
     """
 
-    # TODO: make this use our settings framework
-    def __init__(self, maildirPath, subFolders, separator=" ", **config):
-        """
-        Constructor.
+    defaults = [
+        ("maildirPath", "~/Mail", "path to the Maildir folder"),
+        ("subFolders", [], 'The subfolders to scan (e.g. [{"path": "INBOX", '
+            '"label": "Home mail"}, {"path": "spam", "label": "Home junk"}]'),
+        ("separator", " ", "the string to put between the subfolder strings."),
+    ]
 
-        @param maildirPath: the path to the Maildir (e.g. "~/Mail").
-        @param subFolders: the subfolders to scan (e.g. [{"path": "INBOX", "label": "Home mail"}, {"path": "spam", "label": "Home junk"}]).
-        @param separator: the string to put between the subfolder strings.
-        @param timeout: the refresh timeout in seconds.
-        """
+    def __init__(self, maildirPath=None, subFolders=None, separator=" ", **config):
         base.ThreadedPollText.__init__(self, **config)
-        self._maildirPath = os.path.expanduser(maildirPath)
-        self._separator = separator
-        self._subFolders = []
+        self.add_defaults(Maildir.defaults)
+
+        if maildirPath is not None:
+            base.deprecated("maildirPath is deprecated")
+            self.maildirPath = maildirPath
+        if subFolders is not None:
+            base.deprecated("subFolders is deprecated")
+            self.subFolders = subFolders
+        if separator != " ":
+            base.deprecated("separator is deprecated")
+            self.separator = separator
 
         # if it looks like a list of strings then we just convert them
         # and use the name as the label
-        if isinstance(subFolders[0], basestring):
-            self._subFolders = [
+        if isinstance(self.subFolders[0], basestring):
+            self.subFolders = [
                 {"path": folder, "label": folder}
                 for folder in subFolders
             ]
-        else:
-            self._subFolders = subFolders
 
     def poll(self):
         """
@@ -49,8 +53,8 @@ class Maildir(base.ThreadedPollText):
             for path in iter(paths):
                 yield path.rsplit(":")[0]
 
-        for subFolder in self._subFolders:
-            path = os.path.join(self._maildirPath, subFolder["path"])
+        for subFolder in self.subFolders:
+            path = os.path.join(self.maildirPath, subFolder["path"])
             maildir = mailbox.Maildir(path)
             state[subFolder["label"]] = 0
 
@@ -67,6 +71,6 @@ class Maildir(base.ThreadedPollText):
         @param state: a dictionary as returned by mailbox_state.
         @return: a string representation of the given state.
         """
-        return self._separator.join(
+        return self.separator.join(
             "{}: {}".format(*item) for item in state.iteritems()
         )
