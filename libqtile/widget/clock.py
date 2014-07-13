@@ -3,8 +3,6 @@ from datetime import datetime
 from contextlib import contextmanager
 
 import base
-import warnings
-import exceptions
 import os
 
 @contextmanager
@@ -33,8 +31,8 @@ class Clock(base.InLoopPollText):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(Clock.defaults)
         if fmt is not None:
-            warnings.warn('fmt kwarg or positional argument is deprecated. '
-                          'Please use format.', exceptions.DeprecationWarning)
+            base.deprecated('fmt kwarg or positional argument is deprecated. '
+                            'Please use format.')
             self.format = fmt
 
     def tick(self):
