@@ -9,7 +9,8 @@ class Clipboard(base._TextBox):
     defaults = [
         ("selection", "CLIPBOARD",
             "the selection to display(CLIPBOARD or PRIMARY)"),
-        ("max_width", 10, "size in pixels of task title"),
+        ("max_width", 10, "maximum number of characters to display "
+            "(None for all, useful when width is bar.STRETCH)"),
         ("timeout", 10,
             "Default timeout (seconds) for display text, None to keep forever"
          ),
@@ -61,7 +62,7 @@ class Clipboard(base._TextBox):
                 text = selection["selection"].replace("\n", " ")
 
                 text = text.strip()
-                if len(text) > self.max_width:
+                if self.max_width is not None and len(text) > self.max_width:
                     text = text[:self.max_width] + "..."
 
             self.text = text
