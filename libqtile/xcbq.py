@@ -3,6 +3,7 @@
     complete - it only implements the subset of functionalty needed by qtile.
 """
 from xcb.xproto import CW, WindowClass, EventMask
+from xcb.xfixes import SelectionEventMask
 import struct
 import utils
 import xcb.randr
@@ -327,6 +328,24 @@ class RandR:
             )
             l.append(d)
         return l
+
+
+class XFixes:
+    selection_mask = SelectionEventMask.SetSelectionOwner | \
+        SelectionEventMask.SelectionClientClose | \
+        SelectionEventMask.SelectionWindowDestroy
+
+    def __init__(self, conn):
+        self.conn = conn
+        self.ext = conn.conn(xcb.xfixes.key)
+        self.ext.QueryVersion(xcb.xfixes.MAJOR_VERSION,
+                              xcb.xfixes.MINOR_VERSION)
+
+    def select_selection_input(self, window, selection="PRIMARY"):
+        SELECTION = self.conn.atoms[selection]
+        self.conn.xfixes.ext.SelectSelectionInput(window.wid,
+                                                  SELECTION,
+                                                  self.selection_mask)
 
 
 class GC:
@@ -741,6 +760,7 @@ class Connection:
     _extmap = {
         "xinerama": Xinerama,
         "randr": RandR,
+        "xfixes": XFixes,
     }
 
     def __init__(self, display):
