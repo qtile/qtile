@@ -1,6 +1,7 @@
 import base
 from .. import bar, hook
 
+from .. import xcbq
 import gobject
 
 
@@ -10,7 +11,14 @@ class Clipboard(base._TextBox):
             "the selection to display(CLIPBOARD or PRIMARY)"),
         ("max_width", 10, "size in pixels of task title"),
         ("timeout", 10,
-            "Default timeout (seconds) for display text, None to keep forever")
+            "Default timeout (seconds) for display text, None to keep forever"
+         ),
+        ("blacklist", ["keepassx"],
+            "list with blacklisted wm_class, sadly not every "
+            "clipboard window sets them, keepassx does"),
+        ("blacklist_text", "***********",
+            "text to display when the wm_class is blacklisted"
+         )
         ]
 
     def __init__(self, width=bar.CALCULATED, **config):
@@ -27,14 +35,35 @@ class Clipboard(base._TextBox):
         self.text = ""
         self.bar.draw()
 
+    def is_blacklisted(self, owner_id):
+        if not self.blacklist:
+            return False
+
+        if owner_id in self.qtile.windowMap:
+            owner = self.qtile.windowMap[owner_id].window
+        else:
+            owner = xcbq.Window(self.qtile.conn, owner_id)
+
+        owner_class = owner.get_wm_class()
+        if owner_class:
+            for wm_class in self.blacklist:
+                if wm_class in owner_class:
+                    return True
+
     def setup_hooks(self):
         def hook_change(name, selection):
             if name != self.selection:
                 return
-            text = selection["selection"].replace("\n", " ")
-            text = text.strip()
-            if len(text) > self.max_width:
-                text = text[:self.max_width] + "..."
+
+            if self.is_blacklisted(selection["owner"]):
+                text = self.blacklist_text
+            else:
+                text = selection["selection"].replace("\n", " ")
+
+                text = text.strip()
+                if len(text) > self.max_width:
+                    text = text[:self.max_width] + "..."
+
             self.text = text
 
             if self.timeout_id:
