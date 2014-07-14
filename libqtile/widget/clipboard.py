@@ -39,6 +39,7 @@ class Clipboard(base._TextBox):
 
             if self.timeout_id:
                 gobject.source_remove(self.timeout_id)
+                self.timeout_id = None
 
             if self.timeout:
                 self.timeout_id = self.timeout_add(self.timeout, self.clear)
@@ -50,6 +51,7 @@ class Clipboard(base._TextBox):
 
             if self.timeout_id:
                 gobject.source_remove(self.timeout_id)
+                self.timeout_id = None
 
             # only clear if don't change don't apply in .5 seconds
             self.timeout_id = self.timeout_add(.5, self.clear)
