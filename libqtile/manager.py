@@ -116,8 +116,8 @@ class Qtile(command.CommandObject):
             self.supporting_wm_check_window.wid
         )
 
-        # TODO: maybe allow changing the name without external tools?
-        self.supporting_wm_check_window.set_property('_NET_WM_NAME', "qtile")
+        wmname = getattr(self.config, "wmname", "qtile")
+        self.supporting_wm_check_window.set_property('_NET_WM_NAME', wmname)
         self.supporting_wm_check_window.set_property(
             '_NET_SUPPORTING_WM_CHECK',
             self.supporting_wm_check_window.wid
