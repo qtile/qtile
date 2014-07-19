@@ -12,14 +12,10 @@ class Countdown(base.InLoopPollText):
         ('format', '{D}d {H}h {M}m {S}s',
             'string formating: "{D}d {H}h {M}m {S}s" for 01d 10h 42m 21s'),
         ('update_interval', 1., 'Update interval for the clock'),
+        ('date', datetime.now(), "The datetime for the endo of the countdown"),
     ]
 
-    def __init__(self, date, **config):
-        """
-            - date: a datetime with the end of the countdown
-        """
-
-        self.date = date
+    def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(Countdown.defaults)
 
