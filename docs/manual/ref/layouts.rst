@@ -176,6 +176,9 @@ Suggested Bindings:
     * - border_width
       - ``2``
       - Border width.
+    * - name
+      - ``"monadtall"``
+      - Name of this layout
 
 
 RatioTile
