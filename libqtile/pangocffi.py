@@ -23,6 +23,8 @@
 #
 # This is not intended to be a complete cffi-based pango binding.
 
+from __future__ import print_function
+
 from cffi import FFI
 import xcffib
 import cairocffi
@@ -134,7 +136,7 @@ def pkgconfig(*packages, **kw):
             kw.setdefault(flag_map.get(token[:2]), []).append(token[2:])
         else:
             if token == 'Package':
-                print "looks like you don't have one of %s installed" % str(packages)
+                print("looks like you don't have one of %s installed" % str(packages))
                 import sys
                 sys.exit(1)
             # no need to -lpthread, we already have those symbols
