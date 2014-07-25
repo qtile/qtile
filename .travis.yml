@@ -79,15 +79,6 @@ install:
   - make -j3
   - sudo make install
   - popd
-# Update cairo (currently needed to use libqtile/pangocffi.py, see tycho/qtile#5)
-  - git clone git://anongit.freedesktop.org/cairo
-  - pushd cairo
-  - git reset --hard 39b7d5138eb83cc2d4f3ab6039894cc61c7fe4c7 # Use same git HEAD as current 14.04
-  - ./autogen.sh
-  - ./configure --prefix=/usr
-  - make -j3
-  - sudo make install
-  - popd
 # Installl git xcffib
   - pip install xcffib
 # Install cairocffi w/xcffib support
