@@ -47,6 +47,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         hook.subscribe.client_killed(hook_response)
         hook.subscribe.setgroup(hook_response)
         hook.subscribe.group_window_add(hook_response)
+        hook.subscribe.focus_change(hook_response)
 
     def drawbox(self, offset, text, bordercolor, textcolor, rounded=False,
                 block=False, width=None):
