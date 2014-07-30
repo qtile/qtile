@@ -53,7 +53,7 @@ wm_protocols = conn.core.InternAtom(0, len("WM_PROTOCOLS"), "WM_PROTOCOLS").repl
 delete_window = conn.core.InternAtom(0, len("WM_DELETE_WINDOW"), "WM_DELETE_WINDOW").reply().atom
 conn.core.ChangeProperty(xcb.xproto.PropMode.Replace,
         window, wm_protocols,
-        xcb.xproto.Atom.ATOM, 32, 4,
+        xcb.xproto.Atom.ATOM, 32, 1,
         struct.pack("=L", delete_window))
 
 conn.core.ConfigureWindow(window,
@@ -73,7 +73,7 @@ try:
     while 1:
         event = conn.wait_for_event()
         if event.__class__ == xcb.xproto.ClientMessageEvent:
-            if conn.core.GetAtomName(event.type).reply().name == "WM_DELETE_WINDOW":
+            if str(conn.core.GetAtomName(event.data.data32[0]).reply().name.buf()) == "WM_DELETE_WINDOW":
                 sys.exit(1)
 except (IOError, xcb.Exception):
     pass
