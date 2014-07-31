@@ -770,6 +770,25 @@ By default the widget only displays if the space is less than warn_space
       - ``60``
       - The update inteval in seconds
 
+Image
+~~~~~
+
+Display a PNG image on the bar.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - scale
+      - ``True``
+      - Enable/Disable image scaling
+    * - filename
+      - ``None``
+      - PNG Image filename. Can contain '~'. Must be set.
+
 
 Notify
 ~~~~~~
