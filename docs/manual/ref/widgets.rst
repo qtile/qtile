@@ -9,7 +9,7 @@ Applications
 Canto
 ~~~~~
 
-<missing doc string>
+Display RSS feeds updates using the canto console reader.
 
 .. list-table::
     :widths: 20 20 60
