@@ -5,6 +5,44 @@ Built-in Widgets
 Applications
 ------------
 
+BitcoinTicker
+~~~~~
+
+A bitcoin ticker widget, data provided by the btc-e.com API. Defaults to
+displaying currency in whatever the current locale is.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - update_delay
+      - ``600``
+      - The delay in seconds between updates
+    * - currency
+      - defaults to current locale
+      - The currency the value of bitcoin is displayed in'),
+    * - format
+      - BTC Buy: {buy}, Sell: {sell}
+      - Display format, available variables: buy, sell, high, low, avg, vol, vol_cur, last.
+
 
 Canto
 ~~~~~
