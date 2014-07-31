@@ -129,6 +129,56 @@ Decide for yourself if this is a good idea.
       - only show unseen mail count
 
 
+
+GoogleCalendar
+~~~~~~~~~~~~~~
+
+This widget will display the next appointment on your Google calendar
+in the qtile status bar. Appointments within the "reminder" time will
+be highlighted. Authentication credentials are stored in a file on
+disk.
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - calendar
+      - ``"primary"ä``
+      - calendar to use
+    * - format'
+      - ``" {next_event} "``
+      - text to display - leave this at the default for now...
+    * - storage_file
+      - ``None``
+      - absolute path of secrets file - must be set
+    * - reminder_color
+      - ``"FF0000"``
+      - color of calendar entries during reminder time
+    * - www_group
+      - ``"www"``
+      - group to open browser into
+    * - www_screen
+      - ``0``
+      - screen to open group on
+    * - browser_cmd
+      - ``"/usr/bin/firefox -url calendar.google.com"``
+      - command or script to execute on click
+
+
 Maildir
 ~~~~~~~
 
