@@ -571,6 +571,57 @@ A simple countdown timer text widget.
       - The datetime for the endo of the countdown
 
 
+DF
+~~
+
+Disk Free Widget
+By default the widget only displays if the space is less than warn_space
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - partition
+      - ``"/"``
+      - the partition to check space
+    * - warn_color
+      - ``"ff0000"``
+      - Warning color
+    * - warn_space
+      - ``2``
+      - Warning space in scale defined by the ``measure`` option.
+    * - visible_on_warn
+      - ``True``
+      - Only display if warning. False == always display
+    * _ measure
+      - ``"G"``
+      - Measurement in G == Gigabytes, M == Megabytes or B == Bytes
+    * - format
+      - ``"{p} ({uf}{m})"``
+      - String format p: partition, s: size, f: free space, uf: user free space, m: measure
+    * - update_interval
+      - ``60``
+      - The update inteval in seconds
+
+
 Notify
 ~~~~~~
 
