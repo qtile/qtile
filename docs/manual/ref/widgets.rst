@@ -896,7 +896,7 @@ Window Management
 CurrentLayout
 ~~~~~~~~~~~~~
 
-<missing doc string>
+Display the name of the current layout of the current group of the screen, the bar containing the widget, is on.
 
 .. list-table::
     :widths: 20 20 60
@@ -920,7 +920,9 @@ CurrentLayout
     * - foreground
       - ``"#ffffff"``
       - Foreground colour.
-
+    * - fontshadow
+      - ``None``
+      - font shadow color, default is None (no shadow)
 
 GroupBox
 ~~~~~~~~

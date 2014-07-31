@@ -3,6 +3,11 @@ from .. import bar, hook
 
 
 class CurrentLayout(base._TextBox):
+    """
+        Display the name of the current layout of the current 
+        group of the screen, the bar containing the widget, is on.
+    """
+
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "", width, **config)
 
