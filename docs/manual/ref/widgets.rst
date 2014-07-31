@@ -6,7 +6,7 @@ Applications
 ------------
 
 BitcoinTicker
-~~~~~
+~~~~~~~~~~~~~
 
 A bitcoin ticker widget, data provided by the btc-e.com API. Defaults to
 displaying currency in whatever the current locale is.
