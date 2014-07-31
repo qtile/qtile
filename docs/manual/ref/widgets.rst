@@ -316,7 +316,7 @@ Graphs
 CPUGraph
 ~~~~~~~~
 
-<missing doc string>
+Display a CPU usage graph.
 
 .. list-table::
     :widths: 20 20 60
@@ -361,12 +361,70 @@ CPUGraph
     * - start_pos
       - ``"bottom"``
       - Drawer starting position ('bottom'/'top')
+    * - core
+      - ``"all"``
+      - Which core to show (all/0/1/2/...)
 
+
+HDDBusyGraph
+~~~~~~~~~~~~
+
+Display a HDD usage stats graph.
+Parses /sys/block/<dev>/stat file and extracts overall device
+IO usage, based on `io_ticks`'s value.
+See https://www.kernel.org/doc/Documentation/block/stat.txt
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - graph_color
+      - ``"18BAEB"``
+      - Graph color
+    * - fill_color
+      - ``"1667EB.3"``
+      - Fill color for linefill graph
+    * - background
+      - ``"000000"``
+      - Widget background
+    * - border_color
+      - ``"215578"``
+      - Widget border color
+    * - border_width
+      - ``2``
+      - Widget background
+    * - margin_x
+      - ``3``
+      - Margin X
+    * - margin_y
+      - ``3``
+      - Margin Y
+    * - samples
+      - ``100``
+      - Count of graph samples.
+    * - frequency
+      - ``60``
+      - Update frequency in seconds
+    * - type
+      - ``"linefill"``
+      - 'box', 'line', 'linefill'
+    * - line_width
+      - ``3``
+      - Line width
+    * - start_pos
+      - ``"bottom"``
+      - Drawer starting position ('bottom'/'top')
+    * - device
+      - ``"sda"``
+      - Block device to display info for.
 
 HDDGraph
 ~~~~~~~~
 
-<missing doc string>
+Display HDD free or used space graph.
 
 .. list-table::
     :widths: 20 20 60
@@ -412,8 +470,8 @@ HDDGraph
       - ``"bottom"``
       - Drawer starting position ('bottom'/'top')
     * - path
-      - ``"sda1"``
-      - Path at which parition is MOUNTED.
+      - ``"/"``
+      - Partition mount point.
     * - space_type
       - ``"used"``
       - free/used
@@ -422,7 +480,7 @@ HDDGraph
 MemoryGraph
 ~~~~~~~~~~~
 
-<missing doc string>
+Displays a memory usage graph.
 
 .. list-table::
     :widths: 20 20 60
@@ -472,7 +530,7 @@ MemoryGraph
 NetGraph
 ~~~~~~~~
 
-<missing doc string>
+Display a network usage graph.
 
 .. list-table::
     :widths: 20 20 60
@@ -515,8 +573,8 @@ NetGraph
       - ``3``
       - Line width
     * - interface
-      - ``"eth0"``
-      - Interface to display info for
+      - ``"auto"``
+      - Interface to display info for ('auto' for detection, or e.g. eth0).
     * - bandwidth_type
       - ``"down"``
       - down(load)/up(load)
@@ -528,7 +586,7 @@ NetGraph
 SwapGraph
 ~~~~~~~~~
 
-<missing doc string>
+Display a swap info graph.
 
 .. list-table::
     :widths: 20 20 60
