@@ -488,6 +488,50 @@ Misc
 ----
 
 
+Clipboard
+~~~~~~~~~
+
+Display current clipboard contents.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - selection
+      - ``"CLIPBOARD"``
+      - the selection to display (CLIPBOARD or PRIMARY)
+    * - max_width
+      - ``10``
+      - maximum number of characters to display. ``None`` for all, useful when width is ``bar.STRETCH``
+    * - timeout
+      - ``10``
+      - Default timeout (seconds) for display text, None to keep forever.
+    * - blacklist
+      - ``["keepassx"]``
+      - list with blacklisted wm_class, sadly not every clipboard window sets them, keepassx does.
+    * - blacklist_text
+      - ``"***********"``
+      - text to display when the wm_class is blacklisted.
+
+
 Notify
 ~~~~~~
 
