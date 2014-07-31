@@ -87,6 +87,47 @@ Display RSS feeds updates using the canto console reader.
       - ``600``
       - The delay in seconds between updates
 
+GmailChecker
+~~~~~~~~~~~~
+
+A simple gmail checker.
+You will need to write your Gmail password into to your config to use this widget.
+Decide for yourself if this is a good idea.
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - username
+      - ``None``
+      - Gmail username i.e. email@gmail.com
+    * - password
+      - ``None``
+      - Your Gmail password.
+    * - email_path
+      - ``None``
+      - valid email path
+    * - fmt'
+      - ``"inbox[%s],unseen[%s]"``
+      - format string fot textbox widget
+    * - status_only_unseen
+      - ``False``
+      - only show unseen mail count
+
 
 Maildir
 ~~~~~~~
