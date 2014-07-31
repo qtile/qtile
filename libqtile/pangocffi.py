@@ -29,7 +29,7 @@ from cffi import FFI
 import xcffib
 import cairocffi
 
-from .compat import getoutput
+from .compat import getoutput, unichr
 
 ffi = FFI()
 
@@ -59,7 +59,8 @@ ffi.cdef("""
 
     typedef void* gpointer;
     typedef int gboolean;
-    typedef ... gunichar;
+    typedef unsigned int guint32;
+    typedef guint32 gunichar;
     typedef ... GError;
     typedef int gint;
 
@@ -232,16 +233,14 @@ class FontDescription(object):
     def get_size(self, size):
         return pango.pango_font_description_get_size(self._pointer, size)
 
-def parse_markup(value, accel_marker=u'\x00'):
-    c_accel_marker = ffi.new("gunichar", accel_marker)
-
+def parse_markup(value, accel_marker=0):
     attr_list = ffi.new("PangoAttrList**")
     text = ffi.new("char**")
     error = ffi.new("GError**")
 
-    ret = pango.pango_parse_markup(value, -1, c_accel_marker, attr_list, text, ffi.NULL, error)
+    ret = pango.pango_parse_markup(value, -1, accel_marker, attr_list, text, ffi.NULL, error)
 
     if ret == 0:
         raise Exception("parse_markup() failed for %s" % value)
 
-    return attr_list[0], text[0], accel_marker
+    return attr_list[0], ffi.string(text[0]), unichr(accel_marker)

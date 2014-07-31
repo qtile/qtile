@@ -16,6 +16,7 @@ if PY3:
 
     # Renamed objects
     unicode = string_type = str
+    unichr = chr
     input = input
 else:
     from commands import getoutput
@@ -27,4 +28,5 @@ else:
 
     string_type = basestring
     unicode = unicode
+    unichr = unichr
     input = raw_input
