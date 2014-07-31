@@ -1189,6 +1189,12 @@ A widget that graphically displays the current group.
     * - urgent_alert_method
       - ``"border"``
       - Method for alerting you of WM urgent hints (one of 'border' or 'text')
+    * - disable_drag
+      - ``False``
+      - Disable dragging and dropping of group names on widget.
+    * - invert_mouse_wheel
+      - ``False``
+      - Whether to invert mouse wheel group movement.
 
 
 WindowName
