@@ -5,7 +5,7 @@ import base
 
 class _CrashMe(base._TextBox):
     """
-        A developper widget to force a crash in qtile
+        A developer widget to force a crash in qtile
     """
     def __init__(self, width=bar.CALCULATED, **config):
         """
