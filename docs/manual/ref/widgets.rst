@@ -40,7 +40,7 @@ displaying currency in whatever the current locale is.
       - defaults to current locale
       - The currency the value of bitcoin is displayed in'),
     * - format
-      - BTC Buy: {buy}, Sell: {sell}
+      - ``"BTC Buy: {buy}, Sell: {sell}"``
       - Display format, available variables: buy, sell, high, low, avg, vol, vol_cur, last.
 
 
