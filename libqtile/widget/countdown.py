@@ -5,13 +5,14 @@ import base
 
 class Countdown(base.InLoopPollText):
     """
-        A simple countdown text widget.
+        A simple countdown timer text widget.
     """
 
     defaults = [
         ('format', '{D}d {H}h {M}m {S}s',
-            'string formating: "{D}d {H}h {M}m {S}s" for 01d 10h 42m 21s'),
-        ('update_interval', 1., 'Update interval for the clock'),
+            'Format of the displayed text. Available variables:'
+            '{D} == days, {H} == hours, {M} == minutes, {S} seconds.'),
+        ('update_interval', 1., 'Update interval in seconds for the clock'),
         ('date', datetime.now(), "The datetime for the endo of the countdown"),
     ]
 

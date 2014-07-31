@@ -533,6 +533,44 @@ Display current clipboard contents.
       - text to display when the wm_class is blacklisted.
 
 
+Countdown
+~~~~~~~~~
+
+A simple countdown timer text widget.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - format
+      - ``"{D}d {H}h {M}m {S}s"``
+      - Format of the displayed text. Available variables:  {D} == days, {H} == hours, {M} == minutes, {S} seconds.
+    * - update_interval
+      - ``1.``
+      - Update interval in seconds for the clock
+    * - date
+      - ``datetime.now()``
+      - The datetime for the endo of the countdown
+
+
 Notify
 ~~~~~~
 
