@@ -1040,6 +1040,37 @@ A simple but flexible text-based clock.
       - ``"ffffff"``
       - Foreground colour
 
+KeyboardLayout
+~~~~~~~~~~~~~~
+
+Widget for changing and displaying the current keyboard layout.
+        It requires setxkbmap to be available in the sytem.
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - update_interval
+      - ``1``
+      - Update time in seconds
+    * - configured_keyboards
+      - us
+      - A list of predefined keyboard layouts represented as strings. For example: ['us', 'us colemak', 'es', 'fr'].
+
 
 Systray
 ~~~~~~~
