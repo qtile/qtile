@@ -970,7 +970,9 @@ A widget that prompts for user input. Input should be started using the
     * - cursorblink
       - ``0.5``
       - Cursor blink rate. 0 to disable.
-
+    * - prompt
+      - ``"{prompt}: "``
+      - Text displayed at the prompt.
 
 Sep
 ~~~
