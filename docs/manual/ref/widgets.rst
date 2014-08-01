@@ -246,6 +246,71 @@ correct version of MPRIS, though I have only tested it with clementine.
     * - foreground
       - ``"ffffff"``
       - Foreground colour
+    * - name
+      - ``"clementine"``
+      - name of the player
+    * - width
+      - bar.CALCULATED
+      - Width of the widget. Can be one of bar.CALCULATED, bar.STRETCH or the width in pixels.
+    * - objname
+      - 'org.mpris.clementine'
+      - BUS MPRIS 2 compatible player identifier'. Find it out with dbus-dbus-monitor "member=RequestName"
+        and then launch your media player. The correct name starts with org.mpris
+        Also see: http://specifications.freedesktop.org/mpris-spec/latest/#Bus-Name-Policy
+
+
+Mpris2
+~~~~~
+
+A widget which displays the current track/artist of your favorite MPRIS
+player. It should work with all players which implement a reasonably
+correct version of MPRIS, though I have only tested it with audacious.
+This widget scrolls the text if neccessary and information that is displayed is
+configurable.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - widget font
+    * - fontsize
+      - ``None``
+      - widget pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - widget padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - name
+      - ``"clementine"``
+      - name of the player
+    * - objname
+      - 'org.mpris.clementine'
+      - BUS MPRIS 2 compatible player identifier'. Find it out with dbus-dbus-monitor "member=RequestName"
+        and then launch your media player. The correct name starts with org.mpris
+        Also see: http://specifications.freedesktop.org/mpris-spec/latest/#Bus-Name-Policy
+    * - display_metadata
+      - ``['xesam:title', 'xesam:album', 'xesam:artist']``
+      - Which metadata identifiers to display. 
+        See http://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata/#index5h3 for possible values.
+    * - scroll_chars
+      - ``30``
+      - How many chars to display at once.
+    * - scroll_interval
+      - ``0.5``
+      - Scroll delay interval.
+    * - scroll_wait_intervals
+      - ``8``
+      - Wait x scroll_interval before scrolling/removing text
 
 
 YahooWeather
