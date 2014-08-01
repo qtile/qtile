@@ -813,7 +813,7 @@ An notify widget
       - description
     * - font
       - ``"Arial"``
-      - Mpd widget font
+      - widget font
     * - fontsize
       - ``None``
       - Mpd widget pixel size. Calculated if None.
