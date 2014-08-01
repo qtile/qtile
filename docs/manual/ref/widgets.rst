@@ -206,6 +206,15 @@ A simple widget showing the number of new mails in maildir mailboxes.
     * - foreground
       - ``"ffffff"``
       - Foreground colour
+    * - maildirPath
+      - ``"~/Mail"``
+      - path to the Maildir folder"
+    * - subFolders
+      - ``[]``
+      - The subfolders to scan (e.g. [{"path": "INBOX", "label": "Home mail"}, {"path": "spam", "label": "Home junk"}])
+    * - separator
+      - ``" "``
+      - the string to put between the subfolder strings.
 
 
 Mpris
