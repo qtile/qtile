@@ -867,7 +867,7 @@ Display a PNG image on the bar.
 Notify
 ~~~~~~
 
-An notify widget
+A notify widget
 
 .. list-table::
     :widths: 20 20 60
