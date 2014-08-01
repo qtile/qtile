@@ -1072,6 +1072,33 @@ Widget for changing and displaying the current keyboard layout.
       - A list of predefined keyboard layouts represented as strings. For example: ['us', 'us colemak', 'es', 'fr'].
 
 
+LaunchBar
+~~~~~~~~~
+
+A widget that display icons to launch the associated command
+
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - padding
+      - ``2``
+      - Padding in pixels between icons
+    * - default_icon
+      - ``"/usr/share/icons/oxygen/256x256/mimetypes/application-x-executable.png"``
+      - Default icon to use if application icon wasn't found'
+    * - progs
+      - 
+      - A list of tuples (software_name, command_to_execute, comment)
+        for example:
+        ``[('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode'),
+        ('logout', 'qsh:self.qtile.cmd_shutdown()', 'logout from qtile'),]``
+
+
 Systray
 ~~~~~~~
 
