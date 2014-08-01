@@ -816,10 +816,10 @@ An notify widget
       - widget font
     * - fontsize
       - ``None``
-      - Mpd widget pixel size. Calculated if None.
+      - widget pixel size. Calculated if None.
     * - padding
       - ``None``
-      - Mpd widget padding. Calculated if None.
+      - widget padding. Calculated if None.
     * - background
       - ``"000000"``
       - Background colour
