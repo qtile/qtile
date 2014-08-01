@@ -897,6 +897,9 @@ An notify widget
     * - foreground_low
       - ``"dddddd"``
       - Foreground low priority colour
+    * - default_timeout
+      - ``None``
+      - Default timeout (seconds) for notifications.
 
 
 Prompt
