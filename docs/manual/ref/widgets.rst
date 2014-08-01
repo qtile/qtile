@@ -1092,7 +1092,7 @@ A widget that display icons to launch the associated command
       - ``"/usr/share/icons/oxygen/256x256/mimetypes/application-x-executable.png"``
       - Default icon to use if application icon wasn't found'
     * - progs
-      - 
+      -
       - A list of tuples (software_name, command_to_execute, comment)
         for example:
         ``[('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode'),
