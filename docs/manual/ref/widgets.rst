@@ -233,13 +233,13 @@ correct version of MPRIS, though I have only tested it with clementine.
       - description
     * - font
       - ``"Arial"``
-      - Mpd widget font
+      - widget font
     * - fontsize
       - ``None``
-      - Mpd widget pixel size. Calculated if None.
+      - widget pixel size. Calculated if None.
     * - padding
       - ``None``
-      - Mpd widget padding. Calculated if None.
+      - widget padding. Calculated if None.
     * - background
       - ``"000000"``
       - Background colour
