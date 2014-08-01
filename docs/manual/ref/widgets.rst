@@ -312,6 +312,43 @@ configurable.
       - ``8``
       - Wait x scroll_interval before scrolling/removing text
 
+Pacman
+~~~~~~
+
+Shows number of available updates.
+    Needs the pacman package manager installed. So will only work in Arch Linux installation.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - widget font
+    * - fontsize
+      - ``None``
+      - widget pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - widget padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - unavailable
+      - ``"ffffff"``
+      - Unavailable Color - no updates
+    * - execute
+      - ``None``
+      - Command to execute on click. String.
+    * - update_interval
+      - ``60``
+      - The update interval.
 
 YahooWeather
 ~~~~~~~~~~~~
