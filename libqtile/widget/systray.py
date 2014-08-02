@@ -151,7 +151,7 @@ class Systray(base._Widget):
         for pos, icon in enumerate(self.icons.values()):
             icon.place(
                 self.offset + xoffset,
-                self.bar.height / 2 - self.icon_size / 2,
+                self.bar.height // 2 - self.icon_size // 2,
                 icon.width, self.icon_size,
                 0,
                 None
