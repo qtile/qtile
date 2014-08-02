@@ -1,6 +1,7 @@
 import collections
 import math
 import cairocffi
+import cairocffi.xcb
 import xcffib.xproto
 
 from . import pangocffi
@@ -185,7 +186,7 @@ class Drawer:
                 self.qtile.conn.default_screen.white_pixel
             ]
         )
-        self.surface = cairocffi.XCBSurface(
+        self.surface = cairocffi.xcb.XCBSurface(
             qtile.conn.conn,
             self.pixmap,
             self.find_root_visual(),

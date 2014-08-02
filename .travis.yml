@@ -79,7 +79,7 @@ install:
 # Installl git xcffib
   - pip install xcffib
 # Install cairocffi w/xcffib support
-  - git clone -b xcffib https://github.com/tych0/cairocffi.git
+  - git clone -b xcb https://github.com/flacjacket/cairocffi.git
   - pushd cairocffi
   - pip install .
   - popd
