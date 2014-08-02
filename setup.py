@@ -58,5 +58,4 @@ setup(
         "bin/qtile-run",
         "bin/qtile-session"
     ],
-    ext_modules=[libqtile.pangocffi.ffi.verifier.get_extension()],
 )
