@@ -7,11 +7,6 @@ python:
   - 3.3
   - 3.4
 
-# Python 3.2 can't use u'' literals
-matrix:
-  allow_failures:
-    - python: 3.2
-
 script: nosetests
 
 before_install:

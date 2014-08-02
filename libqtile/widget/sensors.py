@@ -2,8 +2,11 @@
 # coding: utf-8
 
 from . import base
+from ..compat import u
+
 from subprocess import Popen, PIPE
 import re
+
 
 
 class ThermalSensor(base.InLoopPollText):
@@ -31,14 +34,14 @@ class ThermalSensor(base.InLoopPollText):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(ThermalSensor.defaults)
         self.sensors_temp = re.compile(
-            r"""
+            u(r"""
             ([a-zA-Z]+        #Tag
             \s?[0-9]+):       #Tag number
             \s+[+-]           #Temp signed
             ([0-9]+\.[0-9]+)  #Temp value
             (\xc2\xb0         #° match
             [CF])             #Celsius or Fahrenheit
-            """,
+            """),
             re.UNICODE | re.VERBOSE
         )
         self.value_temp = re.compile("[0-9]+\.[0-9]+")

@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 from .base import SingleWindow
-from .. import window
-from .. import drawer
-from .. import hook
+from ..compat import u
+from .. import drawer, hook, window
 
-to_superscript = dict(zip(map(ord, u'0123456789'), map(ord, u'⁰¹²³⁴⁵⁶⁷⁸⁹')))
+to_superscript = dict(zip(map(ord, u('0123456789')), map(ord, u('⁰¹²³⁴⁵⁶⁷⁸⁹'))))
 
 
 class TreeNode(object):

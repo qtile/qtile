@@ -18,6 +18,9 @@ if PY3:
     unicode = string_type = str
     unichr = chr
     input = input
+
+    def u(x):
+        return x
 else:
     from commands import getoutput
     import gobject
@@ -30,3 +33,7 @@ else:
     unicode = unicode
     unichr = unichr
     input = raw_input
+
+    import codecs
+    def u(x):
+        return codecs.unicode_escape_decode(x)[0]

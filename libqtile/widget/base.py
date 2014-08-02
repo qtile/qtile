@@ -2,7 +2,6 @@ from .. import command, bar, configurable, drawer
 from ..compat import gobject
 import logging
 import threading
-import exceptions
 import warnings
 
 
@@ -359,4 +358,4 @@ class MarginMixin(object):
     margin_y = configurable.ExtraFallback('margin_y', 'margin')
 
 def deprecated(msg):
-    warnings.warn(msg, exceptions.DeprecationWarning)
+    warnings.warn(msg, DeprecationWarning)

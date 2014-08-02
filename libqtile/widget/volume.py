@@ -6,6 +6,7 @@ import cairocffi
 
 from . import base
 from .. import bar
+from ..compat import u
 
 __all__ = [
     'Volume',
@@ -102,13 +103,13 @@ class Volume(base._TextBox):
             self.drawer.ctx.paint()
         elif self.emoji:
             if self.volume <= 0:
-                self.text = u'\U0001f507'
+                self.text = u('\U0001f507')
             elif self.volume <= 30:
-                self.text = u'\U0001f508'
+                self.text = u('\U0001f508')
             elif self.volume < 80:
-                self.text = u'\U0001f509'
+                self.text = u('\U0001f509')
             elif self.volume >= 80:
-                self.text = u'\U0001f50a'
+                self.text = u('\U0001f50a')
         else:
             if self.volume == -1:
                 self.text = 'M'

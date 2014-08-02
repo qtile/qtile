@@ -1,7 +1,6 @@
-import base
-from .. import bar, hook
+from . import base
+from .. import bar, hook, xcbq
 
-from .. import xcbq
 import gobject
 
 
