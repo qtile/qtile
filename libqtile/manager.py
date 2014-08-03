@@ -79,7 +79,6 @@ class Qtile(command.CommandObject):
         self.fname = fname
         hook.init(self)
 
-        self.keyMap = {}
         self.windowMap = {}
         self.widgetMap = {}
         self.groupMap = {}
@@ -116,8 +115,8 @@ class Qtile(command.CommandObject):
             self.supporting_wm_check_window.wid
         )
 
-        # TODO: maybe allow changing the name without external tools?
-        self.supporting_wm_check_window.set_property('_NET_WM_NAME', "qtile")
+        wmname = getattr(self.config, "wmname", "qtile")
+        self.supporting_wm_check_window.set_property('_NET_WM_NAME', wmname)
         self.supporting_wm_check_window.set_property(
             '_NET_SUPPORTING_WM_CHECK',
             self.supporting_wm_check_window.wid
@@ -191,6 +190,34 @@ class Qtile(command.CommandObject):
         if state:
             st = pickle.load(BytesIO(state.encode()))
             st.apply(self)
+
+        self.selection = {
+            "PRIMARY": {"owner": None, "selection": ""},
+            "CLIPBOARD": {"owner": None, "selection": ""}
+            }
+        self.setup_selection()
+
+    def setup_selection(self):
+        PRIMARY = self.conn.atoms["PRIMARY"]
+        CLIPBOARD = self.conn.atoms["CLIPBOARD"]
+
+        self.selection_window = self.conn.create_window(-1, -1, 1, 1)
+        self.selection_window.set_attribute(
+            eventmask=EventMask.PropertyChange
+            )
+        self.conn.xfixes.select_selection_input(self.selection_window,
+                                                "PRIMARY")
+        self.conn.xfixes.select_selection_input(self.selection_window,
+                                                "CLIPBOARD")
+
+        r = self.conn.conn.core.GetSelectionOwner(PRIMARY).reply()
+        self.selection["PRIMARY"]["owner"] = r.owner
+        r = self.conn.conn.core.GetSelectionOwner(CLIPBOARD).reply()
+        self.selection["CLIPBOARD"]["owner"] = r.owner
+
+        # ask for selection on starup
+        self.convert_selection(PRIMARY)
+        self.convert_selection(CLIPBOARD)
 
     def _process_fake_screens(self):
         """
@@ -701,6 +728,37 @@ class Qtile(command.CommandObject):
                 closest_screen = s
         return closest_screen
 
+    def handle_SelectionNotify(self, e):
+        if not getattr(e, "owner", None):
+            return
+
+        name = self.conn.atoms.get_name(e.selection)
+        self.selection[name]["owner"] = e.owner
+        self.selection[name]["selection"] = ""
+
+        self.convert_selection(e.selection)
+
+        hook.fire("selection_notify", name, self.selection[name])
+
+    def convert_selection(self, selection, _type="UTF8_STRING"):
+        TYPE = self.conn.atoms[_type]
+        self.conn.conn.core.ConvertSelection(self.selection_window.wid,
+                                             selection,
+                                             TYPE, selection,
+                                             xcb.xcb.CurrentTime)
+
+    def handle_PropertyNotify(self, e):
+        name = self.conn.atoms.get_name(e.atom)
+        # it's the selection property
+        if name in ("PRIMARY", "CLIPBOARD"):
+            assert e.window == self.selection_window.wid
+            prop = self.selection_window.get_property(e.atom, "UTF8_STRING")
+
+            data = "".join([chr(i) for i in prop.value])
+
+            self.selection[name]["selection"] = data
+            hook.fire("selection_change", name, self.selection[name])
+
     def handle_EnterNotify(self, e):
         if e.event in self.windowMap:
             return True
@@ -904,8 +962,11 @@ class Qtile(command.CommandObject):
         """
         if len(self.screens) < n - 1:
             return
+        old = self.currentScreen
         self.currentScreen = self.screens[n]
-        self.currentGroup.focus(self.currentWindow, True)
+        if old != self.currentScreen:
+            hook.fire("current_screen_change")
+            self.currentGroup.focus(self.currentWindow, True)
 
     def moveToGroup(self, group):
         """

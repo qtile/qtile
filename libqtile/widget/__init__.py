@@ -21,6 +21,8 @@ from .keyboardlayout import KeyboardLayout
 from .df import DF
 from .image import Image
 from .gmail_checker import GmailChecker
+from .clipboard import Clipboard
+from .countdown import Countdown
 
 try:
     from .launchbar import LaunchBar

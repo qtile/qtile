@@ -168,6 +168,18 @@ class Subscribe:
         """
         return self._subscribe("net_wm_icon_change", func)
 
+    def selection_notify(self, func):
+        """
+            Called on selection notify.
+        """
+        return self._subscribe("selection_notify", func)
+
+    def selection_change(self, func):
+        """
+            Called on selection chance.
+        """
+        return self._subscribe("selection_change", func)
+
     def screen_change(self, func):
         """
             Called when a screen is added or screen configuration is changed
@@ -182,6 +194,13 @@ class Subscribe:
                     qtile.cmd_restart()
         """
         return self._subscribe("screen_change", func)
+
+    def current_screen_change(self, func):
+        """
+            Called when the current screen (i.e. the screen with focus)
+            changes; no arguments.
+        """
+        return self._subscribe("current_screen_change", func)
 
 subscribe = Subscribe()
 

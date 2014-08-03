@@ -82,6 +82,7 @@ class File(object):
             "auto_fullscreen",
             "widget_defaults",
             "bring_front_click",
+            "wmname",
         ]
 
         # We delay importing here to avoid a circular import issue when

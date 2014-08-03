@@ -2,7 +2,7 @@ Running Inside Gnome
 ====================
 
 Add the following snippet to your Qtile configuration. As per `this
-page <https://live.gnome.org/SessionManagement/GnomeSession#A3._Register>`_,
+page <https://wiki.gnome.org/Projects/SessionManagement/GnomeSession#A3._Register>`_,
 it registers Qtile with gnome-session. Without it, a "Something has gone
 wrong!" message shows up a short while after logging in. dbus-send must
 be on your $PATH.

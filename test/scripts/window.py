@@ -74,8 +74,8 @@ conn.core.ConfigureWindow(window,
 try:
     while 1:
         event = conn.wait_for_event()
-        if event.__class__ == xcffib.xproto.ClientMessageEvent:
-            if conn.core.GetAtomName(event.type).reply().name.to_string() == "WM_DELETE_WINDOW":
+        if event.__class__ == xcb.xproto.ClientMessageEvent:
+            if str(conn.core.GetAtomName(event.data.data32[0]).reply().name.buf()) == "WM_DELETE_WINDOW":
                 sys.exit(1)
 except xcffib.XcffibException:
     pass
