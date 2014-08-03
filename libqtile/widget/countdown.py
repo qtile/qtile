@@ -1,6 +1,6 @@
 from datetime import datetime
 
-import base
+from . import base
 
 
 class Countdown(base.InLoopPollText):

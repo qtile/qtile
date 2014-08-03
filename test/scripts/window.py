@@ -75,7 +75,7 @@ try:
     while 1:
         event = conn.wait_for_event()
         if event.__class__ == xcffib.xproto.ClientMessageEvent:
-            if conn.core.GetAtomName(event.data.data32[0]).reply().name.as_string() == "WM_DELETE_WINDOW":
+            if conn.core.GetAtomName(event.data.data32[0]).reply().name.to_string() == "WM_DELETE_WINDOW":
                 sys.exit(1)
 except xcffib.XcffibException:
     pass

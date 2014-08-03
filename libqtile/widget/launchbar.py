@@ -14,9 +14,9 @@ To execute a python command in qtile, begin with by 'qsh:'
 
 from libqtile import bar
 from libqtile.widget import base
+from ..compat import gobject
 import os.path
 import cairocffi
-import gobject
 from xdg.IconTheme import getIconPath
 
 
