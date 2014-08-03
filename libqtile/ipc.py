@@ -33,7 +33,7 @@ import struct
 import errno
 import fcntl
 
-from .compat import gobject
+from six.moves import gobject
 
 HDRLEN = 4
 BUFSIZE = 1024 * 1024

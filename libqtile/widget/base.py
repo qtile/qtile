@@ -1,5 +1,5 @@
 from .. import command, bar, configurable, drawer
-from ..compat import gobject
+from six.moves import gobject
 import logging
 import threading
 import warnings

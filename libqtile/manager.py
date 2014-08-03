@@ -31,8 +31,9 @@ import sys
 import xcffib
 import xcffib.xinerama
 import xcffib.xproto
+import six
+from six.moves import gobject
 
-from .compat import gobject, BytesIO
 from .config import Drag, Click, Screen, Match, Rule
 from .group import _Group
 from .state import QtileState
@@ -188,7 +189,7 @@ class Qtile(command.CommandObject):
         hook.subscribe.setgroup(self.update_net_desktops)
 
         if state:
-            st = pickle.load(BytesIO(state.encode()))
+            st = pickle.load(six.BytesIO(state.encode()))
             st.apply(self)
 
         self.selection = {
@@ -1161,7 +1162,7 @@ class Qtile(command.CommandObject):
         if '--no-spawn' not in argv:
             argv.append('--no-spawn')
 
-        buf = BytesIO()
+        buf = six.BytesIO()
         pickle.dump(QtileState(self), buf, protocol=0)
         argv = [s for s in argv if not s.startswith('--with-state')]
         argv.append('--with-state=' + buf.getvalue().decode())

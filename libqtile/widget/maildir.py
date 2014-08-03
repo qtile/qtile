@@ -2,8 +2,8 @@
 # vim: set sw=4 et tw=80:
 
 from . import base
-from ..compat import string_type
 
+import six
 import os.path
 import mailbox
 
@@ -36,7 +36,7 @@ class Maildir(base.ThreadedPollText):
 
         # if it looks like a list of strings then we just convert them
         # and use the name as the label
-        if isinstance(subFolders[0], string_type):
+        if isinstance(subFolders[0], six.string_types):
             self._subFolders = [
                 {"path": folder, "label": folder}
                 for folder in subFolders

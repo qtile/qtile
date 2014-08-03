@@ -29,7 +29,8 @@ from cffi import FFI
 import xcffib
 import cairocffi
 
-from .compat import getoutput, unichr
+import six
+from six.moves import getoutput
 
 ffi = FFI()
 
@@ -243,4 +244,4 @@ def parse_markup(value, accel_marker=0):
     if ret == 0:
         raise Exception("parse_markup() failed for %s" % value)
 
-    return attr_list[0], ffi.string(text[0]), unichr(accel_marker)
+    return attr_list[0], ffi.string(text[0]), six.unichr(accel_marker)

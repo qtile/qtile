@@ -5,7 +5,7 @@ from . import hook
 from . import utils
 from . import xcbq
 
-from .compat import maxint
+from six import MAXSIZE
 
 
 class Key:
@@ -337,7 +337,7 @@ class Group(object):
     """
     def __init__(self, name, matches=None, exclusive=False,
                  spawn=None, layout=None, layouts=None, persist=True, init=True,
-                 layout_opts=None, screen_affinity=None, position=maxint):
+                 layout_opts=None, screen_affinity=None, position=MAXSIZE):
         """
         :param name: the name of this group
         :type name: string

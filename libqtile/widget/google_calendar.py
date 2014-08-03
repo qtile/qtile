@@ -58,7 +58,7 @@ import datetime
 import re
 import dateutil.parser
 import threading
-from ..compat import gobject
+from six.moves import gobject
 
 from apiclient.discovery import build
 from oauth2client.client import OAuth2WebServerFlow

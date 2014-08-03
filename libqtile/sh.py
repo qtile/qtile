@@ -30,8 +30,9 @@ import textwrap
 import fcntl
 import termios
 import struct
+import six
+from six.moves import input
 
-from .compat import input, string_type
 from . import command
 from . import ipc
 
@@ -289,7 +290,7 @@ class QSh:
                 val = builtin(args)
             else:
                 val = self._call(cmd, args)
-            if isinstance(val, string_type):
+            if isinstance(val, six.string_types):
                 print(val)
             elif val:
                 pprint.pprint(val)

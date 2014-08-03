@@ -8,7 +8,7 @@ from libqtile.config import Group
 from libqtile.config import Rule
 from libqtile.config import Match
 
-from .compat import gobject
+from six.moves import gobject
 
 def simple_key_binder(mod, keynames=None):
     """

@@ -26,7 +26,7 @@ from . import hook
 from . import configurable
 from . import window
 
-from .compat import gobject
+from six.moves import gobject
 
 USE_BAR_DRAW_QUEUE = True
 

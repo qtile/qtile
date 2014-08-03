@@ -4,25 +4,25 @@
 """
 from __future__ import print_function, division
 
+import six
+import struct
+
 from xcffib.xproto import CW, WindowClass, EventMask
 from xcffib.xfixes import SelectionEventMask
 
-import struct
 import xcffib
 import xcffib.randr
 import xcffib.xinerama
 import xcffib.xproto
 
 from . import xkeysyms
-from .compat import string_type
 
 
 # hack xcffib.xproto for negative numbers
 def ConfigureWindow(self, window, value_mask, value_list):
     from struct import pack
     from array import array
-    from .compat import BytesIO
-    buf = BytesIO()
+    buf = six.BytesIO()
     buf.write(pack('xx2xIH2x', window, value_mask))
     buf.write(array('i', value_list).tostring())
     return self.send_request(12, buf)
@@ -636,10 +636,10 @@ class Window:
             r = self.conn.conn.core.GetProperty(
                 False, self.wid,
                 self.conn.atoms[prop]
-                if isinstance(prop, string_type)
+                if isinstance(prop, six.string_types)
                 else prop,
                 self.conn.atoms[type]
-                if isinstance(type, string_type)
+                if isinstance(type, six.string_types)
                 else type,
                 0, (2 ** 32) - 1
             ).reply()
