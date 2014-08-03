@@ -745,7 +745,7 @@ class Qtile(command.CommandObject):
         self.conn.conn.core.ConvertSelection(self.selection_window.wid,
                                              selection,
                                              TYPE, selection,
-                                             xcb.xcb.CurrentTime)
+                                             xcffib.CurrentTime)
 
     def handle_PropertyNotify(self, e):
         name = self.conn.atoms.get_name(e.atom)

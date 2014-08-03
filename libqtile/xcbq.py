@@ -339,9 +339,9 @@ class XFixes:
 
     def __init__(self, conn):
         self.conn = conn
-        self.ext = conn.conn(xcb.xfixes.key)
-        self.ext.QueryVersion(xcb.xfixes.MAJOR_VERSION,
-                              xcb.xfixes.MINOR_VERSION)
+        self.ext = conn.conn(xcffib.xfixes.key)
+        self.ext.QueryVersion(xcffib.xfixes.MAJOR_VERSION,
+                              xcffib.xfixes.MINOR_VERSION)
 
     def select_selection_input(self, window, selection="PRIMARY"):
         SELECTION = self.conn.atoms[selection]
