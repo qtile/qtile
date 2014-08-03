@@ -374,7 +374,7 @@ class Qtile(command.CommandObject):
             for i in list(group.windows):
                 i.togroup(target.name)
             if self.currentGroup.name == name:
-                self.currentScreen.setGroup(target)
+                self.currentScreen.setGroup(target, save_prev=False)
             self.groups.remove(group)
             del(self.groupMap[name])
             hook.fire("delgroup", self, name)
