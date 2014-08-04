@@ -1215,7 +1215,7 @@ A widget that display icons to launch the associated command
         ('logout', 'qsh:self.qtile.cmd_shutdown()', 'logout from qtile'),]``
 
 ThermalSensor
-~~~~~~~
+~~~~~~~~~~~~~
 
 For using the thermal sensor widget you need to have lm-sensors installed.
 You can get a list of the tag_sensors executing "sensors" in your terminal.
@@ -1258,6 +1258,41 @@ available.
     * - foreground_alert
       - ``ff0000``
       - Foreground colour alert
+
+
+She
+~~~
+
+Widget to display the Super Hybrid Engine status.
+can display either the mode or CPU speed on eeepc computers.
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - device
+      - ``"/sys/devices/platform/eeepc/cpufv"``
+      - sys path to cpufv
+    * - format
+      - ``"speed"``
+      - Type of info to display "speed" or "name"
+    * - update_interval
+      - ``0.5``
+      - Update Time in seconds.
 
 
 Systray
