@@ -258,7 +258,7 @@ class Screen(_Wrapper):
         self.default_colormap = Colormap(conn, screen.default_colormap)
         self.root = Window(conn, self.root)
         # FIXME: Where is the right place to set the cursor?
-        #self.root.set_cursor("Normal")
+        # self.root.set_cursor("Normal")
 
 
 class PseudoScreen:
@@ -621,7 +621,7 @@ class Window:
             string to be used with the struct module.
         """
         if type is None:
-            if not prop in PropertyMap:
+            if prop not in PropertyMap:
                 raise ValueError(
                     "Must specify type for unknown property."
                 )

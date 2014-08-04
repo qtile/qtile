@@ -24,7 +24,7 @@ class Subscribe:
 
     def _subscribe(self, event, func):
         lst = subscriptions.setdefault(event, [])
-        if not func in lst:
+        if func not in lst:
             lst.append(func)
 
     def startup(self, func):
@@ -226,7 +226,7 @@ unsubscribe = Unsubscribe()
 def fire(event, *args, **kwargs):
     if event not in subscribe.hooks:
         raise utils.QtileError("Unknown event: %s" % event)
-    if not event in SKIPLOG:
+    if event not in SKIPLOG:
         qtile.log.info(
             "Internal event: %s(%s, %s)" %
             (event, args, kwargs)

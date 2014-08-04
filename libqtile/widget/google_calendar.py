@@ -120,7 +120,7 @@ class GoogleCalendar(base.ThreadedPollText):
         )
 
     def cred_init(self):
-        #this is the main method for obtaining credentials
+        # this is the main method for obtaining credentials
         self.log.info('refreshing GC credentials')
 
         # Set up a Flow object to be used for authentication.
@@ -213,7 +213,7 @@ class GoogleCalendar(base.ThreadedPollText):
         except:
             remindertime = datetime.timedelta(0, 0)
 
-        #format the data
+        # format the data
         data = {
             'next_event': event['summary'] +
             ' ' +

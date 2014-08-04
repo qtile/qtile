@@ -4,7 +4,7 @@ from .. import bar, hook
 
 class CurrentLayout(base._TextBox):
     """
-        Display the name of the current layout of the current 
+        Display the name of the current layout of the current
         group of the screen, the bar containing the widget, is on.
     """
 

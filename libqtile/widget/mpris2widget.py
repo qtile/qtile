@@ -9,7 +9,7 @@ class Mpris2(base._TextBox):
     player. It should work with all MPRIS 2 compatible players
     which implement a reasonably correct version of MPRIS,
     though I have only tested it with audacious.
-    This widget scrolls the text if neccessary and information that 
+    This widget scrolls the text if neccessary and information that
     is displayed is configurable.
     '''
     defaults = [

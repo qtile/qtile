@@ -154,7 +154,7 @@ class Bar(Gap, configurable.Configurable):
         self.queued_draws = 0
 
     def _configure(self, qtile, screen):
-        if not self in [screen.top, screen.bottom]:
+        if self not in [screen.top, screen.bottom]:
             raise confreader.ConfigError(
                 "Bars must be at the top or the bottom of the screen."
             )
@@ -250,7 +250,7 @@ class Bar(Gap, configurable.Configurable):
             Removes the widget's keyboard handler.
         """
         del self.window.handle_KeyPress
-        if not self.saved_focus is None:
+        if self.saved_focus is not None:
             self.saved_focus.window.set_input_focus()
 
     def draw(self):

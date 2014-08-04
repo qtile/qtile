@@ -71,7 +71,7 @@ class Qtile(command.CommandObject):
             # Dots might appear in the host part of the display name
             # during remote X sessions. Let's strip the host part first.
             displayNum = displayName.partition(":")[2]
-            if not "." in displayNum:
+            if "." not in displayNum:
                 displayName = displayName + ".0"
             fname = command.find_sockfile(displayName)
 
@@ -314,7 +314,7 @@ class Qtile(command.CommandObject):
 
     def unmapKey(self, key):
         key_index = (key.keysym, key.modmask & self.validMask)
-        if not key_index in self.keyMap:
+        if key_index not in self.keyMap:
             return
 
         code = self.conn.keysym_to_keycode(key.keysym)
@@ -474,7 +474,7 @@ class Qtile(command.CommandObject):
         if attrs and attrs.override_redirect:
             return
 
-        if not w.wid in self.windowMap:
+        if w.wid not in self.windowMap:
             if internal:
                 try:
                     c = window.Internal(w, self)
@@ -603,7 +603,7 @@ class Qtile(command.CommandObject):
 
                 if ename.endswith("Event"):
                     ename = ename[:-5]
-                if not e.__class__ in self.ignoreEvents:
+                if e.__class__ not in self.ignoreEvents:
                     self.log.debug(ename)
                     for h in self.get_target_chain(ename, e):
                         self.log.info("Handling: %s" % ename)
@@ -1376,7 +1376,7 @@ class Qtile(command.CommandObject):
                         AttributeError) as err:
                     self.log.error(err.message)
                     result = None
-                if not result is None:
+                if result is not None:
                     from pprint import pformat
                     message = pformat(result)
                     if messenger:

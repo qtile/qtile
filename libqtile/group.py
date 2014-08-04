@@ -146,7 +146,7 @@ class _Group(command.CommandObject):
             # don't change focus while dragging windows
             return
         if win:
-            if not win in self.windows:
+            if win not in self.windows:
                 return
             else:
                 self.currentWindow = win
@@ -218,7 +218,7 @@ class _Group(command.CommandObject):
             if nextfocus is None:
                 nextfocus = self.layout.focus_first()
         self.focus(nextfocus, True)
-        #else: TODO: change focus
+        # else: TODO: change focus
 
     def mark_floating(self, win, floating):
         if floating and win in self.floating_layout.clients:
