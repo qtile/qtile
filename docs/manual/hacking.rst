@@ -79,14 +79,9 @@ biggest issue is tabs vs. spaces: only 4 space tabs, please. We also request
 that git commit messages follow the `standard format
 <http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>`_.
 
-Feel free to add your contribution (no matter how small) to the appropriate
-place in the CHANGELOG as well!
 
-Reporting Bugs
---------------
-
-Please report any bugs you find to the `github issue tracker
-<https://github.com/qtile/qtile/issues>`_.
+Please add your contribution (no matter how small) to the appropriate place in
+the CHANGELOG as well!
 
 Resources
 ---------
