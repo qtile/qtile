@@ -1009,6 +1009,20 @@ Spacer
 Just an empty space on the bar. Often used with width equal to
 bar.STRETCH to push bar widgets to the right edge of the screen.
 
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - background
+      - ``None``
+      - Background colour.
+    * - width
+      - ``bar.STRETCH``
+      - Width of the widget. Can be either ``bar.STRETCH`` or a width in pixels.
+
 
 System
 ------
