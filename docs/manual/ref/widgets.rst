@@ -1254,51 +1254,6 @@ A widget that display icons to launch the associated command
         ``[('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode'),
         ('logout', 'qsh:self.qtile.cmd_shutdown()', 'logout from qtile'),]``
 
-ThermalSensor
-~~~~~~~~~~~~~
-
-For using the thermal sensor widget you need to have lm-sensors installed.
-You can get a list of the tag_sensors executing "sensors" in your terminal.
-Then you can choose which you want, otherwise it will display the first
-available.
-
-    * - key
-      - default
-      - description
-    * - font
-      - ``"Arial"``
-      - Font
-    * - fontsize
-      - ``None``
-      - Pixel size. Calculated if None.
-    * - padding
-      - ``None``
-      - Padding. Calculated if None.
-    * - background
-      - ``"000000"``
-      - Background colour
-    * - foreground
-      - ``"ffffff"``
-      - Foreground colour
-    * - metric
-      - ``True``
-      - True to use metric/C, False to use imperial/F
-    * - show_tag
-      - ``False``
-      - Show tag sensor
-    * - update_interval
-      - ``2``
-      - Update interval in seconds
-    * - tag_sensor
-      - ``None``
-      - Tag of the temperature sensor. For example: "temp1" or "Core 0"
-    * - threshold
-      - ``70``
-      - If the current temperature value is above then change to ``foreground_alert`` colour
-    * - foreground_alert
-      - ``ff0000``
-      - Foreground colour alert
-
 
 She
 ~~~
@@ -1358,6 +1313,51 @@ A widget that manage system tray
     * - background
       - ``None``
       - Background colour
+
+ThermalSensor
+~~~~~~~~~~~~~
+
+For using the thermal sensor widget you need to have lm-sensors installed.
+You can get a list of the tag_sensors executing "sensors" in your terminal.
+Then you can choose which you want, otherwise it will display the first
+available.
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - metric
+      - ``True``
+      - True to use metric/C, False to use imperial/F
+    * - show_tag
+      - ``False``
+      - Show tag sensor
+    * - update_interval
+      - ``2``
+      - Update interval in seconds
+    * - tag_sensor
+      - ``None``
+      - Tag of the temperature sensor. For example: "temp1" or "Core 0"
+    * - threshold
+      - ``70``
+      - If the current temperature value is above then change to ``foreground_alert`` colour
+    * - foreground_alert
+      - ``ff0000``
+      - Foreground colour alert
 
 
 Volume
