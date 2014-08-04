@@ -94,6 +94,10 @@ A simple gmail checker.
 You will need to write your Gmail password into to your config to use this widget.
 Decide for yourself if this is a good idea.
 
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
     * - key
       - default
       - description
@@ -137,6 +141,10 @@ This widget will display the next appointment on your Google calendar
 in the qtile status bar. Appointments within the "reminder" time will
 be highlighted. Authentication credentials are stored in a file on
 disk.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
 
     * - key
       - default
@@ -1039,6 +1047,10 @@ TextBox
 A flexible textbox that can be updated from bound keys, scripts and qsh.
 Keep an instance in your config and call ``cmd_update`` to update the text.
 
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
     * - key
       - default
       - description
@@ -1211,6 +1223,10 @@ KeyboardLayout
 Widget for changing and displaying the current keyboard layout.
 It requires setxkbmap to be available in the system.
 
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
     * - key
       - default
       - description
@@ -1269,6 +1285,10 @@ She
 
 Widget to display the Super Hybrid Engine status.
 can display either the mode or CPU speed on eeepc computers.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
 
     * - key
       - default
@@ -1330,6 +1350,10 @@ For using the thermal sensor widget you need to have lm-sensors installed.
 You can get a list of the tag_sensors executing "sensors" in your terminal.
 Then you can choose which you want, otherwise it will display the first
 available.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
 
     * - key
       - default
@@ -1565,6 +1589,10 @@ The TaskList widget displays the window in the current of the curent screen.
 Clicking on a window name in the widget will focus the window and if it is
 floating bring it to the front.
 
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
     * - key
       - default
       - description
@@ -1642,6 +1670,10 @@ WindowTabs
 Displays the name of each window in the current group.
 Contrary to TaskList this is not an interactive widget.
 The window that currently has focus is highlighted.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
 
     * - key
       - default
