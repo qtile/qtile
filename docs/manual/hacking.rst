@@ -65,7 +65,7 @@ Examples of custom ``xsession`` files are available in `qtile-examples
 Contributing to Qtile
 ---------------------
 
-Now you've got a patch you want to submit to be merged to Qtile. Typically,
+Now you've got a patch you want to submit to be merged to Qtile! Typically,
 this is done via github `pull requests
 <https://help.github.com/articles/using-pull-requests>`_. Qtile uses a `well
 known <http://nvie.com/posts/a-successful-git-branching-model/>`_ branching
@@ -74,11 +74,26 @@ pull requests should be based against.
 
 While not all of our code follows `PEP8
 <http://www.python.org/dev/peps/pep-0008/>`_, we do try to adhere to it where
-possible, and ideally any new code would be PEP8 compliant. Perhaps the
-biggest issue is tabs vs. spaces: only 4 space tabs, please. We also request
+possible, and ideally any new code would be PEP8 compliant. We also request
 that git commit messages follow the `standard format
 <http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>`_.
 
+All pull requests for widgets should come with associated documentation.
+Additionally, all widgets should use our defaults system (see
+`libqtile/widget/clock.py
+<https://github.com/qtile/qtile/blob/develop/libqtile/widget/clock.py>`_ for an
+example); this will allow us to autogenerate the documentation in the future.
+Finally, when a widget API is changed, you should deprecate the change using
+``libqtile.widget.base.deprecated`` to warn users, in additon to adding it to
+the appropriate place in the changelog. We will typically remove deprecated
+APIs one tag after they are deprecated.
+
+Of course, your patches should also pass the unit tests as well. Qtile's tests
+are not particularly robust under load, so travis-ci will sometimes fail tests
+that would otherwise pass. We are working to fix this, but in the meantime, if
+your tests pass locally but not when you make a PR, don't fret, just ask
+someone on IRC or the mailing list to take a look to make sure it is a known
+issue.
 
 Please add your contribution (no matter how small) to the appropriate place in
 the CHANGELOG as well!
