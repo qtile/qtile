@@ -1363,9 +1363,8 @@ A widget that manage system tray
 Volume
 ~~~~~~
 
-Widget that display and change volume
-if theme_path is set it draw widget as
-icons
+Widget that displays current volume and that can change the volume.
+If theme_path is set it draw widget as icons.
 
 .. list-table::
     :widths: 20 20 60
@@ -1401,6 +1400,11 @@ icons
     * - update_interval
       - ``0.2``
       - Update time in seconds.
+    * - emoji
+      - ``False``
+      - Use emoji to display volume states, only if ``theme_path`` is not set.
+        The specified font needs to contain the correct unicode characters.
+
 
 
 Window Management
