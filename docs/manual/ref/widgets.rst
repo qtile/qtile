@@ -415,6 +415,15 @@ Format options:
     * - update_interval
       - ``600``
       - Update interval in seconds
+    * - up
+      - ``"^"``
+      - symbol for rising atmospheric pressure
+    * - down
+      - ``"v"``
+      - symbol for falling atmospheric pressure
+    * - steady
+      - "``s"``
+      - symbol for steady atmospheric pressure
 
 
 Graphs
