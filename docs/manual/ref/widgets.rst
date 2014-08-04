@@ -1484,6 +1484,55 @@ A widget that graphically displays the current group.
       - Whether to invert mouse wheel group movement.
 
 
+TaskList
+~~~~~~~~
+
+The TaskList widget displays the window in the current of the curent screen.
+Clicking on a window name in the widget will focus the window and if it is
+floating bring it to the front.
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Text font
+    * - fontsize
+      - ``None``
+      - Font pixel size. Calculated if None.
+    * - background
+      - ``None``
+      - Background colour.
+    * - foreground
+      - ``"#ffffff"``
+      - Foreground colour.
+    * - fontshadow
+      - ``None``
+      - font shadow color, default is None (no shadow)
+    * - borderwidth
+      - ``2``
+      - Current group border width
+    * - border
+      - ``"#215578"
+      - Border colour
+      - rounded
+      - True
+      - To round or not to round borders
+      - highlight_method
+      - ``"border"``
+      - Method of highlighting. Valid values: "border and "block"
+        Uses ``border`` color settings
+    * - urgent_border
+      - ``"FF0000"
+      - Urgent border color
+    * - urgent_alert_method
+      - ``"border"``
+      - Method for alerting you of WM urgent hints. Valid values: "border" or "text"
+    * - max_title_width
+      - ``200``
+      - maximum size in pixels of task title
+
+
 WindowName
 ~~~~~~~~~~
 
