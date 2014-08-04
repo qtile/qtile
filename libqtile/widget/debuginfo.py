@@ -35,13 +35,12 @@ class DebugInfo(base._TextBox):
                                                        current)
         elif isinstance(w.group.layout, layout.TreeTab):
             node = w.group.layout._nodes[w]
-            tree = w.group.layout._tree
             nodeIdx = node.parent.children.index(node)
             snode = node
             level = 1
             while not isinstance(snode, layout.tree.Section):
                 snode = snode.parent
-                level +=1
+                level += 1
             sectionIdx = snode.parent.children.index(snode)
             self.text = "Level: %s SectionIdx: %s NodeIdx: %s" % (level,
                                                                   sectionIdx,
@@ -51,4 +50,3 @@ class DebugInfo(base._TextBox):
             self.bar.draw()
         else:
             self.draw()
-

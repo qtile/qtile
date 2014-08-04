@@ -48,8 +48,8 @@ keys = [
     Key([mod], "Return", lazy.spawn("xterm")),
 
     # Toggle between different layouts as defined below
-    Key([mod], "Tab",    lazy.nextlayout()),
-    Key([mod], "w",      lazy.window.kill()),
+    Key([mod], "Tab", lazy.nextlayout()),
+    Key([mod], "w", lazy.window.kill()),
 
     Key([mod, "control"], "r", lazy.restart()),
     Key([mod, "control"], "q", lazy.shutdown()),
@@ -86,9 +86,9 @@ layouts = [
 ]
 
 widget_defaults = dict(
-    font = 'Arial',
-    fontsize = 16,
-    padding = 3,
+    font='Arial',
+    fontsize=16,
+    padding=3,
 )
 
 screens = [

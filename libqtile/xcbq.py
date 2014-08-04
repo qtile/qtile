@@ -32,7 +32,7 @@ keysyms = xkeysyms.keysyms
 # These should be in xpyb:
 ModMasks = {
     "shift": 1 << 0,
-    "lock":  1 << 1,
+    "lock": 1 << 1,
     "control": 1 << 2,
     "mod1": 1 << 3,
     "mod2": 1 << 4,
@@ -100,7 +100,7 @@ WindowTypes = {
 WindowStates = {
     None: 'normal',
     '_NET_WM_STATE_FULLSCREEN': 'fullscreen',
-    }
+}
 
 # Maps property names to types and formats.
 PropertyMap = {

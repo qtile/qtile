@@ -137,7 +137,7 @@ class Bar(Gap, configurable.Configurable):
     """
     defaults = [
         ("background", "#000000", "Background colour."),
-        ("opacity",  1, "Bar window opacity.")
+        ("opacity", 1, "Bar window opacity."),
     ]
 
     def __init__(self, widgets, size, **config):

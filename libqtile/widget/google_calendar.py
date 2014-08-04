@@ -183,7 +183,7 @@ class GoogleCalendar(base.ThreadedPollText):
         service = build('calendar', 'v3', http=http)
 
         # current timestamp
-        now = datetime.datetime.utcnow().isoformat('T')+'Z'
+        now = datetime.datetime.utcnow().isoformat('T') + 'Z'
         data = {}
 
         # grab the next event
@@ -223,10 +223,8 @@ class GoogleCalendar(base.ThreadedPollText):
                 event['start']['dateTime'].replace('T', ' ')
             )
         }
-        if dateutil.parser.parse(
-                event['start']['dateTime'],
-                ignoretz=True
-                ) - remindertime <= datetime.datetime.now():
+        parse_result = dateutil.parser.parse(event['start']['dateTime'], ignoretz=True)
+        if parse_result - remindertime <= datetime.datetime.now():
             data = {
                 'next_event': '<span color="' +
                 utils.hex(self.reminder_color) +

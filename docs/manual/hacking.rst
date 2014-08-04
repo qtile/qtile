@@ -74,8 +74,10 @@ pull requests should be based against.
 
 While not all of our code follows `PEP8
 <http://www.python.org/dev/peps/pep-0008/>`_, we do try to adhere to it where
-possible, and ideally any new code would be PEP8 compliant. We also request
-that git commit messages follow the `standard format
+possible, and ideally any new code would be PEP8 compliant. 'make lint' will
+run a linter with our configuration over libqtile to ensure your patch complies
+with reasonable formatting constraints. We also request that git commit
+messages follow the `standard format
 <http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>`_.
 
 All pull requests for widgets should come with associated documentation.

@@ -185,13 +185,11 @@ class Tile(Layout):
         self.up()
 
     def cmd_next(self):
-        client = self.focus_next(self.focused) or \
-                 self.focus_first()
+        client = self.focus_next(self.focused) or self.focus_first()
         self.group.focus(client, False)
 
     def cmd_previous(self):
-        client = self.focus_previous(self.focused) or \
-                 self.focus_last()
+        client = self.focus_previous(self.focused) or self.focus_last()
         self.group.focus(client, False)
 
     def cmd_decrease_ratio(self):

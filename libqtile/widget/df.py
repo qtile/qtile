@@ -31,13 +31,13 @@ class DF(base.ThreadedPollText):
         ('visible_on_warn', True, 'Only display if warning'),
         ('measure', "G", "Measurement (G, M, B)"),
         ('format', '{p} ({uf}{m})',
-                    'String format (p: partition, s: size, '\
-                    'f: free space, uf: user free space, m: measure)'),
+            'String format (p: partition, s: size, '
+            'f: free space, uf: user free space, m: measure)'),
         ('update_interval', 60, 'The update inteval.'),
     ]
 
-    measures = {"G": 1024*1024*1024,
-                "M": 1024*1024,
+    measures = {"G": 1024 * 1024 * 1024,
+                "M": 1024 * 1024,
                 "B": 1024}
     def __init__(self, **config):
         base.ThreadedPollText.__init__(self, **config)

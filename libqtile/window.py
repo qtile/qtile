@@ -893,7 +893,6 @@ class Window(_Window):
                     ((height - self.hints['base_height'])
                     % self.hints['height_inc']))
 
-
             self.place(
                 self.x,
                 self.y,
@@ -1047,15 +1046,15 @@ class Window(_Window):
             width = size[0]
             height = size[4]
 
-            next_pix = width*height*4
+            next_pix = width * height * 4
             data = icon[:next_pix]
 
             arr = array.array("B", data)
             for i in range(0, len(arr), 4):
-                mult = (arr[i+3]) / 255.
-                arr[i+0] = int(arr[i+0] * mult)
-                arr[i+1] = int(arr[i+1] * mult)
-                arr[i+2] = int(arr[i+2] * mult)
+                mult = (arr[i + 3]) / 255.
+                arr[i + 0] = int(arr[i + 0] * mult)
+                arr[i + 1] = int(arr[i + 1] * mult)
+                arr[i + 2] = int(arr[i + 2] * mult)
             icon = icon[next_pix:]
             icons["%sx%s" % (width, height)] = arr
         self.icons = icons
@@ -1087,8 +1086,6 @@ class Window(_Window):
                 if not prop:
                     # skip 0
                     continue
-
-                prop_name = atoms.get_name(prop)
 
                 if action == _NET_WM_STATE_REMOVE:
                     current_state.discard(prop)

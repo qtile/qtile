@@ -5,12 +5,14 @@ python:
   - 2.7
 
 script:
+  make lint
   nosetests
 
 before_install:
 # Environment setup
   - sudo apt-get update -qq
   - sudo apt-get install xserver-xephyr x11-apps
+  - sudo pip install flake8
 # Setup XvFB
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start

@@ -157,7 +157,7 @@ class Mpd(base.ThreadedPollText):
         return self.to_minutes_seconds(self.song['time'])
 
     def get_number(self):
-        return str(int(self.status['song'])+1)
+        return str(int(self.status['song']) + 1)
 
     def get_playlistlength(self):
         return self.status['playlistlength']

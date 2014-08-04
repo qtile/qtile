@@ -195,7 +195,7 @@ class Qtile(command.CommandObject):
         self.selection = {
             "PRIMARY": {"owner": None, "selection": ""},
             "CLIPBOARD": {"owner": None, "selection": ""}
-            }
+        }
         self.setup_selection()
 
     def setup_selection(self):
@@ -203,9 +203,7 @@ class Qtile(command.CommandObject):
         CLIPBOARD = self.conn.atoms["CLIPBOARD"]
 
         self.selection_window = self.conn.create_window(-1, -1, 1, 1)
-        self.selection_window.set_attribute(
-            eventmask=EventMask.PropertyChange
-            )
+        self.selection_window.set_attribute(eventmask=EventMask.PropertyChange)
         self.conn.xfixes.select_selection_input(self.selection_window,
                                                 "PRIMARY")
         self.conn.xfixes.select_selection_input(self.selection_window,
@@ -871,7 +869,6 @@ class Qtile(command.CommandObject):
                     xcb.xproto.GrabMode.Async,
                 )
 
-
     def handle_ButtonRelease(self, e):
         button_code = e.detail
         state = e.state & ~xcbq.AllButtonsMask
@@ -1264,8 +1261,8 @@ class Qtile(command.CommandObject):
 
         # update window _NET_WM_DESKTOP
         for group in (self.groups[indexa], self.groups[indexb]):
-            for window in group.windows:
-                window.group = group
+            for w in group.windows:
+                w.group = group
 
     def find_window(self, wid):
         window = self.windowMap.get(wid)
@@ -1361,7 +1358,8 @@ class Qtile(command.CommandObject):
         """
         def f(cmd):
             if cmd:
-                c = command.CommandRoot(self)
+                # c here is used in eval() below
+                c = command.CommandRoot(self)  # noqa
                 try:
                     cmd_arg = str(cmd).split(' ')
                 except AttributeError:

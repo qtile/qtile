@@ -617,12 +617,12 @@ class MonadTall(SingleWindow):
 
     def cmd_next(self):
         client = self.focus_next(self.clients[self.focused]) or \
-                 self.focus_first()
+            self.focus_first()
         self.group.focus(client, False)
 
     def cmd_previous(self):
         client = self.focus_previous(self.clients[self.focused]) or \
-                 self.focus_last()
+            self.focus_last()
         self.group.focus(client, False)
 
     def cmd_shrink(self):

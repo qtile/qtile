@@ -15,17 +15,15 @@ class Clipboard(base._TextBox):
         ("max_width", 10, "maximum number of characters to display "
             "(None for all, useful when width is bar.STRETCH)"),
         ("timeout", 10,
-            "Default timeout (seconds) for display text, None to keep forever"
-         ),
+            "Default timeout (seconds) for display text, None to keep forever"),
         ("blacklist", ["keepassx"],
             "list with blacklisted wm_class, sadly not every "
             "clipboard window sets them, keepassx does."
             "Clipboard contents from blacklisted wm_classes "
             "will be replaced by the value of ``blacklist_text``."),
         ("blacklist_text", "***********",
-            "text to display when the wm_class is blacklisted"
-         )
-        ]
+            "text to display when the wm_class is blacklisted")
+    ]
 
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "", width, **config)

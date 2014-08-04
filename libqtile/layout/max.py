@@ -69,13 +69,11 @@ class Max(SingleWindow):
             return self.clients[idx - 1]
 
     def up(self):
-        client = self.focus_previous(self.focused) or \
-                 self.focus_last()
+        client = self.focus_previous(self.focused) or self.focus_last()
         self.group.focus(client, False)
 
     def down(self):
-        client = self.focus_next(self.focused) or \
-                 self.focus_first()
+        client = self.focus_next(self.focused) or self.focus_first()
         self.group.focus(client, False)
 
     def clone(self, group):

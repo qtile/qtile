@@ -22,7 +22,7 @@ class Wlan(base.InLoopPollText):
             quality = stats.qual.quality
             essid = interface.getEssid()
             return "{} {}/70".format(essid, quality)
-        except IOError as e:
+        except IOError:
             logging.getLogger('qtile').error('%s: Probably your wlan device '
                     'is switched off or otherwise not present in your system.',
                     self.__class__.__name__)
