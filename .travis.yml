@@ -5,8 +5,7 @@ python:
   - 2.7
 
 script:
-  make lint
-  nosetests
+  - make ckpatch
 
 before_install:
 # Environment setup
