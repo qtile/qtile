@@ -1590,3 +1590,36 @@ Displays the name of the window that currently has focus.
     * - foreground
       - ``"ffffff"``
       - Foreground colour.
+
+
+WindowTabs
+~~~~~~~~~~
+
+Displays the name of each window in the current group.
+Contrary to TaskList this is not an interactive widget.
+The window that currently has focus is highlighted.
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font face.
+    * - fontsize
+      - ``None``
+      - Font pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding left and right.
+    * - background
+      - ``"000000"``
+      - Background colour.
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour.
+    * - separator
+      - ``" | "``
+      - Task separator text.
+    * - selected
+      - ``"<", ">"``
+      - Selected task indicator.
