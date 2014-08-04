@@ -1405,7 +1405,42 @@ If theme_path is set it draw widget as icons.
       - Use emoji to display volume states, only if ``theme_path`` is not set.
         The specified font needs to contain the correct unicode characters.
 
+Wlan
+~~~~
 
+Displays Wifi ssid and quality.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Text font
+    * - fontsize
+      - ``None``
+      - Font pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding left and right. Calculated if None.
+    * - background
+      - ``None``
+      - Background colour.
+    * - foreground
+      - ``"#ffffff"``
+      - Foreground colour.
+    * - fontshadow
+      - ``None``
+      - font shadow color, default is None (no shadow)
+    * - interface
+      - ``wlan0``
+      - The interface to monitor.
+    * - update_interval
+      - ``1``
+      - The update interval
 
 Window Management
 -----------------
