@@ -1024,6 +1024,32 @@ bar.STRETCH to push bar widgets to the right edge of the screen.
       - Width of the widget. Can be either ``bar.STRETCH`` or a width in pixels.
 
 
+TextBox
+~~~~~~~
+
+A flexible textbox that can be updated from bound keys, scripts and qsh.
+Keep an instance in your config and call ``cmd_update`` to update the text.
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Font pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+
+
 System
 ------
 
