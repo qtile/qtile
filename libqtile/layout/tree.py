@@ -42,9 +42,8 @@ class TreeNode(object):
                 return res
 
     def add_superscript(self, title):
-        from ..compat import unicode
         if not self.expanded and self.children:
-            return unicode(
+            return six.u(
                 len(self.children)
             ).translate(to_superscript).encode('utf-8') + title
         return title

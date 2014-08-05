@@ -2,7 +2,7 @@
 # coding: utf-8
 
 from . import base
-from ..compat import u
+from six import u
 
 from subprocess import Popen, PIPE
 import re

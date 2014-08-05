@@ -6,7 +6,7 @@ import cairocffi
 
 from . import base
 from .. import bar
-from ..compat import u
+from six import u
 
 __all__ = [
     'Volume',
