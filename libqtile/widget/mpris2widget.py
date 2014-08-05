@@ -9,6 +9,8 @@ class Mpris2(base._TextBox):
     player. It should work with all MPRIS 2 compatible players
     which implement a reasonably correct version of MPRIS,
     though I have only tested it with audacious.
+    This widget scrolls the text if neccessary and information that 
+    is displayed is configurable.
     '''
     defaults = [
                 ('name', 'audacious', 'Name of the MPRIS widget.'),
@@ -20,7 +22,9 @@ class Mpris2(base._TextBox):
                     'mpris-spec/latest/#Bus-Name-Policy'),
 
                 ('display_metadata', ['xesam:title', 'xesam:album', 'xesam:artist'],
-                     'Which metadata identifiers to display.'),
+                     'Which metadata identifiers to display. '
+                     'See http://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata/#index5h3 '
+                     'for available values'),
 
                 ('scroll_chars', 30, 'How many chars at once to display.'),
                 ('scroll_interval', 0.5, 'Scroll delay interval.'),

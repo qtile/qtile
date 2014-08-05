@@ -79,7 +79,7 @@ class GoogleCalendar(base.ThreadedPollText):
         (
             'format',
             ' {next_event} ',
-            'calendar output - leave this at the default for now...'
+            'text to display - leave this at the default for now...'
         ),
         (
             'storage_file',

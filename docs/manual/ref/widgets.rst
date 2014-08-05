@@ -5,11 +5,49 @@ Built-in Widgets
 Applications
 ------------
 
+BitcoinTicker
+~~~~~~~~~~~~~
+
+A bitcoin ticker widget, data provided by the btc-e.com API. Defaults to
+displaying currency in whatever the current locale is.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - update_delay
+      - ``600``
+      - The delay in seconds between updates
+    * - currency
+      - defaults to current locale
+      - The currency the value of bitcoin is displayed in'),
+    * - format
+      - ``"BTC Buy: {buy}, Sell: {sell}"``
+      - Display format, available variables: buy, sell, high, low, avg, vol, vol_cur, last.
+
 
 Canto
 ~~~~~
 
-<missing doc string>
+Display RSS feeds updates using the canto console reader.
 
 .. list-table::
     :widths: 20 20 60
@@ -49,6 +87,105 @@ Canto
       - ``600``
       - The delay in seconds between updates
 
+GmailChecker
+~~~~~~~~~~~~
+
+A simple gmail checker.
+You will need to write your Gmail password into to your config to use this widget.
+Decide for yourself if this is a good idea.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - username
+      - ``None``
+      - Gmail username i.e. email@gmail.com
+    * - password
+      - ``None``
+      - Your Gmail password.
+    * - email_path
+      - ``None``
+      - valid email path
+    * - fmt'
+      - ``"inbox[%s],unseen[%s]"``
+      - format string fot textbox widget
+    * - status_only_unseen
+      - ``False``
+      - only show unseen mail count
+
+
+
+GoogleCalendar
+~~~~~~~~~~~~~~
+
+This widget will display the next appointment on your Google calendar
+in the qtile status bar. Appointments within the "reminder" time will
+be highlighted. Authentication credentials are stored in a file on
+disk.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - calendar
+      - ``"primary"ä``
+      - calendar to use
+    * - format'
+      - ``" {next_event} "``
+      - text to display - leave this at the default for now...
+    * - storage_file
+      - ``None``
+      - absolute path of secrets file - must be set
+    * - reminder_color
+      - ``"FF0000"``
+      - color of calendar entries during reminder time
+    * - www_group
+      - ``"www"``
+      - group to open browser into
+    * - www_screen
+      - ``0``
+      - screen to open group on
+    * - browser_cmd
+      - ``"/usr/bin/firefox -url calendar.google.com"``
+      - command or script to execute on click
+
 
 Maildir
 ~~~~~~~
@@ -77,6 +214,15 @@ A simple widget showing the number of new mails in maildir mailboxes.
     * - foreground
       - ``"ffffff"``
       - Foreground colour
+    * - maildirPath
+      - ``"~/Mail"``
+      - path to the Maildir folder"
+    * - subFolders
+      - ``[]``
+      - The subfolders to scan (e.g. [{"path": "INBOX", "label": "Home mail"}, {"path": "spam", "label": "Home junk"}])
+    * - separator
+      - ``" "``
+      - the string to put between the subfolder strings.
 
 
 Mpris
@@ -95,20 +241,122 @@ correct version of MPRIS, though I have only tested it with clementine.
       - description
     * - font
       - ``"Arial"``
-      - Mpd widget font
+      - widget font
     * - fontsize
       - ``None``
-      - Mpd widget pixel size. Calculated if None.
+      - widget pixel size. Calculated if None.
     * - padding
       - ``None``
-      - Mpd widget padding. Calculated if None.
+      - widget padding. Calculated if None.
     * - background
       - ``"000000"``
       - Background colour
     * - foreground
       - ``"ffffff"``
       - Foreground colour
+    * - name
+      - ``"clementine"``
+      - name of the player
+    * - width
+      - bar.CALCULATED
+      - Width of the widget. Can be one of bar.CALCULATED, bar.STRETCH or the width in pixels.
+    * - objname
+      - 'org.mpris.clementine'
+      - BUS MPRIS 2 compatible player identifier'. Find it out with dbus-dbus-monitor "member=RequestName"
+        and then launch your media player. The correct name starts with org.mpris
+        Also see: http://specifications.freedesktop.org/mpris-spec/latest/#Bus-Name-Policy
 
+
+Mpris2
+~~~~~
+
+A widget which displays the current track/artist of your favorite MPRIS
+player. It should work with all players which implement a reasonably
+correct version of MPRIS, though I have only tested it with audacious.
+This widget scrolls the text if neccessary and information that is displayed is
+configurable.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - widget font
+    * - fontsize
+      - ``None``
+      - widget pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - widget padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - name
+      - ``"clementine"``
+      - name of the player
+    * - objname
+      - 'org.mpris.clementine'
+      - BUS MPRIS 2 compatible player identifier'. Find it out with dbus-dbus-monitor "member=RequestName"
+        and then launch your media player. The correct name starts with org.mpris
+        Also see: http://specifications.freedesktop.org/mpris-spec/latest/#Bus-Name-Policy
+    * - display_metadata
+      - ``['xesam:title', 'xesam:album', 'xesam:artist']``
+      - Which metadata identifiers to display. 
+        See http://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata/#index5h3 for possible values.
+    * - scroll_chars
+      - ``30``
+      - How many chars to display at once.
+    * - scroll_interval
+      - ``0.5``
+      - Scroll delay interval.
+    * - scroll_wait_intervals
+      - ``8``
+      - Wait x scroll_interval before scrolling/removing text
+
+Pacman
+~~~~~~
+
+Shows number of available updates.
+    Needs the pacman package manager installed. So will only work in Arch Linux installation.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - widget font
+    * - fontsize
+      - ``None``
+      - widget pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - widget padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - unavailable
+      - ``"ffffff"``
+      - Unavailable Color - no updates
+    * - execute
+      - ``None``
+      - Command to execute on click. String.
+    * - update_interval
+      - ``60``
+      - The update interval.
 
 YahooWeather
 ~~~~~~~~~~~~
@@ -175,6 +423,15 @@ Format options:
     * - update_interval
       - ``600``
       - Update interval in seconds
+    * - up
+      - ``"^"``
+      - symbol for rising atmospheric pressure
+    * - down
+      - ``"v"``
+      - symbol for falling atmospheric pressure
+    * - steady
+      - "``s"``
+      - symbol for steady atmospheric pressure
 
 
 Graphs
@@ -187,7 +444,7 @@ Graphs
 CPUGraph
 ~~~~~~~~
 
-<missing doc string>
+Display a CPU usage graph.
 
 .. list-table::
     :widths: 20 20 60
@@ -232,12 +489,70 @@ CPUGraph
     * - start_pos
       - ``"bottom"``
       - Drawer starting position ('bottom'/'top')
+    * - core
+      - ``"all"``
+      - Which core to show (all/0/1/2/...)
 
+
+HDDBusyGraph
+~~~~~~~~~~~~
+
+Display a HDD usage stats graph.
+Parses /sys/block/<dev>/stat file and extracts overall device
+IO usage, based on `io_ticks`'s value.
+See https://www.kernel.org/doc/Documentation/block/stat.txt
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - graph_color
+      - ``"18BAEB"``
+      - Graph color
+    * - fill_color
+      - ``"1667EB.3"``
+      - Fill color for linefill graph
+    * - background
+      - ``"000000"``
+      - Widget background
+    * - border_color
+      - ``"215578"``
+      - Widget border color
+    * - border_width
+      - ``2``
+      - Widget background
+    * - margin_x
+      - ``3``
+      - Margin X
+    * - margin_y
+      - ``3``
+      - Margin Y
+    * - samples
+      - ``100``
+      - Count of graph samples.
+    * - frequency
+      - ``60``
+      - Update frequency in seconds
+    * - type
+      - ``"linefill"``
+      - 'box', 'line', 'linefill'
+    * - line_width
+      - ``3``
+      - Line width
+    * - start_pos
+      - ``"bottom"``
+      - Drawer starting position ('bottom'/'top')
+    * - device
+      - ``"sda"``
+      - Block device to display info for.
 
 HDDGraph
 ~~~~~~~~
 
-<missing doc string>
+Display HDD free or used space graph.
 
 .. list-table::
     :widths: 20 20 60
@@ -283,8 +598,8 @@ HDDGraph
       - ``"bottom"``
       - Drawer starting position ('bottom'/'top')
     * - path
-      - ``"sda1"``
-      - Path at which parition is MOUNTED.
+      - ``"/"``
+      - Partition mount point.
     * - space_type
       - ``"used"``
       - free/used
@@ -293,7 +608,7 @@ HDDGraph
 MemoryGraph
 ~~~~~~~~~~~
 
-<missing doc string>
+Displays a memory usage graph.
 
 .. list-table::
     :widths: 20 20 60
@@ -343,7 +658,7 @@ MemoryGraph
 NetGraph
 ~~~~~~~~
 
-<missing doc string>
+Display a network usage graph.
 
 .. list-table::
     :widths: 20 20 60
@@ -386,8 +701,8 @@ NetGraph
       - ``3``
       - Line width
     * - interface
-      - ``"eth0"``
-      - Interface to display info for
+      - ``"auto"``
+      - Interface to display info for ('auto' for detection, or e.g. eth0).
     * - bandwidth_type
       - ``"down"``
       - down(load)/up(load)
@@ -399,7 +714,7 @@ NetGraph
 SwapGraph
 ~~~~~~~~~
 
-<missing doc string>
+Display a swap info graph.
 
 .. list-table::
     :widths: 20 20 60
@@ -450,10 +765,10 @@ Misc
 ----
 
 
-Notify
-~~~~~~
+Clipboard
+~~~~~~~~~
 
-An notify widget
+Display current clipboard contents.
 
 .. list-table::
     :widths: 20 20 60
@@ -464,13 +779,166 @@ An notify widget
       - description
     * - font
       - ``"Arial"``
-      - Mpd widget font
+      - Font
     * - fontsize
       - ``None``
-      - Mpd widget pixel size. Calculated if None.
+      - Pixel size. Calculated if None.
     * - padding
       - ``None``
-      - Mpd widget padding. Calculated if None.
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - selection
+      - ``"CLIPBOARD"``
+      - the selection to display (CLIPBOARD or PRIMARY)
+    * - max_width
+      - ``10``
+      - maximum number of characters to display. ``None`` for all, useful when width is ``bar.STRETCH``
+    * - timeout
+      - ``10``
+      - Default timeout (seconds) for display text, None to keep forever.
+    * - blacklist
+      - ``["keepassx"]``
+      - list with blacklisted wm_class, sadly not every clipboard window sets them, keepassx does.
+        Clipboard contents from blacklisted wm_classes will be replaced by the value of ``blacklist_text``.
+    * - blacklist_text
+      - ``"***********"``
+      - text to display when the wm_class is blacklisted.
+
+
+Countdown
+~~~~~~~~~
+
+A simple countdown timer text widget.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - format
+      - ``"{D}d {H}h {M}m {S}s"``
+      - Format of the displayed text. Available variables:  {D} == days, {H} == hours, {M} == minutes, {S} seconds.
+    * - update_interval
+      - ``1.``
+      - Update interval in seconds for the clock
+    * - date
+      - ``datetime.now()``
+      - The datetime for the endo of the countdown
+
+
+DF
+~~
+
+Disk Free Widget
+By default the widget only displays if the space is less than warn_space
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - partition
+      - ``"/"``
+      - the partition to check space
+    * - warn_color
+      - ``"ff0000"``
+      - Warning color
+    * - warn_space
+      - ``2``
+      - Warning space in scale defined by the ``measure`` option.
+    * - visible_on_warn
+      - ``True``
+      - Only display if warning. False == always display
+    * _ measure
+      - ``"G"``
+      - Measurement in G == Gigabytes, M == Megabytes or B == Bytes
+    * - format
+      - ``"{p} ({uf}{m})"``
+      - String format p: partition, s: size, f: free space, uf: user free space, m: measure
+    * - update_interval
+      - ``60``
+      - The update inteval in seconds
+
+Image
+~~~~~
+
+Display a PNG image on the bar.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - scale
+      - ``True``
+      - Enable/Disable image scaling
+    * - filename
+      - ``None``
+      - PNG Image filename. Can contain '~'. Must be set.
+
+
+Notify
+~~~~~~
+
+A notify widget
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - widget font
+    * - fontsize
+      - ``None``
+      - widget pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - widget padding. Calculated if None.
     * - background
       - ``"000000"``
       - Background colour
@@ -483,6 +951,9 @@ An notify widget
     * - foreground_low
       - ``"dddddd"``
       - Foreground low priority colour
+    * - default_timeout
+      - ``None``
+      - Default timeout (seconds) for notifications.
 
 
 Prompt
@@ -516,7 +987,9 @@ A widget that prompts for user input. Input should be started using the
     * - cursorblink
       - ``0.5``
       - Cursor blink rate. 0 to disable.
-
+    * - prompt
+      - ``"{prompt}: "``
+      - Text displayed at the prompt.
 
 Sep
 ~~~
@@ -552,6 +1025,50 @@ Spacer
 
 Just an empty space on the bar. Often used with width equal to
 bar.STRETCH to push bar widgets to the right edge of the screen.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - background
+      - ``None``
+      - Background colour.
+    * - width
+      - ``bar.STRETCH``
+      - Width of the widget. Can be either ``bar.STRETCH`` or a width in pixels.
+
+
+TextBox
+~~~~~~~
+
+A flexible textbox that can be updated from bound keys, scripts and qsh.
+Keep an instance in your config and call ``cmd_update`` to update the text.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Font pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
 
 
 System
@@ -700,6 +1217,107 @@ A simple but flexible text-based clock.
       - ``"ffffff"``
       - Foreground colour
 
+KeyboardLayout
+~~~~~~~~~~~~~~
+
+Widget for changing and displaying the current keyboard layout.
+It requires setxkbmap to be available in the system.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - update_interval
+      - ``1``
+      - Update time in seconds
+    * - configured_keyboards
+      - us
+      - A list of predefined keyboard layouts represented as strings. For example: ['us', 'us colemak', 'es', 'fr'].
+
+
+LaunchBar
+~~~~~~~~~
+
+A widget that display icons to launch the associated command
+
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - padding
+      - ``2``
+      - Padding in pixels between icons
+    * - default_icon
+      - ``"/usr/share/icons/oxygen/256x256/mimetypes/application-x-executable.png"``
+      - Default icon to use if application icon wasn't found'
+    * - progs
+      -
+      - A list of tuples (software_name, command_to_execute, comment)
+        for example:
+        ``[('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode'),
+        ('logout', 'qsh:self.qtile.cmd_shutdown()', 'logout from qtile'),]``
+
+
+She
+~~~
+
+Widget to display the Super Hybrid Engine status.
+can display either the mode or CPU speed on eeepc computers.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - device
+      - ``"/sys/devices/platform/eeepc/cpufv"``
+      - sys path to cpufv
+    * - format
+      - ``"speed"``
+      - Type of info to display "speed" or "name"
+    * - update_interval
+      - ``0.5``
+      - Update Time in seconds.
+
 
 Systray
 ~~~~~~~
@@ -725,13 +1343,61 @@ A widget that manage system tray
       - ``None``
       - Background colour
 
+ThermalSensor
+~~~~~~~~~~~~~
+
+For using the thermal sensor widget you need to have lm-sensors installed.
+You can get a list of the tag_sensors executing "sensors" in your terminal.
+Then you can choose which you want, otherwise it will display the first
+available.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font
+    * - fontsize
+      - ``None``
+      - Pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding. Calculated if None.
+    * - background
+      - ``"000000"``
+      - Background colour
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour
+    * - metric
+      - ``True``
+      - True to use metric/C, False to use imperial/F
+    * - show_tag
+      - ``False``
+      - Show tag sensor
+    * - update_interval
+      - ``2``
+      - Update interval in seconds
+    * - tag_sensor
+      - ``None``
+      - Tag of the temperature sensor. For example: "temp1" or "Core 0"
+    * - threshold
+      - ``70``
+      - If the current temperature value is above then change to ``foreground_alert`` colour
+    * - foreground_alert
+      - ``ff0000``
+      - Foreground colour alert
+
 
 Volume
 ~~~~~~
 
-Widget that display and change volume
-if theme_path is set it draw widget as
-icons
+Widget that displays current volume and that can change the volume.
+If theme_path is set it draw widget as icons.
 
 .. list-table::
     :widths: 20 20 60
@@ -767,15 +1433,15 @@ icons
     * - update_interval
       - ``0.2``
       - Update time in seconds.
+    * - emoji
+      - ``False``
+      - Use emoji to display volume states, only if ``theme_path`` is not set.
+        The specified font needs to contain the correct unicode characters.
 
+Wlan
+~~~~
 
-Window Management
------------------
-
-CurrentLayout
-~~~~~~~~~~~~~
-
-<missing doc string>
+Displays Wifi ssid and quality.
 
 .. list-table::
     :widths: 20 20 60
@@ -799,7 +1465,49 @@ CurrentLayout
     * - foreground
       - ``"#ffffff"``
       - Foreground colour.
+    * - fontshadow
+      - ``None``
+      - font shadow color, default is None (no shadow)
+    * - interface
+      - ``wlan0``
+      - The interface to monitor.
+    * - update_interval
+      - ``1``
+      - The update interval
 
+Window Management
+-----------------
+
+CurrentLayout
+~~~~~~~~~~~~~
+
+Display the name of the current layout of the current group of the screen, the bar containing the widget, is on.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Text font
+    * - fontsize
+      - ``None``
+      - Font pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding left and right. Calculated if None.
+    * - background
+      - ``None``
+      - Background colour.
+    * - foreground
+      - ``"#ffffff"``
+      - Foreground colour.
+    * - fontshadow
+      - ``None``
+      - font shadow color, default is None (no shadow)
 
 GroupBox
 ~~~~~~~~
@@ -866,6 +1574,65 @@ A widget that graphically displays the current group.
     * - urgent_alert_method
       - ``"border"``
       - Method for alerting you of WM urgent hints (one of 'border' or 'text')
+    * - disable_drag
+      - ``False``
+      - Disable dragging and dropping of group names on widget.
+    * - invert_mouse_wheel
+      - ``False``
+      - Whether to invert mouse wheel group movement.
+
+
+TaskList
+~~~~~~~~
+
+The TaskList widget displays the window in the current of the curent screen.
+Clicking on a window name in the widget will focus the window and if it is
+floating bring it to the front.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Text font
+    * - fontsize
+      - ``None``
+      - Font pixel size. Calculated if None.
+    * - background
+      - ``None``
+      - Background colour.
+    * - foreground
+      - ``"#ffffff"``
+      - Foreground colour.
+    * - fontshadow
+      - ``None``
+      - font shadow color, default is None (no shadow)
+    * - borderwidth
+      - ``2``
+      - Current group border width
+    * - border
+      - ``"#215578"
+      - Border colour
+      - rounded
+      - True
+      - To round or not to round borders
+      - highlight_method
+      - ``"border"``
+      - Method of highlighting. Valid values: "border and "block"
+        Uses ``border`` color settings
+    * - urgent_border
+      - ``"FF0000"
+      - Urgent border color
+    * - urgent_alert_method
+      - ``"border"``
+      - Method for alerting you of WM urgent hints. Valid values: "border" or "text"
+    * - max_title_width
+      - ``200``
+      - maximum size in pixels of task title
 
 
 WindowName
@@ -895,3 +1662,40 @@ Displays the name of the window that currently has focus.
     * - foreground
       - ``"ffffff"``
       - Foreground colour.
+
+
+WindowTabs
+~~~~~~~~~~
+
+Displays the name of each window in the current group.
+Contrary to TaskList this is not an interactive widget.
+The window that currently has focus is highlighted.
+
+.. list-table::
+    :widths: 20 20 60
+    :header-rows: 1
+
+    * - key
+      - default
+      - description
+    * - font
+      - ``"Arial"``
+      - Font face.
+    * - fontsize
+      - ``None``
+      - Font pixel size. Calculated if None.
+    * - padding
+      - ``None``
+      - Padding left and right.
+    * - background
+      - ``"000000"``
+      - Background colour.
+    * - foreground
+      - ``"ffffff"``
+      - Foreground colour.
+    * - separator
+      - ``" | "``
+      - Task separator text.
+    * - selected
+      - ``"<", ">"``
+      - Selected task indicator.

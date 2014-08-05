@@ -6,6 +6,9 @@ import gobject
 
 
 class Clipboard(base._TextBox):
+    """
+        Display current clipboard contents.
+    """
     defaults = [
         ("selection", "CLIPBOARD",
             "the selection to display(CLIPBOARD or PRIMARY)"),
@@ -16,7 +19,9 @@ class Clipboard(base._TextBox):
          ),
         ("blacklist", ["keepassx"],
             "list with blacklisted wm_class, sadly not every "
-            "clipboard window sets them, keepassx does"),
+            "clipboard window sets them, keepassx does."
+            "Clipboard contents from blacklisted wm_classes "
+            "will be replaced by the value of ``blacklist_text``."),
         ("blacklist_text", "***********",
             "text to display when the wm_class is blacklisted"
          )
