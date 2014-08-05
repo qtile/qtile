@@ -268,7 +268,7 @@ correct version of MPRIS, though I have only tested it with clementine.
 
 
 Mpris2
-~~~~~
+~~~~~~
 
 A widget which displays the current track/artist of your favorite MPRIS
 player. It should work with all players which implement a reasonably
@@ -888,7 +888,7 @@ By default the widget only displays if the space is less than warn_space
     * - visible_on_warn
       - ``True``
       - Only display if warning. False == always display
-    * _ measure
+    * - measure
       - ``"G"``
       - Measurement in G == Gigabytes, M == Megabytes or B == Bytes
     * - format
@@ -897,6 +897,7 @@ By default the widget only displays if the space is less than warn_space
     * - update_interval
       - ``60``
       - The update inteval in seconds
+
 
 Image
 ~~~~~
@@ -1615,17 +1616,17 @@ floating bring it to the front.
       - ``2``
       - Current group border width
     * - border
-      - ``"#215578"
+      - ``"#215578"``
       - Border colour
-      - rounded
+    * - rounded
       - True
       - To round or not to round borders
-      - highlight_method
+    * - highlight_method
       - ``"border"``
       - Method of highlighting. Valid values: "border and "block"
         Uses ``border`` color settings
     * - urgent_border
-      - ``"FF0000"
+      - ``"FF0000"``
       - Urgent border color
     * - urgent_alert_method
       - ``"border"``
