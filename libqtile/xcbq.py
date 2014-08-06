@@ -145,6 +145,12 @@ PropertyMap = {
 # TODO add everything required here
 # http://standards.freedesktop.org/wm-spec/1.4/ar01s03.html
 SUPPORTED_ATOMS = [
+    '_NET_WM_PID',
+    '_NET_ACTIVE_WINDOW',
+    '_NET_WM_DESKTOP',
+    '_NET_CURRENT_DESKTOP',
+    '_NET_CLIENT_LIST',
+    '_NET_CLIENT_LIST_STACKING',
     '_NET_SUPPORTED',
     '_NET_WM_STATE',
     '_NET_WM_STATE_FULLSCREEN',
@@ -152,7 +158,14 @@ SUPPORTED_ATOMS = [
     '_NET_WM_NAME',
     '_NET_WM_STRUT',
     '_NET_WM_STRUT_PARTIAL',
+    '_NET_WM_WINDOW_TYPE',
+    'WM_WINDOW_ROLE',
+    'WM_TAKE_FOCUS',
+    'WM_PROTOCOLS',
+    'WM_DELETE_WINDOW',
+    'UTF8_STRING',
 ]
+SUPPORTED_ATOMS += WindowTypes.keys()
 
 XCB_CONN_ERRORS = {
     1: 'XCB_CONN_ERROR',
