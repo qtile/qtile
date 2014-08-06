@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import sys
-
 from . import base
 from .. import bar, utils
 from libqtile.notify import notifier

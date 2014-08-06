@@ -10,10 +10,10 @@ except ImportError:
     import simplejson as json
 
 try:
-    from urllib.request import urlopen # Python 3
+    from urllib.request import urlopen  # Python 3
     from urllib.parse import urlencode
 except ImportError:
-    from urllib import urlencode # Python 2
+    from urllib import urlencode  # Python 2
     from urllib2 import urlopen
 
 QUERY_URL = 'http://query.yahooapis.com/v1/public/yql?'
@@ -66,7 +66,7 @@ class YahooWeather(base.ThreadedPollText):
             'format': 'json'
         })
         try:
-            response = urllib2.urlopen(url)
+            response = urlopen(url)
             data = json.loads(response.read())
             if data['query']['count'] > 1:
                 return data['query']['results']['place'][0]['woeid']
@@ -85,7 +85,7 @@ class YahooWeather(base.ThreadedPollText):
         url = WEATHER_URL + urlencode({'w': self.woeid, 'u': format})
 
         try:
-            response = urllib2.urlopen(url).read()
+            response = urlopen(url).read()
             dom = minidom.parseString(response)
         except Exception:
             # Invalid response or couldn't parse XML.

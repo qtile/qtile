@@ -4,7 +4,7 @@ from .. import bar, xcbq, window
 from . import base
 
 import xcffib
-from xcffib.xproto import EventMask, SetMode
+from xcffib.xproto import EventMask
 import atexit
 import struct
 
@@ -65,8 +65,7 @@ class TrayWindow(window._Window):
 
         opcode = event.type
         wid = event.window
-        data = event.data.data32
-        message = data[1]
+        # message = event.data.data32[1]
 
         conn = self.qtile.conn.conn
         parent = self.systray.bar.window.window

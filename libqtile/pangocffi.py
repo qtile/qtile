@@ -30,7 +30,6 @@ import xcffib
 import cairocffi
 
 import six
-from six.moves import getoutput
 
 ffi = FFI()
 

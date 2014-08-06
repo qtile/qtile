@@ -1,5 +1,3 @@
-import sys
-
 from . import command
 from . import hook
 from . import utils

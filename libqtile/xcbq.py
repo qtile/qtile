@@ -165,7 +165,7 @@ XCB_CONN_ERRORS = {
 }
 
 def toStr(s):
-    #return "".join([chr(i) for i in s.name])
+    # return "".join([chr(i) for i in s.name])
     return s.name.to_string()
 
 
@@ -519,7 +519,7 @@ class Window:
         r = self.get_property("_NET_WM_DESKTOP", "CARDINAL", unpack='I')
 
         if r:
-            #return r[0]
+            # return r[0]
             pass
 
     def get_wm_type(self):

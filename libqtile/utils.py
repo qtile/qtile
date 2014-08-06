@@ -20,7 +20,6 @@
 
 import operator
 import functools
-import logging
 import os
 
 import six

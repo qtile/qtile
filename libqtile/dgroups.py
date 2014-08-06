@@ -1,4 +1,3 @@
-import itertools
 import collections
 
 import libqtile.hook

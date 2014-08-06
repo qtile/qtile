@@ -8,7 +8,6 @@ from subprocess import Popen, PIPE
 import re
 
 
-
 class ThermalSensor(base.InLoopPollText):
     '''
     For using the thermal sensor widget you need to have lm-sensors installed.

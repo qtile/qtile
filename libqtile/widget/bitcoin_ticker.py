@@ -3,12 +3,11 @@
 
 from . import base
 import locale
-import urllib2
 
 try:
-    from urllib.request import urlopen # Python 3
+    from urllib.request import urlopen  # Python 3
 except ImportError:
-    from urllib2 import urlopen # Python 2
+    from urllib2 import urlopen  # Python 2
 
 try:
     import json
