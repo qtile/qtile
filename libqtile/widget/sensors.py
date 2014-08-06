@@ -20,7 +20,7 @@ class ThermalSensor(base.InLoopPollText):
         ('metric', True, 'True to use metric/C, False to use imperial/F'),
         ('show_tag', False, 'Show tag sensor'),
         ('update_interval', 2, 'Update interval in seconds'),
-        ('tag_sensor', None, 'Tag of the temperature sensor'),
+        ('tag_sensor', None, 'Tag of the temperature sensor. For example: "temp1" or "Core 0"'),
         (
             'threshold',
             70,

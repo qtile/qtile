@@ -86,7 +86,7 @@ class TextLayout(object):
     def draw(self, x, y):
         if self.font_shadow is not None:
             self.drawer.set_source_rgb(self.font_shadow)
-            self.drawer.ctx.move_to(x+1, y+1)
+            self.drawer.ctx.move_to(x + 1, y + 1)
             self.drawer.ctx.show_layout(self.layout)
 
         self.drawer.set_source_rgb(self.colour)
@@ -260,7 +260,7 @@ class Drawer:
     def set_source_rgb(self, colour):
         if type(colour) == list:
             linear = cairocffi.LinearGradient(0.0, 0.0, 0.0, self.height)
-            step_size = 1.0 / (len(colour)-1)
+            step_size = 1.0 / (len(colour) - 1)
             step = 0.0
             for c in colour:
                 rgb_col = utils.rgb(c)

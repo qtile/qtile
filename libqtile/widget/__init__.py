@@ -1,3 +1,7 @@
+# https://bitbucket.org/tarek/flake8/issue/141/improve-flake8-statement-to-ignore
+# is annoying, so we ignore libqtile/widget/__init__.py completely
+# flake8: noqa
+
 from .backlight import Backlight
 from .battery import Battery, BatteryIcon
 from .clock import Clock

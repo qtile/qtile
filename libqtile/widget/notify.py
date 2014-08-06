@@ -8,7 +8,7 @@ from libqtile.notify import notifier
 
 class Notify(base._TextBox):
     """
-        An notify widget
+        A notify widget
     """
     defaults = [
         ("foreground_urgent", "ff0000", "Foreground urgent priority colour"),

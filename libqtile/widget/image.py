@@ -5,7 +5,9 @@ from . import base
 from .. import bar
 
 class Image(base._Widget, base.MarginMixin):
-
+    """
+        Display a PNG image on the bar.
+    """
     defaults = [
         ("scale", True, "Enable/Disable image scaling"),
         ("filename", None, "PNG Image filename. Can contain '~'"),

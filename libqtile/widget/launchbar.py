@@ -139,7 +139,7 @@ class LaunchBar(base._Widget):
         self.drawer.clear(self.background or self.bar.background)
         xoffset = 0
         for i in self.commands:
-            self.icons_offsets[i] = xoffset+self.padding
+            self.icons_offsets[i] = xoffset + self.padding
             self.drawer.ctx.move_to(self.offset + xoffset,
                                     self.icons_widths[i])
             self.drawer.clear(self.background or self.bar.background)

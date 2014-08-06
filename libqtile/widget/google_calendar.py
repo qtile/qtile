@@ -79,7 +79,7 @@ class GoogleCalendar(base.ThreadedPollText):
         (
             'format',
             ' {next_event} ',
-            'calendar output - leave this at the default for now...'
+            'text to display - leave this at the default for now...'
         ),
         (
             'storage_file',
@@ -120,7 +120,7 @@ class GoogleCalendar(base.ThreadedPollText):
         )
 
     def cred_init(self):
-        #this is the main method for obtaining credentials
+        # this is the main method for obtaining credentials
         self.log.info('refreshing GC credentials')
 
         # Set up a Flow object to be used for authentication.
@@ -183,7 +183,7 @@ class GoogleCalendar(base.ThreadedPollText):
         service = build('calendar', 'v3', http=http)
 
         # current timestamp
-        now = datetime.datetime.utcnow().isoformat('T')+'Z'
+        now = datetime.datetime.utcnow().isoformat('T') + 'Z'
         data = {}
 
         # grab the next event
@@ -213,7 +213,7 @@ class GoogleCalendar(base.ThreadedPollText):
         except:
             remindertime = datetime.timedelta(0, 0)
 
-        #format the data
+        # format the data
         data = {
             'next_event': event['summary'] +
             ' ' +
@@ -223,10 +223,8 @@ class GoogleCalendar(base.ThreadedPollText):
                 event['start']['dateTime'].replace('T', ' ')
             )
         }
-        if dateutil.parser.parse(
-                event['start']['dateTime'],
-                ignoretz=True
-                ) - remindertime <= datetime.datetime.now():
+        parse_result = dateutil.parser.parse(event['start']['dateTime'], ignoretz=True)
+        if parse_result - remindertime <= datetime.datetime.now():
             data = {
                 'next_event': '<span color="' +
                 utils.hex(self.reminder_color) +

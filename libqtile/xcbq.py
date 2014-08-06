@@ -33,7 +33,7 @@ keysyms = xkeysyms.keysyms
 # These should be in xpyb:
 ModMasks = {
     "shift": 1 << 0,
-    "lock":  1 << 1,
+    "lock": 1 << 1,
     "control": 1 << 2,
     "mod1": 1 << 3,
     "mod2": 1 << 4,
@@ -101,7 +101,7 @@ WindowTypes = {
 WindowStates = {
     None: 'normal',
     '_NET_WM_STATE_FULLSCREEN': 'fullscreen',
-    }
+}
 
 # Maps property names to types and formats.
 PropertyMap = {
@@ -260,7 +260,7 @@ class Screen(_Wrapper):
         self.default_colormap = Colormap(conn, screen.default_colormap)
         self.root = Window(conn, self.root)
         # FIXME: Where is the right place to set the cursor?
-        #self.root.set_cursor("Normal")
+        # self.root.set_cursor("Normal")
 
 
 class PseudoScreen:
@@ -626,7 +626,7 @@ class Window:
             string to be used with the struct module.
         """
         if type is None:
-            if not prop in PropertyMap:
+            if prop not in PropertyMap:
                 raise ValueError(
                     "Must specify type for unknown property."
                 )

@@ -34,7 +34,7 @@ class YahooWeather(base.ThreadedPollText):
     '''
 
     defaults = [
-        ## One of (location, woeid) must be set.
+        # One of (location, woeid) must be set.
         (
             'location',
             None,
@@ -72,7 +72,7 @@ class YahooWeather(base.ThreadedPollText):
                 return data['query']['results']['place'][0]['woeid']
             return data['query']['results']['place']['woeid']
         except Exception:
-            ## HTTPError? JSON Error? KeyError? Doesn't matter, return None
+            # HTTPError? JSON Error? KeyError? Doesn't matter, return None
             return None
 
     def poll(self):
@@ -88,7 +88,7 @@ class YahooWeather(base.ThreadedPollText):
             response = urllib2.urlopen(url).read()
             dom = minidom.parseString(response)
         except Exception:
-            ## Invalid response or couldn't parse XML.
+            # Invalid response or couldn't parse XML.
             return None
 
         structure = (

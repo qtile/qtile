@@ -5,7 +5,9 @@ from . import base
 
 class _CrashMe(base._TextBox):
     """
-        A developper widget to force a crash in qtile
+        A developer widget to force a crash in qtile.
+        Pressing left mouse button causes a zero divison error.
+        Pressing the right mouse button causes a cairo draw error.
     """
     def __init__(self, width=bar.CALCULATED, **config):
         """

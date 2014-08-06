@@ -206,14 +206,15 @@ class Screen(command.CommandObject):
     def get_rect(self):
         return ScreenRect(self.dx, self.dy, self.dwidth, self.dheight)
 
-    def setGroup(self, new_group):
+    def setGroup(self, new_group, save_prev=True):
         """
         Put group on this screen
         """
         if new_group.screen == self:
             return
 
-        self.previous_group = self.group
+        if save_prev:
+            self.previous_group = self.group
 
         if new_group is None:
             return

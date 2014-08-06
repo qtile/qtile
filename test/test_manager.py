@@ -253,11 +253,19 @@ def test_adddelgroup(self):
     self.c.delgroup("testgroup")
     assert not "testgroup" in self.c.groups().keys()
     # Assert that the test window is still a member of some group.
-    assert sum([len(i["windows"]) for i in self.c.groups().values()])
-    for i in list(self.c.groups().keys())[:len(self.c.groups())-1]:
+    assert sum(len(i["windows"]) for i in self.c.groups().values())
+    for i in self.c.groups().keys()[:-1]:
         self.c.delgroup(i)
     assert_raises(libqtile.command.CommandException,
                   self.c.delgroup, list(self.c.groups().keys())[0])
+
+
+@Xephyr(False, TestConfig())
+def test_delgroup(self):
+    self.testWindow("one")
+    for i in ['a', 'd', 'c']:
+        self.c.delgroup(i)
+    assert_raises(libqtile.command.CommandException, self.c.delgroup, 'b')
 
 
 @Xephyr(False, TestConfig())

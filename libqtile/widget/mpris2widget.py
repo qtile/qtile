@@ -9,24 +9,28 @@ class Mpris2(base._TextBox):
     player. It should work with all MPRIS 2 compatible players
     which implement a reasonably correct version of MPRIS,
     though I have only tested it with audacious.
+    This widget scrolls the text if neccessary and information that
+    is displayed is configurable.
     '''
     defaults = [
-                ('name', 'audacious', 'Name of the MPRIS widget.'),
+        ('name', 'audacious', 'Name of the MPRIS widget.'),
 
-                ('objname', 'org.mpris.MediaPlayer2.audacious',
-                    'DBUS MPRIS 2 compatible player identifier'
-                    '- Find it out with dbus-monitor - '
-                    'Also see: http://specifications.freedesktop.org/'
-                    'mpris-spec/latest/#Bus-Name-Policy'),
+        ('objname', 'org.mpris.MediaPlayer2.audacious',
+            'DBUS MPRIS 2 compatible player identifier'
+            '- Find it out with dbus-monitor - '
+            'Also see: http://specifications.freedesktop.org/'
+            'mpris-spec/latest/#Bus-Name-Policy'),
 
-                ('display_metadata', ['xesam:title', 'xesam:album', 'xesam:artist'],
-                     'Which metadata identifiers to display.'),
+        ('display_metadata', ['xesam:title', 'xesam:album', 'xesam:artist'],
+            'Which metadata identifiers to display. '
+            'See http://www.freedesktop.org/wiki/Specifications/mpris-spec/metadata/#index5h3 '
+            'for available values'),
 
-                ('scroll_chars', 30, 'How many chars at once to display.'),
-                ('scroll_interval', 0.5, 'Scroll delay interval.'),
-                ('scroll_wait_intervals', 8, 'Wait x scroll_interval before'
-                     'scrolling/removing text'),
-       ]
+        ('scroll_chars', 30, 'How many chars at once to display.'),
+        ('scroll_interval', 0.5, 'Scroll delay interval.'),
+        ('scroll_wait_intervals', 8, 'Wait x scroll_interval before'
+            'scrolling/removing text'),
+    ]
 
     def __init__(self, **config):
         base._TextBox.__init__(self, '', **config)
@@ -59,13 +63,13 @@ class Mpris2(base._TextBox):
         if metadata:
             self.is_playing = True
             self.displaytext = ' - '.join([metadata.get(x)
-                          if isinstance(metadata.get(x), dbus.String)
-                          else ' + '.join([y for y in metadata.get(x)
-                          if isinstance(y, dbus.String)])
-                          for x in self.display_metadata if metadata.get(x)])
+                if isinstance(metadata.get(x), dbus.String)
+                else ' + '.join([y for y in metadata.get(x)
+                if isinstance(y, dbus.String)])
+                for x in self.display_metadata if metadata.get(x)])
             self.displaytext.replace('\n', '')
         if playbackstatus:
-            if playbackstatus == 'Paused' and  olddisplaytext:
+            if playbackstatus == 'Paused' and olddisplaytext:
                 self.is_playing = False
                 self.displaytext = 'Paused: {}'.format(olddisplaytext)
             elif playbackstatus == 'Paused':

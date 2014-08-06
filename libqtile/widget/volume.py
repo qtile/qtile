@@ -25,7 +25,8 @@ class Volume(base._TextBox):
         ("padding", 3, "Padding left and right. Calculated if None."),
         ("theme_path", None, "Path of the icons"),
         ("update_interval", 0.2, "Update time in seconds."),
-        ("emoji", False, "Use emoji to display volume states"),
+        ("emoji", False, "Use emoji to display volume states, only if ``theme_path`` is not set."
+                         "The specified font needs to contain the correct unicode characters."),
     ]
 
     def __init__(self, **config):

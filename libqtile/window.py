@@ -215,7 +215,7 @@ class _Window(command.CommandObject):
 
         # FIXME
         # h values
-        #{
+        # {
         #    'icon_pixmap': 4194337,
         #    'icon_window': 0,
         #    'icon_mask': 4194340,
@@ -230,7 +230,7 @@ class _Window(command.CommandObject):
         #                  'InputHint',
         #                  'UrgencyHint',
         #                  'IconPixmapHint']),
-        #}
+        # }
 
         if normh:
             normh.pop('flags')
@@ -331,7 +331,7 @@ class _Window(command.CommandObject):
 
     def kill(self):
         if "WM_DELETE_WINDOW" in self.window.get_wm_protocols():
-            #e = event.ClientMessage(
+            # e = event.ClientMessage(
             #        window = self.window,
             #        client_type = self.qtile.display.intern_atom(
             #             "WM_PROTOCOLS"),
@@ -348,7 +348,7 @@ class _Window(command.CommandObject):
             #                0
             #            ]
             #        ]
-            #)
+            # )
             vals = [
                 33,  # ClientMessageEvent
                 32,  # Format
@@ -406,13 +406,13 @@ class _Window(command.CommandObject):
         # the position is changed, so we are sending
         # the ConfigureNotify every time place is called
         #
-        ## if position change and size don't
-        ## send a configure notify. See ICCCM 4.2.3
-        #send_notify = False
-        #if (self.x != x or self.y != y) and \
-        #   (self.width == width and self.height == height):
-        #    send_notify = True
-        ##for now, we just:
+        # # if position change and size don't
+        # # send a configure notify. See ICCCM 4.2.3
+        # send_notify = False
+        # if (self.x != x or self.y != y) and \
+        #    (self.width == width and self.height == height):
+        #       send_notify = True
+        # #for now, we just:
         send_notify = True
 
         self.x = x
@@ -539,7 +539,7 @@ class _Window(command.CommandObject):
             "map_is_installed": a.map_is_installed,
             "map_state": a.map_state,
             "override_redirect": a.override_redirect,
-            #"colormap": a.colormap,
+            # "colormap": a.colormap,
             "all_event_masks": a.all_event_masks,
             "your_event_mask": a.your_event_mask,
             "do_not_propagate_mask": a.do_not_propagate_mask
@@ -868,9 +868,9 @@ class Window(_Window):
         else:
             # make sure x, y is on the screen
             screen = self.qtile.find_closest_screen(self.x, self.y)
-            if not screen is None and \
-                    not self.group is None and \
-                    not self.group.screen is None and \
+            if screen is not None and \
+                    self.group is not None and \
+                    self.group.screen is not None and \
                     screen != self.group.screen:
                 self.x = self.group.screen.x
                 self.y = self.group.screen.y
@@ -892,7 +892,6 @@ class Window(_Window):
                 height = (height -
                     ((height - self.hints['base_height'])
                     % self.hints['height_inc']))
-
 
             self.place(
                 self.x,
@@ -1047,15 +1046,15 @@ class Window(_Window):
             width = size[0]
             height = size[4]
 
-            next_pix = width*height*4
+            next_pix = width * height * 4
             data = icon[:next_pix]
 
             arr = array.array("B", data)
             for i in range(0, len(arr), 4):
-                mult = (arr[i+3]) / 255.
-                arr[i+0] = int(arr[i+0] * mult)
-                arr[i+1] = int(arr[i+1] * mult)
-                arr[i+2] = int(arr[i+2] * mult)
+                mult = (arr[i + 3]) / 255.
+                arr[i + 0] = int(arr[i + 0] * mult)
+                arr[i + 1] = int(arr[i + 1] * mult)
+                arr[i + 2] = int(arr[i + 2] * mult)
             icon = icon[next_pix:]
             icons["%sx%s" % (width, height)] = arr
         self.icons = icons
@@ -1087,8 +1086,6 @@ class Window(_Window):
                 if not prop:
                     # skip 0
                     continue
-
-                prop_name = atoms.get_name(prop)
 
                 if action == _NET_WM_STATE_REMOVE:
                     current_state.discard(prop)
@@ -1137,7 +1134,7 @@ class Window(_Window):
             # Some windows set the state(fullscreen) when starts,
             # updateState is here because the group and the screen
             # are set when the property is emitted
-            #self.updateState()
+            # self.updateState()
             self.updateState()
         elif name == "_NET_WM_USER_TIME":
             if not self.qtile.config.follow_mouse_focus and \
