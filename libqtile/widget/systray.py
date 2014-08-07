@@ -4,7 +4,7 @@ from .. import bar, xcbq, window
 from . import base
 
 import xcffib
-from xcffib.xproto import EventMask
+from xcffib.xproto import EventMask, SetMode
 import atexit
 import struct
 
@@ -64,16 +64,16 @@ class TrayWindow(window._Window):
         atoms = self.qtile.conn.atoms
 
         opcode = event.type
-        wid = event.window
-        # message = event.data.data32[1]
+        data = event.data.data32
+        message = data[1]
+        wid = data[2]
 
         conn = self.qtile.conn.conn
         parent = self.systray.bar.window.window
 
         # message == 0 corresponds to SYSTEM_TRAY_REQUEST_DOCK
         # TODO: handle system tray messages http://standards.freedesktop.org/systemtray-spec/systemtray-spec-latest.html
-        # TODO: re-add 'and message == 0' constraint which /should/ work but doesn't with xcffib
-        if opcode == atoms['_NET_SYSTEM_TRAY_OPCODE']:
+        if opcode == atoms['_NET_SYSTEM_TRAY_OPCODE'] and message == 0:
             try:
                 w = xcbq.Window(self.qtile.conn, wid)
                 icon = Icon(w, self.qtile, self.systray)
@@ -82,8 +82,7 @@ class TrayWindow(window._Window):
 
                 # add icon window to the save-set, so it gets reparented
                 # to the root window when qtile dies
-                # TODO: figure out why this gives a BadMatch with xcffib.
-                # conn.core.ChangeSaveSet(SetMode.Insert, wid)
+                conn.core.ChangeSaveSet(SetMode.Insert, wid)
 
                 conn.core.ReparentWindow(wid, parent.wid, 0, 0)
                 conn.flush()
