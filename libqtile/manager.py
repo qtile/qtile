@@ -753,9 +753,7 @@ class Qtile(command.CommandObject):
             assert e.window == self.selection_window.wid
             prop = self.selection_window.get_property(e.atom, "UTF8_STRING")
 
-            data = "".join([chr(i) for i in prop.value])
-
-            self.selection[name]["selection"] = data
+            self.selection[name]["selection"] = prop.value
             hook.fire("selection_change", name, self.selection[name])
 
     def handle_EnterNotify(self, e):
