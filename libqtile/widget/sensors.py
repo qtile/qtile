@@ -64,9 +64,9 @@ class ThermalSensor(base.InLoopPollText):
         except OSError:
             return None
         cmd_sensors.wait()
-        (stdout, stderr) = cmd_sensors.communicate()
+        stdout, _ = cmd_sensors.communicate()
         temp_values = {}
-        for value in re.findall(self.sensors_temp, stdout):
+        for value in re.findall(self.sensors_temp, stdout.decode()):
             temp_values[value[0]] = value[1:]
         return temp_values
 

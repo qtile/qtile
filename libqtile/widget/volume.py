@@ -165,7 +165,7 @@ class Volume(base._TextBox):
             ],
             stdout=subprocess.PIPE
         )
-        mixer_out = mixerprocess.communicate()[0]
+        mixer_out = mixerprocess.communicate()[0].decode()
         if mixerprocess.returncode:
             return -1
 
