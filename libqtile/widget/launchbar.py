@@ -16,7 +16,6 @@ from libqtile import bar
 from libqtile.widget import base
 import os.path
 import cairo
-import gobject
 from xdg.IconTheme import getIconPath
 
 
@@ -129,7 +128,7 @@ class LaunchBar(base._Widget):
                 if cmd.startswith('qsh:'):
                     eval(cmd[4:])
                 else:
-                    gobject.spawn_async([os.environ['SHELL'], '-c', cmd])
+                    self.qtile.cmd_spawn(cmd)
             self.draw()
 
     def draw(self):
