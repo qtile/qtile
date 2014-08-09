@@ -74,11 +74,14 @@ class _Battery(base._TextBox):
             self.log.exception("Failed to get %s" % name)
 
     def _get_param(self, name):
-        if name in self.filenames:
+        if name in self.filenames and self.filenames[name]:
             return self._load_file(self.filenames[name])
-        else:
+        elif name not in self.filenames:
             # Don't have the file name cached, figure it out
-            file_list = BATTERY_INFO_FILES.get(name, [])
+
+            # Don't modify the global list! Copy with [:]
+            file_list = BATTERY_INFO_FILES.get(name, [])[:]
+
             if getattr(self, name, None):
                 # If a file is manually specified, check it first
                 file_list.insert(0, getattr(self, name))
@@ -90,7 +93,10 @@ class _Battery(base._TextBox):
                     self.filenames[name] = file
                     return value
 
-        # If we made it this far, we don't have a valid file. Just return None.
+        # If we made it this far, we don't have a valid file.
+        # Set it to None to avoid trying the next time.
+        self.filenames[name] = None
+
         return None
 
     def _get_info(self):
