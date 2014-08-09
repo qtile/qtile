@@ -129,7 +129,7 @@ class LaunchBar(base._Widget):
                 if cmd.startswith('qsh:'):
                     eval(cmd[4:])
                 else:
-                    gobject.spawn_async([os.environ['SHELL'], '-c', cmd])
+                    self.qtile.cmd_spawn(cmd)
             self.draw()
 
     def draw(self):
