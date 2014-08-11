@@ -5,7 +5,6 @@
 from __future__ import print_function, division
 
 import six
-import struct
 
 from xcffib.xproto import CW, WindowClass, EventMask
 from xcffib.xfixes import SelectionEventMask
@@ -436,8 +435,7 @@ class Window:
     def get_wm_hints(self):
         r = self.get_property("WM_HINTS", xcffib.xproto.GetPropertyType.Any)
         if r:
-            data = struct.pack("c" * len(r.value), *(list(r.value)))
-            l = struct.unpack_from("=IIIIIIIII", data)
+            l = r.value.to_atoms()
             flags = set()
             for k, v in HintsFlags.items():
                 if l[0] & v:
@@ -460,8 +458,7 @@ class Window:
             xcffib.xproto.GetPropertyType.Any
         )
         if r:
-            data = struct.pack("c" * len(r.value), *(list(r.value)))
-            l = struct.unpack_from("=IIIIIIIIIIIIII", data)
+            l = r.value.to_atoms()
             flags = set()
             for k, v in NormalHintsFlags.items():
                 if l[0] & v:
@@ -484,8 +481,7 @@ class Window:
     def get_wm_protocols(self):
         r = self.get_property("WM_PROTOCOLS", xcffib.xproto.GetPropertyType.Any)
         if r:
-            data = struct.pack("c" * len(r.value), *(list(r.value)))
-            l = struct.unpack_from("=" + "L" * r.value_len, data)
+            l = r.value.to_atoms()
             return set([self.conn.atoms.get_name(i) for i in l])
         else:
             return set()
@@ -493,7 +489,7 @@ class Window:
     def get_wm_state(self):
         r = self.get_property("WM_STATE", xcffib.xproto.GetPropertyType.Any)
         if r:
-            return struct.unpack('=LL', ''.encode().join(r.value))
+            return r.value.to_atoms()
 
     def get_wm_class(self):
         """
@@ -529,7 +525,7 @@ class Window:
         return q.reply()
 
     def get_wm_desktop(self):
-        r = self.get_property("_NET_WM_DESKTOP", "CARDINAL", unpack='I')
+        r = self.get_property("_NET_WM_DESKTOP", "CARDINAL", unpack=int)
 
         if r:
             return r[0]
@@ -538,7 +534,7 @@ class Window:
         """
         http://standards.freedesktop.org/wm-spec/wm-spec-latest.html#id2551529
         """
-        r = self.get_property('_NET_WM_WINDOW_TYPE', "ATOM", unpack='I')
+        r = self.get_property('_NET_WM_WINDOW_TYPE', "ATOM", unpack=int)
         if r:
             name = self.conn.atoms.get_name(r[0])
             return WindowTypes.get(name, name)
@@ -548,13 +544,13 @@ class Window:
         # We're returning only the first one, but we don't need anything
         # other than _NET_WM_STATE_FULLSCREEN (at least for now)
         # Fixing this requires refactoring each call to use a list instead
-        r = self.get_property('_NET_WM_STATE', "ATOM", unpack='I')
+        r = self.get_property('_NET_WM_STATE', "ATOM", unpack=int)
         if r:
             name = self.conn.atoms.get_name(r[0])
             return WindowStates.get(name, name)
 
     def get_net_wm_pid(self):
-        r = self.get_property("_NET_WM_PID", unpack="I")
+        r = self.get_property("_NET_WM_PID", unpack=int)
         if r:
             return r[0]
 
@@ -623,9 +619,9 @@ class Window:
 
     def get_property(self, prop, type=None, unpack=None):
         """
-            Return the contents of a property as a GetPropertyReply, or
-            a tuple of values if unpack is specified, which is a format
-            string to be used with the struct module.
+            Return the contents of a property as a GetPropertyReply. If unpack
+            is specified, a tuple of values is returned.  The type to unpack,
+            either `str` or `int` must be specified.
         """
         if type is None:
             if prop not in PropertyMap:
@@ -647,9 +643,15 @@ class Window:
             ).reply()
 
             if not r.value_len:
+                if unpack:
+                    return []
                 return None
-            elif unpack is not None:
-                return struct.unpack_from(unpack, r.value.buf())
+            elif unpack:
+                # Should we allow more options for unpacking?
+                if unpack is int:
+                    return r.value.to_atoms()
+                elif unpack is str:
+                    return r.value.to_string()
             else:
                 return r
         except xcffib.xproto.WindowError:
