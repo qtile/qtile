@@ -19,17 +19,17 @@
 # SOFTWARE.
 
 import copy
+import six
 from abc import ABCMeta, abstractmethod
 
 from .. import command, configurable
 
 
+@six.add_metaclass(ABCMeta)
 class Layout(command.CommandObject, configurable.Configurable):
     """
         This class defines the API that should be exposed by all layouts.
     """
-    __metaclass__ = ABCMeta
-
     @classmethod
     def _name(cls):
         return cls.__class__.__name__.lower()
