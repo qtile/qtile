@@ -131,9 +131,7 @@ class Xephyr(object):
             assert self.qtile is None, "Kill Qtile before stopping Xephyr"
             assert self.testwindows == [], "Kill all test windows before stopping Xephyr"
         finally:
-            self.xephyr.kill()
-            self.xephyr.wait()
-
+            self._kill(self.xephyr)
             self.xephyr = None
 
     def _waitForXephyr(self):
@@ -181,9 +179,10 @@ class Xephyr(object):
         self.qtile.join(10)
 
         if self.qtile.is_alive():
-            # desparate times...
+            # desparate times... this probably messes with multiprocessing...
             try:
-                self._kill(self.qtile.pid)
+                os.kill(self.qtile.pid, 9)
+                os.waitpid(self.qtile.pid, 0)
             except OSError:
                 # The process may have died due to some other error
                 pass
@@ -191,8 +190,8 @@ class Xephyr(object):
         self.qtile = None
 
         # Kill all the windows
-        for pid in self.testwindows[:]:
-            self._kill(pid)
+        for proc in self.testwindows[:]:
+            self._kill(proc)
 
     def _waitForQtile(self, errpipe):
         # First, wait for socket to appear
@@ -224,24 +223,22 @@ class Xephyr(object):
         else:
             raise AssertionError("Error launching Qtile, quit without exception")
 
-    def _testProc(self, path, args):
-        if path is None:
-            raise AssertionError("Trying to run None! (missing executable)")
+    def _testProc(self, args):
+        if not args:
+            raise AssertionError("Trying to run nothing! (missing arguments)")
         start = len(self.c.windows())
-        pid = os.fork()
-        if pid == 0:
-            try:
-                os.execve(path, args, {"DISPLAY": self.display})
-            finally:
-                os._exit(1)
+
+        proc = subprocess.Popen(args, env={"DISPLAY": self.display})
+
         for i in range(20):
             if len(self.c.windows()) > start:
                 break
             time.sleep(0.1)
         else:
             raise AssertionError("Window never appeared...")
-        self.testwindows.append(pid)
-        return pid
+
+        self.testwindows.append(proc)
+        return proc
 
     def groupconsistency(self):
         groups = self.c.groups()
@@ -267,47 +264,42 @@ class Xephyr(object):
         d = os.path.dirname(os.path.realpath(__file__))
         path = os.path.join(d, "scripts", "window.py")
         return self._testProc(
-                    python,
                     [python, path, self.display, name]
                 )
 
     def testXclock(self):
         path = whereis("xclock")
         return self._testProc(
-                    path,
-                    [path, "-display", self.display]
+                    [path]
                 )
 
     def testXeyes(self):
         path = whereis("xeyes")
         return self._testProc(
-                    path,
-                    [path, "-display", self.display]
+                    [path]
                 )
 
     def testGkrellm(self):
         path = whereis("gkrellm")
         return self._testProc(
-                    path,
                     [path]
                 )
 
     def testXterm(self):
         path = whereis("xterm")
         return self._testProc(
-                    path,
-                    [path, "-display", self.display]
+                    [path]
                 )
 
-    def _kill(self, pid):
-        os.kill(pid, 9)
-        os.waitpid(pid, 0)
-        if pid in self.testwindows:
-            self.testwindows.remove(pid)
+    def _kill(self, proc):
+        proc.kill()
+        proc.wait()
+        if proc in self.testwindows:
+            self.testwindows.remove(proc)
 
-    def kill(self, pid):
+    def kill(self, proc):
         start = len(self.c.windows())
-        self._kill(pid)
+        self._kill(proc)
         for i in range(20):
             if len(self.c.windows()) < start:
                 break
