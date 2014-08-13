@@ -1,5 +1,4 @@
 import libqtile
-import libqtile.hook
 import libqtile.ipc
 
 import logging
@@ -97,7 +96,6 @@ class Xephyr(object):
             finally:
                 # If we started qtile, we should be sure to take it down
                 if self.start_qtile:
-                    libqtile.hook.clear()
                     self.stopQtile()
                 # If we didn't start qtile, make sure the user took it down if needed
                 if self.qtile and not self.start_qtile:
@@ -151,10 +149,10 @@ class Xephyr(object):
             # or the Xephyr process ends...
             ret = self.xephyr.poll()
             if ret is not None:
-                raise AssertionError("Xephyr quit with return code: %d" % proc.returncode)
+                raise AssertionError("Error launching Xephyr, quit with return code: %d" % proc.returncode)
         else:
             # or the setup timesout
-            raise AssertionError("Xephyr did not come up")
+            raise AssertionError("Error launching Xephyr, X did not come up")
 
         conn.disconnect()
         del conn
@@ -174,7 +172,6 @@ class Xephyr(object):
         self.qtile = multiprocessing.Process(target=runQtile)
         self.qtile.start()
 
-        self.c = libqtile.command.Client(self.sockfile)
         self._waitForQtile(rpipe)
 
     def stopQtile(self):
@@ -198,6 +195,21 @@ class Xephyr(object):
             self._kill(pid)
 
     def _waitForQtile(self, errpipe):
+        # First, wait for socket to appear
+        start = time.time()
+        while time.time() < start + 10:
+            if os.path.exists(self.sockfile):
+                break
+
+            if errpipe.poll(0.1):
+                error = errpipe.recv()
+                raise AssertionError("Error launching Qtile, traceback:\n%s" % error)
+        else:
+            raise AssertionError("Error launching Qtile, socket never came up")
+
+        self.c = libqtile.command.Client(self.sockfile)
+
+        # Next, wait for server to come up
         start = time.time()
         while time.time() < start + 10:
             try:
@@ -210,7 +222,7 @@ class Xephyr(object):
                 error = errpipe.recv()
                 raise AssertionError("Error launching Qtile, traceback:\n%s" % error)
         else:
-            raise AssertionError("Qtile quit without exception")
+            raise AssertionError("Error launching Qtile, quit without exception")
 
     def _testProc(self, path, args):
         if path is None:
