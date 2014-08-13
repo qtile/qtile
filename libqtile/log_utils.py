@@ -54,7 +54,7 @@ def init_log(log_level=logging.ERROR, logger='qtile', log_path='~/.%s.log'):
         )
         log.addHandler(handler)
 
-    handler = StreamHandler(sys.stderr)
+    handler = StreamHandler(sys.stdout)
     handler.setFormatter(
         ColorFormatter(
             '$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s'

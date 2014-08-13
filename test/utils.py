@@ -75,6 +75,7 @@ class Xephyr(object):
             # Setup socket and log files
             self.tempdir = tempfile.mkdtemp()
             self.sockfile = os.path.join(self.tempdir, 'qtile.sock')
+            self.logfile = os.path.join(self.tempdir, 'qtile.log')
 
             # Setup Xephyr
             try:
@@ -94,6 +95,15 @@ class Xephyr(object):
                     self.startQtile(self.config)
                 return function(self)
             finally:
+                if os.path.exists(self.logfile):
+                    with open(self.logfile) as f:
+                        log_output = f.read().strip()
+                    if log_output:
+                        print("------------------------ >> begin log file << ------------------------")
+                        print(log_output)
+                        print("------------------------- >> end log file << -------------------------")
+                    else:
+                        print("------------------------ >> log file empty << ------------------------")
                 # If we started qtile, we should be sure to take it down
                 if self.start_qtile:
                     self.stopQtile()
@@ -162,7 +172,7 @@ class Xephyr(object):
             try:
                 q = libqtile.manager.Qtile(
                     config, self.display, self.sockfile,
-                    log=libqtile.manager.init_log(logging.CRITICAL))
+                    log=libqtile.manager.init_log(logging.ERROR, log_path=self.logfile))
                 q.loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
