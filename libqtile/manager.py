@@ -56,9 +56,12 @@ class Qtile(command.CommandObject):
                  displayName=None, fname=None, no_spawn=False, log=None,
                  state=None):
         gobject.threads_init()
-        self.log = log or init_log()
+        logkwargs = {}
         if hasattr(config, "log_level"):
-            self.log.setLevel(config.log_level)
+            logkwargs["log_level"] = config.log_level
+        if hasattr(config, "log_path"):
+            logkwargs["log_path"] = config.log_path
+        self.log = log or init_log(**logkwargs)
 
         self.no_spawn = no_spawn
 
