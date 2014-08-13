@@ -104,20 +104,6 @@ class Xephyr(object):
 
         return attr('xephyr')(with_setup(setup, teardown)(wrapped_fun))
 
-    def _groupconsistency(self):
-        groups = self.c.groups()
-        screens = self.c.screens()
-        seen = set()
-        for g in groups.values():
-            scrn = g["screen"]
-            if scrn is not None:
-                if scrn in seen:
-                    raise AssertionError(
-                        "Screen referenced from more than one group.")
-                seen.add(scrn)
-                assert screens[scrn]["group"] == g["name"]
-        assert len(seen) == len(screens), "Not all screens \
-        had an attached group."
 
     def _waitForXephyr(self):
         # Try until Xephyr is up
@@ -206,6 +192,21 @@ class Xephyr(object):
             raise AssertionError("Window never appeared...")
         self.testwindows.append(pid)
         return pid
+
+    def groupconsistency(self):
+        groups = self.c.groups()
+        screens = self.c.screens()
+        seen = set()
+        for g in groups.values():
+            scrn = g["screen"]
+            if scrn is not None:
+                if scrn in seen:
+                    raise AssertionError(
+                        "Screen referenced from more than one group.")
+                seen.add(scrn)
+                assert screens[scrn]["group"] == g["name"]
+        assert len(seen) == len(screens), "Not all screens \
+        had an attached group."
 
     def qtileRaises(self, exc, config):
         self._waitForXephyr()

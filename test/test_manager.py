@@ -738,14 +738,14 @@ def qtile_tests():
             def test_setgroup(self):
                 self.testWindow("one")
                 self.c.group["b"].toscreen()
-                self._groupconsistency()
+                self.groupconsistency()
                 if len(self.c.screens()) == 1:
                     assert self.c.groups()["a"]["screen"] == None
                 else:
                     assert self.c.groups()["a"]["screen"] == 1
                 assert self.c.groups()["b"]["screen"] == 0
                 self.c.group["c"].toscreen()
-                self._groupconsistency()
+                self.groupconsistency()
                 assert self.c.groups()["c"]["screen"] == 0
             yield test_setgroup
 
@@ -755,7 +755,7 @@ def qtile_tests():
                 pid = self.testWindow("two")
                 assert len(self.c.windows()) == 2
                 self.c.group["c"].toscreen()
-                self._groupconsistency()
+                self.groupconsistency()
                 self.c.status()
                 assert len(self.c.windows()) == 2
                 self.kill(pid)
