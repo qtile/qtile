@@ -4,7 +4,6 @@ import libqtile.ipc
 import logging
 import multiprocessing
 import os
-import select
 import shutil
 import subprocess
 import sys
@@ -145,22 +144,16 @@ class Xephyr(object):
             self.xephyr = None
 
     def _waitForXephyr(self):
-        start = time.time()
-        while time.time() < start + 10:
-            # Wait until Xephyr display is up...
+        # Wait until Xephyr process dies
+        while self.xephyr.poll() is None:
             try:
                 conn = xcb.xcb.connect(self.display)
                 break
             except xcb.ConnectException:
                 pass
-
-            # or the Xephyr process ends...
-            ret = self.xephyr.poll()
-            if ret is not None:
-                raise AssertionError("Error launching Xephyr, quit with return code: %d" % proc.returncode)
+            time.sleep(0.1)
         else:
-            # or the setup timesout
-            raise AssertionError("Error launching Xephyr, X did not come up")
+            raise AssertionError("Error launching Xephyr, quit with return code: %d" % self.xephyr.returncode)
 
         conn.disconnect()
         del conn
