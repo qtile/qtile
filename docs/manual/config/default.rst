@@ -50,3 +50,9 @@ tray, and a clock. you're using the default config.
 
 The default configuration has several more advanced key combinations, but the
 above should be enough for basic usage of qtile.
+
+Mouse Bindings
+--------------
+
+By default, holding your ``mod`` key and clicking (and holding) a window will
+allow you to drag it around as a floating window.
