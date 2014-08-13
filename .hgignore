@@ -1,8 +1,0 @@
-syntax: glob
-
-*.pyc
-docs/_build
-.project
-.pydevproject
-.settings
-
