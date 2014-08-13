@@ -3,6 +3,7 @@ import libqtile.hook
 import libqtile.ipc
 
 import logging
+import multiprocessing
 import os
 import select
 import shutil
@@ -58,6 +59,7 @@ class Xephyr(object):
         else:
             self.xoffset = xoffset
 
+        self.qtile = None # Handle to Qtile instance, multiprocessing.Process object
         self.xephyr = None # Handle to Xephyr instance, subprocess.Popen object
         self.display = DISPLAY
 
@@ -88,26 +90,24 @@ class Xephyr(object):
         @with_setup(setup, teardown)
         @wraps(function)
         def wrapped_fun():
-            if self.start_qtile:
-                self.startQtile(self.config)
-
             try:
+                if self.start_qtile:
+                    self.startQtile(self.config)
                 return function(self)
             finally:
                 # If we started qtile, we should be sure to take it down
                 if self.start_qtile:
-                    try:
-                        libqtile.hook.clear()
-                        self.stopQtile()
-                    except:
-                        pass
+                    libqtile.hook.clear()
+                    self.stopQtile()
+                # If we didn't start qtile, make sure the user took it down if needed
+                if self.qtile and not self.start_qtile:
+                    raise AssertionError("Stop qtile!")
 
         return wrapped_fun
 
     def _startXephyr(self):
         args = [
-            "Xephyr", "-keybd", "evdev",
-            "-name", "qtile_test",
+            "Xephyr", "-name", "qtile_test",
             self.display, "-ac",
             "-screen", "%sx%s" % (self.width, self.height)]
         if self.two_screens:
@@ -126,10 +126,17 @@ class Xephyr(object):
         self._waitForXephyr()
 
     def _stopXephyr(self):
-        assert hasattr(self, "xephyr") and self.xephyr is not None, "Xephyr must be started first"
+        assert self.xephyr is not None, "Xephyr must be started first"
 
-        self.xephyr.kill()
-        self.xephyr.wait()
+        # Complain if qtile or windows are running, but still kill xephyr
+        try:
+            assert self.qtile is None, "Kill Qtile before stopping Xephyr"
+            assert self.testwindows == [], "Kill all test windows before stopping Xephyr"
+        finally:
+            self.xephyr.kill()
+            self.xephyr.wait()
+
+            self.xephyr = None
 
     def _waitForXephyr(self):
         start = time.time()
@@ -153,43 +160,44 @@ class Xephyr(object):
         del conn
 
     def startQtile(self, config):
-        rpipe, wpipe = os.pipe()
-        pid = os.fork()
-        if pid == 0:
-            os.close(rpipe)
+        rpipe, wpipe = multiprocessing.Pipe()
+
+        def runQtile():
             try:
                 q = libqtile.manager.Qtile(
                     config, self.display, self.sockfile,
                     log=libqtile.manager.init_log(logging.CRITICAL))
                 q.loop()
             except Exception:
-                with os.fdopen(wpipe, 'w') as f:
-                    traceback.print_exc(file=f)
-            else:
-                os.close(wpipe)
-            finally:
-                os._exit(0)
-        else:
-            os.close(wpipe)
-            self.qtilepid = pid
-            self.c = libqtile.command.Client(self.sockfile)
-            with os.fdopen(rpipe, 'r') as f:
-                self._waitForQtile(f)
+                wpipe.send(traceback.format_exc())
+
+        self.qtile = multiprocessing.Process(target=runQtile)
+        self.qtile.start()
+
+        self.c = libqtile.command.Client(self.sockfile)
+        self._waitForQtile(rpipe)
 
     def stopQtile(self):
-        assert self.c.status()
+        assert self.qtile is not None, "Qtile must be started first"
 
-        if self.qtilepid:
+        self.qtile.terminate()
+        self.qtile.join(10)
+
+        if self.qtile.is_alive():
+            # desparate times...
             try:
-                self._kill(self.qtilepid)
+                self._kill(self.qtile.pid)
             except OSError:
                 # The process may have died due to some other error
                 pass
 
+        self.qtile = None
+
+        # Kill all the windows
         for pid in self.testwindows[:]:
             self._kill(pid)
 
-    def _waitForQtile(self, errfile):
+    def _waitForQtile(self, errpipe):
         start = time.time()
         while time.time() < start + 10:
             try:
@@ -198,13 +206,11 @@ class Xephyr(object):
             except libqtile.ipc.IPCError:
                 pass
 
-            err, _, _ = select.select([errfile], [], [], 0.1)
-            if err:
-                error = errfile.read()
-                if error:
-                    raise AssertionError("Error launching Qtile, traceback:\n%s" % error)
-                else:
-                    raise AssertionError("Qtile quit without exception")
+            if errpipe.poll(0.1):
+                error = errpipe.recv()
+                raise AssertionError("Error launching Qtile, traceback:\n%s" % error)
+        else:
+            raise AssertionError("Qtile quit without exception")
 
     def _testProc(self, path, args):
         if path is None:
