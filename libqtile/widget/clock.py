@@ -34,13 +34,6 @@ class Clock(base.InLoopPollText):
                             'Please use format.')
             self.format = fmt
 
-    def tick(self):
-        ts = time()
-        self.timeout_add(self.update_interval - ts % self.update_interval,
-                         self.tick)
-        self.update(self.poll())
-        return False
-
     def _get_time(self):
         ts = time()
         # adding .5 to get a proper seconds value because glib could

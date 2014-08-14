@@ -255,6 +255,7 @@ class CommandRoot(_CommandRoot):
 
     def call(self, selectors, name, *args, **kwargs):
         state, val = self.qtile.server.call((selectors, name, args, kwargs))
+        self.qtile._loop()
         if state == SUCCESS:
             return val
         elif state == ERROR:

@@ -8,7 +8,7 @@
 # TODO: some kind of templating to make shown info configurable
 # TODO: best practice to handle failures? just write to stderr?
 
-from .. import utils
+from .. import utils, pangocffi
 from mpd import MPDClient, CommandError
 import atexit
 from . import base
@@ -243,11 +243,11 @@ class Mpd(base.ThreadedPollText):
                         progress = int(percent * len(playing))
                         playing = '<span color="%s">%s</span>%s' % (
                             utils.hex(self.foreground_progress),
-                            utils.escape(playing[:progress]),
-                            utils.escape(playing[progress:])
+                            pangocffi.markup_escape_text(playing[:progress]),
+                            pangocffi.markup_escape_text(playing[progress:])
                         )
                     else:
-                        playing = utils.escape(playing)
+                        playing = pangocffi.markup_escape_text(playing)
                 else:
                     playing = self.do_format(self.fmt_stopped)
 

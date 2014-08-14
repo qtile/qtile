@@ -23,7 +23,7 @@ import functools
 import os
 
 import six
-from six.moves import gobject, reduce
+from six.moves import reduce
 
 from . import xcbq
 
@@ -199,8 +199,3 @@ def scrub_to_utf8(text):
         return text
     else:
         return text.decode("utf-8", "ignore")
-
-
-def escape(text):
-    # logging.getLogger('qtile').info('Escaping %s' % text)
-    return gobject.markup_escape_text(text)

@@ -35,9 +35,12 @@ class _Graph(base._Widget):
         self.add_defaults(_Graph.defaults)
         self.values = [0] * self.samples
         self.maxvalue = 0
-        self.timeout_add(self.frequency, self.update)
         self.oldtime = time.time()
         self.lag_cycles = 0
+
+    def _configure(self, qtile, bar):
+        base._Widget._configure(self, qtile, bar)
+        self.timeout_add(self.frequency, self.update)
 
     @property
     def graphwidth(self):

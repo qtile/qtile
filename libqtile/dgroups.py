@@ -7,8 +7,6 @@ from libqtile.config import Group
 from libqtile.config import Rule
 from libqtile.config import Match
 
-from six.moves import gobject
-
 def simple_key_binder(mod, keynames=None):
     """
         Bind keys to mod+group position or to the keys specified as
@@ -120,8 +118,7 @@ class DGroups(object):
     def _add(self, client):
         if client in self.timeout:
             self.qtile.log.info('Remove dgroup source')
-            gobject.source_remove(self.timeout[client])
-            del(self.timeout[client])
+            self.timeout.pop(client).cancel()
 
         # ignore static windows
         if client.defunct:
@@ -208,7 +205,6 @@ class DGroups(object):
 
         # Wait the delay until really delete the group
         self.qtile.log.info('Add dgroup timer')
-        self.timeout[client] = gobject.timeout_add_seconds(
-            self.delay,
-            delete_client
+        self.timeout[client] = self.qtile._eventloop.call_later(
+            self.delay, delete_client
         )

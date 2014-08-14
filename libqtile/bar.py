@@ -26,8 +26,6 @@ from . import hook
 from . import configurable
 from . import window
 
-from six.moves import gobject
-
 USE_BAR_DRAW_QUEUE = True
 
 
@@ -259,7 +257,7 @@ class Bar(Gap, configurable.Configurable):
     def draw(self):
         if USE_BAR_DRAW_QUEUE:
             if self.queued_draws == 0:
-                gobject.idle_add(self._actual_draw)
+                self.qtile._eventloop.call_soon(self._actual_draw)
             self.queued_draws += 1
         else:
             self._actual_draw()
@@ -273,9 +271,6 @@ class Bar(Gap, configurable.Configurable):
             end = i.offset + i.width
             if end < self.width:
                 self.drawer.draw(end, self.width - end)
-
-        # have to return False here to avoid getting called again
-        return False
 
     def info(self):
         return dict(

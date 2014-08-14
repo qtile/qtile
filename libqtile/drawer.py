@@ -1,4 +1,5 @@
 import collections
+import functools
 import math
 import cairocffi
 import cairocffi.xcb
@@ -6,6 +7,15 @@ import xcffib.xproto
 
 from . import pangocffi
 from . import utils
+
+def draw_wrapper(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        f(*args, **kwargs)
+        self = args[0]
+        self.qtile._loop()
+
+    return wrapper
 
 
 class TextLayout(object):
@@ -235,6 +245,7 @@ class Drawer:
         self.ctx.fill()
         self.ctx.stroke()
 
+    @draw_wrapper
     def draw(self, offset, width):
         """
             offset: the X offset to start drawing at.
@@ -352,6 +363,7 @@ class Drawer:
             maxheight = max(maxheight, y)
         return maxwidth, maxheight
 
+    @draw_wrapper
     def draw_vbar(self, color, x, y1, y2, linewidth=1):
         self.set_source_rgb(color)
         self.ctx.move_to(x, y1)
@@ -359,6 +371,7 @@ class Drawer:
         self.ctx.set_line_width(linewidth)
         self.ctx.stroke()
 
+    @draw_wrapper
     def draw_hbar(self, color, x1, x2, y, linewidth=1):
         self.set_source_rgb(color)
         self.ctx.move_to(x1, y)

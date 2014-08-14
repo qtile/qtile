@@ -61,6 +61,8 @@ ffi.cdef("""
     typedef int gboolean;
     typedef unsigned int guint32;
     typedef guint32 gunichar;
+    typedef char gchar;
+    typedef signed long gssize;
     typedef ... GError;
     typedef int gint;
 
@@ -136,6 +138,11 @@ ffi.cdef("""
 
     gint
     pango_font_description_get_size (const PangoFontDescription *desc);
+
+    // https://developer.gnome.org/glib/stable/glib-Simple-XML-Subset-Parser.html
+    gchar *
+    g_markup_escape_text(const gchar *text,
+                         gssize length);
 """)
 
 gobject = ffi.dlopen('gobject-2.0')
@@ -244,3 +251,7 @@ def parse_markup(value, accel_marker=0):
         raise Exception("parse_markup() failed for %s" % value)
 
     return attr_list[0], ffi.string(text[0]), six.unichr(accel_marker)
+
+def markup_escape_text(text):
+    ret = gobject.g_markup_escape_text(text.encode(), -1)
+    return ffi.string(ret)

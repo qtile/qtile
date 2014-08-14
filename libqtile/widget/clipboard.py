@@ -1,8 +1,6 @@
 from . import base
 from .. import bar, hook, xcbq
 
-from six.moves import gobject
-
 
 class Clipboard(base._TextBox):
     """
@@ -70,7 +68,7 @@ class Clipboard(base._TextBox):
             self.text = text
 
             if self.timeout_id:
-                gobject.source_remove(self.timeout_id)
+                self.timeout_id.cancel()
                 self.timeout_id = None
 
             if self.timeout:
@@ -82,7 +80,7 @@ class Clipboard(base._TextBox):
                 return
 
             if self.timeout_id:
-                gobject.source_remove(self.timeout_id)
+                self.timeout_id.cancel()
                 self.timeout_id = None
 
             # only clear if don't change don't apply in .5 seconds

@@ -1,6 +1,5 @@
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
-from six.moves import gobject
 from . import base
 
 class Mpris2(base._TextBox):
@@ -91,7 +90,7 @@ class Mpris2(base._TextBox):
 
         if self.scroll_chars and self.scroll_interval:
             if(self.scroll_timer):
-                gobject.source_remove(self.scroll_timer)
+                self.scroll_timer.cancel()
             self.scrolltext = self.displaytext
             self.scroll_counter = self.scroll_wait_intervals
             self.scroll_timer = self.timeout_add(self.scroll_interval,
