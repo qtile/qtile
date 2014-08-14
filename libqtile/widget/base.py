@@ -262,10 +262,16 @@ class InLoopPollText(_TextBox):
         _TextBox._configure(self, qtile, bar)
 
         # Update when we are configured.
-        if setup_event and self.update_interval is not None:
+        if setup_event:
             def retick():
-                self.tick()
-                self.timeout_add(self.update_interval, retick)
+                update_interval = self.tick()
+                # If self.update_interval is defined and .tick() returns None, re-call after self.update_interval
+                if update_interval is None and self.update_interval is not None:
+                    self.timeout_add(self.update_interval, retick)
+                # We can change the update interval by returning something from .tick()
+                elif update_interval:
+                    self.timeout_add(update_interval, retick)
+                # If update_interval is False, we won't re-call
             retick()
         else:
             self.tick()
@@ -309,10 +315,9 @@ class ThreadedPollText(InLoopPollText):
     def tick(self):
         def worker():
             text = self._poll()
-            self.qtile._eventloop.call_soon(self.update, text)
+            self.qtile._eventloop.call_soon_threadsafe(self.update, text)
         # TODO: There are nice asyncio constructs for this sort of thing, I think...
         threading.Thread(target=worker).start()
-        return True
 
 # these two classes below look SUSPICIOUSLY similar
 

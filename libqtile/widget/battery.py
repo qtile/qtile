@@ -141,6 +141,10 @@ class Battery(_Battery):
     def __init__(self, **config):
         _Battery.__init__(self, **config)
         self.add_defaults(Battery.defaults)
+
+    def _configure(self, qtile, bar):
+        _Battery._configure(self, qtile, bar)
+
         self.timeout_add(self.update_delay, self.update)
         self.update()
 

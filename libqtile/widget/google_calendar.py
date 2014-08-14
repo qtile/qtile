@@ -156,7 +156,7 @@ class GoogleCalendar(base.ThreadedPollText):
 
         def cal_getter():  # get cal data in thread, write it in main loop
             data = self.fetch_calendar()
-            self.qtile._eventloop.call_soon(self.update, data)
+            self.qtile._eventloop.call_soon_threadsafe(self.update, data)
         threading.Thread(target=cal_getter).start()
         return True
 
