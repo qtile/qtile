@@ -136,6 +136,7 @@ class Stack(Layout):
         ("name", "stack", "Name of this layout."),
         ("autosplit", False, "Auto split all new stacks."),
         ("num_stacks", 2, "Number of stacks."),
+        ("fair", False, "Add new windows to the stacks in a round robin way."),
     ]
 
     def __init__(self, **config):
@@ -259,7 +260,11 @@ class Stack(Layout):
             if not i:
                 i.add(client)
                 return
-        self.currentStack.add(client)
+        if self.fair:
+            target = min(self.stacks, key=len)
+            target.add(client)
+        else:
+            self.currentStack.add(client)
 
     def remove(self, client):
         currentOffset = self.currentStackOffset

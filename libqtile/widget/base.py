@@ -224,6 +224,9 @@ class _TextBox(_Widget):
             return 0
 
     def draw(self):
+        # if the bar hasn't placed us yet
+        if self.offset is None:
+            return
         self.drawer.clear(self.background or self.bar.background)
         self.layout.draw(
             self.actual_padding or 0,

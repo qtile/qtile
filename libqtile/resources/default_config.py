@@ -1,4 +1,4 @@
-from libqtile.config import Key, Screen, Group
+from libqtile.config import Key, Screen, Group, Drag, Click
 from libqtile.command import lazy
 from libqtile import layout, bar, widget
 
@@ -56,16 +56,8 @@ keys = [
     Key([mod], "r", lazy.spawncmd()),
 ]
 
-groups = [
-    Group("a"),
-    Group("s"),
-    Group("d"),
-    Group("f"),
-    Group("u"),
-    Group("i"),
-    Group("o"),
-    Group("p"),
-]
+groups = [Group(i) for i in "asdfuiop"]
+
 for i in groups:
     # mod1 + letter of group = switch to group
     keys.append(
@@ -76,9 +68,6 @@ for i in groups:
     keys.append(
         Key([mod, "shift"], i.name, lazy.window.togroup(i.name))
     )
-
-dgroups_key_binder = None
-dgroups_app_rules = []
 
 layouts = [
     layout.Max(),
@@ -107,11 +96,21 @@ screens = [
     ),
 ]
 
+# Drag floating layouts.
+mouse = [
+    Drag([mod], "Button1", lazy.window.set_position_floating(),
+        start=lazy.window.get_position()),
+    Drag([mod], "Button3", lazy.window.set_size_floating(),
+        start=lazy.window.get_size()),
+    Click([mod], "Button2", lazy.window.bring_to_front())
+]
+
+dgroups_key_binder = None
+dgroups_app_rules = []
 main = None
 follow_mouse_focus = True
 bring_front_click = False
 cursor_warp = False
 floating_layout = layout.Floating()
-mouse = ()
 auto_fullscreen = True
 wmname = "qtile"

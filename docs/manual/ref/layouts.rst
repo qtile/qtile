@@ -265,6 +265,9 @@ this is the most mature and flexible layout in Qtile.
     * - num_stacks
       - ``2``
       - Number of stacks
+    * - fair
+      - False
+      - Add new windows to the stacks in a round robin way.
 
 
 Tile

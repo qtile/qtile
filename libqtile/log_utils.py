@@ -40,20 +40,21 @@ class ColorFormatter(logging.Formatter):
         return message + self.reset_seq
 
 
-def init_log(log_level=logging.ERROR, logger='qtile'):
-    handler = logging.FileHandler(
-        os.path.expanduser('~/.%s.log' % logger)
-    )
-    handler.setFormatter(
-        logging.Formatter(
-            "%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s"
-        )
-    )
+def init_log(log_level=logging.ERROR, logger='qtile', log_path='~/.%s.log'):
     log = getLogger(logger)
     log.setLevel(log_level)
-    log.addHandler(handler)
-    log.warning('Starting %s' % logger.title())
-    handler = StreamHandler(sys.stderr)
+
+    if log_path:
+        log_path = os.path.expanduser(log_path)
+        handler = logging.FileHandler(log_path)
+        handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s"
+            )
+        )
+        log.addHandler(handler)
+
+    handler = StreamHandler(sys.stdout)
     handler.setFormatter(
         ColorFormatter(
             '$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s'
@@ -61,4 +62,6 @@ def init_log(log_level=logging.ERROR, logger='qtile'):
         )
     )
     log.addHandler(handler)
+
+    log.warning('Starting %s' % logger.title())
     return log
