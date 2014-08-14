@@ -261,7 +261,6 @@ class Stack(Layout):
                 i.add(client)
                 return
         if self.fair:
-            small = 1024
             target = min(self.stacks, key=len)
             target.add(client)
         else:
