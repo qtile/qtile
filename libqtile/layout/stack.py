@@ -259,6 +259,15 @@ class Stack(Layout):
             if not i:
                 i.add(client)
                 return
+        if self.fair:
+            small = 1024
+            target = None
+            for i in self.stacks:
+                if len(i) < small:
+                    small = len(i)
+                    target = i
+            target.add(client)
+            return
         self.currentStack.add(client)
 
     def remove(self, client):
