@@ -25,15 +25,13 @@
     un-marshalling untrusted data can result in arbitrary code execution).
 """
 import marshal
-import select
 import logging
 import os.path
 import socket
 import struct
-import errno
 import fcntl
 
-from six.moves import gobject
+from six.moves import asyncio
 
 HDRLEN = 4
 BUFSIZE = 1024 * 1024
@@ -44,14 +42,13 @@ class IPCError(Exception):
 
 
 class _IPC:
-    def _read(self, sock):
+    def _unpack(self, data):
         try:
-            size = struct.unpack("!L", sock.recv(HDRLEN))[0]
-            data = "".encode()
-            while len(data) < size:
-                data += sock.recv(BUFSIZE)
-            return self._unpack_body(data)
-        except struct.error:
+            assert len(data) >= HDRLEN
+            size = struct.unpack("!L", data[:HDRLEN])[0]
+            assert size >= len(data[HDRLEN:])
+            return self._unpack_body(data[HDRLEN:HDRLEN + size])
+        except AssertionError:
             raise IPCError(
                 "error reading reply!"
                 " (probably the socket was disconnected)"
@@ -60,52 +57,132 @@ class _IPC:
     def _unpack_body(self, body):
         return marshal.loads(body)
 
-    def _pack_reply(self, msg):
+    def _pack(self, msg):
         msg = marshal.dumps(msg)
         size = struct.pack("!L", len(msg))
         return size + msg
 
-    def _write(self, sock, msg):
-        sock.sendall(self._pack_reply(msg))
+
+class _ClientProtocol(asyncio.Protocol, _IPC):
+    """IPC Client Protocol
+
+    1. The client is initalized with a Future, which will return the result of
+    the query, and a msg, which is sent to the server.
+
+    2. Once the connection is made, the client sends its message to the server,
+    then writes an EOF.
+
+    3. The client then recieves data from the server until the server closes
+    the connection, signalling that all the data has been sent.
+
+    4. When the connection is closed by the server, the data is unpacked and
+    returned.
+    """
+    def __init__(self, future, msg):
+        asyncio.Protocol.__init__(self)
+        self.future = future
+        self.msg = msg
+        self.response = b''
+
+    def connection_made(self, transport):
+        transport.write(self._pack(self.msg))
+        transport.write_eof()
+
+    def data_received(self, data):
+        self.response += data
+
+    def connection_lost(self, exc):
+        try:
+            data = self._unpack(self.response)
+        except IPCError as e:
+            self.future.set_exception(e)
+        else:
+            self.future.set_result(data)
 
 
-class Client(_IPC):
+class Client(object):
     def __init__(self, fname):
         self.fname = fname
+        self.loop = asyncio.get_event_loop()
 
     def send(self, msg):
-        sock = socket.socket(
-            socket.AF_UNIX,
-            socket.SOCK_STREAM,
-            0
-        )
+        future = asyncio.Future()
+        clientprotocol = _ClientProtocol(future, msg)
+
+        client_coroutine = self.loop.create_unix_connection(lambda: clientprotocol, path=self.fname)
+
         try:
-            sock.connect(self.fname)
-        except socket.error:
+            self.loop.run_until_complete(client_coroutine)
+        except OSError:
             raise IPCError("Could not open %s" % self.fname)
 
-        self._write(sock, msg)
+        try:
+            self.loop.run_until_complete(asyncio.wait_for(future, timeout=30))
+        except asyncio.TimeoutError:
+            raise RuntimeError("Server not responding")
 
-        while True:
-            fds, _, _ = select.select([sock], [], [], 1)
-            if fds:
-                data = self._read(sock)
-                sock.close()
-                return data
-            else:
-                raise RuntimeError("Server not responding")
+        return future.result()
 
     def call(self, data):
         return self.send(data)
 
 
-class Server(_IPC):
+class _ServerProtocol(asyncio.Protocol, _IPC):
+    """IPC Server Protocol
+
+    1. The server is initalized with a handler callback function for evaluating
+    incoming queries and a log.
+
+    2. Once the connection is made, the server initializes a data store for
+    incoming data.
+
+    3. The client sends all its data to the server, which is stored.
+
+    4. The client signals that all data is sent by sending an EOF, at which
+    point the server then unpacks the data and runs it through the handler.
+    The result is returned to the client and the connection is closed.
+    """
+    def __init__(self, handler, log):
+        asyncio.Protocol.__init__(self)
+        self.handler = handler
+        self.log = log
+
+    def connection_made(self, transport):
+        self.transport = transport
+        self.log.info('Connection made to server')
+        self.data = b''
+
+    def data_received(self, recv):
+        self.log.info('Data recieved by server')
+        self.data += recv
+
+    def eof_received(self):
+        self.log.info('EOF recieved by server')
+        try:
+            req = self._unpack(self.data)
+        except IPCError:
+            self.log.info('Invalid data received, closing connection')
+            self.transport.close()
+            return
+        rep = self.handler(req)
+        result = self._pack(rep)
+        self.log.info('Sending result on receive EOF')
+        self.transport.write(result)
+        self.log.info('Closing connection on receive EOF')
+        self.transport.close()
+        self.data = None
+
+
+class Server(object):
     def __init__(self, fname, handler):
         self.log = logging.getLogger('qtile')
         self.fname = fname
         self.handler = handler
+        self.loop = asyncio.get_event_loop()
+
         if os.path.exists(fname):
             os.unlink(fname)
+
         self.sock = socket.socket(
             socket.AF_UNIX,
             socket.SOCK_STREAM,
@@ -114,74 +191,15 @@ class Server(_IPC):
         flags = fcntl.fcntl(self.sock, fcntl.F_GETFD)
         fcntl.fcntl(self.sock, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
         self.sock.bind(self.fname)
-        self.sock.listen(5)
 
     def close(self):
-        self.log.info('Remove source on server close')
-        gobject.source_remove(self.gob_tag)
+        self.log.info('Stopping server on server close')
+        self.server.close()
         self.sock.close()
 
     def start(self):
-        self.log.info('Add io watch on server start')
-        self.gob_tag = gobject.io_add_watch(
-            self.sock, gobject.IO_IN, self._connection
-        )
+        serverprotocol = _ServerProtocol(self.handler, self.log)
+        server_coroutine = self.loop.create_unix_server(lambda: serverprotocol, sock=self.sock, backlog=5)
 
-    def _connection(self, sock, cond):
-        try:
-            conn, _ = self.sock.accept()
-        except socket.error as er:
-            if er.errno in (errno.EAGAIN, errno.EINTR):
-                return True
-            raise
-        else:
-            flags = fcntl.fcntl(conn, fcntl.F_GETFD)
-            fcntl.fcntl(conn, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
-            conn.setblocking(0)
-            data = {'buffer': ''.encode()}  # object which holds connection state
-            self.log.info('Add io watch on _connection')
-            gobject.io_add_watch(conn, gobject.IO_IN, self._receive, data)
-            return True
-
-    def _receive(self, conn, cond, data):
-        try:
-            recv = conn.recv(4096)
-        except socket.error as er:
-            if er.errno in (errno.EAGAIN, errno.EINTR):
-                return True
-            raise
-        else:
-            if recv == '':
-                self.log.info('Remove source on receive')
-                gobject.source_remove(data['tag'])
-                conn.close()
-                return True
-
-            data['buffer'] += recv
-            if 'header' not in data and len(data['buffer']) >= HDRLEN:
-                data['header'] = struct.unpack("!L", data['buffer'][:HDRLEN])
-                data['buffer'] = data['buffer'][HDRLEN:]
-            if 'header' in data:
-                if len(data['buffer']) < data['header'][0]:
-                    return True
-
-            req = self._unpack_body(data['buffer'])
-            data['result'] = self._pack_reply(self.handler(req))
-            self.log.info('Add io watch on receive')
-            gobject.io_add_watch(conn, gobject.IO_OUT, self._send, data)
-            return False
-
-    def _send(self, conn, cond, data):
-        try:
-            bytes = conn.send(data['result'])
-        except socket.error as er:
-            if er.errno in (errno.EAGAIN, errno.EINTR, errno.EPIPE):
-                return True
-            raise
-        else:
-            if not bytes or bytes >= len(data['result']):
-                conn.close()
-                return False
-
-            data['result'] = data['result'][bytes:]
-            return True
+        self.log.info('Starting server')
+        self.server = self.loop.run_until_complete(server_coroutine)
