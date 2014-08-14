@@ -1,0 +1,5 @@
+-e git+https://github.com/flacjacket/cairocffi.git@xcb#egg=cairocffi
+cffi
+flake8
+six
+xcffib
