@@ -209,10 +209,10 @@ def test_kill(self):
     self.testwindows = []
     self.c.window[self.c.window.info()["id"]].kill()
     self.c.sync()
-    for i in range(20):
+    for _ in range(20):
+        time.sleep(0.1)
         if len(self.c.windows()) == 0:
             break
-        time.sleep(0.1)
     else:
         raise AssertionError("Window did not die...")
 
@@ -646,10 +646,13 @@ def test_rotate(self):
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE
     )
-    time.sleep(0.1)
     s = self.c.screens()[0]
-    assert s["height"] == width
-    assert s["width"] == height
+    for _ in range(10):
+        time.sleep(0.1)
+        if s["width"] == height and s["height"] == width:
+            break
+    else:
+        raise AssertionError("Screen did not rotate")
 
 
 @Xephyr(False, TestConfig(), randr=True)
@@ -662,10 +665,13 @@ def test_resize_(self):
             "-display", utils.DISPLAY
         ]
     )
-    time.sleep(0.1)
     d = self.c.screen.info()
-    assert d["width"] == 480
-    assert d["height"] == 640
+    for _ in range(10):
+        time.sleep(0.1)
+        if d["width"] == 480 and d["height"] == 640:
+            break
+    else:
+        raise AssertionError("Screen did not resize")
 
 
 # Due to https://github.com/nose-devs/nose/issues/478, nose 1.1.2 ignores
@@ -690,8 +696,12 @@ def qtile_tests():
                 self.testXterm()
                 self.c.window.kill()
                 self.c.sync()
-                time.sleep(0.1)
-                assert not self.c.windows()
+                for _ in range(10):
+                    time.sleep(0.1)
+                    if not self.c.windows():
+                        break
+                else:
+                    raise AssertionError("xterm did not die")
             yield test_xterm_kill
 
             @Xephyr(xinerama, config)
