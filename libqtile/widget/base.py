@@ -257,12 +257,12 @@ class InLoopPollText(_TextBox):
 
     def _configure(self, qtile, bar):
         self.qtile = qtile
-        setup_event = not self.configured
+        setup_timeout = not self.configured
 
         _TextBox._configure(self, qtile, bar)
 
         # Update when we are configured.
-        if setup_event:
+        if setup_timeout:
             def retick():
                 update_interval = self.tick()
                 # If self.update_interval is defined and .tick() returns None, re-call after self.update_interval

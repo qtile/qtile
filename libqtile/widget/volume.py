@@ -42,10 +42,12 @@ class Volume(base._TextBox):
         self.volume = None
 
     def _configure(self, qtile, bar):
+        setup_timeout = not self.configured
         base._TextBox._configure(self, qtile, bar)
         if self.theme_path:
             self.setup_images()
-        self.timeout_add(self.update_interval, self.update)
+        if setup_timeout:
+            self.timeout_add(self.update_interval, self.update)
 
     def button_press(self, x, y, button):
         if button == 5:
