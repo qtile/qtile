@@ -324,7 +324,7 @@ class Screen(command.CommandObject):
             Use screen.prev_group in your config instead
         """
         deprecated(Screen.cmd_prevgroup.__doc__)
-        return self.cmd_prev_group( skip_empty, skip_managed)
+        return self.cmd_prev_group(skip_empty, skip_managed)
 
     def cmd_prev_group(self, skip_empty=False, skip_managed=False):
         """
