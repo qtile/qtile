@@ -4,6 +4,7 @@ import sys
 import utils
 import xcbq
 
+from widget.base import deprecated
 
 class Key:
     """
