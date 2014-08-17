@@ -315,7 +315,7 @@ def test_stack_split(self):
 
 @Xephyr(False, StackConfig())
 def test_stack_shuffle(self):
-    self.c.nextlayout()
+    self.c.next_layout()
     one = self.testWindow("one")
     two = self.testWindow("two")
     three = self.testWindow("three")
@@ -440,7 +440,7 @@ def test_ratiotile_add_windows(self):
 
 @Xephyr(False, RatioTileConfig())
 def test_ratiotile_add_windows_golden_ratio(self):
-    self.c.nextlayout()
+    self.c.next_layout()
     for i in range(12):
         self.testWindow(str(i))
         if i == 0:
@@ -573,7 +573,7 @@ def test_tile_master_and_slave(self):
     assert self.c.layout.info()["master"] == ["three"]
     assert self.c.layout.info()["slave"] == ["two", "one"]
 
-    self.c.nextlayout()
+    self.c.next_layout()
     assert self.c.layout.info()["master"] == ["three", "two"]
     assert self.c.layout.info()["slave"] == ["one"]
 
@@ -661,20 +661,20 @@ def test_slice_focus(self):
 def test_all_slices(self):
     self.testWindow('slice')  # left
     assertDimensions(self, 0, 0, 200, 600)
-    self.c.nextlayout()  # right
+    self.c.next_layout()  # right
     assertDimensions(self, 600, 0, 200, 600)
-    self.c.nextlayout()  # top
+    self.c.next_layout()  # top
     assertDimensions(self, 0, 0, 800, 200)
-    self.c.nextlayout()  # bottom
+    self.c.next_layout()  # bottom
     assertDimensions(self, 0, 400, 800, 200)
-    self.c.nextlayout()  # left again
+    self.c.next_layout()  # left again
     self.testWindow('one')
     assertDimensions(self, 200, 0, 600, 600)
-    self.c.nextlayout()  # right
+    self.c.next_layout()  # right
     assertDimensions(self, 0, 0, 600, 600)
-    self.c.nextlayout()  # top
+    self.c.next_layout()  # top
     assertDimensions(self, 0, 200, 800, 400)
-    self.c.nextlayout()  # bottom
+    self.c.next_layout()  # bottom
     assertDimensions(self, 0, 0, 800, 400)
 
 
