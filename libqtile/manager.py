@@ -43,7 +43,7 @@ import xcb.xinerama
 import xcb.xproto
 import xcbq
 
-from widget.base import _Widget
+from widget.base import _Widget, deprecated
 
 
 class Qtile(command.CommandObject):
@@ -1204,6 +1204,14 @@ class Qtile(command.CommandObject):
 
     def cmd_to_next_screen(self):
         """
+            This method will be deprecated in favor of cmd_next_screen.
+            Use qtile.next_screen in your config instead.
+        """
+        deprecated(Qtile.cmd_to_next_screen.__doc__)
+        return self.cmd_next_screen()
+
+    def cmd_next_screen(self):
+        """
             Move to next screen
         """
         return self.toScreen(
@@ -1211,6 +1219,14 @@ class Qtile(command.CommandObject):
         )
 
     def cmd_to_prev_screen(self):
+        """
+            This method will be deprecated in favor of cmd_prev_screen.
+            Use qtile.prev_screen in your config instead.
+        """
+        deprecated(Qtile.cmd_to_prev_screen.__doc__)
+        return self.cmd_prev_screen()
+
+    def cmd_prev_screen(self):
         """
             Move to the previous screen
         """
