@@ -394,7 +394,7 @@ class _Window(command.CommandObject):
         )
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, force=False):
+              above=False, force=False, margin=None):
         """
             Places the window at the specified location with the given size.
 
@@ -414,6 +414,13 @@ class _Window(command.CommandObject):
         #       send_notify = True
         # #for now, we just:
         send_notify = True
+
+        # Adjust the placement to account for layout margins, if there are any.
+        if margin is not None:
+            x += margin
+            y += margin
+            width -= margin * 2
+            height -= margin * 2
 
         self.x = x
         self.y = y

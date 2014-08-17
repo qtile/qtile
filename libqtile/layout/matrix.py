@@ -14,6 +14,7 @@ class Matrix(Layout):
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width."),
         ("name", "matrix", "Name of this layout."),
+        ("margin", 0, "Margin of the layout"),
     ]
 
     def __init__(self, columns=2, **config):
@@ -122,7 +123,8 @@ class Matrix(Layout):
             win_width,
             win_height,
             self.border_width,
-            px
+            px,
+            margin=self.margin,
         )
         client.unhide()
 

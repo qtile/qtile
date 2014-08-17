@@ -110,6 +110,7 @@ class MonadTall(SingleWindow):
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 2, "Border width."),
         ("name", "xmonad-tall", "Name of this layout."),
+        ("margin", 0, "Margin of the layout"),
     ]
 
     def __init__(self, ratio=_med_ratio, align=_left, change_ratio=.05,
@@ -260,7 +261,8 @@ class MonadTall(SingleWindow):
                 self.group.screen.dwidth,
                 self.group.screen.dheight,
                 0,
-                px
+                px,
+                margin=self.margin,
             )
             client.unhide()
             return
@@ -313,7 +315,8 @@ class MonadTall(SingleWindow):
                 width,
                 height - 2 * self.border_width,
                 self.border_width,
-                px
+                px,
+                margin=self.margin,
             )
             client.unhide()
         else:
@@ -324,7 +327,8 @@ class MonadTall(SingleWindow):
                 width,
                 self.group.screen.dheight - 2 * self.border_width,
                 self.border_width,
-                px
+                px,
+                margin=self.margin,
             )
             client.unhide()
 
