@@ -20,6 +20,6 @@ class CurrentLayout(base._TextBox):
 
     def button_press(self, x, y, button):
         if button == 1:
-            self.qtile.cmd_nextlayout()
+            self.qtile.cmd_next_layout()
         elif button == 2:
-            self.qtile.cmd_prevlayout()
+            self.qtile.cmd_prev_layout()

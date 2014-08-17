@@ -1074,6 +1074,14 @@ class Qtile(command.CommandObject):
 
     def cmd_nextlayout(self, group=None):
         """
+            This method will be deprecated in favor of cmd_next_layout.
+            Use lazy.next_layout(g) in your config instead.
+        """
+        deprecated(Qtile.cmd_nextlayout.__doc__)
+        self.cmd_next_layout(group)
+
+    def cmd_next_layout(self, group=None):
+        """
             Switch to the next layout.
 
             :group Group name. If not specified, the current group is assumed.
@@ -1085,6 +1093,14 @@ class Qtile(command.CommandObject):
         group.nextLayout()
 
     def cmd_prevlayout(self, group=None):
+        """
+            This method will be deprecated in favor of cmd_prev_layout.
+            Use lazy.prev_layout(g) in your config instead.
+        """
+        deprecated(Qtile.cmd_prevlayout.__doc__)
+        self.cmd_prev_layout(group)
+
+    def cmd_prev_layout(self, group=None):
         """
             Switch to the prev layout.
 
@@ -1205,7 +1221,7 @@ class Qtile(command.CommandObject):
     def cmd_to_next_screen(self):
         """
             This method will be deprecated in favor of cmd_next_screen.
-            Use qtile.next_screen in your config instead.
+            Use lazy.next_screen in your config instead.
         """
         deprecated(Qtile.cmd_to_next_screen.__doc__)
         return self.cmd_next_screen()
@@ -1221,7 +1237,7 @@ class Qtile(command.CommandObject):
     def cmd_to_prev_screen(self):
         """
             This method will be deprecated in favor of cmd_prev_screen.
-            Use qtile.prev_screen in your config instead.
+            Use lazy.prev_screen in your config instead.
         """
         deprecated(Qtile.cmd_to_prev_screen.__doc__)
         return self.cmd_prev_screen()
