@@ -11,6 +11,7 @@ class Zoomy(SingleWindow):
         ("property_name", "ZOOM", "Property to set on zoomed window"),
         ("property_small", "0.1", "Property value to set on zoomed window"),
         ("property_big", "1.0", "Property value to set on normal window"),
+        ("margin", 0, "Margin of the layout"),
     ]
 
     def __init__(self, **config):
@@ -70,7 +71,8 @@ class Zoomy(SingleWindow):
                 left.width,
                 left.height,
                 0,
-                None
+                None,
+                margin=self.margin,
             )
         else:
             h = int(right.width * left.height / left.width)
@@ -86,7 +88,8 @@ class Zoomy(SingleWindow):
                     right.width,
                     h,
                     0,
-                    None
+                    None,
+                    margin=self.margin,
                 )
             else:
                 hh = int((right.height - h) / (len(self.clients) - 1))
@@ -96,7 +99,8 @@ class Zoomy(SingleWindow):
                     right.width,
                     h,
                     0,
-                    None
+                    None,
+                    margin=self.margin,
                 )
         client.unhide()
 

@@ -137,6 +137,7 @@ class Stack(Layout):
         ("autosplit", False, "Auto split all new stacks."),
         ("num_stacks", 2, "Number of stacks."),
         ("fair", False, "Add new windows to the stacks in a round robin way."),
+        ("margin", 0, "Margin of the layout"),
     ]
 
     def __init__(self, **config):
@@ -309,7 +310,8 @@ class Stack(Layout):
                 winWidth,
                 winHeight,
                 self.border_width,
-                px
+                px,
+                margin=self.margin,
             )
             client.unhide()
         else:
@@ -320,7 +322,8 @@ class Stack(Layout):
                     winWidth,
                     screen.height - 2 * self.border_width,
                     self.border_width,
-                    px
+                    px,
+                    margin=self.margin,
                 )
                 client.unhide()
             else:
