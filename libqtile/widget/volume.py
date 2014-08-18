@@ -68,6 +68,8 @@ class Volume(base._TextBox):
             subprocess.call([
                 'amixer',
                 '-q',
+                '-D',
+                'pulse',
                 '-c',
                 str(self.cardid),
                 'sset',
