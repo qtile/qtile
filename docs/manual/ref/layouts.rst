@@ -176,6 +176,12 @@ Suggested Bindings:
     * - border_width
       - ``2``
       - Border width.
+    * - name
+      - ``"monadtall"``
+      - Name of this layout
+    * - margin
+      - 0
+      - Margin of the layout.
 
 
 RatioTile
@@ -202,6 +208,9 @@ Tries to tile all windows in the width/height ratio passed in
     * - name
       - ``"ratiotile"``
       - Name of this layout.
+    * - margin
+      - 0
+      - Margin of the layout.
 
 
 Slice
@@ -256,6 +265,18 @@ this is the most mature and flexible layout in Qtile.
     * - name
       - ``"stack"``
       - Name of this layout.
+    * - autosplit
+      - ``False``
+      - Autosplit all new stacks.
+    * - num_stacks
+      - ``2``
+      - Number of stacks
+    * - fair
+      - False
+      - Add new windows to the stacks in a round robin way.
+    * - margin
+      - 0
+      - Margin of the layout.
 
 
 Tile
@@ -282,6 +303,9 @@ Tile
     * - name
       - ``"tile"``
       - Name of this layout.
+    * - margin
+      - 0
+      - Margin of the layout.
 
 
 TreeTab
@@ -398,3 +422,6 @@ right
     * - property_big
       - ``1.0``
       - Property value to set on normal window
+    * - margin
+      - 0
+      - Margin of the layout.

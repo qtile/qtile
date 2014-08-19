@@ -89,7 +89,11 @@ class _Group(command.CommandObject):
                 ]
                 screen = self.screen.get_rect()
                 if normal:
-                    self.layout.layout(normal, screen)
+                    try:
+                        self.layout.layout(normal, screen)
+                    except:
+                        self.qtile.log.exception("Exception in layout %s"
+                            % (self.layout.name))
                 if floating:
                     self.floating_layout.layout(floating, screen)
                 if self.currentWindow and \
@@ -142,7 +146,7 @@ class _Group(command.CommandObject):
             # don't change focus while dragging windows
             return
         if win:
-            if not win in self.windows:
+            if win not in self.windows:
                 return
             else:
                 self.currentWindow = win
@@ -166,6 +170,7 @@ class _Group(command.CommandObject):
             focus=self.currentWindow.name if self.currentWindow else None,
             windows=[i.name for i in self.windows],
             layout=self.layout.name,
+            layouts=[l.name for l in self.layouts],
             floating_info=self.floating_layout.info(),
             screen=self.screen.index if self.screen else None
         )
@@ -213,7 +218,7 @@ class _Group(command.CommandObject):
             if nextfocus is None:
                 nextfocus = self.layout.focus_first()
         self.focus(nextfocus, True)
-        #else: TODO: change focus
+        # else: TODO: change focus
 
     def mark_floating(self, win, floating):
         if floating and win in self.floating_layout.clients:
@@ -341,11 +346,11 @@ class _Group(command.CommandObject):
         if not self.windows:
             return
         if self.currentWindow.floating:
-            nxt = self.floating_layout.focus_prev(self.currentWindow) or \
+            nxt = self.floating_layout.focus_previous(self.currentWindow) or \
                 self.layout.focus_last() or \
                 self.floating_layout.focus_last()
         else:
-            nxt = self.layout.focus_prev(self.currentWindow) or \
+            nxt = self.layout.focus_previous(self.currentWindow) or \
                 self.floating_layout.focus_last() or \
                 self.layout.focus_last()
         self.focus(nxt, True)

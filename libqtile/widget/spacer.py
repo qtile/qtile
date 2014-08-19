@@ -9,7 +9,8 @@ class Spacer(base._Widget):
     """
     def __init__(self, width=bar.STRETCH):
         """
-            - width: bar.STRETCH, or a pixel width.
+            - width: Width of the widget.
+              Can be either ``bar.STRETCH`` or a width in pixels.
         """
         base._Widget.__init__(self, width)
 

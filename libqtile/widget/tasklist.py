@@ -119,7 +119,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         window = None
         new_width = width = 0
         for w in self.bar.screen.group.windows:
-            new_width += self.icon_size+self.box_width(w.name)
+            new_width += self.icon_size + self.box_width(w.name)
             if x >= width and x <= new_width:
                 window = w
                 break
@@ -146,7 +146,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         icons = sorted(
             window.icons.iteritems(),
-            key=lambda x: abs(self.icon_size-int(x[0].split("x")[0]))
+            key=lambda x: abs(self.icon_size - int(x[0].split("x")[0]))
         )
         icon = icons[0]
         width, height = map(int, icon[0].split("x"))
@@ -200,7 +200,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 state = '_ '
             elif w.floating:
                 state = 'V '
-            task = "%s%s" % (state,  w.name if w and w.name else " ")
+            task = "%s%s" % (state, w.name if w and w.name else " ")
 
             if w.urgent:
                 border = self.urgent_border

@@ -1,3 +1,34 @@
+qtile *.*.*, released YYYY-MM-DD:
+    * features
+        - massive widget/layout documentation update
+        - new widget debuginfo for use in qtile development
+        - stack has new autosplit, fair options
+        - matrix, ratiotile, stack, xmonad, zoomy get 'margin' option
+        - new launchbar widget
+        - support for matching WM_CLASS and pid in Match
+        - add support for adding dgroups rules dynamically and via ipc
+        - Clock supports non-system timezones
+        - new mpris2 widget
+        - volume widget can use emoji instead of numbers
+        - add an 'eval' function to qsh at every object level
+        - bar gradients support more colors
+        - new Clipboard widget (very handy!)
+    * bugfixes
+        - bitcoin ticker widget switched from MtGox (dead) to btc-e
+        - all widgets now use qtile's defaults system, so their defaults are
+          settable globally, etc.
+        - fix behavior when screens are cloned
+        - all widgets use a unified polling framework
+        - "dialog" WM_TYPEs float by default
+        - respect xrandr --primary
+        - use a consistent font size in the default config
+        - default config supports mouse movements and floating
+        - fix a bug where the bar was not redrawn correctly in some multiscreen
+          environments
+        - add travis-ci support and make tests vastly more robust
+    * config breakage
+        - libqtile.layout.Stack's `stacks` parameter is now `num_stacks`
+
 qtile 0.7.0, released 2014-03-30:
     * features
         - new disk free percentage widget

@@ -74,24 +74,30 @@ class _Battery(base._TextBox):
             self.log.exception("Failed to get %s" % name)
 
     def _get_param(self, name):
-        if name in self.filenames:
+        if name in self.filenames and self.filenames[name]:
             return self._load_file(self.filenames[name])
-        else:
-            ## Don't have the file name cached, figure it out
-            file_list = BATTERY_INFO_FILES.get(name, [])
+        elif name not in self.filenames:
+            # Don't have the file name cached, figure it out
+
+            # Don't modify the global list! Copy with [:]
+            file_list = BATTERY_INFO_FILES.get(name, [])[:]
+
             if getattr(self, name, None):
-                ## If a file is manually specified, check it first
+                # If a file is manually specified, check it first
                 file_list.insert(0, getattr(self, name))
 
-            ## Iterate over the possibilities, and return the first valid value
+            # Iterate over the possibilities, and return the first valid value
             for file in file_list:
                 value = self._load_file(file)
                 if not (value in (False, None)):
                     self.filenames[name] = file
                     return value
 
-        ## If we made it this far, we don't have a valid file. Just return 0.
-        return 0
+        # If we made it this far, we don't have a valid file.
+        # Set it to None to avoid trying the next time.
+        self.filenames[name] = None
+
+        return None
 
     def _get_info(self):
         try:
@@ -143,7 +149,7 @@ class Battery(_Battery):
         if info is False:
             return 'Error'
 
-        ## Set the charging character
+        # Set the charging character
         try:
             # hide the text when it's higher than threshold, but still
             # display `full` when the battery is fully charged.
@@ -163,7 +169,7 @@ class Battery(_Battery):
         except ZeroDivisionError:
             time = -1
 
-        ## Calculate the battery percentage and time left
+        # Calculate the battery percentage and time left
         if time >= 0:
             hour = int(time)
             min = int(time * 60) % 60

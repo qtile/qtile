@@ -290,7 +290,7 @@ class _Call:
             if q.currentLayout.name != self.layout:
                 return False
             if q.currentWindow and q.currentWindow.floating \
-                and not self.when_floating:
+                    and not self.when_floating:
                 return False
         return True
 
@@ -411,3 +411,28 @@ class CommandObject(object):
             return self.doc(name)
         else:
             raise CommandError("No such command: %s" % name)
+
+    def cmd_eval(self, code):
+        """
+            Evaluates code in the same context as this function.
+            Return value is (success, result), success being a boolean and
+            result being a string representing the return value of eval, or
+            None if exec was used instead.
+        """
+        try:
+            try:
+                return (True, str(eval(code)))
+            except SyntaxError:
+                exec code
+                return (True, None)
+        except:
+            error = traceback.format_exc().strip().split("\n")[-1]
+            return (False, error)
+
+    def cmd_function(self, function):
+        """Call a function with current object as argument"""
+        try:
+            function(self)
+        except Exception:
+            error = traceback.format_exc()
+            self.log.error('Exception calling "%s":\n%s' % (function, error))

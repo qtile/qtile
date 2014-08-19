@@ -1,34 +1,28 @@
-from .. import hook, bar
 import base
+import logging
 from pythonwifi.iwlibs import Wireless, Iwstats
 
 
-class Wlan(base._TextBox):
+class Wlan(base.InLoopPollText):
     """
         Displays Wifi ssid and quality.
     """
-    def __init__(self, interface="wlan0", width=bar.CALCULATED, **config):
-        """
-            - interface: Wlan interface name.
+    defaults = [
+        ('interface', 'wlan0', 'The interface to monitor'),
+        ('update_interval', 1, 'The update interval.'),
+    ]
+    def __init__(self, **config):
+        base.InLoopPollText.__init__(self, **config)
+        self.add_defaults(Wlan.defaults)
 
-            - width: A fixed width, or bar.CALCULATED to calculate the width
-            automatically (which is recommended).
-        """
-        self.interface = interface
-        base._TextBox.__init__(self, " ", width, **config)
-        self.timeout_add(1, self.update)
-
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
-
-    def update(self):
-        if self.configured:
-            interface = Wireless(self.interface)
+    def poll(self):
+        interface = Wireless(self.interface)
+        try:
             stats = Iwstats(self.interface)
             quality = stats.qual.quality
             essid = interface.getEssid()
-            text = "{} {}/70".format(essid, quality)
-            if self.text != text:
-                self.text = text
-                self.bar.draw()
-        return True
+            return "{} {}/70".format(essid, quality)
+        except IOError:
+            logging.getLogger('qtile').error('%s: Probably your wlan device '
+                    'is switched off or otherwise not present in your system.',
+                    self.__class__.__name__)

@@ -5,6 +5,7 @@ import base
 class WindowTabs(base._TextBox):
     """
         Displays the name of each window in the current group.
+        Contrary to TaskList this is not an interactive widget.
         The window that currently has focus is highlighted.
     """
     defaults = [
@@ -39,7 +40,7 @@ class WindowTabs(base._TextBox):
                 state = '_ '
             elif w.floating:
                 state = 'V '
-            task = "%s%s" % (state,  w.name if w and w.name else " ")
+            task = "%s%s" % (state, w.name if w and w.name else " ")
             if w is self.bar.screen.group.currentWindow:
                 task = task.join(self.selected)
             names.append(task)

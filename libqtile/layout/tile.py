@@ -49,13 +49,13 @@ class Tile(Layout):
     def shift_up(self):
         if self.clients:
             currentindex = self.clients.index(self.focused)
-            nextindex = self.get_next_index(currentindex)
+            nextindex = (currentindex + 1) % len(self.clients)
             self.shift(currentindex, nextindex)
 
     def shift_down(self):
         if self.clients:
             currentindex = self.clients.index(self.focused)
-            previndex = self.get_previous_index(currentindex)
+            previndex = (currentindex - 1) % len(self.clients)
             self.shift(currentindex, previndex)
 
     def focus_first(self):
@@ -73,42 +73,12 @@ class Tile(Layout):
         if self.clients:
             return self.clients[-1]
 
-    def focus_prev(self, client):
+    def focus_previous(self, client):
         if client not in self.clients:
             return
         idx = self.clients.index(client)
         if idx > 0:
             return self.clients[idx - 1]
-
-    def get_next_index(self, currentindex):
-        nextindex = currentindex + 1
-        if nextindex >= len(self.clients):
-            nextindex = 0
-        return nextindex
-
-    def get_previous_index(self, currentindex):
-        previndex = currentindex - 1
-        if previndex < 0:
-            previndex = len(self.clients) - 1
-        return previndex
-
-    def getNextClient(self):
-        currentindex = self.clients.index(self.focused)
-        nextindex = self.get_next_index(currentindex)
-        return self.clients[nextindex]
-
-    def getPreviousClient(self):
-        currentindex = self.clients.index(self.focused)
-        previndex = self.get_previous_index(currentindex)
-        return self.clients[previndex]
-
-    def next(self):
-        n = self.getPreviousClient()
-        self.group.focus(n, True)
-
-    def previous(self):
-        n = self.getNextClient()
-        self.group.focus(n, True)
 
     def shuffle(self, function):
         if self.clients:
@@ -170,7 +140,6 @@ class Tile(Layout):
         w = 0
         h = 0
         borderWidth = self.border_width
-        margin = self.margin
         if self.clients and client in self.clients:
             pos = self.clients.index(client)
             if client in self.master_windows:
@@ -190,12 +159,13 @@ class Tile(Layout):
             else:
                 bc = self.group.qtile.colorPixel(self.border_normal)
             client.place(
-                x + margin,
-                y + margin,
-                w - margin * 2 - borderWidth * 2,
-                h - margin * 2 - borderWidth * 2,
+                x,
+                y,
+                w - borderWidth * 2,
+                h - borderWidth * 2,
                 borderWidth,
                 bc,
+                margin=self.margin,
             )
             client.unhide()
         else:
@@ -215,10 +185,12 @@ class Tile(Layout):
         self.up()
 
     def cmd_next(self):
-        self.next()
+        client = self.focus_next(self.focused) or self.focus_first()
+        self.group.focus(client, False)
 
     def cmd_previous(self):
-        self.previous()
+        client = self.focus_previous(self.focused) or self.focus_last()
+        self.group.focus(client, False)
 
     def cmd_decrease_ratio(self):
         self.ratio -= self.ratio_increment

@@ -18,7 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from base import SingleWindow
-from .. import utils
 
 
 class Max(SingleWindow):
@@ -34,28 +33,48 @@ class Max(SingleWindow):
         SingleWindow.__init__(self, **config)
         self.clients = []
         self.add_defaults(Max.defaults)
+        self.focused = None
 
     def _get_window(self):
+        return self.focused
+
+    def focus(self, client):
+        self.group.layoutAll()
+        self.focused = client
+
+    def focus_first(self):
         if self.clients:
             return self.clients[0]
 
-    def focus(self, client):
-        if client in self.clients:
-            self.clients.remove(client)
-            self.clients.insert(0, client)
-            self.group.layoutAll()
+    def focus_last(self):
+        if self.clients:
+            return self.clients[-1]
+
+    def focus_next(self, window):
+        if not self.clients:
+            return
+        if window != self._get_window():
+            self.focus(window)
+        idx = self.clients.index(window)
+        if idx + 1 < len(self.clients):
+            return self.clients[idx + 1]
+
+    def focus_previous(self, window):
+        if not self.clients:
+            return
+        if window != self._get_window():
+            self.focus(window)
+        idx = self.clients.index(window)
+        if idx > 0:
+            return self.clients[idx - 1]
 
     def up(self):
-        if self.clients:
-            utils.shuffleUp(self.clients)
-            self.group.layoutAll()
-            self.group.focus(self.clients[0], False)
+        client = self.focus_previous(self.focused) or self.focus_last()
+        self.group.focus(client, False)
 
     def down(self):
-        if self.clients:
-            utils.shuffleDown(self.clients)
-            self.group.layoutAll()
-            self.group.focus(self.clients[0], False)
+        client = self.focus_next(self.focused) or self.focus_first()
+        self.group.focus(client, False)
 
     def clone(self, group):
         c = SingleWindow.clone(self, group)
@@ -73,7 +92,7 @@ class Max(SingleWindow):
             return self.clients[0]
 
     def configure(self, client, screen):
-        if self.clients and client is self.clients[0]:
+        if self.clients and client is self.focused:
             client.place(
                 screen.x,
                 screen.y,

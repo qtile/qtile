@@ -8,14 +8,14 @@
 # TODO: some kind of templating to make shown info configurable
 # TODO: best practice to handle failures? just write to stderr?
 
-from .. import bar, utils
+from .. import utils
 from mpd import MPDClient, CommandError
 import atexit
 import base
 import re
 
 
-class Mpd(base._TextBox):
+class Mpd(base.ThreadedPollText):
     """
         An mpd widget
     """
@@ -24,11 +24,12 @@ class Mpd(base._TextBox):
         (
             "reconnect",
             False,
-            "Choose if the widget should try to keep reconnect."
+            "Choose if the widget should try to keep reconnecting."
         )
     ]
 
-    def __init__(self, width=bar.CALCULATED, host='localhost', port=6600,
+    # TODO: have this use our config framework
+    def __init__(self, host='localhost', port=6600,
                  password=False, fmt_playing="%a - %t [%v%%]",
                  fmt_stopped="Stopped [%v%%]", msg_nc='Mpd off',
                  do_color_progress=True, **config):
@@ -49,12 +50,11 @@ class Mpd(base._TextBox):
         self.msg_nc = msg_nc
         self.do_color_progress = do_color_progress
         self.inc = 2
-        base._TextBox.__init__(self, " ", width, **config)
+        base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(Mpd.defaults)
         self.client = MPDClient()
         self.connected = False
         self.connect()
-        self.timeout_add(1, self.update)
 
     def connect(self, ifneeded=False):
         if self.connected:
@@ -112,7 +112,7 @@ class Mpd(base._TextBox):
         return True
 
     def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
+        base.ThreadedPollText._configure(self, qtile, bar)
         self.layout = self.drawer.textlayout(
             self.text,
             self.foreground,
@@ -157,7 +157,7 @@ class Mpd(base._TextBox):
         return self.to_minutes_seconds(self.song['time'])
 
     def get_number(self):
-        return str(int(self.status['song'])+1)
+        return str(int(self.status['song']) + 1)
 
     def get_playlistlength(self):
         return self.status['playlistlength']
@@ -225,10 +225,10 @@ class Mpd(base._TextBox):
     def do_format(self, string):
         return re.sub("%(.)", self.match_check, string)
 
-    def update(self):
-        if not self.configured:
-            return True
-        if self.connect(True):
+    def poll(self):
+        # If we're already connected, or if users want to reconnect and we can
+        # successfully reconnect...
+        if self.connected or (self.reconnect and self.connect(True)):
             try:
                 self.status = self.client.status()
                 self.song = self.client.currentsong()
@@ -259,13 +259,9 @@ class Mpd(base._TextBox):
             if self.reconnect:
                 playing = self.msg_nc
             else:
-                return False
+                playing = ''
 
-        if self.text != playing:
-            self.text = playing
-            self.bar.draw()
-
-        return True
+        return playing
 
     def button_press(self, x, y, button):
         if not self.connect(True):

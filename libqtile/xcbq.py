@@ -3,6 +3,7 @@
     complete - it only implements the subset of functionalty needed by qtile.
 """
 from xcb.xproto import CW, WindowClass, EventMask
+from xcb.xfixes import SelectionEventMask
 import struct
 import utils
 import xcb.randr
@@ -31,7 +32,7 @@ keysyms = xkeysyms.keysyms
 # These should be in xpyb:
 ModMasks = {
     "shift": 1 << 0,
-    "lock":  1 << 1,
+    "lock": 1 << 1,
     "control": 1 << 2,
     "mod1": 1 << 3,
     "mod2": 1 << 4,
@@ -99,7 +100,7 @@ WindowTypes = {
 WindowStates = {
     None: 'normal',
     '_NET_WM_STATE_FULLSCREEN': 'fullscreen',
-    }
+}
 
 # Maps property names to types and formats.
 PropertyMap = {
@@ -143,6 +144,12 @@ PropertyMap = {
 # TODO add everything required here
 # http://standards.freedesktop.org/wm-spec/1.4/ar01s03.html
 SUPPORTED_ATOMS = [
+    '_NET_WM_PID',
+    '_NET_ACTIVE_WINDOW',
+    '_NET_WM_DESKTOP',
+    '_NET_CURRENT_DESKTOP',
+    '_NET_CLIENT_LIST',
+    '_NET_CLIENT_LIST_STACKING',
     '_NET_SUPPORTED',
     '_NET_WM_STATE',
     '_NET_WM_STATE_FULLSCREEN',
@@ -150,8 +157,24 @@ SUPPORTED_ATOMS = [
     '_NET_WM_NAME',
     '_NET_WM_STRUT',
     '_NET_WM_STRUT_PARTIAL',
+    '_NET_WM_WINDOW_TYPE',
+    'WM_WINDOW_ROLE',
+    'WM_TAKE_FOCUS',
+    'WM_PROTOCOLS',
+    'WM_DELETE_WINDOW',
+    'UTF8_STRING',
 ]
+SUPPORTED_ATOMS += WindowTypes.keys()
 
+XCB_CONN_ERRORS = {
+    1: 'XCB_CONN_ERROR',
+    2: 'XCB_CONN_CLOSED_EXT_NOTSUPPORTED',
+    3: 'XCB_CONN_CLOSED_MEM_INSUFFICIENT',
+    4: 'XCB_CONN_CLOSED_REQ_LEN_EXCEED',
+    5: 'XCB_CONN_CLOSED_PARSE_ERR',
+    6: 'XCB_CONN_CLOSED_INVALID_SCREEN',
+    7: 'XCB_CONN_CLOSED_FDPASSING_FAILED',
+}
 
 def toStr(s):
     return "".join([chr(i) for i in s.name])
@@ -248,7 +271,7 @@ class Screen(_Wrapper):
         self.default_colormap = Colormap(conn, screen.default_colormap)
         self.root = Window(conn, self.root)
         # FIXME: Where is the right place to set the cursor?
-        #self.root.set_cursor("Normal")
+        # self.root.set_cursor("Normal")
 
 
 class PseudoScreen:
@@ -318,6 +341,24 @@ class RandR:
             )
             l.append(d)
         return l
+
+
+class XFixes:
+    selection_mask = SelectionEventMask.SetSelectionOwner | \
+        SelectionEventMask.SelectionClientClose | \
+        SelectionEventMask.SelectionWindowDestroy
+
+    def __init__(self, conn):
+        self.conn = conn
+        self.ext = conn.conn(xcb.xfixes.key)
+        self.ext.QueryVersion(xcb.xfixes.MAJOR_VERSION,
+                              xcb.xfixes.MINOR_VERSION)
+
+    def select_selection_input(self, window, selection="PRIMARY"):
+        SELECTION = self.conn.atoms[selection]
+        self.conn.xfixes.ext.SelectSelectionInput(window.wid,
+                                                  SELECTION,
+                                                  self.selection_mask)
 
 
 class GC:
@@ -509,6 +550,11 @@ class Window:
             name = self.conn.atoms.get_name(r[0])
             return WindowStates.get(name, name)
 
+    def get_net_wm_pid(self):
+        r = self.get_property("_NET_WM_PID", unpack="I")
+        if r:
+            return r[0]
+
     def configure(self, **kwargs):
         """
             Arguments can be: x, y, width, height, border, sibling, stackmode
@@ -588,7 +634,7 @@ class Window:
             string to be used with the struct module.
         """
         if type is None:
-            if not prop in PropertyMap:
+            if prop not in PropertyMap:
                 raise ValueError(
                     "Must specify type for unknown property."
                 )
@@ -727,10 +773,12 @@ class Connection:
     _extmap = {
         "xinerama": Xinerama,
         "randr": RandR,
+        "xfixes": XFixes,
     }
 
     def __init__(self, display):
         self.conn = xcb.xcb.connect(display=display)
+        self._connected = True
         self.cursors = Cursors(self)
         self.setup = self.conn.get_setup()
         extensions = self.extensions()
@@ -841,8 +889,13 @@ class Connection:
         )
         return Window(self, wid)
 
+    def disconnect(self):
+        self.conn.disconnect()
+        self._connected = False
+
     def flush(self):
-        return self.conn.flush()
+        if self._connected:
+            return self.conn.flush()
 
     def xsync(self):
         # The idea here is that pushing an innocuous request through

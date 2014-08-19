@@ -1,14 +1,17 @@
 import libqtile
-import libqtile.hook
 import libqtile.ipc
+
 import logging
+import multiprocessing
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import traceback
-import Xlib.X
-import Xlib.display
+import xcb
+import xcb.xproto
 from nose.tools import with_setup, assert_raises
 from nose.plugins.attrib import attr
 from functools import wraps
@@ -41,61 +44,206 @@ def whereis(program):
 class Xephyr(object):
     def __init__(self, xinerama, config, start_qtile=True,
                  randr=False, two_screens=True,
-                 width=WIDTH, height=HEIGHT):
+                 width=WIDTH, height=HEIGHT, xoffset=None):
         self.xinerama, self.randr = xinerama, randr
         self.config = config
         self.start_qtile = start_qtile
-        self.name = "xephyr"
-        if xinerama:
-            self.name += "_xinerama"
-        if randr:
-            self.name += "_randr"
         self.two_screens = two_screens
-        self.display = DISPLAY
-        self.xinerama = xinerama
+
         self.width = width
         self.height = height
-        self.fname = '/tmp/qtilesocket'
+        if xoffset is None:
+            self.xoffset = width
+        else:
+            self.xoffset = xoffset
+
+        self.qtile = None # Handle to Qtile instance, multiprocessing.Process object
+        self.xephyr = None # Handle to Xephyr instance, subprocess.Popen object
+        self.display = DISPLAY
 
     def __call__(self, function):
-        def setup():
-            args = [
-                "Xephyr", "-keybd", "evdev",
-                "-name", "qtile_test",
-                self.display, "-ac",
-                "-screen", "%sx%s" % (self.width, self.height)]
-            if self.two_screens:
-                args.extend(["-screen", "%sx%s+800+0" % (
-                    SECOND_WIDTH, SECOND_HEIGHT)])
-
-            if self.xinerama:
-                args.extend(["+xinerama"])
-            if self.randr:
-                args.extend(["+extension", "RANDR"])
-            self.sub = subprocess.Popen(
-                            args,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                        )
-            time.sleep(0.05)
-            self.testwindows = []
-            if self.start_qtile:
-                self.startQtile(self.config)
-
         def teardown():
-            if self.start_qtile:
-                libqtile.hook.clear()
-                self.stopQtile()
-            os.kill(self.sub.pid, 9)
-            os.waitpid(self.sub.pid, 0)
+            # Remove temorary files
+            if os.path.exists(self.tempdir):
+                shutil.rmtree(self.tempdir)
 
+            # Shutdown Xephyr
+            self._stopXephyr()
+
+        def setup():
+            # Setup socket and log files
+            self.tempdir = tempfile.mkdtemp()
+            self.sockfile = os.path.join(self.tempdir, 'qtile.sock')
+            self.logfile = os.path.join(self.tempdir, 'qtile.log')
+
+            # Setup Xephyr
+            try:
+                self._startXephyr()
+            except AssertionError:
+                teardown()
+                raise
+
+            self.testwindows = []
+
+        @attr('xephyr')
+        @with_setup(setup, teardown)
         @wraps(function)
         def wrapped_fun():
-            return function(self)
+            try:
+                if self.start_qtile:
+                    self.startQtile(self.config)
+                return function(self)
+            finally:
+                if os.path.exists(self.logfile):
+                    with open(self.logfile) as f:
+                        log_output = f.read().strip()
+                    if log_output:
+                        print("------------------------ >> begin log file << ------------------------")
+                        print(log_output)
+                        print("------------------------- >> end log file << -------------------------")
+                    else:
+                        print("------------------------ >> log file empty << ------------------------")
+                # If we started qtile, we should be sure to take it down
+                if self.start_qtile:
+                    self.stopQtile()
+                # If we didn't start qtile, make sure the user took it down if needed
+                if self.qtile and not self.start_qtile:
+                    raise AssertionError("Stop qtile!")
 
-        return attr('xephyr')(with_setup(setup, teardown)(wrapped_fun))
+        return wrapped_fun
 
-    def _groupconsistency(self):
+    def _startXephyr(self):
+        args = [
+            "Xephyr", "-name", "qtile_test",
+            self.display, "-ac",
+            "-screen", "%sx%s" % (self.width, self.height)]
+        if self.two_screens:
+            args.extend(["-origin", "%s,0" % self.xoffset, "-screen",
+                "%sx%s" % (SECOND_WIDTH, SECOND_HEIGHT)])
+
+        if self.xinerama:
+            args.extend(["+xinerama"])
+        if self.randr:
+            args.extend(["+extension", "RANDR"])
+
+        self.xephyr = subprocess.Popen(args,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+
+        self._waitForXephyr()
+
+    def _stopXephyr(self):
+        assert self.xephyr is not None, "Xephyr must be started first"
+
+        # Complain if qtile or windows are running, but still kill xephyr
+        try:
+            assert self.qtile is None, "Kill Qtile before stopping Xephyr"
+            assert self.testwindows == [], "Kill all test windows before stopping Xephyr"
+        finally:
+            self._kill(self.xephyr)
+            self.xephyr = None
+
+    def _waitForXephyr(self):
+        # Wait until Xephyr process dies
+        while self.xephyr.poll() is None:
+            try:
+                conn = xcb.xcb.connect(self.display)
+                break
+            except xcb.ConnectException:
+                pass
+            time.sleep(0.1)
+        else:
+            raise AssertionError("Error launching Xephyr, quit with return code: %d" % self.xephyr.returncode)
+
+        conn.disconnect()
+        del conn
+
+    def startQtile(self, config):
+        rpipe, wpipe = multiprocessing.Pipe()
+
+        def runQtile():
+            try:
+                q = libqtile.manager.Qtile(
+                    config, self.display, self.sockfile,
+                    log=libqtile.manager.init_log(logging.ERROR, log_path=self.logfile))
+                q.loop()
+            except Exception:
+                wpipe.send(traceback.format_exc())
+
+        self.qtile = multiprocessing.Process(target=runQtile)
+        self.qtile.start()
+
+        self._waitForQtile(rpipe)
+
+    def stopQtile(self):
+        assert self.qtile is not None, "Qtile must be started first"
+
+        self.qtile.terminate()
+        self.qtile.join(10)
+
+        if self.qtile.is_alive():
+            # desparate times... this probably messes with multiprocessing...
+            try:
+                os.kill(self.qtile.pid, 9)
+                os.waitpid(self.qtile.pid, 0)
+            except OSError:
+                # The process may have died due to some other error
+                pass
+
+        self.qtile = None
+
+        # Kill all the windows
+        for proc in self.testwindows[:]:
+            self._kill(proc)
+
+    def _waitForQtile(self, errpipe):
+        # First, wait for socket to appear
+        start = time.time()
+        while time.time() < start + 10:
+            if os.path.exists(self.sockfile):
+                break
+
+            if errpipe.poll(0.1):
+                error = errpipe.recv()
+                raise AssertionError("Error launching Qtile, traceback:\n%s" % error)
+        else:
+            raise AssertionError("Error launching Qtile, socket never came up")
+
+        self.c = libqtile.command.Client(self.sockfile)
+
+        # Next, wait for server to come up
+        start = time.time()
+        while time.time() < start + 10:
+            try:
+                if self.c.status() == "OK":
+                    break
+            except libqtile.ipc.IPCError:
+                pass
+
+            if errpipe.poll(0.1):
+                error = errpipe.recv()
+                raise AssertionError("Error launching Qtile, traceback:\n%s" % error)
+        else:
+            raise AssertionError("Error launching Qtile, quit without exception")
+
+    def _testProc(self, args):
+        if not args:
+            raise AssertionError("Trying to run nothing! (missing arguments)")
+        start = len(self.c.windows())
+
+        proc = subprocess.Popen(args, env={"DISPLAY": self.display})
+
+        for i in range(20):
+            if len(self.c.windows()) > start:
+                break
+            time.sleep(0.1)
+        else:
+            raise AssertionError("Window never appeared...")
+
+        self.testwindows.append(proc)
+        return proc
+
+    def groupconsistency(self):
         groups = self.c.groups()
         screens = self.c.screens()
         seen = set()
@@ -110,126 +258,51 @@ class Xephyr(object):
         assert len(seen) == len(screens), "Not all screens \
         had an attached group."
 
-    def _waitForXephyr(self):
-        # Try until Xephyr is up
-        for i in range(50):
-            try:
-                d = Xlib.display.Display(self.display)
-                break
-            except (Xlib.error.DisplayConnectionError,
-                    Xlib.error.ConnectionClosedError):
-                time.sleep(0.1)
-        else:
-            raise AssertionError("Could not connect to display.")
-        d.close()
-        del d
-
-    def _waitForQtile(self):
-        for i in range(20):
-            try:
-                if self.c.status() == "OK":
-                    break
-            except libqtile.ipc.IPCError:
-                pass
-            time.sleep(0.1)
-        else:
-            raise AssertionError("Timeout waiting for Qtile")
-
-    def startQtile(self, config):
-        self._waitForXephyr()
-        pid = os.fork()
-        if pid == 0:
-            try:
-                q = libqtile.manager.Qtile(
-                    config, self.display, self.fname,
-                    log=libqtile.manager.init_log(logging.CRITICAL))
-                q.loop()
-            except Exception:
-                traceback.print_exc(file=sys.stderr)
-            sys.exit(0)
-        else:
-            self.qtilepid = pid
-            self.c = libqtile.command.Client(self.fname)
-            self._waitForQtile()
-
-    def stopQtile(self):
-        assert self.c.status()
-        if self.qtilepid:
-            try:
-                self._kill(self.qtilepid)
-            except OSError:
-                # The process may have died due to some other error
-                pass
-        for pid in self.testwindows[:]:
-            self._kill(pid)
-
-    def _testProc(self, path, args):
-        if path is None:
-            raise AssertionError("Trying to run None! (missing executable)")
-        start = len(self.c.windows())
-        pid = os.fork()
-        if pid == 0:
-            os.putenv("DISPLAY", self.display)
-            os.execv(path, args)
-        for i in range(20):
-            if len(self.c.windows()) > start:
-                break
-            time.sleep(0.1)
-        else:
-            raise AssertionError("Window never appeared...")
-        self.testwindows.append(pid)
-        return pid
-
     def qtileRaises(self, exc, config):
-        self._waitForXephyr()
         assert_raises(exc, libqtile.manager.Qtile,
-                      config, self.display, self.fname)
+                      config, self.display, self.sockfile)
 
     def testWindow(self, name):
+        python = sys.executable
         d = os.path.dirname(os.path.realpath(__file__))
         path = os.path.join(d, "scripts", "window.py")
         return self._testProc(
-                    path,
-                    [path, self.display, name]
+                    [python, path, self.display, name]
                 )
 
     def testXclock(self):
         path = whereis("xclock")
         return self._testProc(
-                    path,
-                    [path, "-display", self.display]
+                    [path]
                 )
 
     def testXeyes(self):
         path = whereis("xeyes")
         return self._testProc(
-                    path,
-                    [path, "-display", self.display]
+                    [path]
                 )
 
     def testGkrellm(self):
         path = whereis("gkrellm")
         return self._testProc(
-                    path,
                     [path]
                 )
 
     def testXterm(self):
         path = whereis("xterm")
         return self._testProc(
-                    path,
-                    [path, "-display", self.display]
+                    [path]
                 )
 
-    def _kill(self, pid):
-        os.kill(pid, 9)
-        os.waitpid(pid, 0)
-        if pid in self.testwindows:
-            self.testwindows.remove(pid)
+    def _kill(self, proc):
+        proc.kill()
+        proc.wait()
+        if proc in self.testwindows:
+            self.testwindows.remove(proc)
 
-    def kill(self, pid):
+    def kill(self, proc):
         start = len(self.c.windows())
-        self._kill(pid)
+        self._kill(proc)
         for i in range(20):
             if len(self.c.windows()) < start:
                 break

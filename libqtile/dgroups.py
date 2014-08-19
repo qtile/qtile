@@ -1,4 +1,3 @@
-import itertools
 import gobject
 
 import libqtile.hook
@@ -6,6 +5,7 @@ from libqtile.config import Key
 from libqtile.command import lazy
 from libqtile.config import Group
 from libqtile.config import Rule
+from libqtile.config import Match
 
 def simple_key_binder(mod, keynames=None):
     """
@@ -51,7 +51,13 @@ class DGroups(object):
 
         self.groups = dgroups
         self.groupMap = {}
-        self.rules = getattr(qtile.config, 'dgroups_app_rules', [])
+
+        self.rules = []
+        self.rules_map = {}
+        self.last_rule_id = 0
+
+        for rule in getattr(qtile.config, 'dgroups_app_rules', []):
+            self.add_rule(rule)
 
         self.keys = []
 
@@ -64,19 +70,34 @@ class DGroups(object):
 
         self.timeout = {}
 
+    def add_rule(self, rule, last=True):
+        self.rules_map[self.last_rule_id] = rule
+        if last:
+            self.rules.append(rule)
+        else:
+            self.rules.insert(0, rule)
+        self.last_rule_id += 1
+        return self.last_rule_id
+
+    def remove_rule(self, rule_id=None):
+        rule = self.rules[rule_id]
+        self.rules.remove(rule)
+        del self.rules[rule_id]
+
     def add_dgroup(self, group, start=False):
         self.groupMap[group.name] = group
         rules = [Rule(m, group=group.name) for m in group.matches]
         self.rules.extend(rules)
         if start:
-            self.qtile.addGroup(group.name, group.layout)
+            self.qtile.addGroup(group.name, group.layout, group.layouts)
 
     def _setup_groups(self):
         for group in self.groups:
             self.add_dgroup(group, group.init)
 
             if group.spawn and not self.qtile.no_spawn:
-                self.qtile.cmd_spawn(group.spawn)
+                pid = self.qtile.cmd_spawn(group.spawn)
+                self.add_rule(Rule(Match(net_wm_pid=[pid]), group.name))
 
     def _setup_hooks(self):
         libqtile.hook.subscribe.addgroup(self._addgroup)
@@ -115,7 +136,11 @@ class DGroups(object):
                         layout = self.groupMap[rule.group].layout
                     except KeyError:
                         layout = None
-                    group_added = self.qtile.addGroup(rule.group, layout)
+                    try:
+                        layouts = self.groupMap[rule.group].layouts
+                    except KeyError:
+                        layouts = None
+                    group_added = self.qtile.addGroup(rule.group, layout, layouts)
                     client.togroup(rule.group)
 
                     group_set = True
