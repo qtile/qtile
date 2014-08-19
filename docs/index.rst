@@ -58,7 +58,7 @@ Miscellaneous
 
 * :doc:`Frequently Asked Questions </manual/faq>`
 * :doc:`Hacking Qtile </manual/hacking>`
-* :doc:`Release notes </releases/index>`
+* `Release notes <https://github.com/qtile/qtile/blob/master/CHANGELOG>`_
 * :doc:`License </manual/license>`
 
 
@@ -75,5 +75,3 @@ Miscellaneous
     /manual/ref/index
     /manual/ref/*
     /manual/*
-    /releases/index
-    /releases/*
