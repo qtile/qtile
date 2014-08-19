@@ -1,4 +1,4 @@
-qtile *.*.*, released YYYY-MM-DD:
+qtile 0.8.0, released 2014-08-18:
     * features
         - massive widget/layout documentation update
         - new widget debuginfo for use in qtile development
