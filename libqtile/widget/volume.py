@@ -48,8 +48,8 @@ class Volume(base._TextBox):
 
     def button_press(self, x, y, button):
         if button == 5:
-            if self.volume_up_command is not None:
-                subprocess.call(self.volume_up_command)
+            if self.volume_down_command is not None:
+                subprocess.call(self.volume_down_command)
             else:
                 subprocess.call([
                     'amixer',
@@ -61,8 +61,8 @@ class Volume(base._TextBox):
                     '2dB-'
                 ])
         elif button == 4:
-            if self.volume_down_command is not None:
-                subprocess.call(self.volume_down_command)
+            if self.volume_up_command is not None:
+                subprocess.call(self.volume_up_command)
             else:
                 subprocess.call([
                     'amixer',
