@@ -143,11 +143,11 @@ def test_to_screen(self):
     assert gb["windows"] == ["one"]
 
     assert self.c.window.info()["name"] == "two"
-    self.c.to_next_screen()
+    self.c.next_screen()
     assert self.c.window.info()["name"] == "one"
-    self.c.to_next_screen()
+    self.c.next_screen()
     assert self.c.window.info()["name"] == "two"
-    self.c.to_prev_screen()
+    self.c.prev_screen()
     assert self.c.window.info()["name"] == "one"
 
 
@@ -226,14 +226,14 @@ def test_regression_groupswitch(self):
 
 
 @Xephyr(False, TestConfig())
-def test_nextlayout(self):
+def test_next_layout(self):
     self.testWindow("one")
     self.testWindow("two")
     assert len(self.c.layout.info()["stacks"]) == 1
-    self.c.nextlayout()
+    self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
-    self.c.nextlayout()
-    self.c.nextlayout()
+    self.c.next_layout()
+    self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 1
 
 
@@ -272,10 +272,10 @@ def test_delgroup(self):
 @Xephyr(False, TestConfig())
 def test_nextprevgroup(self):
     start = self.c.group.info()["name"]
-    ret = self.c.screen.nextgroup()
+    ret = self.c.screen.next_group()
     assert self.c.group.info()["name"] != start
     assert self.c.group.info()["name"] == ret
-    ret = self.c.screen.prevgroup()
+    ret = self.c.screen.prev_group()
     assert self.c.group.info()["name"] == start
 
 
@@ -320,7 +320,7 @@ def test_match(self):
 @Xephyr(False, TestConfig())
 def test_default_float(self):
     # change to 2 col stack
-    self.c.nextlayout()
+    self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
     self.testXclock()
 
@@ -376,7 +376,7 @@ def test_last_float_size(self):
 @Xephyr(False, TestConfig())
 def test_float_max_min_combo(self):
     # change to 2 col stack
-    self.c.nextlayout()
+    self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
     self.testXterm()
     self.testXeyes()
@@ -419,7 +419,7 @@ def test_float_max_min_combo(self):
 @Xephyr(False, TestConfig())
 def test_toggle_fullscreen(self):
     # change to 2 col stack
-    self.c.nextlayout()
+    self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
     self.testXterm()
     self.testXeyes()
@@ -454,7 +454,7 @@ def test_toggle_fullscreen(self):
 @Xephyr(False, TestConfig())
 def test_toggle_max(self):
     # change to 2 col stack
-    self.c.nextlayout()
+    self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
     self.testXterm()
     self.testXeyes()
@@ -487,7 +487,7 @@ def test_toggle_max(self):
 @Xephyr(False, TestConfig())
 def test_toggle_min(self):
     # change to 2 col stack
-    self.c.nextlayout()
+    self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
     self.testXterm()
     self.testXeyes()
@@ -531,14 +531,14 @@ def test_toggle_floating(self):
     assert self.c.window.info()['floating'] == True
 
     #change layout (should still be floating)
-    self.c.nextlayout()
+    self.c.next_layout()
     assert self.c.window.info()['floating'] == True
 
 
 @Xephyr(False, TestConfig())
 def test_floating_focus(self):
     # change to 2 col stack
-    self.c.nextlayout()
+    self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
     self.testXterm()
     self.testXeyes()
@@ -620,7 +620,7 @@ def test_move_floating(self):
     assert self.c.window.info()['y'] == 20
 
     #change layout (x, y should be same)
-    self.c.nextlayout()
+    self.c.next_layout()
     assert self.c.window.info()['width'] == 10
     assert self.c.window.info()['height'] == 20
     assert self.c.window.info()['x'] == 10
