@@ -1,8 +1,14 @@
-qtile (0.7.0-utopic1) utopic; urgency=low
+qtile (0.8.0-trusty1ubuntu2) trusty; urgency=medium
 
-  * First utopic release.
+  * Use a better debian/rules file.
 
- -- Tycho Andersen <tycho@tycho.ws>  Sat, 05 Jul 2014 16:32:35 -0500
+ -- Tycho Andersen <tycho@tycho.ws>  Wed, 27 Aug 2014 21:09:39 -0500
+
+qtile (0.8.0-trusty1ubuntu1) trusty; urgency=medium
+
+  * Release 0.8.0
+
+ -- Tycho Andersen <tycho@tycho.ws>  Wed, 27 Aug 2014 20:27:29 -0500
 
 qtile (0.7.0-trusty1) trusty; urgency=low
 
