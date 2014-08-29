@@ -1451,3 +1451,30 @@ class Qtile(command.CommandObject):
 
     def cmd_remove_rule(self, rule_id):
         self.dgroups.remove_rule(rule_id)
+
+    def cmd_hide_show_bar(self, position="all"):
+        """
+            param: position one of: "top", "bottom", "left", "right" or "all"
+        """
+        if position in ["top", "bottom", "left", "right"]:
+            bar = getattr(self.currentScreen, position)
+            if bar:
+                bar.show(not bar.is_show())
+                self.currentGroup.layoutAll()
+            else:
+                self.log.warning(
+                    "Not found bar in position '%s' for hide/show." % position)
+        elif position == "all":
+            screen = self.currentScreen
+            is_show = None
+            for bar in [screen.left, screen.right, screen.top, screen.bottom]:
+                if bar:
+                    if is_show is None:
+                        is_show = not bar.is_show()
+                    bar.show(is_show)
+            if is_show is not None:
+                self.currentGroup.layoutAll()
+            else:
+                self.log.warning("Not found bar for hide/show.")
+        else:
+            self.log.error("Invalid position value:%s" % position)

@@ -30,6 +30,7 @@ from six.moves import gobject
 
 USE_BAR_DRAW_QUEUE = True
 
+
 class Gap(command.CommandObject):
     """
         A gap, placed along one of the edges of the screen. If a gap has been
@@ -42,6 +43,7 @@ class Gap(command.CommandObject):
             size: The width of the gap.
         """
         self.size = size
+        self.initial_size = size
         self.qtile = None
         self.screen = None
 
@@ -282,6 +284,18 @@ class Bar(Gap, configurable.Configurable):
             widgets=[i.info() for i in self.widgets],
             window=self.window.window.wid
         )
+
+    def is_show(self):
+        return self.size != 0
+
+    def show(self, is_show=True):
+        if is_show != self.is_show():
+            if is_show:
+                self.size = self.initial_size
+                self.window.unhide()
+            else:
+                self.size = 0
+                self.window.hide()
 
     def cmd_fake_button_press(self, screen, position, x, y, button=1):
         """
