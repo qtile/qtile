@@ -1,8 +1,7 @@
-import base
-from .. import bar, hook
+from . import base
+from .. import bar, hook, xcbq
 
-from .. import xcbq
-import gobject
+from six.moves import gobject
 
 
 class Clipboard(base._TextBox):

@@ -1,8 +1,10 @@
-from .. import bar, xcbq, window
-import base
+from __future__ import division
 
-import xcb
-from xcb.xproto import EventMask, SetMode
+from .. import bar, xcbq, window
+from . import base
+
+import xcffib
+from xcffib.xproto import EventMask, SetMode
 import atexit
 import struct
 
@@ -29,7 +31,7 @@ class Icon(window._Window):
             height = icon_size
 
         if height > icon_size:
-            width = width * icon_size / height
+            width = width * icon_size // height
             height = icon_size
         if height <= 0:
             width = icon_size
@@ -85,7 +87,7 @@ class TrayWindow(window._Window):
                 conn.core.ReparentWindow(wid, parent.wid, 0, 0)
                 conn.flush()
                 w.map()
-            except xcb.xproto.DrawableError:
+            except xcffib.xproto.DrawableError:
                 # The icon wasn't ready to be drawn yet... (NetworkManager does
                 # this sometimes), so we just forget about it and wait for the
                 # next event.
@@ -127,12 +129,12 @@ class Systray(base._Widget):
         qtile.conn.conn.core.SetSelectionOwner(
             win.wid,
             atoms['_NET_SYSTEM_TRAY_S0'],
-            xcb.CurrentTime
+            xcffib.CurrentTime
         )
         event = struct.pack(
             'BBHII5I', 33, 32, 0, qtile.root.wid,
             atoms['MANAGER'],
-            xcb.CurrentTime, atoms['_NET_SYSTEM_TRAY_S0'],
+            xcffib.CurrentTime, atoms['_NET_SYSTEM_TRAY_S0'],
             win.wid, 0, 0
         )
         qtile.root.send_event(event, mask=EventMask.StructureNotify)
@@ -147,7 +149,7 @@ class Systray(base._Widget):
         for pos, icon in enumerate(self.icons.values()):
             icon.place(
                 self.offset + xoffset,
-                self.bar.height / 2 - self.icon_size / 2,
+                self.bar.height // 2 - self.icon_size // 2,
                 icon.width, self.icon_size,
                 0,
                 None
@@ -159,6 +161,6 @@ class Systray(base._Widget):
         self.qtile.conn.conn.core.SetSelectionOwner(
             0,
             atoms['_NET_SYSTEM_TRAY_S0'],
-            xcb.CurrentTime,
+            xcffib.CurrentTime,
         )
         self.traywin.hide()

@@ -1,4 +1,4 @@
-import cairo
+import cairocffi
 
 from . import base
 from os import statvfs
@@ -57,7 +57,7 @@ class _Graph(base._Widget):
 
     def draw_line(self, x, y, values):
         step = self.graphwidth / float(self.samples - 1)
-        self.drawer.ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+        self.drawer.ctx.set_line_join(cairocffi.LINE_JOIN_ROUND)
         self.drawer.set_source_rgb(self.graph_color)
         self.drawer.ctx.set_line_width(self.line_width)
         for val in values:
@@ -67,7 +67,7 @@ class _Graph(base._Widget):
 
     def draw_linefill(self, x, y, values):
         step = self.graphwidth / float(self.samples - 2)
-        self.drawer.ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+        self.drawer.ctx.set_line_join(cairocffi.LINE_JOIN_ROUND)
         self.drawer.set_source_rgb(self.graph_color)
         self.drawer.ctx.set_line_width(self.line_width)
         for index, val in enumerate(values):

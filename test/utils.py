@@ -10,8 +10,8 @@ import sys
 import tempfile
 import time
 import traceback
-import xcb
-import xcb.xproto
+import xcffib
+import xcffib.xproto
 from nose.tools import with_setup, assert_raises
 from nose.plugins.attrib import attr
 from functools import wraps
@@ -147,9 +147,9 @@ class Xephyr(object):
         # Wait until Xephyr process dies
         while self.xephyr.poll() is None:
             try:
-                conn = xcb.xcb.connect(self.display)
+                conn = xcffib.connect(self.display)
                 break
-            except xcb.ConnectException:
+            except xcffib.ConnectionException:
                 pass
             time.sleep(0.1)
         else:
@@ -265,6 +265,7 @@ class Xephyr(object):
     def testWindow(self, name):
         python = sys.executable
         d = os.path.dirname(os.path.realpath(__file__))
+        python = sys.executable
         path = os.path.join(d, "scripts", "window.py")
         return self._testProc(
                     [python, path, self.display, name]

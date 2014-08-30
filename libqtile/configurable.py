@@ -40,7 +40,8 @@ class Configurable(object):
             setattr(self, name, value)
             return value
         else:
-            raise AttributeError("no attribute: %s" % name)
+            cname = self.__class__.__name__
+            raise AttributeError("%s has no attribute: %s" % (cname, name))
 
     def _find_default(self, name):
         """Returns a tuple (found, value)"""

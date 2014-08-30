@@ -1,4 +1,3 @@
-import cStringIO
 import libqtile.manager
 import libqtile.utils
 import libqtile.hook

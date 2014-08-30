@@ -1,5 +1,5 @@
 import os
-import base
+from . import base
 
 BACKLIGHT_DIR = '/sys/class/backlight'
 

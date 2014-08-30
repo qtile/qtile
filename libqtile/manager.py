@@ -19,31 +19,31 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from config import Drag, Click, Screen, Match, Rule
-from utils import QtileError
 from libqtile.log_utils import init_log
 from libqtile.dgroups import DGroups
-from state import QtileState
-from group import _Group
-from StringIO import StringIO
-from xcb.xproto import EventMask, BadWindow, BadAccess, BadDrawable
+from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
 import atexit
-import command
-import gobject
-import hook
 import logging
 import os
 import os.path
 import pickle
 import sys
-import utils
-import window
-import xcb
-import xcb.xinerama
-import xcb.xproto
-import xcbq
+import xcffib
+import xcffib.xinerama
+import xcffib.xproto
+import six
+from six.moves import gobject
 
-from widget.base import _Widget
+from .config import Drag, Click, Screen, Match, Rule
+from .group import _Group
+from .state import QtileState
+from .utils import QtileError
+from .widget.base import _Widget
+from . import command
+from . import hook
+from . import utils
+from . import window
+from . import xcbq
 
 
 class Qtile(command.CommandObject):
@@ -151,15 +151,15 @@ class Qtile(command.CommandObject):
         self._drag = None
 
         self.ignoreEvents = set([
-            xcb.xproto.KeyReleaseEvent,
-            xcb.xproto.ReparentNotifyEvent,
-            xcb.xproto.CreateNotifyEvent,
+            xcffib.xproto.KeyReleaseEvent,
+            xcffib.xproto.ReparentNotifyEvent,
+            xcffib.xproto.CreateNotifyEvent,
             # DWM handles this to help "broken focusing windows".
-            xcb.xproto.MapNotifyEvent,
-            xcb.xproto.LeaveNotifyEvent,
-            xcb.xproto.FocusOutEvent,
-            xcb.xproto.FocusInEvent,
-            xcb.xproto.NoExposureEvent
+            xcffib.xproto.MapNotifyEvent,
+            xcffib.xproto.LeaveNotifyEvent,
+            xcffib.xproto.FocusOutEvent,
+            xcffib.xproto.FocusInEvent,
+            xcffib.xproto.NoExposureEvent
         ])
 
         self.conn.flush()
@@ -192,7 +192,7 @@ class Qtile(command.CommandObject):
         hook.subscribe.setgroup(self.update_net_desktops)
 
         if state:
-            st = pickle.load(StringIO(state))
+            st = pickle.load(six.BytesIO(state.encode()))
             st.apply(self)
 
         self.selection = {
@@ -296,23 +296,23 @@ class Qtile(command.CommandObject):
             code,
             key.modmask,
             True,
-            xcb.xproto.GrabMode.Async,
-            xcb.xproto.GrabMode.Async,
+            xcffib.xproto.GrabMode.Async,
+            xcffib.xproto.GrabMode.Async,
         )
         if self.numlockMask:
             self.root.grab_key(
                 code,
                 key.modmask | self.numlockMask,
                 True,
-                xcb.xproto.GrabMode.Async,
-                xcb.xproto.GrabMode.Async,
+                xcffib.xproto.GrabMode.Async,
+                xcffib.xproto.GrabMode.Async,
             )
             self.root.grab_key(
                 code,
                 key.modmask | self.numlockMask | xcbq.ModMasks["lock"],
                 True,
-                xcb.xproto.GrabMode.Async,
-                xcb.xproto.GrabMode.Async,
+                xcffib.xproto.GrabMode.Async,
+                xcffib.xproto.GrabMode.Async,
             )
 
     def unmapKey(self, key):
@@ -420,10 +420,10 @@ class Qtile(command.CommandObject):
             try:
                 attrs = item.get_attributes()
                 state = item.get_wm_state()
-            except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+            except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
                 continue
 
-            if attrs and attrs.map_state == xcb.xproto.MapState.Unmapped:
+            if attrs and attrs.map_state == xcffib.xproto.MapState.Unmapped:
                 continue
             if state and state[0] == window.WithdrawnState:
                 continue
@@ -474,7 +474,7 @@ class Qtile(command.CommandObject):
         try:
             attrs = w.get_attributes()
             internal = w.get_property("QTILE_INTERNAL")
-        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             return
         if attrs and attrs.override_redirect:
             return
@@ -483,13 +483,13 @@ class Qtile(command.CommandObject):
             if internal:
                 try:
                     c = window.Internal(w, self)
-                except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+                except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
                     return
                 self.windowMap[w.wid] = c
             else:
                 try:
                     c = window.Window(w, self)
-                except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+                except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
                     return
 
                 if w.get_wm_type() == "dock" or c.strut:
@@ -518,7 +518,7 @@ class Qtile(command.CommandObject):
         and drag and drop of tabs in chrome
         """
 
-        windows = [wid for wid, c in self.windowMap.iteritems() if c.group]
+        windows = [wid for wid, c in self.windowMap.items() if c.group]
         self.root.set_property("_NET_CLIENT_LIST", windows)
         # TODO: check stack order
         self.root.set_property("_NET_CLIENT_LIST_STACKING", windows)
@@ -529,9 +529,9 @@ class Qtile(command.CommandObject):
             if isinstance(i, Click) and i.focus:
                 # Make a freezing grab on mouse button to gain focus
                 # Event will propagate to target window
-                grabmode = xcb.xproto.GrabMode.Sync
+                grabmode = xcffib.xproto.GrabMode.Sync
             else:
-                grabmode = xcb.xproto.GrabMode.Async
+                grabmode = xcffib.xproto.GrabMode.Async
             eventmask = EventMask.ButtonPress
             if isinstance(i, Drag):
                 eventmask |= EventMask.ButtonRelease
@@ -541,7 +541,7 @@ class Qtile(command.CommandObject):
                 True,
                 eventmask,
                 grabmode,
-                xcb.xproto.GrabMode.Async,
+                xcffib.xproto.GrabMode.Async,
             )
             if self.numlockMask:
                 self.root.grab_button(
@@ -550,7 +550,7 @@ class Qtile(command.CommandObject):
                     True,
                     eventmask,
                     grabmode,
-                    xcb.xproto.GrabMode.Async,
+                    xcffib.xproto.GrabMode.Async,
                 )
                 self.root.grab_button(
                     i.button_code,
@@ -558,7 +558,7 @@ class Qtile(command.CommandObject):
                     True,
                     eventmask,
                     grabmode,
-                    xcb.xproto.GrabMode.Async,
+                    xcffib.xproto.GrabMode.Async,
                 )
 
     def grabKeys(self):
@@ -649,10 +649,10 @@ class Qtile(command.CommandObject):
                     # example, if a window is created and then immediately
                     # destroyed (before the event handler is evoked), when the
                     # event handler tries to examine the window properties, it
-                    # will throw a BadWindow exception. We can essentially
+                    # will throw a WindowError exception. We can essentially
                     # ignore it, since the window is already dead and we've got
                     # another event in the queue notifying us to clean it up.
-                    except (BadWindow, BadAccess, BadDrawable):
+                    except (WindowError, AccessError, DrawableError):
                         pass
                 if self._exit:
                     self.log.info('Got shutdown, Breaking main loop cleanly')
@@ -749,7 +749,7 @@ class Qtile(command.CommandObject):
         self.conn.conn.core.ConvertSelection(self.selection_window.wid,
                                              selection,
                                              TYPE, selection,
-                                             xcb.xcb.CurrentTime)
+                                             xcffib.CurrentTime)
 
     def handle_PropertyNotify(self, e):
         name = self.conn.atoms.get_name(e.atom)
@@ -758,9 +758,7 @@ class Qtile(command.CommandObject):
             assert e.window == self.selection_window.wid
             prop = self.selection_window.get_property(e.atom, "UTF8_STRING")
 
-            data = "".join([chr(i) for i in prop.value])
-
-            self.selection[name]["selection"] = data
+            self.selection[name]["selection"] = prop.value.to_string()
             hook.fire("selection_change", name, self.selection[name])
 
     def handle_EnterNotify(self, e):
@@ -773,8 +771,8 @@ class Qtile(command.CommandObject):
     def handle_ClientMessage(self, event):
         atoms = self.conn.atoms
 
-        opcode = xcb.xproto.ClientMessageData(event, 0, 20).data32[2]
-        data = xcb.xproto.ClientMessageData(event, 12, 20)
+        opcode = event.type
+        data = event.data
 
         # handle change of desktop
         if atoms["_NET_CURRENT_DESKTOP"] == opcode:
@@ -811,15 +809,15 @@ class Qtile(command.CommandObject):
         if self.config.bring_front_click:
             self.conn.conn.core.ConfigureWindow(
                 wnd,
-                xcb.xproto.ConfigWindow.StackMode,
-                [xcb.xproto.StackMode.Above]
+                xcffib.xproto.ConfigWindow.StackMode,
+                [xcffib.xproto.StackMode.Above]
             )
 
         if self.windowMap.get(wnd):
             self.currentGroup.focus(self.windowMap.get(wnd), False)
             self.windowMap.get(wnd).focus(False)
 
-        self.conn.conn.core.AllowEvents(xcb.xproto.Allow.ReplayPointer, e.time)
+        self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
         self.conn.conn.flush()
 
     def handle_ButtonPress(self, e):
@@ -870,8 +868,8 @@ class Qtile(command.CommandObject):
                     xcbq.ButtonMotionMask |
                     xcbq.AllButtonsMask |
                     xcbq.ButtonReleaseMask,
-                    xcb.xproto.GrabMode.Async,
-                    xcb.xproto.GrabMode.Async,
+                    xcffib.xproto.GrabMode.Async,
+                    xcffib.xproto.GrabMode.Async,
                 )
 
     def handle_ButtonRelease(self, e):
@@ -922,7 +920,7 @@ class Qtile(command.CommandObject):
 
     def handle_ConfigureRequest(self, e):
         # It's not managed, or not mapped, so we just obey it.
-        cw = xcb.xproto.ConfigWindow
+        cw = xcffib.xproto.ConfigWindow
         args = {}
         if e.value_mask & cw.X:
             args["x"] = max(e.x, 0)
@@ -939,7 +937,7 @@ class Qtile(command.CommandObject):
 
     def handle_MappingNotify(self, e):
         self.conn.refresh_keymap()
-        if e.request == xcb.xproto.Mapping.Keyboard:
+        if e.request == xcffib.xproto.Mapping.Keyboard:
             self.grabKeys()
 
     def handle_MapRequest(self, e):
@@ -981,17 +979,17 @@ class Qtile(command.CommandObject):
 
     def _items(self, name):
         if name == "group":
-            return True, self.groupMap.keys()
+            return True, list(self.groupMap.keys())
         elif name == "layout":
-            return True, range(len(self.currentGroup.layouts))
+            return True, list(range(len(self.currentGroup.layouts)))
         elif name == "widget":
-            return False, self.widgetMap.keys()
+            return False, list(self.widgetMap.keys())
         elif name == "bar":
             return False, [x.position for x in self.currentScreen.gaps]
         elif name == "window":
             return True, self.listWID()
         elif name == "screen":
-            return True, range(len(self.screens))
+            return True, list(range(len(self.screens)))
 
     def _select(self, name, sel):
         if name == "group":
@@ -1072,7 +1070,7 @@ class Qtile(command.CommandObject):
         """
             List of all addressible widget names.
         """
-        return self.widgetMap.keys()
+        return list(self.widgetMap.keys())
 
     def cmd_nextlayout(self, group=None):
         """
@@ -1145,7 +1143,7 @@ class Qtile(command.CommandObject):
         d.detail = keycode
         try:
             d.state = utils.translateMasks(modifiers)
-        except KeyError, v:
+        except KeyError as v:
             return v.args[0]
         self.handle_KeyPress(d)
 
@@ -1164,10 +1162,10 @@ class Qtile(command.CommandObject):
         if '--no-spawn' not in argv:
             argv.append('--no-spawn')
 
-        buf = StringIO()
-        pickle.dump(QtileState(self), buf)
-        argv = filter(lambda s: not s.startswith('--with-state'), argv)
-        argv.append('--with-state=' + buf.getvalue())
+        buf = six.BytesIO()
+        pickle.dump(QtileState(self), buf, protocol=0)
+        argv = [s for s in argv if not s.startswith('--with-state')]
+        argv.append('--with-state=' + buf.getvalue().decode())
 
         self.cmd_execute(sys.executable, argv)
 
@@ -1295,7 +1293,7 @@ class Qtile(command.CommandObject):
 
     def cmd_next_urgent(self):
         try:
-            nxt = filter(lambda w: w.urgent, self.windowMap.values())[0]
+            nxt = [w for w in self.windowMap.values() if w.urgent][0]
             nxt.group.cmd_toscreen()
             nxt.group.focus(nxt, False)
         except IndexError:

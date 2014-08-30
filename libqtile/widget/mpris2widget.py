@@ -1,7 +1,7 @@
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
-import gobject
-import base
+from six.moves import gobject
+from . import base
 
 class Mpris2(base._TextBox):
     '''

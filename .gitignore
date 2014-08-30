@@ -3,6 +3,7 @@
 *.py~
 *.so
 *.o
+__pycache__
 MANIFEST
 /build
 /dist

@@ -54,7 +54,11 @@ def make_qtile():
     from argparse import ArgumentParser
     parser = ArgumentParser(
         description='A full-featured, pure-Python tiling window manager.',
-        prog='qtile',
+        prog='qtile')
+
+    parser.add_argument(
+        '--version',
+        action='version',
         version=VERSION)
 
     parser.add_argument(

@@ -1,7 +1,7 @@
-import cairo
+import cairocffi
 import os
 from libqtile import bar
-import base
+from . import base
 
 BAT_DIR = '/sys/class/power_supply'
 CHARGED = 'Full'
@@ -275,11 +275,11 @@ class BatteryIcon(_Battery):
             base._TextBox.draw(self)
 
     def setup_images(self):
-        for key, name in self.icons.iteritems():
+        for key, name in self.icons.items():
             try:
                 path = os.path.join(self.theme_path, name)
-                img = cairo.ImageSurface.create_from_png(path)
-            except cairo.Error:
+                img = cairocffi.ImageSurface.create_from_png(path)
+            except cairocffi.Error:
                 self.theme_path = None
                 self.qtile.log.warning('Battery Icon switching to text mode')
                 return
@@ -292,13 +292,13 @@ class BatteryIcon(_Battery):
             if width > self.width:
                 self.width = int(width) + self.actual_padding * 2
 
-            imgpat = cairo.SurfacePattern(img)
+            imgpat = cairocffi.SurfacePattern(img)
 
-            scaler = cairo.Matrix()
+            scaler = cairocffi.Matrix()
 
             scaler.scale(sp, sp)
             scaler.translate(self.actual_padding * -1, 0)
             imgpat.set_matrix(scaler)
 
-            imgpat.set_filter(cairo.FILTER_BEST)
+            imgpat.set_filter(cairocffi.FILTER_BEST)
             self.surfaces[key] = imgpat

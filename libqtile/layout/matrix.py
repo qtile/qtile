@@ -1,6 +1,8 @@
+from __future__ import division
+
 import math
 
-from base import Layout
+from .base import Layout
 
 
 class Matrix(Layout):
@@ -28,7 +30,7 @@ class Matrix(Layout):
         d = Layout.info(self)
         d["rows"] = [
             [win.name for win in self.get_row(i)]
-            for i in xrange(self.get_num_rows())
+            for i in range(self.get_num_rows())
         ]
         d["current_window"] = self.current_window
         d["clients"] = [x.name for x in self.clients]
@@ -56,7 +58,7 @@ class Matrix(Layout):
         assert column < self.columns
         return [
             self.clients[i]
-            for i in xrange(column, len(self.clients), self.columns)
+            for i in range(column, len(self.clients), self.columns)
         ]
 
     def add(self, client):
@@ -71,7 +73,7 @@ class Matrix(Layout):
         if client not in self.clients:
             return
         idx = self.clients.index(client)
-        self.current_window = (idx % self.columns, idx / self.columns)
+        self.current_window = (idx % self.columns, idx // self.columns)
 
     def focus_first(self):
         if self.clients:
@@ -104,7 +106,7 @@ class Matrix(Layout):
             return
         idx = self.clients.index(client)
         column = idx % self.columns
-        row = idx / self.columns
+        row = idx // self.columns
         column_size = int(math.ceil(float(len(self.clients)) / self.columns))
         if (column, row) == self.current_window:
             px = self.group.qtile.colorPixel(self.border_focus)

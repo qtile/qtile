@@ -1,5 +1,5 @@
 from .. import bar
-import base
+from . import base
 
 
 class TextBox(base._TextBox):

@@ -20,9 +20,12 @@
 
 import operator
 import functools
-import gobject
 import os
-import xcbq
+
+import six
+from six.moves import gobject, reduce
+
+from . import xcbq
 
 
 class QtileError(Exception):
@@ -147,7 +150,7 @@ def rgb(x):
         else:
             alpha = 1
         return (x[0] / 255.0, x[1] / 255.0, x[2] / 255.0, alpha)
-    elif isinstance(x, basestring):
+    elif isinstance(x, six.string_types):
         if x.startswith("#"):
             x = x[1:]
         if "." in x:
@@ -191,8 +194,8 @@ data = Data(__name__)
 
 def scrub_to_utf8(text):
     if not text:
-        return ""
-    elif isinstance(text, unicode):
+        return six.u("")
+    elif isinstance(text, six.text_type):
         return text
     else:
         return text.decode("utf-8", "ignore")

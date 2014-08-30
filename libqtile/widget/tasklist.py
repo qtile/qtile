@@ -1,6 +1,6 @@
-import cairo
+import cairocffi
 from .. import bar, hook
-import base
+from . import base
 
 
 class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
@@ -145,22 +145,22 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             return cache
 
         icons = sorted(
-            window.icons.iteritems(),
+            iter(window.icons.items()),
             key=lambda x: abs(self.icon_size - int(x[0].split("x")[0]))
         )
         icon = icons[0]
         width, height = map(int, icon[0].split("x"))
 
-        img = cairo.ImageSurface.create_for_data(
+        img = cairocffi.ImageSurface.create_for_data(
             icon[1],
-            cairo.FORMAT_ARGB32,
+            cairocffi.FORMAT_ARGB32,
             width,
             height
         )
 
-        surface = cairo.SurfacePattern(img)
+        surface = cairocffi.SurfacePattern(img)
 
-        scaler = cairo.Matrix()
+        scaler = cairocffi.Matrix()
 
         if height != self.icon_size:
             sp = height / float(self.icon_size)

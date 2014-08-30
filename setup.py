@@ -24,6 +24,10 @@ Features
       unit-tested window mangers around.
 """
 
+import libqtile.pangocffi
+
+dependencies = ['six', 'cffi>=0.8.2']
+
 setup(
     name="qtile",
     version="0.8.0",
@@ -44,6 +48,8 @@ setup(
     maintainer_email="tycho@tycho.ws",
     url="http://qtile.org",
     license="MIT",
+    install_requires=dependencies,
+    setup_requires=dependencies,
     packages=['libqtile',
               'libqtile.layout',
               'libqtile.widget',
