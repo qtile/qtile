@@ -5,7 +5,7 @@ from . import xcbq
 
 from six import MAXSIZE
 
-from widget.base import deprecated
+from .widget.base import deprecated
 
 class Key:
     """
