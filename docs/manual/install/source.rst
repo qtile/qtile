@@ -37,14 +37,14 @@ not yet merged. Thankfully, this is fairly easy:
 .. code-block:: bash
 
     git clone -b xcb https://github.com/flacjacket/cairocffi.git
-    cd caricffi && sudo python setup.py install
+    cd cariocffi && sudo python setup.py install
 
-PyGTK
------
+python-gobject
+--------------
 
-We also require a reasonably recent version of the Python GTK bindings, in
-particular, the pango module. You should just be able to install this using
-your chosen distribution's package manager.
+We also require a reasonably recent version of the Python gobject bindings. You
+should just be able to install this using your chosen distribution's package
+manager.
 
 Qtile
 -----
