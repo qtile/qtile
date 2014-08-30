@@ -1421,3 +1421,39 @@ class Qtile(command.CommandObject):
 
     def cmd_remove_rule(self, rule_id):
         self.dgroups.remove_rule(rule_id)
+
+    def cmd_run_external(self, full_path):
+        def format_error(path, e):
+            s = "Can't call \"main\" from \"{path}\"\n\t{err_name}: {err}"
+            return s.format(path=path, err_name=e.__class__.__name__, err=e)
+
+        from cStringIO import StringIO
+        module_name = os.path.splitext(os.path.basename(full_path))[0]
+        dir_path = os.path.dirname(full_path)
+        err_str = ""
+        local_stdout = StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = local_stdout
+        sys.exc_clear()
+
+        try:
+            import imp
+
+            fp, pathname, description = imp.find_module(module_name, [dir_path])
+            module = imp.load_module(module_name, fp, pathname, description)
+            module.main(self)
+        except ImportError as e:
+            fp = None
+            err_str += format_error(full_path, e)
+        except:
+            import traceback
+            (exc_type, exc_value, exc_traceback) = sys.exc_info()
+            err_str += traceback.format_exc()
+            err_str += format_error(full_path, exc_type(exc_value))
+        finally:
+            sys.exc_clear()
+            sys.stdout = old_stdout
+            if fp:
+                fp.close()
+
+        return local_stdout.getvalue() + err_str

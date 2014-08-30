@@ -1,17 +1,17 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,21 +22,32 @@
 
 from libqtile import sh, command
 
+
 def main():
 
     from optparse import OptionParser
 
     parser = OptionParser(version="%prog 0.2")
-    parser.add_option("-s", "--socket",
-                      action="store", type="string",
-                      default=None,
-                      dest="socket",
-                      help='Use specified socket to connect to qtile.')
+    parser.add_option(
+        "-s", "--socket",
+        action="store", type="string",
+        default=None,
+        dest="socket",
+        help='Use specified socket to connect to qtile.')
+    parser.add_option(
+        "-r", "--run",
+        action="store", type="string",
+        default=None,
+        dest="pyfile",
+        help='The full path to python file with the \"main\" function to call.')
     options, args = parser.parse_args()
 
     client = command.Client(options.socket)
-    qsh = sh.QSh(client)
-    qsh.loop()
+    if options.pyfile is None:
+        qsh = sh.QSh(client)
+        qsh.loop()
+    else:
+        print client.run_external(options.pyfile)
 
 
 if __name__ == "__main__":
