@@ -26,7 +26,7 @@ Features
 
 import libqtile.pangocffi
 
-dependencies = ['six', 'cffi>=0.8.2']
+dependencies = ['six>=1.4.1', 'cffi>=0.8.2']
 
 setup(
     name="qtile",
