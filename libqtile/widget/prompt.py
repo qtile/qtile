@@ -351,9 +351,8 @@ class Prompt(base._TextBox):
     def _blink(self):
         self.blink = not self.blink
         self._update()
-        if not self.active:
-            return False
-        return True
+        if self.active:
+            self.timeout_add(self.cursorblink, self._blink)
 
     def _update(self):
         if self.active:
