@@ -22,7 +22,6 @@ from __future__ import division
 from . import command
 from . import confreader
 from . import drawer
-from . import hook
 from . import configurable
 from . import window
 
@@ -187,10 +186,6 @@ class Bar(Gap, configurable.Configurable):
             qtile.registerWidget(i)
             i._configure(qtile, self)
         self._resize(self.width, self.widgets)
-
-        # FIXME: These should be targeted better.
-        hook.subscribe.setgroup(self.draw)
-        hook.subscribe.changegroup(self.draw)
 
     def _resize(self, width, widgets):
         stretches = [i for i in widgets if i.width_type == STRETCH]

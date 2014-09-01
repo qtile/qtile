@@ -48,6 +48,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         hook.subscribe.setgroup(hook_response)
         hook.subscribe.group_window_add(hook_response)
         hook.subscribe.current_screen_change(hook_response)
+        hook.subscribe.changegroup(hook_response)
 
     def drawbox(self, offset, text, bordercolor, textcolor, rounded=False,
                 block=False, width=None):
