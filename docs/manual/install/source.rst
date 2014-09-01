@@ -39,12 +39,14 @@ not yet merged. Thankfully, this is fairly easy:
     git clone -b xcb https://github.com/flacjacket/cairocffi.git
     cd cairocffi && sudo python setup.py install
 
-python-gobject
---------------
+asyncio/trollius
+----------------
 
-We also require a reasonably recent version of the Python gobject bindings. You
-should just be able to install this using your chosen distribution's package
-manager.
+Qtile uses the asyncio module for its event loop. This module comes as part of
+the standard library with pythons >=3.4, so if you're running on one of those
+you can skip this step. For users running python ==3.3 you can ``pip install
+asyncio``, and for users running 2.6<= python <=3.2, you can ``pip install
+trollius``.
 
 Qtile
 -----
