@@ -333,7 +333,7 @@ class Qtile(command.CommandObject):
     def update_net_desktops(self):
         try:
             index = self.groups.index(self.currentGroup)
-        except:
+        except ValueError:
             index = 0
 
         self.root.set_property("_NET_NUMBER_OF_DESKTOPS", len(self.groups))
@@ -1381,7 +1381,7 @@ class Qtile(command.CommandObject):
         try:
             mb = self.widgetMap[widget]
             mb.startInput(prompt, f, complete)
-        except:
+        except KeyError:
             self.log.error("No widget named '%s' present." % widget)
 
     def cmd_qtilecmd(self, prompt="command",

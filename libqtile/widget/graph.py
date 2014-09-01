@@ -319,7 +319,7 @@ class NetGraph(_Graph):
                 (r for r in routes if not int(r['dest'], 16)),
                 routes[0]
             )['iface']
-        except:
+        except (KeyError, ValueError):
             raise RuntimeError('No valid interfaces available')
 
 

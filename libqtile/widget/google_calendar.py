@@ -210,7 +210,7 @@ class GoogleCalendar(base.ThreadedPollText):
                     event.get('reminders').get('overrides')[0].get('minutes')
                 ) * 60
             )
-        except:
+        except (IndexError, ValueError, AttributeError):
             remindertime = datetime.timedelta(0, 0)
 
         # format the data
