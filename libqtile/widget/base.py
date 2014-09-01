@@ -126,7 +126,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
             This method calls either ``.call_later`` with given arguments.
         """
         self.log.debug('Adding timer for %r in %.2fs', method, seconds)
-        return self.qtile._eventloop.call_later(seconds, method, *method_args)
+        return self.qtile.call_later(seconds, method, *method_args)
 
 
 UNSPECIFIED = bar.Obj("UNSPECIFIED")
@@ -315,7 +315,7 @@ class ThreadedPollText(InLoopPollText):
     def tick(self):
         def worker():
             text = self._poll()
-            self.qtile._eventloop.call_soon_threadsafe(self.update, text)
+            self.qtile.call_soon_threadsafe(self.update, text)
         # TODO: There are nice asyncio constructs for this sort of thing, I think...
         threading.Thread(target=worker).start()
 

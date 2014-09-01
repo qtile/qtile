@@ -55,7 +55,6 @@ class Qtile(command.CommandObject):
     """
         This object is the __root__ of the command graph.
     """
-    _exit = asyncio.Future()
 
     def __init__(self, config,
                  displayName=None, fname=None, no_spawn=False, log=None,
@@ -634,17 +633,10 @@ class Qtile(command.CommandObject):
                     self.log.exception("Shutting down due to X connection error %s (%s)" %
                         (error_string, error_code))
                     self.conn.disconnect()
-                    self._exit.set_result(None)
 
                 self.log.exception("Got an exception in poll loop")
-        self._loop()
 
-    def _shutdown(self):
-        self.log.info('Got shutdown, breaking main loop cleanly')
-        self._eventloop.stop()
-
-    def _loop(self):
-        # Whenever changes happen, this should be called
+        # Any changes these events triggered should be flushed to the server.
         try:
             self.conn.flush()
 
@@ -656,20 +648,21 @@ class Qtile(command.CommandObject):
         # will throw a WindowError exception. We can essentially
         # ignore it, since the window is already dead and we've got
         # another event in the queue notifying us to clean it up.
+        #
+        # We have to catch these here, because when we .flush() is when xcb
+        # reports checked exceptions.
         except (WindowError, AccessError, DrawableError):
             pass
 
     def loop(self):
         self.server.start()
-        self._exit.add_done_callback(lambda x: self._shutdown())
 
-        self._eventloop.add_signal_handler(signal.SIGINT, self._shutdown)
-        self._eventloop.add_signal_handler(signal.SIGTERM, self._shutdown)
+        self._eventloop.add_signal_handler(signal.SIGINT, self._eventloop.stop)
+        self._eventloop.add_signal_handler(signal.SIGTERM, self._eventloop.stop)
 
         self.log.info('Adding io watch')
         fd = self.conn.conn.get_file_descriptor()
         self._eventloop.add_reader(fd, self._xpoll)
-        self._eventloop.call_soon(self._loop)
 
         try:
             self._eventloop.run_forever()
@@ -678,6 +671,7 @@ class Qtile(command.CommandObject):
             self.log.info('Removing io watch')
             self._eventloop.remove_reader(fd)
             self._eventloop.close()
+            self.conn.conn.disconnect()
 
     def find_screen(self, x, y):
         """
@@ -1044,6 +1038,28 @@ class Qtile(command.CommandObject):
                 return i
         return None
 
+    def call_soon(self, func, *args):
+        """ A wrapper for the event loop's call_soon which also flushes the X
+        event queue to the server after func is called. """
+        def f():
+            func(*args)
+            self.conn.flush()
+        self._eventloop.call_soon(f)
+
+    def call_soon_threadsafe(self, func, *args):
+        """ Another event loop proxy, see `call_soon`. """
+        def f():
+            func(*args)
+            self.conn.flush()
+        self._eventloop.call_soon_threadsafe(f)
+
+    def call_later(self, delay, func, *args):
+        """ Another event loop proxy, see `call_soon`. """
+        def f():
+            func(*args)
+            self.conn.flush()
+        self._eventloop.call_later(delay, f)
+
     def cmd_debug(self):
         """Set log level to DEBUG"""
         self.log.setLevel(logging.DEBUG)
@@ -1301,7 +1317,7 @@ class Qtile(command.CommandObject):
         """
             Quit Qtile.
         """
-        self._exit.set_result(None)
+        self._eventloop.stop()
 
     def cmd_switch_groups(self, groupa, groupb):
         """
