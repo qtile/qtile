@@ -1227,13 +1227,47 @@ class Qtile(command.CommandObject):
 
                 spawn("firefox")
         """
-        loop = asyncio.new_event_loop()
-
         args = shlex.split(cmd)
-        proc_co = asyncio.create_subprocess_exec(*args, loop=loop)  # coroutine to spawn process
-        proc = loop.run_until_complete(proc_co)  # returns a Process
 
-        return proc.pid
+        r, w = os.pipe()
+        pid = os.fork()
+        if pid < 0:
+            os.close(r)
+            os.close(w)
+            return pid
+
+        if pid == 0:
+            os.close(r)
+
+            # close qtile's stdin, stdout, stderr so the called process doesn't
+            # pollute our xsession-errors.
+            os.close(0)
+            os.close(1)
+            os.close(2)
+
+            pid2 = os.fork()
+            if pid2 == 0:
+                try:
+                    os.execvp(args[0], args)
+                except OSError:
+                    pass
+                os._exit(1)
+            else:
+                # Here it doesn't matter if fork failed or not, we just write
+                # its return code and exit.
+                os.write(w, str(pid2))
+
+                # sys.exit raises SystemExit, which will then be caught by our
+                # top level catchall and we'll end up with two qtiles; os._exit
+                # actually calls exit.
+                os._exit(0)
+        else:
+            os.close(w)
+
+            # 1024 bytes should be enough for any pid. :)
+            pid = os.read(r, 1024)
+            os.close(r)
+            return int(pid)
 
     def cmd_status(self):
         """
