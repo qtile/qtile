@@ -182,7 +182,7 @@ class PangoLayout(object):
         pango.pango_layout_set_alignment(self._pointer, alignment)
 
     def set_attributes(self, attrs):
-        pango.pango_layout_set_attributes(self._pointer, attrs._pointer)
+        pango.pango_layout_set_attributes(self._pointer, attrs)
 
     def set_text(self, text):
         text = text.encode('utf-8')
