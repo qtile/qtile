@@ -333,7 +333,12 @@ class Qtile(command.CommandObject):
     def update_net_desktops(self):
         try:
             index = self.groups.index(self.currentGroup)
-        except ValueError:
+        # TODO: we should really only except ValueError here, AttributeError is
+        # an annoying chicken and egg because we're accessing currentScreen
+        # (via currentGroup), and when we set up the initial groups, there
+        # aren't any screens yet. This can probably be changed when #475 is
+        # fixed.
+        except (ValueError, AttributeError):
             index = 0
 
         self.root.set_property("_NET_NUMBER_OF_DESKTOPS", len(self.groups))
