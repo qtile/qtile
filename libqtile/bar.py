@@ -25,8 +25,6 @@ from . import drawer
 from . import configurable
 from . import window
 
-USE_BAR_DRAW_QUEUE = True
-
 
 class Gap(command.CommandObject):
     """
@@ -250,12 +248,9 @@ class Bar(Gap, configurable.Configurable):
             self.saved_focus.window.set_input_focus()
 
     def draw(self):
-        if USE_BAR_DRAW_QUEUE:
-            if self.queued_draws == 0:
-                self.qtile._eventloop.call_soon(self._actual_draw)
-            self.queued_draws += 1
-        else:
-            self._actual_draw()
+        if self.queued_draws == 0:
+            self.qtile.call_soon(self._actual_draw)
+        self.queued_draws += 1
 
     def _actual_draw(self):
         self.queued_draws = 0
