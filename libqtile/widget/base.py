@@ -289,6 +289,7 @@ class InLoopPollText(_TextBox):
             return self.poll()
         except:
             self.log.exception('got exception while polling')
+            return self.__class__.__name__ + ' error'
 
     def tick(self):
         text = self._poll()
