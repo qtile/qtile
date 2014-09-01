@@ -34,7 +34,6 @@ import fcntl
 from six.moves import asyncio
 
 HDRLEN = 4
-BUFSIZE = 1024 * 1024
 
 
 class IPCError(Exception):
