@@ -303,7 +303,6 @@ class InLoopPollText(_TextBox):
                 self.draw()
             else:
                 self.bar.draw()
-        return False
 
 
 class ThreadedPollText(InLoopPollText):

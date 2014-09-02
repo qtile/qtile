@@ -102,9 +102,11 @@ class GoogleCalendar(base.ThreadedPollText):
     def __init__(self, **config):
         base.ThreadedPollText.__init__(self, **config)
         self.text = 'Calendar not initialized.'
-        self.cred_init()
         # confirm credentials every hour
-        self.timeout_add(3600, self.cred_init)
+        def cred_init_wrapper():
+            self.cred_init()
+            self.timeout_add(3600, self.cred_init_wrapper)
+        cred_init_wrapper()
 
     def _configure(self, qtile, bar):
         base.ThreadedPollText._configure(self, qtile, bar)
@@ -148,17 +150,6 @@ class GoogleCalendar(base.ThreadedPollText):
             target=get_from_flow,
             args=(self.credentials, storage)
         ).start()
-
-        return True
-
-    def cal_updater(self):
-        self.log.info('adding GC widget timer')
-
-        def cal_getter():  # get cal data in thread, write it in main loop
-            data = self.fetch_calendar()
-            self.qtile.call_soon_threadsafe(self.update, data)
-        threading.Thread(target=cal_getter).start()
-        return True
 
     def button_press(self, x, y, button):
         base.ThreadedPollText.button_press(self, x, y, button)

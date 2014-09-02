@@ -107,15 +107,16 @@ class Mpris2(base._TextBox):
         if self.scroll_counter:
             self.scroll_counter -= 1
             if self.scroll_counter:
-                return True
+                self.timeout_add(self.scroll_interval, self.scroll_text)
+                return
         if len(self.scrolltext) >= self.scroll_chars:
             self.scrolltext = self.scrolltext[1:]
             if len(self.scrolltext) == self.scroll_chars:
                 self.scroll_counter += self.scroll_wait_intervals
-            return True
+            self.timeout_add(self.scroll_interval, self.scroll_text)
+            return
         self.text = ''
         self.bar.draw()
-        return False
 
     def cmd_info(self):
         '''What's the current state of the widget?'''

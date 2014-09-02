@@ -100,7 +100,7 @@ class Volume(base._TextBox):
                 # to figure out how big it is and draw it.
                 self._update_drawer()
                 self.bar.draw()
-        return True
+        self.timeout_add(self.update_interval, self.update)
 
     def _update_drawer(self):
         if self.theme_path:

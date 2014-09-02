@@ -145,7 +145,7 @@ class _Graph(base._Widget):
 
         if self.configured:
             self.update_graph()
-        return True
+        self.timeout_add(self.frequency, self.update)
 
     def fullfill(self, value):
         self.values = [value] * len(self.values)
