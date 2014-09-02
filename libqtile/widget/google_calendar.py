@@ -76,11 +76,6 @@ class GoogleCalendar(base.ThreadedPollText):
     defaults = [
         ('calendar', 'primary', 'calendar to use'),
         (
-            'format',
-            ' {next_event} ',
-            'text to display - leave this at the default for now...'
-        ),
-        (
             'storage_file',
             None,
             'absolute path of secrets file - must be set'
@@ -105,7 +100,7 @@ class GoogleCalendar(base.ThreadedPollText):
         # confirm credentials every hour
         def cred_init_wrapper():
             self.cred_init()
-            self.timeout_add(3600, self.cred_init_wrapper)
+            self.timeout_add(3600, cred_init_wrapper)
         cred_init_wrapper()
 
     def _configure(self, qtile, bar):
@@ -162,8 +157,7 @@ class GoogleCalendar(base.ThreadedPollText):
         # if we don't have valid credentials, update them
         if not hasattr(self, 'credentials') or self.credentials.invalid:
             self.cred_init()
-            data = {'next_event': 'Credentials updating'}
-            return data
+            return 'Credentials updating'
 
         # Create an httplib2.Http object to handle our HTTP requests and
         # authorize it with our credentials from self.cred_init
@@ -189,8 +183,7 @@ class GoogleCalendar(base.ThreadedPollText):
         try:
             event = events.get('items', [])[0]
         except IndexError:
-            data = {'next_event': 'No appointments scheduled'}
-            return data
+            return 'No appointments scheduled'
 
         # get reminder time
         try:
@@ -203,25 +196,17 @@ class GoogleCalendar(base.ThreadedPollText):
         except (IndexError, ValueError, AttributeError):
             remindertime = datetime.timedelta(0, 0)
 
-        # format the data
-        data = {
-            'next_event': event['summary'] +
-            ' ' +
-            re.sub(
-                ':.{2}-.*$',
-                '',
-                event['start']['dateTime'].replace('T', ' ')
-            )
-        }
+        time = re.sub(
+            ':.{2}-.*$',
+            '',
+            event['start']['dateTime'].replace('T', ' ')
+        )
+
+        data = event['summary'] + ' ' + time
+
+        # colorize the event if it is upcoming
         parse_result = dateutil.parser.parse(event['start']['dateTime'], ignoretz=True)
         if parse_result - remindertime <= datetime.datetime.now():
-            data = {
-                'next_event': '<span color="' +
-                utils.hex(self.reminder_color) +
-                '">' +
-                data['next_event'] +
-                '</span>'
-            }
+            data = '<span color="%s">%s</span>' % (utils.hex(self.reminder_color), data)
 
-        # return the data
         return data
