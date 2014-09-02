@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Import python libs
+import sys
 try:
     from setuptools import setup
 except ImportError:
@@ -24,9 +25,15 @@ Features
       unit-tested window mangers around.
 """
 
-import libqtile.pangocffi
+# TODO: Add cairocffi[xcb] in place of xcffib when pip-installable
+dependencies = ['six>=1.4.1', 'xcffib', 'cffi>=0.8.2']
 
-dependencies = ['six>=1.4.1', 'cffi>=0.8.2']
+if sys.version_info >= (3, 4):
+    pass
+elif sys.version_info >= (3, 3):
+    dependencies.append('asyncio')
+else:
+    dependencies.append('trollius')
 
 setup(
     name="qtile",
