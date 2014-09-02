@@ -74,8 +74,7 @@ class _ClientProtocol(asyncio.Protocol, _IPC):
     3. The client then recieves data from the server until the server closes
     the connection, signalling that all the data has been sent.
 
-    4. When the connection is closed by the server, the data is unpacked and
-    returned.
+    4. When the server sends on EOF, the data is unpacked and returned.
     """
     def __init__(self, future, msg):
         asyncio.Protocol.__init__(self)
@@ -90,16 +89,21 @@ class _ClientProtocol(asyncio.Protocol, _IPC):
     def data_received(self, data):
         self.response += data
 
+    def eof_received(self):
+        # The server sends EOF when there is data ready to be processed
+        try:
+            data = self._unpack(self.response)
+        except IPCError as e:
+            self.future.set_exception(e)
+        else:
+            self.future.set_result(data)
+
     def connection_lost(self, exc):
+        # The client shouldn't just lose the connection without an EOF
         if exc:
             self.future.set_exception(exc)
-        else:
-            try:
-                data = self._unpack(self.response)
-            except IPCError as e:
-                self.future.set_exception(e)
-            else:
-                self.future.set_result(data)
+        if not self.future.done():
+            self.future.set_exception(IPCError)
 
 
 class Client(object):
