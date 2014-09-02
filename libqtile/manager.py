@@ -1245,13 +1245,23 @@ class Qtile(command.CommandObject):
             os.close(1)
             os.close(2)
 
-            # Open /dev/null for stdin, stdout, stderr
-            os.open(os.devnull, os.O_RDWR)
-            os.dup2(0, 1)
-            os.dup2(0, 2)
-
             pid2 = os.fork()
             if pid2 == 0:
+                os.close(w)
+
+                # Open /dev/null as stdin, stdout, stderr
+                try:
+                    fd = os.open(os.devnull, os.O_RDWR)
+                except OSError:
+                    # This shouldn't happen, catch it just in case
+                    pass
+                else:
+                    if fd > 0:
+                        # Again, this shouldn't happen, but we should just check
+                        os.dup2(fd, 0)
+                    os.dup2(fd, 1)
+                    os.dup2(fd, 2)
+
                 try:
                     os.execvp(args[0], args)
                 except OSError:
@@ -1261,6 +1271,7 @@ class Qtile(command.CommandObject):
                 # Here it doesn't matter if fork failed or not, we just write
                 # its return code and exit.
                 os.write(w, str(pid2).encode())
+                os.close(w)
 
                 # sys.exit raises SystemExit, which will then be caught by our
                 # top level catchall and we'll end up with two qtiles; os._exit
