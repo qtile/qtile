@@ -1245,6 +1245,11 @@ class Qtile(command.CommandObject):
             os.close(1)
             os.close(2)
 
+            # Open /dev/null for stdin, stdout, stderr
+            os.open(os.devnull, os.O_RDWR)
+            os.dup2(0, 1)
+            os.dup2(0, 2)
+
             pid2 = os.fork()
             if pid2 == 0:
                 try:
