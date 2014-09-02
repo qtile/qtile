@@ -1255,7 +1255,7 @@ class Qtile(command.CommandObject):
             else:
                 # Here it doesn't matter if fork failed or not, we just write
                 # its return code and exit.
-                os.write(w, str(pid2))
+                os.write(w, str(pid2).encode())
 
                 # sys.exit raises SystemExit, which will then be caught by our
                 # top level catchall and we'll end up with two qtiles; os._exit
