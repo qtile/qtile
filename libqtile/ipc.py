@@ -91,12 +91,15 @@ class _ClientProtocol(asyncio.Protocol, _IPC):
         self.response += data
 
     def connection_lost(self, exc):
-        try:
-            data = self._unpack(self.response)
-        except IPCError as e:
-            self.future.set_exception(e)
+        if exc:
+            self.future.set_exception(exc)
         else:
-            self.future.set_result(data)
+            try:
+                data = self._unpack(self.response)
+            except IPCError as e:
+                self.future.set_exception(e)
+            else:
+                self.future.set_result(data)
 
 
 class Client(object):
@@ -163,13 +166,19 @@ class _ServerProtocol(asyncio.Protocol, _IPC):
             self.log.info('Invalid data received, closing connection')
             self.transport.close()
             return
+        finally:
+            self.data = None
+
+        if req[1] == 'restart':
+            self.log.info('Closing connection on restart')
+            self.transport.write_eof()
+
         rep = self.handler(req)
         result = self._pack(rep)
         self.log.info('Sending result on receive EOF')
         self.transport.write(result)
         self.log.info('Closing connection on receive EOF')
-        self.transport.close()
-        self.data = None
+        self.transport.write_eof()
 
 
 class Server(object):
