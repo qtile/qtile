@@ -165,7 +165,7 @@ class Xephyr(object):
             try:
                 q = libqtile.manager.Qtile(
                     config, self.display, self.sockfile,
-                    log=libqtile.manager.init_log(logging.ERROR, log_path=self.logfile))
+                    log=libqtile.manager.init_log(logging.INFO, log_path=self.logfile))
                 q.loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
@@ -233,9 +233,12 @@ class Xephyr(object):
 
         proc = subprocess.Popen(args, env={"DISPLAY": self.display})
 
-        for i in range(20):
-            if len(self.c.windows()) > start:
-                break
+        for _ in range(50):
+            try:
+                if len(self.c.windows()) > start:
+                    break
+            except RuntimeError:
+                pass
             time.sleep(0.1)
         else:
             raise AssertionError("Window never appeared...")

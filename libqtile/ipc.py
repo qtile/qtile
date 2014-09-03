@@ -123,7 +123,7 @@ class Client(object):
             raise IPCError("Could not open %s" % self.fname)
 
         try:
-            self.loop.run_until_complete(asyncio.wait_for(future, timeout=5))
+            self.loop.run_until_complete(asyncio.wait_for(future, timeout=10))
         except asyncio.TimeoutError:
             raise RuntimeError("Server not responding")
 

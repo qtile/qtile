@@ -169,8 +169,13 @@ def test_togroup(self):
 @Xephyr(True, TestConfig())
 def test_resize(self):
     self.c.screen[0].resize(x=10, y=10, w=100, h=100)
-    d = self.c.screen[0].info()
-    assert d["width"] == d["height"] == 100
+    for _ in range(10):
+        time.sleep(0.1)
+        d = self.c.screen[0].info()
+        if d["width"] == d["height"] == 100:
+            break
+    else:
+        raise AssertionError("Screen didn't resize")
     assert d["x"] == d["y"] == 10
 
 
@@ -646,9 +651,9 @@ def test_rotate(self):
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE
     )
-    s = self.c.screens()[0]
     for _ in range(10):
         time.sleep(0.1)
+        s = self.c.screens()[0]
         if s["width"] == height and s["height"] == width:
             break
     else:
@@ -665,9 +670,10 @@ def test_resize_(self):
             "-display", utils.DISPLAY
         ]
     )
-    d = self.c.screen.info()
     for _ in range(10):
         time.sleep(0.1)
+        d = self.c.screen.info()
+
         if d["width"] == 480 and d["height"] == 640:
             break
     else:
