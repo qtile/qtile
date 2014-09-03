@@ -1,12 +1,24 @@
 language: python
 
-python:
-  - 2.6
-  - 2.7
-  - 3.2
-  - 3.3
-  - 3.4
-  - pypy
+# Install trollius for 2, 3.2, and pypy
+# Install either trollius or tulip for 3.3
+# Asyncio is in the standard library for 3.4+
+matrix:
+  include:
+    - python: 2.6
+      env: EVENTLOOP=trollius
+    - python: 2.7
+      env: EVENTLOOP=trollius
+    - python: 3.2
+      env: EVENTLOOP=trollius
+    - python: 3.3
+      env: EVENTLOOP=trollius
+    - python: 3.3
+      env: EVENTLOOP=tulip
+    - python: 3.4
+      env: EVENTLOOP=asyncio
+    - python: pypy
+      env: EVENTLOOP=trollius
 
 script:
   - make ckpatch
@@ -30,13 +42,9 @@ before_install:
 
 install:
 # Installl requirements
-  - if [[ ${TRAVIS_PYTHON_VERSION} == "3.4" ]]; then
-      pip install -r requirements-3.4+.txt;
-    elif [[ ${TRAVIS_PYTHON_VERSION} == "3.3" ]]; then
-      pip install -r requirements-3.3.txt;
-    else
-      pip install -r requirements-2.6-3.2.txt;
-    fi
+  - pip install -r requirements.txt
+  - if [[ ${EVENTLOOP} == "trollius" ]]; then pip install trollius; fi
+  - if [[ ${EVENTLOOP} == "tulip" ]]; then pip install asyncio; fi
 
 notifications:
   - email: false
