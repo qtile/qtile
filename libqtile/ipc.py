@@ -65,45 +65,45 @@ class _IPC:
 class _ClientProtocol(asyncio.Protocol, _IPC):
     """IPC Client Protocol
 
-    1. The client is initalized with a Future, which will return the result of
-    the query, and a msg, which is sent to the server.
+    1. Once the connection is made, the client initializes a Future self.reply,
+    which will hold the response from the server.
 
-    2. Once the connection is made, the client sends its message to the server,
-    then writes an EOF.
+    2. The message is sent to the server with .send(msg), which closes the
+    connection once the message is sent.
 
     3. The client then recieves data from the server until the server closes
     the connection, signalling that all the data has been sent.
 
-    4. When the server sends on EOF, the data is unpacked and returned.
+    4. When the server sends on EOF, the data is unpacked and stored to the
+    reply future.
     """
-    def __init__(self, future, msg):
-        asyncio.Protocol.__init__(self)
-        self.future = future
-        self.msg = msg
-        self.response = b''
-
     def connection_made(self, transport):
-        transport.write(self._pack(self.msg))
-        transport.write_eof()
+        self.transport = transport
+        self.recv = b''
+        self.reply = asyncio.Future()
+
+    def send(self, msg):
+        self.transport.write(self._pack(msg))
+        self.transport.write_eof()
 
     def data_received(self, data):
-        self.response += data
+        self.recv += data
 
     def eof_received(self):
         # The server sends EOF when there is data ready to be processed
         try:
-            data = self._unpack(self.response)
+            data = self._unpack(self.recv)
         except IPCError as e:
-            self.future.set_exception(e)
+            self.reply.set_exception(e)
         else:
-            self.future.set_result(data)
+            self.reply.set_result(data)
 
     def connection_lost(self, exc):
         # The client shouldn't just lose the connection without an EOF
         if exc:
-            self.future.set_exception(exc)
-        if not self.future.done():
-            self.future.set_exception(IPCError)
+            self.reply.set_exception(exc)
+        if not self.reply.done():
+            self.reply.set_exception(IPCError)
 
 
 class Client(object):
@@ -112,22 +112,22 @@ class Client(object):
         self.loop = asyncio.get_event_loop()
 
     def send(self, msg):
-        future = asyncio.Future()
-        clientprotocol = _ClientProtocol(future, msg)
-
-        client_coroutine = self.loop.create_unix_connection(lambda: clientprotocol, path=self.fname)
+        client_coroutine = self.loop.create_unix_connection(_ClientProtocol, path=self.fname)
 
         try:
-            self.loop.run_until_complete(client_coroutine)
+
+            _, client_proto = self.loop.run_until_complete(client_coroutine)
         except OSError:
             raise IPCError("Could not open %s" % self.fname)
 
+        client_proto.send(msg)
+
         try:
-            self.loop.run_until_complete(asyncio.wait_for(future, timeout=10))
+            self.loop.run_until_complete(asyncio.wait_for(client_proto.reply, timeout=10))
         except asyncio.TimeoutError:
             raise RuntimeError("Server not responding")
 
-        return future.result()
+        return client_proto.reply.result()
 
     def call(self, data):
         return self.send(data)
