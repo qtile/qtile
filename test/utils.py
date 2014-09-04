@@ -169,6 +169,9 @@ class Xephyr(object):
                 q.loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
+                print("--------------------- >> begin qtile traceback << --------------------")
+                print(traceback.format_exc())
+                print("-------------------- >> begin qtile traceback << ---------------------")
 
         self.qtile = multiprocessing.Process(target=runQtile)
         self.qtile.start()
