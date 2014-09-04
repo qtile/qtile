@@ -2,7 +2,7 @@ Installing from Source
 ======================
 
 Qtile itself is very easy to install, you'll just need python's ``setuptools``.
-Additionally, qtile uses a branch of cariocffi that has not yet been merged, so
+Additionally, qtile uses a branch of cairocffi that has not yet been merged, so
 you need to install that from source. A step by step guide is below.
 
 cffi
@@ -37,7 +37,7 @@ not yet merged. Thankfully, this is fairly easy:
 .. code-block:: bash
 
     git clone -b xcb https://github.com/flacjacket/cairocffi.git
-    cd cariocffi && sudo python setup.py install
+    cd cairocffi && sudo python setup.py install
 
 python-gobject
 --------------
