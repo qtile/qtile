@@ -233,7 +233,7 @@ class Xephyr(object):
 
         proc = subprocess.Popen(args, env={"DISPLAY": self.display})
 
-        for _ in range(50):
+        while proc.poll() is None:
             try:
                 if len(self.c.windows()) > start:
                     break
