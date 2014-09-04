@@ -193,6 +193,9 @@ class Xephyr(object):
                 # The process may have died due to some other error
                 pass
 
+        if self.qtile.exitcode:
+            print("Qtile exited with exitcode: %d" % self.qtile.exitcode)
+
         self.qtile = None
 
         # Kill all the windows
