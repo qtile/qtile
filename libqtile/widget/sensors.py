@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import base
+from . import base
+from six import u
+
 from subprocess import Popen, PIPE
 import re
 
@@ -31,14 +33,14 @@ class ThermalSensor(base.InLoopPollText):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(ThermalSensor.defaults)
         self.sensors_temp = re.compile(
-            ur"""
+            u(r"""
             ([a-zA-Z]+        #Tag
             \s?[0-9]+):       #Tag number
             \s+[+-]           #Temp signed
             ([0-9]+\.[0-9]+)  #Temp value
             (\xc2\xb0         #° match
             [CF])             #Celsius or Fahrenheit
-            """,
+            """),
             re.UNICODE | re.VERBOSE
         )
         self.value_temp = re.compile("[0-9]+\.[0-9]+")
@@ -62,9 +64,9 @@ class ThermalSensor(base.InLoopPollText):
         except OSError:
             return None
         cmd_sensors.wait()
-        (stdout, stderr) = cmd_sensors.communicate()
+        stdout, _ = cmd_sensors.communicate()
         temp_values = {}
-        for value in re.findall(self.sensors_temp, stdout):
+        for value in re.findall(self.sensors_temp, stdout.decode()):
             temp_values[value[0]] = value[1:]
         return temp_values
 

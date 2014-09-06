@@ -1,10 +1,11 @@
 import collections
-import utils
 import math
-import pangocairo
-import cairo
-import pango
-import xcb.xproto
+import cairocffi
+import cairocffi.xcb
+import xcffib.xproto
+
+from . import pangocffi
+from . import utils
 
 
 class TextLayout(object):
@@ -12,12 +13,12 @@ class TextLayout(object):
                  font_shadow, wrap=True, markup=False):
         self.drawer, self.colour = drawer, colour
         layout = drawer.ctx.create_layout()
-        layout.set_alignment(pango.ALIGN_CENTER)
+        layout.set_alignment(pangocffi.ALIGN_CENTER)
         if not wrap:  # pango wraps by default
-            layout.set_ellipsize(pango.ELLIPSIZE_END)
-        desc = pango.FontDescription()
+            layout.set_ellipsize(pangocffi.ELLIPSIZE_END)
+        desc = pangocffi.FontDescription()
         desc.set_family(font_family)
-        desc.set_absolute_size(font_size * pango.SCALE)
+        desc.set_absolute_size(pangocffi.units_from_double(font_size))
         layout.set_font_description(desc)
         self.font_shadow = font_shadow
         self.layout = layout
@@ -32,7 +33,7 @@ class TextLayout(object):
     @text.setter
     def text(self, value):
         if self.markup:
-            attrlist, value, accel_char = pango.parse_markup(value)
+            attrlist, value, accel_char = pangocffi.parse_markup(value)
             self.layout.set_attributes(attrlist)
         return self.layout.set_text(utils.scrub_to_utf8(value))
 
@@ -46,7 +47,7 @@ class TextLayout(object):
     @width.setter
     def width(self, value):
         self._width = value
-        self.layout.set_width(value * pango.SCALE)
+        self.layout.set_width(pangocffi.units_from_double(value))
 
     @width.deleter
     def width(self):
@@ -80,7 +81,7 @@ class TextLayout(object):
     def font_size(self, size):
         d = self.fontdescription()
         d.set_size(size)
-        d.set_absolute_size(size * pango.SCALE)
+        d.set_absolute_size(pangocffi.units_from_double(size))
         self.layout.set_font_description(d)
 
     def draw(self, x, y):
@@ -179,13 +180,13 @@ class Drawer:
         self.qtile.conn.conn.core.CreateGC(
             self.gc,
             self.wid,
-            xcb.xproto.GC.Foreground | xcb.xproto.GC.Background,
+            xcffib.xproto.GC.Foreground | xcffib.xproto.GC.Background,
             [
                 self.qtile.conn.default_screen.black_pixel,
                 self.qtile.conn.default_screen.white_pixel
             ]
         )
-        self.surface = cairo.XCBSurface(
+        self.surface = cairocffi.xcb.XCBSurface(
             qtile.conn.conn,
             self.pixmap,
             self.find_root_visual(),
@@ -255,11 +256,11 @@ class Drawer:
                     return v
 
     def new_ctx(self):
-        return pangocairo.CairoContext(cairo.Context(self.surface))
+        return pangocffi.CairoContext(cairocffi.Context(self.surface))
 
     def set_source_rgb(self, colour):
         if type(colour) == list:
-            linear = cairo.LinearGradient(0.0, 0.0, 0.0, self.height)
+            linear = cairocffi.LinearGradient(0.0, 0.0, 0.0, self.height)
             step_size = 1.0 / (len(colour) - 1)
             step = 0.0
             for c in colour:
@@ -314,7 +315,7 @@ class Drawer:
         self.ctx.select_font_face(fontface)
         self.ctx.set_font_size(size)
         fo = self.ctx.get_font_options()
-        fo.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
+        fo.set_antialias(cairocffi.ANTIALIAS_SUBPIXEL)
 
     def text_extents(self, text):
         return self.ctx.text_extents(utils.scrub_to_utf8(text))

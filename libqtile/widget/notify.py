@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
+from . import base
 from .. import bar, utils
 from libqtile.notify import notifier
-import base
 
 
 class Notify(base._TextBox):

@@ -1,4 +1,4 @@
-import base
+from . import base
 import imaplib
 import re
 import logging

@@ -4,6 +4,10 @@ Installing Qtile
 Distro Guides
 -------------
 
+*Warning*: all of these distro guides are out of date with the cffi branch.
+Please install from source for now. Installation will be _much_ simpler in the
+very near future.
+
 Below are the preferred installation methods for specific distros. If you are
 running something else, please see `Installing From Source`_.
 

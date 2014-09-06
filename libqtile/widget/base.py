@@ -1,8 +1,7 @@
 from .. import command, bar, configurable, drawer
-import gobject
+from six.moves import gobject
 import logging
 import threading
-import exceptions
 import warnings
 
 
@@ -290,6 +289,7 @@ class InLoopPollText(_TextBox):
             return self.poll()
         except:
             self.log.exception('got exception while polling')
+            return self.__class__.__name__ + ' error'
 
     def tick(self):
         text = self._poll()
@@ -362,4 +362,4 @@ class MarginMixin(object):
     margin_y = configurable.ExtraFallback('margin_y', 'margin')
 
 def deprecated(msg):
-    warnings.warn(msg, exceptions.DeprecationWarning)
+    warnings.warn(msg, DeprecationWarning)

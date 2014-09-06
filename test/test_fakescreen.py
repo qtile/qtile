@@ -2,7 +2,7 @@ import libqtile.manager
 import libqtile.config
 from libqtile import layout, bar, widget
 from libqtile.config import Screen
-from utils import Xephyr
+from .utils import Xephyr
 
 LEFT_ALT = 'mod1'
 WINDOWS = 'mod4'
@@ -308,8 +308,8 @@ def test_float_outside_edges(self):
 @Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
 def test_hammer_tile(self):
     # change to tile layout
-    self.c.nextlayout()
-    self.c.nextlayout()
+    self.c.next_layout()
+    self.c.next_layout()
     for i in range(7):
         self.testXclock()
     for i in range(30):
@@ -333,7 +333,7 @@ def test_hammer_tile(self):
 @Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
 def test_hammer_ratio_tile(self):
     # change to ratio tile layout
-    self.c.nextlayout()
+    self.c.next_layout()
     for i in range(7):
         self.testXclock()
     for i in range(30):
@@ -357,7 +357,7 @@ def test_hammer_ratio_tile(self):
 @Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
 def test_ratio_to_fourth_screen(self):
     # change to ratio tile layout
-    self.c.nextlayout()
+    self.c.next_layout()
     for i in range(7):
         self.testXclock()
     self.c.to_screen(1)

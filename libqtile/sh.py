@@ -20,6 +20,8 @@
 """
     A command shell for Qtile.
 """
+from __future__ import division, print_function
+
 import readline
 import sys
 import pprint
@@ -28,8 +30,11 @@ import textwrap
 import fcntl
 import termios
 import struct
-import command
-import ipc
+import six
+from six.moves import input
+
+from . import command
+from . import ipc
 
 
 def terminalWidth():
@@ -92,8 +97,8 @@ class QSh:
         if lst:
             lst = [str(i) for i in lst]
             mx = max([len(i) for i in lst])
-            cols = self.termwidth / (mx + 2) or 1
-            for i in range(len(lst) / cols):
+            cols = self.termwidth // (mx + 2) or 1
+            for i in range(len(lst) // cols):
                 sl = lst[i * cols: (i + 1) * cols]
                 sl = [x + " " * (mx - len(x)) for x in sl]
                 ret.append("  ".join(sl))
@@ -249,9 +254,9 @@ class QSh:
                 dict(cmd=cmd)
             )
             return val
-        except SyntaxError, v:
+        except SyntaxError as v:
             return "Syntax error in expression: %s" % v.text
-        except command.CommandException, val:
+        except command.CommandException as val:
             return "Command exception: %s\n" % val
         except ipc.IPCError:
             # on restart, try to reconnect
@@ -265,9 +270,9 @@ class QSh:
     def loop(self):
         while True:
             try:
-                line = raw_input(self.prompt)
+                line = input(self.prompt)
             except (EOFError, KeyboardInterrupt):
-                print
+                print()
                 return
             if not line:
                 continue
@@ -285,7 +290,7 @@ class QSh:
                 val = builtin(args)
             else:
                 val = self._call(cmd, args)
-            if isinstance(val, basestring):
-                print val
+            if isinstance(val, six.string_types):
+                print(val)
             elif val:
                 pprint.pprint(val)

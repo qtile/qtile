@@ -1,8 +1,8 @@
 from time import time
 from datetime import datetime
 from contextlib import contextmanager
+from . import base
 
-import base
 import os
 
 @contextmanager
@@ -14,7 +14,6 @@ def tz(the_tz):
         os.environ['TZ'] = orig
     else:
         del os.environ['TZ']
-
 
 class Clock(base.InLoopPollText):
     """

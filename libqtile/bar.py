@@ -17,17 +17,19 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import division
 
-import command
-import confreader
-import drawer
-import hook
-import configurable
-import window
+from . import command
+from . import confreader
+from . import drawer
+from . import hook
+from . import configurable
+from . import window
 
-import gobject
+from six.moves import gobject
 
 USE_BAR_DRAW_QUEUE = True
+
 
 class Gap(command.CommandObject):
     """
@@ -41,6 +43,7 @@ class Gap(command.CommandObject):
             size: The width of the gap.
         """
         self.size = size
+        self.initial_size = size
         self.qtile = None
         self.screen = None
 
@@ -158,7 +161,7 @@ class Bar(Gap, configurable.Configurable):
             raise confreader.ConfigError(
                 "Bars must be at the top or the bottom of the screen."
             )
-        if len(filter(lambda w: w.width_type == STRETCH, self.widgets)) > 1:
+        if len([w for w in self.widgets if w.width_type == STRETCH]) > 1:
             raise confreader.ConfigError("Only one STRETCH widget allowed!")
 
         Gap._configure(self, qtile, screen)
@@ -198,7 +201,7 @@ class Bar(Gap, configurable.Configurable):
                 [i.width for i in widgets if i.width_type != STRETCH]
             )
             stretchspace = max(stretchspace, 0)
-            astretch = stretchspace / len(stretches)
+            astretch = stretchspace // len(stretches)
             for i in stretches:
                 i.width = astretch
             if astretch:
@@ -281,6 +284,18 @@ class Bar(Gap, configurable.Configurable):
             widgets=[i.info() for i in self.widgets],
             window=self.window.window.wid
         )
+
+    def is_show(self):
+        return self.size != 0
+
+    def show(self, is_show=True):
+        if is_show != self.is_show():
+            if is_show:
+                self.size = self.initial_size
+                self.window.unhide()
+            else:
+                self.size = 0
+                self.window.hide()
 
     def cmd_fake_button_press(self, screen, position, x, y, button=1):
         """

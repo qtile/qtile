@@ -2,7 +2,7 @@ import dbus
 
 from dbus.mainloop.glib import DBusGMainLoop
 
-import base
+from . import base
 from .. import bar
 
 

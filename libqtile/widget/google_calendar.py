@@ -52,13 +52,13 @@
 # borrows liberally from that one.
 ###################################################################
 
-import base
+from . import base
 import httplib2
 import datetime
 import re
 import dateutil.parser
 import threading
-import gobject
+from six.moves import gobject
 
 from apiclient.discovery import build
 from oauth2client.client import OAuth2WebServerFlow
@@ -210,7 +210,7 @@ class GoogleCalendar(base.ThreadedPollText):
                     event.get('reminders').get('overrides')[0].get('minutes')
                 ) * 60
             )
-        except:
+        except (IndexError, ValueError, AttributeError):
             remindertime = datetime.timedelta(0, 0)
 
         # format the data
