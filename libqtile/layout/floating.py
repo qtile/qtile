@@ -79,14 +79,8 @@ class Floating(Layout):
             offset_x = win._float_info['x']
             offset_y = win._float_info['y']
 
-            if offset_x > 0:
-                new_x = new_screen.x + offset_x
-            else:
-                new_x = new_screen.x + i * 10
-            if offset_y > 0:
-                new_y = new_screen.y + offset_y
-            else:
-                new_y = new_screen.y + i * 10
+            new_x = new_screen.x + offset_x
+            new_y = new_screen.y + offset_y
 
             right_edge = new_screen.x + new_screen.width
             bottom_edge = new_screen.y + new_screen.height
