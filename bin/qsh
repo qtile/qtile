@@ -47,7 +47,7 @@ def main():
         qsh = sh.QSh(client)
         qsh.loop()
     else:
-        print client.run_external(options.pyfile)
+        print(client.run_external(options.pyfile))
 
 
 if __name__ == "__main__":
