@@ -14,6 +14,7 @@ qtile.egg-info/
 *.swo
 /doc
 /docs/_build
+.coverage
 # some people hack on macs? :-)
 .DS_Store
 # debian stuff

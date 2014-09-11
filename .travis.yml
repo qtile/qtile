@@ -46,5 +46,8 @@ install:
   - if [[ ${EVENTLOOP} == "trollius" ]]; then pip install trollius; fi
   - if [[ ${EVENTLOOP} == "tulip" ]]; then pip install asyncio; fi
 
+after_success:
+  - coveralls
+
 notifications:
   - email: false

@@ -1,5 +1,6 @@
 -e git://github.com/flacjacket/cairocffi.git@xcb#egg=cairocffi
 cffi
 flake8
+python-coveralls
 six
 xcffib
