@@ -7,7 +7,7 @@ default:
 
 .PHONY: check
 check:
-	nosetests -v -d
+	nosetests -v -d --with-coverage --cover-package=libqtile
 
 .PHONY: lint
 lint:
