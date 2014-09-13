@@ -43,7 +43,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Qtile'
-copyright = u'2012, Aldo Cortesi and contributers'
+copyright = u'2008-2014, Aldo Cortesi and contributers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -218,8 +218,10 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'qtile', u'Qtile Documentation',
-     [u'Aldo Cortesi'], 1)
+    ('man/qtile', 'qtile', u'Qtile Documentation',
+     [u'Tycho Andersen'], 1),
+    ('man/qsh', 'qsh', u'Qtile Documentation',
+     [u'Tycho Andersen'], 1),
 ]
 
 # If true, show URL addresses after external links.
