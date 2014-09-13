@@ -1,7 +1,5 @@
 include LICENSE
 include README.rst
-recursive-include contrib *
 recursive-include libqtile/resources *
 recursive-exclude scripts *
 recursive-exclude test *
-recursive-exclude docs *.html *.js *.css *.png
