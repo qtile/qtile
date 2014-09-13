@@ -11,7 +11,7 @@ check:
 
 .PHONY: lint
 lint:
-	flake8 --config=./test/flake8.cfg ./libqtile
+	flake8 --config=./test/flake8.cfg ./libqtile bin/qtile* bin/qsh
 
 .PHONY: ckpatch
 ckpatch: lint check
