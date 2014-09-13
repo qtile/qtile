@@ -25,6 +25,4 @@ VERSION=$(shell git describe --tags | cut -c 2-)
 
 .PHONY: deb
 deb:
-	@echo building package for $(VERSION)
-	git archive -o ../qtile_$VERSION.orig.tar.gz v$(VERSION)
-	git buildpackage -S # -sd disables uploading of orig.tar.gz
+	git buildpackage --git-upstream-tree=develop --git-ignore-branch
