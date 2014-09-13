@@ -29,10 +29,10 @@ locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
 import logging
 from libqtile import confreader, manager
 
-import pkg_resources
 try:
+    import pkg_resources
     VERSION = pkg_resources.require("qtile")[0].version
-except pkg_resources.DistributionNotFound:
+except (pkg_resources.DistributionNotFound, ImportError):
     VERSION = 'dev'
 
 def rename_process():
