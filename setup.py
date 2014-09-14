@@ -69,4 +69,7 @@ setup(
         "bin/qtile-run",
         "bin/qtile-session"
     ],
+    data_files=[
+        ('share/man/man1', ['resources/qtile.1',
+                            'resources/qsh.1'])],
 )

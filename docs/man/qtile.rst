@@ -1,13 +1,20 @@
 PLACEHOLDER
 -----------
 
+SYNOPSIS
+========
+
 qtile [-c config] [-s qtilesocket] [-l DEBUG] [-n]
 
-``qtile`` - Run Qtile on the current $DISPLAY. Qtile is a tiling window manager
+DESCRIPTION
+===========
+
+``qtile`` runs Qtile on the current $DISPLAY. Qtile is a tiling window manager
 written in python. Complete configuration information is available online at
 http://docs.qtile.org.
 
-Options:
+OPTIONS
+=======
     -c config, --config config
 
         Use the specified config file.

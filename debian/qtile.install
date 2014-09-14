@@ -1,2 +1,4 @@
 resources/qtile.desktop usr/share/xsessions
-usr/bin/*
+usr/bin/qtile
+usr/bin/qsh
+usr/share/man*

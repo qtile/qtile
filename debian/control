@@ -18,6 +18,11 @@ Build-Depends: debhelper (>= 9)
     , python3-xcffib (>= 0.1.5)
     , python-cairocffi (>= 0.5.4)
     , python3-cairocffi (>= 0.5.4)
+    , python-trollius
+    , python3-trollius
+    , libglib2.0-0
+    , libpango1.0-0
+    , libpangocairo-1.0-0
 X-Python-Version: >= 2.6
 X-Python3-Version: >= 3.2
 Standards-Version: 3.9.5
@@ -37,20 +42,26 @@ XB-Description: Full-featured, pure-Python tiling window manager.
      possible, making it one of the best-tested window managers around.
 
 Package: python-qtile
-Architecture: any
+Architecture: all
 Depends: python-cffi (>= 0.8.2)
     , python-xcffib (>= 0.1.5)
     , python-cairocffi (>= 0.5.4)
     , python-trollius
+    , libglib2.0-0
+    , libpango1.0-0
+    , libpangocairo-1.0-0
     , ${misc:Depends}
     , ${python:Depends}
 Provides: ${python:Provides}
 
 Package: python3-qtile
-Architecture: any
+Architecture: all
 Depends: python-cffi (>= 0.8.2)
     , python-xcffib (>= 0.1.5)
     , python-cairocffi (>= 0.5.4)
+    , libglib2.0-0
+    , libpango1.0-0
+    , libpangocairo-1.0-0
 # only needed for <= 3.3
     , python3-trollius
     , ${misc:Depends}
@@ -58,7 +69,7 @@ Depends: python-cffi (>= 0.8.2)
 Provides: ${python3:Provides}
 
 Package: qtile
-Architecture: any
+Architecture: all
 Depends: xinit
     , python3-setproctitle
     , python3-qtile

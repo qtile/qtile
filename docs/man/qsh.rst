@@ -1,12 +1,19 @@
 PLACEHOLDER
 -----------
 
+SYNOPSIS
+========
+
 qsh [-s qtilesocket]
+
+DESCRIPTION
+===========
 
 ``qsh`` is the remote shell tool for ``qtile``. ``qsh`` supports manipulating
 various pieces of qtile remotely via an interactive shell.
 
-Options:
+OPTIONS
+=======
     -s qtilesocket, --socket qtilesocket
 
         Use qtilesocket for IPC communication. This can be useful if you
