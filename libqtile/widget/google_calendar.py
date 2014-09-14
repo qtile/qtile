@@ -92,28 +92,19 @@ class GoogleCalendar(base.ThreadedPollText):
             '/usr/bin/firefox -url calendar.google.com',
             'command or script to execute on click'
         ),
+        ('markup', True, 'Use pango markup by default.'),
     ]
 
     def __init__(self, **config):
         base.ThreadedPollText.__init__(self, **config)
-        self.text = 'Calendar not initialized.'
-        # confirm credentials every hour
-        def cred_init_wrapper():
-            self.cred_init()
-            self.timeout_add(3600, cred_init_wrapper)
-        cred_init_wrapper()
-
-    def _configure(self, qtile, bar):
-        base.ThreadedPollText._configure(self, qtile, bar)
         self.add_defaults(GoogleCalendar.defaults)
-        self.layout = self.drawer.textlayout(
-            self.text,
-            self.foreground,
-            self.font,
-            self.fontsize,
-            self.fontshadow,
-            markup=True
-        )
+        self.text = 'Calendar not initialized.'
+
+    def timer_setup(self):
+        base.ThreadedPollText.timer_setup(self)
+        self.cred_init()
+        # confirm credentials every hour
+        self.timeout_add(3600, self.timer_setup)
 
     def cred_init(self):
         # this is the main method for obtaining credentials

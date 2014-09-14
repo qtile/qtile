@@ -142,20 +142,17 @@ class Battery(_Battery):
         _Battery.__init__(self, **config)
         self.add_defaults(Battery.defaults)
 
-    def _configure(self, qtile, bar):
-        setup_timeout = not self.configured
-        _Battery._configure(self, qtile, bar)
+    def timer_setup(self):
+        update_delay = self.update()
+        if update_delay is None and self.update_delay is not None:
+            self.timeout_add(self.update_delay, self.timer_setup)
+        elif update_delay:
+            self.timeout_add(update_delay, self.timer_setup)
 
-        if setup_timeout:
-            def retick():
-                update_delay = self.update()
-                if update_delay is None and self.update_delay is not None:
-                    self.timeout_add(self.update_delay, retick)
-                elif update_delay:
-                    self.timeout_add(update_delay, retick)
-            retick()
-        else:
+    def _configure(self, qtile, bar):
+        if self.configured:
             self.update()
+        _Battery._configure(self, qtile, bar)
 
     def _get_text(self):
         info = self._get_info()
@@ -203,11 +200,10 @@ class Battery(_Battery):
         )
 
     def update(self):
-        if self.configured:
-            ntext = self._get_text()
-            if ntext != self.text:
-                self.text = ntext
-                self.bar.draw()
+        ntext = self._get_text()
+        if ntext != self.text:
+            self.text = ntext
+            self.bar.draw()
 
 
 class BatteryIcon(_Battery):
@@ -269,11 +265,10 @@ class BatteryIcon(_Battery):
         return key
 
     def update(self):
-        if self.configured:
-            icon = self._get_icon_key()
-            if icon != self.current_icon:
-                self.current_icon = icon
-                self.draw()
+        icon = self._get_icon_key()
+        if icon != self.current_icon:
+            self.current_icon = icon
+            self.draw()
 
     def draw(self):
         if self.theme_path:

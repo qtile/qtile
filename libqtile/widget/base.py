@@ -56,6 +56,11 @@ class _Widget(command.CommandObject, configurable.Configurable):
     def win(self):
         return self.bar.window.window
 
+    def timer_setup(self):
+        """ This is called exactly once, after the widget has been configured
+        and timers are available to be set up. """
+        pass
+
     def _configure(self, qtile, bar):
         self.qtile = qtile
         self.bar = bar
@@ -65,7 +70,9 @@ class _Widget(command.CommandObject, configurable.Configurable):
             self.bar.width,
             self.bar.height
         )
-        self.configured = True
+        if not self.configured:
+            self.configured = True
+            self.qtile.call_soon(self.timer_setup)
 
     def clear(self):
         self.drawer.set_source_rgb(self.bar.background)
@@ -151,6 +158,7 @@ class _TextBox(_Widget):
             None,
             "font shadow color, default is None(no shadow)"
         ),
+        ("markup", False, "Whether or not to use pango markup"),
     ]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -206,6 +214,7 @@ class _TextBox(_Widget):
             self.font,
             self.fontsize,
             self.fontshadow,
+            markup=self.markup,
         )
 
     def calculate_width(self):
@@ -260,25 +269,22 @@ class InLoopPollText(_TextBox):
         _TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
         self.add_defaults(InLoopPollText.defaults)
 
-    def _configure(self, qtile, bar):
-        self.qtile = qtile
-        setup_timeout = not self.configured
+    def timer_setup(self):
+        update_interval = self.tick()
+        # If self.update_interval is defined and .tick() returns None, re-call after self.update_interval
+        if update_interval is None and self.update_interval is not None:
+            self.timeout_add(self.update_interval, self.timer_setup)
+        # We can change the update interval by returning something from .tick()
+        elif update_interval:
+            self.timeout_add(update_interval, self.timer_setup)
+        # If update_interval is False, we won't re-call
 
+    def _configure(self, qtile, bar):
+        should_tick = self.configured
         _TextBox._configure(self, qtile, bar)
 
-        # Update when we are configured.
-        if setup_timeout:
-            def retick():
-                update_interval = self.tick()
-                # If self.update_interval is defined and .tick() returns None, re-call after self.update_interval
-                if update_interval is None and self.update_interval is not None:
-                    self.timeout_add(self.update_interval, retick)
-                # We can change the update interval by returning something from .tick()
-                elif update_interval:
-                    self.timeout_add(update_interval, retick)
-                # If update_interval is False, we won't re-call
-            retick()
-        else:
+        # Update when we are being re-configured.
+        if should_tick:
             self.tick()
 
     def button_press(self, x, y, button):

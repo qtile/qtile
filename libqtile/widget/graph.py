@@ -38,8 +38,7 @@ class _Graph(base._Widget):
         self.oldtime = time.time()
         self.lag_cycles = 0
 
-    def _configure(self, qtile, bar):
-        base._Widget._configure(self, qtile, bar)
+    def timer_setup(self):
         self.timeout_add(self.frequency, self.update)
 
     @property
@@ -143,8 +142,7 @@ class _Graph(base._Widget):
         self.lag_cycles = int((newtime - self.oldtime) / self.frequency)
         self.oldtime = newtime
 
-        if self.configured:
-            self.update_graph()
+        self.update_graph()
         self.timeout_add(self.frequency, self.update)
 
     def fullfill(self, value):

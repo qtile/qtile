@@ -31,6 +31,9 @@ class TextLayout(object):
     @text.setter
     def text(self, value):
         if self.markup:
+            # pangocffi doesn't like None here, so we use "".
+            if value is None:
+                value = ''
             attrlist, value, accel_char = pangocffi.parse_markup(value)
             self.layout.set_attributes(attrlist)
         return self.layout.set_text(utils.scrub_to_utf8(value))

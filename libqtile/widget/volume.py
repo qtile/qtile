@@ -41,13 +41,10 @@ class Volume(base._TextBox):
         self.surfaces = {}
         self.volume = None
 
-    def _configure(self, qtile, bar):
-        setup_timeout = not self.configured
-        base._TextBox._configure(self, qtile, bar)
+    def timer_setup(self):
+        self.timeout_add(self.update_interval, self.update)
         if self.theme_path:
             self.setup_images()
-        if setup_timeout:
-            self.timeout_add(self.update_interval, self.update)
 
     def button_press(self, x, y, button):
         if button == 5:
@@ -92,14 +89,13 @@ class Volume(base._TextBox):
         self.draw()
 
     def update(self):
-        if self.configured:
-            vol = self.get_volume()
-            if vol != self.volume:
-                self.volume = vol
-                # Update the underlying canvas size before actually attempting
-                # to figure out how big it is and draw it.
-                self._update_drawer()
-                self.bar.draw()
+        vol = self.get_volume()
+        if vol != self.volume:
+            self.volume = vol
+            # Update the underlying canvas size before actually attempting
+            # to figure out how big it is and draw it.
+            self._update_drawer()
+            self.bar.draw()
         self.timeout_add(self.update_interval, self.update)
 
     def _update_drawer(self):
