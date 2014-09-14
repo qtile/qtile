@@ -1279,6 +1279,7 @@ class Qtile(command.CommandObject):
                 os._exit(0)
         else:
             os.close(w)
+            os.waitpid(pid, 0)
 
             # 1024 bytes should be enough for any pid. :)
             pid = os.read(r, 1024)
