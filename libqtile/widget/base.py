@@ -126,7 +126,13 @@ class _Widget(command.CommandObject, configurable.Configurable):
             This method calls either ``.call_later`` with given arguments.
         """
         self.log.debug('Adding timer for %r in %.2fs', method, seconds)
-        return self.qtile.call_later(seconds, method, *method_args)
+        return self.qtile.call_later(seconds, self._wrapper, method, *method_args)
+
+    def _wrapper(self, method, *method_args):
+        try:
+            method(*method_args)
+        except:
+            self.log.exception('got exception from widget timer')
 
 
 UNSPECIFIED = bar.Obj("UNSPECIFIED")
@@ -282,15 +288,8 @@ class InLoopPollText(_TextBox):
     def poll(self):
         return 'N/A'
 
-    def _poll(self):
-        try:
-            return self.poll()
-        except:
-            self.log.exception('got exception while polling')
-            return self.__class__.__name__ + ' error'
-
     def tick(self):
-        text = self._poll()
+        text = self.poll()
         self.update(text)
 
     def update(self, text):
@@ -313,7 +312,7 @@ class ThreadedPollText(InLoopPollText):
 
     def tick(self):
         def worker():
-            text = self._poll()
+            text = self.poll()
             self.qtile.call_soon_threadsafe(self.update, text)
         # TODO: There are nice asyncio constructs for this sort of thing, I think...
         threading.Thread(target=worker).start()
