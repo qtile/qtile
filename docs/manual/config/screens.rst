@@ -39,3 +39,17 @@ Bars support background colors and gradients, e.g. :code:`bar.Bar(...,
 background="#000000")` will give you a black back ground (the default), while
 :code:`bar.Bar(..., background=["#000000", "#FFFFFF"])` will give you a
 background that fades from black to white.
+
+
+Third-party bars
+----------------
+
+There might be some reasons to use third-party bars. For instance you can come from another window manager and you have already configured dzen2, xmobar, or something else. They can definitely be used with Qtile too.
+
+::
+
+        Screen(
+            top = bar.Gap(20),
+            ),
+
+Just make the gap from the edge of the screen that you want and run your bar.
