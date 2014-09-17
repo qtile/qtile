@@ -770,7 +770,11 @@ class Qtile(command.CommandObject):
             assert e.window == self.selection_window.wid
             prop = self.selection_window.get_property(e.atom, "UTF8_STRING")
 
-            self.selection[name]["selection"] = prop.value.to_string()
+            # If the selection property is None, it is unset, which means the
+            # clipboard is empty.
+            value = prop.value.to_string() or ""
+
+            self.selection[name]["selection"] = value
             hook.fire("selection_change", name, self.selection[name])
 
     def handle_EnterNotify(self, e):
