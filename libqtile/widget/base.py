@@ -125,7 +125,6 @@ class _Widget(command.CommandObject, configurable.Configurable):
         """
             This method calls either ``.call_later`` with given arguments.
         """
-        self.log.debug('Adding timer for %r in %.2fs', method, seconds)
         return self.qtile.call_later(seconds, self._wrapper, method, *method_args)
 
     def _wrapper(self, method, *method_args):
