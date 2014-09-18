@@ -15,8 +15,12 @@ def safe_import(module_name, class_name):
         for name in class_name:
             safe_import(module_name, name)
         return
+    package = __package__
+    # python 3.2 don't set __package__
+    if not package:
+        package = __name__
     try:
-        module = importlib.import_module(module_name, __package__)
+        module = importlib.import_module(module_name, package)
         globals()[class_name] = getattr(module, class_name)
     except ImportError as error:
         msg = "Can't Import Widget: '%s.%s', %s"
