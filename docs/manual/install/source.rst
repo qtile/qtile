@@ -60,6 +60,15 @@ Based on your Python version, there are different ways to install this:
 .. _Tulip project: https://code.google.com/p/tulip/
 .. _trollius: http://trollius.readthedocs.org/
 
+importlib
+---------
+
+- Python <=2.6 you will need to install importlib from PyPi:
+
+  .. code-block:: bash
+
+      sudo pip install importlib
+
 Qtile
 -----
 
