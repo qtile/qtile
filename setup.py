@@ -32,6 +32,9 @@ if sys.version_info >= (3, 4):
     pass
 elif sys.version_info >= (3, 3):
     dependencies.append('asyncio')
+elif sys.version_info <= (2, 6) or \
+        (sys.version_info >= (3, 0) and sys.version_info <= (3, 1)):
+    dependencies.append('importlib')
 else:
     dependencies.append('trollius')
 
@@ -61,7 +64,7 @@ setup(
               'libqtile.layout',
               'libqtile.widget',
               'libqtile.resources'
-    ],
+              ],
     package_data={'libqtile.resources': ['battery-icons/*.png']},
     scripts=[
         "bin/qsh",
