@@ -44,12 +44,4 @@ background that fades from black to white.
 Third-party bars
 ----------------
 
-There might be some reasons to use third-party bars. For instance you can come from another window manager and you have already configured dzen2, xmobar, or something else. They can definitely be used with Qtile too.
-
-::
-
-        Screen(
-            top = bar.Gap(20),
-            ),
-
-Just make the gap from the edge of the screen that you want and run your bar.
+There might be some reasons to use third-party bars. For instance you can come from another window manager and you have already configured dzen2, xmobar, or something else. They definitely can be used with Qtile too. In fact, any additional configurations aren't needed. Just run the bar and qtile will adapt.
