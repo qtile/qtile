@@ -956,6 +956,7 @@ A notify widget
       - ``None``
       - Default timeout (seconds) for notifications.
 
+.. _prompt:
 
 Prompt
 ~~~~~~
