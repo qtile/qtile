@@ -191,6 +191,10 @@ class Qtile(command.CommandObject):
 
         self.grabMouse()
 
+        # no_spawn is set when we are restarting; we only want to run the
+        # startup hook once.
+        if not no_spawn:
+            hook.fire("startup_once")
         hook.fire("startup")
 
         self.scan()
