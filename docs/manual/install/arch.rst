@@ -38,13 +38,13 @@ Also you need these packages from AUR:
 
 **For python3:**
 
-- `qtile-git`_
+- `qtile-python3-git`_
 - `python-xcffib`_
 - `python-cairocffi-xcffib-git`_
 
 **For python2:**
 
-- `qtile-python3-git`_
+- `qtile-git`_
 - `python2-xcffib`_
 - `python2-cairocffi-xcffib-git`_
 - `trollius`_
