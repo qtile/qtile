@@ -1,4 +1,4 @@
--e git://github.com/flacjacket/cairocffi.git@xcb#egg=cairocffi
+cairocffi
 cffi
 flake8
 nose-cov
