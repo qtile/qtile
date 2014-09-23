@@ -21,12 +21,12 @@ available from PyPi via:
 cairocffi
 ---------
 
-You'll need to install a source branch of cairocffi_, since the xcffib patches
-are not yet merged. Thankfully, pip makes this fairly easy:
+Qtile uses cairocffi_ with XCB support via xcffib.  The latest version on PyPi
+has these features once xcffib is installed:
 
 .. code-block:: bash
 
-    sudo pip install git://github.com/flacjacket/cairocffi.git@xcb
+    sudo pip install cairocffi
 
 .. _cairocffi: https://pythonhosted.org/cairocffi/overview.html
 
