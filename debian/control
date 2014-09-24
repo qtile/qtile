@@ -16,8 +16,8 @@ Build-Depends: debhelper (>= 9)
 # testing
     , python-xcffib (>= 0.1.5)
     , python3-xcffib (>= 0.1.5)
-    , python-cairocffi (>= 0.5.4)
-    , python3-cairocffi (>= 0.5.4)
+    , python-cairocffi (>= 0.6)
+    , python3-cairocffi (>= 0.6)
     , python-trollius
     , python3-trollius
     , libglib2.0-0
@@ -45,7 +45,7 @@ Package: python-qtile
 Architecture: all
 Depends: python-cffi (>= 0.8.2)
     , python-xcffib (>= 0.1.5)
-    , python-cairocffi (>= 0.5.4)
+    , python-cairocffi (>= 0.)
     , python-trollius
     , libglib2.0-0
     , libpango1.0-0
@@ -58,7 +58,7 @@ Package: python3-qtile
 Architecture: all
 Depends: python-cffi (>= 0.8.2)
     , python-xcffib (>= 0.1.5)
-    , python-cairocffi (>= 0.5.4)
+    , python-cairocffi (>= 0.6)
     , libglib2.0-0
     , libpango1.0-0
     , libpangocairo-1.0-0
