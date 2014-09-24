@@ -20,8 +20,8 @@ Configuration
 -------------
 
 * **The basics**:
-  :doc:`Default Configuration </manual/config/default>` |
   :doc:`Overview </manual/config/index>` |
+  :doc:`Default Configuration </manual/config/default>` |
   :doc:`Hooks </manual/config/hooks>` |
   :doc:`Running inside Gnome </manual/config/gnome>`
 
