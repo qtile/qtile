@@ -32,13 +32,13 @@ class Subscribe:
             Called when Qtile has initialized, exactly once (i.e. not on each
             lazy.restart()).
         """
-        return self._subscribe("startup", func)
+        return self._subscribe("startup_once", func)
 
     def startup(self, func):
         """
             Called each time qtile is started (including the first time qtile starts)
         """
-        return self._subscribe("restart", func)
+        return self._subscribe("startup", func)
 
     def setgroup(self, func):
         """
