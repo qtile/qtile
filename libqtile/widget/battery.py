@@ -236,7 +236,10 @@ class BatteryIcon(_Battery):
             'battery-full-charged',
         )])
         self.icons.update(self.custom_icons)
-        self.timeout_add(self.update_delay, self.update)
+
+    def timer_setup(self):
+        self.update()
+        self.timeout_add(self.update_delay, self.timer_setup)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
