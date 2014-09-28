@@ -23,7 +23,8 @@ Configuration
   :doc:`Overview </manual/config/index>` |
   :doc:`Default Configuration </manual/config/default>` |
   :doc:`Hooks </manual/config/hooks>` |
-  :doc:`Running inside Gnome </manual/config/gnome>`
+  :doc:`Running inside Gnome </manual/config/gnome>` |
+  :doc:`Autostart </manual/config/autostart>`
 
 * **Config variables**:
   :doc:`groups </manual/config/groups>` |
