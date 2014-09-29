@@ -621,7 +621,7 @@ class Window:
         # can have a different associated size.
         #  - value is a string of bytes.
         #  - length is the length of the data in terms of the specified format.
-        self.conn.conn.core.ChangeProperty(
+        self.conn.conn.core.ChangePropertyChecked(
             xcffib.xproto.PropMode.Replace,
             self.wid,
             self.conn.atoms[name],
@@ -629,7 +629,7 @@ class Window:
             format,  # Format - 8, 16, 32
             length,
             buf
-        )
+        ).check()
 
     def get_property(self, prop, type=None, unpack=None):
         """
@@ -673,7 +673,7 @@ class Window:
         self.conn.conn.core.MapWindow(self.wid)
 
     def unmap(self):
-        self.conn.conn.core.UnmapWindow(self.wid)
+        self.conn.conn.core.UnmapWindowChecked(self.wid).check()
 
     def get_attributes(self):
         return self.conn.conn.core.GetWindowAttributes(self.wid).reply()

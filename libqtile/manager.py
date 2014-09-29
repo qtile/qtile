@@ -450,8 +450,6 @@ class Qtile(command.CommandObject):
             hook.fire("client_killed", c)
             self.reset_gaps(c)
             if getattr(c, "group", None):
-                c.window.unmap()
-                c.state = window.WithdrawnState
                 c.group.remove(c)
             del self.windowMap[win]
             self.update_client_list()
@@ -972,6 +970,17 @@ class Qtile(command.CommandObject):
 
     def handle_UnmapNotify(self, e):
         if e.event != self.root.wid:
+            c = self.windowMap.get(e.window)
+            if c and getattr(c, "group", None):
+                try:
+                    c.window.unmap()
+                    c.state = window.WithdrawnState
+                except xcffib.xproto.WindowError:
+                    # This means that the window has probably been destroyed,
+                    # but we haven't yet seen the DestroyNotify (it is likely
+                    # next in the queue). So, we just let these errors pass
+                    # since the window is dead.
+                    pass
             self.unmanage(e.window)
 
     def handle_ScreenChangeNotify(self, e):
