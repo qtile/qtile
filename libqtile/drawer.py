@@ -194,6 +194,10 @@ class Drawer:
         self.ctx = self.new_ctx()
         self.clear((0, 0, 1))
 
+    def __del__(self):
+        self.qtile.conn.conn.core.FreeGC(self.gc)
+        self.qtile.conn.conn.core.FreePixmap(self.pixmap)
+
     def _rounded_rect(self, x, y, width, height, linewidth):
         aspect = 1.0
         corner_radius = height / 10.0

@@ -262,6 +262,7 @@ class TreeTab(SingleWindow):
         self.add_defaults(TreeTab.defaults)
         self._focused = None
         self._panel = None
+        self._drawer = None
         self._tree = Root(self.sections)
         self._nodes = {}
 
@@ -545,12 +546,13 @@ class TreeTab(SingleWindow):
         self.group.layoutAll()
 
     def _create_drawer(self):
-        self._drawer = drawer.Drawer(
-            self.group.qtile,
-            self._panel.window.wid,
-            self.panel_width,
-            self.group.screen.dheight
-        )
+        if self._drawer is None:
+            self._drawer = drawer.Drawer(
+                self.group.qtile,
+                self._panel.window.wid,
+                self.panel_width,
+                self.group.screen.dheight
+            )
         self._drawer.clear(self.bg_color)
         self._layout = self._drawer.textlayout(
             "",
