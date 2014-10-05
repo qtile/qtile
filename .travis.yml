@@ -30,15 +30,6 @@ before_install:
 # Setup XvFB
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
-# Ubuntu 12.04 uses old xcb-proto (xcb-proto 1.7)
-# See https://github.com/travis-ci/travis-ci/issues/2046
-  - wget http://xcb.freedesktop.org/dist/xcb-proto-1.10.tar.bz2
-  - tar xjf xcb-proto-1.10.tar.bz2
-  - pushd xcb-proto-1.10
-  - ./configure --prefix=/usr
-  - make -j3
-  - sudo make install
-  - popd
 
 install:
 # Installl requirements
