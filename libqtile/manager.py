@@ -986,7 +986,7 @@ class Qtile(command.CommandObject):
     def handle_ScreenChangeNotify(self, e):
         hook.fire("screen_change", self, e)
 
-    def toScreen(self, n):
+    def toScreen(self, n, warp=True):
         """
         Have Qtile move to screen and put focus there
         """
@@ -996,7 +996,7 @@ class Qtile(command.CommandObject):
         self.currentScreen = self.screens[n]
         if old != self.currentScreen:
             hook.fire("current_screen_change")
-            self.currentGroup.focus(self.currentWindow, True)
+            self.currentGroup.focus(self.currentWindow, warp)
 
     def moveToGroup(self, group):
         """

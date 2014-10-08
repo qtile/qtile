@@ -999,7 +999,7 @@ class Window(_Window):
         if self.group.screen and \
                 self.qtile.currentScreen != self.group.screen and \
                 self.qtile.config.follow_mouse_focus:
-            self.qtile.toScreen(self.group.screen.index)
+            self.qtile.toScreen(self.group.screen.index, False)
         return True
 
     def handle_ConfigureRequest(self, e):
