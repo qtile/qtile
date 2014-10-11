@@ -71,18 +71,22 @@ class DGroups(object):
         self.timeout = {}
 
     def add_rule(self, rule, last=True):
-        self.rules_map[self.last_rule_id] = rule
+        rule_id = self.last_rule_id
+        self.rules_map[rule_id] = rule
         if last:
             self.rules.append(rule)
         else:
             self.rules.insert(0, rule)
         self.last_rule_id += 1
-        return self.last_rule_id
+        return rule_id
 
-    def remove_rule(self, rule_id=None):
-        rule = self.rules[rule_id]
-        self.rules.remove(rule)
-        del self.rules[rule_id]
+    def remove_rule(self, rule_id):
+        rule = self.rules_map.get(rule_id, None)
+        if rule:
+            self.rules.remove(rule)
+            del self.rules_map[rule_id]
+        else:
+            self.qtile.log.warn('Rule "%s" not found' % rule_id)
 
     def add_dgroup(self, group, start=False):
         self.groupMap[group.name] = group
