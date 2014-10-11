@@ -40,13 +40,13 @@ Also you need these packages from AUR:
 
 - `qtile-python3-git`_
 - `python-xcffib`_
-- `python-cairocffi-xcffib-git`_
+- `python-cairocffi`_
 
 **For python2:**
 
 - `qtile-git`_
 - `python2-xcffib`_
-- `python2-cairocffi-xcffib-git`_
+- `python2-cairocffi`_
 - `trollius`_
 
 Using pacman for release
@@ -96,6 +96,6 @@ http://wiki.archlinux.org/index.php/AUR#Installing_packages
 .. _xorg-xpyb-git: http://aur.archlinux.org/packages.php?ID=57865
 .. _python-xcffib: https://aur.archlinux.org/packages/python-xcffib/
 .. _python2-xcffib: https://aur.archlinux.org/packages/python2-xcffib/
-.. _python-cairocffi-xcffib-git: https://aur.archlinux.org/packages/python-cairocffi-xcffib-git/
-.. _python2-cairocffi-xcffib-git: https://aur.archlinux.org/packages/python2-cairocffi-xcffib-git/
+.. _python-cairocffi: https://aur.archlinux.org/packages/python-cairocffi/
+.. _python2-cairocffi: https://aur.archlinux.org/packages/python2-cairocffi/
 .. _trollius: https://aur.archlinux.org/packages/python2-trollius/
