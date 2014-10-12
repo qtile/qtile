@@ -1103,6 +1103,11 @@ class Window(_Window):
 
             # add support for additional flags here
             self.fullscreen = (fullscreen_atom in current_state)
+            # remove the bar if the window is fullscreen
+            screen = self.group.screen
+            for bar in [screen.top, screen.bottom, screen.left, screen.right]:
+                if bar:
+                    bar.show(not self.fullscreen)
 
             self.window.set_property('_NET_WM_STATE', list(current_state))
 
