@@ -584,8 +584,6 @@ class Window:
             type: String Atom name
             format: 8, 16, 32
         """
-        from . import utils
-
         if name in PropertyMap:
             if type or format:
                 raise ValueError(
@@ -598,7 +596,19 @@ class Window:
                     "Must specify type and format for unknown property."
                 )
 
-        if not utils.isSequenceLike(value):
+        try:
+            if isinstance(value, six.string_types):
+                # we always wrap strings
+                value = [value]
+            else:
+                # the value is already a list, don't wrap it
+                six.next(iter(value))
+        except StopIteration:
+            # The value was an iterable, just empty
+            value = []
+        except TypeError:
+            # the value wasn't an interable and wasn't a string, so let's
+            # wrap it.
             value = [value]
 
         buf = []
@@ -609,9 +619,9 @@ class Window:
             elif format == 16:
                 buf.append(struct.pack("=H", i))
             elif format == 8:
-                if utils.isStringLike(i):
+                try:
                     buf.append(i.encode())
-                else:
+                except AttributeError:
                     buf.append(struct.pack("=B", i))
         buf = "".encode().join(buf)
 

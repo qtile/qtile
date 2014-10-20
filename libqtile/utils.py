@@ -107,31 +107,6 @@ class LRUCache:
         return wrap
 
 
-def isStringLike(anobj):
-    try:
-        # Avoid succeeding expensively if anobj is large.
-        anobj[:0] + ''
-    except:
-        return 0
-    else:
-        return 1
-
-
-def isSequenceLike(anobj):
-    """
-        Is anobj a non-string sequence type (list, tuple, iterator, or
-        similar)?  Crude, but mostly effective.
-    """
-    if not hasattr(anobj, "next"):
-        if isStringLike(anobj):
-            return 0
-        try:
-            anobj[:0]
-        except:
-            return 0
-    return 1
-
-
 def rgb(x):
     """
         Returns a valid RGBA tuple.
