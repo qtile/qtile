@@ -200,6 +200,13 @@ class MonadTall(SingleWindow):
             self.group.layoutAll()
         self.do_normalize = False
 
+    def cmd_reset(self, redraw=True):
+        "Reset Layout."
+        self.ratio = self._med_ratio
+        if self.align == self._right:
+            self.align = self._left
+        self.cmd_normalize(redraw)
+
     def _maximize_main(self):
         "Toggle the main pane between min and max size"
         if self.ratio <= self._med_ratio:
@@ -713,9 +720,9 @@ class MonadTall(SingleWindow):
 
     def cmd_swap_main(self):
         "Swap current window to main pane."
-        if self.align == 0:
+        if self.align == self._right:
             self.cmd_swap_left()
-        else:
+        elif self.align == self._left:
             self.cmd_swap_right()
 
     def cmd_left(self):
