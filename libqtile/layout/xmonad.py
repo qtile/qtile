@@ -720,9 +720,9 @@ class MonadTall(SingleWindow):
 
     def cmd_swap_main(self):
         "Swap current window to main pane."
-        if self.align == 0:
+        if self.align == self._left:
             self.cmd_swap_left()
-        else:
+        elif self.align == self._right:
             self.cmd_swap_right()
 
     def cmd_left(self):
