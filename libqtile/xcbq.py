@@ -598,10 +598,10 @@ class Window:
 
         try:
             if isinstance(value, six.string_types):
-                # we always wrap strings
-                value = [value]
+                # xcffib will pack the strings
+                pass
             else:
-                # the value is already a list, don't wrap it
+                # if this runs without error, the value is already a list, don't wrap it
                 six.next(iter(value))
         except StopIteration:
             # The value was an iterable, just empty
@@ -611,35 +611,15 @@ class Window:
             # wrap it.
             value = [value]
 
-        buf = []
-        for i in value:
-            # We'll expand these conversions as we need them
-            if format == 32:
-                buf.append(struct.pack("=L", i))
-            elif format == 16:
-                buf.append(struct.pack("=H", i))
-            elif format == 8:
-                try:
-                    buf.append(i.encode())
-                except AttributeError:
-                    buf.append(struct.pack("=B", i))
-        buf = "".encode().join(buf)
-
-        length = len(buf) // (format // 8)
-
-        # This is a real balls-up interface-wise. As I understand it, each type
-        # can have a different associated size.
-        #  - value is a string of bytes.
-        #  - length is the length of the data in terms of the specified format.
         self.conn.conn.core.ChangePropertyChecked(
             xcffib.xproto.PropMode.Replace,
             self.wid,
             self.conn.atoms[name],
             self.conn.atoms[type],
             format,  # Format - 8, 16, 32
-            length,
-            buf
-        ).check()
+            len(value),
+            value
+        )
 
     def get_property(self, prop, type=None, unpack=None):
         """
