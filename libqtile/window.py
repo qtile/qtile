@@ -814,7 +814,6 @@ class Window(_Window):
             self.group.remove(self)
             screen.group.add(self)
             self.qtile.toScreen(screen.index)
-            # TODO - need to kick boxes to update
 
         self._reconfigure_floating()
 
