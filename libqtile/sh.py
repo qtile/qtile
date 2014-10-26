@@ -267,6 +267,25 @@ class QSh:
             else:
                 raise
 
+    def process_command(self, line):
+        match = re.search(r"\W", line)
+        if match:
+            cmd = line[:match.start()].strip()
+            args = line[match.start():].strip()
+        else:
+            cmd = line
+            args = ''
+
+        builtin = getattr(self, "do_" + cmd, None)
+        if builtin:
+            val = builtin(args)
+        else:
+            val = self._call(cmd, args)
+        if isinstance(val, six.string_types):
+            print(val)
+        elif val:
+            pprint.pprint(val)
+
     def loop(self):
         while True:
             try:
@@ -277,20 +296,4 @@ class QSh:
             if not line:
                 continue
 
-            match = re.search(r"\W", line)
-            if match:
-                cmd = line[:match.start()].strip()
-                args = line[match.start():].strip()
-            else:
-                cmd = line
-                args = ''
-
-            builtin = getattr(self, "do_" + cmd, None)
-            if builtin:
-                val = builtin(args)
-            else:
-                val = self._call(cmd, args)
-            if isinstance(val, six.string_types):
-                print(val)
-            elif val:
-                pprint.pprint(val)
+            self.process_command(line)

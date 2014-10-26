@@ -40,12 +40,20 @@ def main():
         default=None,
         dest="pyfile",
         help='The full path to python file with the \"main\" function to call.')
+    parser.add_option(
+        "-c", "--command",
+        action="store", type="string",
+        default=None,
+        help='Run the specified qsh command and exit.')
     options, args = parser.parse_args()
 
     client = command.Client(options.socket)
     if options.pyfile is None:
         qsh = sh.QSh(client)
-        qsh.loop()
+        if options.command is not None:
+            qsh.process_command(options.command)
+        else:
+            qsh.loop()
     else:
         print(client.run_external(options.pyfile))
 
