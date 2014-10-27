@@ -4,9 +4,8 @@ from .. import bar, xcbq, window
 from . import base
 
 import xcffib
-from xcffib.xproto import EventMask, SetMode
+from xcffib.xproto import ClientMessageEvent, ClientMessageData, EventMask, SetMode
 import atexit
-import struct
 
 
 class Icon(window._Window):
@@ -131,11 +130,17 @@ class Systray(base._Widget):
             atoms['_NET_SYSTEM_TRAY_S0'],
             xcffib.CurrentTime
         )
-        event = struct.pack(
-            'BBHII5I', 33, 32, 0, qtile.root.wid,
-            atoms['MANAGER'],
-            xcffib.CurrentTime, atoms['_NET_SYSTEM_TRAY_S0'],
+        data = [
+            xcffib.CurrentTime,
+            atoms['_NET_SYSTEM_TRAY_S0'],
             win.wid, 0, 0
+        ]
+        union = ClientMessageData.synthetic(data, "I" * 5)
+        event = ClientMessageEvent.synthetic(
+            format=32,
+            window=qtile.root.wid,
+            type=atoms['MANAGER'],
+            data=union
         )
         qtile.root.send_event(event, mask=EventMask.StructureNotify)
 

@@ -383,8 +383,8 @@ class Window:
         """
         return r.value.to_string()
 
-    def send_event(self, eventbuf, mask=EventMask.NoEvent):
-        self.conn.conn.core.SendEvent(False, self.wid, mask, eventbuf)
+    def send_event(self, synthevent, mask=EventMask.NoEvent):
+        self.conn.conn.core.SendEvent(False, self.wid, mask, synthevent.pack())
 
     def kill_client(self):
         self.conn.conn.core.KillClient(self.wid)

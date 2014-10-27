@@ -19,7 +19,6 @@
 # SOFTWARE.
 
 import array
-import struct
 import contextlib
 from xcffib.xproto import EventMask, StackMode, SetMode
 import xcffib.xproto
@@ -331,37 +330,23 @@ class _Window(command.CommandObject):
 
     def kill(self):
         if "WM_DELETE_WINDOW" in self.window.get_wm_protocols():
-            # e = event.ClientMessage(
-            #        window = self.window,
-            #        client_type = self.qtile.display.intern_atom(
-            #             "WM_PROTOCOLS"),
-            #        data = [
-            #            # Use 32-bit format:
-            #            32,
-            #            # Must be exactly 20 bytes long:
-            #            [
-            #                self.qtile.display.intern_atom(
-            #                        "WM_DELETE_WINDOW"),
-            #                X.CurrentTime,
-            #                0,
-            #                0,
-            #                0
-            #            ]
-            #        ]
-            # )
-            vals = [
-                33,  # ClientMessageEvent
-                32,  # Format
-                0,
-                self.window.wid,
-                self.qtile.conn.atoms["WM_PROTOCOLS"],
+            data = [
                 self.qtile.conn.atoms["WM_DELETE_WINDOW"],
                 xcffib.xproto.Time.CurrentTime,
                 0,
                 0,
-                0,
+                0
             ]
-            e = struct.pack('BBHII5I', *vals)
+
+            u = xcffib.xproto.ClientMessageData.synthetic(data, "I" * 5)
+
+            e = xcffib.xproto.ClientMessageEvent.synthetic(
+                format=32,
+                window=self.window.wid,
+                type=self.qtile.conn.atoms["WM_PROTOCOLS"],
+                data=u
+            )
+
             self.window.send_event(e)
         else:
             self.window.kill_client()
@@ -460,12 +445,18 @@ class _Window(command.CommandObject):
         window = self.window.wid
         above_sibling = False
         override_redirect = False
-        event_type = 22  # ConfigureNotify
 
-        event = struct.pack('bx2xIIIhhHHHB5x', event_type,
-                            window, window, above_sibling,
-                            x, y, width, height, self.borderwidth,
-                            override_redirect)
+        event = xcffib.xproto.ConfigureNotifyEvent.synthetic(
+            event=window,
+            window=window,
+            above_sibling=above_sibling,
+            x=x,
+            y=y,
+            width=width,
+            height=height,
+            border_width=self.borderwidth,
+            override_redirect=override_redirect
+        )
 
         self.window.send_event(event, mask=EventMask.StructureNotify)
 
@@ -491,19 +482,22 @@ class _Window(command.CommandObject):
             # Never send TAKE_FOCUS on java *dialogs*
             if not is_java_dialog and \
                     "WM_TAKE_FOCUS" in self.window.get_wm_protocols():
-                vals = [
-                    33,
-                    32,
-                    0,
-                    self.window.wid,
-                    self.qtile.conn.atoms["WM_PROTOCOLS"],
+                data = [
                     self.qtile.conn.atoms["WM_TAKE_FOCUS"],
                     xcffib.xproto.Time.CurrentTime,
                     0,
                     0,
-                    0,
+                    0
                 ]
-                e = struct.pack('BBHII5I', *vals)
+
+                u = xcffib.xproto.ClientMessageData.synthetic(data, "I" * 5)
+                e = xcffib.xproto.ClientMessageEvent.synthetic(
+                    format=32,
+                    window=self.window.wid,
+                    type=self.qtile.conn.atoms["WM_PROTOCOLS"],
+                    data=u
+                )
+
                 self.window.send_event(e)
 
             # Never send FocusIn to java windows
