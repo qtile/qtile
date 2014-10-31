@@ -316,7 +316,7 @@ class _Window(command.CommandObject):
 
     def getOpacity(self):
         opacity = self.window.get_property(
-            "_NET_WM_WINDOW_OPACITY", unpack=int
+            "_NET_WM_WINDOW_OPACITY", unpack="I"
         )
         if not opacity:
             return 1.0
@@ -655,11 +655,11 @@ class Static(_Window):
     def update_strut(self):
         strut = self.window.get_property(
             "_NET_WM_STRUT_PARTIAL",
-            unpack=int
+            unpack="I" * 12
         )
         strut = strut or self.window.get_property(
             "_NET_WM_STRUT",
-            unpack=int
+            unpack="I" * 4
         )
         strut = strut or (0, 0, 0, 0)
         self.qtile.update_gaps(strut, self.strut)
@@ -1028,9 +1028,10 @@ class Window(_Window):
             Set a dict with the icons of the window
         """
 
-        icon = self.window.get_property('_NET_WM_ICON', 'CARDINAL', unpack=int)
-        if not icon:
+        ret = self.window.get_property('_NET_WM_ICON', 'CARDINAL')
+        if not ret:
             return
+        icon = list(map(ord, ret.value))
 
         icons = {}
         while True:
@@ -1071,7 +1072,7 @@ class Window(_Window):
             prev_state = self.window.get_property(
                 '_NET_WM_STATE',
                 'ATOM',
-                unpack=int
+                unpack='I'
             )
             if not prev_state:
                 prev_state = []
