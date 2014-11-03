@@ -619,7 +619,7 @@ class Window:
             format,  # Format - 8, 16, 32
             len(value),
             value
-        )
+        ).check()
 
     def get_property(self, prop, type=None, unpack=None):
         """
