@@ -3,6 +3,7 @@ Section: python
 Priority: optional
 Maintainer: Tycho Andersen <tycho@tycho.ws>
 Build-Depends: debhelper (>= 9)
+    , dh-python
     , python-all
     , python3-all
     , python-all-dev
