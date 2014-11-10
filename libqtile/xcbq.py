@@ -436,8 +436,7 @@ class Window:
     def get_wm_hints(self):
         r = self.get_property("WM_HINTS", xcffib.xproto.GetPropertyType.Any)
         if r:
-            data = struct.pack("c" * len(r.value), *(list(r.value)))
-            l = struct.unpack_from("=IIIIIIIII", data)
+            l = r.value.to_atoms()
             flags = set()
             for k, v in HintsFlags.items():
                 if l[0] & v:
@@ -460,8 +459,7 @@ class Window:
             xcffib.xproto.GetPropertyType.Any
         )
         if r:
-            data = struct.pack("c" * len(r.value), *(list(r.value)))
-            l = struct.unpack_from("=IIIIIIIIIIIIII", data)
+            l = r.value.to_atoms()
             flags = set()
             for k, v in NormalHintsFlags.items():
                 if l[0] & v:
@@ -484,8 +482,7 @@ class Window:
     def get_wm_protocols(self):
         r = self.get_property("WM_PROTOCOLS", xcffib.xproto.GetPropertyType.Any)
         if r:
-            data = struct.pack("c" * len(r.value), *(list(r.value)))
-            l = struct.unpack_from("=" + "L" * r.value_len, data)
+            l = r.value.to_atoms()
             return set([self.conn.atoms.get_name(i) for i in l])
         else:
             return set()
@@ -493,7 +490,7 @@ class Window:
     def get_wm_state(self):
         r = self.get_property("WM_STATE", xcffib.xproto.GetPropertyType.Any)
         if r:
-            return struct.unpack('=LL', ''.encode().join(r.value))
+            return r.value.to_atoms()
 
     def get_wm_class(self):
         """
