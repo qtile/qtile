@@ -76,14 +76,14 @@ class Xephyr(object):
             self.sockfile = os.path.join(self.tempdir, 'qtile.sock')
             self.logfile = os.path.join(self.tempdir, 'qtile.log')
 
+            self.testwindows = []
+
             # Setup Xephyr
             try:
                 self._startXephyr()
             except AssertionError:
                 teardown()
                 raise
-
-            self.testwindows = []
 
         @attr('xephyr')
         @with_setup(setup, teardown)
