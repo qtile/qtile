@@ -559,7 +559,7 @@ class Window:
             Arguments can be: x, y, width, height, border, sibling, stackmode
         """
         mask, values = ConfigureMasks(**kwargs)
-        return self.conn.conn.core.ConfigureWindow(self.wid, mask, values)
+        return self.conn.conn.core.ConfigureWindowChecked(self.wid, mask, values).check()
 
     def set_attribute(self, **kwargs):
         mask, values = AttributeMasks(**kwargs)
