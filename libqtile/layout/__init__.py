@@ -12,3 +12,4 @@ from .slice import Slice
 from .tree import TreeTab
 from .zoomy import Zoomy
 from .matrix import Matrix
+from .verticaltile import VerticalTile
