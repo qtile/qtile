@@ -83,6 +83,7 @@ class VerticalTile(Layout):
         ('border_focus', '#FF0000', 'Border color for the focused window.'),
         ('border_normal', '#FFFFFF', 'Border color for un-focused winows.'),
         ('border_width', 1, 'Border width.'),
+        ('margin', 0, 'Border margin.'),
         ('name', 'VerticalTile', 'Name of this layout.'),
     ]
 
@@ -188,7 +189,7 @@ class VerticalTile(Layout):
                         y = y - sec_pane_height + main_pane_height
 
             window.place(screen.x, y, width, height, border_width,
-                         border_color)
+                         border_color, margin=self.margin)
             window.unhide()
         else:
             window.hide()
