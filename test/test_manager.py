@@ -175,6 +175,7 @@ def test_togroup(self):
 # the two
 @Xephyr(True, TestConfig())
 def test_resize(self):
+    raise nose.SkipTest
     self.c.screen[0].resize(x=10, y=10, w=100, h=100)
     for _ in range(10):
         time.sleep(0.1)
@@ -674,6 +675,7 @@ def test_rotate(self):
 # TODO: see note on test_resize
 @Xephyr(False, TestConfig(), randr=True)
 def test_resize_(self):
+    raise nose.SkipTest
     self.testWindow("one")
     subprocess.call(
         [
