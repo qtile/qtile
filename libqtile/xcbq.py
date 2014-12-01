@@ -16,17 +16,6 @@ import xcffib.xproto
 
 from . import xkeysyms
 
-
-# hack xcffib.xproto for negative numbers
-def ConfigureWindow(self, window, value_mask, value_list):
-    from struct import pack
-    from array import array
-    buf = six.BytesIO()
-    buf.write(pack('xx2xIH2x', window, value_mask))
-    buf.write(array('i', value_list).tostring())
-    return self.send_request(12, buf)
-xcffib.xproto.xprotoExtension.ConfigureWindow = ConfigureWindow
-
 keysyms = xkeysyms.keysyms
 
 # These should be in xpyb:
@@ -559,6 +548,8 @@ class Window:
             Arguments can be: x, y, width, height, border, sibling, stackmode
         """
         mask, values = ConfigureMasks(**kwargs)
+        # hack for negative numbers
+        values = [i & 0xffffffff for i in values]
         return self.conn.conn.core.ConfigureWindow(self.wid, mask, values)
 
     def set_attribute(self, **kwargs):
