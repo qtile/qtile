@@ -34,8 +34,7 @@ class ThermalSensor(base.InLoopPollText):
         self.add_defaults(ThermalSensor.defaults)
         self.sensors_temp = re.compile(
             u(r"""
-            ([a-zA-Z]+        #Tag
-            \s?[0-9]+):       #Tag number
+            ([a-zA-Z0-9 ]+):  #Tag
             \s+[+-]           #Temp signed
             ([0-9]+\.[0-9]+)  #Temp value
             (\xc2\xb0         #° match
