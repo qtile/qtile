@@ -22,6 +22,7 @@ class Volume(base._TextBox):
     defaults = [
         ("cardid", 0, "Card Id"),
         ("channel", "Master", "Channel"),
+        ("pulseaudio", False, "Whether to use pulse device and ignore cardid"),
         ("padding", 3, "Padding left and right. Calculated if None."),
         ("theme_path", None, "Path of the icons"),
         ("update_interval", 0.2, "Update time in seconds."),
@@ -50,6 +51,16 @@ class Volume(base._TextBox):
         if button == 5:
             if self.volume_down_command is not None:
                 subprocess.call(self.volume_down_command)
+            elif self.pulseaudio:
+                subprocess.call([
+                    'amixer',
+                    '-q',
+                    '-D',
+                    'pulse',
+                    'sset',
+                    self.channel,
+                    '4%-'
+                ])
             else:
                 subprocess.call([
                     'amixer',
@@ -63,6 +74,16 @@ class Volume(base._TextBox):
         elif button == 4:
             if self.volume_up_command is not None:
                 subprocess.call(self.volume_up_command)
+            elif self.pulseaudio:
+                subprocess.call([
+                    'amixer',
+                    '-q',
+                    '-D',
+                    'pulse',
+                    'sset',
+                    self.channel,
+                    '4%+'
+                ])
             else:
                 subprocess.call([
                     'amixer',
@@ -76,6 +97,16 @@ class Volume(base._TextBox):
         elif button == 1:
             if self.mute_command is not None:
                 subprocess.call(self.mute_command)
+            elif self.pulseaudio:
+                subprocess.call([
+                    'amixer',
+                    '-q',
+                    '-D',
+                    'pulse',
+                    'sset',
+                    self.channel,
+                    'toggle'
+                ])
             else:
                 subprocess.call([
                     'amixer',
@@ -165,16 +196,28 @@ class Volume(base._TextBox):
             self.surfaces[img_name] = imgpat
 
     def get_volume(self):
-        mixerprocess = subprocess.Popen(
-            [
-                'amixer',
-                '-c',
-                str(self.cardid),
-                'sget',
-                self.channel
-            ],
-            stdout=subprocess.PIPE
-        )
+        if self.pulseaudio:
+            mixerprocess = subprocess.Popen(
+                [
+                    'amixer',
+                    '-D',
+                    'pulse',
+                    'sget',
+                    self.channel
+                ],
+                stdout=subprocess.PIPE
+            )
+        else:
+            mixerprocess = subprocess.Popen(
+                [
+                    'amixer',
+                    '-c',
+                    str(self.cardid),
+                    'sget',
+                    self.channel
+                ],
+                stdout=subprocess.PIPE
+            )
         mixer_out = mixerprocess.communicate()[0].decode()
         if mixerprocess.returncode:
             return -1
