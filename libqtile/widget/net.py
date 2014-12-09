@@ -43,7 +43,7 @@ class Net(base.ThreadedPollText):
             name = int_s[0][:-1]
             down = float(int_s[1])
             up = float(int_s[-8])
-            interfaces[int_s[0][:-1]] = {'down': down, 'up': up}
+            interfaces[name] = {'down': down, 'up': up}
         return interfaces
 
     def _format(self, down, up):
