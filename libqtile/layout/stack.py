@@ -82,14 +82,15 @@ class _WinStack(object):
                 return self[idx - 1]
 
     def add(self, client):
-        self.lst.insert(self.current, client)
+        self.lst.insert(self.current+1, client)
+        self.group.focus(client, False)
 
     def remove(self, client):
         if client not in self.lst:
             return
         idx = self.lst.index(client)
         self.lst.remove(client)
-        if idx > self.current:
+        if idx != 0:
             self.current -= 1
         else:
             # This apparently nonsensical assignment caps the value using the
@@ -347,14 +348,14 @@ class Stack(Layout):
         """
             Switch to the next window in this stack.
         """
-        self.currentStack.current -= 1
+        self.currentStack.current += 1
         self.group.focus(self.currentStack.cw, False)
 
     def cmd_up(self):
         """
             Switch to the previous window in this stack.
         """
-        self.currentStack.current += 1
+        self.currentStack.current -= 1
         self.group.focus(self.currentStack.cw, False)
 
     def cmd_shuffle_up(self):
