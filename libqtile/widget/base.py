@@ -1,10 +1,7 @@
 from .. import command, bar, configurable, drawer
-import gobject
 import logging
 import threading
-import exceptions
 import warnings
-
 
 LEFT = object()
 CENTER = object()
@@ -59,6 +56,11 @@ class _Widget(command.CommandObject, configurable.Configurable):
     def win(self):
         return self.bar.window.window
 
+    def timer_setup(self):
+        """ This is called exactly once, after the widget has been configured
+        and timers are available to be set up. """
+        pass
+
     def _configure(self, qtile, bar):
         self.qtile = qtile
         self.bar = bar
@@ -68,7 +70,9 @@ class _Widget(command.CommandObject, configurable.Configurable):
             self.bar.width,
             self.bar.height
         )
-        self.configured = True
+        if not self.configured:
+            self.configured = True
+            self.qtile.call_soon(self.timer_setup)
 
     def clear(self):
         self.drawer.set_source_rgb(self.bar.background)
@@ -126,19 +130,15 @@ class _Widget(command.CommandObject, configurable.Configurable):
 
     def timeout_add(self, seconds, method, method_args=()):
         """
-            This method calls either ``gobject.timeout_add`` or
-            ``gobject.timeout_add_seconds`` with same arguments. Latter is
-            better for battery usage, but works only with integer timeouts.
+            This method calls either ``.call_later`` with given arguments.
         """
-        self.log.debug('Adding timer for %r in %.2fs', method, seconds)
-        if int(seconds) == seconds:
-            return gobject.timeout_add_seconds(
-                int(seconds), method, *method_args
-            )
-        else:
-            return gobject.timeout_add(
-                int(seconds * 1000), method, *method_args
-            )
+        return self.qtile.call_later(seconds, self._wrapper, method, *method_args)
+
+    def _wrapper(self, method, *method_args):
+        try:
+            method(*method_args)
+        except:
+            self.log.exception('got exception from widget timer')
 
 
 UNSPECIFIED = bar.Obj("UNSPECIFIED")
@@ -158,6 +158,7 @@ class _TextBox(_Widget):
             None,
             "font shadow color, default is None(no shadow)"
         ),
+        ("markup", False, "Whether or not to use pango markup"),
     ]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -213,6 +214,7 @@ class _TextBox(_Widget):
             self.font,
             self.fontsize,
             self.fontshadow,
+            markup=self.markup,
         )
 
     def calculate_width(self):
@@ -267,17 +269,23 @@ class InLoopPollText(_TextBox):
         _TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
         self.add_defaults(InLoopPollText.defaults)
 
+    def timer_setup(self):
+        update_interval = self.tick()
+        # If self.update_interval is defined and .tick() returns None, re-call after self.update_interval
+        if update_interval is None and self.update_interval is not None:
+            self.timeout_add(self.update_interval, self.timer_setup)
+        # We can change the update interval by returning something from .tick()
+        elif update_interval:
+            self.timeout_add(update_interval, self.timer_setup)
+        # If update_interval is False, we won't re-call
+
     def _configure(self, qtile, bar):
-        self.qtile = qtile
-        if not self.configured:
-            if self.update_interval is None:
-                gobject.idle_add(self.tick)
-            else:
-                self.timeout_add(self.update_interval, self.tick)
+        should_tick = self.configured
         _TextBox._configure(self, qtile, bar)
 
-        # Update when we are configured.
-        self.tick()
+        # Update when we are being re-configured.
+        if should_tick:
+            self.tick()
 
     def button_press(self, x, y, button):
         self.tick()
@@ -285,16 +293,9 @@ class InLoopPollText(_TextBox):
     def poll(self):
         return 'N/A'
 
-    def _poll(self):
-        try:
-            return self.poll()
-        except:
-            self.log.exception('got exception while polling')
-
     def tick(self):
-        text = self._poll()
+        text = self.poll()
         self.update(text)
-        return True
 
     def update(self, text):
         old_width = self.layout.width
@@ -306,7 +307,6 @@ class InLoopPollText(_TextBox):
                 self.draw()
             else:
                 self.bar.draw()
-        return False
 
 
 class ThreadedPollText(InLoopPollText):
@@ -317,10 +317,10 @@ class ThreadedPollText(InLoopPollText):
 
     def tick(self):
         def worker():
-            text = self._poll()
-            gobject.idle_add(self.update, text)
+            text = self.poll()
+            self.qtile.call_soon_threadsafe(self.update, text)
+        # TODO: There are nice asyncio constructs for this sort of thing, I think...
         threading.Thread(target=worker).start()
-        return True
 
 # these two classes below look SUSPICIOUSLY similar
 
@@ -362,4 +362,4 @@ class MarginMixin(object):
     margin_y = configurable.ExtraFallback('margin_y', 'margin')
 
 def deprecated(msg):
-    warnings.warn(msg, exceptions.DeprecationWarning)
+    warnings.warn(msg, DeprecationWarning)

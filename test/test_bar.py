@@ -1,12 +1,12 @@
 import time
+import six
 import libqtile.layout
 import libqtile.bar
 import libqtile.widget
 import libqtile.manager
 import libqtile.config
 import libqtile.confreader
-from utils import Xephyr
-
+from .utils import Xephyr
 
 class GBConfig:
     auto_fullscreen = True
@@ -126,7 +126,7 @@ def test_textbox_errors(self):
     self.c.widget["text"].update(None)
     self.c.widget["text"].update("".join(chr(i) for i in range(255)))
     self.c.widget["text"].update("V\xE2r\xE2na\xE7\xEE")
-    self.c.widget["text"].update(u"\ua000")
+    self.c.widget["text"].update(six.u("\ua000"))
 
 
 @Xephyr(True, GBConfig())

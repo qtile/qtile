@@ -1,4 +1,4 @@
-import utils
+from . import utils
 
 subscriptions = {}
 SKIPLOG = set()
@@ -27,9 +27,16 @@ class Subscribe:
         if func not in lst:
             lst.append(func)
 
+    def startup_once(self, func):
+        """
+            Called when Qtile has initialized, exactly once (i.e. not on each
+            lazy.restart()).
+        """
+        return self._subscribe("startup_once", func)
+
     def startup(self, func):
         """
-            Called when Qtile has initialized
+            Called each time qtile is started (including the first time qtile starts)
         """
         return self._subscribe("startup", func)
 
@@ -227,10 +234,7 @@ def fire(event, *args, **kwargs):
     if event not in subscribe.hooks:
         raise utils.QtileError("Unknown event: %s" % event)
     if event not in SKIPLOG:
-        qtile.log.info(
-            "Internal event: %s(%s, %s)" %
-            (event, args, kwargs)
-        )
+        qtile.log.info("Internal event: %s(%s, %s)", event, args, kwargs)
     for i in subscriptions.get(event, []):
         try:
             i(*args, **kwargs)

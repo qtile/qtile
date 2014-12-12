@@ -1,4 +1,4 @@
-import cairo
+import cairocffi
 
 from . import base
 from os import statvfs
@@ -35,9 +35,11 @@ class _Graph(base._Widget):
         self.add_defaults(_Graph.defaults)
         self.values = [0] * self.samples
         self.maxvalue = 0
-        self.timeout_add(self.frequency, self.update)
         self.oldtime = time.time()
         self.lag_cycles = 0
+
+    def timer_setup(self):
+        self.timeout_add(self.frequency, self.update)
 
     @property
     def graphwidth(self):
@@ -57,7 +59,7 @@ class _Graph(base._Widget):
 
     def draw_line(self, x, y, values):
         step = self.graphwidth / float(self.samples - 1)
-        self.drawer.ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+        self.drawer.ctx.set_line_join(cairocffi.LINE_JOIN_ROUND)
         self.drawer.set_source_rgb(self.graph_color)
         self.drawer.ctx.set_line_width(self.line_width)
         for val in values:
@@ -67,7 +69,7 @@ class _Graph(base._Widget):
 
     def draw_linefill(self, x, y, values):
         step = self.graphwidth / float(self.samples - 2)
-        self.drawer.ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+        self.drawer.ctx.set_line_join(cairocffi.LINE_JOIN_ROUND)
         self.drawer.set_source_rgb(self.graph_color)
         self.drawer.ctx.set_line_width(self.line_width)
         for index, val in enumerate(values):
@@ -140,9 +142,8 @@ class _Graph(base._Widget):
         self.lag_cycles = int((newtime - self.oldtime) / self.frequency)
         self.oldtime = newtime
 
-        if self.configured:
-            self.update_graph()
-        return True
+        self.update_graph()
+        self.timeout_add(self.frequency, self.update)
 
     def fullfill(self, value):
         self.values = [value] * len(self.values)
@@ -319,7 +320,7 @@ class NetGraph(_Graph):
                 (r for r in routes if not int(r['dest'], 16)),
                 routes[0]
             )['iface']
-        except:
+        except (KeyError, IndexError, ValueError):
             raise RuntimeError('No valid interfaces available')
 
 

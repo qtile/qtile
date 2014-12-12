@@ -10,8 +10,8 @@ import sys
 import tempfile
 import time
 import traceback
-import xcb
-import xcb.xproto
+import xcffib
+import xcffib.xproto
 from nose.tools import with_setup, assert_raises
 from nose.plugins.attrib import attr
 from functools import wraps
@@ -76,14 +76,14 @@ class Xephyr(object):
             self.sockfile = os.path.join(self.tempdir, 'qtile.sock')
             self.logfile = os.path.join(self.tempdir, 'qtile.log')
 
+            self.testwindows = []
+
             # Setup Xephyr
             try:
                 self._startXephyr()
             except AssertionError:
                 teardown()
                 raise
-
-            self.testwindows = []
 
         @attr('xephyr')
         @with_setup(setup, teardown)
@@ -147,9 +147,9 @@ class Xephyr(object):
         # Wait until Xephyr process dies
         while self.xephyr.poll() is None:
             try:
-                conn = xcb.xcb.connect(self.display)
+                conn = xcffib.connect(self.display)
                 break
-            except xcb.ConnectException:
+            except xcffib.ConnectionException:
                 pass
             time.sleep(0.1)
         else:
@@ -165,10 +165,13 @@ class Xephyr(object):
             try:
                 q = libqtile.manager.Qtile(
                     config, self.display, self.sockfile,
-                    log=libqtile.manager.init_log(logging.ERROR, log_path=self.logfile))
+                    log=libqtile.manager.init_log(logging.INFO, log_path=self.logfile))
                 q.loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
+                print("--------------------- >> begin qtile traceback << --------------------")
+                print(traceback.format_exc())
+                print("-------------------- >> begin qtile traceback << ---------------------")
 
         self.qtile = multiprocessing.Process(target=runQtile)
         self.qtile.start()
@@ -189,6 +192,9 @@ class Xephyr(object):
             except OSError:
                 # The process may have died due to some other error
                 pass
+
+        if self.qtile.exitcode:
+            print("Qtile exited with exitcode: %d" % self.qtile.exitcode)
 
         self.qtile = None
 
@@ -233,9 +239,12 @@ class Xephyr(object):
 
         proc = subprocess.Popen(args, env={"DISPLAY": self.display})
 
-        for i in range(20):
-            if len(self.c.windows()) > start:
-                break
+        while proc.poll() is None:
+            try:
+                if len(self.c.windows()) > start:
+                    break
+            except RuntimeError:
+                pass
             time.sleep(0.1)
         else:
             raise AssertionError("Window never appeared...")
@@ -265,6 +274,7 @@ class Xephyr(object):
     def testWindow(self, name):
         python = sys.executable
         d = os.path.dirname(os.path.realpath(__file__))
+        python = sys.executable
         path = os.path.join(d, "scripts", "window.py")
         return self._testProc(
                     [python, path, self.display, name]

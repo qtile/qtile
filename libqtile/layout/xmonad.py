@@ -1,4 +1,4 @@
-from base import SingleWindow
+from .base import SingleWindow
 import math
 
 
@@ -199,6 +199,13 @@ class MonadTall(SingleWindow):
         if redraw:
             self.group.layoutAll()
         self.do_normalize = False
+
+    def cmd_reset(self, redraw=True):
+        "Reset Layout."
+        self.ratio = self._med_ratio
+        if self.align == self._right:
+            self.align = self._left
+        self.cmd_normalize(redraw)
 
     def _maximize_main(self):
         "Toggle the main pane between min and max size"
@@ -710,6 +717,13 @@ class MonadTall(SingleWindow):
         candidates = [c for c in self.clients if c.info()['x'] > x]
         target = self._get_closest(x, y, candidates)
         self.cmd_swap(self._get_window(), target)
+
+    def cmd_swap_main(self):
+        "Swap current window to main pane."
+        if self.align == self._left:
+            self.cmd_swap_left()
+        elif self.align == self._right:
+            self.cmd_swap_right()
 
     def cmd_left(self):
         "Focus on the closest window to the left of the current window."

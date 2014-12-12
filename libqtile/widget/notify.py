@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-from .. import bar, utils
+from . import base
+from .. import bar, utils, pangocffi
 from libqtile.notify import notifier
-import base
 
 
 class Notify(base._TextBox):
@@ -36,7 +36,7 @@ class Notify(base._TextBox):
         )
 
     def set_notif_text(self, notif):
-        self.text = utils.escape(notif.summary)
+        self.text = pangocffi.markup_escape_text(notif.summary)
         urgency = notif.hints.get('urgency', 1)
         if urgency != 1:
             self.text = '<span color="%s">%s</span>' % (
@@ -48,7 +48,7 @@ class Notify(base._TextBox):
             )
         if notif.body:
             self.text = '<span weight="bold">%s</span> - %s' % (
-                self.text, utils.escape(notif.body)
+                self.text, pangocffi.markup_escape_text(notif.body)
             )
 
     def update(self, notif):

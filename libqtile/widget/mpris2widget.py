@@ -1,7 +1,6 @@
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
-import gobject
-import base
+from . import base
 
 class Mpris2(base._TextBox):
     '''
@@ -91,7 +90,7 @@ class Mpris2(base._TextBox):
 
         if self.scroll_chars and self.scroll_interval:
             if(self.scroll_timer):
-                gobject.source_remove(self.scroll_timer)
+                self.scroll_timer.cancel()
             self.scrolltext = self.displaytext
             self.scroll_counter = self.scroll_wait_intervals
             self.scroll_timer = self.timeout_add(self.scroll_interval,
@@ -108,15 +107,16 @@ class Mpris2(base._TextBox):
         if self.scroll_counter:
             self.scroll_counter -= 1
             if self.scroll_counter:
-                return True
+                self.timeout_add(self.scroll_interval, self.scroll_text)
+                return
         if len(self.scrolltext) >= self.scroll_chars:
             self.scrolltext = self.scrolltext[1:]
             if len(self.scrolltext) == self.scroll_chars:
                 self.scroll_counter += self.scroll_wait_intervals
-            return True
+            self.timeout_add(self.scroll_interval, self.scroll_text)
+            return
         self.text = ''
         self.bar.draw()
-        return False
 
     def cmd_info(self):
         '''What's the current state of the widget?'''

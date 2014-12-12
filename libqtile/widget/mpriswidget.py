@@ -2,7 +2,7 @@ import dbus
 
 from dbus.mainloop.glib import DBusGMainLoop
 
-import base
+from . import base
 from .. import bar
 
 
@@ -38,7 +38,6 @@ class Mpris(base._TextBox):
 
         # try to connect for grins
         self._connect()
-        self.timeout_add(1, self.update)
 
     def _connect(self):
         """ Try to connect to the player if it exists. """

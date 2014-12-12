@@ -1,10 +1,16 @@
 Built-in Hooks
 ==============
 
+startup_once
+------------
+
+Called when Qtile has initialized, exactly once (i.e. not on each
+lazy.restart())
+
 startup
 -------
 
-Called when Qtile has initialized
+Called each time qtile is started (including the first time qtile starts)
 
 client_name_updated
 -------------------

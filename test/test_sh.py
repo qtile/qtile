@@ -4,7 +4,7 @@ import libqtile.confreader
 import libqtile.layout
 import libqtile.manager
 import libqtile.config
-from utils import Xephyr
+from .utils import Xephyr
 
 
 class ShConfig(object):

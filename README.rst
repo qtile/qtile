@@ -1,6 +1,6 @@
-==============
-Qtile |travis|
-==============
+==========================
+Qtile |travis| |coveralls|
+==========================
 
 A full-featured, pure-Python tiling window manager
 ==================================================
@@ -48,6 +48,10 @@ the Github `issue tracker`_. There are also a few `tips, tricks, and guidelines
 documentation.
 
 .. _`issue tracker`: https://github.com/qtile/qtile/issues
+
 .. |travis| image:: https://travis-ci.org/qtile/qtile.svg?branch=develop
     :alt: Build Status
     :target: https://travis-ci.org/qtile/qtile
+.. |coveralls| image:: https://coveralls.io/repos/qtile/qtile/badge.png?branch=develop
+    :alt: Build Coverage
+    :target: https://coveralls.io/r/qtile/qtile

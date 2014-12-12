@@ -1,18 +1,18 @@
 #!/usr/bin/env python
-
+#
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
 # Copyright (c) 2011, Florian Mounier
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -27,12 +27,13 @@ import locale
 locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
 
 import logging
-from libqtile import confreader, manager
+from libqtile.log_utils import init_log
+from libqtile import confreader
 
-import pkg_resources
 try:
+    import pkg_resources
     VERSION = pkg_resources.require("qtile")[0].version
-except pkg_resources.DistributionNotFound:
+except (pkg_resources.DistributionNotFound, ImportError):
     VERSION = 'dev'
 
 def rename_process():
@@ -54,7 +55,11 @@ def make_qtile():
     from argparse import ArgumentParser
     parser = ArgumentParser(
         description='A full-featured, pure-Python tiling window manager.',
-        prog='qtile',
+        prog='qtile')
+
+    parser.add_argument(
+        '--version',
+        action='version',
         version=VERSION)
 
     parser.add_argument(
@@ -81,7 +86,7 @@ def make_qtile():
     )
     parser.add_argument(
         '-l', '--log-level',
-        default='ERROR',
+        default='WARNING',
         dest='log_level',
         choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),
         help='Set qtile log level'
@@ -95,7 +100,7 @@ def make_qtile():
 
     options = parser.parse_args()
     log_level = getattr(logging, options.log_level)
-    log = manager.init_log(log_level)
+    log = init_log(log_level)
 
     try:
         c = confreader.File(options.configfile, is_restart=options.no_spawn)
@@ -103,6 +108,9 @@ def make_qtile():
         log.exception('Error while reading config file')
         raise
 
+    # XXX: the import is here becouse we need to call init_log
+    # before start importing stuff
+    from libqtile import manager
     try:
         return manager.Qtile(
             c,
@@ -114,7 +122,6 @@ def make_qtile():
     except:
         log.exception('Qtile crashed during startup')
         raise
-
 
 
 if __name__ == "__main__":

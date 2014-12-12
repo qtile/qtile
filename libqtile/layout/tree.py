@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-from base import SingleWindow
-from .. import window
-from .. import drawer
-from .. import hook
+from .base import SingleWindow
+from .. import drawer, hook, window
 
-to_superscript = dict(zip(map(ord, u'0123456789'), map(ord, u'⁰¹²³⁴⁵⁶⁷⁸⁹')))
+import six
+
+to_superscript = dict(zip(map(ord, six.u('0123456789')), map(ord, six.u('⁰¹²³⁴⁵⁶⁷⁸⁹'))))
 
 
 class TreeNode(object):
@@ -43,7 +43,7 @@ class TreeNode(object):
 
     def add_superscript(self, title):
         if not self.expanded and self.children:
-            return unicode(
+            return six.u(
                 len(self.children)
             ).translate(to_superscript).encode('utf-8') + title
         return title
@@ -71,7 +71,7 @@ class TreeNode(object):
         while not isinstance(node, Root):
             parent = node.parent
             idx = parent.children.index(node)
-            for i in xrange(idx + 1, len(parent.children)):
+            for i in range(idx + 1, len(parent.children)):
                 res = parent.children[i].get_first_window()
                 if res:
                     return res
@@ -84,7 +84,7 @@ class TreeNode(object):
             idx = parent.children.index(node)
             if idx == 0 and isinstance(parent, Window):
                 return parent
-            for i in xrange(idx - 1, -1, -1):
+            for i in range(idx - 1, -1, -1):
                 res = parent.children[i].get_last_window()
                 if res:
                     return res
@@ -262,6 +262,7 @@ class TreeTab(SingleWindow):
         self.add_defaults(TreeTab.defaults)
         self._focused = None
         self._panel = None
+        self._drawer = None
         self._tree = Root(self.sections)
         self._nodes = {}
 
@@ -545,12 +546,13 @@ class TreeTab(SingleWindow):
         self.group.layoutAll()
 
     def _create_drawer(self):
-        self._drawer = drawer.Drawer(
-            self.group.qtile,
-            self._panel.window.wid,
-            self.panel_width,
-            self.group.screen.dheight
-        )
+        if self._drawer is None:
+            self._drawer = drawer.Drawer(
+                self.group.qtile,
+                self._panel.window.wid,
+                self.panel_width,
+                self.group.screen.dheight
+            )
         self._drawer.clear(self.bg_color)
         self._layout = self._drawer.textlayout(
             "",

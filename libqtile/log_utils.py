@@ -40,7 +40,7 @@ class ColorFormatter(logging.Formatter):
         return message + self.reset_seq
 
 
-def init_log(log_level=logging.ERROR, logger='qtile', log_path='~/.%s.log'):
+def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log'):
     log = getLogger(logger)
     log.setLevel(log_level)
 

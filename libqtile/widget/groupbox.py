@@ -1,5 +1,5 @@
 from .. import bar, hook
-import base
+from . import base
 
 
 class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
@@ -48,6 +48,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         hook.subscribe.setgroup(hook_response)
         hook.subscribe.group_window_add(hook_response)
         hook.subscribe.current_screen_change(hook_response)
+        hook.subscribe.changegroup(hook_response)
 
     def drawbox(self, offset, text, bordercolor, textcolor, rounded=False,
                 block=False, width=None):
@@ -87,10 +88,10 @@ class AGroupBox(_GroupBase):
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
-        e = (
+        e = next(
             i for i in self.qtile.groups
             if i.name == self.bar.screen.group.name
-        ).next()
+        )
         self.drawbox(self.margin_x, e.name, self.border, self.foreground)
         self.drawer.draw(self.offset, self.width)
 

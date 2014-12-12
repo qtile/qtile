@@ -17,17 +17,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from __future__ import division
 
-import command
-import confreader
-import drawer
-import hook
-import configurable
-import window
+from . import command
+from . import confreader
+from . import drawer
+from . import configurable
+from . import window
 
-import gobject
-
-USE_BAR_DRAW_QUEUE = True
 
 class Gap(command.CommandObject):
     """
@@ -41,6 +38,7 @@ class Gap(command.CommandObject):
             size: The width of the gap.
         """
         self.size = size
+        self.initial_size = size
         self.qtile = None
         self.screen = None
 
@@ -158,7 +156,7 @@ class Bar(Gap, configurable.Configurable):
             raise confreader.ConfigError(
                 "Bars must be at the top or the bottom of the screen."
             )
-        if len(filter(lambda w: w.width_type == STRETCH, self.widgets)) > 1:
+        if len([w for w in self.widgets if w.width_type == STRETCH]) > 1:
             raise confreader.ConfigError("Only one STRETCH widget allowed!")
 
         Gap._configure(self, qtile, screen)
@@ -187,10 +185,6 @@ class Bar(Gap, configurable.Configurable):
             i._configure(qtile, self)
         self._resize(self.width, self.widgets)
 
-        # FIXME: These should be targeted better.
-        hook.subscribe.setgroup(self.draw)
-        hook.subscribe.changegroup(self.draw)
-
     def _resize(self, width, widgets):
         stretches = [i for i in widgets if i.width_type == STRETCH]
         if stretches:
@@ -198,7 +192,7 @@ class Bar(Gap, configurable.Configurable):
                 [i.width for i in widgets if i.width_type != STRETCH]
             )
             stretchspace = max(stretchspace, 0)
-            astretch = stretchspace / len(stretches)
+            astretch = stretchspace // len(stretches)
             for i in stretches:
                 i.width = astretch
             if astretch:
@@ -254,12 +248,9 @@ class Bar(Gap, configurable.Configurable):
             self.saved_focus.window.set_input_focus()
 
     def draw(self):
-        if USE_BAR_DRAW_QUEUE:
-            if self.queued_draws == 0:
-                gobject.idle_add(self._actual_draw)
-            self.queued_draws += 1
-        else:
-            self._actual_draw()
+        if self.queued_draws == 0:
+            self.qtile.call_soon(self._actual_draw)
+        self.queued_draws += 1
 
     def _actual_draw(self):
         self.queued_draws = 0
@@ -271,9 +262,6 @@ class Bar(Gap, configurable.Configurable):
             if end < self.width:
                 self.drawer.draw(end, self.width - end)
 
-        # have to return False here to avoid getting called again
-        return False
-
     def info(self):
         return dict(
             width=self.width,
@@ -281,6 +269,18 @@ class Bar(Gap, configurable.Configurable):
             widgets=[i.info() for i in self.widgets],
             window=self.window.window.wid
         )
+
+    def is_show(self):
+        return self.size != 0
+
+    def show(self, is_show=True):
+        if is_show != self.is_show():
+            if is_show:
+                self.size = self.initial_size
+                self.window.unhide()
+            else:
+                self.size = 0
+                self.window.hide()
 
     def cmd_fake_button_press(self, screen, position, x, y, button=1):
         """

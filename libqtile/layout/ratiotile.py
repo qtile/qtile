@@ -1,6 +1,8 @@
+from __future__ import division
+
 import math
 
-from base import Layout
+from .base import Layout
 from .. import utils
 
 
@@ -63,7 +65,7 @@ class GridInfo(object):
         if num_windows < 2:
             end = 2
         else:
-            end = num_windows / 2 + 1
+            end = num_windows // 2 + 1
         for rows in range(1, end):
             cols = int(math.ceil(float(num_windows) / rows))
             yield (rows, cols, ROWCOL)
@@ -105,8 +107,8 @@ class GridInfo(object):
             x = 0
             y = 0
             for i, col in enumerate(range(cols)):
-                w_width = width / cols
-                w_height = height / rows
+                w_width = width // cols
+                w_height = height // rows
                 if i == cols - 1:
                     w_width = width - x
                 results.append((x + xoffset, y + yoffset, w_width, w_height))
@@ -115,8 +117,8 @@ class GridInfo(object):
             x = 0
             y = 0
             for i, col in enumerate(range(rows)):
-                w_width = width / cols
-                w_height = height / rows
+                w_width = width // cols
+                w_height = height // rows
                 if i == rows - 1:
                     w_height = height - y
                 results.append((x + xoffset, y + yoffset, w_width, w_height))
@@ -134,13 +136,13 @@ class GridInfo(object):
             y = 0
             for i, row in enumerate(range(rows)):
                 x = 0
-                width = total_width / cols
+                width = total_width // cols
                 for j, col in enumerate(range(cols)):
-                    height = total_height / rows
+                    height = total_height // rows
                     if i == rows - 1 and j == 0:
                         # last row
                         remaining = self.num_windows - len(results)
-                        width = total_width / remaining
+                        width = total_width // remaining
                     elif j == cols - 1 or len(results) + 1 == self.num_windows:
                         # since we are dealing with integers,
                         # make last column (or item) take up remaining space
@@ -160,13 +162,13 @@ class GridInfo(object):
             x = 0
             for i, col in enumerate(range(cols)):
                 y = 0
-                height = total_height / rows
+                height = total_height // rows
                 for j, row in enumerate(range(rows)):
-                    width = total_width / cols
+                    width = total_width // cols
                     # down first
                     if i == cols - 1 and j == 0:
                         remaining = self.num_windows - len(results)
-                        height = total_height / remaining
+                        height = total_height // remaining
                     elif j == rows - 1 or len(results) + 1 == self.num_windows:
                         height = total_height - y
                     results.append((

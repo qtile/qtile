@@ -52,13 +52,12 @@
 # borrows liberally from that one.
 ###################################################################
 
-import base
+from . import base
 import httplib2
 import datetime
 import re
 import dateutil.parser
 import threading
-import gobject
 
 from apiclient.discovery import build
 from oauth2client.client import OAuth2WebServerFlow
@@ -77,11 +76,6 @@ class GoogleCalendar(base.ThreadedPollText):
     defaults = [
         ('calendar', 'primary', 'calendar to use'),
         (
-            'format',
-            ' {next_event} ',
-            'text to display - leave this at the default for now...'
-        ),
-        (
             'storage_file',
             None,
             'absolute path of secrets file - must be set'
@@ -98,26 +92,19 @@ class GoogleCalendar(base.ThreadedPollText):
             '/usr/bin/firefox -url calendar.google.com',
             'command or script to execute on click'
         ),
+        ('markup', True, 'Use pango markup by default.'),
     ]
 
     def __init__(self, **config):
         base.ThreadedPollText.__init__(self, **config)
+        self.add_defaults(GoogleCalendar.defaults)
         self.text = 'Calendar not initialized.'
+
+    def timer_setup(self):
+        base.ThreadedPollText.timer_setup(self)
         self.cred_init()
         # confirm credentials every hour
-        self.timeout_add(3600, self.cred_init)
-
-    def _configure(self, qtile, bar):
-        base.ThreadedPollText._configure(self, qtile, bar)
-        self.add_defaults(GoogleCalendar.defaults)
-        self.layout = self.drawer.textlayout(
-            self.text,
-            self.foreground,
-            self.font,
-            self.fontsize,
-            self.fontshadow,
-            markup=True
-        )
+        self.timeout_add(3600, self.timer_setup)
 
     def cred_init(self):
         # this is the main method for obtaining credentials
@@ -150,17 +137,6 @@ class GoogleCalendar(base.ThreadedPollText):
             args=(self.credentials, storage)
         ).start()
 
-        return True
-
-    def cal_updater(self):
-        self.log.info('adding GC widget timer')
-
-        def cal_getter():  # get cal data in thread, write it in main loop
-            data = self.fetch_calendar()
-            gobject.idle_add(self.update, data)
-        threading.Thread(target=cal_getter).start()
-        return True
-
     def button_press(self, x, y, button):
         base.ThreadedPollText.button_press(self, x, y, button)
         if hasattr(self, 'credentials'):
@@ -172,8 +148,7 @@ class GoogleCalendar(base.ThreadedPollText):
         # if we don't have valid credentials, update them
         if not hasattr(self, 'credentials') or self.credentials.invalid:
             self.cred_init()
-            data = {'next_event': 'Credentials updating'}
-            return data
+            return 'Credentials updating'
 
         # Create an httplib2.Http object to handle our HTTP requests and
         # authorize it with our credentials from self.cred_init
@@ -199,8 +174,7 @@ class GoogleCalendar(base.ThreadedPollText):
         try:
             event = events.get('items', [])[0]
         except IndexError:
-            data = {'next_event': 'No appointments scheduled'}
-            return data
+            return 'No appointments scheduled'
 
         # get reminder time
         try:
@@ -210,28 +184,20 @@ class GoogleCalendar(base.ThreadedPollText):
                     event.get('reminders').get('overrides')[0].get('minutes')
                 ) * 60
             )
-        except:
+        except (IndexError, ValueError, AttributeError):
             remindertime = datetime.timedelta(0, 0)
 
-        # format the data
-        data = {
-            'next_event': event['summary'] +
-            ' ' +
-            re.sub(
-                ':.{2}-.*$',
-                '',
-                event['start']['dateTime'].replace('T', ' ')
-            )
-        }
+        time = re.sub(
+            ':.{2}-.*$',
+            '',
+            event['start']['dateTime'].replace('T', ' ')
+        )
+
+        data = event['summary'] + ' ' + time
+
+        # colorize the event if it is upcoming
         parse_result = dateutil.parser.parse(event['start']['dateTime'], ignoretz=True)
         if parse_result - remindertime <= datetime.datetime.now():
-            data = {
-                'next_event': '<span color="' +
-                utils.hex(self.reminder_color) +
-                '">' +
-                data['next_event'] +
-                '</span>'
-            }
+            data = '<span color="%s">%s</span>' % (utils.hex(self.reminder_color), data)
 
-        # return the data
         return data

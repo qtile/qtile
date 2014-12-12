@@ -1,3 +1,15 @@
+qtile *.*.*, released YYYY-MM-DD:
+    * !!! Dependency Changes !!!
+      New dependencies will need to be installed for qtile to work
+        - drop xpyb for xcffib (XCB bindings)
+        - drop py2cairo for cairocffi (Cairo bindings)
+        - drop PyGTK for asyncio (event loop, pangocairo bindings managed
+          internally)
+    * features
+        - add Python 3 and pypy support (made possible by dependency changes)
+    * bugfixes
+        - 
+
 qtile 0.8.0, released 2014-08-18:
     * features
         - massive widget/layout documentation update

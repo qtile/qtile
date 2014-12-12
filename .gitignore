@@ -3,6 +3,7 @@
 *.py~
 *.so
 *.o
+__pycache__
 MANIFEST
 /build
 /dist
@@ -13,5 +14,16 @@ qtile.egg-info/
 *.swo
 /doc
 /docs/_build
+.coverage
 # some people hack on macs? :-)
 .DS_Store
+# debian stuff
+.pybuild
+debian/files
+debian/*.substvars
+debian/*.log
+debian/tmp
+debian/qtile
+debian/python-qtile
+debian/python3-qtile
+debian/*debhelper

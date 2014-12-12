@@ -1,79 +1,78 @@
 Installing from Source
 ======================
 
-Qtile relies on some cutting-edge features in PyCairo, XCB, and xpyb. Until the
-latest versions of these projects make it into distros, it's best to use recent
-checkouts from their repositories. You'll need python's ``setuptools``
-installed. Here's a brief step-by-step guide:
+Qtile itself is very easy to install, you'll just need python's ``setuptools``.
+Additionally, qtile uses a branch of cairocffi that has not yet been merged, so
+you need to install that from source. A step by step guide is below.
 
+xcffib
+------
 
-xpyb
--------
-
-Either ``xpyb-ng`` or ``xpyb`` versions >= 1.3.1 should work. The ``xpyb``
-build itself has historically had some package config issues, so we provide
-xpyb-ng for people who want to use setuptools. (The implementations are also
-slightly different, but users have reported that qtile is stable on either
-fork.) For users with a system version of ``xcb-proto`` < 1.7, xpyb will not
-build correctly (you get an ``AttributeError: 'ListType' object has no
-attribute 'parent'``). However, xpyb-ng provides a branch called
-``pre-1.7-xproto`` which has a hack to fix this issue.
+Qtile uses xcffib_ as an XCB binding, which has its own instructions for
+building from source including building several Haskell packages, but is
+available from PyPi via:
 
 .. code-block:: bash
 
-    git clone git://anongit.freedesktop.org/xcb/xpyb
-    cd xpyb && ./autogen.sh
-    ./configure
-    make install
+    sudo pip install xcffib
+
+.. _xcffib: https://github.com/tych0/xcffib
+
+cairocffi
+---------
+
+Qtile uses cairocffi_ with XCB support via xcffib.  The latest version on PyPi
+has these features once xcffib is installed:
 
 .. code-block:: bash
 
-    git clone git@github.com:tych0/xpyb-ng.git
-    cd xpyb-ng
-    python setup.py install
+    sudo pip install cairocffi
 
+.. _cairocffi: https://pythonhosted.org/cairocffi/overview.html
 
-cairo
------
+asyncio/trollius
+----------------
 
-The latest cairo release works, but recompiling with xcb support is needed.
+Qtile uses the asyncio module as introduced in `PEP 3156`_ for its event loop.
+Based on your Python version, there are different ways to install this:
 
-.. code-block:: bash
+- Python >=3.4: The `asyncio module`_ comes as part of the standard library, so
+  there is nothing more to install.
+- Python 3.3: This has all the infastructure needed to implement PEP 3156, but
+  the asyncio module must be installed from the `Tulip project`_.  This is done
+  by calling:
 
-    wget http://cairographics.org/releases/cairo-1.10.0.tar.gz
-    tar xvzf cairo-1.10.0.tar.gz
-    cd cairo-1.10.0
-    ./autogen.sh --enable-xcb
-    make
-    sudo make install
+  .. code-block:: bash
+    
+      sudo pip install asyncio
 
+  Alternatively, you can install trollius (see next point).
+- Python 2 and <=3.2 (and 3.3 without asyncio): You will need to install
+  trollius_, which backports the asyncio module functionality to work without
+  the infastructure introduced in PEP 3156.  You can install this from PyPi:
 
-py2cairo
---------
+  .. code-block:: bash
 
-.. code-block:: bash
+      sudo pip install trollius
 
-    git clone git://git.cairographics.org/git/py2cairo
-    cd py2cairo
-    ./autogen.sh --enable-xcb
+.. _PEP 3156: http://python.org/dev/peps/pep-3156/
+.. _asyncio module: https://docs.python.org/3/library/asyncio.html
+.. _Tulip project: https://code.google.com/p/tulip/
+.. _trollius: http://trollius.readthedocs.org/
 
-Check the configure output to make sure that XPYB is correctly detected.
+importlib
+---------
 
-.. code-block:: bash
+- Python <=2.6 you will need to install importlib from PyPi:
 
-    make
-    sudo make install
+  .. code-block:: bash
 
-
-PyGTK
------
-
-We also require a reasonably recent version of the Python GTK bindings, in
-particular, the pango module. You should just be able to install this using
-your chosen distribution's package manager.
+      sudo pip install importlib
 
 Qtile
 -----
+
+With the dependencies in place, you can now install qtile:
 
 .. code-block:: bash
 
