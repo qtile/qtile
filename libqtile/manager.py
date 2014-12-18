@@ -1077,6 +1077,11 @@ class Qtile(command.CommandObject):
             self.conn.flush()
         self._eventloop.call_later(delay, f)
 
+    def run_in_executor(self, func, *args):
+        """ A wrapper for running a function in the event loop's default
+        executor. """
+        return self._eventloop.run_in_executor(None, func, *args)
+
     def cmd_debug(self):
         """Set log level to DEBUG"""
         self.log.setLevel(logging.DEBUG)
