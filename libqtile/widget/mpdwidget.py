@@ -3,29 +3,25 @@
 
 
 # TODO: check if UI hangs in case of network issues and such
-# TODO: python-mpd supports idle proto, can widgets be push instead of pull?
-# TODO: a teardown hook so I can client.disconnect() ?
 # TODO: some kind of templating to make shown info configurable
 # TODO: best practice to handle failures? just write to stderr?
+import atexit
+import re
+import time
+
+import mpd
 
 from .. import utils, pangocffi
-from mpd import MPDClient, CommandError
-import atexit
 from . import base
-import re
 
-
-class Mpd(base.ThreadedPollText):
+class Mpd(base.ThreadPoolText):
     """
         An mpd widget
     """
     defaults = [
         ("foreground_progress", "ffffff", "Foreground progress colour"),
-        (
-            "reconnect",
-            False,
-            "Choose if the widget should try to keep reconnecting."
-        )
+        ('reconnect', False, 'attempt to reconnect if initial connection failed'),
+        ('reconnect_interval', 1, 'Time to delay between connection attempts.')
     ]
 
     # TODO: have this use our config framework
@@ -43,6 +39,7 @@ class Mpd(base.ThreadedPollText):
             - width: A fixed width, or bar.CALCULATED to calculate the width
             automatically (which is recommended).
         """
+        super(Mpd, self).__init__(msg_nc, **config)
         self.host = host
         self.port = port
         self.password = password
@@ -50,69 +47,55 @@ class Mpd(base.ThreadedPollText):
         self.msg_nc = msg_nc
         self.do_color_progress = do_color_progress
         self.inc = 2
-        base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(Mpd.defaults)
-        self.client = MPDClient()
+        self.client = mpd.MPDClient()
         self.connected = False
-        self.connect()
+        self.stop = False
 
-    def connect(self, ifneeded=False):
+    def _atexit(self):
+        self.stop = True
+
         if self.connected:
-            if not ifneeded:
-                self.log.warning(
-                    'Already connected. '
-                    'No need to connect again. '
-                    'Maybe you want to disconnect first.'
-                )
+            try:
+                # The volume settings is kind of a dirty trick.  There doesn't
+                # seem to be a decent way to set a timeout for the idle
+                # command.  Therefore we need to trigger some events such that
+                # if poll() is currently waiting on an idle event it will get
+                # something so that it can exit.  In practice, I can't tell the
+                # difference in volume and hopefully no one else can either.
+                self.client.volume(1)
+                self.client.volume(-1)
+                self.client.disconnect()
+            except:
+                pass
+
+
+    def connect(self, quiet=False):
+        if self.connected:
             return True
-        CON_ID = {'host': self.host, 'port': self.port}
-        if not self.mpdConnect(CON_ID):
-            self.log.error('Cannot connect to MPD server.')
+
+        try:
+            self.client.connect(host=self.host, port=self.port)
+        except Exception:
+            if not quiet:
+                self.log.exception('Failed to connect to mpd')
+            return False
+
         if self.password:
-            if not self.mpdAuth(self.password):
+            try:
+                self.client.password(self.password)
+            except Exception:
                 self.log.warning('Authentication failed.  Disconnecting')
                 try:
                     self.client.disconnect()
                 except Exception:
-                    self.log.exception('Error disconnecting mpd')
-        return self.connected
+                    pass
 
-    def mpdConnect(self, con_id):
-        """
-            Simple wrapper to connect MPD.
-        """
-        try:
-            self.client.connect(**con_id)
-        except Exception:
-            self.log.exception('Error connecting mpd')
-            return False
         self.connected = True
         return True
 
-    def mpdDisconnect(self):
-        """
-            Simple wrapper to disconnect MPD.
-        """
-        try:
-            self.client.disconnect()
-        except Exception:
-            self.log.exception('Error disconnecting mpd')
-            return False
-        self.connected = False
-        return True
-
-    def mpdAuth(self, secret):
-        """
-            Authenticate
-        """
-        try:
-            self.client.password(secret)
-        except CommandError:
-            return False
-        return True
-
     def _configure(self, qtile, bar):
-        base.ThreadedPollText._configure(self, qtile, bar)
+        super(Mpd, self)._configure(qtile, bar)
         self.layout = self.drawer.textlayout(
             self.text,
             self.foreground,
@@ -121,7 +104,7 @@ class Mpd(base.ThreadedPollText):
             self.fontshadow,
             markup=True
         )
-        atexit.register(self.mpdDisconnect)
+        atexit.register(self._atexit)
 
     def to_minutes_seconds(self, stime):
         """Takes an integer time in seconds, transforms it into
@@ -225,46 +208,66 @@ class Mpd(base.ThreadedPollText):
     def do_format(self, string):
         return re.sub("%(.)", self.match_check, string)
 
-    def poll(self):
-        # If we're already connected, or if users want to reconnect and we can
-        # successfully reconnect...
-        if self.connected or (self.reconnect and self.connect(True)):
-            try:
-                self.status = self.client.status()
-                self.song = self.client.currentsong()
-                if self.status['state'] != 'stop':
-                    playing = self.do_format(self.fmt_playing)
+    def _get_status(self):
+        playing = self.msg_nc
 
-                    if self.do_color_progress and \
-                            self.status and \
-                            self.status.get('time', None):
-                        elapsed, total = self.status['time'].split(':')
-                        percent = float(elapsed) / float(total)
-                        progress = int(percent * len(playing))
-                        playing = '<span color="%s">%s</span>%s' % (
-                            utils.hex(self.foreground_progress),
-                            pangocffi.markup_escape_text(playing[:progress]),
-                            pangocffi.markup_escape_text(playing[progress:])
-                        )
-                    else:
-                        playing = pangocffi.markup_escape_text(playing)
+        try:
+            self.status = self.client.status()
+            self.song = self.client.currentsong()
+            if self.status['state'] != 'stop':
+                text = self.do_format(self.fmt_playing)
+
+                if (self.do_color_progress
+                        and self.status
+                        and self.status.get('time', None)):
+                    elapsed, total = self.status['time'].split(':')
+                    percent = float(elapsed) / float(total)
+                    progress = int(percent * len(text))
+                    playing = '<span color="%s">%s</span>%s' % (
+                        utils.hex(self.foreground_progress),
+                        pangocffi.markup_escape_text(text[:progress]),
+                        pangocffi.markup_escape_text(text[progress:])
+                    )
                 else:
-                    playing = self.do_format(self.fmt_stopped)
-
-            except Exception:
-                self.log.exception('Mpd error on update')
-                playing = self.msg_nc
-                self.mpdDisconnect()
-        else:
-            if self.reconnect:
-                playing = self.msg_nc
+                    playing = pangocffi.markup_escape_text(text)
             else:
-                playing = ''
+                playing = self.do_format(self.fmt_stopped)
+
+        except Exception:
+            self.log.exception('Mpd error on update')
 
         return playing
 
+    def poll(self):
+        was_connected = self.connected
+
+        if not self.connected:
+            if self.reconnect:
+                while not self.stop and not self.connect(quiet=True):
+                    time.sleep(self.reconnect_interval)
+            else:
+                return
+       
+        if self.stop:
+            return
+
+        if was_connected:
+            try:
+                self.client.send_idle()
+                _ = self.client.fetch_idle()
+            except mpd.ConnectionError:
+                self.client.disconnect()
+                self.connected = False
+                return self.msg_nc
+            except Exception as e:
+                self.log.exception('Error communicating with mpd')
+                self.client.disconnect()
+                return
+
+        return self._get_status()
+
     def button_press(self, x, y, button):
-        if not self.connect(True):
+        if not self.connect():
             return False
         try:
             status = self.client.status()
