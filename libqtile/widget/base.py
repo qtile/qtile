@@ -322,6 +322,56 @@ class ThreadedPollText(InLoopPollText):
         # TODO: There are nice asyncio constructs for this sort of thing, I think...
         threading.Thread(target=worker).start()
 
+
+class ThreadPoolText(_TextBox):
+    """ A common interface for wrapping blocking events which when triggered
+    will update a textbox.  This is an alternative to the ThreadedPollText
+    class which differs by being push based rather than pull.
+
+    The poll method is intended to wrap a blocking function which may take
+    quite a while to return anything.  It will be executed as a future and
+    should return updated text when completed.  It may also return None to
+    disable any further updates.
+
+    param: text - Initial text to display.
+    """
+    def __init__(self, text, **config):
+        super(ThreadPoolText, self).__init__(text, width=bar.CALCULATED, **config)
+
+    def timer_setup(self):
+        def on_done(future):
+            try:
+                result = future.result()
+            except Exception:
+                self.log.exception('poll() raised exceptions, not rescheduling')
+        
+            if result is not None:
+                try:
+                    self.update(result)
+                    self.timer_setup()
+                except Exception:
+                    self.log.exception('Failed to reschedule.')
+            else:
+                self.log.warning('poll() returned None, not rescheduling')
+
+        future = self.qtile.run_in_executor(self.poll)
+        future.add_done_callback(on_done)
+
+    def update(self, text):
+        old_width = self.layout.width
+        if self.text == text:
+            return
+
+        self.text = text
+
+        if self.layout.width == old_width:
+            self.draw()
+        else:
+            self.bar.draw()
+          
+    def poll(self):
+        pass
+
 # these two classes below look SUSPICIOUSLY similar
 
 class PaddingMixin(object):
