@@ -344,7 +344,7 @@ class ThreadPoolText(_TextBox):
                 result = future.result()
             except Exception:
                 self.log.exception('poll() raised exceptions, not rescheduling')
-        
+
             if result is not None:
                 try:
                     self.update(result)
@@ -368,7 +368,7 @@ class ThreadPoolText(_TextBox):
             self.draw()
         else:
             self.bar.draw()
-          
+
     def poll(self):
         pass
 

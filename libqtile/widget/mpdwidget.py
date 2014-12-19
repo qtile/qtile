@@ -69,7 +69,6 @@ class Mpd(base.ThreadPoolText):
             except:
                 pass
 
-
     def connect(self, quiet=False):
         if self.connected:
             return True
@@ -247,19 +246,19 @@ class Mpd(base.ThreadPoolText):
                     time.sleep(self.reconnect_interval)
             else:
                 return
-       
+
         if self.stop:
             return
 
         if was_connected:
             try:
                 self.client.send_idle()
-                _ = self.client.fetch_idle()
+                self.client.fetch_idle()
             except mpd.ConnectionError:
                 self.client.disconnect()
                 self.connected = False
                 return self.msg_nc
-            except Exception as e:
+            except Exception:
                 self.log.exception('Error communicating with mpd')
                 self.client.disconnect()
                 return
