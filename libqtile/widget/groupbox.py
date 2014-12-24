@@ -138,7 +138,8 @@ class GroupBox(_GroupBase):
             "Border colour for group on other screen."
         ),
         ("urgent_border", "FF0000", "Urgent border color"),
-        ("invert_mouse_wheel", False, "Whether to invert mouse wheel group movement")
+        ("invert_mouse_wheel", False, "Whether to invert mouse wheel group movement"),
+        ("show_empty_groups", True, "Whether to show groups with no windows")
     ]
 
     def __init__(self, **config):
@@ -185,6 +186,8 @@ class GroupBox(_GroupBase):
     def calculate_width(self):
         width = 0
         for g in self.qtile.groups:
+            if not self.show_empty_groups and len(g.windows) == 0:
+                continue
             width += self.box_width([g])
         return width
 
@@ -195,7 +198,10 @@ class GroupBox(_GroupBase):
         self.drawer.clear(self.background or self.bar.background)
 
         offset = 0
-        for i, g in enumerate(self.qtile.groups):
+        for g in self.qtile.groups:
+            if not self.show_empty_groups and len(g.windows) == 0:
+                continue
+
             is_block = (self.highlight_method == 'block')
 
             bw = self.box_width([g])
