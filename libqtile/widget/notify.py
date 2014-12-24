@@ -52,6 +52,9 @@ class Notify(base._TextBox):
             )
 
     def update(self, notif):
+        self.qtile.call_soon_threadsafe(self.real_update, notif)
+
+    def real_update(self, notif):
         self.set_notif_text(notif)
         self.current_id = notif.id - 1
         if notif.timeout and notif.timeout > 0:

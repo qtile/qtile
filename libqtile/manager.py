@@ -32,6 +32,7 @@ import shlex
 import signal
 import sys
 import traceback
+import threading
 import xcffib
 import xcffib.xinerama
 import xcffib.xproto
@@ -168,6 +169,8 @@ class Qtile(command.CommandObject):
             xcffib.xproto.NoExposureEvent
         ])
 
+        self.setup_python_dbus()
+
         self.conn.flush()
         self.conn.xsync()
         self._xpoll()
@@ -230,6 +233,32 @@ class Qtile(command.CommandObject):
         # ask for selection on starup
         self.convert_selection(PRIMARY)
         self.convert_selection(CLIPBOARD)
+
+    def setup_python_dbus(self):
+        # This is a little strange. python-dbus internally depends on gobject,
+        # so gobject's threads need to be running, and a gobject "main loop
+        # thread" needs to be spawned, but we try to let it only interact with
+        # us via calls to asyncio's call_soon_threadsafe.
+        try:
+            # We import dbus here to thrown an ImportError if it isn't
+            # available. Since the only reason we're running this thread is
+            # because of dbus, if dbus isn't around there's no need to run
+            # this thread.
+            import dbus  # noqa
+            from six.moves import gobject
+
+            gobject.threads_init()
+            def gobject_thread():
+                ctx = gobject.main_context_default()
+                while not self._eventloop.is_closed():
+                    try:
+                        ctx.iteration(True)
+                    except Exception:
+                        self.qtile.exception("got exception from gobject")
+            t = threading.Thread(target=gobject_thread, name="gobject_thread")
+            t.start()
+        except ImportError:
+            self.log.warning("importing dbus/gobject failed, dbus will not work.")
 
     def _process_fake_screens(self):
         """

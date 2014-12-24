@@ -17,6 +17,20 @@ class Mpris(base._TextBox):
                  objname='org.mpris.clementine', **config):
         base._TextBox.__init__(self, " ", width, **config)
 
+        self.dbus_loop = None
+
+        self.objname = objname
+        self.connected = False
+        self.name = name
+
+    def _configure(self, qtile, bar):
+        base._TextBox._configure(self, qtile, bar)
+
+        # we don't need to reconnect all the dbus stuff if we already
+        # connected it.
+        if self.dbus_loop is not None:
+            return
+
         # we need a main loop to get event signals
         # we just piggyback on qtile's main loop
         self.dbus_loop = DBusGMainLoop()
@@ -31,10 +45,6 @@ class Mpris(base._TextBox):
             "NameOwnerChanged",
             self.handle_name_owner_change
         )
-
-        self.objname = objname
-        self.connected = False
-        self.name = name
 
         # try to connect for grins
         self._connect()
@@ -59,6 +69,7 @@ class Mpris(base._TextBox):
             )
             self.connected = True
         except dbus.exceptions.DBusException:
+            self.qtile.log.exception("exception initalizing mpris")
             self.connected = False
 
     def handle_track_change(self, metadata):
@@ -95,10 +106,14 @@ class Mpris(base._TextBox):
 
     @ensure_connected
     def update(self):
+        self.qtile.call_soon_threadsafe(self.real_update)
+
+    @ensure_connected
+    def real_update(self):
         if not self.configured:
-            return True
+            playing = 'Not configured'
         if not self.connected:
-            playing = ''
+            playing = 'Not Connected'
         elif not self.is_playing():
             playing = 'Stopped'
         else:
