@@ -703,6 +703,11 @@ class Qtile(command.CommandObject):
             self._eventloop.remove_reader(fd)
             self._eventloop.close()
             self.conn.conn.disconnect()
+            try:
+                from six.moves import gobject
+                gobject.idle_add(lambda: None)
+            except ImportError:
+                pass
 
     def find_screen(self, x, y):
         """
