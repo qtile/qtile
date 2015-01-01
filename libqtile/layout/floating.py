@@ -9,6 +9,10 @@ DEFAULT_FLOAT_WM_TYPES = set([
     'dialog',
 ])
 
+DEFAULT_FLOAT_RULES = [
+    {"role": "About"},
+]
+
 
 class Floating(Layout):
     """
@@ -50,7 +54,7 @@ class Floating(Layout):
         Layout.__init__(self, **config)
         self.clients = []
         self.focused = None
-        self.float_rules = float_rules or []
+        self.float_rules = float_rules or DEFAULT_FLOAT_RULES
         self.add_defaults(Floating.defaults)
 
     def match(self, win):
