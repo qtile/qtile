@@ -460,6 +460,9 @@ class _Window(command.CommandObject):
 
         self.window.send_event(event, mask=EventMask.StructureNotify)
 
+    def can_steal_focus(self):
+        return self.window.get_wm_type() != 'notification'
+
     def focus(self, warp):
 
         # Workaround for misbehaving java applications (actually it might be

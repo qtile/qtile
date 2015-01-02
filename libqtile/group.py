@@ -176,7 +176,7 @@ class _Group(command.CommandObject):
             screen=self.screen.index if self.screen else None
         )
 
-    def add(self, win):
+    def add(self, win, focus=True):
         hook.fire("group_window_add")
         self.windows.add(win)
         win.group = self
@@ -196,7 +196,8 @@ class _Group(command.CommandObject):
         else:
             for i in self.layouts:
                 i.add(win)
-        self.focus(win, True)
+        if focus:
+            self.focus(win, True)
 
     def remove(self, win):
         self.windows.remove(win)
