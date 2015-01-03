@@ -19,7 +19,7 @@ ckpatch: lint check
 
 .PHONY: clean
 clean:
-	-rm -rf dist qtile.egg-info docs/_build
+	-rm -rf dist qtile.egg-info docs/_build build/
 
 # strip off the leading 'v'
 VERSION=$(shell git describe --tags | cut -c 2-)
