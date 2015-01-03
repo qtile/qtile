@@ -4,6 +4,7 @@ default:
 	@echo "'make ckpatch'" to check a patch
 	@echo "'make clean'" to clean generated files
 	@echo "'make deb'" to generate debian package
+	@echo "'make man'" to generate debian package
 
 .PHONY: check
 check:
@@ -32,7 +33,7 @@ VERSION=$(shell git describe --tags | cut -c 2-)
 .PHONY: man
 man:
 	python setup.py build_sphinx -b man
-	cp docs/_build/man/* resources/
+	cp build/sphinx/man/* resources/
 
 .PHONY: deb
 deb:
