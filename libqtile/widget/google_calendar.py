@@ -100,12 +100,6 @@ class GoogleCalendar(base.ThreadedPollText):
         self.add_defaults(GoogleCalendar.defaults)
         self.text = 'Calendar not initialized.'
 
-    def timer_setup(self):
-        base.ThreadedPollText.timer_setup(self)
-        self.cred_init()
-        # confirm credentials every hour
-        self.timeout_add(3600, self.timer_setup)
-
     def cred_init(self):
         # this is the main method for obtaining credentials
         self.log.info('refreshing GC credentials')
@@ -130,12 +124,13 @@ class GoogleCalendar(base.ThreadedPollText):
         # FLOW must be run in a different thread or it blocks qtile
         # when it tries to pop the authentication web page
         def get_from_flow(creds, storage):
-            if creds is None or creds.invalid:
-                self.credentials = run(FLOW, storage)
-        threading.Thread(
-            target=get_from_flow,
-            args=(self.credentials, storage)
-        ).start()
+            self.credentials = run(FLOW, storage)
+
+        if self.credentials is None or self.credentials.invalid:
+            threading.Thread(
+                target=get_from_flow,
+                args=(self.credentials, storage)
+            ).start()
 
     def button_press(self, x, y, button):
         base.ThreadedPollText.button_press(self, x, y, button)
@@ -169,6 +164,7 @@ class GoogleCalendar(base.ThreadedPollText):
             maxResults='1',
             orderBy='startTime'
         ).execute()
+        self.qtile.log.info('calendar json data: %s' % str(events))
 
         # get items list
         try:
@@ -181,10 +177,10 @@ class GoogleCalendar(base.ThreadedPollText):
             remindertime = datetime.timedelta(
                 0,
                 int(
-                    event.get('reminders').get('overrides')[0].get('minutes')
+                    event['reminders']['overrides'][0]['minutes']
                 ) * 60
             )
-        except (IndexError, ValueError, AttributeError):
+        except (IndexError, ValueError, AttributeError, KeyError):
             remindertime = datetime.timedelta(0, 0)
 
         time = re.sub(
@@ -200,4 +196,7 @@ class GoogleCalendar(base.ThreadedPollText):
         if parse_result - remindertime <= datetime.datetime.now():
             data = '<span color="%s">%s</span>' % (utils.hex(self.reminder_color), data)
 
-        return data
+        self.qtile.log.info('returned data from poll: %s' % str(data))
+        # XXX: FIXME: qtile dies completely silently if we return unicode here
+        # in python2.
+        return str(data)
