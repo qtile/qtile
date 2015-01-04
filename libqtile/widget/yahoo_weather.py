@@ -3,11 +3,8 @@
 
 from . import base
 from xml.dom import minidom
+import json
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.parse import urlencode

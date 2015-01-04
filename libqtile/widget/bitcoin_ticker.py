@@ -2,14 +2,10 @@
 # -*- coding: utf-8 -*-
 
 from . import base
+import json
 import locale
 
 from six.moves.urllib.request import urlopen
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 
 class BitcoinTicker(base.ThreadedPollText):
