@@ -808,7 +808,7 @@ class Qtile(command.CommandObject):
 
             # If the selection property is None, it is unset, which means the
             # clipboard is empty.
-            value = prop.value.to_string() or ""
+            value = prop and prop.value.to_string() or ""
 
             self.selection[name]["selection"] = value
             hook.fire("selection_change", name, self.selection[name])
