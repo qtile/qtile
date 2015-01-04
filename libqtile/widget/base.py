@@ -181,6 +181,16 @@ class _TextBox(_Widget):
     def font(self):
         return self._font
 
+    @property
+    def foreground(self):
+        return self._foreground
+
+    @foreground.setter
+    def foreground(self, fg):
+        self._foreground = fg
+        if self.layout:
+            self.layout.colour = fg
+
     @font.setter
     def font(self, value):
         self._font = value
