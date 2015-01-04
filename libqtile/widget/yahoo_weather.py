@@ -9,12 +9,8 @@ try:
 except ImportError:
     import simplejson as json
 
-try:
-    from urllib.request import urlopen  # Python 3
-    from urllib.parse import urlencode
-except ImportError:
-    from urllib import urlencode  # Python 2
-    from urllib2 import urlopen
+from six.moves.urllib.request import urlopen
+from six.moves.urllib.parse import urlencode
 
 QUERY_URL = 'http://query.yahooapis.com/v1/public/yql?'
 WEATHER_URL = 'http://weather.yahooapis.com/forecastrss?'

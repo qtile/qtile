@@ -4,10 +4,7 @@
 from . import base
 import locale
 
-try:
-    from urllib.request import urlopen  # Python 3
-except ImportError:
-    from urllib2 import urlopen  # Python 2
+from six.moves.urllib.request import urlopen
 
 try:
     import json
