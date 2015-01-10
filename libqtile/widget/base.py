@@ -112,7 +112,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
         """
             Info for this object.
         """
-        return dict(name=self.name)
+        return self.info()
 
     def draw(self):
         """
@@ -260,6 +260,12 @@ class _TextBox(_Widget):
         if fontshadow is not UNSPECIFIED:
             self.fontshadow = fontshadow
         self.bar.draw()
+
+    def info(self):
+        d = _Widget.info(self)
+        d['foreground'] = self.foreground
+        d['text'] = self.text
+        return d
 
 
 class InLoopPollText(_TextBox):

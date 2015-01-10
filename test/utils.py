@@ -1,5 +1,6 @@
 import libqtile
 import libqtile.ipc
+from libqtile.manager import Qtile, init_log
 
 import logging
 import multiprocessing
@@ -163,9 +164,8 @@ class Xephyr(object):
 
         def runQtile():
             try:
-                q = libqtile.manager.Qtile(
-                    config, self.display, self.sockfile,
-                    log=libqtile.manager.init_log(logging.INFO, log_path=self.logfile))
+                q = Qtile(config, self.display, self.sockfile,
+                          log=init_log(logging.INFO, log_path=self.logfile))
                 q.loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
@@ -268,7 +268,7 @@ class Xephyr(object):
         had an attached group."
 
     def qtileRaises(self, exc, config):
-        assert_raises(exc, libqtile.manager.Qtile,
+        assert_raises(exc, Qtile,
                       config, self.display, self.sockfile)
 
     def testWindow(self, name):
