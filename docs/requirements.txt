@@ -1,0 +1,5 @@
+jinja2
+sphinx
+sphinx_rtd_theme
+sphinxcontrib-seqdiag
+watchdog

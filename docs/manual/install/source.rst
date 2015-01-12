@@ -1,3 +1,4 @@
+======================
 Installing from Source
 ======================
 
@@ -6,7 +7,7 @@ Additionally, qtile uses a branch of cairocffi that has not yet been merged, so
 you need to install that from source. A step by step guide is below.
 
 xcffib
-------
+======
 
 Qtile uses xcffib_ as an XCB binding, which has its own instructions for
 building from source including building several Haskell packages, but is
@@ -19,7 +20,7 @@ available from PyPi via:
 .. _xcffib: https://github.com/tych0/xcffib
 
 cairocffi
----------
+=========
 
 Qtile uses cairocffi_ with XCB support via xcffib.  The latest version on PyPi
 has these features once xcffib is installed:
@@ -31,7 +32,7 @@ has these features once xcffib is installed:
 .. _cairocffi: https://pythonhosted.org/cairocffi/overview.html
 
 asyncio/trollius
-----------------
+================
 
 Qtile uses the asyncio module as introduced in `PEP 3156`_ for its event loop.
 Based on your Python version, there are different ways to install this:
@@ -43,7 +44,7 @@ Based on your Python version, there are different ways to install this:
   by calling:
 
   .. code-block:: bash
-    
+
       sudo pip install asyncio
 
   Alternatively, you can install trollius (see next point).
@@ -61,7 +62,7 @@ Based on your Python version, there are different ways to install this:
 .. _trollius: http://trollius.readthedocs.org/
 
 importlib
----------
+=========
 
 - Python <=2.6 you will need to install importlib from PyPi:
 
@@ -70,7 +71,7 @@ importlib
       sudo pip install importlib
 
 Qtile
------
+=====
 
 With the dependencies in place, you can now install qtile:
 

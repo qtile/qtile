@@ -1,3 +1,4 @@
+========================
 Installing on Arch Linux
 ========================
 
@@ -8,7 +9,7 @@ Qtile is available on the `AUR`_ as:
 - `qtile`_ stable branch(release) of qtile.
 
 Using an AUR Helper
--------------------
+===================
 
 The preferred way to install Qtile is with an `AUR helper`_. For example,
 if you use `yaourt`_:
@@ -23,7 +24,7 @@ if you use `yaourt`_:
     yaourt -S qtile-python3-git
 
 Using pacman for develop
-------------------------
+========================
 
 You can choose python3 or python2
 
@@ -50,7 +51,7 @@ Also you need these packages from AUR:
 - `trollius`_
 
 Using pacman for release
-------------------------
+========================
 
 **Packages in Core:**
 
@@ -69,7 +70,7 @@ You need:
 - `qtile`_
 
 Installing AUR packages without helper
---------------------------------------
+======================================
 
 To install these packages, download the .tar.gz's from the AUR and run the
 following commands for each:
