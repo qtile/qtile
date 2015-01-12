@@ -92,13 +92,13 @@ class GoogleCalendar(base.ThreadedPollText):
             '/usr/bin/firefox -url calendar.google.com',
             'command or script to execute on click'
         ),
-        ('markup', True, 'Use pango markup by default.'),
     ]
 
     def __init__(self, **config):
         base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(GoogleCalendar.defaults)
         self.text = 'Calendar not initialized.'
+        self.default_foreground = self.foreground
 
     def cred_init(self):
         # this is the main method for obtaining credentials
@@ -143,7 +143,6 @@ class GoogleCalendar(base.ThreadedPollText):
         # if we don't have valid credentials, update them
         if not hasattr(self, 'credentials') or self.credentials.invalid:
             self.cred_init()
-            return 'Credentials updating'
 
         # Create an httplib2.Http object to handle our HTTP requests and
         # authorize it with our credentials from self.cred_init
@@ -194,9 +193,10 @@ class GoogleCalendar(base.ThreadedPollText):
         # colorize the event if it is upcoming
         parse_result = dateutil.parser.parse(event['start']['dateTime'], ignoretz=True)
         if parse_result - remindertime <= datetime.datetime.now():
-            data = '<span color="%s">%s</span>' % (utils.hex(self.reminder_color), data)
+            self.foreground = utils.hex(self.reminder_color)
+        else:
+            self.foreground = self.default_foreground
 
-        self.qtile.log.info('returned data from poll: %s' % str(data))
         # XXX: FIXME: qtile dies completely silently if we return unicode here
         # in python2.
         return str(data)
