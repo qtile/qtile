@@ -1,3 +1,4 @@
+=====
 Mouse
 =====
 
@@ -7,7 +8,7 @@ global mouse actions, and is a list of ``Click`` and
 is clicked or dragged.
 
 Example
-~~~~~~~
+=======
 
 ::
 

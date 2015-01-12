@@ -1,3 +1,4 @@
+=====================
 Default Configuration
 =====================
 
@@ -14,7 +15,7 @@ just there so qtile does /something/ when fired up, and so that it doesn't
 crash and cause you to lose all your work if you reload a bad config.
 
 Configuration Lookup
---------------------
+====================
 
 Qtile looks in the following places for a configuration file, in order:
 
@@ -25,7 +26,7 @@ Qtile looks in the following places for a configuration file, in order:
   default with every qtile installation.
 
 Key Bindings
-------------
+============
 
 The mod key for the default config is ``mod4``, which is typically bound to
 the "Super" keys, which are things like the windows key and the mac control
@@ -52,7 +53,7 @@ The default configuration has several more advanced key combinations, but the
 above should be enough for basic usage of qtile.
 
 Mouse Bindings
---------------
+==============
 
 By default, holding your ``mod`` key and clicking (and holding) a window will
 allow you to drag it around as a floating window.

@@ -1,3 +1,4 @@
+===
 qsh
 ===
 
@@ -10,7 +11,7 @@ file. See the GNU Readline documentation for more information.
 
 
 Navigating the Object Graph
----------------------------
+===========================
 
 The shell presents a filesystem-like interface to the object graph - the
 builtin "cd" and "ls" commmands act like their familiar shell counterparts:
@@ -50,7 +51,7 @@ should be used in scripts and key bindings:
     group['4'].window[31457314]>
 
 Documentation
--------------
+=============
 
 The shell help provides the canonical documentation for the Qtile API:
 

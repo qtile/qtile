@@ -1,23 +1,24 @@
+====================
 Installing on Funtoo
 ====================
 
 Portage
--------
+=======
 
 The ebuild in portage is broken for now, as of missing xpyb support for pycairo, but will be fixed in some future releases.
 
 Manual (Github)
----------------
+===============
 
 This section is taken from the documents from Qtile. [#]_.
 
 Dependencies
-~~~~~~~~~~~~
+------------
 
 USE flags and keyword changes may have to be made for the packages taken from portage.
 
 libxcb
-~~~~~~
+------
 
 libxcb can be emerged from portage.
 
@@ -27,7 +28,7 @@ libxcb can be emerged from portage.
 
 
 xpyb
-~~~~
+----
 
 xpyb can be emerged from portage. Make sure that you are emerging xpyb-1.3.1 or above.
 
@@ -37,7 +38,7 @@ xpyb can be emerged from portage. Make sure that you are emerging xpyb-1.3.1 or 
 
 
 cairo
-~~~~~
+-----
 
 cairo can be emerged from portage. Make sure you have your USE flags set to:
 
@@ -52,7 +53,7 @@ and then emerge cairo:
     # emerge -avt cairo
 
 pygtk
-~~~~~
+-----
 
 pygtk can be merged from portage.
 
@@ -62,7 +63,7 @@ pygtk can be merged from portage.
 
 
 py2cairo
-~~~~~~~~
+--------
 
 Needs to be build manually cause of reason above.
 
@@ -83,7 +84,7 @@ As an alternative to virtualenv, you can
 But the virtualenv is the recommended option in installation if you are an advanced user with python, else use the systemwide alternative.
 
 qtile
-~~~~~
+-----
 
 .. code-block:: bash
 
@@ -92,7 +93,7 @@ qtile
     # sudo python setup.py install --record files_uninstall.txt
 
 Setup
------
+=====
 
 **Copy** either a config from the examples directory in the cloned qtile **(including a default config)**, a config you have found elsewhere, or create your own config.
 
@@ -107,7 +108,7 @@ Setup
 Another config is `config.py <https://github.com/akiress/dotfiles/blob/master/qtile/config.py>`_, this is based on `dmpayton's config.py <https://github.com/dmpayton/dotfiles/blob/master/qtile/config.py>`_.
 
 Testing Qtile Installation
---------------------------
+==========================
 
 If you have a running DE/WM already you can test your qtile config with the following steps:
 
@@ -128,7 +129,7 @@ or using the build in code: [#]_
 For further information, see the Documentation section.
 
 dmenu
------
+=====
 
 Qtile uses dmenu as the application launcher
 
@@ -137,7 +138,7 @@ Qtile uses dmenu as the application launcher
     # emerge dmenu
 
 xinitrc
--------
+=======
 
 An example of preparing Qtile to start with the startup-session script for autostarting apps in the ~/.xinitrc:
 
@@ -167,7 +168,7 @@ and the connected ~/.qtile-session
     dropbox &
 
 X and RandR
------------
+===========
 
 **NOTE: RandR and Xinerama do not play together. Use one or the other.**
 I use an AMD HD 6870 with 3 monitors (2 DVI and 1 with an AMD validated Mini DisplayPort™ to DVI dongle).
@@ -203,7 +204,7 @@ or, in a case similar to mine,
     # xinit qtile
 
 Starting with CDM
------------------
+=================
 
 Another good tool for starting qtile is **CDM** (short for Console Display Manager). To make it work, just merge cdm
 
