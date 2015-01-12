@@ -1,0 +1,20 @@
+seqdiag {
+    activation = none;
+    default_fontsize = 14;
+    default_note_color = Yellow;
+
+    feature [color=Cornsilk, label="feature/xxx"];
+    develop [color=PowderBlue];
+    master [color=LightGreen];
+
+    develop --> feature [label="git branch"];
+    feature -> feature [label="git commit"];
+    feature -> feature [label="git commit"];
+    develop -> feature [label="git merge", leftnote="sync with develop"];
+    feature -> feature [label="git commit"];
+    feature -> develop [label="git merge"];
+
+    === rinse and repeat ===
+
+    develop -> master [label="git merge", rightnote="new release!"];
+}
