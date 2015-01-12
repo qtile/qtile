@@ -1,0 +1,55 @@
+digraph G {
+    layout = circo;
+    root = "root";
+    splines = true;
+
+    node [style="filled", color=DarkGray, fillcolor=Gray, label="root"];
+    root;
+
+    node [style="filled", color=Red, fillcolor=Tomato, label="bar"];
+    bar;
+
+    node [style="filled", color=OrangeRed, fillcolor=Orange, label="group"];
+    group;
+
+    node [style="filled", color=Goldenrod, fillcolor=Gold, label="layout"]
+    layout;
+
+    node [style="filled", color=DarkGreen, fillcolor=LimeGreen, label="screen"];
+    screen;
+
+    node [style="filled", color=Blue, fillcolor=LightBlue, label="widget"];
+    widget;
+
+    node [style="filled", color=Purple, fillcolor=Violet, label="window"];
+    window;
+
+    root -> bar;
+    root -> group;
+    root -> layout;
+    root -> screen;
+    root -> widget;
+    root -> window;
+
+    bar -> screen;
+
+    group -> layout;
+    group -> screen;
+    group -> window;
+
+    layout -> group;
+    layout -> screen;
+    layout -> window;
+
+    screen -> bar;
+    screen -> layout;
+    screen -> window;
+
+    widget -> bar;
+    widget -> group;
+    widget -> screen;
+
+    window -> group;
+    window -> screen;
+    window -> layout;
+}
