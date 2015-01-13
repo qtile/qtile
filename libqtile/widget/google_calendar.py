@@ -34,6 +34,10 @@
 # Installing the Google API oauth2 dependencies should be done before
 # running the widget.
 #
+# Note for python 3.x: the google-api-python-client module doesn't
+# exist. There is an "unofficial" port of the module available here:
+# https://github.com/enorvelle/GoogleApiPython3x
+#
 # This widget also requires the dateutil.parser module.
 # If you get a strange "AttributeError: 'module' object has no attribute
 # GoogleCalendar" error, you are probably missing a module. Check
