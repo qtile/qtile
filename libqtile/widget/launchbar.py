@@ -27,8 +27,8 @@ class LaunchBar(base._Widget):
 
     defaults = [
         ('padding', 2, 'Padding between icons'),
-        ('default_icon', '/usr/share/icons/oxygen/256x256/mimetypes/\
-        application-x-executable.png', 'Default icon not found'),
+        ('default_icon', '/usr/share/icons/oxygen/256x256/mimetypes/'
+        'application-x-executable.png', 'Default icon not found'),
     ]
 
     def __init__(self, progs=None, width=bar.CALCULATED, **config):
