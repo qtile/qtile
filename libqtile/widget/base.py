@@ -81,7 +81,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
 
     def info(self):
         return dict(
-            name=self.__class__.__name__,
+            name=self.name,
             offset=self.offset,
             width=self.width,
         )

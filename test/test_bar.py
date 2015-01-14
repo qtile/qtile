@@ -87,7 +87,7 @@ def test_completion():
 def test_draw(self):
     self.testWindow("one")
     b = self.c.bar["bottom"].info()
-    assert b["widgets"][0]["name"] == "GroupBox"
+    assert b["widgets"][0]["name"] == "groupbox"
 
 
 @Xephyr(True, GBConfig())
