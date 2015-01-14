@@ -8,7 +8,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, bar.CALCULATED, **config)
+        base._TextBox.__init__(self, width=bar.CALCULATED, **config)
         self.add_defaults(_GroupBase.defaults)
         self.add_defaults(base.PaddingMixin.defaults)
         self.add_defaults(base.MarginMixin.defaults)
