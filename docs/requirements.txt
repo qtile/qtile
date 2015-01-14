@@ -1,5 +1,6 @@
 jinja2
 sphinx
 sphinx_rtd_theme
+sphinxcontrib-blockdiag
 sphinxcontrib-seqdiag
 watchdog
