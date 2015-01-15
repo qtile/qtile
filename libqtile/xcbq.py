@@ -370,7 +370,7 @@ class Window:
         """
             Extract a string from a window property reply message.
         """
-        return r.value.to_string()
+        return b''.join(r.value).decode('utf-8')
 
     def _propertyUTF8(self, r):
         return r.value.to_utf8()
