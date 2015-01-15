@@ -34,8 +34,7 @@ Our workflow is based on Vincent Driessen's `successful git branching model
 
 * The ``master`` branch is our current release
 * The ``develop`` branch is what all pull requests should be based against
-* Feature branches, generally named ``feature/branch-name``, are where new
-  features, both major and minor, should be developed.
+* Feature branches are where new features, both major and minor, should be developed.
 
 .. seqdiag:: /_static/diagrams/git-branching-strategy.diag
 

@@ -3,7 +3,7 @@ seqdiag {
     default_fontsize = 14;
     default_note_color = Yellow;
 
-    feature [color=Cornsilk, label="feature/xxx"];
+    feature [color=Cornsilk, label="feature"];
     develop [color=PowderBlue];
     master [color=LightGreen];
 
