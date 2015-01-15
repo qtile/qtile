@@ -11,7 +11,27 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
+import os
+import sys
+from mock import MagicMock
+
+
+class Mock(MagicMock):
+    @classmethod
+    def __getattr__(cls, name):
+            return Mock()
+
+MOCK_MODULES = [
+    'cairocffi',
+    'cffi',
+    'trollius',
+    'xcffib',
+    'xcffib.randr',
+    'xcffib.xfixes',
+    'xcffib.xinerama',
+    'xcffib.xproto'
+]
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
