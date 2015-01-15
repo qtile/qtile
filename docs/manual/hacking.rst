@@ -44,11 +44,27 @@ In practice, the development cycle looks something like this:
 Second X Session
 ================
 
-Some users prefer to test Qtile in it's own brand new X session. If you'd like
-to run a second X session, you can switch to a new tty and start a new one
-with ``xinit second_xsession``, where ``second_xsession`` is a file invoking
-your development version of qtile (and doing any other setup you want).
-Examples of custom ``xsession`` files are available in `qtile-examples
+Some users prefer to test Qtile in a second, completely separate X session:
+Just switch to a new tty and run ``startx`` normally to use the ``~/.xinitrc``
+X startup script.
+
+It's likely though that you want to use a different, customized startup script
+for testing purposes, for example ``~/.config/qtile/xinitrc``. You can do so by
+launching X with:
+
+.. code-block:: bash
+
+  startx ~/.config/qtile/xinitrc
+
+``startx`` deals with multiple X sessions automatically. If you want to use
+``xinit`` instead, you need to first copy ``/etc/X11/xinit/xserverrc`` to
+``~/.xserverrc``; when launching it, you have to specify a new session number:
+
+.. code-block:: bash
+
+  xinit ~/.config/qtile/xinitrc -- :1
+
+Examples of custom X startup scripts are available in `qtile-examples
 <https://github.com/qtile/qtile-examples>`_.
 
 Coding style

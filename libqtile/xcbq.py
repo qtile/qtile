@@ -372,6 +372,9 @@ class Window:
         """
         return r.value.to_string()
 
+    def _propertyUTF8(self, r):
+        return r.value.to_utf8()
+
     def send_event(self, synthevent, mask=EventMask.NoEvent):
         self.conn.conn.core.SendEvent(False, self.wid, mask, synthevent.pack())
 
@@ -408,11 +411,11 @@ class Window:
             xcffib.xproto.GetPropertyType.Any
         )
         if r:
-            return self._propertyString(r)
+            return self._propertyUTF8(r)
 
         r = self.get_property("_NET_WM_NAME", xcffib.xproto.GetPropertyType.Any)
         if r:
-            return self._propertyString(r)
+            return self._propertyUTF8(r)
 
         r = self.get_property(
             xcffib.xproto.Atom.WM_NAME,

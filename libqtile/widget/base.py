@@ -1,4 +1,5 @@
 from .. import command, bar, configurable, drawer
+import six
 import logging
 import threading
 import warnings
@@ -80,7 +81,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
 
     def info(self):
         return dict(
-            name=self.__class__.__name__,
+            name=self.name,
             offset=self.offset,
             width=self.width,
         )
@@ -173,6 +174,7 @@ class _TextBox(_Widget):
 
     @text.setter
     def text(self, value):
+        assert value is None or isinstance(value, six.string_types)
         self._text = value
         if self.layout:
             self.layout.text = value
