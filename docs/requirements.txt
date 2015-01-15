@@ -1,8 +1,8 @@
 jinja2
+mock
+six
 sphinx
 sphinx_rtd_theme
 sphinxcontrib-blockdiag
 sphinxcontrib-seqdiag
 watchdog
-
--r ../requirements.txt
