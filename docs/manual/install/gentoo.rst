@@ -1,8 +1,9 @@
+====================
 Installing on Gentoo
 ====================
 
 Prepare Dependencies
---------------------
+====================
 
 You may apply these USE-Flags:
 
@@ -12,7 +13,7 @@ You may apply these USE-Flags:
     echo "x11-libs/cairo X glib opengl svg xcb" >> /etc/portage/package.use
 
 Install
--------
+=======
 
 Simply unmask and emerge:
 
@@ -35,7 +36,7 @@ where build is i.e
     /usr/lib64/python2.7/site-packages
 
 Test Installation
------------------
+=================
 
 You can test your installation in Xephyr. If you don't have Xephyr you need to
 set the kdrive USE-Flag for xorg-server

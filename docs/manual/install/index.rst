@@ -1,8 +1,9 @@
+================
 Installing Qtile
 ================
 
 Distro Guides
--------------
+=============
 
 *Warning*: all of these distro guides are out of date with the cffi branch.
 Please install from source for now. Installation will be _much_ simpler in the
@@ -11,13 +12,16 @@ very near future.
 Below are the preferred installation methods for specific distros. If you are
 running something else, please see `Installing From Source`_.
 
-* :doc:`/manual/install/arch`
-* :doc:`/manual/install/funtoo`
-* :doc:`/manual/install/gentoo`
-* :doc:`/manual/install/ubuntu`
+.. toctree::
+    :maxdepth: 1
+
+    Arch <arch>
+    Funtoo <funtoo>
+    Gentoo <gentoo>
+    Ubuntu <ubuntu>
 
 Installing From Source
-----------------------
+======================
 
 Qtile relies on some cutting-edge features in PyCairo, XCB, and xpyb. Until the
 latest versions of these projects make it into distros, it's best to use recent
@@ -30,7 +34,7 @@ from source:
 
 
 Once You've Installed
----------------------
+=====================
 
 Once you've installed there are several ways to start Qtile. The most common
 way is via an entry in your X session manager's menu. The default Qtile
