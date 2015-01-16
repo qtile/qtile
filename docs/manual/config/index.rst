@@ -6,12 +6,6 @@ Qtile is configured in Python. A script (``~/.config/qtile/config.py`` by
 default) is evaluated, and a small set of configuration variables are pulled
 from its global namespace.
 
-.. toctree::
-    :maxdepth: 2
-
-    default
-    gnome
-
 Configuration lookup order
 ==========================
 
@@ -26,6 +20,15 @@ Qtile looks in the following places for a configuration file, in order:
 Configuration variables
 =======================
 
+A Qtile configuration consists of a file with a bunch of variables in it, which
+qtile imports and then runs as a python file to derive its final configuration.
+The documentation below describes the most common configuration variables; more
+advanced configuration can be found in the `qtile-examples
+<https://github.com/qtile/qtile-examples>`_ repository, which includes a number
+of real-world configurations that demonstrate how you can tune Qtile to your
+liking. (Feel free to issue a pull request to add your own configuration to the
+mix!)
+
 .. toctree::
     :maxdepth: 1
 
@@ -35,54 +38,6 @@ Configuration variables
     mouse
     screens
     hooks
-
-groups
-------
-
-A list of ``libqtile.config.Group`` objects which defines the group names.
-A group is a container for a bunch of windows, analogous to workspaces in
-other window managers. Each client window managed by the window manager
-belongs to exactly one group.
-
-keys
-----
-
-A list of ``libqtile.config.Key`` objects which defines the keybindings.
-At a minimum, this will probably include bindings to switch between
-windows, groups and layouts.
-
-layouts
--------
-
-A list of layout objects, configuring the layouts you want to use.
-
-mouse
------
-
-A list of ``libqtile.config.Drag`` and ``libqtile.config.Click`` objects
-defining mouse operations.
-
-screens
--------
-
-A list of ``libqtile.config.Screen`` objects, which defines the physical
-screens you want to use, and the bars and widgets associated with them.
-Most of the visible "look and feel" configuration will happen in this
-section.
-
-main()
-------
-
-A function that executes after the window manager is initialized, but
-before groups, screens and other components are set up.
-
-Putting it all together
-=======================
-
-The `qtile-examples <https://github.com/qtile/qtile-examples>`_ repository
-includes a number of real-world configurations that demonstrate how you can
-tune Qtile to your liking. (Feel free to issue a pull request to add your own
-configuration to the mix!)
 
 Testing your configuration
 ==========================
