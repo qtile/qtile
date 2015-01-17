@@ -6,11 +6,7 @@ class DebugInfo(base._TextBox):
     """
         Displays debugging infos about selected window
     """
-    def __init__(self, width=bar.CALCULATED, **config):
-        """
-           - width: A fixed width, or bar.CALCULATED to calculate the width
-           automatically (wich is recommended).
-        """
+    def __init__(self, **config):
         self.log = logging.getLogger('qtile')
         base._TextBox.__init__(self, " ", width, **config)
 

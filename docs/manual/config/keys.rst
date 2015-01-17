@@ -65,7 +65,7 @@ General functions
     * - ``lazy.spawn("application"))``
       - Run the ``application``
     * - ``lazy.spawncmd())``
-      - Open command prompt on the bar. See :ref:`prompt` widget.
+      - Open command prompt on the bar. See prompt widget.
     * - ``lazy.restart())``
       - Restart Qtile and reload its config. It won't close your windows
     * - ``lazy.shutdown())``

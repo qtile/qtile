@@ -12,14 +12,11 @@ class TextBox(base._TextBox):
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("fontshadow", None, "font shadow color, default is None(no shadow)"),
         ("padding", None, "Padding left and right. Calculated if None."),
-        ("foreground", "#ffffff", "Foreground colour.")
+        ("foreground", "#ffffff", "Foreground colour."),
+        ("text", " ", "Initial text for the widget"),
     ]
 
-    def __init__(self, text=" ", width=bar.CALCULATED, **config):
-        """
-            - text: Initial widget text.
-            - width: An integer width, bar.STRETCH, or bar.CALCULATED .
-        """
+    def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, text, width, **config)
 
     def update(self, text):

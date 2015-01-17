@@ -23,8 +23,8 @@ if you use `yaourt`_:
     # or for develop python3
     yaourt -S qtile-python3-git
 
-Using pacman for develop
-========================
+Using pacman
+============
 
 You can choose python3 or python2
 
@@ -50,25 +50,6 @@ Also you need these packages from AUR:
 - `python2-cairocffi`_
 - `trollius`_
 
-Using pacman for release
-========================
-
-**Packages in Core:**
-
-You need pygtk, python2 and cairo
-
-.. code-block:: bash
-
-    sudo pacman -S pygtk cairo
-
-**Packages in the AUR:**
-
-You need:
-
-- `pycairo-xcb-git`_
-- `xorg-xpyb-git`_
-- `qtile`_
-
 Installing AUR packages without helper
 ======================================
 
@@ -93,8 +74,6 @@ http://wiki.archlinux.org/index.php/AUR#Installing_packages
 .. _qtile: https://aur.archlinux.org/packages/qtile/
 .. _qtile-git: https://aur.archlinux.org/packages/qtile-git/
 .. _qtile-python3-git: https://aur.archlinux.org/packages/qtile-python3-git/
-.. _pycairo-xcb-git: http://aur.archlinux.org/packages.php?ID=43939
-.. _xorg-xpyb-git: http://aur.archlinux.org/packages.php?ID=57865
 .. _python-xcffib: https://aur.archlinux.org/packages/python-xcffib/
 .. _python2-xcffib: https://aur.archlinux.org/packages/python2-xcffib/
 .. _python-cairocffi: https://aur.archlinux.org/packages/python-cairocffi/

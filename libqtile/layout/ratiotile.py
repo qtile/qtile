@@ -195,21 +195,20 @@ class RatioTile(Layout):
         ("border_width", 1, "Border width."),
         ("name", "ratiotile", "Name of this layout."),
         ("margin", 0, "Margin of the layout"),
+        ("ratio", GOLDEN_RATIO, "Ratio of the tiles"),
+        ("ratio_increment", 0.1, "Amount to inrement per ratio increment"),
+        ("fancy", False, "Use a different method to calculate window sizes."),
     ]
 
-    def __init__(self, ratio=GOLDEN_RATIO, ratio_increment=0.1,
-                 fancy=False, **config):
+    def __init__(self, **config):
         Layout.__init__(self, **config)
         self.add_defaults(RatioTile.defaults)
         self.clients = []
-        self.ratio_increment = ratio_increment
-        self.ratio = ratio
         self.focused = None
         self.dirty = True  # need to recalculate
         self.layout_info = []
         self.last_size = None
         self.last_screen = None
-        self.fancy = fancy
 
     def clone(self, group):
         c = Layout.clone(self, group)

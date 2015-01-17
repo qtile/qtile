@@ -78,8 +78,6 @@ to ensure your patch complies with reasonable formatting constraints. We also
 request that git commit messages follow the
 `standard format <http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>`_.
 
-Perhaps the biggest issue is tabs vs. spaces: only 4 space tabs, please.
-
 Deprecation policy
 ==================
 
@@ -92,11 +90,8 @@ Testing
 =======
 
 Of course, your patches should also pass the unit tests as well (i.e.
-``make check``). Qtile's tests are not particularly robust under load, so
-travis-ci will sometimes fail tests that would otherwise pass. We are working
-to fix this, but in the meantime, if your tests pass locally but not when you
-make a PR, don't fret, just ask someone on IRC or the mailing list to take a
-look to make sure it is a known issue.
+``make check``). These will be run by travis-ci on every pull request so you
+can see whether or not your contribution passes.
 
 Resources
 =========

@@ -32,51 +32,55 @@ class VerticalTile(Layout):
     (secondary panes) share the remaining space.
     The master area (at default 75%) can grow and shrink via keybindings.
 
+    ::
 
-    -----------------                -----------------  ---
-    |               |                |               |   |
-    |       1       |  <-- Panes     |               |   |
-    |               |        |       |               |   |
-    |---------------|        |       |               |   |
-    |               |        |       |               |   |
-    |       2       |  <-----+       |       1       |   |  Master Area
-    |               |        |       |               |   |
-    |---------------|        |       |               |   |
-    |               |        |       |               |   |
-    |       3       |  <-----+       |               |   |
-    |               |        |       |               |   |
-    |---------------|        |       |---------------|  ---
-    |               |        |       |       2       |   |
-    |       4       |  <-----+       |---------------|   |  Secondary Area
-    |               |                |       3       |   |
-    -----------------                -----------------  ---
+        -----------------                -----------------  ---
+        |               |                |               |   |
+        |       1       |  <-- Panes     |               |   |
+        |               |        |       |               |   |
+        |---------------|        |       |               |   |
+        |               |        |       |               |   |
+        |       2       |  <-----+       |       1       |   |  Master Area
+        |               |        |       |               |   |
+        |---------------|        |       |               |   |
+        |               |        |       |               |   |
+        |       3       |  <-----+       |               |   |
+        |               |        |       |               |   |
+        |---------------|        |       |---------------|  ---
+        |               |        |       |       2       |   |
+        |       4       |  <-----+       |---------------|   |  Secondary Area
+        |               |                |       3       |   |
+        -----------------                -----------------  ---
 
     Normal behavior. No              One maximized pane in the master area
     maximized pane. No               and two secondary panes in the
     specific areas.                  secondary area.
 
+    ::
 
-    -----------------------------------  In some cases VerticalTile can be
-    |                                 |  useful on horizontal mounted
-    |                1                |  monitors two.
-    |                                 |  For example if you want to have a
-    |---------------------------------|  webbrowser and a shell below it.
-    |                                 |
-    |                2                |
-    |                                 |
-    -----------------------------------
+        -----------------------------------  In some cases VerticalTile can be
+        |                                 |  useful on horizontal mounted
+        |                1                |  monitors two.
+        |                                 |  For example if you want to have a
+        |---------------------------------|  webbrowser and a shell below it.
+        |                                 |
+        |                2                |
+        |                                 |
+        -----------------------------------
 
 
-    Keybindings:
+    Suggested keybindings:
 
-    Key([modkey], 'j', lazy.layout.down()),
-    Key([modkey], 'k', lazy.layout.up()),
-    Key([modkey], 'Tab', lazy.layout.next()),
-    Key([modkey, 'shift'], 'Tab', lazy.layout.next()),
-    Key([modkey, 'shift'], 'j', lazy.layout.shuffle_down()),
-    Key([modkey, 'shift'], 'k', lazy.layout.shuffle_up()),
-    Key([modkey], 'm', lazy.layout.maximize()),
-    Key([modkey], 'n', lazy.layout.normalize()),
+    ::
+
+        Key([modkey], 'j', lazy.layout.down()),
+        Key([modkey], 'k', lazy.layout.up()),
+        Key([modkey], 'Tab', lazy.layout.next()),
+        Key([modkey, 'shift'], 'Tab', lazy.layout.next()),
+        Key([modkey, 'shift'], 'j', lazy.layout.shuffle_down()),
+        Key([modkey, 'shift'], 'k', lazy.layout.shuffle_up()),
+        Key([modkey], 'm', lazy.layout.maximize()),
+        Key([modkey], 'n', lazy.layout.normalize()),
     """
 
     defaults = [

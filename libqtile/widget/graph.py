@@ -357,7 +357,7 @@ class HDDGraph(_Graph):
 class HDDBusyGraph(_Graph):
     """
         Parses /sys/block/<dev>/stat file and extracts overall device
-        IO usage, based on `io_ticks`'s value.
+        IO usage, based on ``io_ticks``'s value.
         See https://www.kernel.org/doc/Documentation/block/stat.txt
     """
     defaults = [

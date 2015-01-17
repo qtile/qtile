@@ -96,13 +96,14 @@ class Subscribe:
 
             - arguments: window.Window object
 
-            ## Example:
+            Example::
 
                 def func(c):
                     if c.name == "xterm":
                         c.togroup("a")
                     elif c.name == "dzen":
                         c.static(0)
+
                 libqtile.hook.subscribe.client_new(func)
         """
         return self._subscribe("client_new", func)
@@ -195,7 +196,7 @@ class Subscribe:
             usage is simply to call ``qtile.cmd_restart()`` on each event (to
             restart qtile when there is a new monitor):
 
-            ## Example:
+            Example::
 
                 def restart_on_randr(qtile, ev):
                     qtile.cmd_restart()

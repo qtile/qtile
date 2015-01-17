@@ -11,7 +11,8 @@ Built-in Layouts
 .. qtile_class:: libqtile.layout.max.Max
     :no-commands:
 
-.. TODO:: libqtile.layout.xmonad.MonadTall
+.. qtile_class:: libqtile.layout.xmonad.MonadTall
+    :no-commands:
 
 .. qtile_class:: libqtile.layout.ratiotile.RatioTile
     :no-commands:

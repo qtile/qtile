@@ -20,7 +20,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             "highlight_method",
             "border",
             "Method of highlighting (one of 'border' or 'block') "
-            "Uses *_border color settings"
+            "Uses \*_border color settings"
         ),
         ("urgent_border", "FF0000", "Urgent border color"),
         (

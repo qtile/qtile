@@ -10,17 +10,6 @@ logger = logging.getLogger('qtile')
 class GmailChecker(base.ThreadedPollText):
     """
         A simple gmail checker.
-        settings = {
-            'username': username,
-            'password': password,
-            'email_path': valide email path,
-            'fmt': "format string fot textbox widget",
-            #if status_only_unseen is True
-            #example "my unseen[%s]",
-            #if status_only_unseen is False
-            #example "messages: %s, unseen: %s"
-            status_only_unseen: True or False
-        }
     """
     defaults = [
         ("update_interval", 30, "Update time in seconds."),

@@ -60,14 +60,8 @@ to our `issue tracker <https://github.com/qtile/qtile/issues>`_ on Github.
     following:
 
     * **Code** that conforms to PEP8.
-    * **Unit tests** that pass locally and in our CI environment. [#f1]_
+    * **Unit tests** that pass locally and in our CI environment.
     * **Documentation** updates on an as needed basis.
 
 Feel free to add your contribution (no matter how small) to the appropriate
 place in the CHANGELOG as well!
-
-.. [#f1] Qtile's tests are not particularly robust under load, so travis-ci
-    will sometimes fail tests that would otherwise pass. We are working to fix
-    this, but in the meantime, if your tests pass locally but not when you make a
-    PR, don't fret, just ask someone on IRC or the mailing list to take a look to
-    make sure it is a known issue.

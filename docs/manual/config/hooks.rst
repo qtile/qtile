@@ -14,10 +14,11 @@ Examples
 Automatic floating dialogs
 --------------------------
 
-Let's say we wanted to automatically float all dialog windows. We would
-subscribe to the ``client_new`` hook to tell us when a new window has opened
-and, if the type is "dialog", as can set the window to float. In our
-configuration file it would look something like this:
+Let's say we wanted to automatically float all dialog windows (this code is not
+actually necessary; Qtile floats all dialogs by default). We would subscribe to
+the ``client_new`` hook to tell us when a new window has opened and, if the
+type is "dialog", as can set the window to float. In our configuration file it
+would look something like this:
 
 .. code-block:: python
 

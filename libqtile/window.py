@@ -960,12 +960,12 @@ class Window(_Window):
             Match window against given attributes.
 
             - wname matches against the window name or title, that is,
-            either `_NET_WM_VISIBLE_NAME`, `_NET_WM_NAME`, `WM_NAME`.
+            either ``_NET_WM_VISIBLE_NAME``, ``_NET_WM_NAME``, ``WM_NAME``.
 
             - wmclass matches against any of the two values in the
-            `WM_CLASS` property
+            ``WM_CLASS`` property
 
-            - role matches against the `WM_WINDOW_ROLE` property
+            - role matches against the ``WM_WINDOW_ROLE`` property
         """
         if not (wname or wmclass or role):
             raise TypeError(

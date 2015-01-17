@@ -16,14 +16,27 @@ WEATHER_NS = 'http://xml.weather.yahoo.com/ns/rss/1.0'
 
 class YahooWeather(base.ThreadedPollText):
     ''' A weather widget, data provided by the Yahoo! Weather API
+
         Format options:
-            astronomy_sunrise, astronomy_sunset
-            atmosphere_humidity, atmosphere_visibility,
-            atmosphere_pressure, atmosphere_rising
-            condition_text, condition_code, condition_temp, condition_date
-            location_city. location_region, location_country
-            units_temperature, units_distance, units_pressure, units_speed
-            wind_chill, wind_direction, wind_speed
+
+            - astronomy_sunrise
+            - astronomy_sunset
+            - atmosphere_humidity
+            - atmosphere_visibility
+            - atmosphere_pressure
+            - atmosphere_rising
+            - condition_text
+            - condition_code
+            - condition_temp
+            - condition_date
+            - location_city
+            - location_region
+            - location_country
+            - units_temperature
+            - units_distance
+            - units_pressure
+            - units_speed
+            - wind_chill
     '''
 
     defaults = [

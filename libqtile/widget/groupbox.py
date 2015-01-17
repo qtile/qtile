@@ -108,7 +108,7 @@ class GroupBox(_GroupBase):
             "highlight_method",
             "border",
             "Method of highlighting (one of 'border' or 'block') "
-            "Uses *_border color settings"
+            "Uses \*_border color settings"
         ),
         ("rounded", True, "To round or not to round borders"),
         (

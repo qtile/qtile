@@ -292,7 +292,7 @@ class Delegate(Layout):
     def __getattr__(self, name):
         """Delegate unimplemented command calls to active layout.
 
-        For `cmd_`-methods that don't exist on the Delegate subclass, this
+        For ``cmd_``-methods that don't exist on the Delegate subclass, this
         looks for an implementation on the active layout.
         """
         if name.startswith('cmd_'):
