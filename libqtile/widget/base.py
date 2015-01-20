@@ -39,6 +39,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
             self.width_type = width
             self.width = 0
         else:
+            assert isinstance(width, six.integer_types)
             self.width_type = bar.STATIC
             self.width = width
         self.configured = False

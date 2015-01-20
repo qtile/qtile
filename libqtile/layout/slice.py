@@ -65,7 +65,7 @@ class Slice(Delegate):
         ("width", 256, "Slice width"),
         ("side", "left", "Side of the slice (left, right, top, bottom)"),
         ("name", "max", "Name of this layout."),
-        ("wmname", None, "WM_NAME to match"),
+        ("wname", None, "WM_NAME to match"),
         ("wmclass", None, "WM_CLASS to match"),
         ("role", None, "WM_WINDOW_ROLE to match"),
         ("fallback", Max(), "Fallback layout"),

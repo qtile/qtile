@@ -13,11 +13,10 @@ class TextBox(base._TextBox):
         ("fontshadow", None, "font shadow color, default is None(no shadow)"),
         ("padding", None, "Padding left and right. Calculated if None."),
         ("foreground", "#ffffff", "Foreground colour."),
-        ("text", " ", "Initial text for the widget"),
     ]
 
-    def __init__(self, width=bar.CALCULATED, **config):
-        base._TextBox.__init__(self, text, width, **config)
+    def __init__(self, text=" ", width=bar.CALCULATED, **config):
+        base._TextBox.__init__(self, text=text, width=width, **config)
 
     def update(self, text):
         self.text = text

@@ -8,7 +8,7 @@ class DebugInfo(base._TextBox):
     """
     def __init__(self, **config):
         self.log = logging.getLogger('qtile')
-        base._TextBox.__init__(self, " ", width, **config)
+        base._TextBox.__init__(self, text=" ", width=bar.CALCULATED, **config)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
