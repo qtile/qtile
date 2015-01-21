@@ -245,11 +245,11 @@ class Qtile(command.CommandObject):
             # because of dbus, if dbus isn't around there's no need to run
             # this thread.
             import dbus  # noqa
-            from six.moves import gobject
+            from gi.repository import GObject
 
-            gobject.threads_init()
+            GObject.threads_init()
             def gobject_thread():
-                ctx = gobject.main_context_default()
+                ctx = GObject.main_context_default()
                 while not self._eventloop.is_closed():
                     try:
                         ctx.iteration(True)
@@ -704,8 +704,8 @@ class Qtile(command.CommandObject):
             self._eventloop.close()
             self.conn.conn.disconnect()
             try:
-                from six.moves import gobject
-                gobject.idle_add(lambda: None)
+                from gi.repository import GObject
+                GObject.idle_add(lambda: None)
             except ImportError:
                 pass
 
