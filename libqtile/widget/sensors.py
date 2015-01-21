@@ -2,7 +2,7 @@
 # coding: utf-8
 
 from . import base
-from six import u
+from six import PY3, u
 
 from subprocess import Popen, PIPE
 import re
@@ -65,7 +65,9 @@ class ThermalSensor(base.InLoopPollText):
         cmd_sensors.wait()
         stdout, _ = cmd_sensors.communicate()
         temp_values = {}
-        for value in re.findall(self.sensors_temp, stdout.decode()):
+        if PY3:
+            stdout = stdout.decode()
+        for value in re.findall(self.sensors_temp, stdout):
             temp_values[value[0]] = value[1:]
         return temp_values
 
