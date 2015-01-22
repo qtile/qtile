@@ -69,7 +69,7 @@ class Clipboard(base._TextBox):
 
             if six.PY3:
                 text = six.b(text).decode('utf-8')
-                
+
             self.text = text
 
             if self.timeout_id:
