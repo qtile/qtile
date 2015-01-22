@@ -67,7 +67,10 @@ class Clipboard(base._TextBox):
                 if self.max_width is not None and len(text) > self.max_width:
                     text = text[:self.max_width] + "..."
 
-            self.text = six.b(text).decode('utf-8')
+            if six.PY3:
+                text = six.b(text).decode('utf-8')
+                
+            self.text = text
 
             if self.timeout_id:
                 self.timeout_id.cancel()
