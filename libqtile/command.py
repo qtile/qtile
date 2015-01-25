@@ -430,10 +430,10 @@ class CommandObject(object):
             error = traceback.format_exc().strip().split("\n")[-1]
             return (False, error)
 
-    def cmd_function(self, function, *args):
+    def cmd_function(self, function, *args, **kwargs):
         """Call a function with current object as argument"""
         try:
-            function(self, *args)
+            function(self, *args, **kwargs)
         except Exception:
             error = traceback.format_exc()
             self.log.error('Exception calling "%s":\n%s' % (function, error))
