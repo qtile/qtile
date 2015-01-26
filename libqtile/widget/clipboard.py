@@ -1,3 +1,5 @@
+import six
+
 from . import base
 from .. import bar, hook, xcbq
 
@@ -64,6 +66,9 @@ class Clipboard(base._TextBox):
                 text = text.strip()
                 if self.max_width is not None and len(text) > self.max_width:
                     text = text[:self.max_width] + "..."
+
+            if six.PY3:
+                text = six.b(text).decode('utf-8')
 
             self.text = text
 
