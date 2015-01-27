@@ -505,12 +505,12 @@ class Window:
     def get_wm_icon_name(self):
         r = self.get_property("WM_ICON_NAME", "UTF8_STRING")
         if r:
-            return self._propertyString(r)
+            return self._propertyUTF8(r)
 
     def get_wm_client_machine(self):
         r = self.get_property("WM_CLIENT_MACHINE", "UTF8_STRING")
         if r:
-            return self._propertyString(r)
+            return self._propertyUTF8(r)
 
     def get_geometry(self):
         q = self.conn.conn.core.GetGeometry(self.wid)
