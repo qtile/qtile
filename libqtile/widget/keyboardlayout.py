@@ -1,7 +1,8 @@
+import re
 import subprocess
 from subprocess import CalledProcessError
+
 from . import base
-import re
 
 
 class KeyboardLayout(base.InLoopPollText):
@@ -49,7 +50,7 @@ class KeyboardLayout(base.InLoopPollText):
             In case of error returns "unknown".
         """
         try:
-            xset_output = subprocess.check_output(["xset", "-q"]).decode()
+            xset_output = self.call_process(["xset", "-q"])
             keyboard = _Keyboard(self.configured_keyboards).get_keyboard_layout(xset_output).upper()
             return str(keyboard)
         except CalledProcessError as e:

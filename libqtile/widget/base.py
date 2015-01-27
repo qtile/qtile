@@ -1,5 +1,6 @@
 from .. import command, bar, configurable, drawer
 import six
+import subprocess
 import logging
 import threading
 import warnings
@@ -135,6 +136,17 @@ class _Widget(command.CommandObject, configurable.Configurable):
             This method calls either ``.call_later`` with given arguments.
         """
         return self.qtile.call_later(seconds, self._wrapper, method, *method_args)
+
+    def call_process(self, command, **kwargs):
+        """
+            This method uses `subprocess.check_output` to run the given command
+            and return the string from stdout, which is decoded when using
+            Python 3.
+        """
+        output = subprocess.check_output(command, **kwargs)
+        if six.PY3:
+            output = output.decode()
+        return output
 
     def _wrapper(self, method, *method_args):
         try:
@@ -393,6 +405,7 @@ class ThreadPoolText(_TextBox):
 
 # these two classes below look SUSPICIOUSLY similar
 
+
 class PaddingMixin(object):
     """
         Mixin that provides padding(_x|_y|)
@@ -429,6 +442,7 @@ class MarginMixin(object):
 
     margin_x = configurable.ExtraFallback('margin_x', 'margin')
     margin_y = configurable.ExtraFallback('margin_y', 'margin')
+
 
 def deprecated(msg):
     warnings.warn(msg, DeprecationWarning)

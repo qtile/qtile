@@ -2,9 +2,8 @@
 # coding: utf-8
 
 from . import base
-from six import PY3, u
+from six import u
 
-from subprocess import Popen, PIPE
 import re
 
 
@@ -59,15 +58,11 @@ class ThermalSensor(base.InLoopPollText):
         if not self.metric:
             fahrenheit = ["-f"]
         try:
-            cmd_sensors = Popen(["sensors", ] + fahrenheit, stdout=PIPE)
+            sensors_out = self.call_process(["sensors"] + fahrenheit)
         except OSError:
             return None
-        cmd_sensors.wait()
-        stdout, _ = cmd_sensors.communicate()
         temp_values = {}
-        if PY3:
-            stdout = stdout.decode()
-        for value in re.findall(self.sensors_temp, stdout):
+        for value in re.findall(self.sensors_temp, sensors_out):
             temp_values[value[0]] = value[1:]
         return temp_values
 
