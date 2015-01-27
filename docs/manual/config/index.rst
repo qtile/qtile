@@ -53,8 +53,8 @@ key. The basic operation is:
 
 The default config defines one screen and 8 groups, one for each letter in
 ``qweruiop``. It has a basic bottom bar that includes a group box, the current
-window name, a little text reminder that you're using the default, a system
-tray, and a clock. you're using the default config.
+window name, a little text reminder that you're using the default config,
+a system tray, and a clock.
 
 The default configuration has several more advanced key combinations, but the
 above should be enough for basic usage of qtile.
