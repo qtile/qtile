@@ -45,7 +45,7 @@ class Pacman(base.ThreadedPollText):
 
     def poll(self):
         pacman = self.call_process(['checkupdates'])
-        return str(len(pacman.stdout.readlines()))
+        return str(len(pacman.splitlines()))
 
     def button_press(self, x, y, button):
         base.ThreadedPollText.button_press(self, x, y, button)
