@@ -6,6 +6,7 @@ import xcffib.xproto
 from . import pangocffi
 from . import utils
 
+
 class TextLayout(object):
     def __init__(self, drawer, text, colour, font_family, font_size,
                  font_shadow, wrap=True, markup=False):
@@ -288,31 +289,18 @@ class Drawer:
                    markup=False, **kw):
         """
             Get a text layout.
-
-            NB: the return value of this function should be saved, and reused
-            to avoid a huge memory leak in the pygtk bindings. Once this has
-            been repaired, we can make the semantics easier.
-
-            https://bugzilla.gnome.org/show_bug.cgi?id=625287
         """
         return TextLayout(self, text, colour, font_family, font_size,
                           font_shadow, markup=markup, **kw)
 
-    _sizelayout = None
-
     def max_layout_size(self, texts, font_family, font_size):
-        # FIXME: This is incredibly clumsy, to avoid a memory leak in pygtk.
-        # See comment on textlayout() for details.
-        if not self._sizelayout:
-            self._sizelayout = self.textlayout(
-                "", "ffffff", font_family, font_size, None)
+        sizelayout = self.textlayout(
+            "", "ffffff", font_family, font_size, None)
         widths, heights = [], []
-        self._sizelayout.font_family = font_family
-        self._sizelayout.font_size = font_size
         for i in texts:
-            self._sizelayout.text = i
-            widths.append(self._sizelayout.width)
-            heights.append(self._sizelayout.height)
+            sizelayout.text = i
+            widths.append(sizelayout.width)
+            heights.append(sizelayout.height)
         return max(widths), max(heights)
 
     # Old text layout functions, to be deprectated.
