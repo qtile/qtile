@@ -84,7 +84,11 @@ class _ClientProtocol(asyncio.Protocol, _IPC):
 
     def send(self, msg):
         self.transport.write(self._pack(msg))
-        self.transport.write_eof()
+        try:
+            self.transport.write_eof()
+        except AttributeError:
+            log = logging.getLogger('qtile')
+            log.exception('Swallowing AttributeError due to asyncio bug!')
 
     def data_received(self, data):
         self.recv += data
