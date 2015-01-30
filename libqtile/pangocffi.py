@@ -149,6 +149,7 @@ gobject = ffi.dlopen('gobject-2.0')
 pango = ffi.dlopen('pango-1.0')
 pangocairo = ffi.dlopen('pangocairo-1.0')
 
+
 def CairoContext(cairo_t):
     def create_layout():
         return PangoLayout(cairo_t._pointer)
@@ -164,13 +165,16 @@ ALIGN_CENTER = pango.PANGO_ALIGN_CENTER
 ELLIPSIZE_END = pango.PANGO_ELLIPSIZE_END
 units_from_double = pango.pango_units_from_double
 
+
 def _const_char_to_py_str(cc):
     return ''.join(ffi.buffer(cc, len(cc)))
+
 
 class PangoLayout(object):
     def __init__(self, cairo_t):
         self._cairo_t = cairo_t
         self._pointer = pangocairo.pango_cairo_create_layout(cairo_t)
+
         def free(p):
             p = ffi.cast("gpointer", p)
             gobject.g_object_unref(p)
@@ -216,6 +220,7 @@ class PangoLayout(object):
     def set_width(self, width):
         pango.pango_layout_set_width(self._pointer, width)
 
+
 class FontDescription(object):
     def __init__(self, pointer=None):
         if pointer is None:
@@ -240,6 +245,7 @@ class FontDescription(object):
     def get_size(self, size):
         return pango.pango_font_description_get_size(self._pointer, size)
 
+
 def parse_markup(value, accel_marker=0):
     attr_list = ffi.new("PangoAttrList**")
     text = ffi.new("char**")
@@ -253,6 +259,7 @@ def parse_markup(value, accel_marker=0):
         raise Exception("parse_markup() failed for %s" % value)
 
     return attr_list[0], ffi.string(text[0]), six.unichr(accel_marker)
+
 
 def markup_escape_text(text):
     ret = gobject.g_markup_escape_text(text.encode(), -1)
