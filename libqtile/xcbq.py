@@ -576,8 +576,14 @@ class Window:
 
         try:
             if isinstance(value, six.string_types):
-                # xcffib will pack the strings
-                pass
+                # xcffib will pack the bytes, but we should encode them properly
+                if six.PY3:
+                    value = value.encode()
+                elif not isinstance(value, str):
+                    # This will only run for Python 2 unicode strings, can't
+                    # use 'isinstance(value, unicode)' because Py 3 does not
+                    # have unicode and pyflakes complains
+                    value = value.encode('utf-8')
             else:
                 # if this runs without error, the value is already a list, don't wrap it
                 six.next(iter(value))
