@@ -192,6 +192,7 @@ class RatioTile(Layout):
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width."),
         ("name", "ratiotile", "Name of this layout."),
+        ("margin", 0, "Margin of the layout"),
     ]
 
     def __init__(self, ratio=GOLDEN_RATIO, ratio_increment=0.1,
@@ -278,7 +279,8 @@ class RatioTile(Layout):
             w - self.border_width * 2,
             h - self.border_width * 2,
             self.border_width,
-            bc
+            bc,
+            margin=self.margin,
         )
         win.unhide()
 
@@ -313,7 +315,7 @@ class RatioTile(Layout):
         if self.clients:
             return self.clients[-1]
 
-    def focus_prev(self, win):
+    def focus_previous(self, win):
         idx = self.clients.index(win)
         if idx > 0:
             return self.clients[idx - 1]

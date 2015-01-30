@@ -149,6 +149,9 @@ class _Graph(base._Widget):
 
 
 class CPUGraph(_Graph):
+    """
+        Display CPU usage graph.
+    """
     defaults = [
         ("core", "all", "Which core to show (all/0/1/2/...)"),
     ]
@@ -209,6 +212,9 @@ def get_meminfo():
 
 
 class MemoryGraph(_Graph):
+    """
+        Displays a memory usage graph.
+    """
     fixed_upper_bound = True
 
     def __init__(self, **config):
@@ -230,13 +236,16 @@ class MemoryGraph(_Graph):
 
 
 class SwapGraph(_Graph):
+    """
+        Display a swap info graph.
+    """
     fixed_upper_bound = True
 
     def __init__(self, **config):
         _Graph.__init__(self, **config)
         val = self._getvalues()
         self.maxvalue = val['SwapTotal']
-        swap = val['SwapTotal'] - val['SwapFree'] - val['SwapCached']
+        swap = val['SwapTotal'] - val['SwapFree'] - val.get('SwapCached', 0)
         self.fullfill(swap)
 
     def _getvalues(self):
@@ -245,7 +254,7 @@ class SwapGraph(_Graph):
     def update_graph(self):
         val = self._getvalues()
 
-        swap = val['SwapTotal'] - val['SwapFree'] - val['SwapCached']
+        swap = val['SwapTotal'] - val['SwapFree'] - val.get('SwapCached', 0)
 
         # can change, swapon/off
         if self.maxvalue != val['SwapTotal']:
@@ -255,6 +264,9 @@ class SwapGraph(_Graph):
 
 
 class NetGraph(_Graph):
+    """
+        Display a network usage graph.
+    """
     defaults = [
         (
             "interface",
@@ -312,6 +324,9 @@ class NetGraph(_Graph):
 
 
 class HDDGraph(_Graph):
+    """
+        Display HDD free or used space graph.
+    """
     fixed_upper_bound = True
     defaults = [
         ("path", "/", "Partition mount point."),
@@ -340,9 +355,9 @@ class HDDGraph(_Graph):
 
 class HDDBusyGraph(_Graph):
     """
-    Parses /sys/block/<dev>/stat file and extracts overall device
-    IO usage, based on `io_ticks`'s value.
-    See https://www.kernel.org/doc/Documentation/block/stat.txt
+        Parses /sys/block/<dev>/stat file and extracts overall device
+        IO usage, based on `io_ticks`'s value.
+        See https://www.kernel.org/doc/Documentation/block/stat.txt
     """
     defaults = [
         ("device", "sda", "Block device to display info for")

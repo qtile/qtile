@@ -5,7 +5,8 @@ PPA on Launchpad
 ----------------
 
 Packages are available for 11.10 (Oneiric Ocelot), 12.04 (Precise Pangolin),
-12.10 (Quantal Quetzal) and 13.04 (Raring Ringtail).
+12.10 (Quantal Quetzal), 13.04 (Raring Ringtail), 13.10 (Saucy Salamander), and
+14.04 (Trusty Tahr).
 
 .. code-block:: bash
 

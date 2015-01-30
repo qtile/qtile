@@ -35,6 +35,24 @@ class Single(SingleWindow):
         """
         return self.window is None
 
+    def focus_first(self):
+        return self.window
+
+    def focus_last(self):
+        return self.window
+
+    def focus_next(self, window):
+        return self.window
+
+    def focus_previous(self, window):
+        return self.window
+
+    def cmd_next(self):
+        pass
+
+    def cmd_previous(self):
+        pass
+
 
 class Slice(Delegate):
     """Slice layout
@@ -106,3 +124,9 @@ class Slice(Delegate):
         else:
             self._fallback.add(win)
             self.layouts[win] = self._fallback
+
+    def cmd_next(self):
+        self._fallback.cmd_next()
+
+    def cmd_previous(self):
+        self._fallback.cmd_previous()

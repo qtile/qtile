@@ -86,7 +86,7 @@ class TextLayout(object):
     def draw(self, x, y):
         if self.font_shadow is not None:
             self.drawer.set_source_rgb(self.font_shadow)
-            self.drawer.ctx.move_to(x+1, y+1)
+            self.drawer.ctx.move_to(x + 1, y + 1)
             self.drawer.ctx.show_layout(self.layout)
 
         self.drawer.set_source_rgb(self.colour)
@@ -116,7 +116,7 @@ class TextFrame:
         else:
             self.pad_top = self.pad_bottom = pad_y
 
-    def draw(self, x, y, rounded=True):
+    def draw(self, x, y, rounded=True, fill=False):
         self.drawer.set_source_rgb(self.border_color)
         opts = [
             x, y,
@@ -124,10 +124,16 @@ class TextFrame:
             self.layout.height + self.pad_top + self.pad_bottom,
             self.border_width
         ]
-        if rounded:
-            self.drawer.rounded_rectangle(*opts)
+        if fill:
+            if rounded:
+                self.drawer.rounded_fillrect(*opts)
+            else:
+                self.drawer.fillrect(*opts)
         else:
-            self.drawer.rectangle(*opts)
+            if rounded:
+                self.drawer.rounded_rectangle(*opts)
+            else:
+                self.drawer.rectangle(*opts)
         self.drawer.ctx.stroke()
         self.layout.draw(
             x + self.pad_left,
@@ -135,21 +141,7 @@ class TextFrame:
         )
 
     def draw_fill(self, x, y, rounded=True):
-        self.drawer.set_source_rgb(self.border_color)
-        opts = [
-            x, y,
-            self.layout.width + self.pad_left + self.pad_right,
-            self.layout.height + self.pad_top + self.pad_bottom,
-            self.border_width
-        ]
-        if rounded:
-            self.drawer.rounded_fillrect(*opts)
-        else:
-            self.drawer.fillrect(*opts)
-        self.layout.draw(
-            x + self.pad_left,
-            y + self.pad_top
-        )
+        self.draw(x, y, rounded, fill=True)
 
     @property
     def height(self):
@@ -268,32 +260,20 @@ class Drawer:
     def set_source_rgb(self, colour):
         if type(colour) == list:
             linear = cairo.LinearGradient(0.0, 0.0, 0.0, self.height)
-            c1 = utils.rgb(colour[0])
-            c2 = utils.rgb(colour[1])
-            if len(c1) < 4:
-                c1[3] = 1
-            if len(c2) < 4:
-                c2[3] = 1
-            linear.add_color_stop_rgba(0.0, c1[0], c1[1], c1[2], c1[3])
-            linear.add_color_stop_rgba(1.0, c2[0], c2[1], c2[2], c2[3])
+            step_size = 1.0 / (len(colour) - 1)
+            step = 0.0
+            for c in colour:
+                rgb_col = utils.rgb(c)
+                if len(rgb_col) < 4:
+                    rgb_col[3] = 1
+                linear.add_color_stop_rgba(step, *rgb_col)
+                step += step_size
             self.ctx.set_source(linear)
         else:
             self.ctx.set_source_rgba(*utils.rgb(colour))
 
     def clear(self, colour):
-        if type(colour) == list:
-            linear = cairo.LinearGradient(0.0, 0.0, 0.0, self.height)
-            c1 = utils.rgb(colour[0])
-            c2 = utils.rgb(colour[1])
-            if len(c1) < 4:
-                c1[3] = 1
-            if len(c2) < 4:
-                c2[3] = 1
-            linear.add_color_stop_rgba(0.0, c1[0], c1[1], c1[2], c1[3])
-            linear.add_color_stop_rgba(1.0, c2[0], c2[1], c2[2], c2[3])
-            self.ctx.set_source(linear)
-        else:
-            self.set_source_rgb(colour)
+        self.set_source_rgb(colour)
         self.ctx.rectangle(0, 0, self.width, self.height)
         self.ctx.fill()
         self.ctx.stroke()

@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+# Import python libs
+try:
+    from setuptools import setup
+except ImportError:
+    # Let's not fail if setuptools is not available
+    from distutils.core import setup
 
 long_description = """
 A pure-Python tiling window manager.
@@ -21,7 +26,7 @@ Features
 
 setup(
     name="qtile",
-    version="0.7.0",
+    version="0.8.0",
     description="A pure-Python tiling window manager.",
     long_description=long_description,
     classifiers=[
@@ -48,6 +53,7 @@ setup(
     scripts=[
         "bin/qsh",
         "bin/qtile",
+        "bin/qtile-run",
         "bin/qtile-session"
     ],
 )

@@ -27,8 +27,8 @@ class TestConfig:
         libqtile.config.Group("d")
     ]
     layouts = [
-                libqtile.layout.stack.Stack(stacks=1),
-                libqtile.layout.stack.Stack(2),
+                libqtile.layout.stack.Stack(num_stacks=1),
+                libqtile.layout.stack.Stack(num_stacks=2),
                 libqtile.layout.max.Max()
             ]
     floating_layout = libqtile.layout.floating.Floating(
@@ -67,8 +67,8 @@ class BareConfig:
         libqtile.config.Group("d")
     ]
     layouts = [
-                libqtile.layout.stack.Stack(stacks=1),
-                libqtile.layout.stack.Stack(2)
+                libqtile.layout.stack.Stack(num_stacks=1),
+                libqtile.layout.stack.Stack(num_stacks=2)
             ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = [
@@ -102,9 +102,7 @@ def test_screen_dim(self):
     self.c.to_screen(1)
     self.testXeyes()
     assert self.c.screen.info()["index"] == 1
-    # !!! note that the following wrong!
-    # x offset would be 800 on real screens
-    assert self.c.screen.info()["x"] == 0
+    assert self.c.screen.info()["x"] == 800
     assert self.c.screen.info()["width"] == 640
     assert self.c.group.info()["name"] == 'b'
     assert self.c.group.info()["focus"] == 'xeyes'
@@ -115,6 +113,18 @@ def test_screen_dim(self):
     assert self.c.screen.info()["width"] == 800
     assert self.c.group.info()["name"] == 'a'
     assert self.c.group.info()["focus"] == 'xclock'
+
+
+@Xephyr(True, TestConfig(), xoffset=0)
+def test_clone_dim(self):
+    self.testXclock()
+    assert self.c.screen.info()["index"] == 0
+    assert self.c.screen.info()["x"] == 0
+    assert self.c.screen.info()["width"] == 800
+    assert self.c.group.info()["name"] == 'a'
+    assert self.c.group.info()["focus"] == 'xclock'
+
+    assert len(self.c.screens()) == 1
 
 
 @Xephyr(True, TestConfig())
@@ -190,7 +200,8 @@ def test_keypress(self):
 
 @Xephyr(False, TestConfig())
 def test_spawn(self):
-    assert self.c.spawn("true") == None
+    # Spawn something with a pid greater than init's
+    assert int(self.c.spawn("true")) > 1
 
 
 @Xephyr(False, TestConfig())
@@ -243,11 +254,19 @@ def test_adddelgroup(self):
     self.c.delgroup("testgroup")
     assert not "testgroup" in self.c.groups().keys()
     # Assert that the test window is still a member of some group.
-    assert sum([len(i["windows"]) for i in self.c.groups().values()])
-    for i in self.c.groups().keys()[:len(self.c.groups())-1]:
+    assert sum(len(i["windows"]) for i in self.c.groups().values())
+    for i in self.c.groups().keys()[:-1]:
         self.c.delgroup(i)
     assert_raises(libqtile.command.CommandException,
                   self.c.delgroup, self.c.groups().keys()[0])
+
+
+@Xephyr(False, TestConfig())
+def test_delgroup(self):
+    self.testWindow("one")
+    for i in ['a', 'd', 'c']:
+        self.c.delgroup(i)
+    assert_raises(libqtile.command.CommandException, self.c.delgroup, 'b')
 
 
 @Xephyr(False, TestConfig())
@@ -312,7 +331,7 @@ def test_default_float(self):
     assert self.c.window.info()['y'] == 0
     assert self.c.window.info()['floating'] == True
 
-    self.c.window.move_floating(10, 20)
+    self.c.window.move_floating(10, 20, 42, 42)
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == 10
@@ -334,7 +353,7 @@ def test_last_float_size(self):
     assert self.c.window.info()['width'] == 150
     assert self.c.window.info()['height'] == 100
     # resize
-    self.c.window.set_size_floating(50, 90)
+    self.c.window.set_size_floating(50, 90, 42, 42)
     assert self.c.window.info()['width'] == 50
     assert self.c.window.info()['height'] == 90
     self.c.window.toggle_floating()
@@ -527,7 +546,7 @@ def test_floating_focus(self):
     assert self.c.window.info()['width'] == 398
     assert self.c.window.info()['height'] == 578
     self.c.window.toggle_floating()
-    self.c.window.move_floating(10, 20)
+    self.c.window.move_floating(10, 20, 42, 42)
     assert self.c.window.info()['name'] == 'xeyes'
     assert self.c.group.info()['focus'] == 'xeyes'
     # check what stack thinks is focus
@@ -576,25 +595,25 @@ def test_move_floating(self):
     self.c.window.toggle_floating()
     assert self.c.window.info()['floating'] == True
 
-    self.c.window.move_floating(10, 20)
+    self.c.window.move_floating(10, 20, 42, 42)
     assert self.c.window.info()['width'] == 150
     assert self.c.window.info()['height'] == 100
     assert self.c.window.info()['x'] == 10
     assert self.c.window.info()['y'] == 20
 
-    self.c.window.set_size_floating(50, 90)
+    self.c.window.set_size_floating(50, 90, 42, 42)
     assert self.c.window.info()['width'] == 50
     assert self.c.window.info()['height'] == 90
     assert self.c.window.info()['x'] == 10
     assert self.c.window.info()['y'] == 20
 
-    self.c.window.resize_floating(10, 20)
+    self.c.window.resize_floating(10, 20, 42, 42)
     assert self.c.window.info()['width'] == 60
     assert self.c.window.info()['height'] == 110
     assert self.c.window.info()['x'] == 10
     assert self.c.window.info()['y'] == 20
 
-    self.c.window.set_size_floating(10, 20)
+    self.c.window.set_size_floating(10, 20, 42, 42)
     assert self.c.window.info()['width'] == 10
     assert self.c.window.info()['height'] == 20
     assert self.c.window.info()['x'] == 10
@@ -628,6 +647,7 @@ def test_rotate(self):
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE
     )
+    time.sleep(0.1)
     s = self.c.screens()[0]
     assert s["height"] == width
     assert s["width"] == height
@@ -643,6 +663,7 @@ def test_resize_(self):
             "-display", utils.DISPLAY
         ]
     )
+    time.sleep(0.1)
     d = self.c.screen.info()
     assert d["width"] == 480
     assert d["height"] == 640
@@ -717,14 +738,14 @@ def qtile_tests():
             def test_setgroup(self):
                 self.testWindow("one")
                 self.c.group["b"].toscreen()
-                self._groupconsistency()
+                self.groupconsistency()
                 if len(self.c.screens()) == 1:
                     assert self.c.groups()["a"]["screen"] == None
                 else:
                     assert self.c.groups()["a"]["screen"] == 1
                 assert self.c.groups()["b"]["screen"] == 0
                 self.c.group["c"].toscreen()
-                self._groupconsistency()
+                self.groupconsistency()
                 assert self.c.groups()["c"]["screen"] == 0
             yield test_setgroup
 
@@ -734,7 +755,7 @@ def qtile_tests():
                 pid = self.testWindow("two")
                 assert len(self.c.windows()) == 2
                 self.c.group["c"].toscreen()
-                self._groupconsistency()
+                self.groupconsistency()
                 self.c.status()
                 assert len(self.c.windows()) == 2
                 self.kill(pid)
@@ -797,8 +818,8 @@ class _Config:
         libqtile.config.Group("d")
     ]
     layouts = [
-                libqtile.layout.stack.Stack(stacks=1),
-                libqtile.layout.stack.Stack(2)
+                libqtile.layout.stack.Stack(num_stacks=1),
+                libqtile.layout.stack.Stack(num_stacks=2)
             ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = [

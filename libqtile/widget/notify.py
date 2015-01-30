@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
-import sys
-
-from .. import bar, drawer, utils
+from .. import bar, utils
 from libqtile.notify import notifier
 import base
 
 
 class Notify(base._TextBox):
     """
-        An notify widget
+        A notify widget
     """
     defaults = [
         ("foreground_urgent", "ff0000", "Foreground urgent priority colour"),

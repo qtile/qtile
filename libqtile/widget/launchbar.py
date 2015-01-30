@@ -16,7 +16,6 @@ from libqtile import bar
 from libqtile.widget import base
 import os.path
 import cairo
-import gobject
 from xdg.IconTheme import getIconPath
 
 
@@ -48,7 +47,7 @@ class LaunchBar(base._Widget):
         self.icons_widths = {}
         self.icons_offsets = {}
         # For now, ignore the comments but may be one day it will be useful
-        self.commands = {prg[0]: prg[1] for prg in progs}
+        self.commands = dict((prg[0], prg[1]) for prg in progs)
 
     def _configure(self, qtile, pbar):
         base._Widget._configure(self, qtile, pbar)
@@ -129,7 +128,7 @@ class LaunchBar(base._Widget):
                 if cmd.startswith('qsh:'):
                     eval(cmd[4:])
                 else:
-                    gobject.spawn_async([os.environ['SHELL'], '-c', cmd])
+                    self.qtile.cmd_spawn(cmd)
             self.draw()
 
     def draw(self):
@@ -139,7 +138,7 @@ class LaunchBar(base._Widget):
         self.drawer.clear(self.background or self.bar.background)
         xoffset = 0
         for i in self.commands:
-            self.icons_offsets[i] = xoffset+self.padding
+            self.icons_offsets[i] = xoffset + self.padding
             self.drawer.ctx.move_to(self.offset + xoffset,
                                     self.icons_widths[i])
             self.drawer.clear(self.background or self.bar.background)

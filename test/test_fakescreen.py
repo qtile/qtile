@@ -68,7 +68,7 @@ class FakeScreenConfig:
                 widget.Sep(),
                 widget.Systray(),
                 widget.Sep(),
-                widget.Clock('%H:%M:%S %d.%m.%Y',
+                widget.Clock(format='%H:%M:%S %d.%m.%Y',
                              fontsize=FONTSIZE, padding=6),
             ],
                     24,
@@ -183,7 +183,7 @@ def test_float_change_screens(self):
     self.testXeyes()
     self.testXclock()
     self.c.window.toggle_floating()
-    assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
+    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.group.info()['floating_info']['clients'] == ['xclock']
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
@@ -201,7 +201,7 @@ def test_float_change_screens(self):
         'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
     self.c.group['a'].toscreen()
     assert self.c.group.info()['name'] == 'a'
-    assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
+    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.window.info()['name'] == 'xclock'
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
@@ -217,7 +217,7 @@ def test_float_change_screens(self):
     assert self.c.group.info()['name'] == 'c'
     self.c.group['a'].toscreen()
     assert self.c.group.info()['name'] == 'a'
-    assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
+    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.window.info()['name'] == 'xclock'
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
@@ -231,7 +231,7 @@ def test_float_change_screens(self):
     assert self.c.group.info()['name'] == 'd'
     self.c.group['a'].toscreen()
     assert self.c.group.info()['name'] == 'a'
-    assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
+    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.window.info()['name'] == 'xclock'
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
@@ -245,7 +245,7 @@ def test_float_change_screens(self):
     assert self.c.group.info()['name'] == 'b'
     self.c.group['a'].toscreen()
     assert self.c.group.info()['name'] == 'a'
-    assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
+    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.window.info()['name'] == 'xclock'
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
@@ -266,7 +266,7 @@ def test_float_outside_edges(self):
         'clients': [], 'group': 'a', 'name': 'max'}
 
     # move left, but some still on screen 0
-    self.c.window.move_floating(-10, 20)
+    self.c.window.move_floating(-10, 20, 42, 42)
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == -10
@@ -274,7 +274,7 @@ def test_float_outside_edges(self):
     assert self.c.window.info()['group'] == 'a'
 
     # move up, but some still on screen 0
-    self.c.window.set_position_floating(-10, -20)
+    self.c.window.set_position_floating(-10, -20, 42, 42)
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == -10
@@ -282,7 +282,7 @@ def test_float_outside_edges(self):
     assert self.c.window.info()['group'] == 'a'
 
     # move above a
-    self.c.window.set_position_floating(50, -20)
+    self.c.window.set_position_floating(50, -20, 42, 42)
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == 50
@@ -290,14 +290,14 @@ def test_float_outside_edges(self):
     assert self.c.window.info()['group'] == 'a'
 
     # move down so still left, but next to screen c
-    self.c.window.set_position_floating(-10, 520)
+    self.c.window.set_position_floating(-10, 520, 42, 42)
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == -10
     assert self.c.window.info()['y'] == 520
     assert self.c.window.info()['group'] == 'c'
 
     # move above b
-    self.c.window.set_position_floating(700, -10)
+    self.c.window.set_position_floating(700, -10, 42, 42)
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == 700

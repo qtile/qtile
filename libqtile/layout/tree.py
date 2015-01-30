@@ -253,6 +253,8 @@ class TreeTab(SingleWindow):
         ("panel_width", 150, "Width of the left panel"),
         ("sections", ['Default'], "Foreground color of inactive tab"),
         ("name", "treetab", "Name of this layout."),
+        ("previous_on_rm", False,
+            "Focus previous window on close instead of first."),
     ]
 
     def __init__(self, **config):
@@ -276,6 +278,26 @@ class TreeTab(SingleWindow):
     def focus(self, win):
         self._focused = win
 
+    def focus_first(self):
+        win = self._tree.get_first_window()
+        if win:
+            return win.window
+
+    def focus_last(self):
+        win = self._tree.get_last_window()
+        if win:
+            return win.window
+
+    def focus_next(self, client):
+        win = self._nodes[client].get_next_window()
+        if win:
+            return win.window
+
+    def focus_previous(self, client):
+        win = self._nodes[client].get_prev_window()
+        if win:
+            return win.window
+
     def blur(self):
         # Does not clear current window, will change if new one
         # will be focused. This works better when floating window
@@ -291,13 +313,20 @@ class TreeTab(SingleWindow):
 
     def remove(self, win):
         if self._focused is win:
-            self._focused = None
+            if self.previous_on_rm:
+                # select previous window in the list
+                self.cmd_up()
+                if self._focused is win:
+                    self._focused = None
+            else:
+                self._focused = None
         self._nodes[win].remove()
         del self._nodes[win]
         self.draw_panel()
 
-        # select 1st window in the list
-        self.cmd_down()
+        # select first window in the list
+        if not self.previous_on_rm:
+            self.cmd_down()
 
     def _create_panel(self):
         self._panel = window.Internal.create(
@@ -370,6 +399,8 @@ class TreeTab(SingleWindow):
         if win:
             self.group.focus(win.window, False)
 
+    cmd_next = cmd_down
+
     def cmd_up(self):
         """
             Switch up in the window list
@@ -381,6 +412,8 @@ class TreeTab(SingleWindow):
             win = self._tree.get_last_window()
         if win:
             self.group.focus(win.window, False)
+
+    cmd_previous = cmd_up
 
     def cmd_move_up(self):
         win = self._focused

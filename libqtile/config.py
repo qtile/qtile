@@ -127,9 +127,6 @@ class Screen(command.CommandObject):
     """
         A physical screen, and its associated paraphernalia.
     """
-    group = None
-    previous_group = None
-
     def __init__(self, top=None, bottom=None, left=None, right=None,
                  x=None, y=None, width=None, height=None):
         """
@@ -141,6 +138,10 @@ class Screen(command.CommandObject):
             x,y,width and height aren't specified usually unless you are
             using 'fake screens'.
         """
+
+        self.group = None
+        self.previous_group = None
+
         self.top = top
         self.bottom = bottom
         self.left = left
@@ -202,14 +203,15 @@ class Screen(command.CommandObject):
     def get_rect(self):
         return ScreenRect(self.dx, self.dy, self.dwidth, self.dheight)
 
-    def setGroup(self, new_group):
+    def setGroup(self, new_group, save_prev=True):
         """
         Put group on this screen
         """
         if new_group.screen == self:
             return
 
-        self.previous_group = self.group
+        if save_prev:
+            self.previous_group = self.group
 
         if new_group is None:
             return
@@ -332,7 +334,7 @@ class Group(object):
     certain Matched windows to be on them, hide when they're not in use, etc.
     """
     def __init__(self, name, matches=None, exclusive=False,
-                 spawn=None, layout=None, persist=True, init=True,
+                 spawn=None, layout=None, layouts=None, persist=True, init=True,
                  layout_opts=None, screen_affinity=None, position=sys.maxint):
         """
         :param name: the name of this group
@@ -345,6 +347,8 @@ class Group(object):
         :type spawn: string
         :param layout: the default layout for this group (e.g. 'max' or 'stack')
         :type layout: string
+        :param layouts: the group layouts list overriding global layouts
+        :type layouts: list
         :param persist: should this group stay alive with no member windows?
         :type persist: boolean
         :param init: is this group alive when qtile starts?
@@ -357,6 +361,7 @@ class Group(object):
         self.exclusive = exclusive
         self.spawn = spawn
         self.layout = layout
+        self.layouts = layouts or []
         self.persist = persist
         self.init = init
         self.matches = matches or []
@@ -371,7 +376,8 @@ class Match(object):
         Match for dynamic groups
         It can match by title, class or role.
     """
-    def __init__(self, title=None, wm_class=None, role=None, wm_type=None):
+    def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
+                 wm_instance_class=None, net_wm_pid=None):
         """
 
         ``Match`` supports both regular expression objects (i.e. the result of
@@ -379,10 +385,15 @@ class Match(object):
         matches any of the things in any of the lists, it is considered a
         match.
 
-        :param title: things to match against the title
-        :param wm_classes: things to match against the WM_CLASS atom
+        :param title: things to match against the title (WM_NAME)
+        :param wm_class: things to match against the second string in
+                         WM_CLASS atom
         :param role: things to match against the WM_ROLE atom
         :param wm_type: things to match against the WM_TYPE atom
+        :param wm_instance_class: things to match against the first string in
+               WM_CLASS atom
+        :param net_wm_pid: things to match against the _NET_WM_PID atom
+              (only int allowed in this rule)
         """
         if not title:
             title = []
@@ -392,25 +403,48 @@ class Match(object):
             role = []
         if not wm_type:
             wm_type = []
+        if not wm_instance_class:
+            wm_instance_class = []
+        if not net_wm_pid:
+            net_wm_pid = []
+
+        try:
+            net_wm_pid = map(int, net_wm_pid)
+        except ValueError:
+            error = 'Invalid rule for net_wm_pid: "%s" '\
+                    'only ints allowed' % str(net_wm_pid)
+            raise utils.QtileError(error)
+
         self._rules = [('title', t) for t in title]
         self._rules += [('wm_class', w) for w in wm_class]
         self._rules += [('role', r) for r in role]
         self._rules += [('wm_type', r) for r in wm_type]
+        self._rules += [('wm_instance_class', w) for w in wm_instance_class]
+        self._rules += [('net_wm_pid', w) for w in net_wm_pid]
 
     def compare(self, client):
         for _type, rule in self._rules:
-            match_func = getattr(rule, 'match', None) or getattr(rule, 'count')
+            if _type == "net_wm_pid":
+                match_func = lambda value: rule == value
+            else:
+                match_func = getattr(rule, 'match', None) or \
+                    getattr(rule, 'count')
 
             if _type == 'title':
                 value = client.name
             elif _type == 'wm_class':
+                value = None
+                _value = client.window.get_wm_class()
+                if _value and len(_value) > 1:
+                    value = _value[1]
+            elif _type == 'wm_instance_class':
                 value = client.window.get_wm_class()
-                if value and len(value) > 1:
-                    value = value[1]
-                elif value:
+                if value:
                     value = value[0]
             elif _type == 'wm_type':
                 value = client.window.get_wm_type()
+            elif _type == 'net_wm_pid':
+                value = client.window.get_net_wm_pid()
             else:
                 value = client.window.get_wm_window_role()
 

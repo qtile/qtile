@@ -15,7 +15,6 @@ Installing
   :doc:`Funtoo </manual/install/funtoo>` |
   :doc:`Gentoo </manual/install/gentoo>` |
   :doc:`Ubuntu </manual/install/ubuntu>` |
-  :doc:`Debian </manual/install/debian>`
 
 Configuration
 -------------
@@ -23,7 +22,6 @@ Configuration
 * **The basics**:
   :doc:`Default Configuration </manual/config/default>` |
   :doc:`Overview </manual/config/index>` |
-  :doc:`Starting Qtile </manual/config/starting>` |
   :doc:`Hooks </manual/config/hooks>` |
   :doc:`Running inside Gnome </manual/config/gnome>`
 
@@ -60,7 +58,7 @@ Miscellaneous
 
 * :doc:`Frequently Asked Questions </manual/faq>`
 * :doc:`Hacking Qtile </manual/hacking>`
-* :doc:`Release notes </releases/index>`
+* `Release notes <https://github.com/qtile/qtile/blob/master/CHANGELOG>`_
 * :doc:`License </manual/license>`
 
 
@@ -77,5 +75,3 @@ Miscellaneous
     /manual/ref/index
     /manual/ref/*
     /manual/*
-    /releases/index
-    /releases/*

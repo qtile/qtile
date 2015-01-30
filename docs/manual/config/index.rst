@@ -32,6 +32,28 @@ Configuration variables
     Most of the visible "look and feel" configuration will happen in this
     section.
 
+``widget_defaults``
+    A dictionary which contains default properties you'd like to apply to all
+    widgets. The default is:
+    ::
+
+        widget_defaults = dict(
+            font='Arial',
+            fontsize=16,
+            padding=3,
+        )
+
+``follow_mouse_focus``
+    A boolean flag which tells qtile whether or not you want the window input
+    focus to follow your mouse. This defaults to ``True``.
+
+``wmname``
+    A string that controls what qtile tells applications is the name of the
+    window manager. It defaults to ``"qtile"``, but it may be useful to set to
+    something else (e.g. ``"LG3D"``) if you're using a Java application which
+    looks at this property. More discussion is available on the issue tracker
+    and various mailing list posts.
+
 main()
     A function that executes after the window manager is initialized, but
     before groups, screens and other components are set up.

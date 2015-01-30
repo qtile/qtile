@@ -21,7 +21,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+# Set the locale before any widgets or anything are imported, so any widget
+# whose defaults depend on a reasonable locale sees something reasonable.
 import locale
+locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
+
 import logging
 from libqtile import confreader, manager
 
@@ -114,7 +118,6 @@ def make_qtile():
 
 
 if __name__ == "__main__":
-    locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
     rename_process()
     q = make_qtile()
     try:

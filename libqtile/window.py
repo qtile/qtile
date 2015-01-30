@@ -215,7 +215,7 @@ class _Window(command.CommandObject):
 
         # FIXME
         # h values
-        #{
+        # {
         #    'icon_pixmap': 4194337,
         #    'icon_window': 0,
         #    'icon_mask': 4194340,
@@ -230,7 +230,7 @@ class _Window(command.CommandObject):
         #                  'InputHint',
         #                  'UrgencyHint',
         #                  'IconPixmapHint']),
-        #}
+        # }
 
         if normh:
             normh.pop('flags')
@@ -331,7 +331,7 @@ class _Window(command.CommandObject):
 
     def kill(self):
         if "WM_DELETE_WINDOW" in self.window.get_wm_protocols():
-            #e = event.ClientMessage(
+            # e = event.ClientMessage(
             #        window = self.window,
             #        client_type = self.qtile.display.intern_atom(
             #             "WM_PROTOCOLS"),
@@ -348,7 +348,7 @@ class _Window(command.CommandObject):
             #                0
             #            ]
             #        ]
-            #)
+            # )
             vals = [
                 33,  # ClientMessageEvent
                 32,  # Format
@@ -394,7 +394,7 @@ class _Window(command.CommandObject):
         )
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, force=False):
+              above=False, force=False, margin=None):
         """
             Places the window at the specified location with the given size.
 
@@ -406,14 +406,21 @@ class _Window(command.CommandObject):
         # the position is changed, so we are sending
         # the ConfigureNotify every time place is called
         #
-        ## if position change and size don't
-        ## send a configure notify. See ICCCM 4.2.3
-        #send_notify = False
-        #if (self.x != x or self.y != y) and \
-        #   (self.width == width and self.height == height):
-        #    send_notify = True
-        ##for now, we just:
+        # # if position change and size don't
+        # # send a configure notify. See ICCCM 4.2.3
+        # send_notify = False
+        # if (self.x != x or self.y != y) and \
+        #    (self.width == width and self.height == height):
+        #       send_notify = True
+        # #for now, we just:
         send_notify = True
+
+        # Adjust the placement to account for layout margins, if there are any.
+        if margin is not None:
+            x += margin
+            y += margin
+            width -= margin * 2
+            height -= margin * 2
 
         self.x = x
         self.y = y
@@ -539,7 +546,7 @@ class _Window(command.CommandObject):
             "map_is_installed": a.map_is_installed,
             "map_state": a.map_state,
             "override_redirect": a.override_redirect,
-            #"colormap": a.colormap,
+            # "colormap": a.colormap,
             "all_event_masks": a.all_event_masks,
             "your_event_mask": a.your_event_mask,
             "do_not_propagate_mask": a.do_not_propagate_mask
@@ -711,6 +718,10 @@ class Window(_Window):
         self._group = group
 
     @property
+    def edges(self):
+        return (self.x, self.y, self.x + self.width, self.y + self.height)
+
+    @property
     def floating(self):
         return self._float_state != NOT_FLOATING
 
@@ -864,9 +875,9 @@ class Window(_Window):
         else:
             # make sure x, y is on the screen
             screen = self.qtile.find_closest_screen(self.x, self.y)
-            if not screen is None and \
-                    not self.group is None and \
-                    not self.group.screen is None and \
+            if screen is not None and \
+                    self.group is not None and \
+                    self.group.screen is not None and \
                     screen != self.group.screen:
                 self.x = self.group.screen.x
                 self.y = self.group.screen.y
@@ -888,7 +899,6 @@ class Window(_Window):
                 height = (height -
                     ((height - self.hints['base_height'])
                     % self.hints['height_inc']))
-
 
             self.place(
                 self.x,
@@ -1043,15 +1053,15 @@ class Window(_Window):
             width = size[0]
             height = size[4]
 
-            next_pix = width*height*4
+            next_pix = width * height * 4
             data = icon[:next_pix]
 
             arr = array.array("B", data)
             for i in range(0, len(arr), 4):
-                mult = (arr[i+3]) / 255.
-                arr[i+0] = int(arr[i+0] * mult)
-                arr[i+1] = int(arr[i+1] * mult)
-                arr[i+2] = int(arr[i+2] * mult)
+                mult = (arr[i + 3]) / 255.
+                arr[i + 0] = int(arr[i + 0] * mult)
+                arr[i + 1] = int(arr[i + 1] * mult)
+                arr[i + 2] = int(arr[i + 2] * mult)
             icon = icon[next_pix:]
             icons["%sx%s" % (width, height)] = arr
         self.icons = icons
@@ -1083,8 +1093,6 @@ class Window(_Window):
                 if not prop:
                     # skip 0
                     continue
-
-                prop_name = atoms.get_name(prop)
 
                 if action == _NET_WM_STATE_REMOVE:
                     current_state.discard(prop)
@@ -1133,7 +1141,7 @@ class Window(_Window):
             # Some windows set the state(fullscreen) when starts,
             # updateState is here because the group and the screen
             # are set when the property is emitted
-            #self.updateState()
+            # self.updateState()
             self.updateState()
         elif name == "_NET_WM_USER_TIME":
             if not self.qtile.config.follow_mouse_focus and \
@@ -1185,25 +1193,25 @@ class Window(_Window):
         """
         self.togroup(groupName)
 
-    def cmd_move_floating(self, dx, dy):
+    def cmd_move_floating(self, dx, dy, curx, cury):
         """
             Move window by dx and dy
         """
         self.tweak_float(dx=dx, dy=dy)
 
-    def cmd_resize_floating(self, dw, dh):
+    def cmd_resize_floating(self, dw, dh, curx, cury):
         """
             Add dw and dh to size of window
         """
         self.tweak_float(dw=dw, dh=dh)
 
-    def cmd_set_position_floating(self, x, y):
+    def cmd_set_position_floating(self, x, y, curx, cury):
         """
             Move window to x and y
         """
         self.tweak_float(x=x, y=y)
 
-    def cmd_set_size_floating(self, w, h):
+    def cmd_set_size_floating(self, w, h, curx, cury):
         """
             Set window dimensions to w and h
         """
@@ -1280,3 +1288,23 @@ class Window(_Window):
             self.opacity += .1
         else:
             self.opacity = 1
+
+    def _is_in_window(self, x, y, window):
+        return (window.edges[0] <= x <= window.edges[2] and
+                window.edges[1] <= y <= window.edges[3])
+
+    def cmd_set_position(self, dx, dy, curx, cury):
+        if self.floating:
+            self.tweak_float(dx, dy)
+            return
+        for window in self.group.windows:
+            if window == self or window.floating:
+                continue
+            if self._is_in_window(curx, cury, window):
+                clients = self.group.layout.clients
+                index1 = clients.index(self)
+                index2 = clients.index(window)
+                clients[index1], clients[index2] = clients[index2], clients[index1]
+                self.group.layout.focused = index2
+                self.group.layoutAll()
+                break

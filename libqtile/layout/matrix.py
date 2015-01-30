@@ -14,6 +14,7 @@ class Matrix(Layout):
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 1, "Border width."),
         ("name", "matrix", "Name of this layout."),
+        ("margin", 0, "Margin of the layout"),
     ]
 
     def __init__(self, columns=2, **config):
@@ -75,8 +76,28 @@ class Matrix(Layout):
     def focus_first(self):
         if self.clients:
             return self.clients[0]
-        else:
-            return None
+
+    def focus_last(self):
+        if self.clients:
+            return self.clients[-1]
+
+    def focus_next(self, window):
+        if not self.clients:
+            return
+        if self.get_current_window != window:
+            self.focus(window)
+        idx = self.clients.index(window)
+        if idx + 1 < len(self.clients):
+            return self.clients[idx + 1]
+
+    def focus_previous(self, window):
+        if not self.clients:
+            return
+        if self.get_current_window != window:
+            self.focus(window)
+        idx = self.clients.index(window)
+        if idx > 0:
+            return self.clients[idx - 1]
 
     def configure(self, client, screen):
         if client not in self.clients:
@@ -102,11 +123,30 @@ class Matrix(Layout):
             win_width,
             win_height,
             self.border_width,
-            px
+            px,
+            margin=self.margin,
         )
         client.unhide()
 
     def cmd_next(self):
+        client = self.focus_next(self.get_current_window()) or \
+            self.focus_first()
+        self.group.focus(client, False)
+
+    def cmd_previous(self):
+        client = self.focus_previous(self.get_current_window()) or \
+            self.focus_last()
+        self.group.focus(client, False)
+
+    def cmd_left(self):
+        """
+            Switch to the next window on current row
+        """
+        column, row = self.current_window
+        self.current_window = ((column - 1) % len(self.get_row(row)), row)
+        self.group.focus(self.get_current_window(), False)
+
+    def cmd_right(self):
         """
             Switch to the next window on current row
         """
