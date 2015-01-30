@@ -386,19 +386,10 @@ class _Window(command.CommandObject):
             if force is false, than it tries to obey hints
         """
 
-        # TODO: self.x/y/height/width are updated BEFORE
-        # place is called, so there's no way to know if only
-        # the position is changed, so we are sending
-        # the ConfigureNotify every time place is called
-        #
-        # # if position change and size don't
-        # # send a configure notify. See ICCCM 4.2.3
-        # send_notify = False
-        # if (self.x != x or self.y != y) and \
-        #    (self.width == width and self.height == height):
-        #       send_notify = True
-        # #for now, we just:
-        send_notify = True
+        # If position changes and size does not, send a configure notify
+        # See ICCCM 4.2.3
+        send_notify = (self.x != x or self.y != y) and \
+            (self.width == width and self.height == height)
 
         # Adjust the placement to account for layout margins, if there are any.
         if margin is not None:
@@ -875,32 +866,35 @@ class Window(_Window):
                     self.group is not None and \
                     self.group.screen is not None and \
                     screen != self.group.screen:
-                self.x = self.group.screen.x
-                self.y = self.group.screen.y
+                x = self.group.screen.x
+                y = self.group.screen.y
+            else:
+                x = self.x
+                y = self.y
 
             if self.width < self.hints.get('min_width', 0):
-                self.width = self.hints['min_width']
+                width = self.hints['min_width']
+            else:
+                width = self.width
 
             if self.height < self.hints.get('min_height', 0):
                 self.height = self.hints['min_height']
+            else:
+                height = self.height
 
-            width = self.width
             if self.hints.get('width_inc', 0):
                 width = (width -
-                    ((width - self.hints['base_width']) %
-                    self.hints['width_inc']))
+                         ((width - self.hints['base_width']) %
+                          self.hints['width_inc']))
 
-            height = self.height
             if self.hints.get('height_inc', 0):
                 height = (height -
-                    ((height - self.hints['base_height'])
-                    % self.hints['height_inc']))
+                          ((height - self.hints['base_height'])
+                           % self.hints['height_inc']))
 
             self.place(
-                self.x,
-                self.y,
-                width,
-                height,
+                x, y,
+                width, height,
                 self.borderwidth,
                 self.bordercolor,
                 above=True,
@@ -1005,23 +999,18 @@ class Window(_Window):
         if getattr(self, 'floating', False):
             # only obey resize for floating windows
             cw = xcffib.xproto.ConfigWindow
-            if e.value_mask & cw.Width:
-                self.width = e.width
-            if e.value_mask & cw.Height:
-                self.height = e.height
-            if e.value_mask & cw.X:
-                self.x = e.x
-            if e.value_mask & cw.Y:
-                self.y = e.y
+            width = e.width if e.value_mask & cw.Width else self.width
+            height = e.height if e.value_mask & cw.Height else self.height
+            x = e.x if e.value_mask & cw.X else self.x
+            y = e.y if e.value_mask & cw.Y else self.y
+        else:
+            width, height, x, y = self.width, self.height, self.x, self.y
 
         if self.group and self.group.screen:
             self.place(
-                self.x,
-                self.y,
-                self.width,
-                self.height,
-                self.borderwidth,
-                self.bordercolor,
+                x, y,
+                width, height,
+                self.borderwidth, self.bordercolor,
             )
         self.updateState()
         return False
