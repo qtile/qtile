@@ -29,7 +29,7 @@ available from PyPi via:
 
 .. code-block:: bash
 
-    sudo pip install xcffib
+    pip install xcffib
 
 .. _xcffib: https://github.com/tych0/xcffib
 
@@ -41,7 +41,7 @@ has these features once xcffib is installed:
 
 .. code-block:: bash
 
-    sudo pip install cairocffi
+    pip install cairocffi
 
 .. _cairocffi: https://pythonhosted.org/cairocffi/overview.html
 
@@ -59,7 +59,7 @@ Based on your Python version, there are different ways to install this:
 
   .. code-block:: bash
 
-      sudo pip install asyncio
+      pip install asyncio
 
   Alternatively, you can install trollius (see next point).
 - Python 2 and <=3.2 (and 3.3 without asyncio): You will need to install
@@ -68,7 +68,7 @@ Based on your Python version, there are different ways to install this:
 
   .. code-block:: bash
 
-      sudo pip install trollius
+      pip install trollius
 
 .. _PEP 3156: http://python.org/dev/peps/pep-3156/
 .. _asyncio module: https://docs.python.org/3/library/asyncio.html
@@ -82,7 +82,7 @@ importlib
 
   .. code-block:: bash
 
-      sudo pip install importlib
+      pip install importlib
 
 dbus/gobject
 ------------
