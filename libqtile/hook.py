@@ -1,4 +1,4 @@
-import utils
+from . import utils
 
 subscriptions = {}
 SKIPLOG = set()
@@ -27,9 +27,16 @@ class Subscribe:
         if func not in lst:
             lst.append(func)
 
+    def startup_once(self, func):
+        """
+            Called when Qtile has initialized, exactly once (i.e. not on each
+            lazy.restart()).
+        """
+        return self._subscribe("startup_once", func)
+
     def startup(self, func):
         """
-            Called when Qtile has initialized
+            Called each time qtile is started (including the first time qtile starts)
         """
         return self._subscribe("startup", func)
 
@@ -89,13 +96,14 @@ class Subscribe:
 
             - arguments: window.Window object
 
-            ## Example:
+            Example::
 
                 def func(c):
                     if c.name == "xterm":
                         c.togroup("a")
                     elif c.name == "dzen":
                         c.static(0)
+
                 libqtile.hook.subscribe.client_new(func)
         """
         return self._subscribe("client_new", func)
@@ -188,7 +196,7 @@ class Subscribe:
             usage is simply to call ``qtile.cmd_restart()`` on each event (to
             restart qtile when there is a new monitor):
 
-            ## Example:
+            Example::
 
                 def restart_on_randr(qtile, ev):
                     qtile.cmd_restart()
@@ -227,10 +235,7 @@ def fire(event, *args, **kwargs):
     if event not in subscribe.hooks:
         raise utils.QtileError("Unknown event: %s" % event)
     if event not in SKIPLOG:
-        qtile.log.info(
-            "Internal event: %s(%s, %s)" %
-            (event, args, kwargs)
-        )
+        qtile.log.info("Internal event: %s(%s, %s)", event, args, kwargs)
     for i in subscriptions.get(event, []):
         try:
             i(*args, **kwargs)

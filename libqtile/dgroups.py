@@ -1,4 +1,4 @@
-import gobject
+import collections
 
 import libqtile.hook
 from libqtile.config import Key
@@ -22,7 +22,7 @@ def simple_key_binder(mod, keynames=None):
             keys = keynames
         else:
             # keys 1 to 9 and 0
-            keys = map(str, range(1, 10) + [0])
+            keys = list(map(str, list(range(1, 10)) + [0]))
 
         # bind all keys
         for keyname, group in zip(keys, dgroup.qtile.groups):
@@ -71,18 +71,22 @@ class DGroups(object):
         self.timeout = {}
 
     def add_rule(self, rule, last=True):
-        self.rules_map[self.last_rule_id] = rule
+        rule_id = self.last_rule_id
+        self.rules_map[rule_id] = rule
         if last:
             self.rules.append(rule)
         else:
             self.rules.insert(0, rule)
         self.last_rule_id += 1
-        return self.last_rule_id
+        return rule_id
 
-    def remove_rule(self, rule_id=None):
-        rule = self.rules[rule_id]
-        self.rules.remove(rule)
-        del self.rules[rule_id]
+    def remove_rule(self, rule_id):
+        rule = self.rules_map.get(rule_id, None)
+        if rule:
+            self.rules.remove(rule)
+            del self.rules_map[rule_id]
+        else:
+            self.qtile.log.warn('Rule "%s" not found' % rule_id)
 
     def add_dgroup(self, group, start=False):
         self.groupMap[group.name] = group
@@ -118,8 +122,7 @@ class DGroups(object):
     def _add(self, client):
         if client in self.timeout:
             self.qtile.log.info('Remove dgroup source')
-            gobject.source_remove(self.timeout[client])
-            del(self.timeout[client])
+            self.timeout.pop(client).cancel()
 
         # ignore static windows
         if client.defunct:
@@ -148,8 +151,8 @@ class DGroups(object):
                     group_obj = self.qtile.groupMap[rule.group]
                     group = self.groupMap.get(rule.group)
                     if group and group_added:
-                        for k, v in group.layout_opts.iteritems():
-                            if callable(v):
+                        for k, v in list(group.layout_opts.items()):
+                            if isinstance(v, collections.Callable):
                                 v(group_obj.layout)
                             else:
                                 setattr(group_obj.layout, k, v)
@@ -206,7 +209,6 @@ class DGroups(object):
 
         # Wait the delay until really delete the group
         self.qtile.log.info('Add dgroup timer')
-        self.timeout[client] = gobject.timeout_add_seconds(
-            self.delay,
-            delete_client
+        self.timeout[client] = self.qtile._eventloop.call_later(
+            self.delay, delete_client
         )

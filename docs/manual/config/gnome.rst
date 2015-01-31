@@ -1,3 +1,4 @@
+====================
 Running Inside Gnome
 ====================
 
@@ -43,10 +44,7 @@ The custom session for gnome-session.
     $ cat /usr/share/gnome-session/sessions/qtile.session
     [GNOME Session]
     Name=Qtile session
-    RequiredComponents=gnome-settings-daemon;
-    RequiredProviders=windowmanager;notifications;
-    DefaultProvider-windowmanager=qtile
-    DefaultProvider-notifications=notification-daemon
+    RequiredComponents=qtile;gnome-settings-daemon;
 
 So that Qtile starts automatically on login.
 

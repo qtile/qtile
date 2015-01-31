@@ -1,6 +1,6 @@
-==============
-Qtile |travis|
-==============
+==========================
+Qtile |travis| |coveralls|
+==========================
 
 A full-featured, pure-Python tiling window manager
 ==================================================
@@ -26,7 +26,7 @@ Features
 Current Release
 ===============
 
-The current stable version of qtile is 0.8.0, released 2014-08-18. See the
+The current stable version of qtile is 0.9.0, released 2015-01-20. See the
 `documentation <http://docs.qtile.org/en/latest/manual/install/index.html>`_
 for installation instructions.
 
@@ -48,6 +48,10 @@ the Github `issue tracker`_. There are also a few `tips, tricks, and guidelines
 documentation.
 
 .. _`issue tracker`: https://github.com/qtile/qtile/issues
+
 .. |travis| image:: https://travis-ci.org/qtile/qtile.svg?branch=develop
     :alt: Build Status
     :target: https://travis-ci.org/qtile/qtile
+.. |coveralls| image:: https://coveralls.io/repos/qtile/qtile/badge.png?branch=develop
+    :alt: Build Coverage
+    :target: https://coveralls.io/r/qtile/qtile

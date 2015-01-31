@@ -1,4 +1,4 @@
-from base import Layout
+from .base import Layout
 from .. import window
 
 DEFAULT_FLOAT_WM_TYPES = set([
@@ -8,6 +8,10 @@ DEFAULT_FLOAT_WM_TYPES = set([
     'splash',
     'dialog',
 ])
+
+DEFAULT_FLOAT_RULES = [
+    {"role": "About"},
+]
 
 
 class Floating(Layout):
@@ -50,7 +54,7 @@ class Floating(Layout):
         Layout.__init__(self, **config)
         self.clients = []
         self.focused = None
-        self.float_rules = float_rules or []
+        self.float_rules = float_rules or DEFAULT_FLOAT_RULES
         self.add_defaults(Floating.defaults)
 
     def match(self, win):
@@ -79,14 +83,8 @@ class Floating(Layout):
             offset_x = win._float_info['x']
             offset_y = win._float_info['y']
 
-            if offset_x > 0:
-                new_x = new_screen.x + offset_x
-            else:
-                new_x = new_screen.x + i * 10
-            if offset_y > 0:
-                new_y = new_screen.y + offset_y
-            else:
-                new_y = new_screen.y + i * 10
+            new_x = new_screen.x + offset_x
+            new_y = new_screen.y + offset_y
 
             right_edge = new_screen.x + new_screen.width
             bottom_edge = new_screen.y + new_screen.height

@@ -40,11 +40,15 @@ class ColorFormatter(logging.Formatter):
         return message + self.reset_seq
 
 
-def init_log(log_level=logging.ERROR, logger='qtile', log_path='~/.%s.log'):
+def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log'):
     log = getLogger(logger)
     log.setLevel(log_level)
 
     if log_path:
+        try:
+            log_path = log_path % logger
+        except TypeError:  # Happens if log_path doesn't contain formatters.
+            pass
         log_path = os.path.expanduser(log_path)
         handler = logging.FileHandler(log_path)
         handler.setFormatter(

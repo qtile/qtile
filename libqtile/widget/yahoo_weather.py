@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import base
-import urllib
-import urllib2
+from . import base
 from xml.dom import minidom
+import json
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+
+from six.moves.urllib.request import urlopen
+from six.moves.urllib.parse import urlencode
 
 QUERY_URL = 'http://query.yahooapis.com/v1/public/yql?'
 WEATHER_URL = 'http://weather.yahooapis.com/forecastrss?'
@@ -18,14 +16,27 @@ WEATHER_NS = 'http://xml.weather.yahoo.com/ns/rss/1.0'
 
 class YahooWeather(base.ThreadedPollText):
     ''' A weather widget, data provided by the Yahoo! Weather API
+
         Format options:
-            astronomy_sunrise, astronomy_sunset
-            atmosphere_humidity, atmosphere_visibility,
-            atmosphere_pressure, atmosphere_rising
-            condition_text, condition_code, condition_temp, condition_date
-            location_city. location_region, location_country
-            units_temperature, units_distance, units_pressure, units_speed
-            wind_chill, wind_direction, wind_speed
+
+            - astronomy_sunrise
+            - astronomy_sunset
+            - atmosphere_humidity
+            - atmosphere_visibility
+            - atmosphere_pressure
+            - atmosphere_rising
+            - condition_text
+            - condition_code
+            - condition_temp
+            - condition_date
+            - location_city
+            - location_region
+            - location_country
+            - units_temperature
+            - units_distance
+            - units_pressure
+            - units_speed
+            - wind_chill
     '''
 
     defaults = [
@@ -56,12 +67,12 @@ class YahooWeather(base.ThreadedPollText):
         self.add_defaults(YahooWeather.defaults)
 
     def fetch_woeid(self, location):
-        url = QUERY_URL + urllib.urlencode({
+        url = QUERY_URL + urlencode({
             'q': 'select woeid from geo.places where text="%s"' % location,
             'format': 'json'
         })
         try:
-            response = urllib2.urlopen(url)
+            response = urlopen(url)
             data = json.loads(response.read())
             if data['query']['count'] > 1:
                 return data['query']['results']['place'][0]['woeid']
@@ -77,10 +88,10 @@ class YahooWeather(base.ThreadedPollText):
             if not self.woeid:
                 return None
         format = 'c' if self.metric else 'f'
-        url = WEATHER_URL + urllib.urlencode({'w': self.woeid, 'u': format})
+        url = WEATHER_URL + urlencode({'w': self.woeid, 'u': format})
 
         try:
-            response = urllib2.urlopen(url).read()
+            response = urlopen(url).read()
             dom = minidom.parseString(response)
         except Exception:
             # Invalid response or couldn't parse XML.

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import base
+from . import base
 from subprocess import check_output, call
 
 
@@ -25,11 +25,11 @@ class Canto(base.ThreadedPollText):
             if self.fetch:
                 arg += "u"
             return self.all_format.format(
-                number=check_output(["canto", arg])[:-1])
+                number=check_output(["canto", arg])[:-1]).decode()
         else:
             if self.fetch:
                 call(["canto", "-u"])
             return "".join([self.one_format.format(
                 name=feed,
-                number=check_output(["canto", "-n", feed])[:-1]
+                number=check_output(["canto", "-n", feed]).decode()[:-1]
             ) for feed in self.feeds])

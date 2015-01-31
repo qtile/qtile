@@ -1,4 +1,4 @@
-from base import SingleWindow
+from .base import SingleWindow
 import math
 
 
@@ -11,9 +11,11 @@ class MonadTall(SingleWindow):
 
     A main pane that contains a single window takes up a vertical
     portion of the screen based on the ratio setting. This ratio can
-    be adjusted with the `cmd_grow' and `cmd_shrink' methods while
+    be adjusted with the ``cmd_grow`` and ``cmd_shrink`` methods while
     the main pane is in focus.
 
+    ::
+
         ---------------------
         |            |      |
         |            |      |
@@ -23,9 +25,11 @@ class MonadTall(SingleWindow):
         |            |      |
         ---------------------
 
-    Using the `cmd_flip' method will switch which horizontal side the
+    Using the ``cmd_flip`` method will switch which horizontal side the
     main pane will occupy. The main pane is considered the "top" of
     the stack.
+
+    ::
 
         ---------------------
         |      |            |
@@ -40,10 +44,12 @@ class MonadTall(SingleWindow):
 
     Occupying the rest of the screen are one or more secondary panes.
     The secondary panes will share the vertical space of the screen
-    however they can be resized at will with the `cmd_grow' and
-    `cmd_shrink' methods. The other secondary panes will adjust their
+    however they can be resized at will with the ``cmd_grow`` and
+    ``cmd_shrink`` methods. The other secondary panes will adjust their
     sizes to smoothly fill all of the space.
 
+    ::
+
         ---------------------          ---------------------
         |            |      |          |            |______|
         |            |______|          |            |      |
@@ -53,11 +59,13 @@ class MonadTall(SingleWindow):
         |            |      |          |            |      |
         ---------------------          ---------------------
 
-    Panes can be moved with the `cmd_shuffle_up' and `cmd_shuffle_down'
+    Panes can be moved with the ``cmd_shuffle_up`` and ``cmd_shuffle_down``
     methods. As mentioned the main pane is considered the top of the
     stack; moving up is counter-clockwise and moving down is clockwise.
 
     The opposite is true if the layout is "flipped".
+
+    ::
 
         ---------------------          ---------------------
         |            |  2   |          |   2   |           |
@@ -72,29 +80,31 @@ class MonadTall(SingleWindow):
     Normalizing:
 
     To restore all client windows to their default size ratios simply
-    use the `cmd_normalize' method.
+    use the ``cmd_normalize`` method.
 
 
     Maximizing:
 
     To toggle a client window between its minimum and maximum sizes
-    simply use the `cmd_maximize' on a focused client.
+    simply use the ``cmd_maximize`` on a focused client.
 
     Suggested Bindings:
 
-    Key([modkey], "h", lazy.layout.left()),
-    Key([modkey], "l", lazy.layout.right()),
-    Key([modkey], "j", lazy.layout.down()),
-    Key([modkey], "k", lazy.layout.up()),
-    Key([modkey, "shift"], "h", lazy.layout.swap_left()),
-    Key([modkey, "shift"], "l", lazy.layout.swap_right()),
-    Key([modkey, "shift"], "j", lazy.layout.shuffle_down()),
-    Key([modkey, "shift"], "k", lazy.layout.shuffle_up()),
-    Key([modkey], "i", lazy.layout.grow()),
-    Key([modkey], "m", lazy.layout.shrink()),
-    Key([modkey], "n", lazy.layout.normalize()),
-    Key([modkey], "o", lazy.layout.maximize()),
-    Key([modkey, "shift"], "space", lazy.layout.flip()),
+    ::
+
+        Key([modkey], "h", lazy.layout.left()),
+        Key([modkey], "l", lazy.layout.right()),
+        Key([modkey], "j", lazy.layout.down()),
+        Key([modkey], "k", lazy.layout.up()),
+        Key([modkey, "shift"], "h", lazy.layout.swap_left()),
+        Key([modkey, "shift"], "l", lazy.layout.swap_right()),
+        Key([modkey, "shift"], "j", lazy.layout.shuffle_down()),
+        Key([modkey, "shift"], "k", lazy.layout.shuffle_up()),
+        Key([modkey], "i", lazy.layout.grow()),
+        Key([modkey], "m", lazy.layout.shrink()),
+        Key([modkey], "n", lazy.layout.normalize()),
+        Key([modkey], "o", lazy.layout.maximize()),
+        Key([modkey, "shift"], "space", lazy.layout.flip()),
 
     """
 
@@ -111,26 +121,20 @@ class MonadTall(SingleWindow):
         ("border_width", 2, "Border width."),
         ("name", "xmonad-tall", "Name of this layout."),
         ("margin", 0, "Margin of the layout"),
+        ("ratio", _med_ratio,
+            "The percent of the screen-space the master pane should occupy "
+            "by default."),
+        ("align", _left, "Which side master plane will be placed "
+            "(one of ``MonadTall._left`` or ``MonadTall._right``)"),
+        ("change_ratio", .05, "Resize ratio"),
+        ("change_size", 20, "Resize change in pixels"),
     ]
 
-    def __init__(self, ratio=_med_ratio, align=_left, change_ratio=.05,
-                 change_size=20, **config):
-        """
-            - ratio       : The percent of the screen-space the
-                            master pane should occupy by default.
-
-            - align       : Which side the master pane will be placed.
-
-            - change_size : Resize change in pixels
-        """
+    def __init__(self, **config):
         SingleWindow.__init__(self, **config)
         self.add_defaults(MonadTall.defaults)
         self.clients = []
         self.relative_sizes = []
-        self.ratio = ratio
-        self.align = align
-        self.change_size = change_size
-        self.change_ratio = change_ratio
         self._focus = 0
 
     # track client that has 'focus'
@@ -199,6 +203,13 @@ class MonadTall(SingleWindow):
         if redraw:
             self.group.layoutAll()
         self.do_normalize = False
+
+    def cmd_reset(self, redraw=True):
+        "Reset Layout."
+        self.ratio = self._med_ratio
+        if self.align == self._right:
+            self.align = self._left
+        self.cmd_normalize(redraw)
 
     def _maximize_main(self):
         "Toggle the main pane between min and max size"
@@ -381,7 +392,7 @@ class MonadTall(SingleWindow):
         index by an equal share of the provided amount. After
         applying the shared amount to all affected clients,
         any amount left over will be applied in a
-        non-equal manner with `shrink_up'.
+        non-equal manner with ``shrink_up``.
 
         Any amount that was unable to be applied to the
         clients is returned.
@@ -422,7 +433,7 @@ class MonadTall(SingleWindow):
         index by an equal share of the provided amount. After
         applying the shared amount to all affected clients,
         any amount left over will be applied in a
-        non-equal manner with `shrink_down'.
+        non-equal manner with ``shrink_down``.
 
         Any amount that was unable to be applied to the
         clients is returned.
@@ -710,6 +721,13 @@ class MonadTall(SingleWindow):
         candidates = [c for c in self.clients if c.info()['x'] > x]
         target = self._get_closest(x, y, candidates)
         self.cmd_swap(self._get_window(), target)
+
+    def cmd_swap_main(self):
+        "Swap current window to main pane."
+        if self.align == self._left:
+            self.cmd_swap_left()
+        elif self.align == self._right:
+            self.cmd_swap_right()
 
     def cmd_left(self):
         "Focus on the closest window to the left of the current window."

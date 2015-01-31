@@ -2,7 +2,7 @@ import glob
 import os
 import string
 from .. import bar, xkeysyms, xcbq, command
-import base
+from . import base
 
 
 class NullCompleter:
@@ -182,7 +182,7 @@ class WindowCompleter:
         """
         if not self.lookup:
             self.lookup = []
-            for wid, window in self.qtile.windowMap.iteritems():
+            for wid, window in self.qtile.windowMap.items():
                 if window.group and window.name.lower().startswith(txt):
                     self.lookup.append((window.name, wid))
 
@@ -351,9 +351,8 @@ class Prompt(base._TextBox):
     def _blink(self):
         self.blink = not self.blink
         self._update()
-        if not self.active:
-            return False
-        return True
+        if self.active:
+            self.timeout_add(self.cursorblink, self._blink)
 
     def _update(self):
         if self.active:

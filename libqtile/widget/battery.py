@@ -1,7 +1,7 @@
-import cairo
+import cairocffi
 import os
 from libqtile import bar
-import base
+from . import base
 
 BAT_DIR = '/sys/class/power_supply'
 CHARGED = 'Full'
@@ -141,8 +141,18 @@ class Battery(_Battery):
     def __init__(self, **config):
         _Battery.__init__(self, **config)
         self.add_defaults(Battery.defaults)
-        self.timeout_add(self.update_delay, self.update)
-        self.update()
+
+    def timer_setup(self):
+        update_delay = self.update()
+        if update_delay is None and self.update_delay is not None:
+            self.timeout_add(self.update_delay, self.timer_setup)
+        elif update_delay:
+            self.timeout_add(update_delay, self.timer_setup)
+
+    def _configure(self, qtile, bar):
+        if self.configured:
+            self.update()
+        _Battery._configure(self, qtile, bar)
 
     def _get_text(self):
         info = self._get_info()
@@ -190,12 +200,10 @@ class Battery(_Battery):
         )
 
     def update(self):
-        if self.configured:
-            ntext = self._get_text()
-            if ntext != self.text:
-                self.text = ntext
-                self.bar.draw()
-        return True
+        ntext = self._get_text()
+        if ntext != self.text:
+            self.text = ntext
+            self.bar.draw()
 
 
 class BatteryIcon(_Battery):
@@ -228,7 +236,10 @@ class BatteryIcon(_Battery):
             'battery-full-charged',
         )])
         self.icons.update(self.custom_icons)
-        self.timeout_add(self.update_delay, self.update)
+
+    def timer_setup(self):
+        self.update()
+        self.timeout_add(self.update_delay, self.timer_setup)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
@@ -257,12 +268,10 @@ class BatteryIcon(_Battery):
         return key
 
     def update(self):
-        if self.configured:
-            icon = self._get_icon_key()
-            if icon != self.current_icon:
-                self.current_icon = icon
-                self.draw()
-        return True
+        icon = self._get_icon_key()
+        if icon != self.current_icon:
+            self.current_icon = icon
+            self.draw()
 
     def draw(self):
         if self.theme_path:
@@ -275,11 +284,11 @@ class BatteryIcon(_Battery):
             base._TextBox.draw(self)
 
     def setup_images(self):
-        for key, name in self.icons.iteritems():
+        for key, name in self.icons.items():
             try:
                 path = os.path.join(self.theme_path, name)
-                img = cairo.ImageSurface.create_from_png(path)
-            except cairo.Error:
+                img = cairocffi.ImageSurface.create_from_png(path)
+            except cairocffi.Error:
                 self.theme_path = None
                 self.qtile.log.warning('Battery Icon switching to text mode')
                 return
@@ -292,13 +301,13 @@ class BatteryIcon(_Battery):
             if width > self.width:
                 self.width = int(width) + self.actual_padding * 2
 
-            imgpat = cairo.SurfacePattern(img)
+            imgpat = cairocffi.SurfacePattern(img)
 
-            scaler = cairo.Matrix()
+            scaler = cairocffi.Matrix()
 
             scaler.scale(sp, sp)
             scaler.translate(self.actual_padding * -1, 0)
             imgpat.set_matrix(scaler)
 
-            imgpat.set_filter(cairo.FILTER_BEST)
+            imgpat.set_filter(cairocffi.FILTER_BEST)
             self.surfaces[key] = imgpat

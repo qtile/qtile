@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import base
+from . import base
+import json
 import locale
-import urllib2
 
-try:
-    import json
-except ImportError:
-    import simplejson as json
+from six.moves.urllib.request import urlopen
 
 
 class BitcoinTicker(base.ThreadedPollText):
@@ -31,14 +28,14 @@ class BitcoinTicker(base.ThreadedPollText):
         self.add_defaults(BitcoinTicker.defaults)
 
     def poll(self):
-        res = urllib2.urlopen(self.QUERY_URL % self.currency.lower())
+        res = urlopen(self.QUERY_URL % self.currency.lower())
         formatted = {}
-        res = json.loads(res.read())
-        if u'error' in res and res[u'error'] == u"invalid pair":
+        res = json.loads(res.read().decode())
+        if 'error' in res and res['error'] == "invalid pair":
             locale.setlocale(locale.LC_MONETARY, "en_US.UTF-8")
             self.currency = locale.localeconv()['int_curr_symbol'].strip()
-            res = urllib2.urlopen(self.QUERY_URL % self.currency.lower())
+            res = urlopen(self.QUERY_URL % self.currency.lower())
             res = json.loads(res.read())
-        for k, v in res[u'ticker'].iteritems():
-            formatted[k.encode('ascii')] = locale.currency(v)
+        for k, v in res['ticker'].items():
+            formatted[k] = locale.currency(v)
         return self.format.format(**formatted)

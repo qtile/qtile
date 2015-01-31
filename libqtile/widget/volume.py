@@ -2,10 +2,11 @@ import os
 import re
 import subprocess
 
-import cairo
+import cairocffi
 
-import base
+from . import base
 from .. import bar
+from six import u
 
 __all__ = [
     'Volume',
@@ -39,17 +40,16 @@ class Volume(base._TextBox):
             self.width = 0
         self.surfaces = {}
         self.volume = None
-        self.timeout_add(self.update_interval, self.update)
 
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
+    def timer_setup(self):
+        self.timeout_add(self.update_interval, self.update)
         if self.theme_path:
             self.setup_images()
 
     def button_press(self, x, y, button):
         if button == 5:
-            if self.volume_up_command is not None:
-                subprocess.call(self.volume_up_command)
+            if self.volume_down_command is not None:
+                subprocess.call(self.volume_down_command)
             else:
                 subprocess.call([
                     'amixer',
@@ -61,8 +61,8 @@ class Volume(base._TextBox):
                     '2dB-'
                 ])
         elif button == 4:
-            if self.volume_down_command is not None:
-                subprocess.call(self.volume_down_command)
+            if self.volume_up_command is not None:
+                subprocess.call(self.volume_up_command)
             else:
                 subprocess.call([
                     'amixer',
@@ -89,15 +89,14 @@ class Volume(base._TextBox):
         self.draw()
 
     def update(self):
-        if self.configured:
-            vol = self.get_volume()
-            if vol != self.volume:
-                self.volume = vol
-                # Update the underlying canvas size before actually attempting
-                # to figure out how big it is and draw it.
-                self._update_drawer()
-                self.bar.draw()
-        return True
+        vol = self.get_volume()
+        if vol != self.volume:
+            self.volume = vol
+            # Update the underlying canvas size before actually attempting
+            # to figure out how big it is and draw it.
+            self._update_drawer()
+            self.bar.draw()
+        self.timeout_add(self.update_interval, self.update)
 
     def _update_drawer(self):
         if self.theme_path:
@@ -115,13 +114,13 @@ class Volume(base._TextBox):
             self.drawer.ctx.paint()
         elif self.emoji:
             if self.volume <= 0:
-                self.text = u'\U0001f507'
+                self.text = u('\U0001f507')
             elif self.volume <= 30:
-                self.text = u'\U0001f508'
+                self.text = u('\U0001f508')
             elif self.volume < 80:
-                self.text = u'\U0001f509'
+                self.text = u('\U0001f509')
             elif self.volume >= 80:
-                self.text = u'\U0001f50a'
+                self.text = u('\U0001f50a')
         else:
             if self.volume == -1:
                 self.text = 'M'
@@ -137,10 +136,10 @@ class Volume(base._TextBox):
         ):
 
             try:
-                img = cairo.ImageSurface.create_from_png(
+                img = cairocffi.ImageSurface.create_from_png(
                     os.path.join(self.theme_path, '%s.png' % img_name)
                 )
-            except cairo.Error:
+            except cairocffi.Error:
                 self.theme_path = None
                 self.width_type = bar.CALCULATED
                 self.qtile.log.exception('Volume switching to text mode')
@@ -154,15 +153,15 @@ class Volume(base._TextBox):
             if width > self.width:
                 self.width = int(width) + self.actual_padding * 2
 
-            imgpat = cairo.SurfacePattern(img)
+            imgpat = cairocffi.SurfacePattern(img)
 
-            scaler = cairo.Matrix()
+            scaler = cairocffi.Matrix()
 
             scaler.scale(sp, sp)
             scaler.translate(self.actual_padding * -1, 0)
             imgpat.set_matrix(scaler)
 
-            imgpat.set_filter(cairo.FILTER_BEST)
+            imgpat.set_filter(cairocffi.FILTER_BEST)
             self.surfaces[img_name] = imgpat
 
     def get_volume(self):
@@ -176,7 +175,7 @@ class Volume(base._TextBox):
             ],
             stdout=subprocess.PIPE
         )
-        mixer_out = mixerprocess.communicate()[0]
+        mixer_out = mixerprocess.communicate()[0].decode()
         if mixerprocess.returncode:
             return -1
 

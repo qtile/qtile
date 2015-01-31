@@ -1,8 +1,8 @@
 from time import time
 from datetime import datetime
 from contextlib import contextmanager
+from . import base
 
-import base
 import os
 
 @contextmanager
@@ -14,7 +14,6 @@ def tz(the_tz):
         os.environ['TZ'] = orig
     else:
         del os.environ['TZ']
-
 
 class Clock(base.InLoopPollText):
     """
@@ -36,11 +35,9 @@ class Clock(base.InLoopPollText):
             self.format = fmt
 
     def tick(self):
-        ts = time()
-        self.timeout_add(self.update_interval - ts % self.update_interval,
-                         self.tick)
         self.update(self.poll())
-        return False
+        ts = time()
+        return self.update_interval - ts % self.update_interval
 
     def _get_time(self):
         ts = time()

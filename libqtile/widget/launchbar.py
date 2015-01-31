@@ -14,8 +14,9 @@ To execute a python command in qtile, begin with by 'qsh:'
 
 from libqtile import bar
 from libqtile.widget import base
+
 import os.path
-import cairo
+import cairocffi
 from xdg.IconTheme import getIconPath
 
 
@@ -26,8 +27,8 @@ class LaunchBar(base._Widget):
 
     defaults = [
         ('padding', 2, 'Padding between icons'),
-        ('default_icon', '/usr/share/icons/oxygen/256x256/mimetypes/\
-        application-x-executable.png', 'Default icon not found'),
+        ('default_icon', '/usr/share/icons/oxygen/256x256/mimetypes/'
+        'application-x-executable.png', 'Default icon not found'),
     ]
 
     def __init__(self, progs=None, width=bar.CALCULATED, **config):
@@ -57,10 +58,10 @@ class LaunchBar(base._Widget):
 
     def setup_images(self):
         """ Create image structures for each icon files. """
-        for img_name, iconfile in self.icons_files.iteritems():
+        for img_name, iconfile in self.icons_files.items():
             try:
-                img = cairo.ImageSurface.create_from_png(iconfile)
-            except cairo.Error:
+                img = cairocffi.ImageSurface.create_from_png(iconfile)
+            except cairocffi.Error:
                 self.qtile.log.exception('No icon found for application ' +
                                          img_name + '(' + iconfile + ')')
                 return
@@ -74,15 +75,15 @@ class LaunchBar(base._Widget):
             if width > self.width:
                 self.width = int(width) + self.padding * 2
 
-            imgpat = cairo.SurfacePattern(img)
+            imgpat = cairocffi.SurfacePattern(img)
 
-            scaler = cairo.Matrix()
+            scaler = cairocffi.Matrix()
 
             scaler.scale(sp, sp)
             scaler.translate(self.padding * -1, -2)
             imgpat.set_matrix(scaler)
 
-            imgpat.set_filter(cairo.FILTER_BEST)
+            imgpat.set_filter(cairocffi.FILTER_BEST)
             self.surfaces[img_name] = imgpat
             self.icons_widths[img_name] = width
 

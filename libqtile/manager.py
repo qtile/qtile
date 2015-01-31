@@ -19,51 +19,58 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from config import Drag, Click, Screen, Match, Rule
-from utils import QtileError
 from libqtile.log_utils import init_log
 from libqtile.dgroups import DGroups
-from state import QtileState
-from group import _Group
-from StringIO import StringIO
-from xcb.xproto import EventMask, BadWindow, BadAccess, BadDrawable
+from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
 import atexit
-import command
-import gobject
-import hook
+import imp
 import logging
 import os
 import os.path
 import pickle
+import shlex
+import signal
 import sys
-import utils
-import window
-import xcb
-import xcb.xinerama
-import xcb.xproto
-import xcbq
+import traceback
+import threading
+import xcffib
+import xcffib.xinerama
+import xcffib.xproto
+import six
 
-from widget.base import _Widget
+from six.moves import asyncio
+
+from .config import Drag, Click, Screen, Match, Rule
+from .group import _Group
+from .state import QtileState
+from .utils import QtileError
+from .widget.base import _Widget, deprecated
+from . import command
+from . import hook
+from . import utils
+from . import window
+from . import xcbq
 
 
 class Qtile(command.CommandObject):
     """
         This object is the __root__ of the command graph.
     """
-    _exit = False
 
     def __init__(self, config,
                  displayName=None, fname=None, no_spawn=False, log=None,
                  state=None):
-        gobject.threads_init()
         logkwargs = {}
         if hasattr(config, "log_level"):
             logkwargs["log_level"] = config.log_level
         if hasattr(config, "log_path"):
             logkwargs["log_path"] = config.log_path
         self.log = log or init_log(**logkwargs)
+        logging.getLogger('asyncio').setLevel(logging.CRITICAL)
 
         self.no_spawn = no_spawn
+
+        self._eventloop = asyncio.get_event_loop()
 
         if not displayName:
             displayName = os.environ.get("DISPLAY")
@@ -151,16 +158,18 @@ class Qtile(command.CommandObject):
         self._drag = None
 
         self.ignoreEvents = set([
-            xcb.xproto.KeyReleaseEvent,
-            xcb.xproto.ReparentNotifyEvent,
-            xcb.xproto.CreateNotifyEvent,
+            xcffib.xproto.KeyReleaseEvent,
+            xcffib.xproto.ReparentNotifyEvent,
+            xcffib.xproto.CreateNotifyEvent,
             # DWM handles this to help "broken focusing windows".
-            xcb.xproto.MapNotifyEvent,
-            xcb.xproto.LeaveNotifyEvent,
-            xcb.xproto.FocusOutEvent,
-            xcb.xproto.FocusInEvent,
-            xcb.xproto.NoExposureEvent
+            xcffib.xproto.MapNotifyEvent,
+            xcffib.xproto.LeaveNotifyEvent,
+            xcffib.xproto.FocusOutEvent,
+            xcffib.xproto.FocusInEvent,
+            xcffib.xproto.NoExposureEvent
         ])
+
+        self.setup_python_dbus()
 
         self.conn.flush()
         self.conn.xsync()
@@ -185,6 +194,10 @@ class Qtile(command.CommandObject):
 
         self.grabMouse()
 
+        # no_spawn is set when we are restarting; we only want to run the
+        # startup hook once.
+        if not no_spawn:
+            hook.fire("startup_once")
         hook.fire("startup")
 
         self.scan()
@@ -192,7 +205,7 @@ class Qtile(command.CommandObject):
         hook.subscribe.setgroup(self.update_net_desktops)
 
         if state:
-            st = pickle.load(StringIO(state))
+            st = pickle.load(six.BytesIO(state.encode()))
             st.apply(self)
 
         self.selection = {
@@ -220,6 +233,32 @@ class Qtile(command.CommandObject):
         # ask for selection on starup
         self.convert_selection(PRIMARY)
         self.convert_selection(CLIPBOARD)
+
+    def setup_python_dbus(self):
+        # This is a little strange. python-dbus internally depends on gobject,
+        # so gobject's threads need to be running, and a gobject "main loop
+        # thread" needs to be spawned, but we try to let it only interact with
+        # us via calls to asyncio's call_soon_threadsafe.
+        try:
+            # We import dbus here to thrown an ImportError if it isn't
+            # available. Since the only reason we're running this thread is
+            # because of dbus, if dbus isn't around there's no need to run
+            # this thread.
+            import dbus  # noqa
+            from six.moves import gobject
+
+            gobject.threads_init()
+            def gobject_thread():
+                ctx = gobject.main_context_default()
+                while not self._eventloop.is_closed():
+                    try:
+                        ctx.iteration(True)
+                    except Exception:
+                        self.qtile.exception("got exception from gobject")
+            t = threading.Thread(target=gobject_thread, name="gobject_thread")
+            t.start()
+        except ImportError:
+            self.log.warning("importing dbus/gobject failed, dbus will not work.")
 
     def _process_fake_screens(self):
         """
@@ -296,23 +335,23 @@ class Qtile(command.CommandObject):
             code,
             key.modmask,
             True,
-            xcb.xproto.GrabMode.Async,
-            xcb.xproto.GrabMode.Async,
+            xcffib.xproto.GrabMode.Async,
+            xcffib.xproto.GrabMode.Async,
         )
         if self.numlockMask:
             self.root.grab_key(
                 code,
                 key.modmask | self.numlockMask,
                 True,
-                xcb.xproto.GrabMode.Async,
-                xcb.xproto.GrabMode.Async,
+                xcffib.xproto.GrabMode.Async,
+                xcffib.xproto.GrabMode.Async,
             )
             self.root.grab_key(
                 code,
                 key.modmask | self.numlockMask | xcbq.ModMasks["lock"],
                 True,
-                xcb.xproto.GrabMode.Async,
-                xcb.xproto.GrabMode.Async,
+                xcffib.xproto.GrabMode.Async,
+                xcffib.xproto.GrabMode.Async,
             )
 
     def unmapKey(self, key):
@@ -333,7 +372,12 @@ class Qtile(command.CommandObject):
     def update_net_desktops(self):
         try:
             index = self.groups.index(self.currentGroup)
-        except:
+        # TODO: we should really only except ValueError here, AttributeError is
+        # an annoying chicken and egg because we're accessing currentScreen
+        # (via currentGroup), and when we set up the initial groups, there
+        # aren't any screens yet. This can probably be changed when #475 is
+        # fixed.
+        except (ValueError, AttributeError):
             index = 0
 
         self.root.set_property("_NET_NUMBER_OF_DESKTOPS", len(self.groups))
@@ -420,10 +464,10 @@ class Qtile(command.CommandObject):
             try:
                 attrs = item.get_attributes()
                 state = item.get_wm_state()
-            except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+            except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
                 continue
 
-            if attrs and attrs.map_state == xcb.xproto.MapState.Unmapped:
+            if attrs and attrs.map_state == xcffib.xproto.MapState.Unmapped:
                 continue
             if state and state[0] == window.WithdrawnState:
                 continue
@@ -435,8 +479,6 @@ class Qtile(command.CommandObject):
             hook.fire("client_killed", c)
             self.reset_gaps(c)
             if getattr(c, "group", None):
-                c.window.unmap()
-                c.state = window.WithdrawnState
                 c.group.remove(c)
             del self.windowMap[win]
             self.update_client_list()
@@ -474,7 +516,7 @@ class Qtile(command.CommandObject):
         try:
             attrs = w.get_attributes()
             internal = w.get_property("QTILE_INTERNAL")
-        except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             return
         if attrs and attrs.override_redirect:
             return
@@ -483,13 +525,13 @@ class Qtile(command.CommandObject):
             if internal:
                 try:
                     c = window.Internal(w, self)
-                except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+                except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
                     return
                 self.windowMap[w.wid] = c
             else:
                 try:
                     c = window.Window(w, self)
-                except (xcb.xproto.BadWindow, xcb.xproto.BadAccess):
+                except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
                     return
 
                 if w.get_wm_type() == "dock" or c.strut:
@@ -504,7 +546,7 @@ class Qtile(command.CommandObject):
                 self.windowMap[w.wid] = c
                 # Window may have been bound to a group in the hook.
                 if not c.group:
-                    self.currentScreen.group.add(c)
+                    self.currentScreen.group.add(c, focus=c.can_steal_focus())
                 self.update_client_list()
                 hook.fire("client_managed", c)
             return c
@@ -518,7 +560,7 @@ class Qtile(command.CommandObject):
         and drag and drop of tabs in chrome
         """
 
-        windows = [wid for wid, c in self.windowMap.iteritems() if c.group]
+        windows = [wid for wid, c in self.windowMap.items() if c.group]
         self.root.set_property("_NET_CLIENT_LIST", windows)
         # TODO: check stack order
         self.root.set_property("_NET_CLIENT_LIST_STACKING", windows)
@@ -529,9 +571,9 @@ class Qtile(command.CommandObject):
             if isinstance(i, Click) and i.focus:
                 # Make a freezing grab on mouse button to gain focus
                 # Event will propagate to target window
-                grabmode = xcb.xproto.GrabMode.Sync
+                grabmode = xcffib.xproto.GrabMode.Sync
             else:
-                grabmode = xcb.xproto.GrabMode.Async
+                grabmode = xcffib.xproto.GrabMode.Async
             eventmask = EventMask.ButtonPress
             if isinstance(i, Drag):
                 eventmask |= EventMask.ButtonRelease
@@ -541,7 +583,7 @@ class Qtile(command.CommandObject):
                 True,
                 eventmask,
                 grabmode,
-                xcb.xproto.GrabMode.Async,
+                xcffib.xproto.GrabMode.Async,
             )
             if self.numlockMask:
                 self.root.grab_button(
@@ -550,7 +592,7 @@ class Qtile(command.CommandObject):
                     True,
                     eventmask,
                     grabmode,
-                    xcb.xproto.GrabMode.Async,
+                    xcffib.xproto.GrabMode.Async,
                 )
                 self.root.grab_button(
                     i.button_code,
@@ -558,7 +600,7 @@ class Qtile(command.CommandObject):
                     True,
                     eventmask,
                     grabmode,
-                    xcb.xproto.GrabMode.Async,
+                    xcffib.xproto.GrabMode.Async,
                 )
 
     def grabKeys(self):
@@ -597,7 +639,7 @@ class Qtile(command.CommandObject):
             self.log.info("Unknown event: %r" % ename)
         return chain
 
-    def _xpoll(self, conn=None, cond=None):
+    def _xpoll(self):
         while True:
             try:
                 e = self.conn.conn.poll_for_event()
@@ -622,44 +664,50 @@ class Qtile(command.CommandObject):
                     self.log.exception("Shutting down due to X connection error %s (%s)" %
                         (error_string, error_code))
                     self.conn.disconnect()
-                    self._exit = True
-                    return False
 
                 self.log.exception("Got an exception in poll loop")
-        return True
+
+        # Any changes these events triggered should be flushed to the server.
+        try:
+            self.conn.flush()
+
+        # Catch some bad X exceptions. Since X is event based, race
+        # conditions can occur almost anywhere in the code. For
+        # example, if a window is created and then immediately
+        # destroyed (before the event handler is evoked), when the
+        # event handler tries to examine the window properties, it
+        # will throw a WindowError exception. We can essentially
+        # ignore it, since the window is already dead and we've got
+        # another event in the queue notifying us to clean it up.
+        #
+        # We have to catch these here, because when we .flush() is when xcb
+        # reports checked exceptions.
+        except (WindowError, AccessError, DrawableError):
+            pass
 
     def loop(self):
-
         self.server.start()
-        self.log.info('Adding io watch')
-        display_tag = gobject.io_add_watch(
-            self.conn.conn.get_file_descriptor(),
-            gobject.IO_IN, self._xpoll
-        )
-        try:
-            context = gobject.main_context_default()
-            while True:
-                if context.iteration(True):
-                    try:
-                        # this seems to be crucial part
-                        self.conn.flush()
 
-                    # Catch some bad X exceptions. Since X is event based, race
-                    # conditions can occur almost anywhere in the code. For
-                    # example, if a window is created and then immediately
-                    # destroyed (before the event handler is evoked), when the
-                    # event handler tries to examine the window properties, it
-                    # will throw a BadWindow exception. We can essentially
-                    # ignore it, since the window is already dead and we've got
-                    # another event in the queue notifying us to clean it up.
-                    except (BadWindow, BadAccess, BadDrawable):
-                        pass
-                if self._exit:
-                    self.log.info('Got shutdown, Breaking main loop cleanly')
-                    break
+        self._eventloop.add_signal_handler(signal.SIGINT, self._eventloop.stop)
+        self._eventloop.add_signal_handler(signal.SIGTERM, self._eventloop.stop)
+
+        self.log.info('Adding io watch')
+        fd = self.conn.conn.get_file_descriptor()
+        self._eventloop.add_reader(fd, self._xpoll)
+
+        try:
+            self._eventloop.run_forever()
         finally:
-            self.log.info('Removing source')
-            gobject.source_remove(display_tag)
+            self.server.close()
+            self.log.info('Removing io watch')
+            self._eventloop.remove_reader(fd)
+            self._eventloop.close()
+            self.conn.conn.disconnect()
+            try:
+                from six.moves import gobject
+                gobject.idle_add(lambda: None)
+            except ImportError:
+                pass
 
     def find_screen(self, x, y):
         """
@@ -749,7 +797,7 @@ class Qtile(command.CommandObject):
         self.conn.conn.core.ConvertSelection(self.selection_window.wid,
                                              selection,
                                              TYPE, selection,
-                                             xcb.xcb.CurrentTime)
+                                             xcffib.CurrentTime)
 
     def handle_PropertyNotify(self, e):
         name = self.conn.atoms.get_name(e.atom)
@@ -758,9 +806,11 @@ class Qtile(command.CommandObject):
             assert e.window == self.selection_window.wid
             prop = self.selection_window.get_property(e.atom, "UTF8_STRING")
 
-            data = "".join([chr(i) for i in prop.value])
+            # If the selection property is None, it is unset, which means the
+            # clipboard is empty.
+            value = prop and prop.value.to_string() or ""
 
-            self.selection[name]["selection"] = data
+            self.selection[name]["selection"] = value
             hook.fire("selection_change", name, self.selection[name])
 
     def handle_EnterNotify(self, e):
@@ -773,8 +823,8 @@ class Qtile(command.CommandObject):
     def handle_ClientMessage(self, event):
         atoms = self.conn.atoms
 
-        opcode = xcb.xproto.ClientMessageData(event, 0, 20).data32[2]
-        data = xcb.xproto.ClientMessageData(event, 12, 20)
+        opcode = event.type
+        data = event.data
 
         # handle change of desktop
         if atoms["_NET_CURRENT_DESKTOP"] == opcode:
@@ -811,15 +861,15 @@ class Qtile(command.CommandObject):
         if self.config.bring_front_click:
             self.conn.conn.core.ConfigureWindow(
                 wnd,
-                xcb.xproto.ConfigWindow.StackMode,
-                [xcb.xproto.StackMode.Above]
+                xcffib.xproto.ConfigWindow.StackMode,
+                [xcffib.xproto.StackMode.Above]
             )
 
         if self.windowMap.get(wnd):
             self.currentGroup.focus(self.windowMap.get(wnd), False)
             self.windowMap.get(wnd).focus(False)
 
-        self.conn.conn.core.AllowEvents(xcb.xproto.Allow.ReplayPointer, e.time)
+        self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
         self.conn.conn.flush()
 
     def handle_ButtonPress(self, e):
@@ -870,8 +920,8 @@ class Qtile(command.CommandObject):
                     xcbq.ButtonMotionMask |
                     xcbq.AllButtonsMask |
                     xcbq.ButtonReleaseMask,
-                    xcb.xproto.GrabMode.Async,
-                    xcb.xproto.GrabMode.Async,
+                    xcffib.xproto.GrabMode.Async,
+                    xcffib.xproto.GrabMode.Async,
                 )
 
     def handle_ButtonRelease(self, e):
@@ -922,7 +972,7 @@ class Qtile(command.CommandObject):
 
     def handle_ConfigureRequest(self, e):
         # It's not managed, or not mapped, so we just obey it.
-        cw = xcb.xproto.ConfigWindow
+        cw = xcffib.xproto.ConfigWindow
         args = {}
         if e.value_mask & cw.X:
             args["x"] = max(e.x, 0)
@@ -939,7 +989,7 @@ class Qtile(command.CommandObject):
 
     def handle_MappingNotify(self, e):
         self.conn.refresh_keymap()
-        if e.request == xcb.xproto.Mapping.Keyboard:
+        if e.request == xcffib.xproto.Mapping.Keyboard:
             self.grabKeys()
 
     def handle_MapRequest(self, e):
@@ -954,12 +1004,23 @@ class Qtile(command.CommandObject):
 
     def handle_UnmapNotify(self, e):
         if e.event != self.root.wid:
+            c = self.windowMap.get(e.window)
+            if c and getattr(c, "group", None):
+                try:
+                    c.window.unmap()
+                    c.state = window.WithdrawnState
+                except xcffib.xproto.WindowError:
+                    # This means that the window has probably been destroyed,
+                    # but we haven't yet seen the DestroyNotify (it is likely
+                    # next in the queue). So, we just let these errors pass
+                    # since the window is dead.
+                    pass
             self.unmanage(e.window)
 
     def handle_ScreenChangeNotify(self, e):
         hook.fire("screen_change", self, e)
 
-    def toScreen(self, n):
+    def toScreen(self, n, warp=True):
         """
         Have Qtile move to screen and put focus there
         """
@@ -969,7 +1030,7 @@ class Qtile(command.CommandObject):
         self.currentScreen = self.screens[n]
         if old != self.currentScreen:
             hook.fire("current_screen_change")
-            self.currentGroup.focus(self.currentWindow, True)
+            self.currentGroup.focus(self.currentWindow, warp)
 
     def moveToGroup(self, group):
         """
@@ -981,17 +1042,17 @@ class Qtile(command.CommandObject):
 
     def _items(self, name):
         if name == "group":
-            return True, self.groupMap.keys()
+            return True, list(self.groupMap.keys())
         elif name == "layout":
-            return True, range(len(self.currentGroup.layouts))
+            return True, list(range(len(self.currentGroup.layouts)))
         elif name == "widget":
-            return False, self.widgetMap.keys()
+            return False, list(self.widgetMap.keys())
         elif name == "bar":
             return False, [x.position for x in self.currentScreen.gaps]
         elif name == "window":
             return True, self.listWID()
         elif name == "screen":
-            return True, range(len(self.screens))
+            return True, list(range(len(self.screens)))
 
     def _select(self, name, sel):
         if name == "group":
@@ -1027,6 +1088,33 @@ class Qtile(command.CommandObject):
             if i.window.wid == wid:
                 return i
         return None
+
+    def call_soon(self, func, *args):
+        """ A wrapper for the event loop's call_soon which also flushes the X
+        event queue to the server after func is called. """
+        def f():
+            func(*args)
+            self.conn.flush()
+        self._eventloop.call_soon(f)
+
+    def call_soon_threadsafe(self, func, *args):
+        """ Another event loop proxy, see `call_soon`. """
+        def f():
+            func(*args)
+            self.conn.flush()
+        self._eventloop.call_soon_threadsafe(f)
+
+    def call_later(self, delay, func, *args):
+        """ Another event loop proxy, see `call_soon`. """
+        def f():
+            func(*args)
+            self.conn.flush()
+        self._eventloop.call_later(delay, f)
+
+    def run_in_executor(self, func, *args):
+        """ A wrapper for running a function in the event loop's default
+        executor. """
+        return self._eventloop.run_in_executor(None, func, *args)
 
     def cmd_debug(self):
         """Set log level to DEBUG"""
@@ -1072,9 +1160,17 @@ class Qtile(command.CommandObject):
         """
             List of all addressible widget names.
         """
-        return self.widgetMap.keys()
+        return list(self.widgetMap.keys())
 
     def cmd_nextlayout(self, group=None):
+        """
+            This method will be deprecated in favor of cmd_next_layout.
+            Use lazy.next_layout(g) in your config instead.
+        """
+        deprecated(Qtile.cmd_nextlayout.__doc__)
+        self.cmd_next_layout(group)
+
+    def cmd_next_layout(self, group=None):
         """
             Switch to the next layout.
 
@@ -1087,6 +1183,14 @@ class Qtile(command.CommandObject):
         group.nextLayout()
 
     def cmd_prevlayout(self, group=None):
+        """
+            This method will be deprecated in favor of cmd_prev_layout.
+            Use lazy.prev_layout(g) in your config instead.
+        """
+        deprecated(Qtile.cmd_prevlayout.__doc__)
+        self.cmd_prev_layout(group)
+
+    def cmd_prev_layout(self, group=None):
         """
             Switch to the prev layout.
 
@@ -1145,7 +1249,7 @@ class Qtile(command.CommandObject):
         d.detail = keycode
         try:
             d.state = utils.translateMasks(modifiers)
-        except KeyError, v:
+        except KeyError as v:
             return v.args[0]
         self.handle_KeyPress(d)
 
@@ -1164,10 +1268,10 @@ class Qtile(command.CommandObject):
         if '--no-spawn' not in argv:
             argv.append('--no-spawn')
 
-        buf = StringIO()
-        pickle.dump(QtileState(self), buf)
-        argv = filter(lambda s: not s.startswith('--with-state'), argv)
-        argv.append('--with-state=' + buf.getvalue())
+        buf = six.BytesIO()
+        pickle.dump(QtileState(self), buf, protocol=0)
+        argv = [s for s in argv if not s.startswith('--with-state')]
+        argv.append('--with-state=' + buf.getvalue().decode())
 
         self.cmd_execute(sys.executable, argv)
 
@@ -1179,12 +1283,64 @@ class Qtile(command.CommandObject):
 
                 spawn("firefox")
         """
-        pid, _, _, _ = gobject.spawn_async(
-            [os.environ['SHELL'], '-c', cmd],
-            flags=(gobject.SPAWN_STDOUT_TO_DEV_NULL |
-                   gobject.SPAWN_STDERR_TO_DEV_NULL)
-        )
-        return str(pid)
+        args = shlex.split(cmd)
+
+        r, w = os.pipe()
+        pid = os.fork()
+        if pid < 0:
+            os.close(r)
+            os.close(w)
+            return pid
+
+        if pid == 0:
+            os.close(r)
+
+            # close qtile's stdin, stdout, stderr so the called process doesn't
+            # pollute our xsession-errors.
+            os.close(0)
+            os.close(1)
+            os.close(2)
+
+            pid2 = os.fork()
+            if pid2 == 0:
+                os.close(w)
+
+                # Open /dev/null as stdin, stdout, stderr
+                try:
+                    fd = os.open(os.devnull, os.O_RDWR)
+                except OSError:
+                    # This shouldn't happen, catch it just in case
+                    pass
+                else:
+                    if fd > 0:
+                        # Again, this shouldn't happen, but we should just check
+                        os.dup2(fd, 0)
+                    os.dup2(fd, 1)
+                    os.dup2(fd, 2)
+
+                try:
+                    os.execvp(args[0], args)
+                except OSError:
+                    pass
+                os._exit(1)
+            else:
+                # Here it doesn't matter if fork failed or not, we just write
+                # its return code and exit.
+                os.write(w, str(pid2).encode())
+                os.close(w)
+
+                # sys.exit raises SystemExit, which will then be caught by our
+                # top level catchall and we'll end up with two qtiles; os._exit
+                # actually calls exit.
+                os._exit(0)
+        else:
+            os.close(w)
+            os.waitpid(pid, 0)
+
+            # 1024 bytes should be enough for any pid. :)
+            pid = os.read(r, 1024)
+            os.close(r)
+            return int(pid)
 
     def cmd_status(self):
         """
@@ -1210,6 +1366,14 @@ class Qtile(command.CommandObject):
 
     def cmd_to_next_screen(self):
         """
+            This method will be deprecated in favor of cmd_next_screen.
+            Use lazy.next_screen in your config instead.
+        """
+        deprecated(Qtile.cmd_to_next_screen.__doc__)
+        return self.cmd_next_screen()
+
+    def cmd_next_screen(self):
+        """
             Move to next screen
         """
         return self.toScreen(
@@ -1217,6 +1381,14 @@ class Qtile(command.CommandObject):
         )
 
     def cmd_to_prev_screen(self):
+        """
+            This method will be deprecated in favor of cmd_prev_screen.
+            Use lazy.prev_screen in your config instead.
+        """
+        deprecated(Qtile.cmd_to_prev_screen.__doc__)
+        return self.cmd_prev_screen()
+
+    def cmd_prev_screen(self):
         """
             Move to the previous screen
         """
@@ -1252,7 +1424,7 @@ class Qtile(command.CommandObject):
         """
             Quit Qtile.
         """
-        self._exit = True
+        self._eventloop.stop()
 
     def cmd_switch_groups(self, groupa, groupb):
         """
@@ -1295,7 +1467,7 @@ class Qtile(command.CommandObject):
 
     def cmd_next_urgent(self):
         try:
-            nxt = filter(lambda w: w.urgent, self.windowMap.values())[0]
+            nxt = [w for w in self.windowMap.values() if w.urgent][0]
             nxt.group.cmd_toscreen()
             nxt.group.focus(nxt, False)
         except IndexError:
@@ -1351,7 +1523,7 @@ class Qtile(command.CommandObject):
         try:
             mb = self.widgetMap[widget]
             mb.startInput(prompt, f, complete)
-        except:
+        except KeyError:
             self.log.error("No widget named '%s' present." % widget)
 
     def cmd_qtilecmd(self, prompt="command",
@@ -1421,3 +1593,62 @@ class Qtile(command.CommandObject):
 
     def cmd_remove_rule(self, rule_id):
         self.dgroups.remove_rule(rule_id)
+
+    def cmd_run_external(self, full_path):
+        def format_error(path, e):
+            s = """Can't call "main" from "{path}"\n\t{err_name}: {err}"""
+            return s.format(path=path, err_name=e.__class__.__name__, err=e)
+
+        module_name = os.path.splitext(os.path.basename(full_path))[0]
+        dir_path = os.path.dirname(full_path)
+        err_str = ""
+        local_stdout = six.BytesIO()
+        old_stdout = sys.stdout
+        sys.stdout = local_stdout
+        sys.exc_clear()
+
+        try:
+            fp, pathname, description = imp.find_module(module_name, [dir_path])
+            module = imp.load_module(module_name, fp, pathname, description)
+            module.main(self)
+        except ImportError as e:
+            fp = None
+            err_str += format_error(full_path, e)
+        except:
+            (exc_type, exc_value, exc_traceback) = sys.exc_info()
+            err_str += traceback.format_exc()
+            err_str += format_error(full_path, exc_type(exc_value))
+        finally:
+            sys.exc_clear()
+            sys.stdout = old_stdout
+            if fp:
+                fp.close()
+
+        return local_stdout.getvalue() + err_str
+
+    def cmd_hide_show_bar(self, position="all"):
+        """
+            param: position one of: "top", "bottom", "left", "right" or "all"
+        """
+        if position in ["top", "bottom", "left", "right"]:
+            bar = getattr(self.currentScreen, position)
+            if bar:
+                bar.show(not bar.is_show())
+                self.currentGroup.layoutAll()
+            else:
+                self.log.warning(
+                    "Not found bar in position '%s' for hide/show." % position)
+        elif position == "all":
+            screen = self.currentScreen
+            is_show = None
+            for bar in [screen.left, screen.right, screen.top, screen.bottom]:
+                if bar:
+                    if is_show is None:
+                        is_show = not bar.is_show()
+                    bar.show(is_show)
+            if is_show is not None:
+                self.currentGroup.layoutAll()
+            else:
+                self.log.warning("Not found bar for hide/show.")
+        else:
+            self.log.error("Invalid position value:%s" % position)

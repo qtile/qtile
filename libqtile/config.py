@@ -1,9 +1,11 @@
-import command
-import hook
-import sys
-import utils
-import xcbq
+from . import command
+from . import hook
+from . import utils
+from . import xcbq
 
+from six import MAXSIZE
+
+from .widget.base import deprecated
 
 class Key:
     """
@@ -29,7 +31,7 @@ class Key:
         self.keysym = xcbq.keysyms[key]
         try:
             self.modmask = utils.translateMasks(self.modifiers)
-        except KeyError, v:
+        except KeyError as v:
             raise utils.QtileError(v)
 
     def __repr__(self):
@@ -56,7 +58,7 @@ class Drag(object):
         try:
             self.button_code = int(self.button.replace('Button', ''))
             self.modmask = utils.translateMasks(self.modifiers)
-        except KeyError, v:
+        except KeyError as v:
             raise utils.QtileError(v)
 
     def __repr__(self):
@@ -78,7 +80,7 @@ class Click(object):
         try:
             self.button_code = int(self.button.replace('Button', ''))
             self.modmask = utils.translateMasks(self.modifiers)
-        except KeyError, v:
+        except KeyError as v:
             raise utils.QtileError(v)
 
     def __repr__(self):
@@ -251,7 +253,7 @@ class Screen(command.CommandObject):
 
     def _items(self, name):
         if name == "layout":
-            return (True, range(len(self.group.layouts)))
+            return (True, list(range(len(self.group.layouts))))
         elif name == "window":
             return (True, [i.window.wid for i in self.group.windows])
         elif name == "bar":
@@ -282,7 +284,7 @@ class Screen(command.CommandObject):
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
                 bar.draw()
-        self.group.layoutAll()
+        self.qtile._eventloop.call_soon(self.group.layoutAll())
 
     def cmd_info(self):
         """
@@ -304,6 +306,14 @@ class Screen(command.CommandObject):
 
     def cmd_nextgroup(self, skip_empty=False, skip_managed=False):
         """
+            This method will be deprecated in favor of cmd_next_group.
+            Use screen.next_group in your config instead.
+        """
+        deprecated(Screen.cmd_nextgroup.__doc__)
+        return self.cmd_next_group(skip_empty, skip_managed)
+
+    def cmd_next_group(self, skip_empty=False, skip_managed=False):
+        """
             Switch to the next group.
         """
         n = self.group.nextGroup(skip_empty, skip_managed)
@@ -311,6 +321,14 @@ class Screen(command.CommandObject):
         return n.name
 
     def cmd_prevgroup(self, skip_empty=False, skip_managed=False):
+        """
+            This method will be deprecated in favor of cmd_prev_group.
+            Use screen.prev_group in your config instead
+        """
+        deprecated(Screen.cmd_prevgroup.__doc__)
+        return self.cmd_prev_group(skip_empty, skip_managed)
+
+    def cmd_prev_group(self, skip_empty=False, skip_managed=False):
         """
             Switch to the previous group.
         """
@@ -335,7 +353,7 @@ class Group(object):
     """
     def __init__(self, name, matches=None, exclusive=False,
                  spawn=None, layout=None, layouts=None, persist=True, init=True,
-                 layout_opts=None, screen_affinity=None, position=sys.maxint):
+                 layout_opts=None, screen_affinity=None, position=MAXSIZE):
         """
         :param name: the name of this group
         :type name: string
@@ -409,7 +427,7 @@ class Match(object):
             net_wm_pid = []
 
         try:
-            net_wm_pid = map(int, net_wm_pid)
+            net_wm_pid = list(map(int, net_wm_pid))
         except ValueError:
             error = 'Invalid rule for net_wm_pid: "%s" '\
                     'only ints allowed' % str(net_wm_pid)

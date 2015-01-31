@@ -1,45 +1,105 @@
+================
 Installing Qtile
 ================
 
 Distro Guides
--------------
+=============
 
 Below are the preferred installation methods for specific distros. If you are
 running something else, please see `Installing From Source`_.
 
-* :doc:`/manual/install/arch`
-* :doc:`/manual/install/funtoo`
-* :doc:`/manual/install/gentoo`
-* :doc:`/manual/install/ubuntu`
+.. toctree::
+    :maxdepth: 1
+
+    Arch <arch>
+    Ubuntu <ubuntu>
 
 Installing From Source
-----------------------
+======================
 
-Qtile relies on some cutting-edge features in PyCairo, XCB, and xpyb. Until the
-latest versions of these projects make it into distros, it's best to use recent
-checkouts from their repositories.
+First, you need to install all of Qtile's dependencies (although some are
+optional/not needed depending on your python version, as noted below).
 
-Here is a brief step-by-step guide to installing Qtile and its dependencies
-from source:
+xcffib
+------
 
-:doc:`/manual/install/source`
+Qtile uses xcffib_ as an XCB binding, which has its own instructions for
+building from source including building several Haskell packages, but is
+available from PyPi via:
 
+.. code-block:: bash
 
-Once You've Installed
----------------------
+    sudo pip install xcffib
 
-Once you've installed there are several ways to start Qtile. The most common
-way is via an entry in your X session manager's menu. The default Qtile
-behavior can be invoked by creating a `qtile.desktop
-<https://github.com/qtile/qtile/blob/master/resources/qtile.desktop>`_ file in
-``/usr/share/xsessions``.
+.. _xcffib: https://github.com/tych0/xcffib
 
-A second way to start Qtile is a custom X session. This way allows you to
-invoke Qtile with custom arguments, and also allows you to do any setup you
-want (e.g. special keyboard bindings like mapping caps lock to control, setting
-your desktop background, etc.) before Qtile starts. If you're using an X
-session manager, you still may need to create a ``custom.desktop`` file similar
-to the ``qtile.desktop`` file above, but with ``Exec=/etc/X11/xsession``. Then,
-create your own ``~/.xsession``. There are several examples of user defined
-``xsession`` s in the `qtile-examples
-<https://github.com/qtile/qtile-examples>`_ repository.
+cairocffi
+---------
+
+Qtile uses cairocffi_ with XCB support via xcffib.  The latest version on PyPi
+has these features once xcffib is installed:
+
+.. code-block:: bash
+
+    sudo pip install cairocffi
+
+.. _cairocffi: https://pythonhosted.org/cairocffi/overview.html
+
+asyncio/trollius
+----------------
+
+Qtile uses the asyncio module as introduced in `PEP 3156`_ for its event loop.
+Based on your Python version, there are different ways to install this:
+
+- Python >=3.4: The `asyncio module`_ comes as part of the standard library, so
+  there is nothing more to install.
+- Python 3.3: This has all the infastructure needed to implement PEP 3156, but
+  the asyncio module must be installed from the `Tulip project`_.  This is done
+  by calling:
+
+  .. code-block:: bash
+
+      sudo pip install asyncio
+
+  Alternatively, you can install trollius (see next point).
+- Python 2 and <=3.2 (and 3.3 without asyncio): You will need to install
+  trollius_, which backports the asyncio module functionality to work without
+  the infastructure introduced in PEP 3156.  You can install this from PyPi:
+
+  .. code-block:: bash
+
+      sudo pip install trollius
+
+.. _PEP 3156: http://python.org/dev/peps/pep-3156/
+.. _asyncio module: https://docs.python.org/3/library/asyncio.html
+.. _Tulip project: https://code.google.com/p/tulip/
+.. _trollius: http://trollius.readthedocs.org/
+
+importlib
+---------
+
+- Python <=2.6 you will need to install importlib from PyPi:
+
+  .. code-block:: bash
+
+      sudo pip install importlib
+
+dbus/gobject
+------------
+
+Until someone comes along and writes an asyncio-based dbus library, qtile will
+depend on ``python-dbus`` to interact with dbus. This means that if you want
+to use things like notification daemon or mpris widgets, you'll need to
+install python-gobject and python-dbus. Qtile will run fine without these,
+although it will emit a warning that some things won't work.
+
+Qtile
+-----
+
+With the dependencies in place, you can now install qtile:
+
+.. code-block:: bash
+
+    git clone git://github.com/qtile/qtile.git
+    cd qtile
+    sudo python setup.py install

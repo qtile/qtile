@@ -19,17 +19,17 @@
 # SOFTWARE.
 
 import copy
+import six
 from abc import ABCMeta, abstractmethod
 
 from .. import command, configurable
 
 
+@six.add_metaclass(ABCMeta)
 class Layout(command.CommandObject, configurable.Configurable):
     """
         This class defines the API that should be exposed by all layouts.
     """
-    __metaclass__ = ABCMeta
-
     @classmethod
     def _name(cls):
         return cls.__class__.__name__.lower()
@@ -239,7 +239,7 @@ class Delegate(Layout):
                 grouped[lay].append(w)
             else:
                 grouped[lay] = [w]
-        for lay, wins in grouped.iteritems():
+        for lay, wins in grouped.items():
             lay.layout(wins, mapping[lay])
 
     def remove(self, win):
@@ -292,7 +292,7 @@ class Delegate(Layout):
     def __getattr__(self, name):
         """Delegate unimplemented command calls to active layout.
 
-        For `cmd_`-methods that don't exist on the Delegate subclass, this
+        For ``cmd_``-methods that don't exist on the Delegate subclass, this
         looks for an implementation on the active layout.
         """
         if name.startswith('cmd_'):

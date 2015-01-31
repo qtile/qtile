@@ -1,8 +1,10 @@
-Qtile Reference
-===============
+=========
+Reference
+=========
 
-:doc:`/manual/ref/hooks`
+.. toctree::
+    :maxdepth: 1
 
-:doc:`/manual/ref/layouts`
-
-:doc:`/manual/ref/widgets`
+    hooks
+    layouts
+    widgets

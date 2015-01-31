@@ -1,0 +1,7 @@
+To build on ubuntu:
+
+sudo apt-get install python-sphinxcontrib.seqdiag python-sphinxcontrib.blockdiag
+
+Install: https://github.com/:snide/sphinx_rtd_theme
+
+make html

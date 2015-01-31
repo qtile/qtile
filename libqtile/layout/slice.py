@@ -3,8 +3,8 @@
 Slice layout. Serves as example of delegating layouts (or sublayouts)
 """
 
-from base import Layout, SingleWindow, Delegate
-from max import Max
+from .base import Layout, SingleWindow, Delegate
+from .max import Max
 
 
 class Single(SingleWindow):
@@ -65,27 +65,26 @@ class Slice(Delegate):
         ("width", 256, "Slice width"),
         ("side", "left", "Side of the slice (left, right, top, bottom)"),
         ("name", "max", "Name of this layout."),
+        ("wname", None, "WM_NAME to match"),
+        ("wmclass", None, "WM_CLASS to match"),
+        ("role", None, "WM_WINDOW_ROLE to match"),
+        ("fallback", Max(), "Fallback layout"),
     ]
 
-    def __init__(self, side, width,
-                 wname=None, wmclass=None, role=None,
-                 fallback=Max(), **config):
-        if wname is None and wmclass is None and role is None:
-            wname = 'slice'
-        self.match = {
-            'wname': wname,
-            'wmclass': wmclass,
-            'role': role,
-        }
+    def __init__(self, side, width, **config):
         Delegate.__init__(self, width=width, side=side, **config)
         self.add_defaults(Slice.defaults)
+        self.match = {
+            'wname': self.wname,
+            'wmclass': self.wmclass,
+            'role': self.role,
+        }
         self._slice = Single()
-        self._fallback = fallback
 
     def clone(self, group):
         res = Layout.clone(self, group)
         res._slice = self._slice.clone(group)
-        res._fallback = self._fallback.clone(group)
+        res.fallback = self.fallback.clone(group)
         res._window = None
         return res
 
@@ -104,7 +103,7 @@ class Slice(Delegate):
             windows,
             {
                 self._slice: win,
-                self._fallback: sub,
+                self.fallback: sub,
             }
         )
 
@@ -112,21 +111,21 @@ class Slice(Delegate):
         raise NotImplementedError("Should not be called")
 
     def _get_layouts(self):
-        return (self._slice, self._fallback)
+        return (self._slice, self.fallback)
 
     def _get_active_layout(self):
-        return self._fallback  # always
+        return self.fallback  # always
 
     def add(self, win):
         if self._slice.empty() and win.match(**self.match):
             self._slice.add(win)
             self.layouts[win] = self._slice
         else:
-            self._fallback.add(win)
-            self.layouts[win] = self._fallback
+            self.fallback.add(win)
+            self.layouts[win] = self.fallback
 
     def cmd_next(self):
-        self._fallback.cmd_next()
+        self.fallback.cmd_next()
 
     def cmd_previous(self):
-        self._fallback.cmd_previous()
+        self.fallback.cmd_previous()
