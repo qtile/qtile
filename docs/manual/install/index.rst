@@ -24,26 +24,35 @@ xcffib
 ------
 
 Qtile uses xcffib_ as an XCB binding, which has its own instructions for
-building from source including building several Haskell packages, but is
-available from PyPi via:
+building from source. However, if you'd like to skip building it, you can
+install its dependencies (``sudo apt-get install libxcb-render0-dev`` on
+Ubuntu), and install it via pypi:
 
 .. code-block:: bash
 
     pip install xcffib
 
-.. _xcffib: https://github.com/tych0/xcffib
+.. _xcffib: https://github.com/tych0/xcffib#installation
 
 cairocffi
 ---------
 
-Qtile uses cairocffi_ with XCB support via xcffib.  The latest version on PyPi
-has these features once xcffib is installed:
+Qtile uses cairocffi_ with XCB support via xcffib. You'll need ``libcairo2``,
+the underlying library used by the binding. Once you've got that installed, you
+can use the latest version on pypi:
 
 .. code-block:: bash
 
     pip install cairocffi
 
 .. _cairocffi: https://pythonhosted.org/cairocffi/overview.html
+
+pangocairo
+----------
+
+You'll also need ``libpangocairo``, which on Ubuntu can be installed via ``sudo
+apt-get install libpangocairo-1.0-0``. Qtile uses this to provide text
+rendering (and binds directly to it via cffi with a small in-tree binding).
 
 asyncio/trollius
 ----------------
