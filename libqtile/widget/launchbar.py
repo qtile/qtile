@@ -22,6 +22,7 @@ from libqtile.widget import base
 
 import os.path
 import cairocffi
+
 from xdg.IconTheme import getIconPath
 
 
