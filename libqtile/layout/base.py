@@ -298,3 +298,9 @@ class Delegate(Layout):
         if name.startswith('cmd_'):
             return getattr(self._get_active_layout(), name)
         return super(Delegate, self).__getattr__(name)
+
+    def info(self):
+        d = Layout.info(self)
+        for layout in self._get_layouts():
+            d[layout.name] = layout.info()
+        return d

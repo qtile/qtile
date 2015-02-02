@@ -16,6 +16,7 @@ class Single(SingleWindow):
     def __init__(self):
         SingleWindow.__init__(self)
         self.window = None
+        self.focused = False
 
     def add(self, window):
         assert self.window is None
@@ -36,15 +37,23 @@ class Single(SingleWindow):
         return self.window is None
 
     def focus_first(self):
+        self.focused = True
         return self.window
 
     def focus_last(self):
+        self.focused = True
         return self.window
 
     def focus_next(self, window):
+        if self.focused:
+            self.focused = False
+            return None
         return self.window
 
     def focus_previous(self, window):
+        if self.focused:
+            self.focused = False
+            return None
         return self.window
 
     def cmd_next(self):

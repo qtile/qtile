@@ -53,6 +53,8 @@ class Max(SingleWindow):
     def focus_next(self, window):
         if not self.clients:
             return
+        if window is None:
+            return
         if window != self._get_window():
             self.focus(window)
         idx = self.clients.index(window)
@@ -61,6 +63,8 @@ class Max(SingleWindow):
 
     def focus_previous(self, window):
         if not self.clients:
+            return
+        if window is None:
             return
         if window != self._get_window():
             self.focus(window)

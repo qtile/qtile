@@ -647,15 +647,15 @@ def test_slice_focus(self):
     assertFocused(self, 'two')
     slice = self.testWindow('slice')
     assertFocused(self, 'slice')
-    assertFocusPath(self, 'one', 'two', 'slice')
+    assertFocusPath(self, 'slice')
     three = self.testWindow('three')
-    assertFocusPath(self, 'one', 'two', 'three', 'slice')
+    assertFocusPath(self, 'slice', 'three')
     self.kill(two)
-    assertFocusPath(self, 'one', 'three', 'slice')
+    assertFocusPath(self, 'slice', 'one')
     self.kill(slice)
-    assertFocusPath(self, 'one', 'three')
+    assertFocusPath(self, 'one')
     slice = self.testWindow('slice')
-    assertFocusPath(self, 'one', 'three', 'slice')
+    assertFocusPath(self, 'one', 'slice')
 
 
 @Xephyr(False, SliceConfig())
@@ -714,5 +714,5 @@ def test_zoomy_one(self):
     assertDimensions(self, 0, 0, 600, 600)
     self.testWindow('three')
     assertDimensions(self, 0, 0, 600, 600)
-    assertFocusPath(self, 'one', 'two', 'three')
+    assertFocusPath(self, 'two', 'one', 'three')
     # TODO(pc) find a way to check size of inactive windows
