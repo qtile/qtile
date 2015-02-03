@@ -386,10 +386,19 @@ class _Window(command.CommandObject):
             if force is false, than it tries to obey hints
         """
 
-        # If position changes and size does not, send a configure notify
-        # See ICCCM 4.2.3
-        send_notify = (self.x != x or self.y != y) and \
-            (self.width == width and self.height == height)
+        # TODO: self.x/y/height/width are updated BEFORE
+        # place is called, so there's no way to know if only
+        # the position is changed, so we are sending
+        # the ConfigureNotify every time place is called
+        #
+        # # if position change and size don't
+        # # send a configure notify. See ICCCM 4.2.3
+        # send_notify = False
+        # if (self.x != x or self.y != y) and \
+        #    (self.width == width and self.height == height):
+        #       send_notify = True
+        # #for now, we just:
+        send_notify = True
 
         # Adjust the placement to account for layout margins, if there are any.
         if margin is not None:
