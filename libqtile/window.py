@@ -505,7 +505,7 @@ class _Window(command.CommandObject):
         self.qtile.root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
         hook.fire("client_focus", self)
 
-    def _items(self, name, sel):
+    def _items(self, name):
         return None
 
     def _select(self, name, sel):
