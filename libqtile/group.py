@@ -323,12 +323,12 @@ class _Group(command.CommandObject):
     def nextGroup(self, skip_empty=False, skip_managed=False):
         return self._dirGroup(1, skip_empty, skip_managed)
 
-    def cmd_unminimise_all(self):
+    def cmd_unminimize_all(self):
         """
             Unminimise all windows in this group.
         """
         for w in self.windows:
-            w.minimised = False
+            w.minimized = False
         self.layoutAll()
 
     def cmd_next_window(self):
