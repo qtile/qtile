@@ -30,6 +30,7 @@ class Volume(base._TextBox):
         ("mute_command", None, "Mute command"),
         ("volume_up_command", None, "Volume up command"),
         ("volume_down_command", None, "Volume down command"),
+        ("get_volume_command", None, "Command to get the current volume"),
     ]
 
     def __init__(self, **config):
@@ -166,15 +167,18 @@ class Volume(base._TextBox):
 
     def get_volume(self):
         try:
-            mixer_out = self.call_process(
-                [
-                    'amixer',
-                    '-c',
-                    str(self.cardid),
-                    'sget',
-                    self.channel
-                ]
-            )
+            get_volume_cmd = [
+                'amixer',
+                '-c',
+                str(self.cardid),
+                'sget',
+                self.channel
+            ]
+
+            if self.get_volume_command:
+                get_volume_cmd = self.get_volume_command
+
+            mixer_out = self.call_process(get_volume_cmd)
         except subprocess.CalledProcessError:
             return -1
 
