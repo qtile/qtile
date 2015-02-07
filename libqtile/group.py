@@ -21,6 +21,7 @@ class _Group(command.CommandObject):
         self.qtile = None
         self.layouts = []
         self.floating_layout = None
+        self.previousWindow = None
         self.currentWindow = None
         self.screen = None
         self.currentLayout = None
@@ -28,6 +29,7 @@ class _Group(command.CommandObject):
     def _configure(self, layouts, floating_layout, qtile):
         self.screen = None
         self.currentLayout = 0
+        self.previousWindow = None
         self.currentWindow = None
         self.windows = set()
         self.qtile = qtile
@@ -150,6 +152,7 @@ class _Group(command.CommandObject):
             if win not in self.windows:
                 return
             else:
+                self.previousWindow = self.currentWindow
                 self.currentWindow = win
                 if win.floating:
                     for l in self.layouts:
@@ -160,6 +163,7 @@ class _Group(command.CommandObject):
                     for l in self.layouts:
                         l.focus(win)
         else:
+            self.previousWindow = self.currentWindow
             self.currentWindow = None
         hook.fire("focus_change")
         # !!! note that warp isn't hooked up now
@@ -205,6 +209,11 @@ class _Group(command.CommandObject):
         nextfocus = None
         if win.floating:
             nextfocus = self.floating_layout.remove(win)
+            if win is not self.currentWindow:
+                # For example a notification, which doesn't steal focus
+                return
+            if nextfocus is None:
+                nextfocus = self.previousWindow
             if nextfocus is None:
                 nextfocus = self.layout.focus_first()
             if nextfocus is None:
