@@ -163,6 +163,8 @@ class _Group(command.CommandObject):
                     for l in self.layouts:
                         l.focus(win)
         else:
+            # If there are no windows left, self.previousWindow has already
+            # been set to None in self.remove
             self.previousWindow = self.currentWindow
             self.currentWindow = None
         hook.fire("focus_change")
