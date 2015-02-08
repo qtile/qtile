@@ -21,16 +21,16 @@ class _Group(command.CommandObject):
         self.qtile = None
         self.layouts = []
         self.floating_layout = None
-        self.previousWindow = None
         self.currentWindow = None
+        self.focusHistory = []
         self.screen = None
         self.currentLayout = None
 
     def _configure(self, layouts, floating_layout, qtile):
         self.screen = None
         self.currentLayout = 0
-        self.previousWindow = None
         self.currentWindow = None
+        self.focusHistory = []
         self.windows = set()
         self.qtile = qtile
         self.layouts = [i.clone(self) for i in layouts]
@@ -151,12 +151,13 @@ class _Group(command.CommandObject):
         if win:
             if win not in self.windows:
                 return
-            elif win is self.currentWindow:
-                # This especially avoids ending up with self.previousWindow
-                # and self.currentWindow both referencing win
-                return
             else:
-                self.previousWindow = self.currentWindow
+                try:
+                    self.focusHistory.remove(win)
+                except ValueError:
+                    pass
+                else:
+                    self.focusHistory.append(win)
                 self.currentWindow = win
                 if win.floating:
                     for l in self.layouts:
@@ -167,9 +168,6 @@ class _Group(command.CommandObject):
                     for l in self.layouts:
                         l.focus(win)
         else:
-            # If there are no windows left, self.previousWindow has already
-            # been set to None in self.remove
-            self.previousWindow = self.currentWindow
             self.currentWindow = None
         hook.fire("focus_change")
         # !!! note that warp isn't hooked up now
@@ -211,19 +209,23 @@ class _Group(command.CommandObject):
 
     def remove(self, win):
         self.windows.remove(win)
+        try:
+            self.focusHistory.remove(win)
+        except ValueError:
+            # The window has never received focus
+            pass
         win.group = None
         nextfocus = None
         if win.floating:
             nextfocus = self.floating_layout.remove(win)
-            if win is self.previousWindow:
-                # Don't leave a reference to a removed window
-                self.previousWindow = None
-                return
             if win is not self.currentWindow:
                 # For example a notification, which doesn't steal focus
                 return
             if nextfocus is None:
-                nextfocus = self.previousWindow
+                try:
+                    nextfocus = self.focusHistory[-1]
+                except IndexError:
+                    pass
             if nextfocus is None:
                 nextfocus = self.layout.focus_first()
             if nextfocus is None:
@@ -234,16 +236,15 @@ class _Group(command.CommandObject):
                     nextfocus = i.remove(win)
                 else:
                     i.remove(win)
-            if win is self.previousWindow:
-                # Don't leave a reference to a removed window
-                self.previousWindow = None
-                return
             if win is not self.currentWindow:
                 return
             if nextfocus is None:
                 nextfocus = self.floating_layout.focus_first()
             if nextfocus is None:
-                nextfocus = self.previousWindow
+                try:
+                    nextfocus = self.focusHistory[-1]
+                except IndexError:
+                    pass
             if nextfocus is None:
                 nextfocus = self.layout.focus_first()
         self.focus(nextfocus, True)
