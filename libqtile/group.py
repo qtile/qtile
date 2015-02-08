@@ -209,6 +209,10 @@ class _Group(command.CommandObject):
         nextfocus = None
         if win.floating:
             nextfocus = self.floating_layout.remove(win)
+            if win is self.previousWindow:
+                # Don't leave a reference to a removed window
+                self.previousWindow = None
+                return
             if win is not self.currentWindow:
                 # For example a notification, which doesn't steal focus
                 return
@@ -224,6 +228,10 @@ class _Group(command.CommandObject):
                     nextfocus = i.remove(win)
                 else:
                     i.remove(win)
+            if win is self.previousWindow:
+                # Don't leave a reference to a removed window
+                self.previousWindow = None
+                return
             if win is not self.currentWindow:
                 return
             if nextfocus is None:
