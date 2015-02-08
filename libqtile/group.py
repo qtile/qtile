@@ -224,6 +224,8 @@ class _Group(command.CommandObject):
                     nextfocus = i.remove(win)
                 else:
                     i.remove(win)
+            if win is not self.currentWindow:
+                return
             if nextfocus is None:
                 nextfocus = self.floating_layout.focus_first()
             if nextfocus is None:
