@@ -22,8 +22,10 @@ from .. import utils
 
 
 class _WinStack(object):
-    split = False
-    _current = 0
+    def __init__(self, autosplit=False):
+        self.split = autosplit
+        self._current = 0
+        self.lst = []
 
     @property
     def current(self):
@@ -41,9 +43,6 @@ class _WinStack(object):
         if not self.lst:
             return None
         return self.lst[self.current]
-
-    def __init__(self):
-        self.lst = []
 
     def toggleSplit(self):
         self.split = False if self.split else True
@@ -108,8 +107,8 @@ class _WinStack(object):
     def __contains__(self, client):
         return client in self.lst
 
-    def __repr__(self):
-        return "_WinStack(%s, %s)" % (
+    def __str__(self):
+        return "_WinStack: %s, %s" % (
             self.current, str([i.name for i in self])
         )
 
@@ -143,10 +142,7 @@ class Stack(Layout):
     def __init__(self, **config):
         Layout.__init__(self, **config)
         self.add_defaults(Stack.defaults)
-        self.stacks = [_WinStack() for i in range(self.num_stacks)]
-        for stack in self.stacks:
-            if self.autosplit:
-                stack.split = True
+        self.stacks = [_WinStack(autosplit=self.autosplit) for i in range(self.num_stacks)]
 
     @property
     def currentStack(self):
@@ -169,10 +165,7 @@ class Stack(Layout):
     def clone(self, group):
         c = Layout.clone(self, group)
         # These are mutable
-        c.stacks = [_WinStack() for i in self.stacks]
-        for stack in c.stacks:
-            if self.autosplit:
-                stack.split = True
+        c.stacks = [_WinStack(autosplit=self.autosplit) for i in self.stacks]
         return c
 
     def _findNext(self, lst, offset):
@@ -383,7 +376,7 @@ class Stack(Layout):
         """
             Add another stack to the layout.
         """
-        newstack = _WinStack()
+        newstack = _WinStack(autosplit=self.autosplit)
         if self.autosplit:
             newstack.split = True
         self.stacks.append(newstack)
