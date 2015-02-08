@@ -174,8 +174,8 @@ class _Group(command.CommandObject):
                 for l in self.layouts:
                     l.focus(win)
             hook.fire("focus_change")
-        # !!! note that warp isn't hooked up now
-        self.layoutAll(warp)
+            # !!! note that warp isn't hooked up now
+            self.layoutAll(warp)
 
     def info(self):
         return dict(
