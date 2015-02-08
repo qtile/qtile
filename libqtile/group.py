@@ -151,6 +151,10 @@ class _Group(command.CommandObject):
         if win:
             if win not in self.windows:
                 return
+            elif win is self.currentWindow:
+                # This especially avoids ending up with self.previousWindow
+                # and self.currentWindow both referencing win
+                return
             else:
                 self.previousWindow = self.currentWindow
                 self.currentWindow = win
