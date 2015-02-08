@@ -243,6 +243,8 @@ class _Group(command.CommandObject):
             if nextfocus is None:
                 nextfocus = self.floating_layout.focus_first()
             if nextfocus is None:
+                nextfocus = self.previousWindow
+            if nextfocus is None:
                 nextfocus = self.layout.focus_first()
         self.focus(nextfocus, True)
         # else: TODO: change focus
