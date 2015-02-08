@@ -174,8 +174,6 @@ class _Group(command.CommandObject):
                     self.floating_layout.blur()
                     for l in self.layouts:
                         l.focus(win)
-        else:
-            self.currentWindow = None
         hook.fire("focus_change")
         # !!! note that warp isn't hooked up now
         self.layoutAll(warp)
