@@ -443,7 +443,8 @@ class Match(object):
     def compare(self, client):
         for _type, rule in self._rules:
             if _type == "net_wm_pid":
-                match_func = lambda value: rule == value
+                def match_func(value):
+                    return rule == value
             else:
                 match_func = getattr(rule, 'match', None) or \
                     getattr(rule, 'count')

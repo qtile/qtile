@@ -24,11 +24,12 @@
 # Set the locale before any widgets or anything are imported, so any widget
 # whose defaults depend on a reasonable locale sees something reasonable.
 import locale
-locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
-
 import logging
+
 from libqtile.log_utils import init_log
 from libqtile import confreader
+
+locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
 
 try:
     import pkg_resources
