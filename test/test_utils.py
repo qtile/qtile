@@ -1,6 +1,6 @@
-import libqtile.utils as utils
+import six
 
-# TODO: more tests are required here. Several of the utilities are untested.
+import libqtile.utils as utils
 
 
 class Foo:
@@ -79,10 +79,12 @@ def test_rgb_from_base10_tuple():
 def test_rgb_from_base10_tuple_with_alpha():
     assert utils.rgb([255, 255, 0, 0.5]) == (1, 1, 0, 0.5)
 
-# TODO: test scrub to utf8
-# TODO: test Data
-# TODO: test issequencelike
-# TODO: test isstringlike
-# TODO: test shuffleUp, shuffleDown
-# Probably do not require a whole lot of tests, but at least one for each
-# function so that we can refactor with confidence.
+def test_scrub_to_utf8():
+    assert utils.scrub_to_utf8(six.b("foo")) == six.u("foo")
+
+def test_shuffle():
+    l = list(range(3))
+    utils.shuffleUp(l)
+    assert l != list(range(3))
+    utils.shuffleDown(l)
+    assert l == list(range(3))
