@@ -52,6 +52,17 @@ class _Group(command.CommandObject):
             pass
         self.focusHistory.append(win)
 
+    def _remove_from_focus_history(self, win):
+        try:
+            index = self.focusHistory.index(win)
+        except ValueError:
+            # win has never received focus
+            return False
+        else:
+            del self.focusHistory[index]
+            # return True if win was the last item (i.e. it was currentWindow)
+            return index == len(self.focusHistory)
+
     @property
     def layout(self):
         return self.layouts[self.currentLayout]
@@ -213,19 +224,13 @@ class _Group(command.CommandObject):
 
     def remove(self, win):
         self.windows.remove(win)
-        try:
-            winFocusIndex = self.focusHistory.index(win)
-        except ValueError:
-            # win has never received focus
-            winFocusIndex = -1
-        else:
-            del self.focusHistory[winFocusIndex]
+        hadfocus = self._remove_from_focus_history(win)
         win.group = None
         nextfocus = None
         if win.floating:
             nextfocus = self.floating_layout.remove(win)
-            if winFocusIndex != len(self.focusHistory):
-                # win didn't have focus (for example a notification)
+            if not hadfocus:
+                # For example a notification
                 return
             if nextfocus is None:
                 nextfocus = self.currentWindow
@@ -239,8 +244,7 @@ class _Group(command.CommandObject):
                     nextfocus = i.remove(win)
                 else:
                     i.remove(win)
-            if winFocusIndex != len(self.focusHistory):
-                # win didn't have focus
+            if not hadfocus:
                 return
             if nextfocus is None:
                 nextfocus = self.floating_layout.focus_first()
