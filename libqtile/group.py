@@ -21,6 +21,11 @@ class _Group(command.CommandObject):
         self.qtile = None
         self.layouts = []
         self.floating_layout = None
+        # self.focusHistory lists the group's windows in the order they
+        # received focus, from the oldest (first item) to the currently
+        # focused window (last item); NB the list does *not* contain any
+        # windows that never received focus; refer to self.windows for the
+        # complete set
         self.focusHistory = []
         self.screen = None
         self.currentLayout = None
@@ -42,6 +47,7 @@ class _Group(command.CommandObject):
         try:
             return self.focusHistory[-1]
         except IndexError:
+            # no window has focus
             return None
 
     @currentWindow.setter
@@ -49,6 +55,7 @@ class _Group(command.CommandObject):
         try:
             self.focusHistory.remove(win)
         except ValueError:
+            # win has never received focus before
             pass
         self.focusHistory.append(win)
 
