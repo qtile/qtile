@@ -289,7 +289,9 @@ class MonadTall(SingleWindow):
         self.group.layoutAll()
         # if we have two windows switch focus to maximized
         if self.follow_max and len(self.clients) == 2:
-            if self.ratio <= self._max_ratio:
+            focused_size = self.clients[self.focused].getsize()
+            unfocused_size = self.clients[1 - self.focused].getsize()
+            if focused_size[0] < unfocused_size[0]:
                 self.cmd_next()
 
     def configure(self, client, screen):
