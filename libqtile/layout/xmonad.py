@@ -163,6 +163,7 @@ class MonadTall(SingleWindow):
             "(one of ``MonadTall._left`` or ``MonadTall._right``)"),
         ("change_ratio", .05, "Resize ratio"),
         ("change_size", 20, "Resize change in pixels"),
+        ("follow_max", False, "Follow maximizing window for two windows"),
     ]
 
     def __init__(self, **config):
@@ -286,6 +287,10 @@ class MonadTall(SingleWindow):
         else:
             self._maximize_secondary()
         self.group.layoutAll()
+        # if we have two windows switch focus to maximized
+        if self.follow_max and len(self.clients) == 2:
+            if self.ratio <= self._max_ratio:
+                self.cmd_next()
 
     def configure(self, client, screen):
         "Position client based on order and sizes"
