@@ -293,8 +293,7 @@ class MonadTall(SingleWindow):
     def _follow_max(self):
         "Follow maximized client of two"
         if len(self.clients) == 2 and \
-                (self.focused and self.ratio > self._med_ratio or \
-                not self.focused and self.ratio < self._med_ratio):
+                (self.focused and self.ratio > self._med_ratio or not self.focused and self.ratio < self._med_ratio):
             self.cmd_next()
 
     def configure(self, client, screen):
