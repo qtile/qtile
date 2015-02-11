@@ -24,14 +24,11 @@
 #
 # -*- coding: utf-8 -*-
 
-from . import base
-import json
+from .generic_poll_text import GenPollUrl
 import locale
 
-from six.moves.urllib.request import urlopen
 
-
-class BitcoinTicker(base.ThreadedPollText):
+class BitcoinTicker(GenPollUrl):
     ''' A bitcoin ticker widget, data provided by the btc-e.com API. Defaults to
         displaying currency in whatever the current locale is.
     '''
@@ -47,18 +44,19 @@ class BitcoinTicker(base.ThreadedPollText):
     ]
 
     def __init__(self, **config):
-        base.ThreadedPollText.__init__(self, **config)
+        GenPollUrl.__init__(self, **config)
         self.add_defaults(BitcoinTicker.defaults)
 
-    def poll(self):
-        res = urlopen(self.QUERY_URL % self.currency.lower())
+    @property
+    def url(self):
+        return self.QUERY_URL % self.currency.lower()
+
+    def parse(self, body):
         formatted = {}
-        res = json.loads(res.read().decode())
-        if 'error' in res and res['error'] == "invalid pair":
+        if 'error' in body and body['error'] == "invalid pair":
             locale.setlocale(locale.LC_MONETARY, "en_US.UTF-8")
             self.currency = locale.localeconv()['int_curr_symbol'].strip()
-            res = urlopen(self.QUERY_URL % self.currency.lower())
-            res = json.loads(res.read())
-        for k, v in res['ticker'].items():
+            body = self.fetch(self.url)
+        for k, v in body['ticker'].items():
             formatted[k] = locale.currency(v)
         return self.format.format(**formatted)

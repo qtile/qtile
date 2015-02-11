@@ -27,12 +27,10 @@
 #
 # -*- coding: utf-8 -*-
 
-from . import base
+from .generic_poll_text import GenPollUrl
 from xml.dom import minidom
-import json
 
 
-from six.moves.urllib.request import urlopen
 from six.moves.urllib.parse import urlencode
 
 QUERY_URL = 'http://query.yahooapis.com/v1/public/yql?'
@@ -40,7 +38,7 @@ WEATHER_URL = 'http://weather.yahooapis.com/forecastrss?'
 WEATHER_NS = 'http://xml.weather.yahoo.com/ns/rss/1.0'
 
 
-class YahooWeather(base.ThreadedPollText):
+class YahooWeather(GenPollUrl):
     ''' A weather widget, data provided by the Yahoo! Weather API
 
         Format options:
@@ -88,40 +86,39 @@ class YahooWeather(base.ThreadedPollText):
         ('steady', 's', 'symbol for steady atmospheric pressure'),
     ]
 
+    json = False
+
     def __init__(self, **config):
-        base.ThreadedPollText.__init__(self, **config)
+        GenPollUrl.__init__(self, **config)
         self.add_defaults(YahooWeather.defaults)
+        self._url = None
 
     def fetch_woeid(self, location):
         url = QUERY_URL + urlencode({
             'q': 'select woeid from geo.places where text="%s"' % location,
             'format': 'json'
         })
-        try:
-            response = urlopen(url)
-            data = json.loads(response.read())
-            if data['query']['count'] > 1:
-                return data['query']['results']['place'][0]['woeid']
-            return data['query']['results']['place']['woeid']
-        except Exception:
-            # HTTPError? JSON Error? KeyError? Doesn't matter, return None
-            return None
+        data = self.fetch(url)
+        if data['query']['count'] > 1:
+            return data['query']['results']['place'][0]['woeid']
+        return data['query']['results']['place']['woeid']
 
-    def poll(self):
+    @property
+    def url(self):
+        if self._url:
+            return self._url
+
         if not self.woeid:
             if self.location:
                 self.woeid = self.fetch_woeid(self.location)
             if not self.woeid:
                 return None
         format = 'c' if self.metric else 'f'
-        url = WEATHER_URL + urlencode({'w': self.woeid, 'u': format})
+        self._url = WEATHER_URL + urlencode({'w': self.woeid, 'u': format})
+        return self._url
 
-        try:
-            response = urlopen(url).read()
-            dom = minidom.parseString(response)
-        except Exception:
-            # Invalid response or couldn't parse XML.
-            return None
+    def parse(self, body):
+        dom = minidom.parseString(body)
 
         structure = (
             ('location', ('city', 'region', 'country')),
