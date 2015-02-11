@@ -287,12 +287,15 @@ class MonadTall(SingleWindow):
         else:
             self._maximize_secondary()
         self.group.layoutAll()
-        # if we have two windows switch focus to maximized
-        if self.follow_max and len(self.clients) == 2:
-            focused_size = self.clients[self.focused].getsize()
-            unfocused_size = self.clients[1 - self.focused].getsize()
-            if focused_size[0] < unfocused_size[0]:
-                self.cmd_next()
+        if self.follow_max:
+            self._follow_max()
+
+    def _follow_max(self):
+        "Follow maximized client of two"
+        if len(self.clients) == 2 and \
+                (self.focused and self.ratio > self._med_ratio or \
+                not self.focused and self.ratio < self._med_ratio):
+            self.cmd_next()
 
     def configure(self, client, screen):
         "Position client based on order and sizes"
