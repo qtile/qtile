@@ -1,4 +1,6 @@
 import json
+
+import six
 from six.moves.urllib.request import urlopen, Request
 
 from libqtile.widget import base
@@ -30,14 +32,29 @@ class GenPollUrl(base.ThreadedPollText):
         ('data', None, 'Post Data'),
         ('parse', None, 'Parse Function'),
         ('json', True, 'Is Json?'),
-        ('user_agent', 'Mozilla/5.0 (X11; Linux i686; rv:36.0) '
-         'Gecko/20100101 Firefox/36.0', 'Set the user agent'),
+        ('user_agent', 'Qtile', 'Set the user agent'),
         ('headers', {}, 'Extra Headers')
     ]
 
     def __init__(self, **config):
         base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(GenPollUrl.defaults)
+
+    def fetch(self, url, data=None, headers={}, is_json=True):
+        req = Request(url, data, headers)
+        res = urlopen(req)
+        if six.PY3:
+            charset = res.headers.get_content_charset()
+        else:
+            charset = res.headers.getparam('charset')
+
+        body = res.read()
+        if charset:
+            body = body.decode(charset)
+
+        if is_json:
+            body = json.loads(body)
+        return body
 
     def poll(self):
         if not self.parse or not self.url:
@@ -49,14 +66,10 @@ class GenPollUrl(base.ThreadedPollText):
             headers['Content-Type'] = 'application/json'
 
         if data and not isinstance(data, str):
-            data = json.dumps(data)
+            data = json.dumps(data).encode()
 
         headers.update(self.headers)
-        req = Request(self.url, data, headers)
-        res = urlopen(req)
-        body = res.read()
-        if self.json:
-            body = json.loads(body)
+        body = self.fetch(self.url, data, headers, self.json)
 
         try:
             text = self.parse(body)
