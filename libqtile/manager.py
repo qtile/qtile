@@ -690,6 +690,8 @@ class Qtile(command.CommandObject):
 
         self._eventloop.add_signal_handler(signal.SIGINT, self._eventloop.stop)
         self._eventloop.add_signal_handler(signal.SIGTERM, self._eventloop.stop)
+        self._eventloop.set_exception_handler(
+            lambda x, y: self.log.exception("Got an exception in poll loop"))
 
         self.log.info('Adding io watch')
         fd = self.conn.conn.get_file_descriptor()
