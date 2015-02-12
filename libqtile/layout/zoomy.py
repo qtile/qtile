@@ -138,11 +138,14 @@ class Zoomy(SingleWindow):
         return d
 
     def focus(self, win):
-        if self.focused and self.property_name:
+        if self.focused and self.property_name and self.focused.window.get_property(
+                self.property_name,
+                "UTF8_STRING"
+                ):
             self.focused.window.set_property(
                 self.property_name,
                 self.property_small,
-                "STRING",
+                "UTF8_STRING",
                 format=8
             )
         SingleWindow.focus(self, win)
@@ -151,7 +154,7 @@ class Zoomy(SingleWindow):
             win.window.set_property(
                 self.property_name,
                 self.property_big,
-                "STRING",
+                "UTF8_STRING",
                 format=8
             )
 
