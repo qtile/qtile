@@ -126,9 +126,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             self.layout.width = width
 
     def drawbox(self, offset, text, bordercolor, textcolor, rounded=False,
-                block=False, width=None):
+                block=False, width=None, icon=None):
         self.drawtext(text, textcolor, width)
-        padding_x = [self.padding_x + self.icon_size + 4, self.padding_x]
+
+        icon_padding = (self.icon_size + 4) if icon else 0
+        padding_x = [self.padding_x + icon_padding, self.padding_x]
+
         framed = self.layout.framed(
             self.borderwidth,
             bordercolor,
@@ -139,6 +142,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             framed.draw_fill(offset, self.margin_y, rounded)
         else:
             framed.draw(offset, self.margin_y, rounded)
+
+        if icon:
+            self.draw_icon(icon, offset)
 
     def get_clicked(self, x, y):
         window = None
@@ -165,6 +171,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 window.cmd_bring_to_front()
 
     def get_window_icon(self, window):
+        if not window.icons:
+            return None
+
         cache = self._icons_cache.get(window.window.wid)
         if cache:
             return cache
@@ -196,14 +205,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         self._icons_cache[window.window.wid] = surface
         return surface
 
-    def draw_icon(self, window, offset):
-        if not window.icons:
+    def draw_icon(self, surface, offset):
+        if not surface:
             return
 
         x = offset + self.padding_x + self.borderwidth + 2 + self.margin_x
         y = self.padding_y + self.borderwidth
-
-        surface = self.get_window_icon(window)
 
         self.drawer.ctx.save()
         self.drawer.ctx.translate(x, y)
@@ -242,9 +249,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 self.foreground,
                 self.rounded,
                 self.highlight_method == 'block',
-                bw - self.margin_x * 2 - self.padding_x * 2
+                bw - self.margin_x * 2 - self.padding_x * 2,
+                icon=self.get_window_icon(w),
             )
-            self.draw_icon(w, offset)
 
             offset += bw + self.icon_size
         self.drawer.draw(self.offset, self.width)
