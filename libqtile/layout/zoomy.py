@@ -139,8 +139,8 @@ class Zoomy(SingleWindow):
 
     def focus(self, win):
         if self.focused and self.property_name and self.focused.window.get_property(
-                self.property_name,
-                "UTF8_STRING"
+                    self.property_name,
+                    "UTF8_STRING"
                 ) is not None:
             self.focused.window.set_property(
                 self.property_name,
