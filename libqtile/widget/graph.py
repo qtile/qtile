@@ -347,7 +347,7 @@ class NetGraph(_Graph):
     def get_main_iface():
         filename = "/proc/net/route"
         def make_route(line):
-            dict(zip(['iface', 'dest'], line.split()))
+            return dict(zip(['iface', 'dest'], line.split()))
         routes = [make_route(line) for line in list(open(filename))[1:]]
         try:
             return next(
