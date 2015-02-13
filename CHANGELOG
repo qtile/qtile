@@ -1,3 +1,12 @@
+qtile 0.9.1, released 2015-02-13:
+    This is primarily a unicode bugfix release for 0.9.0; there were several
+    nits related to the python2/3 unicode conversion that were simply wrong.
+    This release also adds license headers to each file, which is necessary for
+    distro maintainers to package Qtile.
+    * bugfixes
+        - fix python2's importing of gobject
+        - fix unicode handling in several places
+
 qtile 0.9.0, released 2015-01-20:
     * !!! Dependency Changes !!!
       New dependencies will need to be installed for qtile to work
