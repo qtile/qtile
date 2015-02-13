@@ -67,6 +67,20 @@ launching X with:
 Examples of custom X startup scripts are available in `qtile-examples
 <https://github.com/qtile/qtile-examples>`_.
 
+Capturing an ``xtrace``
+=======================
+
+Occasionally, a bug will be low level enough to require an ``xtrace`` of
+Qtile's conversations with the X server. To capture one of these, create an
+``xinitrc`` or similar file with:
+
+.. code-block:: bash
+
+  exec xtrace qtile >> ~/.qtile.log
+
+This will put the xtrace output in Qtile's logfile as well. You can then
+demonstrate the bug, and paste the contents of this file into the bug report.
+
 Coding style
 ============
 
