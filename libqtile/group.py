@@ -49,14 +49,19 @@ class _Group(command.CommandObject):
         self.qtile = None
         self.layouts = []
         self.floating_layout = None
-        self.currentWindow = None
+        # self.focusHistory lists the group's windows in the order they
+        # received focus, from the oldest (first item) to the currently
+        # focused window (last item); NB the list does *not* contain any
+        # windows that never received focus; refer to self.windows for the
+        # complete set
+        self.focusHistory = []
         self.screen = None
         self.currentLayout = None
 
     def _configure(self, layouts, floating_layout, qtile):
         self.screen = None
         self.currentLayout = 0
-        self.currentWindow = None
+        self.focusHistory = []
         self.windows = set()
         self.qtile = qtile
         self.layouts = [i.clone(self) for i in layouts]
@@ -64,6 +69,34 @@ class _Group(command.CommandObject):
         if self.customLayout is not None:
             self.layout = self.customLayout
             self.customLayout = None
+
+    @property
+    def currentWindow(self):
+        try:
+            return self.focusHistory[-1]
+        except IndexError:
+            # no window has focus
+            return None
+
+    @currentWindow.setter
+    def currentWindow(self, win):
+        try:
+            self.focusHistory.remove(win)
+        except ValueError:
+            # win has never received focus before
+            pass
+        self.focusHistory.append(win)
+
+    def _remove_from_focus_history(self, win):
+        try:
+            index = self.focusHistory.index(win)
+        except ValueError:
+            # win has never received focus
+            return False
+        else:
+            del self.focusHistory[index]
+            # return True if win was the last item (i.e. it was currentWindow)
+            return index == len(self.focusHistory)
 
     @property
     def layout(self):
@@ -177,21 +210,18 @@ class _Group(command.CommandObject):
         if win:
             if win not in self.windows:
                 return
+            self.currentWindow = win
+            if win.floating:
+                for l in self.layouts:
+                    l.blur()
+                self.floating_layout.focus(win)
             else:
-                self.currentWindow = win
-                if win.floating:
-                    for l in self.layouts:
-                        l.blur()
-                    self.floating_layout.focus(win)
-                else:
-                    self.floating_layout.blur()
-                    for l in self.layouts:
-                        l.focus(win)
-        else:
-            self.currentWindow = None
-        hook.fire("focus_change")
-        # !!! note that warp isn't hooked up now
-        self.layoutAll(warp)
+                self.floating_layout.blur()
+                for l in self.layouts:
+                    l.focus(win)
+            hook.fire("focus_change")
+            # !!! note that warp isn't hooked up now
+            self.layoutAll(warp)
 
     def info(self):
         return dict(
@@ -229,24 +259,30 @@ class _Group(command.CommandObject):
 
     def remove(self, win):
         self.windows.remove(win)
+        hadfocus = self._remove_from_focus_history(win)
         win.group = None
         nextfocus = None
         if win.floating:
             nextfocus = self.floating_layout.remove(win)
-            if nextfocus is None:
-                nextfocus = self.layout.focus_first()
-            if nextfocus is None:
-                nextfocus = self.floating_layout.focus_first()
+            if not hadfocus:
+                # For example a notification
+                return
+            nextfocus = nextfocus or \
+                self.currentWindow or \
+                self.layout.focus_first() or \
+                self.floating_layout.focus_first()
         else:
             for i in self.layouts:
                 if i is self.layout:
                     nextfocus = i.remove(win)
                 else:
                     i.remove(win)
-            if nextfocus is None:
-                nextfocus = self.floating_layout.focus_first()
-            if nextfocus is None:
-                nextfocus = self.layout.focus_first()
+            if not hadfocus:
+                return
+            nextfocus = nextfocus or \
+                self.floating_layout.focus_first() or \
+                self.currentWindow or \
+                self.layout.focus_first()
         self.focus(nextfocus, True)
         # else: TODO: change focus
 
