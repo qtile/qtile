@@ -145,6 +145,9 @@ ffi.cdef("""
     PangoFontDescription *pango_font_description_new (void);
     void pango_font_description_free (PangoFontDescription *desc);
 
+    PangoFontDescription *
+    pango_font_description_from_string (const char *str);
+
     void
     pango_font_description_set_family (PangoFontDescription *desc,
                                        const char *family);
@@ -251,6 +254,12 @@ class FontDescription(object):
             self._pointer = ffi.gc(self._pointer, pango.pango_font_description_free)
         else:
             self._pointer = pointer
+
+    @classmethod
+    def from_string(cls, string):
+        pointer = pango.pango_font_description_from_string(string.encode())
+        pointer = ffi.gc(pointer, pango.pango_font_description_free)
+        return cls(pointer)
 
     def set_family(self, family):
         pango.pango_font_description_set_family(self._pointer, family.encode())
