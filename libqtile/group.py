@@ -239,12 +239,10 @@ class _Group(command.CommandObject):
             if not hadfocus:
                 # For example a notification
                 return
-            if nextfocus is None:
-                nextfocus = self.currentWindow
-            if nextfocus is None:
-                nextfocus = self.layout.focus_first()
-            if nextfocus is None:
-                nextfocus = self.floating_layout.focus_first()
+            nextfocus = nextfocus or \
+                self.currentWindow or \
+                self.layout.focus_first() or \
+                self.floating_layout.focus_first()
         else:
             for i in self.layouts:
                 if i is self.layout:
@@ -253,12 +251,10 @@ class _Group(command.CommandObject):
                     i.remove(win)
             if not hadfocus:
                 return
-            if nextfocus is None:
-                nextfocus = self.floating_layout.focus_first()
-            if nextfocus is None:
-                nextfocus = self.currentWindow
-            if nextfocus is None:
-                nextfocus = self.layout.focus_first()
+            nextfocus = nextfocus or \
+                self.floating_layout.focus_first() or \
+                self.currentWindow or \
+                self.layout.focus_first()
         self.focus(nextfocus, True)
         # else: TODO: change focus
 
