@@ -87,7 +87,7 @@ class _WinStack(object):
         if client not in self.lst:
             return
         idx = self.lst.index(client)
-        self.lst.remove(client)
+        del self.lst[idx]
         if idx > self.current:
             self.current -= 1
         else:
