@@ -94,6 +94,8 @@ class Max(SingleWindow):
         self.clients.remove(client)
         if self.clients:
             return self.clients[0]
+        else:
+            self.focused = None
 
     def configure(self, client, screen):
         if self.clients and client is self.focused:
