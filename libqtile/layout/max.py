@@ -86,7 +86,12 @@ class Max(SingleWindow):
         return c
 
     def add(self, client):
-        self.clients.insert(0, client)
+        try:
+            idx = self.clients.index(self._get_window())
+        except ValueError:
+            self.clients.append(client)
+        else:
+            self.clients.insert(idx + 1, client)
 
     def remove(self, client):
         if client not in self.clients:
