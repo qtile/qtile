@@ -120,8 +120,8 @@ class LaunchBar(base._Widget):
                     img = cairocffi.ImageSurface.create_from_png(iconfile)
                 except cairocffi.Error:
                     self.qtile.log.exception('Error loading icon for ' +
-                                             'application "' + img_name + '" ('
-                                             + iconfile + ')')
+                                             'application "' + img_name + '" (' +
+                                             iconfile + ')')
                     return
 
             input_width = img.get_width()
@@ -173,8 +173,8 @@ class LaunchBar(base._Widget):
         """ Retreive the wich icon is clicked according to its position. """
         for i in self.progs:
             if x < (self.icons_offsets[i] +
-                    self.icons_widths[self.progs[i]['name']]
-                    + self.padding / 2):
+                    self.icons_widths[self.progs[i]['name']] +
+                    self.padding / 2):
                 return i
 
     def button_press(self, x, y, button):
@@ -204,8 +204,8 @@ class LaunchBar(base._Widget):
                 textbox = self.surfaces[name]
                 textbox.layout.draw(
                     self.padding + textbox.actual_padding,
-                    int(self.bar.height / 2.0 - textbox.layout.height / 2.0)
-                    + 1)
+                    int((self.bar.height - textbox.layout.height) / 2.0) + 1
+                )
             else:
                 # display an icon
                 self.drawer.ctx.set_source(self.surfaces[name])

@@ -247,9 +247,9 @@ class Mpd(base.ThreadPoolText):
             if self.status['state'] != 'stop':
                 text = self.do_format(self.fmt_playing)
 
-                if (self.do_color_progress
-                        and self.status
-                        and self.status.get('time', None)):
+                if (self.do_color_progress and
+                        self.status and
+                        self.status.get('time', None)):
                     elapsed, total = self.status['time'].split(':')
                     percent = float(elapsed) / float(total)
                     progress = int(percent * len(text))
