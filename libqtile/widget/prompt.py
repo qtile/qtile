@@ -32,7 +32,7 @@
 import glob
 import os
 import string
-from .. import bar, xkeysyms, xcbq, command
+from .. import bar, xkeysyms, xcbq, command, hook
 from . import base
 
 
@@ -330,6 +330,13 @@ class Prompt(base._TextBox):
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
 
+        def f(win):
+            if self.active and not self.bar.window == win:
+                self.active = False
+                self.bar.widget_ungrab_keyboard()
+
+        hook.subscribe.client_focus(f)
+
     def startInput(self, prompt, callback,
                    complete=None, strict_completer=False):
         """
@@ -418,7 +425,8 @@ class Prompt(base._TextBox):
             elif keysym == xkeysyms.keysyms['Escape']:
                 self.active = False
                 self.bar.widget_ungrab_keyboard()
-            elif keysym == xkeysyms.keysyms['Return']:
+            elif keysym in [xkeysyms.keysyms['Return'],
+                            xkeysyms.keysyms['KP_Enter']]:
                 self.active = False
                 self.bar.widget_ungrab_keyboard()
                 if self.strict_completer:
