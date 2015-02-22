@@ -21,9 +21,6 @@ ckpatch: lint check
 clean:
 	-rm -rf dist qtile.egg-info docs/_build build/
 
-# strip off the leading 'v'
-VERSION=$(shell git describe --tags | cut -c 2-)
-
 # This is a little ugly: we want to be able to have users just run
 # 'python setup.py install' to install qtile, but we would also like to install
 # the man pages. I can't figure out a way to have the 'build' target invoke the
