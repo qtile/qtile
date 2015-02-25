@@ -13,6 +13,7 @@ running something else, please see `Installing From Source`_.
 
     Arch <arch>
     Ubuntu <ubuntu>
+    Gentoo <gentoo>
 
 Installing From Source
 ======================
