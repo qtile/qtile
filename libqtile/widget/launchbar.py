@@ -128,7 +128,7 @@ class LaunchBar(base._Widget):
             input_height = img.get_height()
 
             sp = input_height / float(self.bar.height - 4)
-            width = input_width / sp
+            width = int(input_width // sp)
 
             imgpat = cairocffi.SurfacePattern(img)
             scaler = cairocffi.Matrix()
