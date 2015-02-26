@@ -52,7 +52,7 @@ key. The basic operation is:
   commands
 
 The default config defines one screen and 8 groups, one for each letter in
-``qweruiop``. It has a basic bottom bar that includes a group box, the current
+``asdfuiop``. It has a basic bottom bar that includes a group box, the current
 window name, a little text reminder that you're using the default config,
 a system tray, and a clock.
 
