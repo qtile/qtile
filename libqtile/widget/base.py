@@ -166,7 +166,8 @@ class _Widget(command.CommandObject, configurable.Configurable):
         """
             This method calls either ``.call_later`` with given arguments.
         """
-        return self.qtile.call_later(seconds, self._wrapper, method, *method_args)
+        return self.qtile.call_later(seconds, self._wrapper, method,
+                                     *method_args)
 
     def call_process(self, command, **kwargs):
         """
@@ -333,7 +334,8 @@ class InLoopPollText(_TextBox):
 
     def timer_setup(self):
         update_interval = self.tick()
-        # If self.update_interval is defined and .tick() returns None, re-call after self.update_interval
+        # If self.update_interval is defined and .tick() returns None, re-call
+        # after self.update_interval
         if update_interval is None and self.update_interval is not None:
             self.timeout_add(self.update_interval, self.timer_setup)
         # We can change the update interval by returning something from .tick()
@@ -381,7 +383,8 @@ class ThreadedPollText(InLoopPollText):
         def worker():
             text = self.poll()
             self.qtile.call_soon_threadsafe(self.update, text)
-        # TODO: There are nice asyncio constructs for this sort of thing, I think...
+        # TODO: There are nice asyncio constructs for this sort of thing, I
+        # think...
         threading.Thread(target=worker).start()
 
 
@@ -398,14 +401,16 @@ class ThreadPoolText(_TextBox):
     param: text - Initial text to display.
     """
     def __init__(self, text, **config):
-        super(ThreadPoolText, self).__init__(text, width=bar.CALCULATED, **config)
+        super(ThreadPoolText, self).__init__(text, width=bar.CALCULATED,
+                                             **config)
 
     def timer_setup(self):
         def on_done(future):
             try:
                 result = future.result()
             except Exception:
-                self.log.exception('poll() raised exceptions, not rescheduling')
+                self.log.exception('poll() raised exceptions, not '
+                                   'rescheduling')
 
             if result is not None:
                 try:
