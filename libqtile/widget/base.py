@@ -36,9 +36,6 @@ import logging
 import threading
 import warnings
 
-LEFT = object()
-CENTER = object()
-
 
 class _Widget(command.CommandObject, configurable.Configurable):
     """
