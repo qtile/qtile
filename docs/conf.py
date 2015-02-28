@@ -281,3 +281,7 @@ if not os.environ.get('READTHEDOCS', None):
 
 
 graphviz_dot_args = ['-Lg']
+
+# A workaround for the responsive tables always having annoying scrollbars.
+def setup(app):
+    app.add_stylesheet("no_scrollbars.css")
