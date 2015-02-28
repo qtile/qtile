@@ -74,64 +74,66 @@ class FakeScreenConfig:
     floating_layout = libqtile.layout.floating.Floating()
     keys = []
     mouse = []
-    fake_screens = [Screen(
-        bottom=bar.Bar(
-            [
-                widget.GroupBox(this_screen_border=CHAM3,
-                                borderwidth=1,
-                                fontsize=FONTSIZE,
-                                padding=1, margin_x=1, margin_y=1),
-                widget.AGroupBox(),
-                widget.Prompt(),
-                widget.Sep(),
-                widget.WindowName(
-                    fontsize=FONTSIZE, margin_x=6),
-                widget.Sep(),
-                widget.CPUGraph(**GRAPH_KW),
-                widget.MemoryGraph(**GRAPH_KW),
-                widget.SwapGraph(foreground='20C020', **GRAPH_KW),
-                widget.Sep(),
-                widget.Systray(),
-                widget.Sep(),
-                widget.Clock(format='%H:%M:%S %d.%m.%Y',
-                             fontsize=FONTSIZE, padding=6),
-            ],
-                    24,
-            background="#555555"
+    fake_screens = [
+        Screen(
+            bottom=bar.Bar(
+                [
+                    widget.GroupBox(this_screen_border=CHAM3,
+                                    borderwidth=1,
+                                    fontsize=FONTSIZE,
+                                    padding=1, margin_x=1, margin_y=1),
+                    widget.AGroupBox(),
+                    widget.Prompt(),
+                    widget.Sep(),
+                    widget.WindowName(fontsize=FONTSIZE, margin_x=6),
+                    widget.Sep(),
+                    widget.CPUGraph(**GRAPH_KW),
+                    widget.MemoryGraph(**GRAPH_KW),
+                    widget.SwapGraph(foreground='20C020', **GRAPH_KW),
+                    widget.Sep(),
+                    widget.Systray(),
+                    widget.Sep(),
+                    widget.Clock(format='%H:%M:%S %d.%m.%Y',
+                                 fontsize=FONTSIZE, padding=6),
+                ],
+                24,
+                background="#555555"
+            ),
+            x=0, y=0, width=600, height=480
         ),
-        x=0, y=0, width=600, height=480
-    ),
-    Screen(
-        top=bar.Bar(
-            [
-                        widget.GroupBox(),
-                widget.WindowName(),
-                widget.Clock()
-            ],
-                    30,
+        Screen(
+            top=bar.Bar(
+                [
+                    widget.GroupBox(),
+                    widget.WindowName(),
+                    widget.Clock()
+                ],
+                30,
+            ),
+            x=600, y=0, width=300, height=580
         ),
-        x=600, y=0, width=300, height=580
-    ),
-    Screen(
-        top=bar.Bar(
-            [
-                        widget.GroupBox(),
-                widget.WindowName(),
-                widget.Clock()
-            ],
-                    30,
+        Screen(
+            top=bar.Bar(
+                [
+                    widget.GroupBox(),
+                    widget.WindowName(),
+                    widget.Clock()
+                ],
+                30,
+            ),
+            x=0, y=480, width=500, height=400
         ),
-           x=0, y=480, width=500, height=400),
-                    Screen(
-                        bottom=bar.Bar(
-                            [
-                        widget.GroupBox(),
-                                widget.WindowName(),
-                                widget.Clock()
-                            ],
-                    30,
-                        ),
-           x=500, y=580, width=400, height=400),
+        Screen(
+            bottom=bar.Bar(
+                [
+                    widget.GroupBox(),
+                    widget.WindowName(),
+                    widget.Clock()
+                ],
+                30,
+            ),
+            x=500, y=580, width=400, height=400
+        ),
     ]
 
     screens = fake_screens
