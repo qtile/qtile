@@ -94,12 +94,13 @@ class Max(SingleWindow):
             self.clients.insert(idx + 1, client)
 
     def remove(self, client):
-        if client not in self.clients:
+        try:
+            self.clients.remove(client)
+        except ValueError:
             return
-        self.clients.remove(client)
-        if self.clients:
+        try:
             return self.clients[0]
-        else:
+        except IndexError:
             self.focused = None
 
     def configure(self, client, screen):
