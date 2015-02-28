@@ -88,6 +88,34 @@ mix!)
     screens
     hooks
 
+In addition to the above variables, there are several other boolean
+configuration variables that control specific aspects of Qtile's behavior:
+
+.. list-table::
+    :widths: 10 10 80
+    :header-rows: 1
+
+    * - variable
+      - default
+      - description
+    * - follow_mouse_focus
+      - False
+      - Controls whether or not focus follows the mouse around as it moves
+        across windows in a layout.
+    * - bring_front_click
+      - False
+      - When clicked, should the window be brought to the front or not. (This
+        sets the X Stack Mode to Above.)
+    * - cursor_warp
+      - False
+      - If true, the cursor follows the focus as directed by the keyboard,
+        warping to the center of the focused window.
+    * - auto_fullscreen
+      - True
+      - If a window requests to be fullscreen, it is automatically
+        fullscreened. Set this to false if you only want windows to be
+        fullscreen if you ask them to be.
+
 Testing your configuration
 ==========================
 
