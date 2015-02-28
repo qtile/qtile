@@ -271,7 +271,10 @@ class Bar(Gap, configurable.Configurable):
 
     def info(self):
         return dict(
+            size=self.size,
+            length=self.length,
             width=self.width,
+            height=self.height,
             position=self.position,
             widgets=[i.info() for i in self.widgets],
             window=self.window.window.wid
