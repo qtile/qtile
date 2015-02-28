@@ -33,14 +33,14 @@ class Max(SingleWindow):
         SingleWindow.__init__(self, **config)
         self.clients = []
         self.add_defaults(Max.defaults)
-        self.focused = None
+        self.current = None
 
     def _get_window(self):
-        return self.focused
+        return self.current
 
     def focus(self, client):
         self.group.layoutAll()
-        self.focused = client
+        self.current = client
 
     def focus_first(self):
         if self.clients:
@@ -73,11 +73,11 @@ class Max(SingleWindow):
             return self.clients[idx - 1]
 
     def up(self):
-        client = self.focus_previous(self.focused) or self.focus_last()
+        client = self.focus_previous(self.current) or self.focus_last()
         self.group.focus(client, False)
 
     def down(self):
-        client = self.focus_next(self.focused) or self.focus_first()
+        client = self.focus_next(self.current) or self.focus_first()
         self.group.focus(client, False)
 
     def clone(self, group):
@@ -101,10 +101,10 @@ class Max(SingleWindow):
         try:
             return self.clients[0]
         except IndexError:
-            self.focused = None
+            self.current = None
 
     def configure(self, client, screen):
-        if self.clients and client is self.focused:
+        if self.clients and client is self.current:
             client.place(
                 screen.x,
                 screen.y,
