@@ -227,7 +227,7 @@ class Screen(command.CommandObject):
     def __init__(self, top=None, bottom=None, left=None, right=None,
                  x=None, y=None, width=None, height=None):
         """
-            - top, bottom, left, right: Instances of bar objects, or None.
+            - top, bottom, left, right: Instances of Gap/Bar objects, or None.
 
             Note that bar.Bar objects can only be placed at the top or the
             bottom of the screen (bar.Gap objects can be placed anywhere).
