@@ -270,9 +270,10 @@ def test_closing_notification(self):
     assert self.c.window.info()['name'] == "two", self.c.window.info()['name']
 
     # Now test a notification that is the last open window in the group
+    self.c.layout.down()
     notification2 = self.testWindow("notification2")
     self.c.window.toggle_floating()
-    # Create and kill 'temp', otherwise self.c.layout.down() won't work
+    # Create and kill 'temp', otherwise self.c.layout.up() won't work
     temp = self.testWindow("temp")
     self.c.layout.up()
     self.c.layout.up()
@@ -283,6 +284,7 @@ def test_closing_notification(self):
 
     # Now test a notification that is neither the first nor the last open
     # window in the group
+    self.c.layout.down()
     notification3 = self.testWindow("notification3")
     self.c.window.toggle_floating()
     four = self.testWindow("four")

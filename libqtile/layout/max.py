@@ -95,13 +95,21 @@ class Max(SingleWindow):
 
     def remove(self, client):
         try:
-            self.clients.remove(client)
+            idx = self.clients.index(client)
         except ValueError:
             return
-        try:
-            return self.clients[0]
-        except IndexError:
-            self.current = None
+        else:
+            del self.clients[idx]
+
+        if client is self.current:
+            try:
+                # The previous client must become current
+                # if idx == 0, using self.clients[-1] is indeed correct
+                self.current = self.clients[idx - 1]
+            except IndexError:
+                self.current = None
+
+        return self.current
 
     def configure(self, client, screen):
         if self.clients and client is self.current:
