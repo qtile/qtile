@@ -287,17 +287,18 @@ class _Group(command.CommandObject):
         # else: TODO: change focus
 
     def mark_floating(self, win, floating):
-        if floating and win in self.floating_layout.clients:
-            # already floating
-            pass
-        elif floating:
-            for i in self.layouts:
-                i.remove(win)
+        if floating:
+            if win in self.floating_layout.clients:
+                # already floating
+                pass
+            else:
+                for i in self.layouts:
+                    i.remove(win)
+                    if win is self.currentWindow:
+                        i.blur()
+                self.floating_layout.add(win)
                 if win is self.currentWindow:
-                    i.blur()
-            self.floating_layout.add(win)
-            if win is self.currentWindow:
-                self.floating_layout.focus(win)
+                    self.floating_layout.focus(win)
         else:
             self.floating_layout.remove(win)
             self.floating_layout.blur()
