@@ -41,56 +41,44 @@ class Gap(command.CommandObject):
         self.initial_size = size
         self.qtile = None
         self.screen = None
+        self.x = None
+        self.y = None
+        self.length = None
+        self.width = None
+        self.height = None
 
     def _configure(self, qtile, screen):
         self.qtile = qtile
         self.screen = screen
+        # If both horizontal and vertical gaps are present, screen corners are
+        # given to the horizontal ones
+        if screen.top is self:
+            self.x = screen.x
+            self.y = screen.y
+            self.length = screen.width
+            self.width = self.length
+            self.height = self.size
+        elif screen.bottom is self:
+            self.x = screen.x
+            self.y = screen.dy + screen.dheight
+            self.length = screen.width
+            self.width = self.length
+            self.height = self.size
+        elif screen.left is self:
+            self.x = screen.x
+            self.y = screen.dy
+            self.length = screen.dheight
+            self.width = self.size
+            self.height = self.length
+        else:  # right
+            self.x = screen.dx + screen.dwidth
+            self.y = screen.dy
+            self.length = screen.dheight
+            self.width = self.size
+            self.height = self.length
 
     def draw(self):
         pass
-
-    @property
-    def x(self):
-        screen = self.screen
-        if screen.right is self:
-            return screen.dx + screen.dwidth
-        else:
-            return screen.x
-
-    @property
-    def y(self):
-        screen = self.screen
-        if screen.top is self:
-            return screen.y
-        elif screen.bottom is self:
-            return screen.dy + screen.dheight
-        else:
-            # Screen corners are reserved to horizontal gaps, if present
-            return screen.dy
-
-    @property
-    def length(self):
-        screen = self.screen
-        if self in [screen.top, screen.bottom]:
-            return screen.width
-        else:
-            return screen.dheight
-
-    @property
-    def width(self):
-        screen = self.screen
-        if self in [screen.top, screen.bottom]:
-            return self.length
-        else:
-            return self.size
-
-    @property
-    def height(self):
-        screen = self.screen
-        if self in [screen.top, screen.bottom]:
-            return self.size
-        else:
-            return self.length
 
     def geometry(self):
         return (self.x, self.y, self.width, self.height)
