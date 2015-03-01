@@ -1,2 +1,12 @@
 #!/bin/sh
-Xephyr +extension RANDR -screen ${SCREEN_SIZE:-800x600} :1 -ac & (sleep 1; env DISPLAY=:1 ./bin/qtile -l INFO $@ & env DISPLAY=:1 xterm)
+
+HERE=$(dirname $(readlink -f $0))
+SCREEN_SIZE=${SCREEN_SIZE:-800x600}
+XDISPLAY=:1
+
+Xephyr +extension RANDR -screen ${SCREEN_SIZE} ${XDISPLAY} -ac &
+(
+  sleep 1
+  env DISPLAY=${XDISPLAY} "${HERE}"/../bin/qtile -l INFO $@ &
+  env DISPLAY=${XDISPLAY} xterm
+)
