@@ -178,7 +178,9 @@ class _Widget(command.CommandObject, configurable.Configurable):
         return dict(
             name=self.name,
             offset=self.offset,
+            length=self.length,
             width=self.width,
+            height=self.height,
         )
 
     def button_press(self, x, y, button):
