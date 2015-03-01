@@ -2,7 +2,48 @@
 Keys
 ====
 
-The ``keys`` variable defines Qtile's key bindings.
+The ``keys`` variable defines Qtile's key bindings. Individual key
+bindings are defined with ``libqtile.config.Key`` as demonstrated in
+the following example. Note that you may specify more than one
+callback functions.
+
+::
+
+   from libqtile.config import Key
+
+   keys = [
+      # Pressing "Meta + Shift + a".
+      Key(["mod4", "shift"], "a", callback, ...),
+
+      # Pressing "Control + p".
+      Key(["control"], "p", callback, ...),
+
+      # Pressing "Meta + Tab".
+      Key(["mod4", "mod1"], "Tab", callback, ...),
+   ]
+
+The above may also be written more concisely with the help of the
+``EzKey`` helper class. The following example is functionally
+equivalent to the above::
+
+    from libqtile.config import EzKey as Key
+
+    keys = [
+       Key("M-S-a", callback, ...),
+       Key("C-p",   callback, ...),
+       Key("M-A-<Tab>", callback, ...),
+    ]
+
+The ``EzKey`` modifier keys (i.e. ``MASC``) can be overwritten through
+the ``EzKey.modifier_keys`` dictionary. The defaults are::
+
+    modifier_keys = {
+       'M': 'mod4',
+       'A': 'mod1',
+       'S': 'shift',
+       'C': 'control',
+    }
+
 
 The command.lazy object
 =======================
@@ -19,6 +60,7 @@ Example
 
     from libqtile.config import Key
     from libqtile.command import lazy
+
     keys = [
         Key(
             ["mod1"], "k",

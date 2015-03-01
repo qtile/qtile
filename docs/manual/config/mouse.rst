@@ -20,3 +20,16 @@ Example
             start=lazy.window.get_size()),
         Click([mod], "Button2", lazy.window.bring_to_front())
     ]
+
+The above example can also be written more concisely with the help of
+the ``EzClick`` and ``EzDrag`` helpers::
+
+    from libqtile.config import EzClick as EzClick, EzDrag as Drag
+
+    mouse = [
+        Drag("M-1", lazy.window.set_position_floating(),
+            start=lazy.window.get_position()),
+        Drag("M-3", lazy.window.set_size_floating(),
+            start=lazy.window.get_size()),
+        Click("M-2", lazy.window.bring_to_front())
+    ]
