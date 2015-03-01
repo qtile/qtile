@@ -11,7 +11,7 @@ Configuration lookup order
 
 Qtile looks in the following places for a configuration file, in order:
 
-* The location specified by the ``-f`` argument.
+* The location specified by the ``-c`` argument.
 * ``$XDG_CONFIG_HOME/qtile/config.py``, if it is set
 * ``~/.config/qtile/config.py``
 * It reads the module ``libqtile.resources.default_config``, included by
