@@ -117,11 +117,11 @@ class _Widget(command.CommandObject, configurable.Configurable):
     def length(self):
         if self.length_type == bar.CALCULATED:
             return int(self.calculate_width())
-        return self._width
+        return self._length
 
     @length.setter
     def length(self, value):
-        self._width = value
+        self._length = value
 
     @property
     def width(self):
