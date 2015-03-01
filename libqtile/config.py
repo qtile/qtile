@@ -35,7 +35,7 @@ from six import MAXSIZE
 from .widget.base import deprecated
 
 
-class Key:
+class Key(object):
     """
         Defines a keybinding.
     """
@@ -115,7 +115,7 @@ class Click(object):
         return "Click(%s, %s)" % (self.modifiers, self.button)
 
 
-class EzConfig:
+class EzConfig(object):
     '''
     Helper class for defining key and button bindings in an emacs-like format.
     Inspired by Xmonad's XMonad.Util.EZConfig.
