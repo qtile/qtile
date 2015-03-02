@@ -21,6 +21,12 @@ class Mock(MagicMock):
     def __getattr__(cls, name):
             return Mock()
 
+    # xcbq does a dir() on objects and pull stuff out of them and tries to sort
+    # the result. MagicMock has a bunch of stuff that can't be sorted, so let's
+    # like about dir().
+    def __dir__(self):
+        return []
+
 MOCK_MODULES = [
     'cairocffi',
     'cffi',
