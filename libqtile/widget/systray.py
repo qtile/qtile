@@ -33,7 +33,8 @@ from .. import bar, xcbq, window
 from . import base
 
 import xcffib
-from xcffib.xproto import ClientMessageEvent, ClientMessageData, EventMask, SetMode
+from xcffib.xproto import (ClientMessageEvent, ClientMessageData, EventMask,
+                           SetMode)
 import atexit
 
 
