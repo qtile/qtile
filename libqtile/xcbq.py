@@ -212,10 +212,7 @@ class MaskMap:
         for i in dir(obj):
             if not i.startswith("_"):
                 self.mmap.append((getattr(obj, i), i.lower()))
-        try:
-            self.mmap.sort()
-        except TypeError:
-            pass
+        self.mmap.sort()
 
     def __call__(self, **kwargs):
         """
