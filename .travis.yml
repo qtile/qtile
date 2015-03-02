@@ -17,6 +17,11 @@ matrix:
       env: EVENTLOOP=asyncio
     - python: pypy
       env: EVENTLOOP=trollius
+    - python: pypy3
+      env: EVENTLOOP=trollius
+  allow_failures:
+    - python: pypy3
+    - python: pypy
 
 script:
   - make ckpatch
