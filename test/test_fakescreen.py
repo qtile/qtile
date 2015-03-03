@@ -53,8 +53,8 @@ GRAPH_KW = dict(line_width=1,
 #     500     |--------|
 #                 400
 #
-# Notice there is hole in the middle
-# also that D goes down below the others
+# Notice there is a hole in the middle
+# also D goes down below the others
 
 
 class FakeScreenConfig:
@@ -99,6 +99,8 @@ class FakeScreenConfig:
                 24,
                 background="#555555"
             ),
+            left=bar.Gap(16),
+            right=bar.Gap(20),
             x=0, y=0, width=600, height=480
         ),
         Screen(
@@ -110,6 +112,8 @@ class FakeScreenConfig:
                 ],
                 30,
             ),
+            bottom=bar.Gap(24),
+            left=bar.Gap(12),
             x=600, y=0, width=300, height=580
         ),
         Screen(
@@ -121,10 +125,12 @@ class FakeScreenConfig:
                 ],
                 30,
             ),
+            bottom=bar.Gap(16),
+            right=bar.Gap(40),
             x=0, y=480, width=500, height=400
         ),
         Screen(
-            bottom=bar.Bar(
+            top=bar.Bar(
                 [
                     widget.GroupBox(),
                     widget.WindowName(),
@@ -132,6 +138,8 @@ class FakeScreenConfig:
                 ],
                 30,
             ),
+            left=bar.Gap(20),
+            right=bar.Gap(24),
             x=500, y=580, width=400, height=400
         ),
     ]
@@ -161,15 +169,35 @@ def test_basic(self):
 
 
 @Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
+def test_gaps(self):
+    g = self.c.screens()[0]["gaps"]
+    assert g["bottom"] == (0, 456, 600, 24)
+    assert g["left"] == (0, 0, 16, 456)
+    assert g["right"] == (580, 0, 20, 456)
+    g = self.c.screens()[1]["gaps"]
+    assert g["top"] == (600, 0, 300, 30)
+    assert g["bottom"] == (600, 556, 300, 24)
+    assert g["left"] == (600, 30, 12, 526)
+    g = self.c.screens()[2]["gaps"]
+    assert g["top"] == (0, 480, 500, 30)
+    assert g["bottom"] == (0, 864, 500, 16)
+    assert g["right"] == (460, 510, 40, 354)
+    g = self.c.screens()[3]["gaps"]
+    assert g["top"] == (500, 580, 400, 30)
+    assert g["left"] == (500, 610, 20, 370)
+    assert g["right"] == (876, 610, 24, 370)
+
+
+@Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
 def test_maximize_with_move_to_screen(self):
     """
     Ensure that maximize respects bars
     """
     self.testXclock()
     self.c.window.toggle_maximize()
-    assert self.c.window.info()['width'] == 600
+    assert self.c.window.info()['width'] == 564
     assert self.c.window.info()['height'] == 456
-    assert self.c.window.info()['x'] == 0
+    assert self.c.window.info()['x'] == 16
     assert self.c.window.info()['y'] == 0
     assert self.c.window.info()['group'] == 'a'
 
@@ -180,9 +208,9 @@ def test_maximize_with_move_to_screen(self):
     assert self.c.group.info()['name'] == 'b'
     self.c.group['a'].toscreen()
 
-    assert self.c.window.info()['width'] == 300
-    assert self.c.window.info()['height'] == 550
-    assert self.c.window.info()['x'] == 600
+    assert self.c.window.info()['width'] == 288
+    assert self.c.window.info()['height'] == 526
+    assert self.c.window.info()['x'] == 612
     assert self.c.window.info()['y'] == 30
     assert self.c.window.info()['group'] == 'a'
 
@@ -214,7 +242,8 @@ def test_float_change_screens(self):
     assert self.c.group.info()['floating_info']['clients'] == ['xclock']
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == 0
+    # 16 is given by the left gap width
+    assert self.c.window.info()['x'] == 16
     assert self.c.window.info()['y'] == 0
     assert self.c.window.info()['group'] == 'a'
 
@@ -232,7 +261,7 @@ def test_float_change_screens(self):
     assert self.c.window.info()['name'] == 'xclock'
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == 600
+    assert self.c.window.info()['x'] == 616
     assert self.c.window.info()['y'] == 0
     assert self.c.window.info()['group'] == 'a'
     assert self.c.group.info()['floating_info']['clients'] == ['xclock']
@@ -248,7 +277,7 @@ def test_float_change_screens(self):
     assert self.c.window.info()['name'] == 'xclock'
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == 0
+    assert self.c.window.info()['x'] == 16
     assert self.c.window.info()['y'] == 480
 
     # now screen 4 for fun
@@ -262,7 +291,7 @@ def test_float_change_screens(self):
     assert self.c.window.info()['name'] == 'xclock'
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == 500
+    assert self.c.window.info()['x'] == 516
     assert self.c.window.info()['y'] == 580
 
     # and back to one
@@ -276,7 +305,7 @@ def test_float_change_screens(self):
     assert self.c.window.info()['name'] == 'xclock'
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == 0
+    assert self.c.window.info()['x'] == 16
     assert self.c.window.info()['y'] == 0
 
 
@@ -286,17 +315,18 @@ def test_float_outside_edges(self):
     self.c.window.toggle_floating()
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == 0
+    # 16 is given by the left gap width
+    assert self.c.window.info()['x'] == 16
     assert self.c.window.info()['y'] == 0
     # empty because window is floating
     assert self.c.layout.info() == {
         'clients': [], 'group': 'a', 'name': 'max'}
 
     # move left, but some still on screen 0
-    self.c.window.move_floating(-10, 20, 42, 42)
+    self.c.window.move_floating(-30, 20, 42, 42)
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == -10
+    assert self.c.window.info()['x'] == -14
     assert self.c.window.info()['y'] == 20
     assert self.c.window.info()['group'] == 'a'
 

@@ -64,10 +64,9 @@ class Gap(command.CommandObject):
             return screen.y
         elif screen.bottom is self:
             return screen.dy + screen.dheight
-        elif screen.left is self:
+        else:
+            # Screen corners are reserved to horizontal gaps, if present
             return screen.dy
-        elif screen.right is self:
-            return screen.y + screen.dy
 
     @property
     def width(self):
