@@ -273,6 +273,7 @@ class MultiStretchConf(GeomConf):
         ], 10))
     ]
 
+
 class ErrConf:
     main = None
     keys = []
@@ -295,9 +296,6 @@ def test_err(self):
 class TestWidget(libqtile.widget.base._Widget):
     def __init__(self):
         libqtile.widget.base._Widget.__init__(self, 10)
-
-    def _configure(self, qtile, bar):
-        libqtile.widget.base._Widget._configure(self, qtile, bar)
 
     def draw(self):
         pass
