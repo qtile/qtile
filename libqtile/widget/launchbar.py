@@ -88,7 +88,7 @@ class LaunchBar(base._Widget):
         base._Widget._configure(self, qtile, pbar)
         self.lookup_icons()
         self.setup_images()
-        self.length = self.calculate_width()
+        self.length = self.calculate_length()
 
     def setup_images(self):
         """ Create image structures for each icon files. """
@@ -111,7 +111,7 @@ class LaunchBar(base._Widget):
                 )
                 # the name will be displayed
                 textbox.text = img_name
-                textbox.calculate_width()
+                textbox.calculate_length()
                 self.icons_widths[img_name] = textbox.width
                 self.surfaces[img_name] = textbox
                 continue
@@ -214,7 +214,7 @@ class LaunchBar(base._Widget):
                              width=icon_width + self.padding)
             xoffset += icon_width + self.padding
 
-    def calculate_width(self):
+    def calculate_length(self):
         """ Compute the width of the widget according to each icon width. """
         return sum([self.icons_widths[prg['name']] for prg in self.progs.values()]) \
             + self.padding * (len(self.progs) + 1)

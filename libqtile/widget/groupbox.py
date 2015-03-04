@@ -116,7 +116,7 @@ class AGroupBox(_GroupBase):
     def button_press(self, x, y, button):
         self.bar.screen.cmd_nextgroup()
 
-    def calculate_width(self):
+    def calculate_length(self):
         return self.box_width(self.qtile.groups)
 
     def draw(self):
@@ -216,7 +216,7 @@ class GroupBox(_GroupBase):
                 group.cmd_switch_groups(self.clicked.name)
                 self.clicked = None
 
-    def calculate_width(self):
+    def calculate_length(self):
         width = 0
         for g in self.qtile.groups:
             width += self.box_width([g])

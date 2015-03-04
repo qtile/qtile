@@ -381,7 +381,7 @@ class Prompt(base._TextBox):
             self.text = _text
             return width
 
-    def calculate_width(self):
+    def calculate_length(self):
         if self.text:
             return self._calculate_real_width()
         else:

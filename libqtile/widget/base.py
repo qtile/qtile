@@ -116,7 +116,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
     @property
     def length(self):
         if self.length_type == bar.CALCULATED:
-            return int(self.calculate_width())
+            return int(self.calculate_length())
         return self._length
 
     @length.setter
@@ -228,7 +228,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
         """
         raise NotImplementedError
 
-    def calculate_width(self):
+    def calculate_length(self):
         """
             Must be implemented if the widget can take CALCULATED for length.
         """
@@ -347,7 +347,7 @@ class _TextBox(_Widget):
             markup=self.markup,
         )
 
-    def calculate_width(self):
+    def calculate_length(self):
         if self.text:
             return min(
                 self.layout.width,

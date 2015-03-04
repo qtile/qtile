@@ -143,7 +143,7 @@ class Systray(base._Widget):
     def button_press(self, x, y, button):
         pass
 
-    def calculate_width(self):
+    def calculate_length(self):
         width = sum([i.width for i in self.icons.values()])
         width += self.padding * len(self.icons)
         return width
@@ -180,7 +180,7 @@ class Systray(base._Widget):
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
-        self.drawer.draw(offsetx=self.offset, width=self.calculate_width())
+        self.drawer.draw(offsetx=self.offset, width=self.calculate_length())
         xoffset = self.padding
         for pos, icon in enumerate(self.icons.values()):
             icon.place(
