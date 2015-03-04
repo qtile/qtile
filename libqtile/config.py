@@ -263,11 +263,7 @@ class Screen(command.CommandObject):
 
     @property
     def gaps(self):
-        lst = []
-        lst.extend([
-            i for i in [self.top, self.bottom, self.left, self.right] if i
-        ])
-        return lst
+        return (i for i in [self.top, self.bottom, self.left, self.right] if i)
 
     @property
     def dx(self):
