@@ -81,7 +81,7 @@ class Image(base._Widget, base.MarginMixin):
         self.drawer.ctx.paint()
         self.drawer.ctx.restore()
 
-        self.drawer.draw(self.offset, self.width)
+        self.drawer.draw(offsetx=self.offset, width=self.width)
 
     def calculate_width(self):
         return self.image_width + (self.margin_x * 2)

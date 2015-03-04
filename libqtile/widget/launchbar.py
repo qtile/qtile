@@ -210,7 +210,8 @@ class LaunchBar(base._Widget):
                 # display an icon
                 self.drawer.ctx.set_source(self.surfaces[name])
                 self.drawer.ctx.paint()
-            self.drawer.draw(self.offset + xoffset, icon_width + self.padding)
+            self.drawer.draw(offsetx=self.offset + xoffset,
+                             width=icon_width + self.padding)
             xoffset += icon_width + self.padding
 
     def calculate_width(self):

@@ -179,7 +179,7 @@ class Systray(base._Widget):
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
-        self.drawer.draw(self.offset, self.calculate_width())
+        self.drawer.draw(offsetx=self.offset, width=self.calculate_width())
         xoffset = self.padding
         for pos, icon in enumerate(self.icons.values()):
             icon.place(

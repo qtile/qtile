@@ -154,7 +154,7 @@ class _Graph(base._Widget):
         else:
             raise ValueError("Unknown graph type: %s." % self.type)
 
-        self.drawer.draw(self.offset, self.width)
+        self.drawer.draw(offsetx=self.offset, width=self.width)
 
     def push(self, value):
         if self.lag_cycles > self.samples:

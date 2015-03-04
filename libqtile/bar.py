@@ -259,7 +259,7 @@ class Bar(Gap, configurable.Configurable):
         if self.widgets:
             end = i.offset + i.width
             if end < self.width:
-                self.drawer.draw(end, self.width - end)
+                self.drawer.draw(offsetx=end, width=self.width - end)
 
     def info(self):
         return dict(

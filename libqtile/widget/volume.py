@@ -225,6 +225,6 @@ class Volume(base._TextBox):
 
     def draw(self):
         if self.theme_path:
-            self.drawer.draw(self.offset, self.width)
+            self.drawer.draw(offsetx=self.offset, width=self.width)
         else:
             base._TextBox.draw(self)

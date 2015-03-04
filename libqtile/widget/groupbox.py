@@ -125,7 +125,7 @@ class AGroupBox(_GroupBase):
             if i.name == self.bar.screen.group.name
         )
         self.drawbox(self.margin_x, e.name, self.border, self.foreground)
-        self.drawer.draw(self.offset, self.width)
+        self.drawer.draw(offsetx=self.offset, width=self.width)
 
 
 class GroupBox(_GroupBase):
@@ -269,4 +269,4 @@ class GroupBox(_GroupBase):
                 bw - self.margin_x * 2 - self.padding_x * 2
             )
             offset += bw
-        self.drawer.draw(self.offset, self.width)
+        self.drawer.draw(offsetx=self.offset, width=self.width)

@@ -254,4 +254,4 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             )
 
             offset += bw + self.icon_size
-        self.drawer.draw(self.offset, self.width)
+        self.drawer.draw(offsetx=self.offset, width=self.width)

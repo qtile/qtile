@@ -58,4 +58,4 @@ class Sep(base._Widget):
             self.bar.height - margin_top,
             linewidth=self.linewidth
         )
-        self.drawer.draw(self.offset, self.width)
+        self.drawer.draw(offsetx=self.offset, width=self.width)
