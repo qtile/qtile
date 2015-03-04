@@ -35,7 +35,7 @@ class Gap(command.CommandObject):
     """
     def __init__(self, size):
         """
-            size: The width of the gap.
+            size: The "thickness" of the gap.
         """
         self.size = size
         self.initial_size = size
@@ -69,10 +69,18 @@ class Gap(command.CommandObject):
             return screen.dy
 
     @property
-    def width(self):
+    def length(self):
         screen = self.screen
         if self in [screen.top, screen.bottom]:
             return screen.width
+        else:
+            return screen.dheight
+
+    @property
+    def width(self):
+        screen = self.screen
+        if self in [screen.top, screen.bottom]:
+            return self.length
         else:
             return self.size
 
@@ -82,7 +90,7 @@ class Gap(command.CommandObject):
         if self in [screen.top, screen.bottom]:
             return self.size
         else:
-            return screen.dheight
+            return self.length
 
     def geometry(self):
         return (self.x, self.y, self.width, self.height)
@@ -140,7 +148,7 @@ class Bar(Gap, configurable.Configurable):
     def __init__(self, widgets, size, **config):
         """
             - widgets: A list of widget objects.
-            - size: The height of the bar.
+            - size: The "thickness" of the bar.
         """
         Gap.__init__(self, size)
         configurable.Configurable.__init__(self, **config)
@@ -182,12 +190,12 @@ class Bar(Gap, configurable.Configurable):
         for i in self.widgets:
             qtile.registerWidget(i)
             i._configure(qtile, self)
-        self._resize(self.width, self.widgets)
+        self._resize(self.length, self.widgets)
 
-    def _resize(self, width, widgets):
+    def _resize(self, length, widgets):
         stretches = [i for i in widgets if i.width_type == STRETCH]
         if stretches:
-            stretchspace = width - sum(
+            stretchspace = length - sum(
                 [i.width for i in widgets if i.width_type != STRETCH]
             )
             stretchspace = max(stretchspace, 0)
@@ -253,13 +261,13 @@ class Bar(Gap, configurable.Configurable):
 
     def _actual_draw(self):
         self.queued_draws = 0
-        self._resize(self.width, self.widgets)
+        self._resize(self.length, self.widgets)
         for i in self.widgets:
             i.draw()
         if self.widgets:
             end = i.offset + i.width
-            if end < self.width:
-                self.drawer.draw(offsetx=end, width=self.width - end)
+            if end < self.length:
+                self.drawer.draw(offsetx=end, width=self.length - end)
 
     def info(self):
         return dict(
