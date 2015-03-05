@@ -48,32 +48,32 @@ class GBConfig:
     screens = [
         libqtile.config.Screen(
             top=libqtile.bar.Bar(
-                    [
-                        libqtile.widget.CPUGraph(
-                            width=libqtile.bar.STRETCH,
-                            type="linefill",
-                            border_width=20,
-                            margin_x=1,
-                            margin_y=1
-                        ),
-                        libqtile.widget.MemoryGraph(type="line"),
-                        libqtile.widget.SwapGraph(type="box"),
-                        libqtile.widget.TextBox(name="text",
-                        background="333333"),
-                    ],
-                    50,
-                ),
-            bottom=libqtile.bar.Bar(
-                        [
-                            libqtile.widget.GroupBox(),
-                            libqtile.widget.AGroupBox(),
-                            libqtile.widget.Prompt(),
-                            libqtile.widget.WindowName(),
-                            libqtile.widget.Sep(),
-                            libqtile.widget.Clock(),
-                        ],
-                        50
+                [
+                    libqtile.widget.CPUGraph(
+                        width=libqtile.bar.STRETCH,
+                        type="linefill",
+                        border_width=20,
+                        margin_x=1,
+                        margin_y=1
                     ),
+                    libqtile.widget.MemoryGraph(type="line"),
+                    libqtile.widget.SwapGraph(type="box"),
+                    libqtile.widget.TextBox(name="text",
+                    background="333333"),
+                ],
+                50,
+            ),
+            bottom=libqtile.bar.Bar(
+                [
+                    libqtile.widget.GroupBox(),
+                    libqtile.widget.AGroupBox(),
+                    libqtile.widget.Prompt(),
+                    libqtile.widget.WindowName(),
+                    libqtile.widget.Sep(),
+                    libqtile.widget.Clock(),
+                ],
+                50
+            ),
         )
     ]
     main = None
