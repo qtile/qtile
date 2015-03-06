@@ -265,6 +265,14 @@ def test_resize(self):
     assert off(l) == [0, 10, 90]
 
 
+class TestWidget(libqtile.widget.base._Widget):
+    def __init__(self):
+        libqtile.widget.base._Widget.__init__(self, 10)
+
+    def draw(self):
+        pass
+
+
 class ErrConf:
     main = None
     keys = []
@@ -282,14 +290,6 @@ class ErrConf:
 @Xephyr(True, ErrConf(), False)
 def test_err(self):
     self.qtileRaises(libqtile.confreader.ConfigError, ErrConf())
-
-
-class TestWidget(libqtile.widget.base._Widget):
-    def __init__(self):
-        libqtile.widget.base._Widget.__init__(self, 10)
-
-    def draw(self):
-        pass
 
 
 class MultiStretchConf:
