@@ -265,11 +265,6 @@ def test_resize(self):
     assert off(l) == [0, 10, 90]
 
 
-class TopBottomConf(GeomConf):
-    screens = [
-        libqtile.config.Screen(left=libqtile.bar.Bar([], 10))
-    ]
-
 class MultiStretchConf(GeomConf):
     screens = [
         libqtile.config.Screen(top=libqtile.bar.Bar([
