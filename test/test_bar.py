@@ -265,15 +265,6 @@ def test_resize(self):
     assert off(l) == [0, 10, 90]
 
 
-class MultiStretchConf(GeomConf):
-    screens = [
-        libqtile.config.Screen(top=libqtile.bar.Bar([
-          libqtile.widget.TextBox(name=txt, width=libqtile.bar.STRETCH)
-          for txt in ["text1", "text2"]
-        ], 10))
-    ]
-
-
 class ErrConf:
     main = None
     keys = []
@@ -299,6 +290,32 @@ class TestWidget(libqtile.widget.base._Widget):
 
     def draw(self):
         pass
+
+
+class MultiStretchConf:
+    main = None
+    keys = []
+    mouse = []
+    groups = [libqtile.config.Group("a")]
+    layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
+    floating_layout = libqtile.layout.floating.Floating()
+    screens = [
+        libqtile.config.Screen(
+            top=libqtile.bar.Bar(
+                [
+                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
+                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
+                ],
+                10
+            ),
+        )
+    ]
+
+
+@Xephyr(True, MultiStretchConf(), False)
+def test_multiple_stretches(self):
+    # Ensure that adding two STRETCH widgets to the same bar raises ConfigError
+    self.qtileRaises(libqtile.confreader.ConfigError, MultiStretchConf())
 
 
 @Xephyr(True, GeomConf(), False)
