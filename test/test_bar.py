@@ -186,8 +186,8 @@ class GeomConf:
 
 
 class DWidget:
-    def __init__(self, width, width_type):
-        self.width, self.width_type = width, width_type
+    def __init__(self, width, length_type):
+        self.width, self.length_type = width, length_type
 
 
 @Xephyr(True, GeomConf())

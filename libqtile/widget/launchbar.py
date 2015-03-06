@@ -81,7 +81,7 @@ class LaunchBar(base._Widget):
                                       'comment': prog[2] if len(prog) > 2 else
                                       None} for prog in progs]))
         self.progs_name = set([prog['name'] for prog in self.progs.values()])
-        self.width_type = bar.STATIC
+        self.length_type = bar.STATIC
         self.width = 0
 
     def _configure(self, qtile, pbar):

@@ -70,7 +70,7 @@ class Volume(base._TextBox):
         base._TextBox.__init__(self, '0', width=bar.CALCULATED, **config)
         self.add_defaults(Volume.defaults)
         if self.theme_path:
-            self.width_type = bar.STATIC
+            self.length_type = bar.STATIC
             self.width = 0
         self.surfaces = {}
         self.volume = None
@@ -175,7 +175,7 @@ class Volume(base._TextBox):
                 )
             except cairocffi.Error:
                 self.theme_path = None
-                self.width_type = bar.CALCULATED
+                self.length_type = bar.CALCULATED
                 self.qtile.log.exception('Volume switching to text mode')
                 return
             input_width = img.get_width()

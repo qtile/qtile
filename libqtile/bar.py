@@ -160,7 +160,7 @@ class Bar(Gap, configurable.Configurable):
             # test/test_bar.py but a segfault would be raised when nosetests is
             # about to exit
             w._test_orientation_compatibility(self.horizontal)
-            if w.width_type == STRETCH:
+            if w.length_type == STRETCH:
                 stretches += 1
         if stretches > 1:
             raise confreader.ConfigError("Only one STRETCH widget allowed!")
@@ -191,10 +191,10 @@ class Bar(Gap, configurable.Configurable):
         self._resize(self.length, self.widgets)
 
     def _resize(self, length, widgets):
-        stretches = [i for i in widgets if i.width_type == STRETCH]
+        stretches = [i for i in widgets if i.length_type == STRETCH]
         if stretches:
             stretchspace = length - sum(
-                [i.width for i in widgets if i.width_type != STRETCH]
+                [i.width for i in widgets if i.length_type != STRETCH]
             )
             stretchspace = max(stretchspace, 0)
             astretch = stretchspace // len(stretches)

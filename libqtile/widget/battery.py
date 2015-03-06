@@ -253,7 +253,7 @@ class BatteryIcon(_Battery):
         self.add_defaults(BatteryIcon.defaults)
 
         if self.theme_path:
-            self.width_type = bar.STATIC
+            self.length_type = bar.STATIC
             self.width = 0
         self.surfaces = {}
         self.current_icon = 'battery-missing'

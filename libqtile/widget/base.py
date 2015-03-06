@@ -104,17 +104,17 @@ class _Widget(command.CommandObject, configurable.Configurable):
         self.add_defaults(_Widget.defaults)
 
         if width in (bar.CALCULATED, bar.STRETCH):
-            self.width_type = width
+            self.length_type = width
             self.width = 0
         else:
             assert isinstance(width, six.integer_types)
-            self.width_type = bar.STATIC
+            self.length_type = bar.STATIC
             self.width = width
         self.configured = False
 
     @property
     def width(self):
-        if self.width_type == bar.CALCULATED:
+        if self.length_type == bar.CALCULATED:
             return int(self.calculate_width())
         return self._width
 
