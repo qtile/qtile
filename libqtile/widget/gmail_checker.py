@@ -34,6 +34,7 @@ class GmailChecker(base.ThreadedPollText):
     """
         A simple gmail checker.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("update_interval", 30, "Update time in seconds."),
         ("username", None, "username"),

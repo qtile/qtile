@@ -29,6 +29,7 @@ from . import base
 
 
 class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("font", "Arial", "Default font"),
         ("fontsize", None, "Font size. Calculated if None."),

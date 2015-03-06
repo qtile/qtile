@@ -76,7 +76,7 @@ class GoogleCalendar(base.ThreadedPollText):
         be highlighted. Authentication credentials are stored in a file on
         disk.
     '''
-
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('calendar', 'primary', 'calendar to use'),
         (

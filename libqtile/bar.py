@@ -46,6 +46,7 @@ class Gap(command.CommandObject):
         self.length = None
         self.width = None
         self.height = None
+        self.horizontal = None
 
     def _configure(self, qtile, screen):
         self.qtile = qtile
@@ -58,24 +59,28 @@ class Gap(command.CommandObject):
             self.length = screen.width
             self.width = self.length
             self.height = self.size
+            self.horizontal = True
         elif screen.bottom is self:
             self.x = screen.x
             self.y = screen.dy + screen.dheight
             self.length = screen.width
             self.width = self.length
             self.height = self.size
+            self.horizontal = True
         elif screen.left is self:
             self.x = screen.x
             self.y = screen.dy
             self.length = screen.dheight
             self.width = self.size
             self.height = self.length
+            self.horizontal = False
         else:  # right
             self.x = screen.dx + screen.dwidth
             self.y = screen.dy
             self.length = screen.dheight
             self.width = self.size
             self.height = self.length
+            self.horizontal = False
 
     def draw(self):
         pass
@@ -125,8 +130,7 @@ STATIC = Obj("STATIC")
 
 class Bar(Gap, configurable.Configurable):
     """
-        A bar, which can contain widgets. Note that bars can only be placed at
-        the top or bottom of the screen.
+        A bar, which can contain widgets.
     """
     defaults = [
         ("background", "#000000", "Background colour."),
@@ -147,14 +151,20 @@ class Bar(Gap, configurable.Configurable):
         self.queued_draws = 0
 
     def _configure(self, qtile, screen):
-        if self not in [screen.top, screen.bottom]:
-            raise confreader.ConfigError(
-                "Bars must be at the top or the bottom of the screen."
-            )
-        if len([w for w in self.widgets if w.width_type == STRETCH]) > 1:
+        Gap._configure(self, qtile, screen)
+
+        stretches = 0
+        for w in self.widgets:
+            # Executing _test_orientation_compatibility later, for example in
+            # the _configure() method of each widget, would still pass
+            # test/test_bar.py but a segfault would be raised when nosetests is
+            # about to exit
+            w._test_orientation_compatibility(self.horizontal)
+            if w.width_type == STRETCH:
+                stretches += 1
+        if stretches > 1:
             raise confreader.ConfigError("Only one STRETCH widget allowed!")
 
-        Gap._configure(self, qtile, screen)
         self.window = window.Internal.create(
             self.qtile,
             self.x, self.y, self.width, self.height,
@@ -255,7 +265,10 @@ class Bar(Gap, configurable.Configurable):
         if self.widgets:
             end = i.offset + i.width
             if end < self.length:
-                self.drawer.draw(offsetx=end, width=self.length - end)
+                if self.horizontal:
+                    self.drawer.draw(offsetx=end, width=self.length - end)
+                else:
+                    self.drawer.draw(offsety=end, height=self.length - end)
 
     def info(self):
         return dict(

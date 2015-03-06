@@ -8,7 +8,7 @@ from libqtile.widget import base
 
 class GenPollText(base.ThreadedPollText):
     """A generic text widget that polls using poll function to get the text"""
-
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('poll', None, 'Poll Function'),
     ]
@@ -26,7 +26,7 @@ class GenPollText(base.ThreadedPollText):
 class GenPollUrl(base.ThreadedPollText):
     """A generic text widget that polls an url and parses it
     using parse function"""
-
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('url', None, 'Url'),
         ('data', None, 'Post Data'),

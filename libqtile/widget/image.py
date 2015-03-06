@@ -30,6 +30,7 @@ class Image(base._Widget, base.MarginMixin):
     """
         Display a PNG image on the bar.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("scale", True, "Enable/Disable image scaling"),
         ("filename", None, "PNG Image filename. Can contain '~'"),

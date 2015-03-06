@@ -36,6 +36,8 @@ class Backlight(base.InLoopPollText):
 
     filenames = {}
 
+    orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
         ('backlight_name', 'acpi_video0', 'ACPI name of a backlight device'),
         (

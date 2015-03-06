@@ -34,6 +34,8 @@ class _CrashMe(base._TextBox):
         Pressing left mouse button causes a zero divison error.
         Pressing the right mouse button causes a cairo draw error.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
+
     def __init__(self, width=bar.CALCULATED, **config):
         """
             - width: A fixed width, or bar.CALCULATED to calculate the width

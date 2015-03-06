@@ -53,7 +53,7 @@ class LaunchBar(base._Widget):
     """
     A widget that display icons to launch the associated command
     """
-
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('padding', 2, 'Padding between icons'),
         ('default_icon', '/usr/share/icons/oxygen/256x256/mimetypes/'

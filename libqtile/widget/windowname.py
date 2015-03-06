@@ -32,6 +32,8 @@ class WindowName(base._TextBox):
     """
         Displays the name of the window that currently has focus.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
+
     def __init__(self, width=bar.STRETCH, **config):
         base._TextBox.__init__(self, width=width, **config)
 

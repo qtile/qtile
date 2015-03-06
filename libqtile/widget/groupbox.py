@@ -106,6 +106,7 @@ class AGroupBox(_GroupBase):
     """
         A widget that graphically displays the current group.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [("border", "000000", "group box border color")]
 
     def __init__(self, **config):
@@ -132,6 +133,7 @@ class GroupBox(_GroupBase):
     """
         A widget that graphically displays the current group.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("active", "FFFFFF", "Active group font colour"),
         ("inactive", "404040", "Inactive group font colour"),

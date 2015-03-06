@@ -128,6 +128,7 @@ class Systray(base._Widget):
     """
         A widget that manage system tray
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('icon_size', 20, 'Icon width'),
         ('padding', 5, 'Padding between icons'),

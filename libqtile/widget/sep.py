@@ -30,6 +30,7 @@ class Sep(base._Widget):
     """
         A visible widget separator.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("padding", 2, "Padding on either side of separator."),
         ("linewidth", 1, "Width of separator line."),
@@ -43,7 +44,7 @@ class Sep(base._Widget):
 
     def __init__(self, **config):
         width = config.get("padding", 2) * 2 + config.get("linewidth", 1)
-        base._Widget.__init__(self, width=width, **config)
+        base._Widget.__init__(self, width, **config)
         self.add_defaults(Sep.defaults)
         self.width = self.padding + self.linewidth
 

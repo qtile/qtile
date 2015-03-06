@@ -29,12 +29,37 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .. import command, bar, configurable, drawer
+from .. import command, bar, configurable, drawer, confreader
 import six
 import subprocess
 import logging
 import threading
 import warnings
+
+# Each widget class must define which bar orientation(s) it supports by setting
+# these bits in an 'orientations' class attribute. Simply having the attribute
+# inherited by superclasses is discouraged, because if a superclass that was
+# only supporting one orientation, adds support for the other, its subclasses
+# will have to be adapted too, in general. ORIENTATION_NONE is only added for
+# completeness' sake.
+# +------------------------+--------------------+--------------------+
+# | Widget bits            | Horizontal bar     | Vertical bar       |
+# +------------------------+--------------------+--------------------+
+# | ORIENTATION_NONE       | ConfigError raised | ConfigError raised |
+# +------------------------+--------------------+--------------------+
+# | ORIENTATION_HORIZONTAL | Widget displayed   | ConfigError raised |
+# |                        | horizontally       |                    |
+# +------------------------+--------------------+--------------------+
+# | ORIENTATION_VERTICAL   | ConfigError raised | Widget displayed   |
+# |                        |                    | vertically         |
+# +------------------------+--------------------+--------------------+
+# | ORIENTATION_BOTH       | Widget displayed   | Widget displayed   |
+# |                        | horizontally       | vertically         |
+# +------------------------+--------------------+--------------------+
+ORIENTATION_NONE = 0
+ORIENTATION_HORIZONTAL = 1
+ORIENTATION_VERTICAL = 2
+ORIENTATION_BOTH = 3
 
 
 class _Widget(command.CommandObject, configurable.Configurable):
@@ -47,6 +72,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
         The offset attribute is set by the Bar after all widgets have been
         configured.
     """
+    orientations = ORIENTATION_BOTH
     offset = None
     defaults = [("background", None, "Widget background color")]
 
@@ -86,6 +112,20 @@ class _Widget(command.CommandObject, configurable.Configurable):
     @property
     def win(self):
         return self.bar.window.window
+
+    # Do not start the name with "test", or nosetests will try to test it
+    # directly (prepend an underscore instead)
+    def _test_orientation_compatibility(self, horizontal):
+        if horizontal:
+            if not self.orientations & ORIENTATION_HORIZONTAL:
+                raise confreader.ConfigError(
+                    "The widget is not compatible with the orientation of the "
+                    "bar."
+                )
+        elif not self.orientations & ORIENTATION_VERTICAL:
+            raise confreader.ConfigError(
+                "The widget is not compatible with the orientation of the bar."
+            )
 
     def timer_setup(self):
         """ This is called exactly once, after the widget has been configured
@@ -191,6 +231,7 @@ class _TextBox(_Widget):
     """
         Base class for widgets that are just boxes containing text.
     """
+    orientations = ORIENTATION_HORIZONTAL
     defaults = [
         ("font", "Arial", "Default font"),
         ("fontsize", None, "Font size. Calculated if None."),

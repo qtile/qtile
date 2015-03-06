@@ -35,6 +35,7 @@ class Notify(base._TextBox):
     """
         A notify widget
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("foreground_urgent", "ff0000", "Foreground urgent priority colour"),
         ("foreground_low", "dddddd", "Foreground low priority  colour"),

@@ -27,6 +27,7 @@
 #
 # -*- coding: utf-8 -*-
 
+from . import base
 from .generic_poll_text import GenPollUrl
 from xml.dom import minidom
 
@@ -62,7 +63,7 @@ class YahooWeather(GenPollUrl):
             - units_speed
             - wind_chill
     '''
-
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         # One of (location, woeid) must be set.
         (

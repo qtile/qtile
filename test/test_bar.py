@@ -266,6 +266,8 @@ def test_resize(self):
 
 
 class TestWidget(libqtile.widget.base._Widget):
+    orientations = libqtile.widget.base.ORIENTATION_HORIZONTAL
+
     def __init__(self):
         libqtile.widget.base._Widget.__init__(self, 10)
 
@@ -273,7 +275,7 @@ class TestWidget(libqtile.widget.base._Widget):
         pass
 
 
-class ErrConf:
+class IncompatibleWidgetConf:
     main = None
     keys = []
     mouse = []
@@ -282,14 +284,22 @@ class ErrConf:
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
         libqtile.config.Screen(
-            left=libqtile.bar.Bar([], 10),
+            left=libqtile.bar.Bar(
+                [
+                    # This widget doesn't support vertical orientation
+                    TestWidget(),
+                ],
+                10
+            ),
         )
     ]
 
 
-@Xephyr(True, ErrConf(), False)
-def test_err(self):
-    self.qtileRaises(libqtile.confreader.ConfigError, ErrConf())
+@Xephyr(True, IncompatibleWidgetConf(), False)
+def test_incompatible_widget(self):
+    # Ensure that adding a widget that doesn't support the orientation of the
+    # bar raises ConfigError
+    self.qtileRaises(libqtile.confreader.ConfigError, IncompatibleWidgetConf())
 
 
 class MultiStretchConf:

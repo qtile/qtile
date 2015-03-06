@@ -33,6 +33,8 @@ class Spacer(base._Widget):
         Just an empty space on the bar. Often used with width equal to
         bar.STRETCH to push bar widgets to the right edge of the screen.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
+
     def __init__(self, width=bar.STRETCH):
         """
             - width: Width of the widget.

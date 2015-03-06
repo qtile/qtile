@@ -147,6 +147,7 @@ class Battery(_Battery):
     """
         A simple but flexible text-based battery widget.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('low_foreground', 'FF0000', 'font color when battery is low'),
         (
@@ -239,7 +240,7 @@ class Battery(_Battery):
 
 class BatteryIcon(_Battery):
     ''' Battery life indicator widget '''
-
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('theme_path', default_icon_path(), 'Path of the icons'),
         ('custom_icons', {}, 'dict containing key->filename icon map'),
