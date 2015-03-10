@@ -44,19 +44,9 @@ class Maildir(base.ThreadedPollText):
         ("separator", " ", "the string to put between the subfolder strings."),
     ]
 
-    def __init__(self, maildirPath=None, subFolders=None, separator=" ", **config):
+    def __init__(self, **config):
         base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(Maildir.defaults)
-
-        if maildirPath is not None:
-            base.deprecated("maildirPath is deprecated")
-            self.maildirPath = maildirPath
-        if subFolders is not None:
-            base.deprecated("subFolders is deprecated")
-            self.subFolders = subFolders
-        if separator != " ":
-            base.deprecated("separator is deprecated")
-            self.separator = separator
 
         # if it looks like a list of strings then we just convert them
         # and use the name as the label
