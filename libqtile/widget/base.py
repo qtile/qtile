@@ -82,6 +82,9 @@ class _Widget(command.CommandObject, configurable.Configurable):
         widgets have been configured. Only ONE widget per bar can have the
         bar.STRETCH length set.
 
+        In horizontal bars, 'length' corresponds to the width of the widget;
+        in vertical bars, it corresponds to the widget's height.
+
         The offsetx and offsety attributes are set by the Bar after all widgets
         have been configured.
     """
@@ -231,6 +234,10 @@ class _Widget(command.CommandObject, configurable.Configurable):
     def calculate_length(self):
         """
             Must be implemented if the widget can take CALCULATED for length.
+            It must return the width of the widget if it's installed in a
+            horizontal bar; it must return the height of the widget if it's
+            installed in a vertical bar. Usually you will test the orientation
+            of the bar with 'self.bar.horizontal'.
         """
         raise NotImplementedError
 

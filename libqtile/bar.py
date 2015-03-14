@@ -35,15 +35,20 @@ class Gap(command.CommandObject):
     """
     def __init__(self, size):
         """
-            size: The "thickness" of the gap.
+            size: The "thickness" of the gap, i.e. the height of a horizontal
+                  gap, or the width of a vertical gap.
         """
+        # 'size' corresponds to the height of a horizontal gap, or the width
+        # of a vertical gap
         self.size = size
         self.initial_size = size
+        # 'length' corresponds to the width of a horizontal gap, or the height
+        # of a vertical gap
+        self.length = None
         self.qtile = None
         self.screen = None
         self.x = None
         self.y = None
-        self.length = None
         self.width = None
         self.height = None
         self.horizontal = None
@@ -140,7 +145,8 @@ class Bar(Gap, configurable.Configurable):
     def __init__(self, widgets, size, **config):
         """
             - widgets: A list of widget objects.
-            - size: The "thickness" of the bar.
+            - size: The "thickness" of the bar, i.e. the height of a horizontal
+                    bar, or the width of a vertical bar.
         """
         Gap.__init__(self, size)
         configurable.Configurable.__init__(self, **config)
