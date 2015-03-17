@@ -1,4 +1,3 @@
-
 # Copyright (c) 2015 Ali Mousavi
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -73,15 +72,15 @@ class KeyboardKbdd(base.InLoopPollText):
         Hanldler for "layoutChanged" dbus signal.
         """
         if self.colours:
-            self._setColour(layout_changed)
+            self._set_colour(layout_changed)
         self.keyboard = self.configured_keyboards[layout_changed]
 
-    def _setColour(self, index):
+    def _set_colour(self, index):
         if isinstance(self.colours, list):
             try:
                 self.layout.colour = self.colours[index]
             except ValueError:
-                self._setColour(index-1)
+                self._setColour(index - 1)
         else:
             self.log.error('variable "colours" should be a list, to set a\
                             colour for all layouts, use "foreground".')
