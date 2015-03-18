@@ -1,7 +1,25 @@
-To build on ubuntu:
+NOTE that the doc build scripts require Python 2, and will *not* work with
+Python 3!!!
 
-sudo apt-get install python-sphinxcontrib.seqdiag python-sphinxcontrib.blockdiag
+===============================================================================
+
+To build in a virtual environment (requires the 'virtualenv' and 'pip' tools
+installed in your distro):
+
+$ cd ./docs
+$ virtualenv2 qtile
+$ source qtile/bin/activate
+$ pip2 install -r requirements.txt
+$ make html
+$ deactivate
+
+===============================================================================
+
+To build on Ubuntu:
+
+$ sudo apt-get install python-sphinxcontrib.seqdiag python-sphinxcontrib.blockdiag
 
 Install: https://github.com/:snide/sphinx_rtd_theme
 
-make html
+$ cd ./docs
+$ make html
