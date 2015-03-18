@@ -22,7 +22,7 @@ import importlib
 from docutils import nodes
 from docutils.statemachine import ViewList
 from jinja2 import Template
-from libqtile import command, configurable
+from libqtile import command, configurable, widget
 from six import class_types
 from six.moves import builtins
 from sphinx.util.compat import Directive
@@ -38,6 +38,9 @@ qtile_module_template = Template('''
 qtile_class_template = Template('''
 .. autoclass:: {{ module }}.{{ class_name }}
     :members: __init__
+    {% if is_widget %}
+    Supported bar orientations: {{ obj.orientations }}
+    {% endif %}
     {% if configurable %}
     .. list-table::
         :widths: 20 20 60
@@ -105,6 +108,7 @@ class QtileClass(SimpleDirectiveMixin, Directive):
                 issubclass(obj, configurable.Configurable),
             'commandable': ':no-commands:' not in self.arguments and
                 issubclass(obj, command.CommandObject),
+            'is_widget': issubclass(obj, widget.base._Widget),
         }
         if context['commandable']:
             context['commands'] = [attr for attr in dir(obj)

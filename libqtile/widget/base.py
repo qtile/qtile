@@ -44,7 +44,7 @@ import warnings
 # completeness' sake.
 # +------------------------+--------------------+--------------------+
 # | Widget bits            | Horizontal bar     | Vertical bar       |
-# +------------------------+--------------------+--------------------+
+# +========================+====================+====================+
 # | ORIENTATION_NONE       | ConfigError raised | ConfigError raised |
 # +------------------------+--------------------+--------------------+
 # | ORIENTATION_HORIZONTAL | Widget displayed   | ConfigError raised |
@@ -56,10 +56,23 @@ import warnings
 # | ORIENTATION_BOTH       | Widget displayed   | Widget displayed   |
 # |                        | horizontally       | vertically         |
 # +------------------------+--------------------+--------------------+
-ORIENTATION_NONE = 0
-ORIENTATION_HORIZONTAL = 1
-ORIENTATION_VERTICAL = 2
-ORIENTATION_BOTH = 3
+class _Orientations(int):
+    def __new__(cls, value, doc):
+        return super(_Orientations, cls).__new__(cls, value)
+
+    def __init__(self, value, doc):
+        self.doc = doc
+
+    def __str__(self):
+        return self.doc
+
+    def __repr__(self):
+        return self.doc
+
+ORIENTATION_NONE = _Orientations(0, 'none')
+ORIENTATION_HORIZONTAL = _Orientations(1, 'horizontal only')
+ORIENTATION_VERTICAL = _Orientations(2, 'vertical only')
+ORIENTATION_BOTH = _Orientations(3, 'horizontal and vertical')
 
 
 class _Widget(command.CommandObject, configurable.Configurable):
