@@ -30,7 +30,7 @@ class Wallpaper(base._TextBox):
     defaults = [
         ("directory", os.path.expanduser("~") + "/Pictures/wallpapers/",
          "Wallpaper Directory"),
-        ("wallpaper", "", "Wallpaper")
+        ("wallpaper", None, "Wallpaper")
     ]
 
     def __init__(self, **config):
@@ -50,7 +50,7 @@ class Wallpaper(base._TextBox):
             self.images = list(
                 filter(os.path.isfile,
                        map(self.get_path,
-                        os.listdir(self.directory)
+                            os.listdir(self.directory)
                            )
                        )
             )
@@ -62,15 +62,10 @@ class Wallpaper(base._TextBox):
             if len(self.wallpaper) == 0:
                 self.text = "empty"
             else:
-                subprocess.call([
-                    'feh',
-                    '--bg-fill',
-                    self.wallpaper
-                ])
-            return
+                self.images.append(self.wallpaper)
         cur_index = self.index % len(self.images)
         cur_image = self.images[cur_index]
-        self.text = self.images[cur_index].split("/")[-1]
+        self.text = os.path.basename
         subprocess.call([
             'feh',
             '--bg-fill',
@@ -82,6 +77,3 @@ class Wallpaper(base._TextBox):
             self.index += 1
             self.set_wallpaper()
             self.draw()
-
-    def draw(self):
-        base._TextBox.draw(self)
