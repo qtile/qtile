@@ -37,7 +37,6 @@
 from __future__ import print_function, division
 
 import six
-import re
 
 from xcffib.xproto import CW, WindowClass, EventMask
 from xcffib.xfixes import SelectionEventMask
