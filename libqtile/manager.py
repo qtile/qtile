@@ -44,7 +44,7 @@ from .config import Drag, Click, Screen, Match, Rule
 from .group import _Group
 from .state import QtileState
 from .utils import QtileError
-from .widget.base import _Widget, deprecated
+from .widget.base import _Widget
 from . import command
 from . import hook
 from . import utils
@@ -1164,14 +1164,6 @@ class Qtile(command.CommandObject):
         """
         return list(self.widgetMap.keys())
 
-    def cmd_nextlayout(self, group=None):
-        """
-            This method will be deprecated in favor of cmd_next_layout.
-            Use lazy.next_layout(g) in your config instead.
-        """
-        deprecated(Qtile.cmd_nextlayout.__doc__)
-        self.cmd_next_layout(group)
-
     def cmd_next_layout(self, group=None):
         """
             Switch to the next layout.
@@ -1183,14 +1175,6 @@ class Qtile(command.CommandObject):
         else:
             group = self.currentGroup
         group.nextLayout()
-
-    def cmd_prevlayout(self, group=None):
-        """
-            This method will be deprecated in favor of cmd_prev_layout.
-            Use lazy.prev_layout(g) in your config instead.
-        """
-        deprecated(Qtile.cmd_prevlayout.__doc__)
-        self.cmd_prev_layout(group)
 
     def cmd_prev_layout(self, group=None):
         """
@@ -1366,14 +1350,6 @@ class Qtile(command.CommandObject):
         """
         return self.toScreen(n)
 
-    def cmd_to_next_screen(self):
-        """
-            This method will be deprecated in favor of cmd_next_screen.
-            Use lazy.next_screen in your config instead.
-        """
-        deprecated(Qtile.cmd_to_next_screen.__doc__)
-        return self.cmd_next_screen()
-
     def cmd_next_screen(self):
         """
             Move to next screen
@@ -1381,14 +1357,6 @@ class Qtile(command.CommandObject):
         return self.toScreen(
             (self.screens.index(self.currentScreen) + 1) % len(self.screens)
         )
-
-    def cmd_to_prev_screen(self):
-        """
-            This method will be deprecated in favor of cmd_prev_screen.
-            Use lazy.prev_screen in your config instead.
-        """
-        deprecated(Qtile.cmd_to_prev_screen.__doc__)
-        return self.cmd_prev_screen()
 
     def cmd_prev_screen(self):
         """

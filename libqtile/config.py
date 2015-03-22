@@ -32,8 +32,6 @@ from . import xcbq
 
 from six import MAXSIZE
 
-from .widget.base import deprecated
-
 
 class Key(object):
     """
@@ -399,14 +397,6 @@ class Screen(command.CommandObject):
         """
         self.resize(x, y, w, h)
 
-    def cmd_nextgroup(self, skip_empty=False, skip_managed=False):
-        """
-            This method will be deprecated in favor of cmd_next_group.
-            Use screen.next_group in your config instead.
-        """
-        deprecated(Screen.cmd_nextgroup.__doc__)
-        return self.cmd_next_group(skip_empty, skip_managed)
-
     def cmd_next_group(self, skip_empty=False, skip_managed=False):
         """
             Switch to the next group.
@@ -414,14 +404,6 @@ class Screen(command.CommandObject):
         n = self.group.nextGroup(skip_empty, skip_managed)
         self.setGroup(n)
         return n.name
-
-    def cmd_prevgroup(self, skip_empty=False, skip_managed=False):
-        """
-            This method will be deprecated in favor of cmd_prev_group.
-            Use screen.prev_group in your config instead
-        """
-        deprecated(Screen.cmd_prevgroup.__doc__)
-        return self.cmd_prev_group(skip_empty, skip_managed)
 
     def cmd_prev_group(self, skip_empty=False, skip_managed=False):
         """
