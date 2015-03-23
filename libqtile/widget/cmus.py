@@ -34,7 +34,7 @@ class Cmus(base.ThreadPoolText):
     defaults = [
         ('play_color', '00ff00', 'Text colour when playing.'),
         ('noplay_color', 'cecece', 'Text colour when not playing.'),
-        ('max_chars', 25, 'Maximum number of characters to display in widget.')
+        ('max_chars', 0, 'Maximum number of characters to display in widget.')
     ]
 
     def __init__(self, **config):
@@ -100,7 +100,7 @@ class Cmus(base.ThreadPoolText):
         old_width = self.layout.width
         if not self.status:
             return
-        if len(text) > self.max_chars:
+        if len(text) > self.max_chars > 0:
             text = text[:self.max_chars] + "…"
         self.text = text
 
