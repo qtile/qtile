@@ -324,9 +324,9 @@ class Colormap:
 
             def x8to16(i):
                 return 0xffff * (i & 0xff) // 0xff
-            r = x8to16(int(color[1] + color[2], 16))
-            g = x8to16(int(color[3] + color[4], 16))
-            b = x8to16(int(color[5] + color[6], 16))
+            r = x8to16(int(color[-6] + color[-5], 16))
+            g = x8to16(int(color[-4] + color[-3], 16))
+            b = x8to16(int(color[-2] + color[-1], 16))
             return self.conn.conn.core.AllocColor(self.cid, r, g, b).reply()
 
 
