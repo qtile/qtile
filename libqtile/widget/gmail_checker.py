@@ -43,10 +43,7 @@ class GmailChecker(base.ThreadedPollText):
         ("status_only_unseen", False, "Only show unseen messages"),
     ]
 
-    def __init__(self, settings=None, **config):
-        if settings is not None:
-            base.deprecated("parameter settings is deprecated")
-            config.updateAll(settings)
+    def __init__(self, **config):
         base._TextBox.__init__(self, **config)
         self.add_defaults(GmailChecker.defaults)
 

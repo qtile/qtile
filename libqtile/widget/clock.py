@@ -49,13 +49,9 @@ class Clock(base.InLoopPollText):
             'e.g. "US/Central" (or anything in /usr/share/zoneinfo). None means '
             'the default timezone.')
     ]
-    def __init__(self, fmt=None, **config):
+    def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(Clock.defaults)
-        if fmt is not None:
-            base.deprecated('fmt kwarg or positional argument is deprecated. '
-                            'Please use format.')
-            self.format = fmt
 
     def tick(self):
         self.update(self.poll())
