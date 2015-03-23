@@ -51,8 +51,8 @@ class Wallpaper(base._TextBox):
                 filter(os.path.isfile,
                        map(self.get_path,
                            os.listdir(self.directory)
+                           )
                        )
-                )
             )
         except IOError as e:
             print("I/O error({0}): {1}".format(e.errno, e.strerror))
@@ -65,7 +65,7 @@ class Wallpaper(base._TextBox):
                 self.images.append(self.wallpaper)
         cur_index = self.index % len(self.images)
         cur_image = self.images[cur_index]
-        self.text = os.path.basename
+        self.text = os.path.basename(cur_image)
         subprocess.call([
             'feh',
             '--bg-fill',
