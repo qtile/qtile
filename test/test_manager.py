@@ -730,14 +730,14 @@ def test_focus_stays_on_layout_switch(xephyr):
     xephyr.testWindow("two")
 
     # switch to a double stack layout
-    xephyr.c.nextlayout()
+    xephyr.c.next_layout()
 
     # focus on a different window than the default
     xephyr.c.layout.next()
 
     # toggle the layout
-    xephyr.c.nextlayout()
-    xephyr.c.prevlayout()
+    xephyr.c.next_layout()
+    xephyr.c.prev_layout()
 
     assert xephyr.c.window.info()['name'] == 'one'
 
