@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (C) 2015, Juan Riquelme González
 #
 # This program is free software: you can redistribute it and/or modify
