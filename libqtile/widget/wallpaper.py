@@ -30,7 +30,8 @@ class Wallpaper(base._TextBox):
     defaults = [
         ("directory", os.path.expanduser("~") + "/Pictures/wallpapers/",
          "Wallpaper Directory"),
-        ("wallpaper", None, "Wallpaper")
+        ("wallpaper", None, "Wallpaper"),
+        ("wallpaper_command", None, "Wallpaper command"),
     ]
 
     def __init__(self, **config):
@@ -55,7 +56,7 @@ class Wallpaper(base._TextBox):
                        )
             )
         except IOError as e:
-            print("I/O error({0}): {1}".format(e.errno, e.strerror))
+            self.qtile.log.exception("I/O error({0}): {1}".format(e.errno, e.strerror))
 
     def set_wallpaper(self):
         if len(self.images) == 0:
@@ -66,6 +67,10 @@ class Wallpaper(base._TextBox):
         cur_index = self.index % len(self.images)
         cur_image = self.images[cur_index]
         self.text = os.path.basename(cur_image)
+        if self.wallpaper_command:
+            self.wallpaper_command.append(cur_image)
+            subprocess.call(self.wallpaper_command)
+            return
         subprocess.call([
             'feh',
             '--bg-fill',
