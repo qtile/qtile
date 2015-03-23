@@ -887,7 +887,7 @@ class Window(_Window):
                 width = self.width
 
             if self.height < self.hints.get('min_height', 0):
-                self.height = self.hints['min_height']
+                height = self.hints['min_height']
             else:
                 height = self.height
 
