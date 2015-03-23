@@ -321,8 +321,6 @@ class Colormap:
                 self.cid, len(color), color
             ).reply()
         except xcffib.xproto.NameError:
-            if len(color) < 6:
-                raise ValueError("Invalid color: %s" % color)
 
             def x8to16(i):
                 return 0xffff * (i & 0xff) // 0xff
