@@ -31,7 +31,7 @@ from . import base
 class KeyboardLayout(base.InLoopPollText):
     """
         Widget for changing and displaying the current keyboard layout.
-        It requires setxkbmap to be available in the sytem.
+        It requires setxkbmap to be available in the system.
     """
     defaults = [
         ("update_interval", 1, "Update time in seconds."),
