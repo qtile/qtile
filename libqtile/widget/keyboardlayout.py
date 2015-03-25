@@ -68,7 +68,7 @@ class KeyboardLayout(base.InLoopPollText):
 
     def poll(self):
         return self._get_keyboard().upper()
-        
+
     def _get_keyboard(self):
         """
             Return the currently used keyboard layout as a string.
