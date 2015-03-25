@@ -76,7 +76,7 @@ class KeyboardLayout(base.InLoopPollText):
             In case of error returns "unknown".
         """
         try:
-            xset_output = subprocess.check_output(["xset", "-q"])
+            xset_output = self.call_process(["xset", "-q"])
             keyboard = _Keyboard(self.configured_keyboards).get_keyboard_layout(xset_output)
             return str(keyboard)
         except CalledProcessError as e:
