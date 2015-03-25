@@ -122,13 +122,13 @@ Group functions
 
     * - function
       - description
-    * - ``lazy.nextlayout())``
+    * - ``lazy.next_layout())``
       - Use next layout on the actual group
-    * - ``lazy.prevlayout())``
+    * - ``lazy.prev_layout())``
       - Use previous layout on the actual group
-    * - ``lazy.screen.nextgroup())``
+    * - ``lazy.screen.next_group())``
       - Move to the group on the right
-    * - ``lazy.screen.prevgroup())``
+    * - ``lazy.screen.prev_group())``
       - Move to the group on the left
     * - ``lazy.screen.togglegroup())``
       - Move to the last visited group
