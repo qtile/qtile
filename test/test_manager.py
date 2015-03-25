@@ -957,3 +957,8 @@ def test_minimal__(self):
     a = self.testWindow("one")
     assert len(self.c.group["d"].info()["windows"]) == 1
     self.kill(a)
+
+@Xephyr(False, TestConfig)
+def test_colorPixel(self):
+    # test for #394
+    self.c.eval("self.colorPixel(\"ffffff\")")
