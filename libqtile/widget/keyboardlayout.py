@@ -77,10 +77,10 @@ class KeyboardLayout(base.InLoopPollText):
             keyboard = _Keyboard(self.configured_keyboards).get_keyboard_layout(xset_output).upper()
             return str(keyboard)
         except CalledProcessError as e:
-            self.log.error('Can not change the keyboard layout: {0}'
+            self.log.error('Can not get the keyboard layout: {0}'
                            .format(e))
         except OSError as e:
-            self.log.error('Please, check that setxkbmap is available: {0}'
+            self.log.error('Please, check that xset is available: {0}'
                            .format(e))
         return "unknown"
 
