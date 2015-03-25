@@ -233,16 +233,16 @@ class GroupBox(_GroupBase):
             bw = self.box_width([g])
 
             if self.group_has_urgent(g) and self.urgent_alert_method == "text":
-                text = self.urgent_text
+                text_color = self.urgent_text
             elif g.windows:
-                text = self.active
+                text_color = self.active
             else:
-                text = self.inactive
+                text_color = self.inactive
 
             if g.screen:
                 if self.highlight_method == 'text':
                     border = self.bar.background
-                    text = self.this_current_screen_border
+                    text_color = self.this_current_screen_border
                 else:
                     if self.bar.screen.group.name == g.name:
                         if self.qtile.currentScreen == self.bar.screen:
@@ -263,7 +263,7 @@ class GroupBox(_GroupBase):
                 self.margin_x + offset,
                 g.name,
                 border,
-                text,
+                text_color,
                 self.rounded,
                 is_block,
                 bw - self.margin_x * 2 - self.padding_x * 2
