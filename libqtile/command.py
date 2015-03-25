@@ -351,7 +351,7 @@ class CommandObject(object):
         """
         raise NotImplementedError
 
-    def _select(self, name, sel, selectors):
+    def _select(self, name, sel):
         """
             Return a selected object, or None if no such object exists.
 
