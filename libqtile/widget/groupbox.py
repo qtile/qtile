@@ -231,21 +231,6 @@ class GroupBox(_GroupBase):
             is_block = (self.highlight_method == 'block')
 
             bw = self.box_width([g])
-            if g.screen:
-                if self.bar.screen.group.name == g.name:
-                    if self.qtile.currentScreen == self.bar.screen:
-                        border = self.this_current_screen_border
-                    else:
-                        border = self.this_screen_border
-                else:
-                    border = self.other_screen_border
-            elif self.group_has_urgent(g) and \
-                    self.urgent_alert_method in ('border', 'block'):
-                border = self.urgent_border
-                if self.urgent_alert_method == 'block':
-                    is_block = True
-            else:
-                border = self.background or self.bar.background
 
             if self.group_has_urgent(g) and self.urgent_alert_method == "text":
                 text = self.urgent_text
@@ -253,6 +238,26 @@ class GroupBox(_GroupBase):
                 text = self.active
             else:
                 text = self.inactive
+
+            if g.screen:
+                if self.highlight_method == 'text':
+                    border = self.bar.background
+                    text = self.this_current_screen_border
+                else:
+                    if self.bar.screen.group.name == g.name:
+                        if self.qtile.currentScreen == self.bar.screen:
+                            border = self.this_current_screen_border
+                        else:
+                            border = self.this_screen_border
+                    else:
+                        border = self.other_screen_border
+            elif self.group_has_urgent(g) and \
+                    self.urgent_alert_method in ('border', 'block'):
+                border = self.urgent_border
+                if self.urgent_alert_method == 'block':
+                    is_block = True
+            else:
+                border = self.background or self.bar.background
 
             self.drawbox(
                 self.margin_x + offset,
