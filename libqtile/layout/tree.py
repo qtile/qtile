@@ -344,21 +344,20 @@ class TreeTab(SingleWindow):
         self._nodes[win] = node
 
     def remove(self, win):
+        if win not in self._nodes:
+            return
+
+        if self.previous_on_rm:
+            self._focused = self.focus_previous()
+        else:
+            self._focused = self.focus_first()
+
         if self._focused is win:
-            if self.previous_on_rm:
-                # select previous window in the list
-                self.cmd_up()
-                if self._focused is win:
-                    self._focused = None
-            else:
-                self._focused = None
+            self._focused = None
+
         self._nodes[win].remove()
         del self._nodes[win]
         self.draw_panel()
-
-        # select first window in the list
-        if not self.previous_on_rm:
-            self.cmd_down()
 
     def _create_panel(self):
         self._panel = window.Internal.create(
@@ -430,6 +429,7 @@ class TreeTab(SingleWindow):
             win = self._tree.get_first_window()
         if win:
             self.group.focus(win.window, False)
+        self._focused = win.window if win else None
 
     cmd_next = cmd_down
 
@@ -444,6 +444,7 @@ class TreeTab(SingleWindow):
             win = self._tree.get_last_window()
         if win:
             self.group.focus(win.window, False)
+        self._focused = win.window if win else None
 
     cmd_previous = cmd_up
 
