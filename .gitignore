@@ -27,3 +27,5 @@ debian/qtile
 debian/python-qtile
 debian/python3-qtile
 debian/*debhelper
+
+*sublime*
