@@ -30,14 +30,21 @@ class Image(base._Widget, base.MarginMixin):
     """
         Display a PNG image on the bar.
     """
-    orientations = base.ORIENTATION_HORIZONTAL
+    orientations = base.ORIENTATION_BOTH
     defaults = [
         ("scale", True, "Enable/Disable image scaling"),
         ("filename", None, "PNG Image filename. Can contain '~'"),
     ]
 
-    def __init__(self, width=bar.CALCULATED, **config):
-        base._Widget.__init__(self, width, **config)
+    def __init__(self, length=bar.CALCULATED, width=None, **config):
+        # 'width' was replaced by 'length' since the widget can be installed in
+        # vertical bars
+        if width is not None:
+            base.deprecated('width kwarg or positional argument is '
+                            'deprecated. Please use length.')
+            length = width
+
+        base._Widget.__init__(self, length, **config)
         self.add_defaults(Image.defaults)
         self.add_defaults(base.MarginMixin.defaults)
 
@@ -64,15 +71,26 @@ class Image(base._Widget, base.MarginMixin):
         self.image_height = self.image.get_height()
 
         if self.scale:
-            new_height = self.bar.height - (self.margin_y * 2)
+            if self.bar.horizontal:
+                new_height = self.bar.height - (self.margin_y * 2)
 
-            if new_height and self.image_height != new_height:
-                scaler = cairocffi.Matrix()
-                sp = self.image_height / float(new_height)
-                self.image_height = new_height
-                self.image_width = int(self.image_width / sp)
-                scaler.scale(sp, sp)
-                self.pattern.set_matrix(scaler)
+                if new_height and self.image_height != new_height:
+                    scaler = cairocffi.Matrix()
+                    sp = self.image_height / float(new_height)
+                    self.image_height = new_height
+                    self.image_width = int(self.image_width / sp)
+                    scaler.scale(sp, sp)
+                    self.pattern.set_matrix(scaler)
+            else:
+                new_width = self.bar.width - (self.margin_x * 2)
+
+                if new_width and self.image_width != new_width:
+                    scaler = cairocffi.Matrix()
+                    sp = self.image_width / float(new_width)
+                    self.image_width = new_width
+                    self.image_height = int(self.image_height / sp)
+                    scaler.scale(sp, sp)
+                    self.pattern.set_matrix(scaler)
 
     def draw(self):
         self.drawer.clear(self.bar.background)
@@ -82,7 +100,13 @@ class Image(base._Widget, base.MarginMixin):
         self.drawer.ctx.paint()
         self.drawer.ctx.restore()
 
-        self.drawer.draw(offsetx=self.offset, width=self.width)
+        if self.bar.horizontal:
+            self.drawer.draw(offsetx=self.offset, width=self.width)
+        else:
+            self.drawer.draw(offsety=self.offset, height=self.width)
 
     def calculate_length(self):
-        return self.image_width + (self.margin_x * 2)
+        if self.bar.horizontal:
+            return self.image_width + (self.margin_x * 2)
+        else:
+            return self.image_height + (self.margin_y * 2)
