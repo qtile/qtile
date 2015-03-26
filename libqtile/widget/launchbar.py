@@ -51,7 +51,7 @@ from xdg.IconTheme import getIconPath
 
 class LaunchBar(base._Widget):
     """
-    A widget that display icons to launch the associated command
+    A widget that display icons to launch the associated command.
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [

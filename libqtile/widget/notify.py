@@ -33,7 +33,7 @@ from libqtile.notify import notifier
 
 class Notify(base._TextBox):
     """
-        A notify widget
+        A notify widget.
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [

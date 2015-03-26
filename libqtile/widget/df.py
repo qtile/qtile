@@ -27,7 +27,7 @@ class DF(base.ThreadedPollText):
     """
     Disk Free Widget
 
-    By default the widget only displays if the space is less than warn_space
+    By default the widget only displays if the space is less than warn_space.
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [

@@ -47,7 +47,7 @@ from . import base
 
 class Mpd(base.ThreadPoolText):
     """
-        An mpd widget
+        An mpd widget.
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [

@@ -29,6 +29,11 @@ from . import base
 
 
 class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
+    """
+        Displays the icon and name of each window in the current group.
+        Contrary to WindowTabs this is an interactive widget.
+        The window that currently has focus is highlighted.
+    """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("font", "Arial", "Default font"),

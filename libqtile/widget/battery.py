@@ -239,7 +239,9 @@ class Battery(_Battery):
 
 
 class BatteryIcon(_Battery):
-    ''' Battery life indicator widget '''
+    '''
+        Battery life indicator widget.
+    '''
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('theme_path', default_icon_path(), 'Path of the icons'),

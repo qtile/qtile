@@ -40,7 +40,7 @@ WEATHER_NS = 'http://xml.weather.yahoo.com/ns/rss/1.0'
 
 
 class YahooWeather(GenPollUrl):
-    ''' A weather widget, data provided by the Yahoo! Weather API
+    ''' A weather widget, data provided by the Yahoo! Weather API.
 
         Format options:
 

@@ -126,7 +126,7 @@ class TrayWindow(window._Window):
 
 class Systray(base._Widget):
     """
-        A widget that manage system tray
+        A widget that manages system tray.
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
