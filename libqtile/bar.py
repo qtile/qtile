@@ -204,24 +204,36 @@ class Bar(Gap, configurable.Configurable):
                 i.length += stretchspace % astretch
 
         offset = 0
-        for i in widgets:
-            i.offset = offset
-            offset += i.length
+        if self.horizontal:
+            for i in widgets:
+                i.offsetx = offset
+                i.offsety = 0
+                offset += i.length
+        else:
+            for i in widgets:
+                i.offsetx = 0
+                i.offsety = offset
+                offset += i.length
 
     def handle_Expose(self, e):
         self.draw()
 
     def get_widget_in_position(self, e):
-        for i in self.widgets:
-            if e.event_x < i.offset + i.length:
-                return i
+        if self.horizontal:
+            for i in self.widgets:
+                if e.event_x < i.offsetx + i.length:
+                    return i
+        else:
+            for i in self.widgets:
+                if e.event_y < i.offsety + i.length:
+                    return i
 
     def handle_ButtonPress(self, e):
         widget = self.get_widget_in_position(e)
         if widget:
             widget.button_press(
-                e.event_x - widget.offset,
-                e.event_y,
+                e.event_x - widget.offsetx,
+                e.event_y - widget.offsety,
                 e.detail
             )
 
@@ -229,8 +241,8 @@ class Bar(Gap, configurable.Configurable):
         widget = self.get_widget_in_position(e)
         if widget:
             widget.button_release(
-                e.event_x - widget.offset,
-                e.event_y,
+                e.event_x - widget.offsetx,
+                e.event_y - widget.offsety,
                 e.detail
             )
 

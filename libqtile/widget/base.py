@@ -82,11 +82,12 @@ class _Widget(command.CommandObject, configurable.Configurable):
         widgets have been configured. Only ONE widget per bar can have the
         bar.STRETCH length set.
 
-        The offset attribute is set by the Bar after all widgets have been
-        configured.
+        The offsetx and offsety attributes are set by the Bar after all widgets
+        have been configured.
     """
     orientations = ORIENTATION_BOTH
-    offset = None
+    offsetx = None
+    offsety = None
     defaults = [("background", None, "Widget background color")]
 
     def __init__(self, length, **config):
@@ -135,6 +136,12 @@ class _Widget(command.CommandObject, configurable.Configurable):
         return self.length
 
     @property
+    def offset(self):
+        if self.bar.horizontal:
+            return self.offsetx
+        return self.offsety
+
+    @property
     def win(self):
         return self.bar.window.window
 
@@ -172,7 +179,8 @@ class _Widget(command.CommandObject, configurable.Configurable):
 
     def clear(self):
         self.drawer.set_source_rgb(self.bar.background)
-        self.drawer.fillrect(self.offset, 0, self.width, self.height)
+        self.drawer.fillrect(self.offsetx, self.offsety, self.width,
+                             self.height)
 
     def info(self):
         return dict(
@@ -350,14 +358,14 @@ class _TextBox(_Widget):
 
     def draw(self):
         # if the bar hasn't placed us yet
-        if self.offset is None:
+        if self.offsetx is None:
             return
         self.drawer.clear(self.background or self.bar.background)
         self.layout.draw(
             self.actual_padding or 0,
             int(self.bar.height / 2.0 - self.layout.height / 2.0) + 1
         )
-        self.drawer.draw(offsetx=self.offset, width=self.width)
+        self.drawer.draw(offsetx=self.offsetx, width=self.width)
 
     def cmd_set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED,
                      fontshadow=UNSPECIFIED):

@@ -185,6 +185,12 @@ class GeomConf:
     ]
 
 
+class DBar(libqtile.bar.Bar):
+    def __init__(self, widgets, size):
+        libqtile.bar.Bar.__init__(self, widgets, size)
+        self.horizontal = True
+
+
 class DWidget:
     def __init__(self, length, length_type):
         self.length, self.length_type = length, length_type
@@ -216,9 +222,9 @@ def test_resize(self):
         return [i.length for i in l]
 
     def off(l):
-        return [i.offset for i in l]
+        return [i.offsetx for i in l]
 
-    b = libqtile.bar.Bar([], 100)
+    b = DBar([], 100)
 
     l = [
         DWidget(10, libqtile.bar.CALCULATED),
@@ -228,9 +234,11 @@ def test_resize(self):
     ]
     b._resize(100, l)
     assert wd(l) == [10, 40, 40, 10]
+    assert off(l) == [0, 10, 50, 90]
 
     b._resize(101, l)
     assert wd(l) == [10, 40, 41, 10]
+    assert off(l) == [0, 10, 50, 91]
 
     l = [
         DWidget(10, libqtile.bar.CALCULATED)
