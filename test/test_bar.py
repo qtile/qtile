@@ -186,8 +186,8 @@ class GeomConf:
 
 
 class DWidget:
-    def __init__(self, width, length_type):
-        self.width, self.length_type = width, length_type
+    def __init__(self, length, length_type):
+        self.length, self.length_type = length, length_type
 
 
 @Xephyr(True, GeomConf())
@@ -213,7 +213,7 @@ def test_geometry(self):
 @Xephyr(True, GeomConf())
 def test_resize(self):
     def wd(l):
-        return [i.width for i in l]
+        return [i.length for i in l]
 
     def off(l):
         return [i.offset for i in l]

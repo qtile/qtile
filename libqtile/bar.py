@@ -194,26 +194,26 @@ class Bar(Gap, configurable.Configurable):
         stretches = [i for i in widgets if i.length_type == STRETCH]
         if stretches:
             stretchspace = length - sum(
-                [i.width for i in widgets if i.length_type != STRETCH]
+                [i.length for i in widgets if i.length_type != STRETCH]
             )
             stretchspace = max(stretchspace, 0)
             astretch = stretchspace // len(stretches)
             for i in stretches:
-                i.width = astretch
+                i.length = astretch
             if astretch:
-                i.width += stretchspace % astretch
+                i.length += stretchspace % astretch
 
         offset = 0
         for i in widgets:
             i.offset = offset
-            offset += i.width
+            offset += i.length
 
     def handle_Expose(self, e):
         self.draw()
 
     def get_widget_in_position(self, e):
         for i in self.widgets:
-            if e.event_x < i.offset + i.width:
+            if e.event_x < i.offset + i.length:
                 return i
 
     def handle_ButtonPress(self, e):
@@ -263,7 +263,7 @@ class Bar(Gap, configurable.Configurable):
         for i in self.widgets:
             i.draw()
         if self.widgets:
-            end = i.offset + i.width
+            end = i.offset + i.length
             if end < self.length:
                 if self.horizontal:
                     self.drawer.draw(offsetx=end, width=self.length - end)

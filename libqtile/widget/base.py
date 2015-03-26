@@ -77,10 +77,10 @@ ORIENTATION_BOTH = _Orientations(3, 'horizontal and vertical')
 
 class _Widget(command.CommandObject, configurable.Configurable):
     """
-        If width is set to the special value bar.STRETCH, the bar itself
-        will set the width to the maximum remaining space, after all other
+        If length is set to the special value bar.STRETCH, the bar itself
+        will set the length to the maximum remaining space, after all other
         widgets have been configured. Only ONE widget per bar can have the
-        bar.STRETCH width set.
+        bar.STRETCH length set.
 
         The offset attribute is set by the Bar after all widgets have been
         configured.
@@ -89,9 +89,9 @@ class _Widget(command.CommandObject, configurable.Configurable):
     offset = None
     defaults = [("background", None, "Widget background color")]
 
-    def __init__(self, width, **config):
+    def __init__(self, length, **config):
         """
-            width: bar.STRETCH, bar.CALCULATED, or a specified width.
+            length: bar.STRETCH, bar.CALCULATED, or a specified length.
         """
         command.CommandObject.__init__(self)
         self.name = self.__class__.__name__.lower()
@@ -103,24 +103,36 @@ class _Widget(command.CommandObject, configurable.Configurable):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(_Widget.defaults)
 
-        if width in (bar.CALCULATED, bar.STRETCH):
-            self.length_type = width
-            self.width = 0
+        if length in (bar.CALCULATED, bar.STRETCH):
+            self.length_type = length
+            self.length = 0
         else:
-            assert isinstance(width, six.integer_types)
+            assert isinstance(length, six.integer_types)
             self.length_type = bar.STATIC
-            self.width = width
+            self.length = length
         self.configured = False
 
     @property
-    def width(self):
+    def length(self):
         if self.length_type == bar.CALCULATED:
             return int(self.calculate_width())
         return self._width
 
-    @width.setter
-    def width(self, value):
+    @length.setter
+    def length(self, value):
         self._width = value
+
+    @property
+    def width(self):
+        if self.bar.horizontal:
+            return self.length
+        return self.bar.size
+
+    @property
+    def height(self):
+        if self.bar.horizontal:
+            return self.bar.size
+        return self.length
 
     @property
     def win(self):
@@ -160,7 +172,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
 
     def clear(self):
         self.drawer.set_source_rgb(self.bar.background)
-        self.drawer.fillrect(self.offset, 0, self.width, self.bar.size)
+        self.drawer.fillrect(self.offset, 0, self.width, self.height)
 
     def info(self):
         return dict(
@@ -201,14 +213,14 @@ class _Widget(command.CommandObject, configurable.Configurable):
     def draw(self):
         """
             Method that draws the widget. You may call this explicitly to
-            redraw the widget, but only if the width of the widget hasn't
+            redraw the widget, but only if the length of the widget hasn't
             changed. If it has, you must call bar.draw instead.
         """
         raise NotImplementedError
 
     def calculate_width(self):
         """
-            Must be implemented if the widget can take CALCULATED for width.
+            Must be implemented if the widget can take CALCULATED for length.
         """
         raise NotImplementedError
 

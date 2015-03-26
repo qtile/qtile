@@ -82,13 +82,13 @@ class LaunchBar(base._Widget):
                                       None} for prog in progs]))
         self.progs_name = set([prog['name'] for prog in self.progs.values()])
         self.length_type = bar.STATIC
-        self.width = 0
+        self.length = 0
 
     def _configure(self, qtile, pbar):
         base._Widget._configure(self, qtile, pbar)
         self.lookup_icons()
         self.setup_images()
-        self.width = self.calculate_width()
+        self.length = self.calculate_width()
 
     def setup_images(self):
         """ Create image structures for each icon files. """

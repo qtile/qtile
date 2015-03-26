@@ -71,7 +71,7 @@ class Volume(base._TextBox):
         self.add_defaults(Volume.defaults)
         if self.theme_path:
             self.length_type = bar.STATIC
-            self.width = 0
+            self.length = 0
         self.surfaces = {}
         self.volume = None
 
@@ -184,8 +184,8 @@ class Volume(base._TextBox):
             sp = input_height / float(self.bar.height - 1)
 
             width = input_width / sp
-            if width > self.width:
-                self.width = int(width) + self.actual_padding * 2
+            if width > self.length:
+                self.length = int(width) + self.actual_padding * 2
 
             imgpat = cairocffi.SurfacePattern(img)
 
@@ -227,6 +227,6 @@ class Volume(base._TextBox):
 
     def draw(self):
         if self.theme_path:
-            self.drawer.draw(offsetx=self.offset, width=self.width)
+            self.drawer.draw(offsetx=self.offset, width=self.length)
         else:
             base._TextBox.draw(self)

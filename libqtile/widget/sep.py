@@ -46,7 +46,7 @@ class Sep(base._Widget):
         width = config.get("padding", 2) * 2 + config.get("linewidth", 1)
         base._Widget.__init__(self, width, **config)
         self.add_defaults(Sep.defaults)
-        self.width = self.padding + self.linewidth
+        self.length = self.padding + self.linewidth
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
@@ -54,9 +54,9 @@ class Sep(base._Widget):
             self.bar.height / float(100) * (100 - self.height_percent)) / 2.0
         self.drawer.draw_vbar(
             self.foreground,
-            float(self.width) / 2,
+            float(self.length) / 2,
             margin_top,
             self.bar.height - margin_top,
             linewidth=self.linewidth
         )
-        self.drawer.draw(offsetx=self.offset, width=self.width)
+        self.drawer.draw(offsetx=self.offset, width=self.length)

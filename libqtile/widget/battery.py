@@ -254,7 +254,7 @@ class BatteryIcon(_Battery):
 
         if self.theme_path:
             self.length_type = bar.STATIC
-            self.width = 0
+            self.length = 0
         self.surfaces = {}
         self.current_icon = 'battery-missing'
         self.icons = dict([(x, '{0}.png'.format(x)) for x in (
@@ -312,7 +312,7 @@ class BatteryIcon(_Battery):
             self.drawer.clear(self.background or self.bar.background)
             self.drawer.ctx.set_source(self.surfaces[self.current_icon])
             self.drawer.ctx.paint()
-            self.drawer.draw(offsetx=self.offset, width=self.width)
+            self.drawer.draw(offsetx=self.offset, width=self.length)
         else:
             self.text = self.current_icon[8:]
             base._TextBox.draw(self)
@@ -332,8 +332,8 @@ class BatteryIcon(_Battery):
             sp = input_height / float(self.bar.height - 1)
 
             width = input_width / sp
-            if width > self.width:
-                self.width = int(width) + self.actual_padding * 2
+            if width > self.length:
+                self.length = int(width) + self.actual_padding * 2
 
             imgpat = cairocffi.SurfacePattern(img)
 
