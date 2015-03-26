@@ -64,8 +64,7 @@ class Wallpaper(base._TextBox):
                 self.text = "empty"
             else:
                 self.images.append(self.wallpaper)
-        cur_index = self.index % len(self.images)
-        cur_image = self.images[cur_index]
+        cur_image = self.images[self.index]
         self.text = os.path.basename(cur_image)
         if self.wallpaper_command:
             self.wallpaper_command.append(cur_image)
@@ -80,5 +79,6 @@ class Wallpaper(base._TextBox):
     def button_press(self, x, y, button):
         if button == 1:
             self.index += 1
+            self.index %= len(self.images)
             self.set_wallpaper()
             self.draw()
