@@ -22,6 +22,7 @@
 # SOFTWARE.
 
 import logging
+import logging.handlers
 import os
 import sys
 from logging import getLogger, StreamHandler
@@ -73,9 +74,10 @@ def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log'):
         except TypeError:  # Happens if log_path doesn't contain formatters.
             pass
         log_path = os.path.expanduser(log_path)
-        with open(log_path, "w"):
+        with open(log_path, "aw"):
             pass
-        handler = logging.FileHandler(log_path)
+        handler = logging.handlers.RotatingFileHandler(
+              log_path, maxBytes=1073741824)
         handler.setFormatter(
             logging.Formatter(
                 "%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s"
