@@ -77,7 +77,7 @@ def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log'):
         with open(log_path, "aw"):
             pass
         handler = logging.handlers.RotatingFileHandler(
-              log_path, maxBytes=1073741824)
+              log_path, maxBytes=1000000000, backupCount=1)
         handler.setFormatter(
             logging.Formatter(
                 "%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s"
