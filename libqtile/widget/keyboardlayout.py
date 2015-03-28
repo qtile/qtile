@@ -56,7 +56,7 @@ class KeyboardLayout(base.InLoopPollText):
             new layout the first one in the list.
         """
 
-        current_keyboard = self.poll()
+        current_keyboard = self._get_keyboard()
         if current_keyboard in self.configured_keyboards:
             # iterate the list circularly
             next_keyboard = self.configured_keyboards[
@@ -67,6 +67,9 @@ class KeyboardLayout(base.InLoopPollText):
         self._set_keyboard(next_keyboard)
 
     def poll(self):
+        return self._get_keyboard().upper()
+
+    def _get_keyboard(self):
         """
             Return the currently used keyboard layout as a string.
             Examples: "us", "us dvorak".
@@ -74,13 +77,13 @@ class KeyboardLayout(base.InLoopPollText):
         """
         try:
             xset_output = self.call_process(["xset", "-q"])
-            keyboard = _Keyboard(self.configured_keyboards).get_keyboard_layout(xset_output).upper()
+            keyboard = _Keyboard(self.configured_keyboards).get_keyboard_layout(xset_output)
             return str(keyboard)
         except CalledProcessError as e:
-            self.log.error('Can not change the keyboard layout: {0}'
+            self.log.error('Can not get the keyboard layout: {0}'
                            .format(e))
         except OSError as e:
-            self.log.error('Please, check that setxkbmap is available: {0}'
+            self.log.error('Please, check that xset is available: {0}'
                            .format(e))
         return "unknown"
 
