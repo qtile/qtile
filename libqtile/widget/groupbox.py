@@ -139,7 +139,7 @@ class GroupBox(_GroupBase):
         (
             "highlight_method",
             "border",
-            "Method of highlighting (one of 'border' or 'block') "
+            "Method of highlighting (one of 'border', 'block' or 'text') "
             "Uses \*_border color settings"
         ),
         ("rounded", True, "To round or not to round borders"),
@@ -231,14 +231,26 @@ class GroupBox(_GroupBase):
             is_block = (self.highlight_method == 'block')
 
             bw = self.box_width([g])
+
+            if self.group_has_urgent(g) and self.urgent_alert_method == "text":
+                text_color = self.urgent_text
+            elif g.windows:
+                text_color = self.active
+            else:
+                text_color = self.inactive
+
             if g.screen:
-                if self.bar.screen.group.name == g.name:
-                    if self.qtile.currentScreen == self.bar.screen:
-                        border = self.this_current_screen_border
-                    else:
-                        border = self.this_screen_border
+                if self.highlight_method == 'text':
+                    border = self.bar.background
+                    text_color = self.this_current_screen_border
                 else:
-                    border = self.other_screen_border
+                    if self.bar.screen.group.name == g.name:
+                        if self.qtile.currentScreen == self.bar.screen:
+                            border = self.this_current_screen_border
+                        else:
+                            border = self.this_screen_border
+                    else:
+                        border = self.other_screen_border
             elif self.group_has_urgent(g) and \
                     self.urgent_alert_method in ('border', 'block'):
                 border = self.urgent_border
@@ -247,18 +259,11 @@ class GroupBox(_GroupBase):
             else:
                 border = self.background or self.bar.background
 
-            if self.group_has_urgent(g) and self.urgent_alert_method == "text":
-                text = self.urgent_text
-            elif g.windows:
-                text = self.active
-            else:
-                text = self.inactive
-
             self.drawbox(
                 self.margin_x + offset,
                 g.name,
                 border,
-                text,
+                text_color,
                 self.rounded,
                 is_block,
                 bw - self.margin_x * 2 - self.padding_x * 2

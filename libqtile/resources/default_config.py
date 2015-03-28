@@ -74,7 +74,7 @@ keys = [
     Key([mod], "Return", lazy.spawn("xterm")),
 
     # Toggle between different layouts as defined below
-    Key([mod], "Tab", lazy.nextlayout()),
+    Key([mod], "Tab", lazy.next_layout()),
     Key([mod], "w", lazy.window.kill()),
 
     Key([mod, "control"], "r", lazy.restart()),
