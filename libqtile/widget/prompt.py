@@ -326,7 +326,14 @@ class Prompt(base._TextBox):
                 ("prompt", "{prompt}: ", "Text displayed at the prompt"),
                 ("record_history", True, "Keep a record of executed commands"),
                 ("max_history", 100,
-                 "Commands to keep in history. 0 for no limit.")]
+                 "Commands to keep in history. 0 for no limit."),
+                ("bell_style", "audible",
+                 "Alert at the begin/end of the command history. " +
+                 "Posible values: 'audible', 'visual' and None."),
+                ("visual_bell_color", "ff0000",
+                 "Color for the visual bell (changes text prompt color)."),
+                ("visual_bell_time", 0.4,
+                 "Visual bell duration (in seconds).")]
 
     def __init__(self, name="prompt", **config):
         base._TextBox.__init__(self, "", bar.CALCULATED, **config)
@@ -365,8 +372,8 @@ class Prompt(base._TextBox):
             from the user. When done, calls the callback with the input string
             as argument. If history record is enabled, also allows to browse
             between previous commands with ↑ and ↓, and execute them
-            (untouched or modified). When historial is exhausted, rings the
-            system bell. It tried to mimic, in some way, the shell behavior.
+            (untouched or modified). When historial is exhausted, fires an
+            alert. It tries to mimic, in some way, the shell behavior.
 
             prompt = text displayed at the prompt, e.g. "spawn: "
             callback = function to call with returned value.
@@ -478,12 +485,32 @@ class Prompt(base._TextBox):
                     pickle.dump(self.history, f, protocol=2)
             self.callback(self.userInput)
 
+    def beep(self):
+        """Ring the system bell."""
+        if os.isatty(1):
+            print("\a")
+        else:
+            self.log.info("Can't beep: there isn't a terminal connected to" +
+                          "stdout.")
+
+    def _alert(self):
+        # Fire an alert (audible or visual), if bell style is not None.
+        if self.bell_style == "audible":
+            self.beep()
+        elif self.bell_style == "visual":
+            self.layout.colour = self.visual_bell_color
+            self.timeout_add(self.visual_bell_time, self._stop_visual_alert)
+
+    def _stop_visual_alert(self):
+        self.layout.colour = self.foreground
+        self._update()
+
     def _get_prev_cmd(self):
         # Get the previous command in history.
         # If there isn't more previous commands, ring system bell
         if self.record_history:
             if not self.position:
-                print("\a")
+                self._alert()
             else:
                 self.position -= 1
                 self.archivedInput = self.history[self.position]
@@ -493,7 +520,7 @@ class Prompt(base._TextBox):
         # If the last command was already reached, ring system bell.
         if self.record_history:
             if self.position == len(self.history):
-                print("\a")
+                self._alert()
             elif self.position < len(self.history):
                 self.position += 1
                 if self.position == len(self.history):
