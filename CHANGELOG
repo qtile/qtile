@@ -198,6 +198,6 @@ qtile 0.5, released 2012-11-11:
         - All unit tests pass
         - Lots of bugfixes to MonadTall
         - Create IPC socket directory if necessary
-        - Better error if two widgets have STRETCH width
+        - Better error if two widgets have STRETCH length
         - Autofloat window classes can now be overridden
         - xkeysyms updated

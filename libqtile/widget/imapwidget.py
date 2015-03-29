@@ -60,7 +60,7 @@ class ImapWidget(base.ThreadedPollText):
     nested sets of quotes! Labels can be whatever you choose, of
     course.
     """
-
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('mbox', '"INBOX"', 'mailbox to fetch'),
         ('label', 'INBOX', 'label for display'),

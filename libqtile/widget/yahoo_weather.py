@@ -27,6 +27,7 @@
 #
 # -*- coding: utf-8 -*-
 
+from . import base
 from .generic_poll_text import GenPollUrl
 from xml.dom import minidom
 
@@ -39,7 +40,7 @@ WEATHER_NS = 'http://xml.weather.yahoo.com/ns/rss/1.0'
 
 
 class YahooWeather(GenPollUrl):
-    ''' A weather widget, data provided by the Yahoo! Weather API
+    ''' A weather widget, data provided by the Yahoo! Weather API.
 
         Format options:
 
@@ -62,7 +63,7 @@ class YahooWeather(GenPollUrl):
             - units_speed
             - wind_chill
     '''
-
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         # One of (location, woeid) must be set.
         (

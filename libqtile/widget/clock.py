@@ -42,6 +42,7 @@ class Clock(base.InLoopPollText):
     """
         A simple but flexible text-based clock.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('format', '%H:%M', 'A Python datetime format string'),
         ('update_interval', 1., 'Update interval for the clock'),

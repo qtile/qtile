@@ -36,6 +36,7 @@ class Mpris(base._TextBox):
     player. It should work with all players which implement a reasonably
     correct version of MPRIS, though I have only tested it with clementine.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
 
     def __init__(self, name="clementine", width=bar.CALCULATED,
                  objname='org.mpris.clementine', **config):

@@ -39,6 +39,7 @@ class ThermalSensor(base.InLoopPollText):
     Then you can choose which you want, otherwise it will display the first
     available.
     '''
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('metric', True, 'True to use metric/C, False to use imperial/F'),
         ('show_tag', False, 'Show tag sensor'),

@@ -30,7 +30,7 @@ class Countdown(base.InLoopPollText):
     """
         A simple countdown timer text widget.
     """
-
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('format', '{D}d {H}h {M}m {S}s',
             'Format of the displayed text. Available variables:'

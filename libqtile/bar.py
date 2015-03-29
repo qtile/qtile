@@ -35,54 +35,60 @@ class Gap(command.CommandObject):
     """
     def __init__(self, size):
         """
-            size: The width of the gap.
+            size: The "thickness" of the gap, i.e. the height of a horizontal
+                  gap, or the width of a vertical gap.
         """
+        # 'size' corresponds to the height of a horizontal gap, or the width
+        # of a vertical gap
         self.size = size
         self.initial_size = size
+        # 'length' corresponds to the width of a horizontal gap, or the height
+        # of a vertical gap
+        self.length = None
         self.qtile = None
         self.screen = None
+        self.x = None
+        self.y = None
+        self.width = None
+        self.height = None
+        self.horizontal = None
 
     def _configure(self, qtile, screen):
         self.qtile = qtile
         self.screen = screen
+        # If both horizontal and vertical gaps are present, screen corners are
+        # given to the horizontal ones
+        if screen.top is self:
+            self.x = screen.x
+            self.y = screen.y
+            self.length = screen.width
+            self.width = self.length
+            self.height = self.size
+            self.horizontal = True
+        elif screen.bottom is self:
+            self.x = screen.x
+            self.y = screen.dy + screen.dheight
+            self.length = screen.width
+            self.width = self.length
+            self.height = self.size
+            self.horizontal = True
+        elif screen.left is self:
+            self.x = screen.x
+            self.y = screen.dy
+            self.length = screen.dheight
+            self.width = self.size
+            self.height = self.length
+            self.horizontal = False
+        else:  # right
+            self.x = screen.dx + screen.dwidth
+            self.y = screen.dy
+            self.length = screen.dheight
+            self.width = self.size
+            self.height = self.length
+            self.horizontal = False
 
     def draw(self):
         pass
-
-    @property
-    def x(self):
-        screen = self.screen
-        if screen.right is self:
-            return screen.dx + screen.dwidth
-        else:
-            return screen.x
-
-    @property
-    def y(self):
-        screen = self.screen
-        if screen.top is self:
-            return screen.y
-        elif screen.bottom is self:
-            return screen.dy + screen.dheight
-        else:
-            # Screen corners are reserved to horizontal gaps, if present
-            return screen.dy
-
-    @property
-    def width(self):
-        screen = self.screen
-        if self in [screen.top, screen.bottom]:
-            return screen.width
-        else:
-            return self.size
-
-    @property
-    def height(self):
-        screen = self.screen
-        if self in [screen.top, screen.bottom]:
-            return self.size
-        else:
-            return screen.dheight
 
     def geometry(self):
         return (self.x, self.y, self.width, self.height)
@@ -129,8 +135,7 @@ STATIC = Obj("STATIC")
 
 class Bar(Gap, configurable.Configurable):
     """
-        A bar, which can contain widgets. Note that bars can only be placed at
-        the top or bottom of the screen.
+        A bar, which can contain widgets.
     """
     defaults = [
         ("background", "#000000", "Background colour."),
@@ -140,7 +145,8 @@ class Bar(Gap, configurable.Configurable):
     def __init__(self, widgets, size, **config):
         """
             - widgets: A list of widget objects.
-            - size: The height of the bar.
+            - size: The "thickness" of the bar, i.e. the height of a horizontal
+                    bar, or the width of a vertical bar.
         """
         Gap.__init__(self, size)
         configurable.Configurable.__init__(self, **config)
@@ -151,14 +157,20 @@ class Bar(Gap, configurable.Configurable):
         self.queued_draws = 0
 
     def _configure(self, qtile, screen):
-        if self not in [screen.top, screen.bottom]:
-            raise confreader.ConfigError(
-                "Bars must be at the top or the bottom of the screen."
-            )
-        if len([w for w in self.widgets if w.width_type == STRETCH]) > 1:
+        Gap._configure(self, qtile, screen)
+
+        stretches = 0
+        for w in self.widgets:
+            # Executing _test_orientation_compatibility later, for example in
+            # the _configure() method of each widget, would still pass
+            # test/test_bar.py but a segfault would be raised when nosetests is
+            # about to exit
+            w._test_orientation_compatibility(self.horizontal)
+            if w.length_type == STRETCH:
+                stretches += 1
+        if stretches > 1:
             raise confreader.ConfigError("Only one STRETCH widget allowed!")
 
-        Gap._configure(self, qtile, screen)
         self.window = window.Internal.create(
             self.qtile,
             self.x, self.y, self.width, self.height,
@@ -182,40 +194,52 @@ class Bar(Gap, configurable.Configurable):
         for i in self.widgets:
             qtile.registerWidget(i)
             i._configure(qtile, self)
-        self._resize(self.width, self.widgets)
+        self._resize(self.length, self.widgets)
 
-    def _resize(self, width, widgets):
-        stretches = [i for i in widgets if i.width_type == STRETCH]
+    def _resize(self, length, widgets):
+        stretches = [i for i in widgets if i.length_type == STRETCH]
         if stretches:
-            stretchspace = width - sum(
-                [i.width for i in widgets if i.width_type != STRETCH]
+            stretchspace = length - sum(
+                [i.length for i in widgets if i.length_type != STRETCH]
             )
             stretchspace = max(stretchspace, 0)
             astretch = stretchspace // len(stretches)
             for i in stretches:
-                i.width = astretch
+                i.length = astretch
             if astretch:
-                i.width += stretchspace % astretch
+                i.length += stretchspace % astretch
 
         offset = 0
-        for i in widgets:
-            i.offset = offset
-            offset += i.width
+        if self.horizontal:
+            for i in widgets:
+                i.offsetx = offset
+                i.offsety = 0
+                offset += i.length
+        else:
+            for i in widgets:
+                i.offsetx = 0
+                i.offsety = offset
+                offset += i.length
 
     def handle_Expose(self, e):
         self.draw()
 
     def get_widget_in_position(self, e):
-        for i in self.widgets:
-            if e.event_x < i.offset + i.width:
-                return i
+        if self.horizontal:
+            for i in self.widgets:
+                if e.event_x < i.offsetx + i.length:
+                    return i
+        else:
+            for i in self.widgets:
+                if e.event_y < i.offsety + i.length:
+                    return i
 
     def handle_ButtonPress(self, e):
         widget = self.get_widget_in_position(e)
         if widget:
             widget.button_press(
-                e.event_x - widget.offset,
-                e.event_y,
+                e.event_x - widget.offsetx,
+                e.event_y - widget.offsety,
                 e.detail
             )
 
@@ -223,8 +247,8 @@ class Bar(Gap, configurable.Configurable):
         widget = self.get_widget_in_position(e)
         if widget:
             widget.button_release(
-                e.event_x - widget.offset,
-                e.event_y,
+                e.event_x - widget.offsetx,
+                e.event_y - widget.offsety,
                 e.detail
             )
 
@@ -253,17 +277,23 @@ class Bar(Gap, configurable.Configurable):
 
     def _actual_draw(self):
         self.queued_draws = 0
-        self._resize(self.width, self.widgets)
+        self._resize(self.length, self.widgets)
         for i in self.widgets:
             i.draw()
         if self.widgets:
-            end = i.offset + i.width
-            if end < self.width:
-                self.drawer.draw(end, self.width - end)
+            end = i.offset + i.length
+            if end < self.length:
+                if self.horizontal:
+                    self.drawer.draw(offsetx=end, width=self.length - end)
+                else:
+                    self.drawer.draw(offsety=end, height=self.length - end)
 
     def info(self):
         return dict(
+            size=self.size,
+            length=self.length,
             width=self.width,
+            height=self.height,
             position=self.position,
             widgets=[i.info() for i in self.widgets],
             window=self.window.window.wid

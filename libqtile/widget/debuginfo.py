@@ -28,6 +28,8 @@ class DebugInfo(base._TextBox):
     """
         Displays debugging infos about selected window
     """
+    orientations = base.ORIENTATION_HORIZONTAL
+
     def __init__(self, **config):
         self.log = logging.getLogger('qtile')
         base._TextBox.__init__(self, text=" ", width=bar.CALCULATED, **config)

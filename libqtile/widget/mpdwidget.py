@@ -47,8 +47,9 @@ from . import base
 
 class Mpd(base.ThreadPoolText):
     """
-        An mpd widget
+        An mpd widget.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("foreground_progress", "ffffff", "Foreground progress colour"),
         ('reconnect', False, 'attempt to reconnect if initial connection failed'),

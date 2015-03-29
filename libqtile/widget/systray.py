@@ -33,7 +33,8 @@ from .. import bar, xcbq, window
 from . import base
 
 import xcffib
-from xcffib.xproto import ClientMessageEvent, ClientMessageData, EventMask, SetMode
+from xcffib.xproto import (ClientMessageEvent, ClientMessageData, EventMask,
+                           SetMode)
 import atexit
 
 
@@ -125,8 +126,9 @@ class TrayWindow(window._Window):
 
 class Systray(base._Widget):
     """
-        A widget that manage system tray
+        A widget that manages system tray.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('icon_size', 20, 'Icon width'),
         ('padding', 5, 'Padding between icons'),
@@ -141,7 +143,7 @@ class Systray(base._Widget):
     def button_press(self, x, y, button):
         pass
 
-    def calculate_width(self):
+    def calculate_length(self):
         width = sum([i.width for i in self.icons.values()])
         width += self.padding * len(self.icons)
         return width
@@ -178,7 +180,7 @@ class Systray(base._Widget):
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
-        self.drawer.draw(self.offset, self.calculate_width())
+        self.drawer.draw(offsetx=self.offset, width=self.calculate_length())
         xoffset = self.padding
         for pos, icon in enumerate(self.icons.values()):
             icon.place(
