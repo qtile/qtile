@@ -1,3 +1,27 @@
+from logging import getLogger
+
+import xcffib
+from cffi import FFI
+ffi = FFI()
+
+ffi.include(xcffib.ffi)
+ffi.cdef("""
+    typedef uint32_t xcb_cursor_t;
+    typedef struct xcb_cursor_context_t xcb_cursor_context_t;
+
+    int xcb_cursor_context_new(
+        xcb_connection_t *conn,
+        xcb_screen_t *screen,
+        xcb_cursor_context_t **ctx
+        );
+
+    xcb_cursor_t xcb_cursor_load_cursor(
+        xcb_cursor_context_t *ctx,
+        const char *name
+        );
+
+    void xcb_cursor_context_free(xcb_cursor_context_t *ctx);
+""")
 
 
 # Stolen from samurai-x
@@ -8,6 +32,7 @@
 class Cursors(dict):
     def __init__(self, conn):
         self.conn = conn
+        self.log = getLogger('qtile')
 
         cursors = (
             (b'X_cursor', 0),
@@ -89,10 +114,41 @@ class Cursors(dict):
             (b'xterm', 152)
         )
 
+        self.xcursor = self._setup_xcursor_binding()
+
         for name, cursor_font in cursors:
             self._new(name, cursor_font)
 
-    def _new(self, name, cursor_font):
+        if self.xcursor:
+            self.xcursor.xcb_cursor_context_free(self._cursor_ctx[0])
+
+    def _setup_xcursor_binding(self):
+        try:
+            xcursor = ffi.dlopen('xcb-cursor')
+        except OSError:
+            self.log.warning("xcb-cursor not found, fallback to font pointer")
+            return False
+
+        conn = self.conn.conn
+        screen_pointer = conn.get_screen_pointers()[0]
+        self._cursor_ctx = ffi.new('xcb_cursor_context_t **')
+        xcursor.xcb_cursor_context_new(conn._conn, screen_pointer,
+                                       self._cursor_ctx)
+
+        return xcursor
+
+    def get_xcursor(self, name):
+        """
+        Get the cursor using xcb-util-cursor, so we support themed cursors
+        """
+        cursor = self.xcursor.xcb_cursor_load_cursor(self._cursor_ctx[0], name)
+        return cursor
+
+    def get_font_cursor(self, name, cursor_font):
+        """
+        Get the cursor from the font, used as a fallback if xcb-util-cursor
+        is not installed
+        """
         fid = self.conn.conn.generate_id()
         self.conn.conn.core.OpenFont(fid, len("cursor"), "cursor")
         cursor = self.conn.conn.generate_id()
@@ -102,4 +158,11 @@ class Cursors(dict):
             0, 0, 0,
             65535, 65535, 65535
         )
-        self[name] = cursor
+        return cursor
+
+    def _new(self, name, cursor_font):
+        if self.xcursor:
+            cursor = self.get_xcursor(name)
+        else:
+            cursor = self.get_font_cursor(name, cursor_font)
+        self[name.decode()] = cursor
