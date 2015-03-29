@@ -74,11 +74,11 @@ def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log'):
         except TypeError:  # Happens if log_path doesn't contain formatters.
             pass
         log_path = os.path.expanduser(log_path)
-        with open(log_path, "a"):
+        with open(log_path, "w"):
             pass
         handler = logging.handlers.RotatingFileHandler(
             log_path,
-            maxBytes=1000000000,
+            maxBytes=10000000,
             backupCount=1
         )
         handler.setFormatter(
