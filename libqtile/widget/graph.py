@@ -154,7 +154,7 @@ class _Graph(base._Widget):
         else:
             raise ValueError("Unknown graph type: %s." % self.type)
 
-        self.drawer.draw(self.offset, self.width)
+        self.drawer.draw(offsetx=self.offset, width=self.width)
 
     def push(self, value):
         if self.lag_cycles > self.samples:
@@ -186,6 +186,7 @@ class CPUGraph(_Graph):
     """
         Display CPU usage graph.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("core", "all", "Which core to show (all/0/1/2/...)"),
     ]
@@ -249,6 +250,7 @@ class MemoryGraph(_Graph):
     """
         Displays a memory usage graph.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     fixed_upper_bound = True
 
     def __init__(self, **config):
@@ -273,6 +275,7 @@ class SwapGraph(_Graph):
     """
         Display a swap info graph.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     fixed_upper_bound = True
 
     def __init__(self, **config):
@@ -301,6 +304,7 @@ class NetGraph(_Graph):
     """
         Display a network usage graph.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         (
             "interface",
@@ -363,6 +367,7 @@ class HDDGraph(_Graph):
         Display HDD free or used space graph.
     """
     fixed_upper_bound = True
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("path", "/", "Partition mount point."),
         ("space_type", "used", "free/used")
@@ -394,6 +399,7 @@ class HDDBusyGraph(_Graph):
         IO usage, based on ``io_ticks``'s value.
         See https://www.kernel.org/doc/Documentation/block/stat.txt
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("device", "sda", "Block device to display info for")
     ]

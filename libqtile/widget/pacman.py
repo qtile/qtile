@@ -26,6 +26,7 @@ class Pacman(base.ThreadedPollText):
     Needs the pacman package manager installed. So will only work in Arch Linux
     installation.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('unavailable', 'ffffff', 'Unavailable Color - no updates.'),
         ('execute', None, 'Command to execute on click'),

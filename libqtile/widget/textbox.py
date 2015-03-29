@@ -32,6 +32,7 @@ class TextBox(base._TextBox):
         A flexible textbox that can be updated from bound keys, scripts and
         qsh.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("font", "Arial", "Text font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),

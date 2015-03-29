@@ -36,6 +36,7 @@ class CurrentLayout(base._TextBox):
         Display the name of the current layout of the current
         group of the screen, the bar containing the widget, is on.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
 
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "", width, **config)

@@ -48,31 +48,33 @@ class GBConfig:
     screens = [
         libqtile.config.Screen(
             top=libqtile.bar.Bar(
-                    [
-                        libqtile.widget.CPUGraph(
-                            width=libqtile.bar.STRETCH,
-                            type="linefill",
-                            border_width=20,
-                            margin_x=1,
-                            margin_y=1
-                        ),
-                        libqtile.widget.MemoryGraph(type="line"),
-                        libqtile.widget.SwapGraph(type="box"),
-                        libqtile.widget.TextBox(name="text", background="333333"),
-                    ],
-                    50,
-                ),
-            bottom=libqtile.bar.Bar(
-                        [
-                            libqtile.widget.GroupBox(),
-                            libqtile.widget.AGroupBox(),
-                            libqtile.widget.Prompt(),
-                            libqtile.widget.WindowName(),
-                            libqtile.widget.Sep(),
-                            libqtile.widget.Clock(),
-                        ],
-                        50
+                [
+                    libqtile.widget.CPUGraph(
+                        width=libqtile.bar.STRETCH,
+                        type="linefill",
+                        border_width=20,
+                        margin_x=1,
+                        margin_y=1
                     ),
+                    libqtile.widget.MemoryGraph(type="line"),
+                    libqtile.widget.SwapGraph(type="box"),
+                    libqtile.widget.TextBox(name="text",
+                    background="333333"),
+                ],
+                50,
+            ),
+            bottom=libqtile.bar.Bar(
+                [
+                    libqtile.widget.GroupBox(),
+                    libqtile.widget.AGroupBox(),
+                    libqtile.widget.Prompt(),
+                    libqtile.widget.WindowName(),
+                    libqtile.widget.Sep(),
+                    libqtile.widget.Clock(),
+                ],
+                50
+            ),
+            # TODO: Add vertical bars and test widgets that support them
         )
     ]
     main = None
@@ -176,17 +178,29 @@ class GeomConf:
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
         libqtile.config.Screen(
-            left=libqtile.bar.Gap(10),
-            right=libqtile.bar.Gap(10),
             top=libqtile.bar.Bar([], 10),
             bottom=libqtile.bar.Bar([], 10),
+            left=libqtile.bar.Bar([], 10),
+            right=libqtile.bar.Bar([], 10),
         )
     ]
 
 
+class DBarH(libqtile.bar.Bar):
+    def __init__(self, widgets, size):
+        libqtile.bar.Bar.__init__(self, widgets, size)
+        self.horizontal = True
+
+
+class DBarV(libqtile.bar.Bar):
+    def __init__(self, widgets, size):
+        libqtile.bar.Bar.__init__(self, widgets, size)
+        self.horizontal = False
+
+
 class DWidget:
-    def __init__(self, width, width_type):
-        self.width, self.width_type = width, width_type
+    def __init__(self, length, length_type):
+        self.length, self.length_type = length, length_type
 
 
 @Xephyr(True, GeomConf())
@@ -204,7 +218,7 @@ def test_geometry(self):
     assert geom["width"] == 778
     assert geom["height"] == 578
     internal = self.c.internal_windows()
-    assert len(internal) == 2
+    assert len(internal) == 4
     wid = self.c.bar["bottom"].info()["window"]
     assert self.c.window[wid].inspect()
 
@@ -212,72 +226,75 @@ def test_geometry(self):
 @Xephyr(True, GeomConf())
 def test_resize(self):
     def wd(l):
-        return [i.width for i in l]
+        return [i.length for i in l]
 
-    def off(l):
-        return [i.offset for i in l]
+    def offx(l):
+        return [i.offsetx for i in l]
 
-    b = libqtile.bar.Bar([], 100)
+    def offy(l):
+        return [i.offsety for i in l]
 
-    l = [
-        DWidget(10, libqtile.bar.CALCULATED),
-        DWidget(None, libqtile.bar.STRETCH),
-        DWidget(None, libqtile.bar.STRETCH),
-        DWidget(10, libqtile.bar.CALCULATED),
-    ]
-    b._resize(100, l)
-    assert wd(l) == [10, 40, 40, 10]
+    for DBar, off in ((DBarH, offx), (DBarV, offy)):
+        b = DBar([], 100)
 
-    b._resize(101, l)
-    assert wd(l) == [10, 40, 41, 10]
+        l = [
+            DWidget(10, libqtile.bar.CALCULATED),
+            DWidget(None, libqtile.bar.STRETCH),
+            DWidget(None, libqtile.bar.STRETCH),
+            DWidget(10, libqtile.bar.CALCULATED),
+        ]
+        b._resize(100, l)
+        assert wd(l) == [10, 40, 40, 10]
+        assert off(l) == [0, 10, 50, 90]
 
-    l = [
-        DWidget(10, libqtile.bar.CALCULATED)
-    ]
-    b._resize(100, l)
-    assert wd(l) == [10]
-    assert off(l) == [0]
+        b._resize(101, l)
+        assert wd(l) == [10, 40, 41, 10]
+        assert off(l) == [0, 10, 50, 91]
 
-    l = [
-        DWidget(10, libqtile.bar.CALCULATED),
-        DWidget(None, libqtile.bar.STRETCH)
-    ]
-    b._resize(100, l)
-    assert wd(l) == [10, 90]
-    assert off(l) == [0, 10]
+        l = [
+            DWidget(10, libqtile.bar.CALCULATED)
+        ]
+        b._resize(100, l)
+        assert wd(l) == [10]
+        assert off(l) == [0]
 
-    l = [
-        DWidget(None, libqtile.bar.STRETCH),
-        DWidget(10, libqtile.bar.CALCULATED),
-    ]
-    b._resize(100, l)
-    assert wd(l) == [90, 10]
-    assert off(l) == [0, 90]
+        l = [
+            DWidget(10, libqtile.bar.CALCULATED),
+            DWidget(None, libqtile.bar.STRETCH)
+        ]
+        b._resize(100, l)
+        assert wd(l) == [10, 90]
+        assert off(l) == [0, 10]
 
-    l = [
-        DWidget(10, libqtile.bar.CALCULATED),
-        DWidget(None, libqtile.bar.STRETCH),
-        DWidget(10, libqtile.bar.CALCULATED),
-    ]
-    b._resize(100, l)
-    assert wd(l) == [10, 80, 10]
-    assert off(l) == [0, 10, 90]
+        l = [
+            DWidget(None, libqtile.bar.STRETCH),
+            DWidget(10, libqtile.bar.CALCULATED),
+        ]
+        b._resize(100, l)
+        assert wd(l) == [90, 10]
+        assert off(l) == [0, 90]
+
+        l = [
+            DWidget(10, libqtile.bar.CALCULATED),
+            DWidget(None, libqtile.bar.STRETCH),
+            DWidget(10, libqtile.bar.CALCULATED),
+        ]
+        b._resize(100, l)
+        assert wd(l) == [10, 80, 10]
+        assert off(l) == [0, 10, 90]
 
 
-class TopBottomConf(GeomConf):
-    screens = [
-        libqtile.config.Screen(left=libqtile.bar.Bar([], 10))
-    ]
+class TestWidget(libqtile.widget.base._Widget):
+    orientations = libqtile.widget.base.ORIENTATION_HORIZONTAL
 
-class MultiStretchConf(GeomConf):
-    screens = [
-        libqtile.config.Screen(top=libqtile.bar.Bar([
-          libqtile.widget.TextBox(name=txt, width=libqtile.bar.STRETCH)
-          for txt in ["text1", "text2"]
-        ], 10))
-    ]
+    def __init__(self):
+        libqtile.widget.base._Widget.__init__(self, 10)
 
-class ErrConf:
+    def draw(self):
+        pass
+
+
+class IncompatibleWidgetConf:
     main = None
     keys = []
     mouse = []
@@ -286,25 +303,48 @@ class ErrConf:
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
         libqtile.config.Screen(
-            left=libqtile.bar.Bar([], 10),
+            left=libqtile.bar.Bar(
+                [
+                    # This widget doesn't support vertical orientation
+                    TestWidget(),
+                ],
+                10
+            ),
         )
     ]
 
 
-@Xephyr(True, ErrConf(), False)
-def test_err(self):
-    self.qtileRaises(libqtile.confreader.ConfigError, ErrConf())
+@Xephyr(True, IncompatibleWidgetConf(), False)
+def test_incompatible_widget(self):
+    # Ensure that adding a widget that doesn't support the orientation of the
+    # bar raises ConfigError
+    self.qtileRaises(libqtile.confreader.ConfigError, IncompatibleWidgetConf())
 
 
-class TestWidget(libqtile.widget.base._Widget):
-    def __init__(self):
-        libqtile.widget.base._Widget.__init__(self, 10)
+class MultiStretchConf:
+    main = None
+    keys = []
+    mouse = []
+    groups = [libqtile.config.Group("a")]
+    layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
+    floating_layout = libqtile.layout.floating.Floating()
+    screens = [
+        libqtile.config.Screen(
+            top=libqtile.bar.Bar(
+                [
+                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
+                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
+                ],
+                10
+            ),
+        )
+    ]
 
-    def _configure(self, qtile, bar):
-        libqtile.widget.base._Widget._configure(self, qtile, bar)
 
-    def draw(self):
-        pass
+@Xephyr(True, MultiStretchConf(), False)
+def test_multiple_stretches(self):
+    # Ensure that adding two STRETCH widgets to the same bar raises ConfigError
+    self.qtileRaises(libqtile.confreader.ConfigError, MultiStretchConf())
 
 
 @Xephyr(True, GeomConf(), False)

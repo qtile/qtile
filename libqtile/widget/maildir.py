@@ -36,7 +36,7 @@ class Maildir(base.ThreadedPollText):
     """
     A simple widget showing the number of new mails in maildir mailboxes.
     """
-
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("maildirPath", "~/Mail", "path to the Maildir folder"),
         ("subFolders", [], 'The subfolders to scan (e.g. [{"path": "INBOX", '

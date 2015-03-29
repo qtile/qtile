@@ -22,6 +22,7 @@
 # SOFTWARE.
 
 import logging
+import logging.handlers
 import os
 import sys
 from logging import getLogger, StreamHandler
@@ -75,7 +76,11 @@ def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log'):
         log_path = os.path.expanduser(log_path)
         with open(log_path, "w"):
             pass
-        handler = logging.FileHandler(log_path)
+        handler = logging.handlers.RotatingFileHandler(
+            log_path,
+            maxBytes=10000000,
+            backupCount=1
+        )
         handler.setFormatter(
             logging.Formatter(
                 "%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s"

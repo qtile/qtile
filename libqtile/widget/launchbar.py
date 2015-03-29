@@ -51,9 +51,9 @@ from xdg.IconTheme import getIconPath
 
 class LaunchBar(base._Widget):
     """
-    A widget that display icons to launch the associated command
+    A widget that display icons to launch the associated command.
     """
-
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('padding', 2, 'Padding between icons'),
         ('default_icon', '/usr/share/icons/oxygen/256x256/mimetypes/'
@@ -81,14 +81,14 @@ class LaunchBar(base._Widget):
                                       'comment': prog[2] if len(prog) > 2 else
                                       None} for prog in progs]))
         self.progs_name = set([prog['name'] for prog in self.progs.values()])
-        self.width_type = bar.STATIC
-        self.width = 0
+        self.length_type = bar.STATIC
+        self.length = 0
 
     def _configure(self, qtile, pbar):
         base._Widget._configure(self, qtile, pbar)
         self.lookup_icons()
         self.setup_images()
-        self.width = self.calculate_width()
+        self.length = self.calculate_length()
 
     def setup_images(self):
         """ Create image structures for each icon files. """
@@ -111,7 +111,7 @@ class LaunchBar(base._Widget):
                 )
                 # the name will be displayed
                 textbox.text = img_name
-                textbox.calculate_width()
+                textbox.calculate_length()
                 self.icons_widths[img_name] = textbox.width
                 self.surfaces[img_name] = textbox
                 continue
@@ -210,10 +210,11 @@ class LaunchBar(base._Widget):
                 # display an icon
                 self.drawer.ctx.set_source(self.surfaces[name])
                 self.drawer.ctx.paint()
-            self.drawer.draw(self.offset + xoffset, icon_width + self.padding)
+            self.drawer.draw(offsetx=self.offset + xoffset,
+                             width=icon_width + self.padding)
             xoffset += icon_width + self.padding
 
-    def calculate_width(self):
+    def calculate_length(self):
         """ Compute the width of the widget according to each icon width. """
         return sum([self.icons_widths[prg['name']] for prg in self.progs.values()]) \
             + self.padding * (len(self.progs) + 1)

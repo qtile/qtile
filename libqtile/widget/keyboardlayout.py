@@ -33,6 +33,7 @@ class KeyboardLayout(base.InLoopPollText):
         Widget for changing and displaying the current keyboard layout.
         It requires setxkbmap to be available in the system.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("update_interval", 1, "Update time in seconds."),
         ("configured_keyboards", "us", "A list of predefined keyboard layouts "

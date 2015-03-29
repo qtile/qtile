@@ -32,6 +32,7 @@ class Wlan(base.InLoopPollText):
     """
         Displays Wifi ssid and quality.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('interface', 'wlan0', 'The interface to monitor'),
         ('update_interval', 1, 'The update interval.'),
