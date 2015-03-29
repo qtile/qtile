@@ -291,8 +291,6 @@ class Screen(_Wrapper):
         _Wrapper.__init__(self, screen)
         self.default_colormap = Colormap(conn, screen.default_colormap)
         self.root = Window(conn, self.root)
-        # FIXME: Where is the right place to set the cursor?
-        # self.root.set_cursor("Normal")
 
 
 class PseudoScreen:
@@ -925,5 +923,3 @@ class Connection:
             i.name.to_string().lower()
             for i in self.conn.core.ListExtensions().reply().names
         )
-
-
