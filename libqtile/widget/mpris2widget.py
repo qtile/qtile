@@ -34,6 +34,7 @@ class Mpris2(base._TextBox):
     This widget scrolls the text if neccessary and information that
     is displayed is configurable.
     '''
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('name', 'audacious', 'Name of the MPRIS widget.'),
 

@@ -30,16 +30,30 @@ from . import base
 
 class Spacer(base._Widget):
     """
-        Just an empty space on the bar. Often used with width equal to
-        bar.STRETCH to push bar widgets to the right edge of the screen.
+        Just an empty space on the bar. Often used with length equal to
+        bar.STRETCH to push bar widgets to the right or bottom edge of the
+        screen.
     """
-    def __init__(self, width=bar.STRETCH):
+    orientations = base.ORIENTATION_BOTH
+
+    def __init__(self, length=bar.STRETCH, width=None):
         """
-            - width: Width of the widget.
-              Can be either ``bar.STRETCH`` or a width in pixels.
+            - length: Length of the widget.
+              Can be either ``bar.STRETCH`` or a length in pixels.
+            - width: DEPRECATED, same as ``length``.
         """
-        base._Widget.__init__(self, width)
+        # 'width' was replaced by 'length' since the widget can be installed in
+        # vertical bars
+        if width is not None:
+            base.deprecated('width kwarg or positional argument is '
+                            'deprecated. Please use length.')
+            length = width
+
+        base._Widget.__init__(self, length)
 
     def draw(self):
         self.drawer.clear(self.bar.background)
-        self.drawer.draw(self.offset, self.width)
+        if self.bar.horizontal:
+            self.drawer.draw(offsetx=self.offset, width=self.length)
+        else:
+            self.drawer.draw(offsety=self.offset, height=self.length)

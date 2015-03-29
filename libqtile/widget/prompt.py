@@ -316,6 +316,7 @@ class Prompt(base._TextBox):
         "window": WindowCompleter,
         None: NullCompleter
     }
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [("cursorblink", 0.5, "Cursor blink rate. 0 to disable."),
                 ("prompt", "{prompt}: ", "Text displayed at the prompt")]
 
@@ -380,7 +381,7 @@ class Prompt(base._TextBox):
             self.text = _text
             return width
 
-    def calculate_width(self):
+    def calculate_length(self):
         if self.text:
             return self._calculate_real_width()
         else:

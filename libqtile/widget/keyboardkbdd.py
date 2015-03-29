@@ -32,7 +32,7 @@ class KeyboardKbdd(base.InLoopPollText):
         kbdd should be installed and running, you can get it from:
         https://github.com/qnikst/kbdd
     """
-
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("update_interval", 1, "Update time in seconds."),
         ("configured_keyboards", ["us", "ir"],

@@ -24,16 +24,20 @@
 #
 # -*- coding: utf-8 -*-
 
+from . import base
 from .generic_poll_text import GenPollUrl
 import locale
 
 
 class BitcoinTicker(GenPollUrl):
-    ''' A bitcoin ticker widget, data provided by the btc-e.com API. Defaults to
-        displaying currency in whatever the current locale is.
+    '''
+        A bitcoin ticker widget, data provided by the btc-e.com API. Defaults
+        to displaying currency in whatever the current locale is.
     '''
 
     QUERY_URL = "https://btc-e.com/api/2/btc_%s/ticker"
+
+    orientations = base.ORIENTATION_HORIZONTAL
 
     defaults = [
         ('currency', locale.localeconv()['int_curr_symbol'].strip(),

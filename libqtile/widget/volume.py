@@ -47,9 +47,11 @@ re_vol = re.compile('\[(\d?\d?\d?)%\]')
 
 
 class Volume(base._TextBox):
-    ''' Widget that display and change volume
-        if theme_path is set it draw widget as
-        icons '''
+    '''
+        Widget that display and change volume if theme_path is set it draw
+        widget as icons.
+    '''
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("cardid", 0, "Card Id"),
         ("channel", "Master", "Channel"),
@@ -68,8 +70,8 @@ class Volume(base._TextBox):
         base._TextBox.__init__(self, '0', width=bar.CALCULATED, **config)
         self.add_defaults(Volume.defaults)
         if self.theme_path:
-            self.width_type = bar.STATIC
-            self.width = 0
+            self.length_type = bar.STATIC
+            self.length = 0
         self.surfaces = {}
         self.volume = None
 
@@ -173,7 +175,7 @@ class Volume(base._TextBox):
                 )
             except cairocffi.Error:
                 self.theme_path = None
-                self.width_type = bar.CALCULATED
+                self.length_type = bar.CALCULATED
                 self.qtile.log.exception('Volume switching to text mode')
                 return
             input_width = img.get_width()
@@ -182,8 +184,8 @@ class Volume(base._TextBox):
             sp = input_height / float(self.bar.height - 1)
 
             width = input_width / sp
-            if width > self.width:
-                self.width = int(width) + self.actual_padding * 2
+            if width > self.length:
+                self.length = int(width) + self.actual_padding * 2
 
             imgpat = cairocffi.SurfacePattern(img)
 
@@ -225,6 +227,6 @@ class Volume(base._TextBox):
 
     def draw(self):
         if self.theme_path:
-            self.drawer.draw(self.offset, self.width)
+            self.drawer.draw(offsetx=self.offset, width=self.length)
         else:
             base._TextBox.draw(self)

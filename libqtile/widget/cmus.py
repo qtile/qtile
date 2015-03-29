@@ -31,7 +31,7 @@ class Cmus(base.ThreadPoolText):
 
     Cmus (https://cmus.github.io) should be installed.
     """
-
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('play_color', '00ff00', 'Text colour when playing.'),
         ('noplay_color', 'cecece', 'Text colour when not playing.'),

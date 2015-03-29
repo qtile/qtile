@@ -106,6 +106,7 @@ class AGroupBox(_GroupBase):
     """
         A widget that graphically displays the current group.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [("border", "000000", "group box border color")]
 
     def __init__(self, **config):
@@ -115,7 +116,7 @@ class AGroupBox(_GroupBase):
     def button_press(self, x, y, button):
         self.bar.screen.cmd_nextgroup()
 
-    def calculate_width(self):
+    def calculate_length(self):
         return self.box_width(self.qtile.groups)
 
     def draw(self):
@@ -125,13 +126,14 @@ class AGroupBox(_GroupBase):
             if i.name == self.bar.screen.group.name
         )
         self.drawbox(self.margin_x, e.name, self.border, self.foreground)
-        self.drawer.draw(self.offset, self.width)
+        self.drawer.draw(offsetx=self.offset, width=self.width)
 
 
 class GroupBox(_GroupBase):
     """
         A widget that graphically displays the current group.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("active", "FFFFFF", "Active group font colour"),
         ("inactive", "404040", "Inactive group font colour"),
@@ -214,7 +216,7 @@ class GroupBox(_GroupBase):
                 group.cmd_switch_groups(self.clicked.name)
                 self.clicked = None
 
-    def calculate_width(self):
+    def calculate_length(self):
         width = 0
         for g in self.qtile.groups:
             width += self.box_width([g])
@@ -269,4 +271,4 @@ class GroupBox(_GroupBase):
                 bw - self.margin_x * 2 - self.padding_x * 2
             )
             offset += bw
-        self.drawer.draw(self.offset, self.width)
+        self.drawer.draw(offsetx=self.offset, width=self.width)

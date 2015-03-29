@@ -383,7 +383,7 @@ class TreeTab(SingleWindow):
             return
         self._drawer.clear(self.bg_color)
         self._tree.draw(self, 0)
-        self._drawer.draw(0, self.panel_width)
+        self._drawer.draw(offsetx=0, width=self.panel_width)
 
     def _panel_ButtonPress(self, event):
         node = self._tree.button_press(event.event_x, event.event_y)

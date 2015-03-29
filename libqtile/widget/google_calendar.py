@@ -71,12 +71,13 @@ import oauth2client.file
 from libqtile import utils
 
 class GoogleCalendar(base.ThreadedPollText):
-    ''' This widget will display the next appointment on your Google calendar
+    '''
+        This widget will display the next appointment on your Google calendar
         in the qtile status bar. Appointments within the "reminder" time will
         be highlighted. Authentication credentials are stored in a file on
         disk.
     '''
-
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('calendar', 'primary', 'calendar to use'),
         (
