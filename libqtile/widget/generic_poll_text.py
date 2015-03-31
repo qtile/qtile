@@ -12,7 +12,7 @@ class GenPollText(base.ThreadedPollText):
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('poll', None, 'Poll Function'),
+        ('func', None, 'Poll Function'),
     ]
 
     def __init__(self, **config):
@@ -20,9 +20,9 @@ class GenPollText(base.ThreadedPollText):
         self.add_defaults(GenPollText.defaults)
 
     def poll(self):
-        if not self.poll:
+        if not self.func:
             return "You need a poll function"
-        return self.poll()
+        return self.func()
 
 
 class GenPollUrl(base.ThreadedPollText):
