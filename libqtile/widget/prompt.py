@@ -349,11 +349,14 @@ class Prompt(base._TextBox):
             if os.path.exists(self.history_path):
                 with open(self.history_path, 'rb') as f:
                     self.history = pickle.load(f)
-                    if self.max_history != self.history.maxlen:
-                        self.history = deque(copy.copy(self.history),
-                                             self.max_history)
+                    if self.max_history != \
+                       self.history[list(self.history)[0]].maxlen:
+                        self.history = {x: deque(copy.copy(self.history[x]),
+                                                 self.max_history)
+                                        for x in self.completers if x}
             else:
-                self.history = deque(maxlen=self.max_history)
+                self.history = {x: deque(maxlen=self.max_history)
+                                for x in self.completers if x}
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
@@ -367,7 +370,8 @@ class Prompt(base._TextBox):
     def startInput(self, prompt, callback,
                    complete=None, strict_completer=False):
         """
-            complete: Tab-completion. Can be None, or "cmd".
+            complete: Tab-completion. Can be None, "cmd", "file", "group",
+            "qsh" or "window".
 
             Displays a prompt and starts to take one line of keyboard input
             from the user. When done, calls the callback with the input string
@@ -395,7 +399,8 @@ class Prompt(base._TextBox):
         self._update()
         self.bar.widget_grab_keyboard(self)
         if self.record_history:
-            self.position = len(self.history)
+            self.completer_history = self.history[complete]
+            self.position = len(self.completer_history)
 
     def _calculate_real_width(self):
         if self.blink:
@@ -449,7 +454,7 @@ class Prompt(base._TextBox):
         if self.archivedInput:
             self.userInput = self.archivedInput
             self.archivedInput = ""
-            self.position = len(self.history)
+            self.position = len(self.completer_history)
 
     def _write_char(self):
         # Add pressed (legal) char key to user input.
@@ -479,25 +484,17 @@ class Prompt(base._TextBox):
         if self.userInput:
             # If history record is activated, also save command in history
             if self.record_history:
-                self.history.append(self.userInput)
+                self.completer_history.append(self.userInput)
                 if self.position < self.max_history:
                     self.position += 1
                 with open(self.history_path, mode='wb') as f:
                     pickle.dump(self.history, f, protocol=2)
             self.callback(self.userInput)
 
-    def beep(self):
-        """Ring the system bell."""
-        if os.isatty(1):
-            print("\a")
-        else:
-            self.log.info("Can't beep: there isn't a terminal connected to" +
-                          "stdout.")
-
     def _alert(self):
         # Fire an alert (audible or visual), if bell style is not None.
         if self.bell_style == "audible":
-            self.beep()
+            self.qtile.conn.conn.core.Bell(0)
         elif self.bell_style == "visual":
             self.layout.colour = self.visual_bell_color
             self.timeout_add(self.visual_bell_time, self._reset_color)
@@ -514,20 +511,20 @@ class Prompt(base._TextBox):
                 self._alert()
             else:
                 self.position -= 1
-                self.archivedInput = self.history[self.position]
+                self.archivedInput = self.completer_history[self.position]
 
     def _get_next_cmd(self):
         # Get the next command in history.
         # If the last command was already reached, ring system bell.
         if self.record_history:
-            if self.position == len(self.history):
+            if self.position == len(self.completer_history):
                 self._alert()
-            elif self.position < len(self.history):
+            elif self.position < len(self.completer_history):
                 self.position += 1
-                if self.position == len(self.history):
+                if self.position == len(self.completer_history):
                     self.archivedInput = ""
                 else:
-                    self.archivedInput = self.history[self.position]
+                    self.archivedInput = self.completer_history[self.position]
 
     def _key_handler(self, k):
         # Return the action (a function) to do according the pressed key (k).
