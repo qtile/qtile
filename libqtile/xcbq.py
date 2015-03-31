@@ -47,6 +47,7 @@ import xcffib.xinerama
 import xcffib.xproto
 
 from . import xkeysyms
+from .xcursors import Cursors
 
 keysyms = xkeysyms.keysyms
 
@@ -290,8 +291,6 @@ class Screen(_Wrapper):
         _Wrapper.__init__(self, screen)
         self.default_colormap = Colormap(conn, screen.default_colormap)
         self.root = Window(conn, self.root)
-        # FIXME: Where is the right place to set the cursor?
-        # self.root.set_cursor("Normal")
 
 
 class PseudoScreen:
@@ -924,50 +923,3 @@ class Connection:
             i.name.to_string().lower()
             for i in self.conn.core.ListExtensions().reply().names
         )
-
-
-# Stolen from samurai-x
-# (Don't know where to put it, so I'll put it here)
-# XCB cursors doesn't want to be themed, libxcursor
-# would be better choice I think
-# and we (indirectly) depend on it anyway...
-class Cursors(dict):
-    def __init__(self, conn):
-        self.conn = conn
-
-        FLEUR = 52
-        LEFT_PTR = 68
-        SIZING = 120
-        BOTTOM_LEFT_CORNER = 12
-        BOTTOM_RIGHT_CORNER = 14
-        TOP_LEFT_CORNER = 134
-        TOP_RIGHT_CORNER = 136
-        DOUBLE_ARROW_HORIZ = 108
-        DOUBLE_ARROW_VERT = 116
-
-        cursors = (
-            ('Normal', LEFT_PTR),
-            ('Resize', SIZING),
-            ('ResizeH', DOUBLE_ARROW_HORIZ),
-            ('ResizeV', DOUBLE_ARROW_VERT),
-            ('Move', FLEUR),
-            ('TopRight', TOP_RIGHT_CORNER),
-            ('TopLeft', TOP_LEFT_CORNER),
-            ('BotRight', BOTTOM_RIGHT_CORNER),
-            ('BotLeft', BOTTOM_LEFT_CORNER),
-        )
-
-        for name, cursor_font in cursors:
-            self._new(name, cursor_font)
-
-    def _new(self, name, cursor_font):
-        fid = self.conn.conn.generate_id()
-        self.conn.conn.core.OpenFont(fid, len("cursor"), "cursor")
-        cursor = self.conn.conn.generate_id()
-        self.conn.conn.core.CreateGlyphCursor(
-            cursor, fid, fid,
-            cursor_font, cursor_font + 1,
-            0, 0, 0,
-            65535, 65535, 65535
-        )
-        self[name] = cursor

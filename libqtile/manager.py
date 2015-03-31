@@ -126,6 +126,9 @@ class Qtile(command.CommandObject):
             self.supporting_wm_check_window.wid
         )
 
+        # setup the default cursor
+        self.root.set_cursor('left_ptr')
+
         wmname = getattr(self.config, "wmname", "qtile")
         self.supporting_wm_check_window.set_property('_NET_WM_NAME', wmname)
         self.supporting_wm_check_window.set_property(
