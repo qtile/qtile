@@ -40,4 +40,4 @@ command. On my system, the output looks like this:
 My "pointer mouse cursor" isn't the one I expect it to be!
 ==========================================================
 
-Qtile should set the defualt cursor to left_ptr, you must install xcb-util-cursor if you want support for themed cursors.
+Qtile should set the default cursor to left_ptr, you must install xcb-util-cursor if you want support for themed cursors.
