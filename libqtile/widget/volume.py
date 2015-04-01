@@ -114,9 +114,7 @@ class Volume(base._TextBox):
                 subprocess.call([
                     'amixer',
                     '-q',
-                    '-c',
-                    str(self.cardid),
-                    'sset',
+                    'set',
                     self.channel,
                     'toggle'
                 ])
