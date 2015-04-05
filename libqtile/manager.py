@@ -253,12 +253,13 @@ class Qtile(command.CommandObject):
             GObject.threads_init()
             def gobject_thread():
                 ctx = GObject.main_context_default()
-                while not self._eventloop.is_closed():
+                while True:
                     try:
                         ctx.iteration(True)
                     except Exception:
                         self.qtile.exception("got exception from gobject")
             t = threading.Thread(target=gobject_thread, name="gobject_thread")
+            t.daemon = True
             t.start()
         except ImportError:
             self.log.warning("importing dbus/gobject failed, dbus will not work.")
@@ -709,11 +710,11 @@ class Qtile(command.CommandObject):
             self._eventloop.remove_reader(fd)
             self._eventloop.close()
             self.conn.conn.disconnect()
-            try:
-                from gi.repository import GObject
-                GObject.idle_add(lambda: None)
-            except ImportError:
-                pass
+            #try:
+            #    from gi.repository import GObject
+            #    GObject.idle_add(lambda: None)
+            #except ImportError:
+            #    pass
 
     def find_screen(self, x, y):
         """
