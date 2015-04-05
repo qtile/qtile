@@ -39,7 +39,7 @@ import string
 from collections import deque
 
 from . import base
-from .. import bar, command, hook, xcbq, xkeysyms
+from .. import bar, command, hook, pangocffi, utils, xcbq, xkeysyms
 
 
 class NullCompleter:
@@ -323,7 +323,10 @@ class Prompt(base._TextBox):
         None: NullCompleter
     }
     orientations = base.ORIENTATION_HORIZONTAL
-    defaults = [("cursorblink", 0.5, "Cursor blink rate. 0 to disable."),
+    defaults = [("cursor", True, "Show a cursor"),
+                ("cursorblink", 0.5, "Cursor blink rate. 0 to disable."),
+                ("cursor_color", "bef098",
+                 "Color for the cursor and text over it."),
                 ("prompt", "{prompt}: ", "Text displayed at the prompt"),
                 ("record_history", True, "Keep a record of executed commands"),
                 ("max_history", 100,
@@ -341,8 +344,29 @@ class Prompt(base._TextBox):
         self.add_defaults(Prompt.defaults)
         self.name = name
         self.active = False
-        self.blink = False
         self.completer = None
+        # Define key handlers (action to do when hit an specific key)
+        self.keyhandlers = {
+            xkeysyms.keysyms['Tab']: self._trigger_complete,
+            xkeysyms.keysyms['BackSpace']: self._delete_char(),
+            xkeysyms.keysyms['Delete']: self._delete_char(False),
+            xkeysyms.keysyms['KP_Delete']: self._delete_char(False),
+            xkeysyms.keysyms['Escape']: self._unfocus,
+            xkeysyms.keysyms['Return']: self._send_cmd,
+            xkeysyms.keysyms['KP_Enter']: self._send_cmd,
+            xkeysyms.keysyms['Up']: self._get_prev_cmd,
+            xkeysyms.keysyms['KP_Up']: self._get_prev_cmd,
+            xkeysyms.keysyms['Down']: self._get_next_cmd,
+            xkeysyms.keysyms['KP_Down']: self._get_next_cmd,
+            xkeysyms.keysyms['Left']: self._move_cursor(),
+            xkeysyms.keysyms['KP_Left']: self._move_cursor(),
+            xkeysyms.keysyms['Right']: self._move_cursor("right"),
+            xkeysyms.keysyms['KP_Right']: self._move_cursor("right"),
+        }
+        printables = [int(hex(x), 16) for x in range(127)]
+        printables = {x: self._write_char for x in printables if
+                      chr(x) in string.printable}
+        self.keyhandlers.update(printables)
         # If history record is on, get saved history or create history record
         if self.record_history:
             self.history_path = os.path.expanduser('~/.qtile_history')
@@ -359,10 +383,11 @@ class Prompt(base._TextBox):
                                 for x in self.completers if x}
 
     def _configure(self, qtile, bar):
+        self.markup = True
         base._TextBox._configure(self, qtile, bar)
 
         def f(win):
-            if self.active and not self.bar.window == win:
+            if self.active and not win == self.bar.window:
                 self._unfocus()
 
         hook.subscribe.client_focus(f)
@@ -387,12 +412,15 @@ class Prompt(base._TextBox):
                                completer result where available.
         """
 
-        if self.cursorblink and not self.active:
+        if self.cursor and self.cursorblink and not self.active:
             self.timeout_add(self.cursorblink, self._blink)
         self.display = self.prompt.format(prompt=prompt)
+        self.display = pangocffi.markup_escape_text(self.display)
         self.active = True
         self.userInput = ""
         self.archivedInput = ""
+        self.show_cursor = self.cursor
+        self.cursor_position = 0
         self.callback = callback
         self.completer = self.completers[complete](self.qtile)
         self.strict_completer = strict_completer
@@ -402,44 +430,45 @@ class Prompt(base._TextBox):
             self.completer_history = self.history[complete]
             self.position = len(self.completer_history)
 
-    def _calculate_real_width(self):
-        if self.blink:
-            return min(
-                self.layout.width,
-                self.bar.width
-            ) + self.actual_padding * 2
-        else:
-            _text = self.text
-            self.text = _text + "_"
+    def calculate_length(self):
+        if self.text:
             width = min(
                 self.layout.width,
                 self.bar.width
             ) + self.actual_padding * 2
-            self.text = _text
             return width
-
-    def calculate_length(self):
-        if self.text:
-            return self._calculate_real_width()
         else:
             return 0
 
     def _blink(self):
-        self.blink = not self.blink
+        self.show_cursor = not self.show_cursor
         self._update()
         if self.active:
             self.timeout_add(self.cursorblink, self._blink)
 
+    def _highlight_text(self, text):
+        color = utils.hex(self.cursor_color)
+        text = '<span foreground="{}">{}</span>'.format(color, text)
+        if self.show_cursor:
+            text = '<u>{}</u>'.format(text)
+        return text
+
     def _update(self):
         if self.active:
-            if self.archivedInput:
-                self.text = "%s%s" % (self.display, self.archivedInput)
+            self.text = self.archivedInput or self.userInput
+            cursor = pangocffi.markup_escape_text(" ")
+            if self.cursor_position < len(self.text):
+                txt1 = self.text[:self.cursor_position]
+                txt2 = self.text[self.cursor_position]
+                txt3 = self.text[self.cursor_position + 1:]
+                for text in (txt1, txt2, txt3):
+                    text = pangocffi.markup_escape_text(text)
+                txt2 = self._highlight_text(txt2)
+                self.text = "{}{}{}{}".format(txt1, txt2, txt3, cursor)
             else:
-                self.text = "%s%s" % (self.display, self.userInput)
-            if self.blink:
-                self.text = self.text + "_"
-            else:
-                self.text = self.text
+                self.text = pangocffi.markup_escape_text(self.text)
+                self.text = self.text + self._highlight_text(cursor)
+            self.text = self.display + self.text
         else:
             self.text = ""
         self.bar.draw()
@@ -447,6 +476,7 @@ class Prompt(base._TextBox):
     def _trigger_complete(self):
         # Trigger the autocompletion in user input
         self.userInput = self.completer.complete(self.userInput)
+        self.cursor_position = len(self.userInput)
 
     def _history_to_input(self):
         # Move actual command (when exploring history) to user input and update
@@ -456,22 +486,41 @@ class Prompt(base._TextBox):
             self.archivedInput = ""
             self.position = len(self.completer_history)
 
+    def _insert_before_cursor(self, charcode):
+        # Insert a caracter (given their charcode) in input, before the cursor
+        txt1 = self.userInput[:self.cursor_position]
+        txt2 = self.userInput[self.cursor_position:]
+        self.userInput = txt1 + chr(charcode) + txt2
+        self.cursor_position += 1
+
+    def _delete_char(self, backspace=True):
+        # Return a function that deletes character from the input text.
+        # If backspace is True, function will emulate backspace, else Delete.
+        def f():
+            self._history_to_input()
+            step = -1 if backspace else 0
+            if not backspace and self.cursor_position == len(self.userInput):
+                self._alert()
+            elif len(self.userInput) > 0 and self.cursor_position + step > -1:
+                txt1 = self.userInput[:self.cursor_position + step]
+                txt2 = self.userInput[self.cursor_position + step + 1:]
+                self.userInput = txt1 + txt2
+                if step:
+                    self.cursor_position += step
+            else:
+                self._alert()
+        return f
+
     def _write_char(self):
         # Add pressed (legal) char key to user input.
         # No LookupString in XCB... oh, the shame! Unicode users beware!
         self._history_to_input()
-        self.userInput += chr(self.key)
-        del self.key
-
-    def _backspace(self):
-        # Delete the last char from user input
-        self._history_to_input()
-        if len(self.userInput) > 0:
-            self.userInput = self.userInput[:-1]
+        self._insert_before_cursor(self.key)
 
     def _unfocus(self):
         # Remove focus from the widget
         self.active = False
+        self._update()
         self.bar.widget_ungrab_keyboard()
 
     def _send_cmd(self):
@@ -512,6 +561,7 @@ class Prompt(base._TextBox):
             else:
                 self.position -= 1
                 self.archivedInput = self.completer_history[self.position]
+                self.cursor_position = len(self.archivedInput)
 
     def _get_next_cmd(self):
         # Get the next command in history.
@@ -525,29 +575,38 @@ class Prompt(base._TextBox):
                     self.archivedInput = ""
                 else:
                     self.archivedInput = self.completer_history[self.position]
+                self.cursor_position = len(self.archivedInput)
 
-    def _key_handler(self, k):
+    def _cursor_to_left(self):
+        # Move cursor to left, if possible
+        if self.cursor_position:
+            self.cursor_position -= 1
+        else:
+            self._alert()
+
+    def _cursor_to_right(self):
+        # move cursor to right, if possible
+        command = self.archivedInput or self.userInput
+        if self.cursor_position < len(command):
+            self.cursor_position += 1
+        else:
+            self._alert()
+
+    def _move_cursor(self, direction="left"):
+        # Move the cursor to left or right, according to direction
+        if direction == "left":
+            return self._cursor_to_left
+        elif direction == "right":
+            return self._cursor_to_right
+
+    def _get_keyhandler(self, k):
         # Return the action (a function) to do according the pressed key (k).
-        if k == xkeysyms.keysyms['Tab']:
-            return self._trigger_complete
-        self.actual_value = self.completer.actual()
-        self.completer.reset()
-        if k < 127 and chr(k) in string.printable:
-            self.key = k
-            return self._write_char
-        if k == xkeysyms.keysyms['BackSpace']:
-            return self._backspace
-        if k == xkeysyms.keysyms['Escape']:
-            return self._unfocus
-        if k in (xkeysyms.keysyms['Return'],
-                 xkeysyms.keysyms['KP_Enter']):
-            return self._send_cmd
-        if k in (xkeysyms.keysyms['Up'],
-                 xkeysyms.keysyms['KP_Up']):
-            return self._get_prev_cmd
-        if k in (xkeysyms.keysyms['Down'],
-                 xkeysyms.keysyms['KP_Down']):
-            return self._get_next_cmd
+        self.key = k
+        if k in self.keyhandlers:
+            if k != xkeysyms.keysyms['Tab']:
+                self.actual_value = self.completer.actual()
+                self.completer.reset()
+            return self.keyhandlers[k]
 
     def handle_KeyPress(self, e):
         """KeyPress handler for the minibuffer.
@@ -556,9 +615,9 @@ class Prompt(base._TextBox):
         """
         state = e.state & ~(self.qtile.numlockMask)
         keysym = self.qtile.conn.keycode_to_keysym(e.detail, state)
-        handle_key = self._key_handler(keysym)
-        if handle_key:
-            handle_key()
+        handle_key = self._get_keyhandler(keysym)
+        handle_key()
+        del self.key
         self._update()
 
     def cmd_fake_keypress(self, key):
