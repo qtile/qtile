@@ -335,8 +335,8 @@ class Prompt(base._TextBox):
                  "Alert at the begin/end of the command history. " +
                  "Posible values: 'audible', 'visual' and None."),
                 ("visual_bell_color", "ff0000",
-                 "Color for the visual bell (changes text prompt color)."),
-                ("visual_bell_time", 0.4,
+                 "Color for the visual bell (changes prompt background)."),
+                ("visual_bell_time", 0.2,
                  "Visual bell duration (in seconds).")]
 
     def __init__(self, name="prompt", **config):
@@ -367,6 +367,8 @@ class Prompt(base._TextBox):
         printables = {x: self._write_char for x in printables if
                       chr(x) in string.printable}
         self.keyhandlers.update(printables)
+        if self.bell_style == "visual":
+            self.original_background = self.background
         # If history record is on, get saved history or create history record
         if self.record_history:
             self.history_path = os.path.expanduser('~/.qtile_history')
@@ -545,11 +547,11 @@ class Prompt(base._TextBox):
         if self.bell_style == "audible":
             self.qtile.conn.conn.core.Bell(0)
         elif self.bell_style == "visual":
-            self.layout.colour = self.visual_bell_color
+            self.background = self.visual_bell_color
             self.timeout_add(self.visual_bell_time, self._stop_visual_alert)
 
     def _stop_visual_alert(self):
-        self.layout.colour = self.foreground
+        self.background = self.original_background
         self._update()
 
     def _get_prev_cmd(self):
