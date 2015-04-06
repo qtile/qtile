@@ -618,8 +618,9 @@ class Prompt(base._TextBox):
         state = e.state & ~(self.qtile.numlockMask)
         keysym = self.qtile.conn.keycode_to_keysym(e.detail, state)
         handle_key = self._get_keyhandler(keysym)
-        handle_key()
-        del self.key
+        if handle_key:
+            handle_key()
+            del self.key
         self._update()
 
     def cmd_fake_keypress(self, key):
