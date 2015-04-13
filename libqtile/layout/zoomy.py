@@ -57,21 +57,19 @@ class Zoomy(SingleWindow):
 
     def focus_last(self):
         if self.clients:
-            return self.clients[len(self.clients) - 1]
+            return self.clients[-1]
 
     def focus_next(self, client):
         if client not in self.clients:
             return
         idx = self.clients.index(client)
-        if len(self.clients) > idx + 1:
-            return self.clients[idx + 1]
+        return self.clients[(idx + 1) % len(self.clients)]
 
     def focus_previous(self, client):
         if not self.clients:
             return
         idx = self.clients.index(client)
-        if idx > 0:
-            return self.clients[idx - 1]
+        return self.clients[idx - 1]
 
     def clone(self, group):
         c = SingleWindow.clone(self, group)
@@ -86,7 +84,9 @@ class Zoomy(SingleWindow):
         if client not in self.clients:
             return
         if self.focused == client:
-            self.cmd_previous()
+            self.focused = self.focus_previous(client)
+        if self.focused == client:
+            self.focused = None
         self.clients.remove(client)
         return self.focused
 
