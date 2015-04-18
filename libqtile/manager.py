@@ -660,6 +660,17 @@ class Qtile(command.CommandObject):
                         r = h(e)
                         if not r:
                             break
+            # Catch some bad X exceptions. Since X is event based, race
+            # conditions can occur almost anywhere in the code. For
+            # example, if a window is created and then immediately
+            # destroyed (before the event handler is evoked), when the
+            # event handler tries to examine the window properties, it
+            # will throw a WindowError exception. We can essentially
+            # ignore it, since the window is already dead and we've got
+            # another event in the queue notifying us to clean it up.
+            except (WindowError, AccessError, DrawableError):
+                pass
+
             except Exception as e:
                 error_code = self.conn.conn.has_error()
                 if error_code:
@@ -671,23 +682,7 @@ class Qtile(command.CommandObject):
 
                 self.log.exception("Got an exception in poll loop")
 
-        # Any changes these events triggered should be flushed to the server.
-        try:
-            self.conn.flush()
-
-        # Catch some bad X exceptions. Since X is event based, race
-        # conditions can occur almost anywhere in the code. For
-        # example, if a window is created and then immediately
-        # destroyed (before the event handler is evoked), when the
-        # event handler tries to examine the window properties, it
-        # will throw a WindowError exception. We can essentially
-        # ignore it, since the window is already dead and we've got
-        # another event in the queue notifying us to clean it up.
-        #
-        # We have to catch these here, because when we .flush() is when xcb
-        # reports checked exceptions.
-        except (WindowError, AccessError, DrawableError):
-            pass
+        self.conn.flush()
 
     def loop(self):
         self.server.start()

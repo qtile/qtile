@@ -647,32 +647,30 @@ class Window:
                 )
             else:
                 type, _ = PropertyMap[prop]
-        try:
-            r = self.conn.conn.core.GetProperty(
-                False, self.wid,
-                self.conn.atoms[prop]
-                if isinstance(prop, six.string_types)
-                else prop,
-                self.conn.atoms[type]
-                if isinstance(type, six.string_types)
-                else type,
-                0, (2 ** 32) - 1
-            ).reply()
 
-            if not r.value_len:
-                if unpack:
-                    return []
-                return None
-            elif unpack:
-                # Should we allow more options for unpacking?
-                if unpack is int:
-                    return r.value.to_atoms()
-                elif unpack is str:
-                    return r.value.to_string()
-            else:
-                return r
-        except xcffib.xproto.WindowError:
+        r = self.conn.conn.core.GetProperty(
+            False, self.wid,
+            self.conn.atoms[prop]
+            if isinstance(prop, six.string_types)
+            else prop,
+            self.conn.atoms[type]
+            if isinstance(type, six.string_types)
+            else type,
+            0, (2 ** 32) - 1
+        ).reply()
+
+        if not r.value_len:
+            if unpack:
+                return []
             return None
+        elif unpack:
+            # Should we allow more options for unpacking?
+            if unpack is int:
+                return r.value.to_atoms()
+            elif unpack is str:
+                return r.value.to_string()
+        else:
+            return r
 
     def list_properties(self):
         r = self.conn.conn.core.ListProperties(self.wid).reply()
