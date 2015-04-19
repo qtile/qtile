@@ -25,6 +25,7 @@ import logging
 import logging.handlers
 import os
 import sys
+import warnings
 from logging import getLogger, StreamHandler
 
 
@@ -86,7 +87,7 @@ def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log'):
                 "%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s"
             )
         )
-        log.addHandler(handler)
+        logging.getLogger().addHandler(handler)
 
     handler = StreamHandler(sys.stdout)
     handler.setFormatter(
@@ -95,7 +96,11 @@ def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log'):
             ' %(funcName)s:%(lineno)d $RESET %(message)s'
         )
     )
-    log.addHandler(handler)
+    logging.getLogger().addHandler(handler)
+
+    # Capture everything from the warnings module.
+    logging.captureWarnings(True)
+    warnings.simplefilter("always")
 
     log.warning('Starting %s' % logger.title())
     return log
