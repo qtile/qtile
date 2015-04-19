@@ -209,7 +209,10 @@ class Qtile(command.CommandObject):
 
         if state:
             st = pickle.load(six.BytesIO(state.encode()))
-            st.apply(self)
+            try:
+                st.apply(self)
+            except:
+                log.exception("failed restoring state")
 
         self.selection = {
             "PRIMARY": {"owner": None, "selection": ""},
