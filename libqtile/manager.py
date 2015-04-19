@@ -251,11 +251,10 @@ class Qtile(command.CommandObject):
             # because of dbus, if dbus isn't around there's no need to run
             # this thread.
             import dbus  # noqa
-            from gi.repository import GObject
+            from gi.repository import GLib
 
-            GObject.threads_init()
             def gobject_thread():
-                ctx = GObject.main_context_default()
+                ctx = GLib.main_context_default()
                 while not self._eventloop.is_closed():
                     try:
                         ctx.iteration(True)
