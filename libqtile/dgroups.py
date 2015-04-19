@@ -155,6 +155,11 @@ class DGroups(object):
         if client.defunct:
             return
 
+        # ignore windows whose groups is already set (e.g. from another hook or
+        # when it was set on state restore)
+        if client.group is not None:
+            return
+
         group_set = False
         intrusive = False
 

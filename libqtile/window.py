@@ -694,6 +694,7 @@ class Window(_Window):
         if index is not None and index < len(qtile.groups):
             group = qtile.groups[index]
             group.add(self)
+            self._group = group
             if group != qtile.currentScreen.group:
                 self.hide()
 
