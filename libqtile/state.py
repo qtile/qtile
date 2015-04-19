@@ -31,11 +31,14 @@ class QtileState(object):
         # configurations.
         self.groups = {}
         self.screens = {}
+        self.current_screen = 0
 
         for group in qtile.groups:
             self.groups[group.name] = group.layout.name
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
+            if screen == qtile.currentScreen:
+                self.current_screen = index
 
     def apply(self, qtile):
         """
@@ -54,3 +57,5 @@ class QtileState(object):
                 qtile.screens[screen].setGroup(group)
             except (KeyError, IndexError):
                 pass  # group or screen missing
+
+        qtile.toScreen(self.current_screen)
