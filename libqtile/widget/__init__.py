@@ -46,7 +46,7 @@ def safe_import(module_name, class_name):
         globals()[class_name] = getattr(module, class_name)
     except ImportError as error:
         msg = "Can't Import Widget: '%s.%s', %s"
-        logger.warn(msg % (module_name, class_name, error))
+        logger.warning(msg % (module_name, class_name, error))
         logger.debug(traceback.format_exc())
 
 
