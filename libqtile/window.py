@@ -684,10 +684,10 @@ class Window(_Window):
         EventMask.FocusChange
     # Set when this object is being retired.
     defunct = False
-    _group = None
 
     def __init__(self, window, qtile):
         _Window.__init__(self, window, qtile)
+        self._group = None
         self.updateName()
         # add to group by position according to _NET_WM_DESKTOP property
         index = window.get_wm_desktop()
