@@ -118,9 +118,9 @@ class Floating(Layout):
             right_edge = new_screen.x + new_screen.width
             bottom_edge = new_screen.y + new_screen.height
             while new_x > right_edge:
-                new_x = (new_x - new_screen.x) / 2
+                new_x = (new_x - new_screen.x) // 2
             while new_y > bottom_edge:
-                new_y = (new_y - new_screen.y) / 2
+                new_y = (new_y - new_screen.y) // 2
             win.x = new_x
             win.y = new_y
             win.group = new_screen.group
