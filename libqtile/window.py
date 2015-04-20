@@ -20,6 +20,8 @@
 
 import array
 import contextlib
+import inspect
+import traceback
 from xcffib.xproto import EventMask, StackMode, SetMode
 import xcffib.xproto
 
@@ -162,9 +164,9 @@ class _Window(command.CommandObject):
         def get_attr(self):
             if getattr(self, "_" + attr) is None:
                 g = self.window.get_geometry()
-                self._x = g.x
-                self._y = g.y
-                self._width = g.width
+                self.x = g.x
+                self.y = g.y
+                self.width = g.width
                 self.height = g.height
                 # note that _float_info x and y are
                 # really offsets, relative to screen x,y
@@ -177,7 +179,15 @@ class _Window(command.CommandObject):
         return get_attr
 
     def _geometry_setter(attr):
-        return lambda self, value: setattr(self, "_" + attr, value)
+        def f(self, value):
+            if not isinstance(value, int) and attr != "_float_info":
+                frame = inspect.currentframe()
+                stack_trace = traceback.format_stack(frame)
+                self.qtile.log.error("!!!! setting %s to a non-int %s; please report this!", attr, value)
+                self.qtile.log.error(''.join(stack_trace[:-1]))
+                value = int(value)
+            setattr(self, "_" + attr, value)
+        return f
 
     x = property(fset=_geometry_setter("x"), fget=_geometry_getter("x"))
     y = property(fset=_geometry_setter("y"), fget=_geometry_getter("y"))
