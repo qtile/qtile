@@ -299,16 +299,22 @@ class Drawer:
 
     def set_source_rgb(self, colour):
         if type(colour) == list:
-            linear = cairocffi.LinearGradient(0.0, 0.0, 0.0, self.height)
-            step_size = 1.0 / (len(colour) - 1)
-            step = 0.0
-            for c in colour:
-                rgb_col = utils.rgb(c)
-                if len(rgb_col) < 4:
-                    rgb_col[3] = 1
-                linear.add_color_stop_rgba(step, *rgb_col)
-                step += step_size
-            self.ctx.set_source(linear)
+            if len(colour) == 0:
+                # defaults to black
+                self.ctx.set_source_rgba(*utils.rgb("#000000"))
+            elif len(colour) == 1:
+                self.ctx.set_source_rgba(*utils.rgb(colour[0]))
+            else:
+                linear = cairocffi.LinearGradient(0.0, 0.0, 0.0, self.height)
+                step_size = 1.0 / (len(colour) - 1)
+                step = 0.0
+                for c in colour:
+                    rgb_col = utils.rgb(c)
+                    if len(rgb_col) < 4:
+                        rgb_col[3] = 1
+                    linear.add_color_stop_rgba(step, *rgb_col)
+                    step += step_size
+                self.ctx.set_source(linear)
         else:
             self.ctx.set_source_rgba(*utils.rgb(colour))
 
