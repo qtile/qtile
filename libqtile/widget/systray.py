@@ -35,7 +35,6 @@ from . import base
 import xcffib
 from xcffib.xproto import (ClientMessageEvent, ClientMessageData, EventMask,
                            SetMode)
-import atexit
 
 
 class Icon(window._Window):
@@ -176,7 +175,7 @@ class Systray(base._Widget):
         qtile.root.send_event(event, mask=EventMask.StructureNotify)
 
         # cleanup before exit
-        atexit.register(self.cleanup)
+        self.qtile.delegate_free_at_exit(self, self.cleanup)
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
@@ -192,7 +191,7 @@ class Systray(base._Widget):
             )
             xoffset += icon.width + self.padding
 
-    def cleanup(self):
+    def cleanup(self, widget):
         atoms = self.qtile.conn.atoms
         self.qtile.conn.conn.core.SetSelectionOwner(
             0,

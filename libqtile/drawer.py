@@ -209,6 +209,10 @@ class Drawer:
             self.width,
             self.height
         )
+        self.qtile.delegate_free_at_exit(
+            self.pixmap,
+            self.qtile.conn.conn.core.FreePixmap)
+
         self.qtile.conn.conn.core.CreateGC(
             self.gc,
             self.wid,
@@ -218,6 +222,10 @@ class Drawer:
                 self.qtile.conn.default_screen.white_pixel
             ]
         )
+        self.qtile.delegate_free_at_exit(
+            self.gc,
+            self.qtile.conn.conn.core.FreeGC)
+
         self.surface = cairocffi.XCBSurface(
             qtile.conn.conn,
             self.pixmap,
@@ -229,8 +237,8 @@ class Drawer:
         self.clear((0, 0, 1))
 
     def __del__(self):
-        self.qtile.conn.conn.core.FreeGC(self.gc)
-        self.qtile.conn.conn.core.FreePixmap(self.pixmap)
+        self.qtile.do_delegated_free(self.gc)
+        self.qtile.do_delegated_free(self.pixmap)
 
     def _rounded_rect(self, x, y, width, height, linewidth):
         aspect = 1.0
