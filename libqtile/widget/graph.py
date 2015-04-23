@@ -415,7 +415,8 @@ class HDDBusyGraph(_Graph):
     def _getActivity(self):
         try:
             # io_ticks is field number 9
-            io_ticks = int(open(self.path).read().split()[9])
+            with open(self.path) as f:
+                io_ticks = int(f.read().split()[9])
         except IOError:
             return 0
         activity = io_ticks - self._prev
