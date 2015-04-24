@@ -286,14 +286,15 @@ class Drawer:
             width: the X portion of the canvas to draw at the starting point.
             height: the Y portion of the canvas to draw at the starting point.
         """
+        # ensure type consistency
         self.qtile.conn.conn.core.CopyArea(
             self.pixmap,
             self.wid,
             self.gc,
             0, 0,  # srcx, srcy
-            offsetx, offsety,  # dstx, dsty
-            self.width if width is None else width,
-            self.height if height is None else height
+            int(offsetx), int(offsety),  # dstx, dsty
+            int(self.width) if width is None else int(width),
+            int(self.height) if height is None else int(height)
         )
 
     def find_root_visual(self):
