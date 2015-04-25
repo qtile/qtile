@@ -87,7 +87,11 @@ class Qtile(command.CommandObject):
                 displayName = displayName + ".0"
             fname = command.find_sockfile(displayName)
 
-        self.conn = xcbq.Connection(displayName)
+        try:
+            self.conn = xcbq.Connection(displayName)
+        except:
+            self._eventloop.close()
+            raise QtileError("Failed to establish a connection to X server.")
         self.config = config
         self.fname = fname
         hook.init(self)
