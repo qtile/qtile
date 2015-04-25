@@ -84,10 +84,10 @@ class Volume(base._TextBox):
     def create_amixer_command(self, *args):
         cmd = ['amixer']
 
-        if (self.cardid != None):
+        if (self.cardid is not None):
             cmd.extend(['-c', str(self.cardid)])
 
-        if (self.device != None):
+        if (self.device is not None):
             cmd.extend(['-D', str(self.device)])
 
         cmd.extend([x for x in args])
