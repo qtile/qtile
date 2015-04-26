@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Copyright (c) 2008 Aldo Cortesi
 # Copyright (c) 2011 Mounier Florian
 # Copyright (c) 2012 dmpayton
@@ -24,10 +26,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-#!/usr/bin/env python
-
-# Import python libs
 import sys
+
 try:
     from setuptools import setup
 except ImportError:
@@ -57,8 +57,7 @@ if sys.version_info >= (3, 4):
     pass
 elif sys.version_info >= (3, 3):
     dependencies.append('asyncio')
-elif sys.version_info <= (2, 6) or \
-        (sys.version_info >= (3, 0) and sys.version_info <= (3, 1)):
+elif (3, 0) <= sys.version_info <= (3, 1):
     dependencies.append('importlib')
 else:
     dependencies.append('trollius')
