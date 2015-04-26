@@ -53,7 +53,8 @@ class Volume(base._TextBox):
     '''
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("cardid", 0, "Card Id"),
+        ("cardid", None, "Card Id"),
+        ("device", "default", "Device Name"),
         ("channel", "Master", "Channel"),
         ("padding", 3, "Padding left and right. Calculated if None."),
         ("theme_path", None, "Path of the icons"),
@@ -80,46 +81,43 @@ class Volume(base._TextBox):
         if self.theme_path:
             self.setup_images()
 
+    def create_amixer_command(self, *args):
+        cmd = ['amixer']
+
+        if (self.cardid is not None):
+            cmd.extend(['-c', str(self.cardid)])
+
+        if (self.device is not None):
+            cmd.extend(['-D', str(self.device)])
+
+        cmd.extend([x for x in args])
+        return cmd
+
     def button_press(self, x, y, button):
         if button == 5:
             if self.volume_down_command is not None:
                 subprocess.call(self.volume_down_command)
             else:
-                subprocess.call([
-                    'amixer',
-                    '-q',
-                    '-c',
-                    str(self.cardid),
-                    'sset',
-                    self.channel,
-                    '2dB-'
-                ])
+                subprocess.call(self.create_amixer_command('-q',
+                                                           'sset',
+                                                           self.channel,
+                                                           '2%-'))
         elif button == 4:
             if self.volume_up_command is not None:
                 subprocess.call(self.volume_up_command)
             else:
-                subprocess.call([
-                    'amixer',
-                    '-q',
-                    '-c',
-                    str(self.cardid),
-                    'sset',
-                    self.channel,
-                    '2dB+'
-                ])
+                subprocess.call(self.create_amixer_command('-q',
+                                                           'sset',
+                                                           self.channel,
+                                                           '2%+'))
         elif button == 1:
             if self.mute_command is not None:
                 subprocess.call(self.mute_command)
             else:
-                subprocess.call([
-                    'amixer',
-                    '-q',
-                    '-c',
-                    str(self.cardid),
-                    'sset',
-                    self.channel,
-                    'toggle'
-                ])
+                subprocess.call(self.create_amixer_command('-q',
+                                                           'sset',
+                                                           self.channel,
+                                                           'toggle'))
         self.draw()
 
     def update(self):
@@ -200,13 +198,8 @@ class Volume(base._TextBox):
 
     def get_volume(self):
         try:
-            get_volume_cmd = [
-                'amixer',
-                '-c',
-                str(self.cardid),
-                'sget',
-                self.channel
-            ]
+            get_volume_cmd = self.create_amixer_command('sget',
+                                                        self.channel)
 
             if self.get_volume_command:
                 get_volume_cmd = self.get_volume_command
