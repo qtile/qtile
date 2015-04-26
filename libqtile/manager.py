@@ -262,9 +262,15 @@ class Qtile(command.CommandObject):
             ctxloop = GLib.MainLoop.new(GLib.main_context_default(), False)
             self.delegate_free_at_exit(ctxloop, lambda l: l.quit())
             def gobject_thread():
-                ctxloop.run()
-            t = threading.Thread(target=gobject_thread, name="gobject_thread")
-            t.start()
+                self.log.info("GObject thread has started.")
+                while not self._loop_pending_stop:
+                    try:
+                        ctxloop.run()
+                    except:
+                        if not self._loop_pending_stop:
+                            self.log.exception("got exception from gobject")
+                self.log.info("GObject thread has exited.")
+            self.run_in_executor(gobject_thread)
         except ImportError:
             self.log.warning("importing dbus/gobject failed, dbus will not work.")
 
