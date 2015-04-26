@@ -259,13 +259,10 @@ class Qtile(command.CommandObject):
             import dbus  # noqa
             from gi.repository import GLib
 
+            ctxloop = GLib.MainLoop.new(GLib.main_context_default(), False)
+            self.delegate_free_at_exit(ctxloop, lambda l: l.quit())
             def gobject_thread():
-                ctx = GLib.main_context_default()
-                while not self._eventloop.is_closed():
-                    try:
-                        ctx.iteration(True)
-                    except Exception:
-                        self.qtile.exception("got exception from gobject")
+                ctxloop.run()
             t = threading.Thread(target=gobject_thread, name="gobject_thread")
             t.start()
         except ImportError:
