@@ -39,7 +39,6 @@ install:
   - pip install -r requirements.txt
   - if [[ ${EVENTLOOP} == "trollius" ]]; then pip install trollius; fi
   - if [[ ${EVENTLOOP} == "tulip" ]]; then pip install asyncio; fi
-  - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install importlib; fi
 
 after_success:
   - coveralls
