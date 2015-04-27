@@ -32,7 +32,6 @@ import shlex
 import signal
 import sys
 import traceback
-import threading
 import xcffib
 import xcffib.xinerama
 import xcffib.xproto
