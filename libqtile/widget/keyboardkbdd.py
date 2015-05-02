@@ -22,11 +22,10 @@
 from . import base
 from dbus.mainloop.glib import DBusGMainLoop
 import re
-import subprocess
 import dbus
 
 
-class KeyboardKbdd(base.InLoopPollText):
+class KeyboardKbdd(base.ThreadedPollText):
     """
         Widget for changing keyboard layouts per window, using kbdd.
         kbdd should be installed and running, you can get it from:
@@ -34,7 +33,7 @@ class KeyboardKbdd(base.InLoopPollText):
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("update_interval", 1, "Update time in seconds."),
+        ("update_interval", 1, "Update interval in seconds."),
         ("configured_keyboards", ["us", "ir"],
          "your predefined list of keyboard layouts."
          "example: ['us', 'ir', 'es']"),
@@ -45,19 +44,20 @@ class KeyboardKbdd(base.InLoopPollText):
     ]
 
     def __init__(self, **config):
-        base.InLoopPollText.__init__(self, **config)
+        base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(KeyboardKbdd.defaults)
         self.keyboard = self.configured_keyboards[0]
-        if not self._check_kbdd():
+        self.is_kbdd_running = self._check_kbdd()
+        if not self.is_kbdd_running:
+            self.log.error('Please check if kbdd is running')
             self.keyboard = "N/A"
         self._dbus_init()
 
     def _check_kbdd(self):
-        s = subprocess.Popen(["ps", "axw"], stdout=subprocess.PIPE)
-        stdout = s.communicate()[0]
-        if re.search("kbdd", stdout):
+        running_list = self.call_process(["ps", "axw"])
+        if re.search("kbdd", running_list):
+            self.keyboard = self.configured_keyboards[0]
             return True
-        self.log.error('Please, check that kbdd is running')
         return False
 
     def _dbus_init(self):
@@ -86,4 +86,8 @@ class KeyboardKbdd(base.InLoopPollText):
                             colour for all layouts, use "foreground".')
 
     def poll(self):
+        if not self.is_kbdd_running:
+            if self._check_kbdd():
+                self.is_kbdd_running = True
+                return self.configured_keyboards[0]
         return self.keyboard
