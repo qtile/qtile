@@ -267,6 +267,25 @@ class Qtile(command.CommandObject):
         except ImportError:
             self.log.warning("importing dbus/gobject failed, dbus will not work.")
 
+    def finalize(self):
+        try:
+            for w in self.widgetMap.values():
+                w.finalize()
+
+            for l in self.config.layouts:
+                l.finalize()
+
+            for screen in self.screens:
+                for bar in [screen.top, screen.bottom, screen.left, screen.right]:
+                    if bar is not None:
+                        bar.finalize()
+
+            fd = self.conn.conn.get_file_descriptor()
+            self._eventloop.remove_reader(fd)
+            self.conn.disconnect()
+        except:
+            self.log.exception('exception during finalize')
+
     def _process_fake_screens(self):
         """
         Since Xephyr, Xnest don't really support offset screens,
@@ -681,7 +700,6 @@ class Qtile(command.CommandObject):
                     error_string = xcbq.XCB_CONN_ERRORS[error_code]
                     self.log.exception("Shutting down due to X connection error %s (%s)" %
                         (error_string, error_code))
-                    self.conn.disconnect()
                     self._eventloop.stop()
 
                 self.log.exception("Got an exception in poll loop")
@@ -705,9 +723,8 @@ class Qtile(command.CommandObject):
         finally:
             self.server.close()
             self.log.info('Removing io watch')
-            self._eventloop.remove_reader(fd)
+            self.finalize()
             self._eventloop.close()
-            self.conn.conn.disconnect()
             try:
                 from gi.repository import GObject
                 GObject.idle_add(lambda: None)
@@ -1246,6 +1263,7 @@ class Qtile(command.CommandObject):
         """
             Executes the specified command, replacing the current process.
         """
+        self.finalize()
         atexit._run_exitfuncs()
         os.execv(cmd, args)
 

@@ -230,7 +230,7 @@ class Drawer(object):
         self.ctx = self.new_ctx()
         self.clear((0, 0, 1))
 
-    def __del__(self):
+    def finalize(self):
         self.qtile.conn.conn.core.FreeGC(self.gc)
         self.qtile.conn.conn.core.FreePixmap(self.pixmap)
 

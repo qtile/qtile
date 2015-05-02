@@ -180,6 +180,9 @@ class _Widget(command.CommandObject, configurable.Configurable):
             self.configured = True
             self.qtile.call_soon(self.timer_setup)
 
+    def finalize(self):
+        self.drawer.finalize()
+
     def clear(self):
         self.drawer.set_source_rgb(self.bar.background)
         self.drawer.fillrect(self.offsetx, self.offsety, self.width,
