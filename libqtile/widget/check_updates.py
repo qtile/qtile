@@ -19,6 +19,7 @@
 # SOFTWARE.
 
 from . import base
+from subprocess import CalledProcessError
 
 
 class CheckUpdates(base.ThreadedPollText):
@@ -59,7 +60,10 @@ class CheckUpdates(base.ThreadedPollText):
             self.cmd = None
 
     def _check_updates(self):
-        updates = self.call_process(self.cmd)
+        try:
+            updates = self.call_process(self.cmd)
+        except CalledProcessError:
+            updates = ""
         num_updates = str(len(updates.splitlines()) - self.subtr)
         self._set_colour(num_updates)
         return num_updates
