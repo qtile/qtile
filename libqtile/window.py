@@ -719,10 +719,13 @@ class Window(_Window):
     @group.setter
     def group(self, group):
         if group:
-            self.window.set_property(
-                "_NET_WM_DESKTOP",
-                self.qtile.groups.index(group)
-            )
+            try:
+                self.window.set_property(
+                    "_NET_WM_DESKTOP",
+                    self.qtile.groups.index(group)
+                )
+            except xcffib.xproto.WindowError:
+                self.qtile.log.exception("whoops, got error setting _NET_WM_DESKTOP, too early?")
         self._group = group
 
     @property
