@@ -164,7 +164,12 @@ class Xephyr(object):
             assert self.qtile is None, "Kill Qtile before stopping Xephyr"
             assert self.testwindows == [], "Kill all test windows before stopping Xephyr"
         finally:
-            self._kill(self.xephyr)
+            try:
+                self._kill(self.xephyr)
+            except:
+                # xephyr exited already
+                raise AssertionError("Xephyr exited unexpectedly with %d" %
+                    self.xephyr.returncode)
             self.xephyr = None
 
     def _waitForXephyr(self):

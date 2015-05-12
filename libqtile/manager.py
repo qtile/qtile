@@ -22,7 +22,7 @@
 from libqtile.log_utils import init_log
 from libqtile.dgroups import DGroups
 from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
-import atexit
+from xcffib import ConnectionException
 import imp
 import logging
 import os
@@ -32,7 +32,6 @@ import shlex
 import signal
 import sys
 import traceback
-import threading
 import xcffib
 import xcffib.xinerama
 import xcffib.xproto
@@ -71,6 +70,8 @@ class Qtile(command.CommandObject):
         self.no_spawn = no_spawn
 
         self._eventloop = asyncio.get_event_loop()
+        self._loop_pending_stop = False
+        self._delegated_deletion_list = []
 
         if not displayName:
             displayName = os.environ.get("DISPLAY")
@@ -85,7 +86,11 @@ class Qtile(command.CommandObject):
                 displayName = displayName + ".0"
             fname = command.find_sockfile(displayName)
 
-        self.conn = xcbq.Connection(displayName)
+        try:
+            self.conn = xcbq.Connection(displayName)
+        except:
+            self._eventloop.close()
+            raise QtileError("Failed to establish a connection to X server.")
         self.config = config
         self.fname = fname
         hook.init(self)
@@ -253,15 +258,18 @@ class Qtile(command.CommandObject):
             import dbus  # noqa
             from gi.repository import GLib
 
+            ctxloop = GLib.MainLoop.new(GLib.main_context_default(), False)
+            self.delegate_free_at_exit(ctxloop, lambda l: l.quit())
             def gobject_thread():
-                ctx = GLib.main_context_default()
-                while not self._eventloop.is_closed():
+                self.log.info("GObject thread has started.")
+                while not self._loop_pending_stop:
                     try:
-                        ctx.iteration(True)
-                    except Exception:
-                        self.qtile.exception("got exception from gobject")
-            t = threading.Thread(target=gobject_thread, name="gobject_thread")
-            t.start()
+                        ctxloop.run()
+                    except:
+                        if not self._loop_pending_stop:
+                            self.log.exception("got exception from gobject")
+                self.log.info("GObject thread has exited.")
+            self.run_in_executor(gobject_thread)
         except ImportError:
             self.log.warning("importing dbus/gobject failed, dbus will not work.")
 
@@ -644,6 +652,38 @@ class Qtile(command.CommandObject):
             self.log.info("Unknown event: %r" % ename)
         return chain
 
+    def delegate_free_at_exit(self, obj, func):
+        self._delegated_deletion_list.append((obj, func))
+
+    def do_delegated_free(self, obj):
+        if self._loop_pending_stop:
+            return
+        for i, (o, f) in enumerate(self._delegated_deletion_list):
+            if o is obj:
+                f(o)
+                self._delegated_deletion_list.pop(i)
+                break
+
+    def _loop_exception_handler(self, loop, context):
+        if not self._loop_pending_stop:
+            self.log.exception("Got an exception in poll loop")
+
+    def _stop_event_loop(self):
+        self._loop_pending_stop = True
+        for (o, f) in self._delegated_deletion_list:
+            try:
+                f(o)
+            except ConnectionException:
+                # since we're stopping event loop,
+                # print no complains about broken connection.
+                pass
+            except:
+                self.log.warning(
+                    "exception occured when deleting delegated object: %s" %
+                    type(o))
+        self._delegated_deletion_list = []
+        self._eventloop.stop()
+
     def _xpoll(self):
         while True:
             try:
@@ -673,6 +713,11 @@ class Qtile(command.CommandObject):
             except (WindowError, AccessError, DrawableError):
                 pass
 
+            except ConnectionException:
+                self.log.warning("connection to X server closed")
+                self._stop_event_loop()
+                break
+
             except Exception as e:
                 error_code = self.conn.conn.has_error()
                 if error_code:
@@ -680,7 +725,7 @@ class Qtile(command.CommandObject):
                     self.log.exception("Shutting down due to X connection error %s (%s)" %
                         (error_string, error_code))
                     self.conn.disconnect()
-                    self._eventloop.stop()
+                    self._stop_event_loop()
 
                 self.log.exception("Got an exception in poll loop")
 
@@ -689,10 +734,12 @@ class Qtile(command.CommandObject):
     def loop(self):
         self.server.start()
 
-        self._eventloop.add_signal_handler(signal.SIGINT, self._eventloop.stop)
-        self._eventloop.add_signal_handler(signal.SIGTERM, self._eventloop.stop)
+        self._eventloop.add_signal_handler(
+            signal.SIGINT, self._stop_event_loop)
+        self._eventloop.add_signal_handler(
+            signal.SIGTERM, self._stop_event_loop)
         self._eventloop.set_exception_handler(
-            lambda x, y: self.log.exception("Got an exception in poll loop"))
+            self._loop_exception_handler)
 
         self.log.info('Adding io watch')
         fd = self.conn.conn.get_file_descriptor()
@@ -705,10 +752,16 @@ class Qtile(command.CommandObject):
             self.log.info('Removing io watch')
             self._eventloop.remove_reader(fd)
             self._eventloop.close()
-            self.conn.conn.disconnect()
             try:
-                from gi.repository import GObject
-                GObject.idle_add(lambda: None)
+                self.conn.disconnect()
+            except:
+                # since we're closing anyway
+                pass
+
+            try:
+                # GObject.idle_add is deprecated; changing to GLib
+                from gi.repository import GLib
+                GLib.idle_add(lambda: None)
             except ImportError:
                 pass
 
@@ -1095,6 +1148,8 @@ class Qtile(command.CommandObject):
     def call_soon(self, func, *args):
         """ A wrapper for the event loop's call_soon which also flushes the X
         event queue to the server after func is called. """
+        if self._loop_pending_stop:
+            return
         def f():
             func(*args)
             self.conn.flush()
@@ -1102,6 +1157,8 @@ class Qtile(command.CommandObject):
 
     def call_soon_threadsafe(self, func, *args):
         """ Another event loop proxy, see `call_soon`. """
+        if self._loop_pending_stop:
+            return
         def f():
             func(*args)
             self.conn.flush()
@@ -1109,6 +1166,8 @@ class Qtile(command.CommandObject):
 
     def call_later(self, delay, func, *args):
         """ Another event loop proxy, see `call_soon`. """
+        if self._loop_pending_stop:
+            return
         def f():
             func(*args)
             self.conn.flush()
@@ -1244,7 +1303,7 @@ class Qtile(command.CommandObject):
         """
             Executes the specified command, replacing the current process.
         """
-        atexit._run_exitfuncs()
+        self._stop_event_loop()
         os.execv(cmd, args)
 
     def cmd_restart(self):
@@ -1395,7 +1454,7 @@ class Qtile(command.CommandObject):
         """
             Quit Qtile.
         """
-        self._eventloop.stop()
+        self._stop_event_loop()
 
     def cmd_switch_groups(self, groupa, groupb):
         """

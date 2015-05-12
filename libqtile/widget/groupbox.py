@@ -37,6 +37,7 @@ from . import base
 class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
     defaults = [
         ("borderwidth", 3, "Current group border width"),
+        ("center_aligned", False, "center-aligned group box"),
     ]
 
     def __init__(self, **config):
@@ -96,10 +97,16 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
             self.padding_x,
             self.padding_y
         )
+        y = self.margin_y
+        if self.center_aligned:
+            for t in base.MarginMixin.defaults:
+                if t[0] == 'margin':
+                    y += (self.bar.height - framed.height) / 2 - t[1]
+                    break
         if block:
-            framed.draw_fill(offset, self.margin_y, rounded)
+            framed.draw_fill(offset, y, rounded)
         else:
-            framed.draw(offset, self.margin_y, rounded)
+            framed.draw(offset, y, rounded)
 
 
 class AGroupBox(_GroupBase):

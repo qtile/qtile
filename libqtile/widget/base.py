@@ -35,6 +35,7 @@ import subprocess
 import logging
 import threading
 import warnings
+import shlex
 
 # Each widget class must define which bar orientation(s) it supports by setting
 # these bits in an 'orientations' class attribute. Simply having the attribute
@@ -254,6 +255,8 @@ class _Widget(command.CommandObject, configurable.Configurable):
             and return the string from stdout, which is decoded when using
             Python 3.
         """
+        if type(command) == str:
+            command = shlex.split(command)
         output = subprocess.check_output(command, **kwargs)
         if six.PY3:
             output = output.decode()

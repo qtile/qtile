@@ -36,7 +36,6 @@
 # TODO: check if UI hangs in case of network issues and such
 # TODO: some kind of templating to make shown info configurable
 # TODO: best practice to handle failures? just write to stderr?
-import atexit
 import re
 import time
 
@@ -84,7 +83,7 @@ class Mpd(base.ThreadPoolText):
         self.connected = False
         self.stop = False
 
-    def _atexit(self):
+    def cleanup(self, widget):
         self.stop = True
 
         if self.connected:
@@ -135,7 +134,7 @@ class Mpd(base.ThreadPoolText):
             self.fontshadow,
             markup=True
         )
-        atexit.register(self._atexit)
+        qtile.delegate_free_at_exit(self, self.cleanup)
 
     def to_minutes_seconds(self, stime):
         """Takes an integer time in seconds, transforms it into
