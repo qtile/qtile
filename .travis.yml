@@ -1,5 +1,9 @@
 language: python
 
+cache:
+  directories:
+    - $HOME/.cache/pip
+
 # Install trollius for 2, 3.2, and pypy
 # Install either trollius or tulip for 3.3
 # Asyncio is in the standard library for 3.4+
