@@ -34,6 +34,7 @@ class Pacman(base.ThreadedPollText):
     ]
 
     def __init__(self, **config):
+        base.deprecated("Pacman is deprecated, please use CheckUpdates")
         base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(Pacman.defaults)
 
