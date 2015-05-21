@@ -36,7 +36,7 @@ Key Bindings
 ------------
 
 The mod key for the default config is ``mod4``, which is typically bound to
-the "Super" keys, which are things like the windows key and the mac control
+the "Super" keys, which are things like the windows key and the mac command
 key. The basic operation is:
 
 * ``mod + k`` or ``mod + j``: switch windows on the current stack
