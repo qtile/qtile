@@ -145,3 +145,17 @@ class Max(SingleWindow):
         self.up()
 
     cmd_previous = cmd_up
+
+    def get_state(self):
+        d = SingleWindow.info(self)
+        d["clients"] = [x.window.wid for x in self.clients]
+        if self.current is not None:
+            d["current"] = self.current.window.wid
+        return d
+
+    def restore_state(self,info,windowMap):
+        self.clients= [windowMap[x] for x in info["clients"]]
+        try:
+            self.current=windowMap[info["current"]]
+        except KeyError: # No window is current
+            pass
