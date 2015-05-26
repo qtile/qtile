@@ -32,9 +32,13 @@ class QtileState(object):
         self.groups = {}
         self.screens = {}
         self.current_screen = 0
+        self.layoutMap={}
 
         for group in qtile.groups:
             self.groups[group.name] = group.layout.name
+            self.layoutMap[group.name]={}
+            for layout in group.layouts:
+                self.layoutMap[group.name][layout.name]=layout.get_state()
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
             if screen == qtile.currentScreen:
@@ -45,6 +49,15 @@ class QtileState(object):
             Rearrange the windows in the specified Qtile object according to
             this QtileState.
         """
+        try:
+            for group in qtile.groups:
+                for layout in group.layouts:
+                    print "begin",layout.name,group.name
+                    layout.restore_state(self.layoutMap[group.name][layout.name],qtile.windowMap)
+        except KeyError:
+            print "ERROR"
+            pass  # group missing
+
         for (group, layout) in self.groups.items():
             try:
                 qtile.groupMap[group].layout = layout
