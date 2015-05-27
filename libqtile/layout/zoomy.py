@@ -177,10 +177,10 @@ class Zoomy(SingleWindow):
             d["focused"] = self.focused.window.wid
         return d
 
-    def restore_state(self,info,windowMap):
+    def restore_state(self, info, windowMap):
 
-        self.clients= [windowMap[x] for x in info["clients"]]
+        self.clients = [windowMap[x] for x in info["clients"]]
         try:
-            self.focused=windowMap[info["focused"]]
-        except KeyError: # No window is current
+            self.focused = windowMap[info["focused"]]
+        except KeyError:  # No window is current
             pass
