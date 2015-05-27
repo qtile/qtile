@@ -56,7 +56,6 @@ class QtileState(object):
                     if layout.name in ['max', 'zoomy']:
                         layout.restore_state(self.layoutMap[group.name][layout.name], qtile.windowMap)
         except KeyError:
-            print "ERROR"
             pass  # group missing
 
         for (group, layout) in self.groups.items():
