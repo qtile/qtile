@@ -153,9 +153,9 @@ class Max(SingleWindow):
             d["current"] = self.current.window.wid
         return d
 
-    def restore_state(self,info,windowMap):
-        self.clients= [windowMap[x] for x in info["clients"]]
+    def restore_state(self, info, windowMap):
+        self.clients = [windowMap[x] for x in info["clients"]]
         try:
-            self.current=windowMap[info["current"]]
-        except KeyError: # No window is current
+            self.current = windowMap[info["current"]]
+        except KeyError:  # No window is current
             pass
