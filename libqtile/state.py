@@ -38,7 +38,8 @@ class QtileState(object):
             self.groups[group.name] = group.layout.name
             self.layoutMap[group.name]={}
             for layout in group.layouts:
-                self.layoutMap[group.name][layout.name]=layout.get_state()
+                if layout.name in ['max','zoomy']:
+                    self.layoutMap[group.name][layout.name]=layout.get_state()
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
             if screen == qtile.currentScreen:
@@ -52,8 +53,8 @@ class QtileState(object):
         try:
             for group in qtile.groups:
                 for layout in group.layouts:
-                    print "begin",layout.name,group.name
-                    layout.restore_state(self.layoutMap[group.name][layout.name],qtile.windowMap)
+                    if layout.name in ['max','zoomy']:
+                        layout.restore_state(self.layoutMap[group.name][layout.name],qtile.windowMap)
         except KeyError:
             print "ERROR"
             pass  # group missing
