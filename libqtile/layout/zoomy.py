@@ -171,18 +171,3 @@ class Zoomy(SingleWindow):
         self.group.focus(client, False)
 
     cmd_up = cmd_previous
-
-    def get_state(self):
-        d = SingleWindow.info(self)
-        d["clients"] = [x.window.wid for x in self.clients]
-        if self.focused is not None:
-            d["focused"] = self.focused.window.wid
-        return d
-
-    def restore_state(self, info, windowMap):
-
-        self.clients = [windowMap[x] for x in info["clients"]]
-        try:
-            self.focused = windowMap[info["focused"]]
-        except KeyError:  # No window is current
-            pass
