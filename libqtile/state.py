@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from . import window
 
 
 class QtileState(object):
@@ -38,8 +39,9 @@ class QtileState(object):
             self.groups[group.name] = group.layout.name
             self.layoutMap[group.name] = {}
             for layout in group.layouts:
-                if layout.name in ['max', 'zoomy']:
-                    self.layoutMap[group.name][layout.name] = layout.get_state()
+                self.layoutMap[group.name][layout.name] = layout
+                layout.group=None
+
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
             if screen == qtile.currentScreen:
@@ -53,8 +55,29 @@ class QtileState(object):
         try:
             for group in qtile.groups:
                 for layout in group.layouts:
-                    if layout.name in ['max', 'zoomy']:
-                        layout.restore_state(self.layoutMap[group.name][layout.name], qtile.windowMap)
+                    d=self.layoutMap[group.name][layout.name]
+                    d.group=layout.group
+                    members = dir(d)
+                    for member in members:
+                        try:
+                            x=getattr(d,member)
+                            if isinstance(x,list):
+                                tmp=[]
+                                last=None
+                                for i in x:
+                                    if isinstance(i,window.Window):
+                                        tmp.append(qtile.windowMap[i.Wid])
+                                    else:
+                                        tmp.append(i)
+                                    last=i
+                                if isinstance(last,window.Window):
+                                    setattr(layout,member,tmp)
+
+                            if isinstance(x,window.Window):
+                                setattr(layout,member,qtile.windowMap[x.Wid])
+                        except AttributeError as e:
+                            pass
+                    layout=d
         except KeyError:
             pass  # group missing
 
