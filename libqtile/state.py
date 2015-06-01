@@ -66,18 +66,20 @@ class QtileState(object):
                                 last=None
                                 for i in x:
                                     if isinstance(i,window.Window):
+                                        print qtile.windowMap[i.Wid],member
                                         tmp.append(qtile.windowMap[i.Wid])
                                     else:
                                         tmp.append(i)
                                     last=i
                                 if isinstance(last,window.Window):
-                                    setattr(d,member,tmp)
-
-                            if isinstance(x,window.Window):
-                                setattr(d,member,qtile.windowMap[x.Wid])
+                                    setattr(layout,member,tmp)
+                            elif isinstance(x,window.Window):
+                                setattr(layout,member,qtile.windowMap[x.Wid])
+                            elif not callable(x) and not str.startswith(member,'_'):
+                                setattr(layout,member,x)
                         except AttributeError as e:
                             pass
-                    layout=d
+                    # layout=d
         except KeyError:
             pass  # group missing
 
