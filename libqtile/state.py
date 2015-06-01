@@ -71,10 +71,10 @@ class QtileState(object):
                                         tmp.append(i)
                                     last=i
                                 if isinstance(last,window.Window):
-                                    setattr(layout,member,tmp)
+                                    setattr(d,member,tmp)
 
                             if isinstance(x,window.Window):
-                                setattr(layout,member,qtile.windowMap[x.Wid])
+                                setattr(d,member,qtile.windowMap[x.Wid])
                         except AttributeError as e:
                             pass
                     layout=d
