@@ -32,6 +32,7 @@ class QtileState(object):
         # configurations.
         self.groups = {}
         self.screens = {}
+        self.focusHistory = {}
         self.current_screen = 0
         self.layoutMap = {}
 
@@ -40,8 +41,8 @@ class QtileState(object):
             self.layoutMap[group.name] = {}
             for layout in group.layouts:
                 self.layoutMap[group.name][layout.name] = layout
-                layout.group=None
-
+                layout.group = None
+            self.focusHistory[group.name] = group.focusHistory
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
             if screen == qtile.currentScreen:
@@ -54,32 +55,34 @@ class QtileState(object):
         """
         try:
             for group in qtile.groups:
+                x = []
+                for i in self.focusHistory[group.name]:
+                    x.append(qtile.windowMap[i.Wid])
+                group.focusHistory = x
                 for layout in group.layouts:
-                    d=self.layoutMap[group.name][layout.name]
-                    d.group=layout.group
+                    d = self.layoutMap[group.name][layout.name]
+                    d.group = layout.group
                     members = dir(d)
                     for member in members:
                         try:
-                            x=getattr(d,member)
-                            if isinstance(x,list):
-                                tmp=[]
-                                last=None
+                            x = getattr(d, member)
+                            if isinstance(x, list):
+                                tmp = []
+                                last = None
                                 for i in x:
-                                    if isinstance(i,window.Window):
-                                        print qtile.windowMap[i.Wid],member
+                                    if isinstance(i, window.Window):
                                         tmp.append(qtile.windowMap[i.Wid])
                                     else:
                                         tmp.append(i)
-                                    last=i
-                                if isinstance(last,window.Window):
-                                    setattr(layout,member,tmp)
-                            elif isinstance(x,window.Window):
-                                setattr(layout,member,qtile.windowMap[x.Wid])
-                            elif not callable(x) and not str.startswith(member,'_'):
-                                setattr(layout,member,x)
+                                    last = i
+                                if isinstance(last, window.Window):
+                                    setattr(layout, member, tmp)
+                            elif isinstance(x, window.Window):
+                                setattr(layout, member, qtile.windowMap[x.Wid])
+                            elif not callable(x) and not str.startswith(member, '_'):
+                                setattr(layout, member, x)
                         except AttributeError as e:
                             pass
-                    # layout=d
         except KeyError:
             pass  # group missing
 
