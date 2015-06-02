@@ -51,7 +51,7 @@ Features
       unit-tested window mangers around.
 """
 
-dependencies = ['cairocffi>=0.6', 'cffi>=0.8.2', 'six>=1.4.1', 'xcffib>=0.2.2']
+dependencies = ['cairocffi>=0.6', 'cffi>=0.8.2,<1', 'six>=1.4.1', 'xcffib>=0.2.5,<3']
 
 if sys.version_info >= (3, 4):
     pass
