@@ -1319,11 +1319,9 @@ class Window(_Window):
 
     def __getstate__(self):
         d = {}
-        d['group'] = self.group.name
         d['window'] = self.window.wid
         return d
 
     def __setstate__(self, state):
-        self.Wid = state['window']
-        self.gid = state['group']
+        self.wid = state['window']
         return self
