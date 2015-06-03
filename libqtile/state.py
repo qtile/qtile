@@ -57,7 +57,7 @@ class QtileState(object):
             for group in qtile.groups:
                 x = []
                 for i in self.focusHistory[group.name]:
-                    x.append(qtile.windowMap[i.Wid])
+                    x.append(qtile.windowMap[i.wid])
                 group.focusHistory = x
                 for layout in group.layouts:
                     d = self.layoutMap[group.name][layout.name]
@@ -71,14 +71,14 @@ class QtileState(object):
                                 last = None
                                 for i in x:
                                     if isinstance(i, window.Window):
-                                        tmp.append(qtile.windowMap[i.Wid])
+                                        tmp.append(qtile.windowMap[i.wid])
                                     else:
                                         tmp.append(i)
                                     last = i
                                 if isinstance(last, window.Window):
                                     setattr(layout, member, tmp)
                             elif isinstance(x, window.Window):
-                                setattr(layout, member, qtile.windowMap[x.Wid])
+                                setattr(layout, member, qtile.windowMap[x.wid])
                             elif not callable(x) and not str.startswith(member, '_'):
                                 setattr(layout, member, x)
                         except AttributeError:
