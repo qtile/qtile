@@ -81,7 +81,7 @@ class QtileState(object):
                                 setattr(layout, member, qtile.windowMap[x.Wid])
                             elif not callable(x) and not str.startswith(member, '_'):
                                 setattr(layout, member, x)
-                        except AttributeError as e:
+                        except AttributeError:
                             pass
         except KeyError:
             pass  # group missing
