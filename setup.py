@@ -74,10 +74,11 @@ if sys.version_info >= (3, 4):
     pass
 elif sys.version_info >= (3, 3):
     dependencies.append('asyncio')
-elif (3, 0) <= sys.version_info <= (3, 1):
-    dependencies.append('importlib')
 else:
     dependencies.append('trollius')
+
+if (3, 0) <= sys.version_info <= (3, 1):
+    dependencies.append('importlib')
 
 setup(
     name="qtile",
