@@ -51,7 +51,7 @@ Features
       unit-tested window mangers around.
 """
 
-dependencies = ['cairocffi>=0.6', 'cffi>=0.8.2,<1', 'six>=1.4.1', 'xcffib>=0.2.5,<3']
+dependencies = ['xcffib>=0.3.2', 'cairocffi>=0.7[xcb]', 'cffi>=1.1.0', 'six>=1.4.1']
 
 if sys.version_info >= (3, 4):
     pass
@@ -90,6 +90,10 @@ setup(
               'libqtile.resources'
               ],
     package_data={'libqtile.resources': ['battery-icons/*.png']},
+    cffi_modules=[
+        'libqtile/ffi_build.py:pango_ffi',
+        'libqtile/ffi_build.py:xcursors_ffi'
+    ],
     scripts=[
         "bin/qsh",
         "bin/qtile",
