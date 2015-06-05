@@ -1,6 +1,10 @@
 from logging import getLogger
 
-from ._ffi_xcursors import ffi
+# PyPy < 2.6 compaitibility
+try:
+    from ._ffi_xcursors import ffi
+except ImportError:
+    from .ffi_build import xcursors_ffi as ffi
 
 
 # Stolen from samurai-x

@@ -51,7 +51,24 @@ Features
       unit-tested window mangers around.
 """
 
-dependencies = ['xcffib>=0.3.2', 'cairocffi>=0.7[xcb]', 'cffi>=1.1.0', 'six>=1.4.1']
+if '_cffi_backend' in sys.builtin_module_names:
+    import _cffi_backend
+    requires_cffi = "cffi==" + _cffi_backend.__version__
+else:
+    requires_cffi = "cffi>=1.1.0"
+
+# PyPy < 2.6 compatibility
+if requires_cffi.startswith("cffi==0."):
+    cffi_args = dict(
+        zip_safe=False
+    )
+else:
+    cffi_args = dict(cffi_modules=[
+        'libqtile/ffi_build.py:pango_ffi',
+        'libqtile/ffi_build.py:xcursors_ffi'
+    ])
+
+dependencies = ['xcffib>=0.3.2', 'cairocffi>=0.7[xcb]', 'six>=1.4.1', requires_cffi]
 
 if sys.version_info >= (3, 4):
     pass
@@ -90,10 +107,6 @@ setup(
               'libqtile.resources'
               ],
     package_data={'libqtile.resources': ['battery-icons/*.png']},
-    cffi_modules=[
-        'libqtile/ffi_build.py:pango_ffi',
-        'libqtile/ffi_build.py:xcursors_ffi'
-    ],
     scripts=[
         "bin/qsh",
         "bin/qtile",
@@ -103,4 +116,5 @@ setup(
     data_files=[
         ('share/man/man1', ['resources/qtile.1',
                             'resources/qsh.1'])],
+    **cffi_args
 )

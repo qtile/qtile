@@ -26,7 +26,9 @@ from xcffib.ffi_build import ffi as xcffib_ffi
 from cairocffi.ffi_build import ffi as cairocffi_ffi
 
 pango_ffi = FFI()
-pango_ffi.set_source("libqtile._ffi_pango", None)
+# PyPy < 2.6 compatibility
+if hasattr(pango_ffi, 'set_source'):
+    pango_ffi.set_source("libqtile._ffi_pango", None)
 
 pango_ffi.include(cairocffi_ffi)
 
@@ -142,7 +144,9 @@ pango_ffi.cdef("""
 """)
 
 xcursors_ffi = FFI()
-xcursors_ffi.set_source("libqtile._ffi_xcursors", None)
+# PyPy < 2.6 compatibility
+if hasattr(xcursors_ffi, 'set_source'):
+    xcursors_ffi.set_source("libqtile._ffi_xcursors", None)
 
 xcursors_ffi.include(xcffib_ffi)
 

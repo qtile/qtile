@@ -40,7 +40,7 @@ install:
   - if [[ ${EVENTLOOP} == "trollius" ]]; then pip install trollius; fi
   - if [[ ${EVENTLOOP} == "tulip" ]]; then pip install asyncio; fi
 # build pangocffi module
-  - python libqtile/ffi_build.py
+  - python -c 'import cffi, sys; sys.exit(cffi.__version_info__[0])' || python libqtile/ffi_build.py
 
 after_success:
   - coveralls

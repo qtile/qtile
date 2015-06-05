@@ -47,7 +47,12 @@
 # This is not intended to be a complete cffi-based pango binding.
 
 import six
-from libqtile._ffi_pango import ffi
+
+# PyPy < 2.6 compatibility
+try:
+    from libqtile._ffi_pango import ffi
+except ImportError:
+    from libqtile.ffi_build import pango_ffi as ffi
 
 gobject = ffi.dlopen('libgobject-2.0.so')
 pango = ffi.dlopen('libpango-1.0.so')
