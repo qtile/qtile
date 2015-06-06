@@ -183,3 +183,5 @@ You can create bindings on them just like for the regular keys. For example
     * - ``XF86AudioMute``
     * - ``XF86AudioNext``
     * - ``XF86AudioPrev``
+    * - ``XF86MonBrightnessUp``
+    * - ``XF86MonBrightnessDown``
