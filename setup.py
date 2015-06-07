@@ -27,12 +27,37 @@
 # SOFTWARE.
 
 import sys
+import textwrap
 
-try:
-    from setuptools import setup
-except ImportError:
-    # Let's not fail if setuptools is not available
-    from distutils.core import setup
+from setuptools import setup
+from setuptools.command.install import install
+
+class CheckCairoXcb(install):
+    def cairo_xcb_check(self):
+        try:
+            from cairocffi import cairo
+            cairo.cairo_xcb_surface_create
+            return True
+        except AttributeError:
+            return False
+
+    def finalize_options(self):
+        if not self.cairo_xcb_check():
+
+            print(textwrap.dedent("""
+
+            Looks like your cairocffi was not built with xcffib support. Please
+            ensure xcffib is installed, and then run:
+
+            pip --no-deps --ignore-installed cairocffi
+
+            or if your versin of pip is too old to have those args, reinstall manually:
+
+            pip uninstall cairocffi
+            pip install cairocffi"""))
+
+            sys.exit(1)
+        install.finalize_options(self)
 
 long_description = """
 A pure-Python tiling window manager.
@@ -117,5 +142,6 @@ setup(
     data_files=[
         ('share/man/man1', ['resources/qtile.1',
                             'resources/qsh.1'])],
+    cmdclass={'install': CheckCairoXcb},
     **cffi_args
 )
