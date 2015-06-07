@@ -68,7 +68,7 @@ else:
         'libqtile/ffi_build.py:xcursors_ffi'
     ])
 
-dependencies = ['xcffib>=0.3.2', 'cairocffi>=0.7[xcb]', 'six>=1.4.1', requires_cffi]
+dependencies = ['xcffib>=0.3.2', 'cairocffi>=0.7', 'six>=1.4.1', requires_cffi]
 
 if sys.version_info >= (3, 4):
     pass
