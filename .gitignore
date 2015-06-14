@@ -33,3 +33,4 @@ debian/python3-qtile
 debian/*debhelper
 
 *sublime*
+.idea
