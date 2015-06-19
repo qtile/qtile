@@ -69,7 +69,7 @@ def shuffleDown(lst):
         lst.append(c)
 
 
-class LRUCache:
+class LRUCache(object):
     """
         A decorator that implements a self-expiring LRU cache for class
         methods (not functions!).

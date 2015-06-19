@@ -201,7 +201,7 @@ XCB_CONN_ERRORS = {
 }
 
 
-class MaskMap:
+class MaskMap(object):
     """
         A general utility class that encapsulates the way the mask/value idiom
         works in xpyb. It understands a special attribute _maskvalue on
@@ -239,7 +239,7 @@ AttributeMasks = MaskMap(CW)
 GCMasks = MaskMap(xcffib.xproto.GC)
 
 
-class AtomCache:
+class AtomCache(object):
     def __init__(self, conn):
         self.conn = conn
         self.atoms = {}
@@ -275,7 +275,7 @@ class AtomCache:
         return self.atoms[key]
 
 
-class _Wrapper:
+class _Wrapper(object):
     def __init__(self, wrapped):
         self.wrapped = wrapped
 
@@ -293,7 +293,7 @@ class Screen(_Wrapper):
         self.root = Window(conn, self.root)
 
 
-class PseudoScreen:
+class PseudoScreen(object):
     """
         This may be a Xinerama screen or a RandR CRTC, both of which are
         rectagular sections of an actual Screen.
@@ -306,7 +306,7 @@ class PseudoScreen:
         self.height = height
 
 
-class Colormap:
+class Colormap(object):
     def __init__(self, conn, cid):
         self.conn = conn
         self.cid = cid
@@ -329,7 +329,7 @@ class Colormap:
             return self.conn.conn.core.AllocColor(self.cid, r, g, b).reply()
 
 
-class Xinerama:
+class Xinerama(object):
     def __init__(self, conn):
         self.ext = conn.conn(xcffib.xinerama.key)
 
@@ -338,7 +338,7 @@ class Xinerama:
         return r.screen_info
 
 
-class RandR:
+class RandR(object):
     def __init__(self, conn):
         self.ext = conn.conn(xcffib.randr.key)
         self.ext.SelectInput(
@@ -360,7 +360,7 @@ class RandR:
         return l
 
 
-class XFixes:
+class XFixes(object):
     selection_mask = SelectionEventMask.SetSelectionOwner | \
         SelectionEventMask.SelectionClientClose | \
         SelectionEventMask.SelectionWindowDestroy
@@ -378,7 +378,7 @@ class XFixes:
                                                   self.selection_mask)
 
 
-class GC:
+class GC(object):
     def __init__(self, conn, gid):
         self.conn = conn
         self.gid = gid
@@ -388,7 +388,7 @@ class GC:
         self.conn.conn.core.ChangeGC(self.gid, mask, values)
 
 
-class Window:
+class Window(object):
     def __init__(self, conn, wid):
         self.conn = conn
         self.wid = wid
@@ -763,7 +763,7 @@ class Window:
         return root, parent, [Window(self.conn, i) for i in q.children]
 
 
-class Font:
+class Font(object):
     def __init__(self, conn, fid):
         self.conn = conn
         self.fid = fid
@@ -780,7 +780,7 @@ class Font:
         return x
 
 
-class Connection:
+class Connection(object):
     _extmap = {
         "xinerama": Xinerama,
         "randr": RandR,

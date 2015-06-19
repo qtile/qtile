@@ -40,7 +40,7 @@ class IPCError(Exception):
     pass
 
 
-class _IPC:
+class _IPC(object):
     def _unpack(self, data):
         try:
             assert len(data) >= HDRLEN

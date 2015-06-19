@@ -98,7 +98,7 @@ class _Server(ipc.Server):
         self.qtile.conn.flush()
 
 
-class _Command:
+class _Command(object):
     def __init__(self, call, selectors, name):
         """
             :command A string command name specification
@@ -263,7 +263,7 @@ class CommandRoot(_CommandRoot):
             raise CommandException(val)
 
 
-class _Call:
+class _Call(object):
     def __init__(self, selectors, name, *args, **kwargs):
         """
             :command A string command name specification

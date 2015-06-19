@@ -117,7 +117,7 @@ class Gap(command.CommandObject):
         return self.info()
 
 
-class Obj:
+class Obj(object):
     def __init__(self, name):
         self.name = name
 

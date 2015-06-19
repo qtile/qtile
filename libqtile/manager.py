@@ -1231,7 +1231,7 @@ class Qtile(command.CommandObject):
             raise command.CommandError("Unknown key: %s" % key)
         keycode = self.conn.first_sym_to_code[keysym]
 
-        class DummyEv:
+        class DummyEv(object):
             pass
 
         d = DummyEv()

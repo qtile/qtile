@@ -132,7 +132,7 @@ class TextLayout(object):
         return TextFrame(self, border_width, border_color, pad_x, pad_y)
 
 
-class TextFrame:
+class TextFrame(object):
     def __init__(self, layout, border_width, border_color, pad_x, pad_y):
         self.layout = layout
         self.border_width = border_width
@@ -187,7 +187,7 @@ class TextFrame:
         return self.layout.width + self.pad_left + self.pad_right
 
 
-class Drawer:
+class Drawer(object):
     """
         A helper class for drawing and text layout.
 
