@@ -23,6 +23,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import division
+
 import cairocffi
 from .. import bar, hook
 from . import base
@@ -203,7 +205,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         scaler = cairocffi.Matrix()
 
         if height != self.icon_size:
-            sp = height / float(self.icon_size)
+            sp = height / self.icon_size
             height = self.icon_size
             width = width / sp
             scaler.scale(sp, sp)

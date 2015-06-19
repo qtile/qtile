@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import division
+
 import array
 import contextlib
 import inspect
@@ -333,7 +335,7 @@ class _Window(command.CommandObject):
         else:
             value = opacity[0]
             # 2 decimal places
-            as_float = round((float(value) / 0xffffffff), 2)
+            as_float = round(value / 0xffffffff, 2)
             return as_float
 
     opacity = property(getOpacity, setOpacity)
@@ -1066,7 +1068,7 @@ class Window(_Window):
 
             arr = array.array("B", data)
             for i in range(0, len(arr), 4):
-                mult = (arr[i + 3]) / 255.
+                mult = arr[i + 3] / 255.
                 arr[i + 0] = int(arr[i + 0] * mult)
                 arr[i + 1] = int(arr[i + 1] * mult)
                 arr[i + 2] = int(arr[i + 2] * mult)

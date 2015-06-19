@@ -183,7 +183,7 @@ class MonadTall(SingleWindow):
     focused = property(_get_focus, _set_focus)
 
     def _get_relative_size_from_absolute(self, absolute_size):
-        return float(absolute_size) / self.group.screen.dheight
+        return absolute_size / self.group.screen.dheight
 
     def _get_absolute_size_from_relative(self, relative_size):
         return int(relative_size * self.group.screen.dheight)

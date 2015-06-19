@@ -26,6 +26,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import division
+
 from .base import SingleWindow
 
 
@@ -103,7 +105,7 @@ class Zoomy(SingleWindow):
                 margin=self.margin,
             )
         else:
-            h = int(right.width * left.height / left.width)
+            h = right.width * left.height // left.width
             client_index = self.clients.index(client)
             focused_index = self.clients.index(self.focused)
             offset = client_index - focused_index - 1
@@ -120,7 +122,7 @@ class Zoomy(SingleWindow):
                     margin=self.margin,
                 )
             else:
-                hh = int((right.height - h) / (len(self.clients) - 1))
+                hh = (right.height - h) // (len(self.clients) - 1)
                 client.place(
                     right.x,
                     right.y + hh * offset,

@@ -17,6 +17,9 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
+from __future__ import division
+
 from .base import Layout
 from .. import utils
 
@@ -290,12 +293,12 @@ class Stack(Layout):
         else:
             px = self.group.qtile.colorPixel(self.border_normal)
 
-        columnWidth = int(screen.width / float(len(self.stacks)))
+        columnWidth = int(screen.width / len(self.stacks))
         xoffset = screen.x + i * columnWidth
         winWidth = columnWidth - 2 * self.border_width
 
         if s.split:
-            columnHeight = int(screen.height / float(len(s)))
+            columnHeight = int(screen.height / len(s))
             winHeight = columnHeight - 2 * self.border_width
             yoffset = screen.y + s.index(client) * columnHeight
             client.place(

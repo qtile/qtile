@@ -36,6 +36,9 @@
 # TODO: check if UI hangs in case of network issues and such
 # TODO: some kind of templating to make shown info configurable
 # TODO: best practice to handle failures? just write to stderr?
+
+from __future__ import division
+
 import atexit
 import re
 import time

@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import division
+
 import os
 import cairocffi
 
@@ -76,7 +78,7 @@ class Image(base._Widget, base.MarginMixin):
 
                 if new_height and self.image_height != new_height:
                     scaler = cairocffi.Matrix()
-                    sp = self.image_height / float(new_height)
+                    sp = self.image_height / new_height
                     self.image_height = new_height
                     self.image_width = int(self.image_width / sp)
                     scaler.scale(sp, sp)
@@ -86,7 +88,7 @@ class Image(base._Widget, base.MarginMixin):
 
                 if new_width and self.image_width != new_width:
                     scaler = cairocffi.Matrix()
-                    sp = self.image_width / float(new_width)
+                    sp = self.image_width / new_width
                     self.image_width = new_width
                     self.image_height = int(self.image_height / sp)
                     scaler.scale(sp, sp)

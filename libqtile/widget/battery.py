@@ -29,6 +29,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import division
+
 import cairocffi
 import os
 from libqtile import bar
@@ -329,7 +331,7 @@ class BatteryIcon(_Battery):
             input_width = img.get_width()
             input_height = img.get_height()
 
-            sp = input_height / float(self.bar.height - 1)
+            sp = input_height / (self.bar.height - 1)
 
             width = input_width / sp
             if width > self.length:
