@@ -64,4 +64,3 @@ class CurrentScreen(base._TextBox):
             self.bar.draw()
 
         hook.subscribe.current_screen_change(hook_response)
-
