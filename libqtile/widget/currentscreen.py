@@ -44,23 +44,20 @@ class CurrentScreen(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        if qtile.currentScreen == bar.screen:
+        self.update_text()
+        self.setup_hooks()
+
+    def setup_hooks(self):
+        def hook_response():
+            self.update_text()
+            self.bar.draw()
+
+        hook.subscribe.current_screen_change(hook_response)
+
+    def update_text(self):
+        if self.qtile.currentScreen == self.bar.screen:
             self.text = self.active_text
             self.foreground = self.active_color
         else:
             self.text = self.inactive_text
             self.foreground = self.inactive_color
-
-        self.setup_hooks()
-
-    def setup_hooks(self):
-        def hook_response():
-            if self.qtile.currentScreen == self.bar.screen:
-                self.text = self.active_text
-                self.foreground = self.active_color
-            else:
-                self.text = self.inactive_text
-                self.foreground = self.inactive_color
-            self.bar.draw()
-
-        hook.subscribe.current_screen_change(hook_response)
