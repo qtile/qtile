@@ -34,7 +34,7 @@ class CurrentScreen(base._TextBox):
         ('active_text', 'A', 'Text displayed when the screen is active'),
         ('inactive_text', 'I', 'Text displayed when the screen is inactive'),
         ('active_color', '00ff00', 'Color when screen is active'),
-        ('inactive_color', 'ff0000', 'Color when screen is incative')
+        ('inactive_color', 'ff0000', 'Color when screen is inactive')
     ]
     orientations = base.ORIENTATION_HORIZONTAL
 
