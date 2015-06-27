@@ -124,6 +124,7 @@ WindowTypes = {
 WindowStates = {
     None: 'normal',
     '_NET_WM_STATE_FULLSCREEN': 'fullscreen',
+    '_NET_WM_STATE_DEMANDS_ATTENTION': 'urgent'
 }
 
 # Maps property names to types and formats.
@@ -549,14 +550,11 @@ class Window:
             return WindowTypes.get(name, name)
 
     def get_net_wm_state(self):
-        # TODO: _NET_WM_STATE is a *list* of atoms
-        # We're returning only the first one, but we don't need anything
-        # other than _NET_WM_STATE_FULLSCREEN (at least for now)
-        # Fixing this requires refactoring each call to use a list instead
         r = self.get_property('_NET_WM_STATE', "ATOM", unpack=int)
         if r:
-            name = self.conn.atoms.get_name(r[0])
-            return WindowStates.get(name, name)
+            names = [self.conn.atoms.get_name(p) for p in r]
+            return [WindowStates.get(n, n) for n in names]
+        return []
 
     def get_net_wm_pid(self):
         r = self.get_property("_NET_WM_PID", unpack=int)
