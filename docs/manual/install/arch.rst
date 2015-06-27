@@ -20,6 +20,8 @@ if you use `yaourt`_:
     # or for develop
     yaourt -S qtile-python3-git
 
+**note:** you may have to add the `community-testing` mirror to your mirrors list in /etc/pacman.conf to install the correct version of python-xcffib.
+
 Using pacman
 ============
 
