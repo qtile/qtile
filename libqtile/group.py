@@ -239,7 +239,7 @@ class _Group(command.CommandObject):
         self.windows.add(win)
         win.group = self
         try:
-            if win.window.get_net_wm_state() == 'fullscreen' and \
+            if 'fullscreen' in win.window.get_net_wm_state() and \
                     self.qtile.config.auto_fullscreen:
                 win._float_state = window.FULLSCREEN
             elif self.floating_layout.match(win):

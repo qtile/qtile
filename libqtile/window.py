@@ -144,6 +144,7 @@ class _Window(command.CommandObject):
         self.state = NormalState
         self.window_type = "normal"
         self._float_state = NOT_FLOATING
+        self._demands_attention = False
 
         self.hints = {
             'input': True,
@@ -277,18 +278,28 @@ class _Window(command.CommandObject):
         return
 
     def updateState(self):
-        if not self.qtile.config.auto_fullscreen:
-            return
+        triggered = ['urgent']
+
+        if self.qtile.config.auto_fullscreen:
+            triggered.append('fullscreen')
+
         state = self.window.get_net_wm_state()
-        self.qtile.log.debug('_NET_WM_STATE: %s' % state)
-        if state == 'fullscreen':
-            self.fullscreen = True
-        else:
-            self.fullscreen = False
+
+        if state:
+            self.qtile.log.debug('_NET_WM_STATE: %s' % ','.join(state))
+            for s in triggered:
+                setattr(self, s, (s in state))
 
     @property
     def urgent(self):
-        return self.hints['urgent']
+        return self.hints['urgent'] | self._demands_attention
+
+    @urgent.setter
+    def urgent(self, val):
+        self._demands_attention = val
+        # TODO unset window hint as well?
+        if not val:
+            self.hints['urgent'] = False
 
     def info(self):
         if self.group:
@@ -523,6 +534,7 @@ class _Window(command.CommandObject):
                     self.window.warp_pointer(self.width // 2, self.height // 2)
             except AttributeError:
                 pass
+        self.urgent = False
         self.qtile.root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
         hook.fire("client_focus", self)
 
