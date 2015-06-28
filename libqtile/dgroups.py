@@ -26,6 +26,7 @@
 # SOFTWARE.
 
 import collections
+import six
 
 import libqtile.hook
 from libqtile.config import Key
@@ -127,7 +128,7 @@ class DGroups(object):
             self.add_dgroup(group, group.init)
 
             if group.spawn and not self.qtile.no_spawn:
-                if isinstance(group.spawn, str):
+                if isinstance(group.spawn, six.string_types):
                     spawns = [group.spawn]
                 else:
                     spawns = group.spawn
