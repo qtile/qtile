@@ -434,8 +434,9 @@ class Group(object):
         :type matches: default ``None``
         :param exclusive: when other apps are started in this group, should we allow them here or not?
         :type exclusive: boolean
-        :param spawn: this will be ``exec()`` d when the group is created
-        :type spawn: string
+        :param spawn: this will be ``exec()`` d when the group is created, you can pass either a
+                      program name or a list of programs to ``exec()``
+        :type spawn: string or list of strings
         :param layout: the default layout for this group (e.g. 'max' or 'stack')
         :type layout: string
         :param layouts: the group layouts list overriding global layouts
