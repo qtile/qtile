@@ -1,7 +1,7 @@
-cairocffi
-cffi
+cairocffi >=0.6, <7.0
+cffi >=0.8.2, <0.9
+xcffib >=0.1.11, <0.2
 flake8
 nose-cov
 python-coveralls
 six
-xcffib
