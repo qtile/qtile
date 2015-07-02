@@ -512,9 +512,10 @@ class Window(object):
             return self._propertyString(r)
 
     def get_wm_transient_for(self):
-        r = self.get_property("WM_TRANSIENT_FOR", "ATOM")
+        r = self.get_property("WM_TRANSIENT_FOR", "WINDOW", unpack=int)
+
         if r:
-            return list(r.value)
+            return r[0]
 
     def get_wm_icon_name(self):
         r = self.get_property("_NET_WM_ICON_NAME", "UTF8_STRING")
