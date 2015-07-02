@@ -46,15 +46,18 @@ class CheckCairoXcb(install):
 
             print(textwrap.dedent("""
 
-            Looks like your cairocffi was not built with xcffib support. Please
-            ensure xcffib is installed, and then run:
+            It looks like your cairocffi was not built with xcffib support.  To fix this:
 
-            pip --no-deps --ignore-installed cairocffi
+              - Ensure a recent xcffib is installed (pip install 'xcffib>=0.3.2')
+              - The pip cache is cleared (remove ~/.cache/pip, if it exists)
+              - Reinstall cairocffi, either:
 
-            or if your versin of pip is too old to have those args, reinstall manually:
+                  pip install --no-deps --ignore-installed cairocffi
 
-            pip uninstall cairocffi
-            pip install cairocffi"""))
+                or
+
+                  pip uninstall cairocffi && pip install cairocffi
+            """))
 
             sys.exit(1)
         install.finalize_options(self)
