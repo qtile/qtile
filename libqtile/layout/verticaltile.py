@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import division
+
 from .base import Layout
 
 
@@ -165,8 +167,8 @@ class VerticalTile(Layout):
                 sec_area_height = screen.height - main_area_height
 
                 main_pane_height = main_area_height - border_width * 2
-                sec_pane_height = sec_area_height / (n - 1) - border_width * 2
-                normal_pane_height = (screen.height / n) - (border_width * 2)
+                sec_pane_height = sec_area_height // (n - 1) - border_width * 2
+                normal_pane_height = (screen.height // n) - (border_width * 2)
 
                 if self.maximized:
                     if window is self.maximized:
