@@ -290,7 +290,7 @@ class _Window(command.CommandObject):
 
     @property
     def urgent(self):
-        return self.hints['urgent'] | self._demands_attention
+        return self.hints['urgent'] or self._demands_attention
 
     @urgent.setter
     def urgent(self, val):
