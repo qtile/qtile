@@ -1,6 +1,8 @@
+include CHANGELOG
 include LICENSE
 include README.rst
 recursive-include libqtile/resources *
+recursive-include resources *
 recursive-exclude scripts *
 recursive-exclude test *
 exclude libqtile/_ffi*.py
