@@ -353,7 +353,7 @@ class MonadTall(SingleWindow):
             height = self._get_absolute_size_from_relative(
                 self.relative_sizes[cidx - 1]
             )
-            #fix double margin
+            # fix double margin
             if cidx > 1:
                 ypos -= self.margin
                 height += self.margin
