@@ -26,10 +26,13 @@ matrix:
 script:
   - make ckpatch
 
+addons:
+  apt:
+    packages:
+      - xserver-xephyr
+      - x11-apps
+
 before_install:
-# Environment setup
-  - sudo apt-get update -qq
-  - sudo apt-get install -qqy xserver-xephyr x11-apps
 # Setup XvFB
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
@@ -47,3 +50,5 @@ after_success:
 
 notifications:
   email: false
+
+sudo: false
