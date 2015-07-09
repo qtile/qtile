@@ -378,7 +378,6 @@ class MonadTall(SingleWindow):
                 self.group.screen.dheight - 2 * self.border_width - 2 * self.margin,
                 self.border_width,
                 px,
-                margin=0,
             )
             client.unhide()
 
