@@ -353,6 +353,10 @@ class MonadTall(SingleWindow):
             height = self._get_absolute_size_from_relative(
                 self.relative_sizes[cidx - 1]
             )
+            #fix double margin
+            if cidx > 1:
+                ypos -= self.margin
+                height += self.margin
             # place client based on calculated dimensions
             client.place(
                 xpos,
@@ -371,7 +375,7 @@ class MonadTall(SingleWindow):
                 xpos + self.margin,
                 self.group.screen.dy + self.margin,
                 width - self.margin,
-                self.group.screen.dheight - 2 * self.border_width - 2*self.margin,
+                self.group.screen.dheight - 2 * self.border_width - 2 * self.margin,
                 self.border_width,
                 px,
                 margin=0,
