@@ -40,16 +40,18 @@ import atexit
 
 class Icon(window._Window):
     _windowMask = EventMask.StructureNotify | \
+        EventMask.PropertyChange | \
         EventMask.Exposure
 
     def __init__(self, win, qtile, systray):
         window._Window.__init__(self, win, qtile)
         self.systray = systray
-        self.width = systray.icon_size
-        self.height = systray.icon_size
+        self.protocol_version = 1
+        self.update_size()
 
-    def handle_ConfigureNotify(self, event):
+    def update_size(self):
         icon_size = self.systray.icon_size
+        self.window.set_attribute(backpixmap=self.systray.drawer.pixmap)
         self.updateHints()
 
         try:
@@ -68,67 +70,38 @@ class Icon(window._Window):
 
         self.width = width
         self.height = height
-        self.window.set_attribute(backpixmap=self.systray.drawer.pixmap)
+        return False
+
+    def handle_PropertyNotify(self, e):
+        name = self.qtile.conn.atoms.get_name(e.atom)
+        if name == "_XEMBED_INFO":
+            info = self.window.get_property('_XEMBED_INFO',
+                                            type="_XEMBED_INFO", unpack=int)
+            if info and info[1]:
+                self.systray.bar.draw()
+
         return False
 
     def handle_DestroyNotify(self, event):
         wid = event.window
         del(self.qtile.windowMap[wid])
         del(self.systray.icons[wid])
-        self.systray.draw()
+        self.systray.bar.draw()
         return False
 
     handle_UnmapNotify = handle_DestroyNotify
 
 
-class TrayWindow(window._Window):
-    _windowMask = EventMask.StructureNotify | \
-        EventMask.Exposure
-
-    def __init__(self, win, qtile, systray):
-        window._Window.__init__(self, win, qtile)
-        self.systray = systray
-
-    def handle_ClientMessage(self, event):
-        atoms = self.qtile.conn.atoms
-
-        opcode = event.type
-        data = event.data.data32
-        message = data[1]
-        wid = data[2]
-
-        conn = self.qtile.conn.conn
-        parent = self.systray.bar.window.window
-
-        # message == 0 corresponds to SYSTEM_TRAY_REQUEST_DOCK
-        # TODO: handle system tray messages http://standards.freedesktop.org/systemtray-spec/systemtray-spec-latest.html
-        if opcode == atoms['_NET_SYSTEM_TRAY_OPCODE'] and message == 0:
-            try:
-                w = xcbq.Window(self.qtile.conn, wid)
-                icon = Icon(w, self.qtile, self.systray)
-                self.systray.icons[wid] = icon
-                self.qtile.windowMap[wid] = icon
-
-                # add icon window to the save-set, so it gets reparented
-                # to the root window when qtile dies
-                conn.core.ChangeSaveSet(SetMode.Insert, wid)
-
-                conn.core.ReparentWindow(wid, parent.wid, 0, 0)
-                conn.flush()
-                w.map()
-            except xcffib.xproto.DrawableError:
-                # The icon wasn't ready to be drawn yet... (NetworkManager does
-                # this sometimes), so we just forget about it and wait for the
-                # next event.
-                pass
-        return False
-
-
-class Systray(base._Widget):
+class Systray(window._Window, base._Widget):
     """
         A widget that manages system tray.
     """
+
+    _windowMask = EventMask.StructureNotify | \
+        EventMask.Exposure
+
     orientations = base.ORIENTATION_HORIZONTAL
+
     defaults = [
         ('icon_size', 20, 'Icon width'),
         ('padding', 5, 'Padding between icons'),
@@ -137,11 +110,8 @@ class Systray(base._Widget):
     def __init__(self, **config):
         base._Widget.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(Systray.defaults)
-        self.traywin = None
         self.icons = {}
-
-    def button_press(self, x, y, button):
-        pass
+        self.screen = 0
 
     def calculate_length(self):
         width = sum([i.width for i in self.icons.values()])
@@ -150,20 +120,22 @@ class Systray(base._Widget):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
-        self.qtile = qtile
+        win = qtile.conn.create_window(-1, -1, 1, 1)
+        window._Window.__init__(self, xcbq.Window(qtile.conn, win.wid), qtile)
+        qtile.windowMap[win.wid] = self
+
+        self.screen = qtile.currentScreen.index
         self.bar = bar
         atoms = qtile.conn.atoms
-        win = qtile.conn.create_window(-1, -1, 1, 1)
-        self.traywin = TrayWindow(win, self.qtile, self)
-        qtile.windowMap[win.wid] = self.traywin
+
         qtile.conn.conn.core.SetSelectionOwner(
             win.wid,
-            atoms['_NET_SYSTEM_TRAY_S0'],
+            atoms['_NET_SYSTEM_TRAY_S{}'.format(self.screen)],
             xcffib.CurrentTime
         )
         data = [
             xcffib.CurrentTime,
-            atoms['_NET_SYSTEM_TRAY_S0'],
+            atoms['_NET_SYSTEM_TRAY_S{}'.format(self.screen)],
             win.wid, 0, 0
         ]
         union = ClientMessageData.synthetic(data, "I" * 5)
@@ -178,10 +150,45 @@ class Systray(base._Widget):
         # cleanup before exit
         atexit.register(self.cleanup)
 
+    def handle_ClientMessage(self, event):
+        atoms = self.qtile.conn.atoms
+
+        opcode = event.type
+        data = event.data.data32
+        message = data[1]
+        wid = data[2]
+
+        conn = self.qtile.conn.conn
+        parent = self.bar.window.window
+
+        if opcode == atoms['_NET_SYSTEM_TRAY_OPCODE'] and message == 0:
+            w = xcbq.Window(self.qtile.conn, wid)
+            icon = Icon(w, self.qtile, self)
+            self.icons[wid] = icon
+            self.qtile.windowMap[wid] = icon
+
+            conn.core.ChangeSaveSet(SetMode.Insert, wid)
+            conn.core.ReparentWindow(wid, parent.wid, 0, 0)
+            conn.flush()
+
+            info = icon.window.get_property(
+                    '_XEMBED_INFO', type='_XEMBED_INFO', unpack=int)
+
+            if not info:
+                self.bar.draw()
+                return False
+
+            icon.protocol_version = info[0]
+
+            if info[1]:
+                self.bar.draw()
+
+        return False
+
     def draw(self):
-        self.drawer.clear(self.background or self.bar.background)
-        self.drawer.draw(offsetx=self.offset, width=self.calculate_length())
         xoffset = self.padding
+        self.drawer.clear(self.background or self.bar.background)
+        self.drawer.draw(offsetx=self.offset, width=self.length)
         for pos, icon in enumerate(self.icons.values()):
             icon.place(
                 self.offset + xoffset,
@@ -190,13 +197,30 @@ class Systray(base._Widget):
                 0,
                 None
             )
+            if icon.hidden:
+                icon.unhide()
+                data = [
+                    self.qtile.conn.atoms["_XEMBED_EMBEDDED_NOTIFY"],
+                    xcffib.xproto.Time.CurrentTime,
+                    0,
+                    self.bar.window.window.wid,
+                    icon.protocol_version
+                ]
+                u = xcffib.xproto.ClientMessageData.synthetic(data, "I" * 5)
+                xcffib.xproto.ClientMessageEvent.synthetic(
+                    format=32,
+                    window=icon.window.wid,
+                    type=self.qtile.conn.atoms["_XEMBED"],
+                    data=u
+                )
+
             xoffset += icon.width + self.padding
 
     def cleanup(self):
         atoms = self.qtile.conn.atoms
         self.qtile.conn.conn.core.SetSelectionOwner(
             0,
-            atoms['_NET_SYSTEM_TRAY_S0'],
+            atoms['_NET_SYSTEM_TRAY_S{}'.format(self.screen)],
             xcffib.CurrentTime,
         )
-        self.traywin.hide()
+        self.hide()
