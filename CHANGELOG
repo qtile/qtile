@@ -1,3 +1,7 @@
+qtile 0.10.1, released 2015-07-08:
+    This release fixes a problem that made the PyPI package uninstallable,
+    qtile will work with a pip install now
+
 qtile 0.10.0, released 2015-07-07:
     !!! Config breakage !!!
         - various deprecated commands have been removed:
