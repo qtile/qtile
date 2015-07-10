@@ -55,7 +55,15 @@ class TestConfig:
         libqtile.config.Group("d")
     ]
     layouts = [
-                libqtile.layout.max.Max()
+                libqtile.layout.Tile(),
+                libqtile.layout.Max(),
+                libqtile.layout.RatioTile(),
+                libqtile.layout.Matrix(),
+                libqtile.layout.MonadTall(),
+                # libqtile.layout.Stack(),
+                libqtile.layout.Zoomy(),
+                libqtile.layout.VerticalTile(),
+
             ]
     floating_layout = libqtile.layout.floating.Floating(
         float_rules=[dict(wmclass="xclock")])
