@@ -244,11 +244,11 @@ class Xephyr(object):
 
         # Kill all the windows
         if self.state is None:
-            print "Closing Qtile"
+            print("Closing Qtile")
             for proc in self.testwindows[:]:
                 self._kill(proc)
         else:
-            print "Restarting Qtile"
+            print("Restarting Qtile")
 
     def _waitForQtile(self, errpipe):
         # First, wait for socket to appear

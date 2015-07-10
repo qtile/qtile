@@ -113,8 +113,8 @@ def test_move(self):
     a = self.c.get_info()
     x = self.simulate_restart()
     b = self.c.get_info()
-    print a
-    print b
+    print(a)
+    print(b)
     assert a == b
 
     self.c.group.next_window()
