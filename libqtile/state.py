@@ -32,17 +32,17 @@ class QtileState(object):
         # configurations.
         self.groups = {}
         self.screens = {}
-        self.focusHistory = {}
+        self.focus_history = {}
         self.current_screen = 0
-        self.layoutMap = {}
+        self.layout_map = {}
 
         for group in qtile.groups:
             self.groups[group.name] = group.layout.name
-            self.layoutMap[group.name] = {}
+            self.layout_map[group.name] = {}
             for layout in group.layouts:
-                self.layoutMap[group.name][layout.name] = layout
+                self.layout_map[group.name][layout.name] = layout
                 layout.group = None
-            self.focusHistory[group.name] = group.focusHistory
+            self.focus_history[group.name] = group.focusHistory
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
             if screen == qtile.currentScreen:
@@ -55,12 +55,9 @@ class QtileState(object):
         """
         try:
             for group in qtile.groups:
-                x = []
-                for i in self.focusHistory[group.name]:
-                    x.append(qtile.windowMap[i.wid])
-                group.focusHistory = x
+                group.focus_history = [qtile.windowMap[i.wid] for i in self.focus_history[group.name]]
                 for layout in group.layouts:
-                    d = self.layoutMap[group.name][layout.name]
+                    d = self.layout_map[group.name][layout.name]
                     d.group = layout.group
                     members = dir(d)
                     for member in members:
