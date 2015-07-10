@@ -1162,10 +1162,9 @@ class Qtile(command.CommandObject):
         return dict((i.name, i.info()) for i in self.groups)
 
     def cmd_get_info(self):
-        x={}
+        x = {}
         for i in self.groups:
-            x[i.name] = [ j.info() for j in i.layouts]
-            #x[i.name].append(i.focusHistory)
+            x[i.name] = [j.info() for j in i.layouts]
         return x
 
     def cmd_list_widgets(self):

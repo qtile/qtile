@@ -46,6 +46,7 @@ from nose.plugins.attrib import attr
 from . import utils
 from .utils import Xephyr
 
+
 class TestConfig:
     auto_fullscreen = True
     groups = [
@@ -97,10 +98,11 @@ def test_minimal(self):
     self.testWindow("one")
     self.testWindow("two")
     self.testWindow("three")
-    a=self.c.get_info()
-    x=self.simulate_restart()
-    b=self.c.get_info()
+    a = self.c.get_info()
+    x = self.simulate_restart()
+    b = self.c.get_info()
     assert a == b
+
 
 @Xephyr(True, TestConfig())
 def test_move(self):
@@ -108,21 +110,21 @@ def test_move(self):
     self.testWindow("two")
     self.testWindow("three")
     self.c.group.next_window()
-    a=self.c.get_info()
-    x=self.simulate_restart()
-    b=self.c.get_info()
-    print a 
+    a = self.c.get_info()
+    x = self.simulate_restart()
+    b = self.c.get_info()
+    print a
     print b
     assert a == b
 
     self.c.group.next_window()
-    a=self.c.get_info()
-    x=self.simulate_restart()
-    b=self.c.get_info()
+    a = self.c.get_info()
+    x = self.simulate_restart()
+    b = self.c.get_info()
     assert a == b
 
     self.c.group.next_window()
-    a=self.c.get_info()
-    x=self.simulate_restart()
-    b=self.c.get_info()
+    a = self.c.get_info()
+    x = self.simulate_restart()
+    b = self.c.get_info()
     assert a == b
