@@ -431,3 +431,4 @@ class Stack(Layout):
 
     def cmd_info(self):
         return self.info()
+#   Add __setstate__() & __getstate__()
