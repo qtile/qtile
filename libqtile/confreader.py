@@ -60,7 +60,11 @@ class File(object):
                 # screwed up their config. So as not to lose their apps, we
                 # just load the default config here.
                 if is_restart:
-                    logging.getLogger('qtile').warning(tb + '\nQtile restarted by default config')
+                    logging.getLogger('qtile').warning(
+                        'Caught exception in configuration:\n\n'
+                        '{}\n\n'
+                        'Qtile restarted with default config'.format(tb)
+                    )
                     config = None
                 else:
                     raise ConfigError(tb)
