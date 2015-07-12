@@ -51,7 +51,6 @@ class Icon(window._Window):
 
     def update_size(self):
         icon_size = self.systray.icon_size
-        self.window.set_attribute(backpixmap=self.systray.drawer.pixmap)
         self.updateHints()
 
         try:
@@ -190,6 +189,7 @@ class Systray(window._Window, base._Widget):
         self.drawer.clear(self.background or self.bar.background)
         self.drawer.draw(offsetx=self.offset, width=self.length)
         for pos, icon in enumerate(self.icons.values()):
+            icon.window.set_attribute(backpixmap=self.drawer.pixmap)
             icon.place(
                 self.offset + xoffset,
                 self.bar.height // 2 - self.icon_size // 2,
