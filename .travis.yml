@@ -26,11 +26,16 @@ matrix:
 script:
   - make ckpatch
 
+cache:
+  directories:
+    - $HOME/.cache/pip
+
 addons:
   apt:
     packages:
-      - xserver-xephyr
       - x11-apps
+      - xserver-xephyr
+      - xvfb
 
 before_install:
 # Setup XvFB
