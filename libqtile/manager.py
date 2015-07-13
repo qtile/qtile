@@ -1164,7 +1164,7 @@ class Qtile(command.CommandObject):
     def cmd_get_info(self):
         x = {}
         for i in self.groups:
-            x[i.name] = i.info()
+            x[i.name] = i.get_info()
         return x
 
     def cmd_list_widgets(self):
