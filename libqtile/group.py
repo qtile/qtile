@@ -228,10 +228,10 @@ class _Group(command.CommandObject):
             name=self.name,
             focus=self.currentWindow.name if self.currentWindow else None,
             windows=[i.name for i in self.windows],
-            focusHistory = [i.name for i in self.focusHistory],
+            focusHistory=[i.name for i in self.focusHistory],
             layout=self.layout.name,
             layouts=[l.name for l in self.layouts],
-            floating_info=self.floating_layout.info(),
+            floating_info=self.floating_layout./////////////////////////////////////////////////////9(),
             screen=self.screen.index if self.screen else None
         )
 
