@@ -231,7 +231,7 @@ class _Group(command.CommandObject):
             focusHistory=[i.name for i in self.focusHistory],
             layout=self.layout.name,
             layouts=[l.name for l in self.layouts],
-            floating_info=self.floating_layout./////////////////////////////////////////////////////9(),
+            floating_info=self.floating_layout.info(),
             screen=self.screen.index if self.screen else None
         )
 
