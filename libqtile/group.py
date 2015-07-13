@@ -227,7 +227,7 @@ class _Group(command.CommandObject):
         return dict(
             name=self.name,
             focus=self.currentWindow.name if self.currentWindow else None,
-            windows=[i.name for i in self.windows],
+            # windows=[i.name for i in self.windows],
             focusHistory=[i.name for i in self.focusHistory],
             layout=self.layout.name,
             layouts=[l.name for l in self.layouts],
