@@ -12,6 +12,7 @@ running something else, please see `Installing From Source`_.
     :maxdepth: 1
 
     Arch <arch>
+    Fedora <fedora>
     Ubuntu <ubuntu>
 
 Installing From Source
