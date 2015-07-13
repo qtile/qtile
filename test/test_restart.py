@@ -61,7 +61,7 @@ class TestConfig:
                 libqtile.layout.RatioTile(),
                 libqtile.layout.Matrix(),
                 libqtile.layout.MonadTall(),
-                # libqtile.layout.Stack(),
+                libqtile.layout.Stack(),
                 libqtile.layout.Zoomy(),
                 libqtile.layout.VerticalTile(),
 
