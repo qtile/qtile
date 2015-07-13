@@ -55,6 +55,7 @@ class QtileState(object):
         """
         try:
             for group in qtile.groups:
+                group.focusHistory = [qtile.windowMap[i.wid] for i in self.focus_history[group.name]]
                 for layout in group.layouts:
                     d = self.layout_map[group.name][layout.name]
                     d.group = layout.group
@@ -79,7 +80,6 @@ class QtileState(object):
                                 setattr(layout, member, x)
                         except AttributeError:
                             pass
-                group.focusHistory = [qtile.windowMap[i.wid] for i in self.focus_history[group.name]]
         except KeyError:
             pass  # group missing
 
