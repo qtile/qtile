@@ -684,7 +684,7 @@ def test_rotate(self):
         [
             "xrandr",
             "--output", "default",
-            "-display", utils.DISPLAY,
+            "-display", self.display,
             "--rotate", "left"
         ],
         stderr=subprocess.PIPE,
@@ -708,7 +708,7 @@ def test_resize_(self):
         [
             "xrandr",
             "-s", "480x640",
-            "-display", utils.DISPLAY
+            "-display", self.display
         ]
     )
     for _ in range(10):
