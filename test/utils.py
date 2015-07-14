@@ -177,7 +177,16 @@ class Xephyr(object):
                 pass
             time.sleep(0.1)
         else:
-            raise AssertionError("Error launching Xephyr, quit with return code: %d" % self.xephyr.returncode)
+            (stdout_data, stderr_data) = self.xephyr.communicate()
+            stdout_data.decode()
+            raise AssertionError("Error launching Xephyr, quit with return code: {:d}\n"
+                                 "stderr: {}\n"
+                                 "stdout: {}".format(
+                                     self.xephyr.returncode,
+                                     stderr_data.decode(),
+                                     stdout_data.decode()
+                                 )
+            )
 
         conn.disconnect()
         del conn
