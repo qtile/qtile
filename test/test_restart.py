@@ -113,7 +113,7 @@ def test_move(self):
     a = self.c.get_info()
     x = self.simulate_restart()
     b = self.c.get_info()
-    print(a),'\n\n'
+    print(a), '\n\n'
     print(b)
     assert a == b
 
@@ -128,3 +128,4 @@ def test_move(self):
     x = self.simulate_restart()
     b = self.c.get_info()
     assert a == b
+#   Comment
