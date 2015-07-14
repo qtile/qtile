@@ -171,7 +171,10 @@ class Systray(window._Window, base._Widget):
             conn.flush()
 
             info = icon.window.get_property(
-                    '_XEMBED_INFO', type='_XEMBED_INFO', unpack=int)
+                '_XEMBED_INFO',
+                type='_XEMBED_INFO',
+                unpack=int
+            )
 
             if not info:
                 self.bar.draw()
