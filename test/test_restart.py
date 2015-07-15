@@ -64,6 +64,8 @@ class TestConfig:
                 libqtile.layout.Stack(),
                 libqtile.layout.Zoomy(),
                 libqtile.layout.VerticalTile(),
+                libqtile.layout.TreeTab(),
+                # libqtile.layout.Slice('left', 256, wname= 'google'),
 
             ]
     floating_layout = libqtile.layout.floating.Floating(
