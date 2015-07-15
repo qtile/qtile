@@ -11,7 +11,7 @@ implementations. To install it, run:
 
 You can also install the development version from GitHub:
 
-.. code-blocks:: bash
+.. code-block:: bash
 
     echo "x11-wm/qtile-9999 **" >> /etc/portage/package.accept_keywords
     emerge -av qtile
