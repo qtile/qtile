@@ -30,12 +30,14 @@ from nose.tools import with_setup, raises
 # TODO: more tests required.
 # 1. Check all hooks that can be fired
 
+
 class TestCall(object):
     def __init__(self, val):
         self.val = val
 
     def __call__(self, val):
         self.val = val
+
 
 def setup():
     class Dummy:

@@ -27,8 +27,10 @@ from libqtile.widget import TextBox
 from .utils import Xephyr
 from .test_manager import BareConfig
 
+
 class ColorChanger(TextBox):
     count = 0
+
     def update(self, text):
         self.count += 1
         if self.count % 2 == 0:
@@ -37,8 +39,10 @@ class ColorChanger(TextBox):
             self.foreground = "0000ff"
         self.text = text
 
+
 class WidgetTestConf(BareConfig):
     screens = [Screen(bottom=Bar([ColorChanger(name="colorchanger")], 20))]
+
 
 @Xephyr(False, WidgetTestConf())
 def test_textbox_color_change(self):
