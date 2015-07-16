@@ -290,7 +290,7 @@ class Qtile(command.CommandObject):
 
             fd = self.conn.conn.get_file_descriptor()
             self._eventloop.remove_reader(fd)
-            self.conn.disconnect()
+            self.conn.finalize()
         except:
             self.log.exception('exception during finalize')
 

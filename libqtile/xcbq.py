@@ -830,6 +830,10 @@ class Connection(object):
         self.modmap = None
         self.refresh_modmap()
 
+    def finalize(self):
+        self.cursors.finalize()
+        self.disconnect()
+
     def refresh_keymap(self, first=None, count=None):
         if first is None:
             first = self.setup.min_keycode
