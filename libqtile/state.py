@@ -17,6 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from . import window
 
 
 class QtileState(object):
@@ -31,10 +32,17 @@ class QtileState(object):
         # configurations.
         self.groups = {}
         self.screens = {}
+        self.focus_history = {}
         self.current_screen = 0
+        self.layout_map = {}
 
         for group in qtile.groups:
             self.groups[group.name] = group.layout.name
+            self.layout_map[group.name] = {}
+            for layout in group.layouts:
+                self.layout_map[group.name][layout.name] = layout
+                layout.group = None
+            self.focus_history[group.name] = group.focusHistory
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
             if screen == qtile.currentScreen:
@@ -45,6 +53,36 @@ class QtileState(object):
             Rearrange the windows in the specified Qtile object according to
             this QtileState.
         """
+        try:
+            for group in qtile.groups:
+                group.focusHistory = [qtile.windowMap[i.wid] for i in self.focus_history[group.name]]
+                for layout in group.layouts:
+                    d = self.layout_map[group.name][layout.name]
+                    d.group = layout.group
+                    members = dir(d)
+                    for member in members:
+                        try:
+                            x = getattr(d, member)
+                            if isinstance(x, list):
+                                tmp = []
+                                last = None
+                                for i in x:
+                                    if isinstance(i, window.Window):
+                                        tmp.append(qtile.windowMap[i.wid])
+                                    else:
+                                        tmp.append(i)
+                                    last = i
+                                if isinstance(last, window.Window):
+                                    setattr(layout, member, tmp)
+                            elif isinstance(x, window.Window):
+                                setattr(layout, member, qtile.windowMap[x.wid])
+                            elif not callable(x) and not str.startswith(member, '_'):
+                                setattr(layout, member, x)
+                        except AttributeError:
+                            pass
+        except KeyError:
+            pass  # group missing
+
         for (group, layout) in self.groups.items():
             try:
                 qtile.groupMap[group].layout = layout

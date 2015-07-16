@@ -1330,3 +1330,12 @@ class Window(_Window):
                 self.group.layout.focused = index2
                 self.group.layoutAll()
                 break
+
+    def __getstate__(self):
+        d = {}
+        d['window'] = self.window.wid
+        return d
+
+    def __setstate__(self, state):
+        self.wid = state['window']
+        return self

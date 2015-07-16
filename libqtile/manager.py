@@ -1161,6 +1161,12 @@ class Qtile(command.CommandObject):
         """
         return dict((i.name, i.info()) for i in self.groups)
 
+    def cmd_get_info(self):
+        x = {}
+        for i in self.groups:
+            x[i.name] = i.get_info()
+        return x
+
     def cmd_list_widgets(self):
         """
             List of all addressible widget names.
@@ -1625,3 +1631,11 @@ class Qtile(command.CommandObject):
                 self.log.warning("Not found bar for hide/show.")
         else:
             self.log.error("Invalid position value:%s" % position)
+
+    def cmd_get_state(self):
+        buf = six.BytesIO()
+        pickle.dump(QtileState(self), buf, protocol=0)
+        state = buf.getvalue().decode()
+        self.log.info('State = ')
+        self.log.info(state)
+        return state

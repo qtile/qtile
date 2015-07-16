@@ -66,11 +66,15 @@ def whereis(program):
 class Xephyr(object):
     def __init__(self, xinerama, config, start_qtile=True,
                  randr=False, two_screens=True,
-                 width=WIDTH, height=HEIGHT, xoffset=None):
+                 width=WIDTH, height=HEIGHT, xoffset=None,
+                 state=None, no_spawn=False):
         self.xinerama, self.randr = xinerama, randr
         self.config = config
         self.start_qtile = start_qtile
         self.two_screens = two_screens
+        self.state=state
+        self.no_spawn=no_spawn
+
 
         self.width = width
         self.height = height
@@ -204,7 +208,8 @@ class Xephyr(object):
         def runQtile():
             try:
                 q = Qtile(config, self.display, self.sockfile,
-                          log=init_log(logging.INFO, log_path=self.logfile))
+                          log=init_log(logging.INFO, log_path=self.logfile),
+                          state=self.state, no_spawn=self.no_spawn)
                 q.loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
@@ -238,8 +243,12 @@ class Xephyr(object):
         self.qtile = None
 
         # Kill all the windows
-        for proc in self.testwindows[:]:
-            self._kill(proc)
+        if self.state is None:
+            print("Closing Qtile")
+            for proc in self.testwindows[:]:
+                self._kill(proc)
+        else:
+            print("Restarting Qtile")
 
     def _waitForQtile(self, errpipe):
         # First, wait for socket to appear
@@ -358,3 +367,11 @@ class Xephyr(object):
             time.sleep(0.1)
         else:
             raise AssertionError("Window could not be killed...")
+
+    def simulate_restart(self):
+        self.no_spawn = True
+        self.state=self.c.get_state()
+        self.stopQtile()
+        self.startQtile(self.config)
+        self.no_spawn = False
+        self.state = None
