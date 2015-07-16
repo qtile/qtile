@@ -33,7 +33,6 @@ import shlex
 import signal
 import sys
 import traceback
-import threading
 import xcffib
 import xcffib.xinerama
 import xcffib.xproto
@@ -72,6 +71,7 @@ class Qtile(command.CommandObject):
         self.no_spawn = no_spawn
 
         self._eventloop = asyncio.get_event_loop()
+        self._finalize = False
 
         if not displayName:
             displayName = os.environ.get("DISPLAY")
@@ -256,18 +256,27 @@ class Qtile(command.CommandObject):
 
             def gobject_thread():
                 ctx = GLib.main_context_default()
-                while not self._eventloop.is_closed():
+                while not self._finalize:
                     try:
                         ctx.iteration(True)
                     except Exception:
                         self.qtile.exception("got exception from gobject")
-            t = threading.Thread(target=gobject_thread, name="gobject_thread")
-            t.start()
+            self._glib_loop = self.run_in_executor(gobject_thread)
         except ImportError:
             self.log.warning("importing dbus/gobject failed, dbus will not work.")
+            self._glib_loop = None
 
     def finalize(self):
+        self._finalize = True
+
         try:
+            try:
+                from gi.repository import GLib
+                GLib.idle_add(lambda: None)
+                self._eventloop.run_until_complete(self._glib_loop)
+            except ImportError:
+                pass
+
             for w in self.widgetMap.values():
                 w.finalize()
 
@@ -720,15 +729,10 @@ class Qtile(command.CommandObject):
         try:
             self._eventloop.run_forever()
         finally:
+            self.finalize()
             self.server.close()
             self.log.info('Removing io watch')
-            self.finalize()
             self._eventloop.close()
-            try:
-                from gi.repository import GObject
-                GObject.idle_add(lambda: None)
-            except ImportError:
-                pass
 
     def find_screen(self, x, y):
         """
