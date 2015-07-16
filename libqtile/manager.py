@@ -24,7 +24,6 @@ from __future__ import division
 from libqtile.log_utils import init_log
 from libqtile.dgroups import DGroups
 from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
-import atexit
 import imp
 import logging
 import os
@@ -34,7 +33,6 @@ import shlex
 import signal
 import sys
 import traceback
-import threading
 import xcffib
 import xcffib.xinerama
 import xcffib.xproto
@@ -73,6 +71,7 @@ class Qtile(command.CommandObject):
         self.no_spawn = no_spawn
 
         self._eventloop = asyncio.get_event_loop()
+        self._finalize = False
 
         if not displayName:
             displayName = os.environ.get("DISPLAY")
@@ -257,15 +256,43 @@ class Qtile(command.CommandObject):
 
             def gobject_thread():
                 ctx = GLib.main_context_default()
-                while not self._eventloop.is_closed():
+                while not self._finalize:
                     try:
                         ctx.iteration(True)
                     except Exception:
                         self.qtile.exception("got exception from gobject")
-            t = threading.Thread(target=gobject_thread, name="gobject_thread")
-            t.start()
+            self._glib_loop = self.run_in_executor(gobject_thread)
         except ImportError:
             self.log.warning("importing dbus/gobject failed, dbus will not work.")
+            self._glib_loop = None
+
+    def finalize(self):
+        self._finalize = True
+
+        try:
+            try:
+                from gi.repository import GLib
+                GLib.idle_add(lambda: None)
+                self._eventloop.run_until_complete(self._glib_loop)
+            except ImportError:
+                pass
+
+            for w in self.widgetMap.values():
+                w.finalize()
+
+            for l in self.config.layouts:
+                l.finalize()
+
+            for screen in self.screens:
+                for bar in [screen.top, screen.bottom, screen.left, screen.right]:
+                    if bar is not None:
+                        bar.finalize()
+
+            fd = self.conn.conn.get_file_descriptor()
+            self._eventloop.remove_reader(fd)
+            self.conn.finalize()
+        except:
+            self.log.exception('exception during finalize')
 
     def _process_fake_screens(self):
         """
@@ -681,7 +708,6 @@ class Qtile(command.CommandObject):
                     error_string = xcbq.XCB_CONN_ERRORS[error_code]
                     self.log.exception("Shutting down due to X connection error %s (%s)" %
                         (error_string, error_code))
-                    self.conn.disconnect()
                     self._eventloop.stop()
 
                 self.log.exception("Got an exception in poll loop")
@@ -703,16 +729,10 @@ class Qtile(command.CommandObject):
         try:
             self._eventloop.run_forever()
         finally:
+            self.finalize()
             self.server.close()
             self.log.info('Removing io watch')
-            self._eventloop.remove_reader(fd)
             self._eventloop.close()
-            self.conn.conn.disconnect()
-            try:
-                from gi.repository import GObject
-                GObject.idle_add(lambda: None)
-            except ImportError:
-                pass
 
     def find_screen(self, x, y):
         """
@@ -1252,7 +1272,7 @@ class Qtile(command.CommandObject):
         """
             Executes the specified command, replacing the current process.
         """
-        atexit._run_exitfuncs()
+        self.finalize()
         os.execv(cmd, args)
 
     def cmd_restart(self):

@@ -105,6 +105,9 @@ class Cursors(dict):
         if self.xcursor:
             self.xcursor.xcb_cursor_context_free(self._cursor_ctx[0])
 
+    def finalize(self):
+        self._cursor_ctx = None
+
     def _setup_xcursor_binding(self):
         try:
             xcursor = ffi.dlopen('libxcb-cursor.so')
