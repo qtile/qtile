@@ -39,7 +39,6 @@
 
 from __future__ import division
 
-import atexit
 import re
 import time
 
@@ -87,7 +86,7 @@ class Mpd(base.ThreadPoolText):
         self.connected = False
         self.stop = False
 
-    def _atexit(self):
+    def finalize(self):
         self.stop = True
 
         if self.connected:
@@ -103,6 +102,7 @@ class Mpd(base.ThreadPoolText):
                 self.client.disconnect()
             except:
                 pass
+        base._Widget.finalize(self)
 
     def connect(self, quiet=False):
         if self.connected:
@@ -138,7 +138,6 @@ class Mpd(base.ThreadPoolText):
             self.fontshadow,
             markup=True
         )
-        atexit.register(self._atexit)
 
     def to_minutes_seconds(self, stime):
         """Takes an integer time in seconds, transforms it into
