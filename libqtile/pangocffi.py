@@ -89,6 +89,11 @@ class PangoLayout(object):
             gobject.g_object_unref(p)
         self._pointer = ffi.gc(self._pointer, free)
 
+    def finalize(self):
+        self._desc = None
+        self._pointer = None
+        self._cairo_t = None
+
     def set_font_description(self, desc):
         # save a pointer so it doesn't get GC'd out from under us
         self._desc = desc
