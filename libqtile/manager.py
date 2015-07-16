@@ -24,7 +24,6 @@ from __future__ import division
 from libqtile.log_utils import init_log
 from libqtile.dgroups import DGroups
 from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
-import atexit
 import imp
 import logging
 import os
@@ -1270,7 +1269,6 @@ class Qtile(command.CommandObject):
             Executes the specified command, replacing the current process.
         """
         self.finalize()
-        atexit._run_exitfuncs()
         os.execv(cmd, args)
 
     def cmd_restart(self):
