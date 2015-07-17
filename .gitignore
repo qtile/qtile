@@ -7,6 +7,7 @@ __pycache__
 MANIFEST
 /build
 /dist
+/env
 # complied cffi output
 libqtile/_ffi_pango.py
 libqtile/_ffi_xcursors.py

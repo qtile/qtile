@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2015 Tycho Andersen
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,13 +23,17 @@
 
 from libqtile.config import Screen
 from libqtile.bar import Bar
-from libqtile.widget import TextBox
+from libqtile.widget import TextBox, ThermalSensor
+
 
 from .utils import Xephyr
 from .test_manager import BareConfig
 
+
 class ColorChanger(TextBox):
+
     count = 0
+
     def update(self, text):
         self.count += 1
         if self.count % 2 == 0:
@@ -37,8 +42,10 @@ class ColorChanger(TextBox):
             self.foreground = "0000ff"
         self.text = text
 
+
 class WidgetTestConf(BareConfig):
     screens = [Screen(bottom=Bar([ColorChanger(name="colorchanger")], 20))]
+
 
 @Xephyr(False, WidgetTestConf())
 def test_textbox_color_change(self):
@@ -48,3 +55,23 @@ def test_textbox_color_change(self):
 
     self.c.widget["colorchanger"].update('f')
     assert self.c.widget["colorchanger"].info()["foreground"] == "ff0000"
+
+
+def test_thermalsensor_regex_compatibility():
+    sensors = ThermalSensor()
+    test_sensors_output = """
+    coretemp-isa-0000
+    Adapter: ISA adapter
+    Physical id 0:  +61.0°C  (high = +86.0°C, crit = +100.0°C)
+    Core 0:         +54.0°C  (high = +86.0°C, crit = +100.0°C)
+    Core 1:         +56.0°C  (high = +86.0°C, crit = +100.0°C)
+    Core 2:         +58.0°C  (high = +86.0°C, crit = +100.0°C)
+    Core 3:         +61.0°C  (high = +86.0°C, crit = +100.0°C)
+    """
+    sensors_detected = sensors._format_sensors_output(test_sensors_output)
+    assert sensors_detected["Physical id 0"] == ("61.0", "°C")
+    assert sensors_detected["Core 0"] == ("54.0", "°C")
+    assert sensors_detected["Core 1"] == ("56.0", "°C")
+    assert sensors_detected["Core 2"] == ("58.0", "°C")
+    assert sensors_detected["Core 3"] == ("61.0", "°C")
+    assert not ("Adapter" in sensors_detected.keys())
