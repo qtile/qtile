@@ -88,7 +88,7 @@ class ThermalSensor(base.InLoopPollText):
         except OSError:
             return None
         temp_values = {}
-        for value in = self.sensors_temp.findall(sensors_out):
+        for value in self.sensors_temp.findall(sensors_out):
             temp_values[value[0]] = value[1:]
         return temp_values
 
