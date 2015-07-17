@@ -37,6 +37,8 @@ from xcffib.xproto import (ClientMessageEvent, ClientMessageData, EventMask,
                            SetMode)
 import atexit
 
+XEMBED_PROTOCOL_VERSION = 0
+
 
 class Icon(window._Window):
     _windowMask = EventMask.StructureNotify | \
@@ -46,7 +48,6 @@ class Icon(window._Window):
     def __init__(self, win, qtile, systray):
         window._Window.__init__(self, win, qtile)
         self.systray = systray
-        self.protocol_version = 1
         self.update_size()
 
     def update_size(self):
@@ -178,8 +179,6 @@ class Systray(window._Window, base._Widget):
                 self.bar.draw()
                 return False
 
-            icon.protocol_version = info[0]
-
             if info[1]:
                 self.bar.draw()
 
@@ -205,7 +204,7 @@ class Systray(window._Window, base._Widget):
                     xcffib.xproto.Time.CurrentTime,
                     0,
                     self.bar.window.window.wid,
-                    icon.protocol_version
+                    XEMBED_PROTOCOL_VERSION
                 ]
                 u = xcffib.xproto.ClientMessageData.synthetic(data, "I" * 5)
                 event = xcffib.xproto.ClientMessageEvent.synthetic(
