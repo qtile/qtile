@@ -27,7 +27,7 @@
 # coding: utf-8
 
 from . import base
-from six import u
+from six import u, PY2
 
 import re
 
@@ -59,12 +59,12 @@ class ThermalSensor(base.InLoopPollText):
         self.add_defaults(ThermalSensor.defaults)
         self.sensors_temp = re.compile(
             u(r"""
-            ([a-zA-Z0-9\s]+): #Tag
-            \s+[+-]           #Temp signed
-            ([0-9]+\.[0-9]+)  #Temp value
-            (\xc2\xb0         #° match
-            [CF])             #Celsius or Fahrenheit
-            """),
+            ([\w ]+):   #Tag
+            \s+[+|-]    #Temp signed
+            (\d+\.\d+)  #Temp value
+            ({degrees}  #° match
+            [C|F])      #Celsius or Fahrenheit
+            """.format(degrees="\xc2\xb0" if PY2 else "\xb0")),
             re.UNICODE | re.VERBOSE
         )
         self.value_temp = re.compile("[0-9]+\.[0-9]+")
