@@ -75,8 +75,7 @@ class Icon(window._Window):
     def handle_PropertyNotify(self, e):
         name = self.qtile.conn.atoms.get_name(e.atom)
         if name == "_XEMBED_INFO":
-            info = self.window.get_property('_XEMBED_INFO',
-                                            type="_XEMBED_INFO", unpack=int)
+            info = self.window.get_property('_XEMBED_INFO', unpack=int)
             if info and info[1]:
                 self.systray.bar.draw()
 
@@ -169,11 +168,7 @@ class Systray(window._Window, base._Widget):
             conn.core.ReparentWindow(wid, parent.wid, 0, 0)
             conn.flush()
 
-            info = icon.window.get_property(
-                '_XEMBED_INFO',
-                type='_XEMBED_INFO',
-                unpack=int
-            )
+            info = icon.window.get_property('_XEMBED_INFO', unpack=int)
 
             if not info:
                 self.bar.draw()

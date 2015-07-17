@@ -159,7 +159,8 @@ PropertyMap = {
     "_NET_WM_STATE_MODAL": ("ATOM", 32),
     "_NET_WM_STATE_HIDDEN": ("ATOM", 32),
     "_NET_WM_STATE_DEMANDS_ATTENTION": ("ATOM", 32),
-
+    # Xembed
+    "_XEMBED_INFO": ("_XEMBED_INFO", 32),
     # ICCCM
     "WM_STATE": ("WM_STATE", 32),
     # Qtile-specific properties
