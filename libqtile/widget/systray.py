@@ -208,12 +208,13 @@ class Systray(window._Window, base._Widget):
                     icon.protocol_version
                 ]
                 u = xcffib.xproto.ClientMessageData.synthetic(data, "I" * 5)
-                xcffib.xproto.ClientMessageEvent.synthetic(
+                event = xcffib.xproto.ClientMessageEvent.synthetic(
                     format=32,
                     window=icon.window.wid,
                     type=self.qtile.conn.atoms["_XEMBED"],
                     data=u
                 )
+                self.window.send_event(event)
 
             xoffset += icon.width + self.padding
 
