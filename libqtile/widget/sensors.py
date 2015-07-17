@@ -26,10 +26,12 @@
 #
 # coding: utf-8
 
-from . import base
+import re
+
 from six import u, PY2
 
-import re
+from . import base
+from ..utils import UnixCommandNotFound, catch_exception_and_warn
 
 
 class ThermalSensor(base.InLoopPollText):
@@ -44,7 +46,8 @@ class ThermalSensor(base.InLoopPollText):
         ('metric', True, 'True to use metric/C, False to use imperial/F'),
         ('show_tag', False, 'Show tag sensor'),
         ('update_interval', 2, 'Update interval in seconds'),
-        ('tag_sensor', None, 'Tag of the temperature sensor. For example: "temp1" or "Core 0"'),
+        ('tag_sensor', None,
+            'Tag of the temperature sensor. For example: "temp1" or "Core 0"'),
         (
             'threshold',
             70,
@@ -59,17 +62,18 @@ class ThermalSensor(base.InLoopPollText):
         self.add_defaults(ThermalSensor.defaults)
         self.sensors_temp = re.compile(
             u(r"""
-            ([\w ]+):   #Tag
-            \s+[+|-]    #Temp signed
-            (\d+\.\d+)  #Temp value
-            ({degrees}  #° match
-            [C|F])      #Celsius or Fahrenheit
+            ([\w ]+):   # Sensor tag name
+            \s+[+|-]    # temp signed
+            (\d+\.\d+)  # temp value
+            ({degrees}  # ° match
+            [C|F])      # Celsius or Fahrenheit
             """.format(degrees="\xc2\xb0" if PY2 else "\xb0")),
             re.UNICODE | re.VERBOSE
         )
-        self.value_temp = re.compile("[0-9]+\.[0-9]+")
+        self.value_temp = re.compile("\d+\.\d+")
         temp_values = self.get_temp_sensors()
         self.foreground_normal = self.foreground
+
         if temp_values is None:
             self.data = "sensors command not found"
         elif len(temp_values) == 0:
@@ -79,18 +83,26 @@ class ThermalSensor(base.InLoopPollText):
                 self.tag_sensor = k
                 break
 
+    @catch_exception_and_warn(warning=UnixCommandNotFound, excepts=OSError)
     def get_temp_sensors(self):
-        fahrenheit = []
+        """calls the unix `sensors` command with `-f` flag if user has specified that
+        the output should be read in Fahrenheit.
+        """
+        command = ["sensors", ]
         if not self.metric:
-            fahrenheit = ["-f"]
-        try:
-            sensors_out = self.call_process(["sensors"] + fahrenheit)
-        except OSError:
-            return None
-        temp_values = {}
-        for value in re.findall(self.sensors_temp, sensors_out):
-            temp_values[value[0]] = value[1:]
-        return temp_values
+            command.append("-f")
+        sensors_out = self.call_process(command)
+        return self._format_sensors_output(sensors_out)
+
+    def _format_sensors_output(self, sensors_out):
+        """formats output of unix `sensors` command into a dict of
+        {<sensor_name>: (<temperature>, <temperature symbol>), ..etc..}
+        """
+        temperature_values = {}
+        for name, temp, symbol in self.sensors_temp.findall(sensors_out):
+            name = name.strip()
+            temperature_values[name] = temp, symbol
+        return temperature_values
 
     def poll(self):
         temp_values = self.get_temp_sensors()
