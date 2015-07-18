@@ -974,8 +974,8 @@ class Window(_Window):
             group = self.qtile.currentGroup
         else:
             group = self.qtile.groupMap.get(groupName)
-        if group is None:
-            raise command.CommandError("No such group: %s" % groupName)
+            if group is None:
+                raise command.CommandError("No such group: %s" % groupName)
 
         if self.group is not group:
             self.hide()
