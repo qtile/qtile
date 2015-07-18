@@ -966,11 +966,12 @@ class Window(_Window):
             self.group.mark_floating(self, False)
             hook.fire('float_change')
 
-    def togroup(self, groupName):
+    def togroup(self, groupName=None):
         """
             Move window to a specified group.
         """
-        group = self.qtile.groupMap.get(groupName)
+        if groupName is None: group = self.qtile.currentGroup
+        else: group = self.qtile.groupMap.get(groupName)
         if group is None:
             raise command.CommandError("No such group: %s" % groupName)
 
@@ -1205,12 +1206,15 @@ class Window(_Window):
         """
         self.kill()
 
-    def cmd_togroup(self, groupName):
+    def cmd_togroup(self, groupName=None):
         """
             Move window to a specified group.
+            if groupName is not specified, we assume the current group
 
-            Examples:
-
+            Move window to current group
+                togroup()
+            
+            Move window to group "a"
                 togroup("a")
         """
         self.togroup(groupName)
