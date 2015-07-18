@@ -970,8 +970,10 @@ class Window(_Window):
         """
             Move window to a specified group.
         """
-        if groupName is None: group = self.qtile.currentGroup
-        else: group = self.qtile.groupMap.get(groupName)
+        if groupName is None:
+            group = self.qtile.currentGroup
+        else:
+            group = self.qtile.groupMap.get(groupName)
         if group is None:
             raise command.CommandError("No such group: %s" % groupName)
 
@@ -1213,7 +1215,7 @@ class Window(_Window):
 
             Move window to current group
                 togroup()
-            
+
             Move window to group "a"
                 togroup("a")
         """
