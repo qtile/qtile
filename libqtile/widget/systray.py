@@ -35,7 +35,6 @@ from . import base
 import xcffib
 from xcffib.xproto import (ClientMessageEvent, ClientMessageData, EventMask,
                            SetMode)
-import atexit
 
 XEMBED_PROTOCOL_VERSION = 0
 
@@ -144,9 +143,6 @@ class Systray(window._Window, base._Widget):
         )
         qtile.root.send_event(event, mask=EventMask.StructureNotify)
 
-        # cleanup before exit
-        atexit.register(self.cleanup)
-
     def handle_ClientMessage(self, event):
         atoms = self.qtile.conn.atoms
 
@@ -212,7 +208,8 @@ class Systray(window._Window, base._Widget):
 
             xoffset += icon.width + self.padding
 
-    def cleanup(self):
+    def finalize(self):
+        base._Widget.finalize(self)
         atoms = self.qtile.conn.atoms
         self.qtile.conn.conn.core.SetSelectionOwner(
             0,
