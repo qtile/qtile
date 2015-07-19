@@ -1272,7 +1272,7 @@ class Qtile(command.CommandObject):
         """
             Executes the specified command, replacing the current process.
         """
-        self.finalize()
+        self._eventloop.stop()
         os.execv(cmd, args)
 
     def cmd_restart(self):
