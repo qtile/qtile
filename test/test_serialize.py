@@ -1,11 +1,5 @@
-# Copyright (c) 2011 Florian Mounier
-# Copyright (c) 2011 Anshuman Bhaduri
-# Copyright (c) 2012-2014 Tycho Andersen
-# Copyright (c) 2013 xarvh
-# Copyright (c) 2013 Craig Barnes
-# Copyright (c) 2014 Sean Vig
-# Copyright (c) 2014 Adi Sieker
-# Copyright (c) 2014 Sebastien Blot
+# Copyright (c) 2015 Aniruddh Kanojia
+# Copyright (c) 2015 Sean Vig
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,10 +19,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
-import time
-import subprocess
-import signal
 import libqtile
 import libqtile.layout
 import libqtile.bar
@@ -39,15 +29,12 @@ import libqtile.config
 import libqtile.hook
 import libqtile.confreader
 
-import nose
-from nose.tools import assert_raises
 from nose.plugins.attrib import attr
 
-from . import utils
 from .utils import Xephyr
 
 
-class TestConfig:
+class LayoutTestConfig(object):
     auto_fullscreen = True
     groups = [
         libqtile.config.Group("a"),
@@ -55,19 +42,6 @@ class TestConfig:
         libqtile.config.Group("c"),
         libqtile.config.Group("d")
     ]
-    layouts = [
-                libqtile.layout.Tile(),
-                libqtile.layout.Max(),
-                libqtile.layout.RatioTile(),
-                libqtile.layout.Matrix(),
-                libqtile.layout.MonadTall(),
-                libqtile.layout.Stack(),
-                libqtile.layout.Zoomy(),
-                libqtile.layout.VerticalTile(),
-                libqtile.layout.TreeTab(),
-                # libqtile.layout.Slice('left', 256, wname= 'google'),
-
-            ]
     floating_layout = libqtile.layout.floating.Floating(
         float_rules=[dict(wmclass="xclock")])
     keys = [
@@ -84,49 +58,77 @@ class TestConfig:
     ]
     mouse = []
     screens = [libqtile.config.Screen(
-            bottom=libqtile.bar.Bar(
-                        [
-                            libqtile.widget.GroupBox(),
-                        ],
-                        20
-                    ),
+        bottom=libqtile.bar.Bar(
+            [
+                libqtile.widget.GroupBox(),
+            ],
+            20
+        ),
     )]
     main = None
     follow_mouse_focus = True
 
-
-@Xephyr(True, TestConfig())
-def test_minimal(self):
-    self.testWindow("one")
-    self.testWindow("two")
-    self.testWindow("three")
-    a = self.c.get_info()
-    x = self.simulate_restart()
-    b = self.c.get_info()
-    assert a == b
+    def __init__(self, layout):
+        self.layouts = [
+            layout
+        ]
 
 
-@Xephyr(True, TestConfig())
-def test_move(self):
-    self.testWindow("one")
-    self.testWindow("two")
-    self.testWindow("three")
-    self.c.group.next_window()
-    a = self.c.get_info()
-    x = self.simulate_restart()
-    b = self.c.get_info()
-    print(a),'\n\n'
-    print(b)
-    assert a == b
+passing_layouts = [
+    libqtile.layout.Tile(),
+    libqtile.layout.Max(),
+    libqtile.layout.RatioTile(),
+    libqtile.layout.Matrix(),
+    libqtile.layout.MonadTall(),
+    libqtile.layout.Stack(),
+    libqtile.layout.Zoomy(),
+    libqtile.layout.VerticalTile(),
+]
 
-    self.c.group.next_window()
-    a = self.c.get_info()
-    x = self.simulate_restart()
-    b = self.c.get_info()
-    assert a == b
+broken_layouts = [
+    libqtile.layout.TreeTab(),
+    libqtile.layout.Slice('left', 256, wname='slice')
+]
 
-    self.c.group.next_window()
-    a = self.c.get_info()
-    x = self.simulate_restart()
-    b = self.c.get_info()
-    assert a == b
+
+@attr('xephyr')
+def simple_serialization_tests():
+    for layout in passing_layouts:
+        @Xephyr(True, LayoutTestConfig(layout))
+        def test_serialize_simple(self):
+            self.testWindow("one")
+            self.testWindow("two")
+            self.testWindow("three")
+            a = self.c.get_info()
+            self.simulate_restart()
+            b = self.c.get_info()
+            assert a == b
+        yield test_serialize_simple
+
+
+@attr('xephyr')
+def change_focus_serialization_tests():
+    for layout in passing_layouts:
+        @Xephyr(True, LayoutTestConfig(layout))
+        def test_serialize_change_focus(self):
+            self.testWindow("one")
+            self.testWindow("two")
+            self.testWindow("three")
+            self.c.group.next_window()
+            a = self.c.get_info()
+            self.simulate_restart()
+            b = self.c.get_info()
+            assert a == b
+
+            self.c.group.next_window()
+            a = self.c.get_info()
+            self.simulate_restart()
+            b = self.c.get_info()
+            assert a == b
+
+            self.c.group.next_window()
+            a = self.c.get_info()
+            self.simulate_restart()
+            b = self.c.get_info()
+            assert a == b
+        yield test_serialize_change_focus
