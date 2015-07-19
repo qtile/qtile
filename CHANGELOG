@@ -1,3 +1,13 @@
+qtile 0.x.x, released xxxx-xx-xx:
+    * features
+        - improved serialization of layouts across restarts
+        - cmd_togroup can move to current group when None sent
+    * bugfixes
+        - fix Python 3 compatibility of ThermalSensor widget
+        - various Systray fixes, including implementing XEMBED protocol
+        - print exception to log during loading config
+        - fixed xmonad layout margins
+
 qtile 0.10.1, released 2015-07-08:
     This release fixes a problem that made the PyPI package uninstallable,
     qtile will work with a pip install now
