@@ -76,8 +76,8 @@ class GridInfo(object):
         best_rows_cols_orientation = None
         for rows, cols, orientation in self._possible_grids(num_windows):
 
-            sample_width = float(width) / cols
-            sample_height = float(height) / rows
+            sample_width = width / cols
+            sample_height = height / rows
             sample_ratio = sample_width / sample_height
             diff = abs(sample_ratio - self.ratio)
             if best_ratio is None or diff < best_ratio:
@@ -95,7 +95,7 @@ class GridInfo(object):
         else:
             end = num_windows // 2 + 1
         for rows in range(1, end):
-            cols = int(math.ceil(float(num_windows) / rows))
+            cols = int(math.ceil(num_windows / rows))
             yield (rows, cols, ROWCOL)
             if rows != cols:
                 # also want the reverse test

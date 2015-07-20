@@ -183,7 +183,7 @@ class MonadTall(SingleWindow):
     focused = property(_get_focus, _set_focus)
 
     def _get_relative_size_from_absolute(self, absolute_size):
-        return float(absolute_size) / self.group.screen.dheight
+        return absolute_size / self.group.screen.dheight
 
     def _get_absolute_size_from_relative(self, relative_size):
         return int(relative_size * self.group.screen.dheight)
@@ -353,6 +353,10 @@ class MonadTall(SingleWindow):
             height = self._get_absolute_size_from_relative(
                 self.relative_sizes[cidx - 1]
             )
+            # fix double margin
+            if cidx > 1:
+                ypos -= self.margin
+                height += self.margin
             # place client based on calculated dimensions
             client.place(
                 xpos,
@@ -368,12 +372,12 @@ class MonadTall(SingleWindow):
             # main client
             width = width_main - 2 * self.border_width
             client.place(
-                xpos, self.group.screen.dy,
-                width,
-                self.group.screen.dheight - 2 * self.border_width,
+                xpos + self.margin,
+                self.group.screen.dy + self.margin,
+                width - self.margin,
+                self.group.screen.dheight - 2 * self.border_width - 2 * self.margin,
                 self.border_width,
                 px,
-                margin=self.margin,
             )
             client.unhide()
 

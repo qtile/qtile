@@ -401,6 +401,11 @@ class TreeTab(SingleWindow):
         else:
             client.hide()
 
+    def finalize(self):
+        SingleWindow.finalize(self)
+        if self._drawer is not None:
+            self._drawer.finalize()
+
     def info(self):
         d = SingleWindow.info(self)
         d["clients"] = [x.name for x in self._nodes]

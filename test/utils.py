@@ -54,8 +54,6 @@ def _find_display():
         display += 1
     return display
 
-DISPLAY = ":%s" % _find_display()
-
 
 def whereis(program):
     for path in os.environ.get('PATH', '').split(':'):
@@ -87,7 +85,7 @@ class Xephyr(object):
 
         self.qtile = None # Handle to Qtile instance, multiprocessing.Process object
         self.xephyr = None # Handle to Xephyr instance, subprocess.Popen object
-        self.display = DISPLAY
+        self.display = ":{}".format(_find_display())
 
     def __call__(self, function):
         def teardown():
@@ -140,7 +138,7 @@ class Xephyr(object):
 
         return wrapped_fun
 
-    def _startXephyr(self):
+    def _startXephyr(self, restart=True):
         args = [
             "Xephyr", "-name", "qtile_test",
             self.display, "-ac",
@@ -158,7 +156,15 @@ class Xephyr(object):
             stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
 
-        self._waitForXephyr()
+        try:
+            self._waitForXephyr()
+        except AssertionError:
+            # We'll try to get a new display and try one more time...
+            if restart:
+                self.display = ":{}".format(_find_display())
+                self._startXephyr(restart=False)
+            else:
+                raise
 
     def _stopXephyr(self):
         assert self.xephyr is not None, "Xephyr must be started first"
@@ -168,7 +174,9 @@ class Xephyr(object):
             assert self.qtile is None, "Kill Qtile before stopping Xephyr"
             assert self.testwindows == [], "Kill all test windows before stopping Xephyr"
         finally:
-            self._kill(self.xephyr)
+            # Kill xephyr only if it is running
+            if self.xephyr.poll() is None:
+                self._kill(self.xephyr)
             self.xephyr = None
 
     def _waitForXephyr(self):
@@ -181,7 +189,15 @@ class Xephyr(object):
                 pass
             time.sleep(0.1)
         else:
-            raise AssertionError("Error launching Xephyr, quit with return code: %d" % self.xephyr.returncode)
+            (stdout_data, stderr_data) = self.xephyr.communicate()
+            raise AssertionError("Error launching Xephyr, quit with return code: {:d}\n"
+                                 "stderr: {}\n"
+                                 "stdout: {}".format(
+                                     self.xephyr.returncode,
+                                     stderr_data.decode(),
+                                     stdout_data.decode()
+                                 )
+            )
 
         conn.disconnect()
         del conn

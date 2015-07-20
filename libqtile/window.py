@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import division
+
 import array
 import contextlib
 import inspect
@@ -142,6 +144,7 @@ class _Window(command.CommandObject):
         self.state = NormalState
         self.window_type = "normal"
         self._float_state = NOT_FLOATING
+        self._demands_attention = False
 
         self.hints = {
             'input': True,
@@ -275,18 +278,28 @@ class _Window(command.CommandObject):
         return
 
     def updateState(self):
-        if not self.qtile.config.auto_fullscreen:
-            return
+        triggered = ['urgent']
+
+        if self.qtile.config.auto_fullscreen:
+            triggered.append('fullscreen')
+
         state = self.window.get_net_wm_state()
-        self.qtile.log.debug('_NET_WM_STATE: %s' % state)
-        if state == 'fullscreen':
-            self.fullscreen = True
-        else:
-            self.fullscreen = False
+
+        if state:
+            self.qtile.log.debug('_NET_WM_STATE: %s' % ','.join(state))
+            for s in triggered:
+                setattr(self, s, (s in state))
 
     @property
     def urgent(self):
-        return self.hints['urgent']
+        return self.hints['urgent'] or self._demands_attention
+
+    @urgent.setter
+    def urgent(self, val):
+        self._demands_attention = val
+        # TODO unset window hint as well?
+        if not val:
+            self.hints['urgent'] = False
 
     def info(self):
         if self.group:
@@ -333,7 +346,7 @@ class _Window(command.CommandObject):
         else:
             value = opacity[0]
             # 2 decimal places
-            as_float = round((float(value) / 0xffffffff), 2)
+            as_float = round(value / 0xffffffff, 2)
             return as_float
 
     opacity = property(getOpacity, setOpacity)
@@ -521,6 +534,7 @@ class _Window(command.CommandObject):
                     self.window.warp_pointer(self.width // 2, self.height // 2)
             except AttributeError:
                 pass
+        self.urgent = False
         self.qtile.root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
         hook.fire("client_focus", self)
 
@@ -952,13 +966,16 @@ class Window(_Window):
             self.group.mark_floating(self, False)
             hook.fire('float_change')
 
-    def togroup(self, groupName):
+    def togroup(self, groupName=None):
         """
             Move window to a specified group.
         """
-        group = self.qtile.groupMap.get(groupName)
-        if group is None:
-            raise command.CommandError("No such group: %s" % groupName)
+        if groupName is None:
+            group = self.qtile.currentGroup
+        else:
+            group = self.qtile.groupMap.get(groupName)
+            if group is None:
+                raise command.CommandError("No such group: %s" % groupName)
 
         if self.group is not group:
             self.hide()
@@ -1066,7 +1083,7 @@ class Window(_Window):
 
             arr = array.array("B", data)
             for i in range(0, len(arr), 4):
-                mult = (arr[i + 3]) / 255.
+                mult = arr[i + 3] / 255.
                 arr[i + 0] = int(arr[i + 0] * mult)
                 arr[i + 1] = int(arr[i + 1] * mult)
                 arr[i + 2] = int(arr[i + 2] * mult)
@@ -1191,12 +1208,15 @@ class Window(_Window):
         """
         self.kill()
 
-    def cmd_togroup(self, groupName):
+    def cmd_togroup(self, groupName=None):
         """
             Move window to a specified group.
+            if groupName is not specified, we assume the current group
 
-            Examples:
+            Move window to current group
+                togroup()
 
+            Move window to group "a"
                 togroup("a")
         """
         self.togroup(groupName)

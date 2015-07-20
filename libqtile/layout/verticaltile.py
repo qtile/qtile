@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import division
+
 from .base import Layout
 
 
@@ -91,33 +93,33 @@ class VerticalTile(Layout):
         ('name', 'VerticalTile', 'Name of this layout.'),
     ]
 
-    windows = []
-    focused = None
-    maximized = None
     ratio = 0.75
     steps = 0.05
 
     def __init__(self, **config):
         Layout.__init__(self, **config)
         self.add_defaults(self.defaults)
+        self.clients = []
+        self.focused = None
+        self.maximized = None
 
     def add(self, window):
-        if self.windows and self.focused:
-            index = self.windows.index(self.focused)
-            self.windows.insert(index + 1, window)
+        if self.clients and self.focused:
+            index = self.clients.index(self.focused)
+            self.clients.insert(index + 1, window)
         else:
-            self.windows.append(window)
+            self.clients.append(window)
 
         self.focus(window)
 
     def remove(self, window):
-        if window not in self.windows:
+        if window not in self.clients:
             return
 
-        index = self.windows.index(window)
-        self.windows.remove(window)
+        index = self.clients.index(window)
+        self.clients.remove(window)
 
-        if not self.windows:
+        if not self.clients:
             self.focused = None
             self.maximized = None
             return
@@ -125,22 +127,22 @@ class VerticalTile(Layout):
         if self.maximized is window:
             self.maximized = None
 
-        if index == len(self.windows):
+        if index == len(self.clients):
             index -= 1
 
-        self.focus(self.windows[index])
+        self.focus(self.clients[index])
         return self.focused
 
     def clone(self, group):
         c = Layout.clone(self, group)
-        c.windows = []
+        c.clients = []
         c.focused = None
         return c
 
     def configure(self, window, screen):
-        if self.windows and window in self.windows:
-            n = len(self.windows)
-            index = self.windows.index(window)
+        if self.clients and window in self.clients:
+            n = len(self.clients)
+            index = self.clients.index(window)
 
             # border
             if n > 1:
@@ -165,8 +167,8 @@ class VerticalTile(Layout):
                 sec_area_height = screen.height - main_area_height
 
                 main_pane_height = main_area_height - border_width * 2
-                sec_pane_height = sec_area_height / (n - 1) - border_width * 2
-                normal_pane_height = (screen.height / n) - (border_width * 2)
+                sec_pane_height = sec_area_height // (n - 1) - border_width * 2
+                normal_pane_height = (screen.height // n) - (border_width * 2)
 
                 if self.maximized:
                     if window is self.maximized:
@@ -189,7 +191,7 @@ class VerticalTile(Layout):
                         (border_width * 2 * index)
 
                 if self.maximized and window is not self.maximized:
-                    if index > self.windows.index(self.maximized):
+                    if index > self.clients.index(self.maximized):
                         y = y - sec_pane_height + main_pane_height
 
             window.place(screen.x, y, width, height, border_width,
@@ -206,27 +208,37 @@ class VerticalTile(Layout):
 
     def focus_first(self):
         try:
-            self.focus(self.windows[0])
+            self.focus(self.clients[0])
         except IndexError:
             self.blur()
 
     def focus_last(self):
         try:
-            self.focus(self.windows[-1])
+            self.focus(self.clients[-1])
         except IndexError:
             self.blur()
 
-    def focus_next(self):
+    def focus_next(self, window):
+        if not self.clients:
+            return
+        if self.focused != window:
+            self.focus(window)
+
         try:
-            index = self.windows.index(self.focused)
-            self.focus(self.windows[index + 1])
+            index = self.clients.index(self.focused)
+            self.focus(self.clients[index + 1])
         except IndexError:
             self.focus_first()
 
-    def focus_previous(self):
+    def focus_previous(self, window):
+        if not self.clients:
+            return
+        if self.focused != window:
+            self.focus(window)
+
         try:
-            index = self.windows.index(self.focused)
-            self.focus(self.windows[index - 1])
+            index = self.clients.index(self.focused)
+            self.focus(self.clients[index - 1])
         except IndexError:
             self.focus_last()
 
@@ -241,47 +253,47 @@ class VerticalTile(Layout):
             self.group.layoutAll()
 
     def cmd_next(self):
-        self.focus_next()
+        self.focus_next(self.focused)
         self.group.focus(self.focused, False)
 
     def cmd_previous(self):
-        self.focus_previous()
+        self.focus_previous(self.focused)
         self.group.focus(self.focused, False)
 
     def cmd_down(self):
-        self.focus_next()
+        self.focus_next(self.focused)
         self.group.focus(self.focused, False)
 
     def cmd_up(self):
-        self.focus_previous()
+        self.focus_previous(self.focused)
         self.group.focus(self.focused, False)
 
     def cmd_shuffle_up(self):
-        index = self.windows.index(self.focused)
+        index = self.clients.index(self.focused)
 
         try:
-            self.windows[index], self.windows[index - 1] =\
-                self.windows[index - 1], self.windows[index]
+            self.clients[index], self.clients[index - 1] =\
+                self.clients[index - 1], self.clients[index]
         except IndexError:
-            self.windows[index], self.windows[-1] =\
-                self.windows[-1], self.windows[index]
+            self.clients[index], self.clients[-1] =\
+                self.clients[-1], self.clients[index]
 
         self.group.layoutAll()
 
     def cmd_shuffle_down(self):
-        index = self.windows.index(self.focused)
+        index = self.clients.index(self.focused)
 
         try:
-            self.windows[index], self.windows[index + 1] =\
-                self.windows[index + 1], self.windows[index]
+            self.clients[index], self.clients[index + 1] =\
+                self.clients[index + 1], self.clients[index]
         except IndexError:
-            self.windows[index], self.windows[0] =\
-                self.windows[0], self.windows[index]
+            self.clients[index], self.clients[0] =\
+                self.clients[0], self.clients[index]
 
         self.group.layoutAll()
 
     def cmd_maximize(self):
-        if self.windows:
+        if self.clients:
             self.maximized = self.focused
             self.group.layoutAll()
 

@@ -42,7 +42,7 @@ from . import base
 from .. import bar, command, hook, pangocffi, utils, xcbq, xkeysyms
 
 
-class NullCompleter:
+class NullCompleter(object):
     def __init__(self, qtile):
         self.qtile = qtile
         self.thisfinal = ""
@@ -57,7 +57,7 @@ class NullCompleter:
         return txt
 
 
-class FileCompleter:
+class FileCompleter(object):
     def __init__(self, qtile, _testing=False):
         self._testing = _testing
         self.qtile = qtile
@@ -102,7 +102,7 @@ class FileCompleter:
         return ret[0]
 
 
-class QshCompleter:
+class QshCompleter(object):
     def __init__(self, qtile):
         self.qtile = qtile
         self.client = command.CommandRoot(self.qtile)
@@ -156,7 +156,7 @@ class QshCompleter:
         return self.path + ret[0]
 
 
-class GroupCompleter:
+class GroupCompleter(object):
     def __init__(self, qtile):
         self.qtile = qtile
         self.thisfinal = None
@@ -196,7 +196,7 @@ class GroupCompleter:
         return ret[0]
 
 
-class WindowCompleter:
+class WindowCompleter(object):
     def __init__(self, qtile):
         self.qtile = qtile
         self.thisfinal = None
@@ -235,7 +235,7 @@ class WindowCompleter:
         return ret[0]
 
 
-class CommandCompleter:
+class CommandCompleter(object):
     DEFAULTPATH = "/bin:/usr/bin:/usr/local/bin"
 
     def __init__(self, qtile, _testing=False):
@@ -624,7 +624,7 @@ class Prompt(base._TextBox):
         self._update()
 
     def cmd_fake_keypress(self, key):
-        class Dummy:
+        class Dummy(object):
             pass
         d = Dummy()
         keysym = xcbq.keysyms[key]

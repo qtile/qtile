@@ -105,8 +105,8 @@ def make_qtile():
 
     try:
         c = confreader.File(options.configfile, is_restart=options.no_spawn)
-    except:
-        log.exception('Error while reading config file')
+    except Exception as e:
+        log.exception(str(e) + '\n\nError while reading config file')
         raise
 
     # XXX: the import is here becouse we need to call init_log

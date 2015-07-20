@@ -15,6 +15,19 @@ install them from your package manager.
 On ubuntu, this can be done with ``sudo apt-get install python-nose
 xserver-xephyr x11-apps``.
 
+Building cffi module
+====================
+
+Qtile ships with a small in-tree pangocairo binding built using cffi,
+``pangocffi.py``, and also binds to xcursor with cffi.  The bindings are not
+built at run time and will have to be generated manually when the code is
+downloaded or when any changes are made to the cffi library.  This can be done
+by calling:
+
+.. code-block:: bash
+
+    python libqtile/ffi_build.py
+
 Using Xephyr and the test suite
 ===============================
 

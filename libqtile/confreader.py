@@ -26,6 +26,7 @@
 import os
 import sys
 import traceback
+import logging
 
 
 class ConfigError(Exception):
@@ -52,15 +53,21 @@ class File(object):
                 sys.path.insert(0, os.path.dirname(fname))
                 config = __import__(os.path.basename(fname)[:-3])
             except Exception as v:
+
+                tb = traceback.format_exc()
+
                 # On restart, user potentially has some windows open, but they
                 # screwed up their config. So as not to lose their apps, we
                 # just load the default config here.
                 if is_restart:
-                    traceback.print_exc()
+                    logging.getLogger('qtile').warning(
+                        'Caught exception in configuration:\n\n'
+                        '{}\n\n'
+                        'Qtile restarted with default config'.format(tb)
+                    )
                     config = None
                 else:
-                    tb = traceback.format_exc()
-                    raise ConfigError(str(v) + "\n\n" + tb)
+                    raise ConfigError(tb)
         else:
             config = None
 

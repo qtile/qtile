@@ -48,7 +48,6 @@ class QtileState(object):
                     layout._slice.group = None
                     self.layout_map[group.name][layout.name+'_fallback'] = layout.fallback
                     self.layout_map[group.name][layout.name+'__slice'] = layout._slice
-
             self.focus_history[group.name] = group.focusHistory
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
@@ -98,6 +97,27 @@ class QtileState(object):
                         d = self.layout_map[group.name][layout.name+'_fallback']
                         d.group = layout.group
                         self.restore_layout(qtile, d, layout.fallback)
+                    members = dir(d)
+                    for member in members:
+                        try:
+                            x = getattr(d, member)
+                            if isinstance(x, list):
+                                tmp = []
+                                last = None
+                                for i in x:
+                                    if isinstance(i, window.Window):
+                                        tmp.append(qtile.windowMap[i.wid])
+                                    else:
+                                        tmp.append(i)
+                                    last = i
+                                if isinstance(last, window.Window):
+                                    setattr(layout, member, tmp)
+                            elif isinstance(x, window.Window):
+                                setattr(layout, member, qtile.windowMap[x.wid])
+                            elif not callable(x) and not str.startswith(member, '_'):
+                                setattr(layout, member, x)
+                        except AttributeError:
+                            pass
         except KeyError:
             pass  # group missing
 

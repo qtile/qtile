@@ -72,7 +72,7 @@ class Matrix(Layout):
         return self.clients[r * self.columns + c]
 
     def get_num_rows(self):
-        return int(math.ceil(float(len(self.clients)) / self.columns))
+        return int(math.ceil(len(self.clients) / self.columns))
 
     def get_row(self, row):
         assert row < self.get_num_rows()
@@ -133,7 +133,7 @@ class Matrix(Layout):
         idx = self.clients.index(client)
         column = idx % self.columns
         row = idx // self.columns
-        column_size = int(math.ceil(float(len(self.clients)) / self.columns))
+        column_size = int(math.ceil(len(self.clients) / self.columns))
         if (column, row) == self.current_window:
             px = self.group.qtile.colorPixel(self.border_focus)
         else:

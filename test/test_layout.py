@@ -68,6 +68,45 @@ def assertFocusPath(self, *names):
         self.c.group.prev_window()
 
 
+class VerticalTileConfig:
+    auto_fullscreen = True
+    main = None
+    groups = [
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b"),
+        libqtile.config.Group("c"),
+        libqtile.config.Group("d")
+    ]
+    layouts = [
+        layout.VerticalTile(columns=2)
+    ]
+    floating_layout = libqtile.layout.floating.Floating()
+    keys = []
+    mouse = []
+    screens = []
+
+
+@Xephyr(False, VerticalTileConfig())
+def test_verticaltile_simple(self):
+    self.testWindow("one")
+    assertDimensions(self, 0, 0, 800, 600)
+    self.testWindow("two")
+    assertDimensions(self, 0, 300, 798, 298)
+    self.testWindow("three")
+    assertDimensions(self, 0, 400, 798, 198)
+
+
+@Xephyr(False, VerticalTileConfig())
+def test_verticaltile_maximize(self):
+    self.testWindow("one")
+    assertDimensions(self, 0, 0, 800, 600)
+    self.testWindow("two")
+    assertDimensions(self, 0, 300, 798, 298)
+    # Maximize the bottom layout, taking 75% of space
+    self.c.layout.maximize()
+    assertDimensions(self, 0, 150, 798, 448)
+
+
 class MatrixConfig:
     auto_fullscreen = True
     main = None

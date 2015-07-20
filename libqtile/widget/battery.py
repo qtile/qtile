@@ -29,6 +29,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import division
+
 import cairocffi
 import os
 from libqtile import bar
@@ -85,7 +87,7 @@ class _Battery(base._TextBox):
             'Name of file with the current'
             ' power draw in /sys/class/power_supply/battery_name'
         ),
-        ('update_delay', 1, 'The delay in seconds between updates'),
+        ('update_delay', 60, 'The delay in seconds between updates'),
     ]
 
     def __init__(self, **config):
@@ -329,7 +331,7 @@ class BatteryIcon(_Battery):
             input_width = img.get_width()
             input_height = img.get_height()
 
-            sp = input_height / float(self.bar.height - 1)
+            sp = input_height / (self.bar.height - 1)
 
             width = input_width / sp
             if width > self.length:

@@ -46,7 +46,7 @@ def clear():
     subscriptions.clear()
 
 
-class Subscribe:
+class Subscribe(object):
     def __init__(self):
         hooks = set([])
         for i in dir(self):

@@ -47,7 +47,7 @@ def terminalWidth():
     return width or 80
 
 
-class QSh:
+class QSh(object):
 
     def __init__(self, client, completekey="tab"):
         self.clientroot = client

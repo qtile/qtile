@@ -26,6 +26,7 @@
 # SOFTWARE.
 
 import collections
+import six
 
 import libqtile.hook
 from libqtile.config import Key
@@ -127,8 +128,13 @@ class DGroups(object):
             self.add_dgroup(group, group.init)
 
             if group.spawn and not self.qtile.no_spawn:
-                pid = self.qtile.cmd_spawn(group.spawn)
-                self.add_rule(Rule(Match(net_wm_pid=[pid]), group.name))
+                if isinstance(group.spawn, six.string_types):
+                    spawns = [group.spawn]
+                else:
+                    spawns = group.spawn
+                for spawn in spawns:
+                    pid = self.qtile.cmd_spawn(spawn)
+                    self.add_rule(Rule(Match(net_wm_pid=[pid]), group.name))
 
     def _setup_hooks(self):
         libqtile.hook.subscribe.addgroup(self._addgroup)
@@ -241,6 +247,6 @@ class DGroups(object):
 
         # Wait the delay until really delete the group
         self.qtile.log.info('Add dgroup timer')
-        self.timeout[client] = self.qtile._eventloop.call_later(
+        self.timeout[client] = self.qtile.call_later(
             self.delay, delete_client
         )

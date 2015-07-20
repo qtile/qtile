@@ -29,6 +29,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import division
+
 import collections
 import math
 import cairocffi
@@ -54,6 +56,9 @@ class TextLayout(object):
         self.markup = markup
         self.text = text
         self._width = None
+
+    def finalize(self):
+        self.layout.finalize()
 
     @property
     def text(self):
@@ -130,7 +135,7 @@ class TextLayout(object):
         return TextFrame(self, border_width, border_color, pad_x, pad_y)
 
 
-class TextFrame:
+class TextFrame(object):
     def __init__(self, layout, border_width, border_color, pad_x, pad_y):
         self.layout = layout
         self.border_width = border_width
@@ -185,7 +190,7 @@ class TextFrame:
         return self.layout.width + self.pad_left + self.pad_right
 
 
-class Drawer:
+class Drawer(object):
     """
         A helper class for drawing and text layout.
 
@@ -228,9 +233,11 @@ class Drawer:
         self.ctx = self.new_ctx()
         self.clear((0, 0, 1))
 
-    def __del__(self):
+    def finalize(self):
         self.qtile.conn.conn.core.FreeGC(self.gc)
         self.qtile.conn.conn.core.FreePixmap(self.pixmap)
+        self.ctx = None
+        self.surface = None
 
     def _rounded_rect(self, x, y, width, height, linewidth):
         aspect = 1.0
@@ -363,7 +370,7 @@ class Drawer:
         self.ctx.set_font_size(heightlimit)
         asc, desc, height, _, _ = self.font_extents()
         self.ctx.set_font_size(
-            int(heightlimit * (heightlimit / float(height))))
+            int(heightlimit * heightlimit / height))
         return self.font_extents()
 
     def fit_text(self, strings, heightlimit):
@@ -376,7 +383,7 @@ class Drawer:
         if not maxheight:
             return 0, 0
         self.ctx.set_font_size(
-            int(heightlimit * (heightlimit / float(maxheight))))
+            int(heightlimit * heightlimit / maxheight))
         maxwidth, maxheight = 0, 0
         for i in strings:
             _, _, x, y, _, _ = self.ctx.text_extents(i)

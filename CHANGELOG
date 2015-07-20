@@ -1,3 +1,61 @@
+qtile 0.x.x, released xxxx-xx-xx:
+    * features
+        - improved serialization of layouts across restarts
+        - cmd_togroup can move to current group when None sent
+    * bugfixes
+        - fix Python 3 compatibility of ThermalSensor widget
+        - various Systray fixes, including implementing XEMBED protocol
+        - print exception to log during loading config
+        - fixed xmonad layout margins
+    * config breakage
+        - layouts.VerticalTile `windows` is now `clients`
+        - layouts.VerticalTile focus_next/focus_previous now take a single
+          argument, similar to other layouts
+
+qtile 0.10.1, released 2015-07-08:
+    This release fixes a problem that made the PyPI package uninstallable,
+    qtile will work with a pip install now
+
+qtile 0.10.0, released 2015-07-07:
+    !!! Config breakage !!!
+        - various deprecated commands have been removed:
+            Screen.cmd_nextgroup: use cmd_next_group
+            Screen.cmd_prevgroup: use cmd_prev_group
+            Qtile.cmd_nextlayout: use cmd_next_layout
+            Qtile.cmd_prevlayout: use cmd_prev_layout
+            Qtile.cmd_to_next_screen: use cmd_next_screen
+            Qtile.cmd_to_prev_screen: use cmd_prev_screen
+        - Clock widget: remove fmt kwarg, use format kwarg
+        - GmailChecker widget: remove settings parameter
+        - Maildir widget: remove maildirPath, subFolders, and separator kwargs
+    * Dependency updates
+        - cffi>=1.1 is now required, along with xcffib>=0.3 and cairocffi>=0.7
+          (the cffi 1.0 compatible versions of each)
+        - Care must be taken that xcffib is installed *before* cairocffi
+    * features
+        - add support for themed cursors using xcb-cursor if available
+        - add CheckUpdate widget, for checking package updates, this deprecates
+          the Pacman widget
+        - add KeyboardKbdd widget, for changing keyboard layouts
+        - add Cmus widget, for showing song playing in cmus
+        - add Wallpaper widget, for showing and cycling wallpaper
+        - add EzConfig classes allowing shortcuts to define key bindings
+        - allow GroupBox urgent highlighting through text
+        - Bar can be placed vertically on sides of screens (widgets must be
+          adapted for vertical viewing)
+        - add recognizing brightness keys
+    * bugfixes
+        - deprecation warnings were not printing to logs, this has been fixed
+        - fix calculation of y property of Gap
+        - fix focus after closing floating windows and floating windows
+        - fix various Python 3 related int/float problems
+        - remember screen focus across restarts
+        - handle length 1 list passed to Drawer.set_source_rgb without raising
+          divide by zero error
+        - properly close files opened in Graph widget
+        - handle _NET_WM_STATE_DEMANDS_ATTENTION as setting urgency
+        - fix get_wm_transient_for, request WINDOW, not ATOM
+
 qtile 0.9.1, released 2015-02-13:
     This is primarily a unicode bugfix release for 0.9.0; there were several
     nits related to the python2/3 unicode conversion that were simply wrong.

@@ -27,12 +27,40 @@
 # SOFTWARE.
 
 import sys
+import textwrap
 
-try:
-    from setuptools import setup
-except ImportError:
-    # Let's not fail if setuptools is not available
-    from distutils.core import setup
+from setuptools import setup
+from setuptools.command.install import install
+
+class CheckCairoXcb(install):
+    def cairo_xcb_check(self):
+        try:
+            from cairocffi import cairo
+            cairo.cairo_xcb_surface_create
+            return True
+        except AttributeError:
+            return False
+
+    def finalize_options(self):
+        if not self.cairo_xcb_check():
+
+            print(textwrap.dedent("""
+
+            It looks like your cairocffi was not built with xcffib support.  To fix this:
+
+              - Ensure a recent xcffib is installed (pip install 'xcffib>=0.3.2')
+              - The pip cache is cleared (remove ~/.cache/pip, if it exists)
+              - Reinstall cairocffi, either:
+
+                  pip install --no-deps --ignore-installed cairocffi
+
+                or
+
+                  pip uninstall cairocffi && pip install cairocffi
+            """))
+
+            sys.exit(1)
+        install.finalize_options(self)
 
 long_description = """
 A pure-Python tiling window manager.
@@ -51,20 +79,38 @@ Features
       unit-tested window mangers around.
 """
 
-dependencies = ['cairocffi>=0.6', 'cffi>=0.8.2', 'six>=1.4.1', 'xcffib>=0.2.2']
+if '_cffi_backend' in sys.builtin_module_names:
+    import _cffi_backend
+    requires_cffi = "cffi==" + _cffi_backend.__version__
+else:
+    requires_cffi = "cffi>=1.1.0"
+
+# PyPy < 2.6 compatibility
+if requires_cffi.startswith("cffi==0."):
+    cffi_args = dict(
+        zip_safe=False
+    )
+else:
+    cffi_args = dict(cffi_modules=[
+        'libqtile/ffi_build.py:pango_ffi',
+        'libqtile/ffi_build.py:xcursors_ffi'
+    ])
+
+dependencies = ['xcffib>=0.3.2', 'cairocffi>=0.7', 'six>=1.4.1', requires_cffi]
 
 if sys.version_info >= (3, 4):
     pass
 elif sys.version_info >= (3, 3):
     dependencies.append('asyncio')
-elif (3, 0) <= sys.version_info <= (3, 1):
-    dependencies.append('importlib')
 else:
     dependencies.append('trollius')
 
+if (3, 0) <= sys.version_info <= (3, 1):
+    dependencies.append('importlib')
+
 setup(
     name="qtile",
-    version="0.9.1",
+    version="0.10.1",
     description="A pure-Python tiling window manager.",
     long_description=long_description,
     classifiers=[
@@ -99,4 +145,6 @@ setup(
     data_files=[
         ('share/man/man1', ['resources/qtile.1',
                             'resources/qsh.1'])],
+    cmdclass={'install': CheckCairoXcb},
+    **cffi_args
 )

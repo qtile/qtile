@@ -19,29 +19,43 @@ matrix:
       env: EVENTLOOP=trollius
     - python: pypy3
       env: EVENTLOOP=trollius
+    - python: nightly
+      env: EVENTLOOP=asyncio
   allow_failures:
-    - python: pypy3
-    - python: pypy
+    - python: nightly
 
 script:
   - make ckpatch
 
+cache:
+  directories:
+    - $HOME/.cache/pip
+
+addons:
+  apt:
+    packages:
+      - x11-apps
+      - xserver-xephyr
+      - xvfb
+
 before_install:
-# Environment setup
-  - sudo apt-get update -qq
-  - sudo apt-get install -qqy xserver-xephyr x11-apps
 # Setup XvFB
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
 
 install:
 # Installl requirements
+  - pip install xcffib
   - pip install -r requirements.txt
   - if [[ ${EVENTLOOP} == "trollius" ]]; then pip install trollius; fi
   - if [[ ${EVENTLOOP} == "tulip" ]]; then pip install asyncio; fi
+# build pangocffi module
+  - python -c 'import cffi, sys; sys.exit(cffi.__version_info__[0])' || python libqtile/ffi_build.py
 
 after_success:
   - coveralls
 
 notifications:
-  - email: false
+  email: false
+
+sudo: false

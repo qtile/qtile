@@ -75,21 +75,19 @@ class LayoutTestConfig(object):
 
 
 passing_layouts = [
-    # libqtile.layout.Tile(),
+    libqtile.layout.Tile(),
     libqtile.layout.Max(),
-    # libqtile.layout.RatioTile(),
-    # libqtile.layout.Matrix(),
-    # libqtile.layout.MonadTall(),
-    # libqtile.layout.Stack(),
-    # libqtile.layout.Zoomy(),
-    # libqtile.layout.VerticalTile(),
-    libqtile.layout.Slice('left', 256, wname='slice'),
-    
+    libqtile.layout.RatioTile(),
+    libqtile.layout.Matrix(),
+    libqtile.layout.MonadTall(),
+    libqtile.layout.Stack(),
+    libqtile.layout.Zoomy(),
+    libqtile.layout.VerticalTile(),
 ]
 
 broken_layouts = [
     libqtile.layout.TreeTab(),
-    
+    libqtile.layout.Slice('left', 256, wname='slice')
 ]
 
 

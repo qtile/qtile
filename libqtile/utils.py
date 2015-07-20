@@ -20,6 +20,7 @@
 
 import operator
 import functools
+import warnings
 
 import six
 from six.moves import reduce
@@ -69,7 +70,7 @@ def shuffleDown(lst):
         lst.append(c)
 
 
-class LRUCache:
+class LRUCache(object):
     """
         A decorator that implements a self-expiring LRU cache for class
         methods (not functions!).
@@ -152,3 +153,43 @@ def scrub_to_utf8(text):
         return text
     else:
         return text.decode("utf-8", "ignore")
+
+
+# WARNINGS
+class UnixCommandNotFound(Warning):
+    pass
+
+
+def catch_exception_and_warn(warning=Warning, return_on_exception=None,
+                             excepts=Exception):
+    """
+    .. function:: warn_on_exception(func, [warning_class, return_on_failure,
+            excepts])
+        attemps to call func. catches exception or exception tuple and issues
+        a warning instead. returns value of return_on_failure when the
+        specified exception is raised.
+
+        :param func: a callable to be wrapped
+        :param warning: the warning class to issue if an exception is
+            raised
+        :param return_on_exception: the default return value of the function
+            if an exception is raised
+        :param excepts: an exception class (or tuple of exception classes) to
+            catch during the execution of func
+        :type excepts: Exception or tuple of Exception classes
+        :type warning: Warning
+        :rtype: a callable
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            return_value = return_on_exception
+            try:
+                return_value = func(*args, **kwargs)
+                print(return_value)
+            except excepts as err:
+                print(err.strerror)
+                warnings.warn(err.strerror, warning)
+            return return_value
+        return wrapper
+    return decorator

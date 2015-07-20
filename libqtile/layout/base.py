@@ -57,6 +57,9 @@ class Layout(command.CommandObject, configurable.Configurable):
         for i in windows:
             self.configure(i, screen)
 
+    def finalize(self):
+        pass
+
     def clone(self, group):
         """
             :group Group to attach new layout instance to.

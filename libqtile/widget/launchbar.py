@@ -41,6 +41,8 @@ To execute a python command in qtile, begin with by 'qsh:'
 
 """
 
+from __future__ import division
+
 from libqtile import bar
 from libqtile.widget import base
 
@@ -127,8 +129,8 @@ class LaunchBar(base._Widget):
             input_width = img.get_width()
             input_height = img.get_height()
 
-            sp = input_height / float(self.bar.height - 4)
-            width = int(input_width // sp)
+            sp = input_height / (self.bar.height - 4)
+            width = int(input_width / sp)
 
             imgpat = cairocffi.SurfacePattern(img)
             scaler = cairocffi.Matrix()

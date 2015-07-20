@@ -40,7 +40,7 @@ class IPCError(Exception):
     pass
 
 
-class _IPC:
+class _IPC(object):
     def _unpack(self, data):
         try:
             assert len(data) >= HDRLEN
@@ -190,11 +190,11 @@ class _ServerProtocol(asyncio.Protocol, _IPC):
 
 
 class Server(object):
-    def __init__(self, fname, handler):
+    def __init__(self, fname, handler, loop):
         self.log = logging.getLogger('qtile')
         self.fname = fname
         self.handler = handler
-        self.loop = asyncio.get_event_loop()
+        self.loop = loop
 
         if os.path.exists(fname):
             os.unlink(fname)

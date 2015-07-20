@@ -124,6 +124,7 @@ WindowTypes = {
 WindowStates = {
     None: 'normal',
     '_NET_WM_STATE_FULLSCREEN': 'fullscreen',
+    '_NET_WM_STATE_DEMANDS_ATTENTION': 'urgent'
 }
 
 # Maps property names to types and formats.
@@ -158,7 +159,8 @@ PropertyMap = {
     "_NET_WM_STATE_MODAL": ("ATOM", 32),
     "_NET_WM_STATE_HIDDEN": ("ATOM", 32),
     "_NET_WM_STATE_DEMANDS_ATTENTION": ("ATOM", 32),
-
+    # Xembed
+    "_XEMBED_INFO": ("_XEMBED_INFO", 32),
     # ICCCM
     "WM_STATE": ("WM_STATE", 32),
     # Qtile-specific properties
@@ -201,7 +203,7 @@ XCB_CONN_ERRORS = {
 }
 
 
-class MaskMap:
+class MaskMap(object):
     """
         A general utility class that encapsulates the way the mask/value idiom
         works in xpyb. It understands a special attribute _maskvalue on
@@ -239,7 +241,7 @@ AttributeMasks = MaskMap(CW)
 GCMasks = MaskMap(xcffib.xproto.GC)
 
 
-class AtomCache:
+class AtomCache(object):
     def __init__(self, conn):
         self.conn = conn
         self.atoms = {}
@@ -275,7 +277,7 @@ class AtomCache:
         return self.atoms[key]
 
 
-class _Wrapper:
+class _Wrapper(object):
     def __init__(self, wrapped):
         self.wrapped = wrapped
 
@@ -293,7 +295,7 @@ class Screen(_Wrapper):
         self.root = Window(conn, self.root)
 
 
-class PseudoScreen:
+class PseudoScreen(object):
     """
         This may be a Xinerama screen or a RandR CRTC, both of which are
         rectagular sections of an actual Screen.
@@ -306,7 +308,7 @@ class PseudoScreen:
         self.height = height
 
 
-class Colormap:
+class Colormap(object):
     def __init__(self, conn, cid):
         self.conn = conn
         self.cid = cid
@@ -329,7 +331,7 @@ class Colormap:
             return self.conn.conn.core.AllocColor(self.cid, r, g, b).reply()
 
 
-class Xinerama:
+class Xinerama(object):
     def __init__(self, conn):
         self.ext = conn.conn(xcffib.xinerama.key)
 
@@ -338,7 +340,7 @@ class Xinerama:
         return r.screen_info
 
 
-class RandR:
+class RandR(object):
     def __init__(self, conn):
         self.ext = conn.conn(xcffib.randr.key)
         self.ext.SelectInput(
@@ -360,7 +362,7 @@ class RandR:
         return l
 
 
-class XFixes:
+class XFixes(object):
     selection_mask = SelectionEventMask.SetSelectionOwner | \
         SelectionEventMask.SelectionClientClose | \
         SelectionEventMask.SelectionWindowDestroy
@@ -378,7 +380,7 @@ class XFixes:
                                                   self.selection_mask)
 
 
-class GC:
+class GC(object):
     def __init__(self, conn, gid):
         self.conn = conn
         self.gid = gid
@@ -388,7 +390,7 @@ class GC:
         self.conn.conn.core.ChangeGC(self.gid, mask, values)
 
 
-class Window:
+class Window(object):
     def __init__(self, conn, wid):
         self.conn = conn
         self.wid = wid
@@ -511,9 +513,10 @@ class Window:
             return self._propertyString(r)
 
     def get_wm_transient_for(self):
-        r = self.get_property("WM_TRANSIENT_FOR", "ATOM")
+        r = self.get_property("WM_TRANSIENT_FOR", "WINDOW", unpack=int)
+
         if r:
-            return list(r.value)
+            return r[0]
 
     def get_wm_icon_name(self):
         r = self.get_property("_NET_WM_ICON_NAME", "UTF8_STRING")
@@ -549,14 +552,11 @@ class Window:
             return WindowTypes.get(name, name)
 
     def get_net_wm_state(self):
-        # TODO: _NET_WM_STATE is a *list* of atoms
-        # We're returning only the first one, but we don't need anything
-        # other than _NET_WM_STATE_FULLSCREEN (at least for now)
-        # Fixing this requires refactoring each call to use a list instead
         r = self.get_property('_NET_WM_STATE', "ATOM", unpack=int)
         if r:
-            name = self.conn.atoms.get_name(r[0])
-            return WindowStates.get(name, name)
+            names = [self.conn.atoms.get_name(p) for p in r]
+            return [WindowStates.get(n, n) for n in names]
+        return []
 
     def get_net_wm_pid(self):
         r = self.get_property("_NET_WM_PID", unpack=int)
@@ -763,7 +763,7 @@ class Window:
         return root, parent, [Window(self.conn, i) for i in q.children]
 
 
-class Font:
+class Font(object):
     def __init__(self, conn, fid):
         self.conn = conn
         self.fid = fid
@@ -774,13 +774,11 @@ class Font:
 
     def text_extents(self, s):
         s = s + "aaa"
-        print(s)
         x = self.conn.conn.core.QueryTextExtents(self.fid, len(s), s).reply()
-        print(x)
         return x
 
 
-class Connection:
+class Connection(object):
     _extmap = {
         "xinerama": Xinerama,
         "randr": RandR,
@@ -829,6 +827,10 @@ class Connection:
 
         self.modmap = None
         self.refresh_modmap()
+
+    def finalize(self):
+        self.cursors.finalize()
+        self.disconnect()
 
     def refresh_keymap(self, first=None, count=None):
         if first is None:
