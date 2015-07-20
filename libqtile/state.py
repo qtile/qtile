@@ -133,4 +133,5 @@ class QtileState(object):
                 qtile.screens[screen].setGroup(group)
             except (KeyError, IndexError):
                 pass  # group or screen missing
+
         qtile.toScreen(self.current_screen)

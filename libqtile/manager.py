@@ -1670,6 +1670,5 @@ class Qtile(command.CommandObject):
         pickle.dump(QtileState(self), buf, protocol=0)
         state = buf.getvalue().decode()
         self.log.info('State = ')
-        self.log.info(state)
         self.log.info(''.join(state.split('\n')))
         return state
