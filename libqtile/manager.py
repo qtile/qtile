@@ -66,11 +66,10 @@ class Qtile(command.CommandObject):
         if hasattr(config, "log_path"):
             logkwargs["log_path"] = config.log_path
         self.log = log or init_log(**logkwargs)
-        logging.getLogger('asyncio').setLevel(logging.CRITICAL)
 
         self.no_spawn = no_spawn
 
-        self._eventloop = asyncio.get_event_loop()
+        self._eventloop = None
         self._finalize = False
 
         if not displayName:
@@ -155,6 +154,9 @@ class Qtile(command.CommandObject):
         for i in self.groups:
             self.groupMap[i.name] = i
 
+        self.setup_eventloop()
+        self.server = command._Server(self.fname, self, config, self._eventloop)
+
         self.currentScreen = None
         self.screens = []
         self._process_screens()
@@ -173,13 +175,9 @@ class Qtile(command.CommandObject):
             xcffib.xproto.NoExposureEvent
         ])
 
-        self.setup_python_dbus()
-
         self.conn.flush()
         self.conn.xsync()
         self._xpoll()
-
-        self.server = command._Server(self.fname, self, config)
 
         # Map and Grab keys
         for key in self.config.keys:
@@ -241,6 +239,20 @@ class Qtile(command.CommandObject):
         self.convert_selection(PRIMARY)
         self.convert_selection(CLIPBOARD)
 
+    def setup_eventloop(self):
+        self._eventloop = asyncio.new_event_loop()
+        self._eventloop.add_signal_handler(signal.SIGINT, self.stop)
+        self._eventloop.add_signal_handler(signal.SIGTERM, self.stop)
+        self._eventloop.set_exception_handler(
+            lambda x, y: self.log.exception("Got an exception in poll loop")
+        )
+
+        self.log.info('Adding io watch')
+        fd = self.conn.conn.get_file_descriptor()
+        self._eventloop.add_reader(fd, self._xpoll)
+
+        self.setup_python_dbus()
+
     def setup_python_dbus(self):
         # This is a little strange. python-dbus internally depends on gobject,
         # so gobject's threads need to be running, and a gobject "main loop
@@ -269,13 +281,18 @@ class Qtile(command.CommandObject):
     def finalize(self):
         self._finalize = True
 
+        self._eventloop.remove_signal_handler(signal.SIGINT)
+        self._eventloop.remove_signal_handler(signal.SIGTERM)
+        self._eventloop.set_exception_handler(None)
+
         try:
-            try:
-                from gi.repository import GLib
-                GLib.idle_add(lambda: None)
-                self._eventloop.run_until_complete(self._glib_loop)
-            except ImportError:
-                pass
+            from gi.repository import GLib
+            GLib.idle_add(lambda: None)
+            self._eventloop.run_until_complete(self._glib_loop)
+        except ImportError:
+            pass
+
+        try:
 
             for w in self.widgetMap.values():
                 w.finalize()
@@ -288,11 +305,16 @@ class Qtile(command.CommandObject):
                     if bar is not None:
                         bar.finalize()
 
+            self.log.info('Removing io watch')
             fd = self.conn.conn.get_file_descriptor()
             self._eventloop.remove_reader(fd)
             self.conn.finalize()
+            self.server.close()
         except:
             self.log.exception('exception during finalize')
+        finally:
+            self._eventloop.close()
+            self._eventloop = None
 
     def _process_fake_screens(self):
         """
@@ -708,31 +730,22 @@ class Qtile(command.CommandObject):
                     error_string = xcbq.XCB_CONN_ERRORS[error_code]
                     self.log.exception("Shutting down due to X connection error %s (%s)" %
                         (error_string, error_code))
-                    self._eventloop.stop()
+                    self.stop()
+                    break
 
                 self.log.exception("Got an exception in poll loop")
-
         self.conn.flush()
+
+    def stop(self):
+        self.log.info('Stopping eventloop')
+        self._eventloop.stop()
 
     def loop(self):
         self.server.start()
-
-        self._eventloop.add_signal_handler(signal.SIGINT, self._eventloop.stop)
-        self._eventloop.add_signal_handler(signal.SIGTERM, self._eventloop.stop)
-        self._eventloop.set_exception_handler(
-            lambda x, y: self.log.exception("Got an exception in poll loop"))
-
-        self.log.info('Adding io watch')
-        fd = self.conn.conn.get_file_descriptor()
-        self._eventloop.add_reader(fd, self._xpoll)
-
         try:
             self._eventloop.run_forever()
         finally:
             self.finalize()
-            self.server.close()
-            self.log.info('Removing io watch')
-            self._eventloop.close()
 
     def find_screen(self, x, y):
         """
@@ -1272,7 +1285,7 @@ class Qtile(command.CommandObject):
         """
             Executes the specified command, replacing the current process.
         """
-        self._eventloop.stop()
+        self.stop()
         os.execv(cmd, args)
 
     def cmd_restart(self):
@@ -1423,7 +1436,7 @@ class Qtile(command.CommandObject):
         """
             Quit Qtile.
         """
-        self._eventloop.stop()
+        self.stop()
 
     def cmd_switch_groups(self, groupa, groupb):
         """
@@ -1657,5 +1670,5 @@ class Qtile(command.CommandObject):
         pickle.dump(QtileState(self), buf, protocol=0)
         state = buf.getvalue().decode()
         self.log.info('State = ')
-        self.log.info(state)
+        self.log.info(''.join(state.split('\n')))
         return state

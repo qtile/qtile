@@ -64,10 +64,10 @@ def formatSelector(lst):
 
 
 class _Server(ipc.Server):
-    def __init__(self, fname, qtile, conf):
+    def __init__(self, fname, qtile, conf, eventloop):
         if os.path.exists(fname):
             os.unlink(fname)
-        ipc.Server.__init__(self, fname, self.call)
+        ipc.Server.__init__(self, fname, self.call, eventloop)
         self.qtile = qtile
         self.widgets = {}
         for i in conf.screens:

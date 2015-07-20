@@ -774,9 +774,7 @@ class Font(object):
 
     def text_extents(self, s):
         s = s + "aaa"
-        print(s)
         x = self.conn.conn.core.QueryTextExtents(self.fid, len(s), s).reply()
-        print(x)
         return x
 
 
