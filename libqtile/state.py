@@ -46,8 +46,8 @@ class QtileState(object):
                 if isinstance(layout, libqtile.layout.slice.Slice):
                     layout.fallback.group = None
                     layout._slice.group = None
-                    self.layout_map[group.name][layout.name+'_fallback'] = layout.fallback
-                    self.layout_map[group.name][layout.name+'__slice'] = layout._slice
+                    self.layout_map[group.name][layout.name + '_fallback'] = layout.fallback
+                    self.layout_map[group.name][layout.name + '__slice'] = layout._slice
             self.focus_history[group.name] = group.focusHistory
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
@@ -91,10 +91,10 @@ class QtileState(object):
                     d.group = layout.group
                     self.restore_layout(qtile, d, layout)
                     if isinstance(layout, libqtile.layout.slice.Slice):
-                        d = self.layout_map[group.name][layout.name+'__slice']
+                        d = self.layout_map[group.name][layout.name + '__slice']
                         d.group = layout.group
                         self.restore_layout(qtile, d, layout._slice)
-                        d = self.layout_map[group.name][layout.name+'_fallback']
+                        d = self.layout_map[group.name][layout.name + '_fallback']
                         d.group = layout.group
                         self.restore_layout(qtile, d, layout.fallback)
                     members = dir(d)
