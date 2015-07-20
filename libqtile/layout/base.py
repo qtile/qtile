@@ -234,7 +234,7 @@ class Delegate(Layout):
         """
         grouped = {}
         for w in windows:
-            lay = self.layouts[w]
+            lay = self.layouts[w.window.wid]
             if lay in grouped:
                 grouped[lay].append(w)
             else:
@@ -243,7 +243,7 @@ class Delegate(Layout):
             lay.layout(wins, mapping[lay])
 
     def remove(self, win):
-        lay = self.layouts.pop(win)
+        lay = self.layouts.pop(win.window.wid)
         focus = lay.remove(win)
         if not focus:
             layouts = self._get_layouts()
@@ -269,7 +269,7 @@ class Delegate(Layout):
 
     def focus_next(self, win):
         layouts = self._get_layouts()
-        cur = self.layouts[win]
+        cur = self.layouts[win.window.wid]
         focus = cur.focus_next(win)
         if not focus:
             idx = layouts.index(cur)
@@ -280,7 +280,7 @@ class Delegate(Layout):
 
     def focus_previous(self, win):
         layouts = self._get_layouts()
-        cur = self.layouts[win]
+        cur = self.layouts[win.window.wid]
         focus = cur.focus_previous(win)
         if not focus:
             idx = layouts.index(cur)
