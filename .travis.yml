@@ -19,9 +19,10 @@ matrix:
       env: EVENTLOOP=trollius
     - python: pypy3
       env: EVENTLOOP=trollius
+    - python: nightly
+      env: EVENTLOOP=asyncio
   allow_failures:
-    - python: pypy3
-    - python: pypy
+    - python: nightly
 
 script:
   - make ckpatch
@@ -44,6 +45,7 @@ before_install:
 
 install:
 # Installl requirements
+  - pip install xcffib
   - pip install -r requirements.txt
   - if [[ ${EVENTLOOP} == "trollius" ]]; then pip install trollius; fi
   - if [[ ${EVENTLOOP} == "tulip" ]]; then pip install asyncio; fi
