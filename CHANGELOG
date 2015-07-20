@@ -7,6 +7,10 @@ qtile 0.x.x, released xxxx-xx-xx:
         - various Systray fixes, including implementing XEMBED protocol
         - print exception to log during loading config
         - fixed xmonad layout margins
+    * config breakage
+        - layouts.VerticalTile `windows` is now `clients`
+        - layouts.VerticalTile focus_next/focus_previous now take a single
+          argument, similar to other layouts
 
 qtile 0.10.1, released 2015-07-08:
     This release fixes a problem that made the PyPI package uninstallable,
