@@ -83,8 +83,10 @@ class Xephyr(object):
         else:
             self.xoffset = xoffset
 
-        self.qtile = None # Handle to Qtile instance, multiprocessing.Process object
-        self.xephyr = None # Handle to Xephyr instance, subprocess.Popen object
+        # Handle to Qtile instance, multiprocessing.Process object
+        self.qtile = None
+        # Handle to Xephyr instance, subprocess.Popen object
+        self.xephyr = None
         self.display = ":{}".format(_find_display())
 
     def __call__(self, function):
@@ -144,16 +146,20 @@ class Xephyr(object):
             self.display, "-ac",
             "-screen", "%sx%s" % (self.width, self.height)]
         if self.two_screens:
-            args.extend(["-origin", "%s,0" % self.xoffset, "-screen",
-                "%sx%s" % (SECOND_WIDTH, SECOND_HEIGHT)])
+            args.extend(
+                [
+                    "-origin", "%s,0" % self.xoffset, "-screen",
+                    "%sx%s" % (SECOND_WIDTH, SECOND_HEIGHT)
+                ]
+            )
 
         if self.xinerama:
             args.extend(["+xinerama"])
         if self.randr:
             args.extend(["+extension", "RANDR"])
 
-        self.xephyr = subprocess.Popen(args,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        self.xephyr = subprocess.Popen(
+            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
 
         try:
@@ -190,13 +196,14 @@ class Xephyr(object):
             time.sleep(0.1)
         else:
             (stdout_data, stderr_data) = self.xephyr.communicate()
-            raise AssertionError("Error launching Xephyr, quit with return code: {:d}\n"
-                                 "stderr: {}\n"
-                                 "stdout: {}".format(
-                                     self.xephyr.returncode,
-                                     stderr_data.decode(),
-                                     stdout_data.decode()
-                                 )
+            raise AssertionError(
+                "Error launching Xephyr, quit with return code: {:d}\n"
+                "stderr: {}\n"
+                "stdout: {}".format(
+                    self.xephyr.returncode,
+                    stderr_data.decode(),
+                    stdout_data.decode()
+                )
             )
 
         conn.disconnect()
@@ -325,32 +332,32 @@ class Xephyr(object):
         python = sys.executable
         path = os.path.join(d, "scripts", "window.py")
         return self._testProc(
-                    [python, path, self.display, name]
-                )
+            [python, path, self.display, name]
+        )
 
     def testXclock(self):
         path = whereis("xclock")
         return self._testProc(
-                    [path]
-                )
+            [path]
+        )
 
     def testXeyes(self):
         path = whereis("xeyes")
         return self._testProc(
-                    [path]
-                )
+            [path]
+        )
 
     def testGkrellm(self):
         path = whereis("gkrellm")
         return self._testProc(
-                    [path]
-                )
+            [path]
+        )
 
     def testXterm(self):
         path = whereis("xterm")
         return self._testProc(
-                    [path]
-                )
+            [path]
+        )
 
     def _kill(self, proc):
         proc.kill()

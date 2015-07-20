@@ -32,7 +32,8 @@ import libqtile.config
 import libqtile.confreader
 from .utils import Xephyr
 
-class GBConfig:
+
+class GBConfig(object):
     auto_fullscreen = True
     keys = []
     mouse = []
@@ -58,8 +59,10 @@ class GBConfig:
                     ),
                     libqtile.widget.MemoryGraph(type="line"),
                     libqtile.widget.SwapGraph(type="box"),
-                    libqtile.widget.TextBox(name="text",
-                    background="333333"),
+                    libqtile.widget.TextBox(
+                        name="text",
+                        background="333333"
+                    ),
                 ],
                 50,
             ),
@@ -158,7 +161,7 @@ def test_textbox_errors(self):
 @Xephyr(True, GBConfig())
 def test_groupbox_button_press(self):
     self.c.group["ccc"].toscreen()
-    assert self.c.groups()["a"]["screen"] == None
+    assert self.c.groups()["a"]["screen"] is None
     self.c.bar["bottom"].fake_button_press(0, "bottom", 10, 10, 1)
     assert self.c.groups()["a"]["screen"] == 0
 

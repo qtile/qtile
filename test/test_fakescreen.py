@@ -234,7 +234,7 @@ def test_float_first_on_second_screen(self):
 
 @Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
 def test_float_change_screens(self):
-    #add some eyes, and float clock
+    "add some eyes, and float clock"
     self.testXeyes()
     self.testXclock()
     self.c.window.toggle_floating()
@@ -247,7 +247,7 @@ def test_float_change_screens(self):
     assert self.c.window.info()['y'] == 0
     assert self.c.window.info()['group'] == 'a'
 
-    #put on group b
+#      put on group b
     assert self.c.screen.info() == {
         'y': 0, 'x': 0, 'index': 0, 'width': 600, 'height': 480}
     assert self.c.group.info()['name'] == 'a'
@@ -370,15 +370,15 @@ def test_hammer_tile(self):
     for i in range(7):
         self.testXclock()
     for i in range(30):
-        old_group = (i + 1) % 4
-        if old_group == 0:
-            name = 'a'
-        elif old_group == 1:
-            name = 'b'
-        elif old_group == 2:
-            name = 'c'
-        elif old_group == 3:
-            name = 'd'
+        # old_group = (i + 1) % 4
+        # if old_group == 0:
+        #     name = 'a'
+        # elif old_group == 1:
+        #     name = 'b'
+        # elif old_group == 2:
+        #     name = 'c'
+        # elif old_group == 3:
+        #     name = 'd'
 
         self.c.to_screen((i + 1) % 4)
         self.c.group['a'].toscreen()
@@ -394,15 +394,15 @@ def test_hammer_ratio_tile(self):
     for i in range(7):
         self.testXclock()
     for i in range(30):
-        old_group = (i + 1) % 4
-        if old_group == 0:
-            name = 'a'
-        elif old_group == 1:
-            name = 'b'
-        elif old_group == 2:
-            name = 'c'
-        elif old_group == 3:
-            name = 'd'
+        # old_group = (i + 1) % 4
+        # if old_group == 0:
+        #     name = 'a'
+        # elif old_group == 1:
+        #     name = 'b'
+        # elif old_group == 2:
+        #     name = 'c'
+        # elif old_group == 3:
+        #     name = 'd'
 
         self.c.to_screen((i + 1) % 4)
         self.c.group['a'].toscreen()

@@ -56,11 +56,11 @@ class CallConfig(object):
     screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
-                        [
-                            libqtile.widget.GroupBox(),
-                        ],
-                        20
-                    ),
+                [
+                    libqtile.widget.GroupBox(),
+                ],
+                20
+            ),
         )
     ]
     main = None
@@ -127,7 +127,7 @@ def test_selectors():
 
     g = c.group
     assert isinstance(g, libqtile.command._TGroup)
-    assert g.myselector == None
+    assert g.myselector is None
 
     g = c.group["one"]
     assert isinstance(g, libqtile.command._TGroup)
@@ -162,19 +162,19 @@ class ServerConfig(object):
     screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
-                        [
-                            libqtile.widget.TextBox(name="one"),
-                        ],
-                        20
-                    ),
+                [
+                    libqtile.widget.TextBox(name="one"),
+                ],
+                20
+            ),
         ),
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
-                        [
-                            libqtile.widget.TextBox(name="two"),
-                        ],
-                        20
-                    ),
+                [
+                    libqtile.widget.TextBox(name="two"),
+                ],
+                20
+            ),
         )
     ]
     main = None
@@ -231,7 +231,7 @@ def test_select_qtile(self):
 
     assert self.c.bar["bottom"].info()["position"] == "bottom"
 
-    win = self.testWindow("one")
+#      win = self.testWindow("one")
     wid = self.c.window.info()["id"]
     assert self.c.window[wid].info()["id"] == wid
 
@@ -246,7 +246,7 @@ def test_items_group(self):
     g = self.c.group
     assert g.items("layout") == (True, [0, 1, 2])
 
-    win = self.testWindow("test")
+#      win = self.testWindow("test")
     wid = self.c.window.info()["id"]
     assert g.items("window") == (True, [wid])
 
@@ -261,7 +261,7 @@ def test_select_group(self):
     assert len(g.layout[2].info()["stacks"]) == 3
 
     assert_raises(libqtile.command.CommandError, self.c.group.window.info)
-    win = self.testWindow("test")
+#      win = self.testWindow("test")
     wid = self.c.window.info()["id"]
 
     assert g.window.info()["id"] == wid
@@ -278,7 +278,7 @@ def test_items_screen(self):
     s = self.c.screen
     assert s.items("layout") == (True, [0, 1, 2])
 
-    win = self.testWindow("test")
+#      win = self.testWindow("test")
     wid = self.c.window.info()["id"]
     assert s.items("window") == (True, [wid])
 
@@ -294,7 +294,7 @@ def test_select_screen(self):
 
     assert_raises(libqtile.command.CommandError, self.c.window.info)
     assert_raises(libqtile.command.CommandError, self.c.window[2].info)
-    win = self.testWindow("test")
+#      win = self.testWindow("test")
     wid = self.c.window.info()["id"]
     assert s.window.info()["id"] == wid
     assert s.window[wid].info()["id"] == wid
@@ -334,18 +334,17 @@ def test_select_layout(self):
 
 @Xephyr(True, ServerConfig())
 def test_items_window(self):
-    win = self.testWindow("test")
-    wid = self.c.window.info()["id"]
 
     assert self.c.window.items("group") == (True, None)
     assert self.c.window.items("layout") == (True, [0, 1, 2])
     assert self.c.window.items("screen") == (True, None)
 
+#      win = self.testWindow("test")
+#      wid = self.c.window.info()["id"]
+
 
 @Xephyr(True, ServerConfig())
 def test_select_window(self):
-    win = self.testWindow("test")
-    wid = self.c.window.info()["id"]
 
     assert self.c.window.group.info()["name"] == "a"
     assert_raises(libqtile.command.CommandError, self.c.window.group["a"].info)
@@ -355,6 +354,9 @@ def test_select_window(self):
 
     assert self.c.window.screen.info()["index"] == 0
     assert_raises(libqtile.command.CommandError, self.c.window.screen[0].info)
+
+#      win = self.testWindow("test")
+#      wid = self.c.window.info()["id"]
 
 
 @Xephyr(True, ServerConfig())
