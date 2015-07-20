@@ -930,7 +930,8 @@ class Qtile(command.CommandObject):
                 [xcffib.xproto.StackMode.Above]
             )
 
-        if self.windowMap.get(wnd):
+        window = self.windowMap.get(wnd)
+        if window and not window.window.get_property('QTILE_INTERNAL'):
             self.currentGroup.focus(self.windowMap.get(wnd), False)
             self.windowMap.get(wnd).focus(False)
 
