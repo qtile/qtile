@@ -152,10 +152,10 @@ class Slice(Delegate):
     def add(self, win):
         if self._slice.empty() and win.match(**self.match):
             self._slice.add(win)
-            self.layouts[win] = self._slice
+            self.layouts[win.window.wid] = self._slice
         else:
             self.fallback.add(win)
-            self.layouts[win] = self.fallback
+            self.layouts[win.window.wid] = self.fallback
 
     def cmd_next(self):
         self.fallback.cmd_next()
