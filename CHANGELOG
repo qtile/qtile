@@ -8,6 +8,7 @@ qtile 0.x.x, released xxxx-xx-xx:
         - print exception to log during loading config
         - fixed xmonad layout margins
         - clear last window name from group widgets when closed
+        - add window border to single xmonad layout
     * config breakage
         - layouts.VerticalTile `windows` is now `clients`
         - layouts.VerticalTile focus_next/focus_previous now take a single

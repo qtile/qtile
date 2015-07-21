@@ -303,9 +303,9 @@ class MonadTall(SingleWindow):
             client.place(
                 self.group.screen.dx,
                 self.group.screen.dy,
-                self.group.screen.dwidth,
-                self.group.screen.dheight,
-                0,
+                self.group.screen.dwidth - self.margin,
+                self.group.screen.dheight - self.margin,
+                self.border_width,
                 px,
                 margin=self.margin,
             )
