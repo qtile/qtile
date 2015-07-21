@@ -41,7 +41,8 @@ class WindowName(base._TextBox):
         base._TextBox._configure(self, qtile, bar)
         hook.subscribe.window_name_change(self.update)
         hook.subscribe.focus_change(self.update)
-        hook.subscribe.float_change(self.update)
+        if self.show_state:
+            hook.subscribe.float_change(self.update)
         # Clear the widget if group has no window
         @hook.subscribe.client_killed
         def on_client_killed(window):
@@ -52,13 +53,12 @@ class WindowName(base._TextBox):
     def update(self):
         w = self.bar.screen.group.currentWindow
         state = ''
-        if w is None:
-            pass
-        elif w.maximized:
-            state = '[] '
-        elif w.minimized:
-            state = '_ '
-        elif w.floating:
-            state = 'V '
+        if self.show_state and w is not None:
+            if w.maximized:
+                state = '[] '
+            elif w.minimized:
+                state = '_ '
+            elif w.floating:
+                state = 'V '
         self.text = "%s%s" % (state, w.name if w and w.name else " ")
         self.bar.draw()
