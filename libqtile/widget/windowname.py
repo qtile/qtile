@@ -34,8 +34,9 @@ class WindowName(base._TextBox):
     """
     orientations = base.ORIENTATION_HORIZONTAL
 
-    def __init__(self, width=bar.STRETCH, **config):
+    def __init__(self, width=bar.STRETCH, show_state=True, **config):
         base._TextBox.__init__(self, width=width, **config)
+        self.show_state = show_state
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
