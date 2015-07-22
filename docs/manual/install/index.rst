@@ -20,15 +20,16 @@ Installing From Source
 ======================
 
 First, you need to install all of Qtile's dependencies (although some are
-optional/not needed depending on your python version, as noted below).
+optional/not needed depending on your Python version, as noted below).
 
 xcffib
 ------
 
 Qtile uses xcffib_ as an XCB binding, which has its own instructions for
 building from source. However, if you'd like to skip building it, you can
-install its dependencies (``sudo apt-get install libxcb-render0-dev`` on
-Ubuntu), and install it via pypi:
+install its dependencies, you will need libxcb and libffi with the associated
+headers (``libxcb-render0-dev`` and ``libffi-dev`` on Ubuntu), and install it
+via PyPI:
 
 .. code-block:: bash
 
@@ -40,8 +41,10 @@ cairocffi
 ---------
 
 Qtile uses cairocffi_ with XCB support via xcffib. You'll need ``libcairo2``,
-the underlying library used by the binding. Once you've got that installed, you
-can use the latest version on pypi:
+the underlying library used by the binding.  You should be sure before you
+install cairocffi that xcffib has been installed, otherwise the needed
+cairo-xcb bindings will not be built.  Once you've got the dependencies
+installed, you can use the latest version on PyPI:
 
 .. code-block:: bash
 
@@ -75,7 +78,7 @@ Based on your Python version, there are different ways to install this:
   Alternatively, you can install trollius (see next point).
 - Python 2 and <=3.2 (and 3.3 without asyncio): You will need to install
   trollius_, which backports the asyncio module functionality to work without
-  the infastructure introduced in PEP 3156.  You can install this from PyPi:
+  the infastructure introduced in PEP 3156.  You can install this from PyPI:
 
   .. code-block:: bash
 
@@ -89,11 +92,11 @@ Based on your Python version, there are different ways to install this:
 importlib
 ---------
 
-- Python <=2.6 you will need to install importlib from PyPi:
+To run with Python <=2.6 you will need to install importlib from PyPI:
 
-  .. code-block:: bash
+.. code-block:: bash
 
-      pip install importlib
+   pip install importlib
 
 dbus/gobject
 ------------
@@ -114,3 +117,13 @@ With the dependencies in place, you can now install qtile:
     git clone git://github.com/qtile/qtile.git
     cd qtile
     sudo python setup.py install
+
+Stable versions of Qtile can be installed from PyPI:
+
+.. code-block:: bash
+
+    pip install qtile
+
+As long as the necessary libraries are in place, this can be done at any point,
+however, it is recommended that you first install xcffib to ensure the
+cairo-xcb bindings are built (see above).
