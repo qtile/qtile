@@ -1,3 +1,4 @@
+
 # Copyright (c) 2008, 2010 Aldo Cortesi
 # Copyright (c) 2010 matt
 # Copyright (c) 2011 Mounier Florian
@@ -33,17 +34,19 @@ class WindowName(base._TextBox):
         Displays the name of the window that currently has focus.
     """
     orientations = base.ORIENTATION_HORIZONTAL
+    defaults = [
+        ('show_state', True, 'show window status before window name')
+    ]
 
-    def __init__(self, width=bar.STRETCH, show_state=True, **config):
+    def __init__(self, width=bar.STRETCH, **config):
         base._TextBox.__init__(self, width=width, **config)
-        self.show_state = show_state
+        self.add_defaults(WindowName.defaults)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         hook.subscribe.window_name_change(self.update)
         hook.subscribe.focus_change(self.update)
-        if self.show_state:
-            hook.subscribe.float_change(self.update)
+        hook.subscribe.float_change(self.update)
         # Clear the widget if group has no window
         @hook.subscribe.client_killed
         def on_client_killed(window):
