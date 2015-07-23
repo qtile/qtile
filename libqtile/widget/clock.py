@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 from time import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from contextlib import contextmanager
 from . import base
 
@@ -50,21 +50,20 @@ class Clock(base.InLoopPollText):
             'e.g. "US/Central" (or anything in /usr/share/zoneinfo). None means '
             'the default timezone.')
     ]
+    DELTA = timedelta(seconds=0.5)
+
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(Clock.defaults)
 
     def tick(self):
         self.update(self.poll())
-        ts = time()
-        return self.update_interval - ts % self.update_interval
+        return self.update_interval - time() % self.update_interval
 
-    def _get_time(self):
-        ts = time()
-        # adding .5 to get a proper seconds value because glib could
-        # theoreticaly call our method too early and we could get something
-        # like (x-1).999 instead of x.000
-        return datetime.fromtimestamp(int(ts + .5)).strftime(self.format)
+    # adding .5 to get a proper seconds value because glib could
+    # theoreticaly call our method too early and we could get something
+    # like (x-1).999 instead of x.000
+    _get_time = lambda self: (datetime.now() + self.DELTA).strftime(self.format)
 
     def poll(self):
         # We use None as a sentinel here because C's strftime defaults to UTC
