@@ -44,7 +44,7 @@ class Net(base.ThreadedPollText):
         letter = 'B'
         if b // 1000 > 0:
             b /= 1000.0
-            letter = 'K'
+            letter = 'k'
         if b // 1000 > 0:
             b /= 1000.0
             letter = 'M'
