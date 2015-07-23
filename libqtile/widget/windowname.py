@@ -33,9 +33,13 @@ class WindowName(base._TextBox):
         Displays the name of the window that currently has focus.
     """
     orientations = base.ORIENTATION_HORIZONTAL
+    defaults = [
+        ('show_state', True, 'show window status before window name')
+    ]
 
     def __init__(self, width=bar.STRETCH, **config):
         base._TextBox.__init__(self, width=width, **config)
+        self.add_defaults(WindowName.defaults)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
@@ -52,13 +56,12 @@ class WindowName(base._TextBox):
     def update(self):
         w = self.bar.screen.group.currentWindow
         state = ''
-        if w is None:
-            pass
-        elif w.maximized:
-            state = '[] '
-        elif w.minimized:
-            state = '_ '
-        elif w.floating:
-            state = 'V '
+        if self.show_state and w is not None:
+            if w.maximized:
+                state = '[] '
+            elif w.minimized:
+                state = '_ '
+            elif w.floating:
+                state = 'V '
         self.text = "%s%s" % (state, w.name if w and w.name else " ")
         self.bar.draw()
