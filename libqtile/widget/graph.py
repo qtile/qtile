@@ -349,10 +349,10 @@ class NetGraph(_Graph):
 
     @staticmethod
     def get_main_iface():
-        filename = "/proc/net/route"
-        def make_route(line):
-            return dict(zip(['iface', 'dest'], line.split()))
-        routes = [make_route(line) for line in list(open(filename))[1:]]
+        make_route = lambda line: dict(zip(['iface', 'dest'], line.split()))
+        with open('/proc/net/route', 'r') as fp:
+            lines = fp.readlines()
+        routes = [make_route(line) for line in lines[1:]]
         try:
             return next(
                 (r for r in routes if not int(r['dest'], 16)),
