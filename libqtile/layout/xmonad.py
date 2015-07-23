@@ -32,6 +32,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import division
+
 from .base import SingleWindow
 import math
 
@@ -303,8 +305,8 @@ class MonadTall(SingleWindow):
             client.place(
                 self.group.screen.dx,
                 self.group.screen.dy,
-                self.group.screen.dwidth - self.margin,
-                self.group.screen.dheight - self.margin,
+                self.group.screen.dwidth - 2 * self.border_width - self.margin,
+                self.group.screen.dheight - 2 * self.border_width - self.margin,
                 self.border_width,
                 px,
                 margin=self.margin,
@@ -380,6 +382,13 @@ class MonadTall(SingleWindow):
                 px,
             )
             client.unhide()
+
+    def info(self):
+        return {
+            'clients': [c.name for c in self.clients],
+            'main': self.clients[0].name if self.clients else None,
+            'secondary': [c.name for c in self.clients[1:]]
+        }
 
     def get_shrink_margin(self, cidx):
         "Return how many remaining pixels a client can shrink"
