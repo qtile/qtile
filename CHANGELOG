@@ -3,6 +3,7 @@ qtile 0.x.x, released xxxx-xx-xx:
         - improved serialization of layouts across restarts
         - cmd_togroup can move to current group when None sent
     * bugfixes
+        - fix MondadTall layout grow/shrink secondary panes for Python 2
         - Clock widget uses datetime.now() rather than .fromtimestamp()
         - fix Python 3 compatibility of ThermalSensor widget
         - various Systray fixes, including implementing XEMBED protocol
