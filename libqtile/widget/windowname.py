@@ -1,4 +1,3 @@
-
 # Copyright (c) 2008, 2010 Aldo Cortesi
 # Copyright (c) 2010 matt
 # Copyright (c) 2011 Mounier Florian
