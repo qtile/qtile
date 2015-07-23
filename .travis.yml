@@ -22,6 +22,7 @@ matrix:
     - python: nightly
       env: EVENTLOOP=asyncio
   allow_failures:
+    - python: pypy3
     - python: nightly
 
 script:
