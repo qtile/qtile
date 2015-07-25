@@ -83,11 +83,11 @@ passing_layouts = [
     libqtile.layout.Stack(),
     libqtile.layout.Zoomy(),
     libqtile.layout.VerticalTile(),
-    libqtile.layout.Slice('left', 256, wname='slice')
+    libqtile.layout.Slice('left', 256, wname='slice'),
+    libqtile.layout.TreeTab(),
 ]
 
 broken_layouts = [
-    libqtile.layout.TreeTab(),
 ]
 
 
