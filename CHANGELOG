@@ -10,9 +10,9 @@ qtile 0.x.x, released xxxx-xx-xx:
         - fix Python 3 compatibility of ThermalSensor widget
         - various Systray fixes, including implementing XEMBED protocol
         - print exception to log during loading config
-        - fixed xmonad layout margins
+        - fixed xmonad layout margins between main and secondary panes
         - clear last window name from group widgets when closed
-        - add window border to single xmonad layout
+        - add toggleable window border to single xmonad layout
     * config breakage
         - layouts.VerticalTile `windows` is now `clients`
         - layouts.VerticalTile focus_next/focus_previous now take a single

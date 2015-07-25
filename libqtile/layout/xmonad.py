@@ -155,6 +155,7 @@ class MonadTall(SingleWindow):
         ("border_focus", "#ff0000", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 2, "Border width."),
+        ("single_border_width", 2, "Border width for single window"),
         ("name", "xmonad-tall", "Name of this layout."),
         ("margin", 0, "Margin of the layout"),
         ("ratio", _med_ratio,
@@ -305,9 +306,9 @@ class MonadTall(SingleWindow):
             client.place(
                 self.group.screen.dx,
                 self.group.screen.dy,
-                self.group.screen.dwidth - 2 * self.border_width - self.margin,
-                self.group.screen.dheight - 2 * self.border_width - self.margin,
-                self.border_width,
+                self.group.screen.dwidth - 2 * self.single_border_width - self.margin,
+                self.group.screen.dheight - 2 * self.single_border_width - self.margin,
+                self.single_border_width,
                 px,
                 margin=self.margin,
             )
