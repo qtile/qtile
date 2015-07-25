@@ -43,6 +43,11 @@ class QtileState(object):
             for layout in group.layouts:
                 self.layout_map[group.name][layout.name] = layout
                 layout.group = None
+                if isinstance(layout, libqtile.layout.tree.TreeTab):
+                        layout._draw = True if layout._panel is not None else False
+                        layout._drawer = None
+                        layout._panel = None
+                        layout._layout = None
                 if isinstance(layout, libqtile.layout.slice.Slice):
                     layout.fallback.group = None
                     layout._slice.group = None
@@ -91,6 +96,15 @@ class QtileState(object):
                     d = self.layout_map[group.name][layout.name]
                     d.group = layout.group
                     self.restore_layout(qtile, d, layout)
+                    if isinstance(layout, libqtile.layout.tree.TreeTab):
+                        layout._tree = d._tree
+                        layout._nodes = d._nodes
+                        for i in d._nodes:
+                            layout._nodes[i].window = qtile.windowMap[i]
+                        if hasattr(d, '_draw') and d._draw:
+                            layout._create_panel()
+                            screen = layout.group.screen.get_rect()
+                            layout.show(screen)
                     if isinstance(layout, libqtile.layout.slice.Slice):
                         d = self.layout_map[group.name][layout.name + '__slice']
                         d.group = layout.group
