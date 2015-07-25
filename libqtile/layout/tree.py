@@ -321,12 +321,12 @@ class TreeTab(SingleWindow):
             return win.window
 
     def focus_next(self, client):
-        win = self._nodes[client].get_next_window()
+        win = self._nodes[client.window.wid].get_next_window()
         if win:
             return win.window
 
     def focus_previous(self, client):
-        win = self._nodes[client].get_prev_window()
+        win = self._nodes[client.window.wid].get_prev_window()
         if win:
             return win.window
 
@@ -338,13 +338,13 @@ class TreeTab(SingleWindow):
 
     def add(self, win):
         if self._focused:
-            node = self._tree.add(win, hint=self._nodes[self._focused])
+            node = self._tree.add(win, hint=self._nodes[self._focused.window.wid])
         else:
             node = self._tree.add(win)
-        self._nodes[win] = node
+        self._nodes[win.window.wid] = node
 
     def remove(self, win):
-        if win not in self._nodes:
+        if win.window.wid not in self._nodes:
             return
 
         if self.previous_on_rm:
@@ -355,8 +355,8 @@ class TreeTab(SingleWindow):
         if self._focused is win:
             self._focused = None
 
-        self._nodes[win].remove()
-        del self._nodes[win]
+        self._nodes[win.window.wid].remove()
+        del self._nodes[win.window.wid]
         self.draw_panel()
 
     def _create_panel(self):
@@ -408,8 +408,11 @@ class TreeTab(SingleWindow):
 
     def info(self):
         d = SingleWindow.info(self)
-        d["clients"] = [x.name for x in self._nodes]
+        d["clients"] = [self._nodes[x].window.name for x in self._nodes]
+        d["ids"] = [x for x in self._nodes]
+        d["focused"] = x if self._focused is not None else "None"
         d["sections"] = [x.title for x in self._tree.children]
+        d["panel"] = self._panel.window.wid if self._panel is not None else None
         return d
 
     def show(self, screen):
@@ -429,7 +432,7 @@ class TreeTab(SingleWindow):
         """
         win = None
         if self._focused:
-            win = self._nodes[self._focused].get_next_window()
+            win = self._nodes[self._focused.window.wid].get_next_window()
         if not win:
             win = self._tree.get_first_window()
         if win:
@@ -444,7 +447,7 @@ class TreeTab(SingleWindow):
         """
         win = None
         if self._focused:
-            win = self._nodes[self._focused].get_prev_window()
+            win = self._nodes[self._focused.window.wid].get_prev_window()
         if not win:
             win = self._tree.get_last_window()
         if win:
@@ -457,7 +460,7 @@ class TreeTab(SingleWindow):
         win = self._focused
         if not win:
             return
-        node = self._nodes[win]
+        node = self._nodes[win.window.wid]
         p = node.parent.children
         idx = p.index(node)
         if idx > 0:
@@ -469,7 +472,7 @@ class TreeTab(SingleWindow):
         win = self._focused
         if not win:
             return
-        node = self._nodes[win]
+        node = self._nodes[win.window.wid]
         p = node.parent.children
         idx = p.index(node)
         if idx < len(p) - 1:
@@ -481,7 +484,7 @@ class TreeTab(SingleWindow):
         win = self._focused
         if not win:
             return
-        node = self._nodes[win]
+        node = self._nodes[win.window.wid]
         if not isinstance(node.parent, Section):
             node.parent.children.remove(node)
             node.parent.parent.add(node)
@@ -501,7 +504,7 @@ class TreeTab(SingleWindow):
         win = self._focused
         if not win:
             return
-        node = self._nodes[win]
+        node = self._nodes[win.window.wid]
         snode = node
         while not isinstance(snode, Section):
             snode = snode.parent
@@ -515,7 +518,7 @@ class TreeTab(SingleWindow):
         win = self._focused
         if not win:
             return
-        node = self._nodes[win]
+        node = self._nodes[win.window.wid]
         snode = node
         while not isinstance(snode, Section):
             snode = snode.parent
@@ -555,7 +558,7 @@ class TreeTab(SingleWindow):
         win = self._focused
         if not win:
             return
-        node = self._nodes[win]
+        node = self._nodes[win.window.wid]
         idx = node.parent.children.index(node)
         if idx > 0:
             node.parent.children.remove(node)
@@ -565,13 +568,13 @@ class TreeTab(SingleWindow):
     def cmd_expand_branch(self):
         if not self._focused:
             return
-        self._nodes[self._focused].expanded = True
+        self._nodes[self._focused.window.wid].expanded = True
         self.draw_panel()
 
     def cmd_collapse_branch(self):
         if not self._focused:
             return
-        self._nodes[self._focused].expanded = False
+        self._nodes[self._focused.window.wid].expanded = False
         self.draw_panel()
 
     def cmd_increase_ratio(self):
