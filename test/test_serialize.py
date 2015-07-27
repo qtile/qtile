@@ -87,9 +87,6 @@ passing_layouts = [
     libqtile.layout.TreeTab(),
 ]
 
-broken_layouts = [
-]
-
 
 @attr('xephyr')
 def simple_serialization_tests():
