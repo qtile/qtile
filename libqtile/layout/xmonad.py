@@ -155,7 +155,7 @@ class MonadTall(SingleWindow):
         ("border_focus", "#ff0000", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 2, "Border width."),
-        ("single_border_width", 2, "Border width for single window"),
+        ("single_border_width", None, "Border width for single window"),
         ("name", "xmonad-tall", "Name of this layout."),
         ("margin", 0, "Margin of the layout"),
         ("ratio", _med_ratio,
@@ -170,6 +170,8 @@ class MonadTall(SingleWindow):
     def __init__(self, **config):
         SingleWindow.__init__(self, **config)
         self.add_defaults(MonadTall.defaults)
+        if self.single_border_width is None:
+            self.single_border_width = self.border_width
         self.clients = []
         self.relative_sizes = []
         self._focus = 0
