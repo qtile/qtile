@@ -30,6 +30,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import itertools
+
 from .. import bar, hook
 from . import base
 
@@ -179,7 +181,13 @@ class GroupBox(_GroupBase):
             "Border colour for group on other screen."
         ),
         ("urgent_border", "FF0000", "Urgent border color"),
-        ("invert_mouse_wheel", False, "Whether to invert mouse wheel group movement")
+        ("invert_mouse_wheel", False, "Whether to invert mouse wheel group movement"),
+        (
+            "visible_groups",
+            None,
+            "Groups that will be visible "
+            "(if set to None or [], all groups will be visible)"
+        )
     ]
 
     def __init__(self, **config):
@@ -187,11 +195,17 @@ class GroupBox(_GroupBase):
         self.add_defaults(GroupBox.defaults)
         self.clicked = None
 
+    @property
+    def groups(self):
+        return self.qtile.groups if not self.visible_groups else \
+               [g for g in self.qtile.groups
+                  if g.name in self.visible_groups]
+    
     def get_clicked_group(self, x, y):
         group = None
         new_width = 0
         width = 0
-        for g in self.qtile.groups:
+        for g in self.groups:
             new_width += self.box_width([g])
             if x >= width and x <= new_width:
                 group = g
@@ -205,9 +219,15 @@ class GroupBox(_GroupBase):
         curGroup = self.qtile.currentGroup
 
         if button == (5 if not self.invert_mouse_wheel else 4):
-            group = curGroup.prevGroup()
+            i = itertools.cycle(self.qtile.groups)
+            while next(i) != curGroup: pass
+            while group is None or group not in self.groups:
+                group = next(i)
         elif button == (4 if not self.invert_mouse_wheel else 5):
-            group = curGroup.nextGroup()
+            i = itertools.cycle(reversed(self.qtile.groups))
+            while next(i) != curGroup: pass
+            while group is None or group not in self.groups:
+                group = next(i)
         else:
             group = self.get_clicked_group(x, y)
             if not self.disable_drag:
@@ -225,7 +245,7 @@ class GroupBox(_GroupBase):
 
     def calculate_length(self):
         width = 0
-        for g in self.qtile.groups:
+        for g in self.groups:
             width += self.box_width([g])
         return width
 
@@ -236,7 +256,7 @@ class GroupBox(_GroupBase):
         self.drawer.clear(self.background or self.bar.background)
 
         offset = 0
-        for i, g in enumerate(self.qtile.groups):
+        for i, g in enumerate(self.groups):
             is_block = (self.highlight_method == 'block')
 
             bw = self.box_width([g])
