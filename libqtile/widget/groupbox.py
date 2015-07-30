@@ -198,9 +198,8 @@ class GroupBox(_GroupBase):
     @property
     def groups(self):
         return self.qtile.groups if not self.visible_groups else \
-               [g for g in self.qtile.groups
-                  if g.name in self.visible_groups]
-    
+            [g for g in self.qtile.groups if g.name in self.visible_groups]
+
     def get_clicked_group(self, x, y):
         group = None
         new_width = 0
@@ -220,12 +219,14 @@ class GroupBox(_GroupBase):
 
         if button == (5 if not self.invert_mouse_wheel else 4):
             i = itertools.cycle(self.qtile.groups)
-            while next(i) != curGroup: pass
+            while next(i) != curGroup:
+                pass
             while group is None or group not in self.groups:
                 group = next(i)
         elif button == (4 if not self.invert_mouse_wheel else 5):
             i = itertools.cycle(reversed(self.qtile.groups))
-            while next(i) != curGroup: pass
+            while next(i) != curGroup:
+                pass
             while group is None or group not in self.groups:
                 group = next(i)
         else:
