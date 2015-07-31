@@ -24,10 +24,8 @@ from __future__ import division
 from libqtile.log_utils import init_log
 from libqtile.dgroups import DGroups
 from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
-import imp
 import logging
 import os
-import os.path
 import pickle
 import shlex
 import signal
@@ -50,6 +48,25 @@ from . import hook
 from . import utils
 from . import window
 from . import xcbq
+
+
+if sys.version_info >= (3, 3):
+    def _import_module(module_name, dir_path):
+        import importlib
+        file_name = os.path.join(dir_path, module_name) + '.py'
+        f = importlib.machinery.SourceFileLoader(module_name, file_name)
+        module = f.load_module()
+        return module
+else:
+    def _import_module(module_name, dir_path):
+        import imp
+        try:
+            fp, pathname, description = imp.find_module(module_name, [dir_path])
+            module = imp.load_module(module_name, fp, pathname, description)
+        finally:
+            if fp:
+                fp.close()
+        return module
 
 
 class Qtile(command.CommandObject):
@@ -1620,11 +1637,9 @@ class Qtile(command.CommandObject):
         sys.exc_clear()
 
         try:
-            fp, pathname, description = imp.find_module(module_name, [dir_path])
-            module = imp.load_module(module_name, fp, pathname, description)
+            module = _import_module(module_name, dir_path)
             module.main(self)
         except ImportError as e:
-            fp = None
             err_str += format_error(full_path, e)
         except:
             (exc_type, exc_value, exc_traceback) = sys.exc_info()
@@ -1633,8 +1648,7 @@ class Qtile(command.CommandObject):
         finally:
             sys.exc_clear()
             sys.stdout = old_stdout
-            if fp:
-                fp.close()
+            local_stdout.close()
 
         return local_stdout.getvalue() + err_str
 

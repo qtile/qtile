@@ -5,6 +5,7 @@ qtile 0.x.x, released xxxx-xx-xx:
         - improved serialization of layouts across restarts
         - cmd_togroup can move to current group when None sent
     * bugfixes
+        - remove deprecated imp for Python >= 3.3
         - properly close file for NetGraph
         - fix MondadTall layout grow/shrink secondary panes for Python 2
         - Clock widget uses datetime.now() rather than .fromtimestamp()
