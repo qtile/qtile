@@ -42,17 +42,16 @@ class QtileState(object):
             self.layout_map[group.name] = {}
             for layout in group.layouts:
                 self.layout_map[group.name][layout.name] = layout
-                layout.group = None
-                if isinstance(layout, libqtile.layout.tree.TreeTab):
+                layout.group = None                 # We Need this for serialization to work.
+                if isinstance(layout, libqtile.layout.tree.TreeTab):  # Special cases as they have layout objects within there structure.
                         layout._draw = True if layout._panel is not None else False
                         layout._drawer = None
                         layout._panel = None
                         layout._layout = None
                 if isinstance(layout, libqtile.layout.slice.Slice):
-                    layout.fallback.group = None
+                    layout.fallback.group = None # to make them pickelable
                     layout._slice.group = None
-
-                    self.layout_map[group.name][layout.name + '_fallback'] = layout.fallback
+                    self.layout_map[group.name][layout.name + '_fallback'] = layout.fallback # Here we add the additional objects to our state data
                     self.layout_map[group.name][layout.name + '__slice'] = layout._slice
             self.focus_history[group.name] = group.focusHistory
         for index, screen in enumerate(qtile.screens):
@@ -60,7 +59,7 @@ class QtileState(object):
             if screen == qtile.currentScreen:
                 self.current_screen = index
 
-    def restore_layout(self, qtile, saved_layout, layout):
+    def restore_windowState(self, qtile, saved_layout, layout):
 
         members = dir(saved_layout)
         for member in members:
@@ -77,8 +76,8 @@ class QtileState(object):
                         last = i
                     if isinstance(last, window.Window):
                         setattr(layout, member, tmp)
-                elif isinstance(x, window.Window):
-                    setattr(layout, member, qtile.windowMap[x.wid])
+                elif isinstance(x, window.Window):  # Add exception for unpickelable objects here
+                    setattr(layout, member, qtile.windowMap[x.wid])  # we have to use qtile windowMap to fully restore the window state
                 elif not callable(x) and not str.startswith(member, '_'):
                     setattr(layout, member, x)
             except AttributeError:
