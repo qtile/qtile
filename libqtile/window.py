@@ -1339,7 +1339,7 @@ class Window(_Window):
 
     def __getstate__(self):
         d = {}
-        d['window'] = self.window.wid
+        d['window'] = self.window.wid  # using id alone we can restore the object attributes
         return d
 
     def __setstate__(self, state):
