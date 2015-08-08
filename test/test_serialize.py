@@ -72,9 +72,6 @@ class LayoutTestConfig(object):
         self.layouts = [
             layout
         ]
-border_args = dict(
-    border_width=1,
-)
 
 
 passing_layouts = [
