@@ -49,9 +49,9 @@ class QtileState(object):
                         layout._panel = None
                         layout._layout = None
                 if isinstance(layout, libqtile.layout.slice.Slice):
-                    layout.fallback.group = None # to make them pickelable
+                    layout.fallback.group = None  # to make them pickelable
                     layout._slice.group = None
-                    self.layout_map[group.name][layout.name + '_fallback'] = layout.fallback # Here we add the additional objects to our state data
+                    self.layout_map[group.name][layout.name + '_fallback'] = layout.fallback  # Here we add the additional objects to our state data
                     self.layout_map[group.name][layout.name + '__slice'] = layout._slice
             self.focus_history[group.name] = group.focusHistory
         for index, screen in enumerate(qtile.screens):
