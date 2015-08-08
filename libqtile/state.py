@@ -91,15 +91,15 @@ class QtileState(object):
         saved_layout.group = group
         self.restore_window(qtile, saved_layout, layout)
         if isinstance(layout, libqtile.layout.tree.TreeTab):
-            layout._tree = d._tree
-            layout._nodes = d._nodes
-            for i in d._nodes:
+            layout._tree = saved_layout._tree
+            layout._nodes = saved_layout._nodes
+            for i in saved_layout._nodes:
                 layout._nodes[i].window = qtile.windowMap[i]
-            if hasattr(d, '_draw') and d._draw:
+            if hasattr(saved_layout, '_draw') and saved_layout._draw:
                 layout._create_panel()
                 screen = layout.group.screen.get_rect()
                 layout.show(screen)
-        if isinstance(layout,  libqtile.layout.stack.Stack):
+        if isinstance(layout, libqtile.layout.stack.Stack):
             for i in range(len(layout.stacks)):
                 self.restore_window(qtile, saved_layout.stacks[i], layout.stacks[i])
         if isinstance(layout, libqtile.layout.slice.Slice):
