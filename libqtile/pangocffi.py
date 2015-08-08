@@ -54,9 +54,9 @@ try:
 except ImportError:
     from libqtile.ffi_build import pango_ffi as ffi
 
-gobject = ffi.dlopen('libgobject-2.0.so')
-pango = ffi.dlopen('libpango-1.0.so')
-pangocairo = ffi.dlopen('libpangocairo-1.0.so')
+gobject = ffi.dlopen('libgobject-2.0.so.0')
+pango = ffi.dlopen('libpango-1.0.so.0')
+pangocairo = ffi.dlopen('libpangocairo-1.0.so.0')
 
 
 def CairoContext(cairo_t):
