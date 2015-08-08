@@ -86,7 +86,9 @@ passing_layouts = [
     libqtile.layout.Stack(),
     libqtile.layout.Zoomy(),
     libqtile.layout.VerticalTile(),
-    libqtile.layout.Slice('left', 192, name='gimp', role='gimp-toolbox', fallback=libqtile.layout.Slice('right', 256, name='slice2', role='gimp-dock', fallback=libqtile.layout.Max(name='MAA'))),
+    libqtile.layout.Slice('left', 192, name='Slice1', role='gimp',
+         fallback=libqtile.layout.Slice('right', 256,name='slice', role='gimp-dock',
+         fallback=libqtile.layout.Stack(stacks=1))),
     libqtile.layout.TreeTab(),
 ]
 
