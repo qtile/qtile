@@ -41,26 +41,35 @@ class QtileState(object):
             self.groups[group.name] = group.layout.name
             self.layout_map[group.name] = {}
             for layout in group.layouts:
-                self.layout_map[group.name][layout.name] = layout
-                layout.group = None                 # We Need this for serialization to work.
-                if isinstance(layout, libqtile.layout.tree.TreeTab):  # Special cases as they have layout objects within there structure.
-                        layout._draw = True if layout._panel is not None else False
-                        layout._drawer = None
-                        layout._panel = None
-                        layout._layout = None
-                if isinstance(layout, libqtile.layout.slice.Slice):
-                    layout.fallback.group = None  # to make them pickelable
-                    layout._slice.group = None
-                    self.layout_map[group.name][layout.name + '_fallback'] = layout.fallback  # Here we add the additional objects to our state data
-                    self.layout_map[group.name][layout.name + '__slice'] = layout._slice
+                self.save_layout(layout, group)
             self.focus_history[group.name] = group.focusHistory
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
             if screen == qtile.currentScreen:
                 self.current_screen = index
 
-    def restore_windowState(self, qtile, saved_layout, layout):
+    def save_layout(self, layout, group, save=True):
+        if save:
+            self.layout_map[group.name][layout.name] = layout
+        layout.group = None                 # We Need this for serialization to work.
+        if isinstance(layout, libqtile.layout.slice.Slice):
+            self.save_layout(layout.fallback, group, False)
+            self.save_layout(layout._slice, group, False)
+        if isinstance(layout, libqtile.layout.tree.TreeTab):  # Special cases as they have layout objects within there structure.
+            layout._draw = True if layout._panel is not None else False
+            layout._drawer = None
+            layout._panel = None
+            layout._layout = None
+            # layout.fallback = None
+            # layout._slice = None
+            # layout.fallback.group = None  # to make them pickelable
+            # layout._slice.group = None
+            # self.layout_map[group.name][layout.name + '_fallback'] = layout.fallback  # Here we add the additional objects to our state data
+            # self.layout_map[group.name][layout.name + '__slice'] = layout._slice
 
+    def restore_window(self, qtile, saved_layout, layout):
+
+        print "In restore_WINDOW" , layout.name
         members = dir(saved_layout)
         for member in members:
             try:
@@ -76,12 +85,43 @@ class QtileState(object):
                         last = i
                     if isinstance(last, window.Window):
                         setattr(layout, member, tmp)
+                        print "restoring" , member
                 elif isinstance(x, window.Window):  # Add exception for unpickelable objects here
                     setattr(layout, member, qtile.windowMap[x.wid])  # we have to use qtile windowMap to fully restore the window state
+                    print "restoring" , member
                 elif not callable(x) and not str.startswith(member, '_'):
                     setattr(layout, member, x)
+                    print "restoring" , member
             except AttributeError:
                 pass
+
+    def restore_layout(self, qtile, saved_layout, layout, group):
+
+        saved_layout.group = group
+        self.restore_window(qtile, saved_layout, layout)
+        if isinstance(layout, libqtile.layout.tree.TreeTab):
+            layout._tree = d._tree
+            layout._nodes = d._nodes
+            for i in d._nodes:
+                layout._nodes[i].window = qtile.windowMap[i]
+            if hasattr(d, '_draw') and d._draw:
+                layout._create_panel()
+                screen = layout.group.screen.get_rect()
+                layout.show(screen)
+        if isinstance(layout, libqtile.layout.stack._WinStack):
+            
+        if isinstance(layout, libqtile.layout.slice.Slice):
+            try:
+                # d = self.layout_map[group.name][layout.name + '__slice']
+                # d.group = layout.group
+                print "Going for slice"
+                self.restore_layout(qtile, saved_layout._slice, layout._slice, group)
+                # d = self.layout_map[group.name][layout.name + '_fallback']
+                # d.group = layout.group
+                print "Going for fallback"
+                self.restore_layout(qtile, saved_layout.fallback, layout.fallback, group)
+            except KeyError:
+                print "Problem In Naming"
 
     def apply(self, qtile):
         """
@@ -92,25 +132,8 @@ class QtileState(object):
             for group in qtile.groups:
                 group.focusHistory = [qtile.windowMap[i.wid] for i in self.focus_history[group.name]]
                 for layout in group.layouts:
-                    d = self.layout_map[group.name][layout.name]
-                    d.group = layout.group
-                    self.restore_layout(qtile, d, layout)
-                    if isinstance(layout, libqtile.layout.tree.TreeTab):
-                        layout._tree = d._tree
-                        layout._nodes = d._nodes
-                        for i in d._nodes:
-                            layout._nodes[i].window = qtile.windowMap[i]
-                        if hasattr(d, '_draw') and d._draw:
-                            layout._create_panel()
-                            screen = layout.group.screen.get_rect()
-                            layout.show(screen)
-                    if isinstance(layout, libqtile.layout.slice.Slice):
-                        d = self.layout_map[group.name][layout.name + '__slice']
-                        d.group = layout.group
-                        self.restore_layout(qtile, d, layout._slice)
-                        d = self.layout_map[group.name][layout.name + '_fallback']
-                        d.group = layout.group
-                        self.restore_layout(qtile, d, layout.fallback)
+                    self.restore_layout(qtile, self.layout_map[group.name][layout.name], layout, group)
+                   
         except KeyError:
             pass  # group missing
 

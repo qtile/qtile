@@ -72,6 +72,9 @@ class LayoutTestConfig(object):
         self.layouts = [
             layout
         ]
+border_args = dict(
+    border_width=1,
+)
 
 
 passing_layouts = [
@@ -83,7 +86,7 @@ passing_layouts = [
     libqtile.layout.Stack(),
     libqtile.layout.Zoomy(),
     libqtile.layout.VerticalTile(),
-    libqtile.layout.Slice('left', 256, wname='slice'),
+    libqtile.layout.Slice('left', 192, name='gimp', role='gimp-toolbox', fallback=libqtile.layout.Slice('right', 256, name='slice2', role='gimp-dock', fallback=libqtile.layout.Max(name='MAA'))),
     libqtile.layout.TreeTab(),
 ]
 
