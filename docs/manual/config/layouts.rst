@@ -17,7 +17,7 @@ For custom layouts it is required that if you have unpickelable objects
 within your layout, then you  have to add an exception for your layout
 in state.py. You will have to manually restore those specific attributes in
 state.py. Some examples of unpickelable objects within qtile are a delegate
-layout ,a window object ,a group object etc. For window objects, the current
+layout, a window object, a group object etc. For window objects, the current
 procedure handles most of the trivial cases. However it is possible that your
 layout might need some special handling. For details on how to restore
 them manually for restart to work, see state.py.
