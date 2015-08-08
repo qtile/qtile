@@ -62,7 +62,7 @@ class QtileState(object):
             layout._panel = None
             layout._layout = None
 
-    def restore_window(self, qtile, saved_layout, layout):
+    def restore_window(self, qtile, saved_layout, layout):  # Restore objects with references window objects
 
         members = dir(saved_layout)
         for member in members:
@@ -86,7 +86,7 @@ class QtileState(object):
             except AttributeError:
                 pass
 
-    def restore_layout(self, qtile, saved_layout, layout, group):
+    def restore_layout(self, qtile, saved_layout, layout, group):  # Restore layout objects
 
         saved_layout.group = group
         self.restore_window(qtile, saved_layout, layout)
@@ -101,9 +101,9 @@ class QtileState(object):
                 layout.show(screen)
         if isinstance(layout, libqtile.layout.stack.Stack):
             for i in range(len(layout.stacks)):
-                self.restore_window(qtile, saved_layout.stacks[i], layout.stacks[i])
+                self.restore_window(qtile, saved_layout.stacks[i], layout.stacks[i])  # Objects with references to window objects
         if isinstance(layout, libqtile.layout.slice.Slice):
-            self.restore_layout(qtile, saved_layout._slice, layout._slice, group)
+            self.restore_layout(qtile, saved_layout._slice, layout._slice, group)  # layout with references to layout objects
             self.restore_layout(qtile, saved_layout.fallback, layout.fallback, group)
 
     def apply(self, qtile):
