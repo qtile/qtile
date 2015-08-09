@@ -1314,9 +1314,25 @@ class Qtile(command.CommandObject):
             argv.append('--no-spawn')
 
         buf = six.BytesIO()
-        pickle.dump(QtileState(self), buf, protocol=0)
+        try:
+            pickle.dump(QtileState(self), buf, protocol=0)
+        except (
+                TypeError,
+                pickle.PicklingError) as err:
+            self.log.error("Unpickleable objects present, proceeding without state")
+            self.log.error(err)
         argv = [s for s in argv if not s.startswith('--with-state')]
-        argv.append('--with-state=' + buf.getvalue().decode())
+        try:
+            buf = six.BytesIO()
+            argv.append('--with-state=' + buf.getvalue().decode())
+        except (
+                AttributeError,
+                EOFError,
+                ImportError,
+                IndexError,
+                pickle.UnpicklingError) as err:
+            self.log.error("Unpickling Error, proceeding without state")
+            self.log.error(err)
 
         self.cmd_execute(sys.executable, argv)
 
@@ -1584,7 +1600,7 @@ class Qtile(command.CommandObject):
                         command.CommandError,
                         command.CommandException,
                         AttributeError) as err:
-                    self.log.error(err.message)
+                    self.log.error(err)
                     result = None
                 if result is not None:
                     from pprint import pformat
