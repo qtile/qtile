@@ -21,6 +21,7 @@
 from __future__ import division
 
 import array
+import pickle
 import contextlib
 import inspect
 import traceback
@@ -1339,9 +1340,15 @@ class Window(_Window):
 
     def __getstate__(self):
         d = {}
-        d['window'] = self.window.wid  # using id alone we can restore the object attributes
+        try:
+            d['window'] = self.window.wid  # using id alone we can restore the object attributes
+        except AttributeError:
+            raise pickle.PicklingError("Window not in pickelable state")
         return d
 
     def __setstate__(self, state):
-        self.wid = state['window']
+        try:
+            self.wid = state['window']
+        except KeyError:
+            raise pickle.UnpicklingError("Problem in getting window state")
         return self
