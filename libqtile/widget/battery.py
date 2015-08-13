@@ -170,6 +170,7 @@ class Battery(_Battery):
             "0 < x < 1 at which to indicate battery is low with low_foreground"
         ),
         ('hide_threshold', None, 'Hide the text when there is enough energy'),
+        ('error_message', 'Error', 'Error message if something is wrong'),
     ]
 
     def __init__(self, **config):
@@ -191,7 +192,7 @@ class Battery(_Battery):
     def _get_text(self):
         info = self._get_info()
         if info is False:
-            return 'Error'
+            return self.error_message
 
         # Set the charging character
         try:
