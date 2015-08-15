@@ -105,8 +105,9 @@ class TextLayout(object):
 
     @font_family.setter
     def font_family(self, font):
-        d = self.fontdescription()
-        d.set_family(font)
+        # d = self.fontdescription()
+        d = pangocffi.FontDescription.from_string(font)
+        # d.set_family(font)
         self.layout.set_font_description(d)
 
     @property
