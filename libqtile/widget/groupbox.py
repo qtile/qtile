@@ -145,6 +145,7 @@ class GroupBox(_GroupBase):
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("active", "FFFFFF", "Active group font colour"),
+        ("other_active", "FFFFFF", "Active groups on other screens"),
         ("inactive", "404040", "Inactive group font colour"),
         ("urgent_text", "FF0000", "Urgent group font color"),
         (
@@ -158,6 +159,11 @@ class GroupBox(_GroupBase):
             "this_current_screen_border",
             "215578",
             "Border colour for group on this screen when focused."
+        ),
+        (
+            "other_active_screen_border",
+            "999999",
+            "Border colour for group on other screen"
         ),
         (
             "urgent_alert_method",
@@ -287,7 +293,11 @@ class GroupBox(_GroupBase):
                 if self.urgent_alert_method == 'block':
                     is_block = True
             else:
-                border = self.background or self.bar.background
+                if g.windows:
+                    text_color = self.other_active
+                    border = self.other_active_screen_border
+                else:
+                    border = self.background or self.bar.background
 
             self.drawbox(
                 self.margin_x + offset,
