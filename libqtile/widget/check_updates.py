@@ -83,4 +83,4 @@ class CheckUpdates(base.ThreadedPollText):
     def button_press(self, x, y, button):
         base.ThreadedPollText.button_press(self, x, y, button)
         if button == 1 and self.execute is not None:
-            Popen([self.execute], shell=True)
+            Popen(self.execute, shell=True)
