@@ -52,8 +52,8 @@ class QtileState(object):
 
         if save:
             self.layout_map[group.name][layout.name] = layout
-        layout.group = None                 # We Need this for serialization to work.
-        if isinstance(layout, libqtile.layout.slice.Slice):  # Special cases as they have layout objects within there structure.
+        layout.group = None                 # We Need this for serialization to work
+        if isinstance(layout, libqtile.layout.slice.Slice):  # Special cases as they have layout objects within there structure
             self.save_layout(layout.fallback, group, False)
             self.save_layout(layout._slice, group, False)
         if isinstance(layout, libqtile.layout.tree.TreeTab):

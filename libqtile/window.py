@@ -21,6 +21,7 @@
 from __future__ import division
 
 import array
+import pickle
 import contextlib
 import inspect
 import traceback
@@ -622,7 +623,7 @@ class Internal(_Window):
         return i
 
     def __repr__(self):
-        return "Internal(%s, %s)" % (self.name, self.window.wid)
+        return "Internal(%r, %s)" % (self.name, self.window.wid)
 
     def kill(self):
         self.qtile.conn.conn.core.DestroyWindow(self.window.wid)
@@ -698,7 +699,7 @@ class Static(_Window):
             self.update_strut()
 
     def __repr__(self):
-        return "Static(%s)" % self.name
+        return "Static(%r)" % self.name
 
 
 class Window(_Window):
@@ -1196,7 +1197,7 @@ class Window(_Window):
             return self.group.screen
 
     def __repr__(self):
-        return "Window(%s)" % self.name
+        return "Window(%r)" % self.name
 
     def cmd_static(self, screen, x, y, width, height):
         self.static(screen, x, y, width, height)
@@ -1339,9 +1340,15 @@ class Window(_Window):
 
     def __getstate__(self):
         d = {}
-        d['window'] = self.window.wid  # using id alone we can restore the object attributes
+        try:
+            d['window'] = self.window.wid  # using id alone we can restore the object attributes
+        except AttributeError:
+            raise pickle.PicklingError("Window not in pickelable state")
         return d
 
     def __setstate__(self, state):
-        self.wid = state['window']
+        try:
+            self.wid = state['window']
+        except KeyError:
+            raise pickle.UnpicklingError("Problem in getting window state")
         return self
