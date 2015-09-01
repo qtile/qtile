@@ -16,6 +16,7 @@
 
 from . import base
 
+import os
 import subprocess
 
 
@@ -79,7 +80,12 @@ class Moc(base.ThreadPoolText):
                     self.layout.colour = self.noplay_color
             title = info['SongTitle']
             artist = info['Artist']
-            now_playing = "♫ {0} - {1}".format(artist, title)
+            if title and artist:
+                now_playing = "♫ {0} - {1}".format(artist, title)
+            else:
+                filename = os.path.basename(info['File'])
+                now_playing = "♫ {0}".format(filename)
+
             if self.status == "STOP":
                 now_playing = "♫"
 
