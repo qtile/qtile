@@ -65,7 +65,8 @@ class ColorFormatter(logging.Formatter):
         return message + self.reset_seq
 
 
-def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log'):
+def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log',
+             truncate=True, log_size=10000000, log_numbackups=1):
     log = getLogger(logger)
     log.setLevel(log_level)
 
@@ -75,12 +76,13 @@ def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log'):
         except TypeError:  # Happens if log_path doesn't contain formatters.
             pass
         log_path = os.path.expanduser(log_path)
-        with open(log_path, "w"):
-            pass
+        if truncate:
+            with open(log_path, "w"):
+                pass
         handler = logging.handlers.RotatingFileHandler(
             log_path,
-            maxBytes=10000000,
-            backupCount=1
+            maxBytes=log_size,
+            backupCount=log_numbackups
         )
         handler.setFormatter(
             logging.Formatter(
