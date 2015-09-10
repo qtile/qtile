@@ -37,6 +37,7 @@
 from __future__ import print_function, division
 
 import six
+import logging
 
 from xcffib.xproto import CW, WindowClass, EventMask
 from xcffib.xfixes import SelectionEventMask
@@ -648,16 +649,22 @@ class Window(object):
             else:
                 type, _ = PropertyMap[prop]
 
-        r = self.conn.conn.core.GetProperty(
-            False, self.wid,
-            self.conn.atoms[prop]
-            if isinstance(prop, six.string_types)
-            else prop,
-            self.conn.atoms[type]
-            if isinstance(type, six.string_types)
-            else type,
-            0, (2 ** 32) - 1
-        ).reply()
+        try:
+            r = self.conn.conn.core.GetProperty(
+                False, self.wid,
+                self.conn.atoms[prop]
+                if isinstance(prop, six.string_types)
+                else prop,
+                self.conn.atoms[type]
+                if isinstance(type, six.string_types)
+                else type,
+                0, (2 ** 32) - 1
+            ).reply()
+        except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
+            logging.getLogger('qtile').warning(
+                'X error in GetProperty (wid=%r, prop=%r), ignoring',
+                self.wid, prop)
+            return None
 
         if not r.value_len:
             if unpack:

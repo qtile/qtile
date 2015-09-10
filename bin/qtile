@@ -101,13 +101,18 @@ def make_qtile():
 
     options = parser.parse_args()
     log_level = getattr(logging, options.log_level)
-    log = init_log(log_level)
 
     try:
         c = confreader.File(options.configfile, is_restart=options.no_spawn)
     except Exception as e:
+        log = init_log(log_level)
         log.exception(str(e) + '\n\nError while reading config file')
         raise
+    else:
+        trunc = getattr(c, 'truncate_log', True)
+        log_size = getattr(c, 'log_size', 10000000)
+        log_numbackups = getattr(c, 'log_numbackups', 1)
+        log = init_log(log_level, truncate=trunc, log_size=log_size, log_numbackups=log_numbackups)
 
     # XXX: the import is here becouse we need to call init_log
     # before start importing stuff

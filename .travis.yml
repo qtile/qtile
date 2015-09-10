@@ -15,6 +15,8 @@ matrix:
       env: EVENTLOOP=tulip
     - python: 3.4
       env: EVENTLOOP=asyncio
+    - python: 3.5-dev
+      env: EVENTLOOP=asyncio
     - python: pypy
       env: EVENTLOOP=trollius
     - python: pypy3

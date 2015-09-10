@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 from . import base
-from subprocess import CalledProcessError
+from subprocess import CalledProcessError, Popen
 
 
 class CheckUpdates(base.ThreadedPollText):
@@ -30,6 +30,7 @@ class CheckUpdates(base.ThreadedPollText):
     defaults = [
         ("distro", "Arch", "Name of your distribution"),
         ("update_interval", 60, "Update interval in seconds."),
+        ('execute', None, 'Command to execute on click'),
         ("colour_no_updates", "ffffff", "Colour when there's no updates."),
         ("colour_have_updates", "ffffff", "Colour when there are updates.")
     ]
@@ -78,3 +79,8 @@ class CheckUpdates(base.ThreadedPollText):
         if not self.cmd:
             return "N/A"
         return self._check_updates()
+
+    def button_press(self, x, y, button):
+        base.ThreadedPollText.button_press(self, x, y, button)
+        if button == 1 and self.execute is not None:
+            Popen(self.execute, shell=True)

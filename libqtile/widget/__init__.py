@@ -95,4 +95,8 @@ safe_import(".keyboardkbdd", "KeyboardKbdd")
 safe_import(".cmus", "Cmus")
 safe_import(".wallpaper", "Wallpaper")
 safe_import(".check_updates", "CheckUpdates")
+<<<<<<< HEAD
 safe_import('.pulse', 'PulseAudio')
+=======
+safe_import(".moc", "Moc")
+>>>>>>> 1e2fad876ddab88716a998ca57e2791cc3da2eb9
