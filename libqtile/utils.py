@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
 import operator
 import functools
 import warnings
@@ -193,3 +194,17 @@ def catch_exception_and_warn(warning=Warning, return_on_exception=None,
             return return_value
         return wrapper
     return decorator
+
+
+def get_cache_dir():
+    """
+    Returns the cache directory and create if it doesn't exists
+    """
+
+    cache_directory = os.path.expandvars('$XDG_CACHE_HOME')
+    if cache_directory == '$XDG_CACHE_HOME':
+        # if variable wasn't set
+        cache_directory = os.path.expanduser("~/.cache")
+    if not os.path.exists(cache_directory):
+        os.makedirs(cache_directory)
+    return cache_directory

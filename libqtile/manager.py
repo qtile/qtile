@@ -41,7 +41,7 @@ from six.moves import asyncio
 from .config import Drag, Click, Screen, Match, Rule
 from .group import _Group
 from .state import QtileState
-from .utils import QtileError
+from .utils import QtileError, get_cache_dir
 from .widget.base import _Widget
 from . import command
 from . import hook
