@@ -120,7 +120,7 @@ class _Group(command.CommandObject):
         raise ValueError("No such layout: %s" % layout)
 
     def toLayoutIndex(self, index):
-        assert 0 <= index <= len(self.layouts), "layout index out of bounds"
+        assert 0 <= index < len(self.layouts), "layout index out of bounds"
         self.layout.hide()
         self.currentLayout = index
         hook.fire("layout_change", self.layouts[self.currentLayout], self)
