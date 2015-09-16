@@ -119,21 +119,20 @@ class _Group(command.CommandObject):
                 return
         raise ValueError("No such layout: %s" % layout)
 
-    def nextLayout(self):
+    def toLayoutIndex(self, index):
+        assert 0 <= index <= len(self.layouts), "layout index out of bounds"
         self.layout.hide()
-        self.currentLayout = (self.currentLayout + 1) % (len(self.layouts))
+        self.currentLayout = index
         hook.fire("layout_change", self.layouts[self.currentLayout], self)
         self.layoutAll()
         screen = self.screen.get_rect()
         self.layout.show(screen)
 
+    def nextLayout(self):
+        self.toLayoutIndex((self.currentLayout + 1) % (len(self.layouts)))
+
     def prevLayout(self):
-        self.layout.hide()
-        self.currentLayout = (self.currentLayout - 1) % (len(self.layouts))
-        hook.fire("layout_change", self.layouts[self.currentLayout], self)
-        self.layoutAll()
-        screen = self.screen.get_rect()
-        self.layout.show(screen)
+        self.toLayoutIndex((self.currentLayout - 1) % (len(self.layouts)))
 
     def layoutAll(self, warp=False):
         """

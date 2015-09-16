@@ -1223,6 +1223,19 @@ class Qtile(command.CommandObject):
         """
         return list(self.widgetMap.keys())
 
+    def cmd_to_layout_index(self, index, group=None):
+        """
+            Switch to the layout with the given index in self.layouts.
+
+            :index Index of the layout in the list of layouts.
+            :group Group name. If not specified, the current group is assumed.
+        """
+        if group:
+            group = self.groupMap.get(group)
+        else:
+            group = self.currentGroup
+        group.toLayoutIndex(index)
+
     def cmd_next_layout(self, group=None):
         """
             Switch to the next layout.

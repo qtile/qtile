@@ -7,6 +7,8 @@ qtile 0.x.x, released xxxx-xx-xx:
         - cmd_togroup can move to current group when None sent
         - added MOC playback widget
         - log truncation, max log size, and number of log backups configurable
+        - add a command to change to specific layout index
+          (lazy.to_layout_index(index))
     * bugfixes
         - remove deprecated imp for Python >= 3.3
         - properly close file for NetGraph
