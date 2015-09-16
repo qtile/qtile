@@ -68,7 +68,7 @@ def get_stats(scr, client, group_by='lineno', limit=10, seconds=1.5,
     while True:
         scr.addstr(0, 0, "Qtile - Top %s lines" % limit)
         scr.addstr(1, 0, '%-3s %-40s %-30s %-16s' % (
-            '#', 'Line', 'Memory', ' '*(max_x-71)),
+            '#', 'Line', 'Memory', ' ' * (max_x - 71)),
             curses.A_BOLD | curses.A_REVERSE)
 
         snapshot = get_trace(client, force_start)
@@ -101,7 +101,7 @@ def get_stats(scr, client, group_by='lineno', limit=10, seconds=1.5,
         total_size = "Total allocated size: %.1f KiB" % (total / 1024)
         scr.addstr(cnt, 0, total_size, curses.A_BOLD)
 
-        scr.move(max_y-2, max_y-2)
+        scr.move(max_y - 2, max_y - 2)
         scr.refresh()
         time.sleep(seconds)
         scr.erase()
