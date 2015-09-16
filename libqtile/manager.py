@@ -1708,13 +1708,19 @@ class Qtile(command.CommandObject):
         self.log.info(''.join(state.split('\n')))
         return state
 
-    def cmd_tracemalloc_dump(self):
-        if not tracemalloc:
-            self.log.warning("tracemalloc can't be imported..")
-            raise command.CommandError("No tracemalloc")
+    def cmd_tracemalloc_toggle(self):
         if not tracemalloc.is_tracing():
             tracemalloc.start()
+        else:
+            tracemalloc.stop()
+
+    def cmd_tracemalloc_dump(self):
+        if not tracemalloc:
+            self.log.warning('No tracemalloc module')
+            raise command.CommandError("No tracemalloc module")
+        if not tracemalloc.is_tracing():
+            return [False, "Trace not started"]
         cache_directory = get_cache_dir()
         malloc_dump = os.path.join(cache_directory, "qtile_tracemalloc.dump")
         tracemalloc.take_snapshot().dump(malloc_dump)
-        return malloc_dump
+        return [True, malloc_dump]
