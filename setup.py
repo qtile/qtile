@@ -140,6 +140,7 @@ setup(
         "bin/qsh",
         "bin/qtile",
         "bin/qtile-run",
+        "bin/qtile-top",
         "bin/qtile-session"
     ],
     data_files=[
