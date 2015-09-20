@@ -873,7 +873,7 @@ class Qtile(command.CommandObject):
             return True
         s = self.find_screen(e.root_x, e.root_y)
         if s:
-            self.toScreen(s.index)
+            self.toScreen(s.index, warp=False)
 
     def handle_ClientMessage(self, event):
         atoms = self.conn.atoms
@@ -1527,7 +1527,7 @@ class Qtile(command.CommandObject):
         try:
             nxt = [w for w in self.windowMap.values() if w.urgent][0]
             nxt.group.cmd_toscreen()
-            nxt.group.focus(nxt, False)
+            nxt.group.focus(nxt, True)
         except IndexError:
             pass  # no window had urgent set
 

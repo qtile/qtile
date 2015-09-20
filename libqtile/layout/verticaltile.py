@@ -254,19 +254,19 @@ class VerticalTile(Layout):
 
     def cmd_next(self):
         self.focus_next(self.focused)
-        self.group.focus(self.focused, False)
+        self.group.focus(self.focused)
 
     def cmd_previous(self):
         self.focus_previous(self.focused)
-        self.group.focus(self.focused, False)
+        self.group.focus(self.focused)
 
     def cmd_down(self):
         self.focus_next(self.focused)
-        self.group.focus(self.focused, False)
+        self.group.focus(self.focused)
 
     def cmd_up(self):
         self.focus_previous(self.focused)
-        self.group.focus(self.focused, False)
+        self.group.focus(self.focused)
 
     def cmd_shuffle_up(self):
         index = self.clients.index(self.focused)

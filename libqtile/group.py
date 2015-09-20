@@ -195,13 +195,17 @@ class _Group(command.CommandObject):
         for i in self.windows:
             i._resetMask()
 
-    def focus(self, win, warp):
+    def focus(self, win, warp=True):
         """
             if win is in the group, blur any windows and call
             ``focus`` on the layout (in case it wants to track
             anything), fire focus_change hook and invoke layoutAll.
 
-            warp - warp pointer to win
+            warp - warp pointer to win. This should basically always be True,
+            unless the focus event is coming from something like EnterNotify,
+            where the user is actively using the mouse or on full screen
+            layouts where only one window is "maximized" at a time, and it
+            doesn't make sense for the mouse to automatically move.
         """
         if self.qtile._drag:
             # don't change focus while dragging windows
