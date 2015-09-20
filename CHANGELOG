@@ -10,6 +10,7 @@ qtile 0.x.x, released xxxx-xx-xx:
         - add a command to change to specific layout index
           (lazy.to_layout_index(index))
     * bugfixes
+        - improved cursor warp
         - remove deprecated imp for Python >= 3.3
         - properly close file for NetGraph
         - fix MondadTall layout grow/shrink secondary panes for Python 2

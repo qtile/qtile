@@ -159,12 +159,12 @@ class Matrix(Layout):
     def cmd_next(self):
         client = self.focus_next(self.get_current_window()) or \
             self.focus_first()
-        self.group.focus(client, False)
+        self.group.focus(client)
 
     def cmd_previous(self):
         client = self.focus_previous(self.get_current_window()) or \
             self.focus_last()
-        self.group.focus(client, False)
+        self.group.focus(client)
 
     def cmd_left(self):
         """
@@ -172,7 +172,7 @@ class Matrix(Layout):
         """
         column, row = self.current_window
         self.current_window = ((column - 1) % len(self.get_row(row)), row)
-        self.group.focus(self.get_current_window(), False)
+        self.group.focus(self.get_current_window())
 
     def cmd_right(self):
         """
@@ -180,7 +180,7 @@ class Matrix(Layout):
         """
         column, row = self.current_window
         self.current_window = ((column + 1) % len(self.get_row(row)), row)
-        self.group.focus(self.get_current_window(), False)
+        self.group.focus(self.get_current_window())
 
     def cmd_down(self):
         """
@@ -191,7 +191,7 @@ class Matrix(Layout):
             column,
             (row + 1) % len(self.get_column(column))
         )
-        self.group.focus(self.get_current_window(), False)
+        self.group.focus(self.get_current_window())
 
     def cmd_up(self):
         """
@@ -202,7 +202,7 @@ class Matrix(Layout):
             column,
             (row - 1) % len(self.get_column(column))
         )
-        self.group.focus(self.get_current_window(), False)
+        self.group.focus(self.get_current_window())
 
     def cmd_delete(self):
         """
