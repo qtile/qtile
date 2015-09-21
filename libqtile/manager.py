@@ -21,6 +21,11 @@
 
 from __future__ import division
 
+try:
+    import tracemalloc
+except ImportError:
+    tracemalloc = None
+
 from libqtile.log_utils import init_log
 from libqtile.dgroups import DGroups
 from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
@@ -41,7 +46,7 @@ from six.moves import asyncio
 from .config import Drag, Click, Screen, Match, Rule
 from .group import _Group
 from .state import QtileState
-from .utils import QtileError
+from .utils import QtileError, get_cache_dir
 from .widget.base import _Widget
 from . import command
 from . import hook
@@ -1715,3 +1720,20 @@ class Qtile(command.CommandObject):
         self.log.info('State = ')
         self.log.info(''.join(state.split('\n')))
         return state
+
+    def cmd_tracemalloc_toggle(self):
+        if not tracemalloc.is_tracing():
+            tracemalloc.start()
+        else:
+            tracemalloc.stop()
+
+    def cmd_tracemalloc_dump(self):
+        if not tracemalloc:
+            self.log.warning('No tracemalloc module')
+            raise command.CommandError("No tracemalloc module")
+        if not tracemalloc.is_tracing():
+            return [False, "Trace not started"]
+        cache_directory = get_cache_dir()
+        malloc_dump = os.path.join(cache_directory, "qtile_tracemalloc.dump")
+        tracemalloc.take_snapshot().dump(malloc_dump)
+        return [True, malloc_dump]
