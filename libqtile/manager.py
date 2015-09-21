@@ -1527,7 +1527,7 @@ class Qtile(command.CommandObject):
         try:
             nxt = [w for w in self.windowMap.values() if w.urgent][0]
             nxt.group.cmd_toscreen()
-            nxt.group.focus(nxt, True)
+            nxt.group.focus(nxt)
         except IndexError:
             pass  # no window had urgent set
 
