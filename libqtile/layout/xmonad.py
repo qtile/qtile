@@ -683,12 +683,12 @@ class MonadTall(SingleWindow):
     def cmd_next(self):
         client = self.focus_next(self.clients[self.focused]) or \
             self.focus_first()
-        self.group.focus(client, False)
+        self.group.focus(client)
 
     def cmd_previous(self):
         client = self.focus_previous(self.clients[self.focused]) or \
             self.focus_last()
-        self.group.focus(client, False)
+        self.group.focus(client)
 
     def cmd_shrink(self):
         """
@@ -708,12 +708,12 @@ class MonadTall(SingleWindow):
     def cmd_up(self):
         "Focus on the next more prominent client on the stack"
         self.focused -= 1
-        self.group.focus(self.clients[self.focused], False)
+        self.group.focus(self.clients[self.focused])
 
     def cmd_down(self):
         "Focus on the less prominent client on the stack"
         self.focused += 1
-        self.group.focus(self.clients[self.focused], False)
+        self.group.focus(self.clients[self.focused])
 
     def cmd_shuffle_up(self):
         "Shuffle the client up the stack."
@@ -722,7 +722,7 @@ class MonadTall(SingleWindow):
         self.clients[_oldf], self.clients[self.focused] = \
             self.clients[self.focused], self.clients[_oldf]
         self.group.layoutAll()
-        self.group.focus(self.clients[self.focused], False)
+        self.group.focus(self.clients[self.focused])
 
     def cmd_shuffle_down(self):
         "Shuffle the client down the stack."
@@ -731,7 +731,7 @@ class MonadTall(SingleWindow):
         self.clients[_oldf], self.clients[self.focused] = \
             self.clients[self.focused], self.clients[_oldf]
         self.group.layoutAll()
-        self.group.focus(self.clients[self.focused], False)
+        self.group.focus(self.clients[self.focused])
 
     def cmd_flip(self):
         "Flip the layout horizontally."
@@ -754,7 +754,7 @@ class MonadTall(SingleWindow):
             self.clients[index2], self.clients[index1]
         self.group.layoutAll()
         self.focused = index1
-        self.group.focus(window1, False)
+        self.group.focus(window1)
 
     def cmd_swap_left(self):
         "Swap current window with closest window to the left."
@@ -786,7 +786,7 @@ class MonadTall(SingleWindow):
         candidates = [c for c in self.clients if c.info()['x'] < x]
         target = self._get_closest(x, y, candidates)
         self.focused = self.clients.index(target)
-        self.group.focus(self.clients[self.focused], False)
+        self.group.focus(self.clients[self.focused])
 
     def cmd_right(self):
         "Focus on the closest window to the right of the current window."
@@ -795,4 +795,4 @@ class MonadTall(SingleWindow):
         candidates = [c for c in self.clients if c.info()['x'] > x]
         target = self._get_closest(x, y, candidates)
         self.focused = self.clients.index(target)
-        self.group.focus(self.clients[self.focused], False)
+        self.group.focus(self.clients[self.focused])
