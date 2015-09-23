@@ -36,6 +36,7 @@ import glob
 import os
 import pickle
 import string
+import logging
 from collections import deque
 
 from . import base
@@ -374,7 +375,15 @@ class Prompt(base._TextBox):
             self.history_path = os.path.expanduser('~/.qtile_history')
             if os.path.exists(self.history_path):
                 with open(self.history_path, 'rb') as f:
-                    self.history = pickle.load(f)
+                    try:
+                        self.history = pickle.load(f)
+                    except:
+                        # unfortunately, pickle doesn't wrap its errors, so we
+                        # can't detect what's a pickle error and what's not.
+                        log = logging.getLogger('qtile')
+                        log.exception("failed to load prompt history")
+                        self.history = {x: deque(maxlen=self.max_history)
+                                        for x in self.completers if x}
                     if self.max_history != \
                        self.history[list(self.history)[0]].maxlen:
                         self.history = {x: deque(copy.copy(self.history[x]),
