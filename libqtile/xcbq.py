@@ -625,15 +625,20 @@ class Window(object):
             # wrap it.
             value = [value]
 
-        self.conn.conn.core.ChangePropertyChecked(
-            xcffib.xproto.PropMode.Replace,
-            self.wid,
-            self.conn.atoms[name],
-            self.conn.atoms[type],
-            format,  # Format - 8, 16, 32
-            len(value),
-            value
-        ).check()
+        try:
+            self.conn.conn.core.ChangePropertyChecked(
+                xcffib.xproto.PropMode.Replace,
+                self.wid,
+                self.conn.atoms[name],
+                self.conn.atoms[type],
+                format,  # Format - 8, 16, 32
+                len(value),
+                value
+            ).check()
+        except xcffib.xproto.WindowError:
+            logging.getLogger('qtile').warning(
+                'X error in SetProperty (wid=%r, prop=%r), ignoring',
+                self.wid, name)
 
     def get_property(self, prop, type=None, unpack=None):
         """
