@@ -238,17 +238,6 @@ class _Group(command.CommandObject):
             screen=self.screen.index if self.screen else None
         )
 
-    def get_info(self):
-        return dict(
-            name=self.name,
-            focus=self.currentWindow.name if self.currentWindow else None,
-            focusHistory=[i.name for i in self.focusHistory],
-            layout=self.layout.name,
-            layouts=[l.name for l in self.layouts],
-            floating_info=self.floating_layout.info(),
-            screen=self.screen.index if self.screen else None
-        )
-
     def add(self, win, focus=True):
         hook.fire("group_window_add")
         self.windows.add(win)

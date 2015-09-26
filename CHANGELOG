@@ -1,8 +1,6 @@
 qtile 0.x.x, released xxxx-xx-xx:
     * features
         - add qtile-top memory monitoring
-        - improved serialization of layouts across restarts, thanks to a
-          successful Google Summer of Code project
         - GroupBox can set visible groups
         - allow window state to be hidden on WindowName widget
         - cmd_togroup can move to current group when None sent

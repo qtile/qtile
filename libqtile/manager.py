@@ -1219,7 +1219,7 @@ class Qtile(command.CommandObject):
     def cmd_get_info(self):
         x = {}
         for i in self.groups:
-            x[i.name] = i.get_info()
+            x[i.name] = i.info()
         return x
 
     def cmd_list_widgets(self):
@@ -1334,23 +1334,10 @@ class Qtile(command.CommandObject):
         buf = six.BytesIO()
         try:
             pickle.dump(QtileState(self), buf, protocol=0)
-        except (
-                TypeError,
-                pickle.PicklingError) as err:
-            self.log.error("Unpickleable objects present, proceeding without state")
-            self.log.error(err)
+        except:
+            self.log.error("Unable to pickle qtile state")
         argv = [s for s in argv if not s.startswith('--with-state')]
-        try:
-            buf = six.BytesIO()
-            argv.append('--with-state=' + buf.getvalue().decode())
-        except (
-                AttributeError,
-                EOFError,
-                ImportError,
-                IndexError,
-                pickle.UnpicklingError) as err:
-            self.log.error("Unpickling Error, proceeding without state")
-            self.log.error(err)
+        argv.append('--with-state=' + buf.getvalue().decode())
 
         self.cmd_execute(sys.executable, argv)
 
