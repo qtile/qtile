@@ -63,7 +63,8 @@ class Clock(base.InLoopPollText):
     # adding .5 to get a proper seconds value because glib could
     # theoreticaly call our method too early and we could get something
     # like (x-1).999 instead of x.000
-    _get_time = lambda self: (datetime.now() + self.DELTA).strftime(self.format)
+    def _get_time(self):
+        return (datetime.now() + self.DELTA).strftime(self.format)
 
     def poll(self):
         # We use None as a sentinel here because C's strftime defaults to UTC

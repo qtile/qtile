@@ -349,7 +349,8 @@ class NetGraph(_Graph):
 
     @staticmethod
     def get_main_iface():
-        make_route = lambda line: dict(zip(['iface', 'dest'], line.split()))
+        def make_route(line):
+            return dict(zip(['iface', 'dest'], line.split()))
         with open('/proc/net/route', 'r') as fp:
             lines = fp.readlines()
         routes = [make_route(line) for line in lines[1:]]
