@@ -57,7 +57,7 @@ def default_icon_path():
 
 
 class _Battery(base._TextBox):
-    ''' Base battery class '''
+    """Base battery class"""
 
     filenames = {}
 
@@ -242,9 +242,8 @@ class Battery(_Battery):
 
 
 class BatteryIcon(_Battery):
-    '''
-        Battery life indicator widget.
-    '''
+    """Battery life indicator widget."""
+
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('theme_path', default_icon_path(), 'Path of the icons'),
