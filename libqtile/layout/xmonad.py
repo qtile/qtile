@@ -308,7 +308,6 @@ class MonadTall(SingleWindow):
             client.place(
                 self.group.screen.dx,
                 self.group.screen.dy,
-                # Edited to even the Margin
                 self.group.screen.dwidth - 2 * self.single_border_width,
                 self.group.screen.dheight - 2 * self.single_border_width,
                 self.single_border_width,
