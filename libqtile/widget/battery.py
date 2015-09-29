@@ -151,26 +151,22 @@ class Battery(_Battery):
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('low_foreground', 'FF0000', 'font color when battery is low'),
-        (
-            'format',
-            '{char} {percent:2.0%} {hour:d}:{min:02d}',
-            'Display format'
-        ),
         ('charge_char', '^', 'Character to indicate the battery is charging'),
-        (
-            'discharge_char',
-            'V',
-            'Character to indicate the battery'
-            ' is discharging'
-        ),
-        (
-            'low_percentage',
-            0.10,
-            "0 < x < 1 at which to indicate battery is low with low_foreground"
-        ),
-        ('hide_threshold', None, 'Hide the text when there is enough energy'),
+        ('discharge_char',
+         'V',
+         'Character to indicate the battery is discharging'
+         ),
         ('error_message', 'Error', 'Error message if something is wrong'),
+        ('format',
+         '{char} {percent:2.0%} {hour:d}:{min:02d}',
+         'Display format'
+         ),
+        ('hide_threshold', None, 'Hide the text when there is enough energy'),
+        ('low_percentage',
+         0.10,
+         "Indicates when to use the low_foreground color 0 < x < 1"
+         ),
+        ('low_foreground', 'FF0000', 'Font color on low battery'),
     ]
 
     def __init__(self, **config):
