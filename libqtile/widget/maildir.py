@@ -51,7 +51,7 @@ class Maildir(base.ThreadedPollText):
         # if it looks like a list of strings then we just convert them
         # and use the name as the label
         if isinstance(self.subFolders[0], six.string_types):
-            self._subFolders = [
+            self.subFolders = [
                 {"path": folder, "label": folder}
                 for folder in self.subFolders
             ]
@@ -68,7 +68,7 @@ class Maildir(base.ThreadedPollText):
             for path in iter(paths):
                 yield path.rsplit(":")[0]
 
-        for subFolder in self._subFolders:
+        for subFolder in self.subFolders:
             path = os.path.join(self.maildirPath, subFolder["path"])
             maildir = mailbox.Maildir(path)
             state[subFolder["label"]] = 0
