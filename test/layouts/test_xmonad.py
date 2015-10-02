@@ -25,7 +25,7 @@ from ..utils import Xephyr
 from .layout_utils import assertDimensions, assertFocused
 
 
-class MonadTallConfig:
+class MonadTallConfig(object):
     auto_fullscreen = True
     main = None
     groups = [
@@ -33,6 +33,22 @@ class MonadTallConfig:
     ]
     layouts = [
         layout.MonadTall()
+    ]
+    floating_layout = libqtile.layout.floating.Floating()
+    keys = []
+    mouse = []
+    screens = []
+    follow_mouse_focus = False
+
+
+class MonadTallMarginsConfig(object):
+    auto_fullscreen = True
+    main = None
+    groups = [
+        libqtile.config.Group("a")
+    ]
+    layouts = [
+        layout.MonadTall(margin=4)
     ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = []
@@ -61,6 +77,20 @@ def test_add_clients(self):
     assert self.c.layout.info()["main"] == 'one'
     assert self.c.layout.info()["secondary"] == ['two', 'four', 'three']
     assertFocused(self, 'four')
+
+
+@Xephyr(False, MonadTallMarginsConfig())
+def test_margins(self):
+    self.testWindow('one')
+    assertDimensions(self, 4, 4, 788, 588)
+
+    self.testWindow('two')
+    assertFocused(self, 'two')
+    assertDimensions(self, 404, 4, 388, 588)
+
+    self.c.layout.previous()
+    assertFocused(self, 'one')
+    assertDimensions(self, 4, 4, 392, 588)
 
 
 @Xephyr(False, MonadTallConfig())
