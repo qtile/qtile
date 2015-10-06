@@ -355,7 +355,7 @@ class TreeTab(SingleWindow):
         if self._focused is win:
             self._focused = None
 
-        self._nodes[win.window.wid].remove()
+        self._nodes[win].remove()
         del self._nodes[win]
         self.draw_panel()
 
