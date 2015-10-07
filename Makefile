@@ -5,6 +5,7 @@ default:
 	@echo "'make clean'" to clean generated files
 	@echo "'make deb'" to generate debian package
 	@echo "'make man'" to generate debian package
+	@echo "'make update-requirements'" to update the requirements files
 
 .PHONY: check
 check:
@@ -34,3 +35,7 @@ man:
 .PHONY: deb
 deb:
 	git buildpackage --git-upstream-tree=develop --git-ignore-branch
+
+.PHONY: update-requirements
+update-requirements:
+	pip-compile requirements.in

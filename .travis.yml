@@ -49,7 +49,7 @@ before_install:
 install:
 # Installl requirements
   - pip install xcffib
-  - pip install -r requirements.txt
+  - pip install -r requirements-dev.txt
   - if [[ ${EVENTLOOP} == "trollius" ]]; then pip install trollius; fi
   - if [[ ${EVENTLOOP} == "tulip" ]]; then pip install asyncio; fi
 # build pangocffi module
