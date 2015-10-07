@@ -494,7 +494,9 @@ class Window(object):
 
     def get_wm_protocols(self):
         l = self.get_property("WM_PROTOCOLS", "ATOM", unpack=int)
-        return set(self.conn.atoms.get_name(i) for i in l)
+        if l is not None:
+            return set(self.conn.atoms.get_name(i) for i in l)
+        return set()
 
     def get_wm_state(self):
         return self.get_property("WM_STATE", xcffib.xproto.GetPropertyType.Any, unpack=int)
