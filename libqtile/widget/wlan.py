@@ -1,9 +1,12 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2012 Sebastian Bechtel
 # Copyright (c) 2013 Tao Sauvage
 # Copyright (c) 2014 Sebastian Kricner
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 Tycho Andersen
 # Copyright (c) 2014 Craig Barnes
+# Copyright (c) 2015 farebord
+# Copyright (c) 2015 Jörg Thalheim (Mic92)
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +30,22 @@ from . import base
 import logging
 try:
     from pythonwifi.iwlibs import Wireless, Iwstats
+
+    def get_status(interface):
+        interface = Wireless(interface)
+        stats = Iwstats(interface)
+        quality = stats.qual.quality
+        essid = interface.getEssid()
+        return (essid, quality)
 except ImportError:
     import iwlib
+
+    def get_status(interface):
+        interface = iwlib.get_iwconfig(interface)
+        quality = interface['stats']['quality']
+        essid = bytes(interface['ESSID']).decode()
+        return (essid, quality)
+
 
 class Wlan(base.InLoopPollText):
     """
@@ -39,29 +56,16 @@ class Wlan(base.InLoopPollText):
         ('interface', 'wlan0', 'The interface to monitor'),
         ('update_interval', 1, 'The update interval.'),
     ]
+
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(Wlan.defaults)
 
     def poll(self):
         try:
-            interface = Wireless(self.interface)
-            try:
-                stats = Iwstats(self.interface)
-                quality = stats.qual.quality
-                essid = interface.getEssid()
-                return "{} {}/70".format(essid,quality)
-            except IOError:
-                logging.getLogger('qtile').error('%s: Probably your wlan device '
-                'is switched off or otherwise not present in your system.',
-                self.__class__.__name__)
-        except:
-            interface = iwlib.get_iwconfig(self.interface)
-            try:
-                quality = interface['stats']['quality']
-                essid = bytes(interface['ESSID']).decode()
-                return "{} {}/70".format(essid, quality)
-            except OSError:
-                logging.getLogger('qtile').error('%s: Probably your wlan device'
-                    ' is switched off or otherwise not present in your system.',
-                    self.__class__.__name__)
+            essid, quality = get_status(self.interface)
+            return "{} {}/70".format(essid, quality)
+        except EnvironmentError:
+            msg = '%s: Probably your wlan device is switched off or ' \
+                ' otherwise not present in your system.'
+            logging.getLogger('qtile').error(msg, self.__class__.__name__)
