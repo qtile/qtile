@@ -713,10 +713,19 @@ class Window(_Window):
         _Window.__init__(self, window, qtile)
         self._group = None
         self.updateName()
-        # add to group by position according to _NET_WM_DESKTOP property
-        index = window.get_wm_desktop()
-        if index is not None and index < len(qtile.groups):
-            group = qtile.groups[index]
+
+        group = None
+        parent = self.parent()
+        if parent:
+            # add to group of parent window if possible
+            group = parent.group
+        else:
+            # add to group by position according to _NET_WM_DESKTOP property
+            index = window.get_wm_desktop()
+            if index is not None and index < len(qtile.groups):
+                group = qtile.groups[index]
+
+        if group:
             group.add(self)
             self._group = group
             if group != qtile.currentScreen.group:
@@ -1020,6 +1029,37 @@ class Window(_Window):
             return False
 
         return False
+
+    def parent(self):
+        windowMap = self.qtile.windowMap
+
+        # Get the PIDs of all windows. Filter out PIDs with multiple windows,
+        # since we can't determine the correct parent from it.
+        pids = [w.window.get_net_wm_pid() for w in windowMap.values()]
+        filter_condition = lambda x: x and pids.count(x) == 1
+        pids = list(filter(filter_condition, pids))
+
+        processMap = {w.window.get_net_wm_pid(): w for w in windowMap.values()}
+        processMap = {k: v for k, v in processMap.items() if k in pids}
+
+        # If a window has WM_TRANSIENT_FOR set, we can get it's parent immediately
+        parentWid = self.window.get_wm_transient_for()
+        if parentWid in windowMap:
+            return windowMap.get(parentWid)
+
+        # Otherwise, we have to search for a parent window by looking at the
+        # parent processes
+        pid = self.window.get_net_wm_pid()
+        if pid is None:
+            return
+
+        parent = utils.parent_pid(pid)
+        while parent != 1:
+            parentWindow = processMap.get(parent, None)
+            if parentWindow:
+                return parentWindow
+
+            parent = utils.parent_pid(parent)
 
     def handle_EnterNotify(self, e):
         hook.fire("client_mouse_enter", self)
