@@ -1054,7 +1054,7 @@ class Window(_Window):
             return
 
         parent = utils.parent_pid(pid)
-        while parent != 1:
+        while parent is not None:
             parentWindow = processMap.get(parent, None)
             if parentWindow:
                 return parentWindow

@@ -213,10 +213,16 @@ def get_cache_dir():
 try:
     import psutil
     def parent_pid(pid):
-        return psutil.Process(pid).ppid()
+        try:
+            return psutil.Process(pid).ppid()
+        except:
+            return None
 
 except ImportError:
     import subprocess
     def parent_pid(pid):
         cmd = 'ps -o ppid= -p {}'.format(pid)
-        return int(subprocess.check_output(cmd.split()))
+        try:
+            return int(subprocess.check_output(cmd.split()))
+        except:
+            return None
