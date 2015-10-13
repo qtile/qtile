@@ -131,16 +131,21 @@ class TextLayout(object):
         self.drawer.ctx.move_to(x, y)
         self.drawer.ctx.show_layout(self.layout)
 
-    def framed(self, border_width, border_color, pad_x, pad_y):
-        return TextFrame(self, border_width, border_color, pad_x, pad_y)
+    def framed(self, border_width, border_color, pad_x, pad_y,
+               highlight_color, line_thickness):
+        return TextFrame(self, border_width, border_color, pad_x, pad_y,
+                         highlight_color, line_thickness)
 
 
 class TextFrame(object):
-    def __init__(self, layout, border_width, border_color, pad_x, pad_y):
+    def __init__(self, layout, border_width, border_color, pad_x, pad_y,
+                 highlight_color, line_thickness):
         self.layout = layout
         self.border_width = border_width
         self.border_color = border_color
         self.drawer = self.layout.drawer
+        self.highlight_color = highlight_color
+        self.line_thickness = line_thickness
 
         if isinstance(pad_x, collections.Iterable):
             self.pad_left = pad_x[0]
@@ -154,7 +159,8 @@ class TextFrame(object):
         else:
             self.pad_top = self.pad_bottom = pad_y
 
-    def draw(self, x, y, rounded=True, fill=False):
+    def draw(self, x, y, bar_height=None, rounded=True, fill=False,
+             line=False):
         self.drawer.set_source_rgb(self.border_color)
         opts = [
             x, y,
@@ -162,7 +168,27 @@ class TextFrame(object):
             self.layout.height + self.pad_top + self.pad_bottom,
             self.border_width
         ]
-        if fill:
+        if line:
+            highlight_opts = [
+                x, 0,
+                self.layout.width + self.pad_left + self.pad_right,
+                bar_height,
+                self.border_width
+            ]
+            self.drawer.set_source_rgb(self.highlight_color)
+            self.drawer.fillrect(*highlight_opts)
+
+            lineopts = [
+                x,
+                bar_height - self.line_thickness,
+                self.layout.width + self.pad_left + self.pad_right,
+                self.line_thickness,
+                self.border_width
+            ]
+
+            self.drawer.set_source_rgb(self.border_color)
+            self.drawer.fillrect(*lineopts)
+        elif fill:
             if rounded:
                 self.drawer.rounded_fillrect(*opts)
             else:
@@ -180,6 +206,9 @@ class TextFrame(object):
 
     def draw_fill(self, x, y, rounded=True):
         self.draw(x, y, rounded, fill=True)
+
+    def draw_line(self, x, y, bar_height, rounded=False):
+        self.draw(x, y, bar_height, rounded, line=True)
 
     @property
     def height(self):
