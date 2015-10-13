@@ -169,6 +169,8 @@ class TextFrame(object):
             self.border_width
         ]
         if line:
+            if not bar_height:
+                bar_height = self.layout.height + self.pad_top + self.pad_bottom
             highlight_opts = [
                 x, 0,
                 self.layout.width + self.pad_left + self.pad_right,
