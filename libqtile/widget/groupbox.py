@@ -85,8 +85,9 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         hook.subscribe.current_screen_change(hook_response)
         hook.subscribe.changegroup(hook_response)
 
-    def drawbox(self, offset, text, bordercolor, textcolor, rounded=False,
-                block=False, width=None):
+    def drawbox(self, offset, text, bordercolor, textcolor, highlight_color,
+                line_thickness, rounded=False, block=False, width=None,
+                line=False):
         self.layout.text = text
         self.layout.font_family = self.font
         self.layout.font_size = self.fontsize
@@ -97,7 +98,9 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
             self.borderwidth,
             bordercolor,
             self.padding_x,
-            self.padding_y
+            self.padding_y,
+            highlight_color,
+            line_thickness
         )
         y = self.margin_y
         if self.center_aligned:
@@ -107,6 +110,8 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
                     break
         if block:
             framed.draw_fill(offset, y, rounded)
+        elif line:
+            framed.draw_line(offset, y, self.bar.size, rounded)
         else:
             framed.draw(offset, y, rounded)
 
@@ -150,7 +155,7 @@ class GroupBox(_GroupBase):
         (
             "highlight_method",
             "border",
-            "Method of highlighting (one of 'border', 'block' or 'text') "
+            "Method of highlighting ('border', 'block', 'text' or 'line')"
             "Uses \*_border color settings"
         ),
         ("rounded", True, "To round or not to round borders"),
@@ -187,6 +192,16 @@ class GroupBox(_GroupBase):
             None,
             "Groups that will be visible "
             "(if set to None or [], all groups will be visible)"
+        ),
+        (
+            "highlight_color",
+            ["000000", "282828"],
+            "Active group highlight color when using 'line' highlight method."
+        ),
+        (
+            "line_thickness",
+            2,
+            "Thickness of the line when using the 'line' highlight method."
         )
     ]
 
@@ -259,6 +274,9 @@ class GroupBox(_GroupBase):
         offset = 0
         for i, g in enumerate(self.groups):
             is_block = (self.highlight_method == 'block')
+            is_line = (self.highlight_method == 'line')
+            if not is_line:
+                highlight_color = None
 
             bw = self.box_width([g])
 
@@ -277,8 +295,10 @@ class GroupBox(_GroupBase):
                     if self.bar.screen.group.name == g.name:
                         if self.qtile.currentScreen == self.bar.screen:
                             border = self.this_current_screen_border
+                            highlight_color = self.highlight_color
                         else:
                             border = self.this_screen_border
+                            highlight_color = self.bar.background
                     else:
                         border = self.other_screen_border
             elif self.group_has_urgent(g) and \
@@ -288,15 +308,19 @@ class GroupBox(_GroupBase):
                     is_block = True
             else:
                 border = self.background or self.bar.background
+                highlight_color = self.bar.background
 
             self.drawbox(
                 self.margin_x + offset,
                 g.name,
                 border,
                 text_color,
+                highlight_color,
+                self.line_thickness,
                 self.rounded,
                 is_block,
-                bw - self.margin_x * 2 - self.padding_x * 2
+                bw - self.margin_x * 2 - self.padding_x * 2,
+                is_line
             )
             offset += bw
         self.drawer.draw(offsetx=self.offset, width=self.width)
