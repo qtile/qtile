@@ -105,9 +105,6 @@ elif sys.version_info >= (3, 3):
 else:
     dependencies.append('trollius')
 
-if (3, 0) <= sys.version_info <= (3, 1):
-    dependencies.append('importlib')
-
 setup(
     name="qtile",
     version="0.10.1",

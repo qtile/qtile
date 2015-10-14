@@ -89,15 +89,6 @@ Based on your Python version, there are different ways to install this:
 .. _Tulip project: https://code.google.com/p/tulip/
 .. _trollius: http://trollius.readthedocs.org/
 
-importlib
----------
-
-To run with Python <=2.6 you will need to install importlib from PyPI:
-
-.. code-block:: bash
-
-   pip install importlib
-
 dbus/gobject
 ------------
 
