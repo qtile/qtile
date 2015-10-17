@@ -132,7 +132,7 @@ class TextLayout(object):
         self.drawer.ctx.show_layout(self.layout)
 
     def framed(self, border_width, border_color, pad_x, pad_y,
-               highlight_color, line_thickness):
+               highlight_color=None, line_thickness=None):
         return TextFrame(self, border_width, border_color, pad_x, pad_y,
                          highlight_color, line_thickness)
 
