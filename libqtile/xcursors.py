@@ -1,10 +1,14 @@
 from logging import getLogger
 
-# PyPy < 2.6 compaitibility
 try:
     from ._ffi_xcursors import ffi
 except ImportError:
-    from .ffi_build import xcursors_ffi as ffi
+    # PyPy < 2.6 compaitibility
+    import cffi
+    if cffi.__version_info__[0] == 0:
+        from .ffi_build import xcursors_ffi as ffi
+    else:
+        raise ImportError("No module named libqtile._ffi_xcursors, be sure to run `python ./libqtile/ffi_build.py`")
 
 
 # Stolen from samurai-x
