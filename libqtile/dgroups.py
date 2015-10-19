@@ -244,6 +244,7 @@ class DGroups(object):
                     len(group.windows) <= 0:
                 self.qtile.delGroup(group.name)
                 self.sort_groups()
+            del self.timeout[client]
 
         # Wait the delay until really delete the group
         self.qtile.log.info('Add dgroup timer')
