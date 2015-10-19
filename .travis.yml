@@ -1,35 +1,40 @@
+sudo: false
 language: python
 
-# Install trollius for 2, 3.2, and pypy
-# Install either trollius or tulip for 3.3
-# Asyncio is in the standard library for 3.4+
 matrix:
-  include:
-    - python: 2.7
-      env: EVENTLOOP=trollius
-    - python: 3.2
-      env: EVENTLOOP=trollius
-    - python: 3.3
-      env: EVENTLOOP=trollius
-    - python: 3.3
-      env: EVENTLOOP=tulip
-    - python: 3.4
-      env: EVENTLOOP=asyncio
-    - python: 3.5
-      env: EVENTLOOP=asyncio
-    - python: pypy
-      env: EVENTLOOP=trollius
-    - python: pypy3
-      env: EVENTLOOP=trollius
-    - python: nightly
-      env: EVENTLOOP=asyncio
-  allow_failures:
-    - python: pypy3
-    - python: nightly
+    include:
+        - python: 2.7  # these are just to make travis's UI a bit prettier
+          env: TOXENV=py27-trollius
+        - python: 3.2
+          env: TOXENV=py32-trollius
+        - python: 3.3
+          env: TOXENV=py33-trollius
+        - python: 3.3
+          env: TOXENV=py33-tulip
+        - python: 3.4
+          env: TOXENV=py34
+        - python: 3.5
+          env: TOXENV=py35
+        - python: nightly
+          env: TOXENV=py-nightly
+          
+        - python: pypy
+          env: TOXENV=pypy-trollius
+        - python: pypy3
+          env: TOXENV=pypy3-trollius
 
-script:
-  - make lint
-  - make check-cov
+        - python: 3.5
+          env: TOXENV=packaging
+        - python: 3.5
+          env: TOXENV=docs
+        - python: 3.5
+          env: TOXENV=py3-pep8
+        - python: 2.7
+          env: TOXENV=py2-pep8
+
+    allow_failures:
+        - python: nightly
+          env: TOXENV=py-nightly
 
 cache:
   directories:
@@ -38,23 +43,22 @@ cache:
 addons:
   apt:
     packages:
-      - x11-apps
-      - xserver-xephyr
-      - xvfb
+    - x11-apps
+    - xserver-xephyr
+    - xvfb
+    - graphviz # for docs
 
 before_install:
-# Setup XvFB
+  # Setup XvFB
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
 
 install:
-# Installl requirements
-  - pip install xcffib
-  - pip install -r requirements-dev.txt
-  - if [[ ${EVENTLOOP} == "trollius" ]]; then pip install trollius; fi
-  - if [[ ${EVENTLOOP} == "tulip" ]]; then pip install asyncio; fi
-# build pangocffi module
-  - python -c 'import cffi, sys; sys.exit(cffi.__version_info__[0])' || python libqtile/ffi_build.py
+  - pip install tox python-coveralls
+
+script:
+  - tox
+
 
 after_success:
   - coveralls
@@ -62,4 +66,4 @@ after_success:
 notifications:
   email: false
 
-sudo: false
+
