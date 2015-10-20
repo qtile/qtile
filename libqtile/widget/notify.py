@@ -29,7 +29,7 @@
 from . import base
 from .. import bar, utils, pangocffi
 from libqtile.notify import notifier
-
+from os import path
 
 class Notify(base._TextBox):
     """
@@ -44,6 +44,7 @@ class Notify(base._TextBox):
             None,
             "Default timeout (seconds) for notifications"
         ),
+        ("audiofile", None, "Audiofile played during notifications"),
     ]
 
     def __init__(self, width=bar.CALCULATED, **config):
@@ -78,6 +79,8 @@ class Notify(base._TextBox):
             self.text = '<span weight="bold">%s</span> - %s' % (
                 self.text, pangocffi.markup_escape_text(notif.body)
             )
+        if self.audiofile and path.exists(self.audiofile):
+            self.qtile.cmd_spawn("aplay -q '%s'" % self.audiofile)
 
     def update(self, notif):
         self.qtile.call_soon_threadsafe(self.real_update, notif)
