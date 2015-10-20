@@ -671,6 +671,8 @@ class Window(object):
             logging.getLogger('qtile').warning(
                 'X error in GetProperty (wid=%r, prop=%r), ignoring',
                 self.wid, prop)
+            if unpack:
+                return []
             return None
 
         if not r.value_len:
