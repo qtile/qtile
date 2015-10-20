@@ -6,6 +6,7 @@ default:
 	@echo "'make clean'" to clean generated files
 	@echo "'make man'" to generate sphinx documentation
 	@echo "'make update-requirements'" to update the requirements files
+	@echo "'make isort'" sorts imports in *.py files
 
 .PHONY: check
 check:
@@ -39,3 +40,7 @@ man:
 .PHONY: update-requirements
 update-requirements:
 	pip-compile requirements.in
+
+.PHONY: isort
+isort:
+	isort -rc .
