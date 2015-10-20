@@ -1,7 +1,8 @@
-qtile 0.x.x, released xxxx-xx-xx:
+qtile 0.10.2, released 2015-10-19:
     * features
         - add qtile-top memory monitoring
         - GroupBox can set visible groups
+        - new GroupBox highlighting, line
         - allow window state to be hidden on WindowName widget
         - cmd_togroup can move to current group when None sent
         - added MOC playback widget
@@ -10,6 +11,8 @@ qtile 0.x.x, released xxxx-xx-xx:
         - add a command to change to specific layout index
           (lazy.to_layout_index(index))
     * bugfixes
+        - fixed memory leak in dgroups
+        - margin fixes for MonalTall layout
         - improved cursor warp
         - remove deprecated imp for Python >= 3.3
         - properly close file for NetGraph
