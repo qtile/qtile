@@ -109,7 +109,7 @@ def make_qtile():
         log.exception(str(e) + '\n\nError while reading config file')
         raise
     else:
-        trunc = getattr(c, 'truncate_log', True)
+        trunc = getattr(c, 'truncate_log', False)
         log_size = getattr(c, 'log_size', 10000000)
         log_numbackups = getattr(c, 'log_numbackups', 1)
         log = init_log(log_level, truncate=trunc, log_size=log_size, log_numbackups=log_numbackups)

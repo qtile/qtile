@@ -66,7 +66,7 @@ class ColorFormatter(logging.Formatter):
 
 
 def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log',
-             truncate=True, log_size=10000000, log_numbackups=1):
+             truncate=False, log_size=10000000, log_numbackups=1):
     log = getLogger(logger)
     log.setLevel(log_level)
 
