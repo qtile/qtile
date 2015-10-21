@@ -168,7 +168,7 @@ class GroupBox(_GroupBase):
             "urgent_alert_method",
             "border",
             "Method for alerting you of WM urgent "
-            "hints (one of 'border', 'text' or 'block')"
+            "hints (one of 'border', 'text', 'block', or 'line')"
         ),
         (
             "disable_drag",
@@ -301,11 +301,15 @@ class GroupBox(_GroupBase):
                             highlight_color = self.bar.background
                     else:
                         border = self.other_screen_border
+                        highlight_color = self.bar.background
             elif self.group_has_urgent(g) and \
-                    self.urgent_alert_method in ('border', 'block'):
+                    self.urgent_alert_method in ('border', 'block', 'line'):
                 border = self.urgent_border
+                highlight_color = self.bar.background
                 if self.urgent_alert_method == 'block':
                     is_block = True
+                elif self.urgent_alert_method == 'line':
+                    is_line = True
             else:
                 border = self.background or self.bar.background
                 highlight_color = self.bar.background
