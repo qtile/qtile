@@ -1378,9 +1378,16 @@ class Qtile(command.CommandObject):
                     # This shouldn't happen, catch it just in case
                     pass
                 else:
+                    # For Python >=3.4, need to set file descriptor to inheritable
+                    try:
+                        os.set_inheritable(fd, True)
+                    except AttributeError:
+                        pass
+
+                    # Again, this shouldn't happen, but we should just check
                     if fd > 0:
-                        # Again, this shouldn't happen, but we should just check
                         os.dup2(fd, 0)
+
                     os.dup2(fd, 1)
                     os.dup2(fd, 2)
 
@@ -1388,6 +1395,7 @@ class Qtile(command.CommandObject):
                     os.execvp(args[0], args)
                 except OSError:
                     pass
+
                 os._exit(1)
             else:
                 # Here it doesn't matter if fork failed or not, we just write
