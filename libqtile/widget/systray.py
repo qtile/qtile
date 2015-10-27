@@ -109,6 +109,7 @@ class Systray(window._Window, base._Widget):
         base._Widget.__init__(self, bar.CALCULATED, **config)
         self.add_defaults(Systray.defaults)
         self.icons = {}
+        self.screen = 0
 
     def calculate_length(self):
         width = sum([i.width for i in self.icons.values()])
@@ -121,17 +122,21 @@ class Systray(window._Window, base._Widget):
         window._Window.__init__(self, xcbq.Window(qtile.conn, win.wid), qtile)
         qtile.windowMap[win.wid] = self
 
+        # Even when we have multiple "Screen"s, we are setting up as the system
+        # tray on a particular X display, that is the screen we need to
+        # reference in the atom
+        self.screen = qtile.currentScreen.index
         self.bar = bar
         atoms = qtile.conn.atoms
 
         qtile.conn.conn.core.SetSelectionOwner(
             win.wid,
-            atoms['_NET_SYSTEM_TRAY_S{}'.format(self.bar.screen.index)],
+            atoms['_NET_SYSTEM_TRAY_S{:d}'.format(self.screen)],
             xcffib.CurrentTime
         )
         data = [
             xcffib.CurrentTime,
-            atoms['_NET_SYSTEM_TRAY_S{}'.format(self.bar.screen.index)],
+            atoms['_NET_SYSTEM_TRAY_S{:d}'.format(self.screen)],
             win.wid, 0, 0
         ]
         union = ClientMessageData.synthetic(data, "I" * 5)
@@ -213,7 +218,7 @@ class Systray(window._Window, base._Widget):
         atoms = self.qtile.conn.atoms
         self.qtile.conn.conn.core.SetSelectionOwner(
             0,
-            atoms['_NET_SYSTEM_TRAY_S{}'.format(self.bar.screen.index)],
+            atoms['_NET_SYSTEM_TRAY_S{:d}'.format(self.screen)],
             xcffib.CurrentTime,
         )
         self.hide()
