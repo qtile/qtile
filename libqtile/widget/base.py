@@ -485,9 +485,15 @@ class ThreadPoolText(_TextBox):
 
     param: text - Initial text to display.
     """
+    defaults = [
+        ("update_interval", None, "Update interval in seconds, if none, the "
+            "widget updates whenever it's done'."),
+    ]
+
     def __init__(self, text, **config):
         super(ThreadPoolText, self).__init__(text, width=bar.CALCULATED,
                                              **config)
+        self.add_defaults(ThreadPoolText.defaults)
 
     def timer_setup(self):
         def on_done(future):
@@ -500,7 +506,12 @@ class ThreadPoolText(_TextBox):
             if result is not None:
                 try:
                     self.update(result)
-                    self.timer_setup()
+
+                    if self.update_interval is not None:
+                        self.timeout_add(self.update_interval, self.timer_setup)
+                    else:
+                        self.timer_setup()
+
                 except Exception:
                     self.log.exception('Failed to reschedule.')
             else:
