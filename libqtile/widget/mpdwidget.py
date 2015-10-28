@@ -47,7 +47,7 @@ import mpd
 from .. import utils, pangocffi
 from . import base
 
-class Mpd(base.ThreadPoolText):
+class Mpd(base.ThreadPollText):
     """
         An mpd widget.
     """
