@@ -16,12 +16,11 @@
 
 from . import base
 
-import time
 import os
 import subprocess
 
 
-class Moc(base.ThreadPoolText):
+class Moc(base.InLoopPollText):
 
     """A simple MOC widget.
 
@@ -38,11 +37,11 @@ class Moc(base.ThreadPoolText):
         ('play_color', '00ff00', 'Text colour when playing.'),
         ('noplay_color', 'cecece', 'Text colour when not playing.'),
         ('max_chars', 0, 'Maximum number of characters to display in widget.'),
-        ('refresh_interval', 0.5, 'Refresh interval - manage cpu usage.')
+        ('update_interval', 0.5, 'Update Time in seconds.'),
     ]
 
     def __init__(self, **config):
-        base.ThreadPoolText.__init__(self, "", **config)
+        base.InLoopPollText.__init__(self, **config)
         self.add_defaults(Moc.defaults)
         self.status = ""
         self.local = None
@@ -110,7 +109,6 @@ class Moc(base.ThreadPoolText):
 
     def poll(self):
         """Poll content for the text box."""
-        time.sleep(self.refresh_interval)
         return self.now_playing()
 
     def button_press(self, x, y, button):
