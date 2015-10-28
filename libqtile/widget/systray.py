@@ -125,7 +125,8 @@ class Systray(window._Window, base._Widget):
         # Even when we have multiple "Screen"s, we are setting up as the system
         # tray on a particular X display, that is the screen we need to
         # reference in the atom
-        self.screen = qtile.currentScreen.index
+        if qtile.currentScreen:
+            self.screen = qtile.currentScreen.index
         self.bar = bar
         atoms = qtile.conn.atoms
 
