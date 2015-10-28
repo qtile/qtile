@@ -473,7 +473,7 @@ class ThreadedPollText(InLoopPollText):
         threading.Thread(target=worker).start()
 
 
-class ThreadPollText(_TextBox):
+class ThreadPoolText(_TextBox):
     """ A common interface for wrapping blocking events which when triggered
     will update a textbox.  This is an alternative to the ThreadedPollText
     class which differs by being push based rather than pull.
@@ -486,7 +486,7 @@ class ThreadPollText(_TextBox):
     param: text - Initial text to display.
     """
     def __init__(self, text, **config):
-        super(ThreadPollText, self).__init__(text, width=bar.CALCULATED,
+        super(ThreadPoolText, self).__init__(text, width=bar.CALCULATED,
                                              **config)
 
     def timer_setup(self):

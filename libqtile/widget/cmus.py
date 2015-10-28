@@ -19,7 +19,7 @@ from . import base
 import subprocess
 
 
-class Cmus(base.ThreadPollText):
+class Cmus(base.ThreadPoolText):
 
     """A simple Cmus widget.
 
@@ -39,7 +39,7 @@ class Cmus(base.ThreadPollText):
     ]
 
     def __init__(self, **config):
-        base.ThreadPollText.__init__(self, "", **config)
+        base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(Cmus.defaults)
         self.status = ""
         self.local = None
