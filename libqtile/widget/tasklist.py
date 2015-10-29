@@ -133,8 +133,8 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if width is not None:
             self.layout.width = width
 
-    def drawbox(self, offset, text, bordercolor, textcolor, rounded=False,
-                block=False, width=None, icon=None):
+    def drawbox(self, offset, text, bordercolor, textcolor,
+                width=None, rounded=False, block=False, icon=None):
         self.drawtext(text, textcolor, width)
 
         icon_padding = (self.icon_size + 4) if icon else 0
@@ -255,9 +255,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 task,
                 border,
                 self.foreground,
-                self.rounded,
-                self.highlight_method == 'block',
-                bw - self.margin_x * 2 - self.padding_x * 2,
+                rounded=self.rounded,
+                block=(self.highlight_method == 'block'),
+                width=(bw - self.margin_x * 2 - self.padding_x * 2),
                 icon=self.get_window_icon(w),
             )
 

@@ -85,22 +85,24 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         hook.subscribe.current_screen_change(hook_response)
         hook.subscribe.changegroup(hook_response)
 
-    def drawbox(self, offset, text, bordercolor, textcolor, highlight_color,
-                line_thickness, rounded=False, block=False, width=None,
-                line=False):
+    def drawbox(self, offset, text, bordercolor, textcolor,
+                width=None, rounded=False, block=False, line=False, highlighted=False):
         self.layout.text = text
         self.layout.font_family = self.font
         self.layout.font_size = self.fontsize
         self.layout.colour = textcolor
         if width is not None:
             self.layout.width = width
+        if line:
+            pad_y = (self.bar.height - self.layout.height) / 2
+        else:
+            pad_y = self.padding_y
         framed = self.layout.framed(
             self.borderwidth,
             bordercolor,
             self.padding_x,
-            self.padding_y,
-            highlight_color,
-            line_thickness
+            pad_y,
+            self.highlight_color
         )
         y = self.margin_y
         if self.center_aligned:
@@ -111,7 +113,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         if block:
             framed.draw_fill(offset, y, rounded)
         elif line:
-            framed.draw_line(offset, y, self.bar.size, rounded)
+            framed.draw_line(offset, y, highlighted)
         else:
             framed.draw(offset, y, rounded)
 
@@ -151,47 +153,27 @@ class GroupBox(_GroupBase):
     defaults = [
         ("active", "FFFFFF", "Active group font colour"),
         ("inactive", "404040", "Inactive group font colour"),
-        ("urgent_text", "FF0000", "Urgent group font color"),
         (
             "highlight_method",
             "border",
             "Method of highlighting ('border', 'block', 'text', or 'line')"
             "Uses \*_border color settings"
         ),
-        ("rounded", True, "To round or not to round borders"),
+        ("rounded", True, "To round or not to round box borders"),
         (
             "this_current_screen_border",
             "215578",
-            "Border colour for group on this screen when focused."
-        ),
-        (
-            "urgent_alert_method",
-            "border",
-            "Method for alerting you of WM urgent "
-            "hints (one of 'border', 'text', 'block', or 'line')"
-        ),
-        (
-            "disable_drag",
-            False,
-            "Disable dragging and dropping of group names on widget"
+            "Border or line colour for group on this screen when focused."
         ),
         (
             "this_screen_border",
             "215578",
-            "Border colour for group on this screen."
+            "Border or line colour for group on this screen when unfocused."
         ),
         (
             "other_screen_border",
             "404040",
-            "Border colour for group on other screen."
-        ),
-        ("urgent_border", "FF0000", "Urgent border color"),
-        ("invert_mouse_wheel", False, "Whether to invert mouse wheel group movement"),
-        (
-            "visible_groups",
-            None,
-            "Groups that will be visible "
-            "(if set to None or [], all groups will be visible)"
+            "Border or line colour for group on other screen."
         ),
         (
             "highlight_color",
@@ -199,9 +181,24 @@ class GroupBox(_GroupBase):
             "Active group highlight color when using 'line' highlight method."
         ),
         (
-            "line_thickness",
-            2,
-            "Thickness of the line when using the 'line' highlight method."
+            "urgent_alert_method",
+            "border",
+            "Method for alerting you of WM urgent "
+            "hints (one of 'border', 'text', 'block', or 'line')"
+        ),
+        ("urgent_text", "FF0000", "Urgent group font color"),
+        ("urgent_border", "FF0000", "Urgent border or line color"),
+        (
+            "disable_drag",
+            False,
+            "Disable dragging and dropping of group names on widget"
+        ),
+        ("invert_mouse_wheel", False, "Whether to invert mouse wheel group movement"),
+        (
+            "visible_groups",
+            None,
+            "Groups that will be visible "
+            "(if set to None or [], all groups will be visible)"
         )
     ]
 
@@ -273,10 +270,9 @@ class GroupBox(_GroupBase):
 
         offset = 0
         for i, g in enumerate(self.groups):
+            to_highlight = False
             is_block = (self.highlight_method == 'block')
             is_line = (self.highlight_method == 'line')
-            if not is_line:
-                highlight_color = None
 
             bw = self.box_width([g])
 
@@ -295,36 +291,31 @@ class GroupBox(_GroupBase):
                     if self.bar.screen.group.name == g.name:
                         if self.qtile.currentScreen == self.bar.screen:
                             border = self.this_current_screen_border
-                            highlight_color = self.highlight_color
+                            to_highlight = True
                         else:
                             border = self.this_screen_border
-                            highlight_color = self.bar.background
                     else:
                         border = self.other_screen_border
-                        highlight_color = self.bar.background
             elif self.group_has_urgent(g) and \
                     self.urgent_alert_method in ('border', 'block', 'line'):
                 border = self.urgent_border
-                highlight_color = self.bar.background
                 if self.urgent_alert_method == 'block':
                     is_block = True
                 elif self.urgent_alert_method == 'line':
                     is_line = True
             else:
                 border = self.background or self.bar.background
-                highlight_color = self.bar.background
 
             self.drawbox(
                 self.margin_x + offset,
                 g.name,
                 border,
                 text_color,
-                highlight_color,
-                self.line_thickness,
-                self.rounded,
-                is_block,
-                bw - self.margin_x * 2 - self.padding_x * 2,
-                is_line
+                width=bw - self.margin_x * 2 - self.padding_x * 2,
+                rounded=self.rounded,
+                block=is_block,
+                line=is_line,
+                highlighted=to_highlight
             )
             offset += bw
         self.drawer.draw(offsetx=self.offset, width=self.width)
