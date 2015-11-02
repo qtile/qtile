@@ -36,6 +36,7 @@ import cairocffi
 from . import base
 from os import statvfs
 import time
+import platform
 
 __all__ = [
     'CPUGraph',
@@ -202,7 +203,7 @@ class CPUGraph(_Graph):
     def _getvalues(self):
         proc = '/proc/stat'
         if platform.system() == 'FreeBSD':
-            proc = '/compat/linux'+proc
+            proc = '/compat/linux' + proc
         with open(proc) as file:
             lines = file.readlines()
 
