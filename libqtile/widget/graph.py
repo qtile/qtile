@@ -200,7 +200,10 @@ class CPUGraph(_Graph):
         self.oldvalues = self._getvalues()
 
     def _getvalues(self):
-        with open('/proc/stat') as file:
+        proc = '/proc/stat'
+        if platform.system() == 'FreeBSD':
+            proc = '/compat/linux'+proc
+        with open(proc) as file:
             lines = file.readlines()
 
             # default to all cores (first line)
@@ -211,11 +214,14 @@ class CPUGraph(_Graph):
                 # we already removed the first line from the list,
                 # so it's 0 indexed now :D
                 line = lines[self.core]
+                print line
 
                 if not line.startswith("cpu%s" % self.core):
                     raise ValueError("No such core: %s" % self.core)
-
-            name, user, nice, sys, idle, iowait, tail = line.split(None, 6)
+            if platform.system() == 'FreeBSD':
+                name, user, nice, sys, idle = line.split(None, 6)
+            else:
+                name, user, nice, sys, idle, iowait, tail = line.split(None, 6)
 
             return (int(user), int(nice), int(sys), int(idle))
 
