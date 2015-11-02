@@ -48,9 +48,6 @@ __all__ = [
 ]
 
 
-
-
-
 class _Graph(base._Widget):
     fixed_upper_bound = False
     defaults = [
@@ -272,7 +269,7 @@ class CPUGraphFreeBSD(_Graph):
 
                 if not line.startswith("cpu%s" % self.core):
                     raise ValueError("No such core: %s" % self.core)
-            name, user,  sys, idle = line.split(None, 4)
+            name, user, nice, sys, idle = line.split(None, 4)
 
             return (int(user), int(nice), int(sys), int(idle))
 
