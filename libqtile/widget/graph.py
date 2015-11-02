@@ -48,6 +48,9 @@ __all__ = [
 ]
 
 
+
+
+
 class _Graph(base._Widget):
     fixed_upper_bound = False
     defaults = [
@@ -201,10 +204,7 @@ class CPUGraph(_Graph):
         self.oldvalues = self._getvalues()
 
     def _getvalues(self):
-        proc = '/proc/stat'
-        if platform.system() == 'FreeBSD':
-            proc = '/compat/linux' + proc
-        with open(proc) as file:
+        with open('/proc/stat') as file:
             lines = file.readlines()
 
             # default to all cores (first line)
@@ -218,10 +218,61 @@ class CPUGraph(_Graph):
 
                 if not line.startswith("cpu%s" % self.core):
                     raise ValueError("No such core: %s" % self.core)
-            if platform.system() == 'FreeBSD':
-                name, user, nice, sys, idle = line.split(None, 6)
-            else:
-                name, user, nice, sys, idle, iowait, tail = line.split(None, 6)
+
+            name, user, sys, nice, sys, idle = line.split()[:5]
+
+            return (int(user), int(nice), int(sys), int(idle))
+
+    def update_graph(self):
+        nval = self._getvalues()
+        oval = self.oldvalues
+        busy = nval[0] + nval[1] + nval[2] - oval[0] - oval[1] - oval[2]
+        total = busy + nval[3] - oval[3]
+        # sometimes this value is zero for unknown reason (time shift?)
+        # we just sent the previous value, because it gives us no info about
+        # cpu load, if it's zero.
+
+        if total:
+            push_value = busy * 100.0 / total
+            self.push(push_value)
+        else:
+            self.push(self.values[0])
+        self.oldvalues = nval
+
+
+class CPUGraphFreeBSD(_Graph):
+    """
+        Display CPU usage graph.
+    """
+    orientations = base.ORIENTATION_HORIZONTAL
+    defaults = [
+        ("core", "all", "Which core to show (all/0/1/2/...)"),
+    ]
+
+    fixed_upper_bound = True
+
+    def __init__(self, **config):
+        _Graph.__init__(self, **config)
+        self.add_defaults(CPUGraphFreeBSD.defaults)
+        self.maxvalue = 100
+        self.oldvalues = self._getvalues()
+
+    def _getvalues(self):
+        with open('/compat/linux/proc/stat') as file:
+            lines = file.readlines()
+
+            # default to all cores (first line)
+            line = lines.pop(0)
+
+            # core specified, grab the corresponding line
+            if isinstance(self.core, int):
+                # we already removed the first line from the list,
+                # so it's 0 indexed now :D
+                line = lines[self.core]
+
+                if not line.startswith("cpu%s" % self.core):
+                    raise ValueError("No such core: %s" % self.core)
+            name, user,  sys, idle = line.split(None, 4)
 
             return (int(user), int(nice), int(sys), int(idle))
 
@@ -250,7 +301,6 @@ def get_meminfo():
             uv = tail.split()
             val[key] = int(uv[0])
     return val
-
 
 class MemoryGraph(_Graph):
     """
@@ -432,3 +482,6 @@ class HDDBusyGraph(_Graph):
 
     def update_graph(self):
         self.push(self._getActivity())
+
+if platform.system() == 'FreeBSD':
+    CPUGraph = CPUGraphFreeBSD
