@@ -36,6 +36,7 @@ import cairocffi
 from . import base
 from os import statvfs
 import time
+import platform
 
 __all__ = [
     'CPUGraph',
@@ -200,7 +201,11 @@ class CPUGraph(_Graph):
         self.oldvalues = self._getvalues()
 
     def _getvalues(self):
-        with open('/proc/stat') as file:
+        proc = '/proc/stat'
+        if platform.system() == "FreeBSD":
+            proc = '/compat/linux' + proc
+
+        with open(proc) as file:
             lines = file.readlines()
 
             # default to all cores (first line)
@@ -214,8 +219,10 @@ class CPUGraph(_Graph):
 
                 if not line.startswith("cpu%s" % self.core):
                     raise ValueError("No such core: %s" % self.core)
-
-            name, user, nice, sys, idle, iowait, tail = line.split(None, 6)
+            if platform.system() == 'FreeBSD':
+                name, user, nice, sys, idle = line.split(None, 4)
+            else:
+                name, user, nice, sys, idle, iowait, tail = line.split(None, 6)
 
             return (int(user), int(nice), int(sys), int(idle))
 
@@ -237,12 +244,19 @@ class CPUGraph(_Graph):
 
 
 def get_meminfo():
-    with open('/proc/meminfo') as file:
-        val = {}
+    val = {}
+    proc = '/proc/meminfo'
+    if platform.system() == "FreeBSD":
+        proc = "/compat/linux" + proc
+    with open(proc) as file:
         for line in file:
-            key, tail = line.split(':')
-            uv = tail.split()
-            val[key] = int(uv[0])
+            if line.lstrip().startswith("total"):
+                pass
+            else:
+                key, tail = line.strip().split(':')
+                uv = tail.split()
+                val[key] = int(uv[0])
+    val['MemUsed'] = val['MemTotal'] - val['MemFree']
     return val
 
 
