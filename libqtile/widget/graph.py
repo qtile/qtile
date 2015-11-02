@@ -485,3 +485,5 @@ class HDDBusyGraph(_Graph):
 
 if platform.system() == 'FreeBSD':
     CPUGraph = CPUGraphFreeBSD
+else:
+    CPUGraph = CPUGraph
