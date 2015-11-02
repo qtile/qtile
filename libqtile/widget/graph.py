@@ -215,7 +215,6 @@ class CPUGraph(_Graph):
                 # we already removed the first line from the list,
                 # so it's 0 indexed now :D
                 line = lines[self.core]
-                print line
 
                 if not line.startswith("cpu%s" % self.core):
                     raise ValueError("No such core: %s" % self.core)
