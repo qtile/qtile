@@ -28,7 +28,8 @@ matrix:
     - python: nightly
 
 script:
-  - make ckpatch
+  - make lint
+  - make check-cov
 
 cache:
   directories:

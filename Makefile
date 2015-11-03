@@ -9,6 +9,10 @@ default:
 
 .PHONY: check
 check:
+	nosetests -v -d libqtile
+
+.PHONY: check-cov
+check-cov:
 	nosetests -v -d --with-cov --cov libqtile
 
 .PHONY: lint
