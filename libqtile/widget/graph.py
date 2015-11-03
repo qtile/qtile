@@ -222,7 +222,7 @@ class CPUGraph(_Graph):
             if platform.system() == 'FreeBSD':
                 name, user, nice, sys, idle = line.split(None, 4)
             else:
-	        name, user, nice, sys, idle, iowait, tail = line.split(None, 6)
+                name, user, nice, sys, idle, iowait, tail = line.split(None, 6)
 
             return (int(user), int(nice), int(sys), int(idle))
 
@@ -440,4 +440,3 @@ class HDDBusyGraph(_Graph):
 
     def update_graph(self):
         self.push(self._getActivity())
-
