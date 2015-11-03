@@ -13,7 +13,7 @@ check:
 
 .PHONY: check-cov
 check-cov:
-	nosetests -v -d --with-cov --cov libqtile
+	nosetests -v -d --with-cov --cover-package libqtile
 
 .PHONY: lint
 lint:
