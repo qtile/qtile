@@ -255,7 +255,7 @@ def get_meminfo():
             else:
                 key, tail = line.strip().split(':')
                 uv = tail.split()
-                val[key] = int(uv[0]) // 1000
+                val[key] = int(uv[0])
     val['MemUsed'] = val['MemTotal'] - val['MemFree']
     return val
 
