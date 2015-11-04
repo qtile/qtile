@@ -31,6 +31,7 @@ class CheckUpdates(base.ThreadedPollText):
         ("distro", "Arch", "Name of your distribution"),
         ("update_interval", 60, "Update interval in seconds."),
         ('execute', None, 'Command to execute on click'),
+        ("display_format", "Updates: {updates}", "Display format if updates available"),
         ("colour_no_updates", "ffffff", "Colour when there's no updates."),
         ("colour_have_updates", "ffffff", "Colour when there are updates.")
     ]
@@ -67,7 +68,7 @@ class CheckUpdates(base.ThreadedPollText):
             updates = ""
         num_updates = str(len(updates.splitlines()) - self.subtr)
         self._set_colour(num_updates)
-        return num_updates
+        return self.display_format.format(**{"updates": num_updates})
 
     def _set_colour(self, num_updates):
         if num_updates:
