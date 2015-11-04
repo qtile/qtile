@@ -85,7 +85,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         hook.subscribe.current_screen_change(hook_response)
         hook.subscribe.changegroup(hook_response)
 
-    def drawbox(self, offset, text, bordercolor, textcolor,
+    def drawbox(self, offset, text, bordercolor, textcolor, highlight_color=None,
                 width=None, rounded=False, block=False, line=False, highlighted=False):
         self.layout.text = text
         self.layout.font_family = self.font
@@ -102,7 +102,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
             bordercolor,
             self.padding_x,
             pad_y,
-            self.highlight_color
+            highlight_color
         )
         y = self.margin_y
         if self.center_aligned:
@@ -311,6 +311,7 @@ class GroupBox(_GroupBase):
                 g.name,
                 border,
                 text_color,
+                highlight_color=self.highlight_color,
                 width=bw - self.margin_x * 2 - self.padding_x * 2,
                 rounded=self.rounded,
                 block=is_block,
