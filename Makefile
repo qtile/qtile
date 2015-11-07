@@ -1,5 +1,6 @@
 default:
 	@echo "'make check'" for tests
+	@echo "'make check-cov'" for tests with converage
 	@echo "'make lint'" for source code checks
 	@echo "'make ckpatch'" to check a patch
 	@echo "'make clean'" to clean generated files
@@ -9,11 +10,11 @@ default:
 
 .PHONY: check
 check:
-	nosetests -v -d libqtile
+	nosetests --verbose --detailed-errors
 
 .PHONY: check-cov
 check-cov:
-	nosetests -v -d --with-cov --cover-package libqtile
+	nosetests --verbose --detailed-errors --with-cov --cover-package libqtile
 
 .PHONY: lint
 lint:
