@@ -20,7 +20,7 @@ import os
 import subprocess
 
 
-class Moc(base.InLoopPollText):
+class Moc(base.ThreadPoolText):
 
     """A simple MOC widget.
 
@@ -41,7 +41,7 @@ class Moc(base.InLoopPollText):
     ]
 
     def __init__(self, **config):
-        base.InLoopPollText.__init__(self, **config)
+        base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(Moc.defaults)
         self.status = ""
         self.local = None
