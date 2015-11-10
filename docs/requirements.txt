@@ -1,5 +1,6 @@
 jinja2
-mock
+#TODO: find out why newer version raise an runtimeerror
+mock==0.8
 six
 sphinx
 sphinx_rtd_theme
