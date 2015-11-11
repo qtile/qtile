@@ -55,7 +55,8 @@ class Mpd(base.ThreadPoolText):
     defaults = [
         ("foreground_progress", "ffffff", "Foreground progress colour"),
         ('reconnect', False, 'attempt to reconnect if initial connection failed'),
-        ('reconnect_interval', 1, 'Time to delay between connection attempts.')
+        ('reconnect_interval', 1, 'Time to delay between connection attempts.'),
+        ('update_interval', 0.5, 'Update Time in seconds.')
     ]
 
     # TODO: have this use our config framework

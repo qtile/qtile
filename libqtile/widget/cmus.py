@@ -35,7 +35,8 @@ class Cmus(base.ThreadPoolText):
     defaults = [
         ('play_color', '00ff00', 'Text colour when playing.'),
         ('noplay_color', 'cecece', 'Text colour when not playing.'),
-        ('max_chars', 0, 'Maximum number of characters to display in widget.')
+        ('max_chars', 0, 'Maximum number of characters to display in widget.'),
+        ('update_interval', 0.5, 'Update Time in seconds.')
     ]
 
     def __init__(self, **config):
