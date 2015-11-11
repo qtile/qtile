@@ -13,14 +13,14 @@
 
 import os
 import sys
-from mock import MagicMock
+try:
+    # Python >=3.3
+    from unittest.mock import MagicMock
+except ImportError:
+    from mock import MagicMock
 
 
 class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-            return Mock()
-
     # xcbq does a dir() on objects and pull stuff out of them and tries to sort
     # the result. MagicMock has a bunch of stuff that can't be sorted, so let's
     # like about dir().
@@ -28,6 +28,8 @@ class Mock(MagicMock):
         return []
 
 MOCK_MODULES = [
+    'libqtile._ffi_pango',
+    'libqtile._ffi_xcursors',
     'cairocffi',
     'cffi',
     'trollius',
