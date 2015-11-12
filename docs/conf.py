@@ -60,7 +60,6 @@ extensions = [
     'sphinx.ext.graphviz',
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
-    'sphinxcontrib.blockdiag',
     'sphinxcontrib.seqdiag',
     'sphinx_qtile',
 ]
