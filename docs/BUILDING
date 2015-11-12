@@ -1,15 +1,10 @@
-NOTE that the doc build scripts require Python 2, and will *not* work with
-Python 3!!!
-
-===============================================================================
-
-To build in a virtual environment (requires the 'virtualenv' and 'pip' tools
+To build in a virtual environment (requires the 'virtualenv', 'pip' and 'graphiz' tools
 installed in your distro):
 
 $ cd ./docs
-$ virtualenv2 qtile
+$ virtualenv qtile
 $ source qtile/bin/activate
-$ pip2 install -r requirements.txt
+$ pip install -r requirements.txt
 $ make html
 $ deactivate
 
@@ -17,7 +12,7 @@ $ deactivate
 
 To build on Ubuntu:
 
-$ sudo apt-get install python-sphinxcontrib.seqdiag python-sphinxcontrib.blockdiag
+$ sudo apt-get install python-sphinxcontrib.seqdiag graphiz
 
 Install: https://github.com/:snide/sphinx_rtd_theme
 
