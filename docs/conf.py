@@ -57,6 +57,7 @@ sys.path.insert(0, os.path.abspath('../'))
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
+    'sphinx.ext.coverage',
     'sphinx.ext.graphviz',
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
@@ -123,8 +124,11 @@ pygments_style = 'sphinx'
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
 
+# If true, `todo` and `todoList` produce output, else they produce nothing.
+todo_include_todos = True
 
-# -- Options for HTML output ---------------------------------------------------
+
+# -- Options for HTML output --------fautod-------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
