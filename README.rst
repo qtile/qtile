@@ -1,6 +1,8 @@
-==========================
-Qtile |travis| |coveralls|
-==========================
+=====
+Qtile
+=====
+
+|travis| |coveralls| |rtd|
 
 A full-featured, pure-Python tiling window manager
 ==================================================
@@ -55,3 +57,6 @@ documentation.
 .. |coveralls| image:: https://coveralls.io/repos/qtile/qtile/badge.png?branch=develop
     :alt: Build Coverage
     :target: https://coveralls.io/r/qtile/qtile
+.. |rtd| image:: https://readthedocs.org/projects/qtile/badge/?version=latest
+    :alt: Documentation Status
+    :target: http://docs.qtile.org/en/latest/?badge=latest
