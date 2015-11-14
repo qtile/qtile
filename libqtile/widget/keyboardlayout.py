@@ -77,8 +77,9 @@ class KeyboardLayout(base.InLoopPollText):
             In case of error returns "unknown".
         """
         try:
-            xset_output = self.call_process(["xset", "-q"])
-            keyboard = _Keyboard(self.configured_keyboards).get_keyboard_layout(xset_output)
+            command = 'setxkbmap -verbose 10'
+            setxkbmap_output = self.call_process(command.split(' '))
+            keyboard = _Keyboard().get_keyboard_layout(setxkbmap_output)
             return str(keyboard)
         except CalledProcessError as e:
             self.log.error('Can not get the keyboard layout: {0}'
@@ -103,49 +104,14 @@ class KeyboardLayout(base.InLoopPollText):
 
 class _Keyboard(object):
 
-    def __init__(self, configured_keyboards):
-        if len(configured_keyboards) == 1:
-            self.languages = {
-                'first': configured_keyboards[0],
-                'second': 'None',
-            }
+    def __init__(self):
+        self.regex_pattern = '(?<=layout\:)\s+\w+'
+
+    def get_keyboard_layout(self, setxkbmap_output):
+        matches = re.search(self.regex_pattern, setxkbmap_output)
+        current_layout = matches.group(0).strip()
+        if bool(current_layout):
+            result = current_layout
         else:
-            self.languages = {
-                'first': configured_keyboards[0],
-                'second': configured_keyboards[1],
-            }
-        self.regular_strings = {
-            'hexadecimal': {
-                'first': """\w{4}e\w{3}""",
-                'second': """\w{4}f\w{3}""",
-            },
-            'binary': {
-                'first': """\w{4}0\w{3}""",
-                'second': """\w{4}1\w{3}""",
-            },
-            "inetger": "\d{8}",
-            "led_mask": """LED mask:\s\s\w{8}""",
-        }
-
-    def get_keyboard_layout(self, xset_output):
-        raw_list = []
-
-        for item in xset_output.strip().splitlines():
-            if re.search(self.regular_strings['led_mask'], item):
-                raw_led_mask = re.search(self.regular_strings['led_mask'], item).group()
-                raw_list = raw_led_mask.split(':')
-                led_mask = raw_list[1].strip()
-                break
-
-        if not re.search(self.regular_strings['inetger'], led_mask):
-            cur_regular_strings = self.regular_strings['hexadecimal']
-        else:
-            cur_regular_strings = self.regular_strings['binary']
-
-        if re.search(cur_regular_strings['first'], led_mask):
-            result = self.languages['first']
-        elif re.search(cur_regular_strings['second'], led_mask):
-            result = self.languages['second']
-        else:
-            result = "ERR"
+            result = 'ERR'
         return result
