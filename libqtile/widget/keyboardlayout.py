@@ -101,6 +101,11 @@ class KeyboardLayout(base.InLoopPollText):
             self.log.error('Please, check that setxkbmap is available: {0}'
                            .format(e))
 
+    def cmd_next_keyboard(self):
+        self.next_keyboard()
+
+    def check(self,q):
+        return True
 
 class _Keyboard(object):
 
