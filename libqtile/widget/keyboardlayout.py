@@ -104,9 +104,6 @@ class KeyboardLayout(base.InLoopPollText):
     def cmd_next_keyboard(self):
         self.next_keyboard()
 
-    def check(self,q):
-        return True
-
 class _Keyboard(object):
 
     def __init__(self):
