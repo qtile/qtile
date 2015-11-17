@@ -45,11 +45,12 @@ Contributing
 ============
 
 Please report any suggestions, feature requests, bug reports, or annoyances to
-the Github `issue tracker`_. There are also a few `tips, tricks, and guidelines
-<http://docs.qtile.org/en/latest/manual/hacking.html>`_ for contributing in the
-documentation.
+the Github `issue tracker`_. There are also a few `tips & tricks`_,
+and `guidelines`_ for contributing in the documentation.
 
 .. _`issue tracker`: https://github.com/qtile/qtile/issues
+.. _`tips & tricks`: http://docs.qtile.org/en/latest/manual/hacking.html
+.. _`guidelines`: http://docs.qtile.org/en/latest/manual/contributing.html
 
 .. |travis| image:: https://travis-ci.org/qtile/qtile.svg?branch=develop
     :alt: Build Status
