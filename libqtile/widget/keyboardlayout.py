@@ -28,6 +28,9 @@ from subprocess import CalledProcessError
 from . import base
 
 
+kb_regex = re.compile('layout\:\s+(?P<layout>\w+)')
+
+
 class KeyboardLayout(base.InLoopPollText):
     """
         Widget for changing and displaying the current keyboard layout.
@@ -36,7 +39,7 @@ class KeyboardLayout(base.InLoopPollText):
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("update_interval", 1, "Update time in seconds."),
-        ("configured_keyboards", "us", "A list of predefined keyboard layouts "
+        ("configured_keyboards", ["us"], "A list of predefined keyboard layouts "
             "represented as strings. For example: "
             "['us', 'us colemak', 'es', 'fr']."),
     ]
@@ -65,12 +68,19 @@ class KeyboardLayout(base.InLoopPollText):
                 len(self.configured_keyboards)]
         else:
             next_keyboard = self.configured_keyboards[0]
-        self._set_keyboard(next_keyboard)
+        self.keyboard = next_keyboard
 
     def poll(self):
-        return self._get_keyboard().upper()
+        return self.keyboard.upper()
 
-    def _get_keyboard(self):
+    def get_keyboard_layout(self, setxkbmap_output):
+        matches = kb_regex.search(setxkbmap_output)
+        if matches is None:
+            return 'ERR'
+        return matches.group('layout')
+
+    @property
+    def keyboard(self):
         """
             Return the currently used keyboard layout as a string.
             Examples: "us", "us dvorak".
@@ -79,41 +89,24 @@ class KeyboardLayout(base.InLoopPollText):
         try:
             command = 'setxkbmap -verbose 10'
             setxkbmap_output = self.call_process(command.split(' '))
-            keyboard = _Keyboard().get_keyboard_layout(setxkbmap_output)
+            keyboard = self.get_keyboard_layout(setxkbmap_output)
             return str(keyboard)
         except CalledProcessError as e:
-            self.log.error('Can not get the keyboard layout: {0}'
-                           .format(e))
+            self.log.error('Can not get the keyboard layout: {0}'.format(e))
         except OSError as e:
-            self.log.error('Please, check that xset is available: {0}'
-                           .format(e))
+            self.log.error('Please, check that xset is available: {0}'.format(e))
         return "unknown"
 
-    def _set_keyboard(self, keyboard):
+    @keyboard.setter
+    def keyboard(self, keyboard):
         command = ['setxkbmap']
         command.extend(keyboard.split(" "))
         try:
             subprocess.check_call(command)
         except CalledProcessError as e:
-            self.log.error('Can not change the keyboard layout: {0}'
-                           .format(e))
+            self.log.error('Can not change the keyboard layout: {0}'.format(e))
         except OSError as e:
-            self.log.error('Please, check that setxkbmap is available: {0}'
-                           .format(e))
+            self.log.error('Please, check that setxkbmap is available: {0}'.format(e))
 
     def cmd_next_keyboard(self):
         self.next_keyboard()
-
-class _Keyboard(object):
-
-    def __init__(self):
-        self.regex_pattern = '(?<=layout\:)\s+\w+'
-
-    def get_keyboard_layout(self, setxkbmap_output):
-        matches = re.search(self.regex_pattern, setxkbmap_output)
-        current_layout = matches.group(0).strip()
-        if bool(current_layout):
-            result = current_layout
-        else:
-            result = 'ERR'
-        return result
