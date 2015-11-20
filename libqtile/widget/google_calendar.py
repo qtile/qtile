@@ -21,9 +21,7 @@
 #
 # This widget will display the next appointment on your calendar in
 # the qtile status bar. Appointments within the "reminder" time will be
-# highlighted. Authentication credentials can be stored in a
-# keyring or on disk depending on the setting of the 'keyring'
-# parameter (default is to store in the keyring).
+# highlighted. Authentication credentials are stored on disk.
 #
 # To use this widget, you will need to install the Google API oauth2
 # dependencies. This can be accomplished by executing the following
@@ -34,17 +32,22 @@
 # Installing the Google API oauth2 dependencies should be done before
 # running the widget.
 #
-# Note for python 3.x: the google-api-python-client module doesn't
-# exist. There is an "unofficial" port of the module available here:
-# https://github.com/enorvelle/GoogleApiPython3x
-#
 # This widget also requires the dateutil.parser module.
 # If you get a strange "AttributeError: 'module' object has no attribute
 # GoogleCalendar" error, you are probably missing a module. Check
 # carefully.
 #
-# Also, note that the first time you run the widget, you will need to
-# authenticate. The widget will automatically pop an authentication  web
+# Finally, you need to turn on your own Google Calendar API. You can do
+# this by following step 1 from here:
+# https://developers.google.com/google-apps/calendar/quickstart/python
+# However, save the client_secret.json file to ~/.credentials (your
+# google-calendar-widget.json credentials file will also be stored in
+# ~/.credentials).
+#
+# Once you have completed the preliminary steps, when you start qtile
+# with the GoogleCalendar widget configured, the calendar will show
+# the text "calendar not initialized." Click on this text to
+# authenticate. The widget will automatically pop an authentication web
 # page. Add your calendar login/password and authorize the widget to
 # access your calendar data and you are good to go. Depending on the
 # lifetime of the Google refresh_token, you may be required to
@@ -62,13 +65,24 @@ import datetime
 import re
 import dateutil.parser
 import threading
+import os
 
-from apiclient.discovery import build
-from oauth2client.client import OAuth2WebServerFlow
-from oauth2client.tools import run
-import oauth2client.file
+from apiclient import discovery
+import oauth2client
+from oauth2client import client
+from oauth2client import tools
 
 from libqtile import utils
+
+try:
+    import argparse
+    flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
+except ImportError:
+    flags = None
+
+SCOPES = 'https://www.googleapis.com/auth/calendar'
+CLIENT_SECRET_FILE = 'client_secret.json'
+APPLICATION_NAME = 'Qtile Google Calendar Widget/Version 0.4'
 
 class GoogleCalendar(base.ThreadedPollText):
     '''
@@ -80,11 +94,6 @@ class GoogleCalendar(base.ThreadedPollText):
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('calendar', 'primary', 'calendar to use'),
-        (
-            'storage_file',
-            None,
-            'absolute path of secrets file - must be set'
-        ),
         (
             'reminder_color',
             'FF0000',
@@ -106,32 +115,32 @@ class GoogleCalendar(base.ThreadedPollText):
         self.default_foreground = self.foreground
 
     def cred_init(self):
-        # this is the main method for obtaining credentials
-        self.log.info('refreshing GC credentials')
+        """Gets valid user credentials from storage.
 
-        # Set up a Flow object to be used for authentication.
-        FLOW = OAuth2WebServerFlow(
-            client_id='196949979762-5m3j4orcn9heesoh6td942gb2bph424q.'
-            'apps.googleusercontent.com',
-            client_secret='3H1-w_9gX4DFx3bC9c-whEBs',
-            scope='https://www.googleapis.com/auth/calendar',
-            user_agent='Qtile Google Calendar Widget/Version 0.3'
-        )
+        If nothing has been stored, or if the stored credentials are invalid,
+        the OAuth2 flow is completed to obtain the new credentials.
+        """
+        home_dir = os.path.expanduser('~')
+        credential_dir = os.path.join(home_dir, '.credentials')
+        if not os.path.exists(credential_dir):
+            os.makedirs(credential_dir)
+        credential_path = os.path.join(credential_dir,
+                                       'google-calendar-widget.json')
+        secret_path = os.path.join(credential_dir,
+                                   CLIENT_SECRET_FILE)
 
-        # storage is the location of our authentication credentials
-        storage = oauth2client.file.Storage(self.storage_file)
-
-        # get the credentials, and update if necessary
-        # this method will write the new creds back to disk if they are updated
+        storage = oauth2client.file.Storage(credential_path)
         self.credentials = storage.get()
+        flow = client.flow_from_clientsecrets(secret_path, SCOPES)
+        flow.user_agent = APPLICATION_NAME
 
-        # if the credentials don't exist or are invalid, get new ones from FLOW
-        # FLOW must be run in a different thread or it blocks qtile
-        # when it tries to pop the authentication web page
         def get_from_flow(creds, storage):
-            self.credentials = run(FLOW, storage)
+            if flags:
+                self.credentials = tools.run_flow(flow, storage, flags)
+            else: # Needed only for compatibility with Python 2.6
+                self.credentials = tools.run(flow, storage)
 
-        if self.credentials is None or self.credentials.invalid:
+        if not self.credentials or self.credentials.invalid:
             threading.Thread(
                 target=get_from_flow,
                 args=(self.credentials, storage)
@@ -143,18 +152,17 @@ class GoogleCalendar(base.ThreadedPollText):
             self.qtile.addGroup(self.www_group)
             self.qtile.groupMap[self.www_group].cmd_toscreen(self.www_screen)
             self.qtile.cmd_spawn(self.browser_cmd)
+        self.cred_init()
 
     def poll(self):
         # if we don't have valid credentials, update them
-        if not hasattr(self, 'credentials') or self.credentials.invalid:
+        if not self.credentials or self.credentials.invalid:
             self.cred_init()
 
         # Create an httplib2.Http object to handle our HTTP requests and
         # authorize it with our credentials from self.cred_init
-        http = httplib2.Http()
-        http = self.credentials.authorize(http)
-
-        service = build('calendar', 'v3', http=http)
+        http = self.credentials.authorize(httplib2.Http())
+        service = discovery.build('calendar', 'v3', http=http)
 
         # current timestamp
         now = datetime.datetime.utcnow().isoformat('T') + 'Z'
