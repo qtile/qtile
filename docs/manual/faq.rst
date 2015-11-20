@@ -1,8 +1,9 @@
+==========================
 Frequently Asked Questions
 ==========================
 
 When I first start xterm/urxvt/rxvt containing an instance of Vim, I see text and layout corruption. What gives?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+================================================================================================================
 
 Vim is not handling terminal resizes correctly. You can fix the problem by
 starting your xterm with the "-wf" option, like so:
@@ -16,7 +17,7 @@ usually seems to fix it.
 
 
 How do I know which modifier specification maps to which key?
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=============================================================
 
 To see a list of modifier names and their matching keys, use the ``xmodmap``
 command. On my system, the output looks like this:
@@ -37,16 +38,6 @@ command. On my system, the output looks like this:
 
 
 My "pointer mouse cursor" isn't the one I expect it to be!
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+==========================================================
 
-Append the following to your ``~/.config/qtile/config.py`` file:
-
-.. code-block:: python
-
-    from libqtile import hook
-    @hook.subscribe.startup
-    def runner():
-        import subprocess
-        subprocess.Popen(['xsetroot', '-cursor_name', 'left_ptr'])
-
-This will change your pointer cursor to the standard "Left Pointer" cursor you chose in your ``~/.Xresources`` file on Qtile startup.
+Qtile should set the default cursor to left_ptr, you must install xcb-util-cursor if you want support for themed cursors.

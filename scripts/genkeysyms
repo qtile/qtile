@@ -6,24 +6,26 @@
 import os, os.path, sys
 import re
 
+
+template = '''\
+keysyms = {
+%s
+}\
+'''
+
 def genkeysyms(path):
     XRE = r"#define\s+XK_(\S+)\s+(\S+)"
     ks = []
     for i in file(path):
         m = re.match(XRE, i)
         if m:
-            ks.append(
-                (m.group(1), m.group(2))
-            )
-    print "keysyms = {"
-    for i in ks:
-        print "    '%s': %s,"%i
-    print "}"
+            ks.append(m.groups())
+
+    lines = ["    '%s': %s," % i for i in ks]
+    print(template % '\n'.join(lines))
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print >> sys.stderr, "Usage: genkeysyms path/to/keysymdef.h"
+        sys.stderr.write("Usage: genkeysyms path/to/keysymdef.h\n")
         sys.exit(1)
     genkeysyms(sys.argv[1])
-
-

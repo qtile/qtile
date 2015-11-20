@@ -1,3 +1,26 @@
+# Copyright (c) 2011 Florian Mounier
+# Copyright (c) 2012, 2014 Tycho Andersen
+# Copyright (c) 2013 Craig Barnes
+# Copyright (c) 2014 Sean Vig
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import libqtile
 import libqtile.confreader
 import libqtile.manager
@@ -5,7 +28,7 @@ import libqtile.config
 import libqtile.layout
 import libqtile.bar
 import libqtile.widget
-from utils import Xephyr
+from .utils import Xephyr
 from nose.tools import assert_raises
 
 
@@ -26,7 +49,7 @@ class CallConfig(object):
         libqtile.config.Group("b"),
     ]
     layouts = [
-        libqtile.layout.Stack(stacks=1),
+        libqtile.layout.Stack(num_stacks=1),
         libqtile.layout.Max(),
     ]
     floating_layout = libqtile.layout.floating.Floating()
@@ -80,7 +103,7 @@ def test_doc():
 
 def test_commands():
     c = TestCommands()
-    assert len(c.commands()) == 7
+    assert len(c.commands()) == 9
 
 
 def test_command():
@@ -131,9 +154,9 @@ class ServerConfig(object):
         libqtile.config.Group("c"),
     ]
     layouts = [
-        libqtile.layout.Stack(stacks=1),
-        libqtile.layout.Stack(stacks=2),
-        libqtile.layout.Stack(stacks=3),
+        libqtile.layout.Stack(num_stacks=1),
+        libqtile.layout.Stack(num_stacks=2),
+        libqtile.layout.Stack(num_stacks=3),
     ]
     floating_layout = libqtile.layout.floating.Floating()
     screens = [
@@ -188,7 +211,6 @@ def test_items_qtile(self):
     assert len(lst) == 2
     assert self.c.window[lst[0]]
     assert self.c.items("screen") == (True, [0, 1])
-    assert_raises(libqtile.command.CommandError, self.c.items, "wibble")
 
 
 @Xephyr(True, ServerConfig())

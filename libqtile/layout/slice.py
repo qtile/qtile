@@ -1,11 +1,34 @@
+# Copyright (c) 2011 Florian Mounier
+# Copyright (c) 2012, 2015 Tycho Andersen
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2014 ramnes
+# Copyright (c) 2014 Sean Vig
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 # -*- coding: utf-8 -*-
 """
 Slice layout. Serves as example of delegating layouts (or sublayouts)
 """
 
-from base import Layout, SingleWindow, Delegate
-from max import Max
-from .. import manager
+from .base import Layout, SingleWindow, Delegate
+from .max import Max
 
 
 class Single(SingleWindow):
@@ -17,6 +40,7 @@ class Single(SingleWindow):
     def __init__(self):
         SingleWindow.__init__(self)
         self.window = None
+        self.focused = False
 
     def add(self, window):
         assert self.window is None
@@ -36,6 +60,32 @@ class Single(SingleWindow):
         """
         return self.window is None
 
+    def focus_first(self):
+        self.focused = True
+        return self.window
+
+    def focus_last(self):
+        self.focused = True
+        return self.window
+
+    def focus_next(self, window):
+        if self.focused:
+            self.focused = False
+            return None
+        return self.window
+
+    def focus_previous(self, window):
+        if self.focused:
+            self.focused = False
+            return None
+        return self.window
+
+    def cmd_next(self):
+        pass
+
+    def cmd_previous(self):
+        pass
+
 
 class Slice(Delegate):
     """Slice layout
@@ -48,27 +98,26 @@ class Slice(Delegate):
         ("width", 256, "Slice width"),
         ("side", "left", "Side of the slice (left, right, top, bottom)"),
         ("name", "max", "Name of this layout."),
+        ("wname", None, "WM_NAME to match"),
+        ("wmclass", None, "WM_CLASS to match"),
+        ("role", None, "WM_WINDOW_ROLE to match"),
+        ("fallback", Max(), "Fallback layout"),
     ]
 
-    def __init__(self, side, width,
-                 wname=None, wmclass=None, role=None,
-                 fallback=Max(), **config):
-        if wname is None and wmclass is None and role is None:
-            wname = 'slice'
-        self.match = {
-            'wname': wname,
-            'wmclass': wmclass,
-            'role': role,
-        }
+    def __init__(self, side, width, **config):
         Delegate.__init__(self, width=width, side=side, **config)
         self.add_defaults(Slice.defaults)
+        self.match = {
+            'wname': self.wname,
+            'wmclass': self.wmclass,
+            'role': self.role,
+        }
         self._slice = Single()
-        self._fallback = fallback
 
     def clone(self, group):
         res = Layout.clone(self, group)
         res._slice = self._slice.clone(group)
-        res._fallback = self._fallback.clone(group)
+        res.fallback = self.fallback.clone(group)
         res._window = None
         return res
 
@@ -87,7 +136,7 @@ class Slice(Delegate):
             windows,
             {
                 self._slice: win,
-                self._fallback: sub,
+                self.fallback: sub,
             }
         )
 
@@ -95,15 +144,21 @@ class Slice(Delegate):
         raise NotImplementedError("Should not be called")
 
     def _get_layouts(self):
-        return (self._slice, self._fallback)
+        return (self._slice, self.fallback)
 
     def _get_active_layout(self):
-        return self._fallback  # always
+        return self.fallback  # always
 
     def add(self, win):
         if self._slice.empty() and win.match(**self.match):
             self._slice.add(win)
             self.layouts[win] = self._slice
         else:
-            self._fallback.add(win)
-            self.layouts[win] = self._fallback
+            self.fallback.add(win)
+            self.layouts[win] = self.fallback
+
+    def cmd_next(self):
+        self.fallback.cmd_next()
+
+    def cmd_previous(self):
+        self.fallback.cmd_previous()

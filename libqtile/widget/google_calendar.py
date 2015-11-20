@@ -34,6 +34,10 @@
 # Installing the Google API oauth2 dependencies should be done before
 # running the widget.
 #
+# Note for python 3.x: the google-api-python-client module doesn't
+# exist. There is an "unofficial" port of the module available here:
+# https://github.com/enorvelle/GoogleApiPython3x
+#
 # This widget also requires the dateutil.parser module.
 # If you get a strange "AttributeError: 'module' object has no attribute
 # GoogleCalendar" error, you are probably missing a module. Check
@@ -52,41 +56,30 @@
 # borrows liberally from that one.
 ###################################################################
 
-from .. import bar, utils
-import base
+from . import base
 import httplib2
-import logging
-import os
-import pprint
-import sys
 import datetime
 import re
 import dateutil.parser
 import threading
-import gobject
 
 from apiclient.discovery import build
-from oauth2client.client import AccessTokenRefreshError
 from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.tools import run
 import oauth2client.file
 
+from libqtile import utils
 
-class GoogleCalendar(base._TextBox):
-    ''' This widget will display the next appointment on your Google calendar
+class GoogleCalendar(base.ThreadedPollText):
+    '''
+        This widget will display the next appointment on your Google calendar
         in the qtile status bar. Appointments within the "reminder" time will
         be highlighted. Authentication credentials are stored in a file on
         disk.
     '''
-
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('calendar', 'primary', 'calendar to use'),
-        ('update_interval', 900, 'update interval'),
-        (
-            'format',
-            ' {next_event} ',
-            'calendar output - leave this at the default for now...'
-        ),
         (
             'storage_file',
             None,
@@ -107,27 +100,13 @@ class GoogleCalendar(base._TextBox):
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, 'Calendar not initialized',
-                               width=bar.CALCULATED, **config)
-        self.cred_init()
-        # confirm credentials every hour
-        self.timeout_add(3600, self.cred_init)
-        self.timeout_add(self.update_interval, self.cal_updater)
-
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
+        base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(GoogleCalendar.defaults)
-        self.layout = self.drawer.textlayout(
-            self.text,
-            self.foreground,
-            self.font,
-            self.fontsize,
-            self.fontshadow,
-            markup=True
-        )
+        self.text = 'Calendar not initialized.'
+        self.default_foreground = self.foreground
 
     def cred_init(self):
-        #this is the main method for obtaining credentials
+        # this is the main method for obtaining credentials
         self.log.info('refreshing GC credentials')
 
         # Set up a Flow object to be used for authentication.
@@ -150,45 +129,25 @@ class GoogleCalendar(base._TextBox):
         # FLOW must be run in a different thread or it blocks qtile
         # when it tries to pop the authentication web page
         def get_from_flow(creds, storage):
-            if creds is None or creds.invalid:
-                self.credentials = run(FLOW, storage)
-        threading.Thread(
-            target=get_from_flow,
-            args=(self.credentials, storage)
-        ).start()
+            self.credentials = run(FLOW, storage)
 
-        return True
-
-    def cal_updater(self):
-        self.log.info('adding GC widget timer')
-
-        def cal_getter():  # get cal data in thread, write it in main loop
-            data = self.fetch_calendar()
-            gobject.idle_add(self.update, data)
-        threading.Thread(target=cal_getter).start()
-        return True
-
-    def update(self, data):
-        if data:
-            self.text = self.format.format(**data)
-        else:
-            self.text = 'No calendar data available'
-        self.bar.draw()
-        return False
+        if self.credentials is None or self.credentials.invalid:
+            threading.Thread(
+                target=get_from_flow,
+                args=(self.credentials, storage)
+            ).start()
 
     def button_press(self, x, y, button):
-        self.cal_updater()
+        base.ThreadedPollText.button_press(self, x, y, button)
         if hasattr(self, 'credentials'):
             self.qtile.addGroup(self.www_group)
             self.qtile.groupMap[self.www_group].cmd_toscreen(self.www_screen)
             self.qtile.cmd_spawn(self.browser_cmd)
 
-    def fetch_calendar(self):
+    def poll(self):
         # if we don't have valid credentials, update them
         if not hasattr(self, 'credentials') or self.credentials.invalid:
             self.cred_init()
-            data = {'next_event': 'Credentials updating'}
-            return data
 
         # Create an httplib2.Http object to handle our HTTP requests and
         # authorize it with our credentials from self.cred_init
@@ -198,7 +157,7 @@ class GoogleCalendar(base._TextBox):
         service = build('calendar', 'v3', http=http)
 
         # current timestamp
-        now = datetime.datetime.utcnow().isoformat('T')+'Z'
+        now = datetime.datetime.utcnow().isoformat('T') + 'Z'
         data = {}
 
         # grab the next event
@@ -209,46 +168,40 @@ class GoogleCalendar(base._TextBox):
             maxResults='1',
             orderBy='startTime'
         ).execute()
+        self.qtile.log.info('calendar json data: %s' % str(events))
 
         # get items list
         try:
             event = events.get('items', [])[0]
         except IndexError:
-            data = {'next_event': 'No appointments scheduled'}
-            return data
+            return 'No appointments scheduled'
 
         # get reminder time
         try:
             remindertime = datetime.timedelta(
                 0,
                 int(
-                    event.get('reminders').get('overrides')[0].get('minutes')
+                    event['reminders']['overrides'][0]['minutes']
                 ) * 60
             )
-        except:
+        except (IndexError, ValueError, AttributeError, KeyError):
             remindertime = datetime.timedelta(0, 0)
 
-        #format the data
-        data = {
-            'next_event': event['summary'] +
-            ' ' +
-            re.sub(
-                ':.{2}-.*$',
-                '',
-                event['start']['dateTime'].replace('T', ' ')
-            )
-        }
-        if dateutil.parser.parse(
-                event['start']['dateTime'],
-                ignoretz=True
-                ) - remindertime <= datetime.datetime.now():
-            data = {
-                'next_event': '<span color="' +
-                utils.hex(self.reminder_color) +
-                '">' +
-                data['next_event'] +
-                '</span>'
-            }
+        time = re.sub(
+            ':.{2}-.*$',
+            '',
+            event['start']['dateTime'].replace('T', ' ')
+        )
 
-        # return the data
-        return data
+        data = event['summary'] + ' ' + time
+
+        # colorize the event if it is upcoming
+        parse_result = dateutil.parser.parse(event['start']['dateTime'], ignoretz=True)
+        if parse_result - remindertime <= datetime.datetime.now():
+            self.foreground = utils.hex(self.reminder_color)
+        else:
+            self.foreground = self.default_foreground
+
+        # XXX: FIXME: qtile dies completely silently if we return unicode here
+        # in python2.
+        return str(data)

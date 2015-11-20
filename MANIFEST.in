@@ -1,9 +1,8 @@
+include CHANGELOG
 include LICENSE
 include README.rst
-recursive-include examples *
-recursive-include contrib *
-recursive-include docs *.html *.js *.css *.png
 recursive-include libqtile/resources *
-recursive-include scripts *
-recursive-include test *
-recursive-exclude test *.swo *.swp *.pyc
+recursive-include resources *
+recursive-exclude scripts *
+recursive-exclude test *
+exclude libqtile/_ffi*.py

@@ -1,54 +1,66 @@
+# Copyright (c) 2011 Timo Schmiade
+# Copyright (c) 2012 Phil Jackson
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2014 Sean Vig
+# Copyright (c) 2014 Tycho Andersen
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 # -*- coding: utf-8 -*-
 # vim: set sw=4 et tw=80:
 
-import base
-from .. import bar
+from . import base
 
+import six
 import os.path
 import mailbox
 
 
-class Maildir(base._TextBox):
+class Maildir(base.ThreadedPollText):
     """
     A simple widget showing the number of new mails in maildir mailboxes.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
+    defaults = [
+        ("maildirPath", "~/Mail", "path to the Maildir folder"),
+        ("subFolders", [], 'The subfolders to scan (e.g. [{"path": "INBOX", '
+            '"label": "Home mail"}, {"path": "spam", "label": "Home junk"}]'),
+        ("separator", " ", "the string to put between the subfolder strings."),
+    ]
 
-    def __init__(self, maildirPath, subFolders,
-                 separator=" ", timeout=120, **config):
-        """
-        Constructor.
-
-        @param maildirPath: the path to the Maildir (e.g. "~/Mail").
-        @param subFolders: the subfolders to scan (e.g. [{"path": "INBOX", "label": "Home mail"}, {"path": "spam", "label": "Home junk"}]).
-        @param separator: the string to put between the subfolder strings.
-        @param timeout: the refresh timeout in seconds.
-        """
-        base._TextBox.__init__(self, "", bar.CALCULATED, **config)
-        self._maildirPath = os.path.expanduser(maildirPath)
-        self._separator = separator
-        self._timeout = timeout
-        self._subFolders = []
+    def __init__(self, **config):
+        base.ThreadedPollText.__init__(self, **config)
+        self.add_defaults(Maildir.defaults)
 
         # if it looks like a list of strings then we just convert them
         # and use the name as the label
-        if isinstance(subFolders[0], basestring):
-            self._subFolders = [
+        if isinstance(self.subFolders[0], six.string_types):
+            self.subFolders = [
                 {"path": folder, "label": folder}
-                for folder in subFolders
+                for folder in self.subFolders
             ]
-        else:
-            self._subFolders = subFolders
 
-        self.text = self.format_text(self.mailbox_state())
-        self.timeout_add(self._timeout, self.update)
-
-    def mailbox_state(self):
+    def poll(self):
         """
         Scans the mailbox for new messages.
 
-        @return: A dictionary mapping the entries from the subFolders parameter
-                 passed to the constructor to the number of new mails in that
-                 subfolder.
+        @return: A string representing the current mailbox state.
         """
         state = {}
 
@@ -56,8 +68,8 @@ class Maildir(base._TextBox):
             for path in iter(paths):
                 yield path.rsplit(":")[0]
 
-        for subFolder in self._subFolders:
-            path = os.path.join(self._maildirPath, subFolder["path"])
+        for subFolder in self.subFolders:
+            path = os.path.join(self.maildirPath, subFolder["path"])
             maildir = mailbox.Maildir(path)
             state[subFolder["label"]] = 0
 
@@ -65,7 +77,7 @@ class Maildir(base._TextBox):
                 if file in maildir:
                     state[subFolder["label"]] += 1
 
-        return state
+        return self.format_text(state)
 
     def format_text(self, state):
         """
@@ -74,22 +86,6 @@ class Maildir(base._TextBox):
         @param state: a dictionary as returned by mailbox_state.
         @return: a string representation of the given state.
         """
-        return self._separator.join(
-            "{}: {}".format(*item) for item in state.iteritems()
+        return self.separator.join(
+            "{}: {}".format(*item) for item in state.items()
         )
-
-    def update(self):
-        """
-        Updates the widget using mailbox_state and format_text.
-
-        @return: True, to keep the timeout active.
-        """
-        if self.configured:
-            newText = self.format_text(self.mailbox_state())
-
-            if newText != self.text:
-                self.text = newText
-                self.bar.draw()
-        # Return True to keep the timeout active (see documentation of
-        # gobject.timeout_add()).
-        return True

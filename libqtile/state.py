@@ -18,11 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from collections import defaultdict
-
-import command
-import hook
-
 
 class QtileState(object):
     """
@@ -36,26 +31,31 @@ class QtileState(object):
         # configurations.
         self.groups = {}
         self.screens = {}
+        self.current_screen = 0
 
         for group in qtile.groups:
             self.groups[group.name] = group.layout.name
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
+            if screen == qtile.currentScreen:
+                self.current_screen = index
 
     def apply(self, qtile):
         """
             Rearrange the windows in the specified Qtile object according to
             this QtileState.
         """
-        for (group, layout) in self.groups.iteritems():
+        for (group, layout) in self.groups.items():
             try:
                 qtile.groupMap[group].layout = layout
             except KeyError:
                 pass  # group missing
 
-        for (screen, group) in self.screens.iteritems():
+        for (screen, group) in self.screens.items():
             try:
                 group = qtile.groupMap[group]
                 qtile.screens[screen].setGroup(group)
             except (KeyError, IndexError):
                 pass  # group or screen missing
+
+        qtile.toScreen(self.current_screen)

@@ -1,8 +1,33 @@
+# Copyright (c) 2011 Florian Mounier
+# Copyright (c) 2012, 2014 Tycho Andersen
+# Copyright (c) 2013 Craig Barnes
+# Copyright (c) 2014 Sean Vig
+# Copyright (c) 2014 Adi Sieker
+# Copyright (c) 2014 Sebastien Blot
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import libqtile.manager
 import libqtile.config
 from libqtile import layout, bar, widget
 from libqtile.config import Screen
-from utils import Xephyr
+from .utils import Xephyr
 
 LEFT_ALT = 'mod1'
 WINDOWS = 'mod4'
@@ -28,8 +53,8 @@ GRAPH_KW = dict(line_width=1,
 #     500     |--------|
 #                 400
 #
-# Notice there is hole in the middle
-# also that D goes down below the others
+# Notice there is a hole in the middle
+# also D goes down below the others
 
 
 class FakeScreenConfig:
@@ -49,64 +74,74 @@ class FakeScreenConfig:
     floating_layout = libqtile.layout.floating.Floating()
     keys = []
     mouse = []
-    fake_screens = [Screen(
-        bottom=bar.Bar(
-            [
-                widget.GroupBox(this_screen_border=CHAM3,
-                                borderwidth=1,
-                                fontsize=FONTSIZE,
-                                padding=1, margin_x=1, margin_y=1),
-                widget.AGroupBox(),
-                widget.Prompt(),
-                widget.Sep(),
-                widget.WindowName(
-                    fontsize=FONTSIZE, margin_x=6),
-                widget.Sep(),
-                widget.CPUGraph(**GRAPH_KW),
-                widget.MemoryGraph(**GRAPH_KW),
-                widget.SwapGraph(foreground='20C020', **GRAPH_KW),
-                widget.Sep(),
-                widget.Systray(),
-                widget.Sep(),
-                widget.Clock('%H:%M:%S %d.%m.%Y',
-                             fontsize=FONTSIZE, padding=6),
-            ],
-                    24,
-            background="#555555"
+    fake_screens = [
+        Screen(
+            bottom=bar.Bar(
+                [
+                    widget.GroupBox(this_screen_border=CHAM3,
+                                    borderwidth=1,
+                                    fontsize=FONTSIZE,
+                                    padding=1, margin_x=1, margin_y=1),
+                    widget.AGroupBox(),
+                    widget.Prompt(),
+                    widget.Sep(),
+                    widget.WindowName(fontsize=FONTSIZE, margin_x=6),
+                    widget.Sep(),
+                    widget.CPUGraph(**GRAPH_KW),
+                    widget.MemoryGraph(**GRAPH_KW),
+                    widget.SwapGraph(foreground='20C020', **GRAPH_KW),
+                    widget.Sep(),
+                    widget.Systray(),
+                    widget.Sep(),
+                    widget.Clock(format='%H:%M:%S %d.%m.%Y',
+                                 fontsize=FONTSIZE, padding=6),
+                ],
+                24,
+                background="#555555"
+            ),
+            left=bar.Gap(16),
+            right=bar.Gap(20),
+            x=0, y=0, width=600, height=480
         ),
-        x=0, y=0, width=600, height=480
-    ),
-    Screen(
-        top=bar.Bar(
-            [
-                        widget.GroupBox(),
-                widget.WindowName(),
-                widget.Clock()
-            ],
-                    30,
+        Screen(
+            top=bar.Bar(
+                [
+                    widget.GroupBox(),
+                    widget.WindowName(),
+                    widget.Clock()
+                ],
+                30,
+            ),
+            bottom=bar.Gap(24),
+            left=bar.Gap(12),
+            x=600, y=0, width=300, height=580
         ),
-        x=600, y=0, width=300, height=580
-    ),
-    Screen(
-        top=bar.Bar(
-            [
-                        widget.GroupBox(),
-                widget.WindowName(),
-                widget.Clock()
-            ],
-                    30,
+        Screen(
+            top=bar.Bar(
+                [
+                    widget.GroupBox(),
+                    widget.WindowName(),
+                    widget.Clock()
+                ],
+                30,
+            ),
+            bottom=bar.Gap(16),
+            right=bar.Gap(40),
+            x=0, y=480, width=500, height=400
         ),
-           x=0, y=480, width=500, height=400),
-                    Screen(
-                        bottom=bar.Bar(
-                            [
-                        widget.GroupBox(),
-                                widget.WindowName(),
-                                widget.Clock()
-                            ],
-                    30,
-                        ),
-           x=500, y=580, width=400, height=400),
+        Screen(
+            top=bar.Bar(
+                [
+                    widget.GroupBox(),
+                    widget.WindowName(),
+                    widget.Clock()
+                ],
+                30,
+            ),
+            left=bar.Gap(20),
+            right=bar.Gap(24),
+            x=500, y=580, width=400, height=400
+        ),
     ]
 
     screens = fake_screens
@@ -134,15 +169,35 @@ def test_basic(self):
 
 
 @Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
+def test_gaps(self):
+    g = self.c.screens()[0]["gaps"]
+    assert g["bottom"] == (0, 456, 600, 24)
+    assert g["left"] == (0, 0, 16, 456)
+    assert g["right"] == (580, 0, 20, 456)
+    g = self.c.screens()[1]["gaps"]
+    assert g["top"] == (600, 0, 300, 30)
+    assert g["bottom"] == (600, 556, 300, 24)
+    assert g["left"] == (600, 30, 12, 526)
+    g = self.c.screens()[2]["gaps"]
+    assert g["top"] == (0, 480, 500, 30)
+    assert g["bottom"] == (0, 864, 500, 16)
+    assert g["right"] == (460, 510, 40, 354)
+    g = self.c.screens()[3]["gaps"]
+    assert g["top"] == (500, 580, 400, 30)
+    assert g["left"] == (500, 610, 20, 370)
+    assert g["right"] == (876, 610, 24, 370)
+
+
+@Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
 def test_maximize_with_move_to_screen(self):
     """
     Ensure that maximize respects bars
     """
     self.testXclock()
     self.c.window.toggle_maximize()
-    assert self.c.window.info()['width'] == 600
+    assert self.c.window.info()['width'] == 564
     assert self.c.window.info()['height'] == 456
-    assert self.c.window.info()['x'] == 0
+    assert self.c.window.info()['x'] == 16
     assert self.c.window.info()['y'] == 0
     assert self.c.window.info()['group'] == 'a'
 
@@ -153,9 +208,9 @@ def test_maximize_with_move_to_screen(self):
     assert self.c.group.info()['name'] == 'b'
     self.c.group['a'].toscreen()
 
-    assert self.c.window.info()['width'] == 300
-    assert self.c.window.info()['height'] == 550
-    assert self.c.window.info()['x'] == 600
+    assert self.c.window.info()['width'] == 288
+    assert self.c.window.info()['height'] == 526
+    assert self.c.window.info()['x'] == 612
     assert self.c.window.info()['y'] == 30
     assert self.c.window.info()['group'] == 'a'
 
@@ -183,11 +238,12 @@ def test_float_change_screens(self):
     self.testXeyes()
     self.testXclock()
     self.c.window.toggle_floating()
-    assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
+    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.group.info()['floating_info']['clients'] == ['xclock']
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == 0
+    # 16 is given by the left gap width
+    assert self.c.window.info()['x'] == 16
     assert self.c.window.info()['y'] == 0
     assert self.c.window.info()['group'] == 'a'
 
@@ -201,11 +257,11 @@ def test_float_change_screens(self):
         'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
     self.c.group['a'].toscreen()
     assert self.c.group.info()['name'] == 'a'
-    assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
+    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.window.info()['name'] == 'xclock'
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == 600
+    assert self.c.window.info()['x'] == 616
     assert self.c.window.info()['y'] == 0
     assert self.c.window.info()['group'] == 'a'
     assert self.c.group.info()['floating_info']['clients'] == ['xclock']
@@ -217,11 +273,11 @@ def test_float_change_screens(self):
     assert self.c.group.info()['name'] == 'c'
     self.c.group['a'].toscreen()
     assert self.c.group.info()['name'] == 'a'
-    assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
+    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.window.info()['name'] == 'xclock'
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == 0
+    assert self.c.window.info()['x'] == 16
     assert self.c.window.info()['y'] == 480
 
     # now screen 4 for fun
@@ -231,11 +287,11 @@ def test_float_change_screens(self):
     assert self.c.group.info()['name'] == 'd'
     self.c.group['a'].toscreen()
     assert self.c.group.info()['name'] == 'a'
-    assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
+    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.window.info()['name'] == 'xclock'
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == 500
+    assert self.c.window.info()['x'] == 516
     assert self.c.window.info()['y'] == 580
 
     # and back to one
@@ -245,11 +301,11 @@ def test_float_change_screens(self):
     assert self.c.group.info()['name'] == 'b'
     self.c.group['a'].toscreen()
     assert self.c.group.info()['name'] == 'a'
-    assert set(self.c.group.info()['windows']) == {'xeyes', 'xclock'}
+    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.window.info()['name'] == 'xclock'
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == 0
+    assert self.c.window.info()['x'] == 16
     assert self.c.window.info()['y'] == 0
 
 
@@ -259,22 +315,23 @@ def test_float_outside_edges(self):
     self.c.window.toggle_floating()
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == 0
+    # 16 is given by the left gap width
+    assert self.c.window.info()['x'] == 16
     assert self.c.window.info()['y'] == 0
     # empty because window is floating
     assert self.c.layout.info() == {
         'clients': [], 'group': 'a', 'name': 'max'}
 
     # move left, but some still on screen 0
-    self.c.window.move_floating(-10, 20)
+    self.c.window.move_floating(-30, 20, 42, 42)
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == -10
+    assert self.c.window.info()['x'] == -14
     assert self.c.window.info()['y'] == 20
     assert self.c.window.info()['group'] == 'a'
 
     # move up, but some still on screen 0
-    self.c.window.set_position_floating(-10, -20)
+    self.c.window.set_position_floating(-10, -20, 42, 42)
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == -10
@@ -282,7 +339,7 @@ def test_float_outside_edges(self):
     assert self.c.window.info()['group'] == 'a'
 
     # move above a
-    self.c.window.set_position_floating(50, -20)
+    self.c.window.set_position_floating(50, -20, 42, 42)
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == 50
@@ -290,14 +347,14 @@ def test_float_outside_edges(self):
     assert self.c.window.info()['group'] == 'a'
 
     # move down so still left, but next to screen c
-    self.c.window.set_position_floating(-10, 520)
+    self.c.window.set_position_floating(-10, 520, 42, 42)
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == -10
     assert self.c.window.info()['y'] == 520
     assert self.c.window.info()['group'] == 'c'
 
     # move above b
-    self.c.window.set_position_floating(700, -10)
+    self.c.window.set_position_floating(700, -10, 42, 42)
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == 700
@@ -308,8 +365,8 @@ def test_float_outside_edges(self):
 @Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
 def test_hammer_tile(self):
     # change to tile layout
-    self.c.nextlayout()
-    self.c.nextlayout()
+    self.c.next_layout()
+    self.c.next_layout()
     for i in range(7):
         self.testXclock()
     for i in range(30):
@@ -333,7 +390,7 @@ def test_hammer_tile(self):
 @Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
 def test_hammer_ratio_tile(self):
     # change to ratio tile layout
-    self.c.nextlayout()
+    self.c.next_layout()
     for i in range(7):
         self.testXclock()
     for i in range(30):
@@ -357,7 +414,7 @@ def test_hammer_ratio_tile(self):
 @Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
 def test_ratio_to_fourth_screen(self):
     # change to ratio tile layout
-    self.c.nextlayout()
+    self.c.next_layout()
     for i in range(7):
         self.testXclock()
     self.c.to_screen(1)

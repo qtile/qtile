@@ -1,11 +1,41 @@
-# -*- coding: utf-8 -*-
-from base import SingleWindow
-from .. import manager
-from .. import window
-from .. import drawer
-from .. import hook
+# -*- coding:utf-8 -*-
+# Copyright (c) 2011 Mounier Florian
+# Copyright (c) 2011 Paul Colomiets
+# Copyright (c) 2012 roger
+# Copyright (c) 2012-2014 Tycho Andersen
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2013 Arnas Udovicius
+# Copyright (c) 2014 ramnes
+# Copyright (c) 2014 Sean Vig
+# Copyright (c) 2014 Nathan Hoad
+# Copyright (c) 2014 dequis
+# Copyright (c) 2014 Thomas Sarboni
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
-to_superscript = dict(zip(map(ord, u'0123456789'), map(ord, u'⁰¹²³⁴⁵⁶⁷⁸⁹')))
+# -*- coding: utf-8 -*-
+from .base import SingleWindow
+from .. import drawer, hook, window
+
+import six
+
+to_superscript = dict(zip(map(ord, six.u('0123456789')), map(ord, six.u('⁰¹²³⁴⁵⁶⁷⁸⁹'))))
 
 
 class TreeNode(object):
@@ -44,7 +74,7 @@ class TreeNode(object):
 
     def add_superscript(self, title):
         if not self.expanded and self.children:
-            return unicode(
+            return six.u(
                 len(self.children)
             ).translate(to_superscript).encode('utf-8') + title
         return title
@@ -72,7 +102,7 @@ class TreeNode(object):
         while not isinstance(node, Root):
             parent = node.parent
             idx = parent.children.index(node)
-            for i in xrange(idx + 1, len(parent.children)):
+            for i in range(idx + 1, len(parent.children)):
                 res = parent.children[i].get_first_window()
                 if res:
                     return res
@@ -85,7 +115,7 @@ class TreeNode(object):
             idx = parent.children.index(node)
             if idx == 0 and isinstance(parent, Window):
                 return parent
-            for i in xrange(idx - 1, -1, -1):
+            for i in range(idx - 1, -1, -1):
                 res = parent.children[i].get_last_window()
                 if res:
                     return res
@@ -254,6 +284,8 @@ class TreeTab(SingleWindow):
         ("panel_width", 150, "Width of the left panel"),
         ("sections", ['Default'], "Foreground color of inactive tab"),
         ("name", "treetab", "Name of this layout."),
+        ("previous_on_rm", False,
+            "Focus previous window on close instead of first."),
     ]
 
     def __init__(self, **config):
@@ -261,6 +293,7 @@ class TreeTab(SingleWindow):
         self.add_defaults(TreeTab.defaults)
         self._focused = None
         self._panel = None
+        self._drawer = None
         self._tree = Root(self.sections)
         self._nodes = {}
 
@@ -277,6 +310,26 @@ class TreeTab(SingleWindow):
     def focus(self, win):
         self._focused = win
 
+    def focus_first(self):
+        win = self._tree.get_first_window()
+        if win:
+            return win.window
+
+    def focus_last(self):
+        win = self._tree.get_last_window()
+        if win:
+            return win.window
+
+    def focus_next(self, client):
+        win = self._nodes[client].get_next_window()
+        if win:
+            return win.window
+
+    def focus_previous(self, client):
+        win = self._nodes[client].get_prev_window()
+        if win:
+            return win.window
+
     def blur(self):
         # Does not clear current window, will change if new one
         # will be focused. This works better when floating window
@@ -291,14 +344,20 @@ class TreeTab(SingleWindow):
         self._nodes[win] = node
 
     def remove(self, win):
+        if win not in self._nodes:
+            return
+
+        if self.previous_on_rm:
+            self._focused = self.focus_previous()
+        else:
+            self._focused = self.focus_first()
+
         if self._focused is win:
             self._focused = None
+
         self._nodes[win].remove()
         del self._nodes[win]
         self.draw_panel()
-
-        # select 1st window in the list
-        self.cmd_down()
 
     def _create_panel(self):
         self._panel = window.Internal.create(
@@ -323,29 +382,34 @@ class TreeTab(SingleWindow):
             return
         self._drawer.clear(self.bg_color)
         self._tree.draw(self, 0)
-        self._drawer.draw(0, self.panel_width)
+        self._drawer.draw(offsetx=0, width=self.panel_width)
 
     def _panel_ButtonPress(self, event):
         node = self._tree.button_press(event.event_x, event.event_y)
         if node:
             self.group.focus(node.window, False)
 
-    def configure(self, c, screen):
-        if self._nodes and c is self._focused:
-            c.place(
+    def configure(self, client, screen):
+        if self._nodes and client is self._focused:
+            client.place(
                 screen.x, screen.y,
                 screen.width, screen.height,
                 0,
                 None
             )
-            c.unhide()
+            client.unhide()
         else:
-            c.hide()
+            client.hide()
+
+    def finalize(self):
+        SingleWindow.finalize(self)
+        if self._drawer is not None:
+            self._drawer.finalize()
 
     def info(self):
         d = SingleWindow.info(self)
-        d["clients"] = [i.name for i in self._nodes]
-        d["sections"] = [i.title for i in self._tree.children]
+        d["clients"] = [x.name for x in self._nodes]
+        d["sections"] = [x.title for x in self._tree.children]
         return d
 
     def show(self, screen):
@@ -370,6 +434,9 @@ class TreeTab(SingleWindow):
             win = self._tree.get_first_window()
         if win:
             self.group.focus(win.window, False)
+        self._focused = win.window if win else None
+
+    cmd_next = cmd_down
 
     def cmd_up(self):
         """
@@ -382,6 +449,9 @@ class TreeTab(SingleWindow):
             win = self._tree.get_last_window()
         if win:
             self.group.focus(win.window, False)
+        self._focused = win.window if win else None
+
+    cmd_previous = cmd_up
 
     def cmd_move_up(self):
         win = self._focused
@@ -513,12 +583,13 @@ class TreeTab(SingleWindow):
         self.group.layoutAll()
 
     def _create_drawer(self):
-        self._drawer = drawer.Drawer(
-            self.group.qtile,
-            self._panel.window.wid,
-            self.panel_width,
-            self.group.screen.dheight
-        )
+        if self._drawer is None:
+            self._drawer = drawer.Drawer(
+                self.group.qtile,
+                self._panel.window.wid,
+                self.panel_width,
+                self.group.screen.dheight
+            )
         self._drawer.clear(self.bg_color)
         self._layout = self._drawer.textlayout(
             "",

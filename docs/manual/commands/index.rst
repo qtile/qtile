@@ -1,3 +1,4 @@
+============
 Commands API
 ============
 
@@ -26,7 +27,7 @@ basic components of the window manager: ``layouts``, ``windows``, ``groups``,
 addressed by a path specification that starts at the root, and follows the
 edges of the graph. This is what the graph looks like:
 
-.. image:: /_static/objgraph.png
+.. graphviz:: /_static/diagrams/object-graph-orig.dot
 
 Each arrow can be read as "holds a reference to". So, we can see that a
 ``widget`` object *holds a reference to* objects of type ``bar``, ``screen``
@@ -73,7 +74,7 @@ currently displaying group "b", we can do this:
 
 Be aware, however, that group "b" might not currently be displayed. In that
 case, it has no associated screen, the path resolves to a non-existent
-node, and we get an exeption:
+node, and we get an exception:
 
 .. code-block:: python
 
@@ -100,7 +101,7 @@ The key specifier for the various object types are as follows:
       - Key
       - Optional?
       - Example
-    * - Bar
+    * - bar
       - "top", "bottom"
       - No
       - | c.screen.bar["bottom"]

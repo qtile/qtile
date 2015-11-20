@@ -1,21 +1,78 @@
 Source: qtile
-Section: universe/x11
+Section: python
 Priority: optional
 Maintainer: Tycho Andersen <tycho@tycho.ws>
-Build-Depends: debhelper (>= 8.0.0), python-xpyb (>= 1.3.1), python-cairo (>= 1.10.2), xcb-proto, libxcb1-dev, python-xcbgen, libcairo2-dev, python-setuptools
-Standards-Version: 3.9.2
-Homepage: <http://qtile.org>
+Build-Depends: debhelper (>= 9)
+    , dh-python
+    , python-all
+    , python3-all
+    , python-all-dev
+    , python3-all-dev
+    , python-setuptools
+    , python3-setuptools
+    , python-cffi (>= 1.1.0)
+    , python3-cffi (>= 1.1.0)
+    , python-trollius
+    , python3-trollius
+# testing
+    , python-xcffib (>= 0.3.4)
+    , python3-xcffib (>= 0.3.4)
+    , python-cairocffi (>= 0.7)
+    , python3-cairocffi (>= 0.7)
+    , python-trollius
+    , python3-trollius
+    , libglib2.0-0
+    , libpango1.0-0
+    , libpangocairo-1.0-0
+X-Python-Version: >= 2.6
+X-Python3-Version: >= 3.2
+Standards-Version: 3.9.5
+Homepage: http://qtile.org
+Vcs-Git: https://github.com/qtile/qtile
+Vcs-Browser: https://github.com/qtile/qtile
+XB-Description: Full-featured, pure-Python tiling window manager.
+ Qtile is:
+   * simple, small and extensible. It's easy to write your own layouts,
+     widgets and built-in commands.
+   * configured entirely in Python.
+   * command-line shell that allows all aspects of Qtile to be manipulated and
+     inspected.
+   * complete remote scriptability - write scripts to set up workspaces,
+     manipulate windows, update status bar widgets and more.
+   * unit tested. Qtile's scriptability has made thorough unit testing
+     possible, making it one of the best-tested window managers around.
+
+Package: python-qtile
+Architecture: all
+Depends: python-cffi (>= 1.1.0)
+    , python-xcffib (>= 0.3.4)
+    , python-cairocffi (>= 0.7)
+    , python-trollius
+    , libglib2.0-0
+    , libpango1.0-0
+    , libpangocairo-1.0-0
+    , ${misc:Depends}
+    , ${python:Depends}
+Provides: ${python:Provides}
+
+Package: python3-qtile
+Architecture: all
+Depends: python-cffi (>= 1.1.0)
+    , python-xcffib (>= 0.3.4)
+    , python-cairocffi (>= 0.7)
+    , libglib2.0-0
+    , libpango1.0-0
+    , libpangocairo-1.0-0
+# only needed for <= 3.3
+    , python3-trollius
+    , ${misc:Depends}
+    , ${python3:Depends}
+Provides: ${python3:Provides}
 
 Package: qtile
 Architecture: all
-Depends: python-xpyb (>= 1.3.1), python-cairo (>= 1.10.2), libxcb1, xinit, python-gobject, libcairo2, python (<< 2.8), python (>= 2.6), python-support (>= 0.90.0)
-Description: A full-featured, pure-Python tiling window manager.
- * Simple, small and extensible. It's easy to write your own layouts, widgets
-   and built-in commands.
- * Configured entirely in Python.
- * Command-line shell that allows all aspects of Qtile to be manipulated and
-   inspected.
- * Complete remote scriptability - write scripts to set up workspaces,
-   manipulate windows, update status bar widgets and more.
- * Qtile's scriptability has made thorough unit testing possible, making it one
-   of the best-tested window managers around.
+Depends: xinit
+    , python3-setproctitle
+    , python3-qtile
+    , ${misc:Depends}
+    , ${python3:Depends}

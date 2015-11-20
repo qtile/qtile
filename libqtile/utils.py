@@ -18,12 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
 import operator
 import functools
-import gobject
-import logging
-import os
-import xcbq
+import warnings
+
+import six
+from six.moves import reduce
+
+from . import xcbq
 
 
 class QtileError(Exception):
@@ -68,7 +71,7 @@ def shuffleDown(lst):
         lst.append(c)
 
 
-class LRUCache:
+class LRUCache(object):
     """
         A decorator that implements a self-expiring LRU cache for class
         methods (not functions!).
@@ -106,31 +109,6 @@ class LRUCache:
         return wrap
 
 
-def isStringLike(anobj):
-    try:
-        # Avoid succeeding expensively if anobj is large.
-        anobj[:0] + ''
-    except:
-        return 0
-    else:
-        return 1
-
-
-def isSequenceLike(anobj):
-    """
-        Is anobj a non-string sequence type (list, tuple, iterator, or
-        similar)?  Crude, but mostly effective.
-    """
-    if not hasattr(anobj, "next"):
-        if isStringLike(anobj):
-            return 0
-        try:
-            anobj[:0]
-        except:
-            return 0
-    return 1
-
-
 def rgb(x):
     """
         Returns a valid RGBA tuple.
@@ -148,7 +126,7 @@ def rgb(x):
         else:
             alpha = 1
         return (x[0] / 255.0, x[1] / 255.0, x[2] / 255.0, alpha)
-    elif isinstance(x, basestring):
+    elif isinstance(x, six.string_types):
         if x.startswith("#"):
             x = x[1:]
         if "." in x:
@@ -166,39 +144,67 @@ def rgb(x):
 
 def hex(x):
     r, g, b, _ = rgb(x)
-    return '#%02x%02x%02x' % (r * 255, g * 255, b * 255)
-
-
-class Data:
-    def __init__(self, name):
-        m = __import__(name)
-        dirname, _ = os.path.split(m.__file__)
-        self.dirname = os.path.abspath(dirname)
-
-    def path(self, path):
-        """
-            Returns a path to the package data housed at 'path' under this
-            module.Path can be a path to a file, or to a directory.
-
-            This function will raise ValueError if the path does not exist.
-        """
-        fullpath = os.path.join(self.dirname, path)
-        if not os.path.exists(fullpath):
-            raise ValueError("dataPath: %s does not exist." % fullpath)
-        return fullpath
-
-data = Data(__name__)
+    return '#%02x%02x%02x' % (int(r * 255), int(g * 255), int(b * 255))
 
 
 def scrub_to_utf8(text):
     if not text:
-        return ""
-    elif isinstance(text, unicode):
+        return six.u("")
+    elif isinstance(text, six.text_type):
         return text
     else:
         return text.decode("utf-8", "ignore")
 
 
-def escape(text):
-    # logging.getLogger('qtile').info('Escaping %s' % text)
-    return gobject.markup_escape_text(text)
+# WARNINGS
+class UnixCommandNotFound(Warning):
+    pass
+
+
+def catch_exception_and_warn(warning=Warning, return_on_exception=None,
+                             excepts=Exception):
+    """
+    .. function:: warn_on_exception(func, [warning_class, return_on_failure,
+            excepts])
+        attemps to call func. catches exception or exception tuple and issues
+        a warning instead. returns value of return_on_failure when the
+        specified exception is raised.
+
+        :param func: a callable to be wrapped
+        :param warning: the warning class to issue if an exception is
+            raised
+        :param return_on_exception: the default return value of the function
+            if an exception is raised
+        :param excepts: an exception class (or tuple of exception classes) to
+            catch during the execution of func
+        :type excepts: Exception or tuple of Exception classes
+        :type warning: Warning
+        :rtype: a callable
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            return_value = return_on_exception
+            try:
+                return_value = func(*args, **kwargs)
+                print(return_value)
+            except excepts as err:
+                print(err.strerror)
+                warnings.warn(err.strerror, warning)
+            return return_value
+        return wrapper
+    return decorator
+
+
+def get_cache_dir():
+    """
+    Returns the cache directory and create if it doesn't exists
+    """
+
+    cache_directory = os.path.expandvars('$XDG_CACHE_HOME')
+    if cache_directory == '$XDG_CACHE_HOME':
+        # if variable wasn't set
+        cache_directory = os.path.expanduser("~/.cache")
+    if not os.path.exists(cache_directory):
+        os.makedirs(cache_directory)
+    return cache_directory

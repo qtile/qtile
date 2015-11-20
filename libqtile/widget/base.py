@@ -1,29 +1,101 @@
-from .. import command, bar, configurable, drawer
-import gobject
+# Copyright (c) 2008-2010 Aldo Cortesi
+# Copyright (c) 2011 Florian Mounier
+# Copyright (c) 2011 Kenji_Takahashi
+# Copyright (c) 2011 Paul Colomiets
+# Copyright (c) 2012 roger
+# Copyright (c) 2012 Craig Barnes
+# Copyright (c) 2012-2015 Tycho Andersen
+# Copyright (c) 2013 dequis
+# Copyright (c) 2013 David R. Andersen
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2014-2015 Sean Vig
+# Copyright (c) 2014 Justin Bronder
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+from .. import command, bar, configurable, drawer, confreader
+import six
+import subprocess
 import logging
 import threading
+import warnings
 
+# Each widget class must define which bar orientation(s) it supports by setting
+# these bits in an 'orientations' class attribute. Simply having the attribute
+# inherited by superclasses is discouraged, because if a superclass that was
+# only supporting one orientation, adds support for the other, its subclasses
+# will have to be adapted too, in general. ORIENTATION_NONE is only added for
+# completeness' sake.
+# +------------------------+--------------------+--------------------+
+# | Widget bits            | Horizontal bar     | Vertical bar       |
+# +========================+====================+====================+
+# | ORIENTATION_NONE       | ConfigError raised | ConfigError raised |
+# +------------------------+--------------------+--------------------+
+# | ORIENTATION_HORIZONTAL | Widget displayed   | ConfigError raised |
+# |                        | horizontally       |                    |
+# +------------------------+--------------------+--------------------+
+# | ORIENTATION_VERTICAL   | ConfigError raised | Widget displayed   |
+# |                        |                    | vertically         |
+# +------------------------+--------------------+--------------------+
+# | ORIENTATION_BOTH       | Widget displayed   | Widget displayed   |
+# |                        | horizontally       | vertically         |
+# +------------------------+--------------------+--------------------+
+class _Orientations(int):
+    def __new__(cls, value, doc):
+        return super(_Orientations, cls).__new__(cls, value)
 
-LEFT = object()
-CENTER = object()
+    def __init__(self, value, doc):
+        self.doc = doc
+
+    def __str__(self):
+        return self.doc
+
+    def __repr__(self):
+        return self.doc
+
+ORIENTATION_NONE = _Orientations(0, 'none')
+ORIENTATION_HORIZONTAL = _Orientations(1, 'horizontal only')
+ORIENTATION_VERTICAL = _Orientations(2, 'vertical only')
+ORIENTATION_BOTH = _Orientations(3, 'horizontal and vertical')
 
 
 class _Widget(command.CommandObject, configurable.Configurable):
     """
-        If width is set to the special value bar.STRETCH, the bar itself
-        will set the width to the maximum remaining space, after all other
+        If length is set to the special value bar.STRETCH, the bar itself
+        will set the length to the maximum remaining space, after all other
         widgets have been configured. Only ONE widget per bar can have the
-        bar.STRETCH width set.
+        bar.STRETCH length set.
 
-        The offset attribute is set by the Bar after all widgets have been
-        configured.
+        In horizontal bars, 'length' corresponds to the width of the widget;
+        in vertical bars, it corresponds to the widget's height.
+
+        The offsetx and offsety attributes are set by the Bar after all widgets
+        have been configured.
     """
-    offset = None
+    orientations = ORIENTATION_BOTH
+    offsetx = None
+    offsety = None
     defaults = [("background", None, "Widget background color")]
 
-    def __init__(self, width, **config):
+    def __init__(self, length, **config):
         """
-            width: bar.STRETCH, bar.CALCULATED, or a specified width.
+            length: bar.STRETCH, bar.CALCULATED, or a specified length.
         """
         command.CommandObject.__init__(self)
         self.name = self.__class__.__name__.lower()
@@ -35,27 +107,65 @@ class _Widget(command.CommandObject, configurable.Configurable):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(_Widget.defaults)
 
-        if width in (bar.CALCULATED, bar.STRETCH):
-            self.width_type = width
-            self.width = 0
+        if length in (bar.CALCULATED, bar.STRETCH):
+            self.length_type = length
+            self.length = 0
         else:
-            self.width_type = bar.STATIC
-            self.width = width
+            assert isinstance(length, six.integer_types)
+            self.length_type = bar.STATIC
+            self.length = length
         self.configured = False
 
     @property
-    def width(self):
-        if self.width_type == bar.CALCULATED:
-            return int(self.calculate_width())
-        return self._width
+    def length(self):
+        if self.length_type == bar.CALCULATED:
+            return int(self.calculate_length())
+        return self._length
 
-    @width.setter
-    def width(self, value):
-        self._width = value
+    @length.setter
+    def length(self, value):
+        self._length = value
+
+    @property
+    def width(self):
+        if self.bar.horizontal:
+            return self.length
+        return self.bar.size
+
+    @property
+    def height(self):
+        if self.bar.horizontal:
+            return self.bar.size
+        return self.length
+
+    @property
+    def offset(self):
+        if self.bar.horizontal:
+            return self.offsetx
+        return self.offsety
 
     @property
     def win(self):
         return self.bar.window.window
+
+    # Do not start the name with "test", or nosetests will try to test it
+    # directly (prepend an underscore instead)
+    def _test_orientation_compatibility(self, horizontal):
+        if horizontal:
+            if not self.orientations & ORIENTATION_HORIZONTAL:
+                raise confreader.ConfigError(
+                    "The widget is not compatible with the orientation of the "
+                    "bar."
+                )
+        elif not self.orientations & ORIENTATION_VERTICAL:
+            raise confreader.ConfigError(
+                "The widget is not compatible with the orientation of the bar."
+            )
+
+    def timer_setup(self):
+        """ This is called exactly once, after the widget has been configured
+        and timers are available to be set up. """
+        pass
 
     def _configure(self, qtile, bar):
         self.qtile = qtile
@@ -66,17 +176,27 @@ class _Widget(command.CommandObject, configurable.Configurable):
             self.bar.width,
             self.bar.height
         )
-        self.configured = True
+        if not self.configured:
+            self.configured = True
+            self.qtile.call_soon(self.timer_setup)
+
+    def finalize(self):
+        if hasattr(self, 'layout') and self.layout:
+            self.layout.finalize()
+        self.drawer.finalize()
 
     def clear(self):
         self.drawer.set_source_rgb(self.bar.background)
-        self.drawer.fillrect(self.offset, 0, self.width, self.bar.size)
+        self.drawer.fillrect(self.offsetx, self.offsety, self.width,
+                             self.height)
 
     def info(self):
         return dict(
-            name=self.__class__.__name__,
+            name=self.name,
             offset=self.offset,
+            length=self.length,
             width=self.width,
+            height=self.height,
         )
 
     def button_press(self, x, y, button):
@@ -106,37 +226,49 @@ class _Widget(command.CommandObject, configurable.Configurable):
         """
             Info for this object.
         """
-        return dict(name=self.name)
+        return self.info()
 
     def draw(self):
         """
             Method that draws the widget. You may call this explicitly to
-            redraw the widget, but only if the width of the widget hasn't
+            redraw the widget, but only if the length of the widget hasn't
             changed. If it has, you must call bar.draw instead.
         """
         raise NotImplementedError
 
-    def calculate_width(self):
+    def calculate_length(self):
         """
-            Must be implemented if the widget can take CALCULATED for width.
+            Must be implemented if the widget can take CALCULATED for length.
+            It must return the width of the widget if it's installed in a
+            horizontal bar; it must return the height of the widget if it's
+            installed in a vertical bar. Usually you will test the orientation
+            of the bar with 'self.bar.horizontal'.
         """
         raise NotImplementedError
 
     def timeout_add(self, seconds, method, method_args=()):
         """
-            This method calls either ``gobject.timeout_add`` or
-            ``gobject.timeout_add_seconds`` with same arguments. Latter is
-            better for battery usage, but works only with integer timeouts.
+            This method calls either ``.call_later`` with given arguments.
         """
-        self.log.debug('Adding timer for %r in %.2fs', method, seconds)
-        if int(seconds) == seconds:
-            return gobject.timeout_add_seconds(
-                int(seconds), method, *method_args
-            )
-        else:
-            return gobject.timeout_add(
-                int(seconds * 1000), method, *method_args
-            )
+        return self.qtile.call_later(seconds, self._wrapper, method,
+                                     *method_args)
+
+    def call_process(self, command, **kwargs):
+        """
+            This method uses `subprocess.check_output` to run the given command
+            and return the string from stdout, which is decoded when using
+            Python 3.
+        """
+        output = subprocess.check_output(command, **kwargs)
+        if six.PY3:
+            output = output.decode()
+        return output
+
+    def _wrapper(self, method, *method_args):
+        try:
+            method(*method_args)
+        except:
+            self.log.exception('got exception from widget timer')
 
 
 UNSPECIFIED = bar.Obj("UNSPECIFIED")
@@ -146,6 +278,7 @@ class _TextBox(_Widget):
     """
         Base class for widgets that are just boxes containing text.
     """
+    orientations = ORIENTATION_HORIZONTAL
     defaults = [
         ("font", "Arial", "Default font"),
         ("fontsize", None, "Font size. Calculated if None."),
@@ -156,6 +289,7 @@ class _TextBox(_Widget):
             None,
             "font shadow color, default is None(no shadow)"
         ),
+        ("markup", False, "Whether or not to use pango markup"),
     ]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -170,6 +304,7 @@ class _TextBox(_Widget):
 
     @text.setter
     def text(self, value):
+        assert value is None or isinstance(value, six.string_types)
         self._text = value
         if self.layout:
             self.layout.text = value
@@ -177,6 +312,16 @@ class _TextBox(_Widget):
     @property
     def font(self):
         return self._font
+
+    @property
+    def foreground(self):
+        return self._foreground
+
+    @foreground.setter
+    def foreground(self, fg):
+        self._foreground = fg
+        if self.layout:
+            self.layout.colour = fg
 
     @font.setter
     def font(self, value):
@@ -211,9 +356,10 @@ class _TextBox(_Widget):
             self.font,
             self.fontsize,
             self.fontshadow,
+            markup=self.markup,
         )
 
-    def calculate_width(self):
+    def calculate_length(self):
         if self.text:
             return min(
                 self.layout.width,
@@ -223,12 +369,15 @@ class _TextBox(_Widget):
             return 0
 
     def draw(self):
+        # if the bar hasn't placed us yet
+        if self.offsetx is None:
+            return
         self.drawer.clear(self.background or self.bar.background)
         self.layout.draw(
             self.actual_padding or 0,
             int(self.bar.height / 2.0 - self.layout.height / 2.0) + 1
         )
-        self.drawer.draw(self.offset, self.width)
+        self.drawer.draw(offsetx=self.offsetx, width=self.width)
 
     def cmd_set_font(self, font=UNSPECIFIED, fontsize=UNSPECIFIED,
                      fontshadow=UNSPECIFIED):
@@ -244,8 +393,150 @@ class _TextBox(_Widget):
             self.fontshadow = fontshadow
         self.bar.draw()
 
+    def info(self):
+        d = _Widget.info(self)
+        d['foreground'] = self.foreground
+        d['text'] = self.text
+        return d
+
+
+class InLoopPollText(_TextBox):
+    """ A common interface for polling some 'fast' information, munging it, and
+    rendering the result in a text box. You probably want to use
+    ThreadedPollText instead.
+
+    ('fast' here means that this runs /in/ the event loop, so don't block! If
+    you want to run something nontrivial, use ThreadedPollWidget.) """
+
+    defaults = [
+        ("update_interval", 600, "Update interval in seconds, if none, the "
+            "widget updates whenever the event loop is idle."),
+    ]
+
+    def __init__(self, **config):
+        _TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
+        self.add_defaults(InLoopPollText.defaults)
+
+    def timer_setup(self):
+        update_interval = self.tick()
+        # If self.update_interval is defined and .tick() returns None, re-call
+        # after self.update_interval
+        if update_interval is None and self.update_interval is not None:
+            self.timeout_add(self.update_interval, self.timer_setup)
+        # We can change the update interval by returning something from .tick()
+        elif update_interval:
+            self.timeout_add(update_interval, self.timer_setup)
+        # If update_interval is False, we won't re-call
+
+    def _configure(self, qtile, bar):
+        should_tick = self.configured
+        _TextBox._configure(self, qtile, bar)
+
+        # Update when we are being re-configured.
+        if should_tick:
+            self.tick()
+
+    def button_press(self, x, y, button):
+        self.tick()
+
+    def poll(self):
+        return 'N/A'
+
+    def tick(self):
+        text = self.poll()
+        self.update(text)
+
+    def update(self, text):
+        old_width = self.layout.width
+        if self.text != text:
+            self.text = text
+            # If our width hasn't changed, we just draw ourselves. Otherwise,
+            # we draw the whole bar.
+            if self.layout.width == old_width:
+                self.draw()
+            else:
+                self.bar.draw()
+
+
+class ThreadedPollText(InLoopPollText):
+    """ A common interface for polling some REST URL, munging the data, and
+    rendering the result in a text box. """
+    def __init__(self, **config):
+        InLoopPollText.__init__(self, **config)
+
+    def tick(self):
+        def worker():
+            text = self.poll()
+            self.qtile.call_soon_threadsafe(self.update, text)
+        # TODO: There are nice asyncio constructs for this sort of thing, I
+        # think...
+        threading.Thread(target=worker).start()
+
+
+class ThreadPoolText(_TextBox):
+    """ A common interface for wrapping blocking events which when triggered
+    will update a textbox.  This is an alternative to the ThreadedPollText
+    class which differs by being push based rather than pull.
+
+    The poll method is intended to wrap a blocking function which may take
+    quite a while to return anything.  It will be executed as a future and
+    should return updated text when completed.  It may also return None to
+    disable any further updates.
+
+    param: text - Initial text to display.
+    """
+    defaults = [
+        ("update_interval", None, "Update interval in seconds, if none, the "
+            "widget updates whenever it's done'."),
+    ]
+
+    def __init__(self, text, **config):
+        super(ThreadPoolText, self).__init__(text, width=bar.CALCULATED,
+                                             **config)
+        self.add_defaults(ThreadPoolText.defaults)
+
+    def timer_setup(self):
+        def on_done(future):
+            try:
+                result = future.result()
+            except Exception:
+                self.log.exception('poll() raised exceptions, not '
+                                   'rescheduling')
+
+            if result is not None:
+                try:
+                    self.update(result)
+
+                    if self.update_interval is not None:
+                        self.timeout_add(self.update_interval, self.timer_setup)
+                    else:
+                        self.timer_setup()
+
+                except Exception:
+                    self.log.exception('Failed to reschedule.')
+            else:
+                self.log.warning('poll() returned None, not rescheduling')
+
+        future = self.qtile.run_in_executor(self.poll)
+        future.add_done_callback(on_done)
+
+    def update(self, text):
+        old_width = self.layout.width
+        if self.text == text:
+            return
+
+        self.text = text
+
+        if self.layout.width == old_width:
+            self.draw()
+        else:
+            self.bar.draw()
+
+    def poll(self):
+        pass
 
 # these two classes below look SUSPICIOUSLY similar
+
 
 class PaddingMixin(object):
     """
@@ -283,3 +574,7 @@ class MarginMixin(object):
 
     margin_x = configurable.ExtraFallback('margin_x', 'margin')
     margin_y = configurable.ExtraFallback('margin_y', 'margin')
+
+
+def deprecated(msg):
+    warnings.warn(msg, DeprecationWarning)

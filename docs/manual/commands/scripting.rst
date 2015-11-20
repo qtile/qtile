@@ -1,8 +1,9 @@
+=========
 Scripting
 =========
 
 Client-Server Scripting Model
------------------------------
+=============================
 
 Qtile has a client-server control model - the main Qtile instance listens on a
 named pipe, over which marshalled command calls and response data is passed.
@@ -18,7 +19,7 @@ documentation is available through the :doc:`Qtile Shell
 
 
 Example
--------
+=======
 
 Below is a very minimal example script that inspects the current qtile
 instance, and returns the integer offset of the current screen.

@@ -17,8 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from base import SingleWindow
-from .. import utils, manager
+from .base import SingleWindow
 
 
 class Max(SingleWindow):
@@ -34,45 +33,87 @@ class Max(SingleWindow):
         SingleWindow.__init__(self, **config)
         self.clients = []
         self.add_defaults(Max.defaults)
+        self.current = None
 
     def _get_window(self):
+        return self.current
+
+    def focus(self, client):
+        self.group.layoutAll()
+        self.current = client
+
+    def focus_first(self):
         if self.clients:
             return self.clients[0]
 
-    def focus(self, c):
-        if c in self.clients:
-            self.clients.remove(c)
-            self.clients.insert(0, c)
-            self.group.layoutAll()
+    def focus_last(self):
+        if self.clients:
+            return self.clients[-1]
+
+    def focus_next(self, window):
+        if not self.clients:
+            return
+        if window is None:
+            return
+        if window != self._get_window():
+            self.focus(window)
+        idx = self.clients.index(window)
+        if idx + 1 < len(self.clients):
+            return self.clients[idx + 1]
+
+    def focus_previous(self, window):
+        if not self.clients:
+            return
+        if window is None:
+            return
+        if window != self._get_window():
+            self.focus(window)
+        idx = self.clients.index(window)
+        if idx > 0:
+            return self.clients[idx - 1]
 
     def up(self):
-        if self.clients:
-            utils.shuffleUp(self.clients)
-            self.group.layoutAll()
-            self.group.focus(self.clients[0], False)
+        client = self.focus_previous(self.current) or self.focus_last()
+        self.group.focus(client, False)
 
     def down(self):
-        if self.clients:
-            utils.shuffleDown(self.clients)
-            self.group.layoutAll()
-            self.group.focus(self.clients[0], False)
+        client = self.focus_next(self.current) or self.focus_first()
+        self.group.focus(client, False)
 
     def clone(self, group):
         c = SingleWindow.clone(self, group)
         c.clients = []
         return c
 
-    def add(self, c):
-        self.clients.insert(0, c)
+    def add(self, client):
+        try:
+            idx = self.clients.index(self._get_window())
+        except ValueError:
+            self.clients.append(client)
+        else:
+            self.clients.insert(idx + 1, client)
 
-    def remove(self, c):
-        self.clients.remove(c)
-        if self.clients:
-            return self.clients[0]
+    def remove(self, client):
+        try:
+            idx = self.clients.index(client)
+        except ValueError:
+            return
+        else:
+            del self.clients[idx]
 
-    def configure(self, c, screen):
-        if self.clients and c is self.clients[0]:
-            c.place(
+        if client is self.current:
+            try:
+                # The previous client must become current
+                # if idx == 0, using self.clients[-1] is indeed correct
+                self.current = self.clients[idx - 1]
+            except IndexError:
+                self.current = None
+
+        return self.current
+
+    def configure(self, client, screen):
+        if self.clients and client is self.current:
+            client.place(
                 screen.x,
                 screen.y,
                 screen.width,
@@ -80,13 +121,13 @@ class Max(SingleWindow):
                 0,
                 None
             )
-            c.unhide()
+            client.unhide()
         else:
-            c.hide()
+            client.hide()
 
     def info(self):
         d = SingleWindow.info(self)
-        d["clients"] = [i.name for i in self.clients]
+        d["clients"] = [x.name for x in self.clients]
         return d
 
     def cmd_down(self):

@@ -1,19 +1,42 @@
-import cairo
+# Copyright (c) 2012 Tim Neumann
+# Copyright (c) 2012, 2014 Tycho Andersen
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2014 Sean Vig
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import os
-from libqtile import bar
-import base
+from . import base
 
 BACKLIGHT_DIR = '/sys/class/backlight'
 
 FORMAT = '{percent: 2.0%}'
 
 
-class Backlight(base._TextBox):
+class Backlight(base.InLoopPollText):
     """
         A simple widget to show the current brightness of a monitor.
     """
 
     filenames = {}
+
+    orientations = base.ORIENTATION_HORIZONTAL
 
     defaults = [
         ('backlight_name', 'acpi_video0', 'ACPI name of a backlight device'),
@@ -29,13 +52,12 @@ class Backlight(base._TextBox):
             'Name of file with the '
             'maximum brightness in /sys/class/backlight/backlight_name'
         ),
-        ('update_delay', .2, 'The delay in seconds between updates'),
+        ('update_interval', .2, 'The delay in seconds between updates'),
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, "LIGHT", bar.CALCULATED, **config)
+        base.InLoopPollText.__init__(self, **config)
         self.add_defaults(Backlight.defaults)
-        self.timeout_add(self.update_delay, self.update)
 
     def _load_file(self, name):
         try:
@@ -57,18 +79,10 @@ class Backlight(base._TextBox):
             return False
         return info
 
-    def _get_text(self):
+    def poll(self):
         info = self._get_info()
         if info is False:
             return 'Error'
 
         percent = info['brightness'] / info['max']
         return FORMAT.format(percent=percent)
-
-    def update(self):
-        if self.configured:
-            ntext = self._get_text()
-            if ntext != self.text:
-                self.text = ntext
-                self.bar.draw()
-        return True

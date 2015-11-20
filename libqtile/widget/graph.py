@@ -1,8 +1,42 @@
-import cairo
+# Copyright (c) 2010 Aldo Cortesi
+# Copyright (c) 2010-2011 Paul Colomiets
+# Copyright (c) 2010, 2014 roger
+# Copyright (c) 2011 Mounier Florian
+# Copyright (c) 2011 Kenji_Takahashi
+# Copyright (c) 2012 Mika Fischer
+# Copyright (c) 2012, 2014-2015 Tycho Andersen
+# Copyright (c) 2012-2013 Craig Barnes
+# Copyright (c) 2013 dequis
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2013 Mickael FALCK
+# Copyright (c) 2014 Sean Vig
+# Copyright (c) 2014 Adi Sieker
+# Copyright (c) 2014 Florian Scherf
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+import cairocffi
 
 from . import base
 from os import statvfs
 import time
+import platform
 
 __all__ = [
     'CPUGraph',
@@ -35,9 +69,11 @@ class _Graph(base._Widget):
         self.add_defaults(_Graph.defaults)
         self.values = [0] * self.samples
         self.maxvalue = 0
-        self.timeout_add(self.frequency, self.update)
         self.oldtime = time.time()
         self.lag_cycles = 0
+
+    def timer_setup(self):
+        self.timeout_add(self.frequency, self.update)
 
     @property
     def graphwidth(self):
@@ -57,7 +93,7 @@ class _Graph(base._Widget):
 
     def draw_line(self, x, y, values):
         step = self.graphwidth / float(self.samples - 1)
-        self.drawer.ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+        self.drawer.ctx.set_line_join(cairocffi.LINE_JOIN_ROUND)
         self.drawer.set_source_rgb(self.graph_color)
         self.drawer.ctx.set_line_width(self.line_width)
         for val in values:
@@ -67,7 +103,7 @@ class _Graph(base._Widget):
 
     def draw_linefill(self, x, y, values):
         step = self.graphwidth / float(self.samples - 2)
-        self.drawer.ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+        self.drawer.ctx.set_line_join(cairocffi.LINE_JOIN_ROUND)
         self.drawer.set_source_rgb(self.graph_color)
         self.drawer.ctx.set_line_width(self.line_width)
         for index, val in enumerate(values):
@@ -119,7 +155,7 @@ class _Graph(base._Widget):
         else:
             raise ValueError("Unknown graph type: %s." % self.type)
 
-        self.drawer.draw(self.offset, self.width)
+        self.drawer.draw(offsetx=self.offset, width=self.width)
 
     def push(self, value):
         if self.lag_cycles > self.samples:
@@ -140,15 +176,18 @@ class _Graph(base._Widget):
         self.lag_cycles = int((newtime - self.oldtime) / self.frequency)
         self.oldtime = newtime
 
-        if self.configured:
-            self.update_graph()
-        return True
+        self.update_graph()
+        self.timeout_add(self.frequency, self.update)
 
     def fullfill(self, value):
         self.values = [value] * len(self.values)
 
 
 class CPUGraph(_Graph):
+    """
+        Display CPU usage graph.
+    """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("core", "all", "Which core to show (all/0/1/2/...)"),
     ]
@@ -162,7 +201,11 @@ class CPUGraph(_Graph):
         self.oldvalues = self._getvalues()
 
     def _getvalues(self):
-        with open('/proc/stat') as file:
+        proc = '/proc/stat'
+        if platform.system() == "FreeBSD":
+            proc = '/compat/linux' + proc
+
+        with open(proc) as file:
             lines = file.readlines()
 
             # default to all cores (first line)
@@ -176,8 +219,10 @@ class CPUGraph(_Graph):
 
                 if not line.startswith("cpu%s" % self.core):
                     raise ValueError("No such core: %s" % self.core)
-
-            name, user, nice, sys, idle, iowait, tail = line.split(None, 6)
+            if platform.system() == 'FreeBSD':
+                name, user, nice, sys, idle = line.split(None, 4)
+            else:
+                name, user, nice, sys, idle, iowait, tail = line.split(None, 6)
 
             return (int(user), int(nice), int(sys), int(idle))
 
@@ -199,16 +244,27 @@ class CPUGraph(_Graph):
 
 
 def get_meminfo():
-    with open('/proc/meminfo') as file:
-        val = {}
+    val = {}
+    proc = '/proc/meminfo'
+    if platform.system() == "FreeBSD":
+        proc = "/compat/linux" + proc
+    with open(proc) as file:
         for line in file:
-            key, tail = line.split(':')
-            uv = tail.split()
-            val[key] = int(uv[0])
+            if line.lstrip().startswith("total"):
+                pass
+            else:
+                key, tail = line.strip().split(':')
+                uv = tail.split()
+                val[key] = int(uv[0])
+    val['MemUsed'] = val['MemTotal'] - val['MemFree']
     return val
 
 
 class MemoryGraph(_Graph):
+    """
+        Displays a memory usage graph.
+    """
+    orientations = base.ORIENTATION_HORIZONTAL
     fixed_upper_bound = True
 
     def __init__(self, **config):
@@ -230,13 +286,17 @@ class MemoryGraph(_Graph):
 
 
 class SwapGraph(_Graph):
+    """
+        Display a swap info graph.
+    """
+    orientations = base.ORIENTATION_HORIZONTAL
     fixed_upper_bound = True
 
     def __init__(self, **config):
         _Graph.__init__(self, **config)
         val = self._getvalues()
         self.maxvalue = val['SwapTotal']
-        swap = val['SwapTotal'] - val['SwapFree'] - val['SwapCached']
+        swap = val['SwapTotal'] - val['SwapFree'] - val.get('SwapCached', 0)
         self.fullfill(swap)
 
     def _getvalues(self):
@@ -245,7 +305,7 @@ class SwapGraph(_Graph):
     def update_graph(self):
         val = self._getvalues()
 
-        swap = val['SwapTotal'] - val['SwapFree'] - val['SwapCached']
+        swap = val['SwapTotal'] - val['SwapFree'] - val.get('SwapCached', 0)
 
         # can change, swapon/off
         if self.maxvalue != val['SwapTotal']:
@@ -255,6 +315,10 @@ class SwapGraph(_Graph):
 
 
 class NetGraph(_Graph):
+    """
+        Display a network usage graph.
+    """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         (
             "interface",
@@ -299,20 +363,26 @@ class NetGraph(_Graph):
 
     @staticmethod
     def get_main_iface():
-        filename = "/proc/net/route"
-        make_route = lambda line: dict(zip(['iface', 'dest'], line.split()))
-        routes = [make_route(line) for line in list(open(filename))[1:]]
+        def make_route(line):
+            return dict(zip(['iface', 'dest'], line.split()))
+        with open('/proc/net/route', 'r') as fp:
+            lines = fp.readlines()
+        routes = [make_route(line) for line in lines[1:]]
         try:
             return next(
                 (r for r in routes if not int(r['dest'], 16)),
                 routes[0]
             )['iface']
-        except:
+        except (KeyError, IndexError, ValueError):
             raise RuntimeError('No valid interfaces available')
 
 
 class HDDGraph(_Graph):
+    """
+        Display HDD free or used space graph.
+    """
     fixed_upper_bound = True
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("path", "/", "Partition mount point."),
         ("space_type", "used", "free/used")
@@ -340,10 +410,11 @@ class HDDGraph(_Graph):
 
 class HDDBusyGraph(_Graph):
     """
-    Parses /sys/block/<dev>/stat file and extracts overall device
-    IO usage, based on `io_ticks`'s value.
-    See https://www.kernel.org/doc/Documentation/block/stat.txt
+        Parses /sys/block/<dev>/stat file and extracts overall device
+        IO usage, based on ``io_ticks``'s value.
+        See https://www.kernel.org/doc/Documentation/block/stat.txt
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("device", "sda", "Block device to display info for")
     ]
@@ -359,7 +430,8 @@ class HDDBusyGraph(_Graph):
     def _getActivity(self):
         try:
             # io_ticks is field number 9
-            io_ticks = int(open(self.path).read().split()[9])
+            with open(self.path) as f:
+                io_ticks = int(f.read().split()[9])
         except IOError:
             return 0
         activity = io_ticks - self._prev

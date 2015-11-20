@@ -1,74 +1,66 @@
-#!/usr/bin/env python
+# Copyright (c) 2013 Jendrik Poloczek
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2014 Aborilov Pavel
+# Copyright (c) 2014 Sean Vig
+# Copyright (c) 2014-2015 Tycho Andersen
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
 # -*- coding: utf-8 -*-
 
-from .. import bar
-import base
-import urllib
-import urllib2
-import gobject
-import threading
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
+from . import base
+from .generic_poll_text import GenPollUrl
+import locale
 
 
-class BitcoinTicker(base._TextBox):
-    ''' A bitcoin ticker widget, data provided by the MtGox API
-        Format options:
-            buy, sell
+class BitcoinTicker(GenPollUrl):
+    '''
+        A bitcoin ticker widget, data provided by the btc-e.com API. Defaults
+        to displaying currency in whatever the current locale is.
     '''
 
-    QUERY_URL = "http://data.mtgox.com/api/1/BTC%s/ticker_fast"
-    currency_code = {'dollar': 'USD', 'euro': 'EUR'}
+    QUERY_URL = "https://btc-e.com/api/2/btc_%s/ticker"
+
+    orientations = base.ORIENTATION_HORIZONTAL
 
     defaults = [
-        ## One of (location, woeid) must be set.
-        (
-            'currency',
-            'dollar',
-            'The currency the value of bitcoin is displayed in'
-        ),
-        ('format', 'BTC Buy: {buy}, Sell: {sell}', 'Display format'),
-        ('update_interval', 600, 'Update interval in seconds')
+        ('currency', locale.localeconv()['int_curr_symbol'].strip(),
+            'The currency the value of bitcoin is displayed in'),
+        ('format', 'BTC Buy: {buy}, Sell: {sell}',
+            'Display format, allows buy, sell, high, low, avg, '
+            'vol, vol_cur, last, variables.'),
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
-
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
+        GenPollUrl.__init__(self, **config)
         self.add_defaults(BitcoinTicker.defaults)
-        self.timeout_add(self.update_interval, self.wx_updater)
 
-    def button_press(self, x, y, button):
-        self.update(self.fetch_data())
+    @property
+    def url(self):
+        return self.QUERY_URL % self.currency.lower()
 
-    def wx_updater(self):
-        self.log.info('adding WX widget timer')
-
-        def worker():
-            data = self.fetch_data()
-            gobject.idle_add(self.update, data)
-        threading.Thread(target=worker).start()
-        return True
-
-    def fetch_data(self):
-        res = urllib2.urlopen(
-            self.QUERY_URL % self.currency_code[self.currency]
-        )
-        raw = json.loads(res.read())
-        data = {
-            'sell': raw['return']['sell']['display'],
-            'buy': raw['return']['buy']['display']
-        }
-        return data
-
-    def update(self, data):
-        if data:
-            self.text = self.format.format(**data)
-        else:
-            self.text = 'N/A'
-        self.bar.draw()
-        return False
+    def parse(self, body):
+        formatted = {}
+        if 'error' in body and body['error'] == "invalid pair":
+            locale.setlocale(locale.LC_MONETARY, "en_US.UTF-8")
+            self.currency = locale.localeconv()['int_curr_symbol'].strip()
+            body = self.fetch(self.url)
+        for k, v in body['ticker'].items():
+            formatted[k] = locale.currency(v)
+        return self.format.format(**formatted)

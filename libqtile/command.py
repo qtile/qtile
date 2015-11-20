@@ -22,7 +22,9 @@ import inspect
 import traceback
 import textwrap
 import os
-import ipc
+
+from . import ipc
+from .utils import get_cache_dir
 
 
 class CommandError(Exception):
@@ -63,10 +65,10 @@ def formatSelector(lst):
 
 
 class _Server(ipc.Server):
-    def __init__(self, fname, qtile, conf):
+    def __init__(self, fname, qtile, conf, eventloop):
         if os.path.exists(fname):
             os.unlink(fname)
-        ipc.Server.__init__(self, fname, self.call)
+        ipc.Server.__init__(self, fname, self.call, eventloop)
         self.qtile = qtile
         self.widgets = {}
         for i in conf.screens:
@@ -80,7 +82,7 @@ class _Server(ipc.Server):
         selectors, name, args, kwargs = data
         try:
             obj = self.qtile.select(selectors)
-        except _SelectError, v:
+        except _SelectError as v:
             e = formatSelector([(v.name, v.sel)])
             s = formatSelector(selectors)
             return (ERROR, "No object %s in path '%s'" % (e, s))
@@ -90,14 +92,14 @@ class _Server(ipc.Server):
         self.qtile.log.info("Command: %s(%s, %s)" % (name, args, kwargs))
         try:
             return (SUCCESS, cmd(*args, **kwargs))
-        except CommandError, v:
+        except CommandError as v:
             return (ERROR, v.args[0])
-        except Exception, v:
+        except Exception as v:
             return (EXCEPTION, traceback.format_exc())
         self.qtile.conn.flush()
 
 
-class _Command:
+class _Command(object):
     def __init__(self, call, selectors, name):
         """
             :command A string command name specification
@@ -217,12 +219,7 @@ def find_sockfile(display=None):
     display = display or os.environ.get('DISPLAY') or ':0.0'
     if '.' not in display:
         display += '.0'
-    cache_directory = os.path.expandvars('$XDG_CACHE_HOME')
-    if cache_directory == '$XDG_CACHE_HOME':
-        # if variable wasn't set
-        cache_directory = os.path.expanduser("~/.cache")
-    if not os.path.exists(cache_directory):
-        os.makedirs(cache_directory)
+    cache_directory = get_cache_dir()
     return os.path.join(cache_directory, SOCKBASE % display)
 
 
@@ -262,7 +259,7 @@ class CommandRoot(_CommandRoot):
             raise CommandException(val)
 
 
-class _Call:
+class _Call(object):
     def __init__(self, selectors, name, *args, **kwargs):
         """
             :command A string command name specification
@@ -276,13 +273,22 @@ class _Call:
         # Conditionals
         self.layout = None
 
-    def when(self, layout=None):
+    def when(self, layout=None, when_floating=True):
         self.layout = layout
+        self.when_floating = when_floating
         return self
 
     def check(self, q):
-        if self.layout and q.currentLayout.name != self.layout:
-            return False
+        if self.layout:
+            if self.layout == 'floating':
+                if q.currentWindow.floating:
+                    return True
+                return False
+            if q.currentLayout.name != self.layout:
+                return False
+            if q.currentWindow and q.currentWindow.floating \
+                    and not self.when_floating:
+                return False
         return True
 
 
@@ -321,7 +327,9 @@ class CommandObject(object):
         """
         ret = self._items(name)
         if ret is None:
-            raise CommandError("Unknown item class: %s" % name)
+            # Not finding information for a particular item class is OK here;
+            # we don't expect layouts to have a window, etc.
+            return ([], [])
         return ret
 
     def _items(self, name):
@@ -400,3 +408,28 @@ class CommandObject(object):
             return self.doc(name)
         else:
             raise CommandError("No such command: %s" % name)
+
+    def cmd_eval(self, code):
+        """
+            Evaluates code in the same context as this function.
+            Return value is (success, result), success being a boolean and
+            result being a string representing the return value of eval, or
+            None if exec was used instead.
+        """
+        try:
+            try:
+                return (True, str(eval(code)))
+            except SyntaxError:
+                exec(code)
+                return (True, None)
+        except:
+            error = traceback.format_exc().strip().split("\n")[-1]
+            return (False, error)
+
+    def cmd_function(self, function, *args, **kwargs):
+        """Call a function with current object as argument"""
+        try:
+            function(self, *args, **kwargs)
+        except Exception:
+            error = traceback.format_exc()
+            self.log.error('Exception calling "%s":\n%s' % (function, error))

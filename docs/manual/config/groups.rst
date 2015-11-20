@@ -1,3 +1,4 @@
+======
 Groups
 ======
 
@@ -21,7 +22,7 @@ and various other options.
 .. autofunction:: libqtile.dgroups.simple_key_binder
 
 Example
-~~~~~~~
+=======
 
 ::
 

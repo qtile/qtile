@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # coding: utf-8
 #
 # Copyright (c) 2008, Aldo Cortesi <aldo@corte.si>
@@ -26,8 +25,8 @@
 
 import os
 import sys
-import utils
 import traceback
+import logging
 
 
 class ConfigError(Exception):
@@ -42,25 +41,33 @@ class File(object):
                 # if variable wasn't set
                 config_directory = os.path.expanduser("~/.config")
             fname = os.path.join(config_directory, "qtile", "config.py")
-        elif fname == "default":
-            fname = utils.data.path("resources/default_config.py")
 
-        self.fname = fname
+        # We delay importing here to avoid a circular import issue when
+        # testing.
+        from .resources import default_config
 
-        if os.path.isfile(fname):
+        if fname == "default":
+            config = default_config
+        elif os.path.isfile(fname):
             try:
-                sys.path.insert(0, os.path.dirname(self.fname))
-                config = __import__(os.path.basename(self.fname)[:-3])
-            except Exception, v:
+                sys.path.insert(0, os.path.dirname(fname))
+                config = __import__(os.path.basename(fname)[:-3])
+            except Exception as v:
+
+                tb = traceback.format_exc()
+
                 # On restart, user potentially has some windows open, but they
                 # screwed up their config. So as not to lose their apps, we
                 # just load the default config here.
                 if is_restart:
-                    traceback.print_exc()
+                    logging.getLogger('qtile').warning(
+                        'Caught exception in configuration:\n\n'
+                        '{}\n\n'
+                        'Qtile restarted with default config'.format(tb)
+                    )
                     config = None
                 else:
-                    tb = traceback.format_exc()
-                    raise ConfigError(str(v) + "\n\n" + tb)
+                    raise ConfigError(tb)
         else:
             config = None
 
@@ -81,11 +88,9 @@ class File(object):
             "auto_fullscreen",
             "widget_defaults",
             "bring_front_click",
+            "wmname",
         ]
 
-        # We delay importing here to avoid a circular import issue when
-        # testing.
-        from resources import default_config
         for option in config_options:
             if hasattr(config, option):
                 v = getattr(config, option)

@@ -1,12 +1,46 @@
-from base import Layout
-from .. import manager, window
+# Copyright (c) 2010 matt
+# Copyright (c) 2010-2011 Paul Colomiets
+# Copyright (c) 2011 Mounier Florian
+# Copyright (c) 2012 Craig Barnes
+# Copyright (c) 2012, 2014-2015 Tycho Andersen
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2013 Julien Iguchi-Cartigny
+# Copyright (c) 2014 ramnes
+# Copyright (c) 2014 Sean Vig
+# Copyright (c) 2014 dequis
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+from .base import Layout
+from .. import window
 
 DEFAULT_FLOAT_WM_TYPES = set([
     'utility',
     'notification',
     'toolbar',
     'splash',
+    'dialog',
 ])
+
+DEFAULT_FLOAT_RULES = [
+    {"role": "About"},
+]
 
 
 class Floating(Layout):
@@ -49,7 +83,7 @@ class Floating(Layout):
         Layout.__init__(self, **config)
         self.clients = []
         self.focused = None
-        self.float_rules = float_rules or []
+        self.float_rules = float_rules or DEFAULT_FLOAT_RULES
         self.add_defaults(Floating.defaults)
 
     def match(self, win):
@@ -78,21 +112,15 @@ class Floating(Layout):
             offset_x = win._float_info['x']
             offset_y = win._float_info['y']
 
-            if offset_x > 0:
-                new_x = new_screen.x + offset_x
-            else:
-                new_x = new_screen.x + i * 10
-            if offset_y > 0:
-                new_y = new_screen.y + offset_y
-            else:
-                new_y = new_screen.y + i * 10
+            new_x = new_screen.x + offset_x
+            new_y = new_screen.y + offset_y
 
             right_edge = new_screen.x + new_screen.width
             bottom_edge = new_screen.y + new_screen.height
             while new_x > right_edge:
-                new_x = (new_x - new_screen.x) / 2
+                new_x = (new_x - new_screen.x) // 2
             while new_y > bottom_edge:
-                new_y = (new_y - new_screen.y) / 2
+                new_y = (new_y - new_screen.y) // 2
             win.x = new_x
             win.y = new_y
             win.group = new_screen.group
@@ -102,6 +130,8 @@ class Floating(Layout):
             return self.clients[0]
 
     def focus_next(self, win):
+        if win not in self.clients:
+            return
         idx = self.clients.index(win)
         if len(self.clients) > idx + 1:
             return self.clients[idx + 1]
@@ -110,52 +140,67 @@ class Floating(Layout):
         if self.clients:
             return self.clients[-1]
 
-    def focus_prev(self, win):
+    def focus_previous(self, win):
+        if win not in self.clients:
+            return
         idx = self.clients.index(win)
         if idx > 0:
             return self.clients[idx - 1]
 
-    def focus(self, c):
-        self.focused = c
+    def focus(self, client):
+        self.focused = client
 
     def blur(self):
         self.focused = None
 
-    def configure(self, c, screen):
-        if c is self.focused:
+    def configure(self, client, screen):
+        if client is self.focused:
             bc = self.group.qtile.colorPixel(self.border_focus)
         else:
             bc = self.group.qtile.colorPixel(self.border_normal)
-        if c.maximized:
+        if client.maximized:
             bw = self.max_border_width
-        elif c.fullscreen:
+        elif client.fullscreen:
             bw = self.fullscreen_border_width
         else:
             bw = self.border_width
-        c.place(
-            c.x,
-            c.y,
-            c.width,
-            c.height,
+        client.place(
+            client.x,
+            client.y,
+            client.width,
+            client.height,
             bw,
             bc
         )
-        c.unhide()
+        client.unhide()
 
     def clone(self, group):
         c = Layout.clone(self, group)
         c.clients = []
         return c
 
-    def add(self, c):
-        self.clients.append(c)
+    def add(self, client):
+        self.clients.append(client)
+        self.focused = client
 
-    def remove(self, c):
-        res = self.focus_next(c)
-        self.clients.remove(c)
-        return res
+    def remove(self, client):
+        if client not in self.clients:
+            return
+        self.focused = self.focus_next(client)
+        self.clients.remove(client)
+        return self.focused
 
     def info(self):
         d = Layout.info(self)
-        d["clients"] = [i.name for i in self.clients]
+        d["clients"] = [x.name for x in self.clients]
         return d
+
+    def cmd_next(self):
+        client = self.focus_next(self.focused) or \
+            self.focus_first()
+        self.group.focus(client)
+
+    def cmd_previous(self):
+        client = self.focus_previous(self.focused) or \
+            self.focus_last()
+        self.group.focus(client)

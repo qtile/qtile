@@ -1,15 +1,41 @@
+# Copyright (c) 2011 Florian Mounier
+# Copyright (c) 2011 Mounier Florian
+# Copyright (c) 2012 roger
+# Copyright (c) 2012-2014 Tycho Andersen
+# Copyright (c) 2012-2013 Craig Barnes
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2014 Sean Vig
+# Copyright (c) 2014 Adi Sieker
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 # -*- coding: utf-8 -*-
-import sys
-
-from .. import bar, drawer, utils
+from . import base
+from .. import bar, utils, pangocffi
 from libqtile.notify import notifier
-import base
-
+from os import path
 
 class Notify(base._TextBox):
     """
-        An notify widget
+        A notify widget.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("foreground_urgent", "ff0000", "Foreground urgent priority colour"),
         ("foreground_low", "dddddd", "Foreground low priority  colour"),
@@ -18,6 +44,7 @@ class Notify(base._TextBox):
             None,
             "Default timeout (seconds) for notifications"
         ),
+        ("audiofile", None, "Audiofile played during notifications"),
     ]
 
     def __init__(self, width=bar.CALCULATED, **config):
@@ -38,7 +65,7 @@ class Notify(base._TextBox):
         )
 
     def set_notif_text(self, notif):
-        self.text = utils.escape(notif.summary)
+        self.text = pangocffi.markup_escape_text(notif.summary)
         urgency = notif.hints.get('urgency', 1)
         if urgency != 1:
             self.text = '<span color="%s">%s</span>' % (
@@ -50,10 +77,15 @@ class Notify(base._TextBox):
             )
         if notif.body:
             self.text = '<span weight="bold">%s</span> - %s' % (
-                self.text, utils.escape(notif.body)
+                self.text, pangocffi.markup_escape_text(notif.body)
             )
+        if self.audiofile and path.exists(self.audiofile):
+            self.qtile.cmd_spawn("aplay -q '%s'" % self.audiofile)
 
     def update(self, notif):
+        self.qtile.call_soon_threadsafe(self.real_update, notif)
+
+    def real_update(self, notif):
         self.set_notif_text(notif)
         self.current_id = notif.id - 1
         if notif.timeout and notif.timeout > 0:

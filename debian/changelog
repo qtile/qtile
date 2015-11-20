@@ -1,56 +1,5 @@
-qtile (0.6.0-saucy2) saucy; urgency=low
+qtile (0.9.1-1) unstable; urgency=low
 
-  * Take TODO out of debian docs
+  * Initial release.
 
- -- Tycho Andersen <tycho@tycho.ws>  Sat, 07 Sept 2013 23:14:59 -0500
-
-qtile (0.6.0-saucy1) saucy; urgency=low
-
-  * Version bump for saucy salamander
-
- -- Tycho Andersen <tycho@tycho.ws>  Sat, 07 Sept 2013 20:27:59 -0500
-
-qtile (0.5.0-raring1) raring; urgency=low
-
-  * Version bump for new verison of ubuntu
-
- -- Tycho Andersen <tycho@tycho.ws>  Fri, 01 Mar 2013 16:46:59 -0500
-
-qtile (0.5.0-quantal1) quantal; urgency=low
-
-  * Upgrade to the 0.5 release
-
- -- Tycho Andersen <tycho@tycho.ws>  Sun, 11 Nov 2012 16:46:59 -0500
-
-qtile (0.5alpha1-quantal5) quantal; urgency=low
-
-  * Really depend on xpyb instead of xpybng.
-  * Depend on python-setuptools.
-  * Deploy RST versions of docs.
-
- -- Tycho Andersen <tycho@tycho.ws>  Fri, 19 Oct 2012 16:46:59 -0500
-
-qtile (0.5alpha1-quantal2) quantal; urgency=low
-
-  * Depend on xpyb instead of xpybng.
-
- -- Tycho Andersen <tycho@tycho.ws>  Fri, 19 Oct 2012 15:52:59 -0500
-
-qtile (0.5alpha1-quantal1) quantal; urgency=low
-
-  * Moved to the develop branch of qtile, which has lots of bugfixes and
-    improvements.
-
- -- Tycho Andersen <tycho@tycho.ws>  Fri, 19 Oct 2012 15:45:08 -0500
-
-qtile (0.5alpha-precise1) precise; urgency=low
-
-  * Version bump for precise
-
- -- Tycho Andersen <tycho@tycho.ws>  Thu, 16 Feb 2012 20:24:20 -0600
-
-qtile (0.5alpha-oneiric4) oneiric; urgency=low
-
-  * Initial release
-
- -- Tycho Andersen <tycho@tycho.ws>  Thu, 16 Feb 2012 20:24:20 -0600
+ -- Tycho Andersen <tycho@tycho.ws>  Tue, 20 Jan 2015 18:10:02 +1300

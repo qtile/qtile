@@ -1,8 +1,32 @@
+# Copyright (c) 2011 Mounier Florian
+# Copyright (c) 2011, 2014 Tycho Andersen
+# Copyright (c) 2012-2013 Craig Barnes
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2014 Sean Vig
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 import dbus
 
 from dbus.mainloop.glib import DBusGMainLoop
 
-import base
+from . import base
 from .. import bar
 
 
@@ -12,10 +36,25 @@ class Mpris(base._TextBox):
     player. It should work with all players which implement a reasonably
     correct version of MPRIS, though I have only tested it with clementine.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
 
     def __init__(self, name="clementine", width=bar.CALCULATED,
                  objname='org.mpris.clementine', **config):
         base._TextBox.__init__(self, " ", width, **config)
+
+        self.dbus_loop = None
+
+        self.objname = objname
+        self.connected = False
+        self.name = name
+
+    def _configure(self, qtile, bar):
+        base._TextBox._configure(self, qtile, bar)
+
+        # we don't need to reconnect all the dbus stuff if we already
+        # connected it.
+        if self.dbus_loop is not None:
+            return
 
         # we need a main loop to get event signals
         # we just piggyback on qtile's main loop
@@ -32,13 +71,8 @@ class Mpris(base._TextBox):
             self.handle_name_owner_change
         )
 
-        self.objname = objname
-        self.connected = False
-        self.name = name
-
         # try to connect for grins
         self._connect()
-        self.timeout_add(1, self.update)
 
     def _connect(self):
         """ Try to connect to the player if it exists. """
@@ -60,6 +94,7 @@ class Mpris(base._TextBox):
             )
             self.connected = True
         except dbus.exceptions.DBusException:
+            self.qtile.log.exception("exception initalizing mpris")
             self.connected = False
 
     def handle_track_change(self, metadata):
@@ -96,10 +131,14 @@ class Mpris(base._TextBox):
 
     @ensure_connected
     def update(self):
+        self.qtile.call_soon_threadsafe(self.real_update)
+
+    @ensure_connected
+    def real_update(self):
         if not self.configured:
-            return True
+            playing = 'Not configured'
         if not self.connected:
-            playing = ''
+            playing = 'Not Connected'
         elif not self.is_playing():
             playing = 'Stopped'
         else:

@@ -1,4 +1,163 @@
-qtile 0.7, released 2014-MM-DD:
+qtile x.x.x, released xxxx-xx-xx:
+    * features
+        - add BSD support to graph widgets
+    * bugfixes
+        - fix displaying Systray widget on secondary monitor
+        - fix spawn file descriptor handling in Python 3
+
+qtile 0.10.2, released 2015-10-19:
+    * features
+        - add qtile-top memory monitoring
+        - GroupBox can set visible groups
+        - new GroupBox highlighting, line
+        - allow window state to be hidden on WindowName widget
+        - cmd_togroup can move to current group when None sent
+        - added MOC playback widget
+        - added memory usage widget
+        - log truncation, max log size, and number of log backups configurable
+        - add a command to change to specific layout index
+          (lazy.to_layout_index(index))
+    * bugfixes
+        - fixed memory leak in dgroups
+        - margin fixes for MonalTall layout
+        - improved cursor warp
+        - remove deprecated imp for Python >= 3.3
+        - properly close file for NetGraph
+        - fix MondadTall layout grow/shrink secondary panes for Python 2
+        - Clock widget uses datetime.now() rather than .fromtimestamp()
+        - fix Python 3 compatibility of ThermalSensor widget
+        - various Systray fixes, including implementing XEMBED protocol
+        - print exception to log during loading config
+        - fixed xmonad layout margins between main and secondary panes
+        - clear last window name from group widgets when closed
+        - add toggleable window border to single xmonad layout
+    * config breakage
+        - layouts.VerticalTile `windows` is now `clients`
+        - layouts.VerticalTile focus_next/focus_previous now take a single
+          argument, similar to other layouts
+
+qtile 0.10.1, released 2015-07-08:
+    This release fixes a problem that made the PyPI package uninstallable,
+    qtile will work with a pip install now
+
+qtile 0.10.0, released 2015-07-07:
+    !!! Config breakage !!!
+        - various deprecated commands have been removed:
+            Screen.cmd_nextgroup: use cmd_next_group
+            Screen.cmd_prevgroup: use cmd_prev_group
+            Qtile.cmd_nextlayout: use cmd_next_layout
+            Qtile.cmd_prevlayout: use cmd_prev_layout
+            Qtile.cmd_to_next_screen: use cmd_next_screen
+            Qtile.cmd_to_prev_screen: use cmd_prev_screen
+        - Clock widget: remove fmt kwarg, use format kwarg
+        - GmailChecker widget: remove settings parameter
+        - Maildir widget: remove maildirPath, subFolders, and separator kwargs
+    * Dependency updates
+        - cffi>=1.1 is now required, along with xcffib>=0.3 and cairocffi>=0.7
+          (the cffi 1.0 compatible versions of each)
+        - Care must be taken that xcffib is installed *before* cairocffi
+    * features
+        - add support for themed cursors using xcb-cursor if available
+        - add CheckUpdate widget, for checking package updates, this deprecates
+          the Pacman widget
+        - add KeyboardKbdd widget, for changing keyboard layouts
+        - add Cmus widget, for showing song playing in cmus
+        - add Wallpaper widget, for showing and cycling wallpaper
+        - add EzConfig classes allowing shortcuts to define key bindings
+        - allow GroupBox urgent highlighting through text
+        - Bar can be placed vertically on sides of screens (widgets must be
+          adapted for vertical viewing)
+        - add recognizing brightness keys
+    * bugfixes
+        - deprecation warnings were not printing to logs, this has been fixed
+        - fix calculation of y property of Gap
+        - fix focus after closing floating windows and floating windows
+        - fix various Python 3 related int/float problems
+        - remember screen focus across restarts
+        - handle length 1 list passed to Drawer.set_source_rgb without raising
+          divide by zero error
+        - properly close files opened in Graph widget
+        - handle _NET_WM_STATE_DEMANDS_ATTENTION as setting urgency
+        - fix get_wm_transient_for, request WINDOW, not ATOM
+
+qtile 0.9.1, released 2015-02-13:
+    This is primarily a unicode bugfix release for 0.9.0; there were several
+    nits related to the python2/3 unicode conversion that were simply wrong.
+    This release also adds license headers to each file, which is necessary for
+    distro maintainers to package Qtile.
+    * bugfixes
+        - fix python2's importing of gobject
+        - fix unicode handling in several places
+
+qtile 0.9.0, released 2015-01-20:
+    * !!! Dependency Changes !!!
+      New dependencies will need to be installed for qtile to work
+        - drop xpyb for xcffib (XCB bindings)
+        - drop py2cairo for cairocffi (Cairo bindings)
+        - drop PyGTK for asyncio (event loop, pangocairo bindings managed
+          internally)
+        - qtile still depends on gobject if you want to use anything that uses
+          dbus (e.g. the mpris widgets or the libnotify widget)
+    * features
+        - add Python 3 and pypy support (made possible by dependency changes)
+        - new layout for vertical monitors
+        - add startup_once hook, which is called exactly once per session (i.e.
+          it is not called when qtile is restarted via lazy.restart()). This
+          eliminates the need for the execute_once() function found in lots of
+          user configs.
+        - add a command for showing/hiding the bar (lazy.hide_show_bar())
+        - warn when a widget's dependencies cannot be imported
+        - make qtile.log more useful via better warnings in general, including
+          deprecation and various other warnings that were previously
+          nonexistent
+        - new text-polling widget super classes, which enable easy
+          implementation of various widgets that need to poll things outside
+          the event loop.
+        - add man pages
+        - large documentation update, widget/layout documentation is now
+          autogenerated from the docstrings
+        - new ImapWidget for checking imap mailboxes
+    * bugfixes
+        - change default wmname to "LG3D" (this prevents some java apps from
+          not working out of the box)
+        - all code passes flake8
+        - default log level is now WARNING
+        - all widgets now use our config framework
+        - windows with the "About" role float by default
+        - got rid of a bunch of unnecessary bare except: clauses
+
+qtile 0.8.0, released 2014-08-18:
+    * features
+        - massive widget/layout documentation update
+        - new widget debuginfo for use in qtile development
+        - stack has new autosplit, fair options
+        - matrix, ratiotile, stack, xmonad, zoomy get 'margin' option
+        - new launchbar widget
+        - support for matching WM_CLASS and pid in Match
+        - add support for adding dgroups rules dynamically and via ipc
+        - Clock supports non-system timezones
+        - new mpris2 widget
+        - volume widget can use emoji instead of numbers
+        - add an 'eval' function to qsh at every object level
+        - bar gradients support more colors
+        - new Clipboard widget (very handy!)
+    * bugfixes
+        - bitcoin ticker widget switched from MtGox (dead) to btc-e
+        - all widgets now use qtile's defaults system, so their defaults are
+          settable globally, etc.
+        - fix behavior when screens are cloned
+        - all widgets use a unified polling framework
+        - "dialog" WM_TYPEs float by default
+        - respect xrandr --primary
+        - use a consistent font size in the default config
+        - default config supports mouse movements and floating
+        - fix a bug where the bar was not redrawn correctly in some multiscreen
+          environments
+        - add travis-ci support and make tests vastly more robust
+    * config breakage
+        - libqtile.layout.Stack's `stacks` parameter is now `num_stacks`
+
+qtile 0.7.0, released 2014-03-30:
     * features
         - new disk free percentage widget
         - new widget to display static image
@@ -7,12 +166,22 @@ qtile 0.7, released 2014-MM-DD:
         - volume widget changes volume linear-ly instead of log-ly
         - only draw bar when idle, vastly reducing the number of bar draws and
           speeding things up
+        - new Gmail widget
+        - Tile now supports automatically managing master windows via the
+          `master_match` parameter.
+        - include support for minimum height, width, size increment hints
     * bugfixes
         - don't crash on any exception in main loop
         - don't crash on exceptions in hooks
-        - CPU widget lag detection doesn't lag
         - fix a ZeroDivisionError in CPU graph
         - remove a lot of duplicate and unused code
+        - Steam windows are placed more correctly
+        - Fixed several crashes in qsh
+        - performance improvements for some layouts
+        - keyboard layout widget behaves better with multiple keyboard
+          configurations
+    * config breakage
+        - Tile's shuffleMatch is renamed to resetMaster
 
 qtile 0.6, released 2013-05-11:
     !!! Config breakage !!!
@@ -111,6 +280,6 @@ qtile 0.5, released 2012-11-11:
         - All unit tests pass
         - Lots of bugfixes to MonadTall
         - Create IPC socket directory if necessary
-        - Better error if two widgets have STRETCH width
+        - Better error if two widgets have STRETCH length
         - Autofloat window classes can now be overridden
         - xkeysyms updated

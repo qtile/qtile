@@ -1,0 +1,20 @@
+To build in a virtual environment (requires the 'virtualenv', 'pip' and 'graphiz' tools
+installed in your distro):
+
+$ cd ./docs
+$ virtualenv qtile
+$ source qtile/bin/activate
+$ pip install -r requirements.txt
+$ make html
+$ deactivate
+
+===============================================================================
+
+To build on Ubuntu:
+
+$ sudo apt-get install python-sphinxcontrib.seqdiag graphiz
+
+Install: https://github.com/:snide/sphinx_rtd_theme
+
+$ cd ./docs
+$ make html

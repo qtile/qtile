@@ -30,20 +30,29 @@ class Configurable(object):
         """
             Add defaults to this object, overwriting any which already exist.
         """
-        for (prop, value, _) in defaults:
-            self._widget_defaults[prop] = value
+        self._widget_defaults.update(dict((d[0], d[1]) for d in defaults))
 
     def __getattr__(self, name):
-        try:
-            return self._user_config[name]
-        except KeyError:
-            try:
-                return self.global_defaults[name]
-            except KeyError:
-                try:
-                    return self._widget_defaults[name]
-                except KeyError:
-                    raise AttributeError("no attribute: %s" % name)
+        if name == "_widget_defaults":
+            raise AttributeError
+        found, value = self._find_default(name)
+        if found:
+            setattr(self, name, value)
+            return value
+        else:
+            cname = self.__class__.__name__
+            raise AttributeError("%s has no attribute: %s" % (cname, name))
+
+    def _find_default(self, name):
+        """Returns a tuple (found, value)"""
+        defaults = self._widget_defaults.copy()
+        defaults.update(self.global_defaults)
+        defaults.update(self._user_config)
+        if name in defaults:
+            return (True, defaults[name])
+        else:
+            return (False, None)
+
 
 class ExtraFallback(object):
     """
@@ -53,14 +62,20 @@ class ExtraFallback(object):
 
     def __init__(self, name, fallback):
         self.name = name
+        self.hidden_attribute = "_" + name
         self.fallback = fallback
 
     def __get__(self, instance, owner=None):
-        try:
-            retval = Configurable.__getattr__(instance, self.name)
-        except AttributeError:
-            retval = None
+        retval = getattr(instance, self.hidden_attribute, None)
 
-        if retval is None:
-            retval = Configurable.__getattr__(instance, self.fallback)
+        if not retval:
+            _found, retval = Configurable._find_default(instance, self.name)
+
+        if not retval:
+            retval = getattr(instance, self.fallback, None)
+
         return retval
+
+    def __set__(self, instance, value):
+        """Set own value to a hidden attribute of the object"""
+        setattr(instance, self.hidden_attribute, value)

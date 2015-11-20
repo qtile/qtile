@@ -1,42 +1,56 @@
+# Copyright (c) 2013 Jacob Mourelos
+# Copyright (c) 2014 Shepilov Vladislav
+# Copyright (c) 2014-2015 Sean Vig
+# Copyright (c) 2014 Tycho Andersen
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+import re
 import subprocess
 from subprocess import CalledProcessError
-import base
-from .. import bar
+
+from . import base
 
 
-class KeyboardLayout(base._TextBox):
+kb_regex = re.compile('layout\:\s+(?P<layout>\w+)')
+
+
+class KeyboardLayout(base.InLoopPollText):
     """
         Widget for changing and displaying the current keyboard layout.
-        It requires setxkbmap to be available in the sytem.
+        It requires setxkbmap to be available in the system.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("update_interval", 1, "Update time in seconds."),
+        ("configured_keyboards", ["us"], "A list of predefined keyboard layouts "
+            "represented as strings. For example: "
+            "['us', 'us colemak', 'es', 'fr']."),
     ]
 
-    def __init__(self, configured_keyboards=['us'],
-                 width=bar.CALCULATED, **config):
-        """
-            :configured_keyboards A list of predefined keyboard layouts
-            represented as strings. For example: ['us', 'us colemak', 'es', 'fr'].
-        """
-        base._TextBox.__init__(self, "", width, **config)
+    def __init__(self, **config):
+        base.InLoopPollText.__init__(self, **config)
         self.add_defaults(KeyboardLayout.defaults)
-        self.configured_keyboards = configured_keyboards
-        self.text = self._get_keyboard()
-
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
-        self.text = self._get_keyboard()
-        self.timeout_add(self.update_interval, self.update)
 
     def button_press(self, x, y, button):
         if button == 1:
             self.next_keyboard()
-
-    def update(self):
-        self.text = self._get_keyboard()
-        self.bar.draw()
-        return True
 
     def next_keyboard(self):
         """
@@ -54,68 +68,45 @@ class KeyboardLayout(base._TextBox):
                 len(self.configured_keyboards)]
         else:
             next_keyboard = self.configured_keyboards[0]
-        self._set_keyboard(next_keyboard)
+        self.keyboard = next_keyboard
 
-    def _get_keyboard(self):
+    def poll(self):
+        return self.keyboard.upper()
+
+    def get_keyboard_layout(self, setxkbmap_output):
+        matches = kb_regex.search(setxkbmap_output)
+        if matches is None:
+            return 'ERR'
+        return matches.group('layout')
+
+    @property
+    def keyboard(self):
         """
             Return the currently used keyboard layout as a string.
             Examples: "us", "us dvorak".
             In case of error returns "unknown".
         """
         try:
-            setxkbmap_out = subprocess.check_output(['setxkbmap', '-query'])
-            keyboard = _Keyboard().from_setxkbmap_query(setxkbmap_out)
-            return keyboard.__str__()
+            command = 'setxkbmap -verbose 10'
+            setxkbmap_output = self.call_process(command.split(' '))
+            keyboard = self.get_keyboard_layout(setxkbmap_output)
+            return str(keyboard)
         except CalledProcessError as e:
-            self.log.error('Can not change the keyboard layout: {0}'
-                           .format(e))
+            self.log.error('Can not get the keyboard layout: {0}'.format(e))
         except OSError as e:
-            self.log.error('Please, check that setxkbmap is available: {0}'
-                           .format(e))
+            self.log.error('Please, check that xset is available: {0}'.format(e))
         return "unknown"
 
-    def _set_keyboard(self, keyboard):
+    @keyboard.setter
+    def keyboard(self, keyboard):
         command = ['setxkbmap']
         command.extend(keyboard.split(" "))
         try:
             subprocess.check_call(command)
         except CalledProcessError as e:
-            self.log.error('Can not change the keyboard layout: {0}'
-                           .format(e))
+            self.log.error('Can not change the keyboard layout: {0}'.format(e))
         except OSError as e:
-            self.log.error('Please, check that setxkbmap is available: {0}'
-                           .format(e))
+            self.log.error('Please, check that setxkbmap is available: {0}'.format(e))
 
-
-class _Keyboard(object):
-    """
-        Canonical representation of a keyboard layout. It provides some utility
-        methods to build/transform it from/to some other representations.
-    """
-    def __init__(self):
-        pass
-
-    def __str__(self):
-        if not self.variant:
-            return self.layout
-        else:
-            return self.layout + " " + self.variant
-
-    def from_dict(self, dictionary):
-        """
-            Accept a dict containing as keys the layout and variant of a
-            keyboard layout.
-        """
-        self.layout = dictionary['layout']
-        self.variant = dictionary.get('variant')
-        return self
-
-    def from_setxkbmap_query(self, setxkbmap_out):
-        """
-            Accept a setxkbmap query represented as a string.
-        """
-        return self.from_dict(
-            dict((a, b.strip()) for a, b in
-                 (item.split(":") for item in
-                  setxkbmap_out.splitlines()))
-            )
+    def cmd_next_keyboard(self):
+        self.next_keyboard()

@@ -1,7 +1,40 @@
-import cairo
+# Copyright (c) 2011 matt
+# Copyright (c) 2011 Paul Colomiets
+# Copyright (c) 2011-2014 Tycho Andersen
+# Copyright (c) 2012 dmpayton
+# Copyright (c) 2012 hbc
+# Copyright (c) 2012 Tim Neumann
+# Copyright (c) 2012 uberj
+# Copyright (c) 2012-2013 Craig Barnes
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2014 Sean Vig
+# Copyright (c) 2014 dequis
+# Copyright (c) 2014 Sebastien Blot
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+from __future__ import division
+
+import cairocffi
 import os
 from libqtile import bar
-import base
+from . import base
 
 BAT_DIR = '/sys/class/power_supply'
 CHARGED = 'Full'
@@ -24,7 +57,7 @@ def default_icon_path():
 
 
 class _Battery(base._TextBox):
-    ''' Base battery class '''
+    """Base battery class"""
 
     filenames = {}
 
@@ -54,7 +87,7 @@ class _Battery(base._TextBox):
             'Name of file with the current'
             ' power draw in /sys/class/power_supply/battery_name'
         ),
-        ('update_delay', 1, 'The delay in seconds between updates'),
+        ('update_delay', 60, 'The delay in seconds between updates'),
     ]
 
     def __init__(self, **config):
@@ -74,24 +107,30 @@ class _Battery(base._TextBox):
             self.log.exception("Failed to get %s" % name)
 
     def _get_param(self, name):
-        if name in self.filenames:
+        if name in self.filenames and self.filenames[name]:
             return self._load_file(self.filenames[name])
-        else:
-            ## Don't have the file name cached, figure it out
-            file_list = BATTERY_INFO_FILES.get(name, [])
+        elif name not in self.filenames:
+            # Don't have the file name cached, figure it out
+
+            # Don't modify the global list! Copy with [:]
+            file_list = BATTERY_INFO_FILES.get(name, [])[:]
+
             if getattr(self, name, None):
-                ## If a file is manually specified, check it first
+                # If a file is manually specified, check it first
                 file_list.insert(0, getattr(self, name))
 
-            ## Iterate over the possibilities, and return the first valid value
+            # Iterate over the possibilities, and return the first valid value
             for file in file_list:
                 value = self._load_file(file)
                 if not (value in (False, None)):
                     self.filenames[name] = file
                     return value
 
-        ## If we made it this far, we don't have a valid file. Just return 0.
-        return 0
+        # If we made it this far, we don't have a valid file.
+        # Set it to None to avoid trying the next time.
+        self.filenames[name] = None
+
+        return None
 
     def _get_info(self):
         try:
@@ -110,40 +149,48 @@ class Battery(_Battery):
     """
         A simple but flexible text-based battery widget.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('low_foreground', 'FF0000', 'font color when battery is low'),
-        (
-            'format',
-            '{char} {percent:2.0%} {hour:d}:{min:02d}',
-            'Display format'
-        ),
         ('charge_char', '^', 'Character to indicate the battery is charging'),
-        (
-            'discharge_char',
-            'V',
-            'Character to indicate the battery'
-            ' is discharging'
-        ),
-        (
-            'low_percentage',
-            0.10,
-            "0 < x < 1 at which to indicate battery is low with low_foreground"
-        ),
+        ('discharge_char',
+         'V',
+         'Character to indicate the battery is discharging'
+         ),
+        ('error_message', 'Error', 'Error message if something is wrong'),
+        ('format',
+         '{char} {percent:2.0%} {hour:d}:{min:02d}',
+         'Display format'
+         ),
         ('hide_threshold', None, 'Hide the text when there is enough energy'),
+        ('low_percentage',
+         0.10,
+         "Indicates when to use the low_foreground color 0 < x < 1"
+         ),
+        ('low_foreground', 'FF0000', 'Font color on low battery'),
     ]
 
     def __init__(self, **config):
         _Battery.__init__(self, **config)
         self.add_defaults(Battery.defaults)
-        self.timeout_add(self.update_delay, self.update)
-        self.update()
+
+    def timer_setup(self):
+        update_delay = self.update()
+        if update_delay is None and self.update_delay is not None:
+            self.timeout_add(self.update_delay, self.timer_setup)
+        elif update_delay:
+            self.timeout_add(update_delay, self.timer_setup)
+
+    def _configure(self, qtile, bar):
+        if self.configured:
+            self.update()
+        _Battery._configure(self, qtile, bar)
 
     def _get_text(self):
         info = self._get_info()
         if info is False:
-            return 'Error'
+            return self.error_message
 
-        ## Set the charging character
+        # Set the charging character
         try:
             # hide the text when it's higher than threshold, but still
             # display `full` when the battery is fully charged.
@@ -163,7 +210,7 @@ class Battery(_Battery):
         except ZeroDivisionError:
             time = -1
 
-        ## Calculate the battery percentage and time left
+        # Calculate the battery percentage and time left
         if time >= 0:
             hour = int(time)
             min = int(time * 60) % 60
@@ -184,17 +231,16 @@ class Battery(_Battery):
         )
 
     def update(self):
-        if self.configured:
-            ntext = self._get_text()
-            if ntext != self.text:
-                self.text = ntext
-                self.bar.draw()
-        return True
+        ntext = self._get_text()
+        if ntext != self.text:
+            self.text = ntext
+            self.bar.draw()
 
 
 class BatteryIcon(_Battery):
-    ''' Battery life indicator widget '''
+    """Battery life indicator widget."""
 
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('theme_path', default_icon_path(), 'Path of the icons'),
         ('custom_icons', {}, 'dict containing key->filename icon map'),
@@ -205,8 +251,8 @@ class BatteryIcon(_Battery):
         self.add_defaults(BatteryIcon.defaults)
 
         if self.theme_path:
-            self.width_type = bar.STATIC
-            self.width = 0
+            self.length_type = bar.STATIC
+            self.length = 0
         self.surfaces = {}
         self.current_icon = 'battery-missing'
         self.icons = dict([(x, '{0}.png'.format(x)) for x in (
@@ -222,7 +268,10 @@ class BatteryIcon(_Battery):
             'battery-full-charged',
         )])
         self.icons.update(self.custom_icons)
-        self.timeout_add(self.update_delay, self.update)
+
+    def timer_setup(self):
+        self.update()
+        self.timeout_add(self.update_delay, self.timer_setup)
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
@@ -251,48 +300,46 @@ class BatteryIcon(_Battery):
         return key
 
     def update(self):
-        if self.configured:
-            icon = self._get_icon_key()
-            if icon != self.current_icon:
-                self.current_icon = icon
-                self.draw()
-        return True
+        icon = self._get_icon_key()
+        if icon != self.current_icon:
+            self.current_icon = icon
+            self.draw()
 
     def draw(self):
         if self.theme_path:
             self.drawer.clear(self.background or self.bar.background)
             self.drawer.ctx.set_source(self.surfaces[self.current_icon])
             self.drawer.ctx.paint()
-            self.drawer.draw(self.offset, self.width)
+            self.drawer.draw(offsetx=self.offset, width=self.length)
         else:
             self.text = self.current_icon[8:]
             base._TextBox.draw(self)
 
     def setup_images(self):
-        for key, name in self.icons.iteritems():
+        for key, name in self.icons.items():
             try:
                 path = os.path.join(self.theme_path, name)
-                img = cairo.ImageSurface.create_from_png(path)
-            except cairo.Error:
+                img = cairocffi.ImageSurface.create_from_png(path)
+            except cairocffi.Error:
                 self.theme_path = None
                 self.qtile.log.warning('Battery Icon switching to text mode')
                 return
             input_width = img.get_width()
             input_height = img.get_height()
 
-            sp = input_height / float(self.bar.height - 1)
+            sp = input_height / (self.bar.height - 1)
 
             width = input_width / sp
-            if width > self.width:
-                self.width = int(width) + self.actual_padding * 2
+            if width > self.length:
+                self.length = int(width) + self.actual_padding * 2
 
-            imgpat = cairo.SurfacePattern(img)
+            imgpat = cairocffi.SurfacePattern(img)
 
-            scaler = cairo.Matrix()
+            scaler = cairocffi.Matrix()
 
             scaler.scale(sp, sp)
             scaler.translate(self.actual_padding * -1, 0)
             imgpat.set_matrix(scaler)
 
-            imgpat.set_filter(cairo.FILTER_BEST)
+            imgpat.set_filter(cairocffi.FILTER_BEST)
             self.surfaces[key] = imgpat

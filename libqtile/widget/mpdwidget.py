@@ -1,34 +1,66 @@
+# Copyright (c) 2010 matt
+# Copyright (c) 2010 Dieter Plaetinck
+# Copyright (c) 2010, 2012 roger
+# Copyright (c) 2011-2012 Florian Mounier
+# Copyright (c) 2011 Mounier Florian
+# Copyright (c) 2011 Timo Schmiade
+# Copyright (c) 2012 Mikkel Oscar Lyderik
+# Copyright (c) 2012, 2014 Tycho Andersen
+# Copyright (c) 2012 Craig Barnes
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2013 Tom Hunt
+# Copyright (c) 2014 Justin Bronder
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 # -*- coding: utf-8 -*-
 # depends on python-mpd
 
 
 # TODO: check if UI hangs in case of network issues and such
-# TODO: python-mpd supports idle proto, can widgets be push instead of pull?
-# TODO: a teardown hook so I can client.disconnect() ?
 # TODO: some kind of templating to make shown info configurable
 # TODO: best practice to handle failures? just write to stderr?
 
-from .. import bar, utils
-from mpd import MPDClient, CommandError
-import atexit
-import base
+from __future__ import division
+
 import re
+import time
 
+import mpd
 
-class Mpd(base._TextBox):
+from .. import utils, pangocffi
+from . import base
+
+class Mpd(base.ThreadPoolText):
     """
-        An mpd widget
+        An mpd widget.
     """
+    orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("foreground_progress", "ffffff", "Foreground progress colour"),
-        (
-            "reconnect",
-            False,
-            "Choose if the widget should try to keep reconnect."
-        )
+        ('reconnect', False, 'attempt to reconnect if initial connection failed'),
+        ('reconnect_interval', 1, 'Time to delay between connection attempts.'),
+        ('update_interval', 0.5, 'Update Time in seconds.')
     ]
 
-    def __init__(self, width=bar.CALCULATED, host='localhost', port=6600,
+    # TODO: have this use our config framework
+    def __init__(self, host='localhost', port=6600,
                  password=False, fmt_playing="%a - %t [%v%%]",
                  fmt_stopped="Stopped [%v%%]", msg_nc='Mpd off',
                  do_color_progress=True, **config):
@@ -42,6 +74,7 @@ class Mpd(base._TextBox):
             - width: A fixed width, or bar.CALCULATED to calculate the width
             automatically (which is recommended).
         """
+        super(Mpd, self).__init__(msg_nc, **config)
         self.host = host
         self.port = port
         self.password = password
@@ -49,70 +82,55 @@ class Mpd(base._TextBox):
         self.msg_nc = msg_nc
         self.do_color_progress = do_color_progress
         self.inc = 2
-        base._TextBox.__init__(self, " ", width, **config)
         self.add_defaults(Mpd.defaults)
-        self.client = MPDClient()
+        self.client = mpd.MPDClient()
         self.connected = False
-        self.connect()
-        self.timeout_add(1, self.update)
+        self.stop = False
 
-    def connect(self, ifneeded=False):
+    def finalize(self):
+        self.stop = True
+
         if self.connected:
-            if not ifneeded:
-                self.log.warning(
-                    'Already connected. '
-                    'No need to connect again. '
-                    'Maybe you want to disconnect first.'
-                )
+            try:
+                # The volume settings is kind of a dirty trick.  There doesn't
+                # seem to be a decent way to set a timeout for the idle
+                # command.  Therefore we need to trigger some events such that
+                # if poll() is currently waiting on an idle event it will get
+                # something so that it can exit.  In practice, I can't tell the
+                # difference in volume and hopefully no one else can either.
+                self.client.volume(1)
+                self.client.volume(-1)
+                self.client.disconnect()
+            except:
+                pass
+        base._Widget.finalize(self)
+
+    def connect(self, quiet=False):
+        if self.connected:
             return True
-        CON_ID = {'host': self.host, 'port': self.port}
-        if not self.mpdConnect(CON_ID):
-            self.log.error('Cannot connect to MPD server.')
+
+        try:
+            self.client.connect(host=self.host, port=self.port)
+        except Exception:
+            if not quiet:
+                self.log.exception('Failed to connect to mpd')
+            return False
+
         if self.password:
-            if not self.mpdAuth(self.password):
+            try:
+                self.client.password(self.password)
+            except Exception:
                 self.log.warning('Authentication failed.  Disconnecting')
                 try:
                     self.client.disconnect()
                 except Exception:
-                    self.log.exception('Error disconnecting mpd')
-        return self.connected
+                    pass
 
-    def mpdConnect(self, con_id):
-        """
-            Simple wrapper to connect MPD.
-        """
-        try:
-            self.client.connect(**con_id)
-        except Exception:
-            self.log.exception('Error connecting mpd')
-            return False
         self.connected = True
         return True
 
-    def mpdDisconnect(self):
-        """
-            Simple wrapper to disconnect MPD.
-        """
-        try:
-            self.client.disconnect()
-        except Exception:
-            self.log.exception('Error disconnecting mpd')
-            return False
-        self.connected = False
-        return True
-
-    def mpdAuth(self, secret):
-        """
-            Authenticate
-        """
-        try:
-            self.client.password(secret)
-        except CommandError:
-            return False
-        return True
-
     def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
+        super(Mpd, self)._configure(qtile, bar)
         self.layout = self.drawer.textlayout(
             self.text,
             self.foreground,
@@ -121,7 +139,6 @@ class Mpd(base._TextBox):
             self.fontshadow,
             markup=True
         )
-        atexit.register(self.mpdDisconnect)
 
     def to_minutes_seconds(self, stime):
         """Takes an integer time in seconds, transforms it into
@@ -157,7 +174,7 @@ class Mpd(base._TextBox):
         return self.to_minutes_seconds(self.song['time'])
 
     def get_number(self):
-        return str(int(self.status['song'])+1)
+        return str(int(self.status['song']) + 1)
 
     def get_playlistlength(self):
         return self.status['playlistlength']
@@ -225,50 +242,66 @@ class Mpd(base._TextBox):
     def do_format(self, string):
         return re.sub("%(.)", self.match_check, string)
 
-    def update(self):
-        if not self.configured:
-            return True
-        if self.connect(True):
-            try:
-                self.status = self.client.status()
-                self.song = self.client.currentsong()
-                if self.status['state'] != 'stop':
-                    playing = self.do_format(self.fmt_playing)
+    def _get_status(self):
+        playing = self.msg_nc
 
-                    if self.do_color_progress and \
-                            self.status and \
-                            self.status.get('time', None):
-                        elapsed, total = self.status['time'].split(':')
-                        percent = float(elapsed) / float(total)
-                        progress = int(percent * len(playing))
-                        playing = '<span color="%s">%s</span>%s' % (
-                            utils.hex(self.foreground_progress),
-                            utils.escape(playing[:progress]),
-                            utils.escape(playing[progress:])
-                        )
-                    else:
-                        playing = utils.escape(playing)
+        try:
+            self.status = self.client.status()
+            self.song = self.client.currentsong()
+            if self.status['state'] != 'stop':
+                text = self.do_format(self.fmt_playing)
+
+                if (self.do_color_progress and
+                        self.status and
+                        self.status.get('time', None)):
+                    elapsed, total = self.status['time'].split(':')
+                    percent = float(elapsed) / float(total)
+                    progress = int(percent * len(text))
+                    playing = '<span color="%s">%s</span>%s' % (
+                        utils.hex(self.foreground_progress),
+                        pangocffi.markup_escape_text(text[:progress]),
+                        pangocffi.markup_escape_text(text[progress:])
+                    )
                 else:
-                    playing = self.do_format(self.fmt_stopped)
-
-            except Exception:
-                self.log.exception('Mpd error on update')
-                playing = self.msg_nc
-                self.mpdDisconnect()
-        else:
-            if self.reconnect:
-                playing = self.msg_nc
+                    playing = pangocffi.markup_escape_text(text)
             else:
-                return False
+                playing = self.do_format(self.fmt_stopped)
 
-        if self.text != playing:
-            self.text = playing
-            self.bar.draw()
+        except Exception:
+            self.log.exception('Mpd error on update')
 
-        return True
+        return playing
+
+    def poll(self):
+        was_connected = self.connected
+
+        if not self.connected:
+            if self.reconnect:
+                while not self.stop and not self.connect(quiet=True):
+                    time.sleep(self.reconnect_interval)
+            else:
+                return
+
+        if self.stop:
+            return
+
+        if was_connected:
+            try:
+                self.client.send_idle()
+                self.client.fetch_idle()
+            except mpd.ConnectionError:
+                self.client.disconnect()
+                self.connected = False
+                return self.msg_nc
+            except Exception:
+                self.log.exception('Error communicating with mpd')
+                self.client.disconnect()
+                return
+
+        return self._get_status()
 
     def button_press(self, x, y, button):
-        if not self.connect(True):
+        if not self.connect():
             return False
         try:
             status = self.client.status()

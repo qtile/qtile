@@ -1,11 +1,39 @@
-import command
-import hook
-import sys
-import utils
-import xcbq
+# Copyright (c) 2012-2015 Tycho Andersen
+# Copyright (c) 2013 xarvh
+# Copyright (c) 2013 horsik
+# Copyright (c) 2013-2014 roger
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2014 ramnes
+# Copyright (c) 2014 Sean Vig
+# Copyright (c) 2014 Adi Sieker
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+from . import command
+from . import hook
+from . import utils
+from . import xcbq
+
+from six import MAXSIZE
 
 
-class Key:
+class Key(object):
     """
         Defines a keybinding.
     """
@@ -29,7 +57,7 @@ class Key:
         self.keysym = xcbq.keysyms[key]
         try:
             self.modmask = utils.translateMasks(self.modifiers)
-        except KeyError, v:
+        except KeyError as v:
             raise utils.QtileError(v)
 
     def __repr__(self):
@@ -56,7 +84,7 @@ class Drag(object):
         try:
             self.button_code = int(self.button.replace('Button', ''))
             self.modmask = utils.translateMasks(self.modifiers)
-        except KeyError, v:
+        except KeyError as v:
             raise utils.QtileError(v)
 
     def __repr__(self):
@@ -78,11 +106,78 @@ class Click(object):
         try:
             self.button_code = int(self.button.replace('Button', ''))
             self.modmask = utils.translateMasks(self.modifiers)
-        except KeyError, v:
+        except KeyError as v:
             raise utils.QtileError(v)
 
     def __repr__(self):
         return "Click(%s, %s)" % (self.modifiers, self.button)
+
+
+class EzConfig(object):
+    '''
+    Helper class for defining key and button bindings in an emacs-like format.
+    Inspired by Xmonad's XMonad.Util.EZConfig.
+    '''
+
+    modifier_keys = {
+        'M': 'mod4',
+        'A': 'mod1',
+        'S': 'shift',
+        'C': 'control',
+    }
+
+    def parse(self, spec):
+        '''
+        Splits an emacs keydef into modifiers and keys. For example:
+          "M-S-a"     -> ['mod4', 'shift'], 'a'
+          "A-<minus>" -> ['mod1'], 'minus'
+          "C-<Tab>"   -> ['control'], 'Tab'
+        '''
+        mods = []
+        keys = []
+
+        for key in spec.split('-'):
+            if not key:
+                break
+            if key in self.modifier_keys:
+                if keys:
+                    msg = 'Modifiers must always come before key/btn: %s'
+                    raise utils.QtileError(msg % spec)
+                mods.append(self.modifier_keys[key])
+                continue
+            if len(key) == 1:
+                keys.append(key)
+                continue
+            if len(key) > 3 and key[0] == '<' and key[-1] == '>':
+                keys.append(key[1:-1])
+                continue
+
+        if not keys:
+            msg = 'Invalid key/btn specifier: %s'
+            raise utils.QtileError(msg % spec)
+
+        if len(keys) > 1:
+            msg = 'Key chains are not supported: %s' % spec
+            raise utils.QtileError(msg)
+
+        return mods, keys[0]
+
+class EzKey(EzConfig, Key):
+    def __init__(self, keydef, *commands):
+        modkeys, key = self.parse(keydef)
+        super(EzKey, self).__init__(modkeys, key, *commands)
+
+class EzClick(EzConfig, Click):
+    def __init__(self, btndef, *commands, **kwargs):
+        modkeys, button = self.parse(btndef)
+        button = 'Button%s' % button
+        super(EzClick, self).__init__(modkeys, button, *commands, **kwargs)
+
+class EzDrag(EzConfig, Drag):
+    def __init__(self, btndef, *commands, **kwargs):
+        modkeys, button = self.parse(btndef)
+        button = 'Button%s' % button
+        super(EzDrag, self).__init__(modkeys, button, *commands, **kwargs)
 
 
 class ScreenRect(object):
@@ -127,13 +222,10 @@ class Screen(command.CommandObject):
     """
         A physical screen, and its associated paraphernalia.
     """
-    group = None
-    previous_group = None
-
     def __init__(self, top=None, bottom=None, left=None, right=None,
                  x=None, y=None, width=None, height=None):
         """
-            - top, bottom, left, right: Instances of bar objects, or None.
+            - top, bottom, left, right: Instances of Gap/Bar objects, or None.
 
             Note that bar.Bar objects can only be placed at the top or the
             bottom of the screen (bar.Gap objects can be placed anywhere).
@@ -141,6 +233,10 @@ class Screen(command.CommandObject):
             x,y,width and height aren't specified usually unless you are
             using 'fake screens'.
         """
+
+        self.group = None
+        self.previous_group = None
+
         self.top = top
         self.bottom = bottom
         self.left = left
@@ -167,11 +263,7 @@ class Screen(command.CommandObject):
 
     @property
     def gaps(self):
-        lst = []
-        lst.extend([
-            i for i in [self.top, self.bottom, self.left, self.right] if i
-        ])
-        return lst
+        return (i for i in [self.top, self.bottom, self.left, self.right] if i)
 
     @property
     def dx(self):
@@ -202,14 +294,15 @@ class Screen(command.CommandObject):
     def get_rect(self):
         return ScreenRect(self.dx, self.dy, self.dwidth, self.dheight)
 
-    def setGroup(self, new_group):
+    def setGroup(self, new_group, save_prev=True):
         """
         Put group on this screen
         """
         if new_group.screen == self:
             return
 
-        self.previous_group = self.group
+        if save_prev:
+            self.previous_group = self.group
 
         if new_group is None:
             return
@@ -249,7 +342,7 @@ class Screen(command.CommandObject):
 
     def _items(self, name):
         if name == "layout":
-            return (True, range(len(self.group.layouts)))
+            return (True, list(range(len(self.group.layouts))))
         elif name == "window":
             return (True, [i.window.wid for i in self.group.windows])
         elif name == "bar":
@@ -280,7 +373,7 @@ class Screen(command.CommandObject):
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
                 bar.draw()
-        self.group.layoutAll()
+        self.qtile.call_soon(self.group.layoutAll())
 
     def cmd_info(self):
         """
@@ -300,7 +393,7 @@ class Screen(command.CommandObject):
         """
         self.resize(x, y, w, h)
 
-    def cmd_nextgroup(self, skip_empty=False, skip_managed=False):
+    def cmd_next_group(self, skip_empty=False, skip_managed=False):
         """
             Switch to the next group.
         """
@@ -308,7 +401,7 @@ class Screen(command.CommandObject):
         self.setGroup(n)
         return n.name
 
-    def cmd_prevgroup(self, skip_empty=False, skip_managed=False):
+    def cmd_prev_group(self, skip_empty=False, skip_managed=False):
         """
             Switch to the previous group.
         """
@@ -332,8 +425,8 @@ class Group(object):
     certain Matched windows to be on them, hide when they're not in use, etc.
     """
     def __init__(self, name, matches=None, exclusive=False,
-                 spawn=None, layout=None, persist=True, init=True,
-                 layout_opts=None, screen_affinity=None, position=sys.maxint):
+                 spawn=None, layout=None, layouts=None, persist=True, init=True,
+                 layout_opts=None, screen_affinity=None, position=MAXSIZE):
         """
         :param name: the name of this group
         :type name: string
@@ -341,10 +434,13 @@ class Group(object):
         :type matches: default ``None``
         :param exclusive: when other apps are started in this group, should we allow them here or not?
         :type exclusive: boolean
-        :param spawn: this will be ``exec()`` d when the group is created
-        :type spawn: string
+        :param spawn: this will be ``exec()`` d when the group is created, you can pass either a
+                      program name or a list of programs to ``exec()``
+        :type spawn: string or list of strings
         :param layout: the default layout for this group (e.g. 'max' or 'stack')
         :type layout: string
+        :param layouts: the group layouts list overriding global layouts
+        :type layouts: list
         :param persist: should this group stay alive with no member windows?
         :type persist: boolean
         :param init: is this group alive when qtile starts?
@@ -357,6 +453,7 @@ class Group(object):
         self.exclusive = exclusive
         self.spawn = spawn
         self.layout = layout
+        self.layouts = layouts or []
         self.persist = persist
         self.init = init
         self.matches = matches or []
@@ -371,7 +468,8 @@ class Match(object):
         Match for dynamic groups
         It can match by title, class or role.
     """
-    def __init__(self, title=None, wm_class=None, role=None, wm_type=None):
+    def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
+                 wm_instance_class=None, net_wm_pid=None):
         """
 
         ``Match`` supports both regular expression objects (i.e. the result of
@@ -379,10 +477,15 @@ class Match(object):
         matches any of the things in any of the lists, it is considered a
         match.
 
-        :param title: things to match against the title
-        :param wm_classes: things to match against the WM_CLASS atom
+        :param title: things to match against the title (WM_NAME)
+        :param wm_class: things to match against the second string in
+                         WM_CLASS atom
         :param role: things to match against the WM_ROLE atom
         :param wm_type: things to match against the WM_TYPE atom
+        :param wm_instance_class: things to match against the first string in
+               WM_CLASS atom
+        :param net_wm_pid: things to match against the _NET_WM_PID atom
+              (only int allowed in this rule)
         """
         if not title:
             title = []
@@ -392,25 +495,49 @@ class Match(object):
             role = []
         if not wm_type:
             wm_type = []
+        if not wm_instance_class:
+            wm_instance_class = []
+        if not net_wm_pid:
+            net_wm_pid = []
+
+        try:
+            net_wm_pid = list(map(int, net_wm_pid))
+        except ValueError:
+            error = 'Invalid rule for net_wm_pid: "%s" '\
+                    'only ints allowed' % str(net_wm_pid)
+            raise utils.QtileError(error)
+
         self._rules = [('title', t) for t in title]
         self._rules += [('wm_class', w) for w in wm_class]
         self._rules += [('role', r) for r in role]
         self._rules += [('wm_type', r) for r in wm_type]
+        self._rules += [('wm_instance_class', w) for w in wm_instance_class]
+        self._rules += [('net_wm_pid', w) for w in net_wm_pid]
 
     def compare(self, client):
         for _type, rule in self._rules:
-            match_func = getattr(rule, 'match', None) or getattr(rule, 'count')
+            if _type == "net_wm_pid":
+                def match_func(value):
+                    return rule == value
+            else:
+                match_func = getattr(rule, 'match', None) or \
+                    getattr(rule, 'count')
 
             if _type == 'title':
                 value = client.name
             elif _type == 'wm_class':
+                value = None
+                _value = client.window.get_wm_class()
+                if _value and len(_value) > 1:
+                    value = _value[1]
+            elif _type == 'wm_instance_class':
                 value = client.window.get_wm_class()
-                if value and len(value) > 1:
-                    value = value[1]
-                elif value:
+                if value:
                     value = value[0]
             elif _type == 'wm_type':
                 value = client.window.get_wm_type()
+            elif _type == 'net_wm_pid':
+                value = client.window.get_net_wm_pid()
             else:
                 value = client.window.get_wm_window_role()
 

@@ -1,6 +1,28 @@
-import libqtile.utils as utils
+# Copyright (c) 2008, 2010 Aldo Cortesi
+# Copyright (c) 2011 Florian Mounier
+# Copyright (c) 2011 Anshuman Bhaduri
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
-# TODO: more tests are required here. Several of the utilities are untested.
+import six
+
+import libqtile.utils as utils
 
 
 class Foo:
@@ -79,10 +101,12 @@ def test_rgb_from_base10_tuple():
 def test_rgb_from_base10_tuple_with_alpha():
     assert utils.rgb([255, 255, 0, 0.5]) == (1, 1, 0, 0.5)
 
-# TODO: test scrub to utf8
-# TODO: test Data
-# TODO: test issequencelike
-# TODO: test isstringlike
-# TODO: test shuffleUp, shuffleDown
-# Probably do not require a whole lot of tests, but at least one for each
-# function so that we can refactor with confidence.
+def test_scrub_to_utf8():
+    assert utils.scrub_to_utf8(six.b("foo")) == six.u("foo")
+
+def test_shuffle():
+    l = list(range(3))
+    utils.shuffleUp(l)
+    assert l != list(range(3))
+    utils.shuffleDown(l)
+    assert l == list(range(3))

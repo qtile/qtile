@@ -1,5 +1,36 @@
-import traceback
-import utils
+# Copyright (c) 2009-2010 Aldo Cortesi
+# Copyright (c) 2010 Lee McCuller
+# Copyright (c) 2010 matt
+# Copyright (c) 2010, 2014 dequis
+# Copyright (c) 2010, 2012, 2014 roger
+# Copyright (c) 2011 Florian Mounier
+# Copyright (c) 2011 Kenji_Takahashi
+# Copyright (c) 2011 Paul Colomiets
+# Copyright (c) 2011 Tzbob
+# Copyright (c) 2012-2015 Tycho Andersen
+# Copyright (c) 2012 Craig Barnes
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2014 Sean Vig
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+from . import utils
 
 subscriptions = {}
 SKIPLOG = set()
@@ -15,7 +46,7 @@ def clear():
     subscriptions.clear()
 
 
-class Subscribe:
+class Subscribe(object):
     def __init__(self):
         hooks = set([])
         for i in dir(self):
@@ -25,12 +56,19 @@ class Subscribe:
 
     def _subscribe(self, event, func):
         lst = subscriptions.setdefault(event, [])
-        if not func in lst:
+        if func not in lst:
             lst.append(func)
+
+    def startup_once(self, func):
+        """
+            Called when Qtile has initialized, exactly once (i.e. not on each
+            lazy.restart()).
+        """
+        return self._subscribe("startup_once", func)
 
     def startup(self, func):
         """
-            Called when Qtile has initialized
+            Called each time qtile is started (including the first time qtile starts)
         """
         return self._subscribe("startup", func)
 
@@ -90,13 +128,14 @@ class Subscribe:
 
             - arguments: window.Window object
 
-            ## Example:
+            Example::
 
                 def func(c):
                     if c.name == "xterm":
                         c.togroup("a")
                     elif c.name == "dzen":
                         c.static(0)
+
                 libqtile.hook.subscribe.client_new(func)
         """
         return self._subscribe("client_new", func)
@@ -169,6 +208,18 @@ class Subscribe:
         """
         return self._subscribe("net_wm_icon_change", func)
 
+    def selection_notify(self, func):
+        """
+            Called on selection notify.
+        """
+        return self._subscribe("selection_notify", func)
+
+    def selection_change(self, func):
+        """
+            Called on selection chance.
+        """
+        return self._subscribe("selection_change", func)
+
     def screen_change(self, func):
         """
             Called when a screen is added or screen configuration is changed
@@ -177,12 +228,19 @@ class Subscribe:
             usage is simply to call ``qtile.cmd_restart()`` on each event (to
             restart qtile when there is a new monitor):
 
-            ## Example:
+            Example::
 
                 def restart_on_randr(qtile, ev):
                     qtile.cmd_restart()
         """
         return self._subscribe("screen_change", func)
+
+    def current_screen_change(self, func):
+        """
+            Called when the current screen (i.e. the screen with focus)
+            changes; no arguments.
+        """
+        return self._subscribe("current_screen_change", func)
 
 subscribe = Subscribe()
 
@@ -208,14 +266,10 @@ unsubscribe = Unsubscribe()
 def fire(event, *args, **kwargs):
     if event not in subscribe.hooks:
         raise utils.QtileError("Unknown event: %s" % event)
-    if not event in SKIPLOG:
-        qtile.log.info(
-            "Internal event: %s(%s, %s)" %
-            (event, args, kwargs)
-        )
+    if event not in SKIPLOG:
+        qtile.log.info("Internal event: %s(%s, %s)", event, args, kwargs)
     for i in subscriptions.get(event, []):
         try:
             i(*args, **kwargs)
-        except Exception as e:
-            qtile.log.error("Error in hook %s:\n%s" % (
-                event, traceback.format_exc()))
+        except:
+            qtile.log.exception("Error in hook %s" % (event,))

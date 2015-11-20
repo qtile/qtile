@@ -1,11 +1,39 @@
-import itertools
-import gobject
+# Copyright (c) 2011-2012 Florian Mounier
+# Copyright (c) 2012-2014 roger
+# Copyright (c) 2012 Craig Barnes
+# Copyright (c) 2012-2014 Tycho Andersen
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2014 ramnes
+# Copyright (c) 2014 Sebastian Kricner
+# Copyright (c) 2014 Sean Vig
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+import collections
+import six
 
 import libqtile.hook
 from libqtile.config import Key
 from libqtile.command import lazy
 from libqtile.config import Group
 from libqtile.config import Rule
+from libqtile.config import Match
 
 def simple_key_binder(mod, keynames=None):
     """
@@ -22,7 +50,7 @@ def simple_key_binder(mod, keynames=None):
             keys = keynames
         else:
             # keys 1 to 9 and 0
-            keys = map(str, range(1, 10) + [0])
+            keys = list(map(str, list(range(1, 10)) + [0]))
 
         # bind all keys
         for keyname, group in zip(keys, dgroup.qtile.groups):
@@ -51,7 +79,13 @@ class DGroups(object):
 
         self.groups = dgroups
         self.groupMap = {}
-        self.rules = getattr(qtile.config, 'dgroups_app_rules', [])
+
+        self.rules = []
+        self.rules_map = {}
+        self.last_rule_id = 0
+
+        for rule in getattr(qtile.config, 'dgroups_app_rules', []):
+            self.add_rule(rule)
 
         self.keys = []
 
@@ -64,19 +98,43 @@ class DGroups(object):
 
         self.timeout = {}
 
+    def add_rule(self, rule, last=True):
+        rule_id = self.last_rule_id
+        self.rules_map[rule_id] = rule
+        if last:
+            self.rules.append(rule)
+        else:
+            self.rules.insert(0, rule)
+        self.last_rule_id += 1
+        return rule_id
+
+    def remove_rule(self, rule_id):
+        rule = self.rules_map.get(rule_id, None)
+        if rule:
+            self.rules.remove(rule)
+            del self.rules_map[rule_id]
+        else:
+            self.qtile.log.warn('Rule "%s" not found' % rule_id)
+
     def add_dgroup(self, group, start=False):
         self.groupMap[group.name] = group
         rules = [Rule(m, group=group.name) for m in group.matches]
         self.rules.extend(rules)
         if start:
-            self.qtile.addGroup(group.name, group.layout)
+            self.qtile.addGroup(group.name, group.layout, group.layouts)
 
     def _setup_groups(self):
         for group in self.groups:
             self.add_dgroup(group, group.init)
 
             if group.spawn and not self.qtile.no_spawn:
-                self.qtile.cmd_spawn(group.spawn)
+                if isinstance(group.spawn, six.string_types):
+                    spawns = [group.spawn]
+                else:
+                    spawns = group.spawn
+                for spawn in spawns:
+                    pid = self.qtile.cmd_spawn(spawn)
+                    self.add_rule(Rule(Match(net_wm_pid=[pid]), group.name))
 
     def _setup_hooks(self):
         libqtile.hook.subscribe.addgroup(self._addgroup)
@@ -97,11 +155,15 @@ class DGroups(object):
     def _add(self, client):
         if client in self.timeout:
             self.qtile.log.info('Remove dgroup source')
-            gobject.source_remove(self.timeout[client])
-            del(self.timeout[client])
+            self.timeout.pop(client).cancel()
 
         # ignore static windows
         if client.defunct:
+            return
+
+        # ignore windows whose groups is already set (e.g. from another hook or
+        # when it was set on state restore)
+        if client.group is not None:
             return
 
         group_set = False
@@ -115,7 +177,11 @@ class DGroups(object):
                         layout = self.groupMap[rule.group].layout
                     except KeyError:
                         layout = None
-                    group_added = self.qtile.addGroup(rule.group, layout)
+                    try:
+                        layouts = self.groupMap[rule.group].layouts
+                    except KeyError:
+                        layouts = None
+                    group_added = self.qtile.addGroup(rule.group, layout, layouts)
                     client.togroup(rule.group)
 
                     group_set = True
@@ -123,8 +189,8 @@ class DGroups(object):
                     group_obj = self.qtile.groupMap[rule.group]
                     group = self.groupMap.get(rule.group)
                     if group and group_added:
-                        for k, v in group.layout_opts.iteritems():
-                            if callable(v):
+                        for k, v in list(group.layout_opts.items()):
+                            if isinstance(v, collections.Callable):
                                 v(group_obj.layout)
                             else:
                                 setattr(group_obj.layout, k, v)
@@ -178,10 +244,10 @@ class DGroups(object):
                     len(group.windows) <= 0:
                 self.qtile.delGroup(group.name)
                 self.sort_groups()
+            del self.timeout[client]
 
         # Wait the delay until really delete the group
         self.qtile.log.info('Add dgroup timer')
-        self.timeout[client] = gobject.timeout_add_seconds(
-            self.delay,
-            delete_client
+        self.timeout[client] = self.qtile.call_later(
+            self.delay, delete_client
         )

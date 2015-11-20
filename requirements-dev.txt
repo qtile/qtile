@@ -1,0 +1,11 @@
+# Development requirements
+flake8
+nose-cov
+python-coveralls
+pip-tools
+
+# Production requirements
+cairocffi>=0.7
+cffi>=1.1
+six
+xcffib>=0.3.0

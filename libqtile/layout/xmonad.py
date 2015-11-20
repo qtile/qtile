@@ -1,5 +1,40 @@
-from base import SingleWindow
-from .. import manager
+# -*- coding:utf-8 -*-
+# Copyright (c) 2011-2012 Dustin Lacewell
+# Copyright (c) 2011 Mounier Florian
+# Copyright (c) 2012 Craig Barnes
+# Copyright (c) 2012 Maximilian Köhl
+# Copyright (c) 2012, 2014-2015 Tycho Andersen
+# Copyright (c) 2013 jpic
+# Copyright (c) 2013 babadoo
+# Copyright (c) 2013 Jure Ham
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2014 ramnes
+# Copyright (c) 2014 Sean Vig
+# Copyright (c) 2014 dmpayton
+# Copyright (c) 2014 dequis
+# Copyright (c) 2014 Florian Scherf
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+from __future__ import division
+
+from .base import SingleWindow
 import math
 
 
@@ -12,9 +47,11 @@ class MonadTall(SingleWindow):
 
     A main pane that contains a single window takes up a vertical
     portion of the screen based on the ratio setting. This ratio can
-    be adjusted with the `cmd_grow' and `cmd_shrink' methods while
+    be adjusted with the ``cmd_grow`` and ``cmd_shrink`` methods while
     the main pane is in focus.
 
+    ::
+
         ---------------------
         |            |      |
         |            |      |
@@ -24,9 +61,11 @@ class MonadTall(SingleWindow):
         |            |      |
         ---------------------
 
-    Using the `cmd_flip' method will switch which horizontal side the
+    Using the ``cmd_flip`` method will switch which horizontal side the
     main pane will occupy. The main pane is considered the "top" of
     the stack.
+
+    ::
 
         ---------------------
         |      |            |
@@ -41,10 +80,12 @@ class MonadTall(SingleWindow):
 
     Occupying the rest of the screen are one or more secondary panes.
     The secondary panes will share the vertical space of the screen
-    however they can be resized at will with the `cmd_grow' and
-    `cmd_shrink' methods. The other secondary panes will adjust their
+    however they can be resized at will with the ``cmd_grow`` and
+    ``cmd_shrink`` methods. The other secondary panes will adjust their
     sizes to smoothly fill all of the space.
 
+    ::
+
         ---------------------          ---------------------
         |            |      |          |            |______|
         |            |______|          |            |      |
@@ -54,11 +95,13 @@ class MonadTall(SingleWindow):
         |            |      |          |            |      |
         ---------------------          ---------------------
 
-    Panes can be moved with the `cmd_shuffle_up' and `cmd_shuffle_down'
+    Panes can be moved with the ``cmd_shuffle_up`` and ``cmd_shuffle_down``
     methods. As mentioned the main pane is considered the top of the
     stack; moving up is counter-clockwise and moving down is clockwise.
 
     The opposite is true if the layout is "flipped".
+
+    ::
 
         ---------------------          ---------------------
         |            |  2   |          |   2   |           |
@@ -73,29 +116,31 @@ class MonadTall(SingleWindow):
     Normalizing:
 
     To restore all client windows to their default size ratios simply
-    use the `cmd_normalize' method.
+    use the ``cmd_normalize`` method.
 
 
     Maximizing:
 
     To toggle a client window between its minimum and maximum sizes
-    simply use the `cmd_maximize' on a focused client.
+    simply use the ``cmd_maximize`` on a focused client.
 
     Suggested Bindings:
 
-    Key([modkey], "h", lazy.layout.left()),
-    Key([modkey], "l", lazy.layout.right()),
-    Key([modkey], "j", lazy.layout.down()),
-    Key([modkey], "k", lazy.layout.up()),
-    Key([modkey, "shift"], "h", lazy.layout.swap_left()),
-    Key([modkey, "shift"], "l", lazy.layout.swap_right()),
-    Key([modkey, "shift"], "j", lazy.layout.shuffle_down()),
-    Key([modkey, "shift"], "k", lazy.layout.shuffle_up()),
-    Key([modkey], "i", lazy.layout.grow()),
-    Key([modkey], "m", lazy.layout.shrink()),
-    Key([modkey], "n", lazy.layout.normalize()),
-    Key([modkey], "o", lazy.layout.maximize()),
-    Key([modkey, "shift"], "space", lazy.layout.flip()),
+    ::
+
+        Key([modkey], "h", lazy.layout.left()),
+        Key([modkey], "l", lazy.layout.right()),
+        Key([modkey], "j", lazy.layout.down()),
+        Key([modkey], "k", lazy.layout.up()),
+        Key([modkey, "shift"], "h", lazy.layout.swap_left()),
+        Key([modkey, "shift"], "l", lazy.layout.swap_right()),
+        Key([modkey, "shift"], "j", lazy.layout.shuffle_down()),
+        Key([modkey, "shift"], "k", lazy.layout.shuffle_up()),
+        Key([modkey], "i", lazy.layout.grow()),
+        Key([modkey], "m", lazy.layout.shrink()),
+        Key([modkey], "n", lazy.layout.normalize()),
+        Key([modkey], "o", lazy.layout.maximize()),
+        Key([modkey, "shift"], "space", lazy.layout.flip()),
 
     """
 
@@ -110,27 +155,25 @@ class MonadTall(SingleWindow):
         ("border_focus", "#ff0000", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused winows."),
         ("border_width", 2, "Border width."),
+        ("single_border_width", None, "Border width for single window"),
         ("name", "xmonad-tall", "Name of this layout."),
+        ("margin", 0, "Margin of the layout"),
+        ("ratio", _med_ratio,
+            "The percent of the screen-space the master pane should occupy "
+            "by default."),
+        ("align", _left, "Which side master plane will be placed "
+            "(one of ``MonadTall._left`` or ``MonadTall._right``)"),
+        ("change_ratio", .05, "Resize ratio"),
+        ("change_size", 20, "Resize change in pixels"),
     ]
 
-    def __init__(self, ratio=_med_ratio, align=_left, change_ratio=.05,
-                 change_size=20, **config):
-        """
-            - ratio       : The percent of the screen-space the
-                            master pane should occupy by default.
-
-            - align       : Which side the master pane will be placed.
-
-            - change_size : Resize change in pixels
-        """
+    def __init__(self, **config):
         SingleWindow.__init__(self, **config)
         self.add_defaults(MonadTall.defaults)
+        if self.single_border_width is None:
+            self.single_border_width = self.border_width
         self.clients = []
         self.relative_sizes = []
-        self.ratio = ratio
-        self.align = align
-        self.change_size = change_size
-        self.change_ratio = change_ratio
         self._focus = 0
 
     # track client that has 'focus'
@@ -145,7 +188,7 @@ class MonadTall(SingleWindow):
     focused = property(_get_focus, _set_focus)
 
     def _get_relative_size_from_absolute(self, absolute_size):
-        return float(absolute_size) / self.group.screen.dheight
+        return absolute_size / self.group.screen.dheight
 
     def _get_absolute_size_from_relative(self, relative_size):
         return int(relative_size * self.group.screen.dheight)
@@ -155,9 +198,9 @@ class MonadTall(SingleWindow):
         if self.clients:
             return self.clients[self.focused]
 
-    def focus(self, c):
+    def focus(self, client):
         "Set focus to specified client"
-        self.focused = self.clients.index(c)
+        self.focused = self.clients.index(client)
 
     def clone(self, group):
         "Clone layout for other groups"
@@ -170,17 +213,19 @@ class MonadTall(SingleWindow):
         c._focus = 0
         return c
 
-    def add(self, c):
+    def add(self, client):
         "Add client to layout"
-        self.clients.insert(self.focused + 1, c)
+        self.clients.insert(self.focused + 1, client)
         self.do_normalize = True
 
-    def remove(self, c):
+    def remove(self, client):
         "Remove client from layout"
+        if client not in self.clients:
+            return
         # get index of removed client
-        idx = self.clients.index(c)
+        idx = self.clients.index(client)
         # remove the client
-        self.clients.remove(c)
+        self.clients.remove(client)
         # move focus pointer
         self.focused = max(0, idx - 1)
         self.do_normalize = True
@@ -197,6 +242,13 @@ class MonadTall(SingleWindow):
         if redraw:
             self.group.layoutAll()
         self.do_normalize = False
+
+    def cmd_reset(self, redraw=True):
+        "Reset Layout."
+        self.ratio = self._med_ratio
+        if self.align == self._right:
+            self.align = self._left
+        self.cmd_normalize(redraw)
 
     def _maximize_main(self):
         "Toggle the main pane between min and max size"
@@ -239,32 +291,33 @@ class MonadTall(SingleWindow):
             self._maximize_secondary()
         self.group.layoutAll()
 
-    def configure(self, c, screen):
+    def configure(self, client, screen):
         "Position client based on order and sizes"
         # if no sizes or normalize flag is set, normalize
         if not self.relative_sizes or self.do_normalize:
             self.cmd_normalize(False)
 
         # if client not in this layout
-        if not self.clients or c not in self.clients:
-            c.hide()
+        if not self.clients or client not in self.clients:
+            client.hide()
             return
 
         # single client - fullscreen
         if len(self.clients) == 1:
             px = self.group.qtile.colorPixel(self.border_focus)
-            c.place(
+            client.place(
                 self.group.screen.dx,
                 self.group.screen.dy,
-                self.group.screen.dwidth,
-                self.group.screen.dheight,
-                0,
-                px
+                self.group.screen.dwidth - 2 * self.single_border_width,
+                self.group.screen.dheight - 2 * self.single_border_width,
+                self.single_border_width,
+                px,
+                margin=self.margin,
             )
-            c.unhide()
+            client.unhide()
             return
 
-        cidx = self.clients.index(c)
+        cidx = self.clients.index(client)
 
         # determine focus border-color
         if cidx == self.focused:
@@ -305,27 +358,40 @@ class MonadTall(SingleWindow):
             height = self._get_absolute_size_from_relative(
                 self.relative_sizes[cidx - 1]
             )
+            # fix double margin
+            if cidx > 1:
+                ypos -= self.margin
+                height += self.margin
             # place client based on calculated dimensions
-            c.place(
+            client.place(
                 xpos,
                 ypos,
                 width,
                 height - 2 * self.border_width,
                 self.border_width,
-                px
+                px,
+                margin=self.margin,
             )
-            c.unhide()
+            client.unhide()
         else:
             # main client
             width = width_main - 2 * self.border_width
-            c.place(
-                xpos, self.group.screen.dy,
-                width,
-                self.group.screen.dheight - 2 * self.border_width,
+            client.place(
+                xpos + self.margin,
+                self.group.screen.dy + self.margin,
+                width - self.margin,
+                self.group.screen.dheight - 2 * self.border_width - 2 * self.margin,
                 self.border_width,
-                px
+                px,
             )
-            c.unhide()
+            client.unhide()
+
+    def info(self):
+        return {
+            'clients': [c.name for c in self.clients],
+            'main': self.clients[0].name if self.clients else None,
+            'secondary': [c.name for c in self.clients[1:]]
+        }
 
     def get_shrink_margin(self, cidx):
         "Return how many remaining pixels a client can shrink"
@@ -376,7 +442,7 @@ class MonadTall(SingleWindow):
         index by an equal share of the provided amount. After
         applying the shared amount to all affected clients,
         any amount left over will be applied in a
-        non-equal manner with `shrink_up'.
+        non-equal manner with ``shrink_up``.
 
         Any amount that was unable to be applied to the
         clients is returned.
@@ -417,7 +483,7 @@ class MonadTall(SingleWindow):
         index by an equal share of the provided amount. After
         applying the shared amount to all affected clients,
         any amount left over will be applied in a
-        non-equal manner with `shrink_down'.
+        non-equal manner with ``shrink_down``.
 
         Any amount that was unable to be applied to the
         clients is returned.
@@ -557,17 +623,17 @@ class MonadTall(SingleWindow):
         secondary pane.
         """
         # get focused client
-        c = self.clients[self.focused]
+        client = self.clients[self.focused]
 
         # get default change size
         change = amt
 
         # get left-over height after change
-        left = c.height - amt
+        left = client.height - amt
         # if change would violate min_height
         if left < self._min_height:
             # just reduce to min_height
-            change = c.height - self._min_height
+            change = client.height - self._min_height
 
         # calculate half of that change
         half_change = change / 2
@@ -590,6 +656,40 @@ class MonadTall(SingleWindow):
         self.relative_sizes[self.focused - 1] -= \
             self._get_relative_size_from_absolute(change)
 
+    def focus_first(self):
+        if self.clients:
+            return self.clients[0]
+
+    def focus_last(self):
+        if self.clients:
+            return self.clients[-1]
+
+    def focus_next(self, window):
+        if not self.clients:
+            return
+        if self.focused != self.clients.index(window):
+            self.focus(window)
+        if self.focused + 1 < len(self.clients):
+            return self.clients[self.focused + 1]
+
+    def focus_previous(self, window):
+        if not self.clients:
+            return
+        if self.focused != self.clients.index(window):
+            self.focus(window)
+        if self.focused > 0:
+            return self.clients[self.focused - 1]
+
+    def cmd_next(self):
+        client = self.focus_next(self.clients[self.focused]) or \
+            self.focus_first()
+        self.group.focus(client)
+
+    def cmd_previous(self):
+        client = self.focus_previous(self.clients[self.focused]) or \
+            self.focus_last()
+        self.group.focus(client)
+
     def cmd_shrink(self):
         """
         Will shrink the currently focused client reducing the
@@ -608,12 +708,12 @@ class MonadTall(SingleWindow):
     def cmd_up(self):
         "Focus on the next more prominent client on the stack"
         self.focused -= 1
-        self.group.focus(self.clients[self.focused], False)
+        self.group.focus(self.clients[self.focused])
 
     def cmd_down(self):
         "Focus on the less prominent client on the stack"
         self.focused += 1
-        self.group.focus(self.clients[self.focused], False)
+        self.group.focus(self.clients[self.focused])
 
     def cmd_shuffle_up(self):
         "Shuffle the client up the stack."
@@ -622,7 +722,7 @@ class MonadTall(SingleWindow):
         self.clients[_oldf], self.clients[self.focused] = \
             self.clients[self.focused], self.clients[_oldf]
         self.group.layoutAll()
-        self.group.focus(self.clients[self.focused], False)
+        self.group.focus(self.clients[self.focused])
 
     def cmd_shuffle_down(self):
         "Shuffle the client down the stack."
@@ -631,7 +731,7 @@ class MonadTall(SingleWindow):
         self.clients[_oldf], self.clients[self.focused] = \
             self.clients[self.focused], self.clients[_oldf]
         self.group.layoutAll()
-        self.group.focus(self.clients[self.focused], False)
+        self.group.focus(self.clients[self.focused])
 
     def cmd_flip(self):
         "Flip the layout horizontally."
@@ -654,7 +754,7 @@ class MonadTall(SingleWindow):
             self.clients[index2], self.clients[index1]
         self.group.layoutAll()
         self.focused = index1
-        self.group.focus(window1, False)
+        self.group.focus(window1)
 
     def cmd_swap_left(self):
         "Swap current window with closest window to the left."
@@ -672,6 +772,13 @@ class MonadTall(SingleWindow):
         target = self._get_closest(x, y, candidates)
         self.cmd_swap(self._get_window(), target)
 
+    def cmd_swap_main(self):
+        "Swap current window to main pane."
+        if self.align == self._left:
+            self.cmd_swap_left()
+        elif self.align == self._right:
+            self.cmd_swap_right()
+
     def cmd_left(self):
         "Focus on the closest window to the left of the current window."
         x = self._get_window().x
@@ -679,7 +786,7 @@ class MonadTall(SingleWindow):
         candidates = [c for c in self.clients if c.info()['x'] < x]
         target = self._get_closest(x, y, candidates)
         self.focused = self.clients.index(target)
-        self.group.focus(self.clients[self.focused], False)
+        self.group.focus(self.clients[self.focused])
 
     def cmd_right(self):
         "Focus on the closest window to the right of the current window."
@@ -688,4 +795,4 @@ class MonadTall(SingleWindow):
         candidates = [c for c in self.clients if c.info()['x'] > x]
         target = self._get_closest(x, y, candidates)
         self.focused = self.clients.index(target)
-        self.group.focus(self.clients[self.focused], False)
+        self.group.focus(self.clients[self.focused])
