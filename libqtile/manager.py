@@ -1345,11 +1345,19 @@ class Qtile(command.CommandObject):
         """
             Run cmd in a shell.
 
+            cmd may be a string, which is parsed by shlex.split, or
+            a list (similar to subprocess.Popen).
+
             Example:
 
                 spawn("firefox")
+
+                spawn(["xterm", "-T", "Temporary terminal"])
         """
-        args = shlex.split(cmd)
+        if isinstance(cmd, six.string_types):
+            args = shlex.split(cmd)
+        else:
+            args = list(cmd)
 
         r, w = os.pipe()
         pid = os.fork()

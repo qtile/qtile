@@ -236,6 +236,12 @@ def test_spawn(self):
 
 
 @Xephyr(False, TestConfig())
+def test_spawn_list(self):
+    # Spawn something with a pid greater than init's
+    assert int(self.c.spawn(["echo", "true"])) > 1
+
+
+@Xephyr(False, TestConfig())
 def test_kill(self):
     self.testWindow("one")
     self.testwindows = []
