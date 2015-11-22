@@ -249,6 +249,8 @@ class Screen(command.CommandObject):
         self.y = y
         self.width = width
         self.height = height
+        #ignore areas where other panels are in use
+        self.panel_offset = 30
 
     def _configure(self, qtile, index, x, y, width, height, group):
         self.qtile = qtile
@@ -271,7 +273,8 @@ class Screen(command.CommandObject):
 
     @property
     def dy(self):
-        return self.y + self.top.size if self.top else self.y
+#        return self.y + self.top.size if self.top else self.y
+        return self.y + self.top.size + self.panel_offset if self.top else self.y + self.panel_offset
 
     @property
     def dwidth(self):
@@ -286,7 +289,7 @@ class Screen(command.CommandObject):
     def dheight(self):
         val = self.height
         if self.top:
-            val -= self.top.size
+            val -= (self.top.size + self.panel_offset)
         if self.bottom:
             val -= self.bottom.size
         return val
