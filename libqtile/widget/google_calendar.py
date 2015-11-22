@@ -40,20 +40,21 @@
 # Finally, you need to turn on your own Google Calendar API. You can do
 # this by following step 1 from here:
 # https://developers.google.com/google-apps/calendar/quickstart/python
-# However, save the client_secret.json file to ~/.credentials (your
-# google-calendar-widget.json credentials file will also be stored in
-# ~/.credentials).
+# However, save the client_secret.json file to ~/.credentials (the
+# storage_file credentials file is also located in ~/.credentials).
 #
 # Once you have completed the preliminary steps, when you start qtile
-# with the GoogleCalendar widget configured, the calendar will show
-# the text "calendar not initialized." Click on this text to
-# authenticate. The widget will automatically pop an authentication web
-# page. Add your calendar login/password and authorize the widget to
-# access your calendar data and you are good to go. Depending on the
-# lifetime of the Google refresh_token, you may be required to
-# re-authenticate periodically (shouldn't be more than every two weeks
-# or so). After you are authenticated, the calendar data will be
+# with the GoogleCalendar widget configured, the widget will
+# automatically pop an authentication web page. Input your calendar
+# login/password and authorize the widget to access your calendar
+# data. After you authenticate, you may need to click on the
+# "Calendar not initialized." text once to start the calendar
+# updating. After you are authenticated, the calendar data will be
 # refreshed every 'update_interval' seconds.
+#
+# You should only need to perform the oauth2 authentication process
+# once (unless the credentials file gets destroyed). After the first
+# time, reauthentication takes place automatically.
 #
 # Thanks to the creator of the YahooWeather widget (dmpayton). This code
 # borrows liberally from that one.
@@ -69,8 +70,7 @@ import os
 
 from apiclient import discovery
 import oauth2client
-from oauth2client import client
-from oauth2client import tools
+from oauth2client import client, tools
 
 from libqtile import utils
 
@@ -95,6 +95,11 @@ class GoogleCalendar(base.ThreadedPollText):
     defaults = [
         ('calendar', 'primary', 'calendar to use'),
         (
+            'storage_file',
+            'google-calendar-widget.json',
+            'credentials file name'
+        ),
+        (
             'reminder_color',
             'FF0000',
             'color of calendar entries during reminder time'
@@ -113,6 +118,7 @@ class GoogleCalendar(base.ThreadedPollText):
         self.add_defaults(GoogleCalendar.defaults)
         self.text = 'Calendar not initialized.'
         self.default_foreground = self.foreground
+        #self.cred_init()
 
     def cred_init(self):
         """Gets valid user credentials from storage.
@@ -125,9 +131,8 @@ class GoogleCalendar(base.ThreadedPollText):
         if not os.path.exists(credential_dir):
             os.makedirs(credential_dir)
         credential_path = os.path.join(credential_dir,
-                                       'google-calendar-widget.json')
-        secret_path = os.path.join(credential_dir,
-                                   CLIENT_SECRET_FILE)
+                                       self.storage_file)
+        secret_path = os.path.join(credential_dir, CLIENT_SECRET_FILE)
 
         storage = oauth2client.file.Storage(credential_path)
         self.credentials = storage.get()
@@ -137,12 +142,14 @@ class GoogleCalendar(base.ThreadedPollText):
         def get_from_flow(creds, storage):
             if flags:
                 self.credentials = tools.run_flow(flow, storage, flags)
-            else: # Needed only for compatibility with Python 2.6
+            else:
                 self.credentials = tools.run(flow, storage)
 
         if not self.credentials or self.credentials.invalid:
-            threading.Thread(
-                target=get_from_flow,
+            threading.Timer(
+                # wait two seconds for qtile to start...
+                2.0,
+                get_from_flow,
                 args=(self.credentials, storage)
             ).start()
 
@@ -152,11 +159,10 @@ class GoogleCalendar(base.ThreadedPollText):
             self.qtile.addGroup(self.www_group)
             self.qtile.groupMap[self.www_group].cmd_toscreen(self.www_screen)
             self.qtile.cmd_spawn(self.browser_cmd)
-        self.cred_init()
 
     def poll(self):
         # if we don't have valid credentials, update them
-        if not self.credentials or self.credentials.invalid:
+        if not hasattr(self, 'credentials') or self.credentials.invalid:
             self.cred_init()
 
         # Create an httplib2.Http object to handle our HTTP requests and
