@@ -118,7 +118,6 @@ class GoogleCalendar(base.ThreadedPollText):
         self.add_defaults(GoogleCalendar.defaults)
         self.text = 'Calendar not initialized.'
         self.default_foreground = self.foreground
-        #self.cred_init()
 
     def cred_init(self):
         """Gets valid user credentials from storage.
