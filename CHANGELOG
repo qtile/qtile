@@ -2,6 +2,7 @@ qtile x.x.x, released xxxx-xx-xx:
     * features
         - add BSD support to graph widgets
     * bugfixes
+        - fix fullscreen problems
         - fix displaying Systray widget on secondary monitor
         - fix spawn file descriptor handling in Python 3
 
