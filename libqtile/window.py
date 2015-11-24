@@ -1126,9 +1126,6 @@ class Window(_Window):
                 elif action == _NET_WM_STATE_TOGGLE:
                     current_state ^= set([prop])  # toggle :D
 
-            # add support for additional flags here
-            self.fullscreen = (fullscreen_atom in current_state)
-
             self.window.set_property('_NET_WM_STATE', list(current_state))
 
     def handle_PropertyNotify(self, e):
