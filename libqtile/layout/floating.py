@@ -63,20 +63,19 @@ class Floating(Layout):
 
     def __init__(self, float_rules=None, **config):
         """
-        If you have certain apps that you always want to float you can
-        provide ``float_rules`` to do so.
-        ``float_rules`` is a list of dictionaries containing:
+        If you have certain apps that you always want to float you can provide
+        ``float_rules`` to do so. ``float_rules`` is a list of
+        dictionaries containing some or all of the keys::
 
-        {wname: WM_NAME, wmclass: WM_CLASS
-        role: WM_WINDOW_ROLE}
+            {'wname': WM_NAME, 'wmclass': WM_CLASS, 'role': WM_WINDOW_ROLE}
 
         The keys must be specified as above.  You only need one, but
         you need to provide the value for it.  When a new window is
         opened it's ``match`` method is called with each of these
         rules.  If one matches, the window will float.  The following
-        will float gimp and skype:
+        will float gimp and skype::
 
-        float_rules=[dict(wmclass="skype"), dict(wmclass="gimp")]
+            float_rules=[dict(wmclass="skype"), dict(wmclass="gimp")]
 
         Specify these in the ``floating_layout`` in your config.
         """
