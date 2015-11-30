@@ -5,6 +5,7 @@ qtile x.x.x, released xxxx-xx-xx:
         - fix fullscreen problems
         - fix displaying Systray widget on secondary monitor
         - fix spawn file descriptor handling in Python 3
+        - remove duplicate assert code in test_verticaltile.py
 
 qtile 0.10.2, released 2015-10-19:
     * features

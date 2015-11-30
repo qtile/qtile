@@ -29,42 +29,7 @@ from libqtile import layout
 import libqtile.manager
 import libqtile.config
 from ..utils import Xephyr
-
-
-def assertFocused(self, name):
-    """Asserts that window with specified name is currently focused"""
-    info = self.c.window.info()
-    assert info['name'] == name, 'Got {0!r}, expected {1!r}'.format(
-        info['name'], name)
-
-
-def assertDimensions(self, x, y, w, h, win=None):
-    """Asserts dimensions of window"""
-    if win is None:
-        win = self.c.window
-    info = win.info()
-    assert info['x'] == x, info
-    assert info['y'] == y, info
-    assert info['width'] == w, info  # why?
-    assert info['height'] == h, info
-
-
-def assertFocusPath(self, *names):
-    for i in names:
-        self.c.group.next_window()
-        assertFocused(self, i)
-    # let's check twice for sure
-    for i in names:
-        self.c.group.next_window()
-        assertFocused(self, i)
-    # Ok, let's check backwards now
-    for i in reversed(names):
-        assertFocused(self, i)
-        self.c.group.prev_window()
-    # and twice for sure
-    for i in reversed(names):
-        assertFocused(self, i)
-        self.c.group.prev_window()
+from .layout_utils import assertDimensions, assertFocused, assertFocusPath
 
 
 class VerticalTileConfig:
