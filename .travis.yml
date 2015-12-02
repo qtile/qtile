@@ -17,7 +17,7 @@ matrix:
           env: TOXENV=py35
         - python: nightly
           env: TOXENV=py-nightly
-          
+
         - python: pypy
           env: TOXENV=pypy-trollius
         - python: pypy3
