@@ -6,6 +6,7 @@ qtile x.x.x, released xxxx-xx-xx:
         - fix displaying Systray widget on secondary monitor
         - fix spawn file descriptor handling in Python 3
         - remove duplicate assert code in test_verticaltile.py
+        - allow padding_{x,y} and margin_{x,y} widget attrs to be set to 0
 
 qtile 0.10.2, released 2015-10-19:
     * features
