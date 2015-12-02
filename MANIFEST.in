@@ -1,8 +1,25 @@
 include CHANGELOG
 include LICENSE
 include README.rst
-recursive-include libqtile/resources *
-recursive-include resources *
-recursive-exclude scripts *
-recursive-exclude test *
+include MANIFEST.in
+include CONTRIBUTING.md
+
+exclude tox.ini
+exclude requirements.in
+exclude requirements.txt
+exclude requirements-dev.txt
 exclude libqtile/_ffi*.py
+exclude Makefile
+
+graft libqtile/resources
+graft resources
+
+prune bin/libqtile
+prune docs/
+prune scripts
+prune test
+prune debian
+prune rpm
+
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
