@@ -35,7 +35,8 @@ matrix:
     allow_failures:
         - python: nightly
           env: TOXENV=py-nightly
-
+        - python: pypy
+          env: TOXENV=pypy-trollius
 cache:
   directories:
     - $HOME/.cache/pip
