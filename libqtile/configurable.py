@@ -68,10 +68,10 @@ class ExtraFallback(object):
     def __get__(self, instance, owner=None):
         retval = getattr(instance, self.hidden_attribute, None)
 
-        if not retval:
+        if retval is None:
             _found, retval = Configurable._find_default(instance, self.name)
 
-        if not retval:
+        if retval is None:
             retval = getattr(instance, self.fallback, None)
 
         return retval
