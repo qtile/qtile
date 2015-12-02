@@ -37,6 +37,9 @@ matrix:
           env: TOXENV=py-nightly
         - python: pypy
           env: TOXENV=pypy-trollius
+        - python: pypy3
+          env: TOXENV=pypy3-trollius
+          
 cache:
   directories:
     - $HOME/.cache/pip
