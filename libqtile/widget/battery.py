@@ -122,7 +122,7 @@ class _Battery(base._TextBox):
             # Iterate over the possibilities, and return the first valid value
             for file in file_list:
                 value = self._load_file(file)
-                if not (value in (False, None)):
+                if value is not False and value is not None:
                     self.filenames[name] = file
                     return value
 
