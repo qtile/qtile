@@ -17,7 +17,7 @@ matrix:
           env: TOXENV=py35
         - python: nightly
           env: TOXENV=py-nightly
-          
+
         - python: pypy
           env: TOXENV=pypy-trollius
         - python: pypy3
@@ -39,7 +39,7 @@ matrix:
           env: TOXENV=pypy-trollius
         - python: pypy3
           env: TOXENV=pypy3-trollius
-          
+
 cache:
   directories:
     - $HOME/.cache/pip
@@ -58,14 +58,10 @@ before_install:
   - sh -e /etc/init.d/xvfb start
 
 install:
-  - pip install tox python-coveralls
+  - pip install tox
 
 script:
   - tox
-
-
-after_success:
-  - coveralls
 
 notifications:
   email: false

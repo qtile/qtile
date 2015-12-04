@@ -1,0 +1,8 @@
+[run]
+source = libqtile
+
+[report]
+omit =
+    */site-packages/*
+    test/*
+    setup.py
