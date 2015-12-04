@@ -10,6 +10,7 @@ install them from your package manager.
 
 * `Nose <http://nose.readthedocs.org/en/latest/>`_
 * `Xephyr <http://www.freedesktop.org/wiki/Software/Xephyr>`_
+' `xrandr <www.x.org/wiki/Projects/XRandR/>`_
 * ``xeyes`` and ``xclock``
 
 On ubuntu, this can be done with ``sudo apt-get install python-nose
