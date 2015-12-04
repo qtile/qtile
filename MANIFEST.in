@@ -4,6 +4,7 @@ include README.rst
 include MANIFEST.in
 include CONTRIBUTING.md
 
+exclude .coveragerc
 exclude tox.ini
 exclude requirements.in
 exclude requirements.txt
@@ -15,7 +16,7 @@ graft libqtile/resources
 graft resources
 
 prune bin/libqtile
-prune docs/
+prune docs
 prune scripts
 prune test
 prune debian
