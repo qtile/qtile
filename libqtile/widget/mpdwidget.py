@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright (c) 2010 matt
 # Copyright (c) 2010 Dieter Plaetinck
 # Copyright (c) 2010, 2012 roger
@@ -28,8 +29,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-# -*- coding: utf-8 -*-
 # depends on python-mpd
 
 
@@ -46,6 +45,7 @@ import mpd
 
 from .. import utils, pangocffi
 from . import base
+
 
 class Mpd(base.ThreadPoolText):
     """
@@ -188,6 +188,15 @@ class Mpd(base.ThreadPoolText):
         elif n == "stop":
             return "[]"
 
+    def get_statusicon(self):
+        n = self.status['state']
+        if n == "play":
+            return u"▶"
+        elif n == "pause":
+            return u"▷"
+        elif n == "stop":
+            return u"◾"
+
     def get_longstatus(self):
         n = self.status['state']
         if n == "play":
@@ -230,7 +239,7 @@ class Mpd(base.ThreadPoolText):
         'f': get_file, 'l': get_length, 'n': get_number,
         'p': get_playlistlength, 's': get_status, 'S': get_longstatus,
         't': get_title, 'T': get_track, 'v': get_volume, '1': get_single,
-        'r': get_repeat, 'h': get_shuffle, '%': lambda x: '%',
+        'r': get_repeat, 'h': get_shuffle, 'i': get_statusicon, '%': lambda x: '%',
     }
 
     def match_check(self, m):
