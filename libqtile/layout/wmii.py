@@ -27,9 +27,6 @@
 
 from __future__ import division
 
-import math
-import os
-
 from .base import Layout
 
 # This layout implements something akin to wmii's semantics.
@@ -72,11 +69,6 @@ from .base import Layout
 #
 # Each row is an array of clients
 
-def swap(array, a, b):
-    tmp = array[b]
-    array[b] = array[a]
-    array[a] = tmp
-
 class Wmii(Layout):
     """
         This layout emulates wmii layouts.  The screen it split into
@@ -101,7 +93,7 @@ class Wmii(Layout):
         self.add_defaults(Wmii.defaults)
         self.current_window = None
         self.clients = []
-        self.columns = [ { 'active': 0, 'width' : 100, 'mode': 'split', 'rows': [] } ]
+        self.columns = [{'active': 0, 'width': 100, 'mode': 'split', 'rows': []}]
 
     def info(self):
         d = Layout.info(self)
@@ -110,11 +102,11 @@ class Wmii(Layout):
         return d
 
     def add_column(self, prepend, win):
-        newwidth = (int) (100 / (len(self.columns) + 1))
+        newwidth = int(100 / (len(self.columns) + 1))
         # we are only called if there already is a column, simplifies things
         for c in self.columns:
             c['width'] = newwidth
-        c = { 'width': newwidth, 'mode': 'split', 'rows': [ win ] }
+        c = {'width': newwidth, 'mode': 'split', 'rows': [win]}
         if prepend:
             self.columns.insert(0, c)
         else:
@@ -124,11 +116,11 @@ class Wmii(Layout):
         c = Layout.clone(self, group)
         c.current_window = None
         c.clients = []
-        c.columns = [ { 'active': 0, 'width' : 100, 'mode': 'split', 'rows': [] } ]
+        c.columns = [{'active': 0, 'width': 100, 'mode': 'split', 'rows': []}]
         return c
 
     def current_column(self):
-        if self.current_window == None:
+        if self.current_window is None:
             return None
         for c in self.columns:
             if self.current_window in c['rows']:
@@ -138,9 +130,9 @@ class Wmii(Layout):
     def add(self, client):
         self.clients.append(client)
         c = self.current_column()
-        if c == None:
+        if c is None:
             if len(self.columns) == 0:
-                self.columns = [ { 'active': 0, 'width' : 100, 'mode': 'split', 'rows': [] } ]
+                self.columns = [{'active': 0, 'width': 100, 'mode': 'split', 'rows': []}]
             c = self.columns[0]
         c['rows'].append(client)
         self.focus(client)
@@ -166,7 +158,7 @@ class Wmii(Layout):
                 self.columns.remove(c)
                 if len(self.columns) == 0:
                     return None
-                newwidth = (int) (100 / len(self.columns))
+                newwidth = int(100 / len(self.columns))
                 for c in self.columns:
                     c['width'] = newwidth
                 if len(self.columns) == 1:
@@ -203,7 +195,6 @@ class Wmii(Layout):
             xoffset += int(float(c['width']) * screen.width / 100.0)
         if ridx == -1:
             return
-        cidx = self.columns.index(c)
         if client == self.current_window:
             if c['mode'] == 'split':
                 px = self.group.qtile.colorPixel(self.border_focus)
@@ -221,7 +212,7 @@ class Wmii(Layout):
         else:  # stacked
             if c['active'] != c['rows'].index(client):
                 show = False
-            yoffset = int(screen.y) # todo - also add a titlebar for each stacked window?
+            yoffset = int(screen.y)
             win_height = int(screen.height - 2 * self.border_width)
         win_width = int(float(c['width'] * screen.width / 100.0))
         win_width -= 2 * self.border_width
@@ -258,7 +249,7 @@ class Wmii(Layout):
 
     def focus_first(self):
         if len(self.columns) == 0:
-            self.columns = [ { 'active': 0, 'width' : 100, 'mode': 'split', 'rows': [] } ]
+            self.columns = [{'active': 0, 'width': 100, 'mode': 'split', 'rows': []}]
         c = self.columns[0]
         if len(c['rows']) != 0:
             return c['rows'][0]
@@ -267,7 +258,6 @@ class Wmii(Layout):
         c = self.columns(len(self.columns) - 1)
         if len(c['rows']) != 0:
             return c['rows'][len(c['rows']) - 1]
-
 
     def cmd_left(self):
         """
@@ -304,7 +294,7 @@ class Wmii(Layout):
             Switch to the previous window in current column
         """
         c = self.current_column()
-        if c == None:
+        if c is None:
             return
         ridx = c['rows'].index(self.current_window)
         if ridx == 0:
@@ -320,7 +310,7 @@ class Wmii(Layout):
             Switch to the next window in current column
         """
         c = self.current_column()
-        if c == None:
+        if c is None:
             return
         ridx = c['rows'].index(self.current_window)
         if ridx == len(c['rows']) - 1:
@@ -336,7 +326,7 @@ class Wmii(Layout):
 
     def cmd_shuffle_left(self):
         cur = self.current_window
-        if cur == None:
+        if cur is None:
             return
         for c in self.columns:
             if cur in c['rows']:
@@ -353,7 +343,7 @@ class Wmii(Layout):
                     self.columns[cidx - 1]['rows'].append(cur)
                 if len(c['rows']) == 0:
                     self.columns.remove(c)
-                    newwidth = (int) (100 / len(self.columns))
+                    newwidth = int(100 / len(self.columns))
                     for c in self.columns:
                         c['width'] = newwidth
                 else:
@@ -375,7 +365,7 @@ class Wmii(Layout):
 
     def cmd_grow_left(self):
         cur = self.current_window
-        if cur == None:
+        if cur is None:
             return
         for c in self.columns:
             if cur in c['rows']:
@@ -384,16 +374,16 @@ class Wmii(Layout):
                     # grow left for leftmost-column, shrink left
                     if self.is_last_column(cidx):
                         return
-                    self.swap_column_width(cidx+1, cidx)
+                    self.swap_column_width(cidx + 1, cidx)
                     self.group.focus(cur)
                     return
-                self.swap_column_width(cidx, cidx-1)
+                self.swap_column_width(cidx, cidx - 1)
                 self.group.focus(cur)
                 return
 
     def cmd_grow_right(self):
         cur = self.current_window
-        if cur == None:
+        if cur is None:
             return
         for c in self.columns:
             if cur in c['rows']:
@@ -402,17 +392,17 @@ class Wmii(Layout):
                     # grow right from right most, shrink right
                     if cidx == 0:
                         return
-                    self.swap_column_width(cidx-1, cidx)
+                    self.swap_column_width(cidx - 1, cidx)
                     self.group.focus(cur)
                     return
                 # grow my width by 20, reduce neighbor to the right by 20
-                self.swap_column_width(cidx, cidx+1)
+                self.swap_column_width(cidx, cidx + 1)
                 self.group.focus(cur)
                 return
 
     def cmd_shuffle_right(self):
         cur = self.current_window
-        if cur == None:
+        if cur is None:
             return
         for c in self.columns:
             if cur in c['rows']:
@@ -426,10 +416,10 @@ class Wmii(Layout):
                         self.columns.remove(c)
                 else:
                     c['rows'].remove(cur)
-                    self.columns[cidx+1]['rows'].append(cur)
+                    self.columns[cidx + 1]['rows'].append(cur)
                 if len(c['rows']) == 0:
                     self.columns.remove(c)
-                    newwidth = (int) (100 / len(self.columns))
+                    newwidth = int(100 / len(self.columns))
                     for c in self.columns:
                         c['width'] = newwidth
                 else:
@@ -444,7 +434,7 @@ class Wmii(Layout):
                 r = c['rows']
                 ridx = r.index(self.current_window)
                 if ridx < len(r):
-                    swap(r, ridx, ridx + 1)
+                    r[ridx], r[ridx + 1] = r[ridx + 1], r[ridx]
                     client = r[ridx + 1]
                     self.focus(client)
                     self.group.focus(client)
@@ -456,7 +446,7 @@ class Wmii(Layout):
                 r = c['rows']
                 ridx = r.index(self.current_window)
                 if ridx > 0:
-                    swap(r, ridx - 1, ridx)
+                    r[ridx - 1], r[ridx] = r[ridx], r[ridx - 1]
                     client = r[ridx - 1]
                     self.focus(client)
                     self.group.focus(client)
