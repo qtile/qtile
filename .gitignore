@@ -36,3 +36,4 @@ debian/*debhelper
 *sublime*
 
 .tox/
+.idea
