@@ -45,6 +45,7 @@ import mpd
 
 from .. import utils, pangocffi
 from . import base
+from six import u
 
 
 class Mpd(base.ThreadPoolText):
@@ -191,11 +192,11 @@ class Mpd(base.ThreadPoolText):
     def get_statusicon(self):
         n = self.status['state']
         if n == "play":
-            return u"▶"
+            return u("\u25b6")
         elif n == "pause":
-            return u"▷"
+            return u("\u25b7")
         elif n == "stop":
-            return u"◾"
+            return u("\u25a0")
 
     def get_longstatus(self):
         n = self.status['state']
