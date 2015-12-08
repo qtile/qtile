@@ -208,3 +208,21 @@ def get_cache_dir():
     if not os.path.exists(cache_directory):
         os.makedirs(cache_directory)
     return cache_directory
+
+
+try:
+    import psutil
+    def parent_pid(pid):
+        try:
+            return psutil.Process(pid).ppid()
+        except:
+            return None
+
+except ImportError:
+    import subprocess
+    def parent_pid(pid):
+        cmd = 'ps -o ppid= -p {}'.format(pid)
+        try:
+            return int(subprocess.check_output(cmd.split()))
+        except:
+            return None
