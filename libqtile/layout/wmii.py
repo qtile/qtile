@@ -433,7 +433,7 @@ class Wmii(Layout):
             if self.current_window in c['rows']:
                 r = c['rows']
                 ridx = r.index(self.current_window)
-                if ridx < len(r):
+                if ridx + 1 < len(r):
                     r[ridx], r[ridx + 1] = r[ridx + 1], r[ridx]
                     client = r[ridx + 1]
                     self.focus(client)
