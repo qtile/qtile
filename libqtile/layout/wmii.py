@@ -353,8 +353,6 @@ class Wmii(Layout):
                 return
 
     def swap_column_width(self, grow, shrink):
-        with open("/tmp/out", 'a') as outfile:
-            outfile.write("swap_column_width: called with %d %d\n" % (grow, shrink))
         grower = self.columns[grow]
         shrinker = self.columns[shrink]
         amount = self.grow_amount
