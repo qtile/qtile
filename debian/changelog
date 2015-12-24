@@ -1,5 +1,6 @@
-qtile (0.9.1-1) unstable; urgency=low
+qtile (0.10.3-1) unstable; urgency=low
 
   * Initial release.
+  * Closes: #762637
 
- -- Tycho Andersen <tycho@tycho.ws>  Tue, 20 Jan 2015 18:10:02 +1300
+ -- Tycho Andersen <tycho@tycho.ws>  Thu, 24 Dec 2015 04:03:11 +0000
