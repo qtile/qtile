@@ -4,10 +4,8 @@
 #
 #    pip-compile requirements.in
 #
---index-url https://pypi.python.org/simple
-
 cairocffi==0.7.2
-cffi==1.2.1
+cffi==1.4.2
 pycparser==2.14           # via cffi
 six==1.10.0
-xcffib==0.3.6
+xcffib==0.4.0

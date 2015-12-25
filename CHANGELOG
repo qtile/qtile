@@ -1,8 +1,11 @@
-qtile x.x.x, released xxxx-xx-xx:
+qtile 0.10.3, released 2015-12-25:
     * features
+        - add wmii layout
         - add BSD support to graph widgets
     * bugfixes
-        - fix fullscreen problems
+        - fix (some) fullscreen problems
+        - update google calendar widget to latest google api
+        - improve multiple keyboard layout support
         - fix displaying Systray widget on secondary monitor
         - fix spawn file descriptor handling in Python 3
         - remove duplicate assert code in test_verticaltile.py
