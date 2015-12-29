@@ -10,7 +10,7 @@ install them from your package manager.
 
 * `Nose <http://nose.readthedocs.org/en/latest/>`_
 * `Xephyr <http://www.freedesktop.org/wiki/Software/Xephyr>`_
-* ``xeyes`` and ``xclock``
+* ``xrandr``, ``xterm``, ``xeyes`` and ``xclock`` (``x11-apps`` on ubuntu)
 
 On ubuntu, this can be done with ``sudo apt-get install python-nose
 xserver-xephyr x11-apps``.
