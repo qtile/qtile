@@ -104,8 +104,8 @@ class Slice(Delegate):
         ("fallback", Max(), "Fallback layout"),
     ]
 
-    def __init__(self, side, width, **config):
-        Delegate.__init__(self, width=width, side=side, **config)
+    def __init__(self, **config):
+        Delegate.__init__(self, **config)
         self.add_defaults(Slice.defaults)
         self.match = {
             'wname': self.wname,
