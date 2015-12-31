@@ -19,8 +19,6 @@ Build-Depends: debhelper (>= 9)
     , python3-xcffib (>= 0.4.0)
     , python-cairocffi (>= 0.7)
     , python3-cairocffi (>= 0.7)
-    , python-trollius
-    , python3-trollius
     , libglib2.0-0
     , libpango1.0-0
     , libpangocairo-1.0-0
