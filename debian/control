@@ -80,6 +80,7 @@ Provides: ${python3:Provides}
 
 Package: qtile
 Architecture: all
+Section: x11
 Depends: xinit
     , python3-setproctitle
     , python3-qtile
