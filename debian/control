@@ -30,7 +30,7 @@ Vcs-Git: https://github.com/qtile/qtile
 Vcs-Browser: https://github.com/qtile/qtile
 
 Package: python-qtile
-Architecture: all
+Architecture: any
 Depends: python-cffi (>= 1.3.0)
     , python-xcffib (>= 0.4.0)
     , python-cairocffi (>= 0.7)
@@ -61,7 +61,7 @@ Description: This package is a library for developing X window managers (Python 
  This package installs the library for Python 2.
 
 Package: python3-qtile
-Architecture: all
+Architecture: any
 Depends: python-cffi (>= 1.3.0)
     , python-xcffib (>= 0.4.0)
     , python-cairocffi (>= 0.7)
