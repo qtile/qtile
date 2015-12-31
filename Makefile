@@ -39,7 +39,8 @@ man:
 
 .PHONY: deb
 deb:
-	git buildpackage --git-upstream-tree=develop --git-ignore-branch
+	-rm ../qtile_*
+	gbp buildpackage --git-upstream-tree=$(shell git symbolic-ref --short HEAD) --git-ignore-branch
 
 .PHONY: update-requirements
 update-requirements:
