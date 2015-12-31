@@ -28,7 +28,6 @@
 # SOFTWARE.
 
 from .base import Layout
-from .. import window
 
 DEFAULT_FLOAT_WM_TYPES = set([
     'utility',
@@ -102,10 +101,10 @@ class Floating(Layout):
         """
         for i, win in enumerate(self.clients):
             if win.maximized:
-                win.enablemaximize()
+                win.maximized = True
                 continue
             elif win.fullscreen:
-                win.enablemaximize(state=window.FULLSCREEN)
+                win.fullscreen = True
                 continue
 
             offset_x = win._float_info['x']
@@ -120,6 +119,7 @@ class Floating(Layout):
                 new_x = (new_x - new_screen.x) // 2
             while new_y > bottom_edge:
                 new_y = (new_y - new_screen.y) // 2
+
             win.x = new_x
             win.y = new_y
             win.group = new_screen.group

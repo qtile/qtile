@@ -24,6 +24,7 @@ import array
 import contextlib
 import inspect
 import traceback
+import warnings
 from xcffib.xproto import EventMask, StackMode, SetMode
 import xcffib.xproto
 
@@ -287,8 +288,11 @@ class _Window(command.CommandObject):
 
         if state:
             self.qtile.log.debug('_NET_WM_STATE: %s' % ','.join(state))
-            for s in triggered:
-                setattr(self, s, (s in state))
+        else:
+            self.qtile.log.debug('_NET_WM_STATE: EMPTY')
+
+        for s in triggered:
+            setattr(self, s, (s in state))
 
     @property
     def urgent(self):
@@ -764,7 +768,32 @@ class Window(_Window):
     @floating.setter
     def floating(self, do_float):
         if do_float and self._float_state == NOT_FLOATING:
-            self.enablefloating()
+            fi = self._float_info
+            self._enablefloating(fi['x'], fi['y'], fi['w'], fi['h'])
+        elif (not do_float) and self._float_state != NOT_FLOATING:
+            if self._float_state == FLOATING:
+                # store last size
+                fi = self._float_info
+                fi['w'] = self.width
+                fi['h'] = self.height
+            self._float_state = NOT_FLOATING
+            self.group.mark_floating(self, False)
+            hook.fire('float_change')
+
+    def toggle_floating(self):
+        self.floating = not self.floating
+
+    def togglefloating(self):
+        warnings.warn("togglefloating is deprecated, use toggle_floating", DeprecationWarning)
+        self.toggle_floating()
+
+    def enablefloating(self):
+        warnings.warn("enablefloating is deprecated, use floating=True", DeprecationWarning)
+        self.floating = True
+
+    def disablefloating(self):
+        warnings.warn("disablefloating is deprecated, use floating=False", DeprecationWarning)
+        self.floating = False
 
     @property
     def fullscreen(self):
@@ -772,12 +801,37 @@ class Window(_Window):
 
     @fullscreen.setter
     def fullscreen(self, do_full):
+        atom = set([self.qtile.conn.atoms["_NET_WM_STATE_FULLSCREEN"]])
+        prev_state = set(self.window.get_property('_NET_WM_STATE', 'ATOM', unpack=int))
+
         if do_full:
-            if self._float_state != FULLSCREEN:
-                self.enablemaximize(state=FULLSCREEN)
+            screen = self.group.screen or \
+                self.qtile.find_closest_screen(self.x, self.y)
+
+            self._enablefloating(
+                screen.x,
+                screen.y,
+                screen.width,
+                screen.height,
+                new_float_state=FULLSCREEN
+            )
+            state = prev_state | atom
         else:
             if self._float_state == FULLSCREEN:
-                self.disablefloating()
+                self.floating = False
+                state = prev_state - atom
+            else:
+                state = prev_state
+
+        if prev_state != state:
+            self.window.set_property('_NET_WM_STATE', list(state))
+
+    def toggle_fullscreen(self):
+        self.fullscreen = not self.fullscreen
+
+    def togglefullscreen(self):
+        warnings.warn("togglefullscreen is deprecated, use toggle_fullscreen", DeprecationWarning)
+        self.toggle_fullscreen()
 
     @property
     def maximized(self):
@@ -786,11 +840,30 @@ class Window(_Window):
     @maximized.setter
     def maximized(self, do_maximize):
         if do_maximize:
-            if self._float_state != MAXIMIZED:
-                self.enablemaximize()
+            screen = self.group.screen or \
+                self.qtile.find_closest_screen(self.x, self.y)
+
+            self._enablefloating(
+                screen.dx,
+                screen.dy,
+                screen.dwidth,
+                screen.dheight,
+                new_float_state=MAXIMIZED
+            )
         else:
             if self._float_state == MAXIMIZED:
-                self.disablefloating()
+                self.floating = False
+
+    def enablemaximize(self, state=MAXIMIZED):
+        warnings.warn("enablemaximize is deprecated, use maximized=True", DeprecationWarning)
+        self.maximized = True
+
+    def toggle_maximize(self, state=MAXIMIZED):
+        self.maximized = not self.maximized
+
+    def togglemaximize(self):
+        warnings.warn("togglemaximize is deprecated, use toggle_maximize", DeprecationWarning)
+        self.toggle_maximize()
 
     @property
     def minimized(self):
@@ -800,10 +873,21 @@ class Window(_Window):
     def minimized(self, do_minimize):
         if do_minimize:
             if self._float_state != MINIMIZED:
-                self.enableminimize()
+                self._enablefloating(new_float_state=MINIMIZED)
         else:
             if self._float_state == MINIMIZED:
-                self.disablefloating()
+                self.floating = False
+
+    def enableminimize(self):
+        warnings.warn("enableminimized is deprecated, use minimized=True", DeprecationWarning)
+        self.minimized = True
+
+    def toggle_minimize(self):
+        self.minimized = not self.minimized
+
+    def toggleminimize(self):
+        warnings.warn("toggleminimize is deprecated, use toggle_minimize", DeprecationWarning)
+        self.toggle_minimize()
 
     def static(self, screen, x=None, y=None, width=None, height=None):
         """
@@ -858,50 +942,6 @@ class Window(_Window):
 
     def getposition(self):
         return (self.x, self.y)
-
-    def toggleminimize(self):
-        if self.minimized:
-            self.disablefloating()
-        else:
-            self.enableminimize()
-
-    def enableminimize(self):
-        self._enablefloating(new_float_state=MINIMIZED)
-
-    def togglemaximize(self, state=MAXIMIZED):
-        if self._float_state == state:
-            self.disablefloating()
-        else:
-            self.enablemaximize(state)
-
-    def enablemaximize(self, state=MAXIMIZED):
-        screen = self.group.screen or self.qtile.find_closest_screen(
-            self.x,
-            self.y
-        )
-
-        if state == MAXIMIZED:
-            self._enablefloating(
-                screen.dx,
-                screen.dy,
-                screen.dwidth,
-                screen.dheight,
-                new_float_state=state
-            )
-        elif state == FULLSCREEN:
-            self._enablefloating(
-                screen.x,
-                screen.y,
-                screen.width,
-                screen.height,
-                new_float_state=state
-            )
-
-    def togglefloating(self):
-        if self.floating:
-            self.disablefloating()
-        else:
-            self.enablefloating()
 
     def _reconfigure_floating(self, new_float_state=FLOATING):
         if new_float_state == MINIMIZED:
@@ -961,21 +1001,6 @@ class Window(_Window):
             self.width = w
             self.height = h
         self._reconfigure_floating(new_float_state=new_float_state)
-
-    def enablefloating(self):
-        fi = self._float_info
-        self._enablefloating(fi['x'], fi['y'], fi['w'], fi['h'])
-
-    def disablefloating(self):
-        if self._float_state != NOT_FLOATING:
-            if self._float_state == FLOATING:
-                # store last size
-                fi = self._float_info
-                fi['w'] = self.width
-                fi['h'] = self.height
-            self._float_state = NOT_FLOATING
-            self.group.mark_floating(self, False)
-            hook.fire('float_change')
 
     def togroup(self, groupName=None):
         """
@@ -1108,19 +1133,12 @@ class Window(_Window):
 
         opcode = event.type
         data = event.data
-        if atoms["_NET_WM_STATE"] == opcode and \
-                self.qtile.config.auto_fullscreen:
-            fullscreen_atom = atoms["_NET_WM_STATE_FULLSCREEN"]
-
+        if atoms["_NET_WM_STATE"] == opcode:
             prev_state = self.window.get_property(
                 '_NET_WM_STATE',
                 'ATOM',
                 unpack=int
             )
-            if not prev_state:
-                prev_state = []
-                if self.fullscreen:
-                    prev_state.append(fullscreen_atom)
 
             current_state = set(prev_state)
 
@@ -1260,40 +1278,40 @@ class Window(_Window):
         return self.getsize()
 
     def cmd_toggle_floating(self):
-        self.togglefloating()
-
-    def cmd_disable_floating(self):
-        self.disablefloating()
+        self.toggle_floating()
 
     def cmd_enable_floating(self):
-        self.enablefloating()
+        self.floating = True
+
+    def cmd_disable_floating(self):
+        self.floating = False
 
     def cmd_toggle_maximize(self):
-        self.togglemaximize()
-
-    def cmd_disable_maximimize(self):
-        self.disablefloating()
+        self.toggle_maximize()
 
     def cmd_enable_maximize(self):
-        self.enablemaximize()
+        self.maxmize = True
+
+    def cmd_disable_maximimize(self):
+        self.maximize = False
 
     def cmd_toggle_fullscreen(self):
-        self.togglemaximize(state=FULLSCREEN)
+        self.toggle_fullscreen()
 
     def cmd_enable_fullscreen(self):
-        self.enablemaximize(state=FULLSCREEN)
+        self.fullscreen = True
 
     def cmd_disable_fullscreen(self):
-        self.disablefloating()
+        self.fullscreen = False
 
     def cmd_toggle_minimize(self):
-        self.toggleminimize()
+        self.toggle_minimize()
 
     def cmd_enable_minimize(self):
-        self.enableminimize()
+        self.minimize = True
 
     def cmd_disable_minimize(self):
-        self.disablefloating()
+        self.minimize = False
 
     def cmd_bring_to_front(self):
         if self.floating:
