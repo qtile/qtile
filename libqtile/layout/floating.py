@@ -102,26 +102,24 @@ class Floating(Layout):
         for i, win in enumerate(self.clients):
             if win.maximized:
                 win.maximized = True
-                continue
             elif win.fullscreen:
                 win.fullscreen = True
-                continue
+            else:
+                offset_x = win._float_info['x']
+                offset_y = win._float_info['y']
 
-            offset_x = win._float_info['x']
-            offset_y = win._float_info['y']
+                new_x = new_screen.x + offset_x
+                new_y = new_screen.y + offset_y
 
-            new_x = new_screen.x + offset_x
-            new_y = new_screen.y + offset_y
+                right_edge = new_screen.x + new_screen.width
+                bottom_edge = new_screen.y + new_screen.height
+                while new_x > right_edge:
+                    new_x = (new_x - new_screen.x) // 2
+                while new_y > bottom_edge:
+                    new_y = (new_y - new_screen.y) // 2
 
-            right_edge = new_screen.x + new_screen.width
-            bottom_edge = new_screen.y + new_screen.height
-            while new_x > right_edge:
-                new_x = (new_x - new_screen.x) // 2
-            while new_y > bottom_edge:
-                new_y = (new_y - new_screen.y) // 2
-
-            win.x = new_x
-            win.y = new_y
+                win.x = new_x
+                win.y = new_y
             win.group = new_screen.group
 
     def focus_first(self):
