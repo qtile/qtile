@@ -534,7 +534,18 @@ class _Window(command.CommandObject):
                     self.window.warp_pointer(self.width // 2, self.height // 2)
             except AttributeError:
                 pass
-        self.urgent = False
+
+        if self.urgent:
+            self.urgent = False
+
+            atom = self.qtile.conn.atoms["_NET_WM_STATE_DEMANDS_ATTENTION"]
+            state = list(self.window.get_property('_NET_WM_STATE', 'ATOM',
+                unpack=int))
+
+            if atom in state:
+                state.remove(atom)
+                self.window.set_property('_NET_WM_STATE', state)
+
         self.qtile.root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
         hook.fire("client_focus", self)
 
