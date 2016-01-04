@@ -22,6 +22,7 @@ import inspect
 import traceback
 import textwrap
 import os
+import sys
 
 from . import ipc
 from .utils import get_cache_dir
@@ -385,10 +386,19 @@ class CommandObject(object):
         return self.items(name)
 
     def docSig(self, name):
-        args, varargs, varkw, defaults = inspect.getargspec(self.command(name))
+        # inspect.signature introduced in Python 3.3
+        if sys.version_info < (3, 3):
+            args, varargs, varkw, defaults = inspect.getargspec(self.command(name))
+            if args and args[0] == "self":
+                args = args[1:]
+            return name + inspect.formatargspec(args, varargs, varkw, defaults)
+
+        sig = inspect.signature(self.command(name))
+        args = list(sig.parameters)
         if args and args[0] == "self":
             args = args[1:]
-        return name + inspect.formatargspec(args, varargs, varkw, defaults)
+            sig = sig.replace(parameters=args)
+        return name + str(sig)
 
     def docText(self, name):
         return textwrap.dedent(self.command(name).__doc__ or "")
