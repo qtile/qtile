@@ -463,7 +463,7 @@ class Group(object):
         self.position = position
 
     def __repr__(self):
-        attrs= utils.describe_attributes(self,
+        attrs = utils.describe_attributes(self,
             ['exclusive', 'spawn', 'layout', 'layouts', 'persist', 'init',
             'matches', 'layout_opts', 'screen_affinity'])
         return '<config.Group %r (%s)>' % (self.name, attrs)

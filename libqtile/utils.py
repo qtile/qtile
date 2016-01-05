@@ -217,7 +217,7 @@ def describe_attributes(obj, attrs, func=None):
     """
 
     if not func:
-        func = lambda x: x
+        func = lambda x: x  # flake8: noqa
 
     pairs = []
 
