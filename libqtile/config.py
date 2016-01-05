@@ -61,7 +61,7 @@ class Key(object):
             raise utils.QtileError(v)
 
     def __repr__(self):
-        return "Key(%s, %s)" % (self.modifiers, self.key)
+        return "<Key (%s, %s)>" % (self.modifiers, self.key)
 
 
 class Drag(object):
@@ -88,7 +88,7 @@ class Drag(object):
             raise utils.QtileError(v)
 
     def __repr__(self):
-        return "Drag(%s, %s)" % (self.modifiers, self.button)
+        return "<Drag (%s, %s)>" % (self.modifiers, self.button)
 
 
 class Click(object):
@@ -110,7 +110,7 @@ class Click(object):
             raise utils.QtileError(v)
 
     def __repr__(self):
-        return "Click(%s, %s)" % (self.modifiers, self.button)
+        return "<Click (%s, %s)>" % (self.modifiers, self.button)
 
 
 class EzConfig(object):
@@ -462,6 +462,12 @@ class Group(object):
         self.screen_affinity = screen_affinity
         self.position = position
 
+    def __repr__(self):
+        attrs= utils.describe_attributes(self,
+            ['exclusive', 'spawn', 'layout', 'layouts', 'persist', 'init',
+            'matches', 'layout_opts', 'screen_affinity'])
+        return '<config.Group %r (%s)>' % (self.name, attrs)
+
 
 class Match(object):
     """
@@ -551,6 +557,9 @@ class Match(object):
             if self.compare(c):
                 callback(c)
 
+    def __repr__(self):
+        return '<Match %s>' % self._rules
+
 
 class Rule(object):
     """
@@ -574,3 +583,8 @@ class Rule(object):
 
     def matches(self, w):
         return self.match.compare(w)
+
+    def __repr__(self):
+        actions = utils.describe_attributes(self, ['group', 'float',
+            'intrusive', 'break_on_match'])
+        return '<Rule match=%r actions=(%s)>' % (self.match, actions)

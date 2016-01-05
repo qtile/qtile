@@ -431,3 +431,6 @@ class _Group(command.CommandObject):
             Switch position of current group with name
         """
         self.qtile.cmd_switch_groups(self.name, name)
+
+    def __repr__(self):
+        return "<group.Group (%r)>" % self.name

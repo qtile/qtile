@@ -208,3 +208,22 @@ def get_cache_dir():
     if not os.path.exists(cache_directory):
         os.makedirs(cache_directory)
     return cache_directory
+
+
+def describe_attributes(obj, attrs, func=None):
+    """
+    Helper for __repr__ functions to list attributes with truthy values only
+    (or values that return a truthy value by func)
+    """
+
+    if not func:
+        func = lambda x: x
+
+    pairs = []
+
+    for attr in attrs:
+        value = getattr(obj, attr, None)
+        if func(value):
+            pairs.append('%s=%s' % (attr, value))
+
+    return ', '.join(pairs)
