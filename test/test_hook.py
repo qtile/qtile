@@ -43,7 +43,7 @@ def setup():
         pass
 
     dummy = Dummy()
-    dummy.log = libqtile.log_utils.init_log(logging.CRITICAL)
+    libqtile.log_utils.init_log(logging.CRITICAL)
     libqtile.hook.init(dummy)
 
 
