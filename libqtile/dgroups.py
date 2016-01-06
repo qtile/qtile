@@ -25,6 +25,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from logging import getLogger
+logger = getLogger(__name__)
 import collections
 import six
 
@@ -114,7 +116,7 @@ class DGroups(object):
             self.rules.remove(rule)
             del self.rules_map[rule_id]
         else:
-            self.qtile.log.warn('Rule "%s" not found' % rule_id)
+            logger.warn('Rule "%s" not found', rule_id)
 
     def add_dgroup(self, group, start=False):
         self.groupMap[group.name] = group
@@ -154,7 +156,7 @@ class DGroups(object):
 
     def _add(self, client):
         if client in self.timeout:
-            self.qtile.log.info('Remove dgroup source')
+            logger.info('Remove dgroup source')
             self.timeout.pop(client).cancel()
 
         # ignore static windows
@@ -247,7 +249,7 @@ class DGroups(object):
             del self.timeout[client]
 
         # Wait the delay until really delete the group
-        self.qtile.log.info('Add dgroup timer')
+        logger.info('Add dgroup timer')
         self.timeout[client] = self.qtile.call_later(
             self.delay, delete_client
         )

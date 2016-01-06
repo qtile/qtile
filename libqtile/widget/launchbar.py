@@ -42,6 +42,8 @@ To execute a python command in qtile, begin with by 'qsh:'
 """
 
 from __future__ import division
+from logging import getLogger
+logger = getLogger(__name__)
 
 from libqtile import bar
 from libqtile.widget import base
@@ -96,9 +98,9 @@ class LaunchBar(base._Widget):
         """ Create image structures for each icon files. """
         for img_name, iconfile in self.icons_files.items():
             if iconfile is None:
-                self.qtile.log.warning('No icon found for application "' +
-                                       img_name + '" (' + str(iconfile) + ')' +
-                                       ' switch to text mode')
+                logger.warning(
+					'No icon found for application "%s" (%s) switch to text mode',
+					img_name, iconfile)
                 # if no icon is found and no default icon was set, we just
                 # print the name, based on a textbox.
                 textbox = base._TextBox()
@@ -121,9 +123,8 @@ class LaunchBar(base._Widget):
                 try:
                     img = cairocffi.ImageSurface.create_from_png(iconfile)
                 except cairocffi.Error:
-                    self.qtile.log.exception('Error loading icon for ' +
-                                             'application "' + img_name + '" (' +
-                                             iconfile + ')')
+                    logger.exception('Error loading icon for application "%s" (%s)',
+						img_name, iconfile)
                     return
 
             input_width = img.get_width()

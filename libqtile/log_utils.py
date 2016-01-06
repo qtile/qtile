@@ -104,6 +104,6 @@ def init_log(log_level=WARNING, logger='qtile', log_path='~/.%s.log',
     # Capture everything from the warnings module.
     captureWarnings(True)
     warnings.simplefilter("always")
-    _logger.warning('Starting logging for %s' % logger)
+    _logger.warning('Starting logging for %s', logger)
     return _logger
 

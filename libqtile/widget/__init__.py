@@ -20,12 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from logging import getLogger
+logger = getLogger(__name__)
 import logging
 import traceback
 import importlib
-
-
-logger = logging.getLogger('qtile')
 
 
 def safe_import(module_name, class_name):
@@ -45,9 +44,8 @@ def safe_import(module_name, class_name):
         module = importlib.import_module(module_name, package)
         globals()[class_name] = getattr(module, class_name)
     except ImportError as error:
-        msg = "Can't Import Widget: '%s.%s', %s"
-        logger.warning(msg % (module_name, class_name, error))
-        logger.debug(traceback.format_exc())
+        logger.warning("Can't Import Widget: '%s.%s', %s", (module_name, class_name, error))
+        logger.debug("%s", traceback.format_exc())
 
 
 safe_import(".backlight", "Backlight")

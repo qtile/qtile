@@ -26,6 +26,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from logging import getLogger
+logger = getLogger(__name__)
 import contextlib
 import xcffib
 import xcffib.xproto
@@ -153,8 +155,8 @@ class _Group(command.CommandObject):
                     try:
                         self.layout.layout(normal, screen)
                     except:
-                        self.qtile.log.exception("Exception in layout %s"
-                            % (self.layout.name))
+                        logger.exception("Exception in layout %s",
+                            self.layout.name)
                 if floating:
                     self.floating_layout.layout(floating, screen)
                 if self.currentWindow and \

@@ -35,6 +35,8 @@
     complete - it only implements the subset of functionalty needed by qtile.
 """
 from __future__ import print_function, division
+from logging import getLogger
+logger = getLogger(__name__)
 
 import six
 import logging
@@ -638,7 +640,7 @@ class Window(object):
                 value
             ).check()
         except xcffib.xproto.WindowError:
-            logging.getLogger('qtile').warning(
+            logger.warning(
                 'X error in SetProperty (wid=%r, prop=%r), ignoring',
                 self.wid, name)
 
@@ -668,7 +670,7 @@ class Window(object):
                 0, (2 ** 32) - 1
             ).reply()
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
-            logging.getLogger('qtile').warning(
+            logger.warning(
                 'X error in GetProperty (wid=%r, prop=%r), ignoring',
                 self.wid, prop)
             if unpack:

@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from logging import getLogger
+logger = getLogger(__name__)
 from . import base
 import logging
 import six
@@ -99,5 +101,5 @@ class Net(base.ThreadedPollText):
             self.interfaces = new_int
             return str_base % (down, down_letter, up, up_letter)
         except Exception as e:
-            logging.getLogger('qtile').error('%s: Probably your wlan device is switched off or otherwise not present in your system.',
+            logger.error('%s: Probably your wlan device is switched off or otherwise not present in your system.',
                                              self.__class__.__name__, str(e))

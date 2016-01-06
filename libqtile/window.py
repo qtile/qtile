@@ -19,6 +19,8 @@
 # SOFTWARE.
 
 from __future__ import division
+from logging import getLogger
+logger = getLogger(__name__)
 
 import array
 import contextlib
@@ -187,8 +189,8 @@ class _Window(command.CommandObject):
             if not isinstance(value, int) and attr != "_float_info":
                 frame = inspect.currentframe()
                 stack_trace = traceback.format_stack(frame)
-                self.qtile.log.error("!!!! setting %s to a non-int %s; please report this!", attr, value)
-                self.qtile.log.error(''.join(stack_trace[:-1]))
+                logger.error("!!!! setting %s to a non-int %s; please report this!", attr, value)
+                logger.error(''.join(stack_trace[:-1]))
                 value = int(value)
             setattr(self, "_" + attr, value)
         return f
@@ -286,11 +288,7 @@ class _Window(command.CommandObject):
 
         state = self.window.get_net_wm_state()
 
-        if state:
-            self.qtile.log.debug('_NET_WM_STATE: %s' % ','.join(state))
-        else:
-            self.qtile.log.debug('_NET_WM_STATE: EMPTY')
-
+        logger.debug('_NET_WM_STATE: %s', state)
         for s in triggered:
             setattr(self, s, (s in state))
 
@@ -754,7 +752,7 @@ class Window(_Window):
                     self.qtile.groups.index(group)
                 )
             except xcffib.xproto.WindowError:
-                self.qtile.log.exception("whoops, got error setting _NET_WM_DESKTOP, too early?")
+                logger.exception("whoops, got error setting _NET_WM_DESKTOP, too early?")
         self._group = group
 
     @property
@@ -1159,7 +1157,7 @@ class Window(_Window):
 
     def handle_PropertyNotify(self, e):
         name = self.qtile.conn.atoms.get_name(e.atom)
-        self.qtile.log.debug("PropertyNotifyEvent: %s" % name)
+        logger.debug("PropertyNotifyEvent: %s", name)
         if name == "WM_TRANSIENT_FOR":
             pass
         elif name == "WM_HINTS":
@@ -1199,7 +1197,7 @@ class Window(_Window):
                     self.group.currentWindow != self:
                 self.group.focus(self, False)
         else:
-            self.qtile.log.info("Unknown window property: %s" % name)
+            logger.info("Unknown window property: %s", name)
         return False
 
     def _items(self, name):

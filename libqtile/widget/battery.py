@@ -30,6 +30,8 @@
 # SOFTWARE.
 
 from __future__ import division
+from logging import getLogger
+logger = getLogger(__name__)
 
 import cairocffi
 import os
@@ -322,7 +324,7 @@ class BatteryIcon(_Battery):
                 img = cairocffi.ImageSurface.create_from_png(path)
             except cairocffi.Error:
                 self.theme_path = None
-                self.qtile.log.warning('Battery Icon switching to text mode')
+                logger.warning('Battery Icon switching to text mode')
                 return
             input_width = img.get_width()
             input_height = img.get_height()

@@ -22,6 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from logging import getLogger
+logger = getLogger(__name__)
 import dbus
 
 from dbus.mainloop.glib import DBusGMainLoop
@@ -94,7 +96,7 @@ class Mpris(base._TextBox):
             )
             self.connected = True
         except dbus.exceptions.DBusException:
-            self.qtile.log.exception("exception initalizing mpris")
+            logger.exception("exception initalizing mpris")
             self.connected = False
 
     def handle_track_change(self, metadata):

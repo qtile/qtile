@@ -29,6 +29,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from logging import getLogger
+logger = getLogger(__name__)
 import os
 import re
 import subprocess
@@ -174,7 +176,7 @@ class Volume(base._TextBox):
             except cairocffi.Error:
                 self.theme_path = None
                 self.length_type = bar.CALCULATED
-                self.qtile.log.exception('Volume switching to text mode')
+                logger.exception('Volume switching to text mode')
                 return
             input_width = img.get_width()
             input_height = img.get_height()

@@ -60,6 +60,8 @@
 # borrows liberally from that one.
 ###################################################################
 
+from logging import getLogger
+logger = getLogger(__name__)
 from . import base
 import httplib2
 import datetime
@@ -181,7 +183,7 @@ class GoogleCalendar(base.ThreadedPollText):
             maxResults='1',
             orderBy='startTime'
         ).execute()
-        self.qtile.log.info('calendar json data: %s' % str(events))
+        logger.info('calendar json data: %s', events)
 
         # get items list
         try:

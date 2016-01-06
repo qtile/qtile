@@ -23,10 +23,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from logging import getLogger
+logger = getLogger(__name__)
 import os
 import sys
 import traceback
-import logging
 
 
 class ConfigError(Exception):
@@ -60,11 +61,10 @@ class File(object):
                 # screwed up their config. So as not to lose their apps, we
                 # just load the default config here.
                 if is_restart:
-                    logging.getLogger('qtile').warning(
+                    logger.warning(
                         'Caught exception in configuration:\n\n'
-                        '{}\n\n'
-                        'Qtile restarted with default config'.format(tb)
-                    )
+                        '%s\n\n'
+                        'Qtile restarted with default config', tb)
                     config = None
                 else:
                     raise ConfigError(tb)
