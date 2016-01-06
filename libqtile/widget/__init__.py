@@ -23,7 +23,6 @@
 
 from logging import getLogger
 logger = getLogger(__name__)
-import logging
 import traceback
 import importlib
 
