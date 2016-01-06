@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2008-2010 Aldo Cortesi
 # Copyright (c) 2011 Florian Mounier
 # Copyright (c) 2011 Kenji_Takahashi
@@ -29,10 +30,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from logging import getLogger
+logger = getLogger(__name__)
 from .. import command, bar, configurable, drawer, confreader
 import six
 import subprocess
-import logging
 import threading
 import warnings
 
@@ -101,8 +103,6 @@ class _Widget(command.CommandObject, configurable.Configurable):
         self.name = self.__class__.__name__.lower()
         if "name" in config:
             self.name = config["name"]
-
-        self.log = logging.getLogger('qtile')
 
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(_Widget.defaults)
@@ -268,7 +268,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
         try:
             method(*method_args)
         except:
-            self.log.exception('got exception from widget timer')
+            logger.exception('got exception from widget timer')
 
 
 UNSPECIFIED = bar.Obj("UNSPECIFIED")
@@ -500,8 +500,7 @@ class ThreadPoolText(_TextBox):
             try:
                 result = future.result()
             except Exception:
-                self.log.exception('poll() raised exceptions, not '
-                                   'rescheduling')
+                logger.exception('poll() raised exceptions, not rescheduling')
 
             if result is not None:
                 try:
@@ -513,9 +512,9 @@ class ThreadPoolText(_TextBox):
                         self.timer_setup()
 
                 except Exception:
-                    self.log.exception('Failed to reschedule.')
+                    logger.exception('Failed to reschedule.')
             else:
-                self.log.warning('poll() returned None, not rescheduling')
+                logger.warning('poll() returned None, not rescheduling')
 
         future = self.qtile.run_in_executor(self.poll)
         future.add_done_callback(on_done)

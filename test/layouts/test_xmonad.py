@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2015 Sean Vig
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy

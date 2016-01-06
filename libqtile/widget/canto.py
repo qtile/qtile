@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2011 Kenji_Takahashi
 # Copyright (c) 2011 Mounier Florian
 # Copyright (c) 2012, 2014 Tycho Andersen
@@ -21,8 +23,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-# -*- coding: utf-8 -*-
 
 from . import base
 from subprocess import call

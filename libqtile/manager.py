@@ -20,13 +20,14 @@
 # SOFTWARE.
 
 from __future__ import division
+from logging import getLogger
+logger = getLogger(__name__)
 
 try:
     import tracemalloc
 except ImportError:
     tracemalloc = None
 
-from libqtile.log_utils import init_log
 from libqtile.dgroups import DGroups
 from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
 import logging
@@ -79,16 +80,8 @@ class Qtile(command.CommandObject):
         This object is the __root__ of the command graph.
     """
 
-    def __init__(self, config,
-                 displayName=None, fname=None, no_spawn=False, log=None,
-                 state=None):
-        logkwargs = {}
-        if hasattr(config, "log_level"):
-            logkwargs["log_level"] = config.log_level
-        if hasattr(config, "log_path"):
-            logkwargs["log_path"] = config.log_path
-        self.log = log or init_log(**logkwargs)
-
+    def __init__(self, config, displayName=None, fname=None, no_spawn=False,
+            state=None):
         self.no_spawn = no_spawn
 
         self._eventloop = None
@@ -233,7 +226,7 @@ class Qtile(command.CommandObject):
             try:
                 st.apply(self)
             except:
-                log.exception("failed restoring state")
+                logger.exception("failed restoring state")
 
         self.selection = {
             "PRIMARY": {"owner": None, "selection": ""},
@@ -266,10 +259,10 @@ class Qtile(command.CommandObject):
         self._eventloop.add_signal_handler(signal.SIGINT, self.stop)
         self._eventloop.add_signal_handler(signal.SIGTERM, self.stop)
         self._eventloop.set_exception_handler(
-            lambda x, y: self.log.exception("Got an exception in poll loop")
+            lambda x, y: logger.exception("Got an exception in poll loop")
         )
 
-        self.log.info('Adding io watch')
+        logger.info('Adding io watch')
         fd = self.conn.conn.get_file_descriptor()
         self._eventloop.add_reader(fd, self._xpoll)
 
@@ -297,7 +290,7 @@ class Qtile(command.CommandObject):
                         self.qtile.exception("got exception from gobject")
             self._glib_loop = self.run_in_executor(gobject_thread)
         except ImportError:
-            self.log.warning("importing dbus/gobject failed, dbus will not work.")
+            logger.warning("importing dbus/gobject failed, dbus will not work.")
             self._glib_loop = None
 
     def finalize(self):
@@ -327,13 +320,13 @@ class Qtile(command.CommandObject):
                     if bar is not None:
                         bar.finalize()
 
-            self.log.info('Removing io watch')
+            logger.info('Removing io watch')
             fd = self.conn.conn.get_file_descriptor()
             self._eventloop.remove_reader(fd)
             self.conn.finalize()
             self.server.close()
         except:
-            self.log.exception('exception during finalize')
+            logger.exception('exception during finalize')
         finally:
             self._eventloop.close()
             self._eventloop = None
@@ -714,7 +707,7 @@ class Qtile(command.CommandObject):
         if hasattr(self, handler):
             chain.append(getattr(self, handler))
         if not chain:
-            self.log.info("Unknown event: %r" % ename)
+            logger.info("Unknown event: %r" % ename)
         return chain
 
     def _xpoll(self):
@@ -729,9 +722,9 @@ class Qtile(command.CommandObject):
                 if ename.endswith("Event"):
                     ename = ename[:-5]
                 if e.__class__ not in self.ignoreEvents:
-                    self.log.debug(ename)
+                    logger.debug(ename)
                     for h in self.get_target_chain(ename, e):
-                        self.log.info("Handling: %s" % ename)
+                        logger.info("Handling: %s" % ename)
                         r = h(e)
                         if not r:
                             break
@@ -750,16 +743,16 @@ class Qtile(command.CommandObject):
                 error_code = self.conn.conn.has_error()
                 if error_code:
                     error_string = xcbq.XCB_CONN_ERRORS[error_code]
-                    self.log.exception("Shutting down due to X connection error %s (%s)" %
+                    logger.exception("Shutting down due to X connection error %s (%s)" %
                         (error_string, error_code))
                     self.stop()
                     break
 
-                self.log.exception("Got an exception in poll loop")
+                logger.exception("Got an exception in poll loop")
         self.conn.flush()
 
     def stop(self):
-        self.log.info('Stopping eventloop')
+        logger.info('Stopping eventloop')
         self._eventloop.stop()
 
     def loop(self):
@@ -892,7 +885,7 @@ class Qtile(command.CommandObject):
             try:
                 self.currentScreen.setGroup(self.groups[index])
             except IndexError:
-                self.log.info("Invalid Desktop Index: %s" % index)
+                logger.info("Invalid Desktop Index: %s" % index)
 
     def handle_KeyPress(self, e):
         keysym = self.conn.code_to_syms[e.detail][0]
@@ -901,7 +894,7 @@ class Qtile(command.CommandObject):
             state = e.state | self.numlockMask
         k = self.keyMap.get((keysym, state & self.validMask))
         if not k:
-            self.log.info("Ignoring unknown keysym: %s" % keysym)
+            logger.info("Ignoring unknown keysym: %s" % keysym)
             return
         for i in k.commands:
             if i.check(self):
@@ -909,7 +902,7 @@ class Qtile(command.CommandObject):
                     (i.selectors, i.name, i.args, i.kwargs)
                 )
                 if status in (command.ERROR, command.EXCEPTION):
-                    self.log.error("KB command error %s: %s" % (i.name, val))
+                    logger.error("KB command error %s: %s" % (i.name, val))
         else:
             return
 
@@ -941,7 +934,7 @@ class Qtile(command.CommandObject):
         k = self.mouseMap.get(button_code)
         for m in k:
             if not m or m.modmask & self.validMask != state & self.validMask:
-                self.log.info("Ignoring unknown button: %s" % button_code)
+                logger.info("Ignoring unknown button: %s" % button_code)
                 continue
             if isinstance(m, Click):
                 for i in m.commands:
@@ -953,7 +946,7 @@ class Qtile(command.CommandObject):
                         if m.focus == "after":
                             self.cmd_focus_by_click(e)
                         if status in (command.ERROR, command.EXCEPTION):
-                            self.log.error(
+                            logger.error(
                                 "Mouse command error %s: %s" % (i.name, val)
                             )
             elif isinstance(m, Drag):
@@ -966,7 +959,7 @@ class Qtile(command.CommandObject):
                     status, val = self.server.call(
                         (i.selectors, i.name, i.args, i.kwargs))
                     if status in (command.ERROR, command.EXCEPTION):
-                        self.log.error(
+                        logger.error(
                             "Mouse command error %s: %s" % (i.name, val)
                         )
                         continue
@@ -992,7 +985,7 @@ class Qtile(command.CommandObject):
         k = self.mouseMap.get(button_code)
         for m in k:
             if not m:
-                self.log.info(
+                logger.info(
                     "Ignoring unknown button release: %s" % button_code
                 )
                 continue
@@ -1016,7 +1009,7 @@ class Qtile(command.CommandObject):
                         i.kwargs
                     ))
                     if status in (command.ERROR, command.EXCEPTION):
-                        self.log.error(
+                        logger.error(
                             "Mouse command error %s: %s" % (i.name, val)
                         )
 
@@ -1178,28 +1171,28 @@ class Qtile(command.CommandObject):
 
     def cmd_debug(self):
         """Set log level to DEBUG"""
-        self.log.setLevel(logging.DEBUG)
-        self.log.debug('Switching to DEBUG threshold')
+        logger.setLevel(logging.DEBUG)
+        logger.debug('Switching to DEBUG threshold')
 
     def cmd_info(self):
         """Set log level to INFO"""
-        self.log.setLevel(logging.INFO)
-        self.log.info('Switching to INFO threshold')
+        logger.setLevel(logging.INFO)
+        logger.info('Switching to INFO threshold')
 
     def cmd_warning(self):
         """Set log level to WARNING"""
-        self.log.setLevel(logging.WARNING)
-        self.log.warning('Switching to WARNING threshold')
+        logger.setLevel(logging.WARNING)
+        logger.warning('Switching to WARNING threshold')
 
     def cmd_error(self):
         """Set log level to ERROR"""
-        self.log.setLevel(logging.ERROR)
-        self.log.error('Switching to ERROR threshold')
+        logger.setLevel(logging.ERROR)
+        logger.error('Switching to ERROR threshold')
 
     def cmd_critical(self):
         """Set log level to CRITICAL"""
-        self.log.setLevel(logging.CRITICAL)
-        self.log.critical('Switching to CRITICAL threshold')
+        logger.setLevel(logging.CRITICAL)
+        logger.critical('Switching to CRITICAL threshold')
 
     def cmd_pause(self):
         """Drops into pdb"""
@@ -1335,7 +1328,7 @@ class Qtile(command.CommandObject):
         try:
             pickle.dump(QtileState(self), buf, protocol=0)
         except:
-            self.log.error("Unable to pickle qtile state")
+            logger.error("Unable to pickle qtile state")
         argv = [s for s in argv if not s.startswith('--with-state')]
         argv.append('--with-state=' + buf.getvalue().decode())
 
@@ -1521,7 +1514,7 @@ class Qtile(command.CommandObject):
     def cmd_findwindow(self, prompt="window", widget="prompt"):
         mb = self.widgetMap.get(widget)
         if not mb:
-            self.log.error("No widget named '%s' present." % widget)
+            logger.error("No widget named '%s' present." % widget)
             return
 
         mb.startInput(
@@ -1547,12 +1540,12 @@ class Qtile(command.CommandObject):
             widget: Name of the prompt widget (default: "prompt").
         """
         if not self.currentWindow:
-            self.log.warning("No window to move")
+            logger.warning("No window to move")
             return
 
         mb = self.widgetMap.get(widget)
         if not mb:
-            self.log.error("No widget named '%s' present." % widget)
+            logger.error("No widget named '%s' present." % widget)
             return
 
         mb.startInput(prompt, self.moveToGroup, "group", strict_completer=True)
@@ -1563,12 +1556,12 @@ class Qtile(command.CommandObject):
                 try:
                     self.groupMap[group].cmd_toscreen()
                 except KeyError:
-                    self.log.info("No group named '%s' present." % group)
+                    logger.info("No group named '%s' present." % group)
                     pass
 
         mb = self.widgetMap.get(widget)
         if not mb:
-            self.log.warning("No widget named '%s' present." % widget)
+            logger.warning("No widget named '%s' present." % widget)
             return
 
         mb.startInput(prompt, f, "group", strict_completer=True)
@@ -1590,7 +1583,7 @@ class Qtile(command.CommandObject):
             mb = self.widgetMap[widget]
             mb.startInput(prompt, f, complete)
         except KeyError:
-            self.log.error("No widget named '%s' present." % widget)
+            logger.error("No widget named '%s' present." % widget)
 
     def cmd_qtilecmd(self, prompt="command",
                      widget="prompt", messenger="xmessage"):
@@ -1613,7 +1606,7 @@ class Qtile(command.CommandObject):
                     return
                 cmd_len = len(cmd_arg)
                 if cmd_len == 0:
-                    self.log.info('No command entered.')
+                    logger.info('No command entered.')
                     return
                 try:
                     result = eval('c.%s' % (cmd))
@@ -1621,18 +1614,18 @@ class Qtile(command.CommandObject):
                         command.CommandError,
                         command.CommandException,
                         AttributeError) as err:
-                    self.log.error(err)
+                    logger.error(err)
                     result = None
                 if result is not None:
                     from pprint import pformat
                     message = pformat(result)
                     if messenger:
                         self.cmd_spawn('%s "%s"' % (messenger, message))
-                    self.log.info(result)
+                    logger.info(result)
 
         mb = self.widgetMap[widget]
         if not mb:
-            self.log.error("No widget named %s present." % widget)
+            logger.error("No widget named %s present." % widget)
             return
         mb.startInput(prompt, f, "qsh")
 
@@ -1650,7 +1643,7 @@ class Qtile(command.CommandObject):
             param: min_priorty if the rule is added with minimun prioriry(last)
         """
         if not self.dgroups:
-            self.log.warning('No dgroups created')
+            logger.warning('No dgroups created')
             return
 
         match = Match(**match_args)
@@ -1699,7 +1692,7 @@ class Qtile(command.CommandObject):
                 bar.show(not bar.is_show())
                 self.currentGroup.layoutAll()
             else:
-                self.log.warning(
+                logger.warning(
                     "Not found bar in position '%s' for hide/show." % position)
         elif position == "all":
             screen = self.currentScreen
@@ -1712,16 +1705,16 @@ class Qtile(command.CommandObject):
             if is_show is not None:
                 self.currentGroup.layoutAll()
             else:
-                self.log.warning("Not found bar for hide/show.")
+                logger.warning("Not found bar for hide/show.")
         else:
-            self.log.error("Invalid position value:%s" % position)
+            logger.error("Invalid position value:%s" % position)
 
     def cmd_get_state(self):
         buf = six.BytesIO()
         pickle.dump(QtileState(self), buf, protocol=0)
         state = buf.getvalue().decode()
-        self.log.info('State = ')
-        self.log.info(''.join(state.split('\n')))
+        logger.info('State = ')
+        logger.info(''.join(state.split('\n')))
         return state
 
     def cmd_tracemalloc_toggle(self):
@@ -1732,7 +1725,7 @@ class Qtile(command.CommandObject):
 
     def cmd_tracemalloc_dump(self):
         if not tracemalloc:
-            self.log.warning('No tracemalloc module')
+            logger.warning('No tracemalloc module')
             raise command.CommandError("No tracemalloc module")
         if not tracemalloc.is_tracing():
             return [False, "Trace not started"]

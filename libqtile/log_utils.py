@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2012 Florian Mounier
 # Copyright (c) 2013-2014 Tao Sauvage
 # Copyright (c) 2014 Sean Vig
@@ -21,15 +22,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import logging
-import logging.handlers
+from logging import getLogger, StreamHandler, Formatter, WARNING, captureWarnings
+from logging.handlers import RotatingFileHandler
+logger = getLogger(__name__)
 import os
 import sys
 import warnings
-from logging import getLogger, StreamHandler
 
 
-class ColorFormatter(logging.Formatter):
+class ColorFormatter(Formatter):
     """Logging formatter adding console colors to the output."""
     black, red, green, yellow, blue, magenta, cyan, white = range(8)
     colors = {
@@ -53,7 +54,7 @@ class ColorFormatter(logging.Formatter):
     def format(self, record):
         """Format the record with colors."""
         color = self.color_seq % (30 + self.colors[record.levelname])
-        message = logging.Formatter.format(self, record)
+        message = Formatter.format(self, record)
         message = message.replace('$RESET', self.reset_seq)\
             .replace('$BOLD', self.bold_seq)\
             .replace('$COLOR', color)
@@ -65,44 +66,42 @@ class ColorFormatter(logging.Formatter):
         return message + self.reset_seq
 
 
-def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log',
-             truncate=False, log_size=10000000, log_numbackups=1):
-    log = getLogger(logger)
-    log.setLevel(log_level)
-
+def init_log(log_level=WARNING, log_path='~/.%s.log', log_truncate=False,
+        log_size=10000000, log_numbackups=1, log_color=True, ):
+    log = getLogger()
     if log_path:
         try:
-            log_path = log_path % logger
+            log_path = log_path % 'qtile'
         except TypeError:  # Happens if log_path doesn't contain formatters.
             pass
         log_path = os.path.expanduser(log_path)
-        if truncate:
+        if log_truncate:
             with open(log_path, "w"):
                 pass
-        handler = logging.handlers.RotatingFileHandler(
+        handler = RotatingFileHandler(
             log_path,
             maxBytes=log_size,
             backupCount=log_numbackups
         )
+    else:
+        handler = StreamHandler(sys.stdout)
+    if log_color:
         handler.setFormatter(
-            logging.Formatter(
+            ColorFormatter(
+                '$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s'
+                ' %(funcName)s:%(lineno)d $RESET %(message)s'
+            )
+        )
+    else:
+        handler.setFormatter(
+            Formatter(
                 "%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s"
             )
         )
-        logging.getLogger().addHandler(handler)
-
-    handler = StreamHandler(sys.stdout)
-    handler.setFormatter(
-        ColorFormatter(
-            '$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s'
-            ' %(funcName)s:%(lineno)d $RESET %(message)s'
-        )
-    )
-    logging.getLogger().addHandler(handler)
-
+    log.addHandler(handler)
+    log.setLevel(log_level)
     # Capture everything from the warnings module.
-    logging.captureWarnings(True)
+    captureWarnings(True)
     warnings.simplefilter("always")
-
-    log.warning('Starting %s' % logger.title())
-    return log
+    logger.warning('Starting logging for Qtile')
+    return logger

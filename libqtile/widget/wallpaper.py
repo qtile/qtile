@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2015 Muhammed Abuali
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,6 +21,8 @@
 #
 # To use this widget, you will need to install feh wallpaper changer
 
+from logging import getLogger
+logger = getLogger(__name__)
 import os
 import subprocess
 from . import base
@@ -53,7 +56,7 @@ class Wallpaper(base._TextBox):
                        map(self.get_path,
                            os.listdir(self.directory))))
         except IOError as e:
-            self.qtile.log.exception("I/O error({0}): {1}".format(e.errno, e.strerror))
+            logger.exception("I/O error(%s): %s", e.errno, e.strerror)
 
     def set_wallpaper(self):
         if len(self.images) == 0:

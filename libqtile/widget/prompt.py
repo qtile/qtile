@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2010-2011 Aldo Cortesi
 # Copyright (c) 2010 Philip Kranz
 # Copyright (c) 2011 Mounier Florian
@@ -31,12 +32,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from logging import getLogger
+logger = getLogger(__name__)
 import copy
 import glob
 import os
 import pickle
 import string
-import logging
 from collections import deque
 
 from . import base
@@ -380,8 +382,7 @@ class Prompt(base._TextBox):
                     except:
                         # unfortunately, pickle doesn't wrap its errors, so we
                         # can't detect what's a pickle error and what's not.
-                        log = logging.getLogger('qtile')
-                        log.exception("failed to load prompt history")
+                        logger.exception("failed to load prompt history")
                         self.history = {x: deque(maxlen=self.max_history)
                                         for x in self.completers if x}
                     if self.max_history != \

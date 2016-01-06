@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2012 TiN
 # Copyright (c) 2012, 2014 Tycho Andersen
 # Copyright (c) 2013 Tao Sauvage
@@ -23,8 +24,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-#
-# coding: utf-8
 
 import re
 

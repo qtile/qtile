@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2011 Mounier Florian
 # Copyright (c) 2011 Paul Colomiets
 # Copyright (c) 2012 roger
@@ -29,7 +30,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# -*- coding: utf-8 -*-
 from .base import SingleWindow
 from .. import drawer, hook, window
 

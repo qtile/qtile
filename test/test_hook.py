@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2009 Aldo Cortesi
 # Copyright (c) 2011 Florian Mounier
 # Copyright (c) 2011 Anshuman Bhaduri
@@ -21,6 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import libqtile.log_utils
 import libqtile.manager
 import libqtile.utils
 import libqtile.hook
@@ -42,7 +44,7 @@ def setup():
         pass
 
     dummy = Dummy()
-    dummy.log = libqtile.manager.init_log(logging.CRITICAL)
+    libqtile.log_utils.init_log(logging.CRITICAL)
     libqtile.hook.init(dummy)
 
 

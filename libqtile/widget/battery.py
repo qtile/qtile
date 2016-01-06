@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2011 matt
 # Copyright (c) 2011 Paul Colomiets
 # Copyright (c) 2011-2014 Tycho Andersen
@@ -30,6 +31,8 @@
 # SOFTWARE.
 
 from __future__ import division
+from logging import getLogger
+logger = getLogger(__name__)
 
 import cairocffi
 import os
@@ -322,7 +325,7 @@ class BatteryIcon(_Battery):
                 img = cairocffi.ImageSurface.create_from_png(path)
             except cairocffi.Error:
                 self.theme_path = None
-                self.qtile.log.warning('Battery Icon switching to text mode')
+                logger.warning('Battery Icon switching to text mode')
                 return
             input_width = img.get_width()
             input_height = img.get_height()

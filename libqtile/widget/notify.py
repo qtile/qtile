@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2011 Florian Mounier
 # Copyright (c) 2011 Mounier Florian
 # Copyright (c) 2012 roger
@@ -25,7 +27,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# -*- coding: utf-8 -*-
 from . import base
 from .. import bar, utils, pangocffi
 from libqtile.notify import notifier

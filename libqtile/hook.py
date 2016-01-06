@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2009-2010 Aldo Cortesi
 # Copyright (c) 2010 Lee McCuller
 # Copyright (c) 2010 matt
@@ -30,6 +31,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from logging import getLogger
+logger = getLogger(__name__)
 from . import utils
 
 subscriptions = {}
@@ -267,9 +270,9 @@ def fire(event, *args, **kwargs):
     if event not in subscribe.hooks:
         raise utils.QtileError("Unknown event: %s" % event)
     if event not in SKIPLOG:
-        qtile.log.info("Internal event: %s(%s, %s)", event, args, kwargs)
+        logger.info("Internal event: %s(%s, %s)", event, args, kwargs)
     for i in subscriptions.get(event, []):
         try:
             i(*args, **kwargs)
         except:
-            qtile.log.exception("Error in hook %s" % (event,))
+            logger.exception("Error in hook %s", event)

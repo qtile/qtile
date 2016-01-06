@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2015 Ali Mousavi
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
