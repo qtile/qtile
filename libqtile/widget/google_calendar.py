@@ -206,7 +206,10 @@ class GoogleCalendar(base.ThreadedPollText):
             event['start']['dateTime'].replace('T', ' ')
         )
 
-        data = event['summary'] + ' ' + time
+        try:
+            data = event['summary'] + ' ' + time
+        except KeyError:
+            data = 'Event summary not specified in calendar ' + time
 
         # colorize the event if it is upcoming
         parse_result = dateutil.parser.parse(event['start']['dateTime'], ignoretz=True)
