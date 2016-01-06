@@ -23,7 +23,8 @@
 
 import libqtile
 import libqtile.ipc
-from libqtile.manager import Qtile, init_log
+from libqtile.manager import Qtile
+from libqtile.log_utils import init_log
 
 import logging
 import multiprocessing

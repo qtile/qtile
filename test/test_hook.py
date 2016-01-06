@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import libqtile.log_utils
 import libqtile.manager
 import libqtile.utils
 import libqtile.hook
@@ -42,7 +43,7 @@ def setup():
         pass
 
     dummy = Dummy()
-    dummy.log = libqtile.manager.init_log(logging.CRITICAL)
+    dummy.log = libqtile.log_utils.init_log(logging.CRITICAL)
     libqtile.hook.init(dummy)
 
 
