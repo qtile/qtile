@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from logging import getLogger
+logger = getLogger(__name__)
 import os
 import operator
 import functools
@@ -187,9 +189,8 @@ def catch_exception_and_warn(warning=Warning, return_on_exception=None,
             return_value = return_on_exception
             try:
                 return_value = func(*args, **kwargs)
-                print(return_value)
             except excepts as err:
-                print(err.strerror)
+                logger.warn(err.strerror)
                 warnings.warn(err.strerror, warning)
             return return_value
         return wrapper
