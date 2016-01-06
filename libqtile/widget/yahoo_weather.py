@@ -1,5 +1,5 @@
-# vim: tabstop=4 shiftwidth=4 expandtab
 # -*- coding:utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2011-2012 dmpayton
 # Copyright (c) 2011 Kenji_Takahashi
 # Copyright (c) 2011 Mounier Florian
@@ -25,8 +25,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-#
-# -*- coding: utf-8 -*-
 
 from . import base
 from .generic_poll_text import GenPollUrl

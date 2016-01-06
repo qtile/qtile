@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2011 Timo Schmiade
 # Copyright (c) 2012 Phil Jackson
@@ -22,9 +23,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-# -*- coding: utf-8 -*-
-# vim: set sw=4 et tw=80:
 
 from . import base
 

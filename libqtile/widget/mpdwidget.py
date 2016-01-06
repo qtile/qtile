@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2010 matt
 # Copyright (c) 2010 Dieter Plaetinck
@@ -30,7 +31,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# -*- coding: utf-8 -*-
 # depends on python-mpd
 
 
