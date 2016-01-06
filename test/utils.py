@@ -206,7 +206,7 @@ class Xephyr(object):
         def runQtile():
             try:
                 init_log(logging.INFO, log_path=self.logfile)
-                q = Qtile(config, self.display, self.sockfile
+                q = Qtile(config, self.display, self.sockfile)
                 q.loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
