@@ -66,7 +66,7 @@ class ColorFormatter(logging.Formatter):
 
 
 def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log',
-             truncate=False, log_size=10000000, log_numbackups=1):
+             truncate=False, log_size=10000000, log_numbackups=1, log_color=True, ):
     log = getLogger(logger)
     log.setLevel(log_level)
     if log_path:
@@ -83,19 +83,21 @@ def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log',
             maxBytes=log_size,
             backupCount=log_numbackups
         )
-        handler.setFormatter(
-            logging.Formatter(
-                "%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s"
-            )
-        )
 	else:
 		handler = StreamHandler(sys.stdout)
+	if color:
 		handler.setFormatter(
 			ColorFormatter(
 				'$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s'
 				' %(funcName)s:%(lineno)d $RESET %(message)s'
 			)
 		)
+	else:
+        handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s"
+            )
+        )
     logging.getLogger().addHandler(handler)
     # Capture everything from the warnings module.
     logging.captureWarnings(True)
