@@ -90,7 +90,7 @@ def make_qtile():
         )
     parser.add_argument(
         '-l', '--log-level',
-        default='INFO',
+        default='WARNING',
         dest='log_level',
         choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),
         help='Set qtile log level'
