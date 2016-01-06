@@ -27,7 +27,6 @@
 from logging import getLogger
 logger = getLogger(__name__)
 import marshal
-import logging
 import os.path
 import socket
 import struct

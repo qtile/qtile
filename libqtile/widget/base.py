@@ -34,7 +34,6 @@ logger = getLogger(__name__)
 from .. import command, bar, configurable, drawer, confreader
 import six
 import subprocess
-import logging
 import threading
 import warnings
 

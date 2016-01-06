@@ -99,8 +99,8 @@ class LaunchBar(base._Widget):
         for img_name, iconfile in self.icons_files.items():
             if iconfile is None:
                 logger.warning(
-					'No icon found for application "%s" (%s) switch to text mode',
-					img_name, iconfile)
+                    'No icon found for application "%s" (%s) switch to text mode',
+                    img_name, iconfile)
                 # if no icon is found and no default icon was set, we just
                 # print the name, based on a textbox.
                 textbox = base._TextBox()
@@ -124,7 +124,7 @@ class LaunchBar(base._Widget):
                     img = cairocffi.ImageSurface.create_from_png(iconfile)
                 except cairocffi.Error:
                     logger.exception('Error loading icon for application "%s" (%s)',
-						img_name, iconfile)
+                        img_name, iconfile)
                     return
 
             input_width = img.get_width()

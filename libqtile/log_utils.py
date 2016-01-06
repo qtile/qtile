@@ -68,7 +68,7 @@ class ColorFormatter(Formatter):
 
 
 def init_log(log_level=WARNING, log_path='~/.%s.log', log_truncate=False,
-		log_size=10000000, log_numbackups=1, log_color=True, ):
+        log_size=10000000, log_numbackups=1, log_color=True, ):
     log = getLogger()
     if log_path:
         try:
@@ -106,4 +106,3 @@ def init_log(log_level=WARNING, log_path='~/.%s.log', log_truncate=False,
     warnings.simplefilter("always")
     logger.warning('Starting logging for Qtile')
     return logger
-

@@ -39,7 +39,6 @@ from logging import getLogger
 logger = getLogger(__name__)
 
 import six
-import logging
 
 from xcffib.xproto import CW, WindowClass, EventMask
 from xcffib.xfixes import SelectionEventMask

@@ -24,7 +24,6 @@ from logging import getLogger
 logger = getLogger(__name__)
 from .. import hook, bar, layout
 from . import base
-import logging
 
 class DebugInfo(base._TextBox):
     """

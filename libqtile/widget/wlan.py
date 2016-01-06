@@ -68,6 +68,6 @@ class Wlan(base.InLoopPollText):
             return "{} {}/70".format(essid, quality)
         except EnvironmentError:
             logger.error(
-				'%s: Probably your wlan device is switched off or '
+                '%s: Probably your wlan device is switched off or '
                 ' otherwise not present in your system.',
-				self.__class__.__name__)
+                self.__class__.__name__)
