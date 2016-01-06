@@ -25,7 +25,7 @@
 
 from logging import getLogger, StreamHandler, Formatter, WARNING, captureWarnings
 from logging.handlers import RotatingFileHandler
-_logger = getLogger(__name__)
+logger = getLogger(__name__)
 import os
 import sys
 import warnings
@@ -67,16 +67,16 @@ class ColorFormatter(Formatter):
         return message + self.reset_seq
 
 
-def init_log(log_level=WARNING, logger='qtile', log_path='~/.%s.log',
-             truncate=False, log_size=10000000, log_numbackups=1, log_color=True, ):
+def init_log(log_level=WARNING, log_path='~/.%s.log', log_truncate=False,
+		log_size=10000000, log_numbackups=1, log_color=True, ):
     log = getLogger()
     if log_path:
         try:
-            log_path = log_path % logger
+            log_path = log_path % 'qtile'
         except TypeError:  # Happens if log_path doesn't contain formatters.
             pass
         log_path = os.path.expanduser(log_path)
-        if truncate:
+        if log_truncate:
             with open(log_path, "w"):
                 pass
         handler = RotatingFileHandler(
@@ -104,6 +104,6 @@ def init_log(log_level=WARNING, logger='qtile', log_path='~/.%s.log',
     # Capture everything from the warnings module.
     captureWarnings(True)
     warnings.simplefilter("always")
-    _logger.warning('Starting logging for %s', logger)
-    return _logger
+    logger.warning('Starting logging for Qtile')
+    return logger
 
