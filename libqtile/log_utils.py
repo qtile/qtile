@@ -69,7 +69,6 @@ def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log',
              truncate=False, log_size=10000000, log_numbackups=1):
     log = getLogger(logger)
     log.setLevel(log_level)
-
     if log_path:
         try:
             log_path = log_path % logger
@@ -89,20 +88,18 @@ def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log',
                 "%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s"
             )
         )
-        logging.getLogger().addHandler(handler)
-
-    handler = StreamHandler(sys.stdout)
-    handler.setFormatter(
-        ColorFormatter(
-            '$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s'
-            ' %(funcName)s:%(lineno)d $RESET %(message)s'
-        )
-    )
+	else:
+		handler = StreamHandler(sys.stdout)
+		handler.setFormatter(
+			ColorFormatter(
+				'$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s'
+				' %(funcName)s:%(lineno)d $RESET %(message)s'
+			)
+		)
     logging.getLogger().addHandler(handler)
-
     # Capture everything from the warnings module.
     logging.captureWarnings(True)
     warnings.simplefilter("always")
-
     log.warning('Starting %s' % logger.title())
     return log
+
