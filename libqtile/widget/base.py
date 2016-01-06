@@ -464,8 +464,11 @@ class ThreadedPollText(InLoopPollText):
 
     def tick(self):
         def worker():
-            text = self.poll()
-            self.qtile.call_soon_threadsafe(self.update, text)
+            try:
+                text = self.poll()
+                self.qtile.call_soon_threadsafe(self.update, text)
+            except:
+                logger.exception("problem polling to update widget %s", self.name)
         # TODO: There are nice asyncio constructs for this sort of thing, I
         # think...
         threading.Thread(target=worker).start()
