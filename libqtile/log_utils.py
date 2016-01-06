@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2012 Florian Mounier
 # Copyright (c) 2013-2014 Tao Sauvage
 # Copyright (c) 2014 Sean Vig
@@ -20,8 +21,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-#
-# vim: tabstop=4 shiftwidth=4 expandtab
 
 from logging import getLogger, StreamHandler, Formatter, WARNING, captureWarnings
 from logging.handlers import RotatingFileHandler

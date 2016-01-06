@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # -*- coding:utf-8 -*-
 # Copyright (c) 2012 TiN
 # Copyright (c) 2012, 2014 Tycho Andersen

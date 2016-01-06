@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # -*- coding: utf-8 -*-
 # Copyright (c) 2010-2011 Aldo Cortesi
 # Copyright (c) 2010 Philip Kranz
