@@ -20,16 +20,18 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+#
+# vim: tabstop=4 shiftwidth=4 expandtab
 
-import logging
-import logging.handlers
+from logging import getLogger, StreamHandler, Formatter, WARNING, captureWarnings
+from logging.handlers import RotatingFileHandler
+_logger = getLogger(__name__)
 import os
 import sys
 import warnings
-from logging import getLogger, StreamHandler
 
 
-class ColorFormatter(logging.Formatter):
+class ColorFormatter(Formatter):
     """Logging formatter adding console colors to the output."""
     black, red, green, yellow, blue, magenta, cyan, white = range(8)
     colors = {
@@ -53,7 +55,7 @@ class ColorFormatter(logging.Formatter):
     def format(self, record):
         """Format the record with colors."""
         color = self.color_seq % (30 + self.colors[record.levelname])
-        message = logging.Formatter.format(self, record)
+        message = Formatter.format(self, record)
         message = message.replace('$RESET', self.reset_seq)\
             .replace('$BOLD', self.bold_seq)\
             .replace('$COLOR', color)
@@ -65,10 +67,9 @@ class ColorFormatter(logging.Formatter):
         return message + self.reset_seq
 
 
-def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log',
+def init_log(log_level=WARNING, logger='qtile', log_path='~/.%s.log',
              truncate=False, log_size=10000000, log_numbackups=1, log_color=True, ):
-    log = getLogger(logger)
-    log.setLevel(log_level)
+    log = getLogger()
     if log_path:
         try:
             log_path = log_path % logger
@@ -78,30 +79,31 @@ def init_log(log_level=logging.WARNING, logger='qtile', log_path='~/.%s.log',
         if truncate:
             with open(log_path, "w"):
                 pass
-        handler = logging.handlers.RotatingFileHandler(
+        handler = RotatingFileHandler(
             log_path,
             maxBytes=log_size,
             backupCount=log_numbackups
         )
-	else:
-		handler = StreamHandler(sys.stdout)
-	if color:
-		handler.setFormatter(
-			ColorFormatter(
-				'$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s'
-				' %(funcName)s:%(lineno)d $RESET %(message)s'
-			)
-		)
-	else:
+    else:
+        handler = StreamHandler(sys.stdout)
+    if log_color:
         handler.setFormatter(
-            logging.Formatter(
+            ColorFormatter(
+                '$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s'
+                ' %(funcName)s:%(lineno)d $RESET %(message)s'
+            )
+        )
+    else:
+        handler.setFormatter(
+            Formatter(
                 "%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s"
             )
         )
-    logging.getLogger().addHandler(handler)
+    log.addHandler(handler)
+    log.setLevel(log_level)
     # Capture everything from the warnings module.
-    logging.captureWarnings(True)
+    captureWarnings(True)
     warnings.simplefilter("always")
-    log.warning('Starting %s' % logger.title())
-    return log
+    _logger.warning('Starting logging for %s' % logger)
+    return _logger
 
