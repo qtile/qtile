@@ -1,5 +1,4 @@
 # vim: tabstop=4 shiftwidth=4 expandtab
-# vim: tabstop=4 shiftwidth=4 expandtab
 from logging import getLogger
 logger = getLogger(__name__)
 
