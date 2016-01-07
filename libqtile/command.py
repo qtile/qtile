@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -18,6 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from logging import getLogger
+logger = getLogger(__name__)
 import inspect
 import traceback
 import textwrap
@@ -90,7 +93,7 @@ class _Server(ipc.Server):
         cmd = obj.command(name)
         if not cmd:
             return (ERROR, "No such command.")
-        self.qtile.log.info("Command: %s(%s, %s)" % (name, args, kwargs))
+        logger.info("Command: %s(%s, %s)", name, args, kwargs)
         try:
             return (SUCCESS, cmd(*args, **kwargs))
         except CommandError as v:

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2012 Sebastian Bechtel
 # Copyright (c) 2013 Tao Sauvage
 # Copyright (c) 2014 Sebastian Kricner
@@ -26,8 +27,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from logging import getLogger
+logger = getLogger(__name__)
 from . import base
-import logging
 try:
     from pythonwifi.iwlibs import Wireless, Iwstats
 
@@ -66,6 +68,7 @@ class Wlan(base.InLoopPollText):
             essid, quality = get_status(self.interface)
             return "{} {}/70".format(essid, quality)
         except EnvironmentError:
-            msg = '%s: Probably your wlan device is switched off or ' \
-                ' otherwise not present in your system.'
-            logging.getLogger('qtile').error(msg, self.__class__.__name__)
+            logger.error(
+                '%s: Probably your wlan device is switched off or '
+                ' otherwise not present in your system.',
+                self.__class__.__name__)

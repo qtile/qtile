@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,8 +25,9 @@
     run the same Python version, and that clients must be trusted (as
     un-marshalling untrusted data can result in arbitrary code execution).
 """
+from logging import getLogger
+logger = getLogger(__name__)
 import marshal
-import logging
 import os.path
 import socket
 import struct
@@ -87,8 +89,7 @@ class _ClientProtocol(asyncio.Protocol, _IPC):
         try:
             self.transport.write_eof()
         except AttributeError:
-            log = logging.getLogger('qtile')
-            log.exception('Swallowing AttributeError due to asyncio bug!')
+            logger.exception('Swallowing AttributeError due to asyncio bug!')
 
     def data_received(self, data):
         self.recv += data
@@ -141,7 +142,7 @@ class _ServerProtocol(asyncio.Protocol, _IPC):
     """IPC Server Protocol
 
     1. The server is initalized with a handler callback function for evaluating
-    incoming queries and a log.
+    incoming queries.
 
     2. Once the connection is made, the server initializes a data store for
     incoming data.
@@ -152,46 +153,44 @@ class _ServerProtocol(asyncio.Protocol, _IPC):
     point the server then unpacks the data and runs it through the handler.
     The result is returned to the client and the connection is closed.
     """
-    def __init__(self, handler, log):
+    def __init__(self, handler):
         asyncio.Protocol.__init__(self)
         self.handler = handler
-        self.log = log
 
     def connection_made(self, transport):
         self.transport = transport
-        self.log.info('Connection made to server')
+        logger.info('Connection made to server')
         self.data = b''
 
     def data_received(self, recv):
-        self.log.info('Data recieved by server')
+        logger.info('Data recieved by server')
         self.data += recv
 
     def eof_received(self):
-        self.log.info('EOF recieved by server')
+        logger.info('EOF recieved by server')
         try:
             req = self._unpack(self.data)
         except IPCError:
-            self.log.info('Invalid data received, closing connection')
+            logger.info('Invalid data received, closing connection')
             self.transport.close()
             return
         finally:
             self.data = None
 
         if req[1] == 'restart':
-            self.log.info('Closing connection on restart')
+            logger.info('Closing connection on restart')
             self.transport.write_eof()
 
         rep = self.handler(req)
         result = self._pack(rep)
-        self.log.info('Sending result on receive EOF')
+        logger.info('Sending result on receive EOF')
         self.transport.write(result)
-        self.log.info('Closing connection on receive EOF')
+        logger.info('Closing connection on receive EOF')
         self.transport.write_eof()
 
 
 class Server(object):
     def __init__(self, fname, handler, loop):
-        self.log = logging.getLogger('qtile')
         self.fname = fname
         self.handler = handler
         self.loop = loop
@@ -209,13 +208,13 @@ class Server(object):
         self.sock.bind(self.fname)
 
     def close(self):
-        self.log.info('Stopping server on server close')
+        logger.info('Stopping server on server close')
         self.server.close()
         self.sock.close()
 
     def start(self):
-        serverprotocol = _ServerProtocol(self.handler, self.log)
+        serverprotocol = _ServerProtocol(self.handler)
         server_coroutine = self.loop.create_unix_server(lambda: serverprotocol, sock=self.sock, backlog=5)
 
-        self.log.info('Starting server')
+        logger.info('Starting server')
         self.server = self.loop.run_until_complete(server_coroutine)

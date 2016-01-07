@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 Thomas Sarboni
 # Copyright (c) 2014-2015 Tycho Andersen
@@ -20,9 +21,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from logging import getLogger
+logger = getLogger(__name__)
 from .. import hook, bar, layout
 from . import base
-import logging
 
 class DebugInfo(base._TextBox):
     """
@@ -31,7 +33,6 @@ class DebugInfo(base._TextBox):
     orientations = base.ORIENTATION_HORIZONTAL
 
     def __init__(self, **config):
-        self.log = logging.getLogger('qtile')
         base._TextBox.__init__(self, text=" ", width=bar.CALCULATED, **config)
 
     def _configure(self, qtile, bar):

@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2010 dequis
 # Copyright (c) 2011 Florian Mounier
 # Copyright (c) 2011 Mounier Florian
@@ -26,7 +27,8 @@
     If dbus is available, this module implements a
     org.freedesktop.Notifications service.
 """
-import logging
+from logging import getLogger
+logger = getLogger(__name__)
 
 try:
     import dbus
@@ -91,13 +93,13 @@ class NotificationManager(object):
                 DBusGMainLoop(set_as_default=True)
                 self._service = NotificationService(self)
             except Exception:
-                logging.getLogger('qtile').exception('Dbus connection failed')
+                logger.exception('Dbus connection failed')
                 self._service = None
         return self._service
 
     def register(self, callback):
         if not self.service:
-            logging.getLogger('qtile').warning(
+            logger.warning(
                 'Registering %s without any dbus connection existing',
                 callback.__name__,
             )

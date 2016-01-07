@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 zordsdavini
 # Copyright (c) 2014 Alexandr Kriptonov
@@ -21,13 +22,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from logging import getLogger
+logger = getLogger(__name__)
 from . import base
 import imaplib
 import re
-import logging
-
-
-logger = logging.getLogger('qtile')
 
 
 class GmailChecker(base.ThreadedPollText):
@@ -63,6 +62,6 @@ class GmailChecker(base.ThreadedPollText):
                 return self.fmt % (messages, unseen)
         else:
             logger.exception(
-                'GmailChecker UNKNOWN error, answer: %s, raw_data: %s'
-                % (str(answer), str(raw_data)))
+                'GmailChecker UNKNOWN error, answer: %s, raw_data: %s',
+                answer, raw_data)
             return "UNKNOWN ERROR"

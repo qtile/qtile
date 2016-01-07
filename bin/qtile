@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# vim: tabstop=4 shiftwidth=4 expandtab
 #
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
 # Copyright (c) 2011, Florian Mounier
@@ -24,6 +25,8 @@
 # Set the locale before any widgets or anything are imported, so any widget
 # whose defaults depend on a reasonable locale sees something reasonable.
 import locale
+from logging import getLogger
+logger = getLogger(__name__)
 import logging
 
 from libqtile.log_utils import init_log
@@ -56,13 +59,13 @@ def make_qtile():
     from argparse import ArgumentParser
     parser = ArgumentParser(
         description='A full-featured, pure-Python tiling window manager.',
-        prog='qtile')
-
+        prog='qtile',
+        )
     parser.add_argument(
         '--version',
         action='version',
-        version=VERSION)
-
+        version=VERSION,
+        )
     parser.add_argument(
         "-c", "--config",
         action="store",
@@ -70,63 +73,56 @@ def make_qtile():
         dest="configfile",
         help='Use specified configuration file,'
         ' "default" will load the system default config.'
-    )
+        )
     parser.add_argument(
         "-s", "--socket",
         action="store",
         default=None,
         dest="socket",
         help='Path to Qtile comms socket.'
-    )
+        )
     parser.add_argument(
         "-n", "--no-spawn",
         action="store_true",
         default=False,
         dest="no_spawn",
         help='Avoid spawning apps. (Used for restart)'
-    )
+        )
     parser.add_argument(
         '-l', '--log-level',
         default='WARNING',
         dest='log_level',
         choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),
         help='Set qtile log level'
-    )
+        )
     parser.add_argument(
         '--with-state',
         default=None,
         dest='state',
         help='Pickled QtileState object (typically used only internally)',
-    )
-
+        )
     options = parser.parse_args()
     log_level = getattr(logging, options.log_level)
-
+    init_log(
+        log_level=log_level,
+        )
     try:
-        c = confreader.File(options.configfile, is_restart=options.no_spawn)
+        config = confreader.File(options.configfile, is_restart=options.no_spawn)
     except Exception as e:
-        log = init_log(log_level)
-        log.exception(str(e) + '\n\nError while reading config file')
+        logger.exception('Error while reading config file (%s)', e)
         raise
-    else:
-        trunc = getattr(c, 'truncate_log', False)
-        log_size = getattr(c, 'log_size', 10000000)
-        log_numbackups = getattr(c, 'log_numbackups', 1)
-        log = init_log(log_level, truncate=trunc, log_size=log_size, log_numbackups=log_numbackups)
-
     # XXX: the import is here becouse we need to call init_log
     # before start importing stuff
     from libqtile import manager
     try:
         return manager.Qtile(
-            c,
-            log=log,
+            config,
             fname=options.socket,
             no_spawn=options.no_spawn,
             state=options.state,
         )
     except:
-        log.exception('Qtile crashed during startup')
+        logger.exception('Qtile crashed during startup')
         raise
 
 
@@ -136,5 +132,5 @@ if __name__ == "__main__":
     try:
         q.loop()
     except Exception:
-        q.log.exception('Qtile crashed')
-    q.log.info('Exiting...')
+        logger.exception('Qtile crashed')
+    logger.info('Exiting...')

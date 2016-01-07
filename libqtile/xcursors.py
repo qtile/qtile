@@ -1,4 +1,6 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 from logging import getLogger
+logger = getLogger(__name__)
 
 try:
     from ._ffi_xcursors import ffi
@@ -19,8 +21,6 @@ except ImportError:
 class Cursors(dict):
     def __init__(self, conn):
         self.conn = conn
-        self.log = getLogger('qtile')
-
         cursors = (
             (b'X_cursor', 0),
             (b'arrow', 2),
@@ -116,7 +116,7 @@ class Cursors(dict):
         try:
             xcursor = ffi.dlopen('libxcb-cursor.so')
         except OSError:
-            self.log.warning("xcb-cursor not found, fallback to font pointer")
+            logger.warning("xcb-cursor not found, fallback to font pointer")
             return False
 
         conn = self.conn.conn

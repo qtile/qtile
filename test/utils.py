@@ -1,3 +1,4 @@
+# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2011 Florian Mounier
 # Copyright (c) 2011 Anshuman Bhaduri
 # Copyright (c) 2014 Sean Vig
@@ -23,7 +24,8 @@
 
 import libqtile
 import libqtile.ipc
-from libqtile.manager import Qtile, init_log
+from libqtile.manager import Qtile
+from libqtile.log_utils import init_log
 
 import logging
 import multiprocessing
@@ -204,8 +206,8 @@ class Xephyr(object):
 
         def runQtile():
             try:
-                q = Qtile(config, self.display, self.sockfile,
-                          log=init_log(logging.INFO, log_path=self.logfile))
+                init_log(logging.INFO, log_path=self.logfile)
+                q = Qtile(config, self.display, self.sockfile)
                 q.loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
