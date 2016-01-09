@@ -49,6 +49,13 @@ BATTERY_INFO_FILES = {
     'status_file': ['status'],
 }
 
+BATTERY_DEFAULT_INFO = {
+    'status_file': UNKNOWN,
+    'energy_now_file': '0',
+    'energy_full_file': '0',
+    'power_now_file': '0',
+}
+
 
 def default_icon_path():
     # default icons are in libqtile/resources/battery-icons
@@ -126,11 +133,11 @@ class _Battery(base._TextBox):
                     self.filenames[name] = file
                     return value
 
-        # If we made it this far, we don't have a valid file.
-        # Set it to None to avoid trying the next time.
-        self.filenames[name] = None
-
-        return None
+        # Do not remove the files for some non standard laptop
+        # may lost power_now and current_now file after unplug the power,
+        # And it will come back while plug in.
+        # self.filenames[name] = None
+        return BATTERY_DEFAULT_INFO.get(name)
 
     def _get_info(self):
         try:
@@ -205,6 +212,8 @@ class Battery(_Battery):
             elif info['stat'] == CHARGING:
                 char = self.charge_char
                 time = (info['full'] - info['now']) / info['power']
+            elif info['stat'] == UNKNOWN:
+                time = -1
             else:
                 return 'Full'
         except ZeroDivisionError:
@@ -217,8 +226,13 @@ class Battery(_Battery):
         else:
             hour = -1
             min = -1
-        percent = info['now'] / info['full']
-        if info['stat'] == DISCHARGING and percent < self.low_percentage:
+
+        try:
+            percent = info['now'] / info['full']
+        except ZeroDivisionError:
+            return UNKNOWN
+
+        if info['stat'] in [DISCHARGING, UNKNOWN] and percent < self.low_percentage:
             self.layout.colour = self.low_foreground
         else:
             self.layout.colour = self.foreground
