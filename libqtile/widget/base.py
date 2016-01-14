@@ -29,8 +29,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from logging import getLogger
-logger = getLogger(__name__)
+from libqtile.log_utils import logger
 from .. import command, bar, configurable, drawer, confreader
 import six
 import subprocess

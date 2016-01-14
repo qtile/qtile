@@ -30,12 +30,11 @@
 # SOFTWARE.
 
 from __future__ import division
-from logging import getLogger
-logger = getLogger(__name__)
 
 import cairocffi
 import os
 from libqtile import bar
+from libqtile.log_utils import logger
 from . import base
 
 BAT_DIR = '/sys/class/power_supply'

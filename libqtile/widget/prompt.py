@@ -31,8 +31,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from logging import getLogger
-logger = getLogger(__name__)
 import copy
 import glob
 import os
@@ -40,6 +38,7 @@ import pickle
 import string
 from collections import deque
 
+from libqtile.log_utils import logger
 from . import base
 from .. import bar, command, hook, pangocffi, utils, xcbq, xkeysyms
 

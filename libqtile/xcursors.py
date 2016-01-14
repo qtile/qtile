@@ -1,5 +1,4 @@
-from logging import getLogger
-logger = getLogger(__name__)
+from .log_utils import logger
 
 try:
     from ._ffi_xcursors import ffi

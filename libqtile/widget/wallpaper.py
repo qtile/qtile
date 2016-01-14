@@ -20,12 +20,11 @@
 #
 # To use this widget, you will need to install feh wallpaper changer
 
-from logging import getLogger
-logger = getLogger(__name__)
 import os
 import subprocess
 from . import base
 from .. import bar
+from libqtile.log_utils import logger
 
 
 class Wallpaper(base._TextBox):

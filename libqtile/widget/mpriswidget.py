@@ -22,12 +22,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from logging import getLogger
-logger = getLogger(__name__)
 import dbus
 
 from dbus.mainloop.glib import DBusGMainLoop
 
+from libqtile.log_utils import logger
 from . import base
 from .. import bar
 
@@ -178,4 +177,3 @@ class Mpris(base._TextBox):
     def cmd_update(self):
         """ Force the widget to update. Mostly used for testing. """
         self.update()
-

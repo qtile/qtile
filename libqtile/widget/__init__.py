@@ -20,10 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from logging import getLogger
-logger = getLogger(__name__)
 import traceback
 import importlib
+
+from libqtile.log_utils import logger
 
 
 def safe_import(module_name, class_name):

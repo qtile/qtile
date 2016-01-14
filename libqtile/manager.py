@@ -19,8 +19,6 @@
 # SOFTWARE.
 
 from __future__ import division
-from logging import getLogger
-logger = getLogger(__name__)
 
 try:
     import tracemalloc
@@ -45,6 +43,7 @@ from six.moves import asyncio
 
 from .config import Drag, Click, Screen, Match, Rule
 from .group import _Group
+from .log_utils import logger
 from .state import QtileState
 from .utils import QtileError, get_cache_dir
 from .widget.base import _Widget
@@ -79,8 +78,7 @@ class Qtile(command.CommandObject):
         This object is the __root__ of the command graph.
     """
 
-    def __init__(self, config, displayName=None, fname=None, no_spawn=False,
-            state=None):
+    def __init__(self, config, displayName=None, fname=None, no_spawn=False, state=None):
         self.no_spawn = no_spawn
 
         self._eventloop = None

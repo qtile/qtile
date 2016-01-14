@@ -23,10 +23,11 @@
 
 from logging import getLogger, StreamHandler, Formatter, WARNING, captureWarnings
 from logging.handlers import RotatingFileHandler
-logger = getLogger(__name__)
 import os
 import sys
 import warnings
+
+logger = getLogger(__package__)
 
 
 class ColorFormatter(Formatter):
@@ -66,8 +67,10 @@ class ColorFormatter(Formatter):
 
 
 def init_log(log_level=WARNING, log_path='~/.%s.log', log_truncate=False,
-        log_size=10000000, log_numbackups=1, log_color=True, ):
-    log = getLogger()
+             log_size=10000000, log_numbackups=1, log_color=True):
+    # We'll always use a stream handler
+    handlers = [StreamHandler(sys.stdout)]
+    # If we have a log path, we'll also setup a log file
     if log_path:
         try:
             log_path = log_path % 'qtile'
@@ -77,28 +80,26 @@ def init_log(log_level=WARNING, log_path='~/.%s.log', log_truncate=False,
         if log_truncate:
             with open(log_path, "w"):
                 pass
-        handler = RotatingFileHandler(
+        handlers.append(RotatingFileHandler(
             log_path,
             maxBytes=log_size,
             backupCount=log_numbackups
-        )
-    else:
-        handler = StreamHandler(sys.stdout)
+        ))
+
     if log_color:
-        handler.setFormatter(
-            ColorFormatter(
-                '$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s'
-                ' %(funcName)s:%(lineno)d $RESET %(message)s'
-            )
+        formatter = ColorFormatter(
+            '$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s %(filename)s:%(funcName)s():L%(lineno)d $RESET %(message)s'
         )
     else:
-        handler.setFormatter(
-            Formatter(
-                "%(asctime)s %(levelname)s %(funcName)s:%(lineno)d %(message)s"
-            )
+        formatter = Formatter(
+            "%(asctime)s %(levelname)s %(name)s %(filename)s:%(funcName)s():L%(lineno)d %(message)s"
         )
-    log.addHandler(handler)
-    log.setLevel(log_level)
+
+    for handler in handlers:
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+
+    logger.setLevel(log_level)
     # Capture everything from the warnings module.
     captureWarnings(True)
     warnings.simplefilter("always")

@@ -35,8 +35,6 @@
     complete - it only implements the subset of functionalty needed by qtile.
 """
 from __future__ import print_function, division
-from logging import getLogger
-logger = getLogger(__name__)
 
 import six
 
@@ -49,6 +47,7 @@ import xcffib.xinerama
 import xcffib.xproto
 
 from . import xkeysyms
+from .log_utils import logger
 from .xcursors import Cursors
 
 keysyms = xkeysyms.keysyms

@@ -18,8 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from logging import getLogger
-logger = getLogger(__name__)
 import os
 import operator
 import functools
@@ -29,6 +27,7 @@ import six
 from six.moves import reduce
 
 from . import xcbq
+from .log_utils import logger
 
 
 class QtileError(Exception):

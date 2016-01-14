@@ -25,8 +25,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from logging import getLogger
-logger = getLogger(__name__)
 import collections
 import six
 
@@ -36,6 +34,8 @@ from libqtile.command import lazy
 from libqtile.config import Group
 from libqtile.config import Rule
 from libqtile.config import Match
+from libqtile.log_utils import logger
+
 
 def simple_key_binder(mod, keynames=None):
     """

@@ -205,14 +205,15 @@ class Xephyr(object):
 
         def runQtile():
             try:
-                init_log(logging.INFO, log_path=self.logfile)
+                init_log(logging.INFO, log_path=self.logfile, log_color=False)
                 q = Qtile(config, self.display, self.sockfile)
                 q.loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
-                print("--------------------- >> begin qtile traceback << --------------------")
-                print(traceback.format_exc())
-                print("-------------------- >> begin qtile traceback << ---------------------")
+                with open(self.logfile, 'a') as f:
+                    f.write("--------------------- >> begin qtile traceback << --------------------")
+                    f.write(traceback.format_exc())
+                    f.write("-------------------- >> begin qtile traceback << ---------------------")
 
         self.qtile = multiprocessing.Process(target=runQtile)
         self.qtile.start()

@@ -18,8 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from logging import getLogger
-logger = getLogger(__name__)
 import inspect
 import traceback
 import textwrap
@@ -28,6 +26,7 @@ import sys
 
 from . import ipc
 from .utils import get_cache_dir
+from .log_utils import logger
 
 
 class CommandError(Exception):

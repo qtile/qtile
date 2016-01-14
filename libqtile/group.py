@@ -26,8 +26,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from logging import getLogger
-logger = getLogger(__name__)
 import contextlib
 import xcffib
 import xcffib.xproto
@@ -36,6 +34,7 @@ from . import command
 from . import hook
 from . import window
 from . import utils
+from .log_utils import logger
 
 
 class _Group(command.CommandObject):

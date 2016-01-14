@@ -29,8 +29,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from logging import getLogger
-logger = getLogger(__name__)
 import os
 import re
 import subprocess
@@ -39,6 +37,7 @@ import cairocffi
 
 from . import base
 from .. import bar
+from libqtile.log_utils import logger
 from six import u
 
 __all__ = [

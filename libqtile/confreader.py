@@ -23,11 +23,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from logging import getLogger
-logger = getLogger(__name__)
 import os
 import sys
 import traceback
+
+from libqtile.log_utils import logger
 
 
 class ConfigError(Exception):

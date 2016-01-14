@@ -19,8 +19,6 @@
 # SOFTWARE.
 
 from __future__ import division
-from logging import getLogger
-logger = getLogger(__name__)
 
 import array
 import contextlib
@@ -33,6 +31,7 @@ import xcffib.xproto
 from . import command
 from . import utils
 from . import hook
+from .log_utils import logger
 
 
 # ICCM Constants

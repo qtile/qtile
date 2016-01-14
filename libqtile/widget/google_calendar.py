@@ -59,8 +59,6 @@
 # borrows liberally from that one.
 ###################################################################
 
-from logging import getLogger
-logger = getLogger(__name__)
 from . import base
 import httplib2
 import datetime
@@ -74,6 +72,7 @@ import oauth2client
 from oauth2client import client, tools
 
 from libqtile import utils
+from libqtile.log_utils import logger
 
 try:
     import argparse

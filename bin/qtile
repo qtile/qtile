@@ -24,11 +24,9 @@
 # Set the locale before any widgets or anything are imported, so any widget
 # whose defaults depend on a reasonable locale sees something reasonable.
 import locale
-from logging import getLogger
-logger = getLogger(__name__)
 import logging
 
-from libqtile.log_utils import init_log
+from libqtile.log_utils import init_log, logger
 from libqtile import confreader
 
 locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
@@ -59,12 +57,12 @@ def make_qtile():
     parser = ArgumentParser(
         description='A full-featured, pure-Python tiling window manager.',
         prog='qtile',
-        )
+    )
     parser.add_argument(
         '--version',
         action='version',
         version=VERSION,
-        )
+    )
     parser.add_argument(
         "-c", "--config",
         action="store",
@@ -72,39 +70,38 @@ def make_qtile():
         dest="configfile",
         help='Use specified configuration file,'
         ' "default" will load the system default config.'
-        )
+    )
     parser.add_argument(
         "-s", "--socket",
         action="store",
         default=None,
         dest="socket",
         help='Path to Qtile comms socket.'
-        )
+    )
     parser.add_argument(
         "-n", "--no-spawn",
         action="store_true",
         default=False,
         dest="no_spawn",
         help='Avoid spawning apps. (Used for restart)'
-        )
+    )
     parser.add_argument(
         '-l', '--log-level',
         default='WARNING',
         dest='log_level',
         choices=('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'),
         help='Set qtile log level'
-        )
+    )
     parser.add_argument(
         '--with-state',
         default=None,
         dest='state',
         help='Pickled QtileState object (typically used only internally)',
-        )
+    )
     options = parser.parse_args()
     log_level = getattr(logging, options.log_level)
-    init_log(
-        log_level=log_level,
-        )
+    init_log(log_level=log_level)
+
     try:
         config = confreader.File(options.configfile, is_restart=options.no_spawn)
     except Exception as e:

@@ -42,10 +42,9 @@ To execute a python command in qtile, begin with by 'qsh:'
 """
 
 from __future__ import division
-from logging import getLogger
-logger = getLogger(__name__)
 
 from libqtile import bar
+from libqtile.log_utils import logger
 from libqtile.widget import base
 
 import os.path

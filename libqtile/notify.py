@@ -26,8 +26,7 @@
     If dbus is available, this module implements a
     org.freedesktop.Notifications service.
 """
-from logging import getLogger
-logger = getLogger(__name__)
+from .log_utils import logger
 
 try:
     import dbus
