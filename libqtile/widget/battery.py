@@ -206,12 +206,14 @@ class Battery(_Battery):
             elif info['stat'] == CHARGING:
                 char = self.charge_char
                 time = (info['full'] - info['now']) / info['power']
+            # if percent charge >0 and <50, but not discharging or charging, then return the current status
+            # TODO: make this configurable, don't just use 50% as arbitrary cut-off, maybe check if plugged in
             elif info['now'] > 0 and \
                     info['stat'] == UNKNOWN and \
                     int(info['now'] / info['full']) != 1:
                 return '~' + str(int(info['now'] / info['full'] * 100)) + '%'
-            elif info['now'] == 0 and \
-                    info['stat'] == UNKNOWN:
+            # battery is empty and not charging
+            elif info['now'] == 0 and info['stat'] == UNKNOWN:
                 return 'Empty'
             else:
                 return 'Full'
