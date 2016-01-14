@@ -206,6 +206,13 @@ class Battery(_Battery):
             elif info['stat'] == CHARGING:
                 char = self.charge_char
                 time = (info['full'] - info['now']) / info['power']
+            elif info['now'] > 0 and \
+                    info['stat'] == UNKNOWN and \
+                    int(info['now'] / info['full']) != 1:
+                return '~' + str(int(info['now'] / info['full'] * 100)) + '%'
+            elif info['now'] == 0 and \
+                    info['stat'] == UNKNOWN:
+                return 'Empty'
             else:
                 return 'Full'
         except ZeroDivisionError:
