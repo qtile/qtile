@@ -1,4 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2011 Mounier Florian
 # Copyright (c) 2011, 2014 Tycho Andersen
 # Copyright (c) 2012-2013 Craig Barnes
@@ -180,4 +179,3 @@ class Mpris(base._TextBox):
         """ Force the widget to update. Mostly used for testing. """
         self.update()
 
-# vim: tabstop=4 shiftwidth=4 expandtab

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2012 Sebastian Bechtel
 # Copyright (c) 2013 Tao Sauvage
 # Copyright (c) 2014 Sebastian Kricner

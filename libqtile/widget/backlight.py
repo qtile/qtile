@@ -1,4 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2012 Tim Neumann
 # Copyright (c) 2012, 2014 Tycho Andersen
 # Copyright (c) 2013 Tao Sauvage

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2011 Kenji_Takahashi
 # Copyright (c) 2011 Mounier Florian
 # Copyright (c) 2012, 2014 Tycho Andersen

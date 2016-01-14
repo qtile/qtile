@@ -1,4 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2014 Sebastian Kricner
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 Adi Sieker
@@ -149,4 +148,3 @@ class Mpris2(base._TextBox):
             displaytext=self.displaytext,
             isplaying=self.is_playing,
         )
-# vim: tabstop=4 shiftwidth=4 expandtab

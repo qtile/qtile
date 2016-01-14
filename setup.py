@@ -153,4 +153,3 @@ setup(
     cmdclass={'install': CheckCairoXcb},
     **cffi_args
 )
-# vim: tabstop=4 shiftwidth=4 expandtab

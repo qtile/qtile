@@ -1,4 +1,3 @@
-# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2010 dequis
 # Copyright (c) 2011 Florian Mounier
 # Copyright (c) 2011 Mounier Florian

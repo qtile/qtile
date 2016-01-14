@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (C) 2015, Juan Riquelme González
 #
 # This program is free software: you can redistribute it and/or modify

@@ -1,5 +1,4 @@
 # coding: utf-8
-# vim: tabstop=4 shiftwidth=4 expandtab
 #
 # Copyright (c) 2008, Aldo Cortesi <aldo@corte.si>
 # Copyright (c) 2011, Andrew Grigorev <andrew@ei-grad.ru>

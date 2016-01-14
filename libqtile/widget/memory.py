@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# vim: tabstop=4 shiftwidth=4 expandtab
 # Copyright (c) 2015 Jörg Thalheim (Mic92)
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
