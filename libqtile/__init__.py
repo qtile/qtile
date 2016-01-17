@@ -33,11 +33,9 @@ for m in moves:
 # Here, we can't use six.Moved* methods because being able to import asyncio vs
 # trollius is not strictly Py 2 vs Py 3, but rather asyncio for >=3.4, and
 # possibly 3.3 with Tulip, and trollius for 2 and <=3.2, and 3.3 without Tulip.
-# Despite this, six.moves.asyncio makes a convenient place to store this so we
-# don't need to keep try/except importing asyncio.
+# We can no longer direct assign to six.moves, so let's just leave it here so
+# we don't need to keep try/except importing asyncio.
 try:
-    import asyncio
+    import asyncio  # noqa
 except ImportError:
-    import trollius as asyncio
-
-six.moves.asyncio = asyncio
+    import trollius as asyncio  # noqa

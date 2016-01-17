@@ -30,7 +30,7 @@ import socket
 import struct
 import fcntl
 
-from six.moves import asyncio
+from . import asyncio
 
 from .log_utils import logger
 

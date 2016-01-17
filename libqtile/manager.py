@@ -39,7 +39,7 @@ import xcffib.xinerama
 import xcffib.xproto
 import six
 
-from six.moves import asyncio
+from . import asyncio
 
 from .config import Drag, Click, Screen, Match, Rule
 from .group import _Group
