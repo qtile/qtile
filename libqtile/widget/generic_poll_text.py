@@ -4,7 +4,7 @@ import six
 from six.moves.urllib.request import urlopen, Request
 
 from libqtile.widget import base
-
+from libqtile.log_utils import logger
 
 class GenPollText(base.ThreadedPollText):
     """
@@ -78,6 +78,7 @@ class GenPollUrl(base.ThreadedPollText):
         try:
             text = self.parse(body)
         except Exception:
+            logger.exception('got exception polling widget')
             text = "Can't parse"
 
         return text
