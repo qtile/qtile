@@ -31,16 +31,30 @@ import locale
 class BitcoinTicker(GenPollUrl):
     '''
         A bitcoin ticker widget, data provided by the btc-e.com API. Defaults
-        to displaying currency in whatever the current locale is.
+        to displaying currency in whatever the current locale is. Examples:
+
+        ::
+
+            # display the average price of bitcoin in local currency
+            widget.BitcoinTicker(format="BTC: {avg}")
+
+            # display the average price of litecoin in local currency
+            widget.BitcoinTicker(format="LTC: {avg}", source_currency='ltc')
+
+            # display the average price of litecoin in bitcoin
+            widget.BitcoinTicker(format="BTC: ฿{avg}", source_currency='ltc', currency='btc', round=False)
     '''
 
-    QUERY_URL = "https://btc-e.com/api/2/btc_%s/ticker"
+    QUERY_URL = "https://btc-e.com/api/2/%s_%s/ticker"
 
     orientations = base.ORIENTATION_HORIZONTAL
 
     defaults = [
         ('currency', locale.localeconv()['int_curr_symbol'].strip(),
-            'The currency the value of bitcoin is displayed in'),
+            'The currency the value that bitcoin is displayed in'),
+        ('source_currency', 'btc',
+            'The source currency to convert from'),
+        ('round', True, 'whether or not to use locale.currency to round the values'),
         ('format', 'BTC Buy: {buy}, Sell: {sell}',
             'Display format, allows buy, sell, high, low, avg, '
             'vol, vol_cur, last, variables.'),
@@ -52,7 +66,7 @@ class BitcoinTicker(GenPollUrl):
 
     @property
     def url(self):
-        return self.QUERY_URL % self.currency.lower()
+        return self.QUERY_URL % (self.source_currency.lower(), self.currency.lower())
 
     def parse(self, body):
         formatted = {}
@@ -61,5 +75,7 @@ class BitcoinTicker(GenPollUrl):
             self.currency = locale.localeconv()['int_curr_symbol'].strip()
             body = self.fetch(self.url)
         for k, v in body['ticker'].items():
-            formatted[k] = locale.currency(v)
+            formatted[k] = v
+            if self.round:
+                formatted[k] = locale.currency(v)
         return self.format.format(**formatted)
