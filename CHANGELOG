@@ -1,3 +1,15 @@
+qtile 0.10.4, released 2016-01-19:
+    !!! Config breakage !!!
+        - positional arguments to Slice layout removed, now `side` and `width`
+          must be passed in as keyword arguments
+    * features
+        - add alt coin support to BitcoinTracker widget
+    * bugfixes
+        - don't use six.moves assignment (fix for >=setuptools-19.3)
+        - improved floating and fullscreen handling
+        - support empty or non-charging secondary battery in BatteryWidget
+        - fix GoogleCalendar widget crash
+
 qtile 0.10.3, released 2015-12-25:
     * features
         - add wmii layout
