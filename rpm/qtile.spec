@@ -1,7 +1,7 @@
 Summary: A pure-Python tiling window manager
 Name: qtile
-Version: 0.10.3
-Release: 1%{?dist}
+Version: 0.10.4
+Release: 2%{?dist}
 Source0: https://github.com/qtile/qtile/archive/v%{version}.tar.gz
 License: MIT and GPLv3+ and ASL 2.0
 # All MIT except for:
@@ -58,10 +58,6 @@ Features
 %{__python3} setup.py install --single-version-externally-managed -O1 --root=%{buildroot} --record=INSTALLED_FILES
 mkdir -p %{buildroot}%{_datadir}/xsessions/
 install -m 644 %{SOURCE1} %{buildroot}%{_datadir}/xsessions/
-chmod a+x %{buildroot}%{python3_sitelib}/libqtile/confreader.py
-chmod a+x %{buildroot}%{python3_sitelib}/libqtile/widget/yahoo_weather.py
-chmod a+x %{buildroot}%{python3_sitelib}/libqtile/widget/bitcoin_ticker.py
-chmod a+x %{buildroot}%{python3_sitelib}/libqtile/widget/sensors.py
 
 
 
@@ -81,6 +77,12 @@ chmod a+x %{buildroot}%{python3_sitelib}/libqtile/widget/sensors.py
 
 
 %changelog
+* Wed Jan 20 2016 John Dulaney <jdulaney@fedoraproject.org> - 0.10.4-2
+- Fix rpmlint issues
+
+* Tue Jan 19 2016 John Dulaney <jdulaney@fedoraproject.org> - 0.10.4-1
+- New release
+
 * Fri Dec 25 2015 John Dulaney <jdulaney@fedoraproject.org> - 0.10.3-1
 - New upstream release
 
