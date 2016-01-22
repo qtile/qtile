@@ -22,6 +22,12 @@ Installing From Source
 First, you need to install all of Qtile's dependencies (although some are
 optional/not needed depending on your Python version, as noted below).
 
+Note that Python 3 versions 3.3 and newer are currently supported and tested.
+Python 3.2 should still work with Qtile, however the latest versions of pip
+have dropped support for Qtile, so you will need to either use an older
+version, or install all the required packages by running the respective
+``setup.py`` scripts.
+
 xcffib
 ------
 

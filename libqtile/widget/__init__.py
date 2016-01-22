@@ -36,6 +36,7 @@ def safe_import(module_name, class_name):
             safe_import(module_name, name)
         return
     package = __package__
+    # TODO: remove when we really want to drop 3.2 support
     # python 3.2 don't set __package__
     if not package:
         package = __name__
