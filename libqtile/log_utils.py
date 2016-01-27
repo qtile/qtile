@@ -68,8 +68,21 @@ class ColorFormatter(Formatter):
 
 def init_log(log_level=WARNING, log_path='~/.%s.log', log_truncate=False,
              log_size=10000000, log_numbackups=1, log_color=True):
+    formatter = Formatter(
+        "%(asctime)s %(levelname)s %(name)s %(filename)s:%(funcName)s():L%(lineno)d %(message)s"
+    )
+
     # We'll always use a stream handler
-    handlers = [StreamHandler(sys.stdout)]
+    stream_handler = StreamHandler(sys.stdout)
+    if log_color:
+        color_formatter = ColorFormatter(
+            '$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s %(filename)s:%(funcName)s():L%(lineno)d $RESET %(message)s'
+        )
+        stream_handler.setFormatter(color_formatter)
+    else:
+        stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
+
     # If we have a log path, we'll also setup a log file
     if log_path:
         try:
@@ -80,24 +93,14 @@ def init_log(log_level=WARNING, log_path='~/.%s.log', log_truncate=False,
         if log_truncate:
             with open(log_path, "w"):
                 pass
-        handlers.append(RotatingFileHandler(
+        file_handler = RotatingFileHandler(
             log_path,
             maxBytes=log_size,
             backupCount=log_numbackups
-        ))
-
-    if log_color:
-        formatter = ColorFormatter(
-            '$RESET$COLOR%(asctime)s $BOLD$COLOR%(name)s %(filename)s:%(funcName)s():L%(lineno)d $RESET %(message)s'
-        )
-    else:
-        formatter = Formatter(
-            "%(asctime)s %(levelname)s %(name)s %(filename)s:%(funcName)s():L%(lineno)d %(message)s"
         )
 
-    for handler in handlers:
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
 
     logger.setLevel(log_level)
     # Capture everything from the warnings module.
