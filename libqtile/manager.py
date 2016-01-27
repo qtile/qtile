@@ -1074,7 +1074,7 @@ class Qtile(command.CommandObject):
         """
         Have Qtile move to screen and put focus there
         """
-        if len(self.screens) < n - 1:
+        if n <= len(self.screens):
             return
         old = self.currentScreen
         self.currentScreen = self.screens[n]
