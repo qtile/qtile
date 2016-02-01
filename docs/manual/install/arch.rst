@@ -4,8 +4,12 @@ Installing on Arch Linux
 
 Qtile is available on the `AUR`_ as:
 
-- `qtile`_ stable branch(release) of qtile.
-- `qtile-python3-git`_ development branch of qtile.
+======================= =======================
+Package Name            Description
+======================= =======================
+`qtile`_                stable branch (release)
+`qtile-python3-git`_    development branch
+======================= =======================
 
 Using an AUR Helper
 ===================
@@ -15,44 +19,35 @@ if you use `yaourt`_:
 
 .. code-block:: bash
 
-    # for release
-    yaourt -S qtile
-    # or for develop
-    yaourt -S qtile-python3-git
+    yaourt -S <package-name>
 
-Using pacman
-============
+Using makepkg
+=============
 
-.. code-block:: bash
-
-    sudo pacman -S python pango python-cairocffi python-xcffib
-
-Also you need one qtile package from the AUR:
-
-- `qtile-python3-git`_ 
-- `qtile`_ 
-
-
-Installing AUR packages without helper
-======================================
-
-To install these packages, download the .tar.gz's from the AUR and run the
-following commands for each:
+The latest version of either package can be obtained by downloading a snapshot
+or cloning its repository:
 
 .. code-block:: bash
 
-    tar -xvzf <packagename>-<vernum>.tar.gz
-    cd <packagename>-<vernum>
-    makepkg -s
-    sudo pacman -U <packagename>
+    # snapshot
+    curl -s https://aur.archlinux.org/cgit/aur.git/snapshot/<package-name>.tar.gz | tar -xvzf -
+    # or repository
+    git clone https://aur.archlinux.org/<package-name>.git
 
-Please see the Arch Wiki for more information on installing packages from
-the AUR:
+Next makepkg has to be called in the directory where the files were saved. It
+installs missing dependencies using pacman, builds the package, installs it
+and removes obsolete build-time dependencies afterwards:
 
-http://wiki.archlinux.org/index.php/AUR#Installing_packages
+.. code-block:: bash
+
+    cd <package-name>
+    makepkg -sri
+
+Please see the ArchWiki for more information on `installing packages from the AUR`_.
 
 .. _AUR: https://wiki.archlinux.org/index.php/AUR
-.. _AUR Helper: http://wiki.archlinux.org/index.php/AUR_Helpers
-.. _yaourt: http://wiki.archlinux.org/index.php/Yaourt
+.. _AUR Helper: https://wiki.archlinux.org/index.php/AUR_Helpers
+.. _installing packages from the AUR: https://wiki.archlinux.org/index.php/Arch_User_Repository#Installing_packages
 .. _qtile: https://aur.archlinux.org/packages/qtile/
 .. _qtile-python3-git: https://aur.archlinux.org/packages/qtile-python3-git/
+.. _yaourt: https://archlinux.fr/yaourt-en
