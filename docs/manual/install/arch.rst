@@ -11,7 +11,7 @@ Using an AUR Helper
 ===================
 
 The preferred way to install Qtile is with an `AUR helper`_. For example,
-if you use `yaourt`_:
+if you use yaourt:
 
 .. code-block:: bash
 
@@ -20,39 +20,33 @@ if you use `yaourt`_:
     # or for develop
     yaourt -S qtile-python3-git
 
-Using pacman
-============
+Using makepkg
+=============
+
+The latest version of either package can be obtained by downloading a snapshot
+or cloning its repository:
 
 .. code-block:: bash
 
-    sudo pacman -S python pango python-cairocffi python-xcffib
+    # snapshot
+    curl -s https://aur.archlinux.org/cgit/aur.git/snapshot/<package-name>.tar.gz | tar -xvzf -
+    # or repository
+    git clone https://aur.archlinux.org/<package-name>.git
 
-Also you need one qtile package from the AUR:
-
-- `qtile-python3-git`_ 
-- `qtile`_ 
-
-
-Installing AUR packages without helper
-======================================
-
-To install these packages, download the .tar.gz's from the AUR and run the
-following commands for each:
+Next makepkg has to be called in the directory where the files were saved. It
+installs missing dependencies using pacman, builds the package, installs it
+and removes obsolete build-time dependencies afterwards:
 
 .. code-block:: bash
 
-    tar -xvzf <packagename>-<vernum>.tar.gz
-    cd <packagename>-<vernum>
-    makepkg -s
-    sudo pacman -U <packagename>
+    cd <package-name>
+    makepkg -sri
 
 Please see the Arch Wiki for more information on installing packages from
 the AUR:
-
-http://wiki.archlinux.org/index.php/AUR#Installing_packages
+https://wiki.archlinux.org/index.php/Arch_User_Repository#Installing_packages
 
 .. _AUR: https://wiki.archlinux.org/index.php/AUR
-.. _AUR Helper: http://wiki.archlinux.org/index.php/AUR_Helpers
-.. _yaourt: http://wiki.archlinux.org/index.php/Yaourt
+.. _AUR Helper: https://wiki.archlinux.org/index.php/AUR_Helpers
 .. _qtile: https://aur.archlinux.org/packages/qtile/
 .. _qtile-python3-git: https://aur.archlinux.org/packages/qtile-python3-git/
