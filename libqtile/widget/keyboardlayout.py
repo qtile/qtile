@@ -60,7 +60,7 @@ class KeyboardLayout(base.InLoopPollText):
             new layout the first one in the list.
         """
 
-        current_keyboard = self._get_keyboard()
+        current_keyboard = self.keyboard
         if current_keyboard in self.configured_keyboards:
             # iterate the list circularly
             next_keyboard = self.configured_keyboards[
