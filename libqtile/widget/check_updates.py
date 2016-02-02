@@ -46,7 +46,7 @@ class CheckUpdates(base.ThreadedPollText):
                          "Arch_Sup": ("pacman -Sup", 1),
                          "Debian": ("apt-show-versions -u -b", 0),
                          "Ubuntu": ("aptitude search ~U", 0),
-                         "Fedora": ("yum list updates", 3),
+                         "Fedora": ("dnf list updates", 3),
                          "FreeBSD": ("pkg_version -I -l '<'", 0),
                          "Mandriva": ("urpmq --auto-select", 0)
                          }
