@@ -4,21 +4,22 @@ Installing on Arch Linux
 
 Qtile is available on the `AUR`_ as:
 
-- `qtile`_ stable branch(release) of qtile.
-- `qtile-python3-git`_ development branch of qtile.
+======================= =======================
+Package Name            Description
+======================= =======================
+`qtile`_                stable branch (release)
+`qtile-python3-git`_    development branch
+======================= =======================
 
 Using an AUR Helper
 ===================
 
 The preferred way to install Qtile is with an `AUR helper`_. For example,
-if you use yaourt:
+if you use `yaourt`_:
 
 .. code-block:: bash
 
-    # for release
-    yaourt -S qtile
-    # or for develop
-    yaourt -S qtile-python3-git
+    yaourt -S <package-name>
 
 Using makepkg
 =============
@@ -42,11 +43,11 @@ and removes obsolete build-time dependencies afterwards:
     cd <package-name>
     makepkg -sri
 
-Please see the Arch Wiki for more information on installing packages from
-the AUR:
-https://wiki.archlinux.org/index.php/Arch_User_Repository#Installing_packages
+Please see the ArchWiki for more information on `installing packages from the AUR`_.
 
 .. _AUR: https://wiki.archlinux.org/index.php/AUR
 .. _AUR Helper: https://wiki.archlinux.org/index.php/AUR_Helpers
+.. _installing packages from the AUR: https://wiki.archlinux.org/index.php/Arch_User_Repository#Installing_packages
 .. _qtile: https://aur.archlinux.org/packages/qtile/
 .. _qtile-python3-git: https://aur.archlinux.org/packages/qtile-python3-git/
+.. _yaourt: https://archlinux.fr/yaourt-en
