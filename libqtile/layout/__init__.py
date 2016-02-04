@@ -36,3 +36,4 @@ from .zoomy import Zoomy
 from .matrix import Matrix
 from .verticaltile import VerticalTile
 from .wmii import Wmii
+from .columns import Columns
