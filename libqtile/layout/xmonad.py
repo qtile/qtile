@@ -774,10 +774,11 @@ class MonadTall(SingleWindow):
 
     def cmd_swap_main(self):
         "Swap current window to main pane."
-        if self.align == self._left:
-            self.cmd_swap_left()
-        elif self.align == self._right:
-            self.cmd_swap_right()
+        if self.focused != 0:
+            if self.align == self._left:
+                self.cmd_swap_left()
+            elif self.align == self._right:
+                self.cmd_swap_right()
 
     def cmd_left(self):
         "Focus on the closest window to the left of the current window."
