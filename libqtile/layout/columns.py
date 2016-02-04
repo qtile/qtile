@@ -266,7 +266,7 @@ class Columns(Layout):
                 return col.focus_previous(win)
 
     def cmd_toggle_split(self):
-        self.cc.togleSplit()
+        self.cc.toggleSplit()
         self.group.layoutAll()
         self.group.focus(self.cc.cw, True)
 
