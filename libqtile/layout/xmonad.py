@@ -47,8 +47,8 @@ class MonadTall(SingleWindow):
 
     A main pane that contains a single window takes up a vertical
     portion of the screen based on the ratio setting. This ratio can
-    be adjusted with the ``cmd_grow`` and ``cmd_shrink`` methods while
-    the main pane is in focus.
+    be adjusted with the ``cmd_grow_main`` and ``cmd_shrink_main`` or,
+    while the main pane is in focus, ``cmd_grow`` and ``cmd_shrink``.
 
     ::
 
@@ -575,6 +575,22 @@ class MonadTall(SingleWindow):
             self._grow_solo_secondary(self.change_ratio)
         else:
             self._grow_secondary(self.change_size)
+        self.group.layoutAll()
+
+    def cmd_grow_main(self):
+        """
+        Will grow the main pane, reducing the size of clients in
+        the secondary pane.
+        """
+        self._grow_main(self.change_ratio)
+        self.group.layoutAll()
+
+    def cmd_shrink_main(self):
+        """
+        Will shrink the main pane, increasing the size of clients
+        in the secondary pane.
+        """
+        self._shrink_main(self.change_ratio)
         self.group.layoutAll()
 
     def grow(self, cidx, amt):
