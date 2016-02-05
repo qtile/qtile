@@ -289,6 +289,7 @@ class CommandCompleter(object):
                     dirs = os.environ.get("PATH", self.DEFAULTPATH).split(":")
                     for didx, d in enumerate(dirs):
                         try:
+                            d = os.path.expanduser(d)
                             for cmd in glob.glob(os.path.join(d, "%s*" % txt)):
                                 if self.executable(cmd):
                                     self.lookup.append(
