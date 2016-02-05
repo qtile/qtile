@@ -293,16 +293,16 @@ class Columns(Layout):
     def cmd_toggle_split(self):
         self.cc.toggleSplit()
         self.group.layoutAll()
-        self.group.focus(self.cc.cw, True)
+        #self.group.focus(self.cc.cw, True)
 
     def cmd_left(self):
-        if self.current > 0:
-            self.current -= 1
+        if len(self.columns) > 1:
+            self.current = (self.current  - 1) % len(self.columns)
             self.group.focus(self.cc.cw, True)
 
     def cmd_right(self):
-        if self.current + 1 < len(self.columns):
-            self.current += 1
+        if len(self.columns) > 1:
+            self.current = (self.current + 1) % len(self.columns)
             self.group.focus(self.cc.cw, True)
 
     def cmd_up(self):
@@ -341,7 +341,7 @@ class Columns(Layout):
         else:
             return
         self.group.layoutAll()
-        self.group.focus(self.cc.cw, True)
+        #self.group.focus(self.cc.cw, True)
             
 
     def cmd_shuffle_right(self):
@@ -364,7 +364,7 @@ class Columns(Layout):
         else:
             return
         self.group.layoutAll()
-        self.group.focus(self.cc.cw, True)
+        #self.group.focus(self.cc.cw, True)
 
     def cmd_shuffle_up(self):
         col = self.cc
@@ -373,7 +373,7 @@ class Columns(Layout):
                                                       col[col.current]
             col.current -= 1
             self.group.layoutAll()
-            self.group.focus(self.cc.cw, True)
+            #self.group.focus(self.cc.cw, True)
 
     def cmd_shuffle_down(self):
         col = self.cc
@@ -382,7 +382,7 @@ class Columns(Layout):
                                                      col[col.current]
             col.current += 1
             self.group.layoutAll()
-            self.group.focus(self.cc.cw, True)
+            #self.group.focus(self.cc.cw, True)
 
     def cmd_grow_left(self):
         if self.current > 0:
