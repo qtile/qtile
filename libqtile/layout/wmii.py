@@ -86,8 +86,6 @@ class Wmii(Layout):
         ("border_width", 2, "Border width."),
         ("name", "wmii", "Name of this layout."),
         ("margin", 0, "Margin of the layout"),
-        ("column_mode", "split", "Default column mode: 'split' or 'stack'."),
-        ("num_columns", 1, "Preferred number of columns."),
     ]
 
     def __init__(self, **config):
@@ -95,7 +93,7 @@ class Wmii(Layout):
         self.add_defaults(Wmii.defaults)
         self.current_window = None
         self.clients = []
-        self.columns = [{'active': 0, 'width': 100, 'mode': self.column_mode, 'rows': []}]
+        self.columns = [{'active': 0, 'width': 100, 'mode': 'split', 'rows': []}]
 
     def info(self):
         d = Layout.info(self)
@@ -108,7 +106,7 @@ class Wmii(Layout):
         # we are only called if there already is a column, simplifies things
         for c in self.columns:
             c['width'] = newwidth
-        c = {'width': newwidth, 'mode': self.column_mode, 'rows': [win]}
+        c = {'width': newwidth, 'mode': 'split', 'rows': [win]}
         if prepend:
             self.columns.insert(0, c)
         else:
@@ -118,7 +116,7 @@ class Wmii(Layout):
         c = Layout.clone(self, group)
         c.current_window = None
         c.clients = []
-        c.columns = [{'active': 0, 'width': 100, 'mode': self.column_mode, 'rows': []}]
+        c.columns = [{'active': 0, 'width': 100, 'mode': 'split', 'rows': []}]
         return c
 
     def current_column(self):
@@ -134,12 +132,9 @@ class Wmii(Layout):
         c = self.current_column()
         if c is None:
             if len(self.columns) == 0:
-                self.columns = [{'active': 0, 'width': 100, 'mode': self.column_mode, 'rows': []}]
-            self.columns[0]['rows'].append(client)
-        elif len(self.columns) < self.num_columns:
-            self.add_column(False, client)
-        else:
-            c['rows'].append(client)
+                self.columns = [{'active': 0, 'width': 100, 'mode': 'split', 'rows': []}]
+            c = self.columns[0]
+        c['rows'].append(client)
         self.focus(client)
 
     def remove(self, client):
@@ -254,7 +249,7 @@ class Wmii(Layout):
 
     def focus_first(self):
         if len(self.columns) == 0:
-            self.columns = [{'active': 0, 'width': 100, 'mode': self.column_mode, 'rows': []}]
+            self.columns = [{'active': 0, 'width': 100, 'mode': 'split', 'rows': []}]
         c = self.columns[0]
         if len(c['rows']) != 0:
             return c['rows'][0]
