@@ -123,21 +123,42 @@ class _Column(object):
 
 class Columns(Layout):
     """
-        This layout emulates wmii layouts.  The screen it split into
-        columns, always starting with one.  A new window is created in
-        the active window's column.  Windows can be shifted left and right.
-        If there is no column when shifting, a new one is created.
-        Each column can be stacked or divided (equally split).
+        Extension of the Stack layout.
+
+        The screen is split into columns, which can be dynamically added or
+        removed.  Each column displays either a sigle window at a time from a
+        stack of windows or all of them simultaneously, spliting the column
+        space.  Columns and windows can be resized and windows can be shuffled
+        around.  This layout can also emulate "Wmii", "Verical", and "Max",
+        depending on the default parameters.
+
+        An example key configuration is:
+
+            Key([mod], "j", lazy.layout.down()),
+            Key([mod], "k", lazy.layout.up()),
+            Key([mod], "h", lazy.layout.left()),
+            Key([mod], "l", lazy.layout.right()),
+            Key([mod, "shift"], "j", lazy.layout.shuffle_down()),
+            Key([mod, "shift"], "k", lazy.layout.shuffle_up()),
+            Key([mod, "shift"], "h", lazy.layout.shuffle_left()),
+            Key([mod, "shift"], "l", lazy.layout.shuffle_right()),
+            Key([mod, "control"], "j", lazy.layout.grow_down()),
+            Key([mod, "control"], "k", lazy.layout.grow_up()),
+            Key([mod, "control"], "h", lazy.layout.grow_left()),
+            Key([mod, "control"], "l", lazy.layout.grow_right()),
+            Key([mod], "Return", lazy.layout.toggle_split()),
+            Key([mod], "n", lazy.layout.normalize()),
     """
     defaults = [
+        ("name", "columns", "Name of this layout."),
         ("border_focus", "#881111", "Border colour for the focused window."),
         ("border_normal", "#220000", "Border colour for un-focused windows."),
-        ("grow_amount", 10, "Amount by which to grow/shrink a window."),
         ("border_width", 2, "Border width."),
-        ("name", "columns", "Name of this layout."),
-        ("margin", 0, "Margin of the layout"),
-        ("autosplit", True, "Default column mode: 'split' or 'stack'."),
+        ("margin", 0, "Margin of the layout."),
+        ("autosplit", True, "Autosplit newly created columns."),
         ("num_columns", 2, "Preferred number of columns."),
+        ("grow_amount", 10, "Amount by which to grow a window/column."),
+        ("fair", False, "Add new windows to the column with least windows."),
     ]
 
     def __init__(self, **config):
@@ -194,7 +215,11 @@ class Columns(Layout):
         c = self.cc
         if len(c) > 0 and len(self.columns) < self.num_columns:
             c = self.add_column()
-            self.current = len(self.columns) - 1
+        if self.fair:
+            least = min(self.columns, key=len)
+            if len(least) < len(c):
+                c = least
+        self.current = self.columns.index(c)
         c.add(client)
 
     def remove(self, client):
