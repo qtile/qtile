@@ -765,8 +765,8 @@ class Qtile(command.CommandObject):
         """
         result = []
         for i in self.screens:
-            if x >= i.x and x <= i.x + i.width and \
-                    y >= i.y and y <= i.y + i.height:
+            if i.x <= x <= i.x + i.width and \
+                    i.y <= y <= i.y + i.height:
                 result.append(i)
         if len(result) == 1:
             return result[0]
@@ -790,9 +790,9 @@ class Qtile(command.CommandObject):
         x_match = []
         y_match = []
         for i in self.screens:
-            if x >= i.x and x <= i.x + i.width:
+            if i.x <= x <= i.x + i.width:
                 x_match.append(i)
-            if y >= i.y and y <= i.y + i.height:
+            if i.y <= y <= i.y + i.height:
                 y_match.append(i)
         if len(x_match) == 1:
             return x_match[0]
