@@ -64,6 +64,7 @@ if sys.version_info >= (3, 3):
 else:
     def _import_module(module_name, dir_path):
         import imp
+        fp = None
         try:
             fp, pathname, description = imp.find_module(module_name, [dir_path])
             module = imp.load_module(module_name, fp, pathname, description)

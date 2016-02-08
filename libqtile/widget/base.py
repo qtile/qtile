@@ -501,6 +501,7 @@ class ThreadPoolText(_TextBox):
             try:
                 result = future.result()
             except Exception:
+                result = None
                 logger.exception('poll() raised exceptions, not rescheduling')
 
             if result is not None:
