@@ -38,7 +38,7 @@ class DF(base.ThreadedPollText):
         ('format', '{p} ({uf}{m})',
             'String format (p: partition, s: size, '
             'f: free space, uf: user free space, m: measure)'),
-        ('update_interval', 60, 'The update inteval.'),
+        ('update_interval', 60, 'The update interval.'),
     ]
 
     measures = {"G": 1024 * 1024 * 1024,

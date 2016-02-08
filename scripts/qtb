@@ -13,7 +13,7 @@ def main():
             )
     parser.add_option("-l", "--list",
                       action="store_true", dest="list",
-                      help="List addressible widgets.")
+                      help="List addressable widgets.")
     parser.add_option(
                         "-s", "--socket",
                         action="store", type="string",

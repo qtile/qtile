@@ -216,7 +216,7 @@ class Volume(base._TextBox):
         if volgroups:
             return int(volgroups.groups()[0])
         else:
-            # this shouldn't happend
+            # this shouldn't happen
             return -1
 
     def draw(self):

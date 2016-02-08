@@ -349,7 +349,7 @@ class Qtile(command.CommandObject):
         # What's going on here is a little funny. What we really want is only
         # screens that don't overlap here; overlapping screens should see the
         # same parts of the root window (i.e. for people doing xrandr
-        # --same-as). However, the order that X gives us psuedoscreens in is
+        # --same-as). However, the order that X gives us pseudo screens in is
         # important, because it indicates what people have chosen via xrandr
         # --primary or whatever. So we need to alias screens that should be
         # aliased, but preserve order as well. See #383.
@@ -500,7 +500,7 @@ class Qtile(command.CommandObject):
             exists, this will silently ignore that widget. However, this is
             not necessarily a bug. By default a widget's name is just
             self.__class__.lower(), so putting multiple widgets of the same
-            class will alias and one will be inaccessable. Since more than one
+            class will alias and one will be inaccessible. Since more than one
             groupbox widget is useful when you have more than one screen, this
             is a not uncommon occurrence. If you want to use the debug
             info for widgets with the same name, set the name yourself.

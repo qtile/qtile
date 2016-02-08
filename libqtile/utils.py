@@ -167,7 +167,7 @@ def catch_exception_and_warn(warning=Warning, return_on_exception=None,
     """
     .. function:: warn_on_exception(func, [warning_class, return_on_failure,
             excepts])
-        attemps to call func. catches exception or exception tuple and issues
+        attempts to call func. catches exception or exception tuple and issues
         a warning instead. returns value of return_on_failure when the
         specified exception is raised.
 

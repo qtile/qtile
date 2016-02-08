@@ -95,7 +95,7 @@ class Mpris(base._TextBox):
             )
             self.connected = True
         except dbus.exceptions.DBusException:
-            logger.exception("exception initalizing mpris")
+            logger.exception("exception initializing mpris")
             self.connected = False
 
     def handle_track_change(self, metadata):
@@ -116,7 +116,7 @@ class Mpris(base._TextBox):
 
     def ensure_connected(f):
         """
-        Tries to connect to the player. It *should* be succesful if the player
+        Tries to connect to the player. It *should* be successful if the player
         is alive. """
         def wrapper(*args, **kwargs):
             self = args[0]

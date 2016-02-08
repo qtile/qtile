@@ -69,7 +69,7 @@ class KeyboardKbdd(base.ThreadedPollText):
 
     def _layout_changed(self, layout_changed):
         """
-        Hanldler for "layoutChanged" dbus signal.
+        Handler for "layoutChanged" dbus signal.
         """
         if self.colours:
             self._set_colour(layout_changed)
