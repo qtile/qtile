@@ -232,7 +232,7 @@ class Window(TreeNode):
 
     def button_press(self, x, y):
         """Returns self if clicked on title else returns sibling"""
-        if y >= self._title_start and y < self._children_start:
+        if self._title_start <= y < self._children_start:
             return self
         return super(Window, self).button_press(x, y)
 
