@@ -179,7 +179,7 @@ class _Graph(base._Widget):
         self.update_graph()
         self.timeout_add(self.frequency, self.update)
 
-    def fullfill(self, value):
+    def fulfill(self, value):
         self.values = [value] * len(self.values)
 
 
@@ -273,7 +273,7 @@ class MemoryGraph(_Graph):
         self.maxvalue = val['MemTotal']
 
         mem = val['MemTotal'] - val['MemFree'] - val['Buffers'] - val['Cached']
-        self.fullfill(mem)
+        self.fulfill(mem)
 
     def _getvalues(self):
         return get_meminfo()
@@ -297,7 +297,7 @@ class SwapGraph(_Graph):
         val = self._getvalues()
         self.maxvalue = val['SwapTotal']
         swap = val['SwapTotal'] - val['SwapFree'] - val.get('SwapCached', 0)
-        self.fullfill(swap)
+        self.fulfill(swap)
 
     def _getvalues(self):
         return get_meminfo()
@@ -310,7 +310,7 @@ class SwapGraph(_Graph):
         # can change, swapon/off
         if self.maxvalue != val['SwapTotal']:
             self.maxvalue = val['SwapTotal']
-            self.fullfill(swap)
+            self.fulfill(swap)
         self.push(swap)
 
 
@@ -394,7 +394,7 @@ class HDDGraph(_Graph):
         stats = statvfs(self.path)
         self.maxvalue = stats.f_blocks * stats.f_frsize
         values = self._getValues()
-        self.fullfill(values)
+        self.fulfill(values)
 
     def _getValues(self):
         stats = statvfs(self.path)
