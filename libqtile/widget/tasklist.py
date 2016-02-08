@@ -207,7 +207,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if height != self.icon_size:
             sp = height / self.icon_size
             height = self.icon_size
-            width = width / sp
+            width /= sp
             scaler.scale(sp, sp)
         surface.set_matrix(scaler)
         self._icons_cache[window.window.wid] = surface

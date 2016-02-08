@@ -790,7 +790,7 @@ class Font(object):
         return self.fid
 
     def text_extents(self, s):
-        s = s + "aaa"
+        s += "aaa"
         x = self.conn.conn.core.QueryTextExtents(self.fid, len(s), s).reply()
         return x
 

@@ -86,7 +86,7 @@ def init_log(log_level=WARNING, log_path='~/.%s.log', log_truncate=False,
     # If we have a log path, we'll also setup a log file
     if log_path:
         try:
-            log_path = log_path % 'qtile'
+            log_path %= 'qtile'
         except TypeError:  # Happens if log_path doesn't contain formatters.
             pass
         log_path = os.path.expanduser(log_path)

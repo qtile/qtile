@@ -94,7 +94,7 @@ class Qtile(command.CommandObject):
             # during remote X sessions. Let's strip the host part first.
             displayNum = displayName.partition(":")[2]
             if "." not in displayNum:
-                displayName = displayName + ".0"
+                displayName += ".0"
             fname = command.find_sockfile(displayName)
 
         self.conn = xcbq.Connection(displayName)
