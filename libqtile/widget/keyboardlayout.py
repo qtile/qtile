@@ -28,7 +28,7 @@ from subprocess import CalledProcessError
 from . import base
 
 
-kb_regex = re.compile('layout\:\s+(?P<layout>\w+)')
+kb_regex = re.compile('layout:\s+(?P<layout>\w+)')
 
 
 class KeyboardLayout(base.InLoopPollText):
