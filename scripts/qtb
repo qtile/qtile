@@ -13,7 +13,7 @@ def main():
             )
     parser.add_option("-l", "--list",
                       action="store_true", dest="list",
-                      help="List addressible widgets.")
+                      help="List addressable widgets.")
     parser.add_option(
                         "-s", "--socket",
                         action="store", type="string",
@@ -33,8 +33,8 @@ def main():
             parser.error("Please specify widget name and argument.")
         try:
             client.widget.__getitem__(args[0]).update(" ".join(args[1:]))
-        except command.CommandError, v:
-            print >> sys.stderr, v
+        except command.CommandError as v:
+            print >>sys.stderr, v
             sys.exit(1)
 
 

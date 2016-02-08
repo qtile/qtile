@@ -135,7 +135,7 @@ Group functions
     * - ``lazy.group["group_name"].toscreen())``
       - Move to the group called ``group_name``
     * - ``lazy.layout.increase_ratio()``
-      - Incrase the space for master window at the expense of slave windows
+      - Increase the space for master window at the expense of slave windows
     * - ``lazy.layout.decrease_ratio()``
       - Decrease the space for master window in the advantage of slave windows
 

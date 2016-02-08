@@ -255,7 +255,7 @@ class Wmii(Layout):
             return c['rows'][0]
 
     def focus_last(self):
-        c = self.columns(len(self.columns) - 1)
+        c = self.columns[len(self.columns) - 1]
         if len(c['rows']) != 0:
             return c['rows'][len(c['rows']) - 1]
 

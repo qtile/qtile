@@ -153,7 +153,7 @@ class MonadTall(SingleWindow):
 
     defaults = [
         ("border_focus", "#ff0000", "Border colour for the focused window."),
-        ("border_normal", "#000000", "Border colour for un-focused winows."),
+        ("border_normal", "#000000", "Border colour for un-focused windows."),
         ("border_width", 2, "Border width."),
         ("single_border_width", None, "Border width for single window"),
         ("name", "xmonad-tall", "Name of this layout."),
@@ -495,7 +495,7 @@ class MonadTall(SingleWindow):
         for idx in range(cidx + 1, len(self.relative_sizes)):
             # shrink by equal amount and track left-over
             left -= per_amt - self.shrink(idx, per_amt)
-        # apply non-equal shinkage secondary pass
+        # apply non-equal shrinkage secondary pass
         # in order to use up any left over shrink amounts
         left = self.shrink_down(cidx, left)
         # return whatever could not be applied
@@ -567,8 +567,6 @@ class MonadTall(SingleWindow):
         other secondary clients can reduce their size any
         further.
         """
-        # get currently focused client
-        self.clients[self.focused]
         if self.focused == 0:
             self._grow_main(self.change_ratio)
         elif len(self.clients) == 2:
@@ -696,7 +694,6 @@ class MonadTall(SingleWindow):
         size of those around it. Shrinking will stop when the
         client has reached the minimum size.
         """
-        self.clients[self.focused]
         if self.focused == 0:
             self._shrink_main(self.change_ratio)
         elif len(self.clients) == 2:

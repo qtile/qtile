@@ -14,7 +14,7 @@ Navigating the Object Graph
 ===========================
 
 The shell presents a filesystem-like interface to the object graph - the
-builtin "cd" and "ls" commmands act like their familiar shell counterparts:
+builtin "cd" and "ls" commands act like their familiar shell counterparts:
 
 .. code-block:: bash
 

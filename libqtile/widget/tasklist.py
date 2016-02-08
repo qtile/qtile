@@ -159,7 +159,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         new_width = width = 0
         for w in self.bar.screen.group.windows:
             new_width += self.icon_size + self.box_width(w.name)
-            if x >= width and x <= new_width:
+            if width <= x <= new_width:
                 window = w
                 break
             width = new_width
@@ -207,7 +207,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if height != self.icon_size:
             sp = height / self.icon_size
             height = self.icon_size
-            width = width / sp
+            width /= sp
             scaler.scale(sp, sp)
         surface.set_matrix(scaler)
         self._icons_cache[window.window.wid] = surface

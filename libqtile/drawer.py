@@ -72,7 +72,7 @@ class TextLayout(object):
                 value = ''
             attrlist, value, accel_char = pangocffi.parse_markup(value)
             self.layout.set_attributes(attrlist)
-        return self.layout.set_text(utils.scrub_to_utf8(value))
+        self.layout.set_text(utils.scrub_to_utf8(value))
 
     @property
     def width(self):
@@ -364,7 +364,7 @@ class Drawer(object):
             heights.append(sizelayout.height)
         return max(widths), max(heights)
 
-    # Old text layout functions, to be deprectated.
+    # Old text layout functions, to be deprecated.
     def set_font(self, fontface, size, antialias=True):
         self.ctx.select_font_face(fontface)
         self.ctx.set_font_size(size)

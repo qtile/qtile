@@ -218,7 +218,7 @@ class GroupBox(_GroupBase):
         width = 0
         for g in self.groups:
             new_width += self.box_width([g])
-            if x >= width and x <= new_width:
+            if width <= x <= new_width:
                 group = g
                 break
             width = new_width

@@ -209,7 +209,7 @@ class MaskMap(object):
         A general utility class that encapsulates the way the mask/value idiom
         works in xpyb. It understands a special attribute _maskvalue on
         objects, which will be used instead of the object value if present.
-        This lets us passin a Font object, rather than Font.fid, for example.
+        This lets us pass in a Font object, rather than Font.fid, for example.
     """
     def __init__(self, obj):
         self.mmap = []
@@ -299,7 +299,7 @@ class Screen(_Wrapper):
 class PseudoScreen(object):
     """
         This may be a Xinerama screen or a RandR CRTC, both of which are
-        rectagular sections of an actual Screen.
+        rectangular sections of an actual Screen.
     """
     def __init__(self, conn, x, y, width, height):
         self.conn = conn
@@ -624,7 +624,7 @@ class Window(object):
             # The value was an iterable, just empty
             value = []
         except TypeError:
-            # the value wasn't an interable and wasn't a string, so let's
+            # the value wasn't an iterable and wasn't a string, so let's
             # wrap it.
             value = [value]
 
@@ -790,7 +790,7 @@ class Font(object):
         return self.fid
 
     def text_extents(self, s):
-        s = s + "aaa"
+        s += "aaa"
         x = self.conn.conn.core.QueryTextExtents(self.fid, len(s), s).reply()
         return x
 

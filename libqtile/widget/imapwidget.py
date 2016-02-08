@@ -73,7 +73,6 @@ class ImapWidget(base.ThreadedPollText):
             self.password = password
         else:
             self.log.critical('Gnome Keyring Error')
-            return ('Gnome Keyring Error',)
 
     def poll(self):
         im = imaplib.IMAP4_SSL(self.server, 993)

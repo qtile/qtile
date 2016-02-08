@@ -73,7 +73,7 @@ Based on your Python version, there are different ways to install this:
 
 - Python >=3.4: The `asyncio module`_ comes as part of the standard library, so
   there is nothing more to install.
-- Python 3.3: This has all the infastructure needed to implement PEP 3156, but
+- Python 3.3: This has all the infrastructure needed to implement PEP 3156, but
   the asyncio module must be installed from the `Tulip project`_.  This is done
   by calling:
 
@@ -84,7 +84,7 @@ Based on your Python version, there are different ways to install this:
   Alternatively, you can install trollius (see next point).
 - Python 2 and <=3.2 (and 3.3 without asyncio): You will need to install
   trollius_, which backports the asyncio module functionality to work without
-  the infastructure introduced in PEP 3156.  You can install this from PyPI:
+  the infrastructure introduced in PEP 3156.  You can install this from PyPI:
 
   .. code-block:: bash
 

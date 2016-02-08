@@ -140,7 +140,7 @@ class Volume(base._TextBox):
                 img_name = 'audio-volume-low'
             elif self.volume < 80:
                 img_name = 'audio-volume-medium'
-            elif self.volume >= 80:
+            else:  # self.volume >= 80:
                 img_name = 'audio-volume-high'
 
             self.drawer.ctx.set_source(self.surfaces[img_name])
@@ -216,7 +216,7 @@ class Volume(base._TextBox):
         if volgroups:
             return int(volgroups.groups()[0])
         else:
-            # this shouldn't happend
+            # this shouldn't happen
             return -1
 
     def draw(self):

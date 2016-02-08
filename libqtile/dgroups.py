@@ -240,7 +240,7 @@ class DGroups(object):
         group = client.group
 
         def delete_client():
-            # Delete group if empty and dont persist
+            # Delete group if empty and don't persist
             if group and group.name in self.groupMap and \
                     not self.groupMap[group.name].persist and \
                     len(group.windows) <= 0:

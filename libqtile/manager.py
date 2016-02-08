@@ -64,6 +64,7 @@ if sys.version_info >= (3, 3):
 else:
     def _import_module(module_name, dir_path):
         import imp
+        fp = None
         try:
             fp, pathname, description = imp.find_module(module_name, [dir_path])
             module = imp.load_module(module_name, fp, pathname, description)
@@ -94,7 +95,7 @@ class Qtile(command.CommandObject):
             # during remote X sessions. Let's strip the host part first.
             displayNum = displayName.partition(":")[2]
             if "." not in displayNum:
-                displayName = displayName + ".0"
+                displayName += ".0"
             fname = command.find_sockfile(displayName)
 
         self.conn = xcbq.Connection(displayName)
@@ -349,7 +350,7 @@ class Qtile(command.CommandObject):
         # What's going on here is a little funny. What we really want is only
         # screens that don't overlap here; overlapping screens should see the
         # same parts of the root window (i.e. for people doing xrandr
-        # --same-as). However, the order that X gives us psuedoscreens in is
+        # --same-as). However, the order that X gives us pseudo screens in is
         # important, because it indicates what people have chosen via xrandr
         # --primary or whatever. So we need to alias screens that should be
         # aliased, but preserve order as well. See #383.
@@ -500,7 +501,7 @@ class Qtile(command.CommandObject):
             exists, this will silently ignore that widget. However, this is
             not necessarily a bug. By default a widget's name is just
             self.__class__.lower(), so putting multiple widgets of the same
-            class will alias and one will be inaccessable. Since more than one
+            class will alias and one will be inaccessible. Since more than one
             groupbox widget is useful when you have more than one screen, this
             is a not uncommon occurrence. If you want to use the debug
             info for widgets with the same name, set the name yourself.
@@ -765,8 +766,8 @@ class Qtile(command.CommandObject):
         """
         result = []
         for i in self.screens:
-            if x >= i.x and x <= i.x + i.width and \
-                    y >= i.y and y <= i.y + i.height:
+            if i.x <= x <= i.x + i.width and \
+                    i.y <= y <= i.y + i.height:
                 result.append(i)
         if len(result) == 1:
             return result[0]
@@ -790,9 +791,9 @@ class Qtile(command.CommandObject):
         x_match = []
         y_match = []
         for i in self.screens:
-            if x >= i.x and x <= i.x + i.width:
+            if i.x <= x <= i.x + i.width:
                 x_match.append(i)
-            if y >= i.y and y <= i.y + i.height:
+            if i.y <= y <= i.y + i.height:
                 y_match.append(i)
         if len(x_match) == 1:
             return x_match[0]

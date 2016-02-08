@@ -72,7 +72,7 @@ class _ClientProtocol(asyncio.Protocol, _IPC):
     2. The message is sent to the server with .send(msg), which closes the
     connection once the message is sent.
 
-    3. The client then recieves data from the server until the server closes
+    3. The client then receives data from the server until the server closes
     the connection, signalling that all the data has been sent.
 
     4. When the server sends on EOF, the data is unpacked and stored to the
@@ -140,7 +140,7 @@ class Client(object):
 class _ServerProtocol(asyncio.Protocol, _IPC):
     """IPC Server Protocol
 
-    1. The server is initalized with a handler callback function for evaluating
+    1. The server is initialized with a handler callback function for evaluating
     incoming queries.
 
     2. Once the connection is made, the server initializes a data store for
@@ -162,11 +162,11 @@ class _ServerProtocol(asyncio.Protocol, _IPC):
         self.data = b''
 
     def data_received(self, recv):
-        logger.info('Data recieved by server')
+        logger.info('Data received by server')
         self.data += recv
 
     def eof_received(self):
-        logger.info('EOF recieved by server')
+        logger.info('EOF received by server')
         try:
             req = self._unpack(self.data)
         except IPCError:

@@ -1,6 +1,6 @@
 default:
 	@echo "'make check'" for tests
-	@echo "'make check-cov'" for tests with converage
+	@echo "'make check-cov'" for tests with coverage
 	@echo "'make lint'" for source code checks
 	@echo "'make ckpatch'" to check a patch
 	@echo "'make clean'" to clean generated files
