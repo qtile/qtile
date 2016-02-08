@@ -7,7 +7,7 @@ Why the name Qtile?
 
 Users often wonder, why the Q? Does it have something to do with Qt? No. Below
 is an IRC excerpt where cortesi explains the great trial that ultimately
-brought Qtile into existance, thanks to the benevolence of the Open Source
+brought Qtile into existence, thanks to the benevolence of the Open Source
 Gods. Praise be to the OSG!
 
 ::
@@ -15,7 +15,7 @@ Gods. Praise be to the OSG!
     ramnes:  what does Qtile mean?
     ramnes:  what's the Q?
     @tych0:  ramnes: it doesn't :)
-    @tych0:  cortesi was just looking for the first letter that wasn't registerd
+    @tych0:  cortesi was just looking for the first letter that wasn't registered
              in a domain name with "tile" as a suffix
     @tych0:  qtile it was :)
     cortesi: tych0, dx: we really should have something more compelling to

@@ -87,7 +87,7 @@ class VerticalTile(Layout):
 
     defaults = [
         ('border_focus', '#FF0000', 'Border color for the focused window.'),
-        ('border_normal', '#FFFFFF', 'Border color for un-focused winows.'),
+        ('border_normal', '#FFFFFF', 'Border color for un-focused windows.'),
         ('border_width', 1, 'Border width.'),
         ('margin', 0, 'Border margin.'),
         ('name', 'VerticalTile', 'Name of this layout.'),

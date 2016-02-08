@@ -219,12 +219,12 @@ class RatioTile(Layout):
     """
     defaults = [
         ("border_focus", "#0000ff", "Border colour for the focused window."),
-        ("border_normal", "#000000", "Border colour for un-focused winows."),
+        ("border_normal", "#000000", "Border colour for un-focused windows."),
         ("border_width", 1, "Border width."),
         ("name", "ratiotile", "Name of this layout."),
         ("margin", 0, "Margin of the layout"),
         ("ratio", GOLDEN_RATIO, "Ratio of the tiles"),
-        ("ratio_increment", 0.1, "Amount to inrement per ratio increment"),
+        ("ratio_increment", 0.1, "Amount to increment per ratio increment"),
         ("fancy", False, "Use a different method to calculate window sizes."),
     ]
 

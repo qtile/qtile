@@ -173,7 +173,7 @@ class Subscribe(object):
 
     def client_focus(self, func):
         """
-            Called whenver focus changes.
+            Called whenever focus changes.
 
             - arguments: window.Window object of the new focus.
         """

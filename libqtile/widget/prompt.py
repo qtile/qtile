@@ -334,7 +334,7 @@ class Prompt(base._TextBox):
                  "Commands to keep in history. 0 for no limit."),
                 ("bell_style", "audible",
                  "Alert at the begin/end of the command history. " +
-                 "Posible values: 'audible', 'visual' and None."),
+                 "Possible values: 'audible', 'visual' and None."),
                 ("visual_bell_color", "ff0000",
                  "Color for the visual bell (changes prompt background)."),
                 ("visual_bell_time", 0.2,
@@ -412,7 +412,7 @@ class Prompt(base._TextBox):
             from the user. When done, calls the callback with the input string
             as argument. If history record is enabled, also allows to browse
             between previous commands with ↑ and ↓, and execute them
-            (untouched or modified). When historial is exhausted, fires an
+            (untouched or modified). When history is exhausted, fires an
             alert. It tries to mimic, in some way, the shell behavior.
 
             prompt = text displayed at the prompt, e.g. "spawn: "
@@ -477,14 +477,14 @@ class Prompt(base._TextBox):
                 self.text = "{}{}{}{}".format(txt1, txt2, txt3, cursor)
             else:
                 self.text = pangocffi.markup_escape_text(self.text)
-                self.text = self.text + self._highlight_text(cursor)
+                self.text += self._highlight_text(cursor)
             self.text = self.display + self.text
         else:
             self.text = ""
         self.bar.draw()
 
     def _trigger_complete(self):
-        # Trigger the autocompletion in user input
+        # Trigger the auto completion in user input
         self.userInput = self.completer.complete(self.userInput)
         self.cursor_position = len(self.userInput)
 
@@ -497,7 +497,7 @@ class Prompt(base._TextBox):
             self.position = len(self.completer_history)
 
     def _insert_before_cursor(self, charcode):
-        # Insert a caracter (given their charcode) in input, before the cursor
+        # Insert a character (given their charcode) in input, before the cursor
         txt1 = self.userInput[:self.cursor_position]
         txt2 = self.userInput[self.cursor_position:]
         self.userInput = txt1 + chr(charcode) + txt2

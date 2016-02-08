@@ -28,7 +28,7 @@ file it finds has some kind of error in it. The documentation below describes
 the configuration lookup process, as well as what the key bindings are in the
 default config.
 
-The default config is not intended to be sutiable for all users; it's mostly
+The default config is not intended to be suitable for all users; it's mostly
 just there so qtile does /something/ when fired up, and so that it doesn't
 crash and cause you to lose all your work if you reload a bad config.
 

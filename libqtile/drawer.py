@@ -364,7 +364,7 @@ class Drawer(object):
             heights.append(sizelayout.height)
         return max(widths), max(heights)
 
-    # Old text layout functions, to be deprectated.
+    # Old text layout functions, to be deprecated.
     def set_font(self, fontface, size, antialias=True):
         self.ctx.select_font_face(fontface)
         self.ctx.set_font_size(size)

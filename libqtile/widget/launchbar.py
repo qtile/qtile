@@ -145,7 +145,7 @@ class LaunchBar(base._Widget):
     def _lookup_icon(self, name):
         """ Search for the icon corresponding to one command. """
         self.icons_files[name] = None
-        # if the software_name is directly an abslolute path icon file
+        # if the software_name is directly an absolute path icon file
         if os.path.isabs(name):
             # name start with '/' thus it's an absolute path
             root, ext = os.path.splitext(name)
@@ -172,7 +172,7 @@ class LaunchBar(base._Widget):
             self._lookup_icon(name)
 
     def get_icon_in_position(self, x, y):
-        """ Retreive the wich icon is clicked according to its position. """
+        """ Determine which icon is clicked according to its position. """
         for i in self.progs:
             if x < (self.icons_offsets[i] +
                     self.icons_widths[self.progs[i]['name']] +

@@ -109,7 +109,7 @@ Deprecation policy
 ==================
 
 When a widget API is changed, you should deprecate the change using
-``libqtile.widget.base.deprecated`` to warn users, in additon to adding it to
+``libqtile.widget.base.deprecated`` to warn users, in addition to adding it to
 the appropriate place in the changelog. We will typically remove deprecated
 APIs one tag after they are deprecated.
 

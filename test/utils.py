@@ -87,7 +87,7 @@ class Xephyr(object):
 
     def __call__(self, function):
         def teardown():
-            # Remove temorary files
+            # Remove temporary files
             if os.path.exists(self.tempdir):
                 shutil.rmtree(self.tempdir)
 
