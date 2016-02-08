@@ -567,8 +567,6 @@ class MonadTall(SingleWindow):
         other secondary clients can reduce their size any
         further.
         """
-        # get currently focused client
-        self.clients[self.focused]
         if self.focused == 0:
             self._grow_main(self.change_ratio)
         elif len(self.clients) == 2:
@@ -696,7 +694,6 @@ class MonadTall(SingleWindow):
         size of those around it. Shrinking will stop when the
         client has reached the minimum size.
         """
-        self.clients[self.focused]
         if self.focused == 0:
             self._shrink_main(self.change_ratio)
         elif len(self.clients) == 2:

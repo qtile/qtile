@@ -72,7 +72,7 @@ class TextLayout(object):
                 value = ''
             attrlist, value, accel_char = pangocffi.parse_markup(value)
             self.layout.set_attributes(attrlist)
-        return self.layout.set_text(utils.scrub_to_utf8(value))
+        self.layout.set_text(utils.scrub_to_utf8(value))
 
     @property
     def width(self):
