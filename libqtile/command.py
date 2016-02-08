@@ -98,7 +98,6 @@ class _Server(ipc.Server):
             return (ERROR, v.args[0])
         except Exception as v:
             return (EXCEPTION, traceback.format_exc())
-        self.qtile.conn.flush()
 
 
 class _Command(object):
