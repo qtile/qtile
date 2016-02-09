@@ -34,6 +34,7 @@
 import cairocffi
 
 from . import base
+from libqtile.logutils import logger
 from os import statvfs
 import time
 import platform
@@ -335,7 +336,7 @@ class NetGraph(_Graph):
             try:
                 self.interface = self.get_main_iface()
             except RuntimeError:
-                self.log.warning(
+                logger.warning(
                     "NetGraph - Automatic interface detection failed, "
                     "falling back to 'eth0'"
                 )

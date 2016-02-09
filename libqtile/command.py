@@ -442,4 +442,4 @@ class CommandObject(object):
             function(self, *args, **kwargs)
         except Exception:
             error = traceback.format_exc()
-            self.log.error('Exception calling "%s":\n%s' % (function, error))
+            logger.error('Exception calling "%s":\n%s' % (function, error))

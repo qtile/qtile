@@ -105,7 +105,7 @@ class _Battery(base._TextBox):
                 return 0
             return False
         except Exception:
-            self.log.exception("Failed to get %s" % name)
+            logger.exception("Failed to get %s" % name)
 
     def _get_param(self, name):
         if name in self.filenames and self.filenames[name]:

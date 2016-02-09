@@ -46,6 +46,7 @@ import mpd
 
 from .. import utils, pangocffi
 from . import base
+from libqtile.logutils import logger
 
 class Mpd(base.ThreadPoolText):
     """
@@ -113,14 +114,14 @@ class Mpd(base.ThreadPoolText):
             self.client.connect(host=self.host, port=self.port)
         except Exception:
             if not quiet:
-                self.log.exception('Failed to connect to mpd')
+                logger.exception('Failed to connect to mpd')
             return False
 
         if self.password:
             try:
                 self.client.password(self.password)
             except Exception:
-                self.log.warning('Authentication failed.  Disconnecting')
+                logger.warning('Authentication failed.  Disconnecting')
                 try:
                     self.client.disconnect()
                 except Exception:
@@ -268,7 +269,7 @@ class Mpd(base.ThreadPoolText):
                 playing = self.do_format(self.fmt_stopped)
 
         except Exception:
-            self.log.exception('Mpd error on update')
+            logger.exception('Mpd error on update')
 
         return playing
 
@@ -294,7 +295,7 @@ class Mpd(base.ThreadPoolText):
                 self.connected = False
                 return self.msg_nc
             except Exception:
-                self.log.exception('Error communicating with mpd')
+                logger.exception('Error communicating with mpd')
                 self.client.disconnect()
                 return
 
@@ -325,4 +326,4 @@ class Mpd(base.ThreadPoolText):
                         min(int(status['volume']) + self.inc, 100)
                     )
         except Exception:
-            self.log.exception('Mpd error on click')
+            logger.exception('Mpd error on click')

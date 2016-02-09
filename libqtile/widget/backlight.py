@@ -24,6 +24,8 @@
 import os
 from . import base
 
+from libqtile.logutils import logger
+
 BACKLIGHT_DIR = '/sys/class/backlight'
 
 FORMAT = '{percent: 2.0%}'
@@ -67,7 +69,7 @@ class Backlight(base.InLoopPollText):
         except IOError:
             return False
         except Exception:
-            self.log.exception("Failed to get %s" % name)
+            logger.exception("Failed to get %s" % name)
 
     def _get_info(self):
         try:

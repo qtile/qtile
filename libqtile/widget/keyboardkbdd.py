@@ -20,6 +20,7 @@
 
 
 from . import base
+from libqtile.logutils import logger
 from dbus.mainloop.glib import DBusGMainLoop
 import re
 import dbus
@@ -49,7 +50,7 @@ class KeyboardKbdd(base.ThreadedPollText):
         self.keyboard = self.configured_keyboards[0]
         self.is_kbdd_running = self._check_kbdd()
         if not self.is_kbdd_running:
-            self.log.error('Please check if kbdd is running')
+            logger.error('Please check if kbdd is running')
             self.keyboard = "N/A"
         self._dbus_init()
 
@@ -82,7 +83,7 @@ class KeyboardKbdd(base.ThreadedPollText):
             except ValueError:
                 self._setColour(index - 1)
         else:
-            self.log.error('variable "colours" should be a list, to set a\
+            logger.error('variable "colours" should be a list, to set a\
                             colour for all layouts, use "foreground".')
 
     def poll(self):

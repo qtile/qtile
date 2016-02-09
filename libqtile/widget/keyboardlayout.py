@@ -26,6 +26,7 @@ import subprocess
 from subprocess import CalledProcessError
 
 from . import base
+from libqtile.logutils import logger
 
 
 kb_regex = re.compile('layout:\s+(?P<layout>\w+)')
@@ -92,9 +93,9 @@ class KeyboardLayout(base.InLoopPollText):
             keyboard = self.get_keyboard_layout(setxkbmap_output)
             return str(keyboard)
         except CalledProcessError as e:
-            self.log.error('Can not get the keyboard layout: {0}'.format(e))
+            logger.error('Can not get the keyboard layout: {0}'.format(e))
         except OSError as e:
-            self.log.error('Please, check that xset is available: {0}'.format(e))
+            logger.error('Please, check that xset is available: {0}'.format(e))
         return "unknown"
 
     @keyboard.setter
@@ -104,9 +105,9 @@ class KeyboardLayout(base.InLoopPollText):
         try:
             subprocess.check_call(command)
         except CalledProcessError as e:
-            self.log.error('Can not change the keyboard layout: {0}'.format(e))
+            logger.error('Can not change the keyboard layout: {0}'.format(e))
         except OSError as e:
-            self.log.error('Please, check that setxkbmap is available: {0}'.format(e))
+            logger.error('Please, check that setxkbmap is available: {0}'.format(e))
 
     def cmd_next_keyboard(self):
         self.next_keyboard()

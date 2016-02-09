@@ -19,6 +19,7 @@
 # SOFTWARE.
 
 from . import base
+from libqtile.logutils import logger
 from subprocess import CalledProcessError, Popen
 
 
@@ -57,7 +58,7 @@ class CheckUpdates(base.ThreadedPollText):
             self.subtr = self.cmd_dict[self.distro][1]
         except KeyError:
             distros = sorted(self.cmd_dict.keys())
-            self.log.error(self.distro + ' is not a valid distro name. ' +
+            logger.error(self.distro + ' is not a valid distro name. ' +
                            'Use one of the list: ' + str(distros) + '.')
             self.cmd = None
 
