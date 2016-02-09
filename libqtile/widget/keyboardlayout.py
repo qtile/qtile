@@ -26,7 +26,7 @@ import subprocess
 from subprocess import CalledProcessError
 
 from . import base
-from libqtile.logutils import logger
+from libqtile.log_utils import logger
 
 
 kb_regex = re.compile('layout:\s+(?P<layout>\w+)')

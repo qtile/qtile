@@ -20,7 +20,7 @@
 
 
 from . import base
-from libqtile.logutils import logger
+from libqtile.log_utils import logger
 from dbus.mainloop.glib import DBusGMainLoop
 import re
 import dbus

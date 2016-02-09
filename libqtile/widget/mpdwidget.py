@@ -46,7 +46,7 @@ import mpd
 
 from .. import utils, pangocffi
 from . import base
-from libqtile.logutils import logger
+from libqtile.log_utils import logger
 
 class Mpd(base.ThreadPoolText):
     """

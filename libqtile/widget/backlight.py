@@ -24,7 +24,7 @@
 import os
 from . import base
 
-from libqtile.logutils import logger
+from libqtile.log_utils import logger
 
 BACKLIGHT_DIR = '/sys/class/backlight'
 
