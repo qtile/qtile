@@ -2,39 +2,55 @@
 """
     Command-line interaction with Qtile TextBox widgets.
 """
+from __future__ import print_function
+
 import os, sys
-from optparse import OptionParser, OptionGroup
-from libqtile import confreader, command
+from argparse import ArgumentParser
+from libqtile import command
 
 def main():
-    parser = OptionParser(
-                usage="%prog [options] name text",
-                version="%prog 0.2",
-            )
-    parser.add_option("-l", "--list",
-                      action="store_true", dest="list",
-                      help="List addressable widgets.")
-    parser.add_option(
-                        "-s", "--socket",
-                        action="store", type="string",
-                        default=None,
-                        dest="socket",
-                        help='Use specified communication socket.'
-                    )
-    (options, args) = parser.parse_args()
+    parser = ArgumentParser()
+    parser.add_argument('--version', action='version', version='%(prog)s 0.2')
+    parser.add_argument(
+        "-l", "--list",
+        action="store_true",
+        help="List addressable widgets"
+    )
+    parser.add_argument(
+        "-s", "--socket",
+        type=str,
+        default=None,
+        help='Use specified communication socket'
+    )
+    # in order for the -l option to work, we can't require these args, so we
+    # check for them later
+    parser.add_argument(
+        "name",
+        type=str,
+        required=False,
+        help='Name of widget to change'
+    )
+    parser.add_argument(
+        "text",
+        type=str,
+        required=False,
+        help='Text to to place in widget'
+    )
 
-    client = command.Client(options.socket)
+    args = parser.parse_args()
 
-    if options.list:
+    client = command.Client(args.socket)
+
+    if args.list:
         for i in client.list_widgets():
-            print i
+            print(i)
     else:
-        if len(args) < 2:
+        if args.name is None or args.text is None:
             parser.error("Please specify widget name and argument.")
         try:
-            client.widget.__getitem__(args[0]).update(" ".join(args[1:]))
+            client.widget.__getitem__(args.name).update(args.text)
         except command.CommandError as v:
-            print >>sys.stderr, v
+            print(v, file=sys.stderr)
             sys.exit(1)
 
 
