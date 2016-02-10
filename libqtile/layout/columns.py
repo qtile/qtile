@@ -78,7 +78,7 @@ class _Column(object):
             n = len(self)
             growth = [int(delta / n)] * n
             growth[0] += delta - sum(growth)
-            for c,g in zip(self, growth):
+            for c, g in zip(self, growth):
                 self.heights[c] += g
 
     def remove(self, client):
@@ -95,7 +95,7 @@ class _Column(object):
             n = len(self)
             growth = [int(delta / n)] * n
             growth[0] += delta - sum(growth)
-            for c,g in zip(self, growth):
+            for c, g in zip(self, growth):
                 self.heights[c] += g
 
     def index(self, client):
@@ -116,8 +116,8 @@ class _Column(object):
     def __str__(self):
         cur = self.current
         return "_Column: " + ", ".join([
-                "[%s: %d]"%(c.name, self.heights[c]) if c==cur else
-                "%s: %d"%(c.name, self.heights[c]) for c in self
+            "[%s: %d]" % (c.name, self.heights[c]) if c == cur else
+            "%s: %d" % (c.name, self.heights[c]) for c in self
         ])
 
 
@@ -179,7 +179,7 @@ class Columns(Layout):
         return d
 
     def focus(self, client):
-        for i,c in enumerate(self.columns):
+        for i, c in enumerate(self.columns):
             if client in c:
                 c.focus(client)
                 self.current = i
@@ -208,7 +208,7 @@ class Columns(Layout):
             n = len(self.columns)
             growth = [int(delta / n)] * n
             growth[0] += delta - sum(growth)
-            for c,g in zip(self.columns, growth):
+            for c, g in zip(self.columns, growth):
                 c.width += g
 
     def add(self, client):
@@ -233,7 +233,7 @@ class Columns(Layout):
         if remove is not None:
             self.remove_column(c)
         return self.columns[self.current].cw
-        
+
     def configure(self, client, screen):
         pos = 0
         for col in self.columns:
@@ -259,8 +259,8 @@ class Columns(Layout):
                 if client == c:
                     break
                 pos += col.heights[c]
-            height = int(0.5 + col.heights[client] * screen.height * 0.01
-                    / len(col))
+            height = int(0.5 + col.heights[client] * screen.height * 0.01 /
+                    len(col))
             y = screen.y + int(0.5 + pos * screen.height * 0.01 / len(col))
             client.place(x, y, width - 2 * border,
                     height - 2 * border, border,
@@ -293,11 +293,10 @@ class Columns(Layout):
     def cmd_toggle_split(self):
         self.cc.toggleSplit()
         self.group.layoutAll()
-        #self.group.focus(self.cc.cw, True)
 
     def cmd_left(self):
         if len(self.columns) > 1:
-            self.current = (self.current  - 1) % len(self.columns)
+            self.current = (self.current - 1) % len(self.columns)
             self.group.focus(self.cc.cw, True)
 
     def cmd_right(self):
@@ -341,8 +340,6 @@ class Columns(Layout):
         else:
             return
         self.group.layoutAll()
-        #self.group.focus(self.cc.cw, True)
-            
 
     def cmd_shuffle_right(self):
         cur = self.cc
@@ -364,25 +361,22 @@ class Columns(Layout):
         else:
             return
         self.group.layoutAll()
-        #self.group.focus(self.cc.cw, True)
 
     def cmd_shuffle_up(self):
         col = self.cc
         if col.current > 0:
-            col[col.current], col[col.current - 1] =  col[col.current - 1], \
-                                                      col[col.current]
+            col[col.current], col[col.current - 1] = \
+                col[col.current - 1], col[col.current]
             col.current -= 1
             self.group.layoutAll()
-            #self.group.focus(self.cc.cw, True)
 
     def cmd_shuffle_down(self):
         col = self.cc
         if col.current + 1 < len(col):
-            col[col.current], col[col.current + 1] = col[col.current + 1], \
-                                                     col[col.current]
+            col[col.current], col[col.current + 1] = \
+                col[col.current + 1], col[col.current]
             col.current += 1
             self.group.layoutAll()
-            #self.group.focus(self.cc.cw, True)
 
     def cmd_grow_left(self):
         if self.current > 0:
