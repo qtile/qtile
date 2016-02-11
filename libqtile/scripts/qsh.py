@@ -49,10 +49,17 @@ def main():
         default=None,
         help='Run the specified qsh command and exit.'
     )
+    parser.add_argument(
+        "-j", "--json",
+        action="store_true",
+        default=False,
+        dest="is_json",
+        help='Use json in order to communicate with qtile server.'
+    )
 
     args = parser.parse_args()
 
-    client = command.Client(args.socket)
+    client = command.Client(args.socket, is_json=args.is_json)
     if args.pyfile is None:
         qsh = sh.QSh(client)
         if args.command is not None:
