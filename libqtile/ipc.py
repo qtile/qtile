@@ -29,6 +29,7 @@ import os.path
 import socket
 import struct
 import fcntl
+import json
 
 from . import asyncio
 
@@ -43,11 +44,20 @@ class IPCError(Exception):
 
 class _IPC(object):
     def _unpack(self, data):
+
+        if data is None:
+            raise IPCError("received data is None")
+
+        try:
+            return json.loads(data.decode('utf-8')), True
+        except Exception:
+            logger.info("received data was not json")
+
         try:
             assert len(data) >= HDRLEN
             size = struct.unpack("!L", data[:HDRLEN])[0]
             assert size >= len(data[HDRLEN:])
-            return self._unpack_body(data[HDRLEN:HDRLEN + size])
+            return self._unpack_body(data[HDRLEN:HDRLEN + size]), False
         except AssertionError:
             raise IPCError(
                 "error reading reply!"
@@ -57,7 +67,11 @@ class _IPC(object):
     def _unpack_body(self, body):
         return marshal.loads(body)
 
-    def _pack(self, msg):
+    def _pack(self, msg, is_json=False):
+        if is_json:
+            json_obj = json.dumps(msg)
+            return json_obj.encode('utf-8')
+
         msg = marshal.dumps(msg)
         size = struct.pack("!L", len(msg))
         return size + msg
@@ -83,8 +97,8 @@ class _ClientProtocol(asyncio.Protocol, _IPC):
         self.recv = b''
         self.reply = asyncio.Future()
 
-    def send(self, msg):
-        self.transport.write(self._pack(msg))
+    def send(self, msg, is_json=False):
+        self.transport.write(self._pack(msg, is_json))
         try:
             self.transport.write_eof()
         except AttributeError:
@@ -96,7 +110,7 @@ class _ClientProtocol(asyncio.Protocol, _IPC):
     def eof_received(self):
         # The server sends EOF when there is data ready to be processed
         try:
-            data = self._unpack(self.recv)
+            data, _ = self._unpack(self.recv)
         except IPCError as e:
             self.reply.set_exception(e)
         else:
@@ -111,9 +125,10 @@ class _ClientProtocol(asyncio.Protocol, _IPC):
 
 
 class Client(object):
-    def __init__(self, fname):
+    def __init__(self, fname, is_json=False):
         self.fname = fname
         self.loop = asyncio.get_event_loop()
+        self.is_json = is_json
 
     def send(self, msg):
         client_coroutine = self.loop.create_unix_connection(_ClientProtocol, path=self.fname)
@@ -124,7 +139,7 @@ class Client(object):
         except OSError:
             raise IPCError("Could not open %s" % self.fname)
 
-        client_proto.send(msg)
+        client_proto.send(msg, is_json=self.is_json)
 
         try:
             self.loop.run_until_complete(asyncio.wait_for(client_proto.reply, timeout=10))
@@ -168,9 +183,9 @@ class _ServerProtocol(asyncio.Protocol, _IPC):
     def eof_received(self):
         logger.info('EOF received by server')
         try:
-            req = self._unpack(self.data)
+            req, is_json = self._unpack(self.data)
         except IPCError:
-            logger.info('Invalid data received, closing connection')
+            logger.warn('Invalid data received, closing connection')
             self.transport.close()
             return
         finally:
@@ -181,7 +196,7 @@ class _ServerProtocol(asyncio.Protocol, _IPC):
             self.transport.write_eof()
 
         rep = self.handler(req)
-        result = self._pack(rep)
+        result = self._pack(rep, is_json)
         logger.info('Sending result on receive EOF')
         self.transport.write(result)
         logger.info('Closing connection on receive EOF')

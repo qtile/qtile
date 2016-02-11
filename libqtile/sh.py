@@ -49,7 +49,7 @@ def terminalWidth():
 
 class QSh(object):
 
-    def __init__(self, client, completekey="tab"):
+    def __init__(self, client, completekey="tab", is_json=False):
         self.clientroot = client
         self.current = client
         self.completekey = completekey
