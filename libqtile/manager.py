@@ -1393,7 +1393,7 @@ class Qtile(command.CommandObject):
                 try:
                     os.execvp(args[0], args)
                 except OSError as e:
-                    logger.warn("failed spawn: \"{0}\"\n{1}".format(cmd, e))
+                    logger.error("failed spawn: \"{0}\"\n{1}".format(cmd, e))
 
                 os._exit(1)
             else:
