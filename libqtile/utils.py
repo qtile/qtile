@@ -60,7 +60,7 @@ def translateMasks(modifiers):
 		
 def translateModifiers(mask):
     r = []
-    for k, v in xcbq.ModMasks.iteritems():
+    for k, v in xcbq.ModMasks.items():
         if mask & v:
             r.append(k)
     return r

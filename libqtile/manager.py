@@ -1212,7 +1212,7 @@ class Qtile(command.CommandObject):
         for i in self.groups:
             x[i.name] = i.info()
         return x
-		
+
     def cmd_display_kb(self, *args):
         class FormatTable():
             def __init__(self):
