@@ -1212,6 +1212,53 @@ class Qtile(command.CommandObject):
         for i in self.groups:
             x[i.name] = i.info()
         return x
+		
+    def cmd_display_kb(self, *args):
+        class FormatTable():
+            def __init__(self):
+                self.max_col_size = []
+                self.rows = []
+
+            def add(self, row):
+                n = len(row) - len(self.max_col_size)
+                if n > 0:
+                    self.max_col_size += [0] * n
+                for i, f in enumerate(row):
+                    if len(f) > self.max_col_size[i]:
+                        self.max_col_size[i] = len(f)
+                self.rows.append(row)
+
+            def getformat(self):
+                return " ".join((["%%-%ds" % (max_col_size + 2) for max_col_size in self.max_col_size])) + "\n", len(self.max_col_size)
+
+            def expandlist(self, list, n):
+                if len(list) == 0:
+                    return ["-" * max_col_size for max_col_size in self.max_col_size]
+                n = n - len(list)
+                if n > 0:
+                    list += [""] * n
+                return list
+
+            def __str__(self):
+                format, n = self.getformat()
+                return "".join([format % tuple(self.expandlist(row, n)) for row in self.rows])
+
+        result = FormatTable()
+        result.add(["KeySym", "Mod", "Command", "Desc"])
+        result.add([])
+        rows = []
+        for (ks, kmm), k in self.keyMap.iteritems():
+            if len(k.commands) == 0:
+                continue
+            name = ", ".join(xcbq.rkeysyms.get(ks, ("<unknown>", )))
+            modifiers = ", ".join(utils.translateModifiers(kmm))
+            desc = k.kwds.get("desc", "")
+            allargs = ", ".join([repr(value) for value in k.commands[0].args] + ["%s = %s" % (keyword, repr(value)) for keyword, value in k.commands[0].kwargs.iteritems()])
+            rows.append((name, str(modifiers), "%s(%s)" % (k.commands[0].name, allargs), desc))
+        rows.sort()
+        for row in rows:
+            result.add(row)
+        return str(result)
 
     def cmd_list_widgets(self):
         """

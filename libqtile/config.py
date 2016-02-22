@@ -37,7 +37,7 @@ class Key(object):
     """
         Defines a keybinding.
     """
-    def __init__(self, modifiers, key, *commands):
+    def __init__(self, modifiers, key, *commands, **kwds):
         """
             - modifiers: A list of modifier specifications. Modifier
             specifications are one of: "shift", "lock", "control", "mod1",
@@ -52,6 +52,7 @@ class Key(object):
         self.modifiers = modifiers
         self.key = key
         self.commands = commands
+        self.kwds = kwds
         if key not in xcbq.keysyms:
             raise utils.QtileError("Unknown key: %s" % key)
         self.keysym = xcbq.keysyms[key]
