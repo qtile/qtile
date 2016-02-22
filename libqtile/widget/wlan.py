@@ -7,6 +7,7 @@
 # Copyright (c) 2014 Craig Barnes
 # Copyright (c) 2015 farebord
 # Copyright (c) 2015 Jörg Thalheim (Mic92)
+# Copyright (c) 2016 Juhani Imberg
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,15 +34,21 @@ try:
 
     def get_status(interface):
         interface = Wireless(interface)
-        stats = Iwstats(interface)
+        try:
+            stats = Iwstats(interface)
+        except IOError:
+            return (None, None)
         quality = stats.qual.quality
         essid = interface.getEssid()
         return (essid, quality)
+
 except ImportError:
     import iwlib
 
     def get_status(interface):
         interface = iwlib.get_iwconfig(interface)
+        if 'stats' not in interface:
+            return (None, None)
         quality = interface['stats']['quality']
         essid = bytes(interface['ESSID']).decode()
         return (essid, quality)
@@ -55,6 +62,16 @@ class Wlan(base.InLoopPollText):
     defaults = [
         ('interface', 'wlan0', 'The interface to monitor'),
         ('update_interval', 1, 'The update interval.'),
+        (
+            'disconnected_message',
+            'Disconnected',
+            'String to show when the wlan is diconnected.'
+        ),
+        (
+            'format',
+            '{essid} {quality}/70',
+            'Display format. For percents you can use "{essid} {percent:2.0%}"'
+        )
     ]
 
     def __init__(self, **config):
@@ -64,7 +81,15 @@ class Wlan(base.InLoopPollText):
     def poll(self):
         try:
             essid, quality = get_status(self.interface)
-            return "{} {}/70".format(essid, quality)
+            disconnected = essid is None
+            if disconnected:
+                return self.disconnected_message
+
+            return self.format.format(
+                essid=essid,
+                quality=quality,
+                percent=(quality / 70)
+            )
         except EnvironmentError:
             logger.error(
                 '%s: Probably your wlan device is switched off or '
