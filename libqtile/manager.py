@@ -1247,13 +1247,13 @@ class Qtile(command.CommandObject):
         result.add(["KeySym", "Mod", "Command", "Desc"])
         result.add([])
         rows = []
-        for (ks, kmm), k in self.keyMap.iteritems():
+        for (ks, kmm), k in self.keyMap.items():
             if len(k.commands) == 0:
                 continue
             name = ", ".join(xcbq.rkeysyms.get(ks, ("<unknown>", )))
             modifiers = ", ".join(utils.translateModifiers(kmm))
             desc = k.kwds.get("desc", "")
-            allargs = ", ".join([repr(value) for value in k.commands[0].args] + ["%s = %s" % (keyword, repr(value)) for keyword, value in k.commands[0].kwargs.iteritems()])
+            allargs = ", ".join([repr(value) for value in k.commands[0].args] + ["%s = %s" % (keyword, repr(value)) for keyword, value in k.commands[0].kwargs.items()])
             rows.append((name, str(modifiers), "%s(%s)" % (k.commands[0].name, allargs), desc))
         rows.sort()
         for row in rows:
