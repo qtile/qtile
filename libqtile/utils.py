@@ -56,6 +56,14 @@ def translateMasks(modifiers):
         return reduce(operator.or_, masks)
     else:
         return 0
+		
+		
+def translateModifiers(mask):
+    r = []
+    for k, v in xcbq.ModMasks.items():
+        if mask & v:
+            r.append(k)
+    return r
 
 
 def shuffleUp(lst):

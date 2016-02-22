@@ -52,6 +52,15 @@ from .xcursors import Cursors
 
 keysyms = xkeysyms.keysyms
 
+
+def rdict(d):
+    r = {}
+    for k, v in d.items():
+        r.setdefault(v, []).append(k)
+    return r
+
+rkeysyms = rdict(xkeysyms.keysyms)
+
 # These should be in xpyb:
 ModMasks = {
     "shift": 1 << 0,
