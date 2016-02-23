@@ -48,11 +48,13 @@ class Key(object):
             - *commands: A list of lazy command objects generated with the
             command.lazy helper. If multiple Call objects are specified, they
             are run in sequence.
+
+            - **kwds: "desc" = a description can be added.
         """
         self.modifiers = modifiers
         self.key = key
         self.commands = commands
-        self.kwds = kwds
+        self.desc = kwds.get("desc", "")
         if key not in xcbq.keysyms:
             raise utils.QtileError("Unknown key: %s" % key)
         self.keysym = xcbq.keysyms[key]
