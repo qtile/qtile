@@ -38,17 +38,12 @@
 ###################################################################
 
 from . import base
-import httplib2
 import datetime
-import re
 import dateutil.parser
-import threading
-import os
 import subprocess
 import string
 
 from libqtile import utils
-from libqtile.log_utils import logger
 
 class KhalCalendar(base.ThreadedPollText):
     '''
@@ -92,25 +87,25 @@ class KhalCalendar(base.ThreadedPollText):
         try:
             if output[0] == 'Today:':
                 date = str(now.month) + '/' + str(now.day) + '/' + \
-                       str(now.year)
+                    str(now.year)
             elif output[0] == 'Tomorrow:':
                 date = str(tomorrow.month) + '/' + str(tomorrow.day) + \
-                       '/' + str(tomorrow.year)
+                    '/' + str(tomorrow.year)
             else:
                 date = output[0]
         except IndexError:
             return 'No appointments scheduled'
-        for i in range(1,len(output)):
+        for i in range(1, len(output)):
             starttime = dateutil.parser.parse(date + ' ' + output[i][:5],
                                               ignoretz=True)
             endtime = dateutil.parser.parse(date + ' ' + output[i][6:11],
                                             ignoretz=True)
             if endtime > datetime.datetime.now():
-                data = output[0].replace(':','') + ' ' + output[i]
+                data = output[0].replace(':', '') + ' ' + output[i]
                 break
             else:
                 data = 'No appointments in next ' + \
-                        str(self.lookahead) + ' days'
+                    str(self.lookahead) + ' days'
 
         # get rid of any garbage in appointment added by khal
         data = ''.join(filter(lambda x: x in string.printable, data))
