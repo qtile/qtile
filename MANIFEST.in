@@ -15,7 +15,7 @@ exclude Makefile
 graft libqtile/resources
 graft resources
 
-prune bin/libqtile
+prune bin
 prune docs
 prune scripts
 prune test
