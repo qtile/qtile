@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-#
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
-# Copyright (c) 2011, Florian Mounier
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +18,46 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-if __name__ == '__main__':
-    from libqtile.scripts import qtile
-    qtile.main()
+from libqtile import sh, command
+
+
+def main():
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--version',
+        action='version',
+        version='%(prog)s 0.3',
+    )
+    parser.add_argument(
+        "-s", "--socket",
+        action="store", type=str,
+        default=None,
+        help='Use specified socket to connect to qtile.'
+    )
+    parser.add_argument(
+        "-r", "--run",
+        action="store", type=str,
+        default=None,
+        dest="pyfile",
+        help='The full path to python file with the \"main\" function to call.'
+    )
+    parser.add_argument(
+        "-c", "--command",
+        action="store", type=str,
+        default=None,
+        help='Run the specified qsh command and exit.'
+    )
+
+    args = parser.parse_args()
+
+    client = command.Client(args.socket)
+    if args.pyfile is None:
+        qsh = sh.QSh(client)
+        if args.command is not None:
+            qsh.process_command(args.command)
+        else:
+            qsh.loop()
+    else:
+        print(client.run_external(args.pyfile))

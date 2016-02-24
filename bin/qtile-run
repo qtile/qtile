@@ -1,56 +1,5 @@
 #!/usr/bin/env python
-"""
-    Command-line wrapper to run commands and add rules to new windows
-"""
 
-import atexit
-import argparse
-import subprocess
-
-from libqtile import command
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="Run a command applying rules"
-                                     " to the new windows")
-    parser.add_argument('-s', '--socket', type=str, dest="socket",
-                        help='Use specified communication socket.')
-    parser.add_argument('-i', '--intrusive',
-                        dest="intrusive", action='store_true',
-                        help='If the new window should be intrusive.')
-    parser.add_argument('-f', '--float', dest="floating", action='store_true',
-                        help='If the new window should be float.')
-    parser.add_argument('-b', '--dont-break', dest="dont_break",
-                        action='store_true',
-                        help='Don\'t break on match(keep applying rules).')
-    parser.add_argument('-g', '--group', dest="group", type=str,
-                        help='Set the window group.')
-    parser.add_argument('cmd', nargs=argparse.REMAINDER,
-                        help='Command to execute')
-
-    opts = parser.parse_args()
-    if not opts.cmd:
-        parser.print_help()
-        exit()
-    return opts
-
-
-def main():
-    opts = parse_args()
-    client = command.Client(opts.socket)
-
-    proc = subprocess.Popen(opts.cmd)
-    match_args = {"net_wm_pid": [proc.pid]}
-    rule_args = {"float": opts.floating, "intrusive": opts.intrusive,
-                 "group": opts.group, "break_on_match": not opts.dont_break}
-    rule_id = client.add_rule(match_args, rule_args)
-
-    atexit.register(lambda: client.remove_rule(rule_id))
-
-    proc.wait()
-
-if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        pass
+if __name__ == '__main__':
+    from libqtile.scripts import qtile_run
+    qtile_run.main()
