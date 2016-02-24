@@ -135,17 +135,19 @@ setup(
     setup_requires=dependencies,
     packages=['libqtile',
               'libqtile.layout',
+              'libqtile.scripts',
               'libqtile.widget',
               'libqtile.resources'
               ],
     package_data={'libqtile.resources': ['battery-icons/*.png']},
-    scripts=[
-        "bin/qsh",
-        "bin/qtile",
-        "bin/qtile-run",
-        "bin/qtile-top",
-        "bin/qtile-session"
-    ],
+    entry_points={
+        'console_scripts': [
+            'qtile = libqtile.scripts.qtile:main',
+            'qtile-run = libqtile.scripts.qtile_run:main',
+            'qtile-top = libqtile.scripts.qtile_top:main',
+            'qsh = libqtile.scripts.qsh:main',
+        ]
+    },
     data_files=[
         ('share/man/man1', ['resources/qtile.1',
                             'resources/qsh.1'])],
