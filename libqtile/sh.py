@@ -59,12 +59,11 @@ class QSh(object):
         readline.set_completer_delims(" ()|")
         self.builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
 
-    def _complete(self, buf, arg, state):
+    def _complete(self, buf, arg):
         if not re.search(r" |\(", buf) or buf.startswith("help "):
             options = self.builtins + self._commands()
             lst = [i for i in options if i.startswith(arg)]
-            if lst and state < len(lst):
-                return lst[state]
+            return lst
         elif buf.startswith("cd ") or buf.startswith("ls "):
             path = [i for i in arg.split("/") if i]
             if arg.endswith("/"):
@@ -81,12 +80,13 @@ class QSh(object):
             for i in options:
                 if i.startswith(last):
                     lst.append(path + i)
-            if lst and state < len(lst):
-                return lst[state]
+            return lst
 
     def complete(self, arg, state):
         buf = readline.get_line_buffer()
-        return self._complete(buf, arg, state)
+        completers = self._complete(buf, arg)
+        if completers and state < len(completers):
+            return completers[state]
 
     @property
     def prompt(self):
@@ -176,22 +176,39 @@ class QSh(object):
         next = self._findNode(self.current, *[i for i in arg.split("/") if i])
         if next:
             self.current = next
+            return self.current.path or '/'
         else:
             return "No such path."
 
     def do_ls(self, arg):
-        """
-            List contained items on a node.
+        """List contained items on a node.
 
-            Examples:
+        Examples
+        ========
 
-                ls
-
-                ls ../layout
+                > ls
+                > ls ../layout
         """
         l = self._ls(self.current)
         l = ["%s/" % i for i in l]
         return self.columnize(l)
+
+    def do_pwd(self, arg):
+        """Returns the current working location
+
+        This is the same information as presented in the qsh prompt, but is
+        very useful when running iqsh.
+
+        Examples
+        ========
+
+            > pwd
+            /
+            > cd bar/top
+            bar['top']> pwd
+            bar['top']
+        """
+        return self.current.path or '/'
 
     def do_help(self, arg):
         """
@@ -281,10 +298,8 @@ class QSh(object):
             val = builtin(args)
         else:
             val = self._call(cmd, args)
-        if isinstance(val, six.string_types):
-            print(val)
-        elif val:
-            pprint.pprint(val)
+
+        return val
 
     def loop(self):
         while True:
@@ -296,4 +311,8 @@ class QSh(object):
             if not line:
                 continue
 
-            self.process_command(line)
+            val = self.process_command(line)
+            if isinstance(val, six.string_types):
+                print(val)
+            elif val:
+                pprint.pprint(val)
