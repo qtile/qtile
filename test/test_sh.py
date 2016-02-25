@@ -92,9 +92,9 @@ def test_findNode(self):
 @Xephyr(True, ShConfig())
 def test_do_cd(self):
     self.sh = libqtile.sh.QSh(self.c)
-    assert not self.sh.do_cd("layout")
-    assert self.sh.do_cd("0/wibble")
-    assert not self.sh.do_cd("0/")
+    assert self.sh.do_cd("layout") == 'layout'
+    assert self.sh.do_cd("0/wibble") == 'No such path.'
+    assert self.sh.do_cd("0/") == 'layout[0]'
 
 
 @Xephyr(True, ShConfig())
@@ -115,14 +115,18 @@ def test_call(self):
 @Xephyr(True, ShConfig())
 def test_complete(self):
     self.sh = libqtile.sh.QSh(self.c)
-    assert self.sh._complete("c", "c", 0) == "cd"
-    assert self.sh._complete("c", "c", 1) == "commands"
-    assert self.sh._complete("c", "c", 2) == "critical"
-    assert self.sh._complete("c", "c", 3) is None
+    assert self.sh._complete("c", "c") == [
+        "cd",
+        "commands",
+        "critical",
+    ]
 
-    assert self.sh._complete("cd l", "l", 0) == "layout"
-    assert self.sh._complete("cd layout/", "layout/", 0) == "layout/group"
-    assert self.sh._complete("cd layout/", "layout/g", 0) == "layout/group"
+    assert self.sh._complete("cd l", "l") == ["layout"]
+    print(self.sh._complete("cd layout/", "layout/"))
+    assert self.sh._complete("cd layout/", "layout/") == [
+        "layout/" + x for x in ["group", "window", "screen", "0"]
+    ]
+    assert self.sh._complete("cd layout/", "layout/g") == ["layout/group"]
 
 
 @Xephyr(True, ShConfig())

@@ -10,6 +10,8 @@ different places:
   configuration file.
 * Commands can be :doc:`called through qsh </manual/commands/qsh>`, the Qtile
   shell.
+* The qsh can also be hooked into a Jupyter kernel :doc:`called iqsh
+  </manual/commands/iqsh>`.
 * Commands can be :doc:`called from a script </manual/commands/scripting>` to
   interact with Qtile from Python.
 
