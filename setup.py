@@ -133,7 +133,11 @@ setup(
     license="MIT",
     install_requires=dependencies,
     setup_requires=dependencies,
+    extras_require={
+        'ipython': ["ipykernel", "jupyter_console"],
+    },
     packages=['libqtile',
+              'libqtile.interactive',
               'libqtile.layout',
               'libqtile.scripts',
               'libqtile.widget',
@@ -148,6 +152,9 @@ setup(
             'qsh = libqtile.scripts.qsh:main',
         ]
     },
+    scripts=[
+        'bin/iqsh',
+    ],
     data_files=[
         ('share/man/man1', ['resources/qtile.1',
                             'resources/qsh.1'])],

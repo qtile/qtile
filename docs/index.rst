@@ -21,6 +21,7 @@ Commands and scripting
     manual/commands/index
     manual/commands/scripting
     manual/commands/qsh
+    manual/commands/iqsh
 
 Getting involved
 ================
