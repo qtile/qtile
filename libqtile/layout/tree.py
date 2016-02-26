@@ -347,7 +347,7 @@ class TreeTab(SingleWindow):
             return
 
         if self.previous_on_rm:
-            self._focused = self.focus_previous()
+            self._focused = self.focus_previous(win)
         else:
             self._focused = self.focus_first()
 

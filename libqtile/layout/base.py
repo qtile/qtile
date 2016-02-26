@@ -215,7 +215,7 @@ class Delegate(Layout):
         Layout.__init__(self, **config)
 
     def clone(self, group):
-        c = Layout.clone(group)
+        c = Layout.clone(self, group)
         c.layouts = {}
         return c
 
