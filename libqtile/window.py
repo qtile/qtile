@@ -111,6 +111,8 @@ _NET_WM_STATE_TOGGLE = 2
 
 
 class _Window(command.CommandObject):
+    _windowMask = None  # override in child class
+
     def __init__(self, window, qtile):
         self.window, self.qtile = window, qtile
         self.hidden = True
