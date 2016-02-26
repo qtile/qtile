@@ -285,7 +285,7 @@ class Qtile(command.CommandObject):
                     try:
                         ctx.iteration(True)
                     except Exception:
-                        self.qtile.exception("got exception from gobject")
+                        logger.exception("got exception from gobject")
             self._glib_loop = self.run_in_executor(gobject_thread)
         except ImportError:
             logger.warning("importing dbus/gobject failed, dbus will not work.")
