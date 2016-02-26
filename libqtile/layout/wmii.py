@@ -239,11 +239,11 @@ class Wmii(Layout):
             c['mode'] = "split"
         self.group.layoutAll()
 
-    def focus_next(self):
+    def focus_next(self, win):
         self.cmd_down()
         return self.curent_window
 
-    def focus_previous(self):
+    def focus_previous(self, win):
         self.cmd_up()
         return self.current_window
 

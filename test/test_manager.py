@@ -844,7 +844,7 @@ def test_init():
 
 
 class TScreen(libqtile.config.Screen):
-    def setGroup(self, x):
+    def setGroup(self, x, save_prev=True):
         pass
 
 
