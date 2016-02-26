@@ -92,6 +92,12 @@ class TestCommands(libqtile.command.CommandObject):
     def cmd_three(self, a, b=99):
         pass
 
+    def _items(self, name):
+        return None
+
+    def _select(self, name, sel):
+        return None
+
 
 def test_doc():
     c = TestCommands()
@@ -103,7 +109,7 @@ def test_doc():
 
 def test_commands():
     c = TestCommands()
-    assert len(c.commands()) == 9
+    assert len(c.cmd_commands()) == 9
 
 
 def test_command():
@@ -112,13 +118,19 @@ def test_command():
     assert not c.command("nonexistent")
 
 
-class TestCmdRoot(libqtile.command._CommandRoot):
+class ConcreteCmdRoot(libqtile.command._CommandRoot):
     def call(self, *args):
         return args
 
+    def _items(self, name):
+        return None
+
+    def _select(self, name, sel):
+        return None
+
 
 def test_selectors():
-    c = libqtile.command._CommandRoot()
+    c = ConcreteCmdRoot()
 
     s = c.layout.screen.info
     assert s.selectors == [('layout', None), ('screen', None)]
