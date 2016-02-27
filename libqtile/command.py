@@ -18,10 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import abc
 import inspect
 import traceback
-import textwrap
 import os
+import six
 import sys
 
 from . import ipc
@@ -115,17 +116,18 @@ class _Command(object):
         return self.call(self.selectors, self.name, *args, **kwargs)
 
 
-class _CommandTree(object):
+class _CommandTree(six.with_metaclass(abc.ABCMeta)):
+    """A hierarchical collection of objects that contain commands
+
+    CommandTree objects act as containers, allowing them to be nested. The
+    commands themselves appear on the object as callable attributes.
     """
-        A CommandTree a hierarchical collection of command objects.
-        CommandTree objects act as containers, allowing them to be nested. The
-        commands themselves appear on the object as callable attributes.
-    """
-    def __init__(self, call, selectors, myselector, parent):
-        self.call = call
+    def __init__(self, selectors, myselector, parent):
         self.selectors = selectors
         self.myselector = myselector
         self.parent = parent
+        if parent:
+            self.call = parent.call
 
     @property
     def path(self):
@@ -134,17 +136,27 @@ class _CommandTree(object):
             s += [(self.name, self.myselector)]
         return formatSelector(s)
 
+    @property
+    @abc.abstractmethod
+    def name(self):
+        pass
+
+    @property
+    @abc.abstractmethod
+    def _contains(self):
+        pass
+
     def __getitem__(self, select):
         if self.myselector:
             raise KeyError("No such key: %s" % select)
-        return self.__class__(self.call, self.selectors, select, self)
+        return self.__class__(self.selectors, select, self)
 
     def __getattr__(self, name):
         nextSelector = self.selectors[:]
         if self.name:
             nextSelector.append((self.name, self.myselector))
         if name in self._contains:
-            return _TreeMap[name](self.call, nextSelector, None, self)
+            return _TreeMap[name](nextSelector, None, self)
         else:
             return _Command(self.call, nextSelector, name)
 
@@ -189,7 +201,7 @@ _TreeMap = {
 }
 
 
-class _CommandRoot(_CommandTree):
+class _CommandRoot(six.with_metaclass(abc.ABCMeta, _CommandTree)):
     name = None
     _contains = ["layout", "widget", "screen", "bar", "window", "group"]
 
@@ -198,11 +210,12 @@ class _CommandRoot(_CommandTree):
             This method constructs the entire hierarchy of callable commands
             from a conf object.
         """
-        _CommandTree.__init__(self, self.call, [], None, None)
+        _CommandTree.__init__(self, [], None, None)
 
     def __getitem__(self, select):
         raise KeyError("No such key: %s" % select)
 
+    @abc.abstractmethod
     def call(self, selectors, name, *args, **kwargs):
         """
             This method is called for issued commands.
@@ -300,88 +313,97 @@ class _LazyTree(_CommandRoot):
 lazy = _LazyTree()
 
 
-class CommandObject(object):
+class CommandObject(six.with_metaclass(abc.ABCMeta)):
+    """Base class for objects that expose commands
+
+    Each command should be a method named `cmd_X`, where X is the command name.
+    A CommandObject should also implement `._items()` and `._select()` methods
+    (c.f. docstring for `.items()` and `.select()`).
     """
-        Base class for objects that expose commands. Each command should be a
-        method named cmd_X, where X is the command name.
-    """
+
     def select(self, selectors):
+        """Return a selected object
+
+        Recursively finds an object specified by a list of `(name, selector)`
+        items.
+
+        Raises _SelectError if the object does not exist.
+        """
         if not selectors:
             return self
-        name, sel = selectors[0]
-        selectors = selectors[1:]
+        name, selector = selectors[0]
+        next_selector = selectors[1:]
 
         root, items = self.items(name)
-        if (root is False and sel is None) or \
-                (items is None and sel is not None) or \
-                (items is not None and sel and sel not in items):
-            raise _SelectError(name, sel)
+        # if non-root object and no selector given
+        # if no items in container, but selector is given
+        # if selector is not in the list of contained items
+        if (root is False and selector is None) or \
+                (items is None and selector is not None) or \
+                (items is not None and selector and selector not in items):
+            raise _SelectError(name, selector)
 
-        obj = self._select(name, sel)
+        obj = self._select(name, selector)
         if obj is None:
-            raise _SelectError(name, sel)
-        return obj.select(selectors)
+            raise _SelectError(name, selector)
+        return obj.select(next_selector)
 
     def items(self, name):
-        """
-            Returns a list of contained items for this name.
+        """Build a list of contained items for the given item class
+
+        Returns a tuple `(root, items)` for the specified item class, where:
+
+            root: True if this class accepts a "naked" specification without an
+            item seletion (e.g. "layout" defaults to current layout), and False
+            if it does not (e.g. no default "widget").
+
+            items: a list of contained items
         """
         ret = self._items(name)
         if ret is None:
             # Not finding information for a particular item class is OK here;
             # we don't expect layouts to have a window, etc.
-            return ([], [])
+            return False, []
         return ret
 
+    @abc.abstractmethod
     def _items(self, name):
+        """Generate the items for a given
+
+        Same return as `.items()`. Return `None` if name is not a valid item
+        class.
         """
-            Return (root, items) tuple for the specified item class, with:
+        pass
 
-                root: True if this class accepts a "naked" specification
-                without an item specification (i.e. "layout"), and False if it
-                does not.
-
-                items is a list of contained items, or None if this object is
-                not a valid container.
-
-            Return None if name is not a valid item class.
-        """
-        raise NotImplementedError
-
+    @abc.abstractmethod
     def _select(self, name, sel):
-        """
-            Return a selected object, or None if no such object exists.
+        """Select the given item of the given item class
 
-            This method is called with the following guarantees:
-                - name is a valid selector class for this item
-                - sel is a valid selector for this item
-                - the name, sel tuple is not an "impossible" combination (e.g.
-                  a selector is specified when this is not a containment
-                  object).
+        This method is called with the following guarantees:
+            - `name` is a valid selector class for this item
+            - `sel` is a valid selector for this item
+            - the `(name, sel)` tuple is not an "impossible" combination (e.g. a
+              selector is specified when `name` is not a containment object).
+
+        Return None if no such object exists
         """
-        raise NotImplementedError
+        pass
 
     def command(self, name):
         return getattr(self, "cmd_" + name, None)
 
-    def commands(self):
-        lst = []
-        for i in dir(self):
-            if i.startswith("cmd_"):
-                lst.append(i[4:])
-        return lst
-
     def cmd_commands(self):
+        """Returns a list of possible commands for this object
+
+        Used by __qsh__ for command completion and online help
         """
-            Returns a list of possible commands for this object.
-            Used by __qsh__ for command completion and online help.
-        """
-        return self.commands()
+        cmds = [i[4:] for i in dir(self) if i.startswith("cmd_")]
+        return cmds
 
     def cmd_items(self, name):
-        """
-            Returns a list of contained items for the specified name. Used by
-            __qsh__ to allow navigation of the object graph.
+        """Returns a list of contained items for the specified name
+
+        Used by __qsh__ to allow navigation of the object graph.
         """
         return self.items(name)
 
@@ -401,18 +423,17 @@ class CommandObject(object):
         return name + str(sig)
 
     def docText(self, name):
-        return textwrap.dedent(self.command(name).__doc__ or "")
+        return inspect.getdoc(self.command(name)) or ""
 
     def doc(self, name):
         spec = self.docSig(name)
         htext = self.docText(name)
-        htext = "\n".join([i for i in htext.splitlines()])
         return spec + htext
 
     def cmd_doc(self, name):
-        """
-            Returns the documentation for a specified command name. Used by
-            __qsh__ to provide online help.
+        """Returns the documentation for a specified command name
+
+        Used by __qsh__ to provide online help.
         """
         if name in self.commands():
             return self.doc(name)
@@ -420,11 +441,11 @@ class CommandObject(object):
             raise CommandError("No such command: %s" % name)
 
     def cmd_eval(self, code):
-        """
-            Evaluates code in the same context as this function.
-            Return value is (success, result), success being a boolean and
-            result being a string representing the return value of eval, or
-            None if exec was used instead.
+        """Evaluates code in the same context as this function
+
+        Return value is tuple `(success, result)`, success being a boolean and
+        result being a string representing the return value of eval, or None if
+        exec was used instead.
         """
         try:
             try:
