@@ -70,10 +70,10 @@ class _Column(object):
             return self[idx]
         return None
 
-    def add(self, client, width=100):
+    def add(self, client, height=100):
         self.clients.insert(self.current, client)
-        self.heights[client] = width
-        delta = 100 - width
+        self.heights[client] = height
+        delta = 100 - height
         if delta != 0:
             n = len(self)
             growth = [int(delta / n)] * n

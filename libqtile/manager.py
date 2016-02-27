@@ -820,7 +820,7 @@ class Qtile(command.CommandObject):
         # it can't really be a candidate
         candidate_screens = [
             s for s in candidate_screens
-            if x < s.x + s.width and y < s.y + s.width
+            if x < s.x + s.width and y < s.y + s.height
         ]
         for s in candidate_screens:
             middle_x = s.x + s.width / 2

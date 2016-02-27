@@ -201,7 +201,7 @@ class GridInfo(object):
                         height = total_height - y
                     results.append((
                         x + xoffset,  # i * width + xoffset,
-                        y + xoffset,  # j * height + yoffset,
+                        y + yoffset,  # j * height + yoffset,
                         width,
                         height
                     ))
