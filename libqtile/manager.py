@@ -35,6 +35,7 @@ import shlex
 import signal
 import sys
 import traceback
+import subprocess
 import xcffib
 import xcffib.xinerama
 import xcffib.xproto
@@ -108,6 +109,8 @@ class Qtile(command.CommandObject):
         self.groupMap = {}
         self.groups = []
         self.keyMap = {}
+        self.spawnMap = {}   # last PID used for command
+        self.lastCmd = None  # last spawn command
 
         # Find the modifier mask for the numlock key, if there is one:
         nc = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
@@ -1388,23 +1391,81 @@ class Qtile(command.CommandObject):
 
         self.cmd_execute(sys.executable, argv)
 
-    def cmd_spawn(self, cmd):
-        """Run cmd in a shell.
+    def cmd_focus_cmd(self, cmd):
+        """
+            Focus window of the cmd.
+        """
+        logger.debug("cmd='%s' spawnMap=%s" % (cmd, self.spawnMap))
+        try:
+            p = subprocess.Popen(["pgrep", "-f", cmd], stdout=subprocess.PIPE)
+            allpid = [int(pid) for pid in p.communicate()[0].split()]
+        except OSError:
+            logger.error(traceback.format_exc())
+            allpid = None
+
+        if allpid is not None and len(allpid) > 0:
+            if cmd in self.spawnMap:
+                lastpid = self.spawnMap[cmd]
+            else:
+                lastpid = allpid[0]
+
+            try:
+                idx = allpid.index(lastpid)
+                if cmd == self.lastCmd:
+                    # Previous focused spawn is for the same cmd
+                    # => search for next PID (next window).
+                    idx = (idx + 1) % len(allpid)
+                else:
+                    self.lastCmd = cmd
+            except:
+                # lastpid no longer exists
+                idx = 0
+
+            for i in range(len(allpid)):
+                pid = allpid[idx]
+                for win in self.windowMap.values():
+                    # Now we have to find the corresponding window
+                    logger.debug("Idx=%d" % idx)
+                    logger.debug("Check window for PID %d: %s" % (pid, win))
+                    try:
+                        cwpid = win.window.get_net_wm_pid()
+                        logger.debug("Window PID=%s" % (cwpid))
+                        if cwpid == pid:
+                            self.find_window(win.window.wid)
+                            self.spawnMap[cmd] = pid
+                            return pid
+                    except:
+                        logger.error(traceback.format_exc())
+                    logger.debug("No window has been found for PID %d" % pid)
+                idx = (idx + 1) % len(allpid)
+            logger.debug("No window has been found for cmd '%s'" % cmd)
+        return None
+
+    def cmd_spawn(self, cmd, focus=True):
+        """
+            Run cmd in a shell.
 
         cmd may be a string, which is parsed by shlex.split, or a list (similar
         to subprocess.Popen).
 
+        focus ([True] | False) The window of the previously identical launched command is focused.
+
         Examples
         ========
-
-            spawn("firefox")
-
-            spawn(["xterm", "-T", "Temporary terminal"])
+                spawn("firefox")
+                spawn(["xterm", "-T", "Temporary terminal"])
+                spawn("firefox", False)  # Launch a new firefox process
         """
         if isinstance(cmd, six.string_types):
             args = shlex.split(cmd)
         else:
             args = list(cmd)
+            cmd = " ".join(args)
+        # Request focus ?
+        if focus:
+            pid = self.cmd_focus_cmd(cmd)
+            if pid is not None:
+                return pid
 
         r, w = os.pipe()
         pid = os.fork()
@@ -1469,6 +1530,8 @@ class Qtile(command.CommandObject):
             # 1024 bytes should be enough for any pid. :)
             pid = os.read(r, 1024)
             os.close(r)
+            # register last pid for the cmd
+            self.spawnMap[cmd] = int(pid)
             return int(pid)
 
     def cmd_status(self):
