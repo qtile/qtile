@@ -139,6 +139,8 @@ bring_front_click = False
 cursor_warp = False
 floating_layout = layout.Floating()
 auto_fullscreen = True
+# by default, no focus are done on a spawn command
+auto_focus = False
 
 # XXX: Gasp! We're lying here. In fact, nobody really uses or cares about this
 # string besides java UI toolkits; you can see several discussions on the
