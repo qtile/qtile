@@ -111,6 +111,7 @@ class Qtile(command.CommandObject):
         self.keyMap = {}
         self.spawnMap = {}   # last PID used for command
         self.lastCmd = None  # last spawn command
+        self.autoFocus = self.config.auto_focus
 
         # Find the modifier mask for the numlock key, if there is one:
         nc = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
@@ -1441,7 +1442,7 @@ class Qtile(command.CommandObject):
             logger.debug("No window has been found for cmd '%s'" % cmd)
         return None
 
-    def cmd_spawn(self, cmd, focus=True):
+    def cmd_spawn(self, cmd, focus=None):
         """
             Run cmd in a shell.
 
@@ -1462,7 +1463,7 @@ class Qtile(command.CommandObject):
             args = list(cmd)
             cmd = " ".join(args)
         # Request focus ?
-        if focus:
+        if (focus is None and self.autoFocus) or focus:
             pid = self.cmd_focus_cmd(cmd)
             if pid is not None:
                 return pid

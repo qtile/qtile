@@ -90,6 +90,7 @@ class File(object):
             "widget_defaults",
             "bring_front_click",
             "wmname",
+            "auto_focus",
         ]
 
         for option in config_options:
