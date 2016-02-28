@@ -47,11 +47,10 @@ class _IPC(object):
 
         if data is None:
             raise IPCError("received data is None")
-
         try:
             return json.loads(data.decode('utf-8')), True
-        except Exception:
-            logger.info("received data was not json")
+        except ValueError:
+            pass
 
         try:
             assert len(data) >= HDRLEN
@@ -67,11 +66,11 @@ class _IPC(object):
     def _unpack_body(self, body):
         return marshal.loads(body)
 
-    def _pack(self, msg, is_json=False):
-        if is_json:
-            json_obj = json.dumps(msg)
-            return json_obj.encode('utf-8')
+    def _pack_json(self, msg):
+        json_obj = json.dumps(msg)
+        return json_obj.encode('utf-8')
 
+    def _pack(self, msg):
         msg = marshal.dumps(msg)
         size = struct.pack("!L", len(msg))
         return size + msg
@@ -98,7 +97,15 @@ class _ClientProtocol(asyncio.Protocol, _IPC):
         self.reply = asyncio.Future()
 
     def send(self, msg, is_json=False):
-        self.transport.write(self._pack(msg, is_json))
+
+        send_data = b''
+        if is_json:
+            send_data = self._pack_json(msg)
+        else:
+            send_data = self._pack(msg)
+
+        self.transport.write(send_data)
+
         try:
             self.transport.write_eof()
         except AttributeError:
@@ -196,7 +203,13 @@ class _ServerProtocol(asyncio.Protocol, _IPC):
             self.transport.write_eof()
 
         rep = self.handler(req)
-        result = self._pack(rep, is_json)
+
+        result = b''
+        if is_json:
+            result = self._pack_json(rep)
+        else:
+            result = self._pack(rep)
+
         logger.info('Sending result on receive EOF')
         self.transport.write(result)
         logger.info('Closing connection on receive EOF')

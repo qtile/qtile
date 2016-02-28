@@ -53,7 +53,6 @@ def main():
         help='Use json in order to communicate with qtile server.')
     options, args = parser.parse_args()
 
-    print("is_json: " + str(options.is_json))
     client = command.Client(options.socket, is_json=options.is_json)
     if options.pyfile is None:
         qsh = sh.QSh(client)
