@@ -38,6 +38,7 @@ import xcffib
 import xcffib.xinerama
 import xcffib.xproto
 import six
+import warnings
 
 from . import asyncio
 
@@ -1205,15 +1206,15 @@ class Qtile(command.CommandObject):
 
                 groups()
         """
-        return dict((i.name, i.info()) for i in self.groups)
+        return {i.name: i.info() for i in self.groups}
 
     def cmd_get_info(self):
-        x = {}
-        for i in self.groups:
-            x[i.name] = i.info()
-        return x
+        """Prints info for all groups"""
+        warnings.warn("The `get_info` command is deprecated, use `groups`", DeprecationWarning)
+        return self.cmd_groups()
 
     def cmd_display_kb(self, *args):
+        """Display table of key bindings"""
         class FormatTable():
             def __init__(self):
                 self.max_col_size = []
@@ -1577,8 +1578,7 @@ class Qtile(command.CommandObject):
             pass  # no window had urgent set
 
     def cmd_togroup(self, prompt="group", widget="prompt"):
-        """
-            Move current window to the selected group in a propmt widget
+        """Launch prompt widget to move current window to a given group
 
             prompt: Text with which to prompt user.
             widget: Name of the prompt widget (default: "prompt").
@@ -1762,6 +1762,10 @@ class Qtile(command.CommandObject):
         return state
 
     def cmd_tracemalloc_toggle(self):
+        """Toggle tracemalloc status
+
+        Running tracemalloc is required for qtile-top
+        """
         if not tracemalloc.is_tracing():
             tracemalloc.start()
         else:
