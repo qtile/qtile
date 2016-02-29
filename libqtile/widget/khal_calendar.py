@@ -84,6 +84,7 @@ class KhalCalendar(base.ThreadedPollText):
         output = cal.communicate()[0]
         output = output.decode()
         output = output.split('\n')
+        caldate = output[0]
         try:
             if output[0] == 'Today:':
                 date = str(now.month) + '/' + str(now.day) + '/' + \
@@ -96,12 +97,17 @@ class KhalCalendar(base.ThreadedPollText):
         except IndexError:
             return 'No appointments scheduled'
         for i in range(1, len(output)):
-            starttime = dateutil.parser.parse(date + ' ' + output[i][:5],
-                                              ignoretz=True)
-            endtime = dateutil.parser.parse(date + ' ' + output[i][6:11],
-                                            ignoretz=True)
-            if endtime > datetime.datetime.now():
-                data = output[0].replace(':', '') + ' ' + output[i]
+            try:
+                starttime = dateutil.parser.parse(date + ' ' + output[i][:5],
+                                                  ignoretz=True)
+                endtime = dateutil.parser.parse(date + ' ' + output[i][6:11],
+                                                ignoretz=True)
+            except ValueError:
+                date = output[i]
+                caldate = output[i]
+                continue
+            if endtime > now:
+                data = caldate.replace(':', '') + ' ' + output[i]
                 break
             else:
                 data = 'No appointments in next ' + \
