@@ -5,6 +5,9 @@ Built-in Layouts
 .. qtile_class:: libqtile.layout.floating.Floating
     :no-commands:
 
+.. qtile_class:: libqtile.layout.columns.Columns
+    :no-commands:
+
 .. qtile_class:: libqtile.layout.matrix.Matrix
     :no-commands:
 
@@ -30,6 +33,9 @@ Built-in Layouts
     :no-commands:
 
 .. qtile_class:: libqtile.layout.verticaltile.VerticalTile
+    :no-commands:
+
+.. qtile_class:: libqtile.layout.wmii.Wmii
     :no-commands:
 
 .. qtile_class:: libqtile.layout.zoomy.Zoomy

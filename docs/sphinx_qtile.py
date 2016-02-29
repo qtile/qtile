@@ -36,6 +36,9 @@ qtile_module_template = Template('''
 ''')
 
 qtile_class_template = Template('''
+{{ class_name }}
+{{ class_underline }}
+
 .. autoclass:: {{ module }}.{{ class_name }}
     :members: __init__
     {% if is_widget %}
@@ -103,6 +106,7 @@ class QtileClass(SimpleDirectiveMixin, Directive):
         context = {
             'module': module,
             'class_name': class_name,
+            'class_underline': "=" * len(class_name),
             'obj': obj,
             'configurable': ':no-config:' not in self.arguments and
                 issubclass(obj, configurable.Configurable),
