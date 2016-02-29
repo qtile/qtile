@@ -32,6 +32,7 @@ MOCK_MODULES = [
     'libqtile._ffi_xcursors',
     'cairocffi',
     'cffi',
+    'dateutil',
     'dateutil.parser',
     'dbus',
     'dbus.mainloop.glib',
