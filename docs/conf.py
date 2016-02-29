@@ -32,12 +32,19 @@ MOCK_MODULES = [
     'libqtile._ffi_xcursors',
     'cairocffi',
     'cffi',
+    'dateutil.parser',
+    'dbus',
+    'dbus.mainloop.glib',
+    'iwlib',
+    'keyring',
+    'mpd',
     'trollius',
     'xcffib',
     'xcffib.randr',
     'xcffib.xfixes',
     'xcffib.xinerama',
-    'xcffib.xproto'
+    'xcffib.xproto',
+    'xdg.IconTheme',
 ]
 sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
 
