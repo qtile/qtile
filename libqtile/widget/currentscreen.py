@@ -24,10 +24,7 @@ from .. import bar, hook
 
 
 class CurrentScreen(base._TextBox):
-    """
-        Indicates whether the screen this widget is on is currently active
-        or not.
-    """
+    """Indicates whether the screen this widget is on is currently active or not"""
 
     defaults = [
         ('active_text', 'A', 'Text displayed when the screen is active'),

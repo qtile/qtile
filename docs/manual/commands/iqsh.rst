@@ -10,19 +10,24 @@ more information about that.
 Dependencies
 ============
 
-In order to run iqsh, you must have ``ipykernel`` and ``jupyter_console``.  You
+In order to run iqsh, you must have `ipykernel`_ and `jupyter_console`_.  You
 can install the dependencies when you are installing qtile by running:
 
 .. code-block:: bash
 
     $ pip install qtile[ipython]
 
-Otherwise, you can just install these two packages separately.
+Otherwise, you can just install these two packages separately, either through
+PyPI or through your distribution package manager.
+
+.. _ipykernel: https://pypi.python.org/pypi/ipykernel
+.. _jupyter_console: https://pypi.python.org/pypi/jupyter_console
 
 Installing and Running the Kernel
 =================================
 
-Once you have the required dependencies, you can run the kernel right away by running:
+Once you have the required dependencies, you can run the kernel right away by
+running:
 
 .. code-block:: bash
 

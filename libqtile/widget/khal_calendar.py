@@ -46,11 +46,12 @@ import string
 from libqtile import utils
 
 class KhalCalendar(base.ThreadedPollText):
-    '''
-        This widget will display the next appointment on your Khal calendar
-        in the qtile status bar. Appointments within the "reminder" time will
-        be highlighted.
-    '''
+    """Khal calendar widget
+
+    This widget will display the next appointment on your Khal calendar in the
+    qtile status bar. Appointments within the "reminder" time will be
+    highlighted.
+    """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         (

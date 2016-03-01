@@ -33,9 +33,9 @@ kb_regex = re.compile('layout:\s+(?P<layout>\w+)')
 
 
 class KeyboardLayout(base.InLoopPollText):
-    """
-        Widget for changing and displaying the current keyboard layout.
-        It requires setxkbmap to be available in the system.
+    """Widget for changing and displaying the current keyboard layout
+
+    It requires setxkbmap to be available in the system.
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
@@ -54,11 +54,11 @@ class KeyboardLayout(base.InLoopPollText):
             self.next_keyboard()
 
     def next_keyboard(self):
-        """
-            Set the next layout in the list of configured keyboard layouts as
-            new current layout in use.
-            If the current keyboard layout is not in the list, it will set as
-            new layout the first one in the list.
+        """Set the next layout in the list of configured keyboard layouts as
+        new current layout in use
+
+        If the current keyboard layout is not in the list, it will set as new
+        layout the first one in the list.
         """
 
         current_keyboard = self.keyboard
@@ -82,10 +82,9 @@ class KeyboardLayout(base.InLoopPollText):
 
     @property
     def keyboard(self):
-        """
-            Return the currently used keyboard layout as a string.
-            Examples: "us", "us dvorak".
-            In case of error returns "unknown".
+        """Return the currently used keyboard layout as a string
+
+        Examples: "us", "us dvorak".  In case of error returns "unknown".
         """
         try:
             command = 'setxkbmap -verbose 10'
@@ -110,4 +109,5 @@ class KeyboardLayout(base.InLoopPollText):
             logger.error('Please, check that setxkbmap is available: {0}'.format(e))
 
     def cmd_next_keyboard(self):
+        """Select next keyboard layout"""
         self.next_keyboard()

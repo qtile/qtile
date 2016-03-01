@@ -206,14 +206,12 @@ class TextFrame(object):
 
 
 class Drawer(object):
-    """
-        A helper class for drawing and text layout.
+    """ A helper class for drawing and text layout.
 
-        We have a drawer object for each widget in the bar. The underlying
-        surface is a pixmap with the same size as the bar itself. We draw to
-        the pixmap starting at offset 0, 0, and when the time comes to display
-        to the window, we copy the appropriate portion of the pixmap onto the
-        window.
+    We have a drawer object for each widget in the bar. The underlying surface
+    is a pixmap with the same size as the bar itself. We draw to the pixmap
+    starting at offset 0, 0, and when the time comes to display to the window,
+    we copy the appropriate portion of the pixmap onto the window.
     """
     def __init__(self, qtile, wid, width, height):
         self.qtile = qtile
@@ -295,10 +293,17 @@ class Drawer(object):
 
     def draw(self, offsetx=0, offsety=0, width=None, height=None):
         """
-            offsetx: the X offset to start drawing at.
-            offsety: the Y offset to start drawing at.
-            width: the X portion of the canvas to draw at the starting point.
-            height: the Y portion of the canvas to draw at the starting point.
+        Parameters
+        ==========
+
+        offsetx :
+            the X offset to start drawing at.
+        offsety :
+            the Y offset to start drawing at.
+        width :
+            the X portion of the canvas to draw at the starting point.
+        height :
+            the Y portion of the canvas to draw at the starting point.
         """
         self.qtile.conn.conn.core.CopyArea(
             self.pixmap,
@@ -348,9 +353,7 @@ class Drawer(object):
 
     def textlayout(self, text, colour, font_family, font_size, font_shadow,
                    markup=False, **kw):
-        """
-            Get a text layout.
-        """
+        """Get a text layout"""
         return TextLayout(self, text, colour, font_family, font_size,
                           font_shadow, markup=markup, **kw)
 
@@ -378,10 +381,7 @@ class Drawer(object):
         return self.ctx.font_extents()
 
     def fit_fontsize(self, heightlimit):
-        """
-            Try to find a maximum font size that fits any strings within the
-            height.
-        """
+        """Try to find a maximum font size that fits any strings within the height"""
         self.ctx.set_font_size(heightlimit)
         asc, desc, height, _, _ = self.font_extents()
         self.ctx.set_font_size(
@@ -389,10 +389,7 @@ class Drawer(object):
         return self.font_extents()
 
     def fit_text(self, strings, heightlimit):
-        """
-            Try to find a maximum font size that fits all strings within the
-            height.
-        """
+        """Try to find a maximum font size that fits all strings within the height"""
         self.ctx.set_font_size(heightlimit)
         _, _, _, maxheight, _, _ = self.ctx.text_extents("".join(strings))
         if not maxheight:

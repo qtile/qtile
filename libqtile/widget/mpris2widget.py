@@ -26,14 +26,14 @@ from dbus.mainloop.glib import DBusGMainLoop
 from . import base
 
 class Mpris2(base._TextBox):
-    '''
+    """An MPRIS 2 widget
+
     A widget which displays the current track/artist of your favorite MPRIS
-    player. It should work with all MPRIS 2 compatible players
-    which implement a reasonably correct version of MPRIS,
-    though I have only tested it with audacious.
-    This widget scrolls the text if neccessary and information that
+    player. It should work with all MPRIS 2 compatible players which implement
+    a reasonably correct version of MPRIS, though I have only tested it with
+    audacious.  This widget scrolls the text if neccessary and information that
     is displayed is configurable.
-    '''
+    """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('name', 'audacious', 'Name of the MPRIS widget.'),
@@ -72,8 +72,7 @@ class Mpris2(base._TextBox):
         self.scroll_counter = None
 
     def update(self, interface_name, changed_properties, invalidated_properties):
-        '''http://specifications.freedesktop.org/
-        mpris-spec/latest/Track_List_Interface.html#Mapping:Metadata_Map'''
+        """http://specifications.freedesktop.org/mpris-spec/latest/Track_List_Interface.html#Mapping:Metadata_Map"""
         if not self.configured:
             return True
         olddisplaytext = self.displaytext
@@ -143,7 +142,7 @@ class Mpris2(base._TextBox):
         self.bar.draw()
 
     def cmd_info(self):
-        '''What's the current state of the widget?'''
+        """What's the current state of the widget?"""
         return dict(
             displaytext=self.displaytext,
             isplaying=self.is_playing,

@@ -219,9 +219,9 @@ class _Window(command.CommandObject):
         hook.fire("window_name_change")
 
     def updateHints(self):
-        """
-            update the local copy of the window's WM_HINTS
-            http://tronche.com/gui/x/icccm/sec-4.html#WM_HINTS
+        """Update the local copy of the window's WM_HINTS
+
+        See http://tronche.com/gui/x/icccm/sec-4.html#WM_HINTS
         """
         try:
             h = self.window.get_wm_hints()
@@ -406,10 +406,9 @@ class _Window(command.CommandObject):
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, force=False, margin=None):
-        """
-            Places the window at the specified location with the given size.
+        """Places the window at the specified location with the given size.
 
-            if force is false, than it tries to obey hints
+        If force is false, than it tries to obey hints
         """
 
         # TODO: self.x/y/height/width are updated BEFORE
@@ -464,9 +463,7 @@ class _Window(command.CommandObject):
             self.window.set_attribute(borderpixel=bordercolor)
 
     def send_configure_notify(self, x, y, width, height):
-        """
-        Send a synthetic ConfigureNotify
-        """
+        """Send a synthetic ConfigureNotify"""
 
         window = self.window.wid
         above_sibling = False
@@ -559,15 +556,11 @@ class _Window(command.CommandObject):
         return None
 
     def cmd_info(self):
-        """
-            Returns a dictionary of info for this object.
-        """
+        """Returns a dictionary of info for this object"""
         return self.info()
 
     def cmd_inspect(self):
-        """
-            Tells you more than you ever wanted to know about a window.
-        """
+        """Tells you more than you ever wanted to know about a window"""
         a = self.window.get_attributes()
         attrs = {
             "backing_store": a.backing_store,
@@ -614,9 +607,7 @@ class _Window(command.CommandObject):
 
 
 class Internal(_Window):
-    """
-        An internal window, that should not be managed by qtile.
-    """
+    """An internal window, that should not be managed by qtile"""
     _windowMask = EventMask.StructureNotify | \
         EventMask.PropertyChange | \
         EventMask.EnterWindow | \
@@ -646,9 +637,7 @@ class Internal(_Window):
 
 
 class Static(_Window):
-    """
-        An internal window, that should not be managed by qtile.
-    """
+    """An internal window, that should not be managed by qtile"""
     _windowMask = EventMask.StructureNotify | \
         EventMask.PropertyChange | \
         EventMask.EnterWindow | \
@@ -889,12 +878,12 @@ class Window(_Window):
         self.toggle_minimize()
 
     def static(self, screen, x=None, y=None, width=None, height=None):
-        """
-            Makes this window a static window, attached to a Screen. If any of
-            the arguments are left unspecified, the values given by the window
-            itself are used instead. So, for a window that's aware of its
-            appropriate size and location (like dzen), you don't have to
-            specify anything.
+        """Makes this window a static window, attached to a Screen
+
+        If any of the arguments are left unspecified, the values given by the
+        window itself are used instead. So, for a window that's aware of its
+        appropriate size and location (like dzen), you don't have to specify
+        anything.
         """
         self.defunct = True
         screen = self.qtile.screens[screen]
@@ -1002,9 +991,7 @@ class Window(_Window):
         self._reconfigure_floating(new_float_state=new_float_state)
 
     def togroup(self, groupName=None):
-        """
-            Move window to a specified group.
-        """
+        """Move window to a specified group"""
         if groupName is None:
             group = self.qtile.currentGroup
         else:
@@ -1025,16 +1012,17 @@ class Window(_Window):
             group.add(self)
 
     def match(self, wname=None, wmclass=None, role=None):
-        """
-            Match window against given attributes.
+        """Match window against given attributes.
 
-            - wname matches against the window name or title, that is,
-            either ``_NET_WM_VISIBLE_NAME``, ``_NET_WM_NAME``, ``WM_NAME``.
-
-            - wmclass matches against any of the two values in the
-            ``WM_CLASS`` property
-
-            - role matches against the ``WM_WINDOW_ROLE`` property
+        Parameters
+        ==========
+        wname :
+            matches against the window name or title, that is, either
+            ``_NET_WM_VISIBLE_NAME``, ``_NET_WM_NAME``, ``WM_NAME``.
+        wmclass :
+            matches against any of the two values in the ``WM_CLASS`` property
+        role :
+            matches against the ``WM_WINDOW_ROLE`` property
         """
         if not (wname or wmclass or role):
             raise TypeError(
@@ -1091,9 +1079,7 @@ class Window(_Window):
         return False
 
     def update_wm_net_icon(self):
-        """
-            Set a dict with the icons of the window
-        """
+        """Set a dict with the icons of the window"""
 
         icon = self.window.get_property('_NET_WM_ICON', 'CARDINAL')
         if not icon:
@@ -1227,47 +1213,45 @@ class Window(_Window):
         self.static(screen, x, y, width, height)
 
     def cmd_kill(self):
-        """
-            Kill this window. Try to do this politely if the client support
-            this, otherwise be brutal.
+        """Kill this window
+
+        Try to do this politely if the client support
+        this, otherwise be brutal.
         """
         self.kill()
 
     def cmd_togroup(self, groupName=None):
-        """
-            Move window to a specified group.
-            if groupName is not specified, we assume the current group
+        """Move window to a specified group.
 
-            Move window to current group
-                togroup()
+        If groupName is not specified, we assume the current group
 
-            Move window to group "a"
-                togroup("a")
+        Examples
+        ========
+
+        Move window to current group::
+
+            togroup()
+
+        Move window to group "a"::
+
+            togroup("a")
         """
         self.togroup(groupName)
 
     def cmd_move_floating(self, dx, dy, curx, cury):
-        """
-            Move window by dx and dy
-        """
+        """Move window by dx and dy"""
         self.tweak_float(dx=dx, dy=dy)
 
     def cmd_resize_floating(self, dw, dh, curx, cury):
-        """
-            Add dw and dh to size of window
-        """
+        """Add dw and dh to size of window"""
         self.tweak_float(dw=dw, dh=dh)
 
     def cmd_set_position_floating(self, x, y, curx, cury):
-        """
-            Move window to x and y
-        """
+        """Move window to x and y"""
         self.tweak_float(x=x, y=y)
 
     def cmd_set_size_floating(self, w, h, curx, cury):
-        """
-            Set window dimensions to w and h
-        """
+        """Set window dimensions to w and h"""
         self.tweak_float(w=w, h=h)
 
     def cmd_get_position(self):

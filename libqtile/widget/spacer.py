@@ -29,18 +29,23 @@ from . import base
 
 
 class Spacer(base._Widget):
-    """
-        Just an empty space on the bar. Often used with length equal to
-        bar.STRETCH to push bar widgets to the right or bottom edge of the
-        screen.
+    """Just an empty space on the bar
+
+    Often used with length equal to bar.STRETCH to push bar widgets to the
+    right or bottom edge of the screen.
+
+    Parameters
+    ==========
+    length :
+        Length of the widget.  Can be either ``bar.STRETCH`` or a length in
+        pixels.
+    width :
+        DEPRECATED, same as ``length``.
     """
     orientations = base.ORIENTATION_BOTH
 
     def __init__(self, length=bar.STRETCH, width=None):
         """
-            - length: Length of the widget.
-              Can be either ``bar.STRETCH`` or a length in pixels.
-            - width: DEPRECATED, same as ``length``.
         """
         # 'width' was replaced by 'length' since the widget can be installed in
         # vertical bars

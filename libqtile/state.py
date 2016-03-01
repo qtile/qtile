@@ -20,10 +20,10 @@
 
 
 class QtileState(object):
-    """
-        Represents the state of the qtile object. Primarily used for restoring
-        state across restarts; any additional state which doesn't fit nicely
-        into X atoms can go here.
+    """Represents the state of the qtile object
+
+    Primarily used for restoring state across restarts; any additional state
+    which doesn't fit nicely into X atoms can go here.
     """
     def __init__(self, qtile):
         # Note: window state is saved and restored via _NET_WM_STATE, so
@@ -42,8 +42,8 @@ class QtileState(object):
 
     def apply(self, qtile):
         """
-            Rearrange the windows in the specified Qtile object according to
-            this QtileState.
+        Rearrange the windows in the specified Qtile object according to this
+        QtileState.
         """
         for (group, layout) in self.groups.items():
             try:

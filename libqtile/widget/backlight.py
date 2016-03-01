@@ -32,9 +32,7 @@ FORMAT = '{percent: 2.0%}'
 
 
 class Backlight(base.InLoopPollText):
-    """
-        A simple widget to show the current brightness of a monitor.
-    """
+    """A simple widget to show the current brightness of a monitor"""
 
     filenames = {}
 

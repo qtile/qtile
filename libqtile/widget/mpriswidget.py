@@ -32,7 +32,8 @@ from .. import bar
 
 
 class Mpris(base._TextBox):
-    """
+    """MPRIS player widget
+
     A widget which displays the current track/artist of your favorite MPRIS
     player. It should work with all players which implement a reasonably
     correct version of MPRIS, though I have only tested it with clementine.
@@ -76,7 +77,7 @@ class Mpris(base._TextBox):
         self._connect()
 
     def _connect(self):
-        """ Try to connect to the player if it exists. """
+        """Try to connect to the player if it exists"""
         try:
             self.player = self.bus.get_object(self.objname, '/Player')
             self.iface = dbus.Interface(
@@ -115,9 +116,10 @@ class Mpris(base._TextBox):
             self.update()
 
     def ensure_connected(f):
+        """Tries to connect to the player
+
+        It *should* be successful if the player is alive
         """
-        Tries to connect to the player. It *should* be successful if the player
-        is alive. """
         def wrapper(*args, **kwargs):
             self = args[0]
             try:
@@ -158,8 +160,11 @@ class Mpris(base._TextBox):
 
     @ensure_connected
     def is_playing(self):
-        """ Returns true if we are connected to the player and it is playing
-        something, false otherwise. """
+        """Checks status of the player
+
+        Returns true if we are connected to the player and it is playing
+        something, false otherwise
+        """
         if self.connected:
             (playing, random, repeat, stop_after_last) = self.iface.GetStatus()
             return playing == 0
@@ -167,7 +172,7 @@ class Mpris(base._TextBox):
             return False
 
     def cmd_info(self):
-        """ What's the current state of the widget? """
+        """What's the current state of the widget?"""
         return dict(
             connected=self.connected,
             nowplaying=self.text,
@@ -175,5 +180,5 @@ class Mpris(base._TextBox):
         )
 
     def cmd_update(self):
-        """ Force the widget to update. Mostly used for testing. """
+        """Force the widget to update. Mostly used for testing"""
         self.update()

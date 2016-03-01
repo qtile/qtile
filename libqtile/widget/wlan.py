@@ -55,9 +55,7 @@ except ImportError:
 
 
 class Wlan(base.InLoopPollText):
-    """
-        Displays Wifi ssid and quality.
-    """
+    """Displays Wifi ssid and quality"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('interface', 'wlan0', 'The interface to monitor'),

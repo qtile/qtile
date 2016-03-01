@@ -23,10 +23,10 @@ from libqtile.widget import base
 
 
 class She(base.InLoopPollText):
-    '''
-        Widget to display the Super Hybrid Engine status.
-        Can display either the mode or CPU speed on eeepc computers.
-    '''
+    """Widget to display the Super Hybrid Engine status
+
+    Can display either the mode or CPU speed on eeepc computers.
+    """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('device', '/sys/devices/platform/eeepc/cpufv', 'sys path to cpufv'),

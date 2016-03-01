@@ -27,9 +27,7 @@ from .. import command, configurable
 
 @six.add_metaclass(ABCMeta)
 class Layout(command.CommandObject, configurable.Configurable):
-    """
-        This class defines the API that should be exposed by all layouts.
-    """
+    """This class defines the API that should be exposed by all layouts"""
     @classmethod
     def _name(cls):
         return cls.__class__.__name__.lower()
@@ -61,11 +59,15 @@ class Layout(command.CommandObject, configurable.Configurable):
         pass
 
     def clone(self, group):
-        """
-            :group Group to attach new layout instance to.
+        """Duplicate a layout
 
-            Make a copy of this layout. This is done to provide each group with
-            a unique instance of every layout.
+        Make a copy of this layout. This is done to provide each group with a
+        unique instance of every layout.
+
+        Parameters
+        ==========
+        group:
+            Group to attach new layout instance to.
         """
         c = copy.copy(self)
         c.group = group
@@ -84,72 +86,63 @@ class Layout(command.CommandObject, configurable.Configurable):
             return self.group
 
     def show(self, screen):
-        """
-            Called when layout is being shown
-        """
+        """Called when layout is being shown"""
         pass
 
     def hide(self):
-        """
-            Called when layout is being hidden
-        """
+        """Called when layout is being hidden"""
         pass
 
     def focus(self, client):
-        """
-            Called whenever the focus changes.
-        """
+        """Called whenever the focus changes"""
         pass
 
     def blur(self):
-        """
-            Called whenever focus is gone from this layout.
-        """
+        """Called whenever focus is gone from this layout"""
         pass
 
     def info(self):
-        """
-            Returns a dictionary of layout information.
-        """
+        """Returns a dictionary of layout information"""
         return dict(
             name=self.name,
             group=self.group.name
         )
 
     def cmd_info(self):
-        """
-            Return a dictionary of info for this object.
-        """
+        """Return a dictionary of info for this object"""
         return self.info()
 
     @abstractmethod
     def add(self, client):
-        """
-            Called whenever a window is added to the group, whether the layout
-            is current or not. The layout should just add the window to its
-            internal datastructures, without mapping or configuring.
+        """Called whenever a window is added to the group
+
+        Called whether the layout is current or not. The layout should just add
+        the window to its internal datastructures, without mapping or
+        configuring.
         """
         pass
 
     @abstractmethod
     def remove(self, client):
-        """
-            Called whenever a window is removed from the group, whether the
-            layout is current or not. The layout should just de-register the
-            window from its data structures, without unmapping the window.
+        """Called whenever a window is removed from the group
 
-            Returns the "next" window that should gain focus or None.
+        Called whether the layout is current or not. The layout should just
+        de-register the window from its data structures, without unmapping the
+        window.
+
+        Returns the "next" window that should gain focus or None.
         """
         pass
 
     @abstractmethod
     def configure(self, client, screen):
-        """
-            This method should:
+        """Configure the layout
 
-                - Configure the dimensions and borders of a window using the
-                  .place() method.
-                - Call either .hide or .unhide on the window.
+        This method should:
+
+            - Configure the dimensions and borders of a window using the
+              `.place()` method.
+            - Call either `.hide()` or `.unhide()` on the window.
         """
         pass
 
@@ -232,8 +225,12 @@ class Delegate(Layout):
     def delegate_layout(self, windows, mapping):
         """Delegates layouting actual windows
 
-        :param windows: windows to layout
-        :param mapping: mapping from layout to ScreenRect for each layout
+        Parameterer
+        ===========
+        windows:
+            windows to layout
+        mapping:
+            mapping from layout to ScreenRect for each layout
         """
         grouped = {}
         for w in windows:

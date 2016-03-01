@@ -31,9 +31,7 @@ import mailbox
 
 
 class Maildir(base.ThreadedPollText):
-    """
-    A simple widget showing the number of new mails in maildir mailboxes.
-    """
+    """A simple widget showing the number of new mails in maildir mailboxes"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("maildirPath", "~/Mail", "path to the Maildir folder"),
@@ -55,10 +53,11 @@ class Maildir(base.ThreadedPollText):
             ]
 
     def poll(self):
-        """
-        Scans the mailbox for new messages.
+        """Scans the mailbox for new messages
 
-        @return: A string representing the current mailbox state.
+        Returns
+        =======
+        A string representing the current mailbox state
         """
         state = {}
 
@@ -78,11 +77,16 @@ class Maildir(base.ThreadedPollText):
         return self.format_text(state)
 
     def format_text(self, state):
-        """
-        Converts the state of the subfolders to a string.
+        """Converts the state of the subfolders to a string
 
-        @param state: a dictionary as returned by mailbox_state.
-        @return: a string representation of the given state.
+        Parameters
+        ==========
+        state:
+            a dictionary as returned by mailbox_state
+
+        Returns
+        =======
+        a string representation of the given state
         """
         return self.separator.join(
             "{}: {}".format(*item) for item in state.items()

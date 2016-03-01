@@ -202,14 +202,11 @@ _TreeMap = {
 
 
 class _CommandRoot(six.with_metaclass(abc.ABCMeta, _CommandTree)):
+    """This class constructs the entire hierarchy of callable commands from a conf object"""
     name = None
     _contains = ["layout", "widget", "screen", "bar", "window", "group"]
 
     def __init__(self):
-        """
-            This method constructs the entire hierarchy of callable commands
-            from a conf object.
-        """
         _CommandTree.__init__(self, [], None, None)
 
     def __getitem__(self, select):
@@ -217,11 +214,14 @@ class _CommandRoot(six.with_metaclass(abc.ABCMeta, _CommandTree)):
 
     @abc.abstractmethod
     def call(self, selectors, name, *args, **kwargs):
-        """
-            This method is called for issued commands.
+        """This method is called for issued commands.
 
-                :selectors A list of (name, selector) tuples.
-                :name Command name.
+        Parameters
+        ==========
+        selectors :
+            A list of (name, selector) tuples.
+        name :
+            Command name.
         """
         pass
 
@@ -238,10 +238,7 @@ def find_sockfile(display=None):
 
 
 class Client(_CommandRoot):
-    """
-        Exposes a command tree used to communicate with a running instance of
-        Qtile.
-    """
+    """Exposes a command tree used to communicate with a running instance of Qtile"""
     def __init__(self, fname=None, is_json=False):
         if not fname:
             fname = find_sockfile()
@@ -274,12 +271,17 @@ class CommandRoot(_CommandRoot):
 
 
 class _Call(object):
+    """
+    Parameters
+    ==========
+    command :
+        A string command name specification
+    args :
+        Arguments to be passed to the specified command
+    kwargs :
+        Arguments to be passed to the specified command
+    """
     def __init__(self, selectors, name, *args, **kwargs):
-        """
-            :command A string command name specification
-            :*args Arguments to be passed to the specified command
-            :*kwargs Arguments to be passed to the specified command
-        """
         self.selectors = selectors
         self.name = name
         self.args = args
@@ -434,7 +436,7 @@ class CommandObject(six.with_metaclass(abc.ABCMeta)):
     def doc(self, name):
         spec = self.docSig(name)
         htext = self.docText(name)
-        return spec + htext
+        return spec + '\n' + htext
 
     def cmd_doc(self, name):
         """Returns the documentation for a specified command name

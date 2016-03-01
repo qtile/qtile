@@ -119,9 +119,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
 
 
 class AGroupBox(_GroupBase):
-    """
-        A widget that graphically displays the current group.
-    """
+    """A widget that graphically displays the current group"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [("border", "000000", "group box border color")]
 
@@ -146,9 +144,7 @@ class AGroupBox(_GroupBase):
 
 
 class GroupBox(_GroupBase):
-    """
-        A widget that graphically displays the current group.
-    """
+    """A widget that graphically displays the current group"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("active", "FFFFFF", "Active group font colour"),

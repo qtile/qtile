@@ -26,9 +26,9 @@ class Cmus(base.ThreadPoolText):
     Show the artist and album of now listening song and allow basic mouse
     control from the bar:
 
-    - toggle pause (or play if stopped) on left click;
-    - skip forward in playlist on scroll up;
-    - skip backward in playlist on scroll down.
+        - toggle pause (or play if stopped) on left click;
+        - skip forward in playlist on scroll up;
+        - skip backward in playlist on scroll down.
 
     Cmus (https://cmus.github.io) should be installed.
     """

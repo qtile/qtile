@@ -29,21 +29,21 @@ import locale
 
 
 class BitcoinTicker(GenPollUrl):
-    '''
-        A bitcoin ticker widget, data provided by the btc-e.com API. Defaults
-        to displaying currency in whatever the current locale is. Examples:
+    """
+    A bitcoin ticker widget, data provided by the btc-e.com API. Defaults to
+    displaying currency in whatever the current locale is. Examples:
 
-        ::
+    ::
 
-            # display the average price of bitcoin in local currency
-            widget.BitcoinTicker(format="BTC: {avg}")
+        # display the average price of bitcoin in local currency
+        widget.BitcoinTicker(format="BTC: {avg}")
 
-            # display the average price of litecoin in local currency
-            widget.BitcoinTicker(format="LTC: {avg}", source_currency='ltc')
+        # display the average price of litecoin in local currency
+        widget.BitcoinTicker(format="LTC: {avg}", source_currency='ltc')
 
-            # display the average price of litecoin in bitcoin
-            widget.BitcoinTicker(format="BTC: ฿{avg}", source_currency='ltc', currency='btc', round=False)
-    '''
+        # display the average price of litecoin in bitcoin
+        widget.BitcoinTicker(format="BTC: ฿{avg}", source_currency='ltc', currency='btc', round=False)
+    """
 
     QUERY_URL = "https://btc-e.com/api/2/%s_%s/ticker"
 

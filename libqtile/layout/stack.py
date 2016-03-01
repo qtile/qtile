@@ -124,12 +124,13 @@ class _WinStack(object):
 
 
 class Stack(Layout):
-    """
-        The stack layout divides the screen horizontally into a set of stacks.
-        Commands allow you to switch between stacks, to next and previous
-        windows within a stack, and to split a stack to show all windows in the
-        stack, or unsplit it to show only the current window. At the moment,
-        this is the most mature and flexible layout in Qtile.
+    """A layout composed of stacks of windows
+
+    The stack layout divides the screen horizontally into a set of stacks.
+    Commands allow you to switch between stacks, to next and previous windows
+    within a stack, and to split a stack to show all windows in the stack, or
+    unsplit it to show only the current window. At the moment, this is the most
+    mature and flexible layout in Qtile.
     """
     defaults = [
         ("border_focus", "#0000ff", "Border colour for the focused window."),
@@ -334,52 +335,38 @@ class Stack(Layout):
         return d
 
     def cmd_toggle_split(self):
-        """
-            Toggle vertical split on the current stack.
-        """
+        """Toggle vertical split on the current stack"""
         self.currentStack.toggleSplit()
         self.group.layoutAll()
 
     def cmd_down(self):
-        """
-            Switch to the next window in this stack.
-        """
+        """Switch to the next window in this stack"""
         self.currentStack.current -= 1
         self.group.focus(self.currentStack.cw, False)
 
     def cmd_up(self):
-        """
-            Switch to the previous window in this stack.
-        """
+        """Switch to the previous window in this stack"""
         self.currentStack.current += 1
         self.group.focus(self.currentStack.cw, False)
 
     def cmd_shuffle_up(self):
-        """
-            Shuffle the order of this stack up.
-        """
+        """Shuffle the order of this stack up"""
         utils.shuffleUp(self.currentStack.lst)
         self.currentStack.current += 1
         self.group.layoutAll()
 
     def cmd_shuffle_down(self):
-        """
-            Shuffle the order of this stack down.
-        """
+        """Shuffle the order of this stack down"""
         utils.shuffleDown(self.currentStack.lst)
         self.currentStack.current -= 1
         self.group.layoutAll()
 
     def cmd_delete(self):
-        """
-            Delete the current stack from the layout.
-        """
+        """Delete the current stack from the layout"""
         self.deleteCurrentStack()
 
     def cmd_add(self):
-        """
-            Add another stack to the layout.
-        """
+        """Add another stack to the layout"""
         newstack = _WinStack(autosplit=self.autosplit)
         if self.autosplit:
             newstack.split = True
@@ -387,41 +374,30 @@ class Stack(Layout):
         self.group.layoutAll()
 
     def cmd_rotate(self):
-        """
-            Rotate order of the stacks.
-        """
+        """Rotate order of the stacks"""
         utils.shuffleUp(self.stacks)
         self.group.layoutAll()
 
     def cmd_next(self):
-        """
-            Focus next stack.
-        """
+        """Focus next stack"""
         return self.nextStack()
 
     def cmd_previous(self):
-        """
-            Focus previous stack.
-        """
+        """Focus previous stack"""
         return self.previousStack()
 
     def cmd_client_to_next(self):
-        """
-            Send the current client to the next stack.
-        """
+        """Send the current client to the next stack"""
         return self.cmd_client_to_stack(self.currentStackOffset + 1)
 
     def cmd_client_to_previous(self):
-        """
-            Send the current client to the previous stack.
-        """
+        """Send the current client to the previous stack"""
         return self.cmd_client_to_stack(self.currentStackOffset - 1)
 
     def cmd_client_to_stack(self, n):
         """
-            Send the current client to stack n, where n is an integer offset.
-            If is too large or less than 0, it is wrapped modulo the number of
-            stacks.
+        Send the current client to stack n, where n is an integer offset.  If
+        is too large or less than 0, it is wrapped modulo the number of stacks.
         """
         if not self.currentStack:
             return

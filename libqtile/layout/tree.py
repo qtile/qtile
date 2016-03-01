@@ -38,7 +38,6 @@ to_superscript = dict(zip(map(ord, six.u('0123456789')), map(ord, six.u('⁰¹²
 
 
 class TreeNode(object):
-
     def __init__(self):
         self.children = []
         self.expanded = True
@@ -122,7 +121,6 @@ class TreeNode(object):
 
 
 class Root(TreeNode):
-
     def __init__(self, sections, default_section=None):
         super(Root, self).__init__()
         self.sections = {}
@@ -173,7 +171,6 @@ class Root(TreeNode):
 
 
 class Section(TreeNode):
-
     def __init__(self, title):
         super(Section, self).__init__()
         self.title = title
@@ -200,7 +197,6 @@ class Section(TreeNode):
 
 
 class Window(TreeNode):
-
     def __init__(self, win):
         super(Window, self).__init__()
         self.window = win
@@ -423,9 +419,7 @@ class TreeTab(SingleWindow):
             self._panel.hide()
 
     def cmd_down(self):
-        """
-            Switch down in the window list
-        """
+        """Switch down in the window list"""
         win = None
         if self._focused:
             win = self._nodes[self._focused].get_next_window()
@@ -438,9 +432,7 @@ class TreeTab(SingleWindow):
     cmd_next = cmd_down
 
     def cmd_up(self):
-        """
-            Switch up in the window list
-        """
+        """Switch up in the window list"""
         win = None
         if self._focused:
             win = self._nodes[self._focused].get_prev_window()
@@ -527,10 +519,13 @@ class TreeTab(SingleWindow):
     def cmd_sort_windows(self, sorter, create_sections=True):
         """Sorts window to sections using sorter function
 
-        :param sorter: returns name of the section where window should be
-        :type sorter: function with single arg returning string
-        :param create_sections: if this parameter is True (default), if sorter
-          returns unknown section name it will be created dynamically
+        Parameters
+        ==========
+        sorter : function with single arg returning string
+            returns name of the section where window should be
+        create_sections :
+            if this parameter is True (default), if sorter returns unknown
+            section name it will be created dynamically
         """
         for sec in self._tree.children:
             for win in sec.children[:]:

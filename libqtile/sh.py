@@ -49,12 +49,13 @@ def terminalWidth():
 
 
 class QSh(object):
-
+    """Qtile shell instance"""
     def __init__(self, client, completekey="tab"):
         self.clientroot = client
         self.current = client
         self.completekey = completekey
         self.builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
+        self.termwidth = terminalWidth()
 
     def _complete(self, buf, arg):
         if not re.search(r" |\(", buf) or buf.startswith("help "):
@@ -89,14 +90,15 @@ class QSh(object):
     def prompt(self):
         return "%s> " % self.current.path
 
-    def columnize(self, lst):
-        termwidth = terminalWidth()
+    def columnize(self, lst, update_termwidth=True):
+        if update_termwidth:
+            self.termwidth = terminalWidth()
 
         ret = []
         if lst:
             lst = list(map(str, lst))
             mx = max(map(len, lst))
-            cols = termwidth // (mx + 2) or 1
+            cols = self.termwidth // (mx + 2) or 1
             # We want `(n-1) * cols + 1 <= len(lst) <= n * cols` to return `n`
             # If we subtract 1, then do `// cols`, we get `n - 1`, so we can then add 1
             rows = (len(lst) - 1) // cols + 1

@@ -32,8 +32,8 @@ from .. import bar, hook
 
 class CurrentLayout(base._TextBox):
     """
-        Display the name of the current layout of the current
-        group of the screen, the bar containing the widget, is on.
+    Display the name of the current layout of the current group of the screen,
+    the bar containing the widget, is on.
     """
     orientations = base.ORIENTATION_HORIZONTAL
 

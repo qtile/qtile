@@ -29,18 +29,21 @@ from . import base
 
 
 class _CrashMe(base._TextBox):
-    """
-        A developer widget to force a crash in qtile.
-        Pressing left mouse button causes a zero divison error.
-        Pressing the right mouse button causes a cairo draw error.
+    """A developer widget to force a crash in qtile
+
+    Pressing left mouse button causes a zero divison error.  Pressing the right
+    mouse button causes a cairo draw error.
+
+    Parameters
+    ==========
+
+    width :
+        A fixed width, or bar.CALCULATED to calculate the width automatically
+        (which is recommended).
     """
     orientations = base.ORIENTATION_HORIZONTAL
 
     def __init__(self, width=bar.CALCULATED, **config):
-        """
-            - width: A fixed width, or bar.CALCULATED to calculate the width
-            automatically (which is recommended).
-        """
         base._TextBox.__init__(self, "Crash me !", width, **config)
 
     def _configure(self, qtile, bar):

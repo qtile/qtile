@@ -1,3 +1,5 @@
+.. _ref_widgets:
+
 ================
 Built-in Widgets
 ================

@@ -1,3 +1,5 @@
+.. _ref_layouts:
+
 ================
 Built-in Layouts
 ================

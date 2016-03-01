@@ -26,9 +26,7 @@ from .. import bar, hook, xcbq
 
 
 class Clipboard(base._TextBox):
-    """
-        Display current clipboard contents.
-    """
+    """Display current clipboard contents"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("selection", "CLIPBOARD",

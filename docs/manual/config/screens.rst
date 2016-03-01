@@ -32,7 +32,8 @@ Tying together screens, bars and widgets, we get something like this:
             )
         ]
 
-Bars support background colors and gradients, e.g. :code:`bar.Bar(...,
+Bars support both solid background colors and gradients by supplying a list of
+colors that make up a linear gradient. For example, :code:`bar.Bar(...,
 background="#000000")` will give you a black back ground (the default), while
 :code:`bar.Bar(..., background=["#000000", "#FFFFFF"])` will give you a
 background that fades from black to white.
@@ -44,3 +45,15 @@ There might be some reasons to use third-party bars. For instance you can come
 from another window manager and you have already configured dzen2, xmobar, or
 something else. They definitely can be used with Qtile too. In fact, any
 additional configurations aren't needed. Just run the bar and qtile will adapt.
+
+Reference
+=========
+
+.. qtile_class:: libqtile.config.Screen
+   :no-commands:
+
+.. qtile_class:: libqtile.bar.Bar
+   :no-commands:
+
+.. qtile_class:: libqtile.bar.Gap
+   :no-commands:

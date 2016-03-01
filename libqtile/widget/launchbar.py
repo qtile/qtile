@@ -53,8 +53,16 @@ from xdg.IconTheme import getIconPath
 
 
 class LaunchBar(base._Widget):
-    """
-    A widget that display icons to launch the associated command.
+    """A widget that display icons to launch the associated command
+
+    Parameters
+    ==========
+    progs :
+        a list of tuples ``(software_name, command_to_execute, comment)``, for
+        example::
+
+            ('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode')
+            ('logout', 'qsh:self.qtile.cmd_shutdown()', 'logout from qtile')
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
@@ -64,13 +72,6 @@ class LaunchBar(base._Widget):
     ]
 
     def __init__(self, progs=None, width=bar.CALCULATED, **config):
-        """
-        @progs: a list of tuple (software_name, command_to_execute, comment)
-        for example:
-        ('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe\
-        mode')
-        ('logout', 'qsh:self.qtile.cmd_shutdown()', 'logout from qtile')
-        """
         base._Widget.__init__(self, width, **config)
         if progs is None:
             progs = []

@@ -69,9 +69,7 @@ class GridInfo(object):
         self.num_cols = 0
 
     def calc(self, num_windows, width, height):
-        """
-        returns (rows, cols, orientation) tuple given input
-        """
+        """returns (rows, cols, orientation) tuple given input"""
         best_ratio = None
         best_rows_cols_orientation = None
         for rows, cols, orientation in self._possible_grids(num_windows):
@@ -103,9 +101,7 @@ class GridInfo(object):
 
     def get_sizes_advanced(self, total_width, total_height,
                            xoffset=0, yoffset=0):
-        """
-        after every row/column recalculate remaining area
-        """
+        """after every row/column recalculate remaining area"""
         results = []
         width = total_width
         height = total_height
@@ -126,9 +122,7 @@ class GridInfo(object):
         return results
 
     def _get_row_or_col(self, num_windows, width, height, xoffset, yoffset):
-        """
-        process one row (or col) at a time
-        """
+        """process one row (or col) at a time"""
         rows, cols, orientation = self.calc(num_windows, width, height)
         results = []
         if orientation == ROWCOL:
@@ -214,9 +208,7 @@ class GridInfo(object):
 
 
 class RatioTile(Layout):
-    """
-    Tries to tile all windows in the width/height ratio passed in
-    """
+    """Tries to tile all windows in the width/height ratio passed in"""
     defaults = [
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused windows."),

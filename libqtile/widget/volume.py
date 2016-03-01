@@ -48,10 +48,10 @@ re_vol = re.compile('\[(\d?\d?\d?)%\]')
 
 
 class Volume(base._TextBox):
-    '''
-        Widget that display and change volume if theme_path is set it draw
-        widget as icons.
-    '''
+    """Widget that display and change volume
+
+    If theme_path is set it draw widget as icons.
+    """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("cardid", None, "Card Id"),

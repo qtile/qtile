@@ -38,10 +38,10 @@ from .log_utils import logger
 
 
 class _Group(command.CommandObject):
-    """
-        A group is a container for a bunch of windows, analogous to workspaces
-        in other window managers. Each client window managed by the window
-        manager belongs to exactly one group.
+    """A container for a bunch of windows
+
+    Analogous to workspaces in other window managers. Each client window
+    managed by the window manager belongs to exactly one group.
     """
     def __init__(self, name, layout=None):
         self.name = name
@@ -106,7 +106,10 @@ class _Group(command.CommandObject):
     @layout.setter
     def layout(self, layout):
         """
-            "layout" is a string with matching the name of a Layout object.
+        Parameters
+        ==========
+        layout :
+            a string with matching the name of a Layout object.
         """
         for index, obj in enumerate(self.layouts):
             if obj.name == layout:
@@ -136,11 +139,10 @@ class _Group(command.CommandObject):
         self.toLayoutIndex((self.currentLayout - 1) % (len(self.layouts)))
 
     def layoutAll(self, warp=False):
-        """
-        Layout the floating layer, then the current layout.
+        """Layout the floating layer, then the current layout.
 
-        If we have have a currentWindow give it focus, optionally
-        moving warp to it.
+        If we have have a currentWindow give it focus, optionally moving warp
+        to it.
         """
         if self.screen and len(self.windows):
             with self.disableMask(xcffib.xproto.EventMask.EnterWindow):
@@ -163,9 +165,7 @@ class _Group(command.CommandObject):
                     self.currentWindow.focus(warp)
 
     def _setScreen(self, screen):
-        """
-        Set this group's screen to new_screen
-        """
+        """Set this group's screen to new_screen"""
         if screen == self.screen:
             return
         self.screen = screen
@@ -197,16 +197,22 @@ class _Group(command.CommandObject):
             i._resetMask()
 
     def focus(self, win, warp=True):
-        """
-            if win is in the group, blur any windows and call
-            ``focus`` on the layout (in case it wants to track
-            anything), fire focus_change hook and invoke layoutAll.
+        """Focus the given window
 
-            warp - warp pointer to win. This should basically always be True,
-            unless the focus event is coming from something like EnterNotify,
-            where the user is actively using the mouse or on full screen
-            layouts where only one window is "maximized" at a time, and it
-            doesn't make sense for the mouse to automatically move.
+        If win is in the group, blur any windows and call ``focus`` on the
+        layout (in case it wants to track anything), fire focus_change hook and
+        invoke layoutAll.
+
+        Parameters
+        ==========
+        win :
+            Window to focus
+        warp :
+            Warp pointer to win. This should basically always be True, unless
+            the focus event is coming from something like EnterNotify, where
+            the user is actively using the mouse or on full screen layouts
+            where only one window is "maximized" at a time, and it doesn't make
+            sense for the mouse to automatically move.
         """
         if self.qtile._drag:
             # don't change focus while dragging windows
@@ -341,23 +347,26 @@ class _Group(command.CommandObject):
         self.layout = layout
 
     def cmd_info(self):
-        """
-            Returns a dictionary of info for this group.
-        """
+        """Returns a dictionary of info for this group"""
         return self.info()
 
     def cmd_toscreen(self, screen=None):
-        """
-            Pull a group to a specified screen.
+        """Pull a group to a specified screen.
 
-            - screen: Screen offset. If not specified,
-                      we assume the current screen.
+        Parameters
+        ==========
+        screen :
+            Screen offset. If not specified, we assume the current screen.
 
-            Pull group to the current screen:
-                toscreen()
+        Examples
+        ========
+        Pull group to the current screen::
 
-            Pull group to screen 0:
-                toscreen(0)
+            toscreen()
+
+        Pull group to screen 0::
+
+            toscreen(0)
         """
         if screen is None:
             screen = self.qtile.currentScreen
@@ -366,12 +375,14 @@ class _Group(command.CommandObject):
         screen.setGroup(self)
 
     def _dirGroup(self, direction, skip_empty=False, skip_managed=False):
-        """
-        Find a group walking the groups list in the specified
-        direction.
+        """Find a group walking the groups list in the specified direction
 
-        skip_empty skips the empty groups
-        skip_managed skips the groups that have a screen
+        Parameters
+        ==========
+        skip_empty :
+            skips the empty groups
+        skip_managed :
+            skips the groups that have a screen
         """
 
         def match(group):
@@ -394,9 +405,7 @@ class _Group(command.CommandObject):
         return self._dirGroup(1, skip_empty, skip_managed)
 
     def cmd_unminimize_all(self):
-        """
-            Unminimise all windows in this group.
-        """
+        """Unminimise all windows in this group"""
         for w in self.windows:
             w.minimized = False
         self.layoutAll()
@@ -428,9 +437,7 @@ class _Group(command.CommandObject):
         self.focus(nxt, True)
 
     def cmd_switch_groups(self, name):
-        """
-            Switch position of current group with name
-        """
+        """Switch position of current group with name"""
         self.qtile.cmd_switch_groups(self.name, name)
 
     def __repr__(self):

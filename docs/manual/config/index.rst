@@ -81,6 +81,7 @@ mix!)
 .. toctree::
     :maxdepth: 1
 
+    lazy
     groups
     keys
     layouts

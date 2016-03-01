@@ -185,9 +185,7 @@ class _Graph(base._Widget):
 
 
 class CPUGraph(_Graph):
-    """
-        Display CPU usage graph.
-    """
+    """Display CPU usage graph"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("core", "all", "Which core to show (all/0/1/2/...)"),
@@ -262,9 +260,7 @@ def get_meminfo():
 
 
 class MemoryGraph(_Graph):
-    """
-        Displays a memory usage graph.
-    """
+    """Displays a memory usage graph"""
     orientations = base.ORIENTATION_HORIZONTAL
     fixed_upper_bound = True
 
@@ -287,9 +283,7 @@ class MemoryGraph(_Graph):
 
 
 class SwapGraph(_Graph):
-    """
-        Display a swap info graph.
-    """
+    """Display a swap info graph"""
     orientations = base.ORIENTATION_HORIZONTAL
     fixed_upper_bound = True
 
@@ -316,9 +310,7 @@ class SwapGraph(_Graph):
 
 
 class NetGraph(_Graph):
-    """
-        Display a network usage graph.
-    """
+    """Display a network usage graph"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         (
@@ -379,9 +371,7 @@ class NetGraph(_Graph):
 
 
 class HDDGraph(_Graph):
-    """
-        Display HDD free or used space graph.
-    """
+    """Display HDD free or used space graph"""
     fixed_upper_bound = True
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
@@ -410,10 +400,11 @@ class HDDGraph(_Graph):
 
 
 class HDDBusyGraph(_Graph):
-    """
-        Parses /sys/block/<dev>/stat file and extracts overall device
-        IO usage, based on ``io_ticks``'s value.
-        See https://www.kernel.org/doc/Documentation/block/stat.txt
+    """Display HDD busy time graph
+
+    Parses /sys/block/<dev>/stat file and extracts overall device IO usage,
+    based on ``io_ticks``'s value.  See
+    https://www.kernel.org/doc/Documentation/block/stat.txt
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [

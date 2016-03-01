@@ -76,17 +76,18 @@ ORIENTATION_BOTH = _Orientations(3, 'horizontal and vertical')
 
 
 class _Widget(command.CommandObject, configurable.Configurable):
-    """
-        If length is set to the special value bar.STRETCH, the bar itself
-        will set the length to the maximum remaining space, after all other
-        widgets have been configured. Only ONE widget per bar can have the
-        bar.STRETCH length set.
+    """Base Widget class
 
-        In horizontal bars, 'length' corresponds to the width of the widget;
-        in vertical bars, it corresponds to the widget's height.
+    If length is set to the special value `bar.STRETCH`, the bar itself will
+    set the length to the maximum remaining space, after all other widgets have
+    been configured. Only ONE widget per bar can have the `bar.STRETCH` length
+    set.
 
-        The offsetx and offsety attributes are set by the Bar after all widgets
-        have been configured.
+    In horizontal bars, 'length' corresponds to the width of the widget; in
+    vertical bars, it corresponds to the widget's height.
+
+    The offsetx and offsety attributes are set by the Bar after all widgets
+    have been configured.
     """
     orientations = ORIENTATION_BOTH
     offsetx = None
@@ -540,12 +541,11 @@ class ThreadPoolText(_TextBox):
 
 
 class PaddingMixin(object):
-    """
-        Mixin that provides padding(_x|_y|)
+    """Mixin that provides padding(_x|_y|)
 
-        To use it, subclass and add this to __init__:
+    To use it, subclass and add this to __init__:
 
-            self.add_defaults(base.PaddingMixin.defaults)
+        self.add_defaults(base.PaddingMixin.defaults)
     """
 
     defaults = [
@@ -559,12 +559,11 @@ class PaddingMixin(object):
 
 
 class MarginMixin(object):
-    """
-        Mixin that provides margin(_x|_y|)
+    """Mixin that provides margin(_x|_y|)
 
-        To use it, subclass and add this to __init__:
+    To use it, subclass and add this to __init__:
 
-            self.add_defaults(base.MarginMixin.defaults)
+        self.add_defaults(base.MarginMixin.defaults)
     """
 
     defaults = [

@@ -28,9 +28,7 @@ import re
 
 
 class GmailChecker(base.ThreadedPollText):
-    """
-        A simple gmail checker.
-    """
+    """A simple gmail checker"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("update_interval", 30, "Update time in seconds."),

@@ -27,9 +27,7 @@ class Configurable(object):
         self._user_config = config
 
     def add_defaults(self, defaults):
-        """
-            Add defaults to this object, overwriting any which already exist.
-        """
+        """Add defaults to this object, overwriting any which already exist"""
         self._widget_defaults.update(dict((d[0], d[1]) for d in defaults))
 
     def __getattr__(self, name):
@@ -55,9 +53,9 @@ class Configurable(object):
 
 
 class ExtraFallback(object):
-    """
-        Adds another layer of fallback to attributes - to look up
-        a different attribute name
+    """Adds another layer of fallback to attributes
+
+    Used to look up a different attribute name
     """
 
     def __init__(self, name, fallback):

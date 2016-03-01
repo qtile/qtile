@@ -62,184 +62,156 @@ class Subscribe(object):
 
     def startup_once(self, func):
         """
-            Called when Qtile has initialized, exactly once (i.e. not on each
-            lazy.restart()).
+        Called when Qtile has initialized, exactly once (i.e. not on each
+        lazy.restart()).
         """
         return self._subscribe("startup_once", func)
 
     def startup(self, func):
-        """
-            Called each time qtile is started (including the first time qtile starts)
-        """
+        """Called each time qtile is started (including the first time qtile starts)"""
         return self._subscribe("startup", func)
 
     def setgroup(self, func):
-        """
-            Called when group is changed.
-        """
+        """Called when group is changed"""
         return self._subscribe("setgroup", func)
 
     def addgroup(self, func):
-        """
-            Called when group is added.
-        """
+        """Called when group is added"""
         return self._subscribe("addgroup", func)
 
     def delgroup(self, func):
-        """
-            Called when group is deleted.
-        """
+        """Called when group is deleted"""
         return self._subscribe("delgroup", func)
 
     def changegroup(self, func):
-        """
-            Called whenever a group change occurs.
-        """
+        """Called whenever a group change occurs"""
         return self._subscribe("changegroup", func)
 
     def focus_change(self, func):
-        """
-            Called when focus is changed.
-        """
+        """Called when focus is changed"""
         return self._subscribe("focus_change", func)
 
     def float_change(self, func):
-        """
-            Called when a change in float state is made
-        """
+        """Called when a change in float state is made"""
         return self._subscribe("float_change", func)
 
     def group_window_add(self, func):
-        """
-            Called when a new window is added to a group.
-        """
+        """Called when a new window is added to a group"""
         return self._subscribe("group_window_add", func)
 
     def window_name_change(self, func):
-        """
-            Called whenever a windows name changes.
-        """
+        """Called whenever a windows name changes"""
         return self._subscribe("window_name_change", func)
 
     def client_new(self, func):
-        """
-            Called before Qtile starts managing a new client. Use this hook to
-            declare windows static, or add them to a group on startup. This
-            hook is not called for internal windows.
+        """Called before Qtile starts managing a new client
 
-            - arguments: window.Window object
+        Use this hook to declare windows static, or add them to a group on
+        startup. This hook is not called for internal windows.
 
-            Example::
+        Arguments:
 
-                def func(c):
-                    if c.name == "xterm":
-                        c.togroup("a")
-                    elif c.name == "dzen":
-                        c.static(0)
+            window.Window object
 
-                libqtile.hook.subscribe.client_new(func)
+        Examples
+        ========
+
+        ::
+
+            def func(c):
+                if c.name == "xterm":
+                    c.togroup("a")
+                elif c.name == "dzen":
+                    c.static(0)
+
+            libqtile.hook.subscribe.client_new(func)
         """
         return self._subscribe("client_new", func)
 
     def client_managed(self, func):
-        """
-            Called after Qtile starts managing a new client. That is, after a
-            window is assigned to a group, or when a window is made static.
-            This hook is not called for internal windows.
+        """Called after Qtile starts managing a new client
 
-            - arguments: window.Window object
+        That is, after a window is assigned to a group, or when a window is
+        made static.  This hook is not called for internal windows.
+
+        Arguments:
+
+            window.Window object
         """
         return self._subscribe("client_managed", func)
 
     def client_killed(self, func):
-        """
-            Called after a client has been unmanaged.
+        """Called after a client has been unmanaged.
 
-            - arguments: window.Window object of the killed window.
+        Arguments:
+
+            window.Window object of the killed window.
         """
         return self._subscribe("client_killed", func)
 
     def client_state_changed(self, func):
-        """
-            Called whenever client state changes.
-        """
+        """Called whenever client state changes"""
         return self._subscribe("client_state_changed", func)
 
     def client_type_changed(self, func):
-        """
-            Called whenever window type changes.
-        """
+        """Called whenever window type changes"""
         return self._subscribe("client_type_changed", func)
 
     def client_focus(self, func):
-        """
-            Called whenever focus changes.
+        """Called whenever focus changes
 
-            - arguments: window.Window object of the new focus.
+        Arguments:
+            window.Window object of the new focus.
         """
         return self._subscribe("client_focus", func)
 
     def client_mouse_enter(self, func):
-        """
-            Called when the mouse enters a client.
-        """
+        """Called when the mouse enters a client"""
         return self._subscribe("client_mouse_enter", func)
 
     def client_name_updated(self, func):
-        """
-            Called when the client name changes.
-        """
+        """Called when the client name changes"""
         return self._subscribe("client_name_updated", func)
 
     def client_urgent_hint_changed(self, func):
-        """
-            Called when the client urgent hint changes.
-        """
+        """Called when the client urgent hint changes"""
         return self._subscribe("client_urgent_hint_changed", func)
 
     def layout_change(self, func):
-        """
-            Called on layout change.
-        """
+        """Called on layout change"""
         return self._subscribe("layout_change", func)
 
     def net_wm_icon_change(self, func):
-        """
-            Called on _NET_WM_ICON chance.
-        """
+        """Called on _NET_WM_ICON chance"""
         return self._subscribe("net_wm_icon_change", func)
 
     def selection_notify(self, func):
-        """
-            Called on selection notify.
-        """
+        """Called on selection notify"""
         return self._subscribe("selection_notify", func)
 
     def selection_change(self, func):
-        """
-            Called on selection chance.
-        """
+        """Called on selection chance"""
         return self._subscribe("selection_change", func)
 
     def screen_change(self, func):
-        """
-            Called when a screen is added or screen configuration is changed
-            (via xrandr). The hook should take two arguments: the root qtile
-            object and the ``xproto.randr.ScreenChangeNotify`` event. Common
-            usage is simply to call ``qtile.cmd_restart()`` on each event (to
-            restart qtile when there is a new monitor):
+        """ Called when a screen is added or screen configuration is changed (via xrandr)
 
-            Example::
+        The hook should take two arguments: the root qtile object and the
+        ``xproto.randr.ScreenChangeNotify`` event. Common usage is simply to
+        call ``qtile.cmd_restart()`` on each event (to restart qtile when there
+        is a new monitor):
 
-                def restart_on_randr(qtile, ev):
-                    qtile.cmd_restart()
+        Example::
+
+            def restart_on_randr(qtile, ev):
+                qtile.cmd_restart()
         """
         return self._subscribe("screen_change", func)
 
     def current_screen_change(self, func):
-        """
-            Called when the current screen (i.e. the screen with focus)
-            changes; no arguments.
+        """Called when the current screen (i.e. the screen with focus) changes
+
+        No arguments.
         """
         return self._subscribe("current_screen_change", func)
 
@@ -248,8 +220,8 @@ subscribe = Subscribe()
 
 class Unsubscribe(Subscribe):
     """
-        This class mirrors subscribe, except the _subscribe member has been
-        overridden to removed calls from hooks.
+    This class mirrors subscribe, except the _subscribe member has been
+    overridden to removed calls from hooks.
     """
     def _subscribe(self, event, func):
         lst = subscriptions.setdefault(event, [])

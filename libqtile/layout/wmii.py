@@ -29,53 +29,53 @@ from __future__ import division
 
 from .base import Layout
 
-# This layout implements something akin to wmii's semantics.
-#
-# Each group starts with one column.  The first window takes up the whole screen.
-# Next window splits the column in half.  Windows can be moved to the column to
-# the left or right.  If there is no column in the direction being moved into, a
-# new column is created.
-#
-# Each column can be either stacked (each window takes up the whole vertical real
-# estate) or split (the windows are split equally vertically in the column)
-# Columns can be grown horizontally (cmd_grow_left/right).
-#
-# My config.py as the following added:
-
-#    Key(
-#        [mod, "shift", "control"], "l",
-#        lazy.layout.grow_right()
-#    ),
-#    Key(
-#        [mod, "shift"], "l",
-#        lazy.layout.shuffle_right()
-#    ),
-#    Key(
-#        [mod, "shift", "control"], "h",
-#        lazy.layout.grow_left()
-#    ),
-#    Key(
-#        [mod, "shift"], "h",
-#        lazy.layout.shuffle_left()
-#    ),
-#    Key(
-#        [mod], "s",
-#        lazy.layout.toggle_split()
-#    ),
-
 # We have an array of columns.  Each columns is a dict containing
-# width (in percent), rows (an array of rows), # and mode, which is
+# width (in percent), rows (an array of rows), and mode, which is
 # either 'stack' or 'split'
 #
 # Each row is an array of clients
 
 class Wmii(Layout):
-    """
-        This layout emulates wmii layouts.  The screen it split into
-        columns, always starting with one.  A new window is created in
-        the active window's column.  Windows can be shifted left and right.
-        If there is no column when shifting, a new one is created.
-        Each column can be stacked or divided (equally split).
+    """This layout emulates wmii layouts
+
+    The screen it split into columns, always starting with one.  A new window
+    is created in the active window's column.  Windows can be shifted left and
+    right.  If there is no column when shifting, a new one is created.  Each
+    column can be stacked or divided (equally split).
+
+    This layout implements something akin to wmii's semantics.
+
+    Each group starts with one column.  The first window takes up the whole
+    screen.  Next window splits the column in half.  Windows can be moved to
+    the column to the left or right.  If there is no column in the direction
+    being moved into, a new column is created.
+
+    Each column can be either stacked (each window takes up the whole vertical
+    real estate) or split (the windows are split equally vertically in the
+    column) Columns can be grown horizontally (cmd_grow_left/right).
+
+    My config.py has the following added::
+
+        Key(
+            [mod, "shift", "control"], "l",
+            lazy.layout.grow_right()
+        ),
+        Key(
+            [mod, "shift"], "l",
+            lazy.layout.shuffle_right()
+        ),
+        Key(
+            [mod, "shift", "control"], "h",
+            lazy.layout.grow_left()
+        ),
+        Key(
+            [mod, "shift"], "h",
+            lazy.layout.shuffle_left()
+        ),
+        Key(
+            [mod], "s",
+            lazy.layout.toggle_split()
+        ),
     """
     defaults = [
         ("border_focus", "#881111", "Border colour for the focused window."),
@@ -260,9 +260,7 @@ class Wmii(Layout):
             return c['rows'][len(c['rows']) - 1]
 
     def cmd_left(self):
-        """
-            Switch to the first window on prev column
-        """
+        """Switch to the first window on prev column"""
         c = self.current_column()
         cidx = self.columns.index(c)
         if cidx == 0:
@@ -275,9 +273,7 @@ class Wmii(Layout):
             self.group.focus(c['rows'][c['active']])
 
     def cmd_right(self):
-        """
-            Switch to the first window on next column
-        """
+        """Switch to the first window on next column"""
         c = self.current_column()
         cidx = self.columns.index(c)
         if self.is_last_column(cidx):
@@ -290,9 +286,7 @@ class Wmii(Layout):
             self.group.focus(c['rows'][c['active']])
 
     def cmd_up(self):
-        """
-            Switch to the previous window in current column
-        """
+        """Switch to the previous window in current column"""
         c = self.current_column()
         if c is None:
             return
@@ -306,9 +300,7 @@ class Wmii(Layout):
         self.group.focus(client)
 
     def cmd_down(self):
-        """
-            Switch to the next window in current column
-        """
+        """Switch to the next window in current column"""
         c = self.current_column()
         if c is None:
             return

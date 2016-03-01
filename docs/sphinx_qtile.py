@@ -39,8 +39,8 @@ qtile_class_template = Template('''
 {{ class_name }}
 {{ class_underline }}
 
-.. autoclass:: {{ module }}.{{ class_name }}
-    :members: __init__
+.. autoclass:: {{ module }}.{{ class_name }}{% for arg in extra_arguments %}
+    {{ arg }}{% endfor %}
     {% if is_widget %}
     Supported bar orientations: {{ obj.orientations }}
     {% endif %}
@@ -102,17 +102,20 @@ class QtileClass(SimpleDirectiveMixin, Directive):
 
     def make_rst(self):
         module, class_name = self.arguments[0].rsplit('.', 1)
+        arguments = self.arguments[1:]
         obj = import_object(module, class_name)
+        is_configurable = ':no-config:' not in arguments
+        is_commandable = ':no-commands:' not in arguments
+        arguments = [i for i in arguments if i not in (':no-config:', ':no-commands:')]
         context = {
             'module': module,
             'class_name': class_name,
             'class_underline': "=" * len(class_name),
             'obj': obj,
-            'configurable': ':no-config:' not in self.arguments and
-                issubclass(obj, configurable.Configurable),
-            'commandable': ':no-commands:' not in self.arguments and
-                issubclass(obj, command.CommandObject),
+            'configurable': is_configurable and issubclass(obj, configurable.Configurable),
+            'commandable': is_commandable and issubclass(obj, command.CommandObject),
             'is_widget': issubclass(obj, widget.base._Widget),
+            'extra_arguments': arguments,
         }
         if context['commandable']:
             context['commands'] = [attr for attr in dir(obj)

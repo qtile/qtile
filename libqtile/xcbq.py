@@ -406,9 +406,7 @@ class Window(object):
         self.wid = wid
 
     def _propertyString(self, r):
-        """
-            Extract a string from a window property reply message.
-        """
+        """Extract a string from a window property reply message"""
         return r.value.to_string()
 
     def _propertyUTF8(self, r):
@@ -428,9 +426,7 @@ class Window(object):
         )
 
     def warp_pointer(self, x, y):
-        """
-            Warps the pointer to the location `x`, `y` on the window
-        """
+        """Warps the pointer to the location `x`, `y` on the window"""
         self.conn.conn.core.WarpPointer(
             0, self.wid,  # src_window, dst_window
             0, 0,         # src_x, src_y
@@ -439,12 +435,12 @@ class Window(object):
         )
 
     def get_name(self):
-        """
-            Tries to retrieve a canonical window name. We test the following
-            properties in order of preference:
-                - _NET_WM_VISIBLE_NAME
-                - _NET_WM_NAME
-                - WM_NAME.
+        """Tries to retrieve a canonical window name.
+
+        We test the following properties in order of preference:
+            - _NET_WM_VISIBLE_NAME
+            - _NET_WM_NAME
+            - WM_NAME.
         """
         r = self.get_property("_NET_WM_VISIBLE_NAME", "UTF8_STRING")
         if r:
@@ -511,9 +507,7 @@ class Window(object):
         return self.get_property("WM_STATE", xcffib.xproto.GetPropertyType.Any, unpack=int)
 
     def get_wm_class(self):
-        """
-            Return an (instance, class) tuple if WM_CLASS exists, or None.
-        """
+        """Return an (instance, class) tuple if WM_CLASS exists, or None"""
         r = self.get_property("WM_CLASS", "STRING")
         if r:
             s = self._propertyString(r)
@@ -578,7 +572,7 @@ class Window(object):
 
     def configure(self, **kwargs):
         """
-            Arguments can be: x, y, width, height, border, sibling, stackmode
+        Arguments can be: x, y, width, height, border, sibling, stackmode
         """
         mask, values = ConfigureMasks(**kwargs)
         # hack for negative numbers
@@ -600,9 +594,11 @@ class Window(object):
 
     def set_property(self, name, value, type=None, format=None):
         """
-            name: String Atom name
-            type: String Atom name
-            format: 8, 16, 32
+        Parameters
+        ==========
+        name : String Atom name
+        type : String Atom name
+        format : 8, 16, 32
         """
         if name in PropertyMap:
             if type or format:
@@ -653,10 +649,10 @@ class Window(object):
                 self.wid, name)
 
     def get_property(self, prop, type=None, unpack=None):
-        """
-            Return the contents of a property as a GetPropertyReply. If unpack
-            is specified, a tuple of values is returned.  The type to unpack,
-            either `str` or `int` must be specified.
+        """Return the contents of a property as a GetPropertyReply
+
+        If unpack is specified, a tuple of values is returned.  The type to
+        unpack, either `str` or `int` must be specified.
         """
         if type is None:
             if prop not in PropertyMap:
@@ -718,9 +714,7 @@ class Window(object):
         return GC(self.conn, gid)
 
     def ungrab_key(self, key, modifiers):
-        """
-            Passing None means any key, or any modifier.
-        """
+        """Passing None means any key, or any modifier"""
         if key is None:
             key = xcffib.xproto.Atom.Any
         if modifiers is None:
@@ -739,9 +733,7 @@ class Window(object):
         )
 
     def ungrab_button(self, button, modifiers):
-        """
-            Passing None means any key, or any modifier.
-        """
+        """Passing None means any key, or any modifier"""
         if button is None:
             button = xcffib.xproto.Atom.Any
         if modifiers is None:
@@ -885,9 +877,7 @@ class Connection(object):
         self.modmap = modmap
 
     def get_modifier(self, keycode):
-        """
-            Return the modifier matching keycode.
-        """
+        """Return the modifier matching keycode"""
         for n, l in self.modmap.items():
             if keycode in l:
                 return n

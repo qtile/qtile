@@ -57,7 +57,8 @@ so:
     c.group.info()
 
 To access a specific group, regardless of whether or not it is current, we use
-the Python containment syntax. This command sends group "b" to screen 1:
+the Python containment syntax. This command sends group "b" to screen 1 (by the
+:meth:`libqtile.config.Group.to_screen` method):
 
 .. code-block:: python
 
@@ -88,7 +89,7 @@ specifies the group belonging to the screen that belongs to group "b":
 
 .. code-block:: python
 
-    c.group["b"].screen.group()
+    c.group["b"].screen.group
 
 Keys
 ====
@@ -113,12 +114,12 @@ The key specifier for the various object types are as follows:
       - | c.group["one"]
         | c.group
     * - layout
-      - Integer offset
+      - Integer index
       - Yes
       - | c.layout[2]
         | c.layout
     * - screen
-      - Integer offset
+      - Integer index
       - Yes
       - | c.screen[1]
         | c.screen

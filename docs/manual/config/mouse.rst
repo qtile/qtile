@@ -2,10 +2,9 @@
 Mouse
 =====
 
-The ``mouse`` config file variable defines a set of
-global mouse actions, and is a list of ``Click`` and
-``Drag`` objects, which define what to do when a window
-is clicked or dragged.
+The ``mouse`` config file variable defines a set of global mouse actions, and
+is a list of :class:`~libqtile.config.Click` and :class:`~libqtile.config.Drag`
+objects, which define what to do when a window is clicked or dragged.
 
 Example
 =======
@@ -33,3 +32,12 @@ the ``EzClick`` and ``EzDrag`` helpers::
             start=lazy.window.get_size()),
         Click("M-2", lazy.window.bring_to_front())
     ]
+
+Reference
+=========
+
+.. qtile_class:: libqtile.config.Click
+   :no-commands:
+
+.. qtile_class:: libqtile.config.Drag
+   :no-commands:

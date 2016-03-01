@@ -32,10 +32,7 @@ from .base import SingleWindow
 
 
 class Zoomy(SingleWindow):
-    """
-        A layout with single active windows, and few other previews at the
-        right
-    """
+    """A layout with single active windows, and few other previews at the right"""
     defaults = [
         ("columnwidth", 150, "Width of the right column"),
         ("property_name", "ZOOM", "Property to set on zoomed window"),

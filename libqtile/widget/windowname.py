@@ -29,9 +29,7 @@ from . import base
 
 
 class WindowName(base._TextBox):
-    """
-        Displays the name of the window that currently has focus.
-    """
+    """Displays the name of the window that currently has focus"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('show_state', True, 'show window status before window name')

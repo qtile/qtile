@@ -27,10 +27,10 @@ import dbus
 
 
 class KeyboardKbdd(base.ThreadedPollText):
-    """
-        Widget for changing keyboard layouts per window, using kbdd.
-        kbdd should be installed and running, you can get it from:
-        https://github.com/qnikst/kbdd
+    """Widget for changing keyboard layouts per window, using kbdd
+
+    kbdd should be installed and running, you can get it from:
+    https://github.com/qnikst/kbdd
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [

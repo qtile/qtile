@@ -29,9 +29,7 @@ from . import base
 from .. import bar
 
 class Image(base._Widget, base.MarginMixin):
-    """
-        Display a PNG image on the bar.
-    """
+    """Display a PNG image on the bar"""
     orientations = base.ORIENTATION_BOTH
     defaults = [
         ("scale", True, "Enable/Disable image scaling"),

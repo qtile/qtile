@@ -2,3 +2,4 @@ mock # for python <= 3.2
 sphinx
 sphinx_rtd_theme
 sphinxcontrib-seqdiag
+numpydoc

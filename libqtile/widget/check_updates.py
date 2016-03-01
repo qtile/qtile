@@ -24,9 +24,7 @@ from subprocess import CalledProcessError, Popen
 
 
 class CheckUpdates(base.ThreadedPollText):
-    '''
-    Shows number of pending updates in different unix systems.
-    '''
+    """Shows number of pending updates in different unix systems"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("distro", "Arch", "Name of your distribution"),

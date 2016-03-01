@@ -21,11 +21,12 @@ from .base import SingleWindow
 
 
 class Max(SingleWindow):
-    """
-        A simple layout that only displays one window at a time, filling the
-        screen. This is suitable for use on laptops and other devices with
-        small screens. Conceptually, the windows are managed as a stack, with
-        commands to switch to next and previous windows in the stack.
+    """Maximized layout
+
+    A simple layout that only displays one window at a time, filling the
+    screen. This is suitable for use on laptops and other devices with small
+    screens. Conceptually, the windows are managed as a stack, with commands to
+    switch to next and previous windows in the stack.
     """
     defaults = [("name", "max", "Name of this layout.")]
 
@@ -131,17 +132,13 @@ class Max(SingleWindow):
         return d
 
     def cmd_down(self):
-        """
-            Switch down in the window list.
-        """
+        """Switch down in the window list"""
         self.down()
 
     cmd_next = cmd_down
 
     def cmd_up(self):
-        """
-            Switch up in the window list.
-        """
+        """Switch up in the window list"""
         self.up()
 
     cmd_previous = cmd_up

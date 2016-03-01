@@ -27,16 +27,20 @@ from . import window
 
 
 class Gap(command.CommandObject):
-    """
-        A gap, placed along one of the edges of the screen. If a gap has been
-        defined, Qtile will avoid covering it with windows. The most probable
-        reason for configuring a gap is to make space for a third-party bar or
-        other static window.
+    """A gap placed along one of the edges of the screen
+
+    If a gap has been defined, Qtile will avoid covering it with windows. The
+    most probable reason for configuring a gap is to make space for a
+    third-party bar or other static window.
+
+    Parameters
+    ==========
+    size :
+        The "thickness" of the gap, i.e. the height of a horizontal gap, or the
+        width of a vertical gap.
     """
     def __init__(self, size):
         """
-            size: The "thickness" of the gap, i.e. the height of a horizontal
-                  gap, or the width of a vertical gap.
         """
         # 'size' corresponds to the height of a horizontal gap, or the width
         # of a vertical gap
@@ -137,8 +141,15 @@ STATIC = Obj("STATIC")
 
 
 class Bar(Gap, configurable.Configurable):
-    """
-        A bar, which can contain widgets.
+    """A bar, which can contain widgets
+
+    Parameters
+    ==========
+    widgets :
+        A list of widget objects.
+    size :
+        The "thickness" of the bar, i.e. the height of a horizontal bar, or the
+        width of a vertical bar.
     """
     defaults = [
         ("background", "#000000", "Background colour."),
@@ -146,11 +157,6 @@ class Bar(Gap, configurable.Configurable):
     ]
 
     def __init__(self, widgets, size, **config):
-        """
-            - widgets: A list of widget objects.
-            - size: The "thickness" of the bar, i.e. the height of a horizontal
-                    bar, or the width of a vertical bar.
-        """
         Gap.__init__(self, size)
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(Bar.defaults)

@@ -34,7 +34,7 @@ def get_meminfo():
 
 
 class Memory(base.InLoopPollText):
-    """Displays memory usage."""
+    """Displays memory usage"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("fmt", "{MemUsed}M/{MemTotal}M", "see /proc/meminfo for field names")

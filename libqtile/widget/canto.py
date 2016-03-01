@@ -28,9 +28,7 @@ from subprocess import call
 
 
 class Canto(base.ThreadedPollText):
-    """
-        Display RSS feeds updates using the canto console reader.
-    """
+    """Display RSS feeds updates using the canto console reader"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("fetch", False, "Whether to fetch new items on update"),

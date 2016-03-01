@@ -91,9 +91,7 @@ class Icon(window._Window):
 
 
 class Systray(window._Window, base._Widget):
-    """
-        A widget that manages system tray.
-    """
+    """A widget that manages system tray"""
 
     _windowMask = EventMask.StructureNotify | \
         EventMask.Exposure

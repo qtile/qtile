@@ -21,8 +21,8 @@ import subprocess
 
 
 class Pacman(base.ThreadedPollText):
-    """
-    Shows number of available updates.
+    """Shows number of available updates
+
     Needs the pacman package manager installed. So will only work in Arch Linux
     installation.
     """

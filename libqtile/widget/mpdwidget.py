@@ -49,7 +49,30 @@ from . import base
 from libqtile.log_utils import logger
 
 class Mpd(base.ThreadPoolText):
-    """A widget for the Music Player Daemon (MPD)"""
+    """A widget for the Music Player Daemon (MPD)
+
+    Initialize the widget with the following parameters
+
+    Parameters
+    ==========
+    host :
+        host to connect to
+    port :
+        port to connect to
+    password :
+        password to use
+    fmt_playing :
+        format string to display when playing/paused
+    fmt_stopped :
+        format strings to display when stopped
+    msg_nc :
+        which message to show when we're not connected
+    do_color_progress :
+        whether to indicate progress in song by altering message color
+    width :
+        A fixed width, or bar.CALCULATED to calculate the width automatically
+        (which is recommended).
+    """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("foreground_progress", "ffffff", "Foreground progress colour"),
@@ -63,19 +86,6 @@ class Mpd(base.ThreadPoolText):
                  password=False, fmt_playing="%a - %t [%v%%]",
                  fmt_stopped="Stopped [%v%%]", msg_nc='Mpd off',
                  do_color_progress=True, **config):
-        """Initialize the widget with the following parameters
-
-            - host: host to connect to
-            - port: port to connect to
-            - password: password to use
-            - fmt_playing, fmt_stopped: format strings to display when
-              playing/paused and when stopped, respectively
-            - msg_nc: which message to show when we're not connected
-            - do_color_progress: whether to indicate progress in song by
-              altering message color
-            - width: A fixed width, or bar.CALCULATED to calculate the width
-              automatically (which is recommended).
-        """
         super(Mpd, self).__init__(msg_nc, **config)
         self.host = host
         self.port = port

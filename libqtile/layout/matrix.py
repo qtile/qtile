@@ -33,9 +33,9 @@ from .base import Layout
 
 class Matrix(Layout):
     """
-        This layout divides the screen into a matrix of equally sized cells
-        and places one window in each cell. The number of columns is
-        configurable and can also be changed interactively.
+    This layout divides the screen into a matrix of equally sized cells and
+    places one window in each cell. The number of columns is configurable and
+    can also be changed interactively.
     """
     defaults = [
         ("border_focus", "#0000ff", "Border colour for the focused window."),
@@ -167,25 +167,19 @@ class Matrix(Layout):
         self.group.focus(client)
 
     def cmd_left(self):
-        """
-            Switch to the next window on current row
-        """
+        """Switch to the next window on current row"""
         column, row = self.current_window
         self.current_window = ((column - 1) % len(self.get_row(row)), row)
         self.group.focus(self.get_current_window())
 
     def cmd_right(self):
-        """
-            Switch to the next window on current row
-        """
+        """Switch to the next window on current row"""
         column, row = self.current_window
         self.current_window = ((column + 1) % len(self.get_row(row)), row)
         self.group.focus(self.get_current_window())
 
     def cmd_down(self):
-        """
-            Switch to the next window in current column
-        """
+        """Switch to the next window in current column"""
         column, row = self.current_window
         self.current_window = (
             column,
@@ -194,9 +188,7 @@ class Matrix(Layout):
         self.group.focus(self.get_current_window())
 
     def cmd_up(self):
-        """
-            Switch to the previous window in current column
-        """
+        """Switch to the previous window in current column"""
         column, row = self.current_window
         self.current_window = (
             column,
@@ -205,15 +197,11 @@ class Matrix(Layout):
         self.group.focus(self.get_current_window())
 
     def cmd_delete(self):
-        """
-            Decrease number of columns
-        """
+        """Decrease number of columns"""
         self.columns -= 1
         self.group.layoutAll()
 
     def cmd_add(self):
-        """
-            Increase number of columns
-        """
+        """Increase number of columns"""
         self.columns += 1
         self.group.layoutAll()

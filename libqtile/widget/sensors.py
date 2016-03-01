@@ -33,12 +33,13 @@ from ..utils import UnixCommandNotFound, catch_exception_and_warn
 
 
 class ThermalSensor(base.InLoopPollText):
-    '''
+    """Widget to display temperature sensor information
+
     For using the thermal sensor widget you need to have lm-sensors installed.
     You can get a list of the tag_sensors executing "sensors" in your terminal.
     Then you can choose which you want, otherwise it will display the first
     available.
-    '''
+    """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('metric', True, 'True to use metric/C, False to use imperial/F'),

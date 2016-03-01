@@ -34,23 +34,22 @@ from six import MAXSIZE
 
 
 class Key(object):
-    """
-        Defines a keybinding.
+    """Defines a keybinding.
+
+    Parameters
+    ==========
+    modifiers:
+        A list of modifier specifications. Modifier specifications are one of:
+        "shift", "lock", "control", "mod1", "mod2", "mod3", "mod4", "mod5".
+    key:
+        A key specification, e.g. "a", "Tab", "Return", "space".
+    commands:
+        A list of lazy command objects generated with the command.lazy helper.
+        If multiple Call objects are specified, they are run in sequence.
+    kwds:
+        A dictionary containing "desc", allowing a description to be added
     """
     def __init__(self, modifiers, key, *commands, **kwds):
-        """
-            - modifiers: A list of modifier specifications. Modifier
-            specifications are one of: "shift", "lock", "control", "mod1",
-            "mod2", "mod3", "mod4", "mod5".
-
-            - key: A key specification, e.g. "a", "Tab", "Return", "space".
-
-            - *commands: A list of lazy command objects generated with the
-            command.lazy helper. If multiple Call objects are specified, they
-            are run in sequence.
-
-            - **kwds: "desc" = a description can be added.
-        """
         self.modifiers = modifiers
         self.key = key
         self.commands = commands
@@ -68,15 +67,13 @@ class Key(object):
 
 
 class Drag(object):
-    """
-        Defines binding of a mouse to some dragging action
+    """Defines binding of a mouse to some dragging action
 
-        On each motion event command is executed
-        with two extra parameters added
-        x and y offset from previous move
+    On each motion event command is executed with two extra parameters added x
+    and y offset from previous move
 
-        It focuses clicked window by default
-        If you want to prevent it pass focus=None as an argument
+    It focuses clicked window by default.  If you want to prevent it pass,
+    `focus=None` as an argument
     """
     def __init__(self, modifiers, button, *commands, **kwargs):
         self.start = kwargs.get("start", None)
@@ -95,11 +92,10 @@ class Drag(object):
 
 
 class Click(object):
-    """
-        Defines binding of a mouse click
+    """Defines binding of a mouse click
 
-        It focuses clicked window by default
-        If you want to prevent it pass focus=None as an argument
+    It focuses clicked window by default.  If you want to prevent it, pass
+    `focus=None` as an argument
     """
     def __init__(self, modifiers, button, *commands, **kwargs):
         self.focus = kwargs.get("focus", "before")
@@ -117,10 +113,10 @@ class Click(object):
 
 
 class EzConfig(object):
-    '''
+    """
     Helper class for defining key and button bindings in an emacs-like format.
     Inspired by Xmonad's XMonad.Util.EZConfig.
-    '''
+    """
 
     modifier_keys = {
         'M': 'mod4',
@@ -130,12 +126,12 @@ class EzConfig(object):
     }
 
     def parse(self, spec):
-        '''
+        """
         Splits an emacs keydef into modifiers and keys. For example:
           "M-S-a"     -> ['mod4', 'shift'], 'a'
           "A-<minus>" -> ['mod1'], 'minus'
           "C-<Tab>"   -> ['control'], 'Tab'
-        '''
+        """
         mods = []
         keys = []
 
@@ -222,21 +218,27 @@ class ScreenRect(object):
 
 
 class Screen(command.CommandObject):
-    """
-        A physical screen, and its associated paraphernalia.
+    """A physical screen, and its associated paraphernalia.
+
+    Define a screen with a given set of Bars of a specific geometry.  Note that
+    bar.Bar objects can only be placed at the top or the bottom of the screen
+    (bar.Gap objects can be placed anywhere).  Also, ``x``, ``y``, ``width``,
+    and ``height`` aren't specified usually unless you are using 'fake
+    screens'.
+
+    Parameters
+    ==========
+    top: List of Gap/Bar objects, or None.
+    bottom: List of Gap/Bar objects, or None.
+    left: List of Gap/Bar objects, or None.
+    right: List of Gap/Bar objects, or None.
+    x : int or None
+    y : int or None
+    width : int or None
+    height : int or None
     """
     def __init__(self, top=None, bottom=None, left=None, right=None,
                  x=None, y=None, width=None, height=None):
-        """
-            - top, bottom, left, right: Instances of Gap/Bar objects, or None.
-
-            Note that bar.Bar objects can only be placed at the top or the
-            bottom of the screen (bar.Gap objects can be placed anywhere).
-
-            x,y,width and height aren't specified usually unless you are
-            using 'fake screens'.
-        """
-
         self.group = None
         self.previous_group = None
 
@@ -298,9 +300,7 @@ class Screen(command.CommandObject):
         return ScreenRect(self.dx, self.dy, self.dwidth, self.dheight)
 
     def setGroup(self, new_group, save_prev=True):
-        """
-        Put group on this screen
-        """
+        """Put group on this screen"""
         if new_group.screen == self:
             return
 
@@ -391,31 +391,23 @@ class Screen(command.CommandObject):
         )
 
     def cmd_resize(self, x=None, y=None, w=None, h=None):
-        """
-            Resize the screen.
-        """
+        """Resize the screen"""
         self.resize(x, y, w, h)
 
     def cmd_next_group(self, skip_empty=False, skip_managed=False):
-        """
-            Switch to the next group.
-        """
+        """Switch to the next group"""
         n = self.group.nextGroup(skip_empty, skip_managed)
         self.setGroup(n)
         return n.name
 
     def cmd_prev_group(self, skip_empty=False, skip_managed=False):
-        """
-            Switch to the previous group.
-        """
+        """Switch to the previous group"""
         n = self.group.prevGroup(skip_empty, skip_managed)
         self.setGroup(n)
         return n.name
 
     def cmd_togglegroup(self, groupName=None):
-        """
-            Switch to the selected group or to the previously active one.
-        """
+        """Switch to the selected group or to the previously active one"""
         group = self.qtile.groupMap.get(groupName)
         if group in (self.group, None):
             group = self.previous_group
@@ -423,35 +415,36 @@ class Screen(command.CommandObject):
 
 
 class Group(object):
-    """
-    Represents a "dynamic" group. These groups can spawn apps, only allow
-    certain Matched windows to be on them, hide when they're not in use, etc.
+    """Represents a "dynamic" group
+
+    These groups can spawn apps, only allow certain Matched windows to be on
+    them, hide when they're not in use, etc.
+
+    Parameters
+    ==========
+    name : string
+        the name of this group
+    matches : default ``None``
+        list of ``Match`` objects whose  windows will be assigned to this group
+    exclusive : boolean
+        when other apps are started in this group, should we allow them here or not?
+    spawn : string or list of strings
+        this will be ``exec()`` d when the group is created, you can pass
+        either a program name or a list of programs to ``exec()``
+    layout : string
+        the default layout for this group (e.g. 'max' or 'stack')
+    layouts : list
+        the group layouts list overriding global layouts
+    persist : boolean
+        should this group stay alive with no member windows?
+    init : boolean
+        is this group alive when qtile starts?
+    position : int
+        group position
     """
     def __init__(self, name, matches=None, exclusive=False,
                  spawn=None, layout=None, layouts=None, persist=True, init=True,
                  layout_opts=None, screen_affinity=None, position=MAXSIZE):
-        """
-        :param name: the name of this group
-        :type name: string
-        :param matches: list of ``Match`` objects whose  windows will be assigned to this group
-        :type matches: default ``None``
-        :param exclusive: when other apps are started in this group, should we allow them here or not?
-        :type exclusive: boolean
-        :param spawn: this will be ``exec()`` d when the group is created, you can pass either a
-                      program name or a list of programs to ``exec()``
-        :type spawn: string or list of strings
-        :param layout: the default layout for this group (e.g. 'max' or 'stack')
-        :type layout: string
-        :param layouts: the group layouts list overriding global layouts
-        :type layouts: list
-        :param persist: should this group stay alive with no member windows?
-        :type persist: boolean
-        :param init: is this group alive when qtile starts?
-        :type init: boolean
-        :param position: group position
-        :type position: int
-
-        """
         self.name = name
         self.exclusive = exclusive
         self.spawn = spawn
@@ -473,29 +466,32 @@ class Group(object):
 
 
 class Match(object):
-    """
-        Match for dynamic groups
-        It can match by title, class or role.
+    """Match for dynamic groups
+
+    It can match by title, class or role.
+
+    ``Match`` supports both regular expression objects (i.e. the result of
+    ``re.compile()``) or strings (match as a "include" match). If a window
+    matches any of the things in any of the lists, it is considered a match.
+
+    Parameters
+    ==========
+    title:
+        things to match against the title (WM_NAME)
+    wm_class:
+        things to match against the second string in WM_CLASS atom
+    role:
+        things to match against the WM_ROLE atom
+    wm_type:
+        things to match against the WM_TYPE atom
+    wm_instance_class:
+        things to match against the first string in WM_CLASS atom
+    net_wm_pid:
+        things to match against the _NET_WM_PID atom (only int allowed in this
+        rule)
     """
     def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
                  wm_instance_class=None, net_wm_pid=None):
-        """
-
-        ``Match`` supports both regular expression objects (i.e. the result of
-        ``re.compile()``) or strings (match as a "include" match). If a window
-        matches any of the things in any of the lists, it is considered a
-        match.
-
-        :param title: things to match against the title (WM_NAME)
-        :param wm_class: things to match against the second string in
-                         WM_CLASS atom
-        :param role: things to match against the WM_ROLE atom
-        :param wm_type: things to match against the WM_TYPE atom
-        :param wm_instance_class: things to match against the first string in
-               WM_CLASS atom
-        :param net_wm_pid: things to match against the _NET_WM_PID atom
-              (only int allowed in this rule)
-        """
         if not title:
             title = []
         if not wm_class:
@@ -555,7 +551,7 @@ class Match(object):
         return False
 
     def map(self, callback, clients):
-        """ Apply callback to each client that matches this Match """
+        """Apply callback to each client that matches this Match"""
         for c in clients:
             if self.compare(c):
                 callback(c)
@@ -565,19 +561,24 @@ class Match(object):
 
 
 class Rule(object):
-    """
-        A Rule contains a Match object, and a specification about what to do
-        when that object is matched.
+    """How to act on a Match
+
+    A Rule contains a Match object, and a specification about what to do when
+    that object is matched.
+
+    Parameters
+    ==========
+    match :
+        ``Match`` object associated with this ``Rule``
+    float :
+        auto float this window?
+    intrusive :
+        override the group's exclusive setting?
+    break_on_match :
+        Should we stop applying rules if this rule is matched?
     """
     def __init__(self, match, group=None, float=False, intrusive=False,
                  break_on_match=True):
-        """
-        :param match: ``Match`` object associated with this ``Rule``
-        :param float: auto float this window?
-        :param intrusive: override the group's exclusive setting?
-        :param break_on_match: Should we stop applying rules if this rule is
-               matched?
-        """
         self.match = match
         self.group = group
         self.float = float

@@ -32,9 +32,7 @@ from libqtile.notify import notifier
 from os import path
 
 class Notify(base._TextBox):
-    """
-        A notify widget.
-    """
+    """A notify widget"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("foreground_urgent", "ff0000", "Foreground urgent priority colour"),
@@ -123,19 +121,24 @@ class Notify(base._TextBox):
             self.next()
 
     def cmd_display(self):
+        """Display the notifcication"""
         self.display()
 
     def cmd_clear(self):
+        """Clear the notification"""
         self.clear()
 
     def cmd_toggle(self):
+        """Toggle showing/clearing the notification"""
         if self.text == '':
             self.display()
         else:
             self.clear()
 
     def cmd_prev(self):
+        """Show previous notification"""
         self.prev()
 
     def cmd_next(self):
+        """Show next notification"""
         self.next()

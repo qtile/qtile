@@ -24,15 +24,14 @@ from .base import Layout
 
 
 class VerticalTile(Layout):
-    """
-    VerticalTile implements a tiling layout that works nice on vertically
-    mounted monitors.
-    The available height gets divided by the number of panes, if no pane
-    is maximized. If one pane has been maximized, the available height gets
-    split in master- and secondary area. The maximized pane (master pane)
-    gets the full height of the master area and the other panes
-    (secondary panes) share the remaining space.
-    The master area (at default 75%) can grow and shrink via keybindings.
+    """Tiling layout that works nice on vertically mounted monitors
+
+    The available height gets divided by the number of panes, if no pane is
+    maximized. If one pane has been maximized, the available height gets split
+    in master- and secondary area. The maximized pane (master pane) gets the
+    full height of the master area and the other panes (secondary panes) share
+    the remaining space.  The master area (at default 75%) can grow and shrink
+    via keybindings.
 
     ::
 

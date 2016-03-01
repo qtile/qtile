@@ -21,7 +21,6 @@ import subprocess
 
 
 class Moc(base.ThreadPoolText):
-
     """A simple MOC widget.
 
     Show the artist and album of now listening song and allow basic mouse

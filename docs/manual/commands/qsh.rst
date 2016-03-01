@@ -6,8 +6,8 @@ The Qtile command shell is a command-line shell interface that provides access
 to the full complement of Qtile command functions. The shell features command
 name completion, and full command documentation can be accessed from the shell
 itself. The shell uses GNU Readline when it's available, so the interface can
-be configured to, for example, obey VI keybindings with an appropriate .inputrc
-file. See the GNU Readline documentation for more information.
+be configured to, for example, obey VI keybindings with an appropriate
+``.inputrc`` file. See the GNU Readline documentation for more information.
 
 
 Navigating the Object Graph
@@ -50,10 +50,11 @@ should be used in scripts and key bindings:
 
     group['4'].window[31457314]>
 
-Documentation
-=============
+Live Documentation
+==================
 
-The shell help provides the canonical documentation for the Qtile API:
+The shell ``help`` command provides the canonical documentation for the Qtile
+API:
 
 .. code-block:: bash
 
@@ -62,16 +63,34 @@ The shell help provides the canonical documentation for the Qtile API:
     layout[1]> help
     help command   -- Help for a specific command.
 
-    Builtins:
-    =========
+    Builtins
+    ========
     cd    exit  help  ls    q     quit
 
-    Commands for this object:
-    =========================
-    add           commands      current       delete        doc           down          get
-    info          items         next          previous      rotate        shuffle_down  shuffle_up
-    toggle_split  up
+    Commands for this object
+    ========================
+    add           commands      current       delete        doc
+    down          get info      items         next          previous
+    rotate        shuffle_down  shuffle_up    toggle_split  up
 
     layout[1]> help previous
     previous()
     Focus previous stack.
+
+Reference
+=========
+
+Qsh
+---
+
+.. autoclass:: libqtile.sh.QSh
+
+   .. automethod:: libqtile.sh.QSh.do_cd
+
+   .. automethod:: libqtile.sh.QSh.do_exit
+
+   .. automethod:: libqtile.sh.QSh.do_ls
+
+   .. automethod:: libqtile.sh.QSh.do_pwd
+
+   .. automethod:: libqtile.sh.QSh.do_help

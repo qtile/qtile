@@ -27,9 +27,7 @@ from . import base
 
 
 class Sep(base._Widget):
-    """
-        A visible widget separator.
-    """
+    """A visible widget separator"""
     orientations = base.ORIENTATION_BOTH
     defaults = [
         ("padding", 2, "Padding on either side of separator."),

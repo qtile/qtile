@@ -23,8 +23,7 @@ import os
 from . import base
 
 class DF(base.ThreadedPollText):
-    """
-    Disk Free Widget
+    """Disk Free Widget
 
     By default the widget only displays if the space is less than warn_space.
     """

@@ -147,9 +147,7 @@ class _Battery(base._TextBox):
 
 
 class Battery(_Battery):
-    """
-        A simple but flexible text-based battery widget.
-    """
+    """A simple but flexible text-based battery widget"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('charge_char', '^', 'Character to indicate the battery is charging'),

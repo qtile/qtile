@@ -24,9 +24,7 @@ from .. import hook, bar, layout
 from . import base
 
 class DebugInfo(base._TextBox):
-    """
-        Displays debugging infos about selected window
-    """
+    """Displays debugging infos about selected window"""
     orientations = base.ORIENTATION_HORIZONTAL
 
     def __init__(self, **config):

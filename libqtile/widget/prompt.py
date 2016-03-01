@@ -72,9 +72,7 @@ class FileCompleter(object):
         self.lookup = None
 
     def complete(self, txt):
-        """
-        Returns the next completion for txt, or None if there is no completion.
-        """
+        """Returns the next completion for txt, or None if there is no completion"""
         if not self.lookup:
             self.lookup = []
             if txt == "" or txt[0] not in "~/":
@@ -165,9 +163,7 @@ class GroupCompleter(object):
         self.offset = None
 
     def actual(self):
-        """
-            Returns the current actual value.
-        """
+        """Returns the current actual value"""
         return self.thisfinal
 
     def reset(self):
@@ -175,9 +171,7 @@ class GroupCompleter(object):
         self.offset = -1
 
     def complete(self, txt):
-        """
-        Returns the next completion for txt, or None if there is no completion.
-        """
+        """Returns the next completion for txt, or None if there is no completion"""
         txt = txt.lower()
         if not self.lookup:
             self.lookup = []
@@ -205,9 +199,7 @@ class WindowCompleter(object):
         self.offset = None
 
     def actual(self):
-        """
-            Returns the current actual value.
-        """
+        """Returns the current actual value"""
         return self.thisfinal
 
     def reset(self):
@@ -215,9 +207,7 @@ class WindowCompleter(object):
         self.offset = -1
 
     def complete(self, txt):
-        """
-        Returns the next completion for txt, or None if there is no completion.
-        """
+        """Returns the next completion for txt, or None if there is no completion"""
         if not self.lookup:
             self.lookup = []
             for wid, window in self.qtile.windowMap.items():
@@ -237,22 +227,23 @@ class WindowCompleter(object):
 
 
 class CommandCompleter(object):
+    """
+    Parameters
+    ==========
+    _testing :
+        disables reloading of the lookup table to make testing possible.
+    """
+
     DEFAULTPATH = "/bin:/usr/bin:/usr/local/bin"
 
     def __init__(self, qtile, _testing=False):
-        """
-        _testing: disables reloading of the lookup table
-                  to make testing possible.
-        """
         self.lookup = None
         self.offset = None
         self.thisfinal = None
         self._testing = _testing
 
     def actual(self):
-        """
-            Returns the current actual value.
-        """
+        """Returns the current actual value"""
         return self.thisfinal
 
     def executable(self, fpath):
@@ -263,9 +254,7 @@ class CommandCompleter(object):
         self.offset = -1
 
     def complete(self, txt):
-        """
-        Returns the next completion for txt, or None if there is no completion.
-        """
+        """Returns the next completion for txt, or None if there is no completion"""
         if not self.lookup:
             if not self._testing:
                 # Lookup is a set of (display value, actual value) tuples.
@@ -312,9 +301,9 @@ class CommandCompleter(object):
 
 
 class Prompt(base._TextBox):
-    """
-        A widget that prompts for user input. Input should be started using the
-        .startInput method on this class.
+    """A widget that prompts for user input
+
+    Input should be started using the ``.startInput()`` method on this class.
     """
     completers = {
         "file": FileCompleter,
@@ -405,22 +394,29 @@ class Prompt(base._TextBox):
 
     def startInput(self, prompt, callback,
                    complete=None, strict_completer=False):
-        """
-            complete: Tab-completion. Can be None, "cmd", "file", "group",
-            "qsh" or "window".
+        """Run the prompt
 
-            Displays a prompt and starts to take one line of keyboard input
-            from the user. When done, calls the callback with the input string
-            as argument. If history record is enabled, also allows to browse
-            between previous commands with ↑ and ↓, and execute them
-            (untouched or modified). When history is exhausted, fires an
-            alert. It tries to mimic, in some way, the shell behavior.
+        Displays a prompt and starts to take one line of keyboard input from
+        the user. When done, calls the callback with the input string as
+        argument. If history record is enabled, also allows to browse between
+        previous commands with ↑ and ↓, and execute them (untouched or
+        modified). When history is exhausted, fires an alert. It tries to
+        mimic, in some way, the shell behavior.
 
-            prompt = text displayed at the prompt, e.g. "spawn: "
-            callback = function to call with returned value.
-            complete = completer to use.
-            strict_completer = When True the return value wil be the exact
-                               completer result where available.
+        Parameters
+        ==========
+        complete :
+            Tab-completion. Can be None, "cmd", "file", "group", "qsh" or
+            "window".
+        prompt :
+            text displayed at the prompt, e.g. "spawn: "
+        callback :
+            function to call with returned value.
+        complete :
+            completer to use.
+        strict_completer :
+            When True the return value wil be the exact completer result where
+            available.
         """
 
         if self.cursor and self.cursorblink and not self.active:
@@ -642,9 +638,7 @@ class Prompt(base._TextBox):
         self.handle_KeyPress(d)
 
     def cmd_info(self):
-        """
-            Returns a dictionary of info for this object.
-        """
+        """Returns a dictionary of info for this object"""
         return dict(
             name=self.name,
             width=self.width,

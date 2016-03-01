@@ -52,10 +52,10 @@ def test_columnize(self):
     assert self.sh.columnize(["one", "two"]) == "one  two"
 
     self.sh.termwidth = 1
-    assert self.sh.columnize(["one", "two"]) == "one\ntwo"
+    assert self.sh.columnize(["one", "two"], update_termwidth=False) == "one\ntwo"
 
     self.sh.termwidth = 15
-    v = self.sh.columnize(["one", "two", "three", "four", "five"])
+    v = self.sh.columnize(["one", "two", "three", "four", "five"], update_termwidth=False)
     assert v == 'one    two  \nthree  four \nfive '
 
 

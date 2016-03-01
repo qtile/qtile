@@ -28,10 +28,7 @@ from . import base
 
 
 class TextBox(base._TextBox):
-    """
-        A flexible textbox that can be updated from bound keys, scripts and
-        qsh.
-    """
+    """A flexible textbox that can be updated from bound keys, scripts and qsh"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("font", "Arial", "Text font"),
@@ -49,13 +46,9 @@ class TextBox(base._TextBox):
         self.bar.draw()
 
     def cmd_update(self, text):
-        """
-            Update the text in a TextBox widget.
-        """
+        """Update the text in a TextBox widget"""
         self.update(text)
 
     def cmd_get(self):
-        """
-            Retrieve the text in a TextBox widget.
-        """
+        """Retrieve the text in a TextBox widget"""
         return self.text

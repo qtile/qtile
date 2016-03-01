@@ -122,32 +122,31 @@ class _Column(object):
 
 
 class Columns(Layout):
-    """
-        Extension of the Stack layout.
+    """Extension of the Stack layout.
 
-        The screen is split into columns, which can be dynamically added or
-        removed.  Each column displays either a sigle window at a time from a
-        stack of windows or all of them simultaneously, spliting the column
-        space.  Columns and windows can be resized and windows can be shuffled
-        around.  This layout can also emulate "Wmii", "Verical", and "Max",
-        depending on the default parameters.
+    The screen is split into columns, which can be dynamically added or
+    removed.  Each column displays either a sigle window at a time from a
+    stack of windows or all of them simultaneously, spliting the column
+    space.  Columns and windows can be resized and windows can be shuffled
+    around.  This layout can also emulate "Wmii", "Verical", and "Max",
+    depending on the default parameters.
 
-        An example key configuration is:
+    An example key configuration is::
 
-            Key([mod], "j", lazy.layout.down()),
-            Key([mod], "k", lazy.layout.up()),
-            Key([mod], "h", lazy.layout.left()),
-            Key([mod], "l", lazy.layout.right()),
-            Key([mod, "shift"], "j", lazy.layout.shuffle_down()),
-            Key([mod, "shift"], "k", lazy.layout.shuffle_up()),
-            Key([mod, "shift"], "h", lazy.layout.shuffle_left()),
-            Key([mod, "shift"], "l", lazy.layout.shuffle_right()),
-            Key([mod, "control"], "j", lazy.layout.grow_down()),
-            Key([mod, "control"], "k", lazy.layout.grow_up()),
-            Key([mod, "control"], "h", lazy.layout.grow_left()),
-            Key([mod, "control"], "l", lazy.layout.grow_right()),
-            Key([mod], "Return", lazy.layout.toggle_split()),
-            Key([mod], "n", lazy.layout.normalize()),
+        Key([mod], "j", lazy.layout.down()),
+        Key([mod], "k", lazy.layout.up()),
+        Key([mod], "h", lazy.layout.left()),
+        Key([mod], "l", lazy.layout.right()),
+        Key([mod, "shift"], "j", lazy.layout.shuffle_down()),
+        Key([mod, "shift"], "k", lazy.layout.shuffle_up()),
+        Key([mod, "shift"], "h", lazy.layout.shuffle_left()),
+        Key([mod, "shift"], "l", lazy.layout.shuffle_right()),
+        Key([mod, "control"], "j", lazy.layout.grow_down()),
+        Key([mod, "control"], "k", lazy.layout.grow_up()),
+        Key([mod, "control"], "h", lazy.layout.grow_left()),
+        Key([mod, "control"], "l", lazy.layout.grow_right()),
+        Key([mod], "Return", lazy.layout.toggle_split()),
+        Key([mod], "n", lazy.layout.normalize()),
     """
     defaults = [
         ("name", "columns", "Name of this layout."),

@@ -27,17 +27,17 @@ import re
 import keyring
 
 class ImapWidget(base.ThreadedPollText):
-    """
-    This widget will scan one of your imap email boxes and report
-    the number of unseen messages present.  I've configured it to
-    only work with imap with ssl. Your password is obtained from
-    the Gnome Keyring.
+    """Email IMAP widget
 
-    Writing your password to the keyring initially is as simple as
-    (changing out <userid> and <password> for your userid and password):
+    This widget will scan one of your imap email boxes and report the number of
+    unseen messages present.  I've configured it to only work with imap with
+    ssl. Your password is obtained from the Gnome Keyring.
 
-    1) create the file ~/.local/share/python_keyring/keyringrc.cfg
-       with the following contents:
+    Writing your password to the keyring initially is as simple as (changing
+    out <userid> and <password> for your userid and password):
+
+    1) create the file ~/.local/share/python_keyring/keyringrc.cfg with the
+       following contents:
 
        [backend]
        default-keyring=keyring.backends.Gnome.Keyring
@@ -52,12 +52,11 @@ class ImapWidget(base.ThreadedPollText):
        password = <password>
        keyring.set_password('imapwidget', user, password)
 
-    mbox names must include the path to the mbox (except for the
-    default INBOX).  So, for example if your mailroot is ~/Maildir,
-    and you want to look at the mailbox at HomeMail/fred, the mbox
-    setting would be: mbox='"~/Maildir/HomeMail/fred"'.  Note the
-    nested sets of quotes! Labels can be whatever you choose, of
-    course.
+    mbox names must include the path to the mbox (except for the default
+    INBOX).  So, for example if your mailroot is ~/Maildir, and you want to
+    look at the mailbox at HomeMail/fred, the mbox setting would be:
+    mbox='"~/Maildir/HomeMail/fred"'.  Note the nested sets of quotes! Labels
+    can be whatever you choose, of course.
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [

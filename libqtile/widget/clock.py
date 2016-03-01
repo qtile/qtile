@@ -39,9 +39,7 @@ def tz(the_tz):
         del os.environ['TZ']
 
 class Clock(base.InLoopPollText):
-    """
-        A simple but flexible text-based clock.
-    """
+    """A simple but flexible text-based clock"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('format', '%H:%M', 'A Python datetime format string'),
