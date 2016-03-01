@@ -20,6 +20,8 @@
 # SOFTWARE.
 
 from . import base
+from libqtile.log_utils import logging
+
 import imaplib
 import re
 import keyring
@@ -72,7 +74,7 @@ class ImapWidget(base.ThreadedPollText):
         if password is not None:
             self.password = password
         else:
-            self.log.critical('Gnome Keyring Error')
+            logging.critical('Gnome Keyring Error')
 
     def poll(self):
         im = imaplib.IMAP4_SSL(self.server, 993)
