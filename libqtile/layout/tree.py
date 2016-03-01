@@ -29,7 +29,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .base import SingleWindow
+from .base import Layout
 from .. import drawer, hook, window
 
 import six
@@ -244,7 +244,7 @@ class Window(TreeNode):
         del self.children
 
 
-class TreeTab(SingleWindow):
+class TreeTab(Layout):
     """Tree Tab Layout
 
     This layout works just like Max but displays tree of the windows at the
@@ -284,7 +284,7 @@ class TreeTab(SingleWindow):
     ]
 
     def __init__(self, **config):
-        SingleWindow.__init__(self, **config)
+        Layout.__init__(self, **config)
         self.add_defaults(TreeTab.defaults)
         self._focused = None
         self._panel = None
@@ -293,7 +293,7 @@ class TreeTab(SingleWindow):
         self._nodes = {}
 
     def clone(self, group):
-        c = SingleWindow.clone(self, group)
+        c = Layout.clone(self, group)
         c._focused = None
         c._panel = None
         c._tree = Root(self.sections)
@@ -397,12 +397,12 @@ class TreeTab(SingleWindow):
             client.hide()
 
     def finalize(self):
-        SingleWindow.finalize(self)
+        Layout.finalize(self)
         if self._drawer is not None:
             self._drawer.finalize()
 
     def info(self):
-        d = SingleWindow.info(self)
+        d = Layout.info(self)
         d["clients"] = [x.name for x in self._nodes]
         d["sections"] = [x.title for x in self._tree.children]
         return d
@@ -597,7 +597,7 @@ class TreeTab(SingleWindow):
     def layout(self, windows, screen):
         panel, body = screen.hsplit(self.panel_width)
         self._resize_panel(panel)
-        SingleWindow.layout(self, windows, body)
+        Layout.layout(self, windows, body)
 
     def _resize_panel(self, rect):
         if self._panel:

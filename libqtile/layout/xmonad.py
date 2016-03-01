@@ -34,11 +34,11 @@
 
 from __future__ import division
 
-from .base import SingleWindow
+from .base import Layout
 import math
 
 
-class MonadTall(SingleWindow):
+class MonadTall(Layout):
     """Emulate the behavior of XMonad's default tiling scheme
 
     Main-Pane:
@@ -162,7 +162,7 @@ class MonadTall(SingleWindow):
     ]
 
     def __init__(self, **config):
-        SingleWindow.__init__(self, **config)
+        Layout.__init__(self, **config)
         self.add_defaults(MonadTall.defaults)
         if self.single_border_width is None:
             self.single_border_width = self.border_width
@@ -198,7 +198,7 @@ class MonadTall(SingleWindow):
 
     def clone(self, group):
         "Clone layout for other groups"
-        c = SingleWindow.clone(self, group)
+        c = Layout.clone(self, group)
         c.clients = []
         c.sizes = []
         c.relative_sizes = []

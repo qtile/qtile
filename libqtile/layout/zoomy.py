@@ -28,10 +28,10 @@
 
 from __future__ import division
 
-from .base import SingleWindow
+from .base import Layout
 
 
-class Zoomy(SingleWindow):
+class Zoomy(Layout):
     """A layout with single active windows, and few other previews at the right"""
     defaults = [
         ("columnwidth", 150, "Width of the right column"),
@@ -42,7 +42,7 @@ class Zoomy(SingleWindow):
     ]
 
     def __init__(self, **config):
-        SingleWindow.__init__(self, **config)
+        Layout.__init__(self, **config)
         self.add_defaults(Zoomy.defaults)
         self.clients = []
         self.focused = None
@@ -71,7 +71,7 @@ class Zoomy(SingleWindow):
         return self.clients[idx - 1]
 
     def clone(self, group):
-        c = SingleWindow.clone(self, group)
+        c = Layout.clone(self, group)
         c.clients = []
         return c
 
@@ -132,7 +132,7 @@ class Zoomy(SingleWindow):
         client.unhide()
 
     def info(self):
-        d = SingleWindow.info(self)
+        d = Layout.info(self)
         d["clients"] = [x.name for x in self.clients]
         return d
 
@@ -147,7 +147,7 @@ class Zoomy(SingleWindow):
                 "UTF8_STRING",
                 format=8
             )
-        SingleWindow.focus(self, win)
+        Layout.focus(self, win)
         if self.property_name:
             self.focused = win
             win.window.set_property(
