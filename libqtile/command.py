@@ -392,13 +392,19 @@ class CommandObject(six.with_metaclass(abc.ABCMeta)):
     def command(self, name):
         return getattr(self, "cmd_" + name, None)
 
+    @property
+    def commands(self):
+        cmds = [i[4:] for i in dir(self) if i.startswith("cmd_")]
+        print(1)
+        print(cmds)
+        return cmds
+
     def cmd_commands(self):
         """Returns a list of possible commands for this object
 
         Used by __qsh__ for command completion and online help
         """
-        cmds = [i[4:] for i in dir(self) if i.startswith("cmd_")]
-        return cmds
+        return self.commands
 
     def cmd_items(self, name):
         """Returns a list of contained items for the specified name
@@ -435,7 +441,7 @@ class CommandObject(six.with_metaclass(abc.ABCMeta)):
 
         Used by __qsh__ to provide online help.
         """
-        if name in self.commands():
+        if name in self.commands:
             return self.doc(name)
         else:
             raise CommandError("No such command: %s" % name)

@@ -22,15 +22,16 @@
 """
 from __future__ import division, print_function
 
-import readline
-import sys
+import fcntl
+import inspect
 import pprint
 import re
-import textwrap
-import fcntl
-import termios
+import readline
+import sys
 import struct
 import six
+import termios
+
 from six.moves import input
 
 from . import command
@@ -53,15 +54,11 @@ class QSh(object):
         self.clientroot = client
         self.current = client
         self.completekey = completekey
-        self.termwidth = terminalWidth()
-        readline.set_completer(self.complete)
-        readline.parse_and_bind(self.completekey + ": complete")
-        readline.set_completer_delims(" ()|")
         self.builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
 
     def _complete(self, buf, arg):
         if not re.search(r" |\(", buf) or buf.startswith("help "):
-            options = self.builtins + self._commands()
+            options = self.builtins + self._commands
             lst = [i for i in options if i.startswith(arg)]
             return lst
         elif buf.startswith("cd ") or buf.startswith("ls "):
@@ -93,25 +90,26 @@ class QSh(object):
         return "%s> " % self.current.path
 
     def columnize(self, lst):
+        termwidth = terminalWidth()
+
         ret = []
         if lst:
-            lst = [str(i) for i in lst]
-            mx = max([len(i) for i in lst])
-            cols = self.termwidth // (mx + 2) or 1
-            for i in range(len(lst) // cols):
+            lst = list(map(str, lst))
+            mx = max(map(len, lst))
+            cols = termwidth // (mx + 2) or 1
+            # We want `(n-1) * cols + 1 <= len(lst) <= n * cols` to return `n`
+            # If we subtract 1, then do `// cols`, we get `n - 1`, so we can then add 1
+            rows = (len(lst) - 1) // cols + 1
+            for i in range(rows):
+                # Because Python array slicing can go beyond the array bounds,
+                # we don't need to be careful with the values here
                 sl = lst[i * cols: (i + 1) * cols]
-                sl = [x + " " * (mx - len(x)) for x in sl]
-                ret.append("  ".join(sl))
-            if len(lst) % cols:
-                sl = lst[-(len(lst) % cols):]
                 sl = [x + " " * (mx - len(x)) for x in sl]
                 ret.append("  ".join(sl))
         return "\n".join(ret)
 
     def _inspect(self, obj):
-        """
-            Returns an (attrs, keys) tuple.
-        """
+        """Returns an (attrs, keys) tuple"""
         if obj.parent and obj.myselector is None:
             t, itms = obj.parent.items(obj.name)
             attrs = obj._contains if t else None
@@ -128,16 +126,16 @@ class QSh(object):
             all.extend(itms)
         return all
 
+    @property
     def _commands(self):
         try:
+            # calling `.commands()` here triggers `CommandRoot.cmd_commands()`
             return self.current.commands()
         except command.CommandError:
             return []
 
     def _findNode(self, src, *path):
-        """
-            Returns a node, or None if no such node exists.
-        """
+        """Returns a node, or None if no such node exists"""
         if not path:
             return src
 
@@ -164,14 +162,14 @@ class QSh(object):
             return None
 
     def do_cd(self, arg):
-        """
-            Change to another path.
+        """Change to another path.
 
-            Examples:
+        Examples
+        ========
 
-                cd layout/0
+            cd layout/0
 
-                cd ../layout
+            cd ../layout
         """
         next = self._findNode(self.current, *[i for i in arg.split("/") if i])
         if next:
@@ -211,51 +209,52 @@ class QSh(object):
         return self.current.path or '/'
 
     def do_help(self, arg):
+        """Give help on commands and builtins
+
+        When invoked without arguments, provides an overview of all commands.
+        When passed as an argument, also provides a detailed help on a specific command or builtin.
+
+        Examples
+        ========
+
+            > help
+
+            > help command
         """
-            Provide an overview of all commands or detailed
-            help on a specific command or builtin.
-
-            Examples:
-
-                help
-
-                help command
-        """
-        cmds = self._commands()
         if not arg:
             lst = [
                 "help command   -- Help for a specific command.",
                 "",
-                "Builtins:",
-                "=========",
+                "Builtins",
+                "========",
                 self.columnize(self.builtins),
             ]
+            cmds = self._commands
             if cmds:
-                lst += [
+                lst.extend([
                     "",
-                    "Commands for this object:",
-                    "=========================",
+                    "Commands for this object",
+                    "========================",
                     self.columnize(cmds),
-                ]
+                ])
             return "\n".join(lst)
-        elif arg in cmds:
+        elif arg in self._commands:
             return self._call("doc", "(\"%s\")" % arg)
         elif arg in self.builtins:
             c = getattr(self, "do_" + arg)
-            return textwrap.dedent(c.__doc__).lstrip()
+            return inspect.getdoc(c)
         else:
             return "No such command: %s" % arg
 
     def do_exit(self, args):
-        """
-            Exit qsh.
-        """
+        """Exit qsh"""
         sys.exit(0)
+
     do_quit = do_exit
     do_q = do_exit
 
     def _call(self, cmd_name, args):
-        cmds = self._commands()
+        cmds = self._commands
         if cmd_name not in cmds:
             return "No such command: %s" % cmd_name
 
@@ -302,6 +301,10 @@ class QSh(object):
         return val
 
     def loop(self):
+        readline.set_completer(self.complete)
+        readline.parse_and_bind(self.completekey + ": complete")
+        readline.set_completer_delims(" ()|")
+
         while True:
             try:
                 line = input(self.prompt)
