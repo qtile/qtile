@@ -397,8 +397,6 @@ class CommandObject(six.with_metaclass(abc.ABCMeta)):
     @property
     def commands(self):
         cmds = [i[4:] for i in dir(self) if i.startswith("cmd_")]
-        print(1)
-        print(cmds)
         return cmds
 
     def cmd_commands(self):
