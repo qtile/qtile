@@ -112,8 +112,7 @@ class Matrix(Layout):
     def focus_next(self, window):
         if not self.clients:
             return
-        if self.get_current_window != window:
-            self.focus(window)
+
         idx = self.clients.index(window)
         if idx + 1 < len(self.clients):
             return self.clients[idx + 1]
@@ -121,8 +120,7 @@ class Matrix(Layout):
     def focus_previous(self, window):
         if not self.clients:
             return
-        if self.get_current_window != window:
-            self.focus(window)
+
         idx = self.clients.index(window)
         if idx > 0:
             return self.clients[idx - 1]

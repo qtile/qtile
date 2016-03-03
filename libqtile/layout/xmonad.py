@@ -659,16 +659,14 @@ class MonadTall(Layout):
     def focus_next(self, window):
         if not self.clients:
             return
-        if self.focused != self.clients.index(window):
-            self.focus(window)
+
         if self.focused + 1 < len(self.clients):
             return self.clients[self.focused + 1]
 
     def focus_previous(self, window):
         if not self.clients:
             return
-        if self.focused != self.clients.index(window):
-            self.focus(window)
+
         if self.focused > 0:
             return self.clients[self.focused - 1]
 

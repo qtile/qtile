@@ -236,6 +236,7 @@ class Stack(Layout):
                 break
         else:
             return
+
         for i in iterator:
             if i:
                 return i.focus_first()
@@ -250,6 +251,7 @@ class Stack(Layout):
                 break
         else:
             return
+
         for i in iterator:
             if i:
                 return i.focus_last()

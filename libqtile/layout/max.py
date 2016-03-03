@@ -56,8 +56,7 @@ class Max(SingleWindow):
             return
         if window is None:
             return
-        if window != self._get_window():
-            self.focus(window)
+
         idx = self.clients.index(window)
         if idx + 1 < len(self.clients):
             return self.clients[idx + 1]
@@ -67,8 +66,7 @@ class Max(SingleWindow):
             return
         if window is None:
             return
-        if window != self._get_window():
-            self.focus(window)
+
         idx = self.clients.index(window)
         if idx > 0:
             return self.clients[idx - 1]

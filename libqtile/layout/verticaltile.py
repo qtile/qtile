@@ -207,39 +207,35 @@ class VerticalTile(Layout):
 
     def focus_first(self):
         try:
-            self.focus(self.clients[0])
+            return self.clients[0]
         except IndexError:
-            self.blur()
+            pass
 
     def focus_last(self):
         try:
-            self.focus(self.clients[-1])
+            return self.clients[-1]
         except IndexError:
-            self.blur()
+            pass
 
     def focus_next(self, window):
         if not self.clients:
             return
-        if self.focused != window:
-            self.focus(window)
 
         try:
-            index = self.clients.index(self.focused)
-            self.focus(self.clients[index + 1])
+            index = self.clients.index(window)
+            return self.clients[index + 1]
         except IndexError:
-            self.focus_first()
+            pass
 
     def focus_previous(self, window):
         if not self.clients:
             return
-        if self.focused != window:
-            self.focus(window)
 
         try:
-            index = self.clients.index(self.focused)
-            self.focus(self.clients[index - 1])
+            index = self.clients.index(window)
+            return self.clients[index - 1]
         except IndexError:
-            self.focus_last()
+            pass
 
     def grow(self):
         if self.ratio + self.steps < 1:
