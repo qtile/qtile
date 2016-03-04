@@ -406,12 +406,19 @@ class Screen(command.CommandObject):
         self.setGroup(n)
         return n.name
 
-    def cmd_togglegroup(self, groupName=None):
+    def cmd_toggle_group(self, group_name=None):
         """Switch to the selected group or to the previously active one"""
-        group = self.qtile.groupMap.get(groupName)
+        group = self.qtile.groupMap.get(group_name)
         if group in (self.group, None):
             group = self.previous_group
         self.setGroup(group)
+
+    def cmd_togglegroup(self, groupName=None):
+        """Switch to the selected group or to the previously active one
+
+        Deprecated: use toggle_group()"""
+        warnings.warn("togglegroup is deprecated, use toggle_group", DeprecationWarning)
+        self.cmd_toggle_group(groupName)
 
 
 class Group(object):
