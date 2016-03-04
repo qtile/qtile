@@ -19,9 +19,10 @@ has two qualities:
    Do not combine multiple problems even they seem to be similar. Write
    different reports for each problem.
 
-To give more information about your bug you can append logs from `~/.qtile.log`
-or on occasionally events you can capture bugs with `xtrace` for this have a deeper 
-look on the documentation about [capturing an xtrace](http://qtile.readthedocs.org/en/latest/manual/hacking.html#capturing-an-xtrace)
+To give more information about your bug you can append logs from
+`~/.local/share/qtile/qtile.log` or on occasionally events you can capture bugs
+with `xtrace` for this have a deeper look on the documentation about
+[capturing an xtrace](http://qtile.readthedocs.org/en/latest/manual/hacking.html#capturing-an-xtrace)
 
 Writing code
 ============
