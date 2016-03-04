@@ -70,7 +70,7 @@ Group functions
       - Move to the group on the right
     * - ``lazy.screen.prev_group())``
       - Move to the group on the left
-    * - ``lazy.screen.togglegroup())``
+    * - ``lazy.screen.toggle_group())``
       - Move to the last visited group
     * - ``lazy.group["group_name"].toscreen())``
       - Move to the group called ``group_name``

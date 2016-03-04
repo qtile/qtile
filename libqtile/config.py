@@ -31,6 +31,7 @@ from . import utils
 from . import xcbq
 
 from six import MAXSIZE
+import warnings
 
 
 class Key(object):

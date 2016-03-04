@@ -317,14 +317,14 @@ def test_nextprevgroup(self):
 
 
 @Xephyr(False, TestConfig())
-def test_togglegroup(self):
+def test_toggle_group(self):
     self.c.group["a"].toscreen()
     self.c.group["b"].toscreen()
-    self.c.screen.togglegroup("c")
+    self.c.screen.toggle_group("c")
     assert self.c.group.info()["name"] == "c"
-    self.c.screen.togglegroup("c")
+    self.c.screen.toggle_group("c")
     assert self.c.group.info()["name"] == "b"
-    self.c.screen.togglegroup()
+    self.c.screen.toggle_group()
     assert self.c.group.info()["name"] == "c"
 
 
