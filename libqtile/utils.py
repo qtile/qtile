@@ -213,6 +213,7 @@ def get_cache_dir():
     if cache_directory == '$XDG_CACHE_HOME':
         # if variable wasn't set
         cache_directory = os.path.expanduser("~/.cache")
+    cache_directory = os.path.join(cache_directory, 'qtile')
     if not os.path.exists(cache_directory):
         os.makedirs(cache_directory)
     return cache_directory
