@@ -66,7 +66,7 @@ class _Group(command.CommandObject):
         self.windows = set()
         self.qtile = qtile
         self.layouts = [i.clone(self) for i in layouts]
-        self.floating_layout = floating_layout.clone(self)
+        self.floating_layout = floating_layout
         if self.customLayout is not None:
             self.layout = self.customLayout
             self.customLayout = None
@@ -171,7 +171,7 @@ class _Group(command.CommandObject):
         self.screen = screen
         if self.screen:
             # move all floating guys offset to new screen
-            self.floating_layout.to_screen(self.screen)
+            self.floating_layout.to_screen(self, self.screen)
             self.layoutAll()
             rect = self.screen.get_rect()
             self.floating_layout.show(rect)
@@ -196,7 +196,7 @@ class _Group(command.CommandObject):
         for i in self.windows:
             i._resetMask()
 
-    def focus(self, win, warp=True):
+    def focus(self, win, warp=True, force=False):
         """Focus the given window
 
         If win is in the group, blur any windows and call ``focus`` on the
@@ -210,12 +210,12 @@ class _Group(command.CommandObject):
         warp :
             Warp pointer to win. This should basically always be True, unless
             the focus event is coming from something like EnterNotify, where
-            the user is actively using the mouse or on full screen layouts
+            the user is actively using the mouse, or on full screen layouts
             where only one window is "maximized" at a time, and it doesn't make
             sense for the mouse to automatically move.
         """
-        if self.qtile._drag:
-            # don't change focus while dragging windows
+        if self.qtile._drag and not force:
+            # don't change focus while dragging windows (unless forced)
             return
         if win:
             if win not in self.windows:
@@ -245,7 +245,7 @@ class _Group(command.CommandObject):
             screen=self.screen.index if self.screen else None
         )
 
-    def add(self, win, focus=True):
+    def add(self, win, focus=True, force=False):
         hook.fire("group_window_add")
         self.windows.add(win)
         win.group = self
@@ -266,40 +266,41 @@ class _Group(command.CommandObject):
             for i in self.layouts:
                 i.add(win)
         if focus:
-            self.focus(win, True)
+            self.focus(win, warp=True, force=force)
 
-    def remove(self, win):
+    def remove(self, win, force=False):
         self.windows.remove(win)
         hadfocus = self._remove_from_focus_history(win)
         win.group = None
-        nextfocus = None
+
         if win.floating:
             nextfocus = self.floating_layout.remove(win)
-            if not hadfocus:
-                # For example a notification
-                return
+
             nextfocus = nextfocus or \
                 self.currentWindow or \
                 self.layout.focus_first() or \
-                self.floating_layout.focus_first()
+                self.floating_layout.focus_first(group=self)
         else:
             for i in self.layouts:
                 if i is self.layout:
                     nextfocus = i.remove(win)
                 else:
                     i.remove(win)
-            if not hadfocus:
-                return
+
             nextfocus = nextfocus or \
-                self.floating_layout.focus_first() or \
+                self.floating_layout.focus_first(group=self) or \
                 self.currentWindow or \
                 self.layout.focus_first()
-        self.focus(nextfocus, True)
-        # else: TODO: change focus
+
+        if not hadfocus:
+            # For example a notification
+            return
+
+        self.focus(nextfocus, warp=True, force=force)
 
     def mark_floating(self, win, floating):
         if floating:
-            if win in self.floating_layout.clients:
+            if win in self.floating_layout.find_clients(self):
                 # already floating
                 pass
             else:
@@ -416,10 +417,10 @@ class _Group(command.CommandObject):
         if self.currentWindow.floating:
             nxt = self.floating_layout.focus_next(self.currentWindow) or \
                 self.layout.focus_first() or \
-                self.floating_layout.focus_first()
+                self.floating_layout.focus_first(self)
         else:
             nxt = self.layout.focus_next(self.currentWindow) or \
-                self.floating_layout.focus_first() or \
+                self.floating_layout.focus_first(self) or \
                 self.layout.focus_first()
         self.focus(nxt, True)
 
@@ -429,10 +430,10 @@ class _Group(command.CommandObject):
         if self.currentWindow.floating:
             nxt = self.floating_layout.focus_previous(self.currentWindow) or \
                 self.layout.focus_last() or \
-                self.floating_layout.focus_last()
+                self.floating_layout.focus_last(self)
         else:
             nxt = self.layout.focus_previous(self.currentWindow) or \
-                self.floating_layout.focus_last() or \
+                self.floating_layout.focus_last(self) or \
                 self.layout.focus_last()
         self.focus(nxt, True)
 

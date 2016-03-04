@@ -105,7 +105,7 @@ class Layout(command.CommandObject, configurable.Configurable):
         """Returns a dictionary of layout information"""
         return dict(
             name=self.name,
-            group=self.group.name
+            group=self.group.name if self.group else None
         )
 
     def cmd_info(self):

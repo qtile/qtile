@@ -110,6 +110,73 @@ _NET_WM_STATE_ADD = 1
 _NET_WM_STATE_TOGGLE = 2
 
 
+def _geometry_getter(attr):
+    def get_attr(self):
+        if getattr(self, "_" + attr) is None:
+            g = self.window.get_geometry()
+            # trigger the geometry setter on all these
+            self.x = g.x
+            self.y = g.y
+            self.width = g.width
+            self.height = g.height
+        return getattr(self, "_" + attr)
+    return get_attr
+
+
+def _geometry_setter(attr):
+    def f(self, value):
+        if not isinstance(value, int):
+            frame = inspect.currentframe()
+            stack_trace = traceback.format_stack(frame)
+            logger.error("!!!! setting %s to a non-int %s; please report this!", attr, value)
+            logger.error(''.join(stack_trace[:-1]))
+            value = int(value)
+        setattr(self, "_" + attr, value)
+    return f
+
+
+def _float_getter(attr):
+    def getter(self):
+        if self._float_info[attr] is not None:
+            return self._float_info[attr]
+
+        # we don't care so much about width or height, if not set, default to the window width/height
+        if attr in ('width', 'height'):
+            return getattr(self, attr)
+
+        if self.group and self.group.screen:
+            # we haven't set this float_info, and we have a group with a screen
+            # default self.float_x/y to self.x/y, but be sure to properly constrain us to the screen
+            x = getattr(self, attr)
+            if attr == 'x':
+                max_x = self.group.screen.width
+                dx = self.float_width
+            elif attr == 'y':
+                max_x = self.group.screen.height
+                dx = self.float_height
+            else:
+                raise AttributeError("Unknown float parameter: %s" % attr)
+
+            # constrain it to be on the page
+            x = min(x, max_x - dx)
+            x = max(x, 0)
+
+            # we need to reset our position as well
+            setattr(self, attr, x + getattr(self.group.screen, attr))
+
+            return x
+        else:
+            # we haven't set this float_info, and we don't have a screen, lets just return a value, we'll fix this later
+            return getattr(self, attr)
+    return getter
+
+
+def _float_setter(attr):
+    def setter(self, value):
+        self._float_info[attr] = value
+    return setter
+
+
 class _Window(command.CommandObject):
     _windowMask = None  # override in child class
 
@@ -119,20 +186,21 @@ class _Window(command.CommandObject):
         self.group = None
         self.icons = {}
         window.set_attribute(eventmask=self._windowMask)
+
+        self._float_info = {
+            'x': None,
+            'y': None,
+            'width': None,
+            'height': None,
+        }
         try:
             g = self.window.get_geometry()
             self._x = g.x
             self._y = g.y
             self._width = g.width
             self._height = g.height
-            # note that _float_info x and y are
-            # really offsets, relative to screen x,y
-            self._float_info = {
-                'x': g.x,
-                'y': g.y,
-                'w': g.width,
-                'h': g.height,
-            }
+            self._float_info['width'] = g.width
+            self._float_info['height'] = g.height
         except xcffib.xproto.DrawableError:
             # Whoops, we were too early, so let's ignore it for now and get the
             # values on demand.
@@ -140,7 +208,7 @@ class _Window(command.CommandObject):
             self._y = None
             self._width = None
             self._height = None
-            self._float_info = None
+
         self.borderwidth = 0
         self.bordercolor = None
         self.name = "<no name>"
@@ -167,35 +235,6 @@ class _Window(command.CommandObject):
         }
         self.updateHints()
 
-    def _geometry_getter(attr):
-        def get_attr(self):
-            if getattr(self, "_" + attr) is None:
-                g = self.window.get_geometry()
-                self.x = g.x
-                self.y = g.y
-                self.width = g.width
-                self.height = g.height
-                # note that _float_info x and y are
-                # really offsets, relative to screen x,y
-                self._float_info = {
-                    'x': g.x, 'y': g.y,
-                    'w': g.width, 'h': g.height
-                }
-
-            return getattr(self, "_" + attr)
-        return get_attr
-
-    def _geometry_setter(attr):
-        def f(self, value):
-            if not isinstance(value, int) and attr != "_float_info":
-                frame = inspect.currentframe()
-                stack_trace = traceback.format_stack(frame)
-                logger.error("!!!! setting %s to a non-int %s; please report this!", attr, value)
-                logger.error(''.join(stack_trace[:-1]))
-                value = int(value)
-            setattr(self, "_" + attr, value)
-        return f
-
     x = property(fset=_geometry_setter("x"), fget=_geometry_getter("x"))
     y = property(fset=_geometry_setter("y"), fget=_geometry_getter("y"))
     width = property(
@@ -206,9 +245,22 @@ class _Window(command.CommandObject):
         fset=_geometry_setter("height"),
         fget=_geometry_getter("height")
     )
-    _float_info = property(
-        fset=_geometry_setter("_float_info"),
-        fget=_geometry_getter("_float_info")
+
+    float_x = property(
+        fset=_float_setter("x"),
+        fget=_float_getter("x")
+    )
+    float_y = property(
+        fset=_float_setter("y"),
+        fget=_float_getter("y")
+    )
+    float_width = property(
+        fset=_float_setter("width"),
+        fget=_float_getter("width")
+    )
+    float_height = property(
+        fset=_float_setter("height"),
+        fget=_float_getter("height")
     )
 
     def updateName(self):
@@ -432,17 +484,17 @@ class _Window(command.CommandObject):
             width -= margin * 2
             height -= margin * 2
 
+        # save x and y float offset
+        if self.group is not None and self.group.screen is not None:
+            self.float_x = x - self.group.screen.x
+            self.float_y = y - self.group.screen.y
+
         self.x = x
         self.y = y
         self.width = width
         self.height = height
         self.borderwidth = borderwidth
         self.bordercolor = bordercolor
-
-        # save x and y float offset
-        if self.group is not None and self.group.screen is not None:
-            self._float_info['x'] = x - self.group.screen.x
-            self._float_info['y'] = y - self.group.screen.y
 
         kwarg = dict(
             x=x,
@@ -756,14 +808,21 @@ class Window(_Window):
     @floating.setter
     def floating(self, do_float):
         if do_float and self._float_state == NOT_FLOATING:
-            fi = self._float_info
-            self._enablefloating(fi['x'], fi['y'], fi['w'], fi['h'])
+            if self.group and self.group.screen:
+                screen = self.group.screen
+                self._enablefloating(
+                    screen.x + self.float_x, screen.y + self.float_y, self.float_width, self.float_height
+                )
+            else:
+                # if we are setting floating early, e.g. from a hook, we don't have a screen yet
+                self._enablefloating(
+                    self.float_x, self.float_y, self.float_width, self.float_height
+                )
         elif (not do_float) and self._float_state != NOT_FLOATING:
             if self._float_state == FLOATING:
                 # store last size
-                fi = self._float_info
-                fi['w'] = self.width
-                fi['h'] = self.height
+                self.float_width = self.width
+                self.float_height = self.height
             self._float_state = NOT_FLOATING
             self.group.mark_floating(self, False)
             hook.fire('float_change')
@@ -919,8 +978,8 @@ class Window(_Window):
 
         screen = self.qtile.find_closest_screen(self.x, self.y)
         if self.group and screen is not None and screen != self.group.screen:
-            self.group.remove(self)
-            screen.group.add(self)
+            self.group.remove(self, force=True)
+            screen.group.add(self, force=True)
             self.qtile.toScreen(screen.index)
 
         self._reconfigure_floating()
@@ -936,40 +995,17 @@ class Window(_Window):
             self.state = IconicState
             self.hide()
         else:
-            # make sure x, y is on the screen
-            screen = self.qtile.find_closest_screen(self.x, self.y)
-            if screen is not None and \
-                    self.group is not None and \
-                    self.group.screen is not None and \
-                    screen != self.group.screen:
-                x = self.group.screen.x
-                y = self.group.screen.y
-            else:
-                x = self.x
-                y = self.y
+            width = max(self.width, self.hints.get('min_width', 0))
+            height = max(self.height, self.hints.get('min_height', 0))
 
-            if self.width < self.hints.get('min_width', 0):
-                width = self.hints['min_width']
-            else:
-                width = self.width
+            if self.hints['base_width'] and self.hints['width_inc']:
+                width -= (width - self.hints['base_width']) % self.hints['width_inc']
 
-            if self.height < self.hints.get('min_height', 0):
-                height = self.hints['min_height']
-            else:
-                height = self.height
-
-            if self.hints.get('width_inc', 0):
-                width = (width -
-                         ((width - self.hints['base_width']) %
-                          self.hints['width_inc']))
-
-            if self.hints.get('height_inc', 0):
-                height = (height -
-                          ((height - self.hints['base_height'])
-                           % self.hints['height_inc']))
+            if self.hints['base_height'] and self.hints['height_inc']:
+                width -= (width - self.hints['base_height']) % self.hints['height_inc']
 
             self.place(
-                x, y,
+                self.x, self.y,
                 width, height,
                 self.borderwidth,
                 self.bordercolor,

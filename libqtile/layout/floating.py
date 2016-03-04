@@ -81,13 +81,12 @@ class Floating(Layout):
         Layout.__init__(self, **config)
         self.clients = []
         self.focused = None
+        self.group = None
         self.float_rules = float_rules or DEFAULT_FLOAT_RULES
         self.add_defaults(Floating.defaults)
 
     def match(self, win):
-        """
-        Used to default float some windows.
-        """
+        """Used to default float some windows"""
         if win.window.get_wm_type() in self.auto_float_types:
             return True
         for rule_dict in self.float_rules:
@@ -95,54 +94,60 @@ class Floating(Layout):
                 return True
         return False
 
-    def to_screen(self, new_screen):
-        """
-        Adjust offsets of clients within current screen
-        """
-        for i, win in enumerate(self.clients):
+    def find_clients(self, group):
+        """Find all clients belonging to a given group"""
+        return [c for c in self.clients if c.group is group]
+
+    def to_screen(self, group, new_screen):
+        """Adjust offsets of clients within current screen"""
+        for win in self.find_clients(group):
             if win.maximized:
                 win.maximized = True
             elif win.fullscreen:
                 win.fullscreen = True
             else:
-                offset_x = win._float_info['x']
-                offset_y = win._float_info['y']
+                # By default, place window at same offset from top corner
+                new_x = new_screen.x + win.float_x
+                new_y = new_screen.y + win.float_y
 
-                new_x = new_screen.x + offset_x
-                new_y = new_screen.y + offset_y
-
-                right_edge = new_screen.x + new_screen.width
-                bottom_edge = new_screen.y + new_screen.height
-                while new_x > right_edge:
-                    new_x = (new_x - new_screen.x) // 2
-                while new_y > bottom_edge:
-                    new_y = (new_y - new_screen.y) // 2
+                # make sure window isn't off screen left/right...
+                new_x = min(new_x, new_screen.x + new_screen.width - win.width)
+                new_x = max(new_x, new_screen.x)
+                # and up/down
+                new_y = min(new_y, new_screen.y + new_screen.height - win.height)
+                new_y = max(new_y, new_screen.y)
 
                 win.x = new_x
                 win.y = new_y
             win.group = new_screen.group
 
-    def focus_first(self):
-        if self.clients:
-            return self.clients[0]
+    def focus_first(self, group):
+        clients = self.find_clients(group)
+        if group and clients:
+            return clients[0]
 
     def focus_next(self, win):
-        if win not in self.clients:
+        if win not in self.clients or win.group is None:
             return
-        idx = self.clients.index(win)
-        if len(self.clients) > idx + 1:
-            return self.clients[idx + 1]
 
-    def focus_last(self):
-        if self.clients:
-            return self.clients[-1]
+        clients = self.find_clients(win.group)
+        idx = clients.index(win)
+        if len(clients) > idx + 1:
+            return clients[idx + 1]
+
+    def focus_last(self, group):
+        clients = self.find_clients(group)
+        if group and clients:
+            return clients[-1]
 
     def focus_previous(self, win):
-        if win not in self.clients:
+        if win not in self.clients or win.group is None:
             return
-        idx = self.clients.index(win)
+
+        clients = self.find_clients(win.group)
+        idx = clients.index(win)
         if idx > 0:
-            return self.clients[idx - 1]
+            return clients[idx - 1]
 
     def focus(self, client):
         self.focused = client
@@ -152,15 +157,22 @@ class Floating(Layout):
 
     def configure(self, client, screen):
         if client is self.focused:
-            bc = self.group.qtile.colorPixel(self.border_focus)
+            bc = client.group.qtile.colorPixel(self.border_focus)
         else:
-            bc = self.group.qtile.colorPixel(self.border_normal)
+            bc = client.group.qtile.colorPixel(self.border_normal)
         if client.maximized:
             bw = self.max_border_width
         elif client.fullscreen:
             bw = self.fullscreen_border_width
         else:
             bw = self.border_width
+
+        # We definitely have a screen here, so if we haven't configured on a
+        # screen before, let's trigger the logic in _float_getter to stay on
+        # that window
+        client.float_x  # no-qa
+        client.float_y  # no-qa
+
         client.place(
             client.x,
             client.y,
@@ -171,11 +183,6 @@ class Floating(Layout):
         )
         client.unhide()
 
-    def clone(self, group):
-        c = Layout.clone(self, group)
-        c.clients = []
-        return c
-
     def add(self, client):
         self.clients.append(client)
         self.focused = client
@@ -183,21 +190,22 @@ class Floating(Layout):
     def remove(self, client):
         if client not in self.clients:
             return
-        self.focused = self.focus_next(client)
+
+        next_focus = self.focus_next(client)
+        if client is self.focused:
+            self.blur()
         self.clients.remove(client)
-        return self.focused
+        return next_focus
 
     def info(self):
         d = Layout.info(self)
-        d["clients"] = [x.name for x in self.clients]
+        d["clients"] = [c.name for c in self.clients]
         return d
 
     def cmd_next(self):
-        client = self.focus_next(self.focused) or \
-            self.focus_first()
-        self.group.focus(client)
+        # This can't ever be called, but implement the abstract method
+        pass
 
     def cmd_previous(self):
-        client = self.focus_previous(self.focused) or \
-            self.focus_last()
-        self.group.focus(client)
+        # This can't ever be called, but implement the abstract method
+        pass

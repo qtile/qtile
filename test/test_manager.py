@@ -379,13 +379,13 @@ def test_default_float(self):
 @Xephyr(False, TestConfig())
 def test_last_float_size(self):
     """
-    When you re-float something it would be preferable to have it
-    use the previous float size
+    When you re-float something it would be preferable to have it use the previous float size
     """
     self.testXeyes()
     assert self.c.window.info()['name'] == 'xeyes'
     assert self.c.window.info()['width'] == 798
     assert self.c.window.info()['height'] == 578
+    # float and it moves
     self.c.window.toggle_floating()
     assert self.c.window.info()['width'] == 150
     assert self.c.window.info()['height'] == 100
@@ -393,6 +393,7 @@ def test_last_float_size(self):
     self.c.window.set_size_floating(50, 90, 42, 42)
     assert self.c.window.info()['width'] == 50
     assert self.c.window.info()['height'] == 90
+    # back to not floating
     self.c.window.toggle_floating()
     assert self.c.window.info()['width'] == 798
     assert self.c.window.info()['height'] == 578
@@ -465,7 +466,7 @@ def test_toggle_fullscreen(self):
     assert self.c.window.info()['width'] == 398
     assert self.c.window.info()['height'] == 578
     assert self.c.window.info()['float_info'] == {
-        'y': 0, 'x': 400, 'w': 150, 'h': 100}
+        'y': 0, 'x': 400, 'width': 150, 'height': 100}
     assert self.c.window.info()['x'] == 400
     assert self.c.window.info()['y'] == 0
 
@@ -500,7 +501,7 @@ def test_toggle_max(self):
     assert self.c.window.info()['width'] == 398
     assert self.c.window.info()['height'] == 578
     assert self.c.window.info()['float_info'] == {
-        'y': 0, 'x': 400, 'w': 150, 'h': 100}
+        'y': 0, 'x': 400, 'width': 150, 'height': 100}
     assert self.c.window.info()['x'] == 400
     assert self.c.window.info()['y'] == 0
 
@@ -533,7 +534,7 @@ def test_toggle_min(self):
     assert self.c.window.info()['width'] == 398
     assert self.c.window.info()['height'] == 578
     assert self.c.window.info()['float_info'] == {
-        'y': 0, 'x': 400, 'w': 150, 'h': 100}
+        'y': 0, 'x': 400, 'width': 150, 'height': 100}
     assert self.c.window.info()['x'] == 400
     assert self.c.window.info()['y'] == 0
 

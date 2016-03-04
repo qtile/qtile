@@ -222,14 +222,21 @@ def test_float_first_on_second_screen(self):
         'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
 
     self.testXclock()
+    # I don't know where y=30, x=12 comes from...
+    assert self.c.window.info()['float_info'] == {
+        'y': 30, 'x': 12, 'width': 164, 'height': 164
+    }
+
     self.c.window.toggle_floating()
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == 600
-    assert self.c.window.info()['y'] == 0
+
+    assert self.c.window.info()['x'] == 612
+    assert self.c.window.info()['y'] == 30
     assert self.c.window.info()['group'] == 'b'
     assert self.c.window.info()['float_info'] == {
-        'y': 0, 'x': 0, 'w': 164, 'h': 164}
+        'y': 30, 'x': 12, 'width': 164, 'height': 164
+    }
 
 
 @Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
@@ -259,8 +266,10 @@ def test_float_change_screens(self):
     assert self.c.group.info()['name'] == 'a'
     assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.window.info()['name'] == 'xclock'
+    # width/height unchanged
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
+    # x is shifted by 600, y is shifted by 0
     assert self.c.window.info()['x'] == 616
     assert self.c.window.info()['y'] == 0
     assert self.c.window.info()['group'] == 'a'
@@ -275,8 +284,10 @@ def test_float_change_screens(self):
     assert self.c.group.info()['name'] == 'a'
     assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.window.info()['name'] == 'xclock'
+    # width/height unchanged
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
+    # x is shifted by 0, y is shifted by 480
     assert self.c.window.info()['x'] == 16
     assert self.c.window.info()['y'] == 480
 
@@ -289,8 +300,10 @@ def test_float_change_screens(self):
     assert self.c.group.info()['name'] == 'a'
     assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.window.info()['name'] == 'xclock'
+    # width/height unchanged
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
+    # x is shifted by 500, y is shifted by 580
     assert self.c.window.info()['x'] == 516
     assert self.c.window.info()['y'] == 580
 
@@ -303,6 +316,7 @@ def test_float_change_screens(self):
     assert self.c.group.info()['name'] == 'a'
     assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert self.c.window.info()['name'] == 'xclock'
+    # back to the original location
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == 16
