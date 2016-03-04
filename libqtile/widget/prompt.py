@@ -362,7 +362,8 @@ class Prompt(base._TextBox):
             self.original_background = self.background
         # If history record is on, get saved history or create history record
         if self.record_history:
-            self.history_path = os.path.expanduser('~/.qtile_history')
+            self.history_path = os.path.join(utils.get_cache_dir(),
+                                             'prompt_history')
             if os.path.exists(self.history_path):
                 with open(self.history_path, 'rb') as f:
                     try:
