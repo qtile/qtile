@@ -1,7 +1,7 @@
 Summary: A pure-Python tiling window manager
 Name: qtile
-Version: 0.10.4
-Release: 2%{?dist}
+Version: 0.10.5
+Release: 1%{?dist}
 Source0: https://github.com/qtile/qtile/archive/v%{version}.tar.gz
 License: MIT and GPLv3+ and ASL 2.0
 # All MIT except for:
@@ -77,6 +77,20 @@ install -m 644 %{SOURCE1} %{buildroot}%{_datadir}/xsessions/
 
 
 %changelog
+* Fri Mar 04 2016 John Dulaney <jdulaney@fedoraproject.org> - 0.10.5-1
+- Python 3.2 support dropped !!!
+- GoogleCalendar widget dropped for KhalCalendar widget !!!
+- qtile-session script removed in favor of qtile script !!!
+- new Columns layout, composed of dynamic and configurable columns of windows
+- new iPython kernel for qsh, called iqsh, see docs for installing
+- new qsh command `display_kb` to show current key binding
+- add json interface to IPC server
+- add commands for resizing MonadTall main panel
+- wlan widget shows when you are disconnected and uses a configurable format
+- fix path handling in PromptWidget
+- fix KeyboardLayout widget cycling keyboard
+- properly guard against setting screen to too large screen index
+
 * Wed Jan 20 2016 John Dulaney <jdulaney@fedoraproject.org> - 0.10.4-2
 - Fix rpmlint issues
 
