@@ -66,7 +66,7 @@ class ColorFormatter(Formatter):
         return message + self.reset_seq
 
 
-def init_log(log_level=WARNING, log_path='~/.%s.log', log_truncate=False,
+def init_log(log_level=WARNING, log_path=True, log_truncate=False,
              log_size=10000000, log_numbackups=1, log_color=True):
     formatter = Formatter(
         "%(asctime)s %(levelname)s %(name)s %(filename)s:%(funcName)s():L%(lineno)d %(message)s"
@@ -85,6 +85,15 @@ def init_log(log_level=WARNING, log_path='~/.%s.log', log_truncate=False,
 
     # If we have a log path, we'll also setup a log file
     if log_path:
+        if not isinstance(log_path, str):
+            data_directory = os.path.expandvars('$XDG_DATA_HOME')
+            if data_directory == '$XDG_DATA_HOME':
+                # if variable wasn't set
+                data_directory = os.path.expanduser("~/.local/share")
+            data_directory = os.path.join(data_directory, 'qtile')
+            if not os.path.exists(data_directory):
+                os.makedirs(data_directory)
+            log_path = os.path.join(data_directory, '%s.log')
         try:
             log_path %= 'qtile'
         except TypeError:  # Happens if log_path doesn't contain formatters.

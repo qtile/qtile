@@ -1,5 +1,7 @@
 qtile x.x.x, released xxxx-xx-xx:
     * file path changes (XDG Base Directory specification)
+        - the default log file path changed from ~/.qtile.log to
+          ~/.local/share/qtile/qtile.log
         - the cache directory changed from ~/.cache to ~/.cache/qtile
     * features
         - wlan widget shows when you are disconnected and uses a configurable

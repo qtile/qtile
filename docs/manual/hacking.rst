@@ -89,7 +89,7 @@ Qtile's conversations with the X server. To capture one of these, create an
 
 .. code-block:: bash
 
-  exec xtrace qtile >> ~/.qtile.log
+  exec xtrace qtile >> ~/qtile.log
 
 This will put the xtrace output in Qtile's logfile as well. You can then
 demonstrate the bug, and paste the contents of this file into the bug report.
