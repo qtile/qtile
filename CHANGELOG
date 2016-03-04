@@ -3,6 +3,8 @@ qtile x.x.x, released xxxx-xx-xx:
         - the default log file path changed from ~/.qtile.log to
           ~/.local/share/qtile/qtile.log
         - the cache directory changed from ~/.cache to ~/.cache/qtile
+        - the prompt widget's history file changed from ~/.qtile_history to
+          ~/.cache/qtile/prompt_history
     * features
         - wlan widget shows when you are disconnected and uses a configurable
           format
