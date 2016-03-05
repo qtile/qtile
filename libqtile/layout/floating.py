@@ -167,11 +167,23 @@ class Floating(Layout):
         else:
             bw = self.border_width
 
-        # We definitely have a screen here, so if we haven't configured on a
-        # screen before, let's trigger the logic in _float_getter to stay on
-        # that window
-        client.float_x  # no-qa
-        client.float_y  # no-qa
+        # We definitely have a screen here, so let's be sure we'll float on screen
+        try:
+            client.float_x
+            client.float_y
+        except AttributeError:
+            # this window hasn't been placed before, let's put it in a sensible spot
+            x = client.x
+            # constrain it to be on the screen
+            x = min(x, screen.x - client.width)
+            x = max(x, screen.x)
+            # then update it's position (`.place()` will take care of `.float_x`)
+            client.x = x
+
+            y = client.y
+            y = min(y, screen.y - client.height)
+            y = max(y, screen.y)
+            client.y = y
 
         client.place(
             client.x,

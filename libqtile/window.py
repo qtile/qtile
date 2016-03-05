@@ -144,30 +144,7 @@ def _float_getter(attr):
         if attr in ('width', 'height'):
             return getattr(self, attr)
 
-        if self.group and self.group.screen:
-            # we haven't set this float_info, and we have a group with a screen
-            # default self.float_x/y to self.x/y, but be sure to properly constrain us to the screen
-            x = getattr(self, attr)
-            if attr == 'x':
-                max_x = self.group.screen.width
-                dx = self.float_width
-            elif attr == 'y':
-                max_x = self.group.screen.height
-                dx = self.float_height
-            else:
-                raise AttributeError("Unknown float parameter: %s" % attr)
-
-            # constrain it to be on the page
-            x = min(x, max_x - dx)
-            x = max(x, 0)
-
-            # we need to reset our position as well
-            setattr(self, attr, x + getattr(self.group.screen, attr))
-
-            return x
-        else:
-            # we haven't set this float_info, and we don't have a screen, lets just return a value, we'll fix this later
-            return getattr(self, attr)
+        raise AttributeError("Floating not yet configured yet")
     return getter
 
 
@@ -815,9 +792,7 @@ class Window(_Window):
                 )
             else:
                 # if we are setting floating early, e.g. from a hook, we don't have a screen yet
-                self._enablefloating(
-                    self.float_x, self.float_y, self.float_width, self.float_height
-                )
+                self._float_state = FLOATING
         elif (not do_float) and self._float_state != NOT_FLOATING:
             if self._float_state == FLOATING:
                 # store last size
