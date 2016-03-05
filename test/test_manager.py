@@ -54,6 +54,7 @@ class TestConfig:
     layouts = [
                 libqtile.layout.stack.Stack(num_stacks=1),
                 libqtile.layout.stack.Stack(num_stacks=2),
+                libqtile.layout.tile.Tile(ratio=0.5),
                 libqtile.layout.max.Max()
             ]
     floating_layout = libqtile.layout.floating.Floating(
@@ -254,6 +255,29 @@ def test_kill(self):
     else:
         raise AssertionError("Window did not die...")
 
+@Xephyr(False, TestConfig())
+def test_kill_other(self):
+    self.c.group.setlayout("tile")
+    one = self.testWindow("one")
+    assert self.c.window.info()["width"] == 798
+    assert self.c.window.info()["height"] == 578
+    two = self.testWindow("two")
+    assert self.c.window.info()["name"] == "two"
+    assert self.c.window.info()["width"] == 398
+    assert self.c.window.info()["height"] == 578
+    assert len(self.c.windows()) == 2
+
+    self.kill(one)
+    for _ in range(10):
+        time.sleep(0.1)
+        if len(self.c.windows()) == 1:
+            break
+    else:
+        raise AssertionError("window did not die")
+
+    assert self.c.window.info()["name"] == "two"
+    assert self.c.window.info()["width"] == 798
+    assert self.c.window.info()["height"] == 578
 
 @Xephyr(False, TestConfig())
 def test_regression_groupswitch(self):
@@ -269,6 +293,7 @@ def test_next_layout(self):
     assert len(self.c.layout.info()["stacks"]) == 1
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
+    self.c.next_layout()
     self.c.next_layout()
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 1

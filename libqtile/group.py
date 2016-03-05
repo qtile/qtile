@@ -292,11 +292,12 @@ class _Group(command.CommandObject):
                 self.currentWindow or \
                 self.layout.focus_first()
 
-        if not hadfocus:
-            # For example a notification
-            return
+        # a notification may not have focus
+        if hadfocus:
+            self.focus(nextfocus, warp=True, force=force)
+        elif self.screen:
+            self.layoutAll()
 
-        self.focus(nextfocus, warp=True, force=force)
 
     def mark_floating(self, win, floating):
         if floating:
