@@ -298,7 +298,6 @@ class _Group(command.CommandObject):
         elif self.screen:
             self.layoutAll()
 
-
     def mark_floating(self, win, floating):
         if floating:
             if win in self.floating_layout.find_clients(self):
