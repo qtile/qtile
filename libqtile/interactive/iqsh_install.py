@@ -37,7 +37,9 @@ kernel_json = {
 }
 
 
-def main(argv=[]):
+def main(argv=None):
+    if argv is None:
+        argv = []
     user = '--user' in argv or os.geteuid() != 0
 
     with TemporaryDirectory() as td:
