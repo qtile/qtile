@@ -331,9 +331,9 @@ class Bar(Gap, configurable.Configurable):
             :screen The integer screen offset
             :position One of "top", "bottom", "left", or "right"
         """
-        class _fake:
+        class _Fake(object):
             pass
-        fake = _fake()
+        fake = _Fake()
         fake.event_x = x
         fake.event_y = y
         fake.detail = button

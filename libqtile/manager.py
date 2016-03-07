@@ -1211,7 +1211,7 @@ class Qtile(command.CommandObject):
 
     def cmd_display_kb(self, *args):
         """Display table of key bindings"""
-        class FormatTable():
+        class FormatTable(object):
             def __init__(self):
                 self.max_col_size = []
                 self.rows = []
