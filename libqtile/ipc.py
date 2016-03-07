@@ -63,14 +63,17 @@ class _IPC(object):
                 " (probably the socket was disconnected)"
             )
 
-    def _unpack_body(self, body):
+    @staticmethod
+    def _unpack_body(body):
         return marshal.loads(body)
 
-    def _pack_json(self, msg):
+    @staticmethod
+    def _pack_json(msg):
         json_obj = json.dumps(msg)
         return json_obj.encode('utf-8')
 
-    def _pack(self, msg):
+    @staticmethod
+    def _pack(msg):
         msg = marshal.dumps(msg)
         size = struct.pack("!L", len(msg))
         return size + msg
@@ -174,6 +177,8 @@ class _ServerProtocol(asyncio.Protocol, _IPC):
     def __init__(self, handler):
         asyncio.Protocol.__init__(self)
         self.handler = handler
+        self.transport = None
+        self.data = None
 
     def connection_made(self, transport):
         self.transport = transport
@@ -217,6 +222,7 @@ class Server(object):
         self.fname = fname
         self.handler = handler
         self.loop = loop
+        self.server = None
 
         if os.path.exists(fname):
             os.unlink(fname)
