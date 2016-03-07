@@ -1248,7 +1248,7 @@ class Qtile(command.CommandObject):
             if k.commands:
                 continue
             name = ", ".join(xcbq.rkeysyms.get(ks, ("<unknown>", )))
-            modifiers = ", ".join(utils.translateModifiers(kmm))
+            modifiers = ", ".join(utils.translate_modifiers(kmm))
             allargs = ", ".join([repr(value) for value in k.commands[0].args] + ["%s = %s" % (keyword, repr(value)) for keyword, value in k.commands[0].kwargs.items()])
             rows.append((name, str(modifiers), "%s(%s)" % (k.commands[0].name, allargs), k.desc))
         rows.sort()
