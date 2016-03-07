@@ -41,7 +41,7 @@ def lget(o, v):
         return None
 
 
-def translateMasks(modifiers):
+def translate_masks(modifiers):
     """
     Translate a modifier mask specified as a list of strings into an or-ed
     bit representation.

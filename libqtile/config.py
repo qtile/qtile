@@ -59,7 +59,7 @@ class Key(object):
             raise utils.QtileError("Unknown key: %s" % key)
         self.keysym = xcbq.keysyms[key]
         try:
-            self.modmask = utils.translateMasks(self.modifiers)
+            self.modmask = utils.translate_masks(self.modifiers)
         except KeyError as v:
             raise utils.QtileError(v)
 
@@ -84,7 +84,7 @@ class Drag(object):
         self.commands = commands
         try:
             self.button_code = int(self.button.replace('Button', ''))
-            self.modmask = utils.translateMasks(self.modifiers)
+            self.modmask = utils.translate_masks(self.modifiers)
         except KeyError as v:
             raise utils.QtileError(v)
 
@@ -105,7 +105,7 @@ class Click(object):
         self.commands = commands
         try:
             self.button_code = int(self.button.replace('Button', ''))
-            self.modmask = utils.translateMasks(self.modifiers)
+            self.modmask = utils.translate_masks(self.modifiers)
         except KeyError as v:
             raise utils.QtileError(v)
 

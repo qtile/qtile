@@ -1226,7 +1226,7 @@ class Qtile(command.CommandObject):
                 self.rows.append(row)
 
             def getformat(self):
-                return " ".join((["%%-%ds" % (max_col_size + 2) for max_col_size in self.max_col_size])) + "\n", len(self.max_col_size)
+                return " ".join((["%-{0:d}s".format(max_col_size + 2) for max_col_size in self.max_col_size])) + "\n", len(self.max_col_size)
 
             def expandlist(self, list, n):
                 if list:
@@ -1250,7 +1250,7 @@ class Qtile(command.CommandObject):
             name = ", ".join(xcbq.rkeysyms.get(ks, ("<unknown>", )))
             modifiers = ", ".join(utils.translate_modifiers(kmm))
             allargs = ", ".join([repr(value) for value in k.commands[0].args] + ["%s = %s" % (keyword, repr(value)) for keyword, value in k.commands[0].kwargs.items()])
-            rows.append((name, str(modifiers), "%s(%s)" % (k.commands[0].name, allargs), k.desc))
+            rows.append((name, str(modifiers), "{0:s}({1:s})".format(k.commands[0].name, allargs), k.desc))
         rows.sort()
         for row in rows:
             result.add(row)
@@ -1340,7 +1340,7 @@ class Qtile(command.CommandObject):
         # FIXME: This needs to be done with sendevent, once we have that fixed.
         keysym = xcbq.keysyms.get(key)
         if keysym is None:
-            raise command.CommandError("Unknown key: %s" % key)
+            raise command.CommandError(u"Unknown key: {0:s}".format(key))
         keycode = self.conn.first_sym_to_code[keysym]
 
         class DummyEv(object):
@@ -1349,7 +1349,7 @@ class Qtile(command.CommandObject):
         d = DummyEv()
         d.detail = keycode
         try:
-            d.state = utils.translateMasks(modifiers)
+            d.state = utils.translate_masks(modifiers)
         except KeyError as v:
             return v.args[0]
         self.handle_KeyPress(d)
@@ -1546,7 +1546,7 @@ class Qtile(command.CommandObject):
         """
         mb = self.widgetMap.get(widget)
         if not mb:
-            logger.error("No widget named '%s' present." % widget)
+            logger.error("No widget named '{0:s}' present.".format(widget))
             return
 
         mb.startInput(
@@ -1581,7 +1581,7 @@ class Qtile(command.CommandObject):
 
         mb = self.widgetMap.get(widget)
         if not mb:
-            logger.error("No widget named '%s' present." % widget)
+            logger.error("No widget named '{0:s}' present.".format(widget))
             return
 
         mb.startInput(prompt, self.moveToGroup, "group", strict_completer=True)
@@ -1601,12 +1601,12 @@ class Qtile(command.CommandObject):
                 try:
                     self.groupMap[group].cmd_toscreen()
                 except KeyError:
-                    logger.info("No group named '%s' present." % group)
+                    logger.info(u"No group named '{0:s}' present.".format(group))
                     pass
 
         mb = self.widgetMap.get(widget)
         if not mb:
-            logger.warning("No widget named '%s' present." % widget)
+            logger.warning("No widget named '{0:s}' present.".format(widget))
             return
 
         mb.startInput(prompt, f, "group", strict_completer=True)
@@ -1633,7 +1633,7 @@ class Qtile(command.CommandObject):
             mb = self.widgetMap[widget]
             mb.startInput(prompt, f, complete)
         except KeyError:
-            logger.error("No widget named '%s' present." % widget)
+            logger.error("No widget named '{0:s}' present.".format(widget))
 
     def cmd_qtilecmd(self, prompt="command",
                      widget="prompt", messenger="xmessage"):
@@ -1664,7 +1664,7 @@ class Qtile(command.CommandObject):
                     logger.info('No command entered.')
                     return
                 try:
-                    result = eval('c.%s' % (cmd))
+                    result = eval(u'c.{0:s}'.format(cmd))
                 except (
                         command.CommandError,
                         command.CommandException,
@@ -1675,12 +1675,12 @@ class Qtile(command.CommandObject):
                     from pprint import pformat
                     message = pformat(result)
                     if messenger:
-                        self.cmd_spawn('%s "%s"' % (messenger, message))
+                        self.cmd_spawn('{0:s} "{1:s}"'.format(messenger, message))
                     logger.info(result)
 
         mb = self.widgetMap[widget]
         if not mb:
-            logger.error("No widget named %s present." % widget)
+            logger.error("No widget named {0:s} present.".format(widget))
             return
         mb.startInput(prompt, f, "qsh")
 
@@ -1775,7 +1775,7 @@ class Qtile(command.CommandObject):
             else:
                 logger.warning("Not found bar for hide/show.")
         else:
-            logger.error("Invalid position value:%s" % position)
+            logger.error("Invalid position value:{0:s}".format(position))
 
     def cmd_get_state(self):
         """Get pickled state for restarting qtile"""
