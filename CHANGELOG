@@ -1,4 +1,4 @@
-qtile 0.10.5, released xxxx-xx-xx:
+qtile 0.10.5, released 2016-03-06:
     !!! Python 3.2 support dropped !!!
     !!! GoogleCalendar widget dropped for KhalCalendar widget !!!
     !!! qtile-session script removed in favor of qtile script !!!
