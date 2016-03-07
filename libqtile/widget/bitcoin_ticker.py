@@ -23,9 +23,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import locale
+
 from . import base
 from .generic_poll_text import GenPollUrl
-import locale
 
 
 class BitcoinTicker(GenPollUrl):

@@ -25,13 +25,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from . import command
-from . import hook
-from . import utils
-from . import xcbq
+import warnings
 
 from six import MAXSIZE
-import warnings
+
+from . import command, hook, utils, xcbq
 
 
 class Key(object):

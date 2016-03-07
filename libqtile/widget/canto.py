@@ -23,8 +23,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from . import base
 from subprocess import call
+
+from . import base
 
 
 class Canto(base.ThreadedPollText):

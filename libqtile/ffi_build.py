@@ -22,8 +22,9 @@
 # SOFTWARE.
 
 from cffi import FFI
-from xcffib.ffi_build import ffi as xcffib_ffi
+
 from cairocffi.ffi_build import ffi as cairocffi_ffi
+from xcffib.ffi_build import ffi as xcffib_ffi
 
 pango_ffi = FFI()
 pango_ffi.set_source("libqtile._ffi_pango", None)

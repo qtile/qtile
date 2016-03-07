@@ -20,8 +20,9 @@
 # SOFTWARE.
 
 import copy
-import six
 from abc import ABCMeta, abstractmethod
+
+import six
 
 from .. import command, configurable
 

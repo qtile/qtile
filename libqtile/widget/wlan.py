@@ -29,8 +29,9 @@
 
 from __future__ import division
 
-from . import base
 from libqtile.log_utils import logger
+
+from . import base
 
 try:
     from pythonwifi.iwlibs import Wireless, Iwstats

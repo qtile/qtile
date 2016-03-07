@@ -24,9 +24,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.config import Key, Screen, Group, Drag, Click
+from libqtile import bar, layout, widget
 from libqtile.command import lazy
-from libqtile import layout, bar, widget
+from libqtile.config import Click, Drag, Group, Key, Screen
 
 mod = "mod4"
 

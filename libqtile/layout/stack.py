@@ -20,8 +20,8 @@
 
 from __future__ import division
 
-from .base import Layout, _ClientList
 from .. import utils
+from .base import Layout, _ClientList
 
 
 class _WinStack(_ClientList):

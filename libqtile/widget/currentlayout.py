@@ -28,14 +28,16 @@
 
 from __future__ import division
 
-from . import base
-from .. import bar, hook
-from ..log_utils import logger
-import six
 import os
+
 import cairocffi
-from ..layout.base import Layout
+import six
+
+from . import base
 from .. import layout as layout_module
+from .. import bar, hook
+from ..layout.base import Layout
+from ..log_utils import logger
 
 
 class CurrentLayout(base._TextBox):

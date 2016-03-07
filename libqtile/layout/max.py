@@ -21,6 +21,7 @@
 
 from .base import _SimpleLayoutBase
 
+
 class Max(_SimpleLayoutBase):
     """Maximized layout
 

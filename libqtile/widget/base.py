@@ -29,12 +29,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.log_utils import logger
-from .. import command, bar, configurable, drawer, confreader
-import six
 import subprocess
 import threading
 import warnings
+
+import six
+from libqtile.log_utils import logger
+
+from .. import bar, command, configurable, confreader, drawer
+
 
 # Each widget class must define which bar orientation(s) it supports by setting
 # these bits in an 'orientations' class attribute. Simply having the attribute

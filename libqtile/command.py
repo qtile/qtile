@@ -20,14 +20,15 @@
 
 import abc
 import inspect
-import traceback
 import os
-import six
 import sys
+import traceback
+
+import six
 
 from . import ipc
-from .utils import get_cache_dir
 from .log_utils import logger
+from .utils import get_cache_dir
 
 
 class CommandError(Exception):

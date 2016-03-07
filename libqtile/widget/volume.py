@@ -35,10 +35,10 @@ import re
 import subprocess
 
 import cairocffi
+from libqtile.log_utils import logger
 
 from . import base
 from .. import bar
-from libqtile.log_utils import logger
 
 __all__ = [
     'Volume',

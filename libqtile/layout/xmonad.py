@@ -35,8 +35,9 @@
 
 from __future__ import division
 
-from .base import _SimpleLayoutBase
 import math
+
+from .base import _SimpleLayoutBase
 
 
 class MonadTall(_SimpleLayoutBase):

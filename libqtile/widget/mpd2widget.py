@@ -1,8 +1,9 @@
-from . import base
-
-from six import u, text_type
 from socket import error as socket_error
-from mpd import MPDClient, ConnectionError, CommandError
+
+from mpd import CommandError, ConnectionError, MPDClient
+from six import text_type, u
+
+from . import base
 
 # Shortcuts
 # TODO: Volume inc/dec support

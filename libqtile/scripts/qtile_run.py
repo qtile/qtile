@@ -22,8 +22,8 @@
     Command-line wrapper to run commands and add rules to new windows
 """
 
-import atexit
 import argparse
+import atexit
 import subprocess
 
 from libqtile import command

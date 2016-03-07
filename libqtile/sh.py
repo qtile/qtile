@@ -27,15 +27,14 @@ import inspect
 import pprint
 import re
 import readline
-import sys
 import struct
-import six
+import sys
 import termios
 
+import six
 from six.moves import input
 
-from . import command
-from . import ipc
+from . import command, ipc
 
 
 def terminalWidth():
