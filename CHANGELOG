@@ -5,9 +5,24 @@ qtile x.x.x, released xxxx-xx-xx:
         - the cache directory changed from ~/.cache to ~/.cache/qtile
         - the prompt widget's history file changed from ~/.qtile_history to
           ~/.cache/qtile/prompt_history
+
+qtile 0.10.5, released 2016-03-06:
+    !!! Python 3.2 support dropped !!!
+    !!! GoogleCalendar widget dropped for KhalCalendar widget !!!
+    !!! qtile-session script removed in favor of qtile script !!!
     * features
+        - new Columns layout, composed of dynamic and configurable columns of
+          windows
+        - new iPython kernel for qsh, called iqsh, see docs for installing
+        - new qsh command `display_kb` to show current key binding
+        - add json interface to IPC server
+        - add commands for resizing MonadTall main panel
         - wlan widget shows when you are disconnected and uses a configurable
           format
+    * bugfixes
+        - fix path handling in PromptWidget
+        - fix KeyboardLayout widget cycling keyboard
+        - properly guard against setting screen to too large screen index
 
 qtile 0.10.4, released 2016-01-19:
     !!! Config breakage !!!
