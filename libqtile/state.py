@@ -29,12 +29,12 @@ class QtileState(object):
         # Note: window state is saved and restored via _NET_WM_STATE, so
         # the only thing we need to restore here is the layout and screen
         # configurations.
-        self.groups = {}
+        self.groups = []
         self.screens = {}
         self.current_screen = 0
 
         for group in qtile.groups:
-            self.groups[group.name] = group.layout.name
+            self.groups.append((group.name, group.layout.name))
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
             if screen == qtile.currentScreen:
@@ -45,11 +45,11 @@ class QtileState(object):
         Rearrange the windows in the specified Qtile object according to this
         QtileState.
         """
-        for (group, layout) in self.groups.items():
+        for (group, layout) in self.groups:
             try:
                 qtile.groupMap[group].layout = layout
             except KeyError:
-                pass  # group missing
+                qtile.addGroup(group, layout)
 
         for (screen, group) in self.screens.items():
             try:
