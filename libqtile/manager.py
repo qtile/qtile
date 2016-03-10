@@ -214,16 +214,16 @@ class Qtile(command.CommandObject):
             hook.fire("startup_once")
         hook.fire("startup")
 
-        self.scan()
-        self.update_net_desktops()
-        hook.subscribe.setgroup(self.update_net_desktops)
-
         if state:
             st = pickle.load(six.BytesIO(state.encode()))
             try:
                 st.apply(self)
             except:
                 logger.exception("failed restoring state")
+
+        self.scan()
+        self.update_net_desktops()
+        hook.subscribe.setgroup(self.update_net_desktops)
 
         self.selection = {
             "PRIMARY": {"owner": None, "selection": ""},
