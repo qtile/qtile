@@ -53,11 +53,13 @@ class Backlight(base.InLoopPollText):
             'maximum brightness in /sys/class/backlight/backlight_name'
         ),
         ('update_interval', .2, 'The delay in seconds between updates'),
+        ('step', 10, 'Percent of backlight every scroll changed')
     ]
 
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(Backlight.defaults)
+        self.future = None
 
     def _load_file(self, name):
         try:
@@ -86,3 +88,22 @@ class Backlight(base.InLoopPollText):
 
         percent = info['brightness'] / info['max']
         return FORMAT.format(percent=percent)
+
+    def change_backlight(self, value):
+        self.call_process(["xbacklight", "-set", str(value)])
+
+    def button_press(self, x, y, button):
+        if self.future and not self.future.done():
+            return
+        info = self._get_info()
+        if info is False:
+            new = now = 100
+        else:
+            new = now = info["brightness"] / info["max"] * 100
+        if button == 5:  # down
+            new = max(now - self.step, 0)
+        elif button == 4:  # up
+            new = min(now + self.step, 100)
+        if new != now:
+            self.future = self.qtile.run_in_executor(self.change_backlight,
+                                                     new)
