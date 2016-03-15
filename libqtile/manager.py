@@ -750,7 +750,7 @@ class Qtile(command.CommandObject):
                     logger.exception("Shutting down due to X connection error %s (%s)" %
                         (error_string, error_code))
                     self.stop()
-                    break
+                    return
 
                 logger.exception("Got an exception in poll loop")
         self.conn.flush()
