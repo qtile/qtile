@@ -676,10 +676,15 @@ class Qtile(command.CommandObject):
             self.mapKey(key)
 
     def get_target_chain(self, ename, e):
-        """
-        Returns a chain of targets that can handle this event. The event will
-        be passed to each target in turn for handling, until one of the
-        handlers returns False or the end of the chain is reached.
+        """Returns a chain of targets that can handle this event
+
+        Finds functions named `handle_X`, either on the window object itself or
+        on the Qtile instance, where X is the event name (e.g.  EnterNotify,
+        ConfigureNotify, etc).
+
+        The event will be passed to each target in turn for handling, until one
+        of the handlers returns False or None, or the end of the chain is
+        reached.
         """
         chain = []
         handler = "handle_%s" % ename
@@ -690,20 +695,23 @@ class Qtile(command.CommandObject):
             "ButtonRelease",
             "KeyPress",
         ]
-        c = None
         if hasattr(e, "window"):
             c = self.windowMap.get(e.window)
         elif hasattr(e, "drawable"):
             c = self.windowMap.get(e.drawable)
         elif ename in eventEvents:
             c = self.windowMap.get(e.event)
+        else:
+            c = None
 
-        if c and hasattr(c, handler):
+        if c is not None and hasattr(c, handler):
             chain.append(getattr(c, handler))
+
         if hasattr(self, handler):
             chain.append(getattr(self, handler))
+
         if not chain:
-            logger.info("Unknown event: %r" % ename)
+            logger.info("Unhandled event: %r" % ename)
         return chain
 
     def _xpoll(self):
