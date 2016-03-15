@@ -106,19 +106,24 @@ class Floating(Layout):
             elif win.fullscreen:
                 win.fullscreen = True
             else:
-                # By default, place window at same offset from top corner
-                new_x = new_screen.x + win.float_x
-                new_y = new_screen.y + win.float_y
+                # catch if the client hasn't been configured
+                try:
+                    # By default, place window at same offset from top corner
+                    new_x = new_screen.x + win.float_x
+                    new_y = new_screen.y + win.float_y
+                except AttributeError:
+                    # this will be handled in .configure()
+                    pass
+                else:
+                    # make sure window isn't off screen left/right...
+                    new_x = min(new_x, new_screen.x + new_screen.width - win.width)
+                    new_x = max(new_x, new_screen.x)
+                    # and up/down
+                    new_y = min(new_y, new_screen.y + new_screen.height - win.height)
+                    new_y = max(new_y, new_screen.y)
 
-                # make sure window isn't off screen left/right...
-                new_x = min(new_x, new_screen.x + new_screen.width - win.width)
-                new_x = max(new_x, new_screen.x)
-                # and up/down
-                new_y = min(new_y, new_screen.y + new_screen.height - win.height)
-                new_y = max(new_y, new_screen.y)
-
-                win.x = new_x
-                win.y = new_y
+                    win.x = new_x
+                    win.y = new_y
             win.group = new_screen.group
 
     def focus_first(self, group):
@@ -173,14 +178,14 @@ class Floating(Layout):
             client.float_y
         except AttributeError:
             # this window hasn't been placed before, let's put it in a sensible spot
-            x = client.x
-            # constrain it to be on the screen
+            x = screen.x + client.x % screen.width
+            # try to get right edge on screen (without moving the left edge off)
             x = min(x, screen.x - client.width)
             x = max(x, screen.x)
             # then update it's position (`.place()` will take care of `.float_x`)
             client.x = x
 
-            y = client.y
+            y = screen.y + client.y % screen.height
             y = min(y, screen.y - client.height)
             y = max(y, screen.y)
             client.y = y
