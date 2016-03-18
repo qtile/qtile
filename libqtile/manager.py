@@ -1602,7 +1602,6 @@ class Qtile(command.CommandObject):
                     self.groupMap[group].cmd_toscreen()
                 except KeyError:
                     logger.info(u"No group named '{0:s}' present.".format(group))
-                    pass
 
         mb = self.widgetMap.get(widget)
         if not mb:
