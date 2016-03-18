@@ -38,8 +38,9 @@ class TestCall(object):
     def __call__(self, val):
         self.val = val
 
+
 def setup():
-    class Dummy:
+    class Dummy(object):
         pass
 
     dummy = Dummy()

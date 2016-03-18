@@ -25,7 +25,7 @@ import six
 import libqtile.utils as utils
 
 
-class Foo:
+class Foo(object):
     ran = False
 
     @utils.LRUCache(2)

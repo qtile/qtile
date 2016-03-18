@@ -32,7 +32,7 @@ from ..utils import Xephyr
 from .layout_utils import assertDimensions, assertFocused, assertFocusPath
 
 
-class VerticalTileConfig:
+class VerticalTileConfig(object):
     auto_fullscreen = True
     main = None
     groups = [

@@ -43,7 +43,8 @@ from nose.plugins.attrib import attr
 from . import utils
 from .utils import Xephyr
 
-class TestConfig:
+
+class TestConfig(object):
     auto_fullscreen = True
     groups = [
         libqtile.config.Group("a"),
