@@ -456,7 +456,7 @@ class Prompt(base._TextBox):
 
     def _highlight_text(self, text):
         color = utils.hex(self.cursor_color)
-        text = '<span foreground="{}">{}</span>'.format(color, text)
+        text = '<span foreground="{0}">{1}</span>'.format(color, text)
         if self.show_cursor:
             text = '<u>{}</u>'.format(text)
         return text
@@ -472,7 +472,7 @@ class Prompt(base._TextBox):
                 for text in (txt1, txt2, txt3):
                     text = pangocffi.markup_escape_text(text)
                 txt2 = self._highlight_text(txt2)
-                self.text = "{}{}{}{}".format(txt1, txt2, txt3, cursor)
+                self.text = "{0}{1}{2}{3}".format(txt1, txt2, txt3, cursor)
             else:
                 self.text = pangocffi.markup_escape_text(self.text)
                 self.text += self._highlight_text(cursor)

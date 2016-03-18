@@ -89,5 +89,5 @@ class Maildir(base.ThreadedPollText):
         a string representation of the given state
         """
         return self.separator.join(
-            "{}: {}".format(*item) for item in state.items()
+            "{0}: {1}".format(*item) for item in state.items()
         )
