@@ -6,6 +6,7 @@ from six.moves.urllib.request import urlopen, Request
 from libqtile.widget import base
 from libqtile.log_utils import logger
 
+
 class GenPollText(base.ThreadedPollText):
     """A generic text widget that polls using poll function to get the text"""
     orientations = base.ORIENTATION_HORIZONTAL
@@ -39,7 +40,9 @@ class GenPollUrl(base.ThreadedPollText):
         base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(GenPollUrl.defaults)
 
-    def fetch(self, url, data=None, headers={}, is_json=True):
+    def fetch(self, url, data=None, headers=None, is_json=True):
+        if headers is None:
+            headers = {}
         req = Request(url, data, headers)
         res = urlopen(req)
         if six.PY3:
