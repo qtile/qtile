@@ -77,7 +77,7 @@ class Drag(object):
     `focus=None` as an argument
     """
     def __init__(self, modifiers, button, *commands, **kwargs):
-        self.start = kwargs.get("start", None)
+        self.start = kwargs.get("start")
         self.focus = kwargs.get("focus", "before")
         self.modifiers = modifiers
         self.button = button

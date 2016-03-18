@@ -108,7 +108,7 @@ class DGroups(object):
         return rule_id
 
     def remove_rule(self, rule_id):
-        rule = self.rules_map.get(rule_id, None)
+        rule = self.rules_map.get(rule_id)
         if rule:
             self.rules.remove(rule)
             del self.rules_map[rule_id]

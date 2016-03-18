@@ -80,8 +80,8 @@ class Mpris2(base._TextBox):
 
         metadata = None
         playbackstatus = None
-        metadata = changed_properties.get('Metadata', None)
-        playbackstatus = changed_properties.get('PlaybackStatus', None)
+        metadata = changed_properties.get('Metadata')
+        playbackstatus = changed_properties.get('PlaybackStatus')
         if metadata:
             self.is_playing = True
             self.displaytext = ' - '.join([metadata.get(x)
