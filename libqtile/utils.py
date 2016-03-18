@@ -129,7 +129,7 @@ def rgb(x):
             (255, 0, 0)
             (255, 0, 0, 0.5)
     """
-    if isinstance(x, tuple) or isinstance(x, list):
+    if isinstance(x, (tuple, list)):
         if len(x) == 4:
             alpha = x[3]
         else:
