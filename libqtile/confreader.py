@@ -80,6 +80,7 @@ class File(object):
             "dgroups_key_binder",
             "dgroups_app_rules",
             "follow_mouse_focus",
+            "focus_on_window_activation",
             "cursor_warp",
             "layouts",
             "floating_layout",

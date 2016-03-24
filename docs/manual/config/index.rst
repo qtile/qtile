@@ -116,6 +116,15 @@ configuration variables that control specific aspects of Qtile's behavior:
       - If a window requests to be fullscreen, it is automatically
         fullscreened. Set this to false if you only want windows to be
         fullscreen if you ask them to be.
+    * - focus_on_window_activation
+      - urgent
+      - Behavior of the _NET_ACTIVATE_WINDOW message sent by applications
+
+        - urgent: urgent flag is set for the window
+
+        - focus: automatically focus the window
+
+        - smart: automatically focus if the window is in the current group
 
 Testing your configuration
 ==========================
