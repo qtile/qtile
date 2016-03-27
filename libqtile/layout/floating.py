@@ -126,9 +126,13 @@ class Floating(Layout):
                     win.y = new_y
             win.group = new_screen.group
 
-    def focus_first(self, group):
-        clients = self.find_clients(group)
-        if group and clients:
+    def focus_first(self, group=None):
+        if group is None:
+            clients = self.clients
+        else:
+            clients = self.find_clients(group)
+
+        if clients:
             return clients[0]
 
     def focus_next(self, win):
@@ -140,9 +144,13 @@ class Floating(Layout):
         if len(clients) > idx + 1:
             return clients[idx + 1]
 
-    def focus_last(self, group):
-        clients = self.find_clients(group)
-        if group and clients:
+    def focus_last(self, group=None):
+        if group is None:
+            clients = self.clients
+        else:
+            clients = self.find_clients(group)
+
+        if clients:
             return clients[-1]
 
     def focus_previous(self, win):

@@ -417,10 +417,10 @@ class _Group(command.CommandObject):
         if self.currentWindow.floating:
             nxt = self.floating_layout.focus_next(self.currentWindow) or \
                 self.layout.focus_first() or \
-                self.floating_layout.focus_first(self)
+                self.floating_layout.focus_first(group=self)
         else:
             nxt = self.layout.focus_next(self.currentWindow) or \
-                self.floating_layout.focus_first(self) or \
+                self.floating_layout.focus_first(group=self) or \
                 self.layout.focus_first()
         self.focus(nxt, True)
 
@@ -430,10 +430,10 @@ class _Group(command.CommandObject):
         if self.currentWindow.floating:
             nxt = self.floating_layout.focus_previous(self.currentWindow) or \
                 self.layout.focus_last() or \
-                self.floating_layout.focus_last(self)
+                self.floating_layout.focus_last(group=self)
         else:
             nxt = self.layout.focus_previous(self.currentWindow) or \
-                self.floating_layout.focus_last(self) or \
+                self.floating_layout.focus_last(group=self) or \
                 self.layout.focus_last()
         self.focus(nxt, True)
 
