@@ -64,6 +64,36 @@ def whereis(program):
     return None
 
 
+class BareConfig:
+    auto_fullscreen = True
+    groups = [
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b"),
+        libqtile.config.Group("c"),
+        libqtile.config.Group("d")
+    ]
+    layouts = [
+                libqtile.layout.stack.Stack(num_stacks=1),
+                libqtile.layout.stack.Stack(num_stacks=2)
+            ]
+    floating_layout = libqtile.layout.floating.Floating()
+    keys = [
+        libqtile.config.Key(
+            ["control"],
+            "k",
+            libqtile.command._Call([("layout", None)], "up")
+        ),
+        libqtile.config.Key(
+            ["control"],
+            "j",
+            libqtile.command._Call([("layout", None)], "down")
+        ),
+    ]
+    mouse = []
+    screens = [libqtile.config.Screen()]
+    main = None
+    follow_mouse_focus = False
+
 class Xephyr(object):
     def __init__(self, xinerama, config, start_qtile=True,
                  randr=False, two_screens=True,

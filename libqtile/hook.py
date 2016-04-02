@@ -68,8 +68,18 @@ class Subscribe(object):
         return self._subscribe("startup_once", func)
 
     def startup(self, func):
-        """Called each time qtile is started (including the first time qtile starts)"""
+        """
+            Called each time qtile is started (including the first time qtile
+            starts).
+        """
         return self._subscribe("startup", func)
+
+    def startup_complete(self, func):
+        """
+            Called each time qtile is started (including the first time qtile
+            starts), after all resources have been initialized.
+        """
+        return self._subscribe("startup_complete", func)
 
     def setgroup(self, func):
         """Called when group is changed"""
