@@ -230,6 +230,7 @@ class Qtile(command.CommandObject):
             "CLIPBOARD": {"owner": None, "selection": ""}
         }
         self.setup_selection()
+        hook.fire("startup_complete")
 
     def setup_selection(self):
         PRIMARY = self.conn.atoms["PRIMARY"]
