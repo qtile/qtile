@@ -94,7 +94,10 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         if width is not None:
             self.layout.width = width
         if line:
-            pad_y = (self.bar.height - self.layout.height) / 2
+            pad_y = [
+                (self.bar.height - self.layout.height - self.borderwidth) / 2,
+                (self.bar.height - self.layout.height + self.borderwidth) / 2
+            ]
         else:
             pad_y = self.padding_y
         framed = self.layout.framed(
