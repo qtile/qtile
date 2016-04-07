@@ -298,12 +298,13 @@ class Qtile(command.CommandObject):
         self._eventloop.remove_signal_handler(signal.SIGTERM)
         self._eventloop.set_exception_handler(None)
 
-        try:
-            from gi.repository import GLib
-            GLib.idle_add(lambda: None)
-            self._eventloop.run_until_complete(self._glib_loop)
-        except ImportError:
-            pass
+        if self._glib_loop:
+            try:
+                from gi.repository import GLib
+                GLib.idle_add(lambda: None)
+                self._eventloop.run_until_complete(self._glib_loop)
+            except ImportError:
+                pass
 
         try:
 
