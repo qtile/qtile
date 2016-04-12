@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import division
+
 from libqtile.log_utils import logger
 from . import base
 import six
@@ -39,13 +41,14 @@ class Net(base.ThreadedPollText):
         # Here we round to 1000 instead of 1024
         # because of round things
         letter = 'B'
-        if b // 1000 > 0:
+        # b is a float, so don't use integer division
+        if int(b / 1000) > 0:
             b /= 1000.0
             letter = 'k'
-        if b // 1000 > 0:
+        if int(b / 1000) > 0:
             b /= 1000.0
             letter = 'M'
-        if b // 1000 > 0:
+        if int(b / 1000) > 0:
             b /= 1000.0
             letter = 'G'
         # I hope no one have more than 999 GB/s
@@ -97,4 +100,4 @@ class Net(base.ThreadedPollText):
             return str_base % (down, down_letter, up, up_letter)
         except Exception as e:
             logger.error('%s: Probably your wlan device is switched off or otherwise not present in your system.',
-                    self.__class__.__name__, str(e))
+                         self.__class__.__name__)

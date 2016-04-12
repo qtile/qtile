@@ -126,8 +126,6 @@ class _CommandTree(six.with_metaclass(abc.ABCMeta)):
         self.selectors = selectors
         self.myselector = myselector
         self.parent = parent
-        if parent:
-            self.call = parent.call
 
     @property
     def path(self):
@@ -145,6 +143,12 @@ class _CommandTree(six.with_metaclass(abc.ABCMeta)):
     @abc.abstractmethod
     def _contains(self):
         pass
+
+    def call(self, selectors, name, *args, **kwargs):
+        if self.parent:
+            self.parent.call()
+        else:
+            raise NotImplementedError()
 
     def __getitem__(self, select):
         if self.myselector:

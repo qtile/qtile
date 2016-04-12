@@ -110,7 +110,7 @@ class Systray(window._Window, base._Widget):
         self.screen = 0
 
     def calculate_length(self):
-        width = sum([i.width for i in self.icons.values()])
+        width = sum(i.width for i in self.icons.values())
         width += self.padding * len(self.icons)
         return width
 

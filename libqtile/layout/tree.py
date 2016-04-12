@@ -32,38 +32,52 @@
 from .base import Layout
 from .. import drawer, hook, window
 
-import six
-
-to_superscript = dict(zip(map(ord, six.u('0123456789')), map(ord, six.u('⁰¹²³⁴⁵⁶⁷⁸⁹'))))
+to_superscript = dict(zip(map(ord, u'0123456789'), map(ord, u'⁰¹²³⁴⁵⁶⁷⁸⁹')))
 
 
 class TreeNode(object):
     def __init__(self):
         self.children = []
+        self.parent = None
         self.expanded = True
+        self._children_top = None
+        self._children_bot = None
 
     def add(self, node, hint=None):
+        """Add a node below this node
+
+        The `hint` is a node to place the new node after in this nodes
+        children.
+        """
         node.parent = self
-        if hint:
+        if hint is not None:
             try:
                 idx = self.children.index(hint)
             except ValueError:
-                self.children.append(node)
+                pass
             else:
                 self.children.insert(idx + 1, node)
-        else:
-            self.children.append(node)
+                return
+        self.children.append(node)
 
     def draw(self, layout, top, level=0):
-        self._children_start = top
-        for i in self.children:
-            top = i.draw(layout, top, level)
-        self._children_stop = top
+        """Draw the node and its children to a layout
+
+        Draws this node to the given layout (presumably a TreeTab), starting
+        from a y-offset of `top` and at the given level.
+        """
+        self._children_top = top
+        if self.expanded:
+            for i in self.children:
+                top = i.draw(layout, top, level)
+        self._children_bot = top
         return top
 
     def button_press(self, x, y):
         """Returns self or sibling which got the click"""
-        if y >= self._children_stop or y < self._children_start:
+        # if we store the locations of each child, it would be possible to do
+        # this without having to traverse the tree...
+        if not (self._children_top <= y < self._children_bot):
             return
         for i in self.children:
             res = i.button_press(x, y)
@@ -71,13 +85,19 @@ class TreeNode(object):
                 return res
 
     def add_superscript(self, title):
+        """Prepend superscript denoting the number of hidden children"""
         if not self.expanded and self.children:
-            return six.u(
+            return u"{:d}".format(
                 len(self.children)
             ).translate(to_superscript).encode('utf-8') + title
         return title
 
     def get_first_window(self):
+        """Find the first Window under this node
+
+        Returns self if this is a `Window`, otherwise finds first `Window` by
+        depth-first search
+        """
         if isinstance(self, Window):
             return self
         for i in self.children:
@@ -86,6 +106,11 @@ class TreeNode(object):
                 return node
 
     def get_last_window(self):
+        """Find the last Window under this node
+
+        Finds last `Window` by depth-first search, otherwise returns self if
+        this is a `Window`.
+        """
         for i in reversed(self.children):
             node = i.get_last_window()
             if node:
@@ -124,29 +149,43 @@ class Root(TreeNode):
     def __init__(self, sections, default_section=None):
         super(Root, self).__init__()
         self.sections = {}
-        for s in sections:
-            self.add_section(s)
+        for section in sections:
+            self.add_section(section)
         if default_section is None:
             self.def_section = self.children[0]
         else:
             self.def_section = self.sections[default_section]
 
     def add(self, win, hint=None):
-        sect = None
+        """Add a new window
+
+        Adds a new `Window` to the tree.  The location of the new node is
+        controlled by looking:
+
+            * `hint` kwarg - place the node next to this node
+            * win.tree_section - place the window in the given section, by name
+            * default section - fallback to default section (first section, if
+              not otherwise set)
+        """
         parent = None
+
         if hint is not None:
             parent = hint.parent
+
         if parent is None:
             sect = getattr(win, 'tree_section', None)
-        if sect is None:
-            parent = self.sections.get(sect)
+            if sect is not None:
+                parent = self.sections.get(sect)
+
         if parent is None:
             parent = self.def_section
+
         node = Window(win)
         parent.add(node, hint=hint)
         return node
 
     def add_section(self, name):
+        """Add a new Section with the given name"""
         if name in self.sections:
             raise ValueError("Duplicate section name")
         node = Section(name)
@@ -155,19 +194,22 @@ class Root(TreeNode):
         self.children.append(node)
 
     def del_section(self, name):
+        """Remove the Section with the given name"""
+        if name not in self.sections:
+            raise ValueError("Section name not found")
+        if len(self.children) == 1:
+            raise ValueError("Can't delete last section")
+
         sec = self.sections[name]
-        idx = self.children.index(sec)
-        if idx == 0:
-            if len(self.children) == 1:
-                raise ValueError("Can't delete last section")
-            else:
-                nsec = self.children[1]
-        else:
-            nsec = self.children[idx - 1]
+        # move the children of the deleted section to the previous section
+        # if delecting the first section, add children to second section
+        idx = min(self.children.index(sec), 1)
+        next_sec = self.children[idx - 1]
+        # delete old section, reparent children to next section
         del self.children[idx]
-        nsec.children.extend(sec.children)
+        next_sec.children.extend(sec.children)
         for i in sec.children:
-            i.parent = nsec
+            i.parent = next_sec
 
 
 class Section(TreeNode):
@@ -176,10 +218,8 @@ class Section(TreeNode):
         self.title = title
 
     def draw(self, layout, top, level=0):
-        layout._layout.font_size = layout.section_fontsize
-        layout._layout.text = self.add_superscript(self.title)
-        layout._layout.colour = layout.section_fg
         del layout._layout.width  # no centering
+        # draw a horizontal line above the section
         layout._drawer.draw_hbar(
             layout.section_fg,
             0,
@@ -187,12 +227,21 @@ class Section(TreeNode):
             top,
             linewidth=1
         )
-        layout._layout.draw(layout.section_left, top + layout.section_top)
+        # draw the section title
+        layout._layout.font_size = layout.section_fontsize
+        layout._layout.text = self.add_superscript(self.title)
+        layout._layout.colour = layout.section_fg
+        layout._layout.draw(
+            offsetx=layout.section_left,
+            offsety=top + layout.section_top
+        )
         top += layout._layout.height + \
             layout.section_top + \
             layout.section_padding
-        if self.expanded:
-            top = super(Section, self).draw(layout, top, level)
+
+        # run the TreeNode draw to draw children (if expanded)
+        top = super(Section, self).draw(layout, top, level)
+
         return top + layout.section_bottom
 
 
@@ -200,9 +249,12 @@ class Window(TreeNode):
     def __init__(self, win):
         super(Window, self).__init__()
         self.window = win
+        self._title_top = None
 
     def draw(self, layout, top, level=0):
-        self._title_start = 0
+        self._title_top = top
+
+        # setup parameters for drawing self
         left = layout.padding_left + level * layout.level_shift
         layout._layout.font_size = layout.fontsize
         layout._layout.text = self.add_superscript(self.window.name)
@@ -214,33 +266,42 @@ class Window(TreeNode):
             bg = layout.inactive_bg
         layout._layout.colour = fg
         layout._layout.width = layout.panel_width - left
+        # get a text frame from the above
         framed = layout._layout.framed(
             layout.border_width,
             bg,
             layout.padding_x,
             layout.padding_y
         )
+        # draw the text frame at the given point
         framed.draw_fill(left, top)
+
         top += framed.height + layout.vspace + layout.border_width
-        if self.expanded:
-            return super(Window, self).draw(layout, top, level + 1)
-        return top
+
+        # run the TreeNode draw to draw children (if expanded)
+        return super(Window, self).draw(layout, top, level + 1)
 
     def button_press(self, x, y):
         """Returns self if clicked on title else returns sibling"""
-        if self._title_start <= y < self._children_start:
+        if self._title_top <= y < self._children_top:
             return self
         return super(Window, self).button_press(x, y)
 
     def remove(self):
-        self.parent.children.remove(self)
-        if len(self.children) == 1:
-            self.parent.add(self.children[0])
-        elif self.children:
+        """Removes this Window
+
+        If this window has children, the first child takes the place of this
+        window, and any remaining children are reparented to that node
+        """
+        if self.children:
             head = self.children[0]
-            self.parent.add(head)
+            # add the first child to our parent, next to ourselves
+            self.parent.add(head, hint=self)
+            # move remaining children to be under the new head
             for i in self.children[1:]:
                 head.add(i)
+
+        self.parent.children.remove(self)
         del self.children
 
 
@@ -279,8 +340,7 @@ class TreeTab(Layout):
         ("panel_width", 150, "Width of the left panel"),
         ("sections", ['Default'], "Foreground color of inactive tab"),
         ("name", "treetab", "Name of this layout."),
-        ("previous_on_rm", False,
-            "Focus previous window on close instead of first."),
+        ("previous_on_rm", False, "Focus previous window on close instead of first."),
     ]
 
     def __init__(self, **config):
@@ -289,6 +349,7 @@ class TreeTab(Layout):
         self._focused = None
         self._panel = None
         self._drawer = None
+        self._layout = None
         self._tree = Root(self.sections)
         self._nodes = {}
 

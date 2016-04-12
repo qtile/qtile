@@ -219,5 +219,5 @@ class LaunchBar(base._Widget):
 
     def calculate_length(self):
         """ Compute the width of the widget according to each icon width. """
-        return sum([self.icons_widths[prg['name']] for prg in self.progs.values()]) \
+        return sum(self.icons_widths[prg['name']] for prg in self.progs.values()) \
             + self.padding * (len(self.progs) + 1)
