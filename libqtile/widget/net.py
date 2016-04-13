@@ -98,6 +98,6 @@ class Net(base.ThreadedPollText):
 
             self.interfaces = new_int
             return str_base % (down, down_letter, up, up_letter)
-        except Exception as e:
+        except Exception:
             logger.error('%s: Probably your wlan device is switched off or otherwise not present in your system.',
                          self.__class__.__name__)
