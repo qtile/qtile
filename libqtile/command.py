@@ -146,7 +146,7 @@ class _CommandTree(six.with_metaclass(abc.ABCMeta)):
 
     def call(self, selectors, name, *args, **kwargs):
         if self.parent:
-            self.parent.call()
+            return self.parent.call(selectors, name, *args, **kwargs)
         else:
             raise NotImplementedError()
 
