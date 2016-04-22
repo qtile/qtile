@@ -1160,7 +1160,7 @@ class Window(_Window):
                 self.group.focus(self)
             else:  # XCB_EWMH_CLIENT_SOURCE_TYPE_OTHER
                 focus_behavior = self.qtile.config.focus_on_window_activation
-                if focus_behavior == "focus" or (focus_behavior == "smart" and self.group.screen):
+                if focus_behavior == "focus" or (focus_behavior == "smart" and self.group.screen and self.group.screen == self.qtile.currentScreen):
                     logger.info("Focusing window")
                     self.qtile.currentScreen.setGroup(self.group)
                     self.group.focus(self)
