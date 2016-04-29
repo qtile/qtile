@@ -25,11 +25,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import pytest
+
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from ..utils import Xephyr
 from .layout_utils import assertDimensions, assertFocusPath
+from ..conftest import no_xinerama
 
 
 class ZoomyConfig:
@@ -47,13 +49,17 @@ class ZoomyConfig:
     screens = []
 
 
-@Xephyr(False, ZoomyConfig())
-def test_zoomy_one(self):
-    self.testWindow('one')
-    assertDimensions(self, 0, 0, 600, 600)
-    self.testWindow('two')
-    assertDimensions(self, 0, 0, 600, 600)
-    self.testWindow('three')
-    assertDimensions(self, 0, 0, 600, 600)
-    assertFocusPath(self, 'two', 'one', 'three')
+zoomy_config = lambda x: \
+    no_xinerama(pytest.mark.parametrize("qtile", [ZoomyConfig], indirect=True)(x))
+
+
+@zoomy_config
+def test_zoomy_one(qtile):
+    qtile.testWindow('one')
+    assertDimensions(qtile, 0, 0, 600, 600)
+    qtile.testWindow('two')
+    assertDimensions(qtile, 0, 0, 600, 600)
+    qtile.testWindow('three')
+    assertDimensions(qtile, 0, 0, 600, 600)
+    assertFocusPath(qtile, 'two', 'one', 'three')
     # TODO(pc) find a way to check size of inactive windows

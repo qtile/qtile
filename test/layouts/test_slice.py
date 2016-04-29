@@ -25,11 +25,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import pytest
+
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from ..utils import Xephyr
 from .layout_utils import assertDimensions, assertFocused, assertFocusPath
+from ..conftest import no_xinerama
 
 
 class SliceConfig:
@@ -55,77 +57,81 @@ class SliceConfig:
     follow_mouse_focus = False
 
 
-@Xephyr(False, SliceConfig())
-def test_no_slice(self):
-    self.testWindow('one')
-    assertDimensions(self, 200, 0, 600, 600)
-    self.testWindow('two')
-    assertDimensions(self, 200, 0, 600, 600)
+slice_config = lambda x: \
+    no_xinerama(pytest.mark.parametrize("qtile", [SliceConfig], indirect=True)(x))
 
 
-@Xephyr(False, SliceConfig())
-def test_slice_first(self):
-    self.testWindow('slice')
-    assertDimensions(self, 0, 0, 200, 600)
-    self.testWindow('two')
-    assertDimensions(self, 200, 0, 600, 600)
+@slice_config
+def test_no_slice(qtile):
+    qtile.testWindow('one')
+    assertDimensions(qtile, 200, 0, 600, 600)
+    qtile.testWindow('two')
+    assertDimensions(qtile, 200, 0, 600, 600)
 
 
-@Xephyr(False, SliceConfig())
-def test_slice_last(self):
-    self.testWindow('one')
-    assertDimensions(self, 200, 0, 600, 600)
-    self.testWindow('slice')
-    assertDimensions(self, 0, 0, 200, 600)
+@slice_config
+def test_slice_first(qtile):
+    qtile.testWindow('slice')
+    assertDimensions(qtile, 0, 0, 200, 600)
+    qtile.testWindow('two')
+    assertDimensions(qtile, 200, 0, 600, 600)
 
 
-@Xephyr(False, SliceConfig())
-def test_slice_focus(self):
-    one = self.testWindow('one')
-    assertFocused(self, 'one')
-    two = self.testWindow('two')
-    assertFocused(self, 'two')
-    slice = self.testWindow('slice')
-    assertFocused(self, 'slice')
-    assertFocusPath(self, 'slice')
-    three = self.testWindow('three')
-    assertFocusPath(self, 'slice', 'three')
-    self.kill(two)
-    assertFocusPath(self, 'slice', 'one')
-    self.kill(slice)
-    assertFocusPath(self, 'one')
-    slice = self.testWindow('slice')
-    assertFocusPath(self, 'one', 'slice')
+@slice_config
+def test_slice_last(qtile):
+    qtile.testWindow('one')
+    assertDimensions(qtile, 200, 0, 600, 600)
+    qtile.testWindow('slice')
+    assertDimensions(qtile, 0, 0, 200, 600)
 
 
-@Xephyr(False, SliceConfig())
-def test_all_slices(self):
-    self.testWindow('slice')  # left
-    assertDimensions(self, 0, 0, 200, 600)
-    self.c.next_layout()  # right
-    assertDimensions(self, 600, 0, 200, 600)
-    self.c.next_layout()  # top
-    assertDimensions(self, 0, 0, 800, 200)
-    self.c.next_layout()  # bottom
-    assertDimensions(self, 0, 400, 800, 200)
-    self.c.next_layout()  # left again
-    self.testWindow('one')
-    assertDimensions(self, 200, 0, 600, 600)
-    self.c.next_layout()  # right
-    assertDimensions(self, 0, 0, 600, 600)
-    self.c.next_layout()  # top
-    assertDimensions(self, 0, 200, 800, 400)
-    self.c.next_layout()  # bottom
-    assertDimensions(self, 0, 0, 800, 400)
+@slice_config
+def test_slice_focus(qtile):
+    one = qtile.testWindow('one')
+    assertFocused(qtile, 'one')
+    two = qtile.testWindow('two')
+    assertFocused(qtile, 'two')
+    slice = qtile.testWindow('slice')
+    assertFocused(qtile, 'slice')
+    assertFocusPath(qtile, 'slice')
+    three = qtile.testWindow('three')
+    assertFocusPath(qtile, 'slice', 'three')
+    qtile.kill_window(two)
+    assertFocusPath(qtile, 'slice', 'one')
+    qtile.kill_window(slice)
+    assertFocusPath(qtile, 'one')
+    slice = qtile.testWindow('slice')
+    assertFocusPath(qtile, 'one', 'slice')
 
 
-@Xephyr(False, SliceConfig())
-def test_command_propagation(self):
-    self.testWindow('slice')
-    self.testWindow('one')
-    self.testWindow('two')
-    info = self.c.layout.info()
+@slice_config
+def test_all_slices(qtile):
+    qtile.testWindow('slice')  # left
+    assertDimensions(qtile, 0, 0, 200, 600)
+    qtile.c.next_layout()  # right
+    assertDimensions(qtile, 600, 0, 200, 600)
+    qtile.c.next_layout()  # top
+    assertDimensions(qtile, 0, 0, 800, 200)
+    qtile.c.next_layout()  # bottom
+    assertDimensions(qtile, 0, 400, 800, 200)
+    qtile.c.next_layout()  # left again
+    qtile.testWindow('one')
+    assertDimensions(qtile, 200, 0, 600, 600)
+    qtile.c.next_layout()  # right
+    assertDimensions(qtile, 0, 0, 600, 600)
+    qtile.c.next_layout()  # top
+    assertDimensions(qtile, 0, 200, 800, 400)
+    qtile.c.next_layout()  # bottom
+    assertDimensions(qtile, 0, 0, 800, 400)
+
+
+@slice_config
+def test_command_propagation(qtile):
+    qtile.testWindow('slice')
+    qtile.testWindow('one')
+    qtile.testWindow('two')
+    info = qtile.c.layout.info()
     assert info['name'] == 'slice', info['name']
-    org_height = self.c.window.info()['height']
-    self.c.layout.toggle_split()
-    assert self.c.window.info()['height'] != org_height
+    org_height = qtile.c.window.info()['height']
+    qtile.c.layout.toggle_split()
+    assert qtile.c.window.info()['height'] != org_height

@@ -25,11 +25,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import pytest
+
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from ..utils import Xephyr
 from .layout_utils import assertDimensions, assertFocused, assertFocusPath
+from .layout_utils import assertDimensions
+from ..conftest import no_xinerama
 
 
 class VerticalTileConfig(object):
@@ -50,22 +53,26 @@ class VerticalTileConfig(object):
     screens = []
 
 
-@Xephyr(False, VerticalTileConfig())
-def test_verticaltile_simple(self):
-    self.testWindow("one")
-    assertDimensions(self, 0, 0, 800, 600)
-    self.testWindow("two")
-    assertDimensions(self, 0, 300, 798, 298)
-    self.testWindow("three")
-    assertDimensions(self, 0, 400, 798, 198)
+verticaltile_config = lambda x: \
+    no_xinerama(pytest.mark.parametrize("qtile", [VerticalTileConfig], indirect=True)(x))
 
 
-@Xephyr(False, VerticalTileConfig())
-def test_verticaltile_maximize(self):
-    self.testWindow("one")
-    assertDimensions(self, 0, 0, 800, 600)
-    self.testWindow("two")
-    assertDimensions(self, 0, 300, 798, 298)
+@verticaltile_config
+def test_verticaltile_simple(qtile):
+    qtile.testWindow("one")
+    assertDimensions(qtile, 0, 0, 800, 600)
+    qtile.testWindow("two")
+    assertDimensions(qtile, 0, 300, 798, 298)
+    qtile.testWindow("three")
+    assertDimensions(qtile, 0, 400, 798, 198)
+
+
+@verticaltile_config
+def test_verticaltile_maximize(qtile):
+    qtile.testWindow("one")
+    assertDimensions(qtile, 0, 0, 800, 600)
+    qtile.testWindow("two")
+    assertDimensions(qtile, 0, 300, 798, 298)
     # Maximize the bottom layout, taking 75% of space
-    self.c.layout.maximize()
-    assertDimensions(self, 0, 150, 798, 448)
+    qtile.c.layout.maximize()
+    assertDimensions(qtile, 0, 150, 798, 448)

@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import pytest
 from multiprocessing import Value
 
 import libqtile.log_utils
@@ -28,15 +29,13 @@ import libqtile.manager
 import libqtile.utils
 import libqtile.hook
 import logging
-from nose.tools import with_setup, raises
 
-from .utils import Xephyr
-from .utils import BareConfig
+from .conftest import BareConfig
 
 # TODO: more tests required.
 # 1. Check all hooks that can be fired
 
-class TestCall(object):
+class Call(object):
     def __init__(self, val):
         self.val = val
 
@@ -44,7 +43,8 @@ class TestCall(object):
         self.val = val
 
 
-def setup():
+@pytest.yield_fixture
+def hook_fixture():
     class Dummy(object):
         pass
 
@@ -52,36 +52,36 @@ def setup():
     libqtile.log_utils.init_log(logging.CRITICAL)
     libqtile.hook.init(dummy)
 
+    yield
 
-def teardown():
     libqtile.hook.clear()
 
 
-@raises(libqtile.utils.QtileError)
 def test_cannot_fire_unknown_event():
-    libqtile.hook.fire("unknown")
+    with pytest.raises(libqtile.utils.QtileError):
+        libqtile.hook.fire("unknown")
 
 
-@with_setup(setup, teardown)
+@pytest.mark.usefixtures("hook_fixture")
 def test_hook_calls_subscriber():
-    test = TestCall(0)
+    test = Call(0)
     libqtile.manager.hook.subscribe.group_window_add(test)
     libqtile.manager.hook.fire("group_window_add", 8)
     assert test.val == 8
 
 
-@with_setup(setup, teardown)
+@pytest.mark.usefixtures("hook_fixture")
 def test_subscribers_can_be_added_removed():
-    test = TestCall(0)
+    test = Call(0)
     libqtile.manager.hook.subscribe.group_window_add(test)
     assert libqtile.manager.hook.subscriptions
     libqtile.manager.hook.clear()
     assert not libqtile.manager.hook.subscriptions
 
 
-@with_setup(setup, teardown)
+@pytest.mark.usefixtures("hook_fixture")
 def test_can_unsubscribe_from_hook():
-    test = TestCall(0)
+    test = Call(0)
 
     libqtile.manager.hook.subscribe.group_window_add(test)
     libqtile.manager.hook.fire("group_window_add", 3)
@@ -91,8 +91,9 @@ def test_can_unsubscribe_from_hook():
     libqtile.manager.hook.fire("group_window_add", 4)
     assert test.val == 3
 
-@Xephyr(True, BareConfig(), False)
-def test_can_subscribe_to_startup_hooks(self):
+def test_can_subscribe_to_startup_hooks(qtile_nospawn):
+    config = BareConfig
+    self = qtile_nospawn
 
     self.startup_once_calls = Value('i', 0)
     self.startup_calls = Value('i', 0)
@@ -111,7 +112,7 @@ def test_can_subscribe_to_startup_hooks(self):
     libqtile.manager.hook.subscribe.startup(inc_startup_calls)
     libqtile.manager.hook.subscribe.startup_complete(inc_startup_complete_calls)
 
-    self.startQtile(self.config)
+    self.start(config)
     self.start_qtile = True
     assert self.startup_once_calls.value == 1
     assert self.startup_calls.value == 1

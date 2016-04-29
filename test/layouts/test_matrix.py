@@ -25,10 +25,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import pytest
+
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from ..utils import Xephyr
+from ..conftest import no_xinerama
 
 
 class MatrixConfig:
@@ -49,53 +51,57 @@ class MatrixConfig:
     screens = []
 
 
-@Xephyr(False, MatrixConfig())
-def test_matrix_simple(self):
-    self.testWindow("one")
-    assert self.c.layout.info()["rows"] == [["one"]]
-    self.testWindow("two")
-    assert self.c.layout.info()["rows"] == [["one", "two"]]
-    self.testWindow("three")
-    assert self.c.layout.info()["rows"] == [["one", "two"],
+matrix_config = lambda x: \
+    no_xinerama(pytest.mark.parametrize("qtile", [MatrixConfig], indirect=True)(x))
+
+
+@matrix_config
+def test_matrix_simple(qtile):
+    qtile.testWindow("one")
+    assert qtile.c.layout.info()["rows"] == [["one"]]
+    qtile.testWindow("two")
+    assert qtile.c.layout.info()["rows"] == [["one", "two"]]
+    qtile.testWindow("three")
+    assert qtile.c.layout.info()["rows"] == [["one", "two"],
                                             ["three"]]
 
 
-@Xephyr(False, MatrixConfig())
-def test_matrix_navigation(self):
-    self.testWindow("one")
-    self.testWindow("two")
-    self.testWindow("three")
-    self.testWindow("four")
-    self.testWindow("five")
-    self.c.layout.right()
-    assert self.c.layout.info()["current_window"] == (0, 2)
-    self.c.layout.up()
-    assert self.c.layout.info()["current_window"] == (0, 1)
-    self.c.layout.up()
-    assert self.c.layout.info()["current_window"] == (0, 0)
-    self.c.layout.up()
-    assert self.c.layout.info()["current_window"] == (0, 2)
-    self.c.layout.down()
-    assert self.c.layout.info()["current_window"] == (0, 0)
-    self.c.layout.down()
-    assert self.c.layout.info()["current_window"] == (0, 1)
-    self.c.layout.right()
-    assert self.c.layout.info()["current_window"] == (1, 1)
-    self.c.layout.right()
-    assert self.c.layout.info()["current_window"] == (0, 1)
+@matrix_config
+def test_matrix_navigation(qtile):
+    qtile.testWindow("one")
+    qtile.testWindow("two")
+    qtile.testWindow("three")
+    qtile.testWindow("four")
+    qtile.testWindow("five")
+    qtile.c.layout.right()
+    assert qtile.c.layout.info()["current_window"] == (0, 2)
+    qtile.c.layout.up()
+    assert qtile.c.layout.info()["current_window"] == (0, 1)
+    qtile.c.layout.up()
+    assert qtile.c.layout.info()["current_window"] == (0, 0)
+    qtile.c.layout.up()
+    assert qtile.c.layout.info()["current_window"] == (0, 2)
+    qtile.c.layout.down()
+    assert qtile.c.layout.info()["current_window"] == (0, 0)
+    qtile.c.layout.down()
+    assert qtile.c.layout.info()["current_window"] == (0, 1)
+    qtile.c.layout.right()
+    assert qtile.c.layout.info()["current_window"] == (1, 1)
+    qtile.c.layout.right()
+    assert qtile.c.layout.info()["current_window"] == (0, 1)
 
 
-@Xephyr(False, MatrixConfig())
-def test_matrix_add_remove_columns(self):
-    self.testWindow("one")
-    self.testWindow("two")
-    self.testWindow("three")
-    self.testWindow("four")
-    self.testWindow("five")
-    self.c.layout.add()
-    assert self.c.layout.info()["rows"] == [["one", "two", "three"],
+@matrix_config
+def test_matrix_add_remove_columns(qtile):
+    qtile.testWindow("one")
+    qtile.testWindow("two")
+    qtile.testWindow("three")
+    qtile.testWindow("four")
+    qtile.testWindow("five")
+    qtile.c.layout.add()
+    assert qtile.c.layout.info()["rows"] == [["one", "two", "three"],
                                             ["four", "five"]]
-    self.c.layout.delete()
-    assert self.c.layout.info()["rows"] == [["one", "two"],
+    qtile.c.layout.delete()
+    assert qtile.c.layout.info()["rows"] == [["one", "two"],
                                             ["three", "four"],
                                             ["five"]]

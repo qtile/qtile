@@ -25,10 +25,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import pytest
+
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from ..utils import Xephyr
+from ..conftest import no_xinerama
 
 
 class TileConfig:
@@ -51,64 +53,68 @@ class TileConfig:
     follow_mouse_focus = False
 
 
-@Xephyr(False, TileConfig())
-def test_tile_updown(self):
-    self.testWindow("one")
-    self.testWindow("two")
-    self.testWindow("three")
-    assert self.c.layout.info()["clients"] == ["three", "two", "one"]
-    self.c.layout.down()
-    assert self.c.layout.info()["clients"] == ["two", "one", "three"]
-    self.c.layout.up()
-    assert self.c.layout.info()["clients"] == ["three", "two", "one"]
+tile_config = lambda x: \
+    no_xinerama(pytest.mark.parametrize("qtile", [TileConfig], indirect=True)(x))
 
 
-@Xephyr(False, TileConfig())
-def test_tile_nextprev(self):
-    self.testWindow("one")
-    self.testWindow("two")
-    self.testWindow("three")
-
-    assert self.c.layout.info()["clients"] == ["three", "two", "one"]
-    assert self.c.groups()["a"]["focus"] == "three"
-
-    self.c.layout.next()
-    assert self.c.groups()["a"]["focus"] == "two"
-
-    self.c.layout.previous()
-    assert self.c.groups()["a"]["focus"] == "three"
-
-    self.c.layout.previous()
-    assert self.c.groups()["a"]["focus"] == "one"
-
-    self.c.layout.next()
-    self.c.layout.next()
-    self.c.layout.next()
-    assert self.c.groups()["a"]["focus"] == "one"
+@tile_config
+def test_tile_updown(qtile):
+    qtile.testWindow("one")
+    qtile.testWindow("two")
+    qtile.testWindow("three")
+    assert qtile.c.layout.info()["clients"] == ["three", "two", "one"]
+    qtile.c.layout.down()
+    assert qtile.c.layout.info()["clients"] == ["two", "one", "three"]
+    qtile.c.layout.up()
+    assert qtile.c.layout.info()["clients"] == ["three", "two", "one"]
 
 
-@Xephyr(False, TileConfig())
-def test_tile_master_and_slave(self):
-    self.testWindow("one")
-    self.testWindow("two")
-    self.testWindow("three")
+@tile_config
+def test_tile_nextprev(qtile):
+    qtile.testWindow("one")
+    qtile.testWindow("two")
+    qtile.testWindow("three")
 
-    assert self.c.layout.info()["master"] == ["three"]
-    assert self.c.layout.info()["slave"] == ["two", "one"]
+    assert qtile.c.layout.info()["clients"] == ["three", "two", "one"]
+    assert qtile.c.groups()["a"]["focus"] == "three"
 
-    self.c.next_layout()
-    assert self.c.layout.info()["master"] == ["three", "two"]
-    assert self.c.layout.info()["slave"] == ["one"]
+    qtile.c.layout.next()
+    assert qtile.c.groups()["a"]["focus"] == "two"
+
+    qtile.c.layout.previous()
+    assert qtile.c.groups()["a"]["focus"] == "three"
+
+    qtile.c.layout.previous()
+    assert qtile.c.groups()["a"]["focus"] == "one"
+
+    qtile.c.layout.next()
+    qtile.c.layout.next()
+    qtile.c.layout.next()
+    assert qtile.c.groups()["a"]["focus"] == "one"
 
 
-@Xephyr(False, TileConfig())
-def test_tile_remove(self):
-    one = self.testWindow("one")
-    self.testWindow("two")
-    three = self.testWindow("three")
+@tile_config
+def test_tile_master_and_slave(qtile):
+    qtile.testWindow("one")
+    qtile.testWindow("two")
+    qtile.testWindow("three")
 
-    assert self.c.layout.info()["master"] == ["three"]
-    self.kill(one)
-    assert self.c.layout.info()["master"] == ["three"]
-    self.kill(three)
-    assert self.c.layout.info()["master"] == ["two"]
+    assert qtile.c.layout.info()["master"] == ["three"]
+    assert qtile.c.layout.info()["slave"] == ["two", "one"]
+
+    qtile.c.next_layout()
+    assert qtile.c.layout.info()["master"] == ["three", "two"]
+    assert qtile.c.layout.info()["slave"] == ["one"]
+
+
+@tile_config
+def test_tile_remove(qtile):
+    one = qtile.testWindow("one")
+    qtile.testWindow("two")
+    three = qtile.testWindow("three")
+
+    assert qtile.c.layout.info()["master"] == ["three"]
+    qtile.kill_window(one)
+    assert qtile.c.layout.info()["master"] == ["three"]
+    qtile.kill_window(three)
+    assert qtile.c.layout.info()["master"] == ["two"]

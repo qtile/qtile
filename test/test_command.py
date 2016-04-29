@@ -21,6 +21,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import pytest
+
 import libqtile
 import libqtile.confreader
 import libqtile.manager
@@ -28,8 +30,6 @@ import libqtile.config
 import libqtile.layout
 import libqtile.bar
 import libqtile.widget
-from .utils import Xephyr
-from nose.tools import assert_raises
 
 
 class CallConfig(object):
@@ -67,15 +67,18 @@ class CallConfig(object):
     auto_fullscreen = True
 
 
-@Xephyr(True, CallConfig())
-def test_layout_filter(self):
-    self.testWindow("one")
-    self.testWindow("two")
-    assert self.c.groups()["a"]["focus"] == "two"
-    self.c.simulate_keypress(["control"], "j")
-    assert self.c.groups()["a"]["focus"] == "one"
-    self.c.simulate_keypress(["control"], "k")
-    assert self.c.groups()["a"]["focus"] == "two"
+call_config = pytest.mark.parametrize("qtile", [CallConfig], indirect=True)
+
+
+@call_config
+def test_layout_filter(qtile):
+    qtile.testWindow("one")
+    qtile.testWindow("two")
+    assert qtile.c.groups()["a"]["focus"] == "two"
+    qtile.c.simulate_keypress(["control"], "j")
+    assert qtile.c.groups()["a"]["focus"] == "one"
+    qtile.c.simulate_keypress(["control"], "k")
+    assert qtile.c.groups()["a"]["focus"] == "two"
 
 
 class TestCommands(libqtile.command.CommandObject):
@@ -192,190 +195,212 @@ class ServerConfig(object):
     main = None
 
 
-@Xephyr(True, ServerConfig())
-def test_cmd_commands(self):
-    assert self.c.commands()
-    assert self.c.layout.commands()
-    assert self.c.screen.bar["bottom"].commands()
+server_config = pytest.mark.parametrize("qtile", [ServerConfig], indirect=True)
 
 
-@Xephyr(True, ServerConfig())
-def test_call_unknown(self):
-    assert_raises(libqtile.command.CommandError, self.c.nonexistent)
-    assert_raises(libqtile.command.CommandError, self.c.layout.nonexistent)
+@server_config
+def test_cmd_commands(qtile):
+    assert qtile.c.commands()
+    assert qtile.c.layout.commands()
+    assert qtile.c.screen.bar["bottom"].commands()
 
 
-@Xephyr(True, ServerConfig())
-def test_items_qtile(self):
-    v = self.c.items("group")
+@server_config
+def test_call_unknown(qtile):
+    with pytest.raises(libqtile.command.CommandError):
+        qtile.c.nonexistent()
+
+    with pytest.raises(libqtile.command.CommandError):
+        qtile.c.layout.nonexistent()
+
+
+@server_config
+def test_items_qtile(qtile):
+    v = qtile.c.items("group")
     assert v[0]
     assert sorted(v[1]) == ["a", "b", "c"]
 
-    assert self.c.items("layout") == (True, [0, 1, 2])
+    assert qtile.c.items("layout") == (True, [0, 1, 2])
 
-    v = self.c.items("widget")
+    v = qtile.c.items("widget")
     assert not v[0]
     assert sorted(v[1]) == ['one', 'two']
 
-    assert self.c.items("bar") == (False, ["bottom"])
-    t, lst = self.c.items("window")
+    assert qtile.c.items("bar") == (False, ["bottom"])
+    t, lst = qtile.c.items("window")
     assert t
     assert len(lst) == 2
-    assert self.c.window[lst[0]]
-    assert self.c.items("screen") == (True, [0, 1])
+    assert qtile.c.window[lst[0]]
+    assert qtile.c.items("screen") == (True, [0, 1])
 
 
-@Xephyr(True, ServerConfig())
-def test_select_qtile(self):
-    assert self.c.foo.selectors == []
-    assert self.c.layout.info()["group"] == "a"
-    assert len(self.c.layout.info()["stacks"]) == 1
-    assert len(self.c.layout[2].info()["stacks"]) == 3
-    assert_raises(libqtile.command.CommandError, self.c.layout[99].info)
+@server_config
+def test_select_qtile(qtile):
+    assert qtile.c.foo.selectors == []
+    assert qtile.c.layout.info()["group"] == "a"
+    assert len(qtile.c.layout.info()["stacks"]) == 1
+    assert len(qtile.c.layout[2].info()["stacks"]) == 3
+    with pytest.raises(libqtile.command.CommandError):
+        qtile.c.layout[99].info()
 
-    assert self.c.group.info()["name"] == "a"
-    assert self.c.group["c"].info()["name"] == "c"
-    assert_raises(
-        libqtile.command.CommandError, self.c.group["nonexistent"].info)
+    assert qtile.c.group.info()["name"] == "a"
+    assert qtile.c.group["c"].info()["name"] == "c"
+    with pytest.raises(libqtile.command.CommandError):
+        qtile.c.group["nonexistent"].info()
 
-    assert self.c.widget["one"].info()["name"] == "one"
-    assert_raises(libqtile.command.CommandError, self.c.widget.info)
+    assert qtile.c.widget["one"].info()["name"] == "one"
+    with pytest.raises(libqtile.command.CommandError):
+        qtile.c.widget.info()
 
-    assert self.c.bar["bottom"].info()["position"] == "bottom"
+    assert qtile.c.bar["bottom"].info()["position"] == "bottom"
 
-    win = self.testWindow("one")
-    wid = self.c.window.info()["id"]
-    assert self.c.window[wid].info()["id"] == wid
+    win = qtile.testWindow("one")
+    wid = qtile.c.window.info()["id"]
+    assert qtile.c.window[wid].info()["id"] == wid
 
-    assert self.c.screen.info()["index"] == 0
-    assert self.c.screen[1].info()["index"] == 1
-    assert_raises(libqtile.command.CommandError, self.c.screen[22].info)
-    assert_raises(libqtile.command.CommandError, self.c.screen["foo"].info)
+    assert qtile.c.screen.info()["index"] == 0
+    assert qtile.c.screen[1].info()["index"] == 1
+    with pytest.raises(libqtile.command.CommandError):
+        qtile.c.screen[22].info()
+    with pytest.raises(libqtile.command.CommandError):
+        qtile.c.screen["foo"].info()
 
 
-@Xephyr(True, ServerConfig())
-def test_items_group(self):
-    g = self.c.group
+@server_config
+def test_items_group(qtile):
+    g = qtile.c.group
     assert g.items("layout") == (True, [0, 1, 2])
 
-    win = self.testWindow("test")
-    wid = self.c.window.info()["id"]
+    win = qtile.testWindow("test")
+    wid = qtile.c.window.info()["id"]
     assert g.items("window") == (True, [wid])
 
     assert g.items("screen") == (True, None)
 
 
-@Xephyr(True, ServerConfig())
-def test_select_group(self):
-    g = self.c.group
+@server_config
+def test_select_group(qtile):
+    g = qtile.c.group
     assert g.layout.info()["group"] == "a"
     assert len(g.layout.info()["stacks"]) == 1
     assert len(g.layout[2].info()["stacks"]) == 3
 
-    assert_raises(libqtile.command.CommandError, self.c.group.window.info)
-    win = self.testWindow("test")
-    wid = self.c.window.info()["id"]
+    with pytest.raises(libqtile.command.CommandError):
+        qtile.c.group.window.info()
+    win = qtile.testWindow("test")
+    wid = qtile.c.window.info()["id"]
 
     assert g.window.info()["id"] == wid
     assert g.window[wid].info()["id"] == wid
-    assert_raises(libqtile.command.CommandError, g.window["foo"].info)
+    with pytest.raises(libqtile.command.CommandError):
+        g.window["foo"].info()
 
     assert g.screen.info()["index"] == 0
     assert g["b"].screen.info()["index"] == 1
-    assert_raises(libqtile.command.CommandError, g["b"].screen[0].info)
+    with pytest.raises(libqtile.command.CommandError):
+        g["b"].screen[0].info()
 
 
-@Xephyr(True, ServerConfig())
-def test_items_screen(self):
-    s = self.c.screen
+@server_config
+def test_items_screen(qtile):
+    s = qtile.c.screen
     assert s.items("layout") == (True, [0, 1, 2])
 
-    win = self.testWindow("test")
-    wid = self.c.window.info()["id"]
+    win = qtile.testWindow("test")
+    wid = qtile.c.window.info()["id"]
     assert s.items("window") == (True, [wid])
 
     assert s.items("bar") == (False, ["bottom"])
 
 
-@Xephyr(True, ServerConfig())
-def test_select_screen(self):
-    s = self.c.screen
+@server_config
+def test_select_screen(qtile):
+    s = qtile.c.screen
     assert s.layout.info()["group"] == "a"
     assert len(s.layout.info()["stacks"]) == 1
     assert len(s.layout[2].info()["stacks"]) == 3
 
-    assert_raises(libqtile.command.CommandError, self.c.window.info)
-    assert_raises(libqtile.command.CommandError, self.c.window[2].info)
-    win = self.testWindow("test")
-    wid = self.c.window.info()["id"]
+    with pytest.raises(libqtile.command.CommandError):
+        qtile.c.window.info()
+    with pytest.raises(libqtile.command.CommandError):
+        qtile.c.window[2].info()
+    win = qtile.testWindow("test")
+    wid = qtile.c.window.info()["id"]
     assert s.window.info()["id"] == wid
     assert s.window[wid].info()["id"] == wid
 
-    assert_raises(libqtile.command.CommandError, s.bar.info)
-    assert_raises(libqtile.command.CommandError, s.bar["top"].info)
+    with pytest.raises(libqtile.command.CommandError):
+        s.bar.info()
+    with pytest.raises(libqtile.command.CommandError):
+        s.bar["top"].info()
     assert s.bar["bottom"].info()["position"] == "bottom"
 
 
-@Xephyr(True, ServerConfig())
-def test_items_bar(self):
-    assert self.c.bar["bottom"].items("screen") == (True, None)
+@server_config
+def test_items_bar(qtile):
+    assert qtile.c.bar["bottom"].items("screen") == (True, None)
 
 
-@Xephyr(True, ServerConfig())
-def test_select_bar(self):
-    assert self.c.screen[1].bar["bottom"].screen.info()["index"] == 1
-    b = self.c.bar
+@server_config
+def test_select_bar(qtile):
+    assert qtile.c.screen[1].bar["bottom"].screen.info()["index"] == 1
+    b = qtile.c.bar
     assert b["bottom"].screen.info()["index"] == 0
-    assert_raises(libqtile.command.CommandError, b.screen.info)
+    with pytest.raises(libqtile.command.CommandError):
+        b.screen.info()
+
+@server_config
+def test_items_layout(qtile):
+    assert qtile.c.layout.items("screen") == (True, None)
+    assert qtile.c.layout.items("group") == (True, None)
 
 
-@Xephyr(True, ServerConfig())
-def test_items_layout(self):
-    assert self.c.layout.items("screen") == (True, None)
-    assert self.c.layout.items("group") == (True, None)
+@server_config
+def test_select_layout(qtile):
+    assert qtile.c.layout.screen.info()["index"] == 0
+    with pytest.raises(libqtile.command.CommandError):
+        qtile.c.layout.screen[0].info()
+
+    assert qtile.c.layout.group.info()["name"] == "a"
+    with pytest.raises(libqtile.command.CommandError):
+        qtile.c.layout.group["a"].info()
 
 
-@Xephyr(True, ServerConfig())
-def test_select_layout(self):
-    assert self.c.layout.screen.info()["index"] == 0
-    assert_raises(libqtile.command.CommandError, self.c.layout.screen[0].info)
+@server_config
+def test_items_window(qtile):
+    win = qtile.testWindow("test")
+    wid = qtile.c.window.info()["id"]
 
-    assert self.c.layout.group.info()["name"] == "a"
-    assert_raises(libqtile.command.CommandError, self.c.layout.group["a"].info)
-
-
-@Xephyr(True, ServerConfig())
-def test_items_window(self):
-    win = self.testWindow("test")
-    wid = self.c.window.info()["id"]
-
-    assert self.c.window.items("group") == (True, None)
-    assert self.c.window.items("layout") == (True, [0, 1, 2])
-    assert self.c.window.items("screen") == (True, None)
+    assert qtile.c.window.items("group") == (True, None)
+    assert qtile.c.window.items("layout") == (True, [0, 1, 2])
+    assert qtile.c.window.items("screen") == (True, None)
 
 
-@Xephyr(True, ServerConfig())
-def test_select_window(self):
-    win = self.testWindow("test")
-    wid = self.c.window.info()["id"]
+@server_config
+def test_select_window(qtile):
+    win = qtile.testWindow("test")
+    wid = qtile.c.window.info()["id"]
 
-    assert self.c.window.group.info()["name"] == "a"
-    assert_raises(libqtile.command.CommandError, self.c.window.group["a"].info)
+    assert qtile.c.window.group.info()["name"] == "a"
+    with pytest.raises(libqtile.command.CommandError):
+        qtile.c.window.group["a"].info()
 
-    assert len(self.c.window.layout.info()["stacks"]) == 1
-    assert len(self.c.window.layout[1].info()["stacks"]) == 2
+    assert len(qtile.c.window.layout.info()["stacks"]) == 1
+    assert len(qtile.c.window.layout[1].info()["stacks"]) == 2
 
-    assert self.c.window.screen.info()["index"] == 0
-    assert_raises(libqtile.command.CommandError, self.c.window.screen[0].info)
-
-
-@Xephyr(True, ServerConfig())
-def test_items_widget(self):
-    assert self.c.widget["one"].items("bar") == (True, None)
+    assert qtile.c.window.screen.info()["index"] == 0
+    with pytest.raises(libqtile.command.CommandError):
+        qtile.c.window.screen[0].info()
 
 
-@Xephyr(True, ServerConfig())
-def test_select_widget(self):
-    w = self.c.widget["one"]
+@server_config
+def test_items_widget(qtile):
+    assert qtile.c.widget["one"].items("bar") == (True, None)
+
+
+@server_config
+def test_select_widget(qtile):
+    w = qtile.c.widget["one"]
     assert w.bar.info()["position"] == "bottom"
-    assert_raises(libqtile.command.CommandError, w.bar["bottom"].info)
+    with pytest.raises(libqtile.command.CommandError):
+        w.bar["bottom"].info()

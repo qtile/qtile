@@ -25,10 +25,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import pytest
+
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from ..utils import Xephyr
+from ..conftest import no_xinerama
 
 
 class StackConfig:
@@ -51,6 +53,10 @@ class StackConfig:
     follow_mouse_focus = False
 
 
+stack_config = lambda x: \
+    no_xinerama(pytest.mark.parametrize("qtile", [StackConfig], indirect=True)(x))
+
+
 def _stacks(self):
     stacks = []
     for i in self.c.layout.info()["stacks"]:
@@ -60,167 +66,167 @@ def _stacks(self):
     return stacks
 
 
-@Xephyr(False, StackConfig())
-def test_stack_commands(self):
-    assert self.c.layout.info()["current_stack"] == 0
-    self.testWindow("one")
-    assert _stacks(self) == [["one"], []]
-    assert self.c.layout.info()["current_stack"] == 0
-    self.testWindow("two")
-    assert _stacks(self) == [["one"], ["two"]]
-    assert self.c.layout.info()["current_stack"] == 1
-    self.testWindow("three")
-    assert _stacks(self) == [["one"], ["three", "two"]]
-    assert self.c.layout.info()["current_stack"] == 1
+@stack_config
+def test_stack_commands(qtile):
+    assert qtile.c.layout.info()["current_stack"] == 0
+    qtile.testWindow("one")
+    assert _stacks(qtile) == [["one"], []]
+    assert qtile.c.layout.info()["current_stack"] == 0
+    qtile.testWindow("two")
+    assert _stacks(qtile) == [["one"], ["two"]]
+    assert qtile.c.layout.info()["current_stack"] == 1
+    qtile.testWindow("three")
+    assert _stacks(qtile) == [["one"], ["three", "two"]]
+    assert qtile.c.layout.info()["current_stack"] == 1
 
-    self.c.layout.delete()
-    assert _stacks(self) == [["one", "three", "two"]]
-    info = self.c.groups()["a"]
+    qtile.c.layout.delete()
+    assert _stacks(qtile) == [["one", "three", "two"]]
+    info = qtile.c.groups()["a"]
     assert info["focus"] == "one"
-    self.c.layout.delete()
-    assert len(_stacks(self)) == 1
+    qtile.c.layout.delete()
+    assert len(_stacks(qtile)) == 1
 
-    self.c.layout.add()
-    assert _stacks(self) == [["one", "three", "two"], []]
+    qtile.c.layout.add()
+    assert _stacks(qtile) == [["one", "three", "two"], []]
 
-    self.c.layout.rotate()
-    assert _stacks(self) == [[], ["one", "three", "two"]]
-
-
-@Xephyr(False, StackConfig())
-def test_stack_cmd_down(self):
-    self.c.layout.down()
+    qtile.c.layout.rotate()
+    assert _stacks(qtile) == [[], ["one", "three", "two"]]
 
 
-@Xephyr(False, StackConfig())
-def test_stack_addremove(self):
-    one = self.testWindow("one")
-    self.c.layout.next()
-    two = self.testWindow("two")
-    three = self.testWindow("three")
-    assert _stacks(self) == [['one'], ['three', 'two']]
-    assert self.c.layout.info()["current_stack"] == 1
-    self.kill(three)
-    assert self.c.layout.info()["current_stack"] == 1
-    self.kill(two)
-    assert self.c.layout.info()["current_stack"] == 0
-    self.c.layout.next()
-    two = self.testWindow("two")
-    self.c.layout.next()
-    assert self.c.layout.info()["current_stack"] == 0
-    self.kill(one)
-    assert self.c.layout.info()["current_stack"] == 1
+@stack_config
+def test_stack_cmd_down(qtile):
+    qtile.c.layout.down()
 
 
-@Xephyr(False, StackConfig())
-def test_stack_rotation(self):
-    self.c.layout.delete()
-    self.testWindow("one")
-    self.testWindow("two")
-    self.testWindow("three")
-    assert _stacks(self) == [["three", "two", "one"]]
-    self.c.layout.down()
-    assert _stacks(self) == [["one", "three", "two"]]
-    self.c.layout.up()
-    assert _stacks(self) == [["three", "two", "one"]]
-    self.c.layout.down()
-    self.c.layout.down()
-    assert _stacks(self) == [["two", "one", "three"]]
+@stack_config
+def test_stack_addremove(qtile):
+    one = qtile.testWindow("one")
+    qtile.c.layout.next()
+    two = qtile.testWindow("two")
+    three = qtile.testWindow("three")
+    assert _stacks(qtile) == [['one'], ['three', 'two']]
+    assert qtile.c.layout.info()["current_stack"] == 1
+    qtile.kill_window(three)
+    assert qtile.c.layout.info()["current_stack"] == 1
+    qtile.kill_window(two)
+    assert qtile.c.layout.info()["current_stack"] == 0
+    qtile.c.layout.next()
+    two = qtile.testWindow("two")
+    qtile.c.layout.next()
+    assert qtile.c.layout.info()["current_stack"] == 0
+    qtile.kill_window(one)
+    assert qtile.c.layout.info()["current_stack"] == 1
 
 
-@Xephyr(False, StackConfig())
-def test_stack_nextprev(self):
-    self.c.layout.add()
-    one = self.testWindow("one")
-    two = self.testWindow("two")
-    three = self.testWindow("three")
-
-    assert self.c.groups()["a"]["focus"] == "three"
-    self.c.layout.next()
-    assert self.c.groups()["a"]["focus"] == "one"
-
-    self.c.layout.previous()
-    assert self.c.groups()["a"]["focus"] == "three"
-    self.c.layout.previous()
-    assert self.c.groups()["a"]["focus"] == "two"
-
-    self.c.layout.next()
-    self.c.layout.next()
-    self.c.layout.next()
-    assert self.c.groups()["a"]["focus"] == "two"
-
-    self.kill(three)
-    self.c.layout.next()
-    assert self.c.groups()["a"]["focus"] == "one"
-    self.c.layout.previous()
-    assert self.c.groups()["a"]["focus"] == "two"
-    self.c.layout.next()
-    self.kill(two)
-    self.c.layout.next()
-    assert self.c.groups()["a"]["focus"] == "one"
-
-    self.kill(one)
-    self.c.layout.next()
-    assert self.c.groups()["a"]["focus"] == None
-    self.c.layout.previous()
-    assert self.c.groups()["a"]["focus"] == None
+@stack_config
+def test_stack_rotation(qtile):
+    qtile.c.layout.delete()
+    qtile.testWindow("one")
+    qtile.testWindow("two")
+    qtile.testWindow("three")
+    assert _stacks(qtile) == [["three", "two", "one"]]
+    qtile.c.layout.down()
+    assert _stacks(qtile) == [["one", "three", "two"]]
+    qtile.c.layout.up()
+    assert _stacks(qtile) == [["three", "two", "one"]]
+    qtile.c.layout.down()
+    qtile.c.layout.down()
+    assert _stacks(qtile) == [["two", "one", "three"]]
 
 
-@Xephyr(False, StackConfig())
-def test_stack_window_removal(self):
-    self.c.layout.next()
-    one = self.testWindow("one")
-    two = self.testWindow("two")
-    self.c.layout.down()
-    self.kill(two)
+@stack_config
+def test_stack_nextprev(qtile):
+    qtile.c.layout.add()
+    one = qtile.testWindow("one")
+    two = qtile.testWindow("two")
+    three = qtile.testWindow("three")
+
+    assert qtile.c.groups()["a"]["focus"] == "three"
+    qtile.c.layout.next()
+    assert qtile.c.groups()["a"]["focus"] == "one"
+
+    qtile.c.layout.previous()
+    assert qtile.c.groups()["a"]["focus"] == "three"
+    qtile.c.layout.previous()
+    assert qtile.c.groups()["a"]["focus"] == "two"
+
+    qtile.c.layout.next()
+    qtile.c.layout.next()
+    qtile.c.layout.next()
+    assert qtile.c.groups()["a"]["focus"] == "two"
+
+    qtile.kill_window(three)
+    qtile.c.layout.next()
+    assert qtile.c.groups()["a"]["focus"] == "one"
+    qtile.c.layout.previous()
+    assert qtile.c.groups()["a"]["focus"] == "two"
+    qtile.c.layout.next()
+    qtile.kill_window(two)
+    qtile.c.layout.next()
+    assert qtile.c.groups()["a"]["focus"] == "one"
+
+    qtile.kill_window(one)
+    qtile.c.layout.next()
+    assert qtile.c.groups()["a"]["focus"] is None
+    qtile.c.layout.previous()
+    assert qtile.c.groups()["a"]["focus"] is None
 
 
-@Xephyr(False, StackConfig())
-def test_stack_split(self):
-    one = self.testWindow("one")
-    two = self.testWindow("two")
-    three = self.testWindow("three")
-    stacks = self.c.layout.info()["stacks"]
+@stack_config
+def test_stack_window_removal(qtile):
+    qtile.c.layout.next()
+    one = qtile.testWindow("one")
+    two = qtile.testWindow("two")
+    qtile.c.layout.down()
+    qtile.kill_window(two)
+
+
+@stack_config
+def test_stack_split(qtile):
+    one = qtile.testWindow("one")
+    two = qtile.testWindow("two")
+    three = qtile.testWindow("three")
+    stacks = qtile.c.layout.info()["stacks"]
     assert not stacks[1]["split"]
-    self.c.layout.toggle_split()
-    stacks = self.c.layout.info()["stacks"]
+    qtile.c.layout.toggle_split()
+    stacks = qtile.c.layout.info()["stacks"]
     assert stacks[1]["split"]
 
 
-@Xephyr(False, StackConfig())
-def test_stack_shuffle(self):
-    self.c.next_layout()
-    one = self.testWindow("one")
-    two = self.testWindow("two")
-    three = self.testWindow("three")
+@stack_config
+def test_stack_shuffle(qtile):
+    qtile.c.next_layout()
+    one = qtile.testWindow("one")
+    two = qtile.testWindow("two")
+    three = qtile.testWindow("three")
 
-    stack = self.c.layout.info()["stacks"][0]
+    stack = qtile.c.layout.info()["stacks"][0]
     assert stack["clients"][stack["current"]] == "three"
     for i in range(5):
-        self.c.layout.shuffle_up()
-        stack = self.c.layout.info()["stacks"][0]
+        qtile.c.layout.shuffle_up()
+        stack = qtile.c.layout.info()["stacks"][0]
         assert stack["clients"][stack["current"]] == "three"
     for i in range(5):
-        self.c.layout.shuffle_down()
-        stack = self.c.layout.info()["stacks"][0]
+        qtile.c.layout.shuffle_down()
+        stack = qtile.c.layout.info()["stacks"][0]
         assert stack["clients"][stack["current"]] == "three"
 
 
-@Xephyr(False, StackConfig())
-def test_stack_client_to(self):
-    one = self.testWindow("one")
-    two = self.testWindow("two")
-    assert self.c.layout.info()["stacks"][0]["clients"] == ["one"]
-    self.c.layout.client_to_previous()
-    assert self.c.layout.info()["stacks"][0]["clients"] == ["two", "one"]
-    self.c.layout.client_to_previous()
-    assert self.c.layout.info()["stacks"][0]["clients"] == ["one"]
-    assert self.c.layout.info()["stacks"][1]["clients"] == ["two"]
-    self.c.layout.client_to_next()
-    assert self.c.layout.info()["stacks"][0]["clients"] == ["two", "one"]
+@stack_config
+def test_stack_client_to(qtile):
+    one = qtile.testWindow("one")
+    two = qtile.testWindow("two")
+    assert qtile.c.layout.info()["stacks"][0]["clients"] == ["one"]
+    qtile.c.layout.client_to_previous()
+    assert qtile.c.layout.info()["stacks"][0]["clients"] == ["two", "one"]
+    qtile.c.layout.client_to_previous()
+    assert qtile.c.layout.info()["stacks"][0]["clients"] == ["one"]
+    assert qtile.c.layout.info()["stacks"][1]["clients"] == ["two"]
+    qtile.c.layout.client_to_next()
+    assert qtile.c.layout.info()["stacks"][0]["clients"] == ["two", "one"]
 
 
-@Xephyr(False, StackConfig())
-def test_stack_info(self):
-    one = self.testWindow("one")
-    assert self.c.layout.info()["stacks"]
+@stack_config
+def test_stack_info(qtile):
+    one = qtile.testWindow("one")
+    assert qtile.c.layout.info()["stacks"]

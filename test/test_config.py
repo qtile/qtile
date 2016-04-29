@@ -20,16 +20,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
+import pytest
+
 from libqtile import confreader
 from libqtile import config, utils
-from nose.tools import raises, assert_raises
 
-import os
 tests_dir = os.path.dirname(os.path.realpath(__file__))
 
-@raises(confreader.ConfigError)
 def test_syntaxerr():
-    confreader.File(os.path.join(tests_dir, "configs", "syntaxerr.py"))
+    with pytest.raises(confreader.ConfigError):
+        confreader.File(os.path.join(tests_dir, "configs", "syntaxerr.py"))
 
 def test_basic():
     f = confreader.File(os.path.join(tests_dir, "configs", "basic.py"))
@@ -57,16 +58,16 @@ def test_ezkey():
     assert key.key == 'Tab'
     assert key.commands == (cmd,)
 
-    with assert_raises(utils.QtileError):
+    with pytest.raises(utils.QtileError):
         config.EzKey('M--', cmd)
 
-    with assert_raises(utils.QtileError):
+    with pytest.raises(utils.QtileError):
         config.EzKey('Z-Z-z', cmd)
 
-    with assert_raises(utils.QtileError):
+    with pytest.raises(utils.QtileError):
         config.EzKey('asdf', cmd)
 
-    with assert_raises(utils.QtileError):
+    with pytest.raises(utils.QtileError):
         config.EzKey('M-a-A', cmd)
 
 def test_ezclick_ezdrag():

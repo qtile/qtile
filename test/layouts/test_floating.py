@@ -18,11 +18,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import pytest
+
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from ..utils import Xephyr
 from .layout_utils import assertFocused
+from ..conftest import no_xinerama
 
 
 class FloatingConfig(object):
@@ -41,8 +43,14 @@ class FloatingConfig(object):
     follow_mouse_focus = False
 
 
-@Xephyr(False, FloatingConfig())
-def test_float_next_prev_window(self):
+floating_config = lambda x: \
+    no_xinerama(pytest.mark.parametrize("qtile", [FloatingConfig], indirect=True)(x))
+
+
+@floating_config
+def test_float_next_prev_window(qtile):
+    self = qtile
+
     # spawn three windows
     self.testWindow("one")
     self.testWindow("two")

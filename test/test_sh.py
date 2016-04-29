@@ -20,13 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import pytest
+
 import libqtile
 import libqtile.sh
 import libqtile.confreader
 import libqtile.layout
 import libqtile.manager
 import libqtile.config
-from .utils import Xephyr
 
 
 class ShConfig(object):
@@ -46,91 +47,93 @@ class ShConfig(object):
     main = None
 
 
-@Xephyr(True, ShConfig())
-def test_columnize(self):
-    self.sh = libqtile.sh.QSh(self.c)
-    assert self.sh.columnize(["one", "two"]) == "one  two"
+sh_config = pytest.mark.parametrize("qtile", [ShConfig], indirect=True)
 
-    self.sh.termwidth = 1
-    assert self.sh.columnize(["one", "two"], update_termwidth=False) == "one\ntwo"
 
-    self.sh.termwidth = 15
-    v = self.sh.columnize(["one", "two", "three", "four", "five"], update_termwidth=False)
+@sh_config
+def test_columnize(qtile):
+    qtile.sh = libqtile.sh.QSh(qtile.c)
+    assert qtile.sh.columnize(["one", "two"]) == "one  two"
+
+    qtile.sh.termwidth = 1
+    assert qtile.sh.columnize(["one", "two"], update_termwidth=False) == "one\ntwo"
+
+    qtile.sh.termwidth = 15
+    v = qtile.sh.columnize(["one", "two", "three", "four", "five"], update_termwidth=False)
     assert v == 'one    two  \nthree  four \nfive '
 
 
-@Xephyr(True, ShConfig())
-def test_ls(self):
-    self.sh = libqtile.sh.QSh(self.c)
-    self.sh.do_cd("layout")
-    self.sh.do_ls("")
+@sh_config
+def test_ls(qtile):
+    qtile.sh = libqtile.sh.QSh(qtile.c)
+    qtile.sh.do_cd("layout")
+    qtile.sh.do_ls("")
 
 
-@Xephyr(True, ShConfig())
-def test_findNode(self):
-    self.sh = libqtile.sh.QSh(self.c)
-    n = self.sh._findNode(self.sh.current, "layout")
+@sh_config
+def test_findNode(qtile):
+    qtile.sh = libqtile.sh.QSh(qtile.c)
+    n = qtile.sh._findNode(qtile.sh.current, "layout")
     assert n.path == "layout"
     assert n.parent
 
-    n = self.sh._findNode(n, "0")
+    n = qtile.sh._findNode(n, "0")
     assert n.path == "layout[0]"
 
-    n = self.sh._findNode(n, "..")
+    n = qtile.sh._findNode(n, "..")
     assert n.path == "layout"
 
-    n = self.sh._findNode(n, "0", "..")
+    n = qtile.sh._findNode(n, "0", "..")
     assert n.path == "layout"
 
-    n = self.sh._findNode(n, "..", "layout", 0)
+    n = qtile.sh._findNode(n, "..", "layout", 0)
     assert n.path == "layout[0]"
 
-    assert not self.sh._findNode(n, "wibble")
-    assert not self.sh._findNode(n, "..", "0", "wibble")
+    assert not qtile.sh._findNode(n, "wibble")
+    assert not qtile.sh._findNode(n, "..", "0", "wibble")
 
 
-@Xephyr(True, ShConfig())
-def test_do_cd(self):
-    self.sh = libqtile.sh.QSh(self.c)
-    assert self.sh.do_cd("layout") == 'layout'
-    assert self.sh.do_cd("0/wibble") == 'No such path.'
-    assert self.sh.do_cd("0/") == 'layout[0]'
+@sh_config
+def test_do_cd(qtile):
+    qtile.sh = libqtile.sh.QSh(qtile.c)
+    assert qtile.sh.do_cd("layout") == 'layout'
+    assert qtile.sh.do_cd("0/wibble") == 'No such path.'
+    assert qtile.sh.do_cd("0/") == 'layout[0]'
 
 
-@Xephyr(True, ShConfig())
-def test_call(self):
-    self.sh = libqtile.sh.QSh(self.c)
-    assert self.sh._call("status", []) == "OK"
+@sh_config
+def test_call(qtile):
+    qtile.sh = libqtile.sh.QSh(qtile.c)
+    assert qtile.sh._call("status", []) == "OK"
 
-    v = self.sh._call("nonexistent", "")
+    v = qtile.sh._call("nonexistent", "")
     assert "No such command" in v
 
-    v = self.sh._call("status", "(((")
+    v = qtile.sh._call("status", "(((")
     assert "Syntax error" in v
 
-    v = self.sh._call("status", "(1)")
+    v = qtile.sh._call("status", "(1)")
     assert "Command exception" in v
 
 
-@Xephyr(True, ShConfig())
-def test_complete(self):
-    self.sh = libqtile.sh.QSh(self.c)
-    assert self.sh._complete("c", "c") == [
+@sh_config
+def test_complete(qtile):
+    qtile.sh = libqtile.sh.QSh(qtile.c)
+    assert qtile.sh._complete("c", "c") == [
         "cd",
         "commands",
         "critical",
     ]
 
-    assert self.sh._complete("cd l", "l") == ["layout"]
-    print(self.sh._complete("cd layout/", "layout/"))
-    assert self.sh._complete("cd layout/", "layout/") == [
+    assert qtile.sh._complete("cd l", "l") == ["layout"]
+    assert qtile.sh._complete("cd layout/", "layout/") == [
         "layout/" + x for x in ["group", "window", "screen", "0"]
     ]
-    assert self.sh._complete("cd layout/", "layout/g") == ["layout/group"]
+    assert qtile.sh._complete("cd layout/", "layout/g") == ["layout/group"]
 
 
-@Xephyr(True, ShConfig())
-def test_help(self):
-    self.sh = libqtile.sh.QSh(self.c)
-    assert self.sh.do_help("nonexistent").startswith("No such command")
-    assert self.sh.do_help("help")
+@sh_config
+def test_help(qtile):
+    qtile.sh = libqtile.sh.QSh(qtile.c)
+    assert qtile.sh.do_help("nonexistent").startswith("No such command")
+    assert qtile.sh.do_help("help")

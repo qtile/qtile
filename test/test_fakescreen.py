@@ -23,11 +23,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import pytest
+
 import libqtile.manager
 import libqtile.config
 from libqtile import layout, bar, widget
 from libqtile.config import Screen
-from .utils import Xephyr
 
 LEFT_ALT = 'mod1'
 WINDOWS = 'mod4'
@@ -147,242 +148,249 @@ class FakeScreenConfig(object):
     screens = fake_screens
 
 
-@Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
-def test_basic(self):
-    self.testWindow("zero")
-    assert self.c.layout.info()["clients"] == ["zero"]
-    assert self.c.screen.info() == {
+xephyr_config = {
+    "xinerama": False,
+    "two_screens": False,
+    "width": 900,
+    "height": 980
+}
+fakescreen_config = pytest.mark.parametrize("xephyr, qtile", [(xephyr_config, FakeScreenConfig)], indirect=True)
+
+
+@fakescreen_config
+def test_basic(qtile):
+    qtile.testWindow("zero")
+    assert qtile.c.layout.info()["clients"] == ["zero"]
+    assert qtile.c.screen.info() == {
         'y': 0, 'x': 0, 'index': 0, 'width': 600, 'height': 480}
-    self.c.to_screen(1)
-    self.testWindow("one")
-    assert self.c.layout.info()["clients"] == ["one"]
-    assert self.c.screen.info() == {
+    qtile.c.to_screen(1)
+    qtile.testWindow("one")
+    assert qtile.c.layout.info()["clients"] == ["one"]
+    assert qtile.c.screen.info() == {
         'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
-    self.c.to_screen(2)
-    self.testXeyes()
-    assert self.c.screen.info() == {
+    qtile.c.to_screen(2)
+    qtile.testXeyes()
+    assert qtile.c.screen.info() == {
         'y': 480, 'x': 0, 'index': 2, 'width': 500, 'height': 400}
-    self.c.to_screen(3)
-    self.testXclock()
-    assert self.c.screen.info() == {
+    qtile.c.to_screen(3)
+    qtile.testXclock()
+    assert qtile.c.screen.info() == {
         'y': 580, 'x': 500, 'index': 3, 'width': 400, 'height': 400}
 
 
-@Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
-def test_gaps(self):
-    g = self.c.screens()[0]["gaps"]
+@fakescreen_config
+def test_gaps(qtile):
+    g = qtile.c.screens()[0]["gaps"]
     assert g["bottom"] == (0, 456, 600, 24)
     assert g["left"] == (0, 0, 16, 456)
     assert g["right"] == (580, 0, 20, 456)
-    g = self.c.screens()[1]["gaps"]
+    g = qtile.c.screens()[1]["gaps"]
     assert g["top"] == (600, 0, 300, 30)
     assert g["bottom"] == (600, 556, 300, 24)
     assert g["left"] == (600, 30, 12, 526)
-    g = self.c.screens()[2]["gaps"]
+    g = qtile.c.screens()[2]["gaps"]
     assert g["top"] == (0, 480, 500, 30)
     assert g["bottom"] == (0, 864, 500, 16)
     assert g["right"] == (460, 510, 40, 354)
-    g = self.c.screens()[3]["gaps"]
+    g = qtile.c.screens()[3]["gaps"]
     assert g["top"] == (500, 580, 400, 30)
     assert g["left"] == (500, 610, 20, 370)
     assert g["right"] == (876, 610, 24, 370)
 
 
-@Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
-def test_maximize_with_move_to_screen(self):
-    """
-    Ensure that maximize respects bars
-    """
-    self.testXclock()
-    self.c.window.toggle_maximize()
-    assert self.c.window.info()['width'] == 564
-    assert self.c.window.info()['height'] == 456
-    assert self.c.window.info()['x'] == 16
-    assert self.c.window.info()['y'] == 0
-    assert self.c.window.info()['group'] == 'a'
+@fakescreen_config
+def test_maximize_with_move_to_screen(qtile):
+    """Ensure that maximize respects bars"""
+    qtile.testXclock()
+    qtile.c.window.toggle_maximize()
+    assert qtile.c.window.info()['width'] == 564
+    assert qtile.c.window.info()['height'] == 456
+    assert qtile.c.window.info()['x'] == 16
+    assert qtile.c.window.info()['y'] == 0
+    assert qtile.c.window.info()['group'] == 'a'
 
     # go to second screen
-    self.c.to_screen(1)
-    assert self.c.screen.info() == {
+    qtile.c.to_screen(1)
+    assert qtile.c.screen.info() == {
         'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
-    assert self.c.group.info()['name'] == 'b'
-    self.c.group['a'].toscreen()
+    assert qtile.c.group.info()['name'] == 'b'
+    qtile.c.group['a'].toscreen()
 
-    assert self.c.window.info()['width'] == 288
-    assert self.c.window.info()['height'] == 526
-    assert self.c.window.info()['x'] == 612
-    assert self.c.window.info()['y'] == 30
-    assert self.c.window.info()['group'] == 'a'
+    assert qtile.c.window.info()['width'] == 288
+    assert qtile.c.window.info()['height'] == 526
+    assert qtile.c.window.info()['x'] == 612
+    assert qtile.c.window.info()['y'] == 30
+    assert qtile.c.window.info()['group'] == 'a'
 
 
-@Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
-def test_float_first_on_second_screen(self):
-    self.c.to_screen(1)
-    assert self.c.screen.info() == {
+@fakescreen_config
+def test_float_first_on_second_screen(qtile):
+    qtile.c.to_screen(1)
+    assert qtile.c.screen.info() == {
         'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
 
-    self.testXclock()
+    qtile.testXclock()
     # I don't know where y=30, x=12 comes from...
-    assert self.c.window.info()['float_info'] == {
+    assert qtile.c.window.info()['float_info'] == {
         'y': 30, 'x': 12, 'width': 164, 'height': 164
     }
 
-    self.c.window.toggle_floating()
-    assert self.c.window.info()['width'] == 164
-    assert self.c.window.info()['height'] == 164
+    qtile.c.window.toggle_floating()
+    assert qtile.c.window.info()['width'] == 164
+    assert qtile.c.window.info()['height'] == 164
 
-    assert self.c.window.info()['x'] == 612
-    assert self.c.window.info()['y'] == 30
-    assert self.c.window.info()['group'] == 'b'
-    assert self.c.window.info()['float_info'] == {
+    assert qtile.c.window.info()['x'] == 612
+    assert qtile.c.window.info()['y'] == 30
+    assert qtile.c.window.info()['group'] == 'b'
+    assert qtile.c.window.info()['float_info'] == {
         'y': 30, 'x': 12, 'width': 164, 'height': 164
     }
 
 
-@Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
-def test_float_change_screens(self):
-    #add some eyes, and float clock
-    self.testXeyes()
-    self.testXclock()
-    self.c.window.toggle_floating()
-    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
-    assert self.c.group.info()['floating_info']['clients'] == ['xclock']
-    assert self.c.window.info()['width'] == 164
-    assert self.c.window.info()['height'] == 164
+@fakescreen_config
+def test_float_change_screens(qtile):
+    # add some eyes, and float clock
+    qtile.testXeyes()
+    qtile.testXclock()
+    qtile.c.window.toggle_floating()
+    assert set(qtile.c.group.info()['windows']) == set(('xeyes', 'xclock'))
+    assert qtile.c.group.info()['floating_info']['clients'] == ['xclock']
+    assert qtile.c.window.info()['width'] == 164
+    assert qtile.c.window.info()['height'] == 164
     # 16 is given by the left gap width
-    assert self.c.window.info()['x'] == 16
-    assert self.c.window.info()['y'] == 0
-    assert self.c.window.info()['group'] == 'a'
+    assert qtile.c.window.info()['x'] == 16
+    assert qtile.c.window.info()['y'] == 0
+    assert qtile.c.window.info()['group'] == 'a'
 
-    #put on group b
-    assert self.c.screen.info() == {
+    # put on group b
+    assert qtile.c.screen.info() == {
         'y': 0, 'x': 0, 'index': 0, 'width': 600, 'height': 480}
-    assert self.c.group.info()['name'] == 'a'
-    self.c.to_screen(1)
-    assert self.c.group.info()['name'] == 'b'
-    assert self.c.screen.info() == {
+    assert qtile.c.group.info()['name'] == 'a'
+    qtile.c.to_screen(1)
+    assert qtile.c.group.info()['name'] == 'b'
+    assert qtile.c.screen.info() == {
         'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
-    self.c.group['a'].toscreen()
-    assert self.c.group.info()['name'] == 'a'
-    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
-    assert self.c.window.info()['name'] == 'xclock'
+    qtile.c.group['a'].toscreen()
+    assert qtile.c.group.info()['name'] == 'a'
+    assert set(qtile.c.group.info()['windows']) == set(('xeyes', 'xclock'))
+    assert qtile.c.window.info()['name'] == 'xclock'
     # width/height unchanged
-    assert self.c.window.info()['width'] == 164
-    assert self.c.window.info()['height'] == 164
+    assert qtile.c.window.info()['width'] == 164
+    assert qtile.c.window.info()['height'] == 164
     # x is shifted by 600, y is shifted by 0
-    assert self.c.window.info()['x'] == 616
-    assert self.c.window.info()['y'] == 0
-    assert self.c.window.info()['group'] == 'a'
-    assert self.c.group.info()['floating_info']['clients'] == ['xclock']
+    assert qtile.c.window.info()['x'] == 616
+    assert qtile.c.window.info()['y'] == 0
+    assert qtile.c.window.info()['group'] == 'a'
+    assert qtile.c.group.info()['floating_info']['clients'] == ['xclock']
 
     # move to screen 3
-    self.c.to_screen(2)
-    assert self.c.screen.info() == {
+    qtile.c.to_screen(2)
+    assert qtile.c.screen.info() == {
         'y': 480, 'x': 0, 'index': 2, 'width': 500, 'height': 400}
-    assert self.c.group.info()['name'] == 'c'
-    self.c.group['a'].toscreen()
-    assert self.c.group.info()['name'] == 'a'
-    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
-    assert self.c.window.info()['name'] == 'xclock'
+    assert qtile.c.group.info()['name'] == 'c'
+    qtile.c.group['a'].toscreen()
+    assert qtile.c.group.info()['name'] == 'a'
+    assert set(qtile.c.group.info()['windows']) == set(('xeyes', 'xclock'))
+    assert qtile.c.window.info()['name'] == 'xclock'
     # width/height unchanged
-    assert self.c.window.info()['width'] == 164
-    assert self.c.window.info()['height'] == 164
+    assert qtile.c.window.info()['width'] == 164
+    assert qtile.c.window.info()['height'] == 164
     # x is shifted by 0, y is shifted by 480
-    assert self.c.window.info()['x'] == 16
-    assert self.c.window.info()['y'] == 480
+    assert qtile.c.window.info()['x'] == 16
+    assert qtile.c.window.info()['y'] == 480
 
     # now screen 4 for fun
-    self.c.to_screen(3)
-    assert self.c.screen.info() == {
+    qtile.c.to_screen(3)
+    assert qtile.c.screen.info() == {
         'y': 580, 'x': 500, 'index': 3, 'width': 400, 'height': 400}
-    assert self.c.group.info()['name'] == 'd'
-    self.c.group['a'].toscreen()
-    assert self.c.group.info()['name'] == 'a'
-    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
-    assert self.c.window.info()['name'] == 'xclock'
+    assert qtile.c.group.info()['name'] == 'd'
+    qtile.c.group['a'].toscreen()
+    assert qtile.c.group.info()['name'] == 'a'
+    assert set(qtile.c.group.info()['windows']) == set(('xeyes', 'xclock'))
+    assert qtile.c.window.info()['name'] == 'xclock'
     # width/height unchanged
-    assert self.c.window.info()['width'] == 164
-    assert self.c.window.info()['height'] == 164
+    assert qtile.c.window.info()['width'] == 164
+    assert qtile.c.window.info()['height'] == 164
     # x is shifted by 500, y is shifted by 580
-    assert self.c.window.info()['x'] == 516
-    assert self.c.window.info()['y'] == 580
+    assert qtile.c.window.info()['x'] == 516
+    assert qtile.c.window.info()['y'] == 580
 
     # and back to one
-    self.c.to_screen(0)
-    assert self.c.screen.info() == {
+    qtile.c.to_screen(0)
+    assert qtile.c.screen.info() == {
         'y': 0, 'x': 0, 'index': 0, 'width': 600, 'height': 480}
-    assert self.c.group.info()['name'] == 'b'
-    self.c.group['a'].toscreen()
-    assert self.c.group.info()['name'] == 'a'
-    assert set(self.c.group.info()['windows']) == set(('xeyes', 'xclock'))
-    assert self.c.window.info()['name'] == 'xclock'
+    assert qtile.c.group.info()['name'] == 'b'
+    qtile.c.group['a'].toscreen()
+    assert qtile.c.group.info()['name'] == 'a'
+    assert set(qtile.c.group.info()['windows']) == set(('xeyes', 'xclock'))
+    assert qtile.c.window.info()['name'] == 'xclock'
     # back to the original location
-    assert self.c.window.info()['width'] == 164
-    assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == 16
-    assert self.c.window.info()['y'] == 0
+    assert qtile.c.window.info()['width'] == 164
+    assert qtile.c.window.info()['height'] == 164
+    assert qtile.c.window.info()['x'] == 16
+    assert qtile.c.window.info()['y'] == 0
 
 
-@Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
-def test_float_outside_edges(self):
-    self.testXclock()
-    self.c.window.toggle_floating()
-    assert self.c.window.info()['width'] == 164
-    assert self.c.window.info()['height'] == 164
+@fakescreen_config
+def test_float_outside_edges(qtile):
+    qtile.testXclock()
+    qtile.c.window.toggle_floating()
+    assert qtile.c.window.info()['width'] == 164
+    assert qtile.c.window.info()['height'] == 164
     # 16 is given by the left gap width
-    assert self.c.window.info()['x'] == 16
-    assert self.c.window.info()['y'] == 0
+    assert qtile.c.window.info()['x'] == 16
+    assert qtile.c.window.info()['y'] == 0
     # empty because window is floating
-    assert self.c.layout.info() == {
+    assert qtile.c.layout.info() == {
         'clients': [], 'group': 'a', 'name': 'max'}
 
     # move left, but some still on screen 0
-    self.c.window.move_floating(-30, 20, 42, 42)
-    assert self.c.window.info()['width'] == 164
-    assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == -14
-    assert self.c.window.info()['y'] == 20
-    assert self.c.window.info()['group'] == 'a'
+    qtile.c.window.move_floating(-30, 20, 42, 42)
+    assert qtile.c.window.info()['width'] == 164
+    assert qtile.c.window.info()['height'] == 164
+    assert qtile.c.window.info()['x'] == -14
+    assert qtile.c.window.info()['y'] == 20
+    assert qtile.c.window.info()['group'] == 'a'
 
     # move up, but some still on screen 0
-    self.c.window.set_position_floating(-10, -20, 42, 42)
-    assert self.c.window.info()['width'] == 164
-    assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == -10
-    assert self.c.window.info()['y'] == -20
-    assert self.c.window.info()['group'] == 'a'
+    qtile.c.window.set_position_floating(-10, -20, 42, 42)
+    assert qtile.c.window.info()['width'] == 164
+    assert qtile.c.window.info()['height'] == 164
+    assert qtile.c.window.info()['x'] == -10
+    assert qtile.c.window.info()['y'] == -20
+    assert qtile.c.window.info()['group'] == 'a'
 
     # move above a
-    self.c.window.set_position_floating(50, -20, 42, 42)
-    assert self.c.window.info()['width'] == 164
-    assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == 50
-    assert self.c.window.info()['y'] == -20
-    assert self.c.window.info()['group'] == 'a'
+    qtile.c.window.set_position_floating(50, -20, 42, 42)
+    assert qtile.c.window.info()['width'] == 164
+    assert qtile.c.window.info()['height'] == 164
+    assert qtile.c.window.info()['x'] == 50
+    assert qtile.c.window.info()['y'] == -20
+    assert qtile.c.window.info()['group'] == 'a'
 
     # move down so still left, but next to screen c
-    self.c.window.set_position_floating(-10, 520, 42, 42)
-    assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == -10
-    assert self.c.window.info()['y'] == 520
-    assert self.c.window.info()['group'] == 'c'
+    qtile.c.window.set_position_floating(-10, 520, 42, 42)
+    assert qtile.c.window.info()['height'] == 164
+    assert qtile.c.window.info()['x'] == -10
+    assert qtile.c.window.info()['y'] == 520
+    assert qtile.c.window.info()['group'] == 'c'
 
     # move above b
-    self.c.window.set_position_floating(700, -10, 42, 42)
-    assert self.c.window.info()['width'] == 164
-    assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == 700
-    assert self.c.window.info()['y'] == -10
-    assert self.c.window.info()['group'] == 'b'
+    qtile.c.window.set_position_floating(700, -10, 42, 42)
+    assert qtile.c.window.info()['width'] == 164
+    assert qtile.c.window.info()['height'] == 164
+    assert qtile.c.window.info()['x'] == 700
+    assert qtile.c.window.info()['y'] == -10
+    assert qtile.c.window.info()['group'] == 'b'
 
 
-@Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
-def test_hammer_tile(self):
+@fakescreen_config
+def test_hammer_tile(qtile):
     # change to tile layout
-    self.c.next_layout()
-    self.c.next_layout()
+    qtile.c.next_layout()
+    qtile.c.next_layout()
     for i in range(7):
-        self.testXclock()
+        qtile.testXclock()
     for i in range(30):
         old_group = (i + 1) % 4
         if old_group == 0:
@@ -394,19 +402,19 @@ def test_hammer_tile(self):
         elif old_group == 3:
             name = 'd'
 
-        self.c.to_screen((i + 1) % 4)
-        self.c.group['a'].toscreen()
-    assert self.c.group['a'].info()['windows'] == [
+        qtile.c.to_screen((i + 1) % 4)
+        qtile.c.group['a'].toscreen()
+    assert qtile.c.group['a'].info()['windows'] == [
         'xclock', 'xclock', 'xclock', 'xclock',
         'xclock', 'xclock', 'xclock']
 
 
-@Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
-def test_hammer_ratio_tile(self):
+@fakescreen_config
+def test_hammer_ratio_tile(qtile):
     # change to ratio tile layout
-    self.c.next_layout()
+    qtile.c.next_layout()
     for i in range(7):
-        self.testXclock()
+        qtile.testXclock()
     for i in range(30):
         old_group = (i + 1) % 4
         if old_group == 0:
@@ -418,28 +426,28 @@ def test_hammer_ratio_tile(self):
         elif old_group == 3:
             name = 'd'
 
-        self.c.to_screen((i + 1) % 4)
-        self.c.group['a'].toscreen()
-    assert self.c.group['a'].info()['windows'] == [
+        qtile.c.to_screen((i + 1) % 4)
+        qtile.c.group['a'].toscreen()
+    assert qtile.c.group['a'].info()['windows'] == [
         'xclock', 'xclock', 'xclock', 'xclock',
         'xclock', 'xclock', 'xclock']
 
 
-@Xephyr(False, FakeScreenConfig(), two_screens=False, width=900, height=980)
-def test_ratio_to_fourth_screen(self):
+@fakescreen_config
+def test_ratio_to_fourth_screen(qtile):
     # change to ratio tile layout
-    self.c.next_layout()
+    qtile.c.next_layout()
     for i in range(7):
-        self.testXclock()
-    self.c.to_screen(1)
-    self.c.group['a'].toscreen()
-    assert self.c.group['a'].info()['windows'] == [
+        qtile.testXclock()
+    qtile.c.to_screen(1)
+    qtile.c.group['a'].toscreen()
+    assert qtile.c.group['a'].info()['windows'] == [
         'xclock', 'xclock', 'xclock', 'xclock',
         'xclock', 'xclock', 'xclock']
 
     # now move to 4th, fails...
-    self.c.to_screen(3)
-    self.c.group['a'].toscreen()
-    assert self.c.group['a'].info()['windows'] == [
+    qtile.c.to_screen(3)
+    qtile.c.group['a'].toscreen()
+    assert qtile.c.group['a'].info()['windows'] == [
         'xclock', 'xclock', 'xclock', 'xclock',
         'xclock', 'xclock', 'xclock']

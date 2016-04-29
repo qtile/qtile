@@ -25,10 +25,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import pytest
+
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from ..utils import Xephyr
+from ..conftest import no_xinerama
 
 
 class MaxConfig:
@@ -49,101 +51,100 @@ class MaxConfig:
     screens = []
 
 
-@Xephyr(False, MaxConfig())
-def test_max_simple(self):
-    self.testWindow("one")
-    assert self.c.layout.info()["clients"] == ["one"]
-    self.testWindow("two")
-    assert self.c.layout.info()["clients"] == ["one", "two"]
+max_config = lambda x: \
+    no_xinerama(pytest.mark.parametrize("qtile", [MaxConfig], indirect=True)(x))
 
 
-@Xephyr(False, MaxConfig())
-def test_max_updown(self):
-    self.testWindow("one")
-    self.testWindow("two")
-    self.testWindow("three")
-    assert self.c.layout.info()["clients"] == ["one", "two", "three"]
-    self.c.layout.up()
-    assert self.c.groups()["a"]["focus"] == "two"
-    self.c.layout.down()
-    assert self.c.groups()["a"]["focus"] == "three"
+@max_config
+def test_max_simple(qtile):
+    qtile.testWindow("one")
+    assert qtile.c.layout.info()["clients"] == ["one"]
+    qtile.testWindow("two")
+    assert qtile.c.layout.info()["clients"] == ["one", "two"]
 
 
-@Xephyr(False, MaxConfig())
-def test_max_remove(self):
-    self.testWindow("one")
-    two = self.testWindow("two")
-    assert self.c.layout.info()["clients"] == ["one", "two"]
-    self.kill(two)
-    assert self.c.layout.info()["clients"] == ["one"]
+@max_config
+def test_max_updown(qtile):
+    qtile.testWindow("one")
+    qtile.testWindow("two")
+    qtile.testWindow("three")
+    assert qtile.c.layout.info()["clients"] == ["one", "two", "three"]
+    qtile.c.layout.up()
+    assert qtile.c.groups()["a"]["focus"] == "two"
+    qtile.c.layout.down()
+    assert qtile.c.groups()["a"]["focus"] == "three"
 
 
-@Xephyr(False, MaxConfig())
-def test_closing_dialog(self):
+@max_config
+def test_max_remove(qtile):
+    qtile.testWindow("one")
+    two = qtile.testWindow("two")
+    assert qtile.c.layout.info()["clients"] == ["one", "two"]
+    qtile.kill_window(two)
+    assert qtile.c.layout.info()["clients"] == ["one"]
+
+
+@max_config
+def test_closing_dialog(qtile):
     # Closing a floating window that has focus must return the focus to the
     # window that was previously focused
 
     # Start by testing a dialog that is the first open window in the group
-    dialog1 = self.testWindow("dialog1")
-    self.testWindow("one")
-    self.testWindow("two")
-    three = self.testWindow("three")
-    self.c.layout.down()
-    assert self.c.window.info()['name'] == "dialog1", self.c.window.info()[
-                                                                        'name']
-    self.c.window.toggle_floating()
-    self.kill(dialog1)
-    assert self.c.window.info()['name'] == "three", self.c.window.info()[
-                                                                        'name']
+    dialog1 = qtile.testWindow("dialog1")
+    qtile.testWindow("one")
+    qtile.testWindow("two")
+    three = qtile.testWindow("three")
+    qtile.c.layout.down()
+    assert qtile.c.window.info()['name'] == "dialog1", qtile.c.window.info()['name']
+    qtile.c.window.toggle_floating()
+    qtile.kill_window(dialog1)
+    assert qtile.c.window.info()['name'] == "three", qtile.c.window.info()['name']
 
     # Now test a dialog that is the last open window in the group
-    dialog2 = self.testWindow("dialog2")
-    self.c.window.toggle_floating()
-    self.kill(dialog2)
-    assert self.c.window.info()['name'] == "three", self.c.window.info()[
-                                                                        'name']
+    dialog2 = qtile.testWindow("dialog2")
+    qtile.c.window.toggle_floating()
+    qtile.kill_window(dialog2)
+    assert qtile.c.window.info()['name'] == "three", qtile.c.window.info()['name']
 
     # Now test a dialog that is neither the first nor the last open window in
     # the group
-    dialog3 = self.testWindow("dialog3")
-    four = self.testWindow("four")
-    self.testWindow("five")
-    self.testWindow("six")
+    dialog3 = qtile.testWindow("dialog3")
+    four = qtile.testWindow("four")
+    qtile.testWindow("five")
+    qtile.testWindow("six")
     # TODO: for a more generic test, find a way to focus 'five', then focus
     #  'dialog3' skipping 'four', so that then, after closing 'dialog3', the
     #  focus must be returned to 'five', which better represents a generic
     #  window that wasn't necessarily opened immediately after the dialog
-    self.c.layout.up()
-    self.c.layout.up()
-    self.c.layout.up()
-    assert self.c.window.info()['name'] == "dialog3", self.c.window.info()[
-                                                                        'name']
-    self.c.window.toggle_floating()
-    self.kill(dialog3)
-    assert self.c.window.info()['name'] == "four", self.c.window.info()['name']
+    qtile.c.layout.up()
+    qtile.c.layout.up()
+    qtile.c.layout.up()
+    assert qtile.c.window.info()['name'] == "dialog3", qtile.c.window.info()['name']
+    qtile.c.window.toggle_floating()
+    qtile.kill_window(dialog3)
+    assert qtile.c.window.info()['name'] == "four", qtile.c.window.info()['name']
 
     # Finally test a case in which the window that had focus previously is
     # closed without stealing focus from the dialog, thus requiring to find the
     # window that had focus even before that (this tests the history of focus)
-    dialog4 = self.testWindow("dialog4")
-    self.c.layout.up()
-    self.c.layout.up()
-    self.c.layout.up()
-    assert self.c.window.info()['name'] == "two", self.c.window.info()['name']
-    self.c.layout.down()
-    self.c.layout.down()
-    self.c.layout.down()
-    assert self.c.window.info()['name'] == "dialog4", self.c.window.info()[
-                                                                        'name']
-    self.c.window.toggle_floating()
-    self.kill(three)
-    self.kill(four)
-    self.kill(dialog4)
-    assert self.c.window.info()['name'] == "two", self.c.window.info()['name']
+    dialog4 = qtile.testWindow("dialog4")
+    qtile.c.layout.up()
+    qtile.c.layout.up()
+    qtile.c.layout.up()
+    assert qtile.c.window.info()['name'] == "two", qtile.c.window.info()['name']
+    qtile.c.layout.down()
+    qtile.c.layout.down()
+    qtile.c.layout.down()
+    assert qtile.c.window.info()['name'] == "dialog4", qtile.c.window.info()['name']
+    qtile.c.window.toggle_floating()
+    qtile.kill_window(three)
+    qtile.kill_window(four)
+    qtile.kill_window(dialog4)
+    assert qtile.c.window.info()['name'] == "two", qtile.c.window.info()['name']
 
 
-@Xephyr(False, MaxConfig())
-def test_closing_notification(self):
+@max_config
+def test_closing_notification(qtile):
     # Closing a floating window that doesn't have focus must not change the
     # currently focused window
 
@@ -152,39 +153,39 @@ def test_closing_notification(self):
 
     # Start by testing a notification that is the first open window in the
     # group
-    notification1 = self.testWindow("notification1")
-    self.c.window.toggle_floating()
-    self.testWindow("one")
-    self.testWindow("two")
-    self.testWindow("three")
-    self.c.layout.up()
-    assert self.c.window.info()['name'] == "two", self.c.window.info()['name']
-    self.kill(notification1)
-    assert self.c.window.info()['name'] == "two", self.c.window.info()['name']
+    notification1 = qtile.testWindow("notification1")
+    qtile.c.window.toggle_floating()
+    qtile.testWindow("one")
+    qtile.testWindow("two")
+    qtile.testWindow("three")
+    qtile.c.layout.up()
+    assert qtile.c.window.info()['name'] == "two", qtile.c.window.info()['name']
+    qtile.kill_window(notification1)
+    assert qtile.c.window.info()['name'] == "two", qtile.c.window.info()['name']
 
     # Now test a notification that is the last open window in the group
-    self.c.layout.down()
-    notification2 = self.testWindow("notification2")
-    self.c.window.toggle_floating()
-    # Create and kill 'temp', otherwise self.c.layout.up() won't work
-    temp = self.testWindow("temp")
-    self.c.layout.up()
-    self.c.layout.up()
-    self.kill(temp)
-    assert self.c.window.info()['name'] == "two", self.c.window.info()['name']
-    self.kill(notification2)
-    assert self.c.window.info()['name'] == "two", self.c.window.info()['name']
+    qtile.c.layout.down()
+    notification2 = qtile.testWindow("notification2")
+    qtile.c.window.toggle_floating()
+    # Create and kill 'temp', otherwise qtile.c.layout.up() won't work
+    temp = qtile.testWindow("temp")
+    qtile.c.layout.up()
+    qtile.c.layout.up()
+    qtile.kill_window(temp)
+    assert qtile.c.window.info()['name'] == "two", qtile.c.window.info()['name']
+    qtile.kill_window(notification2)
+    assert qtile.c.window.info()['name'] == "two", qtile.c.window.info()['name']
 
     # Now test a notification that is neither the first nor the last open
     # window in the group
-    self.c.layout.down()
-    notification3 = self.testWindow("notification3")
-    self.c.window.toggle_floating()
-    four = self.testWindow("four")
-    five = self.testWindow("five")
-    self.c.layout.up()
-    self.c.layout.up()
-    self.c.layout.up()
-    assert self.c.window.info()['name'] == "two", self.c.window.info()['name']
-    self.kill(notification3)
-    assert self.c.window.info()['name'] == "two", self.c.window.info()['name']
+    qtile.c.layout.down()
+    notification3 = qtile.testWindow("notification3")
+    qtile.c.window.toggle_floating()
+    four = qtile.testWindow("four")
+    five = qtile.testWindow("five")
+    qtile.c.layout.up()
+    qtile.c.layout.up()
+    qtile.c.layout.up()
+    assert qtile.c.window.info()['name'] == "two", qtile.c.window.info()['name']
+    qtile.kill_window(notification3)
+    assert qtile.c.window.info()['name'] == "two", qtile.c.window.info()['name']
