@@ -112,6 +112,7 @@ def test_completion():
     s = "thisisatotallynonexistantpathforsure"
     assert c.complete(s) == s
     assert c.actual() == s
+    c.reset()
 
 
 @gb_config

@@ -238,7 +238,7 @@ class CommandCompleter(object):
 
     def __init__(self, qtile, _testing=False):
         self.lookup = None
-        self.offset = None
+        self.offset = -1
         self.thisfinal = None
         self._testing = _testing
 
@@ -276,10 +276,10 @@ class CommandCompleter(object):
                             self.lookup.append((display, f))
                 else:
                     dirs = os.environ.get("PATH", self.DEFAULTPATH).split(":")
-                    for didx, d in enumerate(dirs):
+                    for d in dirs:
                         try:
                             d = os.path.expanduser(d)
-                            for cmd in glob.glob(os.path.join(d, "%s*" % txt)):
+                            for cmd in glob.iglob(os.path.join(d, "%s*" % txt)):
                                 if self.executable(cmd):
                                     self.lookup.append(
                                         (
