@@ -3,6 +3,6 @@ source = libqtile
 
 [report]
 omit =
-    */site-packages/*
-    test/*
-    setup.py
+    libqtile/interactive/*
+    libqtile/scripts/*
+    libqtile/ffi_build.py
