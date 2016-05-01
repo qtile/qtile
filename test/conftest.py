@@ -363,8 +363,36 @@ class Qtile(object):
         had an attached group."
 
 
+@pytest.yield_fixture(scope="session")
+def xvfb():
+    display = ":{:d}".format(_find_display())
+    args = ["Xvfb", display, "-screen", "0", "800x600x16"]
+    proc = subprocess.Popen(args)
+
+    try:
+        # wait for X display to come up
+        start = time.time()
+        while proc.poll() is None and time.time() < start + max_sleep:
+            try:
+                conn = xcffib.connect(display)
+            except xcffib.ConnectionException:
+                time.sleep(sleep_time)
+            else:
+                conn.disconnect()
+                break
+        else:
+            raise OSError("Xvfb did not come up")
+
+        os.environ["DISPLAY"] = display
+
+        yield
+    finally:
+        proc.terminate()
+        proc.wait()
+
+
 @pytest.yield_fixture(scope="function")
-def xephyr(request):
+def xephyr(request, xvfb):
     kwargs = getattr(request, "param", {})
 
     x = Xephyr(**kwargs)
