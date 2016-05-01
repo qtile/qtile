@@ -35,6 +35,7 @@ from .conftest import BareConfig
 # TODO: more tests required.
 # 1. Check all hooks that can be fired
 
+
 class Call(object):
     def __init__(self, val):
         self.val = val
@@ -90,6 +91,7 @@ def test_can_unsubscribe_from_hook():
     libqtile.manager.hook.unsubscribe.group_window_add(test)
     libqtile.manager.hook.fire("group_window_add", 4)
     assert test.val == 3
+
 
 def test_can_subscribe_to_startup_hooks(qtile_nospawn):
     config = BareConfig

@@ -62,8 +62,7 @@ def test_matrix_simple(qtile):
     qtile.testWindow("two")
     assert qtile.c.layout.info()["rows"] == [["one", "two"]]
     qtile.testWindow("three")
-    assert qtile.c.layout.info()["rows"] == [["one", "two"],
-                                            ["three"]]
+    assert qtile.c.layout.info()["rows"] == [["one", "two"], ["three"]]
 
 
 @matrix_config
@@ -99,9 +98,6 @@ def test_matrix_add_remove_columns(qtile):
     qtile.testWindow("four")
     qtile.testWindow("five")
     qtile.c.layout.add()
-    assert qtile.c.layout.info()["rows"] == [["one", "two", "three"],
-                                            ["four", "five"]]
+    assert qtile.c.layout.info()["rows"] == [["one", "two", "three"], ["four", "five"]]
     qtile.c.layout.delete()
-    assert qtile.c.layout.info()["rows"] == [["one", "two"],
-                                            ["three", "four"],
-                                            ["five"]]
+    assert qtile.c.layout.info()["rows"] == [["one", "two"], ["three", "four"], ["five"]]

@@ -45,7 +45,7 @@ class TileConfig:
     layouts = [
         layout.Tile(),
         layout.Tile(masterWindows=2)
-        ]
+    ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = []
     mouse = []

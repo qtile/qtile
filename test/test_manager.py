@@ -39,7 +39,7 @@ import libqtile.config
 import libqtile.hook
 import libqtile.confreader
 
-from .conftest import whereis, BareConfig, Xephyr, no_xinerama
+from .conftest import whereis, BareConfig, no_xinerama
 
 
 class ManagerConfig(object):
@@ -51,11 +51,11 @@ class ManagerConfig(object):
         libqtile.config.Group("d")
     ]
     layouts = [
-                libqtile.layout.stack.Stack(num_stacks=1),
-                libqtile.layout.stack.Stack(num_stacks=2),
-                libqtile.layout.tile.Tile(ratio=0.5),
-                libqtile.layout.max.Max()
-            ]
+        libqtile.layout.stack.Stack(num_stacks=1),
+        libqtile.layout.stack.Stack(num_stacks=2),
+        libqtile.layout.tile.Tile(ratio=0.5),
+        libqtile.layout.max.Max()
+    ]
     floating_layout = libqtile.layout.floating.Floating(
         float_rules=[dict(wmclass="xclock")])
     keys = [
@@ -72,12 +72,12 @@ class ManagerConfig(object):
     ]
     mouse = []
     screens = [libqtile.config.Screen(
-            bottom=libqtile.bar.Bar(
-                        [
-                            libqtile.widget.GroupBox(),
-                        ],
-                        20
-                    ),
+        bottom=libqtile.bar.Bar(
+            [
+                libqtile.widget.GroupBox(),
+            ],
+            20
+        ),
     )]
     main = None
     follow_mouse_focus = True
@@ -88,7 +88,8 @@ manager_config = pytest.mark.parametrize("qtile", [ManagerConfig], indirect=True
 
 @manager_config
 def test_screen_dim(qtile):
-    #self.c.restart()
+    # self.c.restart()
+
     qtile.testXclock()
     assert qtile.c.screen.info()["index"] == 0
     assert qtile.c.screen.info()["x"] == 0
@@ -123,7 +124,6 @@ def test_clone_dim(qtile):
     assert self.c.screen.info()["width"] == 800
     assert self.c.group.info()["name"] == 'a'
     assert self.c.group.info()["focus"] == 'xclock'
-    self = qtile
 
     assert len(self.c.screens()) == 1
 
@@ -166,7 +166,7 @@ def test_togroup(qtile):
     assert self.c.groups()["a"]["focus"] == "one"
     self.c.window.togroup("b")
     assert self.c.groups()["b"]["focus"] == "one"
-    assert self.c.groups()["a"]["focus"] == None
+    assert self.c.groups()["a"]["focus"] is None
     self.c.to_screen(1)
     self.c.window.togroup("c")
     assert self.c.groups()["c"]["focus"] == "one"
@@ -243,6 +243,7 @@ def test_kill_window(qtile):
     else:
         raise AssertionError("Window did not die...")
 
+
 @manager_config
 @no_xinerama
 def test_kill_other(qtile):
@@ -278,7 +279,7 @@ def test_regression_groupswitch(qtile):
 
     self.c.group["c"].toscreen()
     self.c.group["d"].toscreen()
-    assert self.c.groups()["c"]["screen"] == None
+    assert self.c.groups()["c"]["screen"] is None
 
 
 @manager_config
@@ -318,7 +319,7 @@ def test_adddelgroup(qtile):
     assert "testgroup" in self.c.groups().keys()
     self.c.window.togroup("testgroup")
     self.c.delgroup("testgroup")
-    assert not "testgroup" in self.c.groups().keys()
+    assert "testgroup" not in self.c.groups().keys()
     # Assert that the test window is still a member of some group.
     assert sum(len(i["windows"]) for i in self.c.groups().values())
 
@@ -421,14 +422,14 @@ def test_default_float(qtile):
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == 0
     assert self.c.window.info()['y'] == 0
-    assert self.c.window.info()['floating'] == True
+    assert self.c.window.info()['floating'] is True
 
     self.c.window.move_floating(10, 20, 42, 42)
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == 10
     assert self.c.window.info()['y'] == 20
-    assert self.c.window.info()['floating'] == True
+    assert self.c.window.info()['floating'] is True
 
 
 @manager_config
@@ -485,11 +486,11 @@ def test_float_max_min_combo(qtile):
     assert self.c.window.info()['height'] == 578
     assert self.c.window.info()['x'] == 400
     assert self.c.window.info()['y'] == 0
-    assert self.c.window.info()['floating'] == False
+    assert self.c.window.info()['floating'] is False
 
     self.c.window.toggle_maximize()
-    assert self.c.window.info()['floating'] == True
-    assert self.c.window.info()['maximized'] == True
+    assert self.c.window.info()['floating'] is True
+    assert self.c.window.info()['maximized'] is True
     assert self.c.window.info()['width'] == 800
     assert self.c.window.info()['height'] == 580
     assert self.c.window.info()['x'] == 0
@@ -497,8 +498,8 @@ def test_float_max_min_combo(qtile):
 
     self.c.window.toggle_minimize()
     assert self.c.group.info()['focus'] == 'xeyes'
-    assert self.c.window.info()['floating'] == True
-    assert self.c.window.info()['minimized'] == True
+    assert self.c.window.info()['floating'] is True
+    assert self.c.window.info()['minimized'] is True
     assert self.c.window.info()['width'] == 800
     assert self.c.window.info()['height'] == 580
     assert self.c.window.info()['x'] == 0
@@ -506,9 +507,9 @@ def test_float_max_min_combo(qtile):
 
     self.c.window.toggle_floating()
     assert self.c.group.info()['focus'] == 'xeyes'
-    assert self.c.window.info()['floating'] == False
-    assert self.c.window.info()['minimized'] == False
-    assert self.c.window.info()['maximized'] == False
+    assert self.c.window.info()['floating'] is False
+    assert self.c.window.info()['minimized'] is False
+    assert self.c.window.info()['maximized'] is False
     assert self.c.window.info()['width'] == 398
     assert self.c.window.info()['height'] == 578
     assert self.c.window.info()['x'] == 400
@@ -535,18 +536,18 @@ def test_toggle_fullscreen(qtile):
     assert self.c.window.info()['y'] == 0
 
     self.c.window.toggle_fullscreen()
-    assert self.c.window.info()['floating'] == True
-    assert self.c.window.info()['maximized'] == False
-    assert self.c.window.info()['fullscreen'] == True
+    assert self.c.window.info()['floating'] is True
+    assert self.c.window.info()['maximized'] is False
+    assert self.c.window.info()['fullscreen'] is True
     assert self.c.window.info()['width'] == 800
     assert self.c.window.info()['height'] == 600
     assert self.c.window.info()['x'] == 0
     assert self.c.window.info()['y'] == 0
 
     self.c.window.toggle_fullscreen()
-    assert self.c.window.info()['floating'] == False
-    assert self.c.window.info()['maximized'] == False
-    assert self.c.window.info()['fullscreen'] == False
+    assert self.c.window.info()['floating'] is False
+    assert self.c.window.info()['maximized'] is False
+    assert self.c.window.info()['fullscreen'] is False
     assert self.c.window.info()['width'] == 398
     assert self.c.window.info()['height'] == 578
     assert self.c.window.info()['x'] == 400
@@ -573,16 +574,16 @@ def test_toggle_max(qtile):
     assert self.c.window.info()['y'] == 0
 
     self.c.window.toggle_maximize()
-    assert self.c.window.info()['floating'] == True
-    assert self.c.window.info()['maximized'] == True
+    assert self.c.window.info()['floating'] is True
+    assert self.c.window.info()['maximized'] is True
     assert self.c.window.info()['width'] == 800
     assert self.c.window.info()['height'] == 580
     assert self.c.window.info()['x'] == 0
     assert self.c.window.info()['y'] == 0
 
     self.c.window.toggle_maximize()
-    assert self.c.window.info()['floating'] == False
-    assert self.c.window.info()['maximized'] == False
+    assert self.c.window.info()['floating'] is False
+    assert self.c.window.info()['maximized'] is False
     assert self.c.window.info()['width'] == 398
     assert self.c.window.info()['height'] == 578
     assert self.c.window.info()['x'] == 400
@@ -610,8 +611,8 @@ def test_toggle_min(qtile):
 
     self.c.window.toggle_minimize()
     assert self.c.group.info()['focus'] == 'xeyes'
-    assert self.c.window.info()['floating'] == True
-    assert self.c.window.info()['minimized'] == True
+    assert self.c.window.info()['floating'] is True
+    assert self.c.window.info()['minimized'] is True
     assert self.c.window.info()['width'] == 398
     assert self.c.window.info()['height'] == 578
     assert self.c.window.info()['x'] == 400
@@ -619,8 +620,8 @@ def test_toggle_min(qtile):
 
     self.c.window.toggle_minimize()
     assert self.c.group.info()['focus'] == 'xeyes'
-    assert self.c.window.info()['floating'] == False
-    assert self.c.window.info()['minimized'] == False
+    assert self.c.window.info()['floating'] is False
+    assert self.c.window.info()['minimized'] is False
     assert self.c.window.info()['width'] == 398
     assert self.c.window.info()['height'] == 578
     assert self.c.window.info()['x'] == 400
@@ -633,17 +634,17 @@ def test_toggle_floating(qtile):
     self = qtile
 
     self.testXeyes()
-    assert self.c.window.info()['floating'] == False
+    assert self.c.window.info()['floating'] is False
     self.c.window.toggle_floating()
-    assert self.c.window.info()['floating'] == True
+    assert self.c.window.info()['floating'] is True
     self.c.window.toggle_floating()
-    assert self.c.window.info()['floating'] == False
+    assert self.c.window.info()['floating'] is False
     self.c.window.toggle_floating()
-    assert self.c.window.info()['floating'] == True
+    assert self.c.window.info()['floating'] is True
 
-    #change layout (should still be floating)
+    # change layout (should still be floating)
     self.c.next_layout()
-    assert self.c.window.info()['floating'] == True
+    assert self.c.window.info()['floating'] is True
 
 
 @manager_config
@@ -656,7 +657,7 @@ def test_floating_focus(qtile):
     assert len(self.c.layout.info()["stacks"]) == 2
     self.testXterm()
     self.testXeyes()
-    #self.testWindow("one")
+    # self.testWindow("one")
     assert self.c.window.info()['width'] == 398
     assert self.c.window.info()['height'] == 578
     self.c.window.toggle_floating()
@@ -703,14 +704,14 @@ def test_move_floating(qtile):
     self = qtile
 
     self.testXeyes()
-    #self.testWindow("one")
+    # self.testWindow("one")
     assert self.c.window.info()['width'] == 798
     assert self.c.window.info()['height'] == 578
 
     assert self.c.window.info()['x'] == 0
     assert self.c.window.info()['y'] == 0
     self.c.window.toggle_floating()
-    assert self.c.window.info()['floating'] == True
+    assert self.c.window.info()['floating'] is True
 
     self.c.window.move_floating(10, 20, 42, 42)
     assert self.c.window.info()['width'] == 150
@@ -736,7 +737,7 @@ def test_move_floating(qtile):
     assert self.c.window.info()['x'] == 10
     assert self.c.window.info()['y'] == 20
 
-    #change layout (x, y should be same)
+    # change layout (x, y should be same)
     self.c.next_layout()
     assert self.c.window.info()['width'] == 10
     assert self.c.window.info()['height'] == 20
@@ -904,7 +905,7 @@ def test_setgroup(qtile):
     self.c.group["b"].toscreen()
     self.groupconsistency()
     if len(self.c.screens()) == 1:
-        assert self.c.groups()["a"]["screen"] == None
+        assert self.c.groups()["a"]["screen"] is None
     else:
         assert self.c.groups()["a"]["screen"] == 1
     assert self.c.groups()["b"]["screen"] == 0
@@ -978,9 +979,9 @@ class _Config(object):
         libqtile.config.Group("d")
     ]
     layouts = [
-                libqtile.layout.stack.Stack(num_stacks=1),
-                libqtile.layout.stack.Stack(num_stacks=2)
-            ]
+        libqtile.layout.stack.Stack(num_stacks=1),
+        libqtile.layout.stack.Stack(num_stacks=2)
+    ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = [
         libqtile.config.Key(
@@ -996,12 +997,12 @@ class _Config(object):
     ]
     mouse = []
     screens = [libqtile.config.Screen(
-            bottom=libqtile.bar.Bar(
-                        [
-                            libqtile.widget.GroupBox(),
-                        ],
-                        20
-                    ),
+        bottom=libqtile.bar.Bar(
+            [
+                libqtile.widget.GroupBox(),
+            ],
+            20
+        ),
     )]
     auto_fullscreen = True
 

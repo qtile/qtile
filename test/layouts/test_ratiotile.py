@@ -46,7 +46,7 @@ class RatioTileConfig:
     layouts = [
         layout.RatioTile(ratio=.5),
         layout.RatioTile(),
-        ]
+    ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = []
     mouse = []

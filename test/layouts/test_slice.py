@@ -42,14 +42,14 @@ class SliceConfig:
     ]
     layouts = [
         layout.Slice(side='left', width=200, wname='slice',
-            fallback=layout.Stack(num_stacks=1, border_width=0)),
+                     fallback=layout.Stack(num_stacks=1, border_width=0)),
         layout.Slice(side='right', width=200, wname='slice',
-            fallback=layout.Stack(num_stacks=1, border_width=0)),
+                     fallback=layout.Stack(num_stacks=1, border_width=0)),
         layout.Slice(side='top', width=200, wname='slice',
-            fallback=layout.Stack(num_stacks=1, border_width=0)),
+                     fallback=layout.Stack(num_stacks=1, border_width=0)),
         layout.Slice(side='bottom', width=200, wname='slice',
-            fallback=layout.Stack(num_stacks=1, border_width=0)),
-        ]
+                     fallback=layout.Stack(num_stacks=1, border_width=0)),
+    ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = []
     mouse = []

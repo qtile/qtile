@@ -56,11 +56,11 @@ class CallConfig(object):
     screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
-                        [
-                            libqtile.widget.GroupBox(),
-                        ],
-                        20
-                    ),
+                [
+                    libqtile.widget.GroupBox(),
+                ],
+                20
+            ),
         )
     ]
     main = None
@@ -142,7 +142,7 @@ def test_selectors():
 
     g = c.group
     assert isinstance(g, libqtile.command._TGroup)
-    assert g.myselector == None
+    assert g.myselector is None
 
     g = c.group["one"]
     assert isinstance(g, libqtile.command._TGroup)
@@ -177,19 +177,19 @@ class ServerConfig(object):
     screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
-                        [
-                            libqtile.widget.TextBox(name="one"),
-                        ],
-                        20
-                    ),
+                [
+                    libqtile.widget.TextBox(name="one"),
+                ],
+                20
+            ),
         ),
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
-                        [
-                            libqtile.widget.TextBox(name="two"),
-                        ],
-                        20
-                    ),
+                [
+                    libqtile.widget.TextBox(name="two"),
+                ],
+                20
+            ),
         )
     ]
     main = None
@@ -348,6 +348,7 @@ def test_select_bar(qtile):
     assert b["bottom"].screen.info()["index"] == 0
     with pytest.raises(libqtile.command.CommandError):
         b.screen.info()
+
 
 @server_config
 def test_items_layout(qtile):

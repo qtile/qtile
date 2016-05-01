@@ -42,7 +42,7 @@ class ZoomyConfig:
     ]
     layouts = [
         layout.Zoomy(columnwidth=200),
-        ]
+    ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = []
     mouse = []

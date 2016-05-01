@@ -28,13 +28,16 @@ from libqtile import config, utils
 
 tests_dir = os.path.dirname(os.path.realpath(__file__))
 
+
 def test_syntaxerr():
     with pytest.raises(confreader.ConfigError):
         confreader.File(os.path.join(tests_dir, "configs", "syntaxerr.py"))
 
+
 def test_basic():
     f = confreader.File(os.path.join(tests_dir, "configs", "basic.py"))
     assert f.keys
+
 
 def test_falls_back():
     f = confreader.File(os.path.join(tests_dir, "configs", "basic.py"))
@@ -43,6 +46,7 @@ def test_falls_back():
     # default is; don't assert anything at all about the default in case
     # someone changes it down the road.
     assert hasattr(f, "follow_mouse_focus")
+
 
 def test_ezkey():
     cmd = lambda x: None
@@ -69,6 +73,7 @@ def test_ezkey():
 
     with pytest.raises(utils.QtileError):
         config.EzKey('M-a-A', cmd)
+
 
 def test_ezclick_ezdrag():
     cmd = lambda x: None

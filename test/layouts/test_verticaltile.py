@@ -30,7 +30,6 @@ import pytest
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from .layout_utils import assertDimensions, assertFocused, assertFocusPath
 from .layout_utils import assertDimensions
 from ..conftest import no_xinerama
 

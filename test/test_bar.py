@@ -61,7 +61,7 @@ class GBConfig(object):
                     libqtile.widget.MemoryGraph(type="line"),
                     libqtile.widget.SwapGraph(type="box"),
                     libqtile.widget.TextBox(name="text",
-                    background="333333"),
+                                            background="333333"),
                 ],
                 50,
             ),
@@ -163,7 +163,7 @@ def test_textbox_errors(qtile):
 @gb_config
 def test_groupbox_button_press(qtile):
     qtile.c.group["ccc"].toscreen()
-    assert qtile.c.groups()["a"]["screen"] == None
+    assert qtile.c.groups()["a"]["screen"] is None
     qtile.c.bar["bottom"].fake_button_press(0, "bottom", 10, 10, 1)
     assert qtile.c.groups()["a"]["screen"] == 0
 

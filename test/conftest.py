@@ -32,7 +32,6 @@ import logging
 import multiprocessing
 import os
 import pytest
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -139,7 +138,7 @@ class Xephyr(object):
                 "-screen", "%sx%s" % (self.width, self.height)]
             if self.two_screens:
                 args.extend(["-origin", "%s,0" % self.xoffset, "-screen",
-                    "%sx%s" % (SECOND_WIDTH, SECOND_HEIGHT)])
+                             "%sx%s" % (SECOND_WIDTH, SECOND_HEIGHT)])
             if self.xinerama:
                 args.extend(["+xinerama"])
             if self.randr:
