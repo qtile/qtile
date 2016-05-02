@@ -1,4 +1,10 @@
 qtile x.x.x, released xxxx-xx-xx:
+    * features
+        - Test framework changed to pytest
+        - Add `startup_complete` hook
+    * bugfixes
+        - Restore dynamic groups on restart
+        - Major bug fixes with floating window handling
     * file path changes (XDG Base Directory specification)
         - the default log file path changed from ~/.qtile.log to
           ~/.local/share/qtile/qtile.log

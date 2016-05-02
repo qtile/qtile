@@ -8,11 +8,11 @@ Requirements
 Any reasonably recent version of these should work, so you can probably just
 install them from your package manager.
 
-* `Nose <http://nose.readthedocs.org/en/latest/>`_
+* `pytest <http://pytest.org/latest/>`_
 * `Xephyr <http://www.freedesktop.org/wiki/Software/Xephyr>`_
 * ``xrandr``, ``xterm``, ``xeyes`` and ``xclock`` (``x11-apps`` on ubuntu)
 
-On ubuntu, this can be done with ``sudo apt-get install python-nose
+On ubuntu, this can be done with ``sudo apt-get install python-pytest
 xserver-xephyr x11-apps``.
 
 Building cffi module
@@ -49,9 +49,9 @@ Run it from the top-level of the repository, like this:
 In practice, the development cycle looks something like this:
 
 1. make minor code change
-#. run appropriate test: ``nosetests --tests=test_module``
+#. run appropriate test: ``pytest --tests=test_module``
 #. GOTO 1, until hackage is complete
-#. run entire test suite: ``nosetests``
+#. run entire test suite: ``pytest``
 #. commit
 
 Second X Session

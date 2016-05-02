@@ -10,11 +10,11 @@ default:
 
 .PHONY: check
 check:
-	nosetests --verbose --detailed-errors
+	pytest --verbose
 
 .PHONY: check-cov
 check-cov:
-	nosetests --verbose --detailed-errors --with-cov --cover-package libqtile
+	pytest --verbose --with-cov libqtile --cov-report term-missing
 
 .PHONY: lint
 lint:
