@@ -75,8 +75,8 @@ class Net(base.ThreadedPollText):
         if len(up) > 5:
             up = up[:5]
 
-        down = "  " * (5 - len(down)) + down
-        up = "  " * (5 - len(up)) + up
+        down = " " * (5 - len(down)) + down
+        up = " " * (5 - len(up)) + up
         return down, up
 
     def poll(self):
