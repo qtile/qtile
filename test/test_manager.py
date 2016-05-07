@@ -238,7 +238,7 @@ def test_kill_window(qtile):
     qtile.c.sync()
     for _ in range(20):
         time.sleep(0.1)
-        if len(qtile.c.windows()) == 0:
+        if not qtile.c.windows():
             break
     else:
         raise AssertionError("Window did not die...")
