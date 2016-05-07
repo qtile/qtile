@@ -197,7 +197,7 @@ class Qtile(object):
     def start(self, config_class):
         rpipe, wpipe = multiprocessing.Pipe()
 
-        def runQtile():
+        def run_qtile():
             try:
                 init_log(logging.INFO, log_path=None)
                 q = QtileManager(config_class(), self.display, self.sockfile)
@@ -205,7 +205,7 @@ class Qtile(object):
             except Exception:
                 wpipe.send(traceback.format_exc())
 
-        self.proc = multiprocessing.Process(target=runQtile)
+        self.proc = multiprocessing.Process(target=run_qtile)
         self.proc.start()
 
         # First, wait for socket to appear

@@ -853,7 +853,7 @@ def test_xterm_kill_window(qtile):
 
 @pytest.mark.parametrize("qtile", [BareConfig, ManagerConfig], indirect=True)
 @pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
-def test_mapRequest(qtile):
+def test_map_request(qtile):
     self = qtile
 
     self.testWindow("one")
