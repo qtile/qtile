@@ -34,7 +34,7 @@ from .layout_utils import assertDimensions, assertFocusPath
 from ..conftest import no_xinerama
 
 
-class ZoomyConfig:
+class ZoomyConfig(object):
     auto_fullscreen = True
     main = None
     groups = [

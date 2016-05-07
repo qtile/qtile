@@ -169,7 +169,7 @@ def test_groupbox_button_press(qtile):
     assert qtile.c.groups()["a"]["screen"] == 0
 
 
-class GeomConf:
+class GeomConf(object):
     auto_fullscreen = False
     main = None
     keys = []
@@ -207,7 +207,7 @@ class DBarV(libqtile.bar.Bar):
         self.horizontal = False
 
 
-class DWidget:
+class DWidget(object):
     def __init__(self, length, length_type):
         self.length, self.length_type = length, length_type
 

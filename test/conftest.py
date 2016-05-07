@@ -68,7 +68,7 @@ def whereis(program):
     return None
 
 
-class BareConfig:
+class BareConfig(object):
     auto_fullscreen = True
     groups = [
         libqtile.config.Group("a"),

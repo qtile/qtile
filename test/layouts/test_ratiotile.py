@@ -34,7 +34,7 @@ import libqtile.config
 from ..conftest import no_xinerama
 
 
-class RatioTileConfig:
+class RatioTileConfig(object):
     auto_fullscreen = True
     main = None
     groups = [

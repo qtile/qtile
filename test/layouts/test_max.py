@@ -33,7 +33,7 @@ import libqtile.config
 from ..conftest import no_xinerama
 
 
-class MaxConfig:
+class MaxConfig(object):
     auto_fullscreen = True
     main = None
     groups = [

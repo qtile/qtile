@@ -33,7 +33,7 @@ import libqtile.config
 from ..conftest import no_xinerama
 
 
-class MatrixConfig:
+class MatrixConfig(object):
     auto_fullscreen = True
     main = None
     groups = [
