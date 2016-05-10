@@ -22,12 +22,12 @@ has two qualities:
 To give more information about your bug you can append logs from
 `~/.local/share/qtile/qtile.log` or on occasionally events you can capture bugs
 with `xtrace` for this have a deeper look on the documentation about
-[capturing an xtrace](http://qtile.readthedocs.org/en/latest/manual/hacking.html#capturing-an-xtrace)
+[capturing an xtrace](http://qtile.readthedocs.io/en/latest/manual/hacking.html#capturing-an-xtrace)
 
 Writing code
 ============
 
-To get started writing code for Qtile, check out our guide to [hacking](http://qtile.readthedocs.org/en/latest/manual/hacking.html).
+To get started writing code for Qtile, check out our guide to [hacking](http://qtile.readthedocs.io/en/latest/manual/hacking.html).
 
 Submit a pull request
 ---------------------

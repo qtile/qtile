@@ -91,7 +91,7 @@ Based on your Python version, there are different ways to install this:
 .. _PEP 3156: http://python.org/dev/peps/pep-3156/
 .. _asyncio module: https://docs.python.org/3/library/asyncio.html
 .. _Tulip project: https://code.google.com/p/tulip/
-.. _trollius: http://trollius.readthedocs.org/
+.. _trollius: http://trollius.readthedocs.io/
 .. _trollius is deprecated: http://trollius.readthedocs.io/deprecated.html#deprecated
 
 dbus/gobject
