@@ -23,10 +23,6 @@ First, you need to install all of Qtile's dependencies (although some are
 optional/not needed depending on your Python version, as noted below).
 
 Note that Python 3 versions 3.3 and newer are currently supported and tested.
-Python 3.2 should still work with Qtile, however the latest versions of pip
-have dropped support for Qtile, so you will need to either use an older
-version, or install all the required packages by running the respective
-``setup.py`` scripts.
 
 xcffib
 ------
@@ -81,8 +77,10 @@ Based on your Python version, there are different ways to install this:
 
       pip install asyncio
 
-  Alternatively, you can install trollius (see next point).
-- Python 2 and <=3.2 (and 3.3 without asyncio): You will need to install
+  Alternatively, you can install trollius (see next point).  Note, however,
+  that `trollius is deprecated`_, and it is recommended that you use tulip, as
+  trollius will likely be dropped if (and when) Python 2 support is dropped.
+- Python 2 (and 3.3 without asyncio): You will need to install
   trollius_, which backports the asyncio module functionality to work without
   the infrastructure introduced in PEP 3156.  You can install this from PyPI:
 
@@ -94,6 +92,7 @@ Based on your Python version, there are different ways to install this:
 .. _asyncio module: https://docs.python.org/3/library/asyncio.html
 .. _Tulip project: https://code.google.com/p/tulip/
 .. _trollius: http://trollius.readthedocs.org/
+.. _trollius is deprecated: http://trollius.readthedocs.io/deprecated.html#deprecated
 
 dbus/gobject
 ------------
