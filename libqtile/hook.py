@@ -35,6 +35,12 @@ from . import utils
 
 subscriptions = {}
 SKIPLOG = set()
+qtile = None
+
+
+def init(q):
+    global qtile
+    qtile = q
 
 
 def clear():
