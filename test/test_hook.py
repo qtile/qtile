@@ -46,18 +46,14 @@ class Call(object):
 
 @pytest.yield_fixture
 def hook_fixture():
-    class Dummy(object):
-        pass
-
-    dummy = Dummy()
     libqtile.log_utils.init_log(logging.CRITICAL)
-    libqtile.hook.init(dummy)
 
     yield
 
     libqtile.hook.clear()
 
 
+@pytest.mark.usefixtures("hook_fixture")
 def test_cannot_fire_unknown_event():
     with pytest.raises(libqtile.utils.QtileError):
         libqtile.hook.fire("unknown")
@@ -95,28 +91,26 @@ def test_can_unsubscribe_from_hook():
 
 def test_can_subscribe_to_startup_hooks(qtile_nospawn):
     config = BareConfig
-    self = qtile_nospawn
 
-    self.startup_once_calls = Value('i', 0)
-    self.startup_calls = Value('i', 0)
-    self.startup_complete_calls = Value('i', 0)
+    qtile_nospawn.startup_once_calls = Value('i', 0)
+    qtile_nospawn.startup_calls = Value('i', 0)
+    qtile_nospawn.startup_complete_calls = Value('i', 0)
 
     def inc_startup_once_calls():
-        self.startup_once_calls.value += 1
+        qtile_nospawn.startup_once_calls.value += 1
 
     def inc_startup_calls():
-        self.startup_calls.value += 1
+        qtile_nospawn.startup_calls.value += 1
 
     def inc_startup_complete_calls():
-        self.startup_complete_calls.value += 1
+        qtile_nospawn.startup_complete_calls.value += 1
 
     libqtile.manager.hook.subscribe.startup_once(inc_startup_once_calls)
     libqtile.manager.hook.subscribe.startup(inc_startup_calls)
     libqtile.manager.hook.subscribe.startup_complete(inc_startup_complete_calls)
 
-    self.start(config)
-    self.start_qtile = True
-    assert self.startup_once_calls.value == 1
-    assert self.startup_calls.value == 1
-    assert self.startup_complete_calls.value == 1
+    qtile_nospawn.start(config)
+    assert qtile_nospawn.startup_once_calls.value == 1
+    assert qtile_nospawn.startup_calls.value == 1
+    assert qtile_nospawn.startup_complete_calls.value == 1
     # TODO Restart and check that startup_once doesn't fire again

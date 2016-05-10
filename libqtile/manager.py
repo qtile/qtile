@@ -100,7 +100,6 @@ class Qtile(command.CommandObject):
         self.conn = xcbq.Connection(displayName)
         self.config = config
         self.fname = fname
-        hook.init(self)
 
         self.windowMap = {}
         self.widgetMap = {}
