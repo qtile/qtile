@@ -977,7 +977,7 @@ class Window(_Window):
                 width -= (width - self.hints['base_width']) % self.hints['width_inc']
 
             if self.hints['base_height'] and self.hints['height_inc']:
-                width -= (width - self.hints['base_height']) % self.hints['height_inc']
+                height -= (height - self.hints['base_height']) % self.hints['height_inc']
 
             self.place(
                 self.x, self.y,
