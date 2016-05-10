@@ -40,8 +40,8 @@ SERVICE_PATH = '/org/freedesktop/Notifications'
 
 if dbus:
     class NotificationService(service.Object):
-        def __init__(self, manager):
-            bus_name = service.BusName(BUS_NAME, bus=dbus.SessionBus())
+        def __init__(self, manager, loop):
+            bus_name = service.BusName(BUS_NAME, bus=dbus.SessionBus(mainloop=loop))
             service.Object.__init__(self, bus_name, SERVICE_PATH)
             self.manager = manager
 
@@ -88,8 +88,8 @@ class NotificationManager(object):
     def service(self):
         if dbus and self._service is None:
             try:
-                DBusGMainLoop(set_as_default=True)
-                self._service = NotificationService(self)
+                dbus_loop = DBusGMainLoop()
+                self._service = NotificationService(self, dbus_loop)
             except Exception:
                 logger.exception('Dbus connection failed')
                 self._service = None
