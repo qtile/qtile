@@ -316,7 +316,7 @@ class Columns(Layout):
             self.group.focus(col.cw, True)
 
     def cmd_next(self):
-        if self.cc.split and self.cc.current < len(self.cc)-1:
+        if self.cc.split and self.cc.current < len(self.cc) - 1:
             self.cc.current = self.cc.current + 1
         elif len(self.columns) > 0:
             self.current = (self.current + 1) % len(self.columns)
