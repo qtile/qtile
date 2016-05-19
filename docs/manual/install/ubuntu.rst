@@ -2,8 +2,12 @@
 Installing on Ubuntu
 ====================
 
-There are no packages for currently released versions of qtile. However, on
-wily and above (and debian unstable), the dependencies are available via:
+A Python 3 version of qtile is currently available as a deb_ for Debian sid,
+and can be installed from the ``python3-qtile`` package.
+
+There are no upstream Ubuntu packages for currently released versions of
+qtile. However, on wily and above (and debian unstable), the dependencies
+are available via:
 
 .. code-block:: bash
 
@@ -11,6 +15,7 @@ wily and above (and debian unstable), the dependencies are available via:
 
 And with those, qtile can be built via a normal ``python setup.py install``.
 
+.. _deb: https://packages.debian.org/sid/qtile
 
 PPA on Launchpad
 ================
