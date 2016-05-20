@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import sys
+
 import six
 
 import libqtile.utils as utils
@@ -28,7 +30,7 @@ import libqtile.utils as utils
 class Foo(object):
     ran = False
 
-    @utils.LRUCache(2)
+    @utils.lru_cache(2)
     def one(self, x):
         self.ran = True
         return x
@@ -74,8 +76,10 @@ def test_lrucache_maintains_size():
     f.one(1)
     f.one(2)
     f.one(3)
-    assert len(f._cached_one) == 2
-    assert len(f._cachelist_one) == 2
+    # we only need these checks for the homebuilt LRU cache
+    if sys.version_info < (3, 4): 
+        assert len(f._cached_one) == 2
+        assert len(f._cachelist_one) == 2
 
 
 def test_rgb_from_hex_number():
