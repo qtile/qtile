@@ -94,27 +94,27 @@ if sys.version_info < (3, 3):
             self.size = maxsize
 
         def __call__(self, f):
-            cacheName = "_cached_{0}".format(f.__name__)
-            cacheListName = "_cachelist_{0}".format(f.__name__)
+            cache_name = "_cached_{0}".format(f.__name__)
+            cache_list_name = "_cachelist_{0}".format(f.__name__)
             size = self.size
 
             @functools.wraps(f)
             def wrap(self, *args):
-                if not hasattr(self, cacheName):
-                    setattr(self, cacheName, {})
-                    setattr(self, cacheListName, [])
-                cache = getattr(self, cacheName)
-                cacheList = getattr(self, cacheListName)
+                if not hasattr(self, cache_name):
+                    setattr(self, cache_name, {})
+                    setattr(self, cache_list_name, [])
+                cache = getattr(self, cache_name)
+                cache_list = getattr(self, cache_list_name)
                 if args in cache:
-                    cacheList.remove(args)
-                    cacheList.insert(0, args)
+                    cache_list.remove(args)
+                    cache_list.insert(0, args)
                     return cache[args]
                 else:
                     ret = f(self, *args)
-                    cacheList.insert(0, args)
+                    cache_list.insert(0, args)
                     cache[args] = ret
-                    if len(cacheList) > size:
-                        d = cacheList.pop()
+                    if len(cache_list) > size:
+                        d = cache_list.pop()
                         cache.pop(d)
                     return ret
             return wrap
