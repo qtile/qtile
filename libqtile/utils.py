@@ -94,8 +94,8 @@ if sys.version_info < (3, 3):
             self.size = maxsize
 
         def __call__(self, f):
-            cacheName = "_cached_%s" % f.__name__
-            cacheListName = "_cachelist_%s" % f.__name__
+            cacheName = "_cached_{0}".format(f.__name__)
+            cacheListName = "_cachelist_{0}".format(f.__name__)
             size = self.size
 
             @functools.wraps(f)
