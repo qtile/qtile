@@ -317,7 +317,7 @@ class Columns(Layout):
 
     def cmd_next(self):
         if self.cc.split and self.cc.current < len(self.cc) - 1:
-            self.cc.current = self.cc.current + 1
+            self.cc.current += 1
         elif len(self.columns) > 0:
             self.current = (self.current + 1) % len(self.columns)
             if self.cc.split:
@@ -326,7 +326,7 @@ class Columns(Layout):
 
     def cmd_previous(self):
         if self.cc.split and self.cc.current > 0:
-            self.cc.current = self.cc.current - 1
+            self.cc.current -= 1
         elif len(self.columns) > 0:
             self.current = (self.current - 1) % len(self.columns)
             if self.cc.split:
