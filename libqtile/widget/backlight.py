@@ -66,10 +66,9 @@ class Backlight(base.InLoopPollText):
             path = os.path.join(BACKLIGHT_DIR, self.backlight_name, name)
             with open(path, 'r') as f:
                 return f.read().strip()
-        except IOError:
-            return False
-        except Exception:
-            logger.exception("Failed to get %s" % name)
+        except:
+            logger.exception("Failed to read file: %s" % name)
+            raise
 
     def _get_info(self):
         try:
@@ -77,13 +76,13 @@ class Backlight(base.InLoopPollText):
                 'brightness': float(self._load_file(self.brightness_file)),
                 'max': float(self._load_file(self.max_brightness_file)),
             }
-        except TypeError:
-            return False
+        except:
+            return
         return info
 
     def poll(self):
         info = self._get_info()
-        if info is False:
+        if not info:
             return 'Error'
 
         percent = info['brightness'] / info['max']
