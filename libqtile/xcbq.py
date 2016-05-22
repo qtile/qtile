@@ -624,7 +624,7 @@ class Window(object):
                     value = value.encode('utf-8')
             else:
                 # if this runs without error, the value is already a list, don't wrap it
-                six.next(iter(value))
+                next(iter(value))
         except StopIteration:
             # The value was an iterable, just empty
             value = []

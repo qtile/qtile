@@ -26,7 +26,7 @@
 
 import re
 
-from six import u, PY2
+from six import PY2
 
 from . import base
 from ..utils import UnixCommandNotFound, catch_exception_and_warn
@@ -60,13 +60,12 @@ class ThermalSensor(base.InLoopPollText):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(ThermalSensor.defaults)
         self.sensors_temp = re.compile(
-            u(r"""
-            ([\w ]+):   # Sensor tag name
-            \s+[+|-]    # temp signed
-            (\d+\.\d+)  # temp value
-            ({degrees}  # ° match
-            [C|F])      # Celsius or Fahrenheit
-            """.format(degrees="\xc2\xb0" if PY2 else "\xb0")),
+            (r"\n([\w ]+):"  # Sensor tag name
+             r"\s+[+|-]"     # temp signed
+             r"(\d+\.\d+)"   # temp value
+             u"({degrees}"   # degree symbol match
+             u"[C|F])"       # Celsius or Fahrenheit
+             ).format(degrees=u"\xc2\xb0" if PY2 else u"\xb0"),
             re.UNICODE | re.VERBOSE
         )
         self.value_temp = re.compile("\d+\.\d+")
@@ -98,6 +97,7 @@ class ThermalSensor(base.InLoopPollText):
         {<sensor_name>: (<temperature>, <temperature symbol>), ..etc..}
         """
         temperature_values = {}
+        print(self.sensors_temp.findall(sensors_out))
         for name, temp, symbol in self.sensors_temp.findall(sensors_out):
             name = name.strip()
             temperature_values[name] = temp, symbol

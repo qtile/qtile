@@ -27,6 +27,7 @@ except ImportError:
 
 from libqtile.dgroups import DGroups
 from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
+import io
 import logging
 import os
 import pickle
@@ -215,7 +216,7 @@ class Qtile(command.CommandObject):
         hook.fire("startup")
 
         if state:
-            st = pickle.load(six.BytesIO(state.encode()))
+            st = pickle.load(io.BytesIO(state.encode()))
             try:
                 st.apply(self)
             except:
@@ -865,7 +866,7 @@ class Qtile(command.CommandObject):
 
             # If the selection property is None, it is unset, which means the
             # clipboard is empty.
-            value = prop and prop.value.to_utf8() or six.u("")
+            value = prop and prop.value.to_utf8() or u""
 
             self.selection[name]["selection"] = value
             hook.fire("selection_change", name, self.selection[name])
@@ -1375,7 +1376,7 @@ class Qtile(command.CommandObject):
         if '--no-spawn' not in argv:
             argv.append('--no-spawn')
 
-        buf = six.BytesIO()
+        buf = io.BytesIO()
         try:
             pickle.dump(QtileState(self), buf, protocol=0)
         except:
@@ -1734,7 +1735,7 @@ class Qtile(command.CommandObject):
         module_name = os.path.splitext(os.path.basename(full_path))[0]
         dir_path = os.path.dirname(full_path)
         err_str = ""
-        local_stdout = six.BytesIO()
+        local_stdout = io.BytesIO()
         old_stdout = sys.stdout
         sys.stdout = local_stdout
         sys.exc_clear()
@@ -1788,7 +1789,7 @@ class Qtile(command.CommandObject):
 
     def cmd_get_state(self):
         """Get pickled state for restarting qtile"""
-        buf = six.BytesIO()
+        buf = io.BytesIO()
         pickle.dump(QtileState(self), buf, protocol=0)
         state = buf.getvalue().decode()
         logger.info('State = ')

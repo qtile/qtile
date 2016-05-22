@@ -162,7 +162,7 @@ def hex(x):
 
 def scrub_to_utf8(text):
     if not text:
-        return six.u("")
+        return u""
     elif isinstance(text, six.text_type):
         return text
     else:
