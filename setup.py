@@ -149,15 +149,15 @@ setup(
             'qtile = libqtile.scripts.qtile:main',
             'qtile-run = libqtile.scripts.qtile_run:main',
             'qtile-top = libqtile.scripts.qtile_top:main',
-            'qsh = libqtile.scripts.qsh:main',
+            'qshell = libqtile.scripts.qshell:main',
         ]
     },
     scripts=[
-        'bin/iqsh',
+        'bin/iqshell',
     ],
     data_files=[
         ('share/man/man1', ['resources/qtile.1',
-                            'resources/qsh.1'])],
+                            'resources/qshell.1'])],
     cmdclass={'install': CheckCairoXcb},
     **cffi_args
 )

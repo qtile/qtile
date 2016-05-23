@@ -21,7 +21,7 @@ prune scripts
 prune test
 prune debian
 prune rpm
-include bin/iqsh
+include bin/iqshell
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]

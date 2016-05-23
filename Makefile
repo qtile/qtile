@@ -18,7 +18,7 @@ check-cov:
 
 .PHONY: lint
 lint:
-	flake8 ./libqtile bin/qtile* bin/qsh
+	flake8 ./libqtile bin/q* bin/iqshell
 
 .PHONY: ckpatch
 ckpatch: lint check

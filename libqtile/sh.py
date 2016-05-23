@@ -196,8 +196,8 @@ class QSh(object):
     def do_pwd(self, arg):
         """Returns the current working location
 
-        This is the same information as presented in the qsh prompt, but is
-        very useful when running iqsh.
+        This is the same information as presented in the qshell prompt, but is
+        very useful when running iqshell.
 
         Examples
         ========
@@ -249,7 +249,7 @@ class QSh(object):
             return "No such command: %s" % arg
 
     def do_exit(self, args):
-        """Exit qsh"""
+        """Exit qshell"""
         sys.exit(0)
 
     do_quit = do_exit

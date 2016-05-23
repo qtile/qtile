@@ -8,15 +8,15 @@ different places:
 
 * Commands can be :doc:`bound to keys </manual/config/keys>` in the Qtile
   configuration file.
-* Commands can be :doc:`called through qsh </manual/commands/qsh>`, the Qtile
-  shell.
-* The qsh can also be hooked into a Jupyter kernel :doc:`called iqsh
-  </manual/commands/iqsh>`.
+* Commands can be :doc:`called through qshell </manual/commands/qshell>`, the
+  Qtile shell.
+* The qsh can also be hooked into a Jupyter kernel :doc:`called iqshell
+  </manual/commands/iqshell>`.
 * Commands can be :doc:`called from a script </manual/commands/scripting>` to
   interact with Qtile from Python.
 
 If the explanation below seems a bit complex, please take a moment to explore
-the API using the ``qsh`` command shell. Command lists and detailed
+the API using the ``qshell`` command shell. Command lists and detailed
 documentation can be accessed from its built-in help command.
 
 

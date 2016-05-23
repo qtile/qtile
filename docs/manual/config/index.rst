@@ -23,10 +23,10 @@ Default Configuration
 The `default configuration
 <https://github.com/qtile/qtile/blob/develop/libqtile/resources/default_config.py>`_
 is invoked when qtile cannot find a configuration file. In addition, if qtile
-is restarted via qsh, qtile will load the default configuration if the config
-file it finds has some kind of error in it. The documentation below describes
-the configuration lookup process, as well as what the key bindings are in the
-default config.
+is restarted via qshell, qtile will load the default configuration if the
+config file it finds has some kind of error in it. The documentation below
+describes the configuration lookup process, as well as what the key bindings
+are in the default config.
 
 The default config is not intended to be suitable for all users; it's mostly
 just there so qtile does /something/ when fired up, and so that it doesn't

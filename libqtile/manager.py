@@ -1692,7 +1692,7 @@ class Qtile(command.CommandObject):
         if not mb:
             logger.error("No widget named {0:s} present.".format(widget))
             return
-        mb.startInput(prompt, f, "qsh")
+        mb.startInput(prompt, f, "qshell")
 
     def cmd_addgroup(self, group):
         """Add a group with the given name"""

@@ -1,6 +1,6 @@
-===
-qsh
-===
+======
+qshell
+======
 
 The Qtile command shell is a command-line shell interface that provides access
 to the full complement of Qtile command functions. The shell features command

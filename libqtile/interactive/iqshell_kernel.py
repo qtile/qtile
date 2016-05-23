@@ -24,7 +24,7 @@ from ipykernel.kernelbase import Kernel
 
 
 class QshKernel(Kernel):
-    implementation = 'qsh'
+    implementation = 'qshell'
     implementation_version = '0.1'
     language = 'no-op'
     language_version = '1.0'

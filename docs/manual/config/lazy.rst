@@ -5,7 +5,7 @@ Lazy objects
 The ``command.lazy`` object is a special helper object to specify a command for
 later execution. This object acts like the root of the object graph, which
 means that we can specify a key binding command with the same syntax used to
-call the command through a script or through :doc:`/manual/commands/qsh`.
+call the command through a script or through :doc:`/manual/commands/qshell`.
 
 Example
 -------

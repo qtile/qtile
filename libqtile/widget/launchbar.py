@@ -35,8 +35,8 @@ displayed instead.
 
 To execute a software:
  - ('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode')
-To execute a python command in qtile, begin with by 'qsh:'
- - ('logout', 'qsh:self.qtile.cmd_shutdown()', 'logout from qtile')
+To execute a python command in qtile, begin with by 'qshell:'
+ - ('logout', 'qshell:self.qtile.cmd_shutdown()', 'logout from qtile')
 
 
 """
@@ -62,7 +62,7 @@ class LaunchBar(base._Widget):
         example::
 
             ('thunderbird', 'thunderbird -safe-mode', 'launch thunderbird in safe mode')
-            ('logout', 'qsh:self.qtile.cmd_shutdown()', 'logout from qtile')
+            ('logout', 'qshell:self.qtile.cmd_shutdown()', 'logout from qtile')
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
@@ -186,7 +186,7 @@ class LaunchBar(base._Widget):
             icon = self.get_icon_in_position(x, y)
             if icon is not None:
                 cmd = self.progs[icon]['cmd']
-                if cmd.startswith('qsh:'):
+                if cmd.startswith('qshell:'):
                     exec(cmd[4:].lstrip())
                 else:
                     self.qtile.cmd_spawn(cmd)

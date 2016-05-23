@@ -267,7 +267,7 @@ latex_documents = [
 man_pages = [
     ('man/qtile', 'qtile', u'Qtile Documentation',
      [u'Tycho Andersen'], 1),
-    ('man/qsh', 'qsh', u'Qtile Documentation',
+    ('man/qshell', 'qshell', u'Qtile Documentation',
      [u'Tycho Andersen'], 1),
 ]
 

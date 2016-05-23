@@ -4,13 +4,13 @@ PLACEHOLDER
 SYNOPSIS
 ========
 
-qsh [-s qtilesocket]
+qshell [-s qtilesocket]
 
 DESCRIPTION
 ===========
 
-``qsh`` is the remote shell tool for ``qtile``. ``qsh`` supports manipulating
-various pieces of qtile remotely via an interactive shell.
+``qshell`` is the remote shell tool for ``qtile``. ``qshell`` supports
+manipulating various pieces of qtile remotely via an interactive shell.
 
 OPTIONS
 =======

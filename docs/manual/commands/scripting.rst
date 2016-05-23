@@ -15,7 +15,7 @@ should be exposed. Commands then appear as methods with the appropriate
 signature on the ``Client`` object.  The object hierarchy is described in the
 :doc:`/manual/commands/index` section of this manual. Full command
 documentation is available through the :doc:`Qtile Shell
-</manual/commands/qsh>`.
+</manual/commands/qshell>`.
 
 
 Example

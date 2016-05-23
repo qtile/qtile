@@ -47,7 +47,7 @@ def main():
         "-c", "--command",
         action="store", type=str,
         default=None,
-        help='Run the specified qsh command and exit.'
+        help='Run the specified qshell command and exit.'
     )
     parser.add_argument(
         "-j", "--json",

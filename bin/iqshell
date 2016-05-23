@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/bin/sh
 
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
 #
@@ -20,6 +20,4 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-if __name__ == '__main__':
-    from libqtile.scripts import qsh
-    qsh.main()
+jupyter console --kernel qshell

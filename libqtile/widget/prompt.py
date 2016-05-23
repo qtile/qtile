@@ -307,7 +307,7 @@ class Prompt(base._TextBox):
     """
     completers = {
         "file": FileCompleter,
-        "qsh": QshCompleter,
+        "qshell": QshCompleter,
         "cmd": CommandCompleter,
         "group": GroupCompleter,
         "window": WindowCompleter,
@@ -407,7 +407,7 @@ class Prompt(base._TextBox):
         Parameters
         ==========
         complete :
-            Tab-completion. Can be None, "cmd", "file", "group", "qsh" or
+            Tab-completion. Can be None, "cmd", "file", "group", "qshell" or
             "window".
         prompt :
             text displayed at the prompt, e.g. "spawn: "

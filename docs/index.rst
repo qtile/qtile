@@ -20,8 +20,8 @@ Commands and scripting
 
     manual/commands/index
     manual/commands/scripting
-    manual/commands/qsh
-    manual/commands/iqsh
+    manual/commands/qshell
+    manual/commands/iqshell
 
 Getting involved
 ================
