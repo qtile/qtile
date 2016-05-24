@@ -148,7 +148,7 @@ class QtileHooks(SimpleDirectiveMixin, Directive):
     def make_rst(self):
         module, class_name = self.arguments[0].rsplit('.', 1)
         obj = import_object(module, class_name)
-        for method in obj.hooks:
+        for method in sorted(obj.hooks):
             rst = qtile_hooks_template.render(method=method)
             for line in rst.splitlines():
                 yield line
