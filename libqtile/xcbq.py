@@ -464,13 +464,13 @@ class Window(object):
             flags = set(k for k, v in HintsFlags.items() if l[0] & v)
             return dict(
                 flags=flags,
-                input=l[1],
-                initial_state=l[2],
-                icon_pixmap=l[3],
-                icon_window=l[4],
-                icon_x=l[5],
-                icon_y=l[6],
-                icon_mask=l[7],
+                input=l[1] if "InputHint" in flags else None,
+                initial_state=l[2] if "StateHing" in flags else None,
+                icon_pixmap=l[3] if "IconPixmapHint" in flags else None,
+                icon_window=l[4] if "IconWindowHint" in flags else None,
+                icon_x=l[5] if "IconPositionHint" in flags else None,
+                icon_y=l[6] if "IconPositionHint" in flags else None,
+                icon_mask=l[7] if "IconMaskHint" in flags else None,
                 window_group=l[8] if 'WindowGroupHint' in flags else None,
             )
 
