@@ -86,7 +86,7 @@ class Mpd(base.ThreadPoolText):
                  password=False, fmt_playing="%a - %t [%v%%]",
                  fmt_stopped="Stopped [%v%%]", msg_nc='Mpd off',
                  do_color_progress=True, **config):
-        super(Mpd, self).__init__(msg_nc, **config)
+        super(Mpd, self).__init__('MPD Widget', **config)
         self.host = host
         self.port = port
         self.password = password
