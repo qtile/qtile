@@ -1,9 +1,12 @@
-qtile x.x.x, released xxxx-xx-xx:
+qtile 0.10.6, released 2016-05-24:
+    !!! qsh renamed to qshell !!!
+        This avoids name collision with other packages
     * features
         - Test framework changed to pytest
         - Add `startup_complete` hook
     * bugfixes
         - Restore dynamic groups on restart
+        - Correct placement of transient_for windows
         - Major bug fixes with floating window handling
     * file path changes (XDG Base Directory specification)
         - the default log file path changed from ~/.qtile.log to
