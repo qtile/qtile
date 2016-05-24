@@ -1,12 +1,11 @@
 Summary: A pure-Python tiling window manager
 Name: qtile
-Version: 0.10.5
+Version: 0.10.6
 Release: 1%{?dist}
 Source0: https://github.com/qtile/qtile/archive/v%{version}.tar.gz
-License: MIT and GPLv3+ and ASL 2.0
+License: MIT and GPLv3+
 # All MIT except for:
 # libqtile/widget/pacman.py:GPL (v3 or later)
-# libqtile/widget/google_calendar.py:Apache (v2.0)
 BuildArch: noarch
 Url: http://qtile.org
 
@@ -64,12 +63,12 @@ install -m 644 %{SOURCE1} %{buildroot}%{_datadir}/xsessions/
 %files
 %license LICENSE
 %doc README.rst
-%{_mandir}/man1/qsh.1*
+%{_mandir}/man1/qshell.1*
 %{_mandir}/man1/qtile.1*
-%{_bindir}/qsh
+%{_bindir}/qshell
+%{_bindir}/iqshell
 %{_bindir}/qtile
 %{_bindir}/qtile-run
-%{_bindir}/qtile-session
 %{_bindir}/qtile-top
 %{python3_sitelib}/qtile-%{version}-py%{python3_version}.egg-info
 %{python3_sitelib}/libqtile
@@ -77,6 +76,11 @@ install -m 644 %{SOURCE1} %{buildroot}%{_datadir}/xsessions/
 
 
 %changelog
+* Tue May 05 2016 John Dulaney <jdulaney@fedoraproject.org> - 0.10.6-1
+- Add `startup_complete` hook
+- Restore dynamic groups on restart
+- Major bug fixes with floating window handling
+
 * Fri Mar 04 2016 John Dulaney <jdulaney@fedoraproject.org> - 0.10.5-1
 - Python 3.2 support dropped !!!
 - GoogleCalendar widget dropped for KhalCalendar widget !!!
@@ -90,6 +94,9 @@ install -m 644 %{SOURCE1} %{buildroot}%{_datadir}/xsessions/
 - fix path handling in PromptWidget
 - fix KeyboardLayout widget cycling keyboard
 - properly guard against setting screen to too large screen index
+
+* Thu Feb 04 2016 Fedora Release Engineering <releng@fedoraproject.org> - 0.10.4-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
 
 * Wed Jan 20 2016 John Dulaney <jdulaney@fedoraproject.org> - 0.10.4-2
 - Fix rpmlint issues
