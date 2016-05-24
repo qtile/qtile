@@ -471,7 +471,7 @@ class Window(object):
                 icon_x=l[5],
                 icon_y=l[6],
                 icon_mask=l[7],
-                window_group=l[8]
+                window_group=l[8] if 'WindowGroupHint' in flags else None,
             )
 
     def get_wm_normal_hints(self):
