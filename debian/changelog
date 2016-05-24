@@ -1,6 +1,0 @@
-qtile (0.10.4-1) unstable; urgency=low
-
-  * Initial release.
-  * Closes: #762637
-
- -- Tycho Andersen <tycho@tycho.ws>  Tue, 19 Jan 2016 12:47:35 +0000

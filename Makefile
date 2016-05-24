@@ -4,8 +4,7 @@ default:
 	@echo "'make lint'" for source code checks
 	@echo "'make ckpatch'" to check a patch
 	@echo "'make clean'" to clean generated files
-	@echo "'make deb'" to generate debian package
-	@echo "'make man'" to generate debian package
+	@echo "'make man'" to generate sphinx documentation
 	@echo "'make update-requirements'" to update the requirements files
 
 .PHONY: check
@@ -36,11 +35,6 @@ clean:
 man:
 	python setup.py build_sphinx -b man
 	cp build/sphinx/man/* resources/
-
-.PHONY: deb
-deb:
-	-rm ../qtile_*
-	gbp buildpackage --git-upstream-tree=$(shell git symbolic-ref --short HEAD) --git-ignore-branch
 
 .PHONY: update-requirements
 update-requirements:

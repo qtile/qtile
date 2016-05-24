@@ -19,7 +19,6 @@ prune bin
 prune docs
 prune scripts
 prune test
-prune debian
 prune rpm
 include bin/iqshell
 

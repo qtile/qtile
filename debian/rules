@@ -1,6 +1,0 @@
-#!/usr/bin/make -f
-
-DEB_ENABLE_TESTS = yes
-
-%:
-	dh $@ --with python2,python3 --buildsystem=pybuild
