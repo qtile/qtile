@@ -240,21 +240,30 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 state = '_ '
             elif w.floating:
                 state = 'V '
+
             task = "%s%s" % (state, w.name if w and w.name else " ")
 
             if w.urgent:
                 border = self.urgent_border
+                text_color = border
             elif w is w.group.currentWindow:
                 border = self.border
+                text_color = border
             else:
                 border = self.background or self.bar.background
+                text_color = self.foreground
+
+            if self.highlight_method == 'text':
+                border = self.bar.background
+            else:
+                text_color = self.foreground
 
             bw = self.box_width(task)
             self.drawbox(
                 self.margin_x + offset,
                 task,
                 border,
-                self.foreground,
+                text_color,
                 rounded=self.rounded,
                 block=(self.highlight_method == 'block'),
                 width=(bw - self.margin_x * 2 - self.padding_x * 2),
