@@ -232,8 +232,8 @@ class Section(TreeNode):
         layout._layout.text = self.add_superscript(self.title)
         layout._layout.colour = layout.section_fg
         layout._layout.draw(
-            offsetx=layout.section_left,
-            offsety=top + layout.section_top
+            x=layout.section_left,
+            y=top + layout.section_top
         )
         top += layout._layout.height + \
             layout.section_top + \
