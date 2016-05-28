@@ -179,6 +179,7 @@ class Floating(Layout):
             bw = self.fullscreen_border_width
         else:
             bw = self.border_width
+        above = False
 
         # We definitely have a screen here, so let's be sure we'll float on screen
         try:
@@ -186,17 +187,24 @@ class Floating(Layout):
             client.float_y
         except AttributeError:
             # this window hasn't been placed before, let's put it in a sensible spot
-            x = screen.x + client.x % screen.width
-            # try to get right edge on screen (without moving the left edge off)
-            x = min(x, screen.x - client.width)
-            x = max(x, screen.x)
-            # then update it's position (`.place()` will take care of `.float_x`)
-            client.x = x
+            transient_for = client.window.get_wm_transient_for()
+            win = client.group.qtile.windowMap.get(transient_for)
+            if win is not None:
+                x = win.x + (win.width - client.width) // 2
+                y = win.y + (win.height - client.height) // 2
+                above = True
+            else:
+                x = screen.x + client.x % screen.width
+                # try to get right edge on screen (without moving the left edge off)
+                x = min(x, screen.x - client.width)
+                x = max(x, screen.x)
+                # then update it's position (`.place()` will take care of `.float_x`)
+                client.x = x
 
-            y = screen.y + client.y % screen.height
-            y = min(y, screen.y - client.height)
-            y = max(y, screen.y)
-            client.y = y
+                y = screen.y + client.y % screen.height
+                y = min(y, screen.y - client.height)
+                y = max(y, screen.y)
+                client.y = y
 
         client.place(
             client.x,
@@ -204,7 +212,8 @@ class Floating(Layout):
             client.width,
             client.height,
             bw,
-            bc
+            bc,
+            above,
         )
         client.unhide()
 
