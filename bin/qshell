@@ -20,6 +20,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
+import sys
+
+this_dir = os.path.dirname(__file__)
+base_dir = os.path.abspath(os.path.join(this_dir, ".."))
+sys.path.insert(0, base_dir)
+
 if __name__ == '__main__':
     from libqtile.scripts import qshell
     qshell.main()
