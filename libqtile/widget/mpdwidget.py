@@ -48,53 +48,33 @@ from .. import utils, pangocffi
 from . import base
 from libqtile.log_utils import logger
 
+
 class Mpd(base.ThreadPoolText):
-    """A widget for the Music Player Daemon (MPD)
-
-    Initialize the widget with the following parameters
-
-    Parameters
-    ==========
-    host :
-        host to connect to
-    port :
-        port to connect to
-    password :
-        password to use
-    fmt_playing :
-        format string to display when playing/paused
-    fmt_stopped :
-        format strings to display when stopped
-    msg_nc :
-        which message to show when we're not connected
-    do_color_progress :
-        whether to indicate progress in song by altering message color
-    width :
-        A fixed width, or bar.CALCULATED to calculate the width automatically
-        (which is recommended).
-    """
+    """A widget for the Music Player Daemon (MPD)"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
+        ("host", "localhost", "Host to connect to, can be either an IP "
+                              "address or a UNIX socket path"),
+        ("port", 6600, "Port to connect to"),
+        ("password", None, "Password to use"),
+        ("fmt_playing", "%a - %t [%v%%]", "Format string to display when "
+                                          "playing/paused"),
+        ("fmt_stopped", "Stopped [%v%%]", "Format strings to display when "
+                                          "stopped"),
+        ("msg_nc", "Mpd off", "Which message to show when we're not "
+                              "connected"),
+        ("do_color_progress", True, "Whether to indicate progress in song by "
+                                    "altering message color"),
         ("foreground_progress", "ffffff", "Foreground progress colour"),
-        ('reconnect', False, 'attempt to reconnect if initial connection failed'),
-        ('reconnect_interval', 1, 'Time to delay between connection attempts.'),
-        ('update_interval', 0.5, 'Update Time in seconds.')
+        ("reconnect", False, "Attempt to reconnect if initial connection failed"),
+        ("reconnect_interval", 1, "Time to delay between connection attempts."),
+        ("update_interval", 0.5, "Update Time in seconds.")
     ]
 
-    # TODO: have this use our config framework
-    def __init__(self, host='localhost', port=6600,
-                 password=False, fmt_playing="%a - %t [%v%%]",
-                 fmt_stopped="Stopped [%v%%]", msg_nc='Mpd off',
-                 do_color_progress=True, **config):
+    def __init__(self, **config):
         super(Mpd, self).__init__('MPD Widget', **config)
-        self.host = host
-        self.port = port
-        self.password = password
-        self.fmt_playing, self.fmt_stopped = fmt_playing, fmt_stopped
-        self.msg_nc = msg_nc
-        self.do_color_progress = do_color_progress
-        self.inc = 2
         self.add_defaults(Mpd.defaults)
+        self.inc = 2
         self.client = mpd.MPDClient()
         self.connected = False
         self.stop = False
