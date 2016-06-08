@@ -243,17 +243,19 @@ class Mpd(base.ThreadPoolText):
             if self.status['state'] != 'stop':
                 text = self.do_format(self.fmt_playing)
 
-                if (self.do_color_progress and
-                        self.status and
-                        self.status.get('time')):
-                    elapsed, total = self.status['time'].split(':')
-                    percent = float(elapsed) / float(total)
-                    progress = int(percent * len(text))
-                    playing = '<span color="%s">%s</span>%s' % (
-                        utils.hex(self.foreground_progress),
-                        pangocffi.markup_escape_text(text[:progress]),
-                        pangocffi.markup_escape_text(text[progress:])
-                    )
+                if self.do_color_progress and self.status.get('time'):
+                    try:
+                        elapsed, total = self.status['time'].split(':')
+                        percent = float(elapsed) / float(total)
+                        progress = int(percent * len(text))
+                    except Exception:
+                        playing = pangocffi.markup_escape_text(text)
+                    else:
+                        playing = '<span color="%s">%s</span>%s' % (
+                            utils.hex(self.foreground_progress),
+                            pangocffi.markup_escape_text(text[:progress]),
+                            pangocffi.markup_escape_text(text[progress:])
+                        )
                 else:
                     playing = pangocffi.markup_escape_text(text)
             else:
