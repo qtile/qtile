@@ -76,7 +76,7 @@ class Mpd(base.ThreadPoolText):
         self.add_defaults(Mpd.defaults)
         self.inc = 2
         self.client = mpd.MPDClient()
-        self.connected = False
+        self.connected = None
         self.stop = False
 
     def finalize(self):
@@ -270,14 +270,14 @@ class Mpd(base.ThreadPoolText):
         was_connected = self.connected
 
         if not self.connected:
-            if self.reconnect:
+            if self.connected is None or self.reconnect:
                 while not self.stop and not self.connect(quiet=True):
                     time.sleep(self.reconnect_interval)
             else:
-                return
+                return None
 
         if self.stop:
-            return
+            return True
 
         if was_connected:
             try:
@@ -290,7 +290,7 @@ class Mpd(base.ThreadPoolText):
             except Exception:
                 logger.exception('Error communicating with mpd')
                 self.client.disconnect()
-                return
+                return None
 
         return self._get_status()
 
