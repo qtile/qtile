@@ -300,7 +300,7 @@ class Mpd(base.ThreadPoolText):
         try:
             status = self.client.status()
             if button == 3:
-                if not status:
+                if not status or status.get('state', '') == 'stop':
                     self.client.play()
                 else:
                     self.client.pause()
