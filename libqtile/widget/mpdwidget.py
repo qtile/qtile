@@ -117,6 +117,7 @@ class Mpd(base.ThreadPoolText):
                     self.client.disconnect()
                 except Exception:
                     pass
+                return False
 
         self.connected = True
         return True
@@ -281,8 +282,7 @@ class Mpd(base.ThreadPoolText):
 
         if was_connected:
             try:
-                self.client.send_idle()
-                self.client.fetch_idle()
+                self.client.ping()
             except mpd.ConnectionError:
                 self.client.disconnect()
                 self.connected = False
