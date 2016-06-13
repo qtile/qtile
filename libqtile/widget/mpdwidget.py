@@ -275,7 +275,7 @@ class Mpd(base.ThreadPoolText):
                 while not self.stop and not self.connect(quiet=True):
                     time.sleep(self.reconnect_interval)
             else:
-                return None
+                return
 
         if self.stop:
             return True
@@ -290,7 +290,7 @@ class Mpd(base.ThreadPoolText):
             except Exception:
                 logger.exception('Error communicating with mpd')
                 self.client.disconnect()
-                return None
+                return
 
         return self._get_status()
 
