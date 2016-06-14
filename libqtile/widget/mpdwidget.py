@@ -249,7 +249,7 @@ class Mpd(base.ThreadPoolText):
                         elapsed, total = self.status['time'].split(':')
                         percent = float(elapsed) / float(total)
                         progress = int(percent * len(text))
-                    except Exception:
+                    except (ZeroDivisionError, ValueError):
                         playing = pangocffi.markup_escape_text(text)
                     else:
                         playing = '<span color="%s">%s</span>%s' % (
