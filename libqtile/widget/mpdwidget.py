@@ -252,7 +252,7 @@ class Mpd(base.ThreadPoolText):
                     except (ZeroDivisionError, ValueError):
                         playing = pangocffi.markup_escape_text(text)
                     else:
-                        playing = '<span color="%s">%s</span>%s' % (
+                        playing = '<span color="{0}">{1}</span>{2}'.format(
                             utils.hex(self.foreground_progress),
                             pangocffi.markup_escape_text(text[:progress]),
                             pangocffi.markup_escape_text(text[progress:])
