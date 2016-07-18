@@ -467,7 +467,8 @@ class ThreadedPollText(InLoopPollText):
         def worker():
             try:
                 text = self.poll()
-                self.qtile.call_soon_threadsafe(self.update, text)
+                if self.qtile is not None:
+                    self.qtile.call_soon_threadsafe(self.update, text)
             except:
                 logger.exception("problem polling to update widget %s", self.name)
         # TODO: There are nice asyncio constructs for this sort of thing, I
