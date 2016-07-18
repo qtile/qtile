@@ -226,6 +226,7 @@ class Battery(_Battery):
             hour = -1
             min = -1
         percent = info['now'] / info['full']
+        watt = info['power'] / 1e6
         if info['stat'] == DISCHARGING and percent < self.low_percentage:
             self.layout.colour = self.low_foreground
         else:
@@ -234,6 +235,7 @@ class Battery(_Battery):
         return self.format.format(
             char=char,
             percent=percent,
+            watt=watt,
             hour=hour,
             min=min
         )
