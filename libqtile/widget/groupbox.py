@@ -193,6 +193,7 @@ class GroupBox(_GroupBase):
             "Disable dragging and dropping of group names on widget"
         ),
         ("invert_mouse_wheel", False, "Whether to invert mouse wheel group movement"),
+        ("ignore_mouse_wheel", False, "Whether to ignore mouse wheel events"),
         (
             "visible_groups",
             None,
@@ -229,17 +230,19 @@ class GroupBox(_GroupBase):
         curGroup = self.qtile.currentGroup
 
         if button == (5 if not self.invert_mouse_wheel else 4):
-            i = itertools.cycle(self.qtile.groups)
-            while next(i) != curGroup:
-                pass
-            while group is None or group not in self.groups:
-                group = next(i)
+            if not self.ignore_mouse_wheel:
+                i = itertools.cycle(self.qtile.groups)
+                while next(i) != curGroup:
+                    pass
+                while group is None or group not in self.groups:
+                    group = next(i)
         elif button == (4 if not self.invert_mouse_wheel else 5):
-            i = itertools.cycle(reversed(self.qtile.groups))
-            while next(i) != curGroup:
-                pass
-            while group is None or group not in self.groups:
-                group = next(i)
+            if not self.ignore_mouse_wheel:
+                i = itertools.cycle(reversed(self.qtile.groups))
+                while next(i) != curGroup:
+                    pass
+                while group is None or group not in self.groups:
+                    group = next(i)
         else:
             group = self.get_clicked_group(x, y)
             if not self.disable_drag:
