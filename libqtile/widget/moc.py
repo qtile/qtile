@@ -83,6 +83,8 @@ class Moc(base.ThreadPoolText):
             artist = info['Artist']
             if title and artist:
                 now_playing = "♫ {0} - {1}".format(artist, title)
+            elif title:
+                now_playing = "♫ {0}".format(title)
             else:
                 basename = os.path.basename(info['File'])
                 filename = os.path.splitext(basename)[0]
