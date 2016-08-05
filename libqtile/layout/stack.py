@@ -337,16 +337,21 @@ class Stack(Layout):
         return d
 
     def find(self,client):        
-        for s in self.stacks:
+        for s in self.columns:
             if s.__contains__(client):
-                return [self.stacks.index(s),s.lst.index(client)]
+                return s
 
     def set_position(self, sw, dw):        
-        sidx = self.find(sw)
-        didx = self.find(dw)        
-       
-        self.stacks[sidx[0]].lst[sidx[1]],self.stacks[didx[0]].lst[didx[1]] = self.stacks[didx[0]].lst[didx[1]], self.stacks[sidx[0]].lst[sidx[1]]
-        self.focus(self.stacks[sidx[0]].lst[sidx[1]])
+        sc = self.find(sw)
+        dc = self.find(dw)
+        si = sc.index(sw)
+        di = dc.index(dw)
+
+        sc.clients[si], \
+        dc.clients[di] = dc.clients[di], \
+                         sc.clients[si]
+
+        self.focus(dc.clients[dc.index(sw)])
         self.group.layoutAll()
     
     def set_size(self,sw,w,h):
