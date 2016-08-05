@@ -154,6 +154,17 @@ class Matrix(Layout):
         )
         client.unhide()
 
+    def set_position(self, sw, dw):        
+        sidx = self.clients.index(sw)
+        didx = self.clients.index(dw)
+
+        self.clients[sidx], self.clients[didx] = self.clients[didx], self.clients[sidx]
+        self.focus(clients[sidx])
+        self.group.layoutAll()   
+
+    def set_size(self,sw,w,h):
+        pass
+
     def cmd_next(self):
         client = self.focus_next(self.get_current_window()) or \
             self.focus_first()

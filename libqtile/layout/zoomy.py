@@ -157,6 +157,12 @@ class Zoomy(Layout):
                 format=8
             )
 
+    def set_position(self, sw, dw):
+        pass
+
+    def set_size(self,sw,w,h):
+        pass
+
     def cmd_next(self):
         client = self.focus_next(self.focused) or self.focus_first()
         self.group.focus(client, False)

@@ -336,6 +336,22 @@ class Stack(Layout):
         d["clients"] = [c.name for c in self.clients]
         return d
 
+    def find(self,client):        
+        for s in self.stacks:
+            if s.__contains__(client):
+                return [self.stacks.index(s),s.lst.index(client)]
+
+    def set_position(self, sw, dw):        
+        sidx = self.find(sw)
+        didx = self.find(dw)        
+       
+        self.stacks[sidx[0]].lst[sidx[1]],self.stacks[didx[0]].lst[didx[1]] = self.stacks[didx[0]].lst[didx[1]], self.stacks[sidx[0]].lst[sidx[1]]
+        self.focus(self.stacks[sidx[0]].lst[sidx[1]])
+        self.group.layoutAll()
+    
+    def set_size(self,sw,w,h):
+        pass
+
     def cmd_toggle_split(self):
         """Toggle vertical split on the current stack"""
         self.currentStack.toggleSplit()

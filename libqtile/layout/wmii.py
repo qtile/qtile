@@ -259,6 +259,12 @@ class Wmii(Layout):
         if len(c['rows']) != 0:
             return c['rows'][len(c['rows']) - 1]
 
+    def set_position(self, sw, dw):
+        pass
+
+    def set_size(self,sw,w,h):
+        pass
+
     def cmd_left(self):
         """Switch to the first window on prev column"""
         c = self.current_column()

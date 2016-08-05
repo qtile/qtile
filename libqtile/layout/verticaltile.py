@@ -247,6 +247,12 @@ class VerticalTile(Layout):
             self.ratio -= self.steps
             self.group.layoutAll()
 
+    def set_position(self, sw, dw):
+        pass
+
+    def set_size(self,sw,w,h):
+        pass
+
     def cmd_next(self):
         self.focus_next(self.focused)
         self.group.focus(self.focused)

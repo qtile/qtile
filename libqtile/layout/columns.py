@@ -289,6 +289,22 @@ class Columns(Layout):
             if win in col:
                 return col.focus_previous(win)
 
+    def find(self,client):        
+        for s in self.columns:
+            if s.__contains__(client):
+                return [self.columns.index(s),s.clients.index(client)]
+
+    def set_position(self, sw, dw):        
+        sidx = self.find(sw)
+        didx = self.find(dw)        
+       
+        self.columns[sidx[0]].clients[sidx[1]],self.columns[didx[0]].clients[didx[1]] = self.columns[didx[0]].clients[didx[1]], self.columns[sidx[0]].clients[sidx[1]]
+        self.focus(self.columns[sidx[0]].clients[sidx[1]])
+        self.group.layoutAll() 
+
+    def set_size(self,sw,w,h):
+        pass
+
     def cmd_toggle_split(self):
         self.cc.toggleSplit()
         self.group.layoutAll()

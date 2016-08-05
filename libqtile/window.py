@@ -1241,6 +1241,10 @@ class Window(_Window):
         elif name == "screen":
             return self.group.screen
 
+    def _is_in_window(self, x, y, window):
+        return (window.edges[0] <= x <= window.edges[2] and
+                window.edges[1] <= y <= window.edges[3])
+
     def __repr__(self):
         return "Window(%r)" % self.name
 
@@ -1361,22 +1365,20 @@ class Window(_Window):
         else:
             self.opacity = 1
 
-    def _is_in_window(self, x, y, window):
-        return (window.edges[0] <= x <= window.edges[2] and
-                window.edges[1] <= y <= window.edges[3])
-
-    def cmd_set_position(self, dx, dy, curx, cury):
+    def cmd_set_position(self, dx, dy, curx, cury):        
         if self.floating:
             self.tweak_float(dx, dy)
             return
+        
         for window in self.group.windows:
             if window == self or window.floating:
                 continue
             if self._is_in_window(curx, cury, window):
-                clients = self.group.layout.clients
-                index1 = clients.index(self)
-                index2 = clients.index(window)
-                clients[index1], clients[index2] = clients[index2], clients[index1]
-                self.group.layout.focused = index2
-                self.group.layoutAll()
-                break
+                self.group.layout.set_position(sw=self,dw=window)
+
+    def cmd_set_size(self, w, h, curx, cury):
+        if self.floating:
+            self.tweak_float(w, h)
+            return
+
+        self.group.layout.set_size(sw,w,h)

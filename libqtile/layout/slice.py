@@ -157,6 +157,12 @@ class Slice(Delegate):
             self.fallback.add(win)
             self.layouts[win] = self.fallback
 
+    def set_position(self, sw, dw):
+        pass
+
+    def set_size(self,sw,w,h):
+        pass
+
     def cmd_next(self):
         self.fallback.cmd_next()
 
