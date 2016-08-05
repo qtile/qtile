@@ -285,10 +285,14 @@ class GroupBox(_GroupBase):
             else:
                 text_color = self.inactive
 
-            if g.screen:
+            if g.screen == self.bar.screen:
                 if self.highlight_method == 'text':
                     border = self.bar.background
-                    text_color = self.this_current_screen_border
+                    if self.qtile.currentScreen == self.bar.screen:
+                        text_color = self.this_current_screen_border
+                        to_highlight = True
+                    else:
+                        text_color = self.this_screen_border
                 else:
                     if self.bar.screen.group.name == g.name:
                         if self.qtile.currentScreen == self.bar.screen:
