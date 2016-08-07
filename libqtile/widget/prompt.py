@@ -616,14 +616,18 @@ class Prompt(base._TextBox):
                 self.completer.reset()
             return self.keyhandlers[k]
 
-    def handle_KeyPress(self, e):
+    def handle_KeyPress(self, e):        
         """KeyPress handler for the minibuffer.
 
         Currently only supports ASCII characters.
         """
-        state = e.state & ~(self.qtile.numlockMask)
-        keysym = self.qtile.conn.keycode_to_keysym(e.detail, state)
+        mask = xcbq.ModMasks["shift"] | xcbq.ModMasks["lock"]
+        state = 1 if e.state & mask else 0
+                
+        keysym = self.qtile.conn.code_to_syms[e.detail][state]
+
         handle_key = self._get_keyhandler(keysym)
+        
         if handle_key:
             handle_key()
             del self.key
