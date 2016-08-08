@@ -1365,20 +1365,20 @@ class Window(_Window):
         else:
             self.opacity = 1
 
-    def cmd_set_position(self, dx, dy, curx, cury):        
+    def cmd_set_position(self, dx, dy, curx, cury):
         if self.floating:
             self.tweak_float(dx, dy)
             return
-        
+
         for window in self.group.windows:
             if window == self or window.floating:
                 continue
             if self._is_in_window(curx, cury, window):
-                self.group.layout.set_position(sw=self,dw=window)
+                self.group.layout.set_position(sw=self, dw=window)
 
     def cmd_set_size(self, w, h, curx, cury):
         if self.floating:
             self.tweak_float(w, h)
             return
 
-        self.group.layout.set_size(sw,w,h)
+        self.group.layout.set_size(sw=self, w, h)

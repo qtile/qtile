@@ -210,15 +210,15 @@ class Tile(Layout):
             slave=[c.name for c in self.slave_windows],
         )
 
-    def set_position(self, sw, dw):        
+    def set_position(self, sw, dw):
         sidx = self.clients.index(sw)
         didx = self.clients.index(dw)
 
         self.clients[sidx], self.clients[didx] = self.clients[didx], self.clients[sidx]
-        self.focus(clients[sidx])
+        self.focus(self.clients[sidx])
         self.group.layoutAll()
 
-    def set_size(self,sw,w,h):
+    def set_size(self, sw, w, h):
         pass
 
     def cmd_down(self):

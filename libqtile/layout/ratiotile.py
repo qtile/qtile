@@ -369,7 +369,7 @@ class RatioTile(Layout):
     def set_position(self, sw, dw):
         pass
 
-    def set_size(self,sw,w,h):
+    def set_size(self, sw, w, h):
         pass
 
     def cmd_down(self):

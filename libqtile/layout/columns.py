@@ -289,29 +289,24 @@ class Columns(Layout):
             if win in col:
                 return col.focus_previous(win)
 
-    def find(self,client):        
+    def find(self, client):
         for s in self.columns:
             if s.__contains__(client):
                 return s
 
-    def set_position(self, sw, dw):        
+    def set_position(self, sw, dw):
         sc = self.find(sw)
         dc = self.find(dw)
         si = sc.index(sw)
         di = dc.index(dw)
 
-        sc.heights[dw], \
-        dc.heights[sw], \
-        sc.clients[si], \
-        dc.clients[di] = dc.heights.pop(dw), \
-                         sc.heights.pop(sw), \
-                         dc.clients[di], \
-                         sc.clients[si]
-     
+        sc.heights[dw], dc.heights[sw], sc.clients[si], dc.clients[di] = \
+            dc.heights.pop(dw), sc.heights.pop(sw), dc.clients[di], sc.clients[si]
+
         self.focus(dc.clients[dc.index(sw)])
         self.group.layoutAll()
 
-    def set_size(self,sw,w,h):
+    def set_size(self, sw, w, h):
         pass
 
     def cmd_toggle_split(self):
