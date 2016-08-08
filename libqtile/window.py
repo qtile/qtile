@@ -1381,4 +1381,4 @@ class Window(_Window):
             self.tweak_float(w, h)
             return
 
-        self.group.layout.set_size(sw=self, w, h)
+        self.group.layout.set_size(w, h, sw=self)
