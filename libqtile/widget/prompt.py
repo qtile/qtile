@@ -25,7 +25,7 @@
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVhENT SHALL THE
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
@@ -616,18 +616,18 @@ class Prompt(base._TextBox):
                 self.completer.reset()
             return self.keyhandlers[k]
 
-    def handle_KeyPress(self, e):        
+    def handle_KeyPress(self, e):
         """KeyPress handler for the minibuffer.
 
         Currently only supports ASCII characters.
         """
         mask = xcbq.ModMasks["shift"] | xcbq.ModMasks["lock"]
         state = 1 if e.state & mask else 0
-                
+
         keysym = self.qtile.conn.code_to_syms[e.detail][state]
 
         handle_key = self._get_keyhandler(keysym)
-        
+
         if handle_key:
             handle_key()
             del self.key
