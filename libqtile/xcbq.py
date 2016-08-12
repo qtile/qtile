@@ -777,7 +777,7 @@ class Window(object):
         if q.root:
             root = Window(self.conn, q.root)
         if q.parent:
-            parent = Window(self.conn, q.root)
+            parent = Window(self.conn, q.parent)
         return root, parent, [Window(self.conn, i) for i in q.children]
 
 
