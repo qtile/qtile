@@ -153,12 +153,13 @@ class _Widget(command.CommandObject, configurable.Configurable):
         if horizontal:
             if not self.orientations & ORIENTATION_HORIZONTAL:
                 raise confreader.ConfigError(
-                    "The widget is not compatible with the orientation of the "
-                    "bar."
+                    self.__class__.__name__ +
+                    " is not compatible with the orientation of the bar."
                 )
         elif not self.orientations & ORIENTATION_VERTICAL:
             raise confreader.ConfigError(
-                "The widget is not compatible with the orientation of the bar."
+                self.__class__.__name__ +
+                " is not compatible with the orientation of the bar."
             )
 
     def timer_setup(self):
