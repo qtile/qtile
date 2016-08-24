@@ -1240,7 +1240,7 @@ class Qtile(command.CommandObject):
                 return " ".join((["%-{0:d}s".format(max_col_size + 2) for max_col_size in self.max_col_size])) + "\n", len(self.max_col_size)
 
             def expandlist(self, list, n):
-                if list:
+                if not list:
                     return ["-" * max_col_size for max_col_size in self.max_col_size]
                 n -= len(list)
                 if n > 0:
@@ -1256,7 +1256,7 @@ class Qtile(command.CommandObject):
         result.add([])
         rows = []
         for (ks, kmm), k in self.keyMap.items():
-            if k.commands:
+            if not k.commands:
                 continue
             name = ", ".join(xcbq.rkeysyms.get(ks, ("<unknown>", )))
             modifiers = ", ".join(utils.translate_modifiers(kmm))
