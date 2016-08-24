@@ -22,14 +22,14 @@
 # SOFTWARE.
 
 import re
-import subprocess
 from subprocess import CalledProcessError
 
 from . import base
 from libqtile.log_utils import logger
 
 
-kb_regex = re.compile('layout:\s+(?P<layout>\w+)')
+kb_layout_regex = re.compile('layout:\s+(?P<layout>\w+)')
+kb_variant_regex = re.compile('variant:\s+(?P<variant>\w+)')
 
 
 class KeyboardLayout(base.InLoopPollText):
@@ -69,16 +69,25 @@ class KeyboardLayout(base.InLoopPollText):
                 len(self.configured_keyboards)]
         else:
             next_keyboard = self.configured_keyboards[0]
+
         self.keyboard = next_keyboard
+
+        self.tick()
 
     def poll(self):
         return self.keyboard.upper()
 
     def get_keyboard_layout(self, setxkbmap_output):
-        matches = kb_regex.search(setxkbmap_output)
-        if matches is None:
+        match_layout = kb_layout_regex.search(setxkbmap_output)
+        match_variant = kb_variant_regex.search(setxkbmap_output)
+
+        if match_layout is None:
             return 'ERR'
-        return matches.group('layout')
+
+        kb = match_layout.group('layout')
+        if match_variant:
+            kb += " " + match_variant.group('variant')
+        return kb
 
     @property
     def keyboard(self):
@@ -102,7 +111,7 @@ class KeyboardLayout(base.InLoopPollText):
         command = ['setxkbmap']
         command.extend(keyboard.split(" "))
         try:
-            subprocess.check_call(command)
+            self.call_process(command)
         except CalledProcessError as e:
             logger.error('Can not change the keyboard layout: {0}'.format(e))
         except OSError as e:
