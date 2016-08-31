@@ -13,6 +13,7 @@
 # Copyright (c) 2014 dmpayton
 # Copyright (c) 2014 dequis
 # Copyright (c) 2014 Florian Scherf
+# Copyright (c) 2015 Arnas Udovičius
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -159,6 +160,7 @@ class MonadTall(Layout):
             "(one of ``MonadTall._left`` or ``MonadTall._right``)"),
         ("change_ratio", .05, "Resize ratio"),
         ("change_size", 20, "Resize change in pixels"),
+        ("follow_max", False, "Follow maximizing window for two windows"),
     ]
 
     def __init__(self, **config):
@@ -284,6 +286,14 @@ class MonadTall(Layout):
         else:
             self._maximize_secondary()
         self.group.layoutAll()
+        if self.follow_max:
+            self._follow_max()
+
+    def _follow_max(self):
+        "Follow maximized client of two"
+        if len(self.clients) == 2 and \
+                (self.focused and self.ratio > self._med_ratio or not self.focused and self.ratio < self._med_ratio):
+            self.cmd_next()
 
     def configure(self, client, screen):
         "Position client based on order and sizes"
