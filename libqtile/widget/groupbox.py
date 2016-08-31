@@ -298,9 +298,11 @@ class GroupBox(_GroupBase):
                             border = self.this_screen_border
                     else:
                         border = self.other_screen_border
+                        highlight_color = self.bar.background
             elif self.group_has_urgent(g) and \
                     self.urgent_alert_method in ('border', 'block', 'line'):
                 border = self.urgent_border
+                highlight_color = self.bar.background
                 if self.urgent_alert_method == 'block':
                     is_block = True
                 elif self.urgent_alert_method == 'line':
