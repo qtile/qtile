@@ -15,6 +15,7 @@ running something else, please see `Installing From Source`_.
     Fedora <fedora>
     Funtoo <funtoo>
     Ubuntu <ubuntu>
+    Gentoo <gentoo>
 
 Installing From Source
 ======================
