@@ -44,13 +44,13 @@ General functions
 
     * - function
       - description
-    * - ``lazy.spawn("application"))``
+    * - ``lazy.spawn("application")``
       - Run the ``application``
-    * - ``lazy.spawncmd())``
+    * - ``lazy.spawncmd()``
       - Open command prompt on the bar. See prompt widget.
-    * - ``lazy.restart())``
+    * - ``lazy.restart()``
       - Restart Qtile and reload its config. It won't close your windows
-    * - ``lazy.shutdown())``
+    * - ``lazy.shutdown()``
       - Close the whole Qtile
 
 Group functions
@@ -62,17 +62,17 @@ Group functions
 
     * - function
       - description
-    * - ``lazy.next_layout())``
+    * - ``lazy.next_layout()``
       - Use next layout on the actual group
-    * - ``lazy.prev_layout())``
+    * - ``lazy.prev_layout()``
       - Use previous layout on the actual group
-    * - ``lazy.screen.next_group())``
+    * - ``lazy.screen.next_group()``
       - Move to the group on the right
-    * - ``lazy.screen.prev_group())``
+    * - ``lazy.screen.prev_group()``
       - Move to the group on the left
-    * - ``lazy.screen.toggle_group())``
+    * - ``lazy.screen.toggle_group()``
       - Move to the last visited group
-    * - ``lazy.group["group_name"].toscreen())``
+    * - ``lazy.group["group_name"].toscreen()``
       - Move to the group called ``group_name``
     * - ``lazy.layout.increase_ratio()``
       - Increase the space for master window at the expense of slave windows
@@ -88,9 +88,9 @@ Window functions
 
     * - function
       - description
-    * - ``lazy.window.kill())``
+    * - ``lazy.window.kill()``
       - Close the focused window
-    * - ``lazy.layout.next())``
+    * - ``lazy.layout.next()``
       - Switch window focus to other pane(s) of stack
     * - ``lazy.window.togroup("group_name")``
       - Move focused window to the group called ``group_name``
