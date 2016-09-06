@@ -111,7 +111,7 @@ class Qtile(command.CommandObject):
 
         # Find the modifier mask for the numlock key, if there is one:
         nc = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
-        self.numlockMask = xcbq.ModMasks[self.conn.get_modifier(nc)]
+        self.numlockMask = xcbq.ModMasks.get(self.conn.get_modifier(nc), 0)
         self.validMask = ~(self.numlockMask | xcbq.ModMasks["lock"])
 
         # Because we only do Xinerama multi-screening,
