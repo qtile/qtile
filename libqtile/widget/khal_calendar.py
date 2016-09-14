@@ -82,32 +82,36 @@ class KhalCalendar(base.ThreadedPollText):
         # and get the next event
         args = ['khal', 'agenda', '--days', str(self.lookahead)]
         cal = subprocess.Popen(args, stdout=subprocess.PIPE)
-        output = cal.communicate()[0]
-        output = output.decode()
+        output = unicode(cal.communicate()[0], 'utf-8')
         output = output.split('\n')
-        caldate = output[0]
-        try:
-            if output[0] == 'Today:':
-                date = str(now.month) + '/' + str(now.day) + '/' + \
-                    str(now.year)
-            elif output[0] == 'Tomorrow:':
-                date = str(tomorrow.month) + '/' + str(tomorrow.day) + \
-                    '/' + str(tomorrow.year)
-            else:
-                date = output[0]
-        except IndexError:
+        if len(output) < 2:
             return 'No appointments scheduled'
-        for i in range(1, len(output)):
+        date = 'unknown'
+        endtime = None
+        for i in range(len(output)):  # pylint: disable=consider-using-enumerate
+            if output[i].strip() == '':
+                continue
             try:
                 starttime = dateutil.parser.parse(date + ' ' + output[i][:5],
                                                   ignoretz=True)
                 endtime = dateutil.parser.parse(date + ' ' + output[i][6:11],
                                                 ignoretz=True)
             except ValueError:
-                date = output[i]
-                caldate = output[i]
-                continue
-            if endtime > now:
+                try:
+                    if output[i] == 'Today:':
+                        date = str(now.month) + '/' + str(now.day) + '/' + \
+                                str(now.year)
+                    elif output[i] == 'Tomorrow:':
+                        date = str(tomorrow.month) + '/' + str(tomorrow.day) + \
+                            '/' + str(tomorrow.year)
+                    else:
+                        dateutil.parser.parse(output[i])
+                        date = output[i]
+                        caldate = output[i]
+                        continue
+                except ValueError:
+                    pass  # no date.
+            if endtime is not None and endtime > now:
                 data = caldate.replace(':', '') + ' ' + output[i]
                 break
             else:
