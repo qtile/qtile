@@ -16,6 +16,7 @@
 # borrows liberally from that one.
 #
 # Copyright (c) 2016 by David R. Andersen <k0rx@RXcomm.net>
+# New khal output format adjustment, 2016 Christoph Lassner
 # Licensed under the Gnu Public License
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -74,7 +75,7 @@ class KhalCalendar(base.ThreadedPollText):
         # get today and tomorrow
         now = datetime.datetime.now()
         tomorrow = now + datetime.timedelta(days=1)
-
+        dbg = open('/home/christoph/dbgout.txt', 'w')
         # get reminder time in datetime format
         remtime = datetime.timedelta(minutes=self.remindertime)
 
@@ -107,12 +108,11 @@ class KhalCalendar(base.ThreadedPollText):
                     else:
                         dateutil.parser.parse(output[i])
                         date = output[i]
-                        caldate = output[i]
                         continue
                 except ValueError:
                     pass  # no date.
             if endtime is not None and endtime > now:
-                data = caldate.replace(':', '') + ' ' + output[i]
+                data = date.replace(':', '') + ' ' + output[i]
                 break
             else:
                 data = 'No appointments in next ' + \
@@ -120,7 +120,7 @@ class KhalCalendar(base.ThreadedPollText):
 
         # get rid of any garbage in appointment added by khal
         data = ''.join(filter(lambda x: x in string.printable, data))
-
+        dbg.write('check1')
         # colorize the event if it is within reminder time
         if (starttime - remtime <= now) and (endtime > now):
             self.foreground = utils.hex(self.reminder_color)

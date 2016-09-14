@@ -4,6 +4,7 @@
 # Copyright (c) 2013 Tao Sauvage
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 Tycho Andersen
+# Copyright (c) 2016 Christoph Lassner
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -66,7 +67,8 @@ class Maildir(base.ThreadedPollText):
                 yield path.rsplit(":")[0]
 
         for subFolder in self.subFolders:
-            path = os.path.join(self.maildirPath, subFolder["path"])
+            path = os.path.join(os.path.expanduser(self.maildirPath),
+                                subFolder["path"])
             maildir = mailbox.Maildir(path)
             state[subFolder["label"]] = 0
 

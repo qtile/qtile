@@ -10,6 +10,7 @@
 # Copyright (c) 2014 Adi Sieker
 # Copyright (c) 2014 dmpayton
 # Copyright (c) 2014 Jody Frankowski
+# Copyright (c) 2016 Christoph Lassner
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -44,6 +45,9 @@ __all__ = [
 ]
 
 re_vol = re.compile('\[(\d?\d?\d?)%\]')
+BUTTON_UP = 4
+BUTTON_DOWN = 5
+BUTTON_MUTE = 1
 
 
 class Volume(base._TextBox):
@@ -94,7 +98,7 @@ class Volume(base._TextBox):
         return cmd
 
     def button_press(self, x, y, button):
-        if button == 5:
+        if button == BUTTON_DOWN:
             if self.volume_down_command is not None:
                 subprocess.call(self.volume_down_command)
             else:
@@ -102,7 +106,7 @@ class Volume(base._TextBox):
                                                            'sset',
                                                            self.channel,
                                                            '2%-'))
-        elif button == 4:
+        elif button == BUTTON_UP:
             if self.volume_up_command is not None:
                 subprocess.call(self.volume_up_command)
             else:
@@ -110,7 +114,7 @@ class Volume(base._TextBox):
                                                            'sset',
                                                            self.channel,
                                                            '2%+'))
-        elif button == 1:
+        elif button == BUTTON_MUTE:
             if self.mute_command is not None:
                 subprocess.call(self.mute_command)
             else:
@@ -223,3 +227,15 @@ class Volume(base._TextBox):
             self.drawer.draw(offsetx=self.offset, width=self.length)
         else:
             base._TextBox.draw(self)
+
+    def cmd_increase_vol(self):
+        # Emulate button press.
+        self.button_press(0, 0, BUTTON_UP)
+
+    def cmd_decrease_vol(self):
+        # Emulate button press.
+        self.button_press(0, 0, BUTTON_DOWN)
+
+    def cmd_mute(self):
+        # Emulate button press.
+        self.button_press(0, 0, BUTTON_MUTE)
