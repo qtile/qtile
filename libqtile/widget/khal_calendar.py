@@ -75,7 +75,6 @@ class KhalCalendar(base.ThreadedPollText):
         # get today and tomorrow
         now = datetime.datetime.now()
         tomorrow = now + datetime.timedelta(days=1)
-        dbg = open('/home/christoph/dbgout.txt', 'w')
         # get reminder time in datetime format
         remtime = datetime.timedelta(minutes=self.remindertime)
 
@@ -120,7 +119,6 @@ class KhalCalendar(base.ThreadedPollText):
 
         # get rid of any garbage in appointment added by khal
         data = ''.join(filter(lambda x: x in string.printable, data))
-        dbg.write('check1')
         # colorize the event if it is within reminder time
         if (starttime - remtime <= now) and (endtime > now):
             self.foreground = utils.hex(self.reminder_color)
