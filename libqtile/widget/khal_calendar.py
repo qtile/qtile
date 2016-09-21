@@ -82,7 +82,7 @@ class KhalCalendar(base.ThreadedPollText):
         # and get the next event
         args = ['khal', 'agenda', '--days', str(self.lookahead)]
         cal = subprocess.Popen(args, stdout=subprocess.PIPE)
-        output = unicode(cal.communicate()[0], 'utf-8')
+        output = cal.communicate()[0].decode('utf-8')
         output = output.split('\n')
         if len(output) < 2:
             return 'No appointments scheduled'
@@ -100,7 +100,7 @@ class KhalCalendar(base.ThreadedPollText):
                 try:
                     if output[i] == 'Today:':
                         date = str(now.month) + '/' + str(now.day) + '/' + \
-                                str(now.year)
+                            str(now.year)
                     elif output[i] == 'Tomorrow:':
                         date = str(tomorrow.month) + '/' + str(tomorrow.day) + \
                             '/' + str(tomorrow.year)

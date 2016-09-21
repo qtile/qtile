@@ -30,8 +30,7 @@ from libqtile.log_utils import logger
 
 class Wallpaper(base._TextBox):
     defaults = [
-        ("directory", os.path.expanduser("~") + "/Pictures/wallpapers/",
-         "Wallpaper Directory"),
+        ("directory", "~/Pictures/wallpapers/", "Wallpaper Directory"),
         ("wallpaper", None, "Wallpaper"),
         ("wallpaper_command", None, "Wallpaper command"),
         ("random_selection", False, "If set, use random initial wallpaper and "
@@ -48,7 +47,7 @@ class Wallpaper(base._TextBox):
         self.set_wallpaper()
 
     def get_path(self, file):
-        return os.path.join(self.directory, file)
+        return os.path.join(os.path.expanduser(self.directory), file)
 
     def get_wallpapers(self):
         try:
