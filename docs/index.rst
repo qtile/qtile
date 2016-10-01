@@ -22,6 +22,7 @@ Commands and scripting
     manual/commands/scripting
     manual/commands/qshell
     manual/commands/iqshell
+    manual/commands/qtile-top
 
 Getting involved
 ================
