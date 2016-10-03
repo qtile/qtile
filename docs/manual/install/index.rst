@@ -15,6 +15,7 @@ running something else, please see `Installing From Source`_.
     Fedora <fedora>
     Funtoo <funtoo>
     Ubuntu/Debian <ubuntu>
+    Slackware <slackware>
 
 Installing From Source
 ======================
