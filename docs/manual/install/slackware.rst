@@ -7,7 +7,7 @@ Qtile is available on the `SlackBuilds.org <https://slackbuilds.org/repository/1
 ======================= =======================
 Package Name            Description
 ======================= =======================
-`qtile`_                stable branch (release)
+qtile                   stable branch (release)
 ======================= =======================
 
 Using slpkg (third party package manager)
