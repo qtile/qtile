@@ -114,7 +114,7 @@ class Moc(base.ThreadPoolText):
         return self.now_playing()
 
     def button_press(self, x, y, button):
-        """What to do when press a mouse button over the cmus widget.
+        """What to do when press a mouse button over the MOC widget.
 
         Will:
             - toggle pause (or play if stopped) on left click;
