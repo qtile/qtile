@@ -49,7 +49,7 @@ Run it from the top-level of the repository, like this:
 In practice, the development cycle looks something like this:
 
 1. make minor code change
-#. run appropriate test: ``pytest --tests=test_module``
+#. run appropriate test: ``pytest tests/test_module.py``
 #. GOTO 1, until hackage is complete
 #. run entire test suite: ``pytest``
 #. commit
