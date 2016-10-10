@@ -14,13 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from . import base
-
 import subprocess
+
+from . import base
 
 
 class Cmus(base.ThreadPoolText):
-
     """A simple Cmus widget.
 
     Show the artist and album of now listening song and allow basic mouse
@@ -49,7 +48,7 @@ class Cmus(base.ThreadPoolText):
     def get_info(self):
         """Return a dictionary with info about the current cmus status."""
         try:
-            output = self.call_process(['cmus-remote', '-Q'])
+            output = self.call_process(['cmus-remote', '-C', 'status'])
         except subprocess.CalledProcessError as err:
             output = err.output.decode()
         if output.startswith("status"):
