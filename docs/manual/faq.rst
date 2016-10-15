@@ -68,3 +68,11 @@ My "pointer mouse cursor" isn't the one I expect it to be!
 ==========================================================
 
 Qtile should set the default cursor to left_ptr, you must install xcb-util-cursor if you want support for themed cursors.
+
+LibreOffice menus don't appear or don't stay visible
+====================================================
+
+A workaround for problem with the mouse in libreoffice is setting the environment variable »SAL_USE_VCLPLUGIN=gen«.
+It is dependet on your system configuration where to do this. e.g. ArchLinux with libreoffice-fresh in /etc/profile.d/libreoffice-fresh.sh.
+
+
