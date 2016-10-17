@@ -31,7 +31,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import copy
 import glob
 import os
 import pickle
@@ -381,7 +380,7 @@ class Prompt(base._TextBox):
                                         for x in self.completers if x}
                     if self.max_history != \
                        self.history[list(self.history)[0]].maxlen:
-                        self.history = {x: deque(copy.copy(self.history[x]),
+                        self.history = {x: deque(self.history[x],
                                                  self.max_history)
                                         for x in self.completers if x}
             else:
@@ -664,8 +663,7 @@ class Prompt(base._TextBox):
 
     def _dedup_history(self):
         """Filter the history deque, clearing all duplicate values."""
-        self.history = {x: deque(copy.copy(self._dedup_deque(self.history[x])),
-                                 self.max_history)
+        self.history = {x: self._dedup_deque(self.history[x])
                         for x in self.completers if x}
 
     def _dedup_deque(self, dq):
