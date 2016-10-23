@@ -94,6 +94,19 @@ Based on your Python version, there are different ways to install this:
 .. _trollius: http://trollius.readthedocs.io/
 .. _trollius is deprecated: http://trollius.readthedocs.io/deprecated.html#deprecated
 
+
+uvloop
+-------
+
+Qtile will use `uvloop`_ to replace asyncio's event loop if available.
+You can install it with:
+
+.. code-block:: bash
+
+    pip install uvloop
+
+.. _uvloop: https://pypi.python.org/pypi/uvloop/
+
 dbus/gobject
 ------------
 
