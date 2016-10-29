@@ -6,6 +6,7 @@ qtile 0.10.7, released 2017-02-14:
         - add option to ignore mouse wheel to GroupBox widget
         - add `watts` formatting string option to Battery widgets
         - add volume commands to Volume widget
+        - add Window.focus command
     * bugfixes
         - place transient windows in the middle of their parents
         - fix TreeTab layout

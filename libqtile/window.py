@@ -588,6 +588,12 @@ class _Window(command.CommandObject):
     def _select(self, name, sel):
         return None
 
+    def cmd_focus(self, warp=None):
+        """Focuses the window."""
+        if warp is None:
+            warp = self.qtile.config.cursor_warp
+        self.focus(warp=warp)
+
     def cmd_info(self):
         """Returns a dictionary of info for this object"""
         return self.info()
