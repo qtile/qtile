@@ -6,6 +6,15 @@ from six.moves.urllib.request import urlopen, Request
 from libqtile.widget import base
 from libqtile.log_utils import logger
 
+try:
+    import xmltodict
+    def xmlparse(body):
+        return xmltodict.parse(body)
+except ImportError:
+    # TODO: we could implement a similar parser by hand, but i'm lazy, so let's
+    # punt for now
+    def xmlparse(body):
+        raise Exception("no xmltodict library")
 
 class GenPollText(base.ThreadedPollText):
     """A generic text widget that polls using poll function to get the text"""
@@ -33,14 +42,15 @@ class GenPollUrl(base.ThreadedPollText):
         ('parse', None, 'Parse Function'),
         ('json', True, 'Is Json?'),
         ('user_agent', 'Qtile', 'Set the user agent'),
-        ('headers', {}, 'Extra Headers')
+        ('headers', {}, 'Extra Headers'),
+        ('xml', False, 'Is XML?'),
     ]
 
     def __init__(self, **config):
         base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(GenPollUrl.defaults)
 
-    def fetch(self, url, data=None, headers=None, is_json=True):
+    def fetch(self, url, data=None, headers=None, is_json=True, is_xml=False):
         if headers is None:
             headers = {}
         req = Request(url, data, headers)
@@ -56,6 +66,9 @@ class GenPollUrl(base.ThreadedPollText):
 
         if is_json:
             body = json.loads(body)
+
+        if is_xml:
+            body = xmlparse(body)
         return body
 
     def poll(self):
@@ -71,7 +84,7 @@ class GenPollUrl(base.ThreadedPollText):
             data = json.dumps(data).encode()
 
         headers.update(self.headers)
-        body = self.fetch(self.url, data, headers, self.json)
+        body = self.fetch(self.url, data, headers, self.json, self.xml)
 
         try:
             text = self.parse(body)
