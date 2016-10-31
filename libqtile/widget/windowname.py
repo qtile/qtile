@@ -32,7 +32,8 @@ class WindowName(base._TextBox):
     """Displays the name of the window that currently has focus"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('show_state', True, 'show window status before window name')
+        ('show_state', True, 'show window status before window name'),
+        ('for_current_screen', False, 'instead of this bars screen use currently active screen')
     ]
 
     def __init__(self, width=bar.STRETCH, **config):
@@ -44,9 +45,16 @@ class WindowName(base._TextBox):
         hook.subscribe.window_name_change(self.update)
         hook.subscribe.focus_change(self.update)
         hook.subscribe.float_change(self.update)
+        @hook.subscribe.current_screen_change
+        def on_screen_changed():
+            if self.for_current_screen:
+                self.update()
 
     def update(self):
-        w = self.bar.screen.group.currentWindow
+        if self.for_current_screen:
+            w = self.qtile.currentScreen.group.currentWindow
+        else:
+            w = self.bar.screen.group.currentWindow
         state = ''
         if self.show_state and w is not None:
             if w.maximized:
