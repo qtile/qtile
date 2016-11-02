@@ -49,13 +49,12 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         self.add_defaults(base.MarginMixin.defaults)
 
     def box_width(self, groups):
-        width, height = self.drawer.max_layout_size(
+        width, _ = self.drawer.max_layout_size(
             [i.name for i in groups],
             self.font,
             self.fontsize
         )
-        return width + self.padding_x * 2 + self.margin_x * 2 + \
-            self.borderwidth * 2
+        return width + self.padding_x * 2 + self.borderwidth * 2
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
@@ -103,7 +102,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
         framed = self.layout.framed(
             self.borderwidth,
             bordercolor,
-            self.padding_x,
+            0,
             pad_y,
             highlight_color
         )
@@ -134,7 +133,7 @@ class AGroupBox(_GroupBase):
         self.bar.screen.cmd_next_group()
 
     def calculate_length(self):
-        return self.box_width(self.qtile.groups)
+        return self.box_width(self.qtile.groups) + self.margin_x * 2
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
@@ -198,12 +197,19 @@ class GroupBox(_GroupBase):
             None,
             "Groups that will be visible "
             "(if set to None or [], all groups will be visible)"
-        )
+        ),
+        (
+            "spacing",
+            None,
+            "Spacing between groups"
+            "(if set to None, will be equal to margin_x)")
     ]
 
     def __init__(self, **config):
         _GroupBase.__init__(self, **config)
         self.add_defaults(GroupBox.defaults)
+        if self.spacing is None:
+            self.spacing = self.margin_x
         self.clicked = None
 
     @property
@@ -213,10 +219,10 @@ class GroupBox(_GroupBase):
 
     def get_clicked_group(self, x, y):
         group = None
-        new_width = 0
+        new_width = self.margin_x - self.spacing / 2.0
         width = 0
         for g in self.groups:
-            new_width += self.box_width([g])
+            new_width += self.box_width([g]) + self.spacing
             if width <= x <= new_width:
                 group = g
                 break
@@ -256,7 +262,7 @@ class GroupBox(_GroupBase):
                 self.clicked = None
 
     def calculate_length(self):
-        width = 0
+        width = self.margin_x * 2 + (len(self.groups) - 1) * self.spacing
         for g in self.groups:
             width += self.box_width([g])
         return width
@@ -267,7 +273,7 @@ class GroupBox(_GroupBase):
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
 
-        offset = 0
+        offset = self.margin_x
         for i, g in enumerate(self.groups):
             to_highlight = False
             is_block = (self.highlight_method == 'block')
@@ -306,16 +312,16 @@ class GroupBox(_GroupBase):
                 border = self.background or self.bar.background
 
             self.drawbox(
-                self.margin_x + offset,
+                offset,
                 g.name,
                 border,
                 text_color,
                 highlight_color=self.highlight_color,
-                width=bw - self.margin_x * 2 - self.padding_x * 2,
+                width=bw,
                 rounded=self.rounded,
                 block=is_block,
                 line=is_line,
                 highlighted=to_highlight
             )
-            offset += bw
+            offset += bw + self.spacing
         self.drawer.draw(offsetx=self.offset, width=self.width)
