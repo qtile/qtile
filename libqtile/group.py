@@ -295,6 +295,9 @@ class _Group(command.CommandObject):
         # a notification may not have focus
         if hadfocus:
             self.focus(nextfocus, warp=True, force=force)
+            # no next focus window means focus changed to nothing
+            if not nextfocus:
+                hook.fire("focus_change")
         elif self.screen:
             self.layoutAll()
 
