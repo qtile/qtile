@@ -240,6 +240,10 @@ class _Window(command.CommandObject):
         fget=_float_getter("height")
     )
 
+    @property
+    def has_focus(self):
+        return self == self.qtile.currentWindow
+
     def updateName(self):
         try:
             self.name = self.window.get_name()
