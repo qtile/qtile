@@ -1029,6 +1029,17 @@ class Window(_Window):
                 self.x += group.screen.x
             group.add(self)
 
+    def toscreen(self, index=None):
+        """ Move window to a specified screen, or the current screen. """
+        if index is None:
+            screen = self.qtile.currentScreen
+        else:
+            try:
+                screen = self.qtile.screens[index]
+            except IndexError:
+                raise command.CommandError('No such screen: %d' % index)
+        self.togroup(screen.group.name)
+
     def match(self, wname=None, wmclass=None, role=None):
         """Match window against given attributes.
 
@@ -1272,6 +1283,24 @@ class Window(_Window):
             togroup("a")
         """
         self.togroup(groupName)
+
+    def cmd_toscreen(self, index=None):
+        """Move window to a specified screen.
+
+        If index is not specified, we assume the current screen
+
+        Examples
+        ========
+
+        Move window to current screen::
+
+            toscreen()
+
+        Move window to screen 0::
+
+            toscreen(0)
+        """
+        self.toscreen(index)
 
     def cmd_move_floating(self, dx, dy, curx, cury):
         """Move window by dx and dy"""
