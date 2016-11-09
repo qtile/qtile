@@ -1092,6 +1092,7 @@ class Qtile(command.CommandObject):
         self.currentScreen = self.screens[n]
         if old != self.currentScreen:
             hook.fire("current_screen_change")
+            old.group.layoutAll()
             self.currentGroup.focus(self.currentWindow, warp)
 
     def moveToGroup(self, group):
