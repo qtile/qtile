@@ -290,7 +290,7 @@ class RatioTile(Layout):
             win.hide()
             return
         x, y, w, h = self.layout_info[idx]
-        if win is self.focused:
+        if win.has_focus:
             bc = self.group.qtile.colorPixel(self.border_focus)
         else:
             bc = self.group.qtile.colorPixel(self.border_normal)

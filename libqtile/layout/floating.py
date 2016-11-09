@@ -169,7 +169,7 @@ class Floating(Layout):
         self.focused = None
 
     def configure(self, client, screen):
-        if client is self.focused:
+        if client.has_focus:
             bc = client.group.qtile.colorPixel(self.border_focus)
         else:
             bc = client.group.qtile.colorPixel(self.border_normal)
