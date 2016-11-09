@@ -36,12 +36,6 @@ from ..layout.base import Layout
 from .. import layout as layout_module
 
 
-def default_icon_path():
-    # default icons are in libqtile/resources/layout-icons
-    root = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-2])
-    return os.path.join(root, 'resources', 'layout-icons')
-
-
 class CurrentLayout(base._TextBox):
     """
     Display the name of the current layout of the current group of the screen,
@@ -74,13 +68,39 @@ class CurrentLayout(base._TextBox):
 class CurrentLayoutIcon(base._TextBox):
     """
     Display the icon representing the current layout of the
-    current group of the screen, the bar containing the widget, is on.
+    current group of the screen on which the bar containing the widget is.
+
+    If you are using custom layouts, a default icon with question mark
+    will be displayed for them. If you want to use custom icon for your own
+    layout, for example, `FooGrid`, then create a file named
+    "layout-foogrid.png" and place it in `~/.icons` directory. You can as well
+    use other directories, but then you need to specify those directories
+    in `custom_icon_paths` argument for this plugin.
+
+    The order of icon search is:
+
+    - dirs in `custom_icon_paths` config argument
+    - `~/.icons`
+    - built-in qtile icons
     """
     orientations = base.ORIENTATION_HORIZONTAL
 
     defaults = [
-        ('scale', 1, 'Scale factor, defaults to 1'),
-        ('theme_path', default_icon_path(), 'Path to layout icons')
+        (
+            'scale',
+            1,
+            'Scale factor relative to the bar height.\n'
+            'Defaults to 1'
+        ),
+        (
+            'custom_icon_paths',
+            [],
+            'List of folders where to search icons before'
+            'using built-in icons or icons in ~/.icons dir.\n'
+            'This can also be used to provide'
+            'missing icons for custom layouts.\n'
+            'Defaults to empty list.'
+        )
     ]
 
     def __init__(self, **config):
@@ -95,11 +115,13 @@ class CurrentLayoutIcon(base._TextBox):
         base._TextBox._configure(self, qtile, bar)
         self.text = self.bar.screen.group.layouts[0].name
         self.icons_loaded = False
+        self.icon_paths = []
         self.surfaces = {}
-        self.setup_images()
-        self.setup_hooks()
+        self._update_icon_paths()
+        self._setup_images()
+        self._setup_hooks()
 
-    def setup_hooks(self):
+    def _setup_hooks(self):
         """
         Listens for layout change and performs a redraw when it occurs.
         """
@@ -144,19 +166,48 @@ class CurrentLayoutIcon(base._TextBox):
             if isinstance(layout_class, (type, types.ClassType)) and issubclass(layout_class, Layout)
         ]
 
-    def setup_images(self):
+    def _update_icon_paths(self):
+        self.icon_paths = []
+
+        # We allow user to override icon search path
+        self.icon_paths.extend(self.custom_icon_paths)
+
+        # We also look in ~/.icons/
+        self.icon_paths.append(os.path.expanduser('~/.icons'))
+
+        # Default icons are in libqtile/resources/layout-icons.
+        # If using default config without any custom icons,
+        # this path will be used.
+        root = os.sep.join(os.path.abspath(__file__).split(os.sep)[:-2])
+        self.icon_paths.append(os.path.join(root, 'resources', 'layout-icons'))
+
+    def find_icon_file_path(self, layout_name):
+        icon_filename = 'layout-{}.png'.format(layout_name)
+        for icon_path in self.icon_paths:
+            icon_file_path = os.path.join(icon_path, icon_filename)
+            if os.path.isfile(icon_file_path):
+                return icon_file_path
+
+    def _setup_images(self):
         """
         Loads layout icons.
         """
-        for key in self._get_layout_names():
-            path = os.path.join(self.theme_path, 'layout-{}.png'.format(key))
+        for layout_name in self._get_layout_names():
+            icon_file_path = self.find_icon_file_path(layout_name)
+            if icon_file_path is None:
+                logger.warning('No icon found for layout "{}"'.format(layout_name))
+                icon_file_path = self.find_icon_file_path('unknown')
+
             try:
-                img = cairocffi.ImageSurface.create_from_png(path)
+                img = cairocffi.ImageSurface.create_from_png(icon_file_path)
             except (cairocffi.Error, IOError) as e:
+                # Icon file is guaranteed to exist at this point.
+                # If this exception happens, it means the icon file contains
+                # an invalid image or is not readable.
                 self.icons_loaded = False
                 logger.exception(
-                    'Failed to load icon for layout "{}", '
-                    'error was: {}'.format(key, e.message)
+                    'Failed to load icon from file "{}", '
+                    'error was: {}'.format(icon_file_path, e.message)
                 )
                 return
 
@@ -181,6 +232,6 @@ class CurrentLayoutIcon(base._TextBox):
             imgpat.set_matrix(scaler)
 
             imgpat.set_filter(cairocffi.FILTER_BEST)
-            self.surfaces[key] = imgpat
+            self.surfaces[layout_name] = imgpat
 
         self.icons_loaded = True
