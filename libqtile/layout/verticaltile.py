@@ -149,7 +149,7 @@ class VerticalTile(Layout):
             else:
                 border_width = 0
 
-            if window is self.focused:
+            if window.has_focus:
                 border_color = self.group.qtile.colorPixel(self.border_focus)
             else:
                 border_color = self.group.qtile.colorPixel(self.border_normal)

@@ -186,7 +186,7 @@ class Tile(Layout):
                 h = screenHeight // (len(self.slave_windows))
                 x = screen.x + int(screenWidth * self.ratio)
                 y = screen.y + self.clients[self.master:].index(client) * h
-            if client is self.focused:
+            if client.has_focus:
                 bc = self.group.qtile.colorPixel(self.border_focus)
             else:
                 bc = self.group.qtile.colorPixel(self.border_normal)

@@ -242,7 +242,7 @@ class Columns(Layout):
         else:
             client.hide()
             return
-        if client == self.cc.cw:
+        if client.has_focus:
             color = self.group.qtile.colorPixel(self.border_focus)
         else:
             color = self.group.qtile.colorPixel(self.border_normal)

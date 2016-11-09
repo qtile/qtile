@@ -132,7 +132,7 @@ class Matrix(Layout):
         column = idx % self.columns
         row = idx // self.columns
         column_size = int(math.ceil(len(self.clients) / self.columns))
-        if (column, row) == self.current_window:
+        if client.has_focus:
             px = self.group.qtile.colorPixel(self.border_focus)
         else:
             px = self.group.qtile.colorPixel(self.border_normal)
