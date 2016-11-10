@@ -89,10 +89,10 @@ class DmenuRun():
     """
     dmenu = None
 
-    def __init__(self, configfile):
+    def __init__(self, qtile):
         config = {}
-        if hasattr(configfile, 'extentions') and configfile.extentions['dmenu']:
-            config = configfile.extentions['dmenu']
+        if hasattr(qtile.config, 'extentions') and qtile.config.extentions['dmenu']:
+            config = qtile.config.extentions['dmenu']
 
         self.dmenu = Dmenu(**config)
 

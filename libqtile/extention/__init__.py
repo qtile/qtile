@@ -19,6 +19,4 @@
 # SOFTWARE.
 
 from .dmenu import Dmenu, DmenuRun
-# from ..widget import safe_import
-#
-# safe_import(".dmenu", ["Dmenu", "DmenuRun"])
+from .window_list import WindowList
