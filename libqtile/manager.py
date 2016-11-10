@@ -1819,3 +1819,8 @@ class Qtile(command.CommandObject):
         malloc_dump = os.path.join(cache_directory, "qtile_tracemalloc.dump")
         tracemalloc.take_snapshot().dump(malloc_dump)
         return [True, malloc_dump]
+
+    def cmd_run_extention(self, cls):
+        """Extentions should run from command run()"""
+        c = cls(self.config)
+        c.run()

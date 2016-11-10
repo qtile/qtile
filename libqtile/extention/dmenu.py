@@ -38,14 +38,16 @@ class Dmenu(configurable.Configurable):
         ("foreground", None, "defines the normal foreground color"),
         ("selected_background", None, "defines the selected background color"),
         ("selected_foreground", None, "defines the selected foreground color"),
+        ("height", None, "defines the height"),
     ]
 
-    args = ["dmenu"]
+    args = []
 
     def __init__(self, **config):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(Dmenu.defaults)
         self.configure()
+
 
     def configure(self):
         if self.bottom:
@@ -66,8 +68,34 @@ class Dmenu(configurable.Configurable):
             self.args.extend(("-sb", self.selected_background))
         if self.selected_foreground:
             self.args.extend(("-sf", self.selected_foreground))
+        if self.height:
+            self.args.extend(("-h", str(self.height)))
 
-    def run(self, items):
+
+    def call(self, items=[]):
         input_str = six.b("\n".join([str(i) for i in items]) + "\n")
-        proc = Popen(self.args, stdout=PIPE, stdin=PIPE)
+        proc = Popen(["dmenu"] + self.args, stdout=PIPE, stdin=PIPE)
         return proc.communicate(input_str)[0]
+
+
+    def run_apps(self):
+        proc = Popen(["dmenu_run"] + self.args, stdout=PIPE, stdin=PIPE)
+
+
+
+class DmenuRun():
+    """
+    Special case to run applications.
+    """
+    dmenu = None
+
+    def __init__(self, configfile):
+        config = {}
+        if hasattr(configfile, 'extentions') and configfile.extentions['dmenu']:
+            config = configfile.extentions['dmenu']
+
+        self.dmenu = Dmenu(**config)
+
+
+    def run(self):
+        self.dmenu.run_apps()
