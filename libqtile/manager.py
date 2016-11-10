@@ -1821,5 +1821,5 @@ class Qtile(command.CommandObject):
 
     def cmd_run_extention(self, cls):
         """Extentions should run from command run()"""
-        c = cls(self.config)
+        c = cls(self)
         c.run()
