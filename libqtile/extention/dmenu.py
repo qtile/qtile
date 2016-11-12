@@ -25,7 +25,31 @@ class Dmenu():
     """
     Python wrapper for dmenu
     http://tools.suckless.org/dmenu/
+
+
+    config.py should have something like:
+
+    from libqtile import extention
+    mod = 'mod4'
+    keys = [
+        ...
+        Key([mod], 'l', lazy.run_extention(extention.WindowList)),
+        Key([mod], 'r', lazy.run_extention(extention.DmenuRun)),
+        ...
+    ]
+    extentions = {
+        'dmenu': {
+            'prompt': "→",
+            'font' : "Andika-8",
+            'background' : "#15181a",
+            'foreground' : "#00ff00",
+            'selected_background' : "#079822",
+            'selected_foreground' : "#fff",
+            'height' : 24,
+        }
+    }
     """
+
     defaults = [
         ("bottom", False, "dmenu appears at the bottom of the screen"),
         ("ignorecase", False, "dmenu matches menu items case insensitively"),
@@ -44,7 +68,7 @@ class Dmenu():
     def __init__(self, config):
         default_config = dict((d[0], d[1]) for d in self.defaults)
         default_config.update(config)
-        self.configure(config)
+        self.configure(default_config)
 
 
     def configure(self, config):
