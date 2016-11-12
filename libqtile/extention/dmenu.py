@@ -21,9 +21,7 @@
 import six
 from subprocess import Popen, PIPE
 
-from .. import configurable
-
-class Dmenu(configurable.Configurable):
+class Dmenu():
     """
     Python wrapper for dmenu
     http://tools.suckless.org/dmenu/
@@ -43,33 +41,33 @@ class Dmenu(configurable.Configurable):
 
     args = []
 
-    def __init__(self, **config):
-        configurable.Configurable.__init__(self, **config)
-        self.add_defaults(Dmenu.defaults)
-        self.configure()
+    def __init__(self, config):
+        default_config = dict((d[0], d[1]) for d in self.defaults)
+        default_config.update(config)
+        self.configure(config)
 
 
-    def configure(self):
-        if self.bottom:
+    def configure(self, config):
+        if 'bottom' in config and config['bottom']:
             self.args.append("-b")
-        if self.ignorecase:
+        if 'ignorecase' in config and config['ignorecase']:
             self.args.append("-i")
-        if self.lines:
-            self.args.extend(("-l", str(self.lines)))
-        if self.prompt:
-            self.args.extend(("-p", self.prompt))
-        if self.font:
-            self.args.extend(("-fn", self.font))
-        if self.background:
-            self.args.extend(("-nb", self.background))
-        if self.foreground:
-            self.args.extend(("-nf", self.foreground))
-        if self.selected_background:
-            self.args.extend(("-sb", self.selected_background))
-        if self.selected_foreground:
-            self.args.extend(("-sf", self.selected_foreground))
-        if self.height:
-            self.args.extend(("-h", str(self.height)))
+        if 'lines' in config and config['lines']:
+            self.args.extend(("-l", str(config['lines'])))
+        if 'prompt' in config and config['prompt']:
+            self.args.extend(("-p", config['prompt']))
+        if 'font' in config and config['font']:
+            self.args.extend(("-fn", config['font']))
+        if 'background' in config and config['background']:
+            self.args.extend(("-nb", config['background']))
+        if 'foreground' in config and config['foreground']:
+            self.args.extend(("-nf", config['foreground']))
+        if 'selected_background' in config and config['selected_background']:
+            self.args.extend(("-sb", config['selected_background']))
+        if 'selected_foreground' in config and config['selected_foreground']:
+            self.args.extend(("-sf", config['selected_foreground']))
+        if 'height' in config and config['height']:
+            self.args.extend(("-h", str(config['height'])))
 
 
     def call(self, items=[]):
@@ -87,15 +85,14 @@ class DmenuRun():
     """
     Special case to run applications.
     """
-    dmenu = None
+    config = {}
 
     def __init__(self, qtile):
-        config = {}
         if hasattr(qtile.config, 'extentions') and qtile.config.extentions['dmenu']:
-            config = qtile.config.extentions['dmenu']
-
-        self.dmenu = Dmenu(**config)
+            self.config = qtile.config.extentions['dmenu']
 
 
     def run(self):
-        self.dmenu.run_apps()
+        dmenu = Dmenu(self.config)
+        dmenu.run_apps()
+        del dmenu

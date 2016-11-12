@@ -19,6 +19,7 @@
 # SOFTWARE.
 
 import re
+import six
 
 from .dmenu import Dmenu
 
@@ -26,24 +27,21 @@ class WindowList():
     """
     Give vertical list of all open windows in dmenu. Switchto selected.
     """
-    dmenu = None
+    config = {}
     qtile = None
     wins = []
     id_map = {}
 
     def __init__(self, qtile):
         self.qtile = qtile
-        config = {}
         if hasattr(qtile.config, 'extentions') and qtile.config.extentions['dmenu']:
-            config = qtile.config.extentions['dmenu']
-
-        win_count = self.get_windows()
-        config['lines'] = win_count
-        self.dmenu = Dmenu(**config)
+            self.config = qtile.config.extentions['dmenu']
 
 
     def get_windows(self):
         id = 0
+        self.wins = []
+        self.id_map = {}
         for win in self.qtile.windowMap.values():
             if win.group:
                 self.wins.append("%i: %s (%s)" % (id, win.name, win.group.name))
@@ -54,7 +52,12 @@ class WindowList():
 
 
     def run(self):
-        out = self.dmenu.call(self.wins)
+        win_count = self.get_windows()
+        config_tmp = self.config
+        config_tmp['lines'] = win_count
+        dmenu = Dmenu(config_tmp)
+        out = dmenu.call(self.wins)
+        del dmenu
         if not out:
             return
 
