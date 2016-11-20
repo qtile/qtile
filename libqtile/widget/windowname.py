@@ -45,6 +45,7 @@ class WindowName(base._TextBox):
         hook.subscribe.window_name_change(self.update)
         hook.subscribe.focus_change(self.update)
         hook.subscribe.float_change(self.update)
+
         @hook.subscribe.current_screen_change
         def on_screen_changed():
             if self.for_current_screen:
