@@ -26,10 +26,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import division
+
 from . import base
 from .. import bar, hook
 from ..log_utils import logger
-import types
+import six
 import os
 import cairocffi
 from ..layout.base import Layout
@@ -89,16 +91,16 @@ class CurrentLayoutIcon(base._TextBox):
         (
             'scale',
             1,
-            'Scale factor relative to the bar height.\n'
+            'Scale factor relative to the bar height.  '
             'Defaults to 1'
         ),
         (
             'custom_icon_paths',
             [],
             'List of folders where to search icons before'
-            'using built-in icons or icons in ~/.icons dir.\n'
+            'using built-in icons or icons in ~/.icons dir.  '
             'This can also be used to provide'
-            'missing icons for custom layouts.\n'
+            'missing icons for custom layouts.  '
             'Defaults to empty list.'
         )
     ]
@@ -162,8 +164,8 @@ class CurrentLayoutIcon(base._TextBox):
         return [
             layout_class_name.lower()
             for layout_class, layout_class_name
-            in map(lambda x: (getattr(layout_module, x), x), dir(layout_module))
-            if isinstance(layout_class, (type, types.ClassType)) and issubclass(layout_class, Layout)
+            in [(getattr(layout_module, x), x) for x in dir(layout_module)]
+            if isinstance(layout_class, six.class_types) and issubclass(layout_class, Layout)
         ]
 
     def _update_icon_paths(self):
@@ -214,9 +216,9 @@ class CurrentLayoutIcon(base._TextBox):
             input_width = img.get_width()
             input_height = img.get_height()
 
-            sp = float(input_height) / (self.bar.height - 1)
+            sp = input_height / (self.bar.height - 1)
 
-            width = float(input_width) / sp
+            width = input_width / sp
             if width > self.length:
                 self.length = int(width) + self.actual_padding * 2
 

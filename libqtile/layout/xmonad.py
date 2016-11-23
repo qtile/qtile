@@ -296,9 +296,14 @@ class MonadTall(Layout):
             client.hide()
             return
 
+        # determine focus border-color
+        if client.has_focus:
+            px = self.group.qtile.colorPixel(self.border_focus)
+        else:
+            px = self.group.qtile.colorPixel(self.border_normal)
+
         # single client - fullscreen
         if len(self.clients) == 1:
-            px = self.group.qtile.colorPixel(self.border_focus)
             client.place(
                 self.group.screen.dx,
                 self.group.screen.dy,
@@ -312,12 +317,6 @@ class MonadTall(Layout):
             return
 
         cidx = self.clients.index(client)
-
-        # determine focus border-color
-        if cidx == self.focused:
-            px = self.group.qtile.colorPixel(self.border_focus)
-        else:
-            px = self.group.qtile.colorPixel(self.border_normal)
 
         # calculate main/secondary column widths
         width_main = int(self.group.screen.dwidth * self.ratio)
