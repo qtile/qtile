@@ -164,7 +164,7 @@ class CurrentLayoutIcon(base._TextBox):
         return [
             layout_class_name.lower()
             for layout_class, layout_class_name
-            in [(getattr(layout_module, x), x) for x in dir(layout_module)]
+            in map(lambda x: (getattr(layout_module, x), x), dir(layout_module))
             if isinstance(layout_class, six.class_types) and issubclass(layout_class, Layout)
         ]
 
