@@ -169,9 +169,14 @@ class GroupBox(_GroupBase):
             "Border or line colour for group on this screen when unfocused."
         ),
         (
+            "other_current_screen_border",
+            "404040",
+            "Border or line colour for group on other screen when focused."
+        ),
+        (
             "other_screen_border",
             "404040",
-            "Border or line colour for group on other screen."
+            "Border or line colour for group on other screen when unfocused."
         ),
         (
             "highlight_color",
@@ -303,7 +308,10 @@ class GroupBox(_GroupBase):
                         else:
                             border = self.this_screen_border
                     else:
-                        border = self.other_screen_border
+                        if self.qtile.currentScreen == g.screen:
+                            border = self.other_current_screen_border
+                        else:
+                            border = self.other_screen_border
             elif self.group_has_urgent(g) and \
                     self.urgent_alert_method in ('border', 'block', 'line'):
                 border = self.urgent_border

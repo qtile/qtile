@@ -159,6 +159,7 @@ class MonadTall(Layout):
             "(one of ``MonadTall._left`` or ``MonadTall._right``)"),
         ("change_ratio", .05, "Resize ratio"),
         ("change_size", 20, "Resize change in pixels"),
+        ("new_at_current", False, "Place new windows at the position of the active window."),
     ]
 
     def __init__(self, **config):
@@ -209,7 +210,8 @@ class MonadTall(Layout):
 
     def add(self, client):
         "Add client to layout"
-        self.clients.insert(self.focused + 1, client)
+        new_index = self.focused + (0 if self.new_at_current else 1)
+        self.clients.insert(new_index, client)
         self.do_normalize = True
 
     def remove(self, client):
