@@ -26,6 +26,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
 import sys
 import textwrap
 
@@ -143,7 +144,12 @@ setup(
               'libqtile.widget',
               'libqtile.resources'
               ],
-    package_data={'libqtile.resources': ['battery-icons/*.png']},
+    package_data={'libqtile.resources': [
+        '{}/*'.format(item)
+        for item
+        in os.listdir('libqtile/resources')
+        if os.path.isdir(os.path.join('libqtile/resources', item))
+    ]},
     entry_points={
         'console_scripts': [
             'qtile = libqtile.scripts.qtile:main',
