@@ -2,7 +2,7 @@
 Installing on Funtoo
 ====================
 
-Latest versions of Qtile are available on Funtoo with Python 2.7, 3.3, and 3.4
+Latest versions of Qtile are available on Funtoo with Python 2.7, 3.4, and 3.5
 implementations. To install it, run:
 
 .. code-block:: bash
@@ -22,7 +22,7 @@ Customize
 You can customize your installation with the following useflags:
 
 - dbus
-- widget-google-calendar
+- widget-khal-calendar
 - widget-imap
 - widget-keyboardkbdd
 - widget-launchbar
