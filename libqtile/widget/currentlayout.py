@@ -116,6 +116,7 @@ class CurrentLayoutIcon(base._TextBox):
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         self.text = self.bar.screen.group.layouts[0].name
+        self.current_layout = self.text
         self.icons_loaded = False
         self.icon_paths = []
         self.surfaces = {}
