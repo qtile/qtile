@@ -341,7 +341,8 @@ class BatteryIcon(_Battery):
 
             width = input_width / sp
             if width > self.length:
-                self.length = int(width) + self.actual_padding * 2
+                # cast to `int` only after handling all potentially-float values
+                self.length = int(width + self.actual_padding * 2)
 
             imgpat = cairocffi.SurfacePattern(img)
 
