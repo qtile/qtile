@@ -40,15 +40,16 @@ class Mpris(base._TextBox):
     """
     orientations = base.ORIENTATION_HORIZONTAL
 
-    def __init__(self, name="clementine", width=bar.CALCULATED,
-                 objname='org.mpris.clementine', **config):
-        base._TextBox.__init__(self, " ", width, **config)
+    defaults = [
+        ('name', 'clementine', 'Name of the widget'),
+        ('objname', 'org.mpris.clementine', 'DBUS object to connect to'),
+    ]
 
+    def __init__(self, **config):
+        base._TextBox.__init__(self, " ", **config)
+        self.add_defaults(Mpris.defaults)
         self.dbus_loop = None
-
-        self.objname = objname
         self.connected = False
-        self.name = name
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
