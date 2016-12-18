@@ -43,6 +43,7 @@ class Mpris(base._TextBox):
     defaults = [
         ('name', 'clementine', 'Name of the widget'),
         ('objname', 'org.mpris.clementine', 'DBUS object to connect to'),
+        ('stop_pause_text', 'Stopped', "Optional text to display when in the stopped/paused state"),
     ]
 
     def __init__(self, **config):
@@ -144,7 +145,7 @@ class Mpris(base._TextBox):
         if not self.connected:
             playing = 'Not Connected'
         elif not self.is_playing():
-            playing = 'Stopped'
+            playing = self.stop_pause_text
         else:
             try:
                 metadata = self.iface.GetMetadata()

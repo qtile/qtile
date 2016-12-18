@@ -53,6 +53,8 @@ class Mpris2(base._TextBox):
         ('scroll_interval', 0.5, 'Scroll delay interval.'),
         ('scroll_wait_intervals', 8, 'Wait x scroll_interval before'
             'scrolling/removing text'),
+
+        ('stop_pause_text', None, "Optional text to display when in the stopped/paused state"),
     ]
 
     def __init__(self, **config):
@@ -91,7 +93,10 @@ class Mpris2(base._TextBox):
                 for x in self.display_metadata if metadata.get(x)])
             self.displaytext.replace('\n', '')
         if playbackstatus:
-            if playbackstatus == 'Paused' and olddisplaytext:
+            if playbackstatus == 'Paused' and self.stop_pause_text is not None:
+                self.is_playing = False
+                self.displaytext = self.stop_pause_text
+            elif playbackstatus == 'Paused' and olddisplaytext:
                 self.is_playing = False
                 self.displaytext = 'Paused: {}'.format(olddisplaytext)
             elif playbackstatus == 'Paused':
