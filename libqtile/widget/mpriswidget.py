@@ -28,7 +28,6 @@ from dbus.mainloop.glib import DBusGMainLoop
 
 from libqtile.log_utils import logger
 from . import base
-from .. import bar
 
 
 class Mpris(base._TextBox):
