@@ -106,7 +106,8 @@ class Mpris2(base._TextBox):
                 self.is_playing = True
                 self.displaytext = 'No metadata for current track'
             elif playbackstatus == 'Playing' and self.displaytext:
-                self.playbackstatus = True
+                # Players might send more than one "Playing" message.
+                pass
             else:
                 self.is_playing = False
                 self.displaytext = ''
