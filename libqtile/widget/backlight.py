@@ -28,8 +28,6 @@ from libqtile.log_utils import logger
 
 BACKLIGHT_DIR = '/sys/class/backlight'
 
-FORMAT = '{percent: 2.0%}'
-
 
 class Backlight(base.InLoopPollText):
     """A simple widget to show the current brightness of a monitor"""
@@ -53,7 +51,8 @@ class Backlight(base.InLoopPollText):
             'maximum brightness in /sys/class/backlight/backlight_name'
         ),
         ('update_interval', .2, 'The delay in seconds between updates'),
-        ('step', 10, 'Percent of backlight every scroll changed')
+        ('step', 10, 'Percent of backlight every scroll changed'),
+        ('format', '{percent: 2.0%}', 'Display format')
     ]
 
     def __init__(self, **config):
@@ -86,7 +85,7 @@ class Backlight(base.InLoopPollText):
             return 'Error'
 
         percent = info['brightness'] / info['max']
-        return FORMAT.format(percent=percent)
+        return self.format.format(percent=percent)
 
     def change_backlight(self, value):
         self.call_process(["xbacklight", "-set", str(value)])
