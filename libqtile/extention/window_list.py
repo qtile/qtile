@@ -25,7 +25,7 @@ from .dmenu import Dmenu
 
 class WindowList():
     """
-    Give vertical list of all open windows in dmenu. Switchto selected.
+    Give vertical list of all open windows in dmenu. Switch to selected.
     """
     config = {}
     qtile = None
@@ -54,10 +54,8 @@ class WindowList():
     def run(self):
         win_count = self.get_windows()
         config_tmp = self.config
-        config_tmp['lines'] = win_count
-        dmenu = Dmenu(config_tmp)
+        dmenu = Dmenu(config_tmp, win_count)
         out = dmenu.call(self.wins)
-        del dmenu
         if not out:
             return
 
