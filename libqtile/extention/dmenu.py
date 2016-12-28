@@ -64,20 +64,25 @@ class Dmenu():
     ]
 
     args = []
+    lines = []
 
-    def __init__(self, config):
+    def __init__(self, config, lines=None):
         default_config = dict((d[0], d[1]) for d in self.defaults)
         default_config.update(config)
-        self.configure(default_config)
+        self.configure(default_config, lines)
 
 
-    def configure(self, config):
+    def configure(self, config, lines):
+        self.lines = []
+        if 'lines' in config and config['lines']:
+            self.lines = ["-l", str(config['lines'])]
+        if lines:
+            self.lines = ["-l", str(lines)]
+
         if 'bottom' in config and config['bottom']:
             self.args.append("-b")
         if 'ignorecase' in config and config['ignorecase']:
             self.args.append("-i")
-        if 'lines' in config and config['lines']:
-            self.args.extend(("-l", str(config['lines'])))
         if 'prompt' in config and config['prompt']:
             self.args.extend(("-p", config['prompt']))
         if 'font' in config and config['font']:
@@ -95,13 +100,13 @@ class Dmenu():
 
 
     def call(self, items=[]):
-        input_str = six.b("\n".join([str(i) for i in items]) + "\n")
-        proc = Popen(["dmenu"] + self.args, stdout=PIPE, stdin=PIPE)
-        return proc.communicate(input_str)[0]
+        input_str = "\n".join([six.u(i) for i in items]) + "\n"
+        proc = Popen(["dmenu"] + self.args + self.lines, stdout=PIPE, stdin=PIPE)
+        return proc.communicate(str.encode(input_str))[0]
 
 
     def run_apps(self):
-        proc = Popen(["dmenu_run"] + self.args, stdout=PIPE, stdin=PIPE)
+        Popen(["dmenu_run"] + self.args + self.lines, stdout=PIPE, stdin=PIPE)
 
 
 
@@ -119,4 +124,3 @@ class DmenuRun():
     def run(self):
         dmenu = Dmenu(self.config)
         dmenu.run_apps()
-        del dmenu
