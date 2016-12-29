@@ -37,7 +37,6 @@ class WindowList():
         if hasattr(qtile.config, 'extentions') and qtile.config.extentions['dmenu']:
             self.config = qtile.config.extentions['dmenu']
 
-
     def get_windows(self):
         id = 0
         self.wins = []
@@ -50,7 +49,6 @@ class WindowList():
 
         return id
 
-
     def run(self):
         win_count = self.get_windows()
         config_tmp = self.config
@@ -61,5 +59,6 @@ class WindowList():
 
         id = int(re.match(b"^\d+", out).group())
         win = self.id_map[id]
-        win.group.cmd_toscreen()
-        win.cmd_bring_to_front()
+        screen = self.qtile.currentScreen
+        screen.setGroup(win.group)
+        win.group.focus(win)

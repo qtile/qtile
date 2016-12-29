@@ -71,7 +71,6 @@ class Dmenu():
         default_config.update(config)
         self.configure(default_config, lines)
 
-
     def configure(self, config, lines):
         self.lines = []
         if 'lines' in config and config['lines']:
@@ -98,16 +97,13 @@ class Dmenu():
         if 'height' in config and config['height']:
             self.args.extend(("-h", str(config['height'])))
 
-
     def call(self, items=[]):
         input_str = "\n".join([six.u(i) for i in items]) + "\n"
         proc = Popen(["dmenu"] + self.args + self.lines, stdout=PIPE, stdin=PIPE)
         return proc.communicate(str.encode(input_str))[0]
 
-
     def run_apps(self):
         Popen(["dmenu_run"] + self.args + self.lines, stdout=PIPE, stdin=PIPE)
-
 
 
 class DmenuRun():
@@ -119,7 +115,6 @@ class DmenuRun():
     def __init__(self, qtile):
         if hasattr(qtile.config, 'extentions') and qtile.config.extentions['dmenu']:
             self.config = qtile.config.extentions['dmenu']
-
 
     def run(self):
         dmenu = Dmenu(self.config)
