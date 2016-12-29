@@ -19,7 +19,6 @@
 # SOFTWARE.
 
 import re
-import six
 
 from .dmenu import Dmenu
 
