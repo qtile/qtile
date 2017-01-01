@@ -112,7 +112,7 @@ class Qtile(command.CommandObject):
         self.keyMap = {}
         self.lastPid = {}   # last PID used for command
         self.lastCmd = None  # last spawn command
-        self.autoFocus = self.config.auto_focus
+        self.autoFocus = getattr(self.config, "auto_focus", False)
 
         # Find the modifier mask for the numlock key, if there is one:
         nc = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
