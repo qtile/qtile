@@ -36,7 +36,6 @@ import shlex
 import signal
 import sys
 import traceback
-import subprocess
 import xcffib
 import xcffib.xinerama
 import xcffib.xproto
@@ -1463,11 +1462,11 @@ class Qtile(command.CommandObject):
         cmd may be a string, which is parsed by shlex.split, or a list (similar
         to subprocess.Popen).
 
-        focus
-          - True:  The window of the previously identical launched
+        focus:
+            True:  The window of the previously identical launched
                    command is focused.
-          - False: No old window is focused.
-          - None:  The focusing strategy is given by the auto_focus
+            False: No old window is focused.
+            None:  The focusing strategy is given by the auto_focus
                    configuration keyword.
 
         Examples
