@@ -110,7 +110,7 @@ class Qtile(command.CommandObject):
         self.groupMap = {}
         self.groups = []
         self.keyMap = {}
-        self.spawnMap = {}   # last PID used for command
+        self.lastPid = {}   # last PID used for command
         self.lastCmd = None  # last spawn command
         self.autoFocus = self.config.auto_focus
 
@@ -1397,50 +1397,63 @@ class Qtile(command.CommandObject):
         """
             Focus window of the cmd.
         """
-        logger.debug("cmd='%s' spawnMap=%s" % (cmd, self.spawnMap))
-        try:
-            p = subprocess.Popen(["pgrep", "-f", cmd], stdout=subprocess.PIPE)
-            allpid = [int(pid) for pid in p.communicate()[0].split()]
-        except OSError:
-            logger.error(traceback.format_exc())
-            allpid = None
+        def cleanup():
+            pm = utils.build_process_map()
+            for cmd, pid in ((cmd, pid) for cmd, pid in self.lastPid.items()):
+                if cmd not in pm or pid not in pm[cmd]:
+                    # remove cmd in the lastPid
+                    logger.info("Cleanup: pid=%d (cmd='%s') no longer exists. "
+                                "It's removed." % (pid, cmd))
+                    del(self.lastPid[cmd])
+            return pm
 
-        if allpid is not None and len(allpid) > 0:
-            if cmd in self.spawnMap:
-                lastpid = self.spawnMap[cmd]
+        pm = cleanup()
+        allPid = pm.get(cmd, None)
+
+        if allPid is not None and len(allPid) > 0:
+            logger.info("All these PID %s match with the cmd '%s'" %
+                        (allPid, cmd))
+            if cmd in self.lastPid:
+                lastPid = self.lastPid[cmd]
             else:
-                lastpid = allpid[0]
+                lastPid = allPid[0]
 
             try:
-                idx = allpid.index(lastpid)
+                idx = allPid.index(lastPid)
                 if cmd == self.lastCmd:
                     # Previous focused spawn is for the same cmd
                     # => search for next PID (next window).
-                    idx = (idx + 1) % len(allpid)
+                    idx = (idx + 1) % len(allPid)
                 else:
                     self.lastCmd = cmd
             except:
-                # lastpid no longer exists
+                # lastPid no longer exists
                 idx = 0
 
-            for i in range(len(allpid)):
-                pid = allpid[idx]
+            for i in range(len(allPid)):
+                pid = allPid[idx]
                 for win in self.windowMap.values():
                     # Now we have to find the corresponding window
-                    logger.debug("Idx=%d" % idx)
-                    logger.debug("Check window for PID %d: %s" % (pid, win))
+                    logger.debug("idx=%d pid=%d" % (idx, pid))
+                    logger.info("Check window for PID %d: %s" % (pid, win))
                     try:
                         cwpid = win.window.get_net_wm_pid()
                         logger.debug("Window PID=%s" % (cwpid))
                         if cwpid == pid:
+                            logger.info("This is the good window (%s)." %
+                                        str(win.window.wid))
                             self.find_window(win.window.wid)
-                            self.spawnMap[cmd] = pid
+                            self.lastPid[cmd] = pid
                             return pid
                     except:
                         logger.error(traceback.format_exc())
-                    logger.debug("No window has been found for PID %d" % pid)
-                idx = (idx + 1) % len(allpid)
-            logger.debug("No window has been found for cmd '%s'" % cmd)
+                else:
+                    logger.info("No window has been found for PID %d" % pid)
+                idx = (idx + 1) % len(allPid)
+            logger.info("No window has been found for cmd '%s'" % cmd)
+        else:
+            logger.info("No PID match with the cmd '%s'" % cmd)
+
         return None
 
     def cmd_spawn(self, cmd, focus=None):
@@ -1450,11 +1463,17 @@ class Qtile(command.CommandObject):
         cmd may be a string, which is parsed by shlex.split, or a list (similar
         to subprocess.Popen).
 
-        focus ([True] | False) The window of the previously identical launched command is focused.
+        focus
+          - True:  The window of the previously identical launched
+                   command is focused.
+          - False: No old window is focused.
+          - None:  The focusing strategy is given by the auto_focus
+                   configuration keyword.
 
         Examples
         ========
-                spawn("firefox")
+                spawn("firefox", True)   # Focus Firefox window if exists,
+                                         # else launch Firefox.
                 spawn(["xterm", "-T", "Temporary terminal"])
                 spawn("firefox", False)  # Launch a new firefox process
         """
@@ -1464,8 +1483,8 @@ class Qtile(command.CommandObject):
             args = list(cmd)
             cmd = " ".join(args)
         # Request focus ?
-        if (focus is None and self.autoFocus) or focus:
-            pid = self.cmd_focus_cmd(cmd)
+        if len(args) > 0 and ((focus is None and self.autoFocus) or focus):
+            pid = self.cmd_focus_cmd(os.path.basename(args[0]))
             if pid is not None:
                 return pid
 
@@ -1533,7 +1552,7 @@ class Qtile(command.CommandObject):
             pid = os.read(r, 1024)
             os.close(r)
             # register last pid for the cmd
-            self.spawnMap[cmd] = int(pid)
+            self.lastPid[cmd] = int(pid)
             return int(pid)
 
     def cmd_status(self):

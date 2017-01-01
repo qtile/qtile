@@ -20,6 +20,7 @@
 
 import functools
 import os
+import os.path
 import operator
 import sys
 import warnings
@@ -240,3 +241,21 @@ def describe_attributes(obj, attrs, func=None):
             pairs.append('%s=%s' % (attr, value))
 
     return ', '.join(pairs)
+
+
+def build_process_map(cmd=None):
+    """
+    Build a map (key=first arg of command line, value=list of pid)
+    """
+    result = {}
+    for p in os.listdir("/proc"):
+        for c in p:
+            if c not in "0123456789":
+                break
+        else:
+            with open("/proc/%s/cmdline" % p, "r") as f:
+                first_arg = os.path.basename(f.readline().split("\x00")[0])
+            if cmd is not None and first_arg != cmd:
+                continue
+            result.setdefault(first_arg, []).append(int(p))
+    return result
