@@ -18,5 +18,5 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .dmenu import Dmenu, DmenuRun
-from .window_list import WindowList
+from .dmenu import Dmenu, DmenuRun      # noqa
+from .window_list import WindowList     # noqa
