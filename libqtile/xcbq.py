@@ -575,8 +575,10 @@ class Window(object):
         Arguments can be: x, y, width, height, border, sibling, stackmode
         """
         mask, values = ConfigureMasks(**kwargs)
-        # hack for negative numbers
-        values = [i & 0xffffffff for i in values]
+        # older versions of xcb pack everything into unsigned ints "=I"
+        # since 1.12, uses switches to pack things sensibly
+        if float(xcffib.__xcb_proto_version__) < 1.12:
+            values = [i & 0xffffffff for i in values]
         return self.conn.conn.core.ConfigureWindow(self.wid, mask, values)
 
     def set_attribute(self, **kwargs):
