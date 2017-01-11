@@ -10,7 +10,6 @@
 # Copyright (c) 2014 Adi Sieker
 # Copyright (c) 2014 dmpayton
 # Copyright (c) 2014 Jody Frankowski
-# Copyright (c) 2016 Christoph Lassner
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -45,9 +44,6 @@ __all__ = [
 ]
 
 re_vol = re.compile('\[(\d?\d?\d?)%\]')
-BUTTON_UP = 4
-BUTTON_DOWN = 5
-BUTTON_MUTE = 1
 
 
 class Volume(base._TextBox):
@@ -72,13 +68,17 @@ class Volume(base._TextBox):
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, '0', width=bar.CALCULATED, **config)
+        base._TextBox.__init__(self, '      ', width=bar.CALCULATED, **config)
+        self.surfaces = {}
+        self.muted = False
+        self.wasmuted = False
+        # self.volume = 0
+        # self.update()
         self.add_defaults(Volume.defaults)
         if self.theme_path:
             self.length_type = bar.STATIC
             self.length = 0
-        self.surfaces = {}
-        self.volume = None
+        self.volume = 0
 
     def timer_setup(self):
         self.timeout_add(self.update_interval, self.update)
@@ -98,7 +98,7 @@ class Volume(base._TextBox):
         return cmd
 
     def button_press(self, x, y, button):
-        if button == BUTTON_DOWN:
+        if button == 5:
             if self.volume_down_command is not None:
                 subprocess.call(self.volume_down_command)
             else:
@@ -106,7 +106,7 @@ class Volume(base._TextBox):
                                                            'sset',
                                                            self.channel,
                                                            '2%-'))
-        elif button == BUTTON_UP:
+        elif button == 4:
             if self.volume_up_command is not None:
                 subprocess.call(self.volume_up_command)
             else:
@@ -114,7 +114,7 @@ class Volume(base._TextBox):
                                                            'sset',
                                                            self.channel,
                                                            '2%+'))
-        elif button == BUTTON_MUTE:
+        elif button == 1:
             if self.mute_command is not None:
                 subprocess.call(self.mute_command)
             else:
@@ -125,8 +125,10 @@ class Volume(base._TextBox):
         self.draw()
 
     def update(self):
+        # if self.volume >= 0:
+        #     self.vol_before_mute = self.volume
         vol = self.get_volume()
-        if vol != self.volume:
+        if vol != self.volume or self.muted != self.wasmuted:
             self.volume = vol
             # Update the underlying canvas size before actually attempting
             # to figure out how big it is and draw it.
@@ -158,10 +160,11 @@ class Volume(base._TextBox):
             elif self.volume >= 80:
                 self.text = u'\U0001f50a'
         else:
-            if self.volume == -1:
-                self.text = 'M'
+            if self.muted == True:
+                self.foreground = 'FF0000'
             else:
-                self.text = '%s%%' % self.volume
+                self.foreground = 'FFFFFF'
+            self.text = '%s%%' % self.volume
 
     def setup_images(self):
         for img_name in (
@@ -211,10 +214,13 @@ class Volume(base._TextBox):
             mixer_out = self.call_process(get_volume_cmd)
         except subprocess.CalledProcessError:
             return -1
-
+        
+        self.wasmuted = self.muted
         if '[off]' in mixer_out:
-            return -1
-
+            self.muted = True
+        else:
+            self.muted = False
+        
         volgroups = re_vol.search(mixer_out)
         if volgroups:
             return int(volgroups.groups()[0])
@@ -227,15 +233,3 @@ class Volume(base._TextBox):
             self.drawer.draw(offsetx=self.offset, width=self.length)
         else:
             base._TextBox.draw(self)
-
-    def cmd_increase_vol(self):
-        # Emulate button press.
-        self.button_press(0, 0, BUTTON_UP)
-
-    def cmd_decrease_vol(self):
-        # Emulate button press.
-        self.button_press(0, 0, BUTTON_DOWN)
-
-    def cmd_mute(self):
-        # Emulate button press.
-        self.button_press(0, 0, BUTTON_MUTE)

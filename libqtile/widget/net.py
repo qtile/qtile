@@ -38,17 +38,17 @@ class Net(base.ThreadedPollText):
 
     def convert_b(self, b):
         # Here we round to 1000 instead of 1024
-        # because of round things
+        #?# because of round things
         letter = 'B'
         # b is a float, so don't use integer division
-        if int(b / 1000) > 0:
-            b /= 1000.0
-            letter = 'k'
-        if int(b / 1000) > 0:
-            b /= 1000.0
+        if int(b / 1024) > 0:
+            b /= 1024.0
+            letter = 'K'
+        if int(b / 1024) > 0:
+            b /= 1024.0
             letter = 'M'
-        if int(b / 1000) > 0:
-            b /= 1000.0
+        if int(b / 1024) > 0:
+            b /= 1024.0
             letter = 'G'
         # I hope no one have more than 999 GB/s
         return b, letter
@@ -57,25 +57,33 @@ class Net(base.ThreadedPollText):
         lines = []  # type: List[str]
         with open('/proc/net/dev', 'r') as f:
             lines = f.readlines()[2:]
-        interfaces = {}
+        interfaces = {'net':{'down': 0, 'up': 0}}
         for s in lines:
             int_s = s.split()
             name = int_s[0][:-1]
             down = float(int_s[1])
             up = float(int_s[-8])
             interfaces[name] = {'down': down, 'up': up}
+            interfaces['net']['down'] += down
+            interfaces['net']['up'] += up
+        # net_up = 0
+        # net_down = 0
+        # for iface in interfaces:
+        #     net_up += interfaces[iface]['up']
+        #     net_down += interfaces[iface]['down']
+        # interfaces['net'] = {'down': down, 'up': up}
         return interfaces
 
     def _format(self, down, up):
         down = "%0.2f" % down
         up = "%0.2f" % up
-        if len(down) > 5:
-            down = down[:5]
-        if len(up) > 5:
-            up = up[:5]
+        if len(down) > 4:
+            down = down[:4]
+        if len(up) > 4:
+            up = up[:4]
 
-        down = " " * (5 - len(down)) + down
-        up = " " * (5 - len(up)) + up
+        down = "0" * (4 - len(down)) + down
+        up = "0" * (4 - len(up)) + up
         return down, up
 
     def poll(self):
@@ -93,7 +101,7 @@ class Net(base.ThreadedPollText):
 
             down, up = self._format(down, up)
 
-            str_base = u"%s%s \u2193\u2191 %s%s"
+            str_base = u"%s%s\u2193\u2191%s%s"
 
             self.interfaces = new_int
             return str_base % (down, down_letter, up, up_letter)
