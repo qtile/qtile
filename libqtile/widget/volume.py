@@ -160,7 +160,7 @@ class Volume(base._TextBox):
             elif self.volume >= 80:
                 self.text = u'\U0001f50a'
         else:
-            if self.muted == True:
+            if self.muted:
                 self.foreground = 'FF0000'
             else:
                 self.foreground = 'FFFFFF'
@@ -214,13 +214,13 @@ class Volume(base._TextBox):
             mixer_out = self.call_process(get_volume_cmd)
         except subprocess.CalledProcessError:
             return -1
-        
+
         self.wasmuted = self.muted
         if '[off]' in mixer_out:
             self.muted = True
         else:
             self.muted = False
-        
+
         volgroups = re_vol.search(mixer_out)
         if volgroups:
             return int(volgroups.groups()[0])
