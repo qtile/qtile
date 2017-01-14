@@ -455,7 +455,7 @@ class Window(object):
             xcffib.xproto.GetPropertyType.Any
         )
         if r:
-            return self._propertyString(r)
+            return self._propertyUTF8(r)
 
     def get_wm_hints(self):
         r = self.get_property("WM_HINTS", xcffib.xproto.GetPropertyType.Any)
