@@ -450,12 +450,16 @@ class Window(object):
         if r:
             return self._propertyUTF8(r)
 
+        r = self.get_property(xcffib.xproto.Atom.WM_NAME, "UTF8_STRING")
+        if r:
+            return self._propertyUTF8(r)
+
         r = self.get_property(
             xcffib.xproto.Atom.WM_NAME,
             xcffib.xproto.GetPropertyType.Any
         )
         if r:
-            return self._propertyUTF8(r)
+            return self._propertyString(r)
 
     def get_wm_hints(self):
         r = self.get_property("WM_HINTS", xcffib.xproto.GetPropertyType.Any)
