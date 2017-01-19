@@ -38,12 +38,12 @@ class Net(base.ThreadedPollText):
 
     def convert_b(self, b):
         # Here we round to 1000 instead of 1024
-        # because of round things
+        #  because of round things
         letter = 'B'
         # b is a float, so don't use integer division
         if int(b / 1000) > 0:
             b /= 1000.0
-            letter = 'k'
+            letter = 'K'
         if int(b / 1000) > 0:
             b /= 1000.0
             letter = 'M'
@@ -57,13 +57,15 @@ class Net(base.ThreadedPollText):
         lines = []  # type: List[str]
         with open('/proc/net/dev', 'r') as f:
             lines = f.readlines()[2:]
-        interfaces['net'] = {}
+        interfaces = {'net': {'down': 0, 'up': 0}}
         for s in lines:
             int_s = s.split()
             name = int_s[0][:-1]
             down = float(int_s[1])
             up = float(int_s[-8])
             interfaces[name] = {'down': down, 'up': up}
+            interfaces['net']['down'] += down
+            interfaces['net']['up'] += up
         return interfaces
 
     def _format(self, down, up):

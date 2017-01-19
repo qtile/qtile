@@ -88,7 +88,7 @@ class _Battery(base._TextBox):
             'Name of file with the current'
             ' power draw in /sys/class/power_supply/battery_name'
         ),
-        ('update_delay', 60, 'The delay in seconds between updates'),
+        ('update_delay', 10, 'The delay in seconds between updates'),
     ]
 
     def __init__(self, **config):
@@ -150,9 +150,9 @@ class Battery(_Battery):
     """A simple but flexible text-based battery widget"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('charge_char', '^', 'Character to indicate the battery is charging'),
+        ('charge_char', u"\u2191", 'Character to indicate the battery is charging'),
         ('discharge_char',
-         'V',
+         u"\u2193",
          'Character to indicate the battery is discharging'
          ),
         ('error_message', 'Error', 'Error message if something is wrong'),
@@ -163,9 +163,17 @@ class Battery(_Battery):
         ('hide_threshold', None, 'Hide the text when there is enough energy'),
         ('low_percentage',
          0.10,
-         "Indicates when to use the low_foreground color 0 < x < 1"
+         "Indicates when to warn for low battery color 0 < x < 1"
          ),
         ('warn_foreground', 'FF0000', 'Font color on warning'),
+        ('high_percentage',
+         0.90,
+         "Indicates when to warn for battery full color 0 < x < 1"
+         ),
+        ('warn_for_high_battery', 
+        False, 
+        'whether warn the user when battery level becomes high during charging'
+        )
     ]
 
     def __init__(self, **config):
@@ -228,7 +236,9 @@ class Battery(_Battery):
         percent = info['now'] / info['full']
         watt = info['power'] / 1e6
         if info['stat'] == DISCHARGING and percent < self.low_percentage:
-            self.layout.colour = self.low_foreground
+            self.layout.colour = self.warn_foreground
+        elif self.warn_for_high_battery and info['stat'] == CHARGING and percent > self.high_percentage:
+            self.layout.colour = self.warn_foreground
         else:
             self.layout.colour = self.foreground
 
@@ -341,8 +351,7 @@ class BatteryIcon(_Battery):
 
             width = input_width / sp
             if width > self.length:
-                # cast to `int` only after handling all potentially-float values
-                self.length = int(width + self.actual_padding * 2)
+                self.length = int(width) + self.actual_padding * 2
 
             imgpat = cairocffi.SurfacePattern(img)
 
