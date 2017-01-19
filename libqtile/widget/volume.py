@@ -79,6 +79,8 @@ class Volume(base._TextBox):
             self.length = 0
         self.surfaces = {}
         self.volume = None
+        self.muted = False
+        self.wasmuted = False
 
     def timer_setup(self):
         self.timeout_add(self.update_interval, self.update)
@@ -126,7 +128,7 @@ class Volume(base._TextBox):
 
     def update(self):
         vol = self.get_volume()
-        if vol != self.volume:
+        if vol != self.volume or self.muted != self.wasmuted:
             self.volume = vol
             # Update the underlying canvas size before actually attempting
             # to figure out how big it is and draw it.
@@ -158,10 +160,11 @@ class Volume(base._TextBox):
             elif self.volume >= 80:
                 self.text = u'\U0001f50a'
         else:
-            if self.volume == -1:
-                self.text = 'M'
+            if self.muted:
+                self.foreground = 'FF0000'
             else:
-                self.text = '%s%%' % self.volume
+                self.foreground = 'FFFFFF'
+            self.text = '%s%%' % self.volume
 
     def setup_images(self):
         for img_name in (
@@ -212,8 +215,11 @@ class Volume(base._TextBox):
         except subprocess.CalledProcessError:
             return -1
 
+        self.wasmuted = self.muted
         if '[off]' in mixer_out:
-            return -1
+            self.muted = True
+        else:
+            self.muted = False
 
         volgroups = re_vol.search(mixer_out)
         if volgroups:
