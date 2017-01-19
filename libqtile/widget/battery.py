@@ -165,7 +165,7 @@ class Battery(_Battery):
          0.10,
          "Indicates when to use the low_foreground color 0 < x < 1"
          ),
-        ('low_foreground', 'FF0000', 'Font color on low battery'),
+        ('warn_foreground', 'FF0000', 'Font color on warning'),
     ]
 
     def __init__(self, **config):

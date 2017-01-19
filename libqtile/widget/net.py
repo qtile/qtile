@@ -57,7 +57,7 @@ class Net(base.ThreadedPollText):
         lines = []  # type: List[str]
         with open('/proc/net/dev', 'r') as f:
             lines = f.readlines()[2:]
-        interfaces = {}
+        interfaces['net'] = {}
         for s in lines:
             int_s = s.split()
             name = int_s[0][:-1]
