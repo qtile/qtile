@@ -49,7 +49,7 @@ class TextLayout(object):
         if not wrap:  # pango wraps by default
             layout.set_ellipsize(pangocffi.ELLIPSIZE_END)
         desc = pangocffi.FontDescription.from_string(font_family)
-        desc.set_absolute_size(pangocffi.units_from_double(font_size))
+        desc.set_absolute_size(pangocffi.units_from_double(float(font_size)))
         layout.set_font_description(desc)
         self.font_shadow = font_shadow
         self.layout = layout
