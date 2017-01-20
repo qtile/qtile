@@ -38,12 +38,12 @@ class Net(base.ThreadedPollText):
 
     def convert_b(self, b):
         # Here we round to 1000 instead of 1024
-        #  because of round things
+        # because of round things
         letter = 'B'
         # b is a float, so don't use integer division
         if int(b / 1000) > 0:
             b /= 1000.0
-            letter = 'K'
+            letter = 'k'
         if int(b / 1000) > 0:
             b /= 1000.0
             letter = 'M'
