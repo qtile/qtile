@@ -1156,21 +1156,21 @@ class Qtile(command.CommandObject):
         def f():
             func(*args)
             self.conn.flush()
-        self._eventloop.call_soon(f)
+        return self._eventloop.call_soon(f)
 
     def call_soon_threadsafe(self, func, *args):
         """ Another event loop proxy, see `call_soon`. """
         def f():
             func(*args)
             self.conn.flush()
-        self._eventloop.call_soon_threadsafe(f)
+        return self._eventloop.call_soon_threadsafe(f)
 
     def call_later(self, delay, func, *args):
         """ Another event loop proxy, see `call_soon`. """
         def f():
             func(*args)
             self.conn.flush()
-        self._eventloop.call_later(delay, f)
+        return self._eventloop.call_later(delay, f)
 
     def run_in_executor(self, func, *args):
         """ A wrapper for running a function in the event loop's default
