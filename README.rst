@@ -55,9 +55,9 @@ and `guidelines`_ for contributing in the documentation.
 .. |travis| image:: https://travis-ci.org/qtile/qtile.svg?branch=develop
     :alt: Build Status
     :target: https://travis-ci.org/qtile/qtile
-.. |coveralls| image:: https://coveralls.io/repos/qtile/qtile/badge.png?branch=develop
+.. |coveralls| image:: https://coveralls.io/repos/github/qtile/qtile/badge.svg?branch=develop
     :alt: Build Coverage
-    :target: https://coveralls.io/r/qtile/qtile
+    :target: https://coveralls.io/github/qtile/qtile?branch=develop
 .. |rtd| image:: https://readthedocs.org/projects/qtile/badge/?version=latest
     :alt: Documentation Status
     :target: http://docs.qtile.org/en/latest/?badge=latest
