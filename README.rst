@@ -58,6 +58,6 @@ and `guidelines`_ for contributing in the documentation.
 .. |coveralls| image:: https://coveralls.io/repos/qtile/qtile/badge.png?branch=develop
     :alt: Build Coverage
     :target: https://coveralls.io/r/qtile/qtile
-.. |rtd| image:: https://readthedocs.io/projects/qtile/badge/?version=latest
+.. |rtd| image:: https://readthedocs.org/projects/qtile/badge/?version=latest
     :alt: Documentation Status
     :target: http://docs.qtile.org/en/latest/?badge=latest
