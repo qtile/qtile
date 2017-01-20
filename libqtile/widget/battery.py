@@ -88,7 +88,7 @@ class _Battery(base._TextBox):
             'Name of file with the current'
             ' power draw in /sys/class/power_supply/battery_name'
         ),
-        ('update_delay', 10, 'The delay in seconds between updates'),
+        ('update_delay', 60, 'The delay in seconds between updates'),
     ]
 
     def __init__(self, **config):
