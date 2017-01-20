@@ -170,10 +170,10 @@ class Battery(_Battery):
          0.90,
          "Indicates when to warn for battery full color 0 < x < 1"
          ),
-        ('warn_for_high_battery', 
-        False, 
+        ('warn_for_high_battery',
+        False,
         'whether warn the user when battery level becomes high during charging'
-        )
+         )
     ]
 
     def __init__(self, **config):
