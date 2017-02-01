@@ -12,6 +12,7 @@ be on your $PATH.
 
     import subprocess
     import os
+    from libqtile import hook
 
     @hook.subscribe.startup
     def dbus_register():
