@@ -377,7 +377,7 @@ class Screen(command.CommandObject):
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
                 bar.draw()
-        self.qtile.call_soon(self.group.layoutAll())
+        self.qtile.call_soon(self.group.layoutAll)
 
     def cmd_info(self):
         """
