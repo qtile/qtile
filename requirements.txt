@@ -4,9 +4,8 @@
 #
 #    pip-compile --output-file requirements.txt requirements.in
 #
-
-cairocffi==0.7.2
-cffi==1.6.0
-pycparser==2.14           # via cffi
+cairocffi==0.8.0
+cffi==1.9.1
+pycparser==2.17           # via cffi
 six==1.10.0
-xcffib==0.4.2
+xcffib==0.5.1

@@ -1,4 +1,18 @@
-qtile 0.10.7, released 2017-XX-XX:
+qtile 0.10.7, released 2017-02-14:
+    * features
+        - new MPD widget, widget.MPD2, based on `mpd2` library
+        - add option to ignore duplicates in prompt widget
+        - add additional margin options to GroupBox widget
+        - add option to ignore mouse wheel to GroupBox widget
+        - add `watts` formatting string option to Battery widgets
+        - add volume commands to Volume widget
+    * bugfixes
+        - place transient windows in the middle of their parents
+        - fix TreeTab layout
+        - fix CurrentLayoutIcon in Python 3
+        - fix xcb handling for xcffib 0.5.0
+        - fix bug in Screen.resize
+        - fix Qtile.display_kb command
 
 qtile 0.10.6, released 2016-05-24:
     !!! qsh renamed to qshell !!!
