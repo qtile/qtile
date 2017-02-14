@@ -1,4 +1,5 @@
 sudo: false
+dist: trusty
 language: python
 
 matrix:
@@ -18,10 +19,10 @@ matrix:
         - python: nightly
           env: TOXENV=py-nightly
 
-        - python: pypy
+        - python: pypy-5.4.1
           env: TOXENV=pypy-trollius
-        - python: pypy3
-          env: TOXENV=pypy3-trollius
+        - python: pypy3.3-5.2-alpha1
+          env: TOXENV=pypy-trollius
 
         - python: 3.6
           env: TOXENV=packaging
@@ -35,10 +36,6 @@ matrix:
     allow_failures:
         - python: nightly
           env: TOXENV=py-nightly
-        - python: pypy
-          env: TOXENV=pypy-trollius
-        - python: pypy3
-          env: TOXENV=pypy3-trollius
 
 cache:
   directories:
