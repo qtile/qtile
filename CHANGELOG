@@ -1,3 +1,5 @@
+qtile 0.10.7, released 2017-XX-XX:
+
 qtile 0.10.6, released 2016-05-24:
     !!! qsh renamed to qshell !!!
         This avoids name collision with other packages

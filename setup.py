@@ -49,7 +49,7 @@ class CheckCairoXcb(install):
 
             It looks like your cairocffi was not built with xcffib support.  To fix this:
 
-              - Ensure a recent xcffib is installed (pip install 'xcffib>=0.3.2')
+              - Ensure a recent xcffib is installed (pip install 'xcffib>=0.5.0')
               - The pip cache is cleared (remove ~/.cache/pip, if it exists)
               - Reinstall cairocffi, either:
 
@@ -97,7 +97,7 @@ else:
         'libqtile/ffi_build.py:xcursors_ffi'
     ])
 
-dependencies = ['xcffib>=0.3.2', 'cairocffi>=0.7', 'six>=1.4.1', requires_cffi]
+dependencies = ['xcffib>=0.5.0', 'cairocffi>=0.7', 'six>=1.4.1', requires_cffi]
 
 if sys.version_info >= (3, 4):
     pass
@@ -108,7 +108,7 @@ else:
 
 setup(
     name="qtile",
-    version="0.10.6",
+    version="0.10.7",
     description="A pure-Python tiling window manager.",
     long_description=long_description,
     classifiers=[
@@ -120,6 +120,7 @@ setup(
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Operating System :: Unix",
@@ -128,8 +129,8 @@ setup(
     keywords="qtile tiling window manager",
     author="Aldo Cortesi",
     author_email="aldo@nullcube.com",
-    maintainer="Tycho Andersen",
-    maintainer_email="tycho@tycho.ws",
+    maintainer="Sean Vig",
+    maintainer_email="sean.v.775@gmail.com",
     url="http://qtile.org",
     license="MIT",
     install_requires=dependencies,
