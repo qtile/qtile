@@ -106,7 +106,9 @@ class Clipboard(base._TextBox):
                 self.timeout_id = None
 
             # only clear if don't change don't apply in .5 seconds
-            self.timeout_id = self.timeout_add(.5, self.clear)
+            if self.timeout:
+                self.timeout_id = self.timeout_add(self.timeout, self.clear)
+            self.bar.draw()
 
         hook.subscribe.selection_notify(hook_notify)
         hook.subscribe.selection_change(hook_change)
