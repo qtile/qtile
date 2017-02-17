@@ -24,7 +24,7 @@
 import locale
 import logging
 
-from libqtile.log_utils import init_log, logger
+from libqtile.log_utils import init_log, logger, DEFAULT_LOG_PATH
 from libqtile import confreader
 
 locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
@@ -91,6 +91,17 @@ def make_qtile():
         help='Set qtile log level'
     )
     parser.add_argument(
+        '--log-path',
+        default=DEFAULT_LOG_PATH,
+        dest='log_path',
+        help="Save the log here (Default: '{}')".format(DEFAULT_LOG_PATH)
+    )
+    parser.add_argument(
+        '--log-stdout',
+        action='store_true',
+        help='Send log output also to stdout'
+    )
+    parser.add_argument(
         '--with-state',
         default=None,
         dest='state',
@@ -98,7 +109,11 @@ def make_qtile():
     )
     options = parser.parse_args()
     log_level = getattr(logging, options.log_level)
-    init_log(log_level=log_level)
+    init_log(
+        log_level=log_level,
+        path=options.log_path,
+        stream_handler=options.log_stdout,
+    )
 
     try:
         config = confreader.File(options.configfile, is_restart=options.no_spawn)

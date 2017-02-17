@@ -26,7 +26,7 @@ from __future__ import print_function
 import libqtile
 import libqtile.ipc
 from libqtile.manager import Qtile as QtileManager
-from libqtile.log_utils import init_log
+from libqtile.log_utils import init_log, TESTS_LOG_PATH
 
 import logging
 import multiprocessing
@@ -199,7 +199,7 @@ class Qtile(object):
 
         def run_qtile():
             try:
-                init_log(logging.INFO, log_path=None)
+                init_log(logging.INFO, path=TESTS_LOG_PATH)
                 q = QtileManager(config_class(), self.display, self.sockfile)
                 q.loop()
             except Exception:
@@ -244,7 +244,7 @@ class Qtile(object):
         an error and the returned manager should not be started, otherwise this
         will likely block the thread.
         """
-        init_log(logging.INFO, log_path=None)
+        init_log(logging.INFO, path=TESTS_LOG_PATH)
         return QtileManager(config_class(), self.display, self.sockfile)
 
     def terminate(self):
