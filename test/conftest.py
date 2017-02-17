@@ -54,7 +54,7 @@ sleep_time = 0.05
 def _find_display():
     """Returns the next available display"""
     display = 1
-    while os.path.exists("/tmp/.X{0}-lock".format(display)):
+    while os.path.exists("/tmp/.X11-unix/X{0}".format(display)):
         display += 1
     return display
 
