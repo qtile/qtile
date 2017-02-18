@@ -125,11 +125,11 @@ def test_complete(qtile):
         "critical",
     ]
 
-    assert qtile.sh._complete("cd l", "l") == ["layout"]
+    assert qtile.sh._complete("cd l", "l") == ["layout/"]
     assert qtile.sh._complete("cd layout/", "layout/") == [
         "layout/" + x for x in ["group", "window", "screen", "0"]
     ]
-    assert qtile.sh._complete("cd layout/", "layout/g") == ["layout/group"]
+    assert qtile.sh._complete("cd layout/", "layout/g") == ["layout/group/"]
 
 
 @sh_config

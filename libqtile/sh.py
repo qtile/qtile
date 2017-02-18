@@ -63,21 +63,21 @@ class QSh(object):
             lst = [i for i in options if i.startswith(arg)]
             return lst
         elif buf.startswith("cd ") or buf.startswith("ls "):
-            path = [i for i in arg.split("/") if i]
-            if arg.endswith("/"):
-                last = ""
-            else:
-                last = path[-1]
-                path = path[:-1]
-            node = self._findNode(self.current, *path)
+            last_slash = arg.rfind("/") + 1
+            path, last = arg[:last_slash], arg[last_slash:]
+            node = self._findPath(path)
             options = [str(i) for i in self._ls(node)]
             lst = []
-            path = "/".join(path)
-            if path:
+            if path and not path.endswith("/"):
                 path += "/"
             for i in options:
                 if i.startswith(last):
                     lst.append(path + i)
+
+            if len(lst) == 1:
+                # add a slash to continue completing the next part of the path
+                return [lst[0] + "/"]
+
             return lst
 
     def complete(self, arg, state):
@@ -163,6 +163,11 @@ class QSh(object):
         else:
             return None
 
+    def _findPath(self, path):
+        root = self.clientroot if path.startswith("/") else self.current
+        parts = [i for i in path.split("/") if i]
+        return self._findNode(root, *parts)
+
     def do_cd(self, arg):
         """Change to another path.
 
@@ -173,7 +178,7 @@ class QSh(object):
 
             cd ../layout
         """
-        next = self._findNode(self.current, *[i for i in arg.split("/") if i])
+        next = self._findPath(arg)
         if next:
             self.current = next
             return self.current.path or '/'
@@ -189,7 +194,13 @@ class QSh(object):
                 > ls
                 > ls ../layout
         """
-        l = self._ls(self.current)
+        path = self.current
+        if arg:
+            path = self._findPath(arg)
+            if not path:
+                return "No such path."
+
+        l = self._ls(path)
         l = ["%s/" % i for i in l]
         return self.columnize(l)
 
