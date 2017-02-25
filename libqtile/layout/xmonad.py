@@ -155,11 +155,20 @@ class MonadTall(Layout):
         ("ratio", _med_ratio,
             "The percent of the screen-space the master pane should occupy "
             "by default."),
+        ("min_ratio", _min_ratio,
+            "The percent of the screen-space the master pane should occupy "
+            "at minimum."),
+        ("max_ratio", _max_ratio,
+            "The percent of the screen-space the master pane should occupy "
+            "at maximum."),
+        ("min_height", _min_height,
+            "minimum height in pixel for a secondary pane window "),
         ("align", _left, "Which side master plane will be placed "
             "(one of ``MonadTall._left`` or ``MonadTall._right``)"),
         ("change_ratio", .05, "Resize ratio"),
         ("change_size", 20, "Resize change in pixels"),
-        ("new_at_current", False, "Place new windows at the position of the active window."),
+        ("new_at_current", False,
+            "Place new windows at the position of the active window."),
     ]
 
     def __init__(self, **config):
@@ -249,16 +258,16 @@ class MonadTall(Layout):
     def _maximize_main(self):
         "Toggle the main pane between min and max size"
         if self.ratio <= self._med_ratio:
-            self.ratio = self._max_ratio
+            self.ratio = self.max_ratio
         else:
-            self.ratio = self._min_ratio
+            self.ratio = self.min_ratio
         self.group.layoutAll()
 
     def _maximize_secondary(self):
         "Toggle the focused secondary pane between min and max size"
         n = len(self.clients) - 2  # total shrinking clients
         # total height of collapsed secondaries
-        collapsed_height = self._min_height * n
+        collapsed_height = self.min_height * n
         nidx = self.focused - 1  # focused size index
         # total height of maximized secondary
         maxed_size = self.group.screen.dheight - collapsed_height
@@ -271,7 +280,7 @@ class MonadTall(Layout):
             self._shrink_secondary(
                 self._get_absolute_size_from_relative(
                     self.relative_sizes[nidx]
-                ) - self._min_height
+                ) - self.min_height
             )
         # otherwise maximize
         else:
@@ -394,7 +403,7 @@ class MonadTall(Layout):
             0,
             self._get_absolute_size_from_relative(
                 self.relative_sizes[cidx]
-            ) - self._min_height
+            ) - self.min_height
         )
 
     def shrink(self, cidx, amt):
@@ -497,12 +506,12 @@ class MonadTall(Layout):
     def _grow_main(self, amt):
         """Will grow the client that is currently in the main pane"""
         self.ratio += amt
-        self.ratio = min(self._max_ratio, self.ratio)
+        self.ratio = min(self.max_ratio, self.ratio)
 
     def _grow_solo_secondary(self, amt):
         """Will grow the solitary client in the secondary pane"""
         self.ratio -= amt
-        self.ratio = max(self._min_ratio, self.ratio)
+        self.ratio = max(self.min_ratio, self.ratio)
 
     def _grow_secondary(self, amt):
         """Will grow the focused client in the secondary pane"""
@@ -606,12 +615,12 @@ class MonadTall(Layout):
     def _shrink_main(self, amt):
         """Will shrink the client that currently in the main pane"""
         self.ratio -= amt
-        self.ratio = max(self._min_ratio, self.ratio)
+        self.ratio = max(self.min_ratio, self.ratio)
 
     def _shrink_solo_secondary(self, amt):
         """Will shrink the solitary client in the secondary pane"""
         self.ratio += amt
-        self.ratio = min(self._max_ratio, self.ratio)
+        self.ratio = min(self.max_ratio, self.ratio)
 
     def _shrink_secondary(self, amt):
         """Will shrink the focused client in the secondary pane"""
@@ -624,9 +633,9 @@ class MonadTall(Layout):
         # get left-over height after change
         left = client.height - amt
         # if change would violate min_height
-        if left < self._min_height:
+        if left < self.min_height:
             # just reduce to min_height
-            change = client.height - self._min_height
+            change = client.height - self.min_height
 
         # calculate half of that change
         half_change = change / 2
