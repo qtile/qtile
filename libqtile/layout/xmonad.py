@@ -135,7 +135,6 @@ class MonadTall(Layout):
         Key([modkey], "n", lazy.layout.normalize()),
         Key([modkey], "o", lazy.layout.maximize()),
         Key([modkey, "shift"], "space", lazy.layout.flip()),
-
     """
 
     _left = 0
@@ -809,6 +808,8 @@ class MonadWide(MonadTall):
     adjusted with the ``cmd_grow_main`` and ``cmd_shrink_main`` or,
     while the main pane is in focus, ``cmd_grow`` and ``cmd_shrink``.
 
+    ::
+
         ---------------------
         |                   |
         |                   |
@@ -821,6 +822,8 @@ class MonadWide(MonadTall):
     Using the `cmd_flip' method will switch which vertical side the
     main pane will occupy. The main pane is considered the "top" of
     the stack.
+
+    ::
 
         ---------------------
         |                   |
@@ -839,6 +842,8 @@ class MonadWide(MonadTall):
     `cmd_shrink' methods. The other secondary panes will adjust their
     sizes to smoothly fill all of the space.
 
+    ::
+
         ---------------------          ---------------------
         |                   |          |                   |
         |                   |          |                   |
@@ -853,6 +858,8 @@ class MonadWide(MonadTall):
     stack; moving up is counter-clockwise and moving down is clockwise.
 
     The opposite is true if the layout is "flipped".
+
+    ::
 
         ---------------------          ---------------------
         |                   |          |  2  |   3   |  4  |
@@ -889,7 +896,6 @@ class MonadWide(MonadTall):
         Key([modkey], "n", lazy.layout.normalize()),
         Key([modkey], "o", lazy.layout.maximize()),
         Key([modkey, "shift"], "space", lazy.layout.flip()),
-
     """
 
     _up = 0
