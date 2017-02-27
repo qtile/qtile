@@ -819,7 +819,7 @@ class MonadWide(MonadTall):
         |                   |
         ---------------------
 
-    Using the `cmd_flip' method will switch which vertical side the
+    Using the ``cmd_flip`` method will switch which vertical side the
     main pane will occupy. The main pane is considered the "top" of
     the stack.
 
@@ -838,8 +838,8 @@ class MonadWide(MonadTall):
 
     Occupying the rest of the screen are one or more secondary panes.
     The secondary panes will share the horizontal space of the screen
-    however they can be resized at will with the `cmd_grow' and
-    `cmd_shrink' methods. The other secondary panes will adjust their
+    however they can be resized at will with the ``cmd_grow`` and
+    ``cmd_shrink`` methods. The other secondary panes will adjust their
     sizes to smoothly fill all of the space.
 
     ::
@@ -853,7 +853,7 @@ class MonadWide(MonadTall):
         |     |       |     |          |   |           |   |
         ---------------------          ---------------------
 
-    Panes can be moved with the `cmd_shuffle_up' and `cmd_shuffle_down'
+    Panes can be moved with the ``cmd_shuffle_up`` and ``cmd_shuffle_down``
     methods. As mentioned the main pane is considered the top of the
     stack; moving up is counter-clockwise and moving down is clockwise.
 
@@ -873,13 +873,13 @@ class MonadWide(MonadTall):
     Normalizing:
 
     To restore all client windows to their default size ratios simply
-    use the `cmd_normalize' method.
+    use the ``cmd_normalize`` method.
 
 
     Maximizing:
 
     To toggle a client window between its minimum and maximum sizes
-    simply use the `cmd_maximize' on a focused client.
+    simply use the ``cmd_maximize`` on a focused client.
 
     Suggested Bindings::
 
