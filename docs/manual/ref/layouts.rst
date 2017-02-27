@@ -19,6 +19,9 @@ Built-in Layouts
 .. qtile_class:: libqtile.layout.xmonad.MonadTall
     :no-commands:
 
+.. qtile_class:: libqtile.layout.xmonad.MonadWide
+    :no-commands:
+
 .. qtile_class:: libqtile.layout.ratiotile.RatioTile
     :no-commands:
 
