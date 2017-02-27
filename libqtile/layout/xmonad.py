@@ -39,7 +39,7 @@ import math
 
 
 class MonadTall(Layout):
-    """Emulate the behavior of XMonad's default tiling scheme
+    """Emulate the behavior of XMonad's default tiling scheme.
 
     Main-Pane:
 
@@ -138,12 +138,8 @@ class MonadTall(Layout):
 
     """
 
-    _align_min = 0
-    _align_max = 1
-    _min_secondary_size = 85
-    _min_ratio = .25
-    _med_ratio = .5
-    _max_ratio = .75
+    _left = 0
+    _right = 1
 
     defaults = [
         ("border_focus", "#ff0000", "Border colour for the focused window."),
@@ -152,19 +148,19 @@ class MonadTall(Layout):
         ("single_border_width", None, "Border width for single window"),
         ("name", "xmonad-tall", "Name of this layout."),
         ("margin", 0, "Margin of the layout"),
-        ("ratio", _med_ratio,
+        ("ratio", .5,
             "The percent of the screen-space the master pane should occupy "
             "by default."),
-        ("min_ratio", _min_ratio,
+        ("min_ratio", .25,
             "The percent of the screen-space the master pane should occupy "
             "at minimum."),
-        ("max_ratio", _max_ratio,
+        ("max_ratio", .75,
             "The percent of the screen-space the master pane should occupy "
             "at maximum."),
-        ("min_secondary_size", _min_secondary_size,
+        ("min_secondary_size", 85,
             "minimum size in pixel for a secondary pane window "),
-        ("align", _align_min, "Which side master plane will be placed "
-            "(one of ``MonadTall._align_min`` or ``MonadTall._align_max``)"),
+        ("align", _left, "Which side master plane will be placed "
+            "(one of ``MonadTall._left`` or ``MonadTall._right``)"),
         ("change_ratio", .05, "Resize ratio"),
         ("change_size", 20, "Resize change in pixels"),
         ("new_at_current", False,
@@ -251,8 +247,8 @@ class MonadTall(Layout):
     def cmd_reset(self, redraw=True):
         "Reset Layout."
         self.ratio = self._med_ratio
-        if self.align == self._align_max:
-            self.align = self._align_min
+        if self.align == self._right:
+            self.align = self._left
         self.cmd_normalize(redraw)
 
     def _maximize_main(self):
@@ -337,7 +333,7 @@ class MonadTall(Layout):
         width_shared = self.group.screen.dwidth - width_main
 
         # calculate client's x offset
-        if self.align == self._align_min:  # left or up orientation
+        if self.align == self._left:  # left or up orientation
             if cidx == 0:
                 # main client
                 xpos = self.group.screen.dx
@@ -391,7 +387,6 @@ class MonadTall(Layout):
                 self.border_width,
                 px,
             )
-
 
     def info(self):
         return {
@@ -738,7 +733,7 @@ class MonadTall(Layout):
 
     def cmd_flip(self):
         """Flip the layout horizontally"""
-        self.align = self._align_min if self.align == self._align_max else self._align_max
+        self.align = self._left if self.align == self._right else self._right
         self.group.layoutAll()
 
     def _get_closest(self, x, y, clients):
@@ -777,9 +772,9 @@ class MonadTall(Layout):
 
     def cmd_swap_main(self):
         """Swap current window to main pane"""
-        if self.align == self._align_min:
+        if self.align == self._left:
             self.cmd_swap_left()
-        elif self.align == self._align_max:
+        elif self.align == self._right:
             self.cmd_swap_right()
 
     def cmd_left(self):
@@ -897,8 +892,11 @@ class MonadWide(MonadTall):
 
     """
 
+    _up = 0
+    _down = 1
+
     def _get_relative_size_from_absolute(self, absolute_size):
-        return float(absolute_size) / self.group.screen.dwidth
+        return absolute_size / self.group.screen.dwidth
 
     def _get_absolute_size_from_relative(self, relative_size):
         return int(relative_size * self.group.screen.dwidth)
@@ -933,7 +931,7 @@ class MonadWide(MonadTall):
         height_shared = self.group.screen.dheight - height_main
 
         # calculate client's x offset
-        if self.align == self._align_min:  # left or up orientation
+        if self.align == self._up:  # up orientation
             if cidx == 0:
                 # main client
                 ypos = self.group.screen.dy
@@ -1023,3 +1021,26 @@ class MonadWide(MonadTall):
         # shrink client by total change
         self.relative_sizes[self.focused - 1] -= \
             self._get_relative_size_from_absolute(change)
+
+    def cmd_swap_left(self):
+        """Swap current window with closest window to the down"""
+        x = self._get_window().x
+        y = self._get_window().y
+        candidates = [c for c in self.clients if c.info()['y'] > y]
+        target = self._get_closest(x, y, candidates)
+        self.cmd_swap(self._get_window(), target)
+
+    def cmd_swap_right(self):
+        """Swap current window with closest window to the up"""
+        x = self._get_window().x
+        y = self. _get_window().y
+        candidates = [c for c in self.clients if c.info()['y'] < y]
+        target = self._get_closest(x, y, candidates)
+        self.cmd_swap(self._get_window(), target)
+
+    def cmd_swap_main(self):
+        """Swap current window to main pane"""
+        if self.align == self._up:
+            self.cmd_swap_right()
+        elif self.align == self._down:
+            self.cmd_swap_left()
