@@ -62,7 +62,11 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             "Method for alerting you of WM urgent "
             "hints (one of 'border' or 'text')"
         ),
-        ("max_title_width", 200, "size in pixels of task title")
+        (
+            "max_title_width",
+            None,
+            "Max size in pixels of task title. If None, as much as available."
+        )
     ]
 
     def __init__(self, **config):
@@ -71,6 +75,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         self.add_defaults(base.PaddingMixin.defaults)
         self.add_defaults(base.MarginMixin.defaults)
         self._icons_cache = {}
+        self._box_end_positions = []
 
     def box_width(self, text):
         width, _ = self.drawer.max_layout_size(
@@ -80,9 +85,71 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         )
         width = width + self.padding_x * 2 + \
             self.margin_x * 2 + self.borderwidth * 2
-        if width > self.max_title_width:
-            width = self.max_title_width
+        if (self.max_title_width is not None):
+            width = max(width, self.max_title_width)
         return width
+
+    def get_taskname(self, window):
+        """
+        Get display name for given window.
+        Depending on its state minimized, maximized and floating
+        appropriate characters are prepended.
+        """
+        state = ''
+        if window is None:
+            pass
+        elif window.minimized:
+            state = '\U0001F5D5 '  # minimize character
+        elif window.maximized:
+            state = '\u0001F5d6 '  # maximize character
+        elif window.floating:
+            state = '\U0001F5D7 '  # overlap character
+
+        return "%s%s" % (state, window.name if window and window.name else "?")
+
+    def calc_box_widths(self):
+        """
+        Calculate box width for each window in current group.
+        If the available space is less than overall size of boxes,
+        the boxes are shrink by percentage if greater than average.
+        """
+        windows = self.bar.screen.group.windows
+        window_count = len(windows)
+
+        # if no windows present for current group just return empty list
+        if not windows:
+            return []
+
+        # Determine available and max average width for taskname boxes.
+        # If a max_title_width is given, obey it as max average width
+        width_widget = self.width
+        width_avg = width_widget / window_count
+        if self.max_title_width is not None:
+            width_avg = min(width_avg, self.max_title_width)
+
+        # create lists of names and icons
+        names = [self.get_taskname(w) for w in windows]
+        icons = [self.get_window_icon(w) for w in windows]
+
+        # calculated width for each task according to icon and task name
+        # consisting of state abbreviation and window name
+        width_boxes = [(self.box_width(names[idx]) +
+                        ((self.icon_size+self.padding_x) if icons[idx] else 0))
+                       for idx in range(window_count)]
+        width_sum = sum(width_boxes)
+
+        if width_sum > width_widget:
+            # sum of width of tasks shorter than permitted average
+            # and calculate a ratio to shrink boxes greater than width_avg
+            width_shorter_sum = sum([w for w in width_boxes if w < width_avg])
+
+            ratio = ((width_widget - width_shorter_sum) /
+                     (width_sum - width_shorter_sum))
+            # determine new box widths by shrinking boxes greater than avg
+            width_boxes = [(w if w < width_avg else w*ratio)
+                           for w in width_boxes]
+
+        return zip(windows, icons, names, width_boxes)
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
@@ -137,7 +204,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 width=None, rounded=False, block=False, icon=None):
         self.drawtext(text, textcolor, width)
 
-        icon_padding = (self.icon_size + 4) if icon else 0
+        icon_padding = (self.icon_size + self.padding_x) if icon else 0
         padding_x = [self.padding_x + icon_padding, self.padding_x]
 
         framed = self.layout.framed(
@@ -155,15 +222,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             self.draw_icon(icon, offset)
 
     def get_clicked(self, x, y):
-        window = None
-        new_width = width = 0
-        for w in self.bar.screen.group.windows:
-            new_width += self.icon_size + self.box_width(w.name)
-            if width <= x <= new_width:
-                window = w
-                break
-            width = new_width
-        return window
+        for box_end, win in zip(self._box_end_positions,
+                                self.bar.screen.group.windows):
+            if x <= box_end:
+                return win
+        # not found any , return None
+        return None
 
     def button_press(self, x, y, button):
         window = None
@@ -219,7 +283,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if not surface:
             return
 
-        x = offset + self.padding_x + self.borderwidth + 2 + self.margin_x
+        x = offset + self.borderwidth + self.padding_x
         y = self.padding_y + self.borderwidth
 
         self.drawer.ctx.save()
@@ -232,18 +296,8 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         self.drawer.clear(self.background or self.bar.background)
         offset = 0
 
-        for w in self.bar.screen.group.windows:
-            state = ''
-            if w is None:
-                pass
-            elif w.maximized:
-                state = '[] '
-            elif w.minimized:
-                state = '_ '
-            elif w.floating:
-                state = 'V '
-
-            task = "%s%s" % (state, w.name if w and w.name else " ")
+        self._box_end_positions = []
+        for w, icon, task, bw in self.calc_box_widths():
 
             if w.urgent:
                 border = self.urgent_border
@@ -260,7 +314,8 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             else:
                 text_color = self.foreground
 
-            bw = self.box_width(task)
+            textwidth = (bw - self.margin_x * 2 - self.padding_x*2 -
+                         ((self.icon_size+self.padding_x) if icon else 0))
             self.drawbox(
                 self.margin_x + offset,
                 task,
@@ -268,9 +323,10 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 text_color,
                 rounded=self.rounded,
                 block=(self.highlight_method == 'block'),
-                width=(bw - self.margin_x * 2 - self.padding_x * 2),
-                icon=self.get_window_icon(w),
+                width=textwidth,
+                icon=icon,
             )
+            offset += bw
+            self._box_end_positions.append(offset)
 
-            offset += bw + self.icon_size
         self.drawer.draw(offsetx=self.offset, width=self.width)
