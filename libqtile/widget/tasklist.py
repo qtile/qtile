@@ -134,7 +134,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         # calculated width for each task according to icon and task name
         # consisting of state abbreviation and window name
         width_boxes = [(self.box_width(names[idx]) +
-                        ((self.icon_size+self.padding_x) if icons[idx] else 0))
+                        ((self.icon_size + self.padding_x) if icons[idx] else 0))
                        for idx in range(window_count)]
         width_sum = sum(width_boxes)
 
@@ -146,14 +146,15 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             ratio = ((width_widget - width_shorter_sum) /
                      (width_sum - width_shorter_sum))
             # determine new box widths by shrinking boxes greater than avg
-            width_boxes = [(w if w < width_avg else w*ratio)
+            width_boxes = [(w if w < width_avg else w * ratio)
                            for w in width_boxes]
 
         return zip(windows, icons, names, width_boxes)
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
-        self.icon_size = self.bar.height - (self.borderwidth + 2) * 2
+        self.icon_size = self.bar.height - 2 * (self.borderwidth +
+                                                self.margin_y)
 
         if self.fontsize is None:
             calc = self.bar.height - self.margin_y * 2 - \
@@ -314,8 +315,8 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             else:
                 text_color = self.foreground
 
-            textwidth = (bw - self.margin_x * 2 - self.padding_x*2 -
-                         ((self.icon_size+self.padding_x) if icon else 0))
+            textwidth = (bw - 2 * (self.margin_x + self.padding_x) -
+                         ((self.icon_size + self.padding_x) if icon else 0))
             self.drawbox(
                 self.margin_x + offset,
                 task,
