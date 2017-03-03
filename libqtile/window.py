@@ -843,6 +843,10 @@ class Window(_Window):
         atom = set([self.qtile.conn.atoms["_NET_WM_STATE_FULLSCREEN"]])
         prev_state = set(self.window.get_property('_NET_WM_STATE', 'ATOM', unpack=int))
 
+        def set_state(old_state, new_state):
+            if new_state != old_state:
+                self.window.set_property('_NET_WM_STATE', list(new_state))
+
         if do_full:
             screen = self.group.screen or \
                 self.qtile.find_closest_screen(self.x, self.y)
@@ -854,16 +858,15 @@ class Window(_Window):
                 screen.height,
                 new_float_state=FULLSCREEN
             )
-            state = prev_state | atom
-        else:
-            if self._float_state == FULLSCREEN:
-                self.floating = False
-                state = prev_state - atom
-            else:
-                state = prev_state
+            set_state(prev_state, prev_state | atom)
+            return
 
-        if prev_state != state:
-            self.window.set_property('_NET_WM_STATE', list(state))
+        if self._float_state == FULLSCREEN:
+            # The order of calling set_state() and then
+            # setting self.floating = False is important
+            set_state(prev_state, prev_state - atom)
+            self.floating = False
+            return
 
     def toggle_fullscreen(self):
         self.fullscreen = not self.fullscreen
