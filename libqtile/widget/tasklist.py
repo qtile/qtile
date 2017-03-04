@@ -65,7 +65,14 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         (
             "max_title_width",
             None,
-            "Max size in pixels of task title. If None, as much as available."
+            "Max size in pixels of task title."
+            "(if set to None, as much as available.)"
+        ),
+        (
+            "spacing",
+            None,
+            "Spacing between tasks."
+            "(if set to None, will be equal to margin_x)"
         )
     ]
 
@@ -76,15 +83,20 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         self.add_defaults(base.MarginMixin.defaults)
         self._icons_cache = {}
         self._box_end_positions = []
+        if self.spacing is None:
+            self.spacing = self.margin_x
 
     def box_width(self, text):
+        """
+        calculate box width for given text.
+        If max_title_width is given, the returned width is limited to it.
+        """
         width, _ = self.drawer.max_layout_size(
             [text],
             self.font,
             self.fontsize
         )
-        width = width + self.padding_x * 2 + \
-            self.margin_x * 2 + self.borderwidth * 2
+        width = width + 2 * (self.padding_x + self.borderwidth)
         if (self.max_title_width is not None):
             width = max(width, self.max_title_width)
         return width
@@ -111,23 +123,21 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         """
         Calculate box width for each window in current group.
         If the available space is less than overall size of boxes,
-        the boxes are shrink by percentage if greater than average.
+        the boxes are shrunk by percentage if greater than average.
         """
         windows = self.bar.screen.group.windows
         window_count = len(windows)
 
         # if no windows present for current group just return empty list
-        if not windows:
+        if not window_count:
             return []
 
-        # Determine available and max average width for taskname boxes.
+        # Determine available and max average width for task name boxes.
         # If a max_title_width is given, obey it as max average width
-        width_widget = self.width
-        width_avg = width_widget / window_count
-        if self.max_title_width is not None:
-            width_avg = min(width_avg, self.max_title_width)
+        width_total = (self.width - 2 * self.margin_x -
+                       (window_count - 1) * self.spacing)
+        width_avg = width_total / window_count
 
-        # create lists of names and icons
         names = [self.get_taskname(w) for w in windows]
         icons = [self.get_window_icon(w) for w in windows]
 
@@ -138,12 +148,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                        for idx in range(window_count)]
         width_sum = sum(width_boxes)
 
-        if width_sum > width_widget:
-            # sum of width of tasks shorter than permitted average
+        if width_sum > width_total:
+            # sum the width of tasks shorter than calculated average
             # and calculate a ratio to shrink boxes greater than width_avg
             width_shorter_sum = sum([w for w in width_boxes if w < width_avg])
 
-            ratio = ((width_widget - width_shorter_sum) /
+            ratio = ((width_total - width_shorter_sum) /
                      (width_sum - width_shorter_sum))
             # determine new box widths by shrinking boxes greater than avg
             width_boxes = [(w if w < width_avg else w * ratio)
@@ -223,10 +233,13 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             self.draw_icon(icon, offset)
 
     def get_clicked(self, x, y):
+        box_start = self.margin_x
         for box_end, win in zip(self._box_end_positions,
                                 self.bar.screen.group.windows):
-            if x <= box_end:
+            if box_start <= x <= box_end:
                 return win
+            else:
+                box_start = box_end + self.spacing
         # not found any , return None
         return None
 
@@ -295,10 +308,11 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
     def draw(self):
         self.drawer.clear(self.background or self.bar.background)
-        offset = 0
+        offset = self.margin_x
 
         self._box_end_positions = []
         for w, icon, task, bw in self.calc_box_widths():
+            self._box_end_positions.append(offset + bw)
 
             if w.urgent:
                 border = self.urgent_border
@@ -315,10 +329,10 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             else:
                 text_color = self.foreground
 
-            textwidth = (bw - 2 * (self.margin_x + self.padding_x) -
+            textwidth = (bw - 2 * self.padding_x -
                          ((self.icon_size + self.padding_x) if icon else 0))
             self.drawbox(
-                self.margin_x + offset,
+                offset,
                 task,
                 border,
                 text_color,
@@ -327,7 +341,6 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 width=textwidth,
                 icon=icon,
             )
-            offset += bw
-            self._box_end_positions.append(offset)
+            offset += (bw + self.spacing)
 
         self.drawer.draw(offsetx=self.offset, width=self.width)
