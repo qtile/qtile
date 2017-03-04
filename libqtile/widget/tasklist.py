@@ -97,8 +97,6 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             self.fontsize
         )
         width = width + 2 * (self.padding_x + self.borderwidth)
-        if (self.max_title_width is not None):
-            width = max(width, self.max_title_width)
         return width
 
     def get_taskname(self, window):
@@ -133,7 +131,6 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             return []
 
         # Determine available and max average width for task name boxes.
-        # If a max_title_width is given, obey it as max average width
         width_total = (self.width - 2 * self.margin_x -
                        (window_count - 1) * self.spacing)
         width_avg = width_total / window_count
@@ -143,11 +140,15 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         # calculated width for each task according to icon and task name
         # consisting of state abbreviation and window name
+        # Obey max_title_width if specified
         width_boxes = [(self.box_width(names[idx]) +
                         ((self.icon_size + self.padding_x) if icons[idx] else 0))
                        for idx in range(window_count)]
+        if self.max_title_width:
+            width_boxes = [min(w, self.max_title_width) for w in width_boxes]
         width_sum = sum(width_boxes)
 
+        # calculated box width are to wide for available widget space:
         if width_sum > width_total:
             # sum the width of tasks shorter than calculated average
             # and calculate a ratio to shrink boxes greater than width_avg
