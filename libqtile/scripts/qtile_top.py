@@ -85,7 +85,7 @@ def get_stats(scr, client, group_by='lineno', limit=10, seconds=1.5,
     (max_y, max_x) = scr.getmaxyx()
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
     while True:
-        scr.addstr(0, 0, "Qtile - Top {0:s} lines".format(limit))
+        scr.addstr(0, 0, "Qtile - Top {} lines".format(limit))
         scr.addstr(1, 0, '{0:<3s} {1:<40s} {2:<30s} {3:<16s}'.format('#', 'Line', 'Memory', ' ' * (max_x - 71)),
                    curses.A_BOLD | curses.A_REVERSE)
 
@@ -101,9 +101,9 @@ def get_stats(scr, client, group_by='lineno', limit=10, seconds=1.5,
             line = linecache.getline(frame.filename, frame.lineno).strip()
             if line:
                 code = line
-            mem = "{0:.1f} KiB".format(stat.size / 1024)
-            filename = "{0:s}:{1:s}".format(filename, frame.lineno)
-            scr.addstr(cnt + 1, 0, '{0:<3s} {1:<40s} {2:<30s}'.format(index, filename, mem))
+            mem = "{:.1f} KiB".format(stat.size / 1024.0)
+            filename = "{}:{}".format(filename, frame.lineno)
+            scr.addstr(cnt + 1, 0, '{:<3} {:<40} {:<30}'.format(index, filename, mem))
             scr.addstr(cnt + 2, 4, code, curses.color_pair(1))
             cnt += 2
 
@@ -111,12 +111,12 @@ def get_stats(scr, client, group_by='lineno', limit=10, seconds=1.5,
         cnt += 2
         if other:
             size = sum(stat.size for stat in other)
-            other_size = ("{0:s} other: {1:.1f} KiB".format(len(other), size / 1024))
+            other_size = ("{:d} other: {:.1f} KiB".format(len(other), size / 1024.0))
             scr.addstr(cnt, 0, other_size, curses.A_BOLD)
             cnt += 1
 
         total = sum(stat.size for stat in top_stats)
-        total_size = "Total allocated size: {0:.1f} KiB".format(total / 1024)
+        total_size = "Total allocated size: {0:.1f} KiB".format(total / 1024.0)
         scr.addstr(cnt, 0, total_size, curses.A_BOLD)
 
         scr.move(max_y - 2, max_y - 2)
@@ -130,23 +130,23 @@ def raw_stats(client, group_by='lineno', limit=10, force_start=False):
     snapshot = filter_snapshot(snapshot)
     top_stats = snapshot.statistics(group_by)
 
-    print("Qtile - Top {0:s} lines".format(limit))
+    print("Qtile - Top {} lines".format(limit))
     for index, stat in enumerate(top_stats[:limit], 1):
         frame = stat.traceback[0]
         # replace "/path/to/module/file.py" with "module/file.py"
         filename = os.sep.join(frame.filename.split(os.sep)[-2:])
-        print("#{0:s}: {1:s}:{2:s}: {3:.1f} KiB"
-              .format(index, filename, frame.lineno, stat.size / 1024))
+        print("#{}: {}:{}: {:.1f} KiB"
+              .format(index, filename, frame.lineno, stat.size / 1024.0))
         line = linecache.getline(frame.filename, frame.lineno).strip()
         if line:
-            print('    {0:s}'.format(line))
+            print('    {}'.format(line))
 
     other = top_stats[limit:]
     if other:
         size = sum(stat.size for stat in other)
-        print("{0:s} other: {1:.1f} KiB".format(len(other), size / 1024))
+        print("{:d} other: {:.1f} KiB".format(len(other), size / 1024.0))
     total = sum(stat.size for stat in top_stats)
-    print("Total allocated size: {0:.1f} KiB".format(total / 1024))
+    print("Total allocated size: {0:.1f} KiB".format(total / 1024.0))
 
 
 def main():
