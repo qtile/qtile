@@ -63,6 +63,13 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             "hints (one of 'border' or 'text')"
         ),
         (
+            "unfocused_border",
+            None,
+            "Border color for unfocused windows. "
+            "Affects only hightlight_method 'border' and 'block'. "
+            "Defaults to None, which means no special color."
+        ),
+        (
             "max_title_width",
             None,
             "Max size in pixels of task title."
@@ -322,7 +329,8 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
                 border = self.border
                 text_color = border
             else:
-                border = self.background or self.bar.background
+                border = self.unfocused_border or (self.background or
+                                                   self.bar.background)
                 text_color = self.foreground
 
             if self.highlight_method == 'text':
