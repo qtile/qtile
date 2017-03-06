@@ -225,7 +225,7 @@ class VerticalTile(Layout):
             index = self.clients.index(window)
             return self.clients[index + 1]
         except IndexError:
-            pass
+            return self.clients[0]
 
     def focus_previous(self, window):
         if not self.clients:
@@ -235,7 +235,7 @@ class VerticalTile(Layout):
             index = self.clients.index(window)
             return self.clients[index - 1]
         except IndexError:
-            pass
+            return self.clients[-1]
 
     def grow(self):
         if self.ratio + self.steps < 1:
@@ -247,21 +247,13 @@ class VerticalTile(Layout):
             self.ratio -= self.steps
             self.group.layoutAll()
 
-    def cmd_next(self):
-        self.focus_next(self.focused)
-        self.group.focus(self.focused)
-
     def cmd_previous(self):
-        self.focus_previous(self.focused)
-        self.group.focus(self.focused)
+        self.group.focus(self.focus_previous(self.focused))
+    cmd_up = cmd_previous
 
-    def cmd_down(self):
-        self.focus_next(self.focused)
-        self.group.focus(self.focused)
-
-    def cmd_up(self):
-        self.focus_previous(self.focused)
-        self.group.focus(self.focused)
+    def cmd_next(self):
+        self.group.focus(self.focus_next(self.focused))
+    cmd_down = cmd_next
 
     def cmd_shuffle_up(self):
         index = self.clients.index(self.focused)
