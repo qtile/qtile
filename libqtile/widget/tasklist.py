@@ -118,7 +118,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         elif window.minimized:
             state = '\U0001F5D5 '  # minimize character
         elif window.maximized:
-            state = '\u0001F5d6 '  # maximize character
+            state = '\U0001F5d6 '  # maximize character
         elif window.floating:
             state = '\U0001F5D7 '  # overlap character
 
