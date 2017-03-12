@@ -33,8 +33,8 @@ class WindowList():
 
     def __init__(self, qtile):
         self.qtile = qtile
-        if hasattr(qtile.config, 'extentions') and qtile.config.extentions['dmenu']:
-            self.config = qtile.config.extentions['dmenu']
+        if hasattr(qtile.config, 'extensions') and qtile.config.extensions['dmenu']:
+            self.config = qtile.config.extensions['dmenu']
 
     def get_windows(self):
         id = 0

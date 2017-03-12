@@ -143,7 +143,7 @@ setup(
               'libqtile.layout',
               'libqtile.scripts',
               'libqtile.widget',
-              'libqtile.extention',
+              'libqtile.extension',
               'libqtile.resources'
               ],
     package_data={'libqtile.resources': [

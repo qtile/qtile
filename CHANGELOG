@@ -1,3 +1,7 @@
+qtile next_version:
+    !!! extention subpackage renamed to extension !!!
+    !!! extentions option renamed to extensions !!!
+
 qtile 0.10.7, released 2017-02-14:
     * features
         - new MPD widget, widget.MPD2, based on `mpd2` library

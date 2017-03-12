@@ -29,15 +29,15 @@ class Dmenu():
 
     config.py should have something like:
 
-    from libqtile import extention
+    from libqtile import extension
     mod = 'mod4'
     keys = [
         ...
-        Key([mod], 'l', lazy.run_extention(extention.WindowList)),
-        Key([mod], 'r', lazy.run_extention(extention.DmenuRun)),
+        Key([mod], 'l', lazy.run_extension(extension.WindowList)),
+        Key([mod], 'r', lazy.run_extension(extension.DmenuRun)),
         ...
     ]
-    extentions = {
+    extensions = {
         'dmenu': {
             'prompt': "→",
             'font' : "Andika-8",
@@ -113,8 +113,8 @@ class DmenuRun():
     config = {}
 
     def __init__(self, qtile):
-        if hasattr(qtile.config, 'extentions') and qtile.config.extentions['dmenu']:
-            self.config = qtile.config.extentions['dmenu']
+        if hasattr(qtile.config, 'extensions') and qtile.config.extensions['dmenu']:
+            self.config = qtile.config.extensions['dmenu']
 
     def run(self):
         dmenu = Dmenu(self.config)

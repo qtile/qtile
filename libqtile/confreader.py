@@ -90,8 +90,14 @@ class File(object):
             "widget_defaults",
             "bring_front_click",
             "wmname",
-            "extentions",
+            "extensions",
         ]
+
+        # Keep supporting the deprecated misspelled option "extentions"
+        # TODO: Remove in the future
+        if hasattr(config, "extentions") and not hasattr(config, "extensions"):
+            config.extensions = config.extentions
+            delattr(config, "extentions")
 
         for option in config_options:
             if hasattr(config, option):
