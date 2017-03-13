@@ -26,28 +26,30 @@ class Dmenu():
     Python wrapper for dmenu
     http://tools.suckless.org/dmenu/
 
-
     config.py should have something like:
 
-    from libqtile import extension
-    mod = 'mod4'
-    keys = [
-        ...
-        Key([mod], 'l', lazy.run_extension(extension.WindowList)),
-        Key([mod], 'r', lazy.run_extension(extension.DmenuRun)),
-        ...
-    ]
-    extensions = {
-        'dmenu': {
-            'prompt': "→",
-            'font' : "Andika-8",
-            'background' : "#15181a",
-            'foreground' : "#00ff00",
-            'selected_background' : "#079822",
-            'selected_foreground' : "#fff",
-            'height' : 24,
+    .. code-block:: python
+
+        from libqtile import extension
+        mod = 'mod4'
+        keys = [
+            ...
+            Key([mod], 'l', lazy.run_extension(extension.WindowList)),
+            Key([mod], 'r', lazy.run_extension(extension.DmenuRun)),
+            ...
+        ]
+        extensions = {
+            'dmenu': {
+                'prompt': ">",
+                'font': "Andika-8",
+                'background': "#15181a",
+                'foreground': "#00ff00",
+                'selected_background': "#079822",
+                'selected_foreground': "#fff",
+                'height': 24,
+            }
         }
-    }
+
     """
 
     defaults = [
