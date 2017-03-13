@@ -99,10 +99,11 @@ configuration variables that control specific aspects of Qtile's behavior:
     * - variable
       - default
       - description
-    * - follow_mouse_focus
-      - False
-      - Controls whether or not focus follows the mouse around as it moves
-        across windows in a layout.
+    * - auto_fullscreen
+      - True
+      - If a window requests to be fullscreen, it is automatically
+        fullscreened. Set this to false if you only want windows to be
+        fullscreen if you ask them to be.
     * - bring_front_click
       - False
       - When clicked, should the window be brought to the front or not. (This
@@ -111,13 +112,20 @@ configuration variables that control specific aspects of Qtile's behavior:
       - False
       - If true, the cursor follows the focus as directed by the keyboard,
         warping to the center of the focused window.
-    * - auto_fullscreen
-      - True
-      - If a window requests to be fullscreen, it is automatically
-        fullscreened. Set this to false if you only want windows to be
-        fullscreen if you ask them to be.
+    * - dgroups_key_binder
+      - None
+      - TODO
+    * - dgroups_app_rules
+      - []
+      - TODO
+    * - extensions
+      - {}
+      - TODO
+    * - floating_layout
+      - layout.Floating()
+      - TODO
     * - focus_on_window_activation
-      - urgent
+      - smart
       - Behavior of the _NET_ACTIVATE_WINDOW message sent by applications
 
         - urgent: urgent flag is set for the window
@@ -125,6 +133,21 @@ configuration variables that control specific aspects of Qtile's behavior:
         - focus: automatically focus the window
 
         - smart: automatically focus if the window is in the current group
+    * - follow_mouse_focus
+      - True
+      - Controls whether or not focus follows the mouse around as it moves
+        across windows in a layout.
+    * - main
+      - None
+      - TODO
+    * - widget_defaults
+      - dict(font='Arial',
+             fontsize=16,
+             padding=3)
+      - TODO
+    * - wmname
+      - "LG3D"
+      - TODO
 
 Testing your configuration
 ==========================
