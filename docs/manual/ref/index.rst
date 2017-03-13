@@ -9,3 +9,4 @@ Reference
     hooks
     layouts
     widgets
+    extensions
