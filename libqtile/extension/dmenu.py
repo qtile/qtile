@@ -46,7 +46,7 @@ class Dmenu():
                 'foreground': "#00ff00",
                 'selected_background': "#079822",
                 'selected_foreground': "#fff",
-                'height': 24,
+                'height': 24,  # Only supported by some dmenu forks
             }
         }
 
@@ -62,7 +62,7 @@ class Dmenu():
         ("foreground", None, "defines the normal foreground color"),
         ("selected_background", None, "defines the selected background color"),
         ("selected_foreground", None, "defines the selected foreground color"),
-        ("height", None, "defines the height"),
+        ("height", None, "defines the height (only supported by some dmenu forks)"),
     ]
 
     args = []
@@ -96,6 +96,7 @@ class Dmenu():
             self.args.extend(("-sb", config['selected_background']))
         if 'selected_foreground' in config and config['selected_foreground']:
             self.args.extend(("-sf", config['selected_foreground']))
+        # NOTE: The original dmenu doesn't support the '-h' option
         if 'height' in config and config['height']:
             self.args.extend(("-h", str(config['height'])))
 
