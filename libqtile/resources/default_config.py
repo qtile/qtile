@@ -78,8 +78,8 @@ layouts = [
 ]
 
 widget_defaults = dict(
-    font='Arial',
-    fontsize=16,
+    font='sans',
+    fontsize=12,
     padding=3,
 )
 
@@ -94,7 +94,7 @@ screens = [
                 widget.Systray(),
                 widget.Clock(format='%Y-%m-%d %a %I:%M %p'),
             ],
-            30,
+            24,
         ),
     ),
 ]
