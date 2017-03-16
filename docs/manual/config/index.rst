@@ -122,8 +122,10 @@ configuration variables that control specific aspects of Qtile's behavior:
       - {}
       - TODO
     * - floating_layout
-      - layout.Floating()
+      - layout.Floating(float_rules=[...])
       - TODO
+
+        See the configuration file for the default `float_rules`.
     * - focus_on_window_activation
       - smart
       - Behavior of the _NET_ACTIVATE_WINDOW message sent by applications
@@ -141,8 +143,8 @@ configuration variables that control specific aspects of Qtile's behavior:
       - None
       - TODO
     * - widget_defaults
-      - dict(font='Arial',
-             fontsize=16,
+      - dict(font='sans',
+             fontsize=12,
              padding=3)
       - TODO
     * - wmname
