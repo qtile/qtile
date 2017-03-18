@@ -23,15 +23,19 @@ class Configurable(object):
     global_defaults = {}
 
     def __init__(self, **config):
-        self._widget_defaults = {}
+        self._variable_defaults = {}
         self._user_config = config
 
     def add_defaults(self, defaults):
         """Add defaults to this object, overwriting any which already exist"""
-        self._widget_defaults.update(dict((d[0], d[1]) for d in defaults))
+        # TODO: Ensure that d[1] is an immutable object? Otherwise an instance
+        #       of this class could modify it also for all the other instances;
+        #       if d[1] is a mutable object, perhaps fail or create a (shallow)
+        #       copy, e.g. list(d[1]) in case of lists
+        self._variable_defaults.update(dict((d[0], d[1]) for d in defaults))
 
     def __getattr__(self, name):
-        if name == "_widget_defaults":
+        if name == "_variable_defaults":
             raise AttributeError
         found, value = self._find_default(name)
         if found:
@@ -43,7 +47,7 @@ class Configurable(object):
 
     def _find_default(self, name):
         """Returns a tuple (found, value)"""
-        defaults = self._widget_defaults.copy()
+        defaults = self._variable_defaults.copy()
         defaults.update(self.global_defaults)
         defaults.update(self._user_config)
         if name in defaults:

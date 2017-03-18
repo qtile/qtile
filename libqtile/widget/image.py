@@ -49,7 +49,7 @@ class Image(base._Widget, base.MarginMixin):
         self.add_defaults(base.MarginMixin.defaults)
 
         # make the default 0 instead
-        self._widget_defaults["margin"] = 0
+        self._variable_defaults["margin"] = 0
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
