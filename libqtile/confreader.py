@@ -26,6 +26,7 @@
 import os
 import sys
 import traceback
+import warnings
 
 from libqtile.log_utils import logger
 
@@ -88,16 +89,38 @@ class File(object):
             "main",
             "auto_fullscreen",
             "widget_defaults",
+            "extension_defaults",
             "bring_front_click",
             "wmname",
-            "extensions",
         ]
 
-        # Keep supporting the deprecated misspelled option "extentions"
+        extension_defaults = {}
+
+        # Keep supporting the deprecated 'extentions' option
         # TODO: Remove in the future
-        if hasattr(config, "extentions") and not hasattr(config, "extensions"):
-            config.extensions = config.extentions
-            delattr(config, "extentions")
+        if hasattr(config, "extentions"):
+            warnings.warn("'extentions' is deprecated, use "
+                          "'extension_defaults'", DeprecationWarning)
+            # 'dmenu' was the only supported key when the 'extentions' option
+            # was deprecated
+            extension_defaults.update(config.extentions.get('dmenu', {}))
+            del config.extentions
+
+        # Keep supporting the deprecated 'extensions' option
+        # TODO: Remove in the future
+        if hasattr(config, "extensions"):
+            warnings.warn("'extensions' is deprecated, use "
+                          "'extension_defaults'", DeprecationWarning)
+            # 'dmenu' was the only supported key when the 'extensions' option
+            # was deprecated
+            extension_defaults.update(config.extensions.get('dmenu', {}))
+            del config.extensions
+
+        if hasattr(config, "extension_defaults"):
+            # extension_defaults should override the deprecated variables
+            extension_defaults.update(config.extension_defaults)
+
+        config.extension_defaults = extension_defaults
 
         for option in config_options:
             if hasattr(config, option):

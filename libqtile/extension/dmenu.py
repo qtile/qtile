@@ -19,106 +19,122 @@
 # SOFTWARE.
 
 import six
-from subprocess import Popen, PIPE
+import shlex
+from . import base
 
-class Dmenu():
+
+class Dmenu(base.RunCommand):
     """
     Python wrapper for dmenu
     http://tools.suckless.org/dmenu/
+    """
+
+    defaults = [
+        ("dmenu_font", None, "override the default 'font' and 'fontsize' options for dmenu"),
+        # NOTE: Do not use a list as a default value, since it would be shared
+        #       among all the objects inheriting this class, and if one of them
+        #       modified it, all the other objects would see the modified list;
+        #       use a string or a tuple instead, which are immutable
+        ("dmenu_command", 'dmenu', "the dmenu command to be launched"),
+        ("dmenu_bottom", False, "dmenu appears at the bottom of the screen"),
+        ("dmenu_ignorecase", False, "dmenu matches menu items case insensitively"),
+        ("dmenu_lines", None, "dmenu lists items vertically, with the given number of lines"),
+        ("dmenu_prompt", None, "defines the prompt to be displayed to the left of the input field"),
+        ("dmenu_height", None, "defines the height (only supported by some dmenu forks)"),
+    ]
+
+    def __init__(self, **config):
+        base.RunCommand.__init__(self, **config)
+        self.add_defaults(Dmenu.defaults)
+
+    def _configure(self, qtile):
+        base.RunCommand._configure(self, qtile)
+
+        dmenu_command = self.dmenu_command or self.command
+        if isinstance(dmenu_command, str):
+            self.configured_command = shlex.split(dmenu_command)
+        else:
+            # Create a clone of dmenu_command, don't use it directly since
+            # it's shared among all the instances of this class
+            self.configured_command = list(dmenu_command)
+
+        if self.dmenu_bottom:
+            self.configured_command.append("-b")
+        if self.dmenu_ignorecase:
+            self.configured_command.append("-i")
+        if self.dmenu_lines:
+            self.configured_command.extend(("-l", str(self.dmenu_lines)))
+        if self.dmenu_prompt:
+            self.configured_command.extend(("-p", self.dmenu_prompt))
+
+        if self.dmenu_font:
+            font = self.dmenu_font
+        elif self.font:
+            if self.fontsize:
+                font = '-'.join((self.font, self.fontsize))
+            else:
+                font = self.font
+        self.configured_command.extend(("-fn", font))
+
+        if self.background:
+            self.configured_command.extend(("-nb", self.background))
+        if self.foreground:
+            self.configured_command.extend(("-nf", self.foreground))
+        if self.selected_background:
+            self.configured_command.extend(("-sb", self.selected_background))
+        if self.selected_foreground:
+            self.configured_command.extend(("-sf", self.selected_foreground))
+        # NOTE: The original dmenu doesn't support the '-h' option
+        if self.dmenu_height:
+            self.configured_command.extend(("-h", str(self.dmenu_height)))
+
+    def run(self, items=None):
+        if items:
+            if self.dmenu_lines:
+                lines = min(len(items), self.dmenu_lines)
+            else:
+                lines = len(items)
+            self.configured_command.extend(("-l", str(lines)))
+
+        proc = super(Dmenu, self).run()
+
+        if items:
+            input_str = "\n".join([six.u(i) for i in items]) + "\n"
+            return proc.communicate(str.encode(input_str))[0]
+
+        return proc
+
+
+class DmenuRun(Dmenu):
+    """
+    Special case to run applications.
 
     config.py should have something like:
 
     .. code-block:: python
 
         from libqtile import extension
-        mod = 'mod4'
         keys = [
-            ...
-            Key([mod], 'l', lazy.run_extension(extension.WindowList)),
-            Key([mod], 'r', lazy.run_extension(extension.DmenuRun)),
-            ...
+            Key(['mod4'], 'r', lazy.run_extension(extension.DmenuRun(
+                dmenu_prompt=">",
+                dmenu_font="Andika-8",
+                background="#15181a",
+                foreground="#00ff00",
+                selected_background="#079822",
+                selected_foreground="#fff",
+                dmenu_height=24,  # Only supported by some dmenu forks
+            ))),
         ]
-        extensions = {
-            'dmenu': {
-                'prompt': ">",
-                'font': "Andika-8",
-                'background': "#15181a",
-                'foreground': "#00ff00",
-                'selected_background': "#079822",
-                'selected_foreground': "#fff",
-                'height': 24,  # Only supported by some dmenu forks
-            }
-        }
 
     """
 
     defaults = [
-        ("bottom", False, "dmenu appears at the bottom of the screen"),
-        ("ignorecase", False, "dmenu matches menu items case insensitively"),
-        ("lines", None, "dmenu lists items vertically, with the given number of lines"),
-        ("prompt", None, "defines the prompt to be displayed to the left of the input field"),
-        ("font", None, "defines the font or font set used"),
-        ("background", None, "defines  the normal background color"),
-        ("foreground", None, "defines the normal foreground color"),
-        ("selected_background", None, "defines the selected background color"),
-        ("selected_foreground", None, "defines the selected foreground color"),
-        ("height", None, "defines the height (only supported by some dmenu forks)"),
+        ("dmenu_command", 'dmenu_run', "the dmenu command to be launched"),
     ]
 
-    args = []
-    lines = []
+    def __init__(self, **config):
+        Dmenu.__init__(self, **config)
+        self.add_defaults(DmenuRun.defaults)
 
-    def __init__(self, config, lines=None):
-        default_config = dict((d[0], d[1]) for d in self.defaults)
-        default_config.update(config)
-        self.configure(default_config, lines)
-
-    def configure(self, config, lines):
-        self.lines = []
-        if 'lines' in config and config['lines']:
-            self.lines = ["-l", str(config['lines'])]
-        if lines:
-            self.lines = ["-l", str(lines)]
-
-        if 'bottom' in config and config['bottom']:
-            self.args.append("-b")
-        if 'ignorecase' in config and config['ignorecase']:
-            self.args.append("-i")
-        if 'prompt' in config and config['prompt']:
-            self.args.extend(("-p", config['prompt']))
-        if 'font' in config and config['font']:
-            self.args.extend(("-fn", config['font']))
-        if 'background' in config and config['background']:
-            self.args.extend(("-nb", config['background']))
-        if 'foreground' in config and config['foreground']:
-            self.args.extend(("-nf", config['foreground']))
-        if 'selected_background' in config and config['selected_background']:
-            self.args.extend(("-sb", config['selected_background']))
-        if 'selected_foreground' in config and config['selected_foreground']:
-            self.args.extend(("-sf", config['selected_foreground']))
-        # NOTE: The original dmenu doesn't support the '-h' option
-        if 'height' in config and config['height']:
-            self.args.extend(("-h", str(config['height'])))
-
-    def call(self, items=[]):
-        input_str = "\n".join([six.u(i) for i in items]) + "\n"
-        proc = Popen(["dmenu"] + self.args + self.lines, stdout=PIPE, stdin=PIPE)
-        return proc.communicate(str.encode(input_str))[0]
-
-    def run_apps(self):
-        Popen(["dmenu_run"] + self.args + self.lines, stdout=PIPE, stdin=PIPE)
-
-
-class DmenuRun():
-    """
-    Special case to run applications.
-    """
-    config = {}
-
-    def __init__(self, qtile):
-        if hasattr(qtile.config, 'extensions') and qtile.config.extensions['dmenu']:
-            self.config = qtile.config.extensions['dmenu']
-
-    def run(self):
-        dmenu = Dmenu(self.config)
-        dmenu.run_apps()
+    def _configure(self, qtile):
+        Dmenu._configure(self, qtile)

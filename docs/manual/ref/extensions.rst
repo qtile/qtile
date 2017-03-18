@@ -4,11 +4,6 @@
 Built-in Extensions
 ===================
 
-.. qtile_class:: libqtile.extension.dmenu.Dmenu
-    :no-commands:
-
-.. qtile_class:: libqtile.extension.dmenu.DmenuRun
-    :no-commands:
-
-.. qtile_class:: libqtile.extension.window_list.WindowList
+.. qtile_module:: libqtile.extension
+    :baseclass: libqtile.extension.base._Extension
     :no-commands:

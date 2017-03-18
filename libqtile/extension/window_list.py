@@ -22,21 +22,21 @@ import re
 
 from .dmenu import Dmenu
 
-class WindowList():
+class WindowList(Dmenu):
     """
     Give vertical list of all open windows in dmenu. Switch to selected.
     """
-    config = {}
-    qtile = None
-    wins = []
-    id_map = {}
 
-    def __init__(self, qtile):
-        self.qtile = qtile
-        if hasattr(qtile.config, 'extensions') and qtile.config.extensions['dmenu']:
-            self.config = qtile.config.extensions['dmenu']
+    defaults = []
 
-    def get_windows(self):
+    def __init__(self, **config):
+        Dmenu.__init__(self, **config)
+        self.add_defaults(WindowList.defaults)
+
+    def _configure(self, qtile):
+        Dmenu._configure(self, qtile)
+
+    def list_windows(self):
         id = 0
         self.wins = []
         self.id_map = {}
@@ -44,15 +44,11 @@ class WindowList():
             if win.group:
                 self.wins.append("%i: %s (%s)" % (id, win.name, win.group.name))
                 self.id_map[id] = win
-                id = id + 1
-
-        return id
+                id += 1
 
     def run(self):
-        win_count = self.get_windows()
-        config_tmp = self.config
-        dmenu = Dmenu(config_tmp, win_count)
-        out = dmenu.call(self.wins)
+        self.list_windows()
+        out = super(WindowList, self).run(items=self.wins)
         if not out:
             return
 

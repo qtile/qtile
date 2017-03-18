@@ -1,6 +1,9 @@
 qtile next_version:
-    !!! extention subpackage renamed to extension !!!
-    !!! extentions option renamed to extensions !!!
+    !!! Completely changed extension configuration, see the documentation !!!
+    !!! `extention` subpackage renamed to `extension` !!!
+    !!! `extentions` configuration variable changed to `extension_defaults` !!!
+    * features
+        - new RunCommand extension
 
 qtile 0.10.7, released 2017-02-14:
     * features

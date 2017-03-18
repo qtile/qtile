@@ -25,5 +25,6 @@ def safe_import(module_name, class_name):
     safe_import_((".extension", module_name), class_name, globals())
 
 
+safe_import("base", "RunCommand")
 safe_import("dmenu", ["Dmenu", "DmenuRun"])
 safe_import("window_list", "WindowList")

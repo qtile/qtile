@@ -49,6 +49,7 @@ from .log_utils import logger
 from .state import QtileState
 from .utils import QtileError, get_cache_dir
 from .widget.base import _Widget
+from .extension.base import _Extension
 from . import command
 from . import hook
 from . import utils
@@ -163,6 +164,14 @@ class Qtile(command.CommandObject):
             _Widget.global_defaults = config.widget_defaults
         else:
             _Widget.global_defaults = {}
+
+        if hasattr(config, "extension_defaults") and config.extension_defaults:
+            _Extension.global_defaults = config.extension_defaults
+        else:
+            _Extension.global_defaults = {}
+
+        for installed_extension in _Extension.installed_extensions:
+            installed_extension._configure(self)
 
         for i in self.groups:
             self.groupMap[i.name] = i
@@ -1821,11 +1830,16 @@ class Qtile(command.CommandObject):
         return [True, malloc_dump]
 
     def cmd_run_extention(self, cls):
-        """Deprecated alias for cmd_run_extension()"""
-        # TODO: Remove this method in the future
-        return self.cmd_run_extension(cls)
+        """
+        Deprecated alias for cmd_run_extension()
 
-    def cmd_run_extension(self, cls):
-        """Extensions should run from command run()"""
-        c = cls(self)
-        c.run()
+        Note that it was accepting an extension class, not an instance.
+        """
+        # TODO: Remove this method in the future
+        extension = cls()
+        extension._configure(self)
+        return self.cmd_run_extension(extension)
+
+    def cmd_run_extension(self, extension):
+        """Run extensions"""
+        extension.run()

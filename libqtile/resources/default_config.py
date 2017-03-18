@@ -82,6 +82,7 @@ widget_defaults = dict(
     fontsize=12,
     padding=3,
 )
+extension_defaults = widget_defaults.copy()
 
 screens = [
     Screen(
@@ -132,7 +133,6 @@ floating_layout = layout.Floating(float_rules=[
 ])
 auto_fullscreen = True
 focus_on_window_activation = "smart"
-extensions = {}
 
 # XXX: Gasp! We're lying here. In fact, nobody really uses or cares about this
 # string besides java UI toolkits; you can see several discussions on the
