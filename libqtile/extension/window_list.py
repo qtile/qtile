@@ -27,7 +27,9 @@ class WindowList(Dmenu):
     Give vertical list of all open windows in dmenu. Switch to selected.
     """
 
-    defaults = []
+    defaults = [
+        ("item_format", "{group}.{id}: {window}", "the format for the menu items"),
+    ]
 
     def __init__(self, **config):
         Dmenu.__init__(self, **config)
@@ -42,7 +44,8 @@ class WindowList(Dmenu):
         self.id_map = {}
         for win in self.qtile.windowMap.values():
             if win.group:
-                self.wins.append("%i: %s (%s)" % (id, win.name, win.group.name))
+                self.wins.append(self.item_format.format(
+                    group=win.group.name, id=id, window=win.name))
                 self.id_map[id] = win
                 id += 1
 
