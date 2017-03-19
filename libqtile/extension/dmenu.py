@@ -138,3 +138,40 @@ class DmenuRun(Dmenu):
 
     def _configure(self, qtile):
         Dmenu._configure(self, qtile)
+
+
+class J4DmenuDesktop(Dmenu):
+    """
+    Python wrapper for j4-dmenu-desktop
+    https://github.com/enkore/j4-dmenu-desktop
+    """
+
+    defaults = [
+        ("j4dmenu_command", 'j4-dmenu-desktop', "the dmenu command to be launched"),
+        ("j4dmenu_use_xdg_de", False, "read $XDG_CURRENT_DESKTOP to determine the desktop environment"),
+        ("j4dmenu_display_binary", False, "display binary name after each entry"),
+        ("j4dmenu_generic", True, "include the generic name of desktop entries"),
+        ("j4dmenu_terminal", None, "terminal emulator used to start terminal apps"),
+        ("j4dmenu_usage_log", None, "file used to sort items by usage frequency"),
+    ]
+
+    def __init__(self, **config):
+        Dmenu.__init__(self, **config)
+        self.add_defaults(J4DmenuDesktop.defaults)
+
+    def _configure(self, qtile):
+        Dmenu._configure(self, qtile)
+
+        self.configured_command = [self.j4dmenu_command, '--dmenu',
+                                   " ".join(shlex.quote(arg) for arg in self.configured_command)]
+        if self.j4dmenu_use_xdg_de:
+            self.configured_command.append("--use-xdg-de")
+        if self.j4dmenu_display_binary:
+            self.configured_command.append("--display-binary")
+        if not self.j4dmenu_generic:
+            self.configured_command.append("--no-generic")
+        if self.j4dmenu_terminal:
+            self.configured_command.extend(("--term", self.j4dmenu_terminal))
+        if self.j4dmenu_usage_log:
+            self.configured_command.extend(("--usage-log",
+                                            self.j4dmenu_usage_log))
