@@ -21,7 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from time import time
+import time
 from datetime import datetime, timedelta
 from contextlib import contextmanager
 from . import base
@@ -32,11 +32,13 @@ import os
 def tz(the_tz):
     orig = os.environ.get('TZ')
     os.environ['TZ'] = the_tz
+    time.tzset()
     yield
     if orig is not None:
         os.environ['TZ'] = orig
     else:
         del os.environ['TZ']
+    time.tzset()
 
 class Clock(base.InLoopPollText):
     """A simple but flexible text-based clock"""
@@ -56,7 +58,7 @@ class Clock(base.InLoopPollText):
 
     def tick(self):
         self.update(self.poll())
-        return self.update_interval - time() % self.update_interval
+        return self.update_interval - time.time() % self.update_interval
 
     # adding .5 to get a proper seconds value because glib could
     # theoreticaly call our method too early and we could get something
