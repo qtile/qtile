@@ -7,6 +7,7 @@
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 dmpayton
 # Copyright (c) 2014 dequis
+# Copyright (c) 2017 Dirk Hartmann
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,10 +29,10 @@
 
 from __future__ import division
 
-from .base import Layout
+from .base import _SimpleLayoutBase
 
 
-class Zoomy(Layout):
+class Zoomy(_SimpleLayoutBase):
     """A layout with single active windows, and few other previews at the right"""
     defaults = [
         ("columnwidth", 150, "Width of the right column"),
@@ -42,56 +43,15 @@ class Zoomy(Layout):
     ]
 
     def __init__(self, **config):
-        Layout.__init__(self, **config)
+        _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(Zoomy.defaults)
-        self.clients = []
-        self.focused = None
-
-    def _get_window(self):
-        return self.focused
-
-    def focus_first(self):
-        if self.clients:
-            return self.clients[0]
-
-    def focus_last(self):
-        if self.clients:
-            return self.clients[-1]
-
-    def focus_next(self, client):
-        if client not in self.clients:
-            return
-        idx = self.clients.index(client)
-        return self.clients[(idx + 1) % len(self.clients)]
-
-    def focus_previous(self, client):
-        if not self.clients:
-            return
-        idx = self.clients.index(client)
-        return self.clients[idx - 1]
-
-    def clone(self, group):
-        c = Layout.clone(self, group)
-        c.clients = []
-        return c
 
     def add(self, client):
-        self.clients.insert(0, client)
-        self.focus(client)
-
-    def remove(self, client):
-        if client not in self.clients:
-            return
-        if self.focused == client:
-            self.focused = self.focus_previous(client)
-        if self.focused == client:
-            self.focused = None
-        self.clients.remove(client)
-        return self.focused
+        self.clients.appendHead(client)
 
     def configure(self, client, screen):
         left, right = screen.hsplit(screen.width - self.columnwidth)
-        if client is self.focused:
+        if client is self.clients.current_client:
             client.place(
                 left.x,
                 left.y,
@@ -104,7 +64,7 @@ class Zoomy(Layout):
         else:
             h = right.width * left.height // left.width
             client_index = self.clients.index(client)
-            focused_index = self.clients.index(self.focused)
+            focused_index = self.clients.current_index
             offset = client_index - focused_index - 1
             if offset < 0:
                 offset += len(self.clients)
@@ -131,40 +91,24 @@ class Zoomy(Layout):
                 )
         client.unhide()
 
-    def info(self):
-        d = Layout.info(self)
-        d["clients"] = [x.name for x in self.clients]
-        return d
-
     def focus(self, win):
-        if self.focused and self.property_name and self.focused.window.get_property(
-            self.property_name,
-            "UTF8_STRING"
-        ) is not None:
-            self.focused.window.set_property(
+        if (self.clients.current_client and
+            self.property_name and
+            self.clients.current_client.window.get_property(
+                self.property_name, "UTF8_STRING") is not None):
+
+            self.clients.current_client.window.set_property(
                 self.property_name,
                 self.property_small,
-                "UTF8_STRING",
-                format=8
-            )
-        Layout.focus(self, win)
+                "UTF8_STRING", format=8)
+        _SimpleLayoutBase.focus(self, win)
         if self.property_name:
-            self.focused = win
-            win.window.set_property(
-                self.property_name,
-                self.property_big,
-                "UTF8_STRING",
-                format=8
-            )
+            win.window.set_property(self.property_name,
+                                    self.property_big,
+                                    "UTF8_STRING", format=8)
 
-    def cmd_next(self):
-        client = self.focus_next(self.focused) or self.focus_first()
-        self.group.focus(client, False)
+    cmd_next = _SimpleLayoutBase.next
+    cmd_down = _SimpleLayoutBase.next
 
-    cmd_down = cmd_next
-
-    def cmd_previous(self):
-        client = self.focus_previous(self.focused) or self.focus_last()
-        self.group.focus(client, False)
-
-    cmd_up = cmd_previous
+    cmd_previous = _SimpleLayoutBase.previous
+    cmd_up = _SimpleLayoutBase.previous

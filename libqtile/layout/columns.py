@@ -18,60 +18,32 @@
 
 from __future__ import division
 
-from .base import Layout
+from .base import Layout, _ClientList
 
-class _Column(object):
+class _Column(_ClientList):
+
+    # shortcuts for current client and index used in Columns layout
+    cw = _ClientList.current_client
+    current = _ClientList.current_index
+
     def __init__(self, autosplit=True, width=100):
+        _ClientList.__init__(self)
         self.width = width
         self.split = autosplit
-        self.current = 0
-        self.clients = []
         self.heights = {}
 
     def info(self):
-        return dict(
-            clients=[c.name for c in self],
-            heights=[self.heights[c] for c in self],
-            split=self.split,
-            current=self.current,
-        )
-
-    @property
-    def cw(self):
-        if len(self):
-            return self.clients[self.current]
-        return None
+        info = _ClientList.info(self)
+        info.update(dict(
+            heights=[self.heights[c] for c in self.clients],
+            split=self.split,))
+        return info
 
     def toggleSplit(self):
         self.split = not self.split
 
-    def focus(self, client):
-        self.current = self.index(client)
-
-    def focus_first(self):
-        if self.split and len(self):
-            return self[0]
-        return self.cw
-
-    def focus_last(self):
-        if self.split and len(self):
-            return self[-1]
-        return None
-
-    def focus_next(self, win):
-        idx = self.index(win) + 1
-        if self.split and idx < len(self):
-            return self[idx]
-        return None
-
-    def focus_previous(self, win):
-        idx = self.index(win) - 1
-        if self.split and idx >= 0:
-            return self[idx]
-        return None
-
     def add(self, client, height=100):
-        self.clients.insert(self.current, client)
+        _ClientList.add(self, client)
         self.heights[client] = height
         delta = 100 - height
         if delta != 0:
@@ -82,15 +54,9 @@ class _Column(object):
                 self.heights[c] += g
 
     def remove(self, client):
-        idx = self.index(client)
+        _ClientList.remove(self, client)
         delta = self.heights[client] - 100
         del self.heights[client]
-        del self.clients[idx]
-        if len(self) == 0:
-            self.current = 0
-            return
-        elif idx <= self.current:
-            self.current = max(0, self.current - 1)
         if delta != 0:
             n = len(self)
             growth = [int(delta / n)] * n
@@ -98,26 +64,11 @@ class _Column(object):
             for c, g in zip(self, growth):
                 self.heights[c] += g
 
-    def index(self, client):
-        return self.clients.index(client)
-
-    def __len__(self):
-        return len(self.clients)
-
-    def __getitem__(self, i):
-        return self.clients[i]
-
-    def __setitem__(self, i, c):
-        self.clients[i] = c
-
-    def __contains__(self, client):
-        return client in self.clients
-
     def __str__(self):
         cur = self.current
         return "_Column: " + ", ".join([
             "[%s: %d]" % (c.name, self.heights[c]) if c == cur else
-            "%s: %d" % (c.name, self.heights[c]) for c in self
+            "%s: %d" % (c.name, self.heights[c]) for c in self.clients
         ])
 
 
@@ -274,20 +225,44 @@ class Columns(Layout):
             client.hide()
 
     def focus_first(self):
-        return self.cc.focus_first()
+        """Returns first client in first column of layout"""
+        if self.columns:
+            return self.columns[0].focus_first()
 
     def focus_last(self):
-        return self.cc.focus_last()
+        """Returns last client in last column of layout"""
+        if self.columns:
+            return self.columns[-1].focus_last()
 
     def focus_next(self, win):
-        for col in self.columns:
+        """Returns the next client after 'win' in layout,
+           or None if there is no such client"""
+        # First: try to get next window in column of win
+        for idx, col in enumerate(self.columns):
             if win in col:
-                return col.focus_next(win)
+                nxt = col.focus_next(win)
+                if nxt:
+                    return nxt
+                else:
+                    break
+        # if there was no next, get first client from next column
+        if idx + 1 < len(self.columns):
+            return self.columns[idx + 1].focus_first()
 
     def focus_previous(self, win):
-        for col in self.columns:
+        """Returns the client previous to 'win' in layout.
+           or None if there is no such client"""
+        # First: try to focus previous client in column
+        for idx, col in enumerate(self.columns):
             if win in col:
-                return col.focus_previous(win)
+                prev = col.focus_previous(win)
+                if prev:
+                    return prev
+                else:
+                    break
+        # If there was no previous, get last from previous column
+        if idx > 0:
+            return self.columns[idx - 1].focus_last()
 
     def cmd_toggle_split(self):
         self.cc.toggleSplit()
@@ -306,13 +281,13 @@ class Columns(Layout):
     def cmd_up(self):
         col = self.cc
         if len(col) > 1:
-            col.current = (col.current - 1) % len(col)
+            col.current_index -= 1
             self.group.focus(col.cw, True)
 
     def cmd_down(self):
         col = self.cc
         if len(col) > 1:
-            col.current = (col.current + 1) % len(col)
+            col.current_index += 1
             self.group.focus(col.cw, True)
 
     def cmd_next(self):
@@ -376,19 +351,13 @@ class Columns(Layout):
         self.group.layoutAll()
 
     def cmd_shuffle_up(self):
-        col = self.cc
-        if col.current > 0:
-            col[col.current], col[col.current - 1] = \
-                col[col.current - 1], col[col.current]
-            col.current -= 1
+        if self.cc.current_index > 0:
+            self.cc.shuffle_up()
             self.group.layoutAll()
 
     def cmd_shuffle_down(self):
-        col = self.cc
-        if col.current + 1 < len(col):
-            col[col.current], col[col.current + 1] = \
-                col[col.current + 1], col[col.current]
-            col.current += 1
+        if self.cc.current_index + 1 < len(self.cc):
+            self.cc.shuffle_down()
             self.group.layoutAll()
 
     def cmd_grow_left(self):

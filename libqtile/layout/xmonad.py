@@ -13,6 +13,7 @@
 # Copyright (c) 2014 dmpayton
 # Copyright (c) 2014 dequis
 # Copyright (c) 2014 Florian Scherf
+# Copyright (c) 2017 Dirk Hartmann
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,11 +35,11 @@
 
 from __future__ import division
 
-from .base import Layout
+from .base import _SimpleLayoutBase
 import math
 
 
-class MonadTall(Layout):
+class MonadTall(_SimpleLayoutBase):
     """Emulate the behavior of XMonad's default tiling scheme.
 
     Main-Pane:
@@ -167,24 +168,15 @@ class MonadTall(Layout):
     ]
 
     def __init__(self, **config):
-        Layout.__init__(self, **config)
+        _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(MonadTall.defaults)
         if self.single_border_width is None:
             self.single_border_width = self.border_width
-        self.clients = []
         self.relative_sizes = []
-        self._focus = 0
 
-    # track client that has 'focus'
-    def _get_focus(self):
-        return self._focus
-
-    def _set_focus(self, x):
-        if len(self.clients) > 0:
-            self._focus = abs(x % len(self.clients))
-        else:
-            self._focus = 0
-    focused = property(_get_focus, _set_focus)
+    @property
+    def focused(self):
+        return self.clients.current_index
 
     def _get_relative_size_from_absolute(self, absolute_size):
         return absolute_size / self.group.screen.dheight
@@ -192,45 +184,24 @@ class MonadTall(Layout):
     def _get_absolute_size_from_relative(self, relative_size):
         return int(relative_size * self.group.screen.dheight)
 
-    def _get_window(self):
-        "Get currently focused client"
-        if self.clients:
-            return self.clients[self.focused]
-
-    def focus(self, client):
-        "Set focus to specified client"
-        self.focused = self.clients.index(client)
-
     def clone(self, group):
         "Clone layout for other groups"
-        c = Layout.clone(self, group)
-        c.clients = []
+        c = _SimpleLayoutBase.clone(self, group)
         c.sizes = []
         c.relative_sizes = []
         c.ratio = self.ratio
         c.align = self.align
-        c._focus = 0
         return c
 
     def add(self, client):
         "Add client to layout"
-        new_index = self.focused + (0 if self.new_at_current else 1)
-        self.clients.insert(new_index, client)
+        self.clients.add(client, 0 if self.new_at_current else 1)
         self.do_normalize = True
 
     def remove(self, client):
         "Remove client from layout"
-        if client not in self.clients:
-            return
-        # get index of removed client
-        idx = self.clients.index(client)
-        # remove the client
-        self.clients.remove(client)
-        # move focus pointer
-        self.focused = max(0, idx - 1)
         self.do_normalize = True
-        if self.clients:
-            return self.clients[self.focused]
+        return self.clients.remove(client)
 
     def cmd_normalize(self, redraw=True):
         "Evenly distribute screen-space among secondary clients"
@@ -388,11 +359,11 @@ class MonadTall(Layout):
             )
 
     def info(self):
-        return {
-            'clients': [c.name for c in self.clients],
-            'main': self.clients[0].name if self.clients else None,
-            'secondary': [c.name for c in self.clients[1:]]
-        }
+        d = _SimpleLayoutBase.info(self)
+        d.update(dict(
+            main=d['clients'][0] if self.clients else None,
+            secondary=d['clients'][1::] if self.clients else []))
+        return d
 
     def get_shrink_margin(self, cidx):
         "Return how many remaining pixels a client can shrink"
@@ -655,37 +626,8 @@ class MonadTall(Layout):
         self.relative_sizes[self.focused - 1] -= \
             self._get_relative_size_from_absolute(change)
 
-    def focus_first(self):
-        if self.clients:
-            return self.clients[0]
-
-    def focus_last(self):
-        if self.clients:
-            return self.clients[-1]
-
-    def focus_next(self, window):
-        if not self.clients:
-            return
-
-        if self.focused + 1 < len(self.clients):
-            return self.clients[self.focused + 1]
-
-    def focus_previous(self, window):
-        if not self.clients:
-            return
-
-        if self.focused > 0:
-            return self.clients[self.focused - 1]
-
-    def cmd_next(self):
-        client = self.focus_next(self.clients[self.focused]) or \
-            self.focus_first()
-        self.group.focus(client)
-
-    def cmd_previous(self):
-        client = self.focus_previous(self.clients[self.focused]) or \
-            self.focus_last()
-        self.group.focus(client)
+    cmd_next = _SimpleLayoutBase.next
+    cmd_previous = _SimpleLayoutBase.previous
 
     def cmd_shrink(self):
         """Shrink current window
@@ -702,31 +644,18 @@ class MonadTall(Layout):
             self._shrink_secondary(self.change_size)
         self.group.layoutAll()
 
-    def cmd_up(self):
-        """Focus on the next more prominent client on the stack"""
-        self.focused -= 1
-        self.group.focus(self.clients[self.focused])
-
-    def cmd_down(self):
-        """Focus on the less prominent client on the stack"""
-        self.focused += 1
-        self.group.focus(self.clients[self.focused])
+    cmd_up = cmd_previous
+    cmd_down = cmd_next
 
     def cmd_shuffle_up(self):
         """Shuffle the client up the stack"""
-        _oldf = self.focused
-        self.focused -= 1
-        self.clients[_oldf], self.clients[self.focused] = \
-            self.clients[self.focused], self.clients[_oldf]
+        self.clients.shuffle_up()
         self.group.layoutAll()
-        self.group.focus(self.clients[self.focused])
+        self.group.focus(self.clients.current_client)
 
     def cmd_shuffle_down(self):
         """Shuffle the client down the stack"""
-        _oldf = self.focused
-        self.focused += 1
-        self.clients[_oldf], self.clients[self.focused] = \
-            self.clients[self.focused], self.clients[_oldf]
+        self.clients.shuffle_down()
         self.group.layoutAll()
         self.group.focus(self.clients[self.focused])
 
@@ -745,29 +674,25 @@ class MonadTall(Layout):
 
     def cmd_swap(self, window1, window2):
         """Swap two windows"""
-        index1 = self.clients.index(window1)
-        index2 = self.clients.index(window2)
-        self.clients[index1], self.clients[index2] = \
-            self.clients[index2], self.clients[index1]
+        self.clients.swap(window1, window2, 1)
         self.group.layoutAll()
-        self.focused = index1
         self.group.focus(window1)
 
     def cmd_swap_left(self):
         """Swap current window with closest window to the left"""
-        x = self._get_window().x
-        y = self._get_window().y
+        win = self.clients.current_client
+        x, y = win.x, win.y
         candidates = [c for c in self.clients if c.info()['x'] < x]
         target = self._get_closest(x, y, candidates)
-        self.cmd_swap(self._get_window(), target)
+        self.cmd_swap(win, target)
 
     def cmd_swap_right(self):
         """Swap current window with closest window to the right"""
-        x = self._get_window().x
-        y = self. _get_window().y
+        win = self.clients.current_client
+        x, y = win.x, win.y
         candidates = [c for c in self.clients if c.info()['x'] > x]
         target = self._get_closest(x, y, candidates)
-        self.cmd_swap(self._get_window(), target)
+        self.cmd_swap(win, target)
 
     def cmd_swap_main(self):
         """Swap current window to main pane"""
@@ -778,21 +703,19 @@ class MonadTall(Layout):
 
     def cmd_left(self):
         """Focus on the closest window to the left of the current window"""
-        x = self._get_window().x
-        y = self._get_window().y
+        win = self.clients.current_client
+        x, y = win.x, win.y
         candidates = [c for c in self.clients if c.info()['x'] < x]
-        target = self._get_closest(x, y, candidates)
-        self.focused = self.clients.index(target)
-        self.group.focus(self.clients[self.focused])
+        self.clients.current_client = self._get_closest(x, y, candidates)
+        self.group.focus(self.clients.current_client)
 
     def cmd_right(self):
         """Focus on the closest window to the right of the current window"""
-        x = self._get_window().x
-        y = self._get_window().y
+        win = self.clients.current_client
+        x, y = win.x, win.y
         candidates = [c for c in self.clients if c.info()['x'] > x]
-        target = self._get_closest(x, y, candidates)
-        self.focused = self.clients.index(target)
-        self.group.focus(self.clients[self.focused])
+        self.clients.current_client = self._get_closest(x, y, candidates)
+        self.group.focus(self.clients.current_client)
 
 
 class MonadWide(MonadTall):
@@ -1030,19 +953,22 @@ class MonadWide(MonadTall):
 
     def cmd_swap_left(self):
         """Swap current window with closest window to the down"""
-        x = self._get_window().x
-        y = self._get_window().y
-        candidates = [c for c in self.clients if c.info()['y'] > y]
+        win = self.clients.current_client
+        x, y = win.x, win.y
+        candidates = [c for c in self.clients.clients if c.info()['y'] > y]
         target = self._get_closest(x, y, candidates)
-        self.cmd_swap(self._get_window(), target)
+        self.cmd_swap(win, target)
 
     def cmd_swap_right(self):
         """Swap current window with closest window to the up"""
-        x = self._get_window().x
-        y = self. _get_window().y
+        win = self.clients.current_client
+        x, y = win.x, win.y
         candidates = [c for c in self.clients if c.info()['y'] < y]
         target = self._get_closest(x, y, candidates)
-        self.cmd_swap(self._get_window(), target)
+        self.cmd_swap(win, target)
+
+    cmd_shuffle_left = cmd_swap_left
+    cmd_shuffle_right = cmd_swap_right
 
     def cmd_swap_main(self):
         """Swap current window to main pane"""
