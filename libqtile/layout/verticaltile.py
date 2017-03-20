@@ -1,4 +1,5 @@
 # Copyright (c) 2014, Florian Scherf <fscherf@gmx.net>. All rights reserved.
+# Copyright (c) 2017, Dirk Hartmann.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,10 +21,10 @@
 
 from __future__ import division
 
-from .base import Layout
+from .base import _SimpleLayoutBase
 
 
-class VerticalTile(Layout):
+class VerticalTile(_SimpleLayoutBase):
     """Tiling layout that works nice on vertically mounted monitors
 
     The available height gets divided by the number of panes, if no pane is
@@ -96,46 +97,21 @@ class VerticalTile(Layout):
     steps = 0.05
 
     def __init__(self, **config):
-        Layout.__init__(self, **config)
+        _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(self.defaults)
-        self.clients = []
-        self.focused = None
         self.maximized = None
 
     def add(self, window):
-        if self.clients and self.focused:
-            index = self.clients.index(self.focused)
-            self.clients.insert(index + 1, window)
-        else:
-            self.clients.append(window)
-
-        self.focus(window)
+        return self.clients.add(window, 1)
 
     def remove(self, window):
-        if window not in self.clients:
-            return
-
-        index = self.clients.index(window)
-        self.clients.remove(window)
-
-        if not self.clients:
-            self.focused = None
-            self.maximized = None
-            return
-
         if self.maximized is window:
             self.maximized = None
-
-        if index == len(self.clients):
-            index -= 1
-
-        self.focus(self.clients[index])
-        return self.focused
+        return self.clients.remove(window)
 
     def clone(self, group):
-        c = Layout.clone(self, group)
-        c.clients = []
-        c.focused = None
+        c = _SimpleLayoutBase.clone(self, group)
+        c.maximized = None
         return c
 
     def configure(self, window, screen):
@@ -199,44 +175,6 @@ class VerticalTile(Layout):
         else:
             window.hide()
 
-    def blur(self):
-        self.focused = None
-
-    def focus(self, window):
-        self.focused = window
-
-    def focus_first(self):
-        try:
-            return self.clients[0]
-        except IndexError:
-            pass
-
-    def focus_last(self):
-        try:
-            return self.clients[-1]
-        except IndexError:
-            pass
-
-    def focus_next(self, window):
-        if not self.clients:
-            return
-
-        try:
-            index = self.clients.index(window)
-            return self.clients[index + 1]
-        except IndexError:
-            pass
-
-    def focus_previous(self, window):
-        if not self.clients:
-            return
-
-        try:
-            index = self.clients.index(window)
-            return self.clients[index - 1]
-        except IndexError:
-            pass
-
     def grow(self):
         if self.ratio + self.steps < 1:
             self.ratio += self.steps
@@ -247,49 +185,23 @@ class VerticalTile(Layout):
             self.ratio -= self.steps
             self.group.layoutAll()
 
-    def cmd_next(self):
-        self.focus_next(self.focused)
-        self.group.focus(self.focused)
+    cmd_previous = _SimpleLayoutBase.previous
+    cmd_next = _SimpleLayoutBase.next
 
-    def cmd_previous(self):
-        self.focus_previous(self.focused)
-        self.group.focus(self.focused)
-
-    def cmd_down(self):
-        self.focus_next(self.focused)
-        self.group.focus(self.focused)
-
-    def cmd_up(self):
-        self.focus_previous(self.focused)
-        self.group.focus(self.focused)
+    cmd_up = cmd_previous
+    cmd_down = cmd_next
 
     def cmd_shuffle_up(self):
-        index = self.clients.index(self.focused)
-
-        try:
-            self.clients[index], self.clients[index - 1] =\
-                self.clients[index - 1], self.clients[index]
-        except IndexError:
-            self.clients[index], self.clients[-1] =\
-                self.clients[-1], self.clients[index]
-
+        self.clients.shuffle_up()
         self.group.layoutAll()
 
     def cmd_shuffle_down(self):
-        index = self.clients.index(self.focused)
-
-        try:
-            self.clients[index], self.clients[index + 1] =\
-                self.clients[index + 1], self.clients[index]
-        except IndexError:
-            self.clients[index], self.clients[0] =\
-                self.clients[0], self.clients[index]
-
+        self.clients.shuffle_down()
         self.group.layoutAll()
 
     def cmd_maximize(self):
         if self.clients:
-            self.maximized = self.focused
+            self.maximized = self.clients.current_client
             self.group.layoutAll()
 
     def cmd_normalize(self):
@@ -299,8 +211,7 @@ class VerticalTile(Layout):
     def cmd_grow(self):
         if not self.maximized:
             return
-
-        if self.focused is self.maximized:
+        if self.clients.current_client is self.maximized:
             self.grow()
         else:
             self.shrink()
@@ -308,8 +219,7 @@ class VerticalTile(Layout):
     def cmd_shrink(self):
         if not self.maximized:
             return
-
-        if self.focused is self.maximized:
+        if self.clients.current_client is self.maximized:
             self.shrink()
         else:
             self.grow()

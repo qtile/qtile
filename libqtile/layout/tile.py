@@ -9,6 +9,7 @@
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 dmpayton
 # Copyright (c) 2014 dequis
+# Copyright (c) 2017 Dirk Hartmann.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,11 +31,10 @@
 
 from __future__ import division
 
-from .base import Layout
-from .. import utils
+from .base import _SimpleLayoutBase
 
 
-class Tile(Layout):
+class Tile(_SimpleLayoutBase):
     defaults = [
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused windows."),
@@ -46,12 +46,10 @@ class Tile(Layout):
     def __init__(self, ratio=0.618, masterWindows=1, expand=True,
                  ratio_increment=0.05, add_on_top=True, shift_windows=False,
                  master_match=None, **config):
-        Layout.__init__(self, **config)
+        _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(Tile.defaults)
-        self.clients = []
         self.ratio = ratio
         self.master = masterWindows
-        self.focused = None
         self.expand = expand
         self.ratio_increment = ratio_increment
         self.add_on_top = add_on_top
@@ -68,54 +66,17 @@ class Tile(Layout):
 
     def up(self):
         if self.shift_windows:
-            self.shift_up()
+            self.clients.shuffle_up()
         else:
-            self.shuffle(utils.shuffleUp)
+            self.clients.rotate_down()
+        self.group.layoutAll()
 
     def down(self):
         if self.shift_windows:
-            self.shift_down()
+            self.clients.shuffle_down()
         else:
-            self.shuffle(utils.shuffleDown)
-
-    def shift_up(self):
-        if self.clients:
-            currentindex = self.clients.index(self.focused)
-            nextindex = (currentindex + 1) % len(self.clients)
-            self.shift(currentindex, nextindex)
-
-    def shift_down(self):
-        if self.clients:
-            currentindex = self.clients.index(self.focused)
-            previndex = (currentindex - 1) % len(self.clients)
-            self.shift(currentindex, previndex)
-
-    def focus_first(self):
-        if self.clients:
-            return self.clients[0]
-
-    def focus_next(self, client):
-        if client not in self.clients:
-            return
-        idx = self.clients.index(client)
-        if len(self.clients) > idx + 1:
-            return self.clients[idx + 1]
-
-    def focus_last(self):
-        if self.clients:
-            return self.clients[-1]
-
-    def focus_previous(self, client):
-        if client not in self.clients:
-            return
-        idx = self.clients.index(client)
-        if idx > 0:
-            return self.clients[idx - 1]
-
-    def shuffle(self, function):
-        if self.clients:
-            function(self.clients)
-            self.group.layoutAll(True)
+            self.clients.rotate_up()
+        self.group.layoutAll()
 
     def resetMaster(self, match=None):
         if not match and self.master_match:
@@ -135,34 +96,15 @@ class Tile(Layout):
             self.group.layoutAll(True)
 
     def clone(self, group):
-        c = Layout.clone(self, group)
-        c.clients = []
+        c = _SimpleLayoutBase.clone(self, group)
         return c
 
-    def focus(self, client):
-        self.focused = client
-
-    def blur(self):
-        self.focused = None
-
     def add(self, client):
-        index = 0
-        if not self.add_on_top and self.clients and self.focused:
-            index = self.clients.index(self.focused)
-        self.clients.insert(index, client)
+        if not self.add_on_top and self.clients:
+            self.clients.add(client)
+        else:
+            self.clients.appendHead(client)
         self.resetMaster()
-
-    def remove(self, client):
-        if client not in self.clients:
-            return
-
-        if self.focused is client:
-            self.focused = None
-
-        self.clients.remove(client)
-        if self.clients and client is self.focused:
-            self.focused = self.clients[0]
-        return self.focused
 
     def configure(self, client, screen):
         screenWidth = screen.width
@@ -204,11 +146,12 @@ class Tile(Layout):
             client.hide()
 
     def info(self):
-        return dict(
-            clients=[c.name for c in self.clients],
+        d = _SimpleLayoutBase.info(self)
+        d.update(dict(
             master=[c.name for c in self.master_windows],
             slave=[c.name for c in self.slave_windows],
-        )
+        ))
+        return d
 
     def cmd_down(self):
         self.down()
@@ -216,13 +159,10 @@ class Tile(Layout):
     def cmd_up(self):
         self.up()
 
-    def cmd_next(self):
-        client = self.focus_next(self.focused) or self.focus_first()
-        self.group.focus(client)
-
-    def cmd_previous(self):
-        client = self.focus_previous(self.focused) or self.focus_last()
-        self.group.focus(client)
+    cmd_shuffle_up = cmd_up
+    cmd_shuffle_down = cmd_down
+    cmd_previous = _SimpleLayoutBase.previous
+    cmd_next = _SimpleLayoutBase.next
 
     def cmd_decrease_ratio(self):
         self.ratio -= self.ratio_increment

@@ -415,6 +415,13 @@ class _Group(command.CommandObject):
         self.layoutAll()
 
     def cmd_next_window(self):
+        """
+        Focus the next window in group.
+
+        Method cycles _all_ windows in group regardless if tiled in current
+        layout or floating. Cycling of tiled and floating windows is not mixed.
+        The cycling order depends on the current Layout.
+        """
         if not self.windows:
             return
         if self.currentWindow.floating:
@@ -428,6 +435,13 @@ class _Group(command.CommandObject):
         self.focus(nxt, True)
 
     def cmd_prev_window(self):
+        """
+        Focus the previous window in group.
+
+        Method cycles _all_ windows in group regardless if tiled in current
+        layout or floating. Cycling of tiled and floating windows is not mixed.
+        The cycling order depends on the current Layout.
+        """
         if not self.windows:
             return
         if self.currentWindow.floating:

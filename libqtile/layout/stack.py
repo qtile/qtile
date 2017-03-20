@@ -20,107 +20,31 @@
 
 from __future__ import division
 
-from .base import Layout
+from .base import Layout, _ClientList
 from .. import utils
 
 
-class _WinStack(object):
+class _WinStack(_ClientList):
+
+    # shortcuts for current client and index used in Columns layout
+    cw = _ClientList.current_client
+
     def __init__(self, autosplit=False):
+        _ClientList.__init__(self)
         self.split = autosplit
-        self._current = 0
-        self.lst = []
-
-    @property
-    def current(self):
-        return self._current
-
-    @current.setter
-    def current(self, x):
-        if len(self):
-            self._current = abs(x % len(self))
-        else:
-            self._current = 0
-
-    @property
-    def cw(self):
-        if not self.lst:
-            return None
-        return self.lst[self.current]
 
     def toggleSplit(self):
         self.split = False if self.split else True
 
-    def join(self, ws):
-        # FIXME: This buggers up window order -
-        # windows should be injected BEFORE
-        # the current offset.
-        self.lst.extend(ws.lst)
-
-    def focus(self, client):
-        self.current = self.lst.index(client)
-
-    def focus_first(self):
-        if self.split:
-            return self[0]
-        else:
-            return self.cw
-
-    def focus_next(self, win):
-        if self.split:
-            idx = self.index(win)
-            if idx + 1 < len(self):
-                return self[idx + 1]
-
-    def focus_last(self):
-        if self.split:
-            return self[-1]
-        else:
-            return self.cw
-
-    def focus_previous(self, win):
-        if self.split:
-            idx = self.index(win)
-            if idx > 0:
-                return self[idx - 1]
-
-    def add(self, client):
-        self.lst.insert(self.current, client)
-
-    def remove(self, client):
-        if client not in self.lst:
-            return
-        idx = self.lst.index(client)
-        del self.lst[idx]
-        if idx > self.current:
-            self.current -= 1
-        else:
-            # This apparently nonsensical assignment caps the value using the
-            # property definition.
-            self.current = self.current
-
-    def index(self, client):
-        return self.lst.index(client)
-
-    def __len__(self):
-        return len(self.lst)
-
-    def __getitem__(self, i):
-        return self.lst[i]
-
-    def __contains__(self, client):
-        return client in self.lst
-
     def __str__(self):
         return "_WinStack: %s, %s" % (
-            self.current, str([i.name for i in self])
+            self.current, str([client.name for client in self.clients])
         )
 
     def info(self):
-        return dict(
-            clients=[x.name for x in self],
-            split=self.split,
-            current=self.current,
-        )
+        info = _ClientList.info(self)
+        info['split'] = self.split
+        return info
 
 
 class Stack(Layout):
@@ -129,8 +53,9 @@ class Stack(Layout):
     The stack layout divides the screen horizontally into a set of stacks.
     Commands allow you to switch between stacks, to next and previous windows
     within a stack, and to split a stack to show all windows in the stack, or
-    unsplit it to show only the current window. At the moment, this is the most
-    mature and flexible layout in Qtile.
+    unsplit it to show only the current window.
+
+    Unlike the columns layout the number of stacks is fixed.
     """
     defaults = [
         ("border_focus", "#0000ff", "Border colour for the focused window."),
@@ -164,7 +89,7 @@ class Stack(Layout):
     def clients(self):
         client_list = []
         for stack in self.stacks:
-            client_list.extend(list(stack))
+            client_list.extend(stack.clients)
         return client_list
 
     def clone(self, group):
@@ -188,7 +113,7 @@ class Stack(Layout):
             s = self.stacks[off]
             self.stacks.remove(s)
             off = min(off, len(self.stacks) - 1)
-            self.stacks[off].join(s)
+            self.stacks[off].join(s, 1)
             if self.stacks[off]:
                 self.group.focus(
                     self.stacks[off].cw,
@@ -343,24 +268,22 @@ class Stack(Layout):
 
     def cmd_down(self):
         """Switch to the next window in this stack"""
-        self.currentStack.current -= 1
+        self.currentStack.current_index -= 1
         self.group.focus(self.currentStack.cw, False)
 
     def cmd_up(self):
         """Switch to the previous window in this stack"""
-        self.currentStack.current += 1
+        self.currentStack.current_index += 1
         self.group.focus(self.currentStack.cw, False)
 
     def cmd_shuffle_up(self):
         """Shuffle the order of this stack up"""
-        utils.shuffleUp(self.currentStack.lst)
-        self.currentStack.current += 1
+        self.currentStack.rotate_up()
         self.group.layoutAll()
 
     def cmd_shuffle_down(self):
         """Shuffle the order of this stack down"""
-        utils.shuffleDown(self.currentStack.lst)
-        self.currentStack.current -= 1
+        self.currentStack.rotate_down()
         self.group.layoutAll()
 
     def cmd_delete(self):

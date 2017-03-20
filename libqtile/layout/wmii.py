@@ -240,12 +240,36 @@ class Wmii(Layout):
         self.group.layoutAll()
 
     def focus_next(self, win):
-        self.cmd_down()
-        return self.curent_window
+        # First: try to get next window in column of win
+        for idx, col in enumerate(self.columns):
+            rows = col['rows']
+            if win in rows:
+                i = rows.index(win)
+                if i + 1 < len(rows):
+                    return rows[i + 1]
+                else:
+                    break
+        # if there was no next, get first client from next column
+        if idx + 1 < len(self.columns):
+            rows = self.columns[idx + 1]['rows']
+            if len(rows):
+                return rows[0]
 
     def focus_previous(self, win):
-        self.cmd_up()
-        return self.current_window
+        # First: try to focus previous client in column
+        for idx, col in enumerate(self.columns):
+            rows = col['rows']
+            if win in rows:
+                i = rows.index(win)
+                if i > 0:
+                    return rows[i - 1]
+                else:
+                    break
+        # If there was no previous, get last from previous column
+        if idx > 0:
+            rows = self.columns[idx + 1]['rows']
+            if len(rows):
+                return rows[-1]
 
     def focus_first(self):
         if len(self.columns) == 0:

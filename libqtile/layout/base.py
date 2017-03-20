@@ -1,4 +1,5 @@
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
+# Copyright (c) 2017 Dirk Hartmann
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +21,7 @@
 
 import copy
 import six
+import _collections_abc
 from abc import ABCMeta, abstractmethod
 
 from .. import command, configurable
@@ -148,18 +150,62 @@ class Layout(command.CommandObject, configurable.Configurable):
 
     @abstractmethod
     def focus_first(self):
+        """Called when the first client in Layout shall be focused.
+
+        This method should:
+            - Return the first client in Layout, if any.
+            - Not focus the client itself, this is done by caller.
+        """
         pass
 
     @abstractmethod
     def focus_last(self):
+        """Called when the last client in Layout shall be focused.
+
+        This method should:
+            - Return the last client in Layout, if any.
+            - Not focus the client itself, this is done by caller.
+        """
         pass
 
     @abstractmethod
     def focus_next(self, win):
+        """Called when the next client in Layout shall be focused.
+
+        This method should:
+            - Return the next client in Layout, if any.
+            - Return None if the next client would be the first client.
+            - Not focus the client itself, this is done by caller.
+
+        Do not implement a full cycle here, because the Groups cycling relies
+        on returning None here if the end of Layout is hit,
+        such that Floating clients are included in cycle.
+
+        Parameters
+        ==========
+        win:
+            The currently focused client.
+        """
         pass
 
     @abstractmethod
     def focus_previous(self, win):
+        """Called when the previous client in Layout shall be focused.
+
+        This method should:
+            - Return the previous client in Layout, if any.
+            - Return None if the previous client would be the last client.
+            - Not focus the client itself, this is done by caller.
+
+        Do not implement a full cycle here, because the Groups cycling relies
+        on returning None here if the end of Layout is hit,
+        such that Floating clients are included in cycle.
+
+        Parameters
+        ==========
+        win:
+            The currently focused client.
+        """
         pass
 
     @abstractmethod
@@ -303,4 +349,279 @@ class Delegate(Layout):
         d = Layout.info(self)
         for layout in self._get_layouts():
             d[layout.name] = layout.info()
+        return d
+
+
+class _ClientList(_collections_abc.Sequence):
+    """
+    ClientList maintains a list of clients and a current client.
+
+    The collection is meant as a base or utility class for special layouts,
+    which need to maintain one or several collections of windows, for example
+    Columns or Stack, which use this class as base for their internal helper.
+
+    The property 'current_index' get and set the index to the current client,
+    whereas 'current_client' property can be used with clients directly.
+
+    The collection implements focus_xxx methods as desired for Group.
+    """
+
+    def __init__(self):
+        self._current_idx = 0
+        self.clients = []
+
+    @property
+    def current_index(self):
+        return self._current_idx
+
+    @current_index.setter
+    def current_index(self, x):
+        if len(self):
+            self._current_idx = abs(x % len(self))
+        else:
+            self._current_idx = 0
+        return self._current_idx
+
+    @property
+    def current_client(self):
+        if not self.clients:
+            return None
+        return self.clients[self._current_idx]
+
+    @current_client.setter
+    def current_client(self, client):
+        self._current_idx = self.clients.index(client)
+
+    def focus(self, client):
+        """
+        Mark the given client as the current focused client in collection.
+        This is equivalent to setting current_client.
+        """
+        self.current_client = client
+
+    def focus_first(self):
+        """
+        Returns the first client in collection.
+        """
+        return self[0]
+
+    def focus_next(self, win):
+        """
+        Returns the client next from win in collection.
+        """
+        try:
+            return self[self.index(win) + 1]
+        except IndexError:
+            return None
+
+    def focus_last(self):
+        """
+        Returns the last client in collection.
+        """
+        return self[-1]
+
+    def focus_previous(self, win):
+        """
+        Returns the client previous to win in collection.
+        """
+        try:
+            idx = self.index(win)
+        except IndexError:
+            return None
+        else:
+            if idx > 0:
+                return self[idx - 1]
+
+    def add(self, client, offset_to_current=0):
+        """
+        Insert the given client into collection at position of the current.
+
+        Use parameter 'offset_to_current' to specify where the client shall be
+        inserted. Defaults to zero, which means at position of current client.
+        Positive values are after the client.
+        """
+        pos = max(0, self._current_idx + offset_to_current)
+        if pos < len(self.clients):
+            self.clients.insert(pos, client)
+        else:
+            self.clients.append(client)
+
+    def appendHead(self, client):
+        """
+        Append the given client in front of list.
+        """
+        self.clients.insert(0, client)
+
+    def append(self, client):
+        """
+        Append the given client to the end of the collection.
+        """
+        self.clients.append(client)
+
+    def remove(self, client):
+        """
+        Remove the given client from collection.
+        """
+        if client not in self.clients:
+            return
+        idx = self.clients.index(client)
+        del self.clients[idx]
+        if len(self) == 0:
+            self._current_idx = 0
+        elif idx <= self._current_idx:
+            self._current_idx = max(0, self._current_idx - 1)
+
+    def rotate_up(self, maintain_index=True):
+        """
+        Rotate the list. The first client is moved to last position.
+        If maintain_index is True the current_index is adjusted,
+        such that the same client stays current and goes up in list.
+        """
+        if len(self.clients) > 1:
+            self.clients.append(self.clients.pop(0))
+            if maintain_index:
+                self.current_index -= 1
+
+    def rotate_down(self, maintain_index=True):
+        """
+        Rotate the list. The last client is moved to first position.
+        If maintain_index is True the current_index is adjusted,
+        such that the same client stays current and goes down in list.
+        """
+        if len(self.clients) > 1:
+            self.clients.insert(0, self.clients.pop())
+            if maintain_index:
+                self.current_index += 1
+
+    def swap(self, c1, c2, focus=1):
+        """
+        Swap the two given clients in list.
+        The optional argument 'focus' can be 1, 2 or anything else.
+        In case of 1, the first client c1 is focused, in case of 2 the c2 and
+        the current_index is not changed otherwise.
+        """
+        i1 = self.clients.index(c1)
+        i2 = self.clients.index(c2)
+        self.clients[i1], self.clients[i2] = self.clients[i2], self.clients[i1]
+        if focus == 1:
+            self.current_index = i1
+        elif focus == 2:
+            self.current_index = i2
+
+    def shuffle_up(self, maintain_index=True):
+        """
+        Shuffle the list. The current client swaps position with its predecessor.
+        If maintain_index is True the current_index is adjusted,
+        such that the same client stays current and goes up in list.
+        """
+        idx = self._current_idx
+        if idx > 0:
+            self.clients[idx], self.clients[idx - 1] = self[idx - 1], self[idx]
+            if maintain_index:
+                self.current_index -= 1
+
+    def shuffle_down(self, maintain_index=True):
+        """
+        Shuffle the list. The current client swaps position with its successor.
+        If maintain_index is True the current_index is adjusted,
+        such that the same client stays current and goes down in list.
+        """
+        idx = self._current_idx
+        if idx + 1 < len(self.clients):
+            self.clients[idx], self.clients[idx + 1] = self[idx + 1], self[idx]
+            if maintain_index:
+                self.current_index += 1
+
+    def join(self, other, offset_to_current=0):
+        """
+        Add clients from 'other' _WindowCollection to self.
+        'offset_to_current' works as described for add()
+        """
+        pos = max(0, self.current_index + offset_to_current)
+        if pos < len(self.clients):
+            self.clients = (self.clients[:pos:] + other.clients +
+                            self.clients[pos::])
+        else:
+            self.clients.extend(other.clients)
+
+    def index(self, client):
+        return self.clients.index(client)
+
+    def __len__(self):
+        return len(self.clients)
+
+    def __getitem__(self, i):
+        try:
+            return self.clients[i]
+        except IndexError:
+            return None
+
+    def __iter__(self):
+        return self.clients.__iter__()
+
+    def __contains__(self, client):
+        return client in self.clients
+
+    def __str__(self):
+        curr = self.current_client
+        return "_WindowCollection: " + ", ".join(
+            [('[%s]' if c == curr else '%s') % c.name for c in self.clients])
+
+    def info(self):
+        return dict(
+            clients=[c.name for c in self.clients],
+            current=self._current_idx,
+        )
+
+class _SimpleLayoutBase(Layout):
+    """
+    Basic layout class for simple layouts,
+    which need to maintain a single list of clients.
+    This class offers full fledged list of clients and focus cycling.
+
+    Basic Layouts like Max and Matrix are based on this class
+    """
+
+    def __init__(self, **config):
+        Layout.__init__(self, **config)
+        self.clients = _ClientList()
+
+    def clone(self, group):
+        c = Layout.clone(self, group)
+        c.clients = _ClientList()
+        return c
+
+    def focus(self, client):
+        self.clients.current_client = client
+        self.group.layoutAll()
+
+    def focus_first(self):
+        return self.clients.focus_first()
+
+    def focus_last(self):
+        return self.clients.focus_last()
+
+    def focus_next(self, window):
+        return self.clients.focus_next(window)
+
+    def focus_previous(self, window):
+        return self.clients.focus_previous(window)
+
+    def previous(self):
+        client = self.focus_previous(self.clients.current_client) or self.focus_last()
+        self.group.focus(client, False)
+
+    def next(self):
+        client = self.focus_next(self.clients.current_client) or self.focus_first()
+        self.group.focus(client, False)
+
+    def add(self, client, offset_to_current=0):
+        return self.clients.add(client, offset_to_current)
+
+    def remove(self, client):
+        return self.clients.remove(client)
+
+    def info(self):
+        d = Layout.info(self)
+        d.update(self.clients.info())
         return d
