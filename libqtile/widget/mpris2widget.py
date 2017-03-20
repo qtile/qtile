@@ -66,6 +66,7 @@ class Mpris2(base._TextBox):
         self.is_playing = False
         self.scroll_timer = None
         self.scroll_counter = None
+        self.dbus_loop = None
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
