@@ -32,6 +32,7 @@ from libqtile import layout
 import libqtile.manager
 import libqtile.config
 from ..conftest import no_xinerama
+from .layout_utils import assertFocused, assertFocusPath
 
 
 class RatioTileConfig(object):
@@ -192,3 +193,22 @@ def test_ratiotile_basic(qtile):
     assert qtile.c.window.info()['x'] == 532
     assert qtile.c.window.info()['y'] == 0
     assert qtile.c.window.info()['name'] == 'one'
+
+@ratiotile_config
+def test_ratiotile_window_focus_cycle(qtile):
+    # setup 3 tiled and two floating clients
+    qtile.testWindow("one")
+    qtile.testWindow("two")
+    qtile.testWindow("float1")
+    qtile.c.window.toggle_floating()
+    qtile.testWindow("float2")
+    qtile.c.window.toggle_floating()
+    qtile.testWindow("three")
+    
+    # test preconditions, RatioTile adds clients to head
+    assert qtile.c.layout.info()['clients'] == ['three', 'two', 'one']
+    # last added window has focus
+    assertFocused(qtile,"three")
+    
+    # assert window focus cycle, according to order in layout
+    assertFocusPath(qtile, 'two','one','float1','float2','three' )
