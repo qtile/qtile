@@ -150,9 +150,7 @@ class Wmii(Layout):
                     if client == self.current_window:
                         if ridx > 0:
                             ridx -= 1
-                        newclient = c['rows'][ridx]
-                        self.focus(newclient)
-                    self.group.focus(self.current_window)
+                        return c['rows'][ridx]
                     return self.current_window
                 # column is now empty, remove it and select the previous one
                 self.columns.remove(c)
@@ -168,10 +166,7 @@ class Wmii(Layout):
                     cidx -= 1
                 c = self.columns[cidx]
                 rows = c['rows']
-                newclient = rows[0]
-                self.focus(newclient)
-                self.group.focus(newclient)
-                return newclient
+                return rows[0]
 
     def is_last_column(self, cidx):
             return cidx == len(self.columns) - 1
