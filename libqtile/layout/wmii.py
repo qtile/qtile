@@ -97,7 +97,7 @@ class Wmii(Layout):
 
     def info(self):
         d = Layout.info(self)
-        d["current_window"] = self.current_window
+        d["current_window"] = self.current_window.name if self.current_window else None
         d["clients"] = [x.name for x in self.clients]
         return d
 

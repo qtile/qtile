@@ -23,9 +23,8 @@ import pytest
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from .layout_utils import assertDimensions, assertFocused
+from .layout_utils import assertDimensions, assertFocused, assertFocusPath
 from ..conftest import no_xinerama
-
 
 class MonadTallConfig(object):
     auto_fullscreen = True
@@ -598,3 +597,45 @@ def test_wide_swap(qtile):
     qtile.c.layout.swap_main()
     assert qtile.c.layout.info()['main'] == 'focused'
     assert qtile.c.layout.info()['secondary'] == ['three', 'two', 'one']
+    
+
+@monadtall_config
+def test_tall_window_focus_cycle(qtile):
+    # setup 3 tiled and two floating clients
+    qtile.testWindow("one")
+    qtile.testWindow("two")
+    qtile.testWindow("float1")
+    qtile.c.window.toggle_floating()
+    qtile.testWindow("float2")
+    qtile.c.window.toggle_floating()
+    qtile.testWindow("three")
+    
+    # test preconditions
+    assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
+    # last added window has focus
+    assertFocused(qtile,"three")
+    
+    # starting from the last tiled client, we first cycle through floating ones,
+    # and afterwards through the tiled
+    assertFocusPath(qtile, 'float1','float2','one','two','three' )
+
+
+@monadwide_config
+def test_wide_window_focus_cycle(qtile):
+    # setup 3 tiled and two floating clients
+    qtile.testWindow("one")
+    qtile.testWindow("two")
+    qtile.testWindow("float1")
+    qtile.c.window.toggle_floating()
+    qtile.testWindow("float2")
+    qtile.c.window.toggle_floating()
+    qtile.testWindow("three")
+    
+    # test preconditions
+    assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
+    # last added window has focus
+    assertFocused(qtile,"three")
+    
+    # assert window focus cycle, according to order in layout
+    assertFocusPath(qtile, 'float1','float2','one','two','three' )
+

@@ -31,7 +31,7 @@ from libqtile import layout
 import libqtile.manager
 import libqtile.config
 from ..conftest import no_xinerama
-
+from .layout_utils import assertFocused, assertFocusPath
 
 class MatrixConfig(object):
     auto_fullscreen = True
@@ -101,3 +101,25 @@ def test_matrix_add_remove_columns(qtile):
     assert qtile.c.layout.info()["rows"] == [["one", "two", "three"], ["four", "five"]]
     qtile.c.layout.delete()
     assert qtile.c.layout.info()["rows"] == [["one", "two"], ["three", "four"], ["five"]]
+
+
+@matrix_config
+def test_matrix_window_focus_cycle(qtile):
+    # setup 3 tiled and two floating clients
+    qtile.testWindow("one")
+    qtile.testWindow("two")
+    qtile.testWindow("float1")
+    qtile.c.window.toggle_floating()
+    qtile.testWindow("float2")
+    qtile.c.window.toggle_floating()
+    qtile.testWindow("three")
+    
+    # test preconditions
+    assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
+    # last added window has focus
+    assertFocused(qtile,"three")
+    
+    # assert window focus cycle, according to order in layout
+    assertFocusPath(qtile, 'float1','float2','one','two','three' )
+
+    

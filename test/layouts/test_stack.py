@@ -31,7 +31,7 @@ from libqtile import layout
 import libqtile.manager
 import libqtile.config
 from ..conftest import no_xinerama
-
+from .layout_utils import assertFocused, assertFocusPath
 
 class StackConfig(object):
     auto_fullscreen = True
@@ -230,3 +230,23 @@ def test_stack_client_to(qtile):
 def test_stack_info(qtile):
     one = qtile.testWindow("one")
     assert qtile.c.layout.info()["stacks"]
+
+@stack_config
+def test_stack_window_focus_cycle(qtile):
+    # setup 3 tiled and two floating clients
+    qtile.testWindow("one")
+    qtile.testWindow("two")
+    qtile.testWindow("float1")
+    qtile.c.window.toggle_floating()
+    qtile.testWindow("float2")
+    qtile.c.window.toggle_floating()
+    qtile.testWindow("three")
+    
+    # test preconditions, stack adds clients at pos of current
+    assert qtile.c.layout.info()['clients'] == ['three', 'two', 'one']
+    # last added window has focus
+    assertFocused(qtile,"three")
+    
+    # assert window focus cycle, according to order in layout
+    assertFocusPath(qtile, 'two','one','float1','float2','three' )
+
