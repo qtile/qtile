@@ -134,7 +134,11 @@ class Wmii(Layout):
             if len(self.columns) == 0:
                 self.columns = [{'active': 0, 'width': 100, 'mode': 'split', 'rows': []}]
             c = self.columns[0]
-        c['rows'].append(client)
+        # Insert the new window after the current one, not at the bottom of the
+        # stack, which would feel unnatural for example when a new tiled window
+        # is opened from within an application (new browser window, options
+        # window etc.)
+        c['rows'].insert(c['active'] + 1, client)
         self.focus(client)
 
     def remove(self, client):
