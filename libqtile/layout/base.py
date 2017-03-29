@@ -21,7 +21,6 @@
 
 import copy
 import six
-import _collections_abc
 from abc import ABCMeta, abstractmethod
 
 from .. import command, configurable
@@ -352,7 +351,7 @@ class Delegate(Layout):
         return d
 
 
-class _ClientList(_collections_abc.Sequence):
+class _ClientList(object):
     """
     ClientList maintains a list of clients and a current client.
 
