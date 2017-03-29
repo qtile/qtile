@@ -342,7 +342,7 @@ def test_float_outside_edges(qtile):
     assert qtile.c.window.info()['y'] == 0
     # empty because window is floating
     assert qtile.c.layout.info() == {
-        'clients': [], 'group': 'a', 'name': 'max'}
+        'clients': [], 'current' : 0, 'group': 'a', 'name': 'max'}
 
     # move left, but some still on screen 0
     qtile.c.window.move_floating(-30, 20, 42, 42)
