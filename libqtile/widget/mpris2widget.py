@@ -59,7 +59,7 @@ class Mpris2(base._TextBox):
 
     def __init__(self, **config):
         base._TextBox.__init__(self, '', **config)
-        self.add_defaults(self.__class__.defaults)
+        self.add_defaults(Mpris2.defaults)
 
         self.scrolltext = None
         self.displaytext = ''

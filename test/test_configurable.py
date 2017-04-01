@@ -30,7 +30,7 @@ class ConfigurableWithFallback(configurable.Configurable):
 
     def __init__(self, **config):
         configurable.Configurable.__init__(self, **config)
-        self.add_defaults(self.defaults)
+        self.add_defaults(ConfigurableWithFallback.defaults)
 
 
 def test_use_fallback():

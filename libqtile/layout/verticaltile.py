@@ -98,7 +98,7 @@ class VerticalTile(_SimpleLayoutBase):
 
     def __init__(self, **config):
         _SimpleLayoutBase.__init__(self, **config)
-        self.add_defaults(self.defaults)
+        self.add_defaults(VerticalTile.defaults)
         self.maximized = None
 
     def add(self, window):
