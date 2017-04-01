@@ -27,20 +27,23 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import division
+
 from . import base
 from libqtile.log_utils import logger
+
 try:
     from pythonwifi.iwlibs import Wireless, Iwstats
 
-    def get_status(interface):
-        interface = Wireless(interface)
+    def get_status(interface_name):
+        interface = Wireless(interface_name)
         try:
-            stats = Iwstats(interface)
+            stats = Iwstats(interface_name)
         except IOError:
-            return (None, None)
+            return None, None
         quality = stats.qual.quality
         essid = interface.getEssid()
-        return (essid, quality)
+        return essid, quality
 
 except ImportError:
     import iwlib
@@ -48,10 +51,10 @@ except ImportError:
     def get_status(interface):
         interface = iwlib.get_iwconfig(interface)
         if 'stats' not in interface:
-            return (None, None)
+            return None, None
         quality = interface['stats']['quality']
         essid = bytes(interface['ESSID']).decode()
-        return (essid, quality)
+        return essid, quality
 
 
 class Wlan(base.InLoopPollText):
