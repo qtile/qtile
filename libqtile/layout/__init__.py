@@ -24,16 +24,16 @@
 # is annoying, so we ignore libqtile/layout/__init__.py completely
 # flake8: noqa
 
-from .stack import Stack
-from .max import Max
-from .xmonad import MonadTall, MonadWide
-from .tile import Tile
+from .columns import Columns
 from .floating import Floating
+from .matrix import Matrix
+from .max import Max
 from .ratiotile import RatioTile
 from .slice import Slice
+from .stack import Stack
+from .tile import Tile
 from .tree import TreeTab
-from .zoomy import Zoomy
-from .matrix import Matrix
 from .verticaltile import VerticalTile
 from .wmii import Wmii
-from .columns import Columns
+from .xmonad import MonadTall, MonadWide
+from .zoomy import Zoomy
