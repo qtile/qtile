@@ -597,7 +597,7 @@ def test_wide_swap(qtile):
     qtile.c.layout.swap_main()
     assert qtile.c.layout.info()['main'] == 'focused'
     assert qtile.c.layout.info()['secondary'] == ['three', 'two', 'one']
-    
+
 
 @monadtall_config
 def test_tall_window_focus_cycle(qtile):
@@ -609,15 +609,15 @@ def test_tall_window_focus_cycle(qtile):
     qtile.testWindow("float2")
     qtile.c.window.toggle_floating()
     qtile.testWindow("three")
-    
+
     # test preconditions
     assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
     # last added window has focus
-    assertFocused(qtile,"three")
-    
+    assertFocused(qtile, "three")
+
     # starting from the last tiled client, we first cycle through floating ones,
     # and afterwards through the tiled
-    assertFocusPath(qtile, 'float1','float2','one','two','three' )
+    assertFocusPath(qtile, 'float1', 'float2', 'one', 'two', 'three')
 
 
 @monadwide_config
@@ -630,12 +630,11 @@ def test_wide_window_focus_cycle(qtile):
     qtile.testWindow("float2")
     qtile.c.window.toggle_floating()
     qtile.testWindow("three")
-    
+
     # test preconditions
     assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
     # last added window has focus
-    assertFocused(qtile,"three")
-    
-    # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'float1','float2','one','two','three' )
+    assertFocused(qtile, "three")
 
+    # assert window focus cycle, according to order in layout
+    assertFocusPath(qtile, 'float1', 'float2', 'one', 'two', 'three')

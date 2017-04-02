@@ -76,7 +76,7 @@ def test_verticaltile_maximize(qtile):
     # Maximize the bottom layout, taking 75% of space
     qtile.c.layout.maximize()
     assertDimensions(qtile, 0, 150, 798, 448)
-    
+
 @verticaltile_config
 def test_verticaltile_window_focus_cycle(qtile):
     # setup 3 tiled and two floating clients
@@ -87,11 +87,11 @@ def test_verticaltile_window_focus_cycle(qtile):
     qtile.testWindow("float2")
     qtile.c.window.toggle_floating()
     qtile.testWindow("three")
-    
+
     # test preconditions
     assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
     # last added window has focus
-    assertFocused(qtile,"three")
-    
+    assertFocused(qtile, "three")
+
     # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'float1','float2','one','two','three' )
+    assertFocusPath(qtile, 'float1', 'float2', 'one', 'two', 'three')
