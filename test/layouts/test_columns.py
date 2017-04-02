@@ -59,13 +59,12 @@ def test_columns_window_focus_cycle(qtile):
     qtile.testWindow("float2")
     qtile.c.window.toggle_floating()
     qtile.testWindow("three")
-    
+
     # test preconditions, columns adds clients at pos of current, in two stacks
-    assert qtile.c.layout.info()['columns'][0]['clients'] == ['one'] #three', 'two', 'one']
+    assert qtile.c.layout.info()['columns'][0]['clients'] == ['one']  # 'three', 'two', 'one']
     assert qtile.c.layout.info()['columns'][1]['clients'] == ['three', 'two']
     # last added window has focus
-    assertFocused(qtile,"three")
-    
-    # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'two','float1','float2','one','three' )
+    assertFocused(qtile, "three")
 
+    # assert window focus cycle, according to order in layout
+    assertFocusPath(qtile, 'two', 'float1', 'float2', 'one', 'three')

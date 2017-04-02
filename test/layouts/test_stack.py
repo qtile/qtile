@@ -241,12 +241,11 @@ def test_stack_window_focus_cycle(qtile):
     qtile.testWindow("float2")
     qtile.c.window.toggle_floating()
     qtile.testWindow("three")
-    
-    # test preconditions, stack adds clients at pos of current
-    assert qtile.c.layout.info()['clients'] == ['three', 'one','two']
-    # last added window has focus
-    assertFocused(qtile,"three")
-    
-    # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'one','two','float1','float2','three' )
 
+    # test preconditions, stack adds clients at pos of current
+    assert qtile.c.layout.info()['clients'] == ['three', 'one', 'two']
+    # last added window has focus
+    assertFocused(qtile, "three")
+
+    # assert window focus cycle, according to order in layout
+    assertFocusPath(qtile, 'one', 'two', 'float1', 'float2', 'three')

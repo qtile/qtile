@@ -95,7 +95,7 @@ def test_slice_focus(qtile):
     assertFocused(qtile, 'slice')
     assertFocusPath(qtile, 'slice')
     three = qtile.testWindow('three')
-    assertFocusPath(qtile, 'two','one','slice', 'three')
+    assertFocusPath(qtile, 'two', 'one', 'slice', 'three')
     qtile.kill_window(two)
     assertFocusPath(qtile, 'one', 'slice', 'three')
     qtile.kill_window(slice)

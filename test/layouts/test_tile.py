@@ -118,7 +118,7 @@ def test_tile_remove(qtile):
     assert qtile.c.layout.info()["master"] == ["three"]
     qtile.kill_window(three)
     assert qtile.c.layout.info()["master"] == ["two"]
-    
+
 @tile_config
 def test_tile_window_focus_cycle(qtile):
     # setup 3 tiled and two floating clients
@@ -129,12 +129,11 @@ def test_tile_window_focus_cycle(qtile):
     qtile.testWindow("float2")
     qtile.c.window.toggle_floating()
     qtile.testWindow("three")
-    
+
     # test preconditions, Tile adds (by default) clients at pos of current
     assert qtile.c.layout.info()['clients'] == ['three', 'two', 'one']
     # last added window has focus
-    assertFocused(qtile,"three")
-    
-    # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'two','one','float1','float2','three' )
+    assertFocused(qtile, "three")
 
+    # assert window focus cycle, according to order in layout
+    assertFocusPath(qtile, 'two', 'one', 'float1', 'float2', 'three')
