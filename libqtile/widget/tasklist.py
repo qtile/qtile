@@ -80,7 +80,22 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             None,
             "Spacing between tasks."
             "(if set to None, will be equal to margin_x)"
-        )
+        ),
+        (
+            'txt_minimized',
+            '_ ',
+            'Text representation of the minimized window state.'
+        ),
+        (
+            'txt_maximized',
+            '[] ',
+            'Text representation of the maximized window state.'
+        ),
+        (
+            'txt_floating',
+            'V ',
+            'Text representation of the floating window state.'
+        ),
     ]
 
     def __init__(self, **config):
@@ -116,11 +131,11 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if window is None:
             pass
         elif window.minimized:
-            state = '\U0001F5D5 '  # minimize character
+            state = self.txt_minimized
         elif window.maximized:
-            state = '\U0001F5d6 '  # maximize character
+            state = self.txt_maximized
         elif window.floating:
-            state = '\U0001F5D7 '  # overlap character
+            state = self.txt_floating
 
         return "%s%s" % (state, window.name if window and window.name else "?")
 
