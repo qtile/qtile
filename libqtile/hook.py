@@ -59,6 +59,7 @@ class Subscribe(object):
         lst = subscriptions.setdefault(event, [])
         if func not in lst:
             lst.append(func)
+        return func
 
     def startup_once(self, func):
         """Called when Qtile has started on first start
