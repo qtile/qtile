@@ -245,7 +245,9 @@ class Subscribe(object):
     def client_name_updated(self, func):
         """Called when the client name changes
 
-        Never fires
+        **Arguments**
+
+            * ``window.Window`` of client with updated name
         """
         return self._subscribe("client_name_updated", func)
 
