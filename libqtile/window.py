@@ -250,6 +250,7 @@ class _Window(command.CommandObject):
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             return
         hook.fire("window_name_change")
+        hook.fire('client_name_updated', self)
 
     def updateHints(self):
         """Update the local copy of the window's WM_HINTS
