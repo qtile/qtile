@@ -84,17 +84,20 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         (
             'txt_minimized',
             '_ ',
-            'Text representation of the minimized window state.'
+            'Text representation of the minimized window state. '
+            'e.g., "_ " or "\U0001F5D5 "'
         ),
         (
             'txt_maximized',
             '[] ',
-            'Text representation of the maximized window state.'
+            'Text representation of the maximized window state. '
+            'e.g., "[] " or "\U0001F5D6 "'
         ),
         (
             'txt_floating',
             'V ',
-            'Text representation of the floating window state.'
+            'Text representation of the floating window state. '
+            'e.g., "V " or "\U0001F5D7 "'
         ),
     ]
 
