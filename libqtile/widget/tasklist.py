@@ -221,7 +221,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         self.update(window)
 
     def setup_hooks(self):
-        hook.subscribe.window_name_change(self.update)
+        hook.subscribe.client_name_updated(self.update)
         hook.subscribe.focus_change(self.update)
         hook.subscribe.float_change(self.update)
         hook.subscribe.client_urgent_hint_changed(self.update)
