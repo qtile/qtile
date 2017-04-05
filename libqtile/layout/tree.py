@@ -427,13 +427,13 @@ class TreeTab(Layout):
         self._panel.handle_Expose = self._panel_Expose
         self._panel.handle_ButtonPress = self._panel_ButtonPress
         self.group.qtile.windowMap[self._panel.window.wid] = self._panel
-        hook.subscribe.window_name_change(self.draw_panel)
+        hook.subscribe.client_name_updated(self.draw_panel)
         hook.subscribe.focus_change(self.draw_panel)
 
     def _panel_Expose(self, e):
         self.draw_panel()
 
-    def draw_panel(self):
+    def draw_panel(self, *args):
         if not self._panel:
             return
         self._drawer.clear(self.bg_color)

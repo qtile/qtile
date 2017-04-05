@@ -249,7 +249,6 @@ class _Window(command.CommandObject):
             self.name = self.window.get_name()
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             return
-        hook.fire("window_name_change")
         hook.fire('client_name_updated', self)
 
     def updateHints(self):
