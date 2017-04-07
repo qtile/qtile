@@ -36,15 +36,11 @@ class Pomodoro(base.ThreadPoolText):
         ('color_active', "00ff00", "Colour then pomodoro is running"),
         ('color_break', "ffff00", "Colour then it is break time"),
         ('notification_on', True, "Turn notifications on"),
-        ('prefix',
-            {
-                'inactive': 'POMODORO',
-                'active': '',
-                'break': 'B ',
-                'long_break': 'LB ',
-                'paused': 'PAUSE'
-            },
-            "Prefix for status"),
+        ('prefix_inactive', 'POMODORO', "Prefix when app is inactive"),
+        ('prefix_active', '', "Prefix then app is active"),
+        ('prefix_break', 'B ', "Prefix during short break"),
+        ('prefix_long_break', 'LB ', "Prefix during long break"),
+        ('prefix_paused', 'PAUSE', "Prefix during pause"),
         ("update_interval", 1, "Update interval in seconds, if none, the "
             "widget updates whenever the event loop is idle."),
     ]
@@ -66,6 +62,13 @@ class Pomodoro(base.ThreadPoolText):
     def __init__(self, **config):
         base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(Pomodoro.defaults)
+        self.prefix = {
+            'inactive': self.prefix_inactive,
+            'active': self.prefix_active,
+            'break': self.prefix_break,
+            'long_break': self.prefix_long_break,
+            'paused': self.prefix_paused
+        }
 
     def tick(self):
         self.update(self.poll())
