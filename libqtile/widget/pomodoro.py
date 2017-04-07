@@ -22,9 +22,6 @@ import subprocess
 from time import time
 from datetime import datetime, timedelta
 from . import base
-from ..notify import notifier, Notification
-
-import os
 
 class Pomodoro(base.ThreadPoolText):
     """Pomodoro technique widget"""
@@ -42,11 +39,11 @@ class Pomodoro(base.ThreadPoolText):
         ('prefix',
             {
                 'inactive': 'POMODORO',
-                'active' : '',
-                'break' : 'B ',
+                'active': '',
+                'break': 'B ',
                 'long_break': 'LB ',
                 'paused': 'PAUSE'
-                },
+            },
             "Prefix for status"),
         ("update_interval", 1, "Update interval in seconds, if none, the "
             "widget updates whenever the event loop is idle."),
@@ -104,7 +101,6 @@ class Pomodoro(base.ThreadPoolText):
 
         return
 
-
     def _get_text(self):
         self._update()
 
@@ -126,7 +122,7 @@ class Pomodoro(base.ThreadPoolText):
             self.status = self.STATUS_START
             return
 
-        if self.paused_status == None:
+        if self.paused_status is None:
             self.paused_status = self.status
             self.time_left = self.end_time - datetime.now()
             self.status = self.STATUS_PAUSED
@@ -160,11 +156,11 @@ class Pomodoro(base.ThreadPoolText):
 
     def button_press(self, x, y, button):
         """What to do when press a mouse button over the Pomodoro widget.
+
         LEFT BUTTON: pause/resume current status or start
         RIGHT BUTTON: toggle activity
 
         """
-        print(button)
         if button == 1:
             self._toggle_break()
         elif button == 3:
