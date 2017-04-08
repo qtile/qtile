@@ -20,82 +20,60 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import traceback
-import importlib
-
-from libqtile.log_utils import logger
+from ..utils import safe_import as safe_import_
 
 
 def safe_import(module_name, class_name):
-    """
-    try to import a module, and if it fails because an ImporError
-    it logs on WARNING, and logs the traceback on DEBUG level
-    """
-    if type(class_name) is list:
-        for name in class_name:
-            safe_import(module_name, name)
-        return
-    package = __package__
-    # TODO: remove when we really want to drop 3.2 support
-    # python 3.2 don't set __package__
-    if not package:
-        package = __name__
-    try:
-        module = importlib.import_module(module_name, package)
-        globals()[class_name] = getattr(module, class_name)
-    except ImportError as error:
-        logger.warning("Unmet dependencies for optional Widget: '%s.%s', %s",
-                       module_name, class_name, error)
-        logger.debug("%s", traceback.format_exc())
+    safe_import_((".widget", module_name), class_name, globals())
 
 
-safe_import(".backlight", "Backlight")
-safe_import(".battery", ["Battery", "BatteryIcon"])
-safe_import(".clock", "Clock")
-safe_import(".currentlayout", ["CurrentLayout", "CurrentLayoutIcon"])
-safe_import(".currentscreen", "CurrentScreen")
-safe_import(".debuginfo", "DebugInfo")
-safe_import(".graph", ["CPUGraph", "MemoryGraph", "SwapGraph", "NetGraph",
-                       "HDDGraph", "HDDBusyGraph"])
-safe_import(".groupbox", ["AGroupBox", "GroupBox"])
-safe_import(".maildir", "Maildir")
-safe_import(".notify", "Notify")
-safe_import(".prompt", "Prompt")
-safe_import(".sensors", "ThermalSensor")
-safe_import(".sep", "Sep")
-safe_import(".she", "She")
-safe_import(".spacer", "Spacer")
-safe_import(".systray", "Systray")
-safe_import(".textbox", "TextBox")
-safe_import(".generic_poll_text", ["GenPollText", "GenPollUrl"])
-safe_import(".volume", "Volume")
-safe_import(".windowname", "WindowName")
-safe_import(".windowtabs", "WindowTabs")
-safe_import(".keyboardlayout", "KeyboardLayout")
-safe_import(".df", "DF")
-safe_import(".image", "Image")
-safe_import(".gmail_checker", "GmailChecker")
-safe_import(".clipboard", "Clipboard")
-safe_import(".countdown", "Countdown")
-safe_import(".tasklist", "TaskList")
-safe_import(".pacman", "Pacman")
-safe_import(".launchbar", "LaunchBar")
-safe_import(".canto", "Canto")
-safe_import(".mpriswidget", "Mpris")
-safe_import(".mpris2widget", "Mpris2")
-safe_import(".mpdwidget", "Mpd")
-safe_import(".mpd2widget", "Mpd2")
-safe_import(".yahoo_weather", "YahooWeather")
-safe_import(".bitcoin_ticker", "BitcoinTicker")
-safe_import(".wlan", "Wlan")
-safe_import(".khal_calendar", "KhalCalendar")
-safe_import(".imapwidget", "ImapWidget")
-safe_import(".net", "Net")
-safe_import(".keyboardkbdd", "KeyboardKbdd")
-safe_import(".cmus", "Cmus")
-safe_import(".wallpaper", "Wallpaper")
-safe_import(".check_updates", "CheckUpdates")
-safe_import(".moc", "Moc")
-safe_import(".memory", "Memory")
-safe_import(".idlerpg", "IdleRPG")
-safe_import(".pomodoro", "Pomodoro")
+safe_import("backlight", "Backlight")
+safe_import("battery", ["Battery", "BatteryIcon"])
+safe_import("clock", "Clock")
+safe_import("currentlayout", ["CurrentLayout", "CurrentLayoutIcon"])
+safe_import("currentscreen", "CurrentScreen")
+safe_import("debuginfo", "DebugInfo")
+safe_import("graph", ["CPUGraph", "MemoryGraph", "SwapGraph", "NetGraph",
+                      "HDDGraph", "HDDBusyGraph"])
+safe_import("groupbox", ["AGroupBox", "GroupBox"])
+safe_import("maildir", "Maildir")
+safe_import("notify", "Notify")
+safe_import("prompt", "Prompt")
+safe_import("sensors", "ThermalSensor")
+safe_import("sep", "Sep")
+safe_import("she", "She")
+safe_import("spacer", "Spacer")
+safe_import("systray", "Systray")
+safe_import("textbox", "TextBox")
+safe_import("generic_poll_text", ["GenPollText", "GenPollUrl"])
+safe_import("volume", "Volume")
+safe_import("windowname", "WindowName")
+safe_import("windowtabs", "WindowTabs")
+safe_import("keyboardlayout", "KeyboardLayout")
+safe_import("df", "DF")
+safe_import("image", "Image")
+safe_import("gmail_checker", "GmailChecker")
+safe_import("clipboard", "Clipboard")
+safe_import("countdown", "Countdown")
+safe_import("tasklist", "TaskList")
+safe_import("pacman", "Pacman")
+safe_import("launchbar", "LaunchBar")
+safe_import("canto", "Canto")
+safe_import("mpriswidget", "Mpris")
+safe_import("mpris2widget", "Mpris2")
+safe_import("mpdwidget", "Mpd")
+safe_import("mpd2widget", "Mpd2")
+safe_import("yahoo_weather", "YahooWeather")
+safe_import("bitcoin_ticker", "BitcoinTicker")
+safe_import("wlan", "Wlan")
+safe_import("khal_calendar", "KhalCalendar")
+safe_import("imapwidget", "ImapWidget")
+safe_import("net", "Net")
+safe_import("keyboardkbdd", "KeyboardKbdd")
+safe_import("cmus", "Cmus")
+safe_import("wallpaper", "Wallpaper")
+safe_import("check_updates", "CheckUpdates")
+safe_import("moc", "Moc")
+safe_import("memory", "Memory")
+safe_import("idlerpg", "IdleRPG")
+safe_import("pomodoro", "Pomodoro")

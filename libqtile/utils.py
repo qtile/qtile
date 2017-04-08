@@ -23,6 +23,8 @@ import os
 import operator
 import sys
 import warnings
+import traceback
+import importlib
 
 import six
 from six.moves import reduce
@@ -240,3 +242,27 @@ def describe_attributes(obj, attrs, func=None):
             pairs.append('%s=%s' % (attr, value))
 
     return ', '.join(pairs)
+
+
+def safe_import(module_names, class_name, globals_):
+    """
+    Try to import a module, and if it fails because an ImporError
+    it logs on WARNING, and logs the traceback on DEBUG level
+    """
+    module_path = '.'.join(module_names)
+    if type(class_name) is list:
+        for name in class_name:
+            safe_import(module_names, name, globals_)
+        return
+    package = __package__
+    # TODO: remove when we really want to drop 3.2 support
+    # python 3.2 don't set __package__
+    if not package:
+        package = __name__
+    try:
+        module = importlib.import_module(module_path, package)
+        globals_[class_name] = getattr(module, class_name)
+    except ImportError as error:
+        logger.warning("Unmet dependencies for optional Widget: '%s.%s', %s",
+                       module_path, class_name, error)
+        logger.debug("%s", traceback.format_exc())
