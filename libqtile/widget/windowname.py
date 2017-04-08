@@ -42,7 +42,7 @@ class WindowName(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        hook.subscribe.window_name_change(self.update)
+        hook.subscribe.client_name_updated(self.update)
         hook.subscribe.focus_change(self.update)
         hook.subscribe.float_change(self.update)
 
@@ -51,7 +51,7 @@ class WindowName(base._TextBox):
             if self.for_current_screen:
                 self.update()
 
-    def update(self):
+    def update(self, *args):
         if self.for_current_screen:
             w = self.qtile.currentScreen.group.currentWindow
         else:

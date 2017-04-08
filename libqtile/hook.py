@@ -159,10 +159,13 @@ class Subscribe(object):
     def window_name_change(self, func):
         """Called whenever a windows name changes
 
+        Deprecated: use client_name_updated
         **Arguments**
 
         None
         """
+        msg = 'window_name_change is deprecated, use client_name_updated instead'
+        logger.warning(msg, DeprecationWarning)
         return self._subscribe("window_name_change", func)
 
     def client_new(self, func):
@@ -245,7 +248,9 @@ class Subscribe(object):
     def client_name_updated(self, func):
         """Called when the client name changes
 
-        Never fires
+        **Arguments**
+
+            * ``window.Window`` of client with updated name
         """
         return self._subscribe("client_name_updated", func)
 
@@ -361,3 +366,9 @@ def fire(event, *args, **kwargs):
             i(*args, **kwargs)
         except:
             logger.exception("Error in hook %s", event)
+
+@subscribe.client_name_updated
+def _fire_window_name_change(window):
+    "This should eventually be removed"
+    fire("window_name_change")
+
