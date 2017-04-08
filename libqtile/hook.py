@@ -371,4 +371,3 @@ def fire(event, *args, **kwargs):
 def _fire_window_name_change(window):
     "This should eventually be removed"
     fire("window_name_change")
-
