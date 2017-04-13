@@ -84,6 +84,22 @@ class Mpris2(base._TextBox):
             'org.freedesktop.DBus.Properties', self.objname,
             '/org/mpris/MediaPlayer2')
 
+    def _configure(self, qtile, bar):
+        base._TextBox._configure(self, qtile, bar)
+
+        # we don't need to reconnect all the dbus stuff if we already
+        # connected it.
+        if self.dbus_loop is not None:
+            return
+
+        # we need a main loop to get event signals
+        # we just piggyback on qtile's main loop
+        self.dbus_loop = DBusGMainLoop()
+        self.bus = dbus.SessionBus(mainloop=self.dbus_loop)
+        self.bus.add_signal_receiver(self.update, 'PropertiesChanged',
+            'org.freedesktop.DBus.Properties', self.objname,
+            '/org/mpris/MediaPlayer2')
+
     def update(self, interface_name, changed_properties, invalidated_properties):
         """http://specifications.freedesktop.org/mpris-spec/latest/Track_List_Interface.html#Mapping:Metadata_Map"""
         if not self.configured:
