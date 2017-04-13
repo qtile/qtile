@@ -40,6 +40,7 @@ class Zoomy(_SimpleLayoutBase):
         ("property_small", "0.1", "Property value to set on zoomed window"),
         ("property_big", "1.0", "Property value to set on normal window"),
         ("margin", 0, "Margin of the layout"),
+        ("name", "zoomy", "Name of this layout."),
     ]
 
     def __init__(self, **config):

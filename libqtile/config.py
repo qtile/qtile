@@ -440,9 +440,12 @@ class Group(object):
         this will be ``exec()`` d when the group is created, you can pass
         either a program name or a list of programs to ``exec()``
     layout : string
-        the default layout for this group (e.g. 'max' or 'stack')
+        the name of default layout for this group (e.g. 'max' or 'stack').
+        This is the name specified for a particular layout in config.py
+        or if not defined it defaults in general the class name in all lower case.
     layouts : list
-        the group layouts list overriding global layouts
+        the group layouts list overriding global layouts.
+        Use this to define a separate list of layouts for this particular group.
     persist : boolean
         should this group stay alive with no member windows?
     init : boolean

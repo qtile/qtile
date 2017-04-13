@@ -146,7 +146,7 @@ class MonadTall(_SimpleLayoutBase):
         ("border_normal", "#000000", "Border colour for un-focused windows."),
         ("border_width", 2, "Border width."),
         ("single_border_width", None, "Border width for single window"),
-        ("name", "xmonad-tall", "Name of this layout."),
+        ("name", "xmonadtall", "Name of this layout."),
         ("margin", 0, "Margin of the layout"),
         ("ratio", .5,
             "The percent of the screen-space the master pane should occupy "
