@@ -205,6 +205,10 @@ class MonadTall(_SimpleLayoutBase):
 
     def cmd_normalize(self, redraw=True):
         "Evenly distribute screen-space among secondary clients"
+        # if we have only two clients - reset layout
+        if len(self.clients) == 2:
+            self.ratio = self._med_ratio
+
         n = len(self.clients) - 1  # exclude main client, 0
         # if secondary clients exist
         if n > 0 and self.group.screen is not None:
