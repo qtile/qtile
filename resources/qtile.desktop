@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Qtile
 Comment=Qtile Session
-Exec=qtile
+Exec=qtile-session
 Type=Application
 Keywords=wm;tiling
