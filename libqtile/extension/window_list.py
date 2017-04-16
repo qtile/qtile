@@ -40,23 +40,32 @@ class WindowList(Dmenu):
 
     def list_windows(self):
         id = 0
-        self.wins = []
-        self.id_map = {}
+        self.item_to_win = {}
         for win in self.qtile.windowMap.values():
             if win.group:
-                self.wins.append(self.item_format.format(
-                    group=win.group.name, id=id, window=win.name))
-                self.id_map[id] = win
+                item = self.item_format.format(
+                    group=win.group.name, id=id, window=win.name)
+                self.item_to_win[item] = win
                 id += 1
 
     def run(self):
         self.list_windows()
-        out = super(WindowList, self).run(items=self.wins)
-        if not out:
+        out = super(WindowList, self).run(items=self.item_to_win.keys())
+
+        try:
+            sout = out.rstrip('\n')
+        except AttributeError:
+            # out is not a string (for example it's a Popen object returned
+            # by super(WindowList, self).run() when there are no menu items to
+            # list
             return
 
-        id = int(re.match(b"^\d+", out).group())
-        win = self.id_map[id]
+        try:
+            win = self.item_to_win[sout]
+        except KeyError:
+            # The selected window got closed while the menu was open?
+            return
+
         screen = self.qtile.currentScreen
         screen.setGroup(win.group)
         win.group.focus(win)

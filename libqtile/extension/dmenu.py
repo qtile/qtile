@@ -100,7 +100,7 @@ class Dmenu(base.RunCommand):
 
         if items:
             input_str = "\n".join([six.u(i) for i in items]) + "\n"
-            return proc.communicate(str.encode(input_str))[0]
+            return proc.communicate(str.encode(input_str))[0].decode('utf-8')
 
         return proc
 
