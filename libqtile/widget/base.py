@@ -280,7 +280,7 @@ class _TextBox(_Widget):
     """
     orientations = ORIENTATION_HORIZONTAL
     defaults = [
-        ("font", "Arial", "Default font"),
+        ("font", "sans", "Default font"),
         ("fontsize", None, "Font size. Calculated if None."),
         ("padding", None, "Padding. Calculated if None."),
         ("foreground", "ffffff", "Foreground colour"),

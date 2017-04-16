@@ -328,7 +328,7 @@ class TreeTab(Layout):
         ("border_width", 2, "Width of the border"),
         ("vspace", 2, "Space between tabs"),
         ("level_shift", 8, "Shift for children tabs"),
-        ("font", "Arial", "Font"),
+        ("font", "sans", "Font"),
         ("fontsize", 14, "Font pixel size."),
         ("fontshadow", None, "font shadow color, default is None (no shadow)"),
         ("section_fontsize", 11, "Font pixel size of section label"),

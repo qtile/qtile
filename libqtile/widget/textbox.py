@@ -31,7 +31,7 @@ class TextBox(base._TextBox):
     """A flexible textbox that can be updated from bound keys, scripts, and qshell"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("font", "Arial", "Text font"),
+        ("font", "sans", "Text font"),
         ("fontsize", None, "Font pixel size. Calculated if None."),
         ("fontshadow", None, "font shadow color, default is None(no shadow)"),
         ("padding", None, "Padding left and right. Calculated if None."),
