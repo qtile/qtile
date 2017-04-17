@@ -32,6 +32,7 @@ try:
     import dbus
     from dbus import service
     from dbus.mainloop.glib import DBusGMainLoop
+    DBusGMainLoop(set_as_default=True)
 except ImportError:
     dbus = None
 
@@ -40,8 +41,10 @@ SERVICE_PATH = '/org/freedesktop/Notifications'
 
 if dbus:
     class NotificationService(service.Object):
-        def __init__(self, manager, loop):
-            bus_name = service.BusName(BUS_NAME, bus=dbus.SessionBus(mainloop=loop))
+        def __init__(self, manager):
+            bus=dbus.SessionBus()
+            bus.request_name(BUS_NAME)
+            bus_name = service.BusName(BUS_NAME, bus=bus)
             service.Object.__init__(self, bus_name, SERVICE_PATH)
             self.manager = manager
 
@@ -88,8 +91,7 @@ class NotificationManager(object):
     def service(self):
         if dbus and self._service is None:
             try:
-                dbus_loop = DBusGMainLoop()
-                self._service = NotificationService(self, dbus_loop)
+                self._service = NotificationService(self)
             except Exception:
                 logger.exception('Dbus connection failed')
                 self._service = None
