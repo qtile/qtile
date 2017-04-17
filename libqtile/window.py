@@ -359,7 +359,7 @@ class _Window(command.CommandObject):
 
     @property
     def state(self):
-        return self.window.get_wm_state()[0]
+        return self.window.get_wm_state()[0] if self.window else None
 
     @state.setter
     def state(self, val):
