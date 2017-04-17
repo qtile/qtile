@@ -230,6 +230,9 @@ class DGroups(object):
         self.sort_groups()
 
     def sort_groups(self):
+        for g in self.qtile.groups:
+            if not g.name in self.groupMap:
+                self.add_dgroup(Group(g.name, persist=False))
         self.qtile.groups.sort(key=lambda g: self.groupMap[g.name].position)
         libqtile.hook.fire("setgroup")
 
