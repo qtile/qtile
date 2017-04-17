@@ -124,7 +124,12 @@ class Columns(Layout):
 
     def info(self):
         d = Layout.info(self)
-        d["columns"] = [c.info() for c in self.columns]
+        d["clients"] = []
+        d["columns"] = []
+        for c in self.columns:
+            cinfo = c.info()
+            d["clients"].extend(cinfo['clients'])
+            d["columns"].append(cinfo)
         d["current"] = self.current
         return d
 
