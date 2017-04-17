@@ -150,6 +150,7 @@ class GroupBox(_GroupBase):
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("active", "FFFFFF", "Active group font colour"),
+        ("other_active", "FFFFFF", "Active groups on other screens"),
         ("inactive", "404040", "Inactive group font colour"),
         (
             "highlight_method",
@@ -182,6 +183,11 @@ class GroupBox(_GroupBase):
             "highlight_color",
             ["000000", "282828"],
             "Active group highlight color when using 'line' highlight method."
+        ),
+        (
+            "other_active_screen_border",
+            "999999",
+            "Border colour for group on other screen"
         ),
         (
             "urgent_alert_method",
@@ -320,7 +326,11 @@ class GroupBox(_GroupBase):
                 elif self.urgent_alert_method == 'line':
                     is_line = True
             else:
-                border = self.background or self.bar.background
+                if g.windows:
+                    text_color = self.other_active
+                    border = self.other_active_screen_border
+                else:
+                    border = self.background or self.bar.background
 
             self.drawbox(
                 offset,
