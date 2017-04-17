@@ -45,6 +45,12 @@ class WindowName(base._TextBox):
         hook.subscribe.client_name_updated(self.update)
         hook.subscribe.focus_change(self.update)
         hook.subscribe.float_change(self.update)
+        # Clear the widget if group has no window
+        @hook.subscribe.client_killed
+        def on_client_killed(window):
+            if window == self.bar.screen.group.currentWindow:
+                self.text = ""
+                self.bar.draw()
 
         @hook.subscribe.current_screen_change
         def on_screen_changed():
