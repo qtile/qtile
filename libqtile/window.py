@@ -312,6 +312,8 @@ class _Window(command.CommandObject):
         if getattr(self, 'group', None):
             self.group.layoutAll()
 
+        if h:
+            self.hints["input"] = h["input"]
         return
 
     def updateState(self):
