@@ -674,6 +674,11 @@ class Internal(_Window):
     def cmd_kill(self):
         self.kill()
 
+    def kill(self):
+        self.qtile.conn.conn.core.DestroyWindow(self.window.wid)
+
+    def cmd_kill(self):
+        self.kill()
 
 class Static(_Window):
     """An internal window, that should not be managed by qtile"""
