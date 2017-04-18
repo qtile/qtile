@@ -35,7 +35,6 @@
     complete - it only implements the subset of functionalty needed by qtile.
 """
 from __future__ import print_function, division
-
 import six
 
 from xcffib.xproto import CW, WindowClass, EventMask
@@ -131,6 +130,22 @@ WindowTypes = {
 }
 
 # http://standards.freedesktop.org/wm-spec/latest/ar01s05.html#idm139870829988448
+net_wm_states = (
+    '_NET_WM_STATE_MODAL',
+    '_NET_WM_STATE_STICKY',
+    '_NET_WM_STATE_MAXIMIZED_VERT',
+    '_NET_WM_STATE_MAXIMIZED_HORZ',
+    '_NET_WM_STATE_SHADED',
+    '_NET_WM_STATE_SKIP_TASKBAR',
+    '_NET_WM_STATE_SKIP_PAGER',
+    '_NET_WM_STATE_HIDDEN',
+    '_NET_WM_STATE_FULLSCREEN',
+    '_NET_WM_STATE_ABOVE',
+    '_NET_WM_STATE_BELOW',
+    '_NET_WM_STATE_DEMANDS_ATTENTION',
+    '_NET_WM_STATE_FOCUSED',
+)
+
 WindowStates = {
     None: 'normal',
     '_NET_WM_STATE_FULLSCREEN': 'fullscreen',
@@ -159,16 +174,6 @@ PropertyMap = {
     "_NET_WM_WINDOW_TYPE": ("CARDINAL", 32),
     # Net State
     "_NET_WM_STATE": ("ATOM", 32),
-    "_NET_WM_STATE_STICKY": ("ATOM", 32),
-    "_NET_WM_STATE_SKIP_TASKBAR": ("ATOM", 32),
-    "_NET_WM_STATE_FULLSCREEN": ("ATOM", 32),
-    "_NET_WM_STATE_MAXIMIZED_HORZ": ("ATOM", 32),
-    "_NET_WM_STATE_MAXIMIZED_VERT": ("ATOM", 32),
-    "_NET_WM_STATE_ABOVE": ("ATOM", 32),
-    "_NET_WM_STATE_BELOW": ("ATOM", 32),
-    "_NET_WM_STATE_MODAL": ("ATOM", 32),
-    "_NET_WM_STATE_HIDDEN": ("ATOM", 32),
-    "_NET_WM_STATE_DEMANDS_ATTENTION": ("ATOM", 32),
     # Xembed
     "_XEMBED_INFO": ("_XEMBED_INFO", 32),
     # ICCCM
@@ -176,6 +181,8 @@ PropertyMap = {
     # Qtile-specific properties
     "QTILE_INTERNAL": ("CARDINAL", 32)
 }
+for _name in net_wm_states:
+    PropertyMap[_name] = ('ATOM', 32)
 
 # TODO add everything required here:
 # http://standards.freedesktop.org/wm-spec/latest/ar01s03.html
@@ -200,7 +207,8 @@ SUPPORTED_ATOMS = [
     '_NET_WM_PID',
 ]
 SUPPORTED_ATOMS.extend(WindowTypes.keys())
-SUPPORTED_ATOMS.extend(key for key in WindowStates.keys() if key)
+SUPPORTED_ATOMS.extend(net_wm_states)
+# SUPPORTED_ATOMS.extend(key for key in WindowStates.keys() if key)
 
 XCB_CONN_ERRORS = {
     1: 'XCB_CONN_ERROR',
@@ -248,7 +256,6 @@ class MaskMap(object):
 
 ConfigureMasks = MaskMap(xcffib.xproto.ConfigWindow)
 AttributeMasks = MaskMap(CW)
-GCMasks = MaskMap(xcffib.xproto.GC)
 
 
 class AtomCache(object):
@@ -390,16 +397,47 @@ class XFixes(object):
                                                   self.selection_mask)
 
 
-class GC(object):
-    def __init__(self, conn, gid):
-        self.conn = conn
-        self.gid = gid
+class NetWmState(object):
+    """NetWmState is a descriptor for _NET_WM_STATE_* properties"""
+    def __init__(self, prop_name):
+        self.prop_name = prop_name
 
-    def change(self, **kwargs):
-        mask, values = GCMasks(**kwargs)
-        self.conn.conn.core.ChangeGC(self.gid, mask, values)
+    def __get__(self, xcbq_win, cls):
+        try:
+            atom = self.atom
+        except AttributeError:
+            atom = xcbq_win.conn.atoms[self.prop_name]
+            self.atom = atom
+        reply = xcbq_win.get_property('_NET_WM_STATE', 'ATOM', unpack=int)
+        if atom in reply:
+            return True
+        return False
 
+    def __set__(self, xcbq_win, value):
+        try:
+            atom = self.atom
+        except AttributeError:
+            atom = xcbq_win.conn.atoms[self.prop_name]
+            self.atom = atom
 
+        value = bool(value)
+        reply = list(xcbq_win.get_property('_NET_WM_STATE', 'ATOM', unpack=int))
+        is_set = atom in reply
+        if is_set and not value:
+            reply.remove(atom)
+            xcbq_win.set_property('_NET_WM_STATE', reply)
+        elif value and not is_set:
+            reply.append(atom)
+            xcbq_win.set_property('_NET_WM_STATE', reply)
+        return
+
+def _add_net_wm_state(cls):
+    for name in net_wm_states:
+        lower_name = name.lstrip('_').lower()
+        setattr(cls, lower_name, NetWmState(name))
+    return cls
+
+@_add_net_wm_state
 class Window(object):
     def __init__(self, conn, wid):
         self.conn = conn
@@ -712,12 +750,6 @@ class Window(object):
 
     def get_attributes(self):
         return self.conn.conn.core.GetWindowAttributes(self.wid).reply()
-
-    def create_gc(self, **kwargs):
-        gid = self.conn.conn.generate_id()
-        mask, values = GCMasks(**kwargs)
-        self.conn.conn.core.CreateGC(gid, self.wid, mask, values)
-        return GC(self.conn, gid)
 
     def ungrab_key(self, key, modifiers):
         """Passing None means any key, or any modifier"""

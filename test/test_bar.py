@@ -150,7 +150,6 @@ def test_textbox(qtile):
     assert qtile.c.widget["text"].get() == s
     qtile.c.group["Pppy"].toscreen()
     qtile.c.widget["text"].set_font(fontsize=12)
-    time.sleep(3)
 
 
 @gb_config

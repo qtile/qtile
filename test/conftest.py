@@ -47,17 +47,58 @@ HEIGHT = 600
 SECOND_WIDTH = 640
 SECOND_HEIGHT = 480
 
-max_sleep = 10
-sleep_time = 0.05
+max_sleep = 20.0
+sleep_time = 0.1
+class retry:
+    def __init__(self, fail_msg='retry failed!', ignore_exceptions=(),
+                 dt=sleep_time, tmax=max_sleep):
+        self.fail_msg = fail_msg
+        self.ignore_exceptions = ignore_exceptions
+        self.dt = dt
+        self.tmax = tmax
 
+    def __call__(self, fn):
+        import time
+        from functools import wraps
+
+        @wraps(fn)
+        def wrapper(*args, **kwargs):
+            _time, _sleep = time.time, time.sleep
+            tmax = self.tmax
+            tmax += _time()
+            dt = self.dt
+            ignore_exceptions = self.ignore_exceptions
+
+            while _time() <= tmax:
+                try:
+                    return fn(*args, **kwargs)
+                except ignore_exceptions:
+                    pass
+                _sleep(dt)
+                dt *= 1.5
+            raise AssertionError(self.fail_msg)
+        return wrapper
+
+
+@retry(ignore_exceptions=(xcffib.ConnectionException,))
+def can_connect_x11(disp=':0'):
+    conn = xcffib.connect(display=disp)
+    conn.disconnect()
+    return True
+
+@retry(ignore_exceptions=(libqtile.ipc.IPCError,))
+def can_connect_qtile(socket_path):
+    client = libqtile.command.Client(socket_path)
+    val = client.status()
+    if val == 'OK':
+        return True
+    return False
 
 def _find_display():
     """Returns the next available display"""
-    display = 1
-    while os.path.exists("/tmp/.X11-unix/X{0}".format(display)):
-        display += 1
-    return display
-
+    from xvfbwrapper import Xvfb
+    xvfb = Xvfb()
+    return xvfb._get_next_unused_display()
 
 def whereis(program):
     """Search PATH for executable"""
@@ -148,14 +189,8 @@ class Xephyr(object):
 
             start = time.time()
             # wait for X display to come up
-            while self.proc.poll() is None and time.time() < start + max_sleep:
-                try:
-                    conn = xcffib.connect(self.display)
-                except xcffib.ConnectionException:
-                    time.sleep(sleep_time)
-                else:
-                    conn.disconnect()
-                    return
+            if can_connect_x11(self.display):
+                return
         else:
             # we wern't able to get a display up
             self.display = None
@@ -209,33 +244,13 @@ class Qtile(object):
         self.proc.start()
 
         # First, wait for socket to appear
-        start = time.time()
-        while time.time() < start + max_sleep:
-            if os.path.exists(self.sockfile):
-                break
-
-            if rpipe.poll(sleep_time):
-                error = rpipe.recv()
-                raise AssertionError("Error launching Qtile, traceback:\n%s" % error)
-        else:
-            raise AssertionError("Error launching Qtile, socket never came up")
-
-        self.c = libqtile.command.Client(self.sockfile)
-
-        # Next, wait for server to come up
-        start = time.time()
-        while time.time() < start + max_sleep:
-            try:
-                if self.c.status() == "OK":
-                    break
-            except libqtile.ipc.IPCError:
-                pass
-
-            if rpipe.poll(sleep_time):
-                error = rpipe.recv()
-                raise AssertionError("Error launching Qtile, traceback:\n%s" % error)
-        else:
-            raise AssertionError("Error launching Qtile, quit without exception")
+        if can_connect_qtile(self.sockfile):
+            self.c = libqtile.command.Client(self.sockfile)
+            return
+        if rpipe.poll(sleep_time):
+            error = rpipe.recv()
+            raise AssertionError("Error launching Qtile, traceback:\n%s" % error)
+        raise AssertionError("Error launching Qtile")
 
     def create_manager(self, config_class):
         """Create a Qtile manager instance in this thread
@@ -284,23 +299,21 @@ class Qtile(object):
         """
         if not args:
             raise AssertionError("Trying to run nothing! (missing arguments)")
-        start = len(self.c.windows())
-
+        client = self.c
+        start = len(client.windows())
         proc = subprocess.Popen(args, env={"DISPLAY": self.display})
-
-        while proc.poll() is None:
-            try:
-                if len(self.c.windows()) > start:
-                    break
-            except RuntimeError:
-                pass
-            time.sleep(sleep_time)
+        @retry(ignore_exceptions=(RuntimeError,))
+        def success():
+            while proc.poll() is None:
+                if len(client.windows()) > start:
+                    return True
+            return False
+        if success():
+            self.testwindows.append(proc)
         else:
             proc.terminate()
             proc.wait()
             raise AssertionError("Window never appeared...")
-
-        self.testwindows.append(proc)
         return proc
 
     def kill_window(self, proc):
@@ -310,18 +323,17 @@ class Qtile(object):
         ensuring that qtile removes it from the `windows` attribute.
         """
         assert proc in self.testwindows, "Given process is not a spawned window"
-
         start = len(self.c.windows())
-
         proc.terminate()
         proc.wait()
         self.testwindows.remove(proc)
-
-        for _ in range(100):
+        @retry(ignore_exceptions=(ValueError,))
+        def success():
             if len(self.c.windows()) < start:
-                break
-            time.sleep(sleep_time)
-        else:
+                return True
+            raise ValueError('window is still in client list!')
+
+        if not success():
             raise AssertionError("Window could not be killed...")
 
     def testWindow(self, name):
@@ -368,27 +380,12 @@ def xvfb():
     display = ":{:d}".format(_find_display())
     args = ["Xvfb", display, "-screen", "0", "800x600x16"]
     proc = subprocess.Popen(args)
-
-    try:
-        # wait for X display to come up
-        start = time.time()
-        while proc.poll() is None and time.time() < start + max_sleep:
-            try:
-                conn = xcffib.connect(display)
-            except xcffib.ConnectionException:
-                time.sleep(sleep_time)
-            else:
-                conn.disconnect()
-                break
-        else:
-            raise OSError("Xvfb did not come up")
-
-        os.environ["DISPLAY"] = display
-
-        yield
-    finally:
-        proc.terminate()
-        proc.wait()
+    if not can_connect_x11(display):
+        raise OSError("Xvfb did not come up")
+    os.environ['DISPLAY'] = display
+    yield
+    proc.terminate()
+    proc.wait()
 
 
 @pytest.yield_fixture(scope="function")

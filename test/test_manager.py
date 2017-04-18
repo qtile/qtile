@@ -39,7 +39,7 @@ import libqtile.config
 import libqtile.hook
 import libqtile.confreader
 
-from .conftest import whereis, BareConfig, no_xinerama
+from .conftest import whereis, BareConfig, no_xinerama, retry
 
 
 class ManagerConfig(object):
@@ -175,17 +175,15 @@ def test_togroup(qtile):
 @manager_config
 def test_resize(qtile):
     self = qtile
-
     self.c.screen[0].resize(x=10, y=10, w=100, h=100)
-    for _ in range(10):
-        time.sleep(0.1)
+    @retry(ignore_exceptions=(AssertionError), fail_msg="Screen didn't resize")
+    def run():
         d = self.c.screen[0].info()
-
-        if d["width"] == d["height"] == 100:
-            break
-    else:
-        raise AssertionError("Screen didn't resize")
-    assert d["x"] == d["y"] == 10
+        assert d['width'] == 100
+        assert d['height'] == 100
+        return d
+    d = run()
+    assert d['x'] == d['y'] == 10
 
 
 @no_xinerama
@@ -228,6 +226,10 @@ def test_spawn_list(qtile):
     # Spawn something with a pid greater than init's
     assert int(qtile.c.spawn(["echo", "true"])) > 1
 
+@retry(ignore_exceptions=(AssertionError,), fail_msg='Window did not die!')
+def assert_has_n_windows(client, n_windows=0):
+    assert len(client.windows()) == n_windows
+    return True
 
 @manager_config
 @no_xinerama
@@ -236,13 +238,7 @@ def test_kill_window(qtile):
     qtile.testwindows = []
     qtile.c.window[qtile.c.window.info()["id"]].kill()
     qtile.c.sync()
-    for _ in range(20):
-        time.sleep(0.1)
-        if not qtile.c.windows():
-            break
-    else:
-        raise AssertionError("Window did not die...")
-
+    assert_has_n_windows(qtile.c, 0)
 
 @manager_config
 @no_xinerama
@@ -260,12 +256,7 @@ def test_kill_other(qtile):
     assert len(self.c.windows()) == 2
 
     self.kill_window(one)
-    for _ in range(10):
-        time.sleep(0.1)
-        if len(self.c.windows()) == 1:
-            break
-    else:
-        raise AssertionError("window did not die")
+    assert_has_n_windows(self.c, 1)
 
     assert self.c.window.info()["name"] == "two"
     assert self.c.window.info()["width"] == 798
@@ -771,13 +762,14 @@ def test_rotate(qtile):
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE
     )
-    for _ in range(10):
-        time.sleep(0.1)
+
+    @retry(ignore_exceptions=(AssertionError,), fail_msg="Screen did not rotate")
+    def run():
         s = self.c.screens()[0]
-        if s["width"] == height and s["height"] == width:
-            break
-    else:
-        raise AssertionError("Screen did not rotate")
+        assert s['width'] == height
+        assert s['height'] == width
+        return True
+    run()
 
 
 # TODO: see note on test_resize
@@ -794,14 +786,13 @@ def test_resize_(qtile):
             "-display", self.display
         ]
     )
-    for _ in range(10):
-        time.sleep(0.1)
+    @retry(ignore_exceptions=(AssertionError,), fail_msg="Screen did not resize")
+    def run():
         d = self.c.screen.info()
-
-        if d["width"] == 480 and d["height"] == 640:
-            break
-    else:
-        raise AssertionError("Screen did not resize")
+        assert d['width'] == 480
+        assert d['height'] == 640
+        return True
+    run()
 
 
 @manager_config
@@ -843,12 +834,7 @@ def test_xterm_kill_window(qtile):
     self.testXterm()
     self.c.window.kill()
     self.c.sync()
-    for _ in range(10):
-        time.sleep(0.1)
-        if not self.c.windows():
-            break
-    else:
-        raise AssertionError("xterm did not die")
+    assert_has_n_windows(self.c, 0)
 
 
 @pytest.mark.parametrize("qtile", [BareConfig, ManagerConfig], indirect=True)
