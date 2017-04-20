@@ -291,13 +291,12 @@ class RatioTile(_SimpleLayoutBase):
         win.unhide()
 
     def info(self):
+        d = _SimpleLayoutBase.info(self)
         focused = self.clients.current_client
-        return {
-            'clients': [x.name for x in self.clients],
-            'ratio': self.ratio,
-            'focused': focused.name if focused else None,
-            'layout_info': self.layout_info
-        }
+        d['ratio'] = self.ratio,
+        d['focused'] = focused.name if focused else None,
+        d['layout_info'] = self.layout_info
+        return d
 
     def shuffle(self, function):
         if self.clients:
