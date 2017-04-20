@@ -31,6 +31,7 @@ from . import utils
 from . import xcbq
 
 from six import MAXSIZE
+from functools import reduce
 import warnings
 
 
@@ -570,7 +571,33 @@ class Match(object):
     def __repr__(self):
         return '<Match %s>' % self._rules
 
+class AndMatch(object):
+    """And operator for the Match
 
+    Sometimes multiple one will need multiple matches combined with an and. This class provides this possibility.
+
+    Parameters
+    ==========
+    matches:
+        matches that are combined with and.
+    """
+    def __init__(self, *matches):
+        self.matches = []
+        self.matches.extend(matches)
+
+    def compare(self, client):
+        return reduce(lambda x,y: x and y, self.matches)
+
+    def map(self, callback, clients):
+        for c in clients:
+            if self.compare(c):
+                callback(c)
+
+    def __repr__(self):
+        _subrepr = map(lambda x: repr(x), self.matches)
+        return '<' + '&&'.join(_subrepr) + ">" 
+    
+    
 class Rule(object):
     """How to act on a Match
 
