@@ -230,8 +230,11 @@ class DGroups(object):
         self.sort_groups()
 
     def sort_groups(self):
-        self.qtile.groups.sort(key=lambda g: self.groupMap[g.name].position)
-        libqtile.hook.fire("setgroup")
+        grps = self.qtile.groups
+        sorted_grps = sorted(grps, key=lambda g: self.groupMap[g.name].position)
+        if grps != sorted_grps:
+            self.qtile.groups = sorted_grps
+            libqtile.hook.fire("changegroup")
 
     def _del(self, client):
         group = client.group
