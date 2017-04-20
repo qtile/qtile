@@ -571,6 +571,32 @@ class Match(object):
         return '<Match %s>' % self._rules
 
 
+class AndMatch(object):
+    """Combines multiple Match-Objects with logical &&-operation
+
+    Parameters
+    ==========
+    *matches:
+        Match-objects for combining
+    """
+    def __init__(self, *matches):
+        self.matches = []
+        self.matches.extend(matches)
+
+    def compare(self, client):
+        _tmp_bool = map(lambda x: x.compare(client), self.matches)
+        return all(_tmp_bool)
+
+    def map(self, callback, clients):
+        for c in clients:
+            if self.compare(c):
+                callback(c)
+
+    def __repr__(self):
+        _tmp_repr = map(repr, self.matches)
+        return '<{}>'.format('&&'.join(_tmp_repr))
+
+
 class Rule(object):
     """How to act on a Match
 
