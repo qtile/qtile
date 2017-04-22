@@ -26,6 +26,7 @@ class WindowList(Dmenu):
 
     defaults = [
         ("item_format", "{group}.{id}: {window}", "the format for the menu items"),
+        ("all_groups", True, "If True, list windows from all groups; otherwise only from the current group"),
     ]
 
     def __init__(self, **config):
@@ -38,7 +39,13 @@ class WindowList(Dmenu):
     def list_windows(self):
         id = 0
         self.item_to_win = {}
-        for win in self.qtile.windowMap.values():
+
+        if self.all_groups:
+            windows = self.qtile.windowMap.values()
+        else:
+            windows = self.qtile.currentGroup.windows
+
+        for win in windows:
             if win.group:
                 item = self.item_format.format(
                     group=win.group.name, id=id, window=win.name)
