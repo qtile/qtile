@@ -45,6 +45,10 @@ def assertDimensions(self, x, y, w, h, win=None):
 
 
 def assertFocusPath(self, *names):
+    """
+    Asserts that subsequent calls to next_window() focus the open windows in
+    the given order (and prev_window() in the reverse order)
+    """
     for i in names:
         self.c.group.next_window()
         assertFocused(self, i)
@@ -60,3 +64,22 @@ def assertFocusPath(self, *names):
     for i in reversed(names):
         assertFocused(self, i)
         self.c.group.prev_window()
+
+
+def assertFocusPathUnordered(self, *names):
+    """
+    Wrapper of assertFocusPath that allows the actual focus path to be
+    different from the given one, as long as:
+    1) the focus order is always the same at every forward cycle
+    2) the focus order is always the opposite at every reverse cycle
+    3) all the windows are selected once and only once at every cycle
+    """
+    unordered_names = list(names)
+    ordered_names = []
+    while unordered_names:
+        self.c.group.next_window()
+        wname = self.c.window.info()['name']
+        assert wname in unordered_names
+        unordered_names.remove(wname)
+        ordered_names.append(wname)
+    assertFocusPath(ordered_names)
