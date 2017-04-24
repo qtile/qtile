@@ -116,6 +116,41 @@ def test_focus_cycle(qtile):
 
 
 @each_layout_config
+def test_focus_back(qtile):
+    # No exception must be raised without windows
+    qtile.c.group.focus_back()
+
+    # Nothing must happen with only one window
+    one = qtile.testWindow("one")
+    qtile.c.group.focus_back()
+    assertFocused(qtile, "one")
+
+    # 2 windows
+    two = qtile.testWindow("two")
+    assertFocused(qtile, "two")
+    qtile.c.group.focus_back()
+    assertFocused(qtile, "one")
+    qtile.c.group.focus_back()
+    assertFocused(qtile, "two")
+
+    # Float a window
+    three = qtile.testWindow("three")
+    qtile.c.group.focus_back()
+    assertFocused(qtile, "two")
+    qtile.c.window.toggle_floating()
+    qtile.c.group.focus_back()
+    assertFocused(qtile, "three")
+
+    # If the previous window is killed, the further previous one must be focused
+    four = qtile.testWindow("four")
+    qtile.kill_window(two)
+    qtile.kill_window(three)
+    assertFocused(qtile, "four")
+    qtile.c.group.focus_back()
+    assertFocused(qtile, "one")
+
+
+@each_layout_config
 def test_remove(qtile):
     one = qtile.testWindow("one")
     two = qtile.testWindow("two")

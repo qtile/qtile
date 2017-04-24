@@ -454,6 +454,21 @@ class _Group(command.CommandObject):
                 self.layout.focus_last()
         self.focus(nxt, True)
 
+    def cmd_focus_back(self):
+        """
+        Focus the window that had focus before the current one got it.
+
+        Repeated calls to this function would basically continuously switch
+        between the last two focused windows. Do nothing if less than 2
+        windows ever received focus.
+        """
+        try:
+            win = self.focusHistory[-2]
+        except IndexError:
+            pass
+        else:
+            self.focus(win)
+
     def cmd_focus_by_name(self, name):
         """
         Focus the first window with the given name. Do nothing if the name is
