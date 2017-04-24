@@ -274,6 +274,127 @@ def test_remove(qtile):
     assert qtile.c.window.info()['name'] in qtile.c.layout.info()['clients']
 
 
+@each_layout_config
+def test_remove_floating(qtile):
+    one = qtile.testWindow("one")
+    two = qtile.testWindow("two")
+    float1 = qtile.testDialog("float1")
+    assertFocused(qtile, "float1")
+    assert set(qtile.c.layout.info()['clients']) == {"one", "two"}
+    assert qtile.c.group.info()['focusHistory'] == ["one", "two", "float1"]
+
+    # Removing a focused floating window must focus the one that was focused before
+    qtile.kill_window(float1)
+    assertFocused(qtile, "two")
+    assert qtile.c.group.info()['focusHistory'] == ["one", "two"]
+
+    float2 = qtile.testDialog("float2")
+    assertFocused(qtile, "float2")
+    assert qtile.c.group.info()['focusHistory'] == ["one", "two", "float2"]
+
+    # Removing a non-focused floating window must not change the current focus
+    qtile.c.group.focus_by_name("two")
+    qtile.kill_window(float2)
+    assertFocused(qtile, "two")
+    assert qtile.c.group.info()['focusHistory'] == ["one", "two"]
+
+    # Add more windows and shuffle the focus order
+    three = qtile.testWindow("three")
+    float3 = qtile.testDialog("float3")
+    qtile.c.group.focus_by_name("one")
+    float4 = qtile.testDialog("float4")
+    float5 = qtile.testDialog("float5")
+    qtile.c.group.focus_by_name("three")
+    qtile.c.group.focus_by_name("float3")
+    assert qtile.c.group.info()['focusHistory'] == ["two", "one", "float4",
+                                                    "float5", "three", "float3"]
+
+    qtile.kill_window(one)
+    assertFocused(qtile, "float3")
+    assert qtile.c.group.info()['focusHistory'] == ["two", "float4",
+                                                    "float5", "three", "float3"]
+
+    qtile.kill_window(float5)
+    assertFocused(qtile, "float3")
+    assert qtile.c.group.info()['focusHistory'] == ["two", "float4", "three", "float3"]
+
+    # The focus must be given to the previous window even if it's floating
+    qtile.c.group.focus_by_name("float4")
+    assert qtile.c.group.info()['focusHistory'] == ["two", "three", "float3", "float4"]
+    qtile.kill_window(float4)
+    assertFocused(qtile, "float3")
+    assert qtile.c.group.info()['focusHistory'] == ["two", "three", "float3"]
+
+    four = qtile.testWindow("four")
+    float6 = qtile.testDialog("float6")
+    five = qtile.testWindow("five")
+    qtile.c.group.focus_by_name("float3")
+    assert qtile.c.group.info()['focusHistory'] == ["two", "three", "four",
+                                                    "float6", "five", "float3"]
+
+    # Killing several unfocused windows before the current one, and then
+    # killing the current window, must focus the remaining most recently
+    # focused window
+    qtile.kill_window(five)
+    qtile.kill_window(four)
+    qtile.kill_window(float6)
+    assert qtile.c.group.info()['focusHistory'] == ["two", "three", "float3"]
+    qtile.kill_window(float3)
+    assertFocused(qtile, "three")
+    assert qtile.c.group.info()['focusHistory'] == ["two", "three"]
+
+
+@each_layout_config
+def test_desktop_notifications(qtile):
+    # Unlike normal floating windows such as dialogs, notifications don't steal
+    # focus when they spawn, so test them separately
+
+    # A notification fired in an empty group must not take focus
+    notif1 = qtile.testNotification("notif1")
+    assert qtile.c.group.info()['focus'] is None
+    qtile.kill_window(notif1)
+
+    # A window is spawned while a notification is displayed
+    notif2 = qtile.testNotification("notif2")
+    one = qtile.testWindow("one")
+    assert qtile.c.group.info()['focusHistory'] == ["one"]
+    qtile.kill_window(notif2)
+
+    # Another notification is fired, but the focus must not change
+    notif3 = qtile.testNotification("notif3")
+    assertFocused(qtile, 'one')
+    qtile.kill_window(notif3)
+
+    # Complicate the scenario with multiple windows and notifications
+
+    dialog1 = qtile.testDialog("dialog1")
+    two = qtile.testWindow("two")
+    notif4 = qtile.testNotification("notif4")
+    notif5 = qtile.testNotification("notif5")
+    assert qtile.c.group.info()['focusHistory'] == ["one", "dialog1", "two"]
+
+    dialog2 = qtile.testDialog("dialog2")
+    qtile.kill_window(notif5)
+    three = qtile.testWindow("three")
+    qtile.kill_window(one)
+    qtile.c.group.focus_by_name("two")
+    notif6 = qtile.testNotification("notif6")
+    notif7 = qtile.testNotification("notif7")
+    qtile.kill_window(notif4)
+    notif8 = qtile.testNotification("notif8")
+    assert qtile.c.group.info()['focusHistory'] == ["dialog1", "dialog2",
+                                                    "three", "two"]
+
+    dialog3 = qtile.testDialog("dialog3")
+    qtile.kill_window(dialog1)
+    qtile.kill_window(dialog2)
+    qtile.kill_window(notif6)
+    qtile.c.group.focus_by_name("three")
+    qtile.kill_window(notif7)
+    qtile.kill_window(notif8)
+    assert qtile.c.group.info()['focusHistory'] == ["two", "dialog3", "three"]
+
+
 @all_layouts_config
 def test_cycle_layouts(qtile):
     qtile.testWindow("one")
