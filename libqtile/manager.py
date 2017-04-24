@@ -1829,6 +1829,13 @@ class Qtile(command.CommandObject):
         tracemalloc.take_snapshot().dump(malloc_dump)
         return [True, malloc_dump]
 
+    def cmd_get_test_data(self):
+        """
+        Returns any content arbitrarily set in the self.test_data attribute.
+        Useful in tests.
+        """
+        return self.test_data
+
     def cmd_run_extention(self, cls):
         """
         Deprecated alias for cmd_run_extension()

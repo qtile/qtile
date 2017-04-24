@@ -80,8 +80,26 @@ class AllLayouts(AllLayoutsConfig):
                in AllLayoutsConfig.iter_layouts()]
 
 
+class AllLayoutsConfigEvents(AllLayoutsConfig):
+    """
+    Extends AllLayoutsConfig to test events.
+    """
+    def main(self, c):
+        # TODO: Test more events
+
+        c.test_data = {
+            'focus_change': 0,
+        }
+
+        def handle_focus_change():
+            c.test_data['focus_change'] += 1
+
+        libqtile.hook.subscribe.focus_change(handle_focus_change)
+
+
 each_layout_config = pytest.mark.parametrize("qtile", AllLayoutsConfig.generate(), indirect=True)
 all_layouts_config = pytest.mark.parametrize("qtile", [AllLayouts], indirect=True)
+each_layout_config_events = pytest.mark.parametrize("qtile", AllLayoutsConfigEvents.generate(), indirect=True)
 
 
 @each_layout_config
@@ -148,6 +166,69 @@ def test_focus_back(qtile):
     assertFocused(qtile, "four")
     qtile.c.group.focus_back()
     assertFocused(qtile, "one")
+
+
+# TODO: Test more events
+@each_layout_config_events
+def test_focus_change_event(qtile):
+    # Test that the correct number of focus_change events are fired e.g. when
+    # opening, closing or switching windows.
+    # If for example a layout explicitly fired a focus_change event even though
+    # group._Group.focus() or group._Group.remove() already fire one, the other
+    # installed layouts would wrongly react to it and cause misbehaviour.
+    # In short, this test prevents layouts from influencing each other in
+    # unexpected ways.
+
+    # TODO: Why does it start with 2?
+    assert qtile.c.get_test_data()['focus_change'] == 2
+
+    # Spawning a window must fire only 1 focus_change event
+    one = qtile.testWindow("one")
+    assert qtile.c.get_test_data()['focus_change'] == 3
+    two = qtile.testWindow("two")
+    assert qtile.c.get_test_data()['focus_change'] == 4
+    three = qtile.testWindow("three")
+    assert qtile.c.get_test_data()['focus_change'] == 5
+
+    # Switching window must fire only 1 focus_change event
+    assertFocused(qtile, "three")
+    qtile.c.group.focus_by_name("one")
+    assert qtile.c.get_test_data()['focus_change'] == 6
+    assertFocused(qtile, "one")
+
+    # Focusing the current window must fire another focus_change event
+    qtile.c.group.focus_by_name("one")
+    assert qtile.c.get_test_data()['focus_change'] == 7
+
+    # Toggling a window floating should not fire focus_change events
+    qtile.c.window.toggle_floating()
+    assert qtile.c.get_test_data()['focus_change'] == 7
+    qtile.c.window.toggle_floating()
+    assert qtile.c.get_test_data()['focus_change'] == 7
+
+    # Removing the focused window must fire only 1 focus_change event
+    assertFocused(qtile, "one")
+    assert qtile.c.group.info()['focusHistory'] == ["two", "three", "one"]
+    qtile.kill_window(one)
+    assert qtile.c.get_test_data()['focus_change'] == 8
+
+    # The position where 'one' was after it was floated and unfloated
+    # above depends on the layout, so we can't predict here what window gets
+    # selected after killing it; for this reason, focus 'three' explicitly to
+    # continue testing
+    qtile.c.group.focus_by_name("three")
+    assert qtile.c.group.info()['focusHistory'] == ["two", "three"]
+    assert qtile.c.get_test_data()['focus_change'] == 9
+
+    # Removing a non-focused window must not fire focus_change events
+    qtile.kill_window(two)
+    assert qtile.c.get_test_data()['focus_change'] == 9
+    assertFocused(qtile, "three")
+
+    # Removing the last window must still generate 1 focus_change event
+    qtile.kill_window(three)
+    assert qtile.c.layout.info()['clients'] == []
+    assert qtile.c.get_test_data()['focus_change'] == 10
 
 
 @each_layout_config
