@@ -302,25 +302,36 @@ class _Group(command.CommandObject):
             self.layoutAll()
 
     def mark_floating(self, win, floating):
+        hadfocus = win == self.currentWindow
+        nextfocus = None
+
         if floating:
             if win in self.floating_layout.find_clients(self):
                 # already floating
                 pass
             else:
                 for i in self.layouts:
-                    i.remove(win)
+                    if i is self.layout:
+                        nextfocus = i.remove(win)
+                    else:
+                        i.remove(win)
                     if win is self.currentWindow:
                         i.blur()
                 self.floating_layout.add(win)
                 if win is self.currentWindow:
                     self.floating_layout.focus(win)
         else:
-            self.floating_layout.remove(win)
+            nextfocus = self.floating_layout.remove(win)
             self.floating_layout.blur()
             for i in self.layouts:
                 i.add(win)
                 if win is self.currentWindow:
                     i.focus(win)
+
+        if hadfocus and nextfocus:
+            # store nextfocus in focus history, but don't actually focus it
+            self.currentWindow = nextfocus
+            self.currentWindow = win
         self.layoutAll()
 
     def _items(self, name):
