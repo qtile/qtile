@@ -36,6 +36,8 @@
 """
 from __future__ import print_function, division
 import six
+from collections import OrderedDict
+from itertools import repeat, chain
 
 from xcffib.xproto import CW, WindowClass, EventMask
 from xcffib.xfixes import SelectionEventMask
@@ -61,26 +63,16 @@ def rdict(d):
 rkeysyms = rdict(xkeysyms.keysyms)
 
 # These should be in xpyb:
-ModMasks = {
-    "shift": 1 << 0,
-    "lock": 1 << 1,
-    "control": 1 << 2,
-    "mod1": 1 << 3,
-    "mod2": 1 << 4,
-    "mod3": 1 << 5,
-    "mod4": 1 << 6,
-    "mod5": 1 << 7,
-}
-ModMapOrder = [
-    "shift",
-    "lock",
-    "control",
-    "mod1",
-    "mod2",
-    "mod3",
-    "mod4",
-    "mod5"
-]
+ModMasks = OrderedDict((
+    ("shift", 1 << 0),
+    ("lock", 1 << 1),
+    ("control", 1 << 2),
+    ("mod1", 1 << 3),
+    ("mod2", 1 << 4),
+    ("mod3", 1 << 5),
+    ("mod4", 1 << 6),
+    ("mod5", 1 << 7),
+))
 
 AllButtonsMask = 0b11111 << 8
 ButtonMotionMask = 1 << 13
@@ -907,11 +899,12 @@ class Connection(object):
         self.first_sym_to_code = first_sym_to_code
 
     def refresh_modmap(self):
-        q = self.conn.core.GetModifierMapping().reply()
+        reply = self.conn.core.GetModifierMapping().reply()
         modmap = {}
-        for i, k in enumerate(q.keycodes):
-            l = modmap.setdefault(ModMapOrder[i // q.keycodes_per_modifier], [])
-            l.append(k)
+        names = (repeat(name, reply.keycodes_per_modifier) for name in ModMasks)
+        for name, keycode in zip(chain.from_iterable(names), reply.keycodes):
+            value = modmap.setdefault(name, [])
+            value.append(keycode)
         self.modmap = modmap
 
     def get_modifier(self, keycode):
