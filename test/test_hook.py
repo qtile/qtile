@@ -50,7 +50,8 @@ def hook_fixture():
         pass
 
     dummy = Dummy()
-    libqtile.log_utils.init_log(logging.CRITICAL)
+    libqtile.log_utils.init_log(logging.CRITICAL,
+                                path=libqtile.log_utils.TESTS_LOG_PATH)
     libqtile.hook.init(dummy)
 
     yield
