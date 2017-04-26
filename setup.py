@@ -80,25 +80,7 @@ Features
       unit-tested window mangers around.
 """
 
-if '_cffi_backend' in sys.builtin_module_names:
-    import _cffi_backend
-    requires_cffi = "cffi==" + _cffi_backend.__version__
-else:
-    requires_cffi = "cffi>=1.1.0"
-
-# PyPy < 2.6 compatibility
-if requires_cffi.startswith("cffi==0."):
-    cffi_args = dict(
-        zip_safe=False
-    )
-else:
-    cffi_args = dict(cffi_modules=[
-        'libqtile/ffi_build.py:pango_ffi',
-        'libqtile/ffi_build.py:xcursors_ffi'
-    ])
-
-dependencies = ['xcffib>=0.5.0', 'cairocffi>=0.7', 'six>=1.4.1', requires_cffi]
-
+dependencies = ['xcffib>=0.5.0', 'cairocffi>=0.7', 'six>=1.4.1', 'cffi>=1.1.0']
 if sys.version_info >= (3, 4):
     pass
 elif sys.version_info >= (3, 3):
@@ -167,5 +149,8 @@ setup(
         ('share/man/man1', ['resources/qtile.1',
                             'resources/qshell.1'])],
     cmdclass={'install': CheckCairoXcb},
-    **cffi_args
+    cffi_modules=[
+        'libqtile/ffi_build.py:pango_ffi',
+        'libqtile/ffi_build.py:xcursors_ffi',
+    ],
 )
