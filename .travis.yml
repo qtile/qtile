@@ -22,7 +22,7 @@ matrix:
         - python: pypy-5.4.1
           env: TOXENV=pypy-trollius
         - python: pypy3.3-5.2-alpha1
-          env: TOXENV=pypy-trollius
+          env: TOXENV=pypy3-trollius
 
         - python: 3.6
           env: TOXENV=packaging
@@ -37,7 +37,7 @@ matrix:
         - python: nightly
           env: TOXENV=py-nightly
         - python: pypy3.3-5.2-alpha1
-          env: TOXENV=pypy-trollius
+          env: TOXENV=pypy3-trollius
 
 cache:
   directories:
