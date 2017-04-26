@@ -80,7 +80,13 @@ Features
       unit-tested window mangers around.
 """
 
-dependencies = ['xcffib>=0.5.0', 'cairocffi>=0.7', 'six>=1.4.1', 'cffi>=1.1.0']
+if '_cffi_backend' in sys.builtin_module_names: # pypy has cffi builtin
+    import _cffi_backend
+    requires_cffi = "cffi==" + _cffi_backend.__version__
+else:
+    requires_cffi = "cffi>=1.1.0"
+
+dependencies = ['xcffib>=0.5.0', 'cairocffi>=0.7', 'six>=1.4.1', requires_cffi]
 if sys.version_info >= (3, 4):
     pass
 elif sys.version_info >= (3, 3):
