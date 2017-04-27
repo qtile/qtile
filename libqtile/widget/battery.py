@@ -63,7 +63,6 @@ class _Battery(base._TextBox):
     filenames = {}
 
     defaults = [
-        ('battery_name', 'BAT0', 'ACPI name of a battery, usually BAT0'),
         (
             'status_file',
             'status',
@@ -91,8 +90,13 @@ class _Battery(base._TextBox):
         ('update_delay', 60, 'The delay in seconds between updates'),
     ]
 
-    def __init__(self, **config):
+    def __init__(self, battery_name='BAT0', **config):
         base._TextBox.__init__(self, "BAT", bar.CALCULATED, **config)
+        self.defaults.append((
+            'battery_name',
+            battery_name,
+            'ACPI name of a battery, usually BAT0'
+        ))
         self.add_defaults(_Battery.defaults)
 
     def _load_file(self, name):
