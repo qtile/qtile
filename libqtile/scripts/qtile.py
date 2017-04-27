@@ -106,7 +106,10 @@ def make_qtile():
         config = confreader.Config.from_file(options.configfile)
     except Exception as e:
         logger.exception('Error while reading config file (%s)', e)
-        raise
+        config = confreader.Config()
+        from libqtile.widget import TextBox
+        widgets = config.screens[0].bottom.widgets
+        widgets.insert(0, TextBox('Config Err!'))
     # XXX: the import is here becouse we need to call init_log
     # before start importing stuff
     from libqtile import manager
