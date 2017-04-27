@@ -23,6 +23,7 @@
 # whose defaults depend on a reasonable locale sees something reasonable.
 import locale
 import logging
+from os import path, getenv
 
 from libqtile.log_utils import init_log, logger
 from libqtile import confreader
@@ -64,10 +65,11 @@ def make_qtile():
     parser.add_argument(
         "-c", "--config",
         action="store",
-        default=None,
+        default=path.expanduser(path.join(
+            getenv('XDG_CONFIG_HOME', '~/.config'), 'qtile', 'config.py')),
         dest="configfile",
         help='Use specified configuration file,'
-        ' "default" will load the system default config.'
+        ' "default" will load the system default config.',
     )
     parser.add_argument(
         "-s", "--socket",
@@ -101,7 +103,7 @@ def make_qtile():
     init_log(log_level=log_level)
 
     try:
-        config = confreader.File(options.configfile, is_restart=options.no_spawn)
+        config = confreader.Config.from_file(options.configfile)
     except Exception as e:
         logger.exception('Error while reading config file (%s)', e)
         raise

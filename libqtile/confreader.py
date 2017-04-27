@@ -22,110 +22,67 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 import os
 import sys
-import traceback
-import warnings
-
-from libqtile.log_utils import logger
-
 
 class ConfigError(Exception):
     pass
 
+class Config(object):
+    settings_keys = [
+        "keys",
+        "mouse",
+        "groups",
+        "dgroups_key_binder",
+        "dgroups_app_rules",
+        "follow_mouse_focus",
+        "focus_on_window_activation",
+        "cursor_warp",
+        "layouts",
+        "floating_layout",
+        "screens",
+        "main",
+        "auto_fullscreen",
+        "widget_defaults",
+        "extension_defaults",
+        "bring_front_click",
+        "wmname",
+    ]
 
-class File(object):
-    def __init__(self, fname=None, is_restart=False):
-        if not fname:
-            config_directory = os.path.expandvars('$XDG_CONFIG_HOME')
-            if config_directory == '$XDG_CONFIG_HOME':
-                # if variable wasn't set
-                config_directory = os.path.expanduser("~/.config")
-            fname = os.path.join(config_directory, "qtile", "config.py")
+    def __init__(self, **settings):
+        """Create a Config() object from settings
 
-        # We delay importing here to avoid a circular import issue when
-        # testing.
+        Only attributes found in Config.settings_keys will be added to object.
+        config attribute precedence is 1.) **settings 2.) self 3.) default_config
+        """
         from .resources import default_config
-
-        if fname == "default":
-            config = default_config
-        elif os.path.isfile(fname):
+        default = vars(default_config)
+        for key in self.settings_keys:
             try:
-                sys.path.insert(0, os.path.dirname(fname))
-                config = __import__(os.path.basename(fname)[:-3])
-            except Exception as v:
+                value = settings[key]
+            except KeyError:
+                value = getattr(self, key, default[key])
+            setattr(self, key, value)
+        self._init_deprecated(**settings)
 
-                tb = traceback.format_exc()
-
-                # On restart, user potentially has some windows open, but they
-                # screwed up their config. So as not to lose their apps, we
-                # just load the default config here.
-                if is_restart:
-                    logger.warning(
-                        'Caught exception in configuration:\n\n'
-                        '%s\n\n'
-                        'Qtile restarted with default config', tb)
-                    config = None
-                else:
-                    raise ConfigError(tb)
-        else:
-            config = None
-
-        # if you add something here, be sure to add a reasonable default value
-        # to resources/default_config.py
-        config_options = [
-            "keys",
-            "mouse",
-            "groups",
-            "dgroups_key_binder",
-            "dgroups_app_rules",
-            "follow_mouse_focus",
-            "focus_on_window_activation",
-            "cursor_warp",
-            "layouts",
-            "floating_layout",
-            "screens",
-            "main",
-            "auto_fullscreen",
-            "widget_defaults",
-            "extension_defaults",
-            "bring_front_click",
-            "wmname",
-        ]
-
-        extension_defaults = {}
-
-        # Keep supporting the deprecated 'extentions' option
-        # TODO: Remove in the future
-        if hasattr(config, "extentions"):
+    def _init_deprecated(self, extensions=None, **settings):
+        "Initialize deprecated settings."
+        if extensions:          # Deprecated in v0.10.7
+            import warnings
             warnings.warn("'extentions' is deprecated, use "
                           "'extension_defaults'", DeprecationWarning)
-            # 'dmenu' was the only supported key when the 'extentions' option
-            # was deprecated
-            extension_defaults.update(config.extentions.get('dmenu', {}))
-            del config.extentions
+            self.extension_defaults.update(extensions.get('dmenu', {}))
 
-        # Keep supporting the deprecated 'extensions' option
-        # TODO: Remove in the future
-        if hasattr(config, "extensions"):
-            warnings.warn("'extensions' is deprecated, use "
-                          "'extension_defaults'", DeprecationWarning)
-            # 'dmenu' was the only supported key when the 'extensions' option
-            # was deprecated
-            extension_defaults.update(config.extensions.get('dmenu', {}))
-            del config.extensions
-
-        if hasattr(config, "extension_defaults"):
-            # extension_defaults should override the deprecated variables
-            extension_defaults.update(config.extension_defaults)
-
-        config.extension_defaults = extension_defaults
-
-        for option in config_options:
-            if hasattr(config, option):
-                v = getattr(config, option)
-            else:
-                v = getattr(default_config, option)
-            if not hasattr(self, option):
-                setattr(self, option, v)
+    @classmethod
+    def from_file(cls, path):
+        "Create a Config() object from the python file located at path."
+        try:
+            sys.path.insert(0, os.path.dirname(path))
+            config = __import__(os.path.basename(path)[:-3])
+        except Exception:
+            import traceback
+            from .log_utils import logger
+            logger.exception('Could not import config file %r', path)
+            tb = traceback.format_exc()
+            raise ConfigError(tb)
+        return cls(**vars(config))
