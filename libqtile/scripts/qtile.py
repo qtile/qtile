@@ -68,8 +68,7 @@ def make_qtile():
         default=path.expanduser(path.join(
             getenv('XDG_CONFIG_HOME', '~/.config'), 'qtile', 'config.py')),
         dest="configfile",
-        help='Use specified configuration file,'
-        ' "default" will load the system default config.',
+        help='Use the specified configuration file',
     )
     parser.add_argument(
         "-s", "--socket",
