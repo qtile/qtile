@@ -227,18 +227,19 @@ def test_spawn_list(qtile):
     assert int(qtile.c.spawn(["echo", "true"])) > 1
 
 @retry(ignore_exceptions=(AssertionError,), fail_msg='Window did not die!')
-def assert_has_n_windows(client, n_windows=0):
-    assert len(client.windows()) == n_windows
-    return True
+def assert_window_died(client, window_info):
+    wid = window_info['id']
+    assert wid not in set([x['id'] for x in client.windows()])
 
 @manager_config
 @no_xinerama
 def test_kill_window(qtile):
     qtile.testWindow("one")
     qtile.testwindows = []
-    qtile.c.window[qtile.c.window.info()["id"]].kill()
+    window_info = qtile.c.window.info()
+    qtile.c.window[window_info["id"]].kill()
     qtile.c.sync()
-    assert_has_n_windows(qtile.c, 0)
+    assert_window_died(qtile.c, window_info)
 
 @manager_config
 @no_xinerama
@@ -248,6 +249,7 @@ def test_kill_other(qtile):
     self.c.group.setlayout("tile")
     one = self.testWindow("one")
     assert self.c.window.info()["width"] == 798
+    window_one_info = self.c.window.info()
     assert self.c.window.info()["height"] == 578
     two = self.testWindow("two")
     assert self.c.window.info()["name"] == "two"
@@ -256,7 +258,7 @@ def test_kill_other(qtile):
     assert len(self.c.windows()) == 2
 
     self.kill_window(one)
-    assert_has_n_windows(self.c, 1)
+    assert_window_died(self.c, window_one_info)
 
     assert self.c.window.info()["name"] == "two"
     assert self.c.window.info()["width"] == 798
@@ -832,9 +834,10 @@ def test_xterm_kill_window(qtile):
     self = qtile
 
     self.testXterm()
+    window_info = self.c.window.info()
     self.c.window.kill()
     self.c.sync()
-    assert_has_n_windows(self.c, 0)
+    assert_window_died(self.c, window_info)
 
 
 @pytest.mark.parametrize("qtile", [BareConfig, ManagerConfig], indirect=True)
