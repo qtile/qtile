@@ -409,6 +409,7 @@ class _Window(command.CommandObject):
             self.window.send_event(e)
         else:
             self.window.kill_client()
+        self.qtile.conn.flush()
 
     def hide(self):
         # We don't want to get the UnmapNotify for this unmap

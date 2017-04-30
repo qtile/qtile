@@ -238,7 +238,6 @@ def test_kill_window(qtile):
     qtile.testwindows = []
     window_info = qtile.c.window.info()
     qtile.c.window[window_info["id"]].kill()
-    qtile.c.sync()
     assert_window_died(qtile.c, window_info)
 
 @manager_config
@@ -836,7 +835,6 @@ def test_xterm_kill_window(qtile):
     self.testXterm()
     window_info = self.c.window.info()
     self.c.window.kill()
-    self.c.sync()
     assert_window_died(self.c, window_info)
 
 
