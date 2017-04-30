@@ -388,9 +388,11 @@ class _Window(command.CommandObject):
     opacity = property(getOpacity, setOpacity)
 
     def kill(self):
-        if "WM_DELETE_WINDOW" in self.window.get_wm_protocols():
+        xcbq_window = self.window
+        xcbq_conn = self.qtile.conn
+        if "WM_DELETE_WINDOW" in xcbq_window.get_wm_protocols():
             data = [
-                self.qtile.conn.atoms["WM_DELETE_WINDOW"],
+                xcbq_conn.atoms["WM_DELETE_WINDOW"],
                 xcffib.xproto.Time.CurrentTime,
                 0,
                 0,
@@ -401,15 +403,16 @@ class _Window(command.CommandObject):
 
             e = xcffib.xproto.ClientMessageEvent.synthetic(
                 format=32,
-                window=self.window.wid,
-                type=self.qtile.conn.atoms["WM_PROTOCOLS"],
+                window=xcbq_window.wid,
+                type=xcbq_conn.atoms["WM_PROTOCOLS"],
                 data=u
             )
 
-            self.window.send_event(e)
+            xcbq_window.send_event(e)
         else:
-            self.window.kill_client()
-        self.qtile.conn.flush()
+            xcbq_window.kill_client()
+        xcbq_conn.flush()
+        xcbq_conn.xsync()
 
     def hide(self):
         # We don't want to get the UnmapNotify for this unmap
