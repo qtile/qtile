@@ -19,6 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import division
 import os
 from . import base
 
@@ -34,9 +35,9 @@ class DF(base.ThreadedPollText):
         ('warn_space', 2, 'Warning space in scale defined by the ``measure`` option.'),
         ('visible_on_warn', True, 'Only display if warning'),
         ('measure', "G", "Measurement (G, M, B)"),
-        ('format', '{p} ({uf}{m})',
+        ('format', '{p} ({uf}{m}|{r:.0f}%)',
             'String format (p: partition, s: size, '
-            'f: free space, uf: user free space, m: measure)'),
+            'f: free space, uf: user free space, m: measure, r: ratio (uf/s))'),
         ('update_interval', 60, 'The update interval.'),
     ]
 
@@ -68,6 +69,7 @@ class DF(base.ThreadedPollText):
             text = ""
         else:
             text = self.format.format(p=self.partition, s=size, f=free,
-                    uf=self.user_free, m=self.measure)
+                    uf=self.user_free, m=self.measure,
+                    r=(size - self.user_free) / size * 100)
 
         return text
