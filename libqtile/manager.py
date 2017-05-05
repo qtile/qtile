@@ -81,6 +81,7 @@ class Qtile(command.CommandObject):
     """This object is the `root` of the command graph"""
 
     def __init__(self, config, displayName=None, fname=None, no_spawn=False, state=None):
+        self._restart = False
         self.no_spawn = no_spawn
 
         self._eventloop = None
@@ -339,6 +340,9 @@ class Qtile(command.CommandObject):
         finally:
             self._eventloop.close()
             self._eventloop = None
+        if self._restart:
+            logger.warning('Restarting Qtile with os.execv(...)')
+            os.execv(*self._restart)
 
     def _process_fake_screens(self):
         """
@@ -1376,17 +1380,11 @@ class Qtile(command.CommandObject):
             return v.args[0]
         self.handle_KeyPress(d)
 
-    def cmd_execute(self, cmd, args):
-        """Executes the specified command, replacing the current process"""
-        self.stop()
-        os.execv(cmd, args)
-
     def cmd_restart(self):
-        """Restart qtile using the execute command"""
+        """Restart qtile"""
         argv = [sys.executable] + sys.argv
         if '--no-spawn' not in argv:
             argv.append('--no-spawn')
-
         buf = io.BytesIO()
         try:
             pickle.dump(QtileState(self), buf, protocol=0)
@@ -1394,8 +1392,8 @@ class Qtile(command.CommandObject):
             logger.error("Unable to pickle qtile state")
         argv = [s for s in argv if not s.startswith('--with-state')]
         argv.append('--with-state=' + buf.getvalue().decode())
-
-        self.cmd_execute(sys.executable, argv)
+        self._restart = (sys.executable, argv)
+        self.stop()
 
     def cmd_spawn(self, cmd):
         """Run cmd in a shell.
