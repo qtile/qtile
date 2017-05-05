@@ -23,17 +23,17 @@
 from __future__ import division
 
 import os
-import cairocffi
 
 from . import base
 from .. import bar
+from ..images import Img
 
 class Image(base._Widget, base.MarginMixin):
     """Display a PNG image on the bar"""
     orientations = base.ORIENTATION_BOTH
     defaults = [
         ("scale", True, "Enable/Disable image scaling"),
-        ("filename", None, "PNG Image filename. Can contain '~'"),
+        ("filename", None, "Image filename. Can contain '~'"),
     ]
 
     def __init__(self, length=bar.CALCULATED, width=None, **config):
@@ -58,45 +58,22 @@ class Image(base._Widget, base.MarginMixin):
             raise ValueError("Filename not set!")
 
         self.filename = os.path.expanduser(self.filename)
-
-        try:
-            self.image = cairocffi.ImageSurface.create_from_png(self.filename)
-        except MemoryError:
-            raise ValueError("The image '%s' doesn't seem to be a valid PNG"
-                % (self.filename))
-
-        self.pattern = cairocffi.SurfacePattern(self.image)
-
-        self.image_width = self.image.get_width()
-        self.image_height = self.image.get_height()
-
-        if self.scale:
-            if self.bar.horizontal:
-                new_height = self.bar.height - (self.margin_y * 2)
-
-                if new_height and self.image_height != new_height:
-                    scaler = cairocffi.Matrix()
-                    sp = self.image_height / new_height
-                    self.image_height = new_height
-                    self.image_width = int(self.image_width / sp)
-                    scaler.scale(sp, sp)
-                    self.pattern.set_matrix(scaler)
-            else:
-                new_width = self.bar.width - (self.margin_x * 2)
-
-                if new_width and self.image_width != new_width:
-                    scaler = cairocffi.Matrix()
-                    sp = self.image_width / new_width
-                    self.image_width = new_width
-                    self.image_height = int(self.image_height / sp)
-                    scaler.scale(sp, sp)
-                    self.pattern.set_matrix(scaler)
+        img = Img.from_path(self.filename)
+        self.img = img
+        if not self.scale:
+            return
+        if self.bar.horizontal:
+            new_height = self.bar.height - (self.margin_y * 2)
+            img.resize(height=new_height)
+        else:
+            new_width = self.bar.width - (self.margin_x * 2)
+            img.resize(width=new_width)
 
     def draw(self):
         self.drawer.clear(self.bar.background)
         self.drawer.ctx.save()
         self.drawer.ctx.translate(self.margin_x, self.margin_y)
-        self.drawer.ctx.set_source(self.pattern)
+        self.drawer.ctx.set_source(self.img.pattern)
         self.drawer.ctx.paint()
         self.drawer.ctx.restore()
 
@@ -107,6 +84,6 @@ class Image(base._Widget, base.MarginMixin):
 
     def calculate_length(self):
         if self.bar.horizontal:
-            return self.image_width + (self.margin_x * 2)
+            return self.img.width + (self.margin_x * 2)
         else:
-            return self.image_height + (self.margin_y * 2)
+            return self.img.height + (self.margin_y * 2)
