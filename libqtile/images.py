@@ -77,7 +77,13 @@ def get_cairo_pattern(surface, width=None, height=None, theta=0.0):
     PI = 3.141592653589793
     if abs(theta) > EPSILON:
         theta_rad = PI / 180.0 * theta
-        mat_rot = cairocffi.Matrix.init_rotate(-theta_rad)
+        mat_rot = cairocffi.Matrix()
+        # https://cairographics.org/cookbook/transform_about_point/
+        xt = surf_width * tr_width * 0.5
+        yt = surf_height * tr_height * 0.5
+        mat_rot.translate(xt, yt)
+        mat_rot.rotate(theta_rad)
+        mat_rot.translate(-xt, -yt)
         matrix = mat_rot.multiply(matrix)
 
     pattern.set_matrix(matrix)

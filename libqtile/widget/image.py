@@ -33,6 +33,7 @@ class Image(base._Widget, base.MarginMixin):
     orientations = base.ORIENTATION_BOTH
     defaults = [
         ("scale", True, "Enable/Disable image scaling"),
+        ("rotate", 0.0, "rotate the image in degrees counter-clockwise"),
         ("filename", None, "Image filename. Can contain '~'"),
     ]
 
@@ -60,6 +61,7 @@ class Image(base._Widget, base.MarginMixin):
         self.filename = os.path.expanduser(self.filename)
         img = Img.from_path(self.filename)
         self.img = img
+        img.theta = self.rotate
         if not self.scale:
             return
         if self.bar.horizontal:

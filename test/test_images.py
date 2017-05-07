@@ -132,12 +132,12 @@ class TestImg(object):
         img.theta = 90.0
         assert img.theta == 90.0
         t_matrix = img.pattern.get_matrix().as_tuple()
-        assert_approx_equal(t_matrix, (0.0, -1.0, 1.0, 0.0))
+        assert_approx_equal(t_matrix, (0.0, 1.0, -1.0, 0.0))
         img.theta = 45.0
         t_matrix = img.pattern.get_matrix().as_tuple()
         from math import sqrt
         s2o2 = sqrt(2) / 2.0
-        assert_approx_equal(t_matrix, (s2o2, -s2o2, s2o2, s2o2))
+        assert_approx_equal(t_matrix, (s2o2, s2o2, -s2o2, s2o2))
         del img.theta
         assert img.theta == pytest.approx(0.0)
 
