@@ -1,25 +1,15 @@
 import pytest
-import py
-import os
 from libqtile.widget import Volume
 from libqtile import images
 import cairocffi
-
-TEST_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(os.path.dirname(TEST_DIR), 'data')
-
-audio_volume_muted = os.path.join(
-    DATA_DIR, 'svg', 'audio-volume-muted.svg',
-)
-
-audio_volume_muted = py.path.local(audio_volume_muted)
+from .conftest import TEST_DIR
 
 def test_images_fail():
     vol = Volume(theme_path=TEST_DIR)
     with pytest.raises(images.LoadingError):
         vol.setup_images()
 
-def test_images_good(tmpdir, bar):
+def test_images_good(tmpdir, fake_bar, svg_img_as_pypath):
     names = (
         'audio-volume-high.svg',
         'audio-volume-low.svg',
@@ -28,10 +18,10 @@ def test_images_good(tmpdir, bar):
     )
     for name in names:
         target = tmpdir.join(name)
-        audio_volume_muted.copy(target)
+        svg_img_as_pypath.copy(target)
 
     vol = Volume(theme_path=str(tmpdir))
-    vol.bar = bar
+    vol.bar = fake_bar
     vol.setup_images()
     assert len(vol.surfaces) == len(names)
     for name, surfpat in vol.surfaces.items():

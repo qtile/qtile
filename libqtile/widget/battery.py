@@ -31,11 +31,11 @@
 
 from __future__ import division
 
-import cairocffi
 import os
 from libqtile import bar
 from libqtile.log_utils import logger
 from . import base
+from .. import images
 
 BAT_DIR = '/sys/class/power_supply'
 CHARGED = 'Full'
@@ -253,31 +253,29 @@ class BatteryIcon(_Battery):
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('theme_path', default_icon_path(), 'Path of the icons'),
-        ('custom_icons', {}, 'dict containing key->filename icon map'),
     ]
+
+    icon_names = (
+        'battery-missing',
+        'battery-caution',
+        'battery-low',
+        'battery-good',
+        'battery-full',
+        'battery-caution-charging',
+        'battery-low-charging',
+        'battery-good-charging',
+        'battery-full-charging',
+        'battery-full-charged',
+    )
 
     def __init__(self, **config):
         _Battery.__init__(self, **config)
         self.add_defaults(BatteryIcon.defaults)
-
         if self.theme_path:
             self.length_type = bar.STATIC
             self.length = 0
         self.surfaces = {}
         self.current_icon = 'battery-missing'
-        self.icons = dict([(x, '{0}.png'.format(x)) for x in (
-            'battery-missing',
-            'battery-caution',
-            'battery-low',
-            'battery-good',
-            'battery-full',
-            'battery-caution-charging',
-            'battery-low-charging',
-            'battery-good-charging',
-            'battery-full-charging',
-            'battery-full-charged',
-        )])
-        self.icons.update(self.custom_icons)
 
     def timer_setup(self):
         self.update()
@@ -285,7 +283,8 @@ class BatteryIcon(_Battery):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        self.setup_images()
+        if self.theme_path:
+            self.setup_images()
 
     def _get_icon_key(self):
         key = 'battery'
@@ -326,31 +325,11 @@ class BatteryIcon(_Battery):
             base._TextBox.draw(self)
 
     def setup_images(self):
-        for key, name in self.icons.items():
-            try:
-                path = os.path.join(self.theme_path, name)
-                img = cairocffi.ImageSurface.create_from_png(path)
-            except cairocffi.Error:
-                self.theme_path = None
-                logger.warning('Battery Icon switching to text mode')
-                return
-            input_width = img.get_width()
-            input_height = img.get_height()
-
-            sp = input_height / (self.bar.height - 1)
-
-            width = input_width / sp
-            if width > self.length:
-                # cast to `int` only after handling all potentially-float values
-                self.length = int(width + self.actual_padding * 2)
-
-            imgpat = cairocffi.SurfacePattern(img)
-
-            scaler = cairocffi.Matrix()
-
-            scaler.scale(sp, sp)
-            scaler.translate(self.actual_padding * -1, 0)
-            imgpat.set_matrix(scaler)
-
-            imgpat.set_filter(cairocffi.FILTER_BEST)
-            self.surfaces[key] = imgpat
+        d_imgs = images.Loader(self.theme_path)(*self.icon_names)
+        new_height = self.bar.height - self.actual_padding
+        surfs = self.surfaces
+        for key, img in d_imgs.items():
+            img.resize(height=new_height)
+            if img.width > self.length:
+                self.length = int(img.width + self.actual_padding * 2)
+            surfs[key] = img.pattern
