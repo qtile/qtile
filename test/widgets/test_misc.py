@@ -22,13 +22,10 @@
 # Widget specific tests
 
 import pytest
-
 from libqtile.config import Screen
 from libqtile.bar import Bar
 from libqtile.widget import TextBox, ThermalSensor
-
-from .conftest import BareConfig
-
+from ..conftest import BareConfig
 
 class ColorChanger(TextBox):
     count = 0
@@ -47,7 +44,6 @@ class WidgetTestConf(BareConfig):
 
 
 widget_conf = pytest.mark.parametrize("qtile", [WidgetTestConf], indirect=True)
-
 
 @widget_conf
 def test_textbox_color_change(qtile):
