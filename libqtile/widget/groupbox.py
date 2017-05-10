@@ -50,7 +50,7 @@ class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
 
     def box_width(self, groups):
         width, _ = self.drawer.max_layout_size(
-            [i.name for i in groups],
+            [i.label for i in groups],
             self.font,
             self.fontsize
         )
@@ -146,7 +146,11 @@ class AGroupBox(_GroupBase):
 
 
 class GroupBox(_GroupBase):
-    """A widget that graphically displays the current group"""
+    """
+    A widget that graphically displays the current group.
+    All groups are displayed by their label.
+    If the label of a group is the empty string that group will not be displayed.
+    """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("active", "FFFFFF", "Active group font colour"),
@@ -201,8 +205,9 @@ class GroupBox(_GroupBase):
         (
             "visible_groups",
             None,
-            "Groups that will be visible "
-            "(if set to None or [], all groups will be visible)"
+            "Groups that will be visible. "
+            "If set to None or [], all groups will be visible."
+            "Visible groups are identified by name not by their displayed label."
         ),
         (
             "spacing",
@@ -220,8 +225,17 @@ class GroupBox(_GroupBase):
 
     @property
     def groups(self):
-        return self.qtile.groups if not self.visible_groups else \
-            [g for g in self.qtile.groups if g.name in self.visible_groups]
+        """
+        returns list of visible groups.
+        The existing groups are filtered by the visible_groups attribute and
+        their label. Groups with an empty string as label are never contained.
+        Groups that are not named in visible_groups are not returned.
+        """
+        if self.visible_groups:
+            return [g for g in self.qtile.groups
+                    if g.label and g.name in self.visible_groups]
+        else:
+            return [g for g in self.qtile.groups if g.label]
 
     def get_clicked_group(self, x, y):
         group = None
@@ -324,7 +338,7 @@ class GroupBox(_GroupBase):
 
             self.drawbox(
                 offset,
-                g.name,
+                g.label,
                 border,
                 text_color,
                 highlight_color=self.highlight_color,

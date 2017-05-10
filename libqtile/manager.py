@@ -470,9 +470,9 @@ class Qtile(command.CommandObject):
         )
         self.root.set_property("_NET_CURRENT_DESKTOP", index)
 
-    def addGroup(self, name, layout=None, layouts=None):
+    def addGroup(self, name, layout=None, layouts=None, label=None):
         if name not in self.groupMap.keys():
-            g = _Group(name, layout)
+            g = _Group(name, layout, label=label)
             self.groups.append(g)
             if not layouts:
                 layouts = self.config.layouts
@@ -1703,9 +1703,9 @@ class Qtile(command.CommandObject):
             return
         mb.startInput(prompt, f, "qshell")
 
-    def cmd_addgroup(self, group):
+    def cmd_addgroup(self, group, label=None):
         """Add a group with the given name"""
-        return self.addGroup(group)
+        return self.addGroup(group, label=label)
 
     def cmd_delgroup(self, group):
         """Delete a group with the given name"""

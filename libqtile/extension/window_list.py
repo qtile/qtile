@@ -48,7 +48,7 @@ class WindowList(Dmenu):
         for win in windows:
             if win.group:
                 item = self.item_format.format(
-                    group=win.group.name, id=id, window=win.name)
+                    group=win.group.label or win.group.name, id=id, window=win.name)
                 self.item_to_win[item] = win
                 id += 1
 
