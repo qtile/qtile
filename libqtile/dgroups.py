@@ -120,7 +120,7 @@ class DGroups(object):
         rules = [Rule(m, group=group.name) for m in group.matches]
         self.rules.extend(rules)
         if start:
-            self.qtile.addGroup(group.name, group.layout, group.layouts)
+            self.qtile.addGroup(group.name, group.layout, group.layouts, group.label)
 
     def _setup_groups(self):
         for group in self.groups:

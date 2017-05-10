@@ -427,6 +427,7 @@ class Group(object):
 
     These groups can spawn apps, only allow certain Matched windows to be on
     them, hide when they're not in use, etc.
+    Groups are identified by their name.
 
     Parameters
     ==========
@@ -452,11 +453,17 @@ class Group(object):
         is this group alive when qtile starts?
     position : int
         group position
+    label : string
+        the display name of the group.
+        Use this to define a display name other than name of the group.
+        If set to None, the display name is set to the name.
     """
     def __init__(self, name, matches=None, exclusive=False,
                  spawn=None, layout=None, layouts=None, persist=True, init=True,
-                 layout_opts=None, screen_affinity=None, position=MAXSIZE):
+                 layout_opts=None, screen_affinity=None, position=MAXSIZE,
+                 label=None):
         self.name = name
+        self.label = label
         self.exclusive = exclusive
         self.spawn = spawn
         self.layout = layout
