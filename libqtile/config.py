@@ -487,8 +487,9 @@ class Group(object):
 class ScratchPad(Group):
     """Represents a "ScratchPad" group
 
-    ScratchPad adds a group to be used as a scratchpad. You can send arbitrary
-    windows to this group an
+    ScratchPad adds a (by default) invisible group to qtile.
+    That group is used as place for currently not shown windows spawned by a
+    ``DropDown`` configuration.
 
     Parameters
     ==========
@@ -498,10 +499,13 @@ class ScratchPad(Group):
         list of DropDown objects
     position : int
         group position
+    label : string
+        The display name of the ScratchPad group. Defaults to the empty string
+        such that the group is hidden in ``GroupList`` widget.
     """
-    def __init__(self, name, dropdowns=None, position=MAXSIZE):
+    def __init__(self, name, dropdowns=None, position=MAXSIZE, label=''):
         Group.__init__(self, name, layout='floating', layouts=['floating'],
-                       init=False, position=position)
+                       init=False, position=position, label=label)
         self.dropdowns = dropdowns
 
     def __repr__(self):

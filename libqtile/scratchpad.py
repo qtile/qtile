@@ -203,8 +203,8 @@ class ScratchPad(group._Group):
             logger.warn('%s "%s" :: %s :: %s' % (self.__class__.__name__,
                 self.name, fun, ', '.join(fragments)))
 
-    def __init__(self, name='scratchpad', dropdowns=[]):
-        group._Group.__init__(self, name)
+    def __init__(self, name='scratchpad', dropdowns=[], label=''):
+        group._Group.__init__(self, name, label=label)
         self._dropdownconfig = {dd.name: dd for dd in dropdowns}
         self.dropdowns = {}
         self.scratchpadded = collections.deque()
