@@ -140,6 +140,7 @@ class MonadTall(_SimpleLayoutBase):
 
     _left = 0
     _right = 1
+    _med_ratio = 0.5
 
     defaults = [
         ("border_focus", "#ff0000", "Border colour for the focused window."),
