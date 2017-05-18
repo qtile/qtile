@@ -26,6 +26,7 @@
 # SOFTWARE.
 
 from . import command
+from . import configurable
 from . import hook
 from . import utils
 from . import xcbq
@@ -483,6 +484,31 @@ class Group(object):
         return '<config.Group %r (%s)>' % (self.name, attrs)
 
 
+class ScratchPad(Group):
+    """Represents a "ScratchPad" group
+
+    ScratchPad adds a group to be used as a scratchpad. You can send arbitrary
+    windows to this group an
+
+    Parameters
+    ==========
+    name : string
+        the name of this group
+    dropdowns : default ``None``
+        list of DropDown objects
+    position : int
+        group position
+    """
+    def __init__(self, name, dropdowns=None, position=MAXSIZE):
+        Group.__init__(self, name, layout='floating', layouts=['floating'],
+                       init=False, position=position)
+        self.dropdowns = dropdowns
+
+    def __repr__(self):
+        return '<config.ScratchPad %r (%s)>' % (
+            self.name, ', '.join(dd.name for dd in self.dropdowns))
+
+
 class Match(object):
     """Match for dynamic groups
 
@@ -610,3 +636,74 @@ class Rule(object):
         actions = utils.describe_attributes(self, ['group', 'float',
             'intrusive', 'break_on_match'])
         return '<Rule match=%r actions=(%s)>' % (self.match, actions)
+
+
+class DropDown(configurable.Configurable):
+    """
+    Configure a specified command and its associated window for the SratchPad.
+    That window can be shown in current group and hidden again at keystroke.
+    """
+    defaults = (
+        (
+            'x',
+            0.1,
+            'X position of window as fraction of current screen width. '
+            '0 is the left most position.'
+        ),
+        (
+            'y',
+            0.0,
+            'Y position of window as fraction of current screen height. '
+            '0 is the top most position. To show the window at bottom, '
+            'you have to configure a value < 1 and an appropriate height.'
+        ),
+        (
+            'width',
+            0.8,
+            'Width of window as fraction of current screen width'
+        ),
+        (
+            'height',
+            0.35,
+            'Height of window as fraction of current screen.'
+        ),
+        (
+            'opacity',
+            0.9,
+            'Opacity of window as fraction. Zero is opaque.'
+        ),
+        (
+            'on_focus_lost_hide',
+            True,
+            'Shall the window be hidden if focus is lost? If so, the DropDown '
+            'is hidden if window focus or the group is changed.'
+        ),
+        (
+            'warp_pointer',
+            True,
+            'Shall pointer warp to center of window on activation? '
+            'This has only effect if any of the on_focus_lost_xxx '
+            'configurations is True'
+        ),
+    )
+
+    def __init__(self, name, cmd, **config):
+        """
+        Initialize DropDown window wrapper.
+        Define a command to spawn a process for the first time the DropDown
+        is shown.
+        """
+        configurable.Configurable.__init__(self, **config)
+        self.name = name
+        self.command = cmd
+        self.add_defaults(self.defaults)
+
+    def info(self):
+        return dict(name=self.name,
+                    x=self.x,
+                    y=self.y,
+                    width=self.width,
+                    height=self.height,
+                    opacity=self.opacity,
+                    on_focus_lost_hide=self.on_focus_lost_hide,
+                    warp_pointer=self.warp_pointer,)
