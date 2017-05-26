@@ -704,6 +704,7 @@ class DropDown(configurable.Configurable):
 
     def info(self):
         return dict(name=self.name,
+                    command=self.command,
                     x=self.x,
                     y=self.y,
                     width=self.width,
