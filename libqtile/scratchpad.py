@@ -18,31 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import collections
-
 from . import group
 from . import hook, window
-
-from .log_utils import logger
 
 
 class WindowVisibilityToggler(object):
 
-    def log(self, fun, *args, **kwargs):
-        fragments = ['%s' % arg for arg in args]
-        fragments.extend(['%s=%s' % (k, v) for k, v in kwargs.items()])
-        if not fragments:
-            logger.warn('%s "%s.%s" :: %s' % (self.__class__.__name__,
-                self.scratchpad_name, self.window.window.wid, fun))
-        else:
-            logger.warn('%s "%s.%s" :: %s :: %s' % (self.__class__.__name__,
-                self.scratchpad_name, self.window.window.wid, fun,
-                ', '.join(fragments)))
-
     def __init__(self, scratchpad_name, window, on_focus_lost_hide, warp_pointer):
         self.scratchpad_name = scratchpad_name
         self.window = window
-        self.log('__init__', scratchpad_name=scratchpad_name, win_id=window.window.wid)
         self.on_focus_lost_hide = on_focus_lost_hide
         self.warp_pointer = warp_pointer
         # determine current status based on visibility
@@ -72,7 +56,6 @@ class WindowVisibilityToggler(object):
         """
         Toggle the visibility of associated window. Either show() or hide().
         """
-        self.log('toggle...', visible=self.visible, shown=self.shown)
         if (not self.visible or not self.shown):
             self.show()
         else:
@@ -88,9 +71,7 @@ class WindowVisibilityToggler(object):
         Otherwise, if pointer is moved manually to window by the user
         the window might be hidden again before actually reaching it.
         """
-        self.log('show?', visible=self.visible, shown=self.shown)
         if (not self.visible) or (not self.shown):
-            self.log('SHOW!')
             win = self.window
             # always set the floating state before changing group
             # to avoid disturbance of tiling layout
@@ -112,9 +93,7 @@ class WindowVisibilityToggler(object):
         """
         Hide the associated window. That is, send it to the scratchpad group.
         """
-        self.log('hide?', visible=self.visible, shown=self.shown)
         if self.visible or self.shown:
-            self.log('HIDE!')
             # unsubscribe the hook methods, since the window is not shown
             if self.on_focus_lost_hide:
                 hook.unsubscribe.client_focus(self.on_focus_change)
@@ -139,7 +118,6 @@ class WindowVisibilityToggler(object):
         Depending on 'on_focus_lost_xxx' arguments, the associated window may
         get hidden (by call to hide) or even killed.
         """
-        self.log('on focus change', visible=self.visible, shown=self.shown)
         if self.shown:
             currentGroup = self.window.qtile.currentGroup
             if (self.window.group is not currentGroup or
@@ -173,9 +151,7 @@ class DropDownToggler(WindowVisibilityToggler):
         Like WindowVisibilityToggler.show, but before showing the window,
         its floating x, y, width and height is set.
         """
-        self.log('show?', visible=self.visible, shown=self.shown)
         if (not self.visible) or (not self.shown):
-            self.log('SHOW!')
             win = self.window
             screen = win.qtile.currentScreen
             # calculate windows floating position and width/height
@@ -193,25 +169,14 @@ class DropDownToggler(WindowVisibilityToggler):
 
 class ScratchPad(group._Group):
 
-    def log(self, fun, *args, **kwargs):
-        fragments = ['%s' % arg for arg in args]
-        fragments.extend(['%s=%s' % (k, v) for k, v in kwargs.items()])
-        if not fragments:
-            logger.warn('%s "%s" :: %s' % (self.__class__.__name__,
-                self.name, fun))
-        else:
-            logger.warn('%s "%s" :: %s :: %s' % (self.__class__.__name__,
-                self.name, fun, ', '.join(fragments)))
-
     def __init__(self, name='scratchpad', dropdowns=[], label=''):
         group._Group.__init__(self, name, label=label)
         self._dropdownconfig = {dd.name: dd for dd in dropdowns}
         self.dropdowns = {}
-        self.scratchpadded = collections.deque()
         self._spawned = {}
 
     def _check_unsubscribe(self):
-        if not self.dropdowns and not self.scratchpadded:
+        if not self.dropdowns:
             hook.unsubscribe.client_killed(self.on_client_killed)
             hook.unsubscribe.float_change(self.on_float_change)
 
@@ -230,10 +195,6 @@ class ScratchPad(group._Group):
             cmd = self._dropdownconfig[name].command
             pid = self.qtile.cmd_spawn(cmd)
             self._spawned[pid] = name
-            self.log('_spawn', name=name, command=cmd, pid=pid)
-        else:
-            self.log('_spawn', 'Already spawned a process, but no window detected yet!',
-                     name=name)
 
     def on_client_new(self, client, *args, **kwargs):
         """
@@ -242,7 +203,6 @@ class ScratchPad(group._Group):
         and unsubscribed immediately if the associated window is detected.
         """
         client_pid = client.window.get_net_wm_pid()
-        self.log('on_client_new', client=client.name, pid=client_pid)
         if client_pid in self._spawned:
             name = self._spawned.pop(client_pid)
             if not self._spawned:
@@ -258,13 +218,11 @@ class ScratchPad(group._Group):
         hook method which is called if a client is killed.
         If the associated window is killed, reset internal state.
         """
-        self.log('on_client_killed', client=client.name, wid=client.window.wid)
         name = None
         for name, dd in self.dropdowns.items():
             if dd.window is client:
                 dd.unsubscribe()
                 del self.dropdowns[name]
-                self.log('on_client_killed', released=name)
                 break
         self._check_unsubscribe()
 
@@ -275,32 +233,42 @@ class ScratchPad(group._Group):
         and process is detached from DRopDown, thus the next call to Show
         will spawn a new process.
         """
-        self.log('on_float_change')
         name = None
         for name, dd in self.dropdowns.items():
             if not dd.window.floating:
                 if dd.window.group is not self:
                     dd.unsubscribe()
                     del self.dropdowns[name]
-                    self.log('on_float_change', 'released', name=name)
                     break
-                else:
-                    self.log('on_float_change', 'found "tiled" in scratchpad', name=name)
         self._check_unsubscribe()
 
     def cmd_dropdown_toggle(self, name):
+        """
+        Toggle visibility of named dropdown.
+        """
         if name in self.dropdowns:
             self.dropdowns[name].toggle()
         else:
             if name in self._dropdownconfig:
                 self._spawn(self._dropdownconfig[name])
 
-    def cmd_dropdown_release(self, name):
-        if name in self.dropdowns:
-            self.dropdowns[name].unsubscribe()
-            del self.dropdowns[name]
+    def cmd_dropdown_reconfigure(self, name, **kwargs):
+        """
+        reconfigure the named dropdown configuration.
+        Note that changed attributes only have an effect on spawning the window.
+        """
+        if name not in self._dropdownconfig:
+            return
+        dd = self._dropdownconfig[name]
+        for attr, value in kwargs.items():
+            if hasattr(dd, attr):
+                setattr(dd, attr, value)
 
     def cmd_dropdown_info(self, name=None):
+        """
+        Get information on configured or currently active dropdowns.
+        If name is None, a list of all dropdown names is returned.
+        """
         if name is None:
             return {'dropdowns': [ddname for ddname in self._dropdownconfig]}
         elif name in self.dropdowns:
