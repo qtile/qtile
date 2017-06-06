@@ -135,6 +135,11 @@ configuration variables that control specific aspects of Qtile's behavior:
         - focus: automatically focus the window
 
         - smart: automatically focus if the window is in the current group
+    * - focus_on_mapped_windows
+      - True
+      - Whether to move focus to newly mapped windows
+        - True:  focus new windows on map
+        - False: leave the focus alone
     * - follow_mouse_focus
       - True
       - Controls whether or not focus follows the mouse around as it moves
