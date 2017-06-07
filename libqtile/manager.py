@@ -630,6 +630,10 @@ class Qtile(command.CommandObject):
                 self.windowMap[w.wid] = c
                 # Window may have been bound to a group in the hook.
                 if not c.group:
+                    # NOTE: checking self.config.focus_on_mapped_windows will
+                    # fail tests since most of the test configs don't have this
+                    # set and also aren't real configs. should the test configs
+                    # be read with readconfig like any other config?
                     if getattr(self.config, 'focus_on_mapped_windows', True):
                         steal_focus = c.can_steal_focus()
                     else:
