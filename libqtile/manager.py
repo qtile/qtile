@@ -630,7 +630,11 @@ class Qtile(command.CommandObject):
                 self.windowMap[w.wid] = c
                 # Window may have been bound to a group in the hook.
                 if not c.group:
-                    self.currentScreen.group.add(c, focus=self.config.focus_on_mapped_windows and c.can_steal_focus())
+                    if getattr(self.config, 'focus_on_mapped_windows', True):
+                        steal_focus = c.can_steal_focus()
+                    else:
+                        steal_focus = False
+                    self.currentScreen.group.add(c, focus=steal_focus)
                 self.update_client_list()
                 hook.fire("client_managed", c)
             return c
