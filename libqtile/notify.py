@@ -42,7 +42,7 @@ SERVICE_PATH = '/org/freedesktop/Notifications'
 if dbus:
     class NotificationService(service.Object):
         def __init__(self, manager):
-            bus=dbus.SessionBus()
+            bus = dbus.SessionBus()
             bus.request_name(BUS_NAME)
             bus_name = service.BusName(BUS_NAME, bus=bus)
             service.Object.__init__(self, bus_name, SERVICE_PATH)
