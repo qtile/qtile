@@ -138,6 +138,7 @@ class BareConfig(object):
     screens = [libqtile.config.Screen()]
     main = None
     follow_mouse_focus = False
+    focus_on_mapped_window = True
 
 
 class Xephyr(object):
