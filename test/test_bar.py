@@ -189,6 +189,7 @@ class GeomConf(object):
             right=libqtile.bar.Bar([], 10),
         )
     ]
+    focus_on_mapped_windows = True
 
 
 geom_config = pytest.mark.parametrize("qtile", [GeomConf], indirect=True)
