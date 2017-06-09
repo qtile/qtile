@@ -61,6 +61,7 @@ class MonadTallMarginsConfig(object):
     mouse = []
     screens = []
     follow_mouse_focus = False
+    focus_on_mapped_windows = True
 
 
 monadtallmargins_config = lambda x: \
@@ -81,6 +82,7 @@ class MonadWideConfig(object):
     mouse = []
     screens = []
     follow_mouse_focus = False
+    focus_on_mapped_windows = True
 
 
 monadwide_config = lambda x: \
@@ -101,6 +103,7 @@ class MonadWideMarginsConfig(object):
     mouse = []
     screens = []
     follow_mouse_focus = False
+    focus_on_mapped_windows = True
 
 
 monadwidemargins_config = lambda x: \
