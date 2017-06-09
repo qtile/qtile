@@ -81,6 +81,7 @@ class ManagerConfig(object):
     )]
     main = None
     follow_mouse_focus = True
+    focus_on_mapped_windows = True
 
 
 manager_config = pytest.mark.parametrize("qtile", [ManagerConfig], indirect=True)

@@ -146,6 +146,7 @@ class FakeScreenConfig(object):
     ]
 
     screens = fake_screens
+    focus_on_mapped_windows = True
 
 
 xephyr_config = {

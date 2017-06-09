@@ -194,6 +194,7 @@ class ServerConfig(object):
         )
     ]
     main = None
+    focus_on_mapped_windows = True
 
 
 server_config = pytest.mark.parametrize("qtile", [ServerConfig], indirect=True)
