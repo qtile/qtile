@@ -49,6 +49,7 @@ class MatrixConfig(object):
     keys = []
     mouse = []
     screens = []
+    focus_on_mapped_windows = True
 
 
 matrix_config = lambda x: \

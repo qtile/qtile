@@ -49,6 +49,7 @@ class MaxConfig(object):
     keys = []
     mouse = []
     screens = []
+    focus_on_mapped_windows = True
 
 
 max_config = lambda x: \

@@ -43,6 +43,7 @@ class AllLayoutsConfig(object):
     keys = []
     mouse = []
     screens = []
+    focus_on_mapped_windows = True
 
     @staticmethod
     def iter_layouts():

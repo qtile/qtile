@@ -51,6 +51,7 @@ class VerticalTileConfig(object):
     keys = []
     mouse = []
     screens = []
+    focus_on_mapped_windows = True
 
 
 verticaltile_config = lambda x: \

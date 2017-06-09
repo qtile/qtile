@@ -47,6 +47,7 @@ class ZoomyConfig(object):
     keys = []
     mouse = []
     screens = []
+    focus_on_mapped_windows = True
 
 
 zoomy_config = lambda x: \

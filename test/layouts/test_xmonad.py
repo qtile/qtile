@@ -40,6 +40,7 @@ class MonadTallConfig(object):
     mouse = []
     screens = []
     follow_mouse_focus = False
+    focus_on_mapped_windows = True
 
 
 monadtall_config = lambda x: \
