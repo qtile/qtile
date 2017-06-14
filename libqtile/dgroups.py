@@ -166,7 +166,7 @@ class DGroups(object):
             return
 
         group_set = False
-        intrusive = False
+        intrusive = ('_NET_WM_STATE_STICKY' in client.window.get_net_wm_state())
 
         for rule in self.rules:
             # Matching Rules
