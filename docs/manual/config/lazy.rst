@@ -98,3 +98,16 @@ Window functions
       - Put the focused window to/from floating mode
     * - ``lazy.window.toggle_fullscreen()``
       - Put the focused window to/from fullscreen mode
+
+ScratchPad DropDown functions
+-----------------------------
+
+.. list-table::
+    :widths: 20 80
+    :header-rows: 1
+
+    * - function
+      - description
+    * - ``lazy.group["group_name"].dropdown_toggle("name")``
+      - Toggles the visibility of the specified DropDown window.
+        On first use, the configured process is spawned.
