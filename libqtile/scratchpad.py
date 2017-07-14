@@ -21,10 +21,33 @@
 from . import group
 from . import hook, window
 
-
 class WindowVisibilityToggler(object):
+    """
+    WindowVisibilityToggler is a wrapper for a window, used in ScratchPad group
+    to toggle the current group a window.
+    The window is either send to the named ScratchPad which is by default
+    invisble or the current group on the curremt screen. Thus it seems the
+    window can be shown and hidden by single keystroke
+    (bound to command of ScratchPad group).
+    By default, the window is also hidden if it looses focus.
+    """
 
     def __init__(self, scratchpad_name, window, on_focus_lost_hide, warp_pointer):
+        """
+        Initiliaze the  WindowVisibilityToggler.
+
+        Parameters:
+        ===========
+        scratchpad_name : string
+            The name (not label) of the ScratchPad group used to hide the window
+        window : window
+            The window to toggle
+        on_focus_lost_hide : bool
+            if True the associated window is hidden if it looses focus
+        warp_pointer : bool
+            if True the mouse pointer is warped to center of associated window
+            if shown. Only used if on_focus_lost_hide is True
+        """
         self.scratchpad_name = scratchpad_name
         self.window = window
         self.on_focus_lost_hide = on_focus_lost_hide
@@ -44,7 +67,7 @@ class WindowVisibilityToggler(object):
     def visible(self):
         """
         Determine if associated window is currently visible.
-        That is the window is on a group different from scratchpad
+        That is the window is on a group different from the scratchpad
         and that group is the current visible group.
         """
         if self.window.group is None:
@@ -127,13 +150,18 @@ class WindowVisibilityToggler(object):
 
 
 class DropDownToggler(WindowVisibilityToggler):
-
+    """
+    Specialized WindowVisibilityToggler which places the associatd window
+    each time it is shown at desired location.
+    For example this can be used to create a quake-like terminal.
+    """
     def __init__(self, window, scratchpad_name, ddconfig):
         self.name = ddconfig.name
         self.x = ddconfig.x
         self.y = ddconfig.y
         self.width = ddconfig.width
         self.height = ddconfig.height
+        window.setOpacity(ddconfig.opacity)
         WindowVisibilityToggler.__init__(self, scratchpad_name, window,
             ddconfig.on_focus_lost_hide, ddconfig.warp_pointer)
 
@@ -168,7 +196,16 @@ class DropDownToggler(WindowVisibilityToggler):
 
 
 class ScratchPad(group._Group):
+    """
+    Specialized group which is by default invisible and can be configured, to
+    spawn windows and toggle its visibility (in the current group) by command.
 
+    The ScratchPad group acts as a container for windows which are currently
+    not visible but associated to a DropDownToggler and can toggle their
+    group by command (of ScratchPad group).
+    The ScratchPad, by default, has no label and thus is not shown in
+    GroupBox widget.
+    """
     def __init__(self, name='scratchpad', dropdowns=[], label=''):
         group._Group.__init__(self, name, label=label)
         self._dropdownconfig = {dd.name: dd for dd in dropdowns}
@@ -244,7 +281,7 @@ class ScratchPad(group._Group):
 
     def cmd_dropdown_toggle(self, name):
         """
-        Toggle visibility of named dropdown.
+        Toggle visibility of named DropDown.
         """
         if name in self.dropdowns:
             self.dropdowns[name].toggle()
@@ -254,7 +291,7 @@ class ScratchPad(group._Group):
 
     def cmd_dropdown_reconfigure(self, name, **kwargs):
         """
-        reconfigure the named dropdown configuration.
+        reconfigure the named DropDown configuration.
         Note that changed attributes only have an effect on spawning the window.
         """
         if name not in self._dropdownconfig:
@@ -266,7 +303,7 @@ class ScratchPad(group._Group):
 
     def cmd_dropdown_info(self, name=None):
         """
-        Get information on configured or currently active dropdowns.
+        Get information on configured or currently active DropDowns.
         If name is None, a list of all dropdown names is returned.
         """
         if name is None:
