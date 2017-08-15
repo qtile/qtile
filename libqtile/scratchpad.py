@@ -24,11 +24,11 @@ from . import hook, window
 class WindowVisibilityToggler(object):
     """
     WindowVisibilityToggler is a wrapper for a window, used in ScratchPad group
-    to toggle the current group a window.
-    The window is either send to the named ScratchPad which is by default
-    invisble or the current group on the curremt screen. Thus it seems the
-    window can be shown and hidden by single keystroke
-    (bound to command of ScratchPad group).
+    to toggle visibility of a window by toggling the group it belongs to.
+    The window is either sent to the named ScratchPad, which is by default
+    invisble, or the current group on the current screen.
+    With this functionality the window can be shown and hidden by a single
+    keystroke (bound to command of ScratchPad group).
     By default, the window is also hidden if it looses focus.
     """
 

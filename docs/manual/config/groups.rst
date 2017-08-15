@@ -54,7 +54,7 @@ ScratchPad and DropDown
 :class:`~libqtile.config.ScratchPad` is a special - by default invisible -
 group which acts as a container for :class:`~libqtile.config.DropDown`
 configurations. A `DropDown` can be configured to spawn a defined process and
-bind thats processes window to it. The associated window can then be shown and
+bind thats process' window to it. The associated window can then be shown and
 hidden by the lazy command ``dropdown_toggle()``
 (see :doc:`/manual/config/lazy`) from the ScratchPad group.
 Thus - for example - your favorite terminal emulator turns into a quake-like
@@ -91,8 +91,8 @@ Example
   ]
 
 There is only one DropDown visible in current group at a time.
-If a further DropDown is set visible the currently shown turns
-immediately invisble.
+If a further DropDown is set visible the currently shown DropDown turns
+invisble immediately.
 
 Note that if the window is set to not floating, it is detached from DropDown
 and ScratchPad, and a new pocess is spawned next time the DropDown is set visible.
