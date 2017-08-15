@@ -488,7 +488,7 @@ class ScratchPad(Group):
     """Represents a "ScratchPad" group
 
     ScratchPad adds a (by default) invisible group to qtile.
-    That group is used as place for currently not shown windows spawned by a
+    That group is used as a place for currently not visible windows spawned by a
     ``DropDown`` configuration.
 
     Parameters
@@ -506,7 +506,7 @@ class ScratchPad(Group):
     def __init__(self, name, dropdowns=None, position=MAXSIZE, label=''):
         Group.__init__(self, name, layout='floating', layouts=['floating'],
                        init=False, position=position, label=label)
-        self.dropdowns = dropdowns
+        self.dropdowns = dropdowns if dropdowns is not None else []
 
     def __repr__(self):
         return '<config.ScratchPad %r (%s)>' % (
@@ -644,8 +644,9 @@ class Rule(object):
 
 class DropDown(configurable.Configurable):
     """
-    Configure a specified command and its associated window for the SratchPad.
-    That window can be shown in current group and hidden again at keystroke.
+    Configure a specified command and its associated window for the ScratchPad.
+    That window can be shown and hidden using a configurable keystroke
+    or any other scripted trigger.
     """
     defaults = (
         (
@@ -696,6 +697,13 @@ class DropDown(configurable.Configurable):
         Initialize DropDown window wrapper.
         Define a command to spawn a process for the first time the DropDown
         is shown.
+
+        Parameters
+        ==========
+        name : string
+            The name of the DropDown configuration.
+        cmd : string
+            Command to spawn a process.
         """
         configurable.Configurable.__init__(self, **config)
         self.name = name
