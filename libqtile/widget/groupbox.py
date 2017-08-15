@@ -32,8 +32,8 @@
 
 import itertools
 
-from .. import bar, hook
 from . import base
+from .. import bar, hook
 
 
 class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):

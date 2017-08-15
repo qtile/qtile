@@ -26,8 +26,9 @@
 from __future__ import division
 
 import cairocffi
-from .. import bar, hook
+
 from . import base
+from .. import bar, hook
 
 
 class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):

@@ -26,14 +26,11 @@
 # SOFTWARE.
 
 import collections
-import six
 
 import libqtile.hook
-from libqtile.config import Key
+import six
 from libqtile.command import lazy
-from libqtile.config import Group
-from libqtile.config import Rule
-from libqtile.config import Match
+from libqtile.config import Group, Key, Match, Rule
 from libqtile.log_utils import logger
 
 

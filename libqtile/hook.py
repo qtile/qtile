@@ -30,8 +30,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .log_utils import logger
 from . import utils
+from .log_utils import logger
 
 subscriptions = {}
 SKIPLOG = set()

@@ -20,8 +20,11 @@
 # SOFTWARE.
 
 from __future__ import division
+
 import os
+
 from . import base
+
 
 class DF(base.ThreadedPollText):
     """Disk Free Widget

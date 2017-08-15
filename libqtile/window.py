@@ -25,14 +25,12 @@ import contextlib
 import inspect
 import traceback
 import warnings
-from xcffib.xproto import EventMask, StackMode, SetMode
+
 import xcffib.xproto
+from xcffib.xproto import EventMask, SetMode, StackMode
 
-from . import command
-from . import utils
-from . import hook
+from . import command, hook, utils
 from .log_utils import logger
-
 
 # ICCM Constants
 NoValue = 0x0000

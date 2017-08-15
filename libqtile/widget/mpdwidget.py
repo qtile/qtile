@@ -43,10 +43,10 @@ import re
 import time
 
 import mpd
-
-from .. import utils, pangocffi
-from . import base
 from libqtile.log_utils import logger
+
+from . import base
+from .. import pangocffi, utils
 
 
 class Mpd(base.ThreadPoolText):

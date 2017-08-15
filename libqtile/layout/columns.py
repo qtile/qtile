@@ -20,6 +20,7 @@ from __future__ import division
 
 from .base import Layout, _ClientList
 
+
 class _Column(_ClientList):
 
     # shortcuts for current client and index used in Columns layout

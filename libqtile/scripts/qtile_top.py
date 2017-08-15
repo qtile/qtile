@@ -22,15 +22,14 @@
     Command-line top like for qtile
 """
 
+import argparse
+import curses
+import linecache
 import os
 import time
-import argparse
-
-import curses
-
-import linecache
 import tracemalloc
 from tracemalloc import Snapshot
+
 from libqtile import command
 
 

@@ -23,6 +23,8 @@ from __future__ import absolute_import
 
 import six
 
+from . import extension as extention  # noqa
+
 moves = [
     six.MovedAttribute("getoutput", "commands", "subprocess"),
 ]
@@ -39,7 +41,3 @@ try:
     import asyncio  # noqa
 except ImportError:
     import trollius as asyncio  # noqa
-
-# Keep supporting the deprecated misspelled subpackage "extention"
-# TODO: Remove in the future
-from . import extension as extention  # noqa

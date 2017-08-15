@@ -19,6 +19,7 @@
 # SOFTWARE.
 from .dmenu import Dmenu
 
+
 class WindowList(Dmenu):
     """
     Give vertical list of all open windows in dmenu. Switch to selected.

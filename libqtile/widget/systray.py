@@ -29,12 +29,12 @@
 
 from __future__ import division
 
-from .. import bar, xcbq, window
-from . import base
-
 import xcffib
-from xcffib.xproto import (ClientMessageEvent, ClientMessageData, EventMask,
+from xcffib.xproto import (ClientMessageData, ClientMessageEvent, EventMask,
                            SetMode)
+
+from . import base
+from .. import bar, window, xcbq
 
 XEMBED_PROTOCOL_VERSION = 0
 

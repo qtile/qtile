@@ -33,6 +33,7 @@ import textwrap
 from setuptools import setup
 from setuptools.command.install import install
 
+
 class CheckCairoXcb(install):
     def cairo_xcb_check(self):
         try:

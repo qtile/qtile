@@ -18,9 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from . import base
-from libqtile.log_utils import logger
 from subprocess import CalledProcessError, Popen
+
+from libqtile.log_utils import logger
+
+from . import base
 
 
 class CheckUpdates(base.ThreadedPollText):

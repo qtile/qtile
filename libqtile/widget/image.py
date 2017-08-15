@@ -23,10 +23,12 @@
 from __future__ import division
 
 import os
+
 import cairocffi
 
 from . import base
 from .. import bar
+
 
 class Image(base._Widget, base.MarginMixin):
     """Display a PNG image on the bar"""

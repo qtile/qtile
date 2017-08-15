@@ -2,3 +2,4 @@ flake8
 pytest-cov
 pip-tools
 xvfbwrapper
+isort

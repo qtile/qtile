@@ -19,11 +19,7 @@
 # SOFTWARE.
 from __future__ import division
 
-from . import command
-from . import confreader
-from . import drawer
-from . import configurable
-from . import window
+from . import command, configurable, confreader, drawer, window
 
 
 class Gap(command.CommandObject):

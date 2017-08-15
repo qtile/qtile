@@ -23,10 +23,10 @@
 # whose defaults depend on a reasonable locale sees something reasonable.
 import locale
 import logging
-from os import path, getenv
+from os import getenv, path
 
-from libqtile.log_utils import init_log, logger
 from libqtile import confreader
+from libqtile.log_utils import init_log, logger
 
 locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
 

@@ -25,6 +25,7 @@
 import os
 import sys
 
+
 class ConfigError(Exception):
     pass
 

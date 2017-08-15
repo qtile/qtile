@@ -20,13 +20,6 @@
 
 from __future__ import division
 
-try:
-    import tracemalloc
-except ImportError:
-    tracemalloc = None
-
-from libqtile.dgroups import DGroups
-from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
 import io
 import logging
 import os
@@ -35,27 +28,28 @@ import shlex
 import signal
 import sys
 import traceback
+import warnings
+
+import six
 import xcffib
 import xcffib.xinerama
 import xcffib.xproto
-import six
-import warnings
+from libqtile.dgroups import DGroups
+from xcffib.xproto import AccessError, DrawableError, EventMask, WindowError
 
-from . import asyncio
-
-from .config import Drag, Click, Screen, Match, Rule
+from . import asyncio, command, hook, utils, window, xcbq
+from .config import Click, Drag, Match, Rule, Screen
+from .extension.base import _Extension
 from .group import _Group
 from .log_utils import logger
 from .state import QtileState
 from .utils import QtileError, get_cache_dir
 from .widget.base import _Widget
-from .extension.base import _Extension
-from . import command
-from . import hook
-from . import utils
-from . import window
-from . import xcbq
 
+try:
+    import tracemalloc
+except ImportError:
+    tracemalloc = None
 
 if sys.version_info >= (3, 3):
     def _import_module(module_name, dir_path):

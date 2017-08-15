@@ -21,11 +21,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from logging import getLogger, StreamHandler, Formatter, WARNING, captureWarnings
-from logging.handlers import RotatingFileHandler
 import os
 import sys
 import warnings
+from logging import (WARNING, Formatter, StreamHandler, captureWarnings,
+                     getLogger)
+from logging.handlers import RotatingFileHandler
 
 logger = getLogger(__package__)
 

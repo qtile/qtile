@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from . import base
-
 import os
 import subprocess
+
+from . import base
 
 
 class Moc(base.ThreadPoolText):

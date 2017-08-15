@@ -27,13 +27,11 @@
 # SOFTWARE.
 
 import contextlib
+
 import xcffib
 import xcffib.xproto
 
-from . import command
-from . import hook
-from . import window
-from . import utils
+from . import command, hook, utils, window
 from .log_utils import logger
 
 

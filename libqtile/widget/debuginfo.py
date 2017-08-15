@@ -20,8 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .. import hook, bar, layout
 from . import base
+from .. import bar, hook, layout
+
 
 class DebugInfo(base._TextBox):
     """Displays debugging infos about selected window"""

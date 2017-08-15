@@ -24,11 +24,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from . import base
+import mailbox
+import os.path
 
 import six
-import os.path
-import mailbox
+
+from . import base
 
 
 class Maildir(base.ThreadedPollText):

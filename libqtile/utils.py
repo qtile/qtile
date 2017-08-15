@@ -19,12 +19,12 @@
 # SOFTWARE.
 
 import functools
-import os
-import operator
-import sys
-import warnings
-import traceback
 import importlib
+import operator
+import os
+import sys
+import traceback
+import warnings
 
 import six
 from six.moves import reduce

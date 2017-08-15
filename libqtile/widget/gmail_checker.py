@@ -21,10 +21,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.log_utils import logger
-from . import base
 import imaplib
 import re
+
+from libqtile.log_utils import logger
+
+from . import base
 
 
 class GmailChecker(base.ThreadedPollText):

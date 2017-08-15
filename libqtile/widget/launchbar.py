@@ -43,12 +43,12 @@ To execute a python command in qtile, begin with by 'qshell:'
 
 from __future__ import division
 
+import os.path
+
+import cairocffi
 from libqtile import bar
 from libqtile.log_utils import logger
 from libqtile.widget import base
-
-import os.path
-import cairocffi
 from xdg.IconTheme import getIconPath
 
 

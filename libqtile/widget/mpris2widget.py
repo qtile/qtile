@@ -23,7 +23,9 @@
 
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
+
 from . import base
+
 
 class Mpris2(base._TextBox):
     """An MPRIS 2 widget

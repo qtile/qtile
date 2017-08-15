@@ -34,18 +34,18 @@
     A minimal EWMH-aware OO layer over xpyb. This is NOT intended to be
     complete - it only implements the subset of functionalty needed by qtile.
 """
-from __future__ import print_function, division
-import six
+from __future__ import division, print_function
+
 from collections import OrderedDict
-from itertools import repeat, chain
+from itertools import chain, repeat
 
-from xcffib.xproto import CW, WindowClass, EventMask
-from xcffib.xfixes import SelectionEventMask
-
+import six
 import xcffib
 import xcffib.randr
 import xcffib.xinerama
 import xcffib.xproto
+from xcffib.xfixes import SelectionEventMask
+from xcffib.xproto import CW, EventMask, WindowClass
 
 from . import xkeysyms
 from .log_utils import logger
