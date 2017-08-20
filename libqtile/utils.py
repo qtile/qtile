@@ -176,6 +176,10 @@ class UnixCommandNotFound(Warning):
     pass
 
 
+class UnixCommandRuntimeError(Warning):
+    pass
+
+
 def catch_exception_and_warn(warning=Warning, return_on_exception=None,
                              excepts=Exception):
     """

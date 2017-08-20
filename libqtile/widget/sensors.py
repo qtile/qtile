@@ -25,11 +25,14 @@
 # SOFTWARE.
 
 import re
+from subprocess import CalledProcessError
 
 from six import PY2
 
 from . import base
-from ..utils import UnixCommandNotFound, catch_exception_and_warn
+from ..utils import (
+    UnixCommandNotFound, UnixCommandRuntimeError, catch_exception_and_warn
+)
 from libqtile.log_utils import logger
 
 
@@ -83,6 +86,9 @@ class ThermalSensor(base.InLoopPollText):
                 break
 
     @catch_exception_and_warn(warning=UnixCommandNotFound, excepts=OSError)
+    @catch_exception_and_warn(warning=UnixCommandRuntimeError,
+                              excepts=CalledProcessError,
+                              return_on_exception="")
     def get_temp_sensors(self):
         """calls the unix `sensors` command with `-f` flag if user has specified that
         the output should be read in Fahrenheit.
