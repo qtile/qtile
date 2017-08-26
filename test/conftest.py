@@ -375,8 +375,8 @@ class Qtile(object):
         path = whereis("gkrellm")
         return self._spawn_window(path)
 
-    def testXterm(self):
-        path = whereis("xterm")
+    def testXcalc(self):
+        path = whereis("xcalc")
         return self._spawn_window(path)
 
     def groupconsistency(self):

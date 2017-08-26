@@ -11,7 +11,7 @@ install them from your package manager.
 * `pytest <http://pytest.org/latest/>`_
 * `Xephyr <http://www.freedesktop.org/wiki/Software/Xephyr>`_
 * `xvfbwrapper <https://github.com/cgoldberg/xvfbwrapper>`_
-* ``xrandr``, ``xterm``, ``xeyes`` and ``xclock`` (``x11-apps`` on Ubuntu)
+* ``xrandr``, ``xcalc``, ``xeyes`` and ``xclock`` (``x11-apps`` on Ubuntu)
 
 On Ubuntu, if testing on Python 3, this can be done with:
 
