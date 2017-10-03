@@ -608,11 +608,11 @@ class _SimpleLayoutBase(Layout):
 
     def previous(self):
         client = self.focus_previous(self.clients.current_client) or self.focus_last()
-        self.group.focus(client, False)
+        self.group.focus(client, True)
 
     def next(self):
         client = self.focus_next(self.clients.current_client) or self.focus_first()
-        self.group.focus(client, False)
+        self.group.focus(client, True)
 
     def add(self, client, offset_to_current=0):
         return self.clients.add(client, offset_to_current)
