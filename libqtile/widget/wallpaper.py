@@ -44,6 +44,8 @@ class Wallpaper(base._TextBox):
         self.index = 0
         self.images = []
         self.get_wallpapers()
+        if self.random_selection: # Random selection after reading all files
+            self.index = random.randint(0, len(self.images) - 1)
         self.set_wallpaper()
 
     def get_path(self, file):
