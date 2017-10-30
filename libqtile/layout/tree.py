@@ -31,6 +31,7 @@
 
 from .base import Layout
 from .. import drawer, hook, window
+from libqtile.log_utils import logger
 
 to_superscript = dict(zip(map(ord, u'0123456789'), map(ord, u'⁰¹²³⁴⁵⁶⁷⁸⁹')))
 
@@ -341,6 +342,10 @@ class TreeTab(Layout):
         ("sections", ['Default'], "Foreground color of inactive tab"),
         ("name", "treetab", "Name of this layout."),
         ("previous_on_rm", False, "Focus previous window on close instead of first."),
+        ("add_section_prompt", 'section(add)',
+            'A prompt text on prompt widget when you added new section.'),
+        ("del_section_prompt", 'section(remove)',
+            'A prompt text on prompt widget when you remove a section'),
     ]
 
     def __init__(self, **config):
@@ -636,6 +641,30 @@ class TreeTab(Layout):
     def cmd_decrease_ratio(self):
         self.panel_width -= 10
         self.group.layoutAll()
+
+    def cmd_add_section_using_prompt(self):
+        prompt = self.group.qtile.widgetMap['prompt']
+        if not prompt:
+            logger.warning("cmd_add_section_using_prompt cmd require prompt widget")
+            return
+
+        def f(args):
+            if args:
+                self.cmd_add_section(args)
+
+        prompt.startInput(self.add_section_prompt, f)
+
+    def cmd_del_section_using_prompt(self):
+        prompt = self.group.qtile.widgetMap['prompt']
+        if not prompt:
+            logger.warning("cmd_del_section_using_prompt cmd require prompt widget")
+            return
+
+        def f(args):
+            if args:
+                self.cmd_del_section(args)
+
+        prompt.startInput(self.del_section_prompt, f)
 
     def _create_drawer(self):
         if self._drawer is None:

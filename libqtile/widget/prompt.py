@@ -434,11 +434,15 @@ class Prompt(base._TextBox):
         self.show_cursor = self.cursor
         self.cursor_position = 0
         self.callback = callback
-        self.completer = self.completers[complete](self.qtile)
+        if not complete:
+            self.completer = None
+        else:
+            self.completer = self.completers[complete](self.qtile)
         self.strict_completer = strict_completer
         self._update()
         self.bar.widget_grab_keyboard(self)
-        if self.record_history:
+
+        if self.record_history and complete:
             self.completer_history = self.history[complete]
             self.position = len(self.completer_history)
 
@@ -487,8 +491,9 @@ class Prompt(base._TextBox):
 
     def _trigger_complete(self):
         # Trigger the auto completion in user input
-        self.userInput = self.completer.complete(self.userInput)
-        self.cursor_position = len(self.userInput)
+        if self.completer:
+            self.userInput = self.completer.complete(self.userInput)
+            self.cursor_position = len(self.userInput)
 
     def _history_to_input(self):
         # Move actual command (when exploring history) to user input and update
@@ -544,7 +549,7 @@ class Prompt(base._TextBox):
         self._history_to_input()
         if self.userInput:
             # If history record is activated, also save command in history
-            if self.record_history:
+            if self.record_history and self.completer:
                 # ensure no dups in history
                 if self.ignore_dups_history and (self.userInput in self.completer_history):
                     self.completer_history.remove(self.userInput)
@@ -621,7 +626,7 @@ class Prompt(base._TextBox):
         # Return the action (a function) to do according the pressed key (k).
         self.key = k
         if k in self.keyhandlers:
-            if k != xkeysyms.keysyms['Tab']:
+            if k != xkeysyms.keysyms['Tab'] and self.completer:
                 self.actual_value = self.completer.actual()
                 self.completer.reset()
             return self.keyhandlers[k]
