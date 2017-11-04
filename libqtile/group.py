@@ -158,7 +158,7 @@ class _Group(command.CommandObject):
                 if normal:
                     try:
                         self.layout.layout(normal, screen)
-                    except:
+                    except:  # noqa: E722
                         logger.exception("Exception in layout %s",
                             self.layout.name)
                 if floating:
