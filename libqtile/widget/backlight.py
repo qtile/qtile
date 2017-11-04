@@ -24,8 +24,6 @@
 import os
 from . import base
 
-from libqtile.log_utils import logger
-
 BACKLIGHT_DIR = '/sys/class/backlight'
 
 
@@ -61,22 +59,15 @@ class Backlight(base.InLoopPollText):
         self.future = None
 
     def _load_file(self, name):
-        try:
-            path = os.path.join(BACKLIGHT_DIR, self.backlight_name, name)
-            with open(path, 'r') as f:
-                return f.read().strip()
-        except:
-            logger.exception("Failed to read file: %s" % name)
-            raise
+        path = os.path.join(BACKLIGHT_DIR, self.backlight_name, name)
+        with open(path, 'r') as f:
+            return f.read().strip()
 
     def _get_info(self):
-        try:
-            info = {
-                'brightness': float(self._load_file(self.brightness_file)),
-                'max': float(self._load_file(self.max_brightness_file)),
-            }
-        except:
-            return
+        info = {
+            'brightness': float(self._load_file(self.brightness_file)),
+            'max': float(self._load_file(self.max_brightness_file)),
+        }
         return info
 
     def poll(self):
