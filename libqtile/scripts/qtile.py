@@ -48,7 +48,7 @@ def rename_process():
     try:
         import setproctitle
         setproctitle.setproctitle("qtile")
-    except:
+    except ImportError:
         pass
 
 def make_qtile():
