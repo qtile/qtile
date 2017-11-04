@@ -93,7 +93,7 @@ class Mpd(base.ThreadPoolText):
                 self.client.volume(1)
                 self.client.volume(-1)
                 self.client.disconnect()
-            except:
+            except Exception:
                 pass
         base._Widget.finalize(self)
 
