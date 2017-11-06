@@ -372,7 +372,7 @@ class Prompt(base._TextBox):
                         self.history = pickle.load(f)
                         if self.ignore_dups_history:
                             self._dedup_history()
-                    except:
+                    except:  # noqa: E722
                         # unfortunately, pickle doesn't wrap its errors, so we
                         # can't detect what's a pickle error and what's not.
                         logger.exception("failed to load prompt history")

@@ -48,7 +48,7 @@ def rename_process():
     try:
         import setproctitle
         setproctitle.setproctitle("qtile")
-    except:
+    except ImportError:
         pass
 
 def make_qtile():
@@ -112,16 +112,12 @@ def make_qtile():
     # XXX: the import is here becouse we need to call init_log
     # before start importing stuff
     from libqtile import manager
-    try:
-        return manager.Qtile(
-            config,
-            fname=options.socket,
-            no_spawn=options.no_spawn,
-            state=options.state,
-        )
-    except:
-        logger.exception('Qtile crashed during startup')
-        raise
+    return manager.Qtile(
+        config,
+        fname=options.socket,
+        no_spawn=options.no_spawn,
+        state=options.state,
+    )
 
 
 def main():

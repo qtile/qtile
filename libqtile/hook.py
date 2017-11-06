@@ -364,7 +364,7 @@ def fire(event, *args, **kwargs):
     for i in subscriptions.get(event, []):
         try:
             i(*args, **kwargs)
-        except:
+        except:  # noqa: E722
             logger.exception("Error in hook %s", event)
 
 @subscribe.client_name_updated
