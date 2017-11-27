@@ -30,19 +30,19 @@ import locale
 
 class CryptoTicker(GenPollUrl):
     """
-    A bitcoin ticker widget, data provided by the btc-e.com API. Defaults to
-    displaying currency in whatever the current locale is. Examples:
+    A cryptocurrency ticker widget, data provided by the coinmarketcap API. Defaults to
+    displaying bitcoin currency in whatever the current locale is (or usd). Examples:
 
     ::
 
-        # display the average price of bitcoin in local currency
-        widget.BitcoinTicker(format="BTC: {avg}")
+        # display the average price of bitcoin in euros in format like "BTC:9001"
+        widget.CryptoTicker(from_currency='bitcoin', to_currency='eur', format="{symbol}:{price}")
 
         # display the average price of litecoin in local currency
-        widget.BitcoinTicker(format="LTC: {avg}", source_currency='ltc')
+        widget.CryptoTicker(from_currency='litecoin')
 
         # display the average price of litecoin in bitcoin
-        widget.BitcoinTicker(format="BTC: ฿{avg}", source_currency='ltc', currency='btc', round=False)
+        widget.CryptoTicker(format="{symbol}:{price_btc}", from_currency='litecoin')
     """
 
     QUERY_URL = "https://api.coinmarketcap.com/v1/ticker/{from_currency}/?convert={to_currency}"
