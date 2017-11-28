@@ -664,13 +664,13 @@ class Prompt(base._TextBox):
 
     def cmd_exec_layout(self, prompt, layout_class, cmd_name):
         """
-        Execute a cmd of current layout 
+        Execute a cmd of current layout
             with a string that is obtained from startInput.
 
         config example:
-            Key([alt, "shift"], "a", 
+            Key([alt, "shift"], "a",
                 lazy.widget['prompt'].exec_with_input(
-                    "section(add)", 
+                    "section(add)",
                     layout.TreeTab,
                     "add_section"))
         """
