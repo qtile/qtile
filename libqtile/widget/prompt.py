@@ -38,6 +38,7 @@ import string
 from collections import OrderedDict, deque
 
 from libqtile.log_utils import logger
+from libqtile.command import _SelectError
 
 from . import base
 from .. import bar, command, hook, pangocffi, utils, xcbq, xkeysyms
@@ -385,7 +386,7 @@ class Prompt(base._TextBox):
                                         for x in self.completers if x}
             else:
                 self.history = {x: deque(maxlen=self.max_history)
-                                for x in self.completers if x}
+                                for x in self.completers}
 
     def _configure(self, qtile, bar):
         self.markup = True
@@ -434,11 +435,15 @@ class Prompt(base._TextBox):
         self.show_cursor = self.cursor
         self.cursor_position = 0
         self.callback = callback
-        self.completer = self.completers[complete](self.qtile)
+        if not complete:
+            self.completer = None
+        else:
+            self.completer = self.completers[complete](self.qtile)
         self.strict_completer = strict_completer
         self._update()
         self.bar.widget_grab_keyboard(self)
-        if self.record_history:
+
+        if self.record_history and complete:
             self.completer_history = self.history[complete]
             self.position = len(self.completer_history)
 
@@ -487,8 +492,9 @@ class Prompt(base._TextBox):
 
     def _trigger_complete(self):
         # Trigger the auto completion in user input
-        self.userInput = self.completer.complete(self.userInput)
-        self.cursor_position = len(self.userInput)
+        if self.completer:
+            self.userInput = self.completer.complete(self.userInput)
+            self.cursor_position = len(self.userInput)
 
     def _history_to_input(self):
         # Move actual command (when exploring history) to user input and update
@@ -544,7 +550,7 @@ class Prompt(base._TextBox):
         self._history_to_input()
         if self.userInput:
             # If history record is activated, also save command in history
-            if self.record_history:
+            if self.record_history and self.completer:
                 # ensure no dups in history
                 if self.ignore_dups_history and (self.userInput in self.completer_history):
                     self.completer_history.remove(self.userInput)
@@ -621,7 +627,7 @@ class Prompt(base._TextBox):
         # Return the action (a function) to do according the pressed key (k).
         self.key = k
         if k in self.keyhandlers:
-            if k != xkeysyms.keysyms['Tab']:
+            if k != xkeysyms.keysyms['Tab'] and self.completer:
                 self.actual_value = self.completer.actual()
                 self.completer.reset()
             return self.keyhandlers[k]
@@ -660,6 +666,55 @@ class Prompt(base._TextBox):
             text=self.text,
             active=self.active,
         )
+
+    def cmd_exec_layout(self, prompt, layout_class, cmd_name):
+        """
+        Execute a cmd of current layout
+            with a string that is obtained from startInput.
+
+        config example:
+            Key([alt, "shift"], "a",
+                lazy.widget['prompt'].exec_with_input(
+                    "section(add)",
+                    layout.TreeTab,
+                    "add_section"))
+        """
+        if isinstance(self.qtile.currentLayout, layout_class):
+
+            def f(args):
+                if args:
+                    self.qtile.currentLayout.command(cmd_name)(args)
+
+            self.startInput(prompt, f)
+
+    def cmd_exec_general(
+            self, prompt, cmd_name, selected_name, selector=None):
+        """
+        Execute a cmd of any object. For example layout, group, window, widget
+        , etc with a string that is obtained from startInput.
+
+        config example:
+            Key([alt, "shift"], "a",
+                lazy.widget['prompt'].exec_general(
+                    "prompt",
+                    "add_section",
+                    "layout",
+                    None))
+        """
+        try:
+            obj = self.qtile.select([(selected_name, selector)])
+        except _SelectError:
+            return
+        cmd = obj.command(cmd_name)
+        if not cmd:
+            logger.info("command not found")
+            return
+
+        def f(args):
+            if args:
+                cmd(args)
+
+        self.startInput(prompt, f)
 
     def _dedup_history(self):
         """Filter the history deque, clearing all duplicate values."""
