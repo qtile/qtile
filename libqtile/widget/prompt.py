@@ -385,7 +385,7 @@ class Prompt(base._TextBox):
                                         for x in self.completers if x}
             else:
                 self.history = {x: deque(maxlen=self.max_history)
-                                for x in self.completers if x}
+                                for x in self.completers}
 
     def _configure(self, qtile, bar):
         self.markup = True
@@ -660,6 +660,25 @@ class Prompt(base._TextBox):
             text=self.text,
             active=self.active,
         )
+
+    def cmd_exec_with_input(self, prompt, layout_class, cmd_name):
+        """
+        Execute a cmd of current layout 
+            with a string that is obtained from startInput.
+
+        Key([alt, "shift"], "a", 
+            lazy.widget['prompt'].exec_with_input(
+                "section(add)", 
+                layout.TreeTab,
+                "add_section"))
+        """
+        if isinstance(self.qtile.currentLayout, layout_class):
+
+            def f(args):
+                if args:
+                    self.qtile.currentLayout.command(cmd_name)(args)
+
+            self.startInput(prompt, f)
 
     def _dedup_history(self):
         """Filter the history deque, clearing all duplicate values."""
