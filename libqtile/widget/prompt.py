@@ -698,7 +698,7 @@ class Prompt(base._TextBox):
         """
         try:
             obj = self.qtile.select([(selected_name, selector)])
-        except _SelectError as v:
+        except _SelectError:
             return
         cmd = obj.command(cmd_name)
         if not cmd:
