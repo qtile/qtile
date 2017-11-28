@@ -38,6 +38,7 @@ import string
 from collections import OrderedDict, deque
 
 from libqtile.log_utils import logger
+from libqtile.command import _SelectError
 
 from . import base
 from .. import bar, command, hook, pangocffi, utils, xcbq, xkeysyms
@@ -661,16 +662,17 @@ class Prompt(base._TextBox):
             active=self.active,
         )
 
-    def cmd_exec_with_input(self, prompt, layout_class, cmd_name):
+    def cmd_exec_layout(self, prompt, layout_class, cmd_name):
         """
         Execute a cmd of current layout 
             with a string that is obtained from startInput.
 
-        Key([alt, "shift"], "a", 
-            lazy.widget['prompt'].exec_with_input(
-                "section(add)", 
-                layout.TreeTab,
-                "add_section"))
+        config example:
+            Key([alt, "shift"], "a", 
+                lazy.widget['prompt'].exec_with_input(
+                    "section(add)", 
+                    layout.TreeTab,
+                    "add_section"))
         """
         if isinstance(self.qtile.currentLayout, layout_class):
 
@@ -679,6 +681,35 @@ class Prompt(base._TextBox):
                     self.qtile.currentLayout.command(cmd_name)(args)
 
             self.startInput(prompt, f)
+
+    def cmd_exec_general(
+            self, prompt, cmd_name, selected_name, selector=None):
+        """
+        Execute a cmd of any object. For example layout, group, window, widget
+        , etc with a string that is obtained from startInput.
+
+        config example:
+            Key([alt, "shift"], "a",
+                lazy.widget['prompt'].exec_general(
+                    "prompt",
+                    "add_section",
+                    "layout",
+                    None))
+        """
+        try:
+            obj = self.qtile.select([(selected_name, selector)])
+        except _SelectError as v:
+            return
+        cmd = obj.command(cmd_name)
+        if not cmd:
+            logger.info("command not found")
+            return
+
+        def f(args):
+            if args:
+                cmd(args)
+
+        self.startInput(prompt, f)
 
     def _dedup_history(self):
         """Filter the history deque, clearing all duplicate values."""
