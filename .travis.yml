@@ -52,8 +52,7 @@ install:
   - if [[ $TOXENV == py* ]]; then pip install coveralls; fi
 
 script:
-  - travis_wait 30 script.sh
-  - detox
+  - travis_wait 30 tox
 
 notifications:
   email: false
