@@ -26,10 +26,10 @@ class _Column(_ClientList):
     cw = _ClientList.current_client
     current = _ClientList.current_index
 
-    def __init__(self, autosplit=True, width=100):
+    def __init__(self, split=True, width=100):
         _ClientList.__init__(self)
         self.width = width
-        self.split = autosplit
+        self.split = split
         self.heights = {}
 
     def info(self):
@@ -118,12 +118,12 @@ class Wmii(Layout):
     def __init__(self, **config):
         Layout.__init__(self, **config)
         self.add_defaults(Wmii.defaults)
-        self.columns = [_Column(self.autosplit)]
+        self.columns = [_Column(self.split)]
         self.current = 0
 
     def clone(self, group):
         c = Layout.clone(self, group)
-        c.columns = [_Column(self.autosplit)]
+        c.columns = [_Column(self.split)]
         return c
 
     def info(self):
@@ -149,7 +149,7 @@ class Wmii(Layout):
         return self.columns[self.current]
 
     def add_column(self, prepend=False):
-        c = _Column(self.autosplit)
+        c = _Column(self.split)
         if prepend:
             self.columns.insert(0, c)
             self.current += 1
