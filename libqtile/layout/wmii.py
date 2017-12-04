@@ -1,12 +1,3 @@
-# Copyright (c) 2013 Mattias Svala
-# Copyright (c) 2013 Tao Sauvage
-# Copyright (c) 2014 ramnes
-# Copyright (c) 2014 Sean Vig
-# Copyright (c) 2014 dmpayton
-# Copyright (c) 2014 dequis
-# Copyright (c) 2014 Tycho Andersen
-# Copyright (c) 2015 Serge Hallyn
-#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -27,440 +18,396 @@
 
 from __future__ import division
 
-from .base import Layout
+from .base import Layout, _ClientList
 
-# We have an array of columns.  Each columns is a dict containing
-# width (in percent), rows (an array of rows), and mode, which is
-# either 'stack' or 'split'
-#
-# Each row is an array of clients
+class _Column(_ClientList):
+
+    # shortcuts for current client and index used in Wmii layout
+    cw = _ClientList.current_client
+    current = _ClientList.current_index
+
+    def __init__(self, autosplit=True, width=100):
+        _ClientList.__init__(self)
+        self.width = width
+        self.split = autosplit
+        self.heights = {}
+
+    def info(self):
+        info = _ClientList.info(self)
+        info.update(dict(
+            heights=[self.heights[c] for c in self.clients],
+            split=self.split,))
+        return info
+
+    def toggleSplit(self):
+        self.split = not self.split
+
+    def add(self, client, height=100):
+        _ClientList.add(self, client)
+        self.heights[client] = height
+        delta = 100 - height
+        if delta != 0:
+            n = len(self)
+            growth = [int(delta / n)] * n
+            growth[0] += delta - sum(growth)
+            for c, g in zip(self, growth):
+                self.heights[c] += g
+
+    def remove(self, client):
+        _ClientList.remove(self, client)
+        delta = self.heights[client] - 100
+        del self.heights[client]
+        if delta != 0:
+            n = len(self)
+            growth = [int(delta / n)] * n
+            growth[0] += delta - sum(growth)
+            for c, g in zip(self, growth):
+                self.heights[c] += g
+
+    def __str__(self):
+        cur = self.current
+        return "_Column: " + ", ".join([
+            "[%s: %d]" % (c.name, self.heights[c]) if c == cur else
+            "%s: %d" % (c.name, self.heights[c]) for c in self.clients
+        ])
+
 
 class Wmii(Layout):
-    """This layout emulates wmii layouts
+    """This layout emulates wmii layouts.
 
-    The screen it split into columns, always starting with one.  A new window
-    is created in the active window's column.  Windows can be shifted left and
-    right.  If there is no column when shifting, a new one is created.  Each
-    column can be stacked or divided (equally split).
+    The screen is split into columns, which can be dynamically added or
+    removed.  Each column displays either a sigle window at a time from a
+    stack of windows or all of them simultaneously, spliting the column
+    space.  Columns and windows can be resized and windows can be shuffled
+    around.
+    
+    This layout can also emulate "Verical" and "Max", depending on the
+    default parameters.
 
-    This layout implements something akin to wmii's semantics.
+    An example key configuration is::
 
-    Each group starts with one column.  The first window takes up the whole
-    screen.  Next window splits the column in half.  Windows can be moved to
-    the column to the left or right.  If there is no column in the direction
-    being moved into, a new column is created.
-
-    Each column can be either stacked (each window takes up the whole vertical
-    real estate) or split (the windows are split equally vertically in the
-    column) Columns can be grown horizontally (cmd_grow_left/right).
-
-    My config.py has the following added::
-
-        Key(
-            [mod, "shift", "control"], "l",
-            lazy.layout.grow_right()
-        ),
-        Key(
-            [mod, "shift"], "l",
-            lazy.layout.shuffle_right()
-        ),
-        Key(
-            [mod, "shift", "control"], "h",
-            lazy.layout.grow_left()
-        ),
-        Key(
-            [mod, "shift"], "h",
-            lazy.layout.shuffle_left()
-        ),
-        Key(
-            [mod], "s",
-            lazy.layout.toggle_split()
-        ),
+        Key([mod], "j", lazy.layout.down()),
+        Key([mod], "k", lazy.layout.up()),
+        Key([mod], "h", lazy.layout.left()),
+        Key([mod], "l", lazy.layout.right()),
+        Key([mod, "shift"], "j", lazy.layout.shuffle_down()),
+        Key([mod, "shift"], "k", lazy.layout.shuffle_up()),
+        Key([mod, "shift"], "h", lazy.layout.shuffle_left()),
+        Key([mod, "shift"], "l", lazy.layout.shuffle_right()),
+        Key([mod, "control"], "j", lazy.layout.grow_down()),
+        Key([mod, "control"], "k", lazy.layout.grow_up()),
+        Key([mod, "control"], "h", lazy.layout.grow_left()),
+        Key([mod, "control"], "l", lazy.layout.grow_right()),
+        Key([mod], "Return", lazy.layout.toggle_split()),
+        Key([mod], "n", lazy.layout.normalize()),
     """
     defaults = [
+        ("name", "wmii", "Name of this layout."),
         ("border_focus", "#881111", "Border colour for the focused window."),
         ("border_normal", "#220000", "Border colour for un-focused windows."),
         ("border_focus_stack", "#0000ff", "Border colour for un-focused windows."),
         ("border_normal_stack", "#000022", "Border colour for un-focused windows."),
-        ("grow_amount", 5, "Amount by which to grow/shrink a window."),
         ("border_width", 2, "Border width."),
-        ("name", "wmii", "Name of this layout."),
-        ("margin", 0, "Margin of the layout"),
+        ("margin", 0, "Margin of the layout."),
+        ("split", True, "Newly created collumns presentation mode."),
+        ("num_columns", 1, "Preferred number of columns."),
+        ("grow_amount", 10, "Amount by which to grow a window/column."),
+        ("fair", False, "Add new windows to the column with least windows."),
     ]
 
     def __init__(self, **config):
         Layout.__init__(self, **config)
         self.add_defaults(Wmii.defaults)
-        self.current_window = None
-        self.clients = []
-        self.columns = [{'active': 0, 'width': 100, 'mode': 'split', 'rows': []}]
-
-    def info(self):
-        d = Layout.info(self)
-        d["current_window"] = self.current_window.name if self.current_window else None
-        d["clients"] = [x.name for x in self.clients]
-        return d
-
-    def add_column(self, prepend, win):
-        newwidth = int(100 / (len(self.columns) + 1))
-        # we are only called if there already is a column, simplifies things
-        for c in self.columns:
-            c['width'] = newwidth
-        c = {'width': newwidth, 'mode': 'split', 'rows': [win]}
-        if prepend:
-            self.columns.insert(0, c)
-        else:
-            self.columns.append(c)
+        self.columns = [_Column(self.autosplit)]
+        self.current = 0
 
     def clone(self, group):
         c = Layout.clone(self, group)
-        c.current_window = None
-        c.clients = []
-        c.columns = [{'active': 0, 'width': 100, 'mode': 'split', 'rows': []}]
+        c.columns = [_Column(self.autosplit)]
         return c
 
-    def current_column(self):
-        if self.current_window is None:
-            return None
+    def info(self):
+        d = Layout.info(self)
+        d["clients"] = []
+        d["columns"] = []
         for c in self.columns:
-            if self.current_window in c['rows']:
-                return c
-        return None
-
-    def add(self, client):
-        self.clients.append(client)
-        c = self.current_column()
-        if c is None:
-            if len(self.columns) == 0:
-                self.columns = [{'active': 0, 'width': 100, 'mode': 'split', 'rows': []}]
-            c = self.columns[0]
-        # Insert the new window after the current one, not at the bottom of the
-        # stack, which would feel unnatural for example when a new tiled window
-        # is opened from within an application (new browser window, options
-        # window etc.)
-        c['rows'].insert(c['active'] + 1, client)
-        self.focus(client)
-
-    def remove(self, client):
-        if client not in self.clients:
-            return
-        self.clients.remove(client)
-        for c in self.columns:
-            if client in c['rows']:
-                ridx = c['rows'].index(client)
-                cidx = self.columns.index(c)
-                c['rows'].remove(client)
-                if len(c['rows']) != 0:
-                    if client == self.current_window:
-                        if ridx > 0:
-                            ridx -= 1
-                        return c['rows'][ridx]
-                    return self.current_window
-                # column is now empty, remove it and select the previous one
-                self.columns.remove(c)
-                if len(self.columns) == 0:
-                    return None
-                newwidth = int(100 / len(self.columns))
-                for c in self.columns:
-                    c['width'] = newwidth
-                if len(self.columns) == 1:
-                    # there is no window at all
-                    return None
-                if cidx > 0:
-                    cidx -= 1
-                c = self.columns[cidx]
-                rows = c['rows']
-                return rows[0]
-
-    def is_last_column(self, cidx):
-            return cidx == len(self.columns) - 1
+            cinfo = c.info()
+            d["clients"].extend(cinfo['clients'])
+            d["columns"].append(cinfo)
+        d["current"] = self.current
+        return d
 
     def focus(self, client):
-        self.current_window = client
+        for i, c in enumerate(self.columns):
+            if client in c:
+                c.focus(client)
+                self.current = i
+                break
+
+    @property
+    def cc(self):
+        return self.columns[self.current]
+
+    def add_column(self, prepend=False):
+        c = _Column(self.autosplit)
+        if prepend:
+            self.columns.insert(0, c)
+            self.current += 1
+        else:
+            self.columns.append(c)
+        return c
+
+    def remove_column(self, col):
+        idx = self.columns.index(col)
+        del self.columns[idx]
+        if idx <= self.current:
+            self.current = max(0, self.current - 1)
+        delta = col.width - 100
+        if delta != 0:
+            n = len(self.columns)
+            growth = [int(delta / n)] * n
+            growth[0] += delta - sum(growth)
+            for c, g in zip(self.columns, growth):
+                c.width += g
+
+    def add(self, client):
+        c = self.cc
+        if len(c) > 0 and len(self.columns) < self.num_columns:
+            c = self.add_column()
+        if self.fair:
+            least = min(self.columns, key=len)
+            if len(least) < len(c):
+                c = least
+        self.current = self.columns.index(c)
+        c.add(client)
+
+    def remove(self, client):
+        remove = None
         for c in self.columns:
-            if client in c['rows']:
-                c['active'] = c['rows'].index(client)
+            if client in c:
+                c.remove(client)
+                if len(c) == 0 and len(self.columns) > 1:
+                    remove = c
+                break
+        if remove is not None:
+            self.remove_column(c)
+        return self.columns[self.current].cw
 
     def configure(self, client, screen):
-        show = True
-        if client not in self.clients:
-            return
-        ridx = -1
-        xoffset = int(screen.x)
-        for c in self.columns:
-            if client in c['rows']:
-                ridx = c['rows'].index(client)
+        pos = 0
+        for col in self.columns:
+            if client in col:
                 break
-            xoffset += int(float(c['width']) * screen.width / 100.0)
-        if ridx == -1:
-            return
-        if client == self.current_window:
-            if c['mode'] == 'split':
-                px = self.group.qtile.colorPixel(self.border_focus)
-            else:
-                px = self.group.qtile.colorPixel(self.border_focus_stack)
+            pos += col.width
         else:
-            if c['mode'] == 'split':
-                px = self.group.qtile.colorPixel(self.border_normal)
+            client.hide()
+            return
+        if client.has_focus:
+            if col.split:
+                color = self.group.qtile.colorPixel(self.border_focus)
             else:
-                px = self.group.qtile.colorPixel(self.border_normal_stack)
-        if c['mode'] == 'split':
-            oneheight = screen.height / len(c['rows'])
-            yoffset = int(screen.y + oneheight * ridx)
-            win_height = int(oneheight - 2 * self.border_width)
-        else:  # stacked
-            if c['active'] != c['rows'].index(client):
-                show = False
-            yoffset = int(screen.y)
-            win_height = int(screen.height - 2 * self.border_width)
-        win_width = int(float(c['width'] * screen.width / 100.0))
-        win_width -= 2 * self.border_width
-
-        if show:
-            client.place(
-                xoffset,
-                yoffset,
-                win_width,
-                win_height,
-                self.border_width,
-                px,
-                margin=self.margin,
-            )
+                color = self.group.qtile.colorPixel(self.border_focus_stack)
+        else:
+            if col.split:
+                color = self.group.qtile.colorPixel(self.border_normal)
+            else:
+                color = self.group.qtile.colorPixel(self.border_normal_stack)
+        if len(self.columns) == 1 and (len(col) == 1 or not col.split):
+            border = 0
+        else:
+            border = self.border_width
+        width = int(0.5 + col.width * screen.width * 0.01 / len(self.columns))
+        x = screen.x + int(0.5 + pos * screen.width * 0.01 / len(self.columns))
+        if col.split:
+            pos = 0
+            for c in col:
+                if client == c:
+                    break
+                pos += col.heights[c]
+            height = int(0.5 + col.heights[client] * screen.height * 0.01 /
+                    len(col))
+            y = screen.y + int(0.5 + pos * screen.height * 0.01 / len(col))
+            client.place(x, y, width - 2 * border,
+                    height - 2 * border, border,
+                    color, margin=self.margin)
+            client.unhide()
+        elif client == col.cw:
+            client.place(x, screen.y, width - 2 * border,
+                    screen.height - 2 * border, border,
+                    color, margin=self.margin)
             client.unhide()
         else:
             client.hide()
 
-    def cmd_toggle_split(self):
-        c = self.current_column()
-        if c['mode'] == "split":
-            c['mode'] = "stack"
-        else:
-            c['mode'] = "split"
-        self.group.layoutAll()
+    def focus_first(self):
+        """Returns first client in first column of layout"""
+        if self.columns:
+            return self.columns[0].focus_first()
+
+    def focus_last(self):
+        """Returns last client in last column of layout"""
+        if self.columns:
+            return self.columns[-1].focus_last()
 
     def focus_next(self, win):
+        """Returns the next client after 'win' in layout,
+           or None if there is no such client"""
         # First: try to get next window in column of win
         for idx, col in enumerate(self.columns):
-            rows = col['rows']
-            if win in rows:
-                i = rows.index(win)
-                if i + 1 < len(rows):
-                    return rows[i + 1]
+            if win in col:
+                nxt = col.focus_next(win)
+                if nxt:
+                    return nxt
                 else:
                     break
         # if there was no next, get first client from next column
         if idx + 1 < len(self.columns):
-            rows = self.columns[idx + 1]['rows']
-            if len(rows):
-                return rows[0]
+            return self.columns[idx + 1].focus_first()
 
     def focus_previous(self, win):
+        """Returns the client previous to 'win' in layout.
+           or None if there is no such client"""
         # First: try to focus previous client in column
         for idx, col in enumerate(self.columns):
-            rows = col['rows']
-            if win in rows:
-                i = rows.index(win)
-                if i > 0:
-                    return rows[i - 1]
+            if win in col:
+                prev = col.focus_previous(win)
+                if prev:
+                    return prev
                 else:
                     break
         # If there was no previous, get last from previous column
         if idx > 0:
-            rows = self.columns[idx + 1]['rows']
-            if len(rows):
-                return rows[-1]
+            return self.columns[idx - 1].focus_last()
 
-    def focus_first(self):
-        if len(self.columns) == 0:
-            self.columns = [{'active': 0, 'width': 100, 'mode': 'split', 'rows': []}]
-        c = self.columns[0]
-        if len(c['rows']) != 0:
-            return c['rows'][0]
-
-    def focus_last(self):
-        c = self.columns[len(self.columns) - 1]
-        if len(c['rows']) != 0:
-            return c['rows'][len(c['rows']) - 1]
+    def cmd_toggle_split(self):
+        self.cc.toggleSplit()
+        self.group.layoutAll()
 
     def cmd_left(self):
-        """Switch to the first window on prev column"""
-        c = self.current_column()
-        cidx = self.columns.index(c)
-        if cidx == 0:
-            return
-        cidx -= 1
-        c = self.columns[cidx]
-        if c['mode'] == "split":
-            self.group.focus(c['rows'][0])
-        else:
-            self.group.focus(c['rows'][c['active']])
+        if len(self.columns) > 1:
+            self.current = (self.current - 1) % len(self.columns)
+            self.group.focus(self.cc.cw, True)
 
     def cmd_right(self):
-        """Switch to the first window on next column"""
-        c = self.current_column()
-        cidx = self.columns.index(c)
-        if self.is_last_column(cidx):
-            return
-        cidx += 1
-        c = self.columns[cidx]
-        if c['mode'] == "split":
-            self.group.focus(c['rows'][0])
-        else:
-            self.group.focus(c['rows'][c['active']])
+        if len(self.columns) > 1:
+            self.current = (self.current + 1) % len(self.columns)
+            self.group.focus(self.cc.cw, True)
 
     def cmd_up(self):
-        """Switch to the previous window in current column"""
-        c = self.current_column()
-        if c is None:
-            return
-        ridx = c['rows'].index(self.current_window)
-        if ridx == 0:
-            if c['mode'] != "split":
-                ridx = len(c['rows']) - 1
-        else:
-            ridx -= 1
-        client = c['rows'][ridx]
-        self.group.focus(client)
+        col = self.cc
+        if len(col) > 1:
+            col.current_index -= 1
+            self.group.focus(col.cw, True)
 
     def cmd_down(self):
-        """Switch to the next window in current column"""
-        c = self.current_column()
-        if c is None:
-            return
-        ridx = c['rows'].index(self.current_window)
-        if ridx == len(c['rows']) - 1:
-            if c['mode'] != "split":
-                ridx = 0
-        else:
-            ridx += 1
-        client = c['rows'][ridx]
-        self.group.focus(client)
+        col = self.cc
+        if len(col) > 1:
+            col.current_index += 1
+            self.group.focus(col.cw, True)
 
-    cmd_next = cmd_down
-    cmd_previous = cmd_up
+    def cmd_next(self):
+        if self.cc.split and self.cc.current < len(self.cc) - 1:
+            self.cc.current += 1
+        elif self.columns:
+            self.current = (self.current + 1) % len(self.columns)
+            if self.cc.split:
+                self.cc.current = 0
+        self.group.focus(self.cc.cw, True)
+
+    def cmd_previous(self):
+        if self.cc.split and self.cc.current > 0:
+            self.cc.current -= 1
+        elif self.columns:
+            self.current = (self.current - 1) % len(self.columns)
+            if self.cc.split:
+                self.cc.current = len(self.cc) - 1
+        self.group.focus(self.cc.cw, True)
 
     def cmd_shuffle_left(self):
-        cur = self.current_window
-        if cur is None:
+        cur = self.cc
+        client = cur.cw
+        if client is None:
             return
-        for c in self.columns:
-            if cur in c['rows']:
-                cidx = self.columns.index(c)
-                if cidx == 0:
-                    if len(c['rows']) == 1:
-                        return
-                    c['rows'].remove(cur)
-                    self.add_column(True, cur)
-                    if len(c['rows']) == 0:
-                        self.columns.remove(c)
-                else:
-                    c['rows'].remove(cur)
-                    self.columns[cidx - 1]['rows'].append(cur)
-                if len(c['rows']) == 0:
-                    self.columns.remove(c)
-                    newwidth = int(100 / len(self.columns))
-                    for c in self.columns:
-                        c['width'] = newwidth
-                else:
-                    if c['active'] >= len(c['rows']):
-                        c['active'] = len(c['rows']) - 1
-                self.group.focus(cur)
-                return
-
-    def swap_column_width(self, grow, shrink):
-        grower = self.columns[grow]
-        shrinker = self.columns[shrink]
-        amount = self.grow_amount
-        if shrinker['width'] - amount < 5:
+        if self.current > 0:
+            self.current -= 1
+            new = self.cc
+            new.add(client, cur.heights[client])
+            cur.remove(client)
+            if len(cur) == 0:
+                self.remove_column(cur)
+        elif len(cur) > 1:
+            new = self.add_column(True)
+            new.add(client, cur.heights[client])
+            cur.remove(client)
+            self.current = 0
+        else:
             return
-        grower['width'] += amount
-        shrinker['width'] -= amount
-
-    def cmd_grow_left(self):
-        cur = self.current_window
-        if cur is None:
-            return
-        for c in self.columns:
-            if cur in c['rows']:
-                cidx = self.columns.index(c)
-                if cidx == 0:
-                    # grow left for leftmost-column, shrink left
-                    if self.is_last_column(cidx):
-                        return
-                    self.swap_column_width(cidx + 1, cidx)
-                    self.group.focus(cur)
-                    return
-                self.swap_column_width(cidx, cidx - 1)
-                self.group.focus(cur)
-                return
-
-    def cmd_grow_right(self):
-        cur = self.current_window
-        if cur is None:
-            return
-        for c in self.columns:
-            if cur in c['rows']:
-                cidx = self.columns.index(c)
-                if self.is_last_column(cidx):
-                    # grow right from right most, shrink right
-                    if cidx == 0:
-                        return
-                    self.swap_column_width(cidx - 1, cidx)
-                    self.group.focus(cur)
-                    return
-                # grow my width by 20, reduce neighbor to the right by 20
-                self.swap_column_width(cidx, cidx + 1)
-                self.group.focus(cur)
-                return
+        self.group.layoutAll()
 
     def cmd_shuffle_right(self):
-        cur = self.current_window
-        if cur is None:
+        cur = self.cc
+        client = cur.cw
+        if client is None:
             return
-        for c in self.columns:
-            if cur in c['rows']:
-                cidx = self.columns.index(c)
-                if self.is_last_column(cidx):
-                    if len(c['rows']) == 1:
-                        return
-                    c['rows'].remove(cur)
-                    self.add_column(False, cur)
-                    if len(c['rows']) == 0:
-                        self.columns.remove(c)
-                else:
-                    c['rows'].remove(cur)
-                    self.columns[cidx + 1]['rows'].append(cur)
-                if len(c['rows']) == 0:
-                    self.columns.remove(c)
-                    newwidth = int(100 / len(self.columns))
-                    for c in self.columns:
-                        c['width'] = newwidth
-                else:
-                    if c['active'] >= len(c['rows']):
-                        c['active'] = len(c['rows']) - 1
-                self.group.focus(cur)
-                return
-
-    def cmd_shuffle_down(self):
-        for c in self.columns:
-            if self.current_window in c['rows']:
-                r = c['rows']
-                ridx = r.index(self.current_window)
-                if ridx + 1 < len(r):
-                    r[ridx], r[ridx + 1] = r[ridx + 1], r[ridx]
-                    client = r[ridx + 1]
-                    self.focus(client)
-                    self.group.focus(client)
-                return
+        if self.current + 1 < len(self.columns):
+            self.current += 1
+            new = self.cc
+            new.add(client, cur.heights[client])
+            cur.remove(client)
+            if len(cur) == 0:
+                self.remove_column(cur)
+        elif len(cur) > 1:
+            new = self.add_column()
+            new.add(client, cur.heights[client])
+            cur.remove(client)
+            self.current = len(self.columns) - 1
+        else:
+            return
+        self.group.layoutAll()
 
     def cmd_shuffle_up(self):
-        for c in self.columns:
-            if self.current_window in c['rows']:
-                r = c['rows']
-                ridx = r.index(self.current_window)
-                if ridx > 0:
-                    r[ridx - 1], r[ridx] = r[ridx], r[ridx - 1]
-                    client = r[ridx - 1]
-                    self.focus(client)
-                    self.group.focus(client)
-                return
+        if self.cc.current_index > 0:
+            self.cc.shuffle_up()
+            self.group.layoutAll()
+
+    def cmd_shuffle_down(self):
+        if self.cc.current_index + 1 < len(self.cc):
+            self.cc.shuffle_down()
+            self.group.layoutAll()
+
+    def cmd_grow_left(self):
+        if self.current > 0:
+            if self.columns[self.current - 1].width > self.grow_amount:
+                self.columns[self.current - 1].width -= self.grow_amount
+                self.cc.width += self.grow_amount
+                self.group.layoutAll()
+
+    def cmd_grow_right(self):
+        if self.current + 1 < len(self.columns):
+            if self.columns[self.current + 1].width > self.grow_amount:
+                self.columns[self.current + 1].width -= self.grow_amount
+                self.cc.width += self.grow_amount
+                self.group.layoutAll()
+
+    def cmd_grow_up(self):
+        col = self.cc
+        if col.current > 0:
+            if col.heights[col[col.current - 1]] > self.grow_amount:
+                col.heights[col[col.current - 1]] -= self.grow_amount
+                col.heights[col.cw] += self.grow_amount
+                self.group.layoutAll()
+
+    def cmd_grow_down(self):
+        col = self.cc
+        if col.current + 1 < len(col):
+            if col.heights[col[col.current + 1]] > self.grow_amount:
+                col.heights[col[col.current + 1]] -= self.grow_amount
+                col.heights[col.cw] += self.grow_amount
+                self.group.layoutAll()
+
+    def cmd_normalize(self):
+        for col in self.columns:
+            for client in col:
+                col.heights[client] = 100
+            col.width = 100
+        self.group.layoutAll()
