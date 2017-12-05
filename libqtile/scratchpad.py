@@ -19,7 +19,9 @@
 # SOFTWARE.
 
 from . import group
-from . import hook, window
+from . import hook, window, utils
+
+from .log_utils import logger
 
 class WindowVisibilityToggler(object):
     """
@@ -128,12 +130,14 @@ class WindowVisibilityToggler(object):
         """unsubscribe all hooks"""
         try:
             hook.unsubscribe.client_focus(self.on_focus_change)
-        except:
-            pass
+        except utils.QtileError as err:
+            logger.exception("Scratchpad failed to unsubscribe on_focus_change"
+                             ": %s" % err)
         try:
             hook.unsubscribe.setgroup(self.on_focus_change)
-        except:
-            pass
+        except utils.QtileError as err:
+            logger.exception("Scratchpad failed to unsubscribe on_focus_change"
+                             ": %s" % err)
 
     def on_focus_change(self, *args, **kwargs):
         """
