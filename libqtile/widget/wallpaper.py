@@ -35,7 +35,8 @@ class Wallpaper(base._TextBox):
         ("wallpaper_command", None, "Wallpaper command"),
         ("random_selection", False, "If set, use random initial wallpaper and "
          "randomly cycle through the wallpapers."),
-        ("label", None, "Use a fixed label instead of image name.")
+        ("label", None, "Use a fixed label instead of image name."),
+        ("one_screen", False, "Treat the whole X display as one screen when setting wallpapers (does not work if wallpaper_command is set)."),
     ]
 
     def __init__(self, **config):
@@ -44,6 +45,8 @@ class Wallpaper(base._TextBox):
         self.index = 0
         self.images = []
         self.get_wallpapers()
+        if self.random_selection:  # Random selection after reading all files
+            self.index = random.randint(0, len(self.images) - 1)
         self.set_wallpaper()
 
     def get_path(self, file):
@@ -75,11 +78,14 @@ class Wallpaper(base._TextBox):
             self.wallpaper_command.append(cur_image)
             subprocess.call(self.wallpaper_command)
             return
-        subprocess.call([
+        command = [
             'feh',
             '--bg-fill',
             cur_image
-        ])
+        ]
+        if self.one_screen:
+            command.append("--no-xinerama")
+        subprocess.call(command)
 
     def button_press(self, x, y, button):
         if button == 1:

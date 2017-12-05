@@ -239,7 +239,7 @@ class Qtile(command.CommandObject):
             st = pickle.load(io.BytesIO(state.encode()))
             try:
                 st.apply(self)
-            except:
+            except:  # noqa: E722
                 logger.exception("failed restoring state")
 
         self.scan()
@@ -345,7 +345,7 @@ class Qtile(command.CommandObject):
             self._eventloop.remove_reader(fd)
             self.conn.finalize()
             self.server.close()
-        except:
+        except:  # noqa: E722
             logger.exception('exception during finalize')
         finally:
             self._eventloop.close()
@@ -1398,7 +1398,7 @@ class Qtile(command.CommandObject):
         buf = io.BytesIO()
         try:
             pickle.dump(QtileState(self), buf, protocol=0)
-        except:
+        except:  # noqa: E722
             logger.error("Unable to pickle qtile state")
         argv = [s for s in argv if not s.startswith('--with-state')]
         argv.append('--with-state=' + buf.getvalue().decode())
@@ -1764,7 +1764,7 @@ class Qtile(command.CommandObject):
             module.main(self)
         except ImportError as e:
             err_str += format_error(full_path, e)
-        except:
+        except:  # noqa: E722
             (exc_type, exc_value, exc_traceback) = sys.exc_info()
             err_str += traceback.format_exc()
             err_str += format_error(full_path, exc_type(exc_value))

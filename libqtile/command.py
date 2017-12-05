@@ -463,7 +463,7 @@ class CommandObject(six.with_metaclass(abc.ABCMeta)):
             except SyntaxError:
                 exec(code)
                 return (True, None)
-        except:
+        except:  # noqa: E722
             error = traceback.format_exc().strip().split("\n")[-1]
             return (False, error)
 

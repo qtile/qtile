@@ -267,7 +267,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
     def _wrapper(self, method, *method_args):
         try:
             method(*method_args)
-        except:
+        except:  # noqa: E722
             logger.exception('got exception from widget timer')
 
 
@@ -470,7 +470,7 @@ class ThreadedPollText(InLoopPollText):
                 text = self.poll()
                 if self.qtile is not None:
                     self.qtile.call_soon_threadsafe(self.update, text)
-            except:
+            except:  # noqa: E722
                 logger.exception("problem polling to update widget %s", self.name)
         # TODO: There are nice asyncio constructs for this sort of thing, I
         # think...

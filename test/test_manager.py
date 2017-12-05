@@ -373,10 +373,10 @@ def test_inspect_xeyes(qtile):
 
 @manager_config
 @no_xinerama
-def test_inspect_xterm(qtile):
+def test_inspect_xclock(qtile):
     self = qtile
 
-    self.testXterm()
+    self.testXclock()
     assert self.c.window.inspect()["wm_class"]
 
 
@@ -471,7 +471,7 @@ def test_float_max_min_combo(qtile):
     # change to 2 col stack
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
-    self.testXterm()
+    self.testXcalc()
     self.testXeyes()
 
     assert self.c.group.info()['focus'] == 'xeyes'
@@ -517,7 +517,7 @@ def test_toggle_fullscreen(qtile):
     # change to 2 col stack
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
-    self.testXterm()
+    self.testXcalc()
     self.testXeyes()
 
     assert self.c.group.info()['focus'] == 'xeyes'
@@ -555,7 +555,7 @@ def test_toggle_max(qtile):
     # change to 2 col stack
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
-    self.testXterm()
+    self.testXcalc()
     self.testXeyes()
 
     assert self.c.group.info()['focus'] == 'xeyes'
@@ -591,7 +591,7 @@ def test_toggle_min(qtile):
     # change to 2 col stack
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
-    self.testXterm()
+    self.testXcalc()
     self.testXeyes()
 
     assert self.c.group.info()['focus'] == 'xeyes'
@@ -648,7 +648,7 @@ def test_floating_focus(qtile):
     # change to 2 col stack
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
-    self.testXterm()
+    self.testXcalc()
     self.testXeyes()
     # self.testWindow("one")
     assert self.c.window.info()['width'] == 398
@@ -660,7 +660,7 @@ def test_floating_focus(qtile):
     # check what stack thinks is focus
     assert [x['current'] for x in self.c.layout.info()['stacks']] == [0, 0]
 
-    # change focus to xterm
+    # change focus to xcalc
     self.c.group.next_window()
     assert self.c.window.info()['width'] == 398
     assert self.c.window.info()['height'] == 578
@@ -824,16 +824,16 @@ def test_xeyes(qtile):
 
 @pytest.mark.parametrize("qtile", [BareConfig, ManagerConfig], indirect=True)
 @pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
-def test_xterm(qtile):
-    qtile.testXterm()
+def test_xcalc(qtile):
+    qtile.testXcalc()
 
 
 @pytest.mark.parametrize("qtile", [BareConfig, ManagerConfig], indirect=True)
 @pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
-def test_xterm_kill_window(qtile):
+def test_xcalc_kill_window(qtile):
     self = qtile
 
-    self.testXterm()
+    self.testXcalc()
     window_info = self.c.window.info()
     self.c.window.kill()
     assert_window_died(self.c, window_info)

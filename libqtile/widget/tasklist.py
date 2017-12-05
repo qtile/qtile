@@ -142,13 +142,17 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         return "%s%s" % (state, window.name if window and window.name else "?")
 
+    @property
+    def windows(self):
+        return self.bar.screen.group.windows
+
     def calc_box_widths(self):
         """
         Calculate box width for each window in current group.
         If the available space is less than overall size of boxes,
         the boxes are shrunk by percentage if greater than average.
         """
-        windows = self.bar.screen.group.windows
+        windows = self.windows
         window_count = len(windows)
 
         # if no windows present for current group just return empty list
@@ -207,8 +211,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         self.setup_hooks()
 
     def update(self, window=None):
-        group = self.bar.screen.group
-        if not window or window and window.group is group:
+        if not window or window in self.windows:
             self.bar.draw()
 
     def remove_icon_cache(self, window):
@@ -260,8 +263,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
     def get_clicked(self, x, y):
         box_start = self.margin_x
-        for box_end, win in zip(self._box_end_positions,
-                                self.bar.screen.group.windows):
+        for box_end, win in zip(self._box_end_positions, self.windows):
             if box_start <= x <= box_end:
                 return win
             else:

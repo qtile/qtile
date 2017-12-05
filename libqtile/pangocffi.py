@@ -79,10 +79,6 @@ ELLIPSIZE_END = pango.PANGO_ELLIPSIZE_END
 units_from_double = pango.pango_units_from_double
 
 
-def _const_char_to_py_str(cc):
-    return ''.join(ffi.buffer(cc, len(cc)))
-
-
 class PangoLayout(object):
     def __init__(self, cairo_t):
         self._cairo_t = cairo_t
@@ -119,7 +115,7 @@ class PangoLayout(object):
 
     def get_text(self):
         ret = pango.pango_layout_get_text(self._pointer)
-        return _const_char_to_py_str(ret)
+        return ffi.string(ret).decode()
 
     def set_ellipsize(self, ellipzize):
         pango.pango_layout_set_ellipsize(self._pointer, ellipzize)
@@ -158,7 +154,7 @@ class FontDescription(object):
 
     def get_family(self):
         ret = pango.pango_font_description_get_family(self._pointer)
-        return _const_char_to_py_str(ret)
+        return ffi.string(ret).decode()
 
     def set_absolute_size(self, size):
         pango.pango_font_description_set_absolute_size(self._pointer, size)
@@ -166,8 +162,8 @@ class FontDescription(object):
     def set_size(self, size):
         pango.pango_font_description_set_size(self._pointer, size)
 
-    def get_size(self, size):
-        return pango.pango_font_description_get_size(self._pointer, size)
+    def get_size(self):
+        return pango.pango_font_description_get_size(self._pointer)
 
 
 def parse_markup(value, accel_marker=0):
