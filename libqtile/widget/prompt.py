@@ -38,6 +38,7 @@ import string
 from collections import OrderedDict, deque
 
 from libqtile.log_utils import logger
+from libqtile.command import _SelectError
 
 from . import base
 from .. import bar, command, hook, pangocffi, utils, xcbq, xkeysyms
@@ -377,15 +378,21 @@ class Prompt(base._TextBox):
                         # can't detect what's a pickle error and what's not.
                         logger.exception("failed to load prompt history")
                         self.history = {x: deque(maxlen=self.max_history)
-                                        for x in self.completers if x}
+                                        for x in self.completers}
+
+                    # self.history of size does not match.
+                    if len(self.history) != len(self.completers):
+                        self.history = {x: deque(maxlen=self.max_history)
+                                for x in self.completers}
+
                     if self.max_history != \
                        self.history[list(self.history)[0]].maxlen:
                         self.history = {x: deque(self.history[x],
                                                  self.max_history)
-                                        for x in self.completers if x}
+                                        for x in self.completers}
             else:
                 self.history = {x: deque(maxlen=self.max_history)
-                                for x in self.completers if x}
+                                for x in self.completers}
 
     def _configure(self, qtile, bar):
         self.markup = True
@@ -661,10 +668,56 @@ class Prompt(base._TextBox):
             active=self.active,
         )
 
+    def cmd_exec_general(
+            self, prompt, object_name, cmd_name, selector=None, completer=None):
+        """
+        Execute a cmd of any object. For example layout, group, window, widget
+        , etc with a string that is obtained from startInput.
+
+        Parameters
+        ==========
+        prompt :
+            Text displayed at the prompt.
+        object_name :
+            Name of a object in Qtile. This string has to be 'layout', 'widget',
+            'bar', 'window' or 'screen'.
+        cmd_name :
+            Execution command of selected object using object_name and selector.
+        selector :
+            This value select a specific object within a object list that is
+            obtained by object_name.
+            If this value is None, current object is selected. e.g. current layout,
+            current window and current screen.
+        completer:
+            Completer to use.
+
+        config example:
+            Key([alt, 'shift'], 'a',
+                lazy.widget['prompt'].exec_general(
+                    'section(add)',
+                    'layout',
+                    'add_section'))
+        """
+        try:
+            obj = self.qtile.select([(object_name, selector)])
+        except _SelectError:
+            logger.warn("cannot select a object")
+            return
+        cmd = obj.command(cmd_name)
+        if not cmd:
+            logger.warn("command not found")
+            return
+
+        def f(args):
+            if args:
+                cmd(args)
+
+        self.startInput(prompt, f, completer)
+
     def _dedup_history(self):
         """Filter the history deque, clearing all duplicate values."""
         self.history = {x: self._dedup_deque(self.history[x])
-                        for x in self.completers if x}
+                        for x in self.completers}
 
     def _dedup_deque(self, dq):
         return deque(_LastUpdatedOrderedDict.fromkeys(dq))
