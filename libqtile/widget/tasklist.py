@@ -99,6 +99,12 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             'Text representation of the floating window state. '
             'e.g., "V " or "\U0001F5D7 "'
         ),
+        (
+            'icon_size',
+            None,
+            'Icon size. '
+            '(Calculated if set to None. Icons are hidden if set to 0.)'
+        ),
     ]
 
     def __init__(self, **config):
@@ -165,7 +171,11 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         width_avg = width_total / window_count
 
         names = [self.get_taskname(w) for w in windows]
-        icons = [self.get_window_icon(w) for w in windows]
+
+        if self.icon_size == 0:
+            icons = len(windows) * [None]
+        else:
+            icons = [self.get_window_icon(w) for w in windows]
 
         # calculated width for each task according to icon and task name
         # consisting of state abbreviation and window name
@@ -193,8 +203,9 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
     def _configure(self, qtile, bar):
         base._Widget._configure(self, qtile, bar)
-        self.icon_size = self.bar.height - 2 * (self.borderwidth +
-                                                self.margin_y)
+        if self.icon_size is None:
+            self.icon_size = self.bar.height - 2 * (self.borderwidth +
+                                                    self.margin_y)
 
         if self.fontsize is None:
             calc = self.bar.height - self.margin_y * 2 - \
