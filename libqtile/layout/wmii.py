@@ -80,7 +80,7 @@ class Wmii(Layout):
     stack of windows or all of them simultaneously, spliting the column
     space.  Columns and windows can be resized and windows can be shuffled
     around.
-    
+
     This layout can also emulate "Verical" and "Max", depending on the
     default parameters.
 
