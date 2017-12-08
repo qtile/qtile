@@ -143,8 +143,8 @@ class Bsp(Layout):
 
     def info(self):
         return dict(
-            clients=[c.name for c in self.root.clients()],
-            current=self.current.client.name if self.current.client else '')
+            clients=[c.name for c in self.root.clients()]
+            )
 
     def get_node(self, client):
         for node in self.root:
