@@ -35,14 +35,16 @@ class _BspNode():
     def __iter__(self):
         yield self
         for child in self.children:
-            yield from child
+            for c in child:
+                yield c
 
     def clients(self):
         if self.client:
             yield self.client
         else:
             for child in self.children:
-                yield from child.clients()
+                for c in child.clients()
+                    yield c
 
     def insert(self, client, idx, ratio):
         if self.client is None:
