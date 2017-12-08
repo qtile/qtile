@@ -43,7 +43,7 @@ class _BspNode():
             yield self.client
         else:
             for child in self.children:
-                for c in child.clients()
+                for c in child.clients():
                     yield c
 
     def insert(self, client, idx, ratio):

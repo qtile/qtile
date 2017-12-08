@@ -7,6 +7,9 @@ Built-in Layouts
 .. qtile_class:: libqtile.layout.floating.Floating
     :no-commands:
 
+.. qtile_class:: libqtile.layout.bsp.Bsp
+    :no-commands:
+
 .. qtile_class:: libqtile.layout.columns.Columns
     :no-commands:
 
