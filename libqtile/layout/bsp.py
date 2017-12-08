@@ -32,14 +32,6 @@ class _BspNode():
         self.w = 16
         self.h = 9
 
-    def str(self):
-        return '{}(p {}, c {}) '.format(
-            id(self),
-            id(self.parent) if self.parent else None, self.client.name
-            if self.client else None) + ('[]' if len(
-                self.children) == 0 else '[ {} | {} ]'.format(
-                    self.children[0].str(), self.children[1].str()))
-
     def __iter__(self):
         yield self
         for child in self.children:
@@ -66,13 +58,11 @@ class _BspNode():
     def remove(self, child):
         keep = self.children[1 if child is self.children[0] else 0]
         self.children = keep.children
-        for child in self.children:
-            child.parent = self
+        for c in self.children:
+            c.parent = self
         self.split_horizontal = keep.split_horizontal
         self.split_ratio = keep.split_ratio
         self.client = keep.client
-        del keep
-        del child
         return self
 
     def calc_geom(self, x, y, w, h):
@@ -326,11 +316,33 @@ class Bsp(Layout):
             node.client, self.current.client = self.current.client, node.client
             self.current = node
             self.group.layoutAll()
+        elif self.current is not self.root:
+            node = self.current
+            self.remove(node.client)
+            newroot = _BspNode()
+            newroot.split_horizontal = True
+            newroot.children = [node, self.root]
+            self.root.parent = newroot
+            node.parent = newroot
+            self.root = newroot
+            self.current = node
+            self.group.layoutAll()
 
     def cmd_shuffle_right(self):
         node = self.find_right()
         if node:
             node.client, self.current.client = self.current.client, node.client
+            self.current = node
+            self.group.layoutAll()
+        elif self.current is not self.root:
+            node = self.current
+            self.remove(node.client)
+            newroot = _BspNode()
+            newroot.split_horizontal = True
+            newroot.children = [self.root, node]
+            self.root.parent = newroot
+            node.parent = newroot
+            self.root = newroot
             self.current = node
             self.group.layoutAll()
 
@@ -340,11 +352,33 @@ class Bsp(Layout):
             node.client, self.current.client = self.current.client, node.client
             self.current = node
             self.group.layoutAll()
+        elif self.current is not self.root:
+            node = self.current
+            self.remove(node.client)
+            newroot = _BspNode()
+            newroot.split_horizontal = False
+            newroot.children = [node, self.root]
+            self.root.parent = newroot
+            node.parent = newroot
+            self.root = newroot
+            self.current = node
+            self.group.layoutAll()
 
     def cmd_shuffle_down(self):
         node = self.find_down()
         if node:
             node.client, self.current.client = self.current.client, node.client
+            self.current = node
+            self.group.layoutAll()
+        elif self.current is not self.root:
+            node = self.current
+            self.remove(node.client)
+            newroot = _BspNode()
+            newroot.split_horizontal = False
+            newroot.children = [self.root, node]
+            self.root.parent = newroot
+            node.parent = newroot
+            self.root = newroot
             self.current = node
             self.group.layoutAll()
 
