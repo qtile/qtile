@@ -24,6 +24,7 @@
 # is annoying, so we ignore libqtile/layout/__init__.py completely
 # flake8: noqa
 
+from .bsp import Bsp
 from .columns import Columns
 from .floating import Floating
 from .matrix import Matrix
