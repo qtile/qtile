@@ -26,7 +26,7 @@ from .. import utils
 
 class _WinStack(_ClientList):
 
-    # shortcuts for current client and index used in Columns layout
+    # shortcuts for current client and index used in Wmii layout
     cw = _ClientList.current_client
 
     def __init__(self, autosplit=False):
