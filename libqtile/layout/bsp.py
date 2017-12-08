@@ -104,8 +104,6 @@ class Bsp(Layout):
         Key([mod], "k", lazy.layout.up()),
         Key([mod], "h", lazy.layout.left()),
         Key([mod], "l", lazy.layout.right()),
-        Key([mod], "n", lazy.layout.next()),
-        Key([mod], "u", lazy.layout.previous()),
         Key([mod, "shift"], "j", lazy.layout.shuffle_down()),
         Key([mod, "shift"], "k", lazy.layout.shuffle_up()),
         Key([mod, "shift"], "h", lazy.layout.shuffle_left()),
