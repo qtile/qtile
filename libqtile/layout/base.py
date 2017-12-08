@@ -357,7 +357,7 @@ class _ClientList(object):
 
     The collection is meant as a base or utility class for special layouts,
     which need to maintain one or several collections of windows, for example
-    Columns or Stack, which use this class as base for their internal helper.
+    Wmii or Stack, which use this class as base for their internal helper.
 
     The property 'current_index' get and set the index to the current client,
     whereas 'current_client' property can be used with clients directly.

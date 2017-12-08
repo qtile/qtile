@@ -44,13 +44,13 @@ class WmiiConfig(object):
     follow_mouse_focus = False
 
 
-wmii_config = lambda x: \
+columns_config = lambda x: \
     no_xinerama(pytest.mark.parametrize("qtile", [WmiiConfig], indirect=True)(x))
 
 # This currently only tests the window focus cycle
 
-@wmii_config
-def test_wmii_window_focus_cycle(qtile):
+@columns_config
+def test_columns_window_focus_cycle(qtile):
     # setup 3 tiled and two floating clients
     qtile.testWindow("one")
     qtile.testWindow("two")
@@ -60,10 +60,10 @@ def test_wmii_window_focus_cycle(qtile):
     qtile.c.window.toggle_floating()
     qtile.testWindow("three")
 
-    # test preconditions
-    assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
+    # test preconditions, columns adds clients at pos of current, in two stacks
+    assert qtile.c.layout.info()['columns'][0]['clients'] == ['three', 'two', 'one']
     # last added window has focus
     assertFocused(qtile, "three")
 
     # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'float1', 'float2', 'one', 'two', 'three')
+    assertFocusPath(qtile, 'two', 'one', 'float1', 'float2', 'three')
