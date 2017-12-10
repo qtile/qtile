@@ -17,7 +17,6 @@
 # SOFTWARE.
 
 from __future__ import division
-import operator
 
 from .base import Layout
 
@@ -47,14 +46,17 @@ class _BspNode():
                 for c in child.clients():
                     yield c
 
-    def lengths(self, l=0):
+    def _shortest(self, l):
         if len(self.children) == 0:
-            yield (self, l)
+            return self, l
         else:
-            for child in self.children:
-                for c in child.lengths(l + 1):
-                    yield c
+            c0, l0 = self.children[0]._shortest(l + 1)
+            c1, l1 = self.children[1]._shortest(l + 1)
+            return (c1, l1) if l1 < l0 else (c0, l0)
 
+    def get_shortest(self):
+        return self._shortest(0)[0]
+            
     def insert(self, client, idx, ratio):
         if self.client is None:
             self.client = client
@@ -164,7 +166,7 @@ class Bsp(Layout):
 
     def add(self, client):
         self.recalc = True
-        node = sorted(self.root.lengths(), key=operator.itemgetter(1))[0][0] if self.fair else self.current
+        node = self.root.get_shortest() if self.fair else self.current
         self.current = node.insert(client, int(self.lower_right), self.ratio)
 
     def remove(self, client):
