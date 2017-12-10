@@ -66,4 +66,4 @@ def test_bsp_window_focus_cycle(qtile):
     assertFocused(qtile, "three")
 
     # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'float1', 'float2', 'one', 'two', 'three')
+    assertFocusPath(qtile, 'two', 'float1', 'float2', 'one', 'three')
