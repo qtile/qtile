@@ -56,7 +56,7 @@ class _BspNode():
 
     def get_shortest(self):
         return self._shortest(0)[0]
-            
+
     def insert(self, client, idx, ratio):
         if self.client is None:
             self.client = client
