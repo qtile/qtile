@@ -17,6 +17,7 @@
 # SOFTWARE.
 
 from __future__ import division
+import operator
 
 from .base import Layout
 
@@ -44,6 +45,14 @@ class _BspNode():
         else:
             for child in self.children:
                 for c in child.clients():
+                    yield c
+
+    def lengths(self, l=0):
+        if len(self.children) == 0:
+            yield (self, l)
+        else:
+            for child in self.children:
+                for c in child.lengths(l + 1):
                     yield c
 
     def insert(self, client, idx, ratio):
@@ -88,7 +97,7 @@ class Bsp(Layout):
     features.
 
     The first client occupies the entire srceen space.  When a new client
-    is created, the focused space is partitioned in 2 and the new client
+    is created, the selected space is partitioned in 2 and the new client
     occupies one of those subspaces, leaving the old client with the other.
 
     The partition can be either horizontal or vertical according to the
@@ -125,6 +134,7 @@ class Bsp(Layout):
          "Width/height ratio that defines the partition direction."),
         ("grow_amount", 10, "Amount by which to grow a window/column."),
         ("lower_right", True, "New client occupies lower or right subspace."),
+        ("fair", True, "New clients are inserted in the shortest branch."),
     ]
 
     def __init__(self, **config):
@@ -154,7 +164,8 @@ class Bsp(Layout):
 
     def add(self, client):
         self.recalc = True
-        self.current = self.current.insert(client, int(self.lower_right), self.ratio)
+        node = sorted(self.root.lengths(), key=operator.itemgetter(1))[0][0] if self.fair else self.current
+        self.current = node.insert(client, int(self.lower_right), self.ratio)
 
     def remove(self, client):
         self.recalc = True
