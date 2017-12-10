@@ -61,7 +61,7 @@ def test_bsp_window_focus_cycle(qtile):
     qtile.testWindow("three")
 
     # test preconditions, columns adds clients at pos of current, in two stacks
-    assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
+    assert qtile.c.layout.info()['clients'] == ['one', 'three', 'two']
     # last added window has focus
     assertFocused(qtile, "three")
 
