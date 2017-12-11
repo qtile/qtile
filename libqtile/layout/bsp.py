@@ -144,13 +144,11 @@ class Bsp(Layout):
         self.add_defaults(Bsp.defaults)
         self.root = _BspNode()
         self.current = self.root
-        self.recalc = True
 
     def clone(self, group):
         c = Layout.clone(self, group)
         c.root = _BspNode()
         c.current = c.root
-        c.recalc = True
         return c
 
     def info(self):
@@ -167,12 +165,10 @@ class Bsp(Layout):
         self.current = self.get_node(client)
 
     def add(self, client):
-        self.recalc = True
         node = self.root.get_shortest() if self.fair else self.current
         self.current = node.insert(client, int(self.lower_right), self.ratio)
 
     def remove(self, client):
-        self.recalc = True
         node = self.get_node(client)
         if node.parent:
             node = node.parent.remove(node)
@@ -184,10 +180,8 @@ class Bsp(Layout):
         self.current = self.root
 
     def configure(self, client, screen):
-        if self.recalc:
-            self.root.calc_geom(screen.x, screen.y, screen.width,
-                                screen.height)
-            self.recalc = False
+        self.root.calc_geom(screen.x, screen.y, screen.width,
+                            screen.height)
         node = self.get_node(client)
         color = self.group.qtile.colorPixel(
             self.border_focus if client.has_focus else self.border_normal)
@@ -203,7 +197,6 @@ class Bsp(Layout):
         client.unhide()
 
     def cmd_toggle_split(self):
-        self.recalc = True
         if self.current.parent:
             self.current.parent.split_horizontal = not self.current.parent.split_horizontal
         self.group.layoutAll()
@@ -402,7 +395,6 @@ class Bsp(Layout):
             if parent.split_horizontal and child is parent.children[1]:
                 parent.split_ratio = max(5,
                                          parent.split_ratio - self.grow_amount)
-                self.recalc = True
                 self.group.layoutAll()
                 break
             child = parent
@@ -415,7 +407,6 @@ class Bsp(Layout):
             if parent.split_horizontal and child is parent.children[0]:
                 parent.split_ratio = min(95,
                                          parent.split_ratio + self.grow_amount)
-                self.recalc = True
                 self.group.layoutAll()
                 break
             child = parent
@@ -428,7 +419,6 @@ class Bsp(Layout):
             if not parent.split_horizontal and child is parent.children[1]:
                 parent.split_ratio = max(5,
                                          parent.split_ratio - self.grow_amount)
-                self.recalc = True
                 self.group.layoutAll()
                 break
             child = parent
@@ -441,14 +431,12 @@ class Bsp(Layout):
             if not parent.split_horizontal and child is parent.children[0]:
                 parent.split_ratio = min(95,
                                          parent.split_ratio + self.grow_amount)
-                self.recalc = True
                 self.group.layoutAll()
                 break
             child = parent
             parent = child.parent
 
     def cmd_normalize(self):
-        self.recalc = True
         for node in self.root:
             node.split_ratio = 50
         self.group.layoutAll()
