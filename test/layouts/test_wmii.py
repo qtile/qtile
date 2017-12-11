@@ -68,4 +68,4 @@ def test_wmii_window_focus_cycle(qtile):
     assertFocused(qtile, "three")
 
     # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'two', 'float1', 'float2', 'one', 'three')
+    assertFocusPath(qtile, 'two', 'one', 'float1', 'float2', 'three')
