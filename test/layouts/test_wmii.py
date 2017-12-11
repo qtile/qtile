@@ -63,9 +63,9 @@ def test_wmii_window_focus_cycle(qtile):
     qtile.testWindow("three")
 
     # test preconditions
-    assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
+    assert qtile.c.layout.info()['clients'] == ['three', 'two', 'one']
     # last added window has focus
     assertFocused(qtile, "three")
 
     # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'float1', 'float2', 'one', 'two', 'three')
+    assertFocusPath(qtile, 'two', 'float1', 'float2', 'one', 'three')
