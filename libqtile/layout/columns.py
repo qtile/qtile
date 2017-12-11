@@ -27,17 +27,19 @@ class _Column(_ClientList):
     cw = _ClientList.current_client
     current = _ClientList.current_index
 
-    def __init__(self, autosplit=True, width=100):
+    def __init__(self, split=True, width=100):
         _ClientList.__init__(self)
         self.width = width
-        self.split = autosplit
+        self.split = split
         self.heights = {}
 
     def info(self):
         info = _ClientList.info(self)
-        info.update(dict(
-            heights=[self.heights[c] for c in self.clients],
-            split=self.split,))
+        info.update(
+            dict(
+                heights=[self.heights[c] for c in self.clients],
+                split=self.split,
+            ))
         return info
 
     def toggleSplit(self):
@@ -68,8 +70,9 @@ class _Column(_ClientList):
     def __str__(self):
         cur = self.current
         return "_Column: " + ", ".join([
-            "[%s: %d]" % (c.name, self.heights[c]) if c == cur else
-            "%s: %d" % (c.name, self.heights[c]) for c in self.clients
+            "[%s: %d]" % (c.name, self.heights[c])
+            if c == cur else "%s: %d" % (c.name, self.heights[c])
+            for c in self.clients
         ])
 
 
@@ -77,11 +80,14 @@ class Columns(Layout):
     """Extension of the Stack layout.
 
     The screen is split into columns, which can be dynamically added or
-    removed.  Each column displays either a single window at a time from a
-    stack of windows or all of them simultaneously, spliting the column space.
-    Columns and windows can be resized and windows can be shuffled around.
-    This layout can also emulate "Wmii", "Verical", and "Max", depending on the
-    default parameters.
+    removed.  Each column can present is windows in 2 modes: split or
+    stacked.  In split mode, all windows are presented simultaneously,
+    spliting the column space.  In stacked mode, only a single window is
+    presented from the stack of windows.  Columns and windows can be
+    resized and windows can be shuffled around.
+
+    This layout can also emulate "Wmii", "Verical", and "Max", depending
+    on the default parameters.
 
     An example key configuration is::
 
@@ -104,9 +110,13 @@ class Columns(Layout):
         ("name", "columns", "Name of this layout."),
         ("border_focus", "#881111", "Border colour for the focused window."),
         ("border_normal", "#220000", "Border colour for un-focused windows."),
+        ("border_focus_stack", "#881111",
+         "Border colour for the focused window in stacked columns."),
+        ("border_normal_stack", "#220000",
+         "Border colour for un-focused windows in stacked columns."),
         ("border_width", 2, "Border width."),
         ("margin", 0, "Margin of the layout."),
-        ("autosplit", True, "Autosplit newly created columns."),
+        ("split", True, "New columns presentation mode."),
         ("num_columns", 2, "Preferred number of columns."),
         ("grow_amount", 10, "Amount by which to grow a window/column."),
         ("fair", False, "Add new windows to the column with least windows."),
@@ -115,12 +125,12 @@ class Columns(Layout):
     def __init__(self, **config):
         Layout.__init__(self, **config)
         self.add_defaults(Columns.defaults)
-        self.columns = [_Column(self.autosplit)]
+        self.columns = [_Column(self.split)]
         self.current = 0
 
     def clone(self, group):
         c = Layout.clone(self, group)
-        c.columns = [_Column(self.autosplit)]
+        c.columns = [_Column(self.split)]
         return c
 
     def info(self):
@@ -146,7 +156,7 @@ class Columns(Layout):
         return self.columns[self.current]
 
     def add_column(self, prepend=False):
-        c = _Column(self.autosplit)
+        c = _Column(self.split)
         if prepend:
             self.columns.insert(0, c)
             self.current += 1
@@ -200,9 +210,11 @@ class Columns(Layout):
             client.hide()
             return
         if client.has_focus:
-            color = self.group.qtile.colorPixel(self.border_focus)
+            color = self.group.qtile.colorPixel(self.border_focus if col.split
+                                                else self.border_focus_stack)
         else:
-            color = self.group.qtile.colorPixel(self.border_normal)
+            color = self.group.qtile.colorPixel(self.border_normal if col.split
+                                                else self.border_normal_stack)
         if len(self.columns) == 1 and (len(col) == 1 or not col.split):
             border = 0
         else:
@@ -215,16 +227,27 @@ class Columns(Layout):
                 if client == c:
                     break
                 pos += col.heights[c]
-            height = int(0.5 + col.heights[client] * screen.height * 0.01 / len(col))
+            height = int(
+                0.5 + col.heights[client] * screen.height * 0.01 / len(col))
             y = screen.y + int(0.5 + pos * screen.height * 0.01 / len(col))
-            client.place(x, y, width - 2 * border,
-                         height - 2 * border, border,
-                         color, margin=self.margin)
+            client.place(
+                x,
+                y,
+                width - 2 * border,
+                height - 2 * border,
+                border,
+                color,
+                margin=self.margin)
             client.unhide()
         elif client == col.cw:
-            client.place(x, screen.y, width - 2 * border,
-                         screen.height - 2 * border, border,
-                         color, margin=self.margin)
+            client.place(
+                x,
+                screen.y,
+                width - 2 * border,
+                screen.height - 2 * border,
+                border,
+                color,
+                margin=self.margin)
             client.unhide()
         else:
             client.hide()
