@@ -78,6 +78,21 @@ class _BspNode():
         self.client = keep.client
         return self
 
+    def distribute(self):
+        if len(self.children) == 0:
+            return 1, 1
+        h0, v0 = self.children[0].distribute()
+        h1, v1 = self.children[1].distribute()
+        if self.split_horizontal:
+            h = h0 + h1
+            v = max(v0, v1)
+            self.split_ratio = 100 * h0 / h
+        else:
+            h = max(h0, h1)
+            v = v0 + v1
+            self.split_ratio = 100 * v0 / v
+        return h, v
+
     def calc_geom(self, x, y, w, h):
         self.x = x
         self.y = y
@@ -437,6 +452,11 @@ class Bsp(Layout):
             parent = child.parent
 
     def cmd_normalize(self):
+        distribute = True
         for node in self.root:
-            node.split_ratio = 50
+            if node.split_ratio != 50:
+                node.split_ratio = 50
+                distribute = False
+        if distribute:
+            self.root.distribute()
         self.group.layoutAll()
