@@ -59,6 +59,9 @@ class Image(base._Widget, base.MarginMixin):
 
         self.filename = os.path.expanduser(self.filename)
 
+        if not os.path.exists(self.filename):
+            raise ValueError("File does not exist: {}".format(self.filename)
+
         try:
             self.image = cairocffi.ImageSurface.create_from_png(self.filename)
         except MemoryError:
