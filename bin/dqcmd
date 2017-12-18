@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+# https://github.com/onespaceman/menu-calc
+# Calculator for use with rofi/dmenu(2)
+# Copying to the clipboard requires xclip
+
+usage() {
+    echo "    $(tput bold)menu qtile$(tput sgr0)
+    A qtile manipulator
+    "
+    exit
+}
+
+case $1 in
+    -h|--help) usage ;;
+esac
+
+# Path to menu application
+if [[ -n $(command -v rofi) ]]; then
+    menu="$(command -v rofi) -dmenu -columns 1"
+elif [[ -n $(command -v dmenu) ]]; then
+    menu="$(command -v dmenu)"
+else
+    echo >&2 "Rofi or dmenu not found"
+    exit
+fi
+
+action=$(qcmd  $@ | $menu |cut -f 1)
+
+case $action in
+    "") ;;
+    "..")$0;;
+    *) $0 "$action" ;;
+esac
