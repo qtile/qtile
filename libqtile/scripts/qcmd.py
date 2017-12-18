@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-# pylint: disable=C0325
+# pylint: disable=C0325,C0103,W0612,C0111,W0703
+# TODO: fix pylint warnings
 import pprint
 import argparse
 from libqtile.command import Client
@@ -157,7 +158,7 @@ Examples:\n\
             else:
                 print_commands("-o " + " ".join(args.obj_spec), obj)
 
-    else:  # TODO: print error if -f are used without -o ?
+    else:
         print_base_objects()
 
 
