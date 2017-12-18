@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-# https://github.com/onespaceman/menu-calc
-# Calculator for use with rofi/dmenu(2)
-# Copying to the clipboard requires xclip
+# Based on https://github.com/onespaceman/menu-calc
 
 usage() {
     echo "    $(tput bold)menu qtile$(tput sgr0)
