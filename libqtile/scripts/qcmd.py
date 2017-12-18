@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# pylint: disable=C0325,C0103,W0612,C0111,W0703
+# pylint: disable=C0111,C0325,W0703
 # TODO: fix pylint warnings
 import pprint
 import argparse
@@ -50,7 +50,7 @@ def print_commands(prefix, obj):
 
     try:
         cmds = obj.commands()
-    except Exception as e:
+    except Exception:
         print("Sorry no commands in ", prefix)
         exit()
 
@@ -70,21 +70,21 @@ def print_commands(prefix, obj):
 
 def get_object(argv):
 
-    c = Client()
+    client = Client()
 
     if argv[0] == "cmd":
-        obj = c
+        obj = client
     else:
-        obj = getattr(c, argv[0])
+        obj = getattr(client, argv[0])
 
     # Generate full obj specification
     for arg in argv[1:]:
         try:
             obj = obj[arg]  # check if it is an item
-        except Exception as e:
+        except Exception:
             try:
                 obj = getattr(obj, arg)  # check it it is an attr
-            except Exception as e:
+            except Exception:
                 print("Specified object does not exist" + " ".join(argv))
                 exit()
 
@@ -94,13 +94,13 @@ def get_object(argv):
 def run_function(obj, func, args):
     try:
         func = getattr(obj, func)
-    except Exception as e:
+    except Exception:
         print("Sorry func", func, "does not exist")
         exit()
 
     try:
         ret = func(*args)
-    except Exception as e:
+    except Exception:
         print("Sorry cannot run function", func, "with arguments", args)
         exit()
 
