@@ -172,15 +172,15 @@ class DGroups(object):
             # Matching Rules
             if rule.matches(client):
                 if rule.group:
-                    try:
+                    if rule.group in self.groupMap:
                         layout = self.groupMap[rule.group].layout
-                    except KeyError:
-                        layout = None
-                    try:
                         layouts = self.groupMap[rule.group].layouts
-                    except KeyError:
+                        label = self.groupMap[rule.group].label
+                    else:
+                        layout = None
                         layouts = None
-                    group_added = self.qtile.addGroup(rule.group, layout, layouts)
+                        label = None
+                    group_added = self.qtile.addGroup(rule.group, layout, layouts, label)
                     client.togroup(rule.group)
 
                     group_set = True
