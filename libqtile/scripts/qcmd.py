@@ -1,4 +1,30 @@
 #!/usr/bin/env python
+#
+# Copyright (c) 2017, Piotr Przymus
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+"""
+    Command-line tool to expose qtile.command functionality to shell.
+    This can be used standalone or in other shell scripts.
+"""
+
 from __future__ import print_function
 import pprint
 import argparse
@@ -7,6 +33,12 @@ from libqtile.command import CommandError, CommandException
 
 
 def get_formated_info(obj, cmd, args=True, short=True):
+    """
+    Get documentation for command/function and format it.
+    Returns argument list and summary line (if present).
+    If short = True returns * if arguments are present.
+    """
+
     doc_func = obj.doc if hasattr(obj, "doc") else lambda x: ""
     doc = doc_func(cmd).splitlines()
     doc_args = ""
@@ -28,6 +60,7 @@ def get_formated_info(obj, cmd, args=True, short=True):
     return (doc_args + " " + short_description).rstrip()
 
 def print_commands(prefix, obj):
+    "Print available commands for given object."
     prefix += " -f "
     output = []
     max_cmd = 0  # max len of cmd for formatting
@@ -52,6 +85,9 @@ def print_commands(prefix, obj):
 
 
 def get_object(argv):
+    """
+    Constructs a path to object and returns given object (if it exists).
+    """
 
     client = Client()
 
@@ -75,6 +111,7 @@ def get_object(argv):
 
 
 def run_function(obj, funcname, args):
+    "Run command with specified args on given object."
     func = getattr(obj, funcname)
 
     try:
@@ -91,11 +128,13 @@ def run_function(obj, funcname, args):
 
 
 def print_base_objects():
+    "Prints access objects of Client, use cmd for commands."
     actions = ["-o cmd", "-o window", "-o layout", "-o group"]
     print("\n".join(actions))
 
 
 def main():
+    "Runs tool according to specified arguments."
     description = 'Simple tool to expose qtile.command functionality to shell.'
     epilog = '''\
 Examples:\n\
