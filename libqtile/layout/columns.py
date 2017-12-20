@@ -27,10 +27,11 @@ class _Column(_ClientList):
     cw = _ClientList.current_client
     current = _ClientList.current_index
 
-    def __init__(self, split=True, width=100):
+    def __init__(self, split, insert_position, width=100):
         _ClientList.__init__(self)
         self.width = width
         self.split = split
+        self.insert_position = insert_position
         self.heights = {}
 
     def info(self):
@@ -46,7 +47,7 @@ class _Column(_ClientList):
         self.split = not self.split
 
     def add(self, client, height=100):
-        _ClientList.add(self, client)
+        _ClientList.add(self, client, self.insert_position)
         self.heights[client] = height
         delta = 100 - height
         if delta != 0:
@@ -120,17 +121,20 @@ class Columns(Layout):
         ("num_columns", 2, "Preferred number of columns."),
         ("grow_amount", 10, "Amount by which to grow a window/column."),
         ("fair", False, "Add new windows to the column with least windows."),
+        ("insert_position", 1,
+         "Position relative to the current window where new ones are inserted "
+         "(0 means right above the current window, 1 means right after)."),
     ]
 
     def __init__(self, **config):
         Layout.__init__(self, **config)
         self.add_defaults(Columns.defaults)
-        self.columns = [_Column(self.split)]
+        self.columns = [_Column(self.split, self.insert_position)]
         self.current = 0
 
     def clone(self, group):
         c = Layout.clone(self, group)
-        c.columns = [_Column(self.split)]
+        c.columns = [_Column(self.split, self.insert_position)]
         return c
 
     def info(self):
@@ -156,7 +160,7 @@ class Columns(Layout):
         return self.columns[self.current]
 
     def add_column(self, prepend=False):
-        c = _Column(self.split)
+        c = _Column(self.split, self.insert_position)
         if prepend:
             self.columns.insert(0, c)
             self.current += 1
