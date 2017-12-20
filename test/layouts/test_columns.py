@@ -69,4 +69,4 @@ def test_columns_window_focus_cycle(qtile):
     assertFocused(qtile, "three")
 
     # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'two', 'float1', 'float2', 'one', 'three')
+    assertFocusPath(qtile, 'float1', 'float2', 'one', 'two', 'three')
