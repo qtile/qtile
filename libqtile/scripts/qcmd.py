@@ -9,6 +9,7 @@ from libqtile.command import CommandError, CommandException
 def get_formated_info(obj, cmd, args=True, short=True):
     doc_func = obj.doc if hasattr(obj, "doc") else lambda x: ""
     doc = doc_func(cmd).splitlines()
+    doc_args = ""
 
     if doc:
         short_description = doc[1] if len(doc) > 1 else ""
