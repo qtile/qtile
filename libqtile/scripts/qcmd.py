@@ -15,7 +15,7 @@ def get_formated_info(obj, cmd, args=True, short=True):
         short_description = doc[1] if len(doc) > 1 else ""
 
         tdoc = doc[0]
-        doc_args = tdoc[tdoc.find("(")+1:tdoc.find(")")].strip()
+        doc_args = tdoc[tdoc.find("(") + 1:tdoc.find(")")].strip()
 
         if doc_args:  # return formatted args
             doc_args = "({})".format(doc_args)
@@ -34,7 +34,7 @@ def print_commands(prefix, obj):
 
     try:
         cmds = obj.commands()
-    except:
+    except Exception:
         print("error: Sorry no commands in ", prefix)
         exit()
 
