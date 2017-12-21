@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 
 usage() {
-    echo "    $(tput bold)menu qtile$(tput sgr0)
-    A qtile manipulator. A Rofi/dmenu interface to qcmd.
+    echo "$(tput bold)dqcmd$(tput sgr0)
+
+    A Rofi/dmenu interface to qcmd. Excepts all arguments o qcmd (see below).
     "
+    qcmd -h | sed "s/qcmd/dqcmd/"
     exit
 }
 
