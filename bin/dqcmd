@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 
-# Based on https://github.com/onespaceman/menu-calc
-
 usage() {
     echo "    $(tput bold)menu qtile$(tput sgr0)
-    A qtile manipulator
+    A qtile manipulator. A Rofi/dmenu interface to qcmd.
     "
     exit
 }
@@ -13,20 +11,36 @@ case $1 in
     -h|--help) usage ;;
 esac
 
+action=$(qcmd $@)
+
 # Path to menu application
 if [[ -n $(command -v rofi) ]]; then
     menu="$(command -v rofi) -dmenu -columns 1"
+    global_mesg="Alt-1 	Prompt for args and show function help (if -f is present)..   	Go back to menu.C-u  	Clear inputEsc  	Exit"
+    action=$(echo -e "$action" | $menu -mesg "$global_mesg") # For rofi
 elif [[ -n $(command -v dmenu) ]]; then
     menu="$(command -v dmenu)"
+    action=$(echo -e "$action" | $menu) # For dmenu
 else
     echo >&2 "Rofi or dmenu not found"
     exit
 fi
 
-action=$(qcmd  $@ | $menu |cut -f 1)
+action_info=$? # get the return code from rofi
+
+action=$(echo "$action"| cut -f 1 |  sed -e 's/ *$//g')
+
+# if kb-mod-1 key was pressed in rofi
+if [ "$action_info" -eq "10" ]; then
+    # only run when -f is present (then -i makes sense)
+    if [[ $action == *"-f"* ]]; then
+        info=$(qcmd $action -i)
+        action=$($menu -mesg "$global_mesg<b>Help</b>$info" -filter "$action -a ")
+    fi;
+fi;
 
 case $action in
-    "") ;;
-    "..")$0;;
+    "") ;; # exit
+    ..)$0;; # Go back to main menu
     *) $0 "$action" ;;
 esac
