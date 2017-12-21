@@ -67,7 +67,7 @@ def print_commands(prefix, obj):
 
     try:
         cmds = obj.commands()
-    except Exception:
+    except AttributeError:
         print("error: Sorry no commands in ", prefix)
         exit()
 
@@ -90,21 +90,20 @@ def get_object(argv):
     """
 
     client = Client()
+    obj = client
 
     if argv[0] == "cmd":
-        obj = client
-    else:
-        obj = getattr(client, argv[0])
+        argv = argv[1:]
 
     # Generate full obj specification
-    for arg in argv[1:]:
+    for arg in argv:
         try:
             obj = obj[arg]  # check if it is an item
-        except Exception:
+        except KeyError:
             try:
                 obj = getattr(obj, arg)  # check it it is an attr
-            except Exception:
-                print("Specified object does not exist" + " ".join(argv))
+            except AttributeError:
+                print("Specified object does not exist " + " ".join(argv))
                 exit()
 
     return obj
@@ -112,7 +111,11 @@ def get_object(argv):
 
 def run_function(obj, funcname, args):
     "Run command with specified args on given object."
-    func = getattr(obj, funcname)
+    try:
+        func = getattr(obj, funcname)
+    except AttributeError:
+        print("error: Sorry no function ", funcname)
+        exit()
 
     try:
         ret = func(*args)
