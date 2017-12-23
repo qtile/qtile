@@ -18,7 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.dgroups import DGroups
 from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
 import asyncio
 import functools
@@ -38,7 +37,6 @@ import warnings
 
 from ..config import Drag, Click, Screen, Match, Rule
 from ..config import ScratchPad as ScratchPadConfig
-from ..group import _Group
 from ..scratchpad import ScratchPad
 from ..log_utils import logger
 from ..state import QtileState
@@ -53,6 +51,7 @@ from libqtile import command_interface
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_interface import QtileCommandInterface, IPCCommandServer
 from libqtile.command_object import CommandObject, CommandError, CommandException
+from libqtile.core.group_manager import GroupManager
 from libqtile.ipc import find_sockfile
 from libqtile.lazy import lazy
 
@@ -107,8 +106,6 @@ class Qtile(CommandObject):
 
         self.windows_map = {}
         self.widgets_map = {}
-        self.groups_map = {}
-        self.groups = []
         self.keys_map = {}
 
         # Find the modifier mask for the numlock key, if there is one:
@@ -154,12 +151,13 @@ class Qtile(CommandObject):
         if config.main:
             config.main(self)
 
-        self.dgroups = None
-        if self.config.groups:
+        if hasattr(self.config, 'dgroups_key_binder'):
+            key_binder = self.config.dgroups_key_binder
+        else:
             key_binder = None
-            if hasattr(self.config, 'dgroups_key_binder'):
-                key_binder = self.config.dgroups_key_binder
-            self.dgroups = DGroups(self, self.config.groups, key_binder)
+        groups = self.config.groups if self.config.groups else []
+        self._group_manager = GroupManager(self, groups, key_binder)
+        self.update_net_desktops()
 
         if hasattr(config, "widget_defaults") and config.widget_defaults:
             _Widget.global_defaults = config.widget_defaults
@@ -173,9 +171,6 @@ class Qtile(CommandObject):
 
         for installed_extension in _Extension.installed_extensions:
             installed_extension._configure(self)
-
-        for i in self.groups:
-            self.groups_map[i.name] = i
 
         for grp in self.config.groups:
             if isinstance(grp, ScratchPadConfig):
@@ -250,6 +245,14 @@ class Qtile(CommandObject):
         }
         self.setup_selection()
         hook.fire("startup_complete")
+
+    @property
+    def groups(self):
+        return self._group_manager.active_groups
+
+    @property
+    def groups_map(self):
+        return self._group_manager.active_groups_map
 
     def setup_selection(self):
         primary = self.conn.atoms["PRIMARY"]
@@ -401,7 +404,7 @@ class Qtile(CommandObject):
                 y,
                 w,
                 h,
-                self.groups[i],
+                self._group_manager.active_groups[i],
             )
             self.screens.append(scr)
 
@@ -416,7 +419,7 @@ class Qtile(CommandObject):
                 0, 0, 0,
                 self.conn.default_screen.width_in_pixels,
                 self.conn.default_screen.height_in_pixels,
-                self.groups[0],
+                self._group_manager.active_groups[0],
             )
             self.screens.append(s)
 
@@ -469,51 +472,20 @@ class Qtile(CommandObject):
         except (ValueError, AttributeError):
             index = 0
 
-        self.root.set_property("_NET_NUMBER_OF_DESKTOPS", len(self.groups))
+        if not hasattr(self, "_group_manager"):
+            return
+
+        self.root.set_property("_NET_NUMBER_OF_DESKTOPS", len(self._group_manager.active_groups))
         self.root.set_property(
-            "_NET_DESKTOP_NAMES", "\0".join([i.name for i in self.groups])
+            "_NET_DESKTOP_NAMES", "\0".join([i.name for i in self._group_manager.active_groups])
         )
         self.root.set_property("_NET_CURRENT_DESKTOP", index)
 
-    def add_group(self, name, layout=None, layouts=None, label=None):
-        if name not in self.groups_map.keys():
-            g = _Group(name, layout, label=label)
-            self.groups.append(g)
-            if not layouts:
-                layouts = self.config.layouts
-            g._configure(layouts, self.config.floating_layout, self)
-            self.groups_map[name] = g
-            hook.fire("addgroup", self, name)
-            hook.fire("changegroup")
-            self.update_net_desktops()
-
-            return True
-        return False
+    def add_group(self, name, layout=None, layouts=None, label=None) -> bool:
+        return self._group_manager.add_group(name, layout=layout, layouts=layouts, label=label)
 
     def delete_group(self, name):
-        # one group per screen is needed
-        if len(self.groups) == len(self.screens):
-            raise ValueError("Can't delete all groups.")
-        if name in self.groups_map.keys():
-            group = self.groups_map[name]
-            if group.screen and group.screen.previous_group:
-                target = group.screen.previous_group
-            else:
-                target = group.get_previous_group()
-
-            # Find a group that's not currently on a screen to bring to the
-            # front. This will terminate because of our check above.
-            while target.screen:
-                target = target.get_previous_group()
-            for i in list(group.windows):
-                i.togroup(target.name)
-            if self.current_group.name == name:
-                self.current_screen.set_group(target, save_prev=False)
-            self.groups.remove(group)
-            del(self.groups_map[name])
-            hook.fire("delgroup", self, name)
-            hook.fire("changegroup")
-            self.update_net_desktops()
+        return self._group_manager.delete_group(name)
 
     def register_widget(self, w):
         """Register a bar widget
@@ -1281,7 +1253,7 @@ class Qtile(CommandObject):
 
             groups()
         """
-        return {i.name: i.info() for i in self.groups}
+        return {i.name: i.info() for i in self._group_manager.active_groups}
 
     def cmd_get_info(self):
         """Prints info for all groups"""
@@ -1763,9 +1735,9 @@ class Qtile(CommandObject):
         """Add a group with the given name"""
         return self.add_group(name=group, layout=layout, layouts=layouts, label=label)
 
-    def cmd_delgroup(self, group):
+    def cmd_delgroup(self, group_name):
         """Delete a group with the given name"""
-        return self.delete_group(group)
+        return self.delete_group(group_name)
 
     def cmd_add_rule(self, match_args, rule_args, min_priorty=False):
         """Add a dgroup rule, returns rule_id needed to remove it
@@ -1779,17 +1751,17 @@ class Qtile(CommandObject):
         min_priorty :
             If the rule is added with minimum prioriry (last) (default: False)
         """
-        if not self.dgroups:
+        if not self._group_manager:
             logger.warning('No dgroups created')
             return
 
         match = Match(**match_args)
         rule = Rule(match, **rule_args)
-        return self.dgroups.add_rule(rule, min_priorty)
+        return self._group_manager.add_rule(rule, min_priorty)
 
     def cmd_remove_rule(self, rule_id):
         """Remove a dgroup rule by rule_id"""
-        self.dgroups.remove_rule(rule_id)
+        self._group_manager.remove_rule(rule_id)
 
     def cmd_run_external(self, full_path):
         """Run external Python script"""

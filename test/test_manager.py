@@ -324,10 +324,11 @@ def test_adddelgroup(qtile):
     # Assert that the test window is still a member of some group.
     assert sum(len(i["windows"]) for i in self.c.groups().values())
 
-    for i in list(self.c.groups().keys())[:-1]:
+    last_group, *other_groups = self.c.groups().keys()
+    for i in other_groups:
         self.c.delgroup(i)
     with pytest.raises(CommandException):
-        self.c.delgroup(list(self.c.groups().keys())[0])
+        self.c.delgroup(last_group)
 
     # Assert that setting layout via cmd_addgroup works
     self.c.addgroup("testgroup2", layout='max')
