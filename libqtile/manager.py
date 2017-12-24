@@ -41,7 +41,7 @@ import xcffib.xproto
 import six
 import warnings
 
-from . import asyncio
+from six.moves import asyncio
 
 from .config import Drag, Click, Screen, Match, Rule
 from .group import _Group

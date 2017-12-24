@@ -31,7 +31,7 @@ import struct
 import fcntl
 import json
 
-from . import asyncio
+from six.moves import asyncio
 
 from .log_utils import logger
 
