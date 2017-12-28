@@ -74,7 +74,6 @@ def print_commands(prefix, obj):
         print("error: Sorry no such object ", prefix)
         exit()
 
-
     for cmd in cmds:
         doc_args = get_formated_info(obj, cmd)
 
