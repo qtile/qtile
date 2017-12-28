@@ -70,6 +70,10 @@ def print_commands(prefix, obj):
     except AttributeError:
         print("error: Sorry no commands in ", prefix)
         exit()
+    except CommandError:
+        print("error: Sorry no such object ", prefix)
+        exit()
+
 
     for cmd in cmds:
         doc_args = get_formated_info(obj, cmd)
