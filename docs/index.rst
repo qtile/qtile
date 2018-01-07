@@ -24,6 +24,8 @@ Commands and scripting
     manual/commands/iqshell
     manual/commands/qtile-top
     manual/commands/qtile-run
+    manual/commands/qcmd
+    manual/commands/dqcmd
 
 Getting involved
 ================
