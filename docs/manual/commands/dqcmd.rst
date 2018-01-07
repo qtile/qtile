@@ -1,7 +1,7 @@
 dqcmd
 =====
 
-A Rofi/dmenu interface to qcmd. Excepts all arguments o qcmd.
+A Rofi/dmenu interface to qcmd. Accepts all arguments of qcmd.
 
 Examples:
 ---------
@@ -43,3 +43,5 @@ Output of ``dqcmd -h``
      dqcmd -o cmd -f prev_layout -i
      dqcmd -o cmd -f prev_layout -a 3 # prev_layout on group 3
      dqcmd -o group 3 -f focus_back
+
+    If both rofi and dmenu are present rofi will be selected as default, to change this us --force-dmenu as the first argument.

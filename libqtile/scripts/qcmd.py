@@ -35,8 +35,14 @@ from libqtile.command import CommandError, CommandException
 def get_formated_info(obj, cmd, args=True, short=True):
     """
     Get documentation for command/function and format it.
-    Returns argument list and summary line (if present).
-    If short = True returns * if arguments are present.
+
+    Returns:
+      * args=True, short=False - (function args) and a summary line.
+      * args=True, short=True - '*' if arguments are present and a summary line.
+      * args=False - a summary line.
+
+    If 'doc' function is not present in object or there is no doc string for given cmd it returns empty string.
+    The arguments are extracted from doc[0] line, the summary is constructed from doc[1] line.
     """
 
     doc_func = obj.doc if hasattr(obj, "doc") else lambda x: ""
@@ -135,7 +141,7 @@ def run_function(obj, funcname, args):
 
 def print_base_objects():
     "Prints access objects of Client, use cmd for commands."
-    actions = ["-o cmd", "-o window", "-o layout", "-o group"]
+    actions = ["-o cmd", "-o window", "-o layout", "-o group", "-o bar"]
     print("\n".join(actions))
 
 
