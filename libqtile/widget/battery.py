@@ -61,9 +61,10 @@ class _Battery(base._TextBox):
     """Base battery class"""
 
     filenames = {}
+    # ACPI name of a battery, usually BAT0
+    battery_name = 'BAT0'
 
     defaults = [
-        ('battery_name', 'BAT0', 'ACPI name of a battery, usually BAT0'),
         (
             'status_file',
             'status',
@@ -93,6 +94,7 @@ class _Battery(base._TextBox):
 
     def __init__(self, **config):
         base._TextBox.__init__(self, "BAT", bar.CALCULATED, **config)
+        self.battery_name = self._get_battery_name()
         self.add_defaults(_Battery.defaults)
 
     def _load_file(self, name):
@@ -144,6 +146,14 @@ class _Battery(base._TextBox):
         except TypeError:
             return False
         return info
+
+    def _get_battery_name(self):
+        bats = [ f for f in os.listdir(BAT_DIR) if f.startswith('BAT') ]
+
+        if bats:
+            return bats[0]
+        else:
+            return 'BAT0'
 
 
 class Battery(_Battery):
