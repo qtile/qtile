@@ -61,7 +61,6 @@ class StockTicker(GenPollUrl):
     @property
     def url(self):
         url = 'https://www.alphavantage.co/query?' + urlencode(self.query)
-        print(url)
         return url
 
     def parse(self, body):
@@ -70,7 +69,6 @@ class StockTicker(GenPollUrl):
             # In instead of ==, because of the number prefix that is inconsistent
             if "Last Refreshed" in k:
                 last = v
-        print("last: %s" % last)
 
         # Unfortunately, the actual data key is not consistently named, but
         # since there are only two and one is "Meta Data", we can just use the
@@ -78,7 +76,6 @@ class StockTicker(GenPollUrl):
         other = None
         for k, v in body.items():
             if k != "Meta Data":
-                print("assigning other %s" % v)
                 other = v
                 break
 
