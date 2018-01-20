@@ -63,7 +63,7 @@ class _Battery(base._TextBox):
     filenames = {}
 
     def _get_battery_name():
-        bats = [ f for f in os.listdir(BAT_DIR) if f.startswith('BAT') ]
+        bats = [f for f in os.listdir(BAT_DIR) if f.startswith('BAT')]
 
         if bats:
             return bats[0]
