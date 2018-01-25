@@ -248,7 +248,7 @@ def describe_attributes(obj, attrs, func=None):
     return ', '.join(pairs)
 
 
-def safe_import(module_names, class_name, globals_):
+def safe_import(module_names, class_name, globals_, fallback=None):
     """
     Try to import a module, and if it fails because an ImporError
     it logs on WARNING, and logs the traceback on DEBUG level
@@ -270,3 +270,5 @@ def safe_import(module_names, class_name, globals_):
         logger.warning("Unmet dependencies for optional Widget: '%s.%s', %s",
                        module_path, class_name, error)
         logger.debug("%s", traceback.format_exc())
+        if fallback:
+            globals_[class_name] = fallback(module_path, class_name, error)
