@@ -21,10 +21,12 @@
 # SOFTWARE.
 
 from ..utils import safe_import as safe_import_
+from .import_error import make_error
 
 
 def safe_import(module_name, class_name):
-    safe_import_((".widget", module_name), class_name, globals())
+    safe_import_((".widget", module_name), class_name, globals(),
+                 fallback=make_error)
 
 
 safe_import("backlight", "Backlight")
