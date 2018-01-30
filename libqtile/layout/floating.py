@@ -190,21 +190,28 @@ class Floating(Layout):
             transient_for = client.window.get_wm_transient_for()
             win = client.group.qtile.windowMap.get(transient_for)
             if win is not None:
-                x = win.x + (win.width - client.width) // 2
-                y = win.y + (win.height - client.height) // 2
-                above = True
+                # if transient for a window, place in the center of the window
+                center_x = win.x + win.width / 2
+                center_y = win.y + win.height / 2
             else:
-                x = screen.x + client.x % screen.width
-                # try to get right edge on screen (without moving the left edge off)
-                x = min(x, screen.x - client.width)
-                x = max(x, screen.x)
-                # then update it's position (`.place()` will take care of `.float_x`)
-                client.x = x
+                center_x = screen.x + screen.width / 2
+                center_y = screen.y + screen.height / 2
+                above = True
 
-                y = screen.y + client.y % screen.height
-                y = min(y, screen.y - client.height)
-                y = max(y, screen.y)
-                client.y = y
+            x = center_x - client.width / 2
+            y = center_y - client.height / 2
+
+            # don't go off the right...
+            x = min(x, screen.x + screen.width)
+            # or left...
+            x = max(x, screen.x)
+            # or bottom...
+            y = min(y, screen.y + screen.height)
+            # or top
+            y = max(y, screen.y)
+
+            client.x = int(round(x))
+            client.y = int(round(y))
 
         client.place(
             client.x,
