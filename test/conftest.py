@@ -28,6 +28,7 @@ import libqtile.ipc
 from libqtile.manager import Qtile as QtileManager
 from libqtile.log_utils import init_log
 
+import functools
 import logging
 import multiprocessing
 import os
@@ -40,6 +41,7 @@ import traceback
 
 import xcffib
 import xcffib.xproto
+from xvfbwrapper import Xvfb
 
 # the default sizes for the Xephyr windows
 WIDTH = 800
@@ -58,23 +60,18 @@ class retry:
         self.tmax = tmax
 
     def __call__(self, fn):
-        import time
-        from functools import wraps
-
-        @wraps(fn)
+        @functools.wraps(fn)
         def wrapper(*args, **kwargs):
-            _time, _sleep = time.time, time.sleep
-            tmax = self.tmax
-            tmax += _time()
+            tmax = time.time() + self.tmax
             dt = self.dt
             ignore_exceptions = self.ignore_exceptions
 
-            while _time() <= tmax:
+            while time.time() <= tmax:
                 try:
                     return fn(*args, **kwargs)
                 except ignore_exceptions:
                     pass
-                _sleep(dt)
+                time.sleep(dt)
                 dt *= 1.5
             raise AssertionError(self.fail_msg)
         return wrapper
@@ -86,6 +83,7 @@ def can_connect_x11(disp=':0'):
     conn.disconnect()
     return True
 
+
 @retry(ignore_exceptions=(libqtile.ipc.IPCError,))
 def can_connect_qtile(socket_path):
     client = libqtile.command.Client(socket_path)
@@ -94,11 +92,12 @@ def can_connect_qtile(socket_path):
         return True
     return False
 
+
 def _find_display():
     """Returns the next available display"""
-    from xvfbwrapper import Xvfb
     xvfb = Xvfb()
     return xvfb._get_next_unused_display()
+
 
 def whereis(program):
     """Search PATH for executable"""
@@ -146,9 +145,15 @@ class Xephyr(object):
     Set-up a Xephyr instance with the given parameters.  The Xephyr instance
     must be started, and then stopped.
     """
-    def __init__(self, xinerama=True, randr=False, two_screens=True,
-                 width=WIDTH, height=HEIGHT, xoffset=None):
-        self.xinerama, self.randr = xinerama, randr
+    def __init__(self,
+                 xinerama=True,
+                 randr=False,
+                 two_screens=True,
+                 width=WIDTH,
+                 height=HEIGHT,
+                 xoffset=None):
+        self.xinerama = xinerama
+        self.randr = randr
         self.two_screens = two_screens
 
         self.width = width
@@ -161,36 +166,45 @@ class Xephyr(object):
         self.proc = None  # Handle to Xephyr instance, subprocess.Popen object
         self.display = None
 
+    def __enter__(self):
+        self.start_xephyr()
+
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop_xephyr()
+
     def start_xephyr(self):
         """Start Xephyr instance
 
         Starts the Xephyr instance and sets the `self.display` to the display
         which is used to setup the instance.
         """
-        # we'll try twice to open Xephyr
-        for _ in range(2):
-            # get a new display
-            self.display = ":{}".format(_find_display())
+        # get a new display
+        self.display = ":{}".format(_find_display())
 
-            # build up arguments
-            args = [
-                "Xephyr", "-name", "qtile_test",
-                self.display, "-ac",
-                "-screen", "%sx%s" % (self.width, self.height)]
-            if self.two_screens:
-                args.extend(["-origin", "%s,0" % self.xoffset, "-screen",
-                             "%sx%s" % (SECOND_WIDTH, SECOND_HEIGHT)])
-            if self.xinerama:
-                args.extend(["+xinerama"])
-            if self.randr:
-                args.extend(["+extension", "RANDR"])
+        # build up arguments
+        args = [
+            "Xephyr",
+            "-name",
+            "qtile_test",
+            self.display,
+            "-ac",
+            "-screen",
+            "{}x{}".format(self.width, self.height),
+        ]
+        if self.two_screens:
+            args.extend(["-origin", "%s,0" % self.xoffset, "-screen",
+                         "%sx%s" % (SECOND_WIDTH, SECOND_HEIGHT)])
+        if self.xinerama:
+            args.extend(["+xinerama"])
+        if self.randr:
+            args.extend(["+extension", "RANDR"])
 
-            self.proc = subprocess.Popen(args)
+        self.proc = subprocess.Popen(args)
 
-            start = time.time()
-            # wait for X display to come up
-            if can_connect_x11(self.display):
-                return
+        if can_connect_x11(self.display):
+            return
         else:
             # we wern't able to get a display up
             self.display = None
@@ -395,33 +409,25 @@ class Qtile(object):
         had an attached group."
 
 
-@pytest.yield_fixture(scope="session")
+@pytest.fixture(scope="session")
 def xvfb():
-    display = ":{:d}".format(_find_display())
-    args = ["Xvfb", display, "-screen", "0", "800x600x16"]
-    proc = subprocess.Popen(args)
-    if not can_connect_x11(display):
-        raise OSError("Xvfb did not come up")
-    os.environ['DISPLAY'] = display
-    yield
-    proc.terminate()
-    proc.wait()
+    with Xvfb():
+        display = os.environ["DISPLAY"]
+        if not can_connect_x11(display):
+            raise OSError("Xvfb did not come up")
+
+        yield
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def xephyr(request, xvfb):
     kwargs = getattr(request, "param", {})
 
-    x = Xephyr(**kwargs)
-    try:
-        x.start_xephyr()
-
+    with Xephyr(**kwargs) as x:
         yield x
-    finally:
-        x.stop_xephyr()
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def qtile(request, xephyr):
     config = getattr(request, "param", BareConfig)
 
@@ -436,7 +442,7 @@ def qtile(request, xephyr):
             q.terminate()
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.fixture(scope="function")
 def qtile_nospawn(request, xephyr):
     with tempfile.NamedTemporaryFile() as f:
         sockfile = f.name
