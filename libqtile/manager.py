@@ -44,7 +44,9 @@ import warnings
 from six.moves import asyncio
 
 from .config import Drag, Click, Screen, Match, Rule
+from .config import ScratchPad as ScratchPadConfig
 from .group import _Group
+from .scratchpad import ScratchPad
 from .log_utils import logger
 from .state import QtileState
 from .utils import QtileError, get_cache_dir
@@ -176,6 +178,14 @@ class Qtile(command.CommandObject):
 
         for i in self.groups:
             self.groupMap[i.name] = i
+
+        for grp in self.config.groups:
+            if isinstance(grp, ScratchPadConfig):
+                sp = ScratchPad(grp.name, grp.dropdowns, grp.label)
+                sp._configure([self.config.floating_layout],
+                              self.config.floating_layout, self)
+                self.groups.append(sp)
+                self.groupMap[sp.name] = sp
 
         self.setup_eventloop()
         self.server = command._Server(self.fname, self, config, self._eventloop)

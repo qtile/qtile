@@ -13,7 +13,7 @@ they're not empty, spawn applications for them when they start, automatically
 acquire certain groups, and various other options.
 
 Example
-=======
+-------
 
 ::
 
@@ -31,7 +31,7 @@ Example
 
 
 Reference
-=========
+---------
 
 .. qtile_class:: libqtile.config.Group
    :no-commands:
@@ -46,3 +46,62 @@ Group Matching
 
 .. qtile_class:: libqtile.config.Rule
    :no-commands:
+
+
+ScratchPad and DropDown
+=======================
+
+:class:`~libqtile.config.ScratchPad` is a special - by default invisible -
+group which acts as a container for :class:`~libqtile.config.DropDown`
+configurations. A `DropDown` can be configured to spawn a defined process and
+bind thats process' window to it. The associated window can then be shown and
+hidden by the lazy command ``dropdown_toggle()``
+(see :doc:`/manual/config/lazy`) from the ScratchPad group.
+Thus - for example - your favorite terminal emulator turns into a quake-like
+terminal by the control of qtile.
+
+If the DropDown window turns visible it is placed as a floating window on top
+of the current group.
+If the DropDown is hidden, it is simply switched back to the ScratchPad group.
+
+Example
+-------
+
+::
+
+  from libqtile.config import Group, ScratchPad, DropDown, Key
+  from libqtile.command import lazy
+  groups = [
+      ScratchPad("scratchpad", [
+          # define a drop down terminal.
+          # it is placed in the upper third of screen by default.
+          DropDown("term", "urxvt", opacity=0.8),
+
+          # define another terminal exclusively for qshell at different position
+          DropDown("qshell", "urxvt -hold -e qshell",
+                   x=0.05, y=0.4, width=0.9, height=0.6, opacity=0.9,
+                   on_focus_lost_hide=True) ]), ])
+      Group("a"),
+  ]
+
+  keys = [
+    # toggle visibiliy of above defined DropDown named "term"
+    Key([], 'F11', lazy.group['scratchpad'].dropdown_toggle('term'))
+    Key([], 'F12', lazy.group['scratchpad'].dropdown_toggle('qshell'))
+  ]
+
+There is only one DropDown visible in current group at a time.
+If a further DropDown is set visible the currently shown DropDown turns
+invisble immediately.
+
+Note that if the window is set to not floating, it is detached from DropDown
+and ScratchPad, and a new pocess is spawned next time the DropDown is set visible.
+
+Reference
+---------
+
+.. qtile_class:: libqtile.config.ScratchPad
+    :no-commands:
+
+.. qtile_class:: libqtile.config.DropDown
+     :no-commands:
