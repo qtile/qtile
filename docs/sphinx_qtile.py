@@ -21,11 +21,11 @@
 import importlib
 from docutils import nodes
 from docutils.statemachine import ViewList
+from docutils.parsers.rst import Directive
 from jinja2 import Template
 from libqtile import command, configurable, widget
 from six import class_types
 from six.moves import builtins, reduce
-from sphinx.util.compat import Directive
 from sphinx.util.nodes import nested_parse_with_titles
 
 
