@@ -1,9 +1,35 @@
-qtile next_version:
+qtile 0.11.0, released 2018-02-XX:
     !!! Completely changed extension configuration, see the documentation !!!
     !!! `extention` subpackage renamed to `extension` !!!
     !!! `extentions` configuration variable changed to `extension_defaults` !!!
     * features
-        - new RunCommand and J4DmenuDesktop extensions
+        - qshell improvements
+        - new MonadWide layout
+        - new Bsp layout
+        - new pomodoro widget
+        - new stock ticker widget
+        - new `client_name_updated` hook
+        - new RunCommand and J4DmenuDesktop extension
+        - task list expands to fill space, configurable via `spacing` parameter
+        - add group.focus_by_name() and group.info_by_name()
+        - add disk usage ratio to df widget
+        - allow displayed group name to differ from group name
+        - enable custom TaskList icon size
+        - add qcmd and dqcmd to extend functionality around qtile.command
+          functionality
+        - add ScratchPad group that has configurable drop downs
+    * bugfixes
+        - fix race condition in Window.fullscreen
+        - fix for string formatting in qtile_top
+        - fix unicode literal in tasklist
+        - move mpris2 initialization out of constructor
+        - fix wlan widget variable naming and division
+        - normalize behavior of layouts on various commands
+        - add better fallback to default config
+        - update btc widget to use coinbase
+        - fix cursor warp when using default layout implementation
+        - don't crash when using widget with unmet dependencies
+        - fix floating window default location
 
 qtile 0.10.7, released 2017-02-14:
     * features
