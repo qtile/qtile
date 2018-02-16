@@ -413,11 +413,18 @@ def test_default_float(qtile):
     assert self.c.group.info()['focus'] == 'xclock'
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
-    assert self.c.window.info()['x'] == 0
-    assert self.c.window.info()['y'] == 0
+    assert self.c.window.info()['x'] == 318
+    assert self.c.window.info()['y'] == 208
     assert self.c.window.info()['floating'] is True
 
     self.c.window.move_floating(10, 20, 42, 42)
+    assert self.c.window.info()['width'] == 164
+    assert self.c.window.info()['height'] == 164
+    assert self.c.window.info()['x'] == 328
+    assert self.c.window.info()['y'] == 228
+    assert self.c.window.info()['floating'] is True
+
+    self.c.window.set_position_floating(10, 20, 42, 42)
     assert self.c.window.info()['width'] == 164
     assert self.c.window.info()['height'] == 164
     assert self.c.window.info()['x'] == 10
