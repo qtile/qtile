@@ -16,7 +16,9 @@ be on your $PATH.
 
     @hook.subscribe.startup
     def dbus_register():
-        x = os.environ['DESKTOP_AUTOSTART_ID']
+        id = os.environ.get('DESKTOP_AUTOSTART_ID')
+        if not id:
+            return
         subprocess.Popen(['dbus-send',
                           '--session',
                           '--print-reply',
@@ -24,7 +26,7 @@ be on your $PATH.
                           '/org/gnome/SessionManager',
                           'org.gnome.SessionManager.RegisterClient',
                           'string:qtile',
-                          'string:' + x])
+                          'string:' + id])
 
 This adds a new entry "Qtile GNOME" to GDM's login screen.
 
