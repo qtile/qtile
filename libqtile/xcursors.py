@@ -114,8 +114,12 @@ class Cursors(dict):
         try:
             xcursor = ffi.dlopen('libxcb-cursor.so')
         except OSError:
-            logger.warning("xcb-cursor not found, fallback to font pointer")
-            return False
+            try:
+                # libxcb-cursor.so.0 is used on Ubuntu
+                xcursor = ffi.dlopen('libxcb-cursor.so.0')
+            except OSError:
+                logger.warning("xcb-cursor not found, fallback to font pointer")
+                return False
 
         conn = self.conn.conn
         screen_pointer = conn.get_screen_pointers()[0]
