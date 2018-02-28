@@ -19,7 +19,7 @@ be on your $PATH.
         x = os.environ['DESKTOP_AUTOSTART_ID']
         subprocess.Popen(['dbus-send',
                           '--session',
-                          '--print-reply=string',
+                          '--print-reply',
                           '--dest=org.gnome.SessionManager',
                           '/org/gnome/SessionManager',
                           'org.gnome.SessionManager.RegisterClient',
