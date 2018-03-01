@@ -1,7 +1,7 @@
 Summary: A pure-Python tiling window manager
 Name: qtile
 Version: 0.10.7
-Release: 1%{?dist}
+Release: 3%{?dist}
 Source0: https://github.com/qtile/qtile/archive/v%{version}.tar.gz
 License: MIT and GPLv3+
 # All MIT except for:
@@ -48,7 +48,7 @@ Features
 
 
 %prep
-%setup -q -n qtile-%{version} 
+%setup -q -n qtile-%{version}
 
 %build
 %{__python3} setup.py build
@@ -76,6 +76,42 @@ install -m 644 %{SOURCE1} %{buildroot}%{_datadir}/xsessions/
 
 
 %changelog
+* Wed Feb 28 2018 John Dulaney <jdulaney@fedoraproject.org> - 0.11.0-1
+- !!! Completely changed extension configuration, see the documentation !!!
+- !!! `extention` subpackage renamed to `extension` !!!
+- !!! `extentions` configuration variable changed to `extension_defaults` !!!
+- qshell improvements
+- new MonadWide layout
+- new Bsp layout
+- new pomodoro widget
+- new stock ticker widget
+- new `client_name_updated` hook
+- new RunCommand and J4DmenuDesktop extension
+- task list expands to fill space, configurable via `spacing` parameter
+- add group.focus_by_name() and group.info_by_name()
+- add disk usage ratio to df widget
+- allow displayed group name to differ from group name
+- enable custom TaskList icon size
+- add qcmd and dqcmd to extend functionality around qtile.command functionality
+- add ScratchPad group that has configurable drop downs
+- fix race condition in Window.fullscreen
+- fix for string formatting in qtile_top
+- fix unicode literal in tasklist
+- move mpris2 initialization out of constructor
+- fix wlan widget variable naming and division
+- normalize behavior of layouts on various commands
+- add better fallback to default config
+- update btc widget to use coinbase
+- fix cursor warp when using default layout implementation
+- don't crash when using widget with unmet dependencies
+- fix floating window default location
+
+* Fri Feb 09 2018 Fedora Release Engineering <releng@fedoraproject.org> - 0.10.7-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
+
+* Thu Jul 27 2017 Fedora Release Engineering <releng@fedoraproject.org> - 0.10.7-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
+
 * Tue Feb 14 2017 John Dulaney <jdulaney@fedoraproject.org> - 0.10.7-1
 - new MPD widget, widget.MPD2, based on `mpd2` library
 - add option to ignore duplicates in prompt widget
