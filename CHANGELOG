@@ -1,4 +1,4 @@
-qtile 0.11.0, released 2018-02-XX:
+qtile 0.11.0, released 2018-02-28:
     !!! Completely changed extension configuration, see the documentation !!!
     !!! `extention` subpackage renamed to `extension` !!!
     !!! `extentions` configuration variable changed to `extension_defaults` !!!
