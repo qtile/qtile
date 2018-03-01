@@ -10,6 +10,7 @@
 # Copyright (c) 2014 dmpayton
 # Copyright (c) 2014 dequis
 # Copyright (c) 2017 Dirk Hartmann.
+# Copyright (c) 2018 Nazar Mokrynskyi
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -44,8 +45,8 @@ class Tile(_SimpleLayoutBase):
     ]
 
     def __init__(self, ratio=0.618, masterWindows=1, expand=True,
-                 ratio_increment=0.05, add_on_top=True, shift_windows=False,
-                 master_match=None, **config):
+                 ratio_increment=0.05, add_on_top=True, add_after_last=False,
+                 shift_windows=False, master_match=None, **config):
         _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(Tile.defaults)
         self.ratio = ratio
@@ -53,6 +54,7 @@ class Tile(_SimpleLayoutBase):
         self.expand = expand
         self.ratio_increment = ratio_increment
         self.add_on_top = add_on_top
+        self.add_after_last = add_after_last
         self.shift_windows = shift_windows
         self.master_match = master_match
 
@@ -99,11 +101,13 @@ class Tile(_SimpleLayoutBase):
         c = _SimpleLayoutBase.clone(self, group)
         return c
 
-    def add(self, client):
-        if not self.add_on_top and self.clients:
-            self.clients.add(client)
-        else:
+    def add(self, client, offset_to_current=0):
+        if self.add_after_last:
+            self.clients.append(client)
+        elif self.add_on_top:
             self.clients.appendHead(client)
+        else:
+            self.clients.add(client, offset_to_current)
         self.resetMaster()
 
     def configure(self, client, screen):
