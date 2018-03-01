@@ -96,7 +96,7 @@ else:
 
 setup(
     name="qtile",
-    version="0.11.0",
+    version="0.11.1",
     description="A pure-Python tiling window manager.",
     long_description=long_description,
     classifiers=[

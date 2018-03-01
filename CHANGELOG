@@ -1,3 +1,7 @@
+qtile 0.11.1, released 2018-03-01:
+    * bug fix
+        - fixed pip install of qtile
+
 qtile 0.11.0, released 2018-02-28:
     !!! Completely changed extension configuration, see the documentation !!!
     !!! `extention` subpackage renamed to `extension` !!!
