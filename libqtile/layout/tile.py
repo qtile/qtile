@@ -109,10 +109,6 @@ class Tile(_SimpleLayoutBase):
     def configure(self, client, screen):
         screenWidth = screen.width
         screenHeight = screen.height
-        x = 0
-        y = 0
-        w = 0
-        h = 0
         borderWidth = self.border_width
         if self.clients and client in self.clients:
             pos = self.clients.index(client)
