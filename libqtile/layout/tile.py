@@ -10,6 +10,7 @@
 # Copyright (c) 2014 dmpayton
 # Copyright (c) 2014 dequis
 # Copyright (c) 2017 Dirk Hartmann.
+# Copyright (c) 2018 Nazar Mokrynskyi
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -85,9 +86,9 @@ class Tile(_SimpleLayoutBase):
             return
         if self.clients:
             masters = [c for c in self.clients if match.compare(c)]
-            self.clients = masters + [
-                c for c in self.clients if c not in masters
-            ]
+            for client in masters:
+                self.clients.remove(client)
+                self.clients.appendHead(client)
 
     def shift(self, idx1, idx2):
         if self.clients:
