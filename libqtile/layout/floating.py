@@ -8,6 +8,7 @@
 # Copyright (c) 2014 ramnes
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 dequis
+# Copyright (c) 2018 Nazar Mokrynskyi
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -60,7 +61,7 @@ class Floating(Layout):
         ),
     ]
 
-    def __init__(self, float_rules=None, **config):
+    def __init__(self, float_rules=None, no_reposition_match=None, **config):
         """
         If you have certain apps that you always want to float you can provide
         ``float_rules`` to do so. ``float_rules`` is a list of
@@ -83,6 +84,7 @@ class Floating(Layout):
         self.focused = None
         self.group = None
         self.float_rules = float_rules or DEFAULT_FLOAT_RULES
+        self.no_reposition_match = no_reposition_match
         self.add_defaults(Floating.defaults)
 
     def match(self, win):
@@ -169,6 +171,13 @@ class Floating(Layout):
         self.focused = None
 
     def configure(self, client, screen):
+        # 'sun-awt-X11-XWindowPeer' is a dropdown used in Java application,
+        # don't reposition it anywhere, let Java app to control it
+        cls = client.window.get_wm_class() or ''
+        is_java_dropdown = 'sun-awt-X11-XWindowPeer' in cls
+        if is_java_dropdown:
+            return
+
         if client.has_focus:
             bc = client.group.qtile.colorPixel(self.border_focus)
         else:
@@ -210,8 +219,9 @@ class Floating(Layout):
             # or top
             y = max(y, screen.y)
 
-            client.x = int(round(x))
-            client.y = int(round(y))
+            if not (self.no_reposition_match and self.no_reposition_match.compare(client)):
+                client.x = int(round(x))
+                client.y = int(round(y))
 
         client.place(
             client.x,
