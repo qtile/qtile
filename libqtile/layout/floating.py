@@ -39,6 +39,7 @@ DEFAULT_FLOAT_WM_TYPES = set([
 
 DEFAULT_FLOAT_RULES = [
     {"role": "About"},
+    {"wmclass": "file_progress"},
 ]
 
 
