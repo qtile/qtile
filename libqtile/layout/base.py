@@ -410,7 +410,7 @@ class _ClientList(object):
         """
         try:
             return self[self.index(win) + 1]
-        except IndexError:
+        except (IndexError, ValueError):
             return None
 
     def focus_last(self):
@@ -425,7 +425,7 @@ class _ClientList(object):
         """
         try:
             idx = self.index(win)
-        except IndexError:
+        except (IndexError, ValueError):
             return None
         else:
             if idx > 0:
