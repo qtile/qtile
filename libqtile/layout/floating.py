@@ -79,6 +79,13 @@ class Floating(Layout):
             float_rules=[dict(wmclass="skype"), dict(wmclass="gimp")]
 
         Specify these in the ``floating_layout`` in your config.
+
+        Floating layout will try to center most of floating windows by
+        default (until hints are properly implemented), but if you don't
+        want this to happen for certain windows that are centered by mistake,
+        you can use ``no_reposition_match`` option to specify them and layout
+        will rely on windows to position themselves in correct location on
+        the screen.
         """
         Layout.__init__(self, **config)
         self.clients = []
