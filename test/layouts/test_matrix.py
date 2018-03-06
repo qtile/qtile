@@ -121,3 +121,11 @@ def test_matrix_window_focus_cycle(qtile):
 
     # assert window focus cycle, according to order in layout
     assertFocusPath(qtile, 'float1', 'float2', 'one', 'two', 'three')
+
+@matrix_config
+def test_matrix_next_no_clients(qtile):
+    qtile.c.layout.next()
+
+@matrix_config
+def test_matrix_previous_no_clients(qtile):
+    qtile.c.layout.previous()

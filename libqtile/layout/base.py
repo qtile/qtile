@@ -607,10 +607,14 @@ class _SimpleLayoutBase(Layout):
         return self.clients.focus_previous(window)
 
     def previous(self):
+        if self.clients.current_client is None:
+            return
         client = self.focus_previous(self.clients.current_client) or self.focus_last()
         self.group.focus(client, True)
 
     def next(self):
+        if self.clients.current_client is None:
+            return
         client = self.focus_next(self.clients.current_client) or self.focus_first()
         self.group.focus(client, True)
 
