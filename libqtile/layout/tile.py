@@ -153,16 +153,21 @@ class Tile(_SimpleLayoutBase):
         ))
         return d
 
-    def cmd_down(self):
+    def cmd_shuffle_down(self):
         self.down()
 
-    def cmd_up(self):
+    def cmd_shuffle_up(self):
         self.up()
 
-    cmd_shuffle_up = cmd_up
-    cmd_shuffle_down = cmd_down
+    cmd_shuffle_left = cmd_shuffle_up
+    cmd_shuffle_right = cmd_shuffle_down
+
     cmd_previous = _SimpleLayoutBase.previous
     cmd_next = _SimpleLayoutBase.next
+    cmd_up = cmd_previous
+    cmd_down = cmd_next
+    cmd_left = cmd_previous
+    cmd_right = cmd_next
 
     def cmd_decrease_ratio(self):
         self.ratio -= self.ratio_increment

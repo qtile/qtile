@@ -63,9 +63,9 @@ def test_tile_updown(qtile):
     qtile.testWindow("two")
     qtile.testWindow("three")
     assert qtile.c.layout.info()["clients"] == ["three", "two", "one"]
-    qtile.c.layout.down()
+    qtile.c.layout.shuffle_down()
     assert qtile.c.layout.info()["clients"] == ["two", "one", "three"]
-    qtile.c.layout.up()
+    qtile.c.layout.shuffle_up()
     assert qtile.c.layout.info()["clients"] == ["three", "two", "one"]
 
 
