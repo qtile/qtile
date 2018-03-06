@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 usage() {
-    echo "$(tput bold)dqcmd$(tput sgr0)
+    echo "$(tput bold)dqtile-cmd$(tput sgr0)
 
-    A Rofi/dmenu interface to qcmd. Accepts all arguments of qcmd (see below).
+    A Rofi/dmenu interface to qtile-cmd. Accepts all arguments of qtile-cmd (see below).
 
     "
 
-    qcmd -h | sed "s/qcmd/dqcmd/"
+    qtile-cmd -h | sed "s/qtile-cmd/dqtile-cmd/"
 
 
     echo "
@@ -21,7 +21,7 @@ case $1 in
     --force-dmenu) FORCE_DMENU=1; shift;;
 esac
 
-action=$(qcmd $@)
+action=$(qtile-cmd $@)
 
 # Path to menu application
 if [[ -n $(command -v rofi) ]]  && [[ -z "$FORCE_DMENU" ]]; then
@@ -45,7 +45,7 @@ action=$(echo "$action"| cut -f 1 |  sed -e 's/ *$//g')
 if [ "$action_info" -eq "10" ]; then
     # only run when -f is present (then -i makes sense)
     if [[ $action == *"-f"* ]]; then
-        info=$(qcmd $action -i)
+        info=$(qtile-cmd $action -i)
         action=$($menu -mesg "$global_mesg<b>Help</b>$info" -filter "$action -a ")
     fi;
 fi;

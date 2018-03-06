@@ -2,6 +2,8 @@ qtile 0.x.x, released xxxx-xx-xx:
     !!! Config breakage !!!
         - Tile layout commands up/down/shuffle_up/shuffle_down changed to be
           more consistent with other layouts
+        - move qcmd to qtile-cmd because of conflict with renameutils, move
+          dqcmd to dqtile-cmd for symmetry
     * features
         - add `add_after_last` option to Tile layout to add windows to the end
           of the list.

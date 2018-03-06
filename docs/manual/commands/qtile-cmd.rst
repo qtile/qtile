@@ -1,5 +1,5 @@
-qcmd
-====
+qtile-cmd
+=========
 
 This is a simple tool to expose qtile.command functionality to shell.
 This can be used standalone or in other shell scripts.
@@ -7,13 +7,13 @@ This can be used standalone or in other shell scripts.
 Examples:
 ---------
 
-Output of ``qcmd -h``
-~~~~~~~~~~~~~~~~~~~~~
+Output of ``qtile-cmd -h``
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: text
 
-    usage: qcmd [-h] [--object OBJ_SPEC [OBJ_SPEC ...]] [--function FUNCTION]
-                [--args ARGS [ARGS ...]] [--info]
+    usage: qtile-cmd [-h] [--object OBJ_SPEC [OBJ_SPEC ...]]
+                     [--function FUNCTION] [--args ARGS [ARGS ...]] [--info]
 
     Simple tool to expose qtile.command functionality to shell.
 
@@ -30,14 +30,14 @@ Output of ``qcmd -h``
                             documentation for function.
 
     Examples:
-     qcmd
-     qcmd -o cmd
-     qcmd -o cmd -f prev_layout -i
-     qcmd -o cmd -f prev_layout -a 3 # prev_layout on group 3
-     qcmd -o group 3 -f focus_back
+     qtile-cmd
+     qtile-cmd -o cmd
+     qtile-cmd -o cmd -f prev_layout -i
+     qtile-cmd -o cmd -f prev_layout -a 3 # prev_layout on group 3
+     qtile-cmd -o group 3 -f focus_back
 
-Output of ``qcmd -o group 3``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Output of ``qtile-cmd -o group 3``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: text
 
@@ -58,8 +58,8 @@ Output of ``qcmd -o group 3``
     -o group 3 -f toscreen          * Pull a group to a specified screen.
     -o group 3 -f unminimize_all      Unminimise all windows in this group
 
-Output of ``qcmd -o cmd``
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Output of ``qtile-cmd -o cmd``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: text
 

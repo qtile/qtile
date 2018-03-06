@@ -1,27 +1,28 @@
-dqcmd
-=====
+dqtile-cmd
+==========
 
-A Rofi/dmenu interface to qcmd. Accepts all arguments of qcmd.
+A Rofi/dmenu interface to qtile-cmd. Accepts all arguments of qtile-cmd.
 
 Examples:
 ---------
 
-Output of ``dqcmd -o cmd``
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+Output of ``dqtile-cmd -o cmd``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: dqcmd.png
+.. image:: dqtile-cmd.png
 
-Output of ``dqcmd -h``
-~~~~~~~~~~~~~~~~~~~~~~
+Output of ``dqtile-cmd -h``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: text
 
-    dqcmd
+    dqtile-cmd
 
-        A Rofi/dmenu interface to qcmd. Excepts all arguments o qcmd (see below).
+        A Rofi/dmenu interface to qtile-cmd. Excepts all arguments of qtile-cmd
+        (see below).
 
-    usage: dqcmd [-h] [--object OBJ_SPEC [OBJ_SPEC ...]] [--function FUNCTION]
-                [--args ARGS [ARGS ...]] [--info]
+    usage: dqtile-cmd [-h] [--object OBJ_SPEC [OBJ_SPEC ...]]
+                      [--function FUNCTION] [--args ARGS [ARGS ...]] [--info]
 
     Simple tool to expose qtile.command functionality to shell.
 
@@ -38,10 +39,10 @@ Output of ``dqcmd -h``
                             documentation for function.
 
     Examples:
-     dqcmd
-     dqcmd -o cmd
-     dqcmd -o cmd -f prev_layout -i
-     dqcmd -o cmd -f prev_layout -a 3 # prev_layout on group 3
-     dqcmd -o group 3 -f focus_back
+     dqtile-cmd
+     dqtile-cmd -o cmd
+     dqtile-cmd -o cmd -f prev_layout -i
+     dqtile-cmd -o cmd -f prev_layout -a 3 # prev_layout on group 3
+     dqtile-cmd -o group 3 -f focus_back
 
     If both rofi and dmenu are present rofi will be selected as default, to change this us --force-dmenu as the first argument.

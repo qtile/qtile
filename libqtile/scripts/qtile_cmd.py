@@ -150,11 +150,11 @@ def main():
     description = 'Simple tool to expose qtile.command functionality to shell.'
     epilog = '''\
 Examples:\n\
- qcmd\n\
- qcmd -o cmd\n\
- qcmd -o cmd -f prev_layout -i\n\
- qcmd -o cmd -f prev_layout -a 3 # prev_layout on group 3\n\
- qcmd -o group 3 -f focus_back\n
+ qtile-cmd\n\
+ qtile-cmd -o cmd\n\
+ qtile-cmd -o cmd -f prev_layout -i\n\
+ qtile-cmd -o cmd -f prev_layout -a 3 # prev_layout on group 3\n\
+ qtile-cmd -o group 3 -f focus_back\n
 '''
     fmt = argparse.RawDescriptionHelpFormatter
 

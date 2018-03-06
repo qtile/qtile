@@ -8,5 +8,5 @@ base_dir = os.path.abspath(os.path.join(this_dir, ".."))
 sys.path.insert(0, base_dir)
 
 if __name__ == '__main__':
-    from libqtile.scripts import qcmd
-    qcmd.main()
+    from libqtile.scripts import qtile_cmd
+    qtile_cmd.main()

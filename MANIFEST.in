@@ -20,7 +20,7 @@ prune docs
 prune scripts
 prune test
 prune rpm
-include bin/dqcmd
+include bin/dqtile-cmd
 include bin/iqshell
 
 recursive-exclude * __pycache__
