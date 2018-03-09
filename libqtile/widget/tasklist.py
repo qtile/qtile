@@ -4,6 +4,7 @@
 # Copyright (c) 2013 Tao Sauvage
 # Copyright (c) 2013 Craig Barnes
 # Copyright (c) 2014 Sean Vig
+# Copyright (c) 2018 Piotr Przymus
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +25,10 @@
 # SOFTWARE.
 
 from __future__ import division
+import re
 
 import cairocffi
+from .. import pangocffi
 from .. import bar, hook
 from . import base
 
@@ -75,6 +78,13 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             "Max size in pixels of task title."
             "(if set to None, as much as available.)"
         ),
+
+        (
+            "title_width_method",
+            None,
+            "Method to compute the width of task title. (None, 'uniform'.)"
+            "Defaults to None, the normal behaviour."
+        ),
         (
             "spacing",
             None,
@@ -100,6 +110,42 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             'e.g., "V " or "\U0001F5D7 "'
         ),
         (
+            'markup_normal',
+            None,
+            'Text markup of the normal window state. Supports pangomarkup with markup=True.'
+            'e.g., "{}" or "<span underline="low">{}</span>"'
+        ),
+        (
+            'markup_minimized',
+            None,
+            'Text markup of the minimized window state. Supports pangomarkup with markup=True.'
+            'e.g., "{}" or "<span underline="low">{}</span>"'
+        ),
+        (
+            'markup_maximized',
+            None,
+            'Text markup of the maximized window state. Supports pangomarkup with markup=True.'
+            'e.g., "{}" or "<span underline="low">{}</span>"'
+        ),
+        (
+            'markup_floating',
+            None,
+            'Text markup of the floating window state. Supports pangomarkup with markup=True.'
+            'e.g., "{}" or "<span underline="low">{}</span>"'
+        ),
+        (
+            'markup_focused',
+            None,
+            'Text markup of the focused window state. Supports pangomarkup with markup=True.'
+            'e.g., "{}" or "<span underline="low">{}</span>"'
+        ),
+        (
+            'markup',
+            None,
+            'Enables pangomarkup formatting in markup_* arguments.'
+            'True or False'
+        ),
+        (
             'icon_size',
             None,
             'Icon size. '
@@ -122,6 +168,8 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         calculate box width for given text.
         If max_title_width is given, the returned width is limited to it.
         """
+        if self.markup:
+            text = re.sub('<[^<]+?>', '', text)
         width, _ = self.drawer.max_layout_size(
             [text],
             self.font,
@@ -137,16 +185,29 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         appropriate characters are prepended.
         """
         state = ''
+        markup_str = self.markup_normal
         if window is None:
             pass
         elif window.minimized:
             state = self.txt_minimized
+            markup_str = self.markup_minimized
         elif window.maximized:
             state = self.txt_maximized
+            markup_str = self.markup_maximized
         elif window.floating:
             state = self.txt_floating
+            markup_str = self.markup_floating
+        elif window is window.group.currentWindow:
+            markup_str = self.markup_focused
 
-        return "%s%s" % (state, window.name if window and window.name else "?")
+        window_name = window.name if window and window.name else "?"
+
+        if markup_str is not None:
+            if self.markup:
+                window_name = pangocffi.markup_escape_text(window_name)
+            return markup_str.format(window_name)
+
+        return "%s%s" % (state, window_name)
 
     @property
     def windows(self):
@@ -179,12 +240,19 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         # calculated width for each task according to icon and task name
         # consisting of state abbreviation and window name
-        # Obey max_title_width if specified
         width_boxes = [(self.box_width(names[idx]) +
                         ((self.icon_size + self.padding_x) if icons[idx] else 0))
                        for idx in range(window_count)]
+
+        # Obey title_width_method if specified
+        if self.title_width_method == "uniform":
+            width_uniform = width_total // window_count
+            width_boxes = [width_uniform for w in width_boxes]
+
+        # Obey max_title_width if specified
         if self.max_title_width:
             width_boxes = [min(w, self.max_title_width) for w in width_boxes]
+
         width_sum = sum(width_boxes)
 
         # calculated box width are to wide for available widget space:
@@ -244,7 +312,15 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         hook.subscribe.client_killed(self.remove_icon_cache)
 
     def drawtext(self, text, textcolor, width):
-        self.layout.text = text
+        if self.markup:
+            self.layout.markup = self.markup
+
+        try:
+            self.layout.text = text
+        except Exception:
+            # In some cases text needs to be encoded once more
+            self.layout.text = text.encode('ascii', 'xmlcharrefreplace')
+
         self.layout.font_family = self.font
         self.layout.font_size = self.fontsize
         self.layout.colour = textcolor
