@@ -169,6 +169,7 @@ class Battery(_Battery):
          'Display format'
          ),
         ('hide_threshold', None, 'Hide the text when there is enough energy'),
+        ('hide_full_status', False, 'Hide the text when is battery fully charged'),
         ('low_percentage',
          0.10,
          "Indicates when to use the low_foreground color 0 < x < 1"
@@ -200,7 +201,7 @@ class Battery(_Battery):
         # Set the charging character
         try:
             # hide the text when it's higher than threshold, but still
-            # display `full` when the battery is fully charged.
+            # display by default `full` when the battery is fully charged
             if self.hide_threshold and \
                     info['now'] / info['full'] * 100.0 >= \
                     self.hide_threshold and \
@@ -221,6 +222,9 @@ class Battery(_Battery):
             # battery is empty and not charging
             elif info['now'] == 0 and info['stat'] == UNKNOWN:
                 return 'Empty'
+            # if configured, hide full battery status
+            elif self.hide_full_status:
+                return ''
             else:
                 return 'Full'
         except ZeroDivisionError:
