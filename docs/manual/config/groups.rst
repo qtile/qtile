@@ -80,14 +80,14 @@ Example
           # define another terminal exclusively for qshell at different position
           DropDown("qshell", "urxvt -hold -e qshell",
                    x=0.05, y=0.4, width=0.9, height=0.6, opacity=0.9,
-                   on_focus_lost_hide=True) ]), ])
+                   on_focus_lost_hide=True) ]),
       Group("a"),
   ]
 
   keys = [
     # toggle visibiliy of above defined DropDown named "term"
-    Key([], 'F11', lazy.group['scratchpad'].dropdown_toggle('term'))
-    Key([], 'F12', lazy.group['scratchpad'].dropdown_toggle('qshell'))
+    Key([], 'F11', lazy.group['scratchpad'].dropdown_toggle('term')),
+    Key([], 'F12', lazy.group['scratchpad'].dropdown_toggle('qshell')),
   ]
 
 There is only one DropDown visible in current group at a time.
