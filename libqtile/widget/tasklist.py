@@ -317,7 +317,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         try:
             self.layout.text = text
-        except Exception:
+        except TypeError:
             # In some cases text needs to be encoded once more
             self.layout.text = text.encode('ascii', 'xmlcharrefreplace')
 
