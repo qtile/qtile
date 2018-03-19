@@ -87,7 +87,7 @@ class Tile(_SimpleLayoutBase):
             return
         if self.clients:
             masters = [c for c in self.clients if match.compare(c)]
-            for client in masters:
+            for client in reversed(masters):
                 self.clients.remove(client)
                 self.clients.appendHead(client)
 
