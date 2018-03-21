@@ -31,7 +31,6 @@ from __future__ import division
 
 from . import base
 from subprocess import check_output
-from re import search
 from os import path
 from libqtile.log_utils import logger
 
@@ -63,8 +62,6 @@ except ImportError:
                 iw = "/usr/sbin/iw"
             elif path.isfile("/sbin/iw"):
                 iw = "/sbin/iw"
-            else:
-                return essid, quality
 
             data = check_output([iw, 'dev', interface, 'link'])
             for line in data.split('\n'):
