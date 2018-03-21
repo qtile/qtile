@@ -30,6 +30,8 @@
 from __future__ import division
 
 from . import base
+from subprocess import check_output
+from os import path
 from libqtile.log_utils import logger
 
 try:
@@ -46,15 +48,30 @@ try:
         return essid, quality
 
 except ImportError:
-    import iwlib
+    try:
+        import iwlib
 
-    def get_status(interface):
-        interface = iwlib.get_iwconfig(interface)
-        if 'stats' not in interface:
-            return None, None
-        quality = interface['stats']['quality']
-        essid = bytes(interface['ESSID']).decode()
-        return essid, quality
+        def get_status(interface):
+            interface = iwlib.get_iwconfig(interface)
+            quality = interface['stats']['quality']
+            essid = bytes(interface['ESSID']).decode()
+            return (essid, quality)
+    except ImportError:
+        def get_status(interface):
+            if path.isfile("/usr/sbin/iw"):
+                iw = "/usr/sbin/iw"
+            elif path.isfile("/sbin/iw"):
+                iw = "/sbin/iw"
+
+            data = check_output([iw, 'dev', interface, 'link'])
+            for line in data.split('\n'):
+                if 'SSID' in line:
+                    line = line.lstrip()
+                    essid = line.lstrip('SSID:').lstrip()
+                elif 'signal' in line:
+                    line = line.lstrip().replace(' dBm', '').replace('-', '')
+                    quality = int(line.lstrip('signal:').lstrip())
+            return essid, quality
 
 
 class Wlan(base.InLoopPollText):
