@@ -109,7 +109,7 @@ def make_qtile():
         from libqtile.widget import TextBox
         widgets = config.screens[0].bottom.widgets
         widgets.insert(0, TextBox('Config Err!'))
-    # XXX: the import is here becouse we need to call init_log
+    # XXX: the import is here because we need to call init_log
     # before start importing stuff
     from libqtile import manager
     return manager.Qtile(

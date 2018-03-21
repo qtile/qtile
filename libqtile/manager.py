@@ -1668,7 +1668,7 @@ class Qtile(command.CommandObject):
                      widget="prompt", messenger="xmessage"):
         """ Execute a Qtile command using the client syntax
 
-        Tab completeion aids navigation of the command tree
+        Tab completion aids navigation of the command tree
 
         Parameters
         ==========
