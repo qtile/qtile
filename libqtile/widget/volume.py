@@ -48,6 +48,7 @@ re_vol = re.compile('\[(\d?\d?\d?)%\]')
 BUTTON_UP = 4
 BUTTON_DOWN = 5
 BUTTON_MUTE = 1
+BUTTON_RIGHT = 3
 
 
 class Volume(base._TextBox):
@@ -66,6 +67,7 @@ class Volume(base._TextBox):
         ("emoji", False, "Use emoji to display volume states, only if ``theme_path`` is not set."
                          "The specified font needs to contain the correct unicode characters."),
         ("mute_command", None, "Mute command"),
+        ("volume_app", None, "App to control volume"),
         ("volume_up_command", None, "Volume up command"),
         ("volume_down_command", None, "Volume down command"),
         ("get_volume_command", None, "Command to get the current volume"),
@@ -124,6 +126,10 @@ class Volume(base._TextBox):
                                                            'sset',
                                                            self.channel,
                                                            'toggle'))
+        elif button == BUTTON_RIGHT:
+            if self.volume_app is not None:
+                subprocess.Popen(self.volume_app)
+
         self.draw()
 
     def update(self):
@@ -241,3 +247,7 @@ class Volume(base._TextBox):
     def cmd_mute(self):
         # Emulate button press.
         self.button_press(0, 0, BUTTON_MUTE)
+
+    def cmd_run_app(self):
+        # Emulate button press.
+        self.button_press(0, 0, BUTTON_RIGHT)
