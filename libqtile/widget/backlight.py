@@ -24,13 +24,18 @@
 import os
 from . import base
 
+try:
+    from typing import Dict  # noqa: F401
+except ImportError:
+    pass
+
 BACKLIGHT_DIR = '/sys/class/backlight'
 
 
 class Backlight(base.InLoopPollText):
     """A simple widget to show the current brightness of a monitor"""
 
-    filenames = {}
+    filenames = {}  # type: Dict
 
     orientations = base.ORIENTATION_HORIZONTAL
 

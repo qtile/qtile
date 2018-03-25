@@ -22,11 +22,16 @@ import shlex
 from subprocess import Popen, PIPE
 from .. import configurable
 
+try:
+    from typing import Any, List, Tuple  # noqa: F401
+except ImportError:
+    pass
+
 
 class _Extension(configurable.Configurable):
     """Base Extension class"""
 
-    installed_extensions = []
+    installed_extensions = []  # type: List
 
     defaults = [
         ("font", "sans", "defines the font name to be used"),
@@ -68,7 +73,7 @@ class RunCommand(_Extension):
         #       modified it, all the other objects would see the modified list;
         #       use a string or a tuple instead, which are immutable
         ("command", None, "the command to be launched (string or list with arguments)"),
-    ]
+    ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, **config):
         _Extension.__init__(self, **config)

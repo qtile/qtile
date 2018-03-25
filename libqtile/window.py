@@ -155,7 +155,7 @@ def _float_setter(attr):
 
 
 class _Window(command.CommandObject):
-    _windowMask = None  # override in child class
+    _windowMask = 0  # override in child class
 
     def __init__(self, window, qtile):
         self.window, self.qtile = window, qtile
@@ -214,14 +214,22 @@ class _Window(command.CommandObject):
 
     x = property(fset=_geometry_setter("x"), fget=_geometry_getter("x"))
     y = property(fset=_geometry_setter("y"), fget=_geometry_getter("y"))
-    width = property(
-        fset=_geometry_setter("width"),
-        fget=_geometry_getter("width")
-    )
-    height = property(
-        fset=_geometry_setter("height"),
-        fget=_geometry_getter("height")
-    )
+
+    @property
+    def width(self):
+        return _geometry_getter("width")(self)
+
+    @width.setter
+    def width(self, value):
+        _geometry_setter("width")(self, value)
+
+    @property
+    def height(self):
+        return _geometry_getter("height")(self)
+
+    @height.setter
+    def height(self, value):
+        _geometry_setter("height")(self, value)
 
     float_x = property(
         fset=_float_setter("x"),
@@ -582,7 +590,7 @@ class _Window(command.CommandObject):
         self.qtile.root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
         hook.fire("client_focus", self)
 
-    def _items(self, name, sel):
+    def _items(self, name):
         return None
 
     def _select(self, name, sel):

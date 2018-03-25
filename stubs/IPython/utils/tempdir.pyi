@@ -1,0 +1,3 @@
+from tempfile import TemporaryDirectory as _TemporaryDirectory
+
+class TemporaryDirectory(_TemporaryDirectory): ...

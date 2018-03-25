@@ -28,6 +28,8 @@ matrix:
           env: TOXENV=pep8
         - python: 2.7
           env: TOXENV=pep8
+        - python: 3.6
+          env: TOXENV=mypy
 
     allow_failures:
         - python: nightly

@@ -37,6 +37,11 @@ from libqtile import bar
 from libqtile.log_utils import logger
 from . import base
 
+try:
+    from typing import Dict  # noqa: F401
+except ImportError:
+    pass
+
 BAT_DIR = '/sys/class/power_supply'
 CHARGED = 'Full'
 CHARGING = 'Charging'
@@ -57,18 +62,19 @@ def default_icon_path():
     return os.path.join(root, 'resources', 'battery-icons')
 
 
+def _get_battery_name():
+    bats = [f for f in os.listdir(BAT_DIR) if f.startswith('BAT')]
+
+    if bats:
+        return bats[0]
+    else:
+        return 'BAT0'
+
+
 class _Battery(base._TextBox):
     """Base battery class"""
 
-    filenames = {}
-
-    def _get_battery_name():
-        bats = [f for f in os.listdir(BAT_DIR) if f.startswith('BAT')]
-
-        if bats:
-            return bats[0]
-        else:
-            return 'BAT0'
+    filenames = {}  # type: Dict
 
     defaults = [
         ('battery_name', _get_battery_name(), 'ACPI name of a battery, usually BAT0'),

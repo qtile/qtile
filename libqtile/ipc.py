@@ -31,8 +31,7 @@ import struct
 import fcntl
 import json
 
-from six.moves import asyncio
-
+from .asyncio_compat import asyncio
 from .log_utils import logger
 
 HDRLEN = 4

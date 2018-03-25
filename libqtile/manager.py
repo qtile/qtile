@@ -41,8 +41,7 @@ import xcffib.xproto
 import six
 import warnings
 
-from six.moves import asyncio
-
+from .asyncio_compat import asyncio
 from .config import Drag, Click, Screen, Match, Rule
 from .config import ScratchPad as ScratchPadConfig
 from .group import _Group

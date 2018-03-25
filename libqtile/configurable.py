@@ -18,9 +18,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+try:
+    from typing import Dict  # noqa: F401
+except ImportError:
+    pass
+
 
 class Configurable(object):
-    global_defaults = {}
+    global_defaults = {}  # type: Dict
 
     def __init__(self, **config):
         self._variable_defaults = {}

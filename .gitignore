@@ -38,3 +38,4 @@ debian/*debhelper
 .tox/
 .cache/
 .pytest_cache/
+.mypy_cache/

@@ -21,16 +21,6 @@
 
 from __future__ import absolute_import
 
-import six
-
-moves = [
-    six.MovedAttribute("getoutput", "commands", "subprocess"),
-    six.MovedModule("asyncio", "trollius", "asyncio"),
-]
-
-for m in moves:
-    six.add_move(m)
-
 # Keep supporting the deprecated misspelled subpackage "extention"
 # TODO: Remove in the future
 from . import extension as extention  # noqa

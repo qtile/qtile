@@ -25,6 +25,11 @@ from abc import ABCMeta, abstractmethod
 
 from .. import command, configurable
 
+try:
+    from typing import Any, List, Tuple  # noqa: F401
+except ImportError:
+    pass
+
 
 @six.add_metaclass(ABCMeta)
 class Layout(command.CommandObject, configurable.Configurable):
@@ -38,7 +43,7 @@ class Layout(command.CommandObject, configurable.Configurable):
         None,
         "The name of this layout"
         " (usually the class' name in lowercase, e.g. 'max')"
-    )]
+    )]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, **config):
         # name is a little odd; we can't resolve it until the class is defined

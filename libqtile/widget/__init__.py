@@ -23,6 +23,13 @@
 from ..utils import safe_import as safe_import_
 from .import_error import make_error
 
+from .clock import Clock  # noqa: F401
+from .groupbox import AGroupBox, GroupBox  # noqa: F401
+from .prompt import Prompt  # noqa: F401
+from .systray import Systray  # noqa: F401
+from .textbox import TextBox  # noqa: F401
+from .windowname import WindowName  # noqa: F401
+
 
 def safe_import(module_name, class_name):
     safe_import_((".widget", module_name), class_name, globals(),
@@ -31,25 +38,19 @@ def safe_import(module_name, class_name):
 
 safe_import("backlight", "Backlight")
 safe_import("battery", ["Battery", "BatteryIcon"])
-safe_import("clock", "Clock")
 safe_import("currentlayout", ["CurrentLayout", "CurrentLayoutIcon"])
 safe_import("currentscreen", "CurrentScreen")
 safe_import("debuginfo", "DebugInfo")
 safe_import("graph", ["CPUGraph", "MemoryGraph", "SwapGraph", "NetGraph",
                       "HDDGraph", "HDDBusyGraph"])
-safe_import("groupbox", ["AGroupBox", "GroupBox"])
 safe_import("maildir", "Maildir")
 safe_import("notify", "Notify")
-safe_import("prompt", "Prompt")
 safe_import("sensors", "ThermalSensor")
 safe_import("sep", "Sep")
 safe_import("she", "She")
 safe_import("spacer", "Spacer")
-safe_import("systray", "Systray")
-safe_import("textbox", "TextBox")
 safe_import("generic_poll_text", ["GenPollText", "GenPollUrl"])
 safe_import("volume", "Volume")
-safe_import("windowname", "WindowName")
 safe_import("windowtabs", "WindowTabs")
 safe_import("keyboardlayout", "KeyboardLayout")
 safe_import("df", "DF")

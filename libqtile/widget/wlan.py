@@ -48,8 +48,8 @@ try:
 except ImportError:
     import iwlib
 
-    def get_status(interface):
-        interface = iwlib.get_iwconfig(interface)
+    def get_status(interface_name):
+        interface = iwlib.get_iwconfig(interface_name)
         if 'stats' not in interface:
             return None, None
         quality = interface['stats']['quality']

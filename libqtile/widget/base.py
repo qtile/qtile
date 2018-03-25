@@ -36,6 +36,11 @@ import subprocess
 import threading
 import warnings
 
+try:
+    from typing import Any, List, Tuple  # noqa: F401
+except ImportError:
+    pass
+
 
 # Each widget class must define which bar orientation(s) it supports by setting
 # these bits in an 'orientations' class attribute. Simply having the attribute
@@ -94,7 +99,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
     orientations = ORIENTATION_BOTH
     offsetx = None
     offsety = None
-    defaults = [("background", None, "Widget background color")]
+    defaults = [("background", None, "Widget background color")]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, length, **config):
         """
@@ -292,7 +297,7 @@ class _TextBox(_Widget):
             "font shadow color, default is None(no shadow)"
         ),
         ("markup", False, "Whether or not to use pango markup"),
-    ]
+    ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
         self.layout = None
@@ -312,10 +317,6 @@ class _TextBox(_Widget):
             self.layout.text = value
 
     @property
-    def font(self):
-        return self._font
-
-    @property
     def foreground(self):
         return self._foreground
 
@@ -324,6 +325,10 @@ class _TextBox(_Widget):
         self._foreground = fg
         if self.layout:
             self.layout.colour = fg
+
+    @property
+    def font(self):
+        return self._font
 
     @font.setter
     def font(self, value):
@@ -413,7 +418,7 @@ class InLoopPollText(_TextBox):
     defaults = [
         ("update_interval", 600, "Update interval in seconds, if none, the "
             "widget updates whenever the event loop is idle."),
-    ]
+    ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, **config):
         _TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
@@ -494,7 +499,7 @@ class ThreadPoolText(_TextBox):
     defaults = [
         ("update_interval", None, "Update interval in seconds, if none, the "
             "widget updates whenever it's done'."),
-    ]
+    ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, text, **config):
         super(ThreadPoolText, self).__init__(text, width=bar.CALCULATED,
@@ -556,7 +561,7 @@ class PaddingMixin(object):
         ("padding", 3, "Padding inside the box"),
         ("padding_x", None, "X Padding. Overrides 'padding' if set"),
         ("padding_y", None, "Y Padding. Overrides 'padding' if set"),
-    ]
+    ]  # type: List[Tuple[str, Any, str]]
 
     padding_x = configurable.ExtraFallback('padding_x', 'padding')
     padding_y = configurable.ExtraFallback('padding_y', 'padding')
@@ -574,7 +579,7 @@ class MarginMixin(object):
         ("margin", 3, "Margin inside the box"),
         ("margin_x", None, "X Margin. Overrides 'margin' if set"),
         ("margin_y", None, "Y Margin. Overrides 'margin' if set"),
-    ]
+    ]  # type: List[Tuple[str, Any, str]]
 
     margin_x = configurable.ExtraFallback('margin_x', 'margin')
     margin_y = configurable.ExtraFallback('margin_y', 'margin')

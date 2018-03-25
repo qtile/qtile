@@ -35,12 +35,17 @@ import itertools
 from .. import bar, hook
 from . import base
 
+try:
+    from typing import Any, List, Tuple  # noqa: F401
+except ImportError:
+    pass
+
 
 class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
     defaults = [
         ("borderwidth", 3, "Current group border width"),
         ("center_aligned", False, "center-aligned group box"),
-    ]
+    ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, **config):
         base._TextBox.__init__(self, width=bar.CALCULATED, **config)
