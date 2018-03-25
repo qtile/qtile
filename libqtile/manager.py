@@ -773,8 +773,7 @@ class Qtile(command.CommandObject):
                 error_code = self.conn.conn.has_error()
                 if error_code:
                     error_string = xcbq.XCB_CONN_ERRORS[error_code]
-                    logger.exception("Shutting down due to X connection error %s (%s)" %
-                        (error_string, error_code))
+                    logger.exception("Shutting down due to X connection error %s (%s)" % (error_string, error_code))
                     self.stop()
                     return
 
@@ -1262,7 +1261,8 @@ class Qtile(command.CommandObject):
                 self.rows.append(row)
 
             def getformat(self):
-                return " ".join((["%-{0:d}s".format(max_col_size + 2) for max_col_size in self.max_col_size])) + "\n", len(self.max_col_size)
+                format_string = " ".join("%-{0:d}s".format(max_col_size + 2) for max_col_size in self.max_col_size)
+                return format_string + "\n", len(self.max_col_size)
 
             def expandlist(self, list, n):
                 if not list:
@@ -1285,7 +1285,10 @@ class Qtile(command.CommandObject):
                 continue
             name = ", ".join(xcbq.rkeysyms.get(ks, ("<unknown>", )))
             modifiers = ", ".join(utils.translate_modifiers(kmm))
-            allargs = ", ".join([repr(value) for value in k.commands[0].args] + ["%s = %s" % (keyword, repr(value)) for keyword, value in k.commands[0].kwargs.items()])
+            allargs = ", ".join(
+                [repr(value) for value in k.commands[0].args] +
+                ["%s = %s" % (keyword, repr(value)) for keyword, value in k.commands[0].kwargs.items()]
+            )
             rows.append((name, str(modifiers), "{0:s}({1:s})".format(k.commands[0].name, allargs), k.desc))
         rows.sort()
         for row in rows:

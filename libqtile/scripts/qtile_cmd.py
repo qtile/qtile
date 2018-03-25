@@ -65,6 +65,7 @@ def get_formated_info(obj, cmd, args=True, short=True):
 
     return (doc_args + " " + short_description).rstrip()
 
+
 def print_commands(prefix, obj):
     "Print available commands for given object."
     prefix += " -f "

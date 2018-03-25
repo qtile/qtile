@@ -72,7 +72,7 @@ class Stack(Layout):
         Layout.__init__(self, **config)
         self.add_defaults(Stack.defaults)
         self.stacks = [_WinStack(autosplit=self.autosplit)
-                    for i in range(self.num_stacks)]
+                       for i in range(self.num_stacks)]
 
     @property
     def currentStack(self):

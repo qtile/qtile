@@ -383,7 +383,7 @@ class Prompt(base._TextBox):
                     # self.history of size does not match.
                     if len(self.history) != len(self.completers):
                         self.history = {x: deque(maxlen=self.max_history)
-                                for x in self.completers}
+                                        for x in self.completers}
 
                     if self.max_history != \
                        self.history[list(self.history)[0]].maxlen:
@@ -721,6 +721,7 @@ class Prompt(base._TextBox):
 
     def _dedup_deque(self, dq):
         return deque(_LastUpdatedOrderedDict.fromkeys(dq))
+
 
 class _LastUpdatedOrderedDict(OrderedDict):
     """Store items in the order the keys were last added."""

@@ -8,6 +8,7 @@ from libqtile.log_utils import logger
 
 try:
     import xmltodict
+
     def xmlparse(body):
         return xmltodict.parse(body)
 except ImportError:
@@ -15,6 +16,7 @@ except ImportError:
     # punt for now
     def xmlparse(body):
         raise Exception("no xmltodict library")
+
 
 class GenPollText(base.ThreadedPollText):
     """A generic text widget that polls using poll function to get the text"""

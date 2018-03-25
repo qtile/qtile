@@ -35,6 +35,7 @@ from .base import Layout
 #
 # Each row is an array of clients
 
+
 class Wmii(Layout):
     """This layout emulates wmii layouts
 

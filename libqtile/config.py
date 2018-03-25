@@ -163,16 +163,19 @@ class EzConfig(object):
 
         return mods, keys[0]
 
+
 class EzKey(EzConfig, Key):
     def __init__(self, keydef, *commands):
         modkeys, key = self.parse(keydef)
         super(EzKey, self).__init__(modkeys, key, *commands)
+
 
 class EzClick(EzConfig, Click):
     def __init__(self, btndef, *commands, **kwargs):
         modkeys, button = self.parse(btndef)
         button = 'Button%s' % button
         super(EzClick, self).__init__(modkeys, button, *commands, **kwargs)
+
 
 class EzDrag(EzConfig, Drag):
     def __init__(self, btndef, *commands, **kwargs):
@@ -478,9 +481,10 @@ class Group(object):
         self.position = position
 
     def __repr__(self):
-        attrs = utils.describe_attributes(self,
+        attrs = utils.describe_attributes(
+            self,
             ['exclusive', 'spawn', 'layout', 'layouts', 'persist', 'init',
-            'matches', 'layout_opts', 'screen_affinity'])
+             'matches', 'layout_opts', 'screen_affinity'])
         return '<config.Group %r (%s)>' % (self.name, attrs)
 
 
@@ -637,8 +641,7 @@ class Rule(object):
         return self.match.compare(w)
 
     def __repr__(self):
-        actions = utils.describe_attributes(self, ['group', 'float',
-            'intrusive', 'break_on_match'])
+        actions = utils.describe_attributes(self, ['group', 'float', 'intrusive', 'break_on_match'])
         return '<Rule match=%r actions=(%s)>' % (self.match, actions)
 
 

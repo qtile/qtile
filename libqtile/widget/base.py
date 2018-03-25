@@ -36,6 +36,7 @@ import subprocess
 import threading
 import warnings
 
+
 # Each widget class must define which bar orientation(s) it supports by setting
 # these bits in an 'orientations' class attribute. Simply having the attribute
 # inherited by superclasses is discouraged, because if a superclass that was
@@ -68,6 +69,7 @@ class _Orientations(int):
 
     def __repr__(self):
         return self.doc
+
 
 ORIENTATION_NONE = _Orientations(0, 'none')
 ORIENTATION_HORIZONTAL = _Orientations(1, 'horizontal only')

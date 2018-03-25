@@ -572,6 +572,7 @@ class _ClientList(object):
             current=self._current_idx,
         )
 
+
 class _SimpleLayoutBase(Layout):
     """
     Basic layout class for simple layouts,

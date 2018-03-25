@@ -123,8 +123,7 @@ class LaunchBar(base._Widget):
                 try:
                     img = cairocffi.ImageSurface.create_from_png(iconfile)
                 except cairocffi.Error:
-                    logger.exception('Error loading icon for application "%s" (%s)',
-                        img_name, iconfile)
+                    logger.exception('Error loading icon for application "%s" (%s)', img_name, iconfile)
                     return
 
             input_width = img.get_width()
@@ -154,8 +153,7 @@ class LaunchBar(base._Widget):
                 self.icons_files[name] = name if os.path.isfile(name) else None
             else:
                 # try to add the extension
-                self.icons_files[name] = name + '.png' if os.path.isfile(name +
-                                                '.png') else None
+                self.icons_files[name] = name + '.png' if os.path.isfile(name + '.png') else None
         else:
             self.icons_files[name] = getIconPath(name)
         # no search method found an icon, so default icon

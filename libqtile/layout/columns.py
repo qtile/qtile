@@ -20,6 +20,7 @@ from __future__ import division
 
 from .base import Layout, _ClientList
 
+
 class _Column(_ClientList):
 
     # shortcuts for current client and index used in Columns layout
@@ -214,17 +215,16 @@ class Columns(Layout):
                 if client == c:
                     break
                 pos += col.heights[c]
-            height = int(0.5 + col.heights[client] * screen.height * 0.01 /
-                    len(col))
+            height = int(0.5 + col.heights[client] * screen.height * 0.01 / len(col))
             y = screen.y + int(0.5 + pos * screen.height * 0.01 / len(col))
             client.place(x, y, width - 2 * border,
-                    height - 2 * border, border,
-                    color, margin=self.margin)
+                         height - 2 * border, border,
+                         color, margin=self.margin)
             client.unhide()
         elif client == col.cw:
             client.place(x, screen.y, width - 2 * border,
-                    screen.height - 2 * border, border,
-                    color, margin=self.margin)
+                         screen.height - 2 * border, border,
+                         color, margin=self.margin)
             client.unhide()
         else:
             client.hide()

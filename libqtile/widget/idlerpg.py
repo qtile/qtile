@@ -24,6 +24,7 @@ from .generic_poll_text import GenPollUrl
 
 import datetime
 
+
 class IdleRPG(GenPollUrl):
     """
     A widget for monitoring and displaying IdleRPG stats.

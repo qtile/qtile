@@ -23,6 +23,7 @@ from . import hook, window, utils
 
 from .log_utils import logger
 
+
 class WindowVisibilityToggler(object):
     """
     WindowVisibilityToggler is a wrapper for a window, used in ScratchPad group
@@ -166,8 +167,9 @@ class DropDownToggler(WindowVisibilityToggler):
         self.width = ddconfig.width
         self.height = ddconfig.height
         window.setOpacity(ddconfig.opacity)
-        WindowVisibilityToggler.__init__(self, scratchpad_name, window,
-            ddconfig.on_focus_lost_hide, ddconfig.warp_pointer)
+        WindowVisibilityToggler.__init__(
+            self, scratchpad_name, window, ddconfig.on_focus_lost_hide, ddconfig.warp_pointer
+        )
 
     def info(self):
         info = WindowVisibilityToggler.info(self)

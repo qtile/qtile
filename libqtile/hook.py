@@ -335,6 +335,7 @@ class Subscribe(object):
         """
         return self._subscribe("current_screen_change", func)
 
+
 subscribe = Subscribe()
 
 
@@ -353,6 +354,7 @@ class Unsubscribe(Subscribe):
                 " currently subscribed"
             )
 
+
 unsubscribe = Unsubscribe()
 
 
@@ -366,6 +368,7 @@ def fire(event, *args, **kwargs):
             i(*args, **kwargs)
         except:  # noqa: E722
             logger.exception("Error in hook %s", event)
+
 
 @subscribe.client_name_updated
 def _fire_window_name_change(window):

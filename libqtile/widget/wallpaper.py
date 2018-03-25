@@ -36,7 +36,12 @@ class Wallpaper(base._TextBox):
         ("random_selection", False, "If set, use random initial wallpaper and "
          "randomly cycle through the wallpapers."),
         ("label", None, "Use a fixed label instead of image name."),
-        ("one_screen", False, "Treat the whole X display as one screen when setting wallpapers (does not work if wallpaper_command is set)."),
+        (
+            "one_screen",
+            False,
+            "Treat the whole X display as one screen when setting wallpapers "
+            "(does not work if wallpaper_command is set)."
+        ),
     ]
 
     def __init__(self, **config):

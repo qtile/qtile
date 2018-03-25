@@ -46,6 +46,7 @@ import string
 
 from libqtile import utils
 
+
 class KhalCalendar(base.ThreadedPollText):
     """Khal calendar widget
 

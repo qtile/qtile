@@ -28,6 +28,7 @@ from . import base
 
 import os
 
+
 @contextmanager
 def tz(the_tz):
     orig = os.environ.get('TZ')
@@ -39,6 +40,7 @@ def tz(the_tz):
     else:
         del os.environ['TZ']
     time.tzset()
+
 
 class Clock(base.InLoopPollText):
     """A simple but flexible text-based clock"""

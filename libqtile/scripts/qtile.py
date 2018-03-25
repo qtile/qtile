@@ -36,6 +36,7 @@ try:
 except (pkg_resources.DistributionNotFound, ImportError):
     VERSION = 'dev'
 
+
 def rename_process():
     """
     Try to rename the qtile process if py-setproctitle is installed:
@@ -50,6 +51,7 @@ def rename_process():
         setproctitle.setproctitle("qtile")
     except ImportError:
         pass
+
 
 def make_qtile():
     from argparse import ArgumentParser

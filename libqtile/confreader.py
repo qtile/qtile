@@ -25,8 +25,10 @@
 import os
 import sys
 
+
 class ConfigError(Exception):
     pass
+
 
 class Config(object):
     settings_keys = [

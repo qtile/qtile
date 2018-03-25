@@ -573,8 +573,7 @@ class _Window(command.CommandObject):
             self.urgent = False
 
             atom = self.qtile.conn.atoms["_NET_WM_STATE_DEMANDS_ATTENTION"]
-            state = list(self.window.get_property('_NET_WM_STATE', 'ATOM',
-                unpack=int))
+            state = list(self.window.get_property('_NET_WM_STATE', 'ATOM', unpack=int))
 
             if atom in state:
                 state.remove(atom)
@@ -1194,7 +1193,11 @@ class Window(_Window):
                 self.group.focus(self)
             else:  # XCB_EWMH_CLIENT_SOURCE_TYPE_OTHER
                 focus_behavior = self.qtile.config.focus_on_window_activation
-                if focus_behavior == "focus" or (focus_behavior == "smart" and self.group.screen and self.group.screen == self.qtile.currentScreen):
+                if focus_behavior == "focus":
+                    logger.info("Focusing window")
+                    self.qtile.currentScreen.setGroup(self.group)
+                    self.group.focus(self)
+                elif focus_behavior == "smart" and self.group.screen and self.group.screen == self.qtile.currentScreen:
                     logger.info("Focusing window")
                     self.qtile.currentScreen.setGroup(self.group)
                     self.group.focus(self)

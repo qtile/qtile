@@ -28,6 +28,7 @@ import cairocffi
 from . import base
 from .. import bar
 
+
 class Image(base._Widget, base.MarginMixin):
     """Display a PNG image on the bar"""
     orientations = base.ORIENTATION_BOTH
@@ -65,8 +66,7 @@ class Image(base._Widget, base.MarginMixin):
         try:
             self.image = cairocffi.ImageSurface.create_from_png(self.filename)
         except MemoryError:
-            raise ValueError("The image '%s' doesn't seem to be a valid PNG"
-                % (self.filename))
+            raise ValueError("The image '%s' doesn't seem to be a valid PNG" % (self.filename))
 
         self.pattern = cairocffi.SurfacePattern(self.image)
 

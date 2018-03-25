@@ -26,6 +26,7 @@ import imaplib
 import re
 import keyring
 
+
 class ImapWidget(base.ThreadedPollText):
     """Email IMAP widget
 

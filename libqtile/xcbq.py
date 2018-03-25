@@ -60,6 +60,7 @@ def rdict(d):
         r.setdefault(v, []).append(k)
     return r
 
+
 rkeysyms = rdict(xkeysyms.keysyms)
 
 # These should be in xpyb:
@@ -246,6 +247,7 @@ class MaskMap(object):
             raise ValueError("Unknown mask names: %s" % list(kwargs.keys()))
         return mask, values
 
+
 ConfigureMasks = MaskMap(xcffib.xproto.ConfigWindow)
 AttributeMasks = MaskMap(CW)
 
@@ -358,17 +360,17 @@ class RandR(object):
         )
 
     def query_crtcs(self, root):
-        l = []
-        for i in self.ext.GetScreenResources(root).reply().crtcs:
-            info = self.ext.GetCrtcInfo(i, xcffib.CurrentTime).reply()
-            d = dict(
-                x=info.x,
-                y=info.y,
-                width=info.width,
-                height=info.height
-            )
-            l.append(d)
-        return l
+        crtc_list = []
+        for crtc in self.ext.GetScreenResources(root).reply().crtcs:
+            crtc_info = self.ext.GetCrtcInfo(crtc, xcffib.CurrentTime).reply()
+            crtc_dict = {
+                "x": crtc_info.x,
+                "y": crtc_info.y,
+                "width": crtc_info.width,
+                "height": crtc_info.height,
+            }
+            crtc_list.append(crtc_dict)
+        return crtc_list
 
 
 class XFixes(object):
@@ -423,11 +425,13 @@ class NetWmState(object):
             xcbq_win.set_property('_NET_WM_STATE', reply)
         return
 
+
 def _add_net_wm_state(cls):
     for name in net_wm_states:
         lower_name = name.lstrip('_').lower()
         setattr(cls, lower_name, NetWmState(name))
     return cls
+
 
 @_add_net_wm_state
 class Window(object):
@@ -492,49 +496,49 @@ class Window(object):
             return self._propertyString(r)
 
     def get_wm_hints(self):
-        r = self.get_property("WM_HINTS", xcffib.xproto.GetPropertyType.Any)
-        if r:
-            l = r.value.to_atoms()
-            flags = set(k for k, v in HintsFlags.items() if l[0] & v)
-            return dict(
-                flags=flags,
-                input=l[1] if "InputHint" in flags else None,
-                initial_state=l[2] if "StateHing" in flags else None,
-                icon_pixmap=l[3] if "IconPixmapHint" in flags else None,
-                icon_window=l[4] if "IconWindowHint" in flags else None,
-                icon_x=l[5] if "IconPositionHint" in flags else None,
-                icon_y=l[6] if "IconPositionHint" in flags else None,
-                icon_mask=l[7] if "IconMaskHint" in flags else None,
-                window_group=l[8] if 'WindowGroupHint' in flags else None,
-            )
+        wm_hints = self.get_property("WM_HINTS", xcffib.xproto.GetPropertyType.Any)
+        if wm_hints:
+            atoms_list = wm_hints.value.to_atoms()
+            flags = {k for k, v in HintsFlags.items() if atoms_list[0] & v}
+            return {
+                "flags": flags,
+                "input": atoms_list[1] if "InputHint" in flags else None,
+                "initial_state": atoms_list[2] if "StateHing" in flags else None,
+                "icon_pixmap": atoms_list[3] if "IconPixmapHint" in flags else None,
+                "icon_window": atoms_list[4] if "IconWindowHint" in flags else None,
+                "icon_x": atoms_list[5] if "IconPositionHint" in flags else None,
+                "icon_y": atoms_list[6] if "IconPositionHint" in flags else None,
+                "icon_mask": atoms_list[7] if "IconMaskHint" in flags else None,
+                "window_group": atoms_list[8] if 'WindowGroupHint' in flags else None,
+            }
 
     def get_wm_normal_hints(self):
-        r = self.get_property(
+        wm_normal_hints = self.get_property(
             "WM_NORMAL_HINTS",
             xcffib.xproto.GetPropertyType.Any
         )
-        if r:
-            l = r.value.to_atoms()
-            flags = set(k for k, v in NormalHintsFlags.items() if l[0] & v)
-            return dict(
-                flags=flags,
-                min_width=l[1 + 4],
-                min_height=l[2 + 4],
-                max_width=l[3 + 4],
-                max_height=l[4 + 4],
-                width_inc=l[5 + 4],
-                height_inc=l[6 + 4],
-                min_aspect=l[7 + 4],
-                max_aspect=l[8 + 4],
-                base_width=l[9 + 4],
-                base_height=l[9 + 4],
-                win_gravity=l[9 + 4],
-            )
+        if wm_normal_hints:
+            atom_list = wm_normal_hints.value.to_atoms()
+            flags = {k for k, v in NormalHintsFlags.items() if atom_list[0] & v}
+            return {
+                "flags": flags,
+                "min_width": atom_list[1 + 4],
+                "min_height": atom_list[2 + 4],
+                "max_width": atom_list[3 + 4],
+                "max_height": atom_list[4 + 4],
+                "width_inc": atom_list[5 + 4],
+                "height_inc": atom_list[6 + 4],
+                "min_aspect": atom_list[7 + 4],
+                "max_aspect": atom_list[8 + 4],
+                "base_width": atom_list[9 + 4],
+                "base_height": atom_list[9 + 4],
+                "win_gravity": atom_list[9 + 4],
+            }
 
     def get_wm_protocols(self):
-        l = self.get_property("WM_PROTOCOLS", "ATOM", unpack=int)
-        if l is not None:
-            return set(self.conn.atoms.get_name(i) for i in l)
+        wm_protocols = self.get_property("WM_PROTOCOLS", "ATOM", unpack=int)
+        if wm_protocols is not None:
+            return {self.conn.atoms.get_name(wm_protocol) for wm_protocol in wm_protocols}
         return set()
 
     def get_wm_state(self):

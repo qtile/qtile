@@ -23,6 +23,7 @@ from __future__ import division
 from libqtile.log_utils import logger
 from . import base
 
+
 class Net(base.ThreadedPollText):
     """Displays interface down and up speed"""
     orientations = base.ORIENTATION_HORIZONTAL

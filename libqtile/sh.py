@@ -200,9 +200,9 @@ class QSh(object):
             if not path:
                 return "No such path."
 
-        l = self._ls(path)
-        l = ["%s/" % i for i in l]
-        return self.columnize(l)
+        ls = self._ls(path)
+        formatted_ls = ["%s/" % i for i in ls]
+        return self.columnize(formatted_ls)
 
     def do_pwd(self, arg):
         """Returns the current working location

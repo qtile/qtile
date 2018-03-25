@@ -25,6 +25,7 @@ import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 from . import base
 
+
 class Mpris2(base._TextBox):
     """An MPRIS 2 widget
 
@@ -80,9 +81,11 @@ class Mpris2(base._TextBox):
         # we just piggyback on qtile's main loop
         self.dbus_loop = DBusGMainLoop()
         self.bus = dbus.SessionBus(mainloop=self.dbus_loop)
-        self.bus.add_signal_receiver(self.update, 'PropertiesChanged',
+        self.bus.add_signal_receiver(
+            self.update, 'PropertiesChanged',
             'org.freedesktop.DBus.Properties', self.objname,
-            '/org/mpris/MediaPlayer2')
+            '/org/mpris/MediaPlayer2'
+        )
 
     def update(self, interface_name, changed_properties, invalidated_properties):
         """http://specifications.freedesktop.org/mpris-spec/latest/Track_List_Interface.html#Mapping:Metadata_Map"""
@@ -97,11 +100,12 @@ class Mpris2(base._TextBox):
         playbackstatus = changed_properties.get('PlaybackStatus')
         if metadata:
             self.is_playing = True
-            self.displaytext = ' - '.join([metadata.get(x)
+            self.displaytext = ' - '.join([
+                metadata.get(x)
                 if isinstance(metadata.get(x), dbus.String)
-                else ' + '.join([y for y in metadata.get(x)
-                if isinstance(y, dbus.String)])
-                for x in self.display_metadata if metadata.get(x)])
+                else ' + '.join(y for y in metadata.get(x) if isinstance(y, dbus.String))
+                for x in self.display_metadata if metadata.get(x)
+            ])
             self.displaytext.replace('\n', '')
         if playbackstatus:
             if playbackstatus == 'Paused' and self.stop_pause_text is not None:
@@ -133,8 +137,7 @@ class Mpris2(base._TextBox):
                 self.scroll_timer.cancel()
             self.scrolltext = self.displaytext
             self.scroll_counter = self.scroll_wait_intervals
-            self.scroll_timer = self.timeout_add(self.scroll_interval,
-                    self.scroll_text)
+            self.scroll_timer = self.timeout_add(self.scroll_interval, self.scroll_text)
             return
         if self.text != self.displaytext:
             self.text = self.displaytext
