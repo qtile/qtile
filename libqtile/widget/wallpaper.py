@@ -82,6 +82,7 @@ class Wallpaper(base._TextBox):
         if self.wallpaper_command:
             self.wallpaper_command.append(cur_image)
             subprocess.call(self.wallpaper_command)
+            self.wallpaper_command.pop()
             return
         command = [
             'feh',
