@@ -33,9 +33,8 @@ _DEFAULT_CURRENCY = str(locale.localeconv()['int_curr_symbol'])
 class BitcoinTicker(GenPollUrl):
     """
     A bitcoin ticker widget, data provided by the coinbase.com API. Defaults to
-    displaying currency in whatever the current locale is. Examples:
+    displaying currency in whatever the current locale is. Examples::
 
-    ::
         # display the average price of bitcoin in local currency
         widget.BitcoinTicker()
 

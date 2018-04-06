@@ -42,7 +42,9 @@ qtile_class_template = Template('''
 .. autoclass:: {{ module }}.{{ class_name }}{% for arg in extra_arguments %}
     {{ arg }}{% endfor %}
     {% if is_widget %}
-    Supported bar orientations: {{ obj.orientations }}
+    .. compound::
+
+        Supported bar orientations: {{ obj.orientations }}
     {% endif %}
     {% if configurable %}
     .. list-table::

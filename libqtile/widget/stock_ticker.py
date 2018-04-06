@@ -34,6 +34,7 @@ class StockTicker(GenPollUrl):
     extra arguments to the constructor.
 
     ::
+
         # Display AMZN
         widget.StockTicker(apikey=..., symbol="AMZN")
 
