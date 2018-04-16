@@ -10,4 +10,4 @@ Stable versions of Qtile are currently packaged for Arch Linux. To install this 
 
 Please see the ArchWiki for more information on `Qtile`_.
 
-.. _Qtlie: https://wiki.archlinux.org/index.php/Qtile
+.. _Qtile: https://wiki.archlinux.org/index.php/Qtile
