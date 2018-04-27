@@ -140,12 +140,6 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
             'e.g., "{}" or "<span underline="low">{}</span>"'
         ),
         (
-            'markup',
-            None,
-            'Enables pangomarkup formatting in markup_* arguments.'
-            'True or False'
-        ),
-        (
             'icon_size',
             None,
             'Icon size. '
@@ -160,6 +154,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         self.add_defaults(base.MarginMixin.defaults)
         self._icons_cache = {}
         self._box_end_positions = []
+        self.markup = False
         if self.spacing is None:
             self.spacing = self.margin_x
 
@@ -186,6 +181,14 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         """
         state = ''
         markup_str = self.markup_normal
+
+        # Enforce markup and new string format behaviour when
+        # at least one markup_* option is used.
+        # Mixing non markup and markup may cause problems.
+        if self.markup_minimized or self.markup_maximized\
+                or self.markup_floating or self.markup_focused:
+            enforce_markup = True
+
         if window is None:
             pass
         elif window.minimized:
@@ -202,9 +205,13 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
 
         window_name = window.name if window and window.name else "?"
 
+        # Emulate default widget behavior if markup_str is None
+        if enforce_markup and markup_str is None:
+            markup_str = "%s{}" % (state)
+
         if markup_str is not None:
-            if self.markup:
-                window_name = pangocffi.markup_escape_text(window_name)
+            self.markup = True
+            window_name = pangocffi.markup_escape_text(window_name)
             return markup_str.format(window_name)
 
         return "%s%s" % (state, window_name)
@@ -238,16 +245,17 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         else:
             icons = [self.get_window_icon(w) for w in windows]
 
-        # calculated width for each task according to icon and task name
-        # consisting of state abbreviation and window name
-        width_boxes = [(self.box_width(names[idx]) +
-                        ((self.icon_size + self.padding_x) if icons[idx] else 0))
-                       for idx in range(window_count)]
-
         # Obey title_width_method if specified
         if self.title_width_method == "uniform":
             width_uniform = width_total // window_count
-            width_boxes = [width_uniform for w in width_boxes]
+            width_boxes = [width_uniform for w in range(window_count)]
+        else:
+            # Default behaviour: calculated width for each task according to
+            # icon and task name consisting
+            # of state abbreviation and window name
+            width_boxes = [(self.box_width(names[idx]) +
+                            ((self.icon_size + self.padding_x) if icons[idx] else 0))
+                           for idx in range(window_count)]
 
         # Obey max_title_width if specified
         if self.max_title_width:
@@ -315,11 +323,7 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if self.markup:
             self.layout.markup = self.markup
 
-        try:
-            self.layout.text = text
-        except TypeError:
-            # In some cases text needs to be encoded once more
-            self.layout.text = text.encode('ascii', 'xmlcharrefreplace')
+        self.layout.text = text
 
         self.layout.font_family = self.font
         self.layout.font_size = self.fontsize
