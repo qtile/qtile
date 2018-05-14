@@ -188,6 +188,8 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         if self.markup_minimized or self.markup_maximized\
                 or self.markup_floating or self.markup_focused:
             enforce_markup = True
+        else:
+            enforce_markup = False
 
         if window is None:
             pass
