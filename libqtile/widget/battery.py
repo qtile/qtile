@@ -63,12 +63,11 @@ def default_icon_path():
 
 
 def _get_battery_name():
-    bats = [f for f in os.listdir(BAT_DIR) if f.startswith('BAT')]
-
-    if bats:
-        return bats[0]
-    else:
-        return 'BAT0'
+    if os.path.isdir(BAT_DIR):
+        bats = [f for f in os.listdir(BAT_DIR) if f.startswith('BAT')]
+        if bats:
+            return bats[0]
+    return 'BAT0'
 
 
 class _Battery(base._TextBox):
