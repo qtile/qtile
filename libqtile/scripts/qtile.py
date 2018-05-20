@@ -28,7 +28,7 @@ from os import path, getenv
 from libqtile.log_utils import init_log, logger
 from libqtile import confreader
 
-locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())
+locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())  # type: ignore
 
 try:
     import pkg_resources

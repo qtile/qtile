@@ -33,13 +33,14 @@ try:
     from dbus import service
     from dbus.mainloop.glib import DBusGMainLoop
     DBusGMainLoop(set_as_default=True)
+    has_dbus = True
 except ImportError:
-    dbus = None
+    has_dbus = False
 
 BUS_NAME = 'org.freedesktop.Notifications'
 SERVICE_PATH = '/org/freedesktop/Notifications'
 
-if dbus:
+if has_dbus:
     class NotificationService(service.Object):
         def __init__(self, manager):
             bus = dbus.SessionBus()
@@ -89,7 +90,7 @@ class NotificationManager(object):
 
     @property
     def service(self):
-        if dbus and self._service is None:
+        if has_dbus and self._service is None:
             try:
                 self._service = NotificationService(self)
             except Exception:

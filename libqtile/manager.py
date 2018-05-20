@@ -22,8 +22,9 @@ from __future__ import division
 
 try:
     import tracemalloc
+    has_tracemalloc = True
 except ImportError:
-    tracemalloc = None
+    has_tracemalloc = False
 
 from libqtile.dgroups import DGroups
 from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
@@ -1822,6 +1823,10 @@ class Qtile(command.CommandObject):
 
         Running tracemalloc is required for qtile-top
         """
+        if not has_tracemalloc:
+            logger.warning('No tracemalloc module')
+            raise command.CommandError("No tracemalloc module")
+
         if not tracemalloc.is_tracing():
             tracemalloc.start()
         else:
@@ -1829,9 +1834,10 @@ class Qtile(command.CommandObject):
 
     def cmd_tracemalloc_dump(self):
         """Dump tracemalloc snapshot"""
-        if not tracemalloc:
+        if not has_tracemalloc:
             logger.warning('No tracemalloc module')
             raise command.CommandError("No tracemalloc module")
+
         if not tracemalloc.is_tracing():
             return [False, "Trace not started"]
         cache_directory = get_cache_dir()
