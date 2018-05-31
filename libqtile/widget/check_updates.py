@@ -65,9 +65,9 @@ class CheckUpdates(base.ThreadedPollText):
             updates = self.call_process(self.cmd)
         except CalledProcessError:
             updates = ""
-        num_updates = str(len(updates.splitlines()) - self.subtr)
+        num_updates = len(updates.splitlines()) - self.subtr
         self._set_colour(num_updates)
-        return self.display_format.format(**{"updates": num_updates})
+        return self.display_format.format(**{"updates": str(num_updates)})
 
     def _set_colour(self, num_updates):
         if num_updates:
