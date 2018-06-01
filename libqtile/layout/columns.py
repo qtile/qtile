@@ -77,11 +77,11 @@ class Columns(Layout):
     """Extension of the Stack layout.
 
     The screen is split into columns, which can be dynamically added or
-    removed.  Each column displays either a sigle window at a time from a
-    stack of windows or all of them simultaneously, spliting the column
-    space.  Columns and windows can be resized and windows can be shuffled
-    around.  This layout can also emulate "Wmii", "Verical", and "Max",
-    depending on the default parameters.
+    removed.  Each column displays either a single window at a time from a
+    stack of windows or all of them simultaneously, spliting the column space.
+    Columns and windows can be resized and windows can be shuffled around.
+    This layout can also emulate "Wmii", "Verical", and "Max", depending on the
+    default parameters.
 
     An example key configuration is::
 
