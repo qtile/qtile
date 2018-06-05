@@ -215,6 +215,11 @@ class GroupBox(_GroupBase):
             "Visible groups are identified by name not by their displayed label."
         ),
         (
+            "hide_unused",
+            False,
+            "Hide groups that have no windows and that are not displayed on any screen."
+        ),
+        (
             "spacing",
             None,
             "Spacing between groups"
@@ -236,11 +241,20 @@ class GroupBox(_GroupBase):
         their label. Groups with an empty string as label are never contained.
         Groups that are not named in visible_groups are not returned.
         """
-        if self.visible_groups:
-            return [g for g in self.qtile.groups
-                    if g.label and g.name in self.visible_groups]
+        if self.hide_unused:
+            if self.visible_groups:
+                return [g for g in self.qtile.groups
+                        if g.label and (g.windows or g.screen) and
+                        g.name in self.visible_groups]
+            else:
+                return [g for g in self.qtile.groups if g.label and
+                        (g.windows or g.screen)]
         else:
-            return [g for g in self.qtile.groups if g.label]
+            if self.visible_groups:
+                return [g for g in self.qtile.groups
+                        if g.label and g.name in self.visible_groups]
+            else:
+                return [g for g in self.qtile.groups if g.label]
 
     def get_clicked_group(self, x, y):
         group = None
