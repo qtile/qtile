@@ -561,6 +561,10 @@ class Prompt(base._TextBox):
 
                 if self.position < self.max_history:
                     self.position += 1
+                try:
+                    os.makedirs(os.path.dirname(self.history_path))
+                except FileExistsError:
+                    pass
                 with open(self.history_path, mode='wb') as f:
                     pickle.dump(self.history, f, protocol=2)
             self.callback(self.userInput)
