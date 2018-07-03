@@ -319,6 +319,22 @@ class PseudoScreen(object):
         self.height = height
 
 
+class Monitor(object):
+    """
+        This represents a monitor.
+    """
+    def __init__(self, name, primary, automatic, x, y, width, height, mwidth, mheight):
+        self.name = name
+        self.primary = primary
+        self.automatic = automatic
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.mwidth = mwidth
+        self.mheight = mheight
+
+
 class Colormap(object):
     def __init__(self, conn, cid):
         self.conn = conn
@@ -353,11 +369,14 @@ class Xinerama(object):
 
 class RandR(object):
     def __init__(self, conn):
+        self.conn = conn
         self.ext = conn.conn(xcffib.randr.key)
         self.ext.SelectInput(
             conn.default_screen.root.wid,
             xcffib.randr.NotifyMask.ScreenChange
         )
+        version_reply = self.ext.QueryVersion(1, 5).reply()
+        self.version = version_reply.major_version, version_reply.minor_version
 
     def query_crtcs(self, root):
         crtc_list = []
@@ -371,6 +390,24 @@ class RandR(object):
             }
             crtc_list.append(crtc_dict)
         return crtc_list
+
+    def query_monitors(self, root, get_active=False):
+        monitor_list = []
+        for monitor in self.ext.GetMonitors(root, get_active).reply().monitors:
+            name = self.conn.conn.core.GetAtomName(monitor.name).reply().name
+            monitor_dict = {
+                "name": "".join(map(bytes.decode, name)),
+                "primary": bool(monitor.primary),
+                "automatic": bool(monitor.automatic),
+                "x": monitor.x,
+                "y": monitor.y,
+                "width": monitor.width,
+                "height": monitor.height,
+                "mwidth": monitor.width_in_millimeters,
+                "mheight": monitor.height_in_millimeters,
+            }
+            monitor_list.append(monitor_dict)
+        return monitor_list
 
 
 class XFixes(object):
@@ -850,8 +887,18 @@ class Connection(object):
                 setattr(self, i, self._extmap[i](self))
 
         self.pseudoscreens = []
-        if "xinerama" in extensions:
-            for i, s in enumerate(self.xinerama.query_screens()):
+        if "randr" in extensions:
+            for s in self.randr.query_crtcs(self.screens[0].root.wid):
+                scr = PseudoScreen(
+                    self,
+                    s["x"],
+                    s["y"],
+                    s["width"],
+                    s["height"],
+                )
+                self.pseudoscreens.append(scr)
+        elif "xinerama" in extensions:
+            for s in self.xinerama.query_screens():
                 scr = PseudoScreen(
                     self,
                     s.x_org,
@@ -860,16 +907,22 @@ class Connection(object):
                     s.height,
                 )
                 self.pseudoscreens.append(scr)
-        elif "randr" in extensions:
-            for i in self.randr.query_crtcs(self.screens[0].root.wid):
-                scr = PseudoScreen(
-                    self,
-                    i["x"],
-                    i["y"],
-                    i["width"],
-                    i["height"],
+
+        if "randr" in extensions and self.randr.version >= (1, 5):
+            self.monitors = []
+            for m in self.randr.query_monitors(self.screens[0].root.wid):
+                mon = Monitor(
+                    m["name"],
+                    m["primary"],
+                    m["automatic"],
+                    m["x"],
+                    m["y"],
+                    m["width"],
+                    m["height"],
+                    m["mwidth"],
+                    m["mheight"],
                 )
-                self.pseudoscreens.append(scr)
+                self.monitors.append(mon)
 
         self.atoms = AtomCache(self)
 
