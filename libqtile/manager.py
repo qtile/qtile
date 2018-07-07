@@ -422,27 +422,20 @@ class Qtile(command.CommandObject):
             )
             self.screens.append(s)
 
+    def _auto_modmasks(self):
+        yield 0
+        yield xcbq.ModMasks["lock"]
+        if self.numlockMask:
+            yield self.numlockMask
+            yield self.numlockMask | xcbq.ModMasks["lock"]
+
     def mapKey(self, key):
         self.keyMap[(key.keysym, key.modmask & self.validMask)] = key
         code = self.conn.keysym_to_keycode(key.keysym)
-        self.root.grab_key(
-            code,
-            key.modmask,
-            True,
-            xcffib.xproto.GrabMode.Async,
-            xcffib.xproto.GrabMode.Async,
-        )
-        if self.numlockMask:
+        for amask in self._auto_modmasks():
             self.root.grab_key(
                 code,
-                key.modmask | self.numlockMask,
-                True,
-                xcffib.xproto.GrabMode.Async,
-                xcffib.xproto.GrabMode.Async,
-            )
-            self.root.grab_key(
-                code,
-                key.modmask | self.numlockMask | xcbq.ModMasks["lock"],
+                key.modmask | amask,
                 True,
                 xcffib.xproto.GrabMode.Async,
                 xcffib.xproto.GrabMode.Async,
@@ -454,13 +447,8 @@ class Qtile(command.CommandObject):
             return
 
         code = self.conn.keysym_to_keycode(key.keysym)
-        self.root.ungrab_key(code, key.modmask)
-        if self.numlockMask:
-            self.root.ungrab_key(code, key.modmask | self.numlockMask)
-            self.root.ungrab_key(
-                code,
-                key.modmask | self.numlockMask | xcbq.ModMasks["lock"]
-            )
+        for amask in self._auto_modmasks():
+            self.root.ungrab_key(code, key.modmask | amask)
         del(self.keyMap[key_index])
 
     def update_net_desktops(self):
@@ -670,26 +658,10 @@ class Qtile(command.CommandObject):
             eventmask = EventMask.ButtonPress
             if isinstance(i, Drag):
                 eventmask |= EventMask.ButtonRelease
-            self.root.grab_button(
-                i.button_code,
-                i.modmask,
-                True,
-                eventmask,
-                grabmode,
-                xcffib.xproto.GrabMode.Async,
-            )
-            if self.numlockMask:
+            for amask in self._auto_modmasks():
                 self.root.grab_button(
                     i.button_code,
-                    i.modmask | self.numlockMask,
-                    True,
-                    eventmask,
-                    grabmode,
-                    xcffib.xproto.GrabMode.Async,
-                )
-                self.root.grab_button(
-                    i.button_code,
-                    i.modmask | self.numlockMask | xcbq.ModMasks["lock"],
+                    i.modmask | amask,
                     True,
                     eventmask,
                     grabmode,
