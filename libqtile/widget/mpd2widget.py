@@ -184,7 +184,7 @@ class Mpd2(base.ThreadPoolText):
             formatted = fmt.format(play_status=play_status, **status)
             return formatted
         except KeyError as e:
-            logger.exception("mpd client did not return status: {}".format(e.args[0])
+            logger.exception("mpd client did not return status: {}".format(e.args[0]))
             return "ERROR"
 
     def prepare_formatting(self, status, currentsong):
