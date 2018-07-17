@@ -28,7 +28,7 @@ Features
 Current Release
 ===============
 
-The current stable version of qtile is 0.11.0, released 2018-02-28. See the
+The current stable version of qtile is 0.12.0, released 2018-07-16. See the
 `documentation <http://docs.qtile.org/en/latest/manual/install/index.html>`_
 for installation instructions.
 
