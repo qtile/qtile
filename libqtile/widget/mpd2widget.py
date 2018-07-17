@@ -1,4 +1,5 @@
 from . import base
+from libqtile.log_utils import logger
 
 from six import u, text_type
 from socket import error as socket_error
@@ -179,7 +180,12 @@ class Mpd2(base.ThreadPoolText):
         if not isinstance(fmt, text_type):
             fmt = u(fmt)
 
-        return fmt.format(play_status=play_status, **status)
+        try:
+            formatted = fmt.format(play_status=play_status, **status)
+            return formatted
+        except KeyError as e:
+            logger.exception("mpd client did not return status: {}".format(e.args[0])
+            return "ERROR"
 
     def prepare_formatting(self, status, currentsong):
         for key in self.prepare_status:
