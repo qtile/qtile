@@ -189,14 +189,17 @@ class Bsp(Layout):
 
     def remove(self, client):
         node = self.get_node(client)
-        if node.parent:
-            node = node.parent.remove(node)
-            newclient = next(node.clients(), None)
-            if newclient is None:
-                self.current = self.root
-            return newclient
-        node.client = None
-        self.current = self.root
+        if node:
+            if node.parent:
+                node = node.parent.remove(node)
+                newclient = next(node.clients(), None)
+                if newclient is None:
+                    self.current = self.root
+                else:
+                    self.current = self.get_node(newclient)
+                return newclient
+            node.client = None
+            self.current = self.root
 
     def configure(self, client, screen):
         self.root.calc_geom(screen.x, screen.y, screen.width,
