@@ -1,4 +1,4 @@
-qtile 0.12.0, released 2018-07-16:
+qtile 0.12.0, released 2018-07-20:
     !!! Config breakage !!!
         - Tile layout commands up/down/shuffle_up/shuffle_down changed to be
           more consistent with other layouts
@@ -20,6 +20,7 @@ qtile 0.12.0, released 2018-07-16:
         - fix the wallpaper widget when using `wallpaper_command`
         - fix Tile layout order to not reverse on reset
         - fix calling `focus_previous/next` with no windows
+        - fix floating bug is BSP layout
 
 qtile 0.11.1, released 2018-03-01:
     * bug fix
