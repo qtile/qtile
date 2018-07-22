@@ -66,6 +66,7 @@ class Config(object):
                 value = getattr(self, key, default[key])
             setattr(self, key, value)
         self._init_deprecated(**settings)
+        self._init_fake_screens(**settings)
 
     def _init_deprecated(self, extensions=None, **settings):
         "Initialize deprecated settings."
@@ -74,6 +75,14 @@ class Config(object):
             warnings.warn("'extentions' is deprecated, use "
                           "'extension_defaults'", DeprecationWarning)
             self.extension_defaults.update(extensions.get('dmenu', {}))
+
+    def _init_fake_screens(self, **settings):
+        " Initiaize fake_screens if they are set."
+        try:
+            value = settings['fake_screens']
+            setattr(self, 'fake_screens', value)
+        except KeyError:
+            pass
 
     @classmethod
     def from_file(cls, path):
