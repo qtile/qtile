@@ -373,10 +373,14 @@ class Screen(command.CommandObject):
             return getattr(self, sel)
 
     def resize(self, x=None, y=None, w=None, h=None):
-        x = x or self.x
-        y = y or self.y
-        w = w or self.width
-        h = h or self.height
+        if x is None:
+            x = self.x
+        if y is None:
+            y = self.y
+        if w is None:
+            w = self.width
+        if h is None:
+            h = self.height
         self._configure(self.qtile, self.index, x, y, w, h, self.group)
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
