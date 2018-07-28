@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
 from . import base
 from libqtile.log_utils import logger
 from subprocess import CalledProcessError, Popen
@@ -32,7 +33,8 @@ class CheckUpdates(base.ThreadedPollText):
         ('execute', None, 'Command to execute on click'),
         ("display_format", "Updates: {updates}", "Display format if updates available"),
         ("colour_no_updates", "ffffff", "Colour when there's no updates."),
-        ("colour_have_updates", "ffffff", "Colour when there are updates.")
+        ("colour_have_updates", "ffffff", "Colour when there are updates."),
+        ("restart_indicator", "*", "Indicator to represent reboot is required.")
     ]
 
     def __init__(self, **config):
@@ -64,9 +66,15 @@ class CheckUpdates(base.ThreadedPollText):
         # type: () -> str
         try:
             updates = self.call_process(self.cmd)
+            restart_required = os.path.exists('/var/run/reboot-required')
         except CalledProcessError:
             updates = ""
+            restart_required = ''
         num_updates = len(updates.splitlines()) - self.subtr
+
+        if restart_required:
+            num_updates += self.restart_indicator
+
         self._set_colour(num_updates)
         return self.display_format.format(**{"updates": str(num_updates)})
 
