@@ -34,7 +34,7 @@ class CheckUpdates(base.ThreadedPollText):
         ("display_format", "Updates: {updates}", "Display format if updates available"),
         ("colour_no_updates", "ffffff", "Colour when there's no updates."),
         ("colour_have_updates", "ffffff", "Colour when there are updates."),
-        ("restart_indicator", "", "Indicator to represent reboot is required.")
+        ("restart_indicator", "", "Indicator to represent reboot is required. (Ubuntu only)")
     ]
 
     def __init__(self, **config):
@@ -66,20 +66,18 @@ class CheckUpdates(base.ThreadedPollText):
         # type: () -> str
         try:
             updates = self.call_process(self.cmd)
-            restart_required = os.path.exists('/var/run/reboot-required')
         except CalledProcessError:
             updates = ""
-            restart_required = False
         num_updates = str(len(updates.splitlines()) - self.subtr)
 
-        if self.restart_indicator and restart_required:
+        if self.restart_indicator and os.path.exists('/var/run/reboot-required'):
             num_updates += self.restart_indicator
 
         self._set_colour(num_updates)
         return self.display_format.format(**{"updates": num_updates})
 
     def _set_colour(self, num_updates):
-        # type: (int) -> None
+        # type: (str) -> None
         if num_updates:
             self.layout.colour = self.colour_have_updates
         else:
