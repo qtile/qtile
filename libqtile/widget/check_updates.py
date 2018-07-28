@@ -70,13 +70,13 @@ class CheckUpdates(base.ThreadedPollText):
         except CalledProcessError:
             updates = ""
             restart_required = ''
-        num_updates = len(updates.splitlines()) - self.subtr
+        num_updates = str(len(updates.splitlines()) - self.subtr)
 
         if restart_required:
             num_updates += self.restart_indicator
 
         self._set_colour(num_updates)
-        return self.display_format.format(**{"updates": str(num_updates)})
+        return self.display_format.format(**{"updates": num_updates})
 
     def _set_colour(self, num_updates):
         # type: (int) -> None
