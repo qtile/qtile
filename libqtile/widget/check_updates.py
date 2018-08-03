@@ -28,6 +28,7 @@ class CheckUpdates(base.ThreadedPollText):
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("distro", "Arch", "Name of your distribution"),
+        ("custom_command", None, "Custom shell command for checking updates (counts the lines of the output)"),
         ("update_interval", 60, "Update interval in seconds."),
         ('execute', None, 'Command to execute on click'),
         ("display_format", "Updates: {updates}", "Display format if updates available"),
@@ -63,7 +64,11 @@ class CheckUpdates(base.ThreadedPollText):
     def _check_updates(self):
         # type: () -> str
         try:
-            updates = self.call_process(self.cmd)
+            if self.custom_command is None:
+                updates = self.call_process(self.cmd)
+            else:
+                updates = self.call_process(self.custom_command, shell=True)
+                self.subtr = 0
         except CalledProcessError:
             updates = ""
         num_updates = len(updates.splitlines()) - self.subtr
