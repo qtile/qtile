@@ -310,6 +310,7 @@ def test_adddelgroup(qtile):
     self.c.addgroup("dummygroup")
     self.c.addgroup("testgroup")
     assert "testgroup" in self.c.groups().keys()
+
     self.c.window.togroup("testgroup")
     self.c.delgroup("testgroup")
     assert "testgroup" not in self.c.groups().keys()
@@ -320,6 +321,12 @@ def test_adddelgroup(qtile):
         self.c.delgroup(i)
     with pytest.raises(libqtile.command.CommandException):
         self.c.delgroup(list(self.c.groups().keys())[0])
+
+    # Assert that setting layout via cmd_addgroup works
+    self.c.addgroup("testgroup2", layout='max')
+    assert self.c.groups()["testgroup2"]['layout'] == 'max'
+    self.c.addgroup("testgroup3", layout='monadtall')
+    assert self.c.groups()["testgroup3"]['layout'] == 'monadtall'
 
 
 @manager_config
