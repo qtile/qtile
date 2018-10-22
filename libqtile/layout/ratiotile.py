@@ -304,7 +304,7 @@ class RatioTile(_SimpleLayoutBase):
             self.group.layoutAll()
 
     cmd_down = _SimpleLayoutBase.previous
-    cmd_upn = _SimpleLayoutBase.next
+    cmd_up = _SimpleLayoutBase.next
 
     cmd_previous = _SimpleLayoutBase.previous
     cmd_next = _SimpleLayoutBase.next
