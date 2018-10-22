@@ -32,8 +32,8 @@ from .windowname import WindowName  # noqa: F401
 
 
 def safe_import(module_name, class_name):
-    safe_import_((".widget", module_name), class_name, globals(),
-                 fallback=make_error)
+    safe_import_(
+        (".widget", module_name), class_name, globals(), fallback=make_error)
 
 
 safe_import("backlight", "Backlight")
@@ -41,8 +41,10 @@ safe_import("battery", ["Battery", "BatteryIcon"])
 safe_import("currentlayout", ["CurrentLayout", "CurrentLayoutIcon"])
 safe_import("currentscreen", "CurrentScreen")
 safe_import("debuginfo", "DebugInfo")
-safe_import("graph", ["CPUGraph", "MemoryGraph", "SwapGraph", "NetGraph",
-                      "HDDGraph", "HDDBusyGraph"])
+safe_import("graph", [
+    "CPUGraph", "MemoryGraph", "SwapGraph", "NetGraph", "HDDGraph",
+    "HDDBusyGraph"
+])
 safe_import("maildir", "Maildir")
 safe_import("notify", "Notify")
 safe_import("sensors", "ThermalSensor")
@@ -81,3 +83,4 @@ safe_import("memory", "Memory")
 safe_import("idlerpg", "IdleRPG")
 safe_import("pomodoro", "Pomodoro")
 safe_import("stock_ticker", "StockTicker")
+safe_import("caps_num_lock_indicator", "CapsNumLockIndicator")
