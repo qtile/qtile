@@ -637,6 +637,12 @@ class TreeTab(Layout):
         self.panel_width -= 10
         self.group.layoutAll()
 
+    def cmd_rename_window(self, name):
+        win = self._get_window()
+        if win:
+            win.name = name
+            self.group.layoutAll()
+
     def _create_drawer(self):
         if self._drawer is None:
             self._drawer = drawer.Drawer(
