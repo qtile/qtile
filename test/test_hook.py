@@ -120,3 +120,18 @@ def test_can_subscribe_to_startup_hooks(qtile_nospawn):
     assert self.startup_calls.value == 1
     assert self.startup_complete_calls.value == 1
     # TODO Restart and check that startup_once doesn't fire again
+
+@pytest.mark.usefixtures('hook_fixture')
+def test_can_update_by_selection_change(qtile):
+    test = Call(0)
+    libqtile.manager.hook.subscribe.selection_change(test)
+    libqtile.manager.hook.fire('selection_change', 'hello')
+    assert test.val == 'hello'
+
+@pytest.mark.usefixtures('hook_fixture')
+def test_can_call_by_selection_notify(qtile):
+    test = Call(0)
+    libqtile.manager.hook.subscribe.selection_notify(test)
+    libqtile.manager.hook.fire('selection_notify', 'hello')
+    assert test.val == 'hello'
+
