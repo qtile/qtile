@@ -28,6 +28,7 @@
 import pytest
 import subprocess
 import time
+import logging
 
 import libqtile
 import libqtile.layout
@@ -1052,3 +1053,17 @@ def test_minimal__(qtile):
 def test_colorPixel(qtile):
     # test for #394
     qtile.c.eval("self.colorPixel(\"ffffff\")")
+
+@manager_config
+def test_change_loglevel(qtile):
+    assert qtile.c.loglevel() == (logging.getLevelName(logging.INFO), logging.INFO)
+    qtile.c.debug()
+    assert qtile.c.loglevel() == (logging.getLevelName(logging.DEBUG), logging.DEBUG)
+    qtile.c.info()
+    assert qtile.c.loglevel() == (logging.getLevelName(logging.INFO), logging.INFO)
+    qtile.c.warning()
+    assert qtile.c.loglevel() == (logging.getLevelName(logging.WARNING), logging.WARNING)
+    qtile.c.error()
+    assert qtile.c.loglevel() == (logging.getLevelName(logging.ERROR), logging.ERROR)
+    qtile.c.critical()
+    assert qtile.c.loglevel() == (logging.getLevelName(logging.CRITICAL), logging.CRITICAL)
