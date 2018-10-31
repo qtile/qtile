@@ -33,6 +33,7 @@ import libqtile.config
 from ..conftest import no_xinerama
 from .layout_utils import assertFocused, assertFocusPath
 
+
 class StackConfig(object):
     auto_fullscreen = True
     main = None
@@ -53,8 +54,8 @@ class StackConfig(object):
     follow_mouse_focus = False
 
 
-stack_config = lambda x: \
-    no_xinerama(pytest.mark.parametrize("qtile", [StackConfig], indirect=True)(x))
+def stack_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [StackConfig], indirect=True)(x))
 
 
 def _stacks(self):
@@ -175,7 +176,7 @@ def test_stack_nextprev(qtile):
 @stack_config
 def test_stack_window_removal(qtile):
     qtile.c.layout.next()
-    one = qtile.testWindow("one")
+    qtile.testWindow("one")
     two = qtile.testWindow("two")
     qtile.c.layout.down()
     qtile.kill_window(two)
@@ -183,9 +184,9 @@ def test_stack_window_removal(qtile):
 
 @stack_config
 def test_stack_split(qtile):
-    one = qtile.testWindow("one")
-    two = qtile.testWindow("two")
-    three = qtile.testWindow("three")
+    qtile.testWindow("one")
+    qtile.testWindow("two")
+    qtile.testWindow("three")
     stacks = qtile.c.layout.info()["stacks"]
     assert not stacks[1]["split"]
     qtile.c.layout.toggle_split()
@@ -196,9 +197,9 @@ def test_stack_split(qtile):
 @stack_config
 def test_stack_shuffle(qtile):
     qtile.c.next_layout()
-    one = qtile.testWindow("one")
-    two = qtile.testWindow("two")
-    three = qtile.testWindow("three")
+    qtile.testWindow("one")
+    qtile.testWindow("two")
+    qtile.testWindow("three")
 
     stack = qtile.c.layout.info()["stacks"][0]
     assert stack["clients"][stack["current"]] == "three"
@@ -214,8 +215,8 @@ def test_stack_shuffle(qtile):
 
 @stack_config
 def test_stack_client_to(qtile):
-    one = qtile.testWindow("one")
-    two = qtile.testWindow("two")
+    qtile.testWindow("one")
+    qtile.testWindow("two")
     assert qtile.c.layout.info()["stacks"][0]["clients"] == ["one"]
     qtile.c.layout.client_to_previous()
     assert qtile.c.layout.info()["stacks"][0]["clients"] == ["two", "one"]
@@ -228,8 +229,9 @@ def test_stack_client_to(qtile):
 
 @stack_config
 def test_stack_info(qtile):
-    one = qtile.testWindow("one")
+    qtile.testWindow("one")
     assert qtile.c.layout.info()["stacks"]
+
 
 @stack_config
 def test_stack_window_focus_cycle(qtile):

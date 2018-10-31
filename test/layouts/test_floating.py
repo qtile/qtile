@@ -43,8 +43,8 @@ class FloatingConfig(object):
     follow_mouse_focus = False
 
 
-floating_config = lambda x: \
-    no_xinerama(pytest.mark.parametrize("qtile", [FloatingConfig], indirect=True)(x))
+def floating_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [FloatingConfig], indirect=True)(x))
 
 
 @floating_config

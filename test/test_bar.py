@@ -23,7 +23,6 @@
 # SOFTWARE.
 
 import pytest
-import time
 import six
 
 import libqtile.layout
@@ -245,51 +244,51 @@ def test_resize(qtile):
     for DBar, off in ((DBarH, offx), (DBarV, offy)):
         b = DBar([], 100)
 
-        l = [
+        dwidget_list = [
             DWidget(10, libqtile.bar.CALCULATED),
             DWidget(None, libqtile.bar.STRETCH),
             DWidget(None, libqtile.bar.STRETCH),
             DWidget(10, libqtile.bar.CALCULATED),
         ]
-        b._resize(100, l)
-        assert wd(l) == [10, 40, 40, 10]
-        assert off(l) == [0, 10, 50, 90]
+        b._resize(100, dwidget_list)
+        assert wd(dwidget_list) == [10, 40, 40, 10]
+        assert off(dwidget_list) == [0, 10, 50, 90]
 
-        b._resize(101, l)
-        assert wd(l) == [10, 40, 41, 10]
-        assert off(l) == [0, 10, 50, 91]
+        b._resize(101, dwidget_list)
+        assert wd(dwidget_list) == [10, 40, 41, 10]
+        assert off(dwidget_list) == [0, 10, 50, 91]
 
-        l = [
+        dwidget_list = [
             DWidget(10, libqtile.bar.CALCULATED)
         ]
-        b._resize(100, l)
-        assert wd(l) == [10]
-        assert off(l) == [0]
+        b._resize(100, dwidget_list)
+        assert wd(dwidget_list) == [10]
+        assert off(dwidget_list) == [0]
 
-        l = [
+        dwidget_list = [
             DWidget(10, libqtile.bar.CALCULATED),
             DWidget(None, libqtile.bar.STRETCH)
         ]
-        b._resize(100, l)
-        assert wd(l) == [10, 90]
-        assert off(l) == [0, 10]
+        b._resize(100, dwidget_list)
+        assert wd(dwidget_list) == [10, 90]
+        assert off(dwidget_list) == [0, 10]
 
-        l = [
+        dwidget_list = [
             DWidget(None, libqtile.bar.STRETCH),
             DWidget(10, libqtile.bar.CALCULATED),
         ]
-        b._resize(100, l)
-        assert wd(l) == [90, 10]
-        assert off(l) == [0, 90]
+        b._resize(100, dwidget_list)
+        assert wd(dwidget_list) == [90, 10]
+        assert off(dwidget_list) == [0, 90]
 
-        l = [
+        dwidget_list = [
             DWidget(10, libqtile.bar.CALCULATED),
             DWidget(None, libqtile.bar.STRETCH),
             DWidget(10, libqtile.bar.CALCULATED),
         ]
-        b._resize(100, l)
-        assert wd(l) == [10, 80, 10]
-        assert off(l) == [0, 10, 90]
+        b._resize(100, dwidget_list)
+        assert wd(dwidget_list) == [10, 80, 10]
+        assert off(dwidget_list) == [0, 10, 90]
 
 
 class ExampleWidget(libqtile.widget.base._Widget):
