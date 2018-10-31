@@ -1191,6 +1191,9 @@ class Qtile(command.CommandObject):
         logger.setLevel(logging.ERROR)
         logger.error('Switching to ERROR threshold')
 
+    def cmd_loglevel(self):
+        return (logging.getLevelName(logger.level), logger.level)
+
     def cmd_critical(self):
         """Set log level to CRITICAL"""
         logger.setLevel(logging.CRITICAL)
