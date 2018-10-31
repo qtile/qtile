@@ -49,7 +49,9 @@ def test_falls_back():
 
 
 def test_ezkey():
-    cmd = lambda x: None
+
+    def cmd(x):
+        return None
 
     key = config.EzKey('M-A-S-a', cmd, cmd)
     modkey, altkey = (config.EzConfig.modifier_keys[i] for i in 'MA')
@@ -76,7 +78,9 @@ def test_ezkey():
 
 
 def test_ezclick_ezdrag():
-    cmd = lambda x: None
+
+    def cmd(x):
+        return None
 
     btn = config.EzClick('M-1', cmd)
     assert btn.button == 'Button1'

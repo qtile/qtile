@@ -49,8 +49,8 @@ class ZoomyConfig(object):
     screens = []
 
 
-zoomy_config = lambda x: \
-    no_xinerama(pytest.mark.parametrize("qtile", [ZoomyConfig], indirect=True)(x))
+def zoomy_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [ZoomyConfig], indirect=True)(x))
 
 
 @zoomy_config
@@ -63,6 +63,7 @@ def test_zoomy_one(qtile):
     assertDimensions(qtile, 0, 0, 600, 600)
     assertFocusPath(qtile, 'two', 'one', 'three')
     # TODO(pc) find a way to check size of inactive windows
+
 
 @zoomy_config
 def test_zoomy_window_focus_cycle(qtile):

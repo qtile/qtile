@@ -51,6 +51,8 @@ SECOND_HEIGHT = 480
 
 max_sleep = 20.0
 sleep_time = 0.1
+
+
 class retry:
     def __init__(self, fail_msg='retry failed!', ignore_exceptions=(),
                  dt=sleep_time, tmax=max_sleep):
@@ -316,6 +318,7 @@ class Qtile(object):
         client = self.c
         start = len(client.windows())
         proc = subprocess.Popen(args, env={"DISPLAY": self.display})
+
         @retry(ignore_exceptions=(RuntimeError,))
         def success():
             while proc.poll() is None:
@@ -348,6 +351,7 @@ class Qtile(object):
         proc.terminate()
         proc.wait()
         self.testwindows.remove(proc)
+
         @retry(ignore_exceptions=(ValueError,))
         def success():
             if len(self.c.windows()) < start:

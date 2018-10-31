@@ -176,6 +176,7 @@ def test_togroup(qtile):
 def test_resize(qtile):
     self = qtile
     self.c.screen[0].resize(x=10, y=10, w=100, h=100)
+
     @retry(ignore_exceptions=(AssertionError), fail_msg="Screen didn't resize")
     def run():
         d = self.c.screen[0].info()
@@ -226,11 +227,13 @@ def test_spawn_list(qtile):
     # Spawn something with a pid greater than init's
     assert int(qtile.c.spawn(["echo", "true"])) > 1
 
+
 @retry(ignore_exceptions=(AssertionError,), fail_msg='Window did not die!')
 def assert_window_died(client, window_info):
     client.sync()
     wid = window_info['id']
     assert wid not in set([x['id'] for x in client.windows()])
+
 
 @manager_config
 @no_xinerama
@@ -240,6 +243,7 @@ def test_kill_window(qtile):
     window_info = qtile.c.window.info()
     qtile.c.window[window_info["id"]].kill()
     assert_window_died(qtile.c, window_info)
+
 
 @manager_config
 @no_xinerama
@@ -263,6 +267,7 @@ def test_kill_other(qtile):
     assert self.c.window.info()["name"] == "two"
     assert self.c.window.info()["width"] == 798
     assert self.c.window.info()["height"] == 578
+    self.kill_window(two)
 
 
 @manager_config
@@ -795,6 +800,7 @@ def test_resize_(qtile):
             "-display", self.display
         ]
     )
+
     @retry(ignore_exceptions=(AssertionError,), fail_msg="Screen did not resize")
     def run():
         d = self.c.screen.info()

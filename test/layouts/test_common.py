@@ -142,7 +142,7 @@ def test_focus_back(qtile):
     qtile.c.group.focus_back()
 
     # Nothing must happen with only one window
-    one = qtile.testWindow("one")
+    qtile.testWindow("one")
     qtile.c.group.focus_back()
     assertFocused(qtile, "one")
 
@@ -163,7 +163,7 @@ def test_focus_back(qtile):
     assertFocused(qtile, "three")
 
     # If the previous window is killed, the further previous one must be focused
-    four = qtile.testWindow("four")
+    qtile.testWindow("four")
     qtile.kill_window(two)
     qtile.kill_window(three)
     assertFocused(qtile, "four")
@@ -248,7 +248,7 @@ def test_remove(qtile):
 
     # To continue testing, explicitly set focus on 'two'
     qtile.c.group.focus_by_name("two")
-    four = qtile.testWindow("four")
+    qtile.testWindow("four")
     assertFocused(qtile, "four")
     assert qtile.c.group.info()['focusHistory'] == ["one", "two", "four"]
 
@@ -259,7 +259,7 @@ def test_remove(qtile):
 
     # Add more windows and shuffle the focus order
     five = qtile.testWindow("five")
-    six = qtile.testWindow("six")
+    qtile.testWindow("six")
     qtile.c.group.focus_by_name("one")
     seven = qtile.testWindow("seven")
     qtile.c.group.focus_by_name("six")
@@ -282,7 +282,7 @@ def test_remove_floating(qtile):
     pytest.importorskip("Tkinter")
 
     one = qtile.testWindow("one")
-    two = qtile.testWindow("two")
+    qtile.testWindow("two")
     float1 = qtile.testDialog("float1")
     assertFocused(qtile, "float1")
     assert set(qtile.c.layout.info()['clients']) == {"one", "two"}
@@ -304,7 +304,7 @@ def test_remove_floating(qtile):
     assert qtile.c.group.info()['focusHistory'] == ["one", "two"]
 
     # Add more windows and shuffle the focus order
-    three = qtile.testWindow("three")
+    qtile.testWindow("three")
     float3 = qtile.testDialog("float3")
     qtile.c.group.focus_by_name("one")
     float4 = qtile.testDialog("float4")
@@ -375,14 +375,14 @@ def test_desktop_notifications(qtile):
     # Complicate the scenario with multiple windows and notifications
 
     dialog1 = qtile.testDialog("dialog1")
-    two = qtile.testWindow("two")
+    qtile.testWindow("two")
     notif4 = qtile.testNotification("notif4")
     notif5 = qtile.testNotification("notif5")
     assert qtile.c.group.info()['focusHistory'] == ["one", "dialog1", "two"]
 
     dialog2 = qtile.testDialog("dialog2")
     qtile.kill_window(notif5)
-    three = qtile.testWindow("three")
+    qtile.testWindow("three")
     qtile.kill_window(one)
     qtile.c.group.focus_by_name("two")
     notif6 = qtile.testNotification("notif6")
@@ -392,7 +392,7 @@ def test_desktop_notifications(qtile):
     assert qtile.c.group.info()['focusHistory'] == ["dialog1", "dialog2",
                                                     "three", "two"]
 
-    dialog3 = qtile.testDialog("dialog3")
+    qtile.testDialog("dialog3")
     qtile.kill_window(dialog1)
     qtile.kill_window(dialog2)
     qtile.kill_window(notif6)

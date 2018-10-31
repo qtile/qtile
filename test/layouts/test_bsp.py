@@ -25,6 +25,7 @@ import libqtile.config
 from ..conftest import no_xinerama
 from .layout_utils import assertFocused, assertFocusPath
 
+
 class BspConfig(object):
     auto_fullscreen = True
     main = None
@@ -44,10 +45,11 @@ class BspConfig(object):
     follow_mouse_focus = False
 
 
-bsp_config = lambda x: \
-    no_xinerama(pytest.mark.parametrize("qtile", [BspConfig], indirect=True)(x))
+def bsp_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [BspConfig], indirect=True)(x))
 
 # This currently only tests the window focus cycle
+
 
 @bsp_config
 def test_bsp_window_focus_cycle(qtile):

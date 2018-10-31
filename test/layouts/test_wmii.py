@@ -25,6 +25,7 @@ import libqtile.config
 from ..conftest import no_xinerama
 from .layout_utils import assertFocused, assertFocusPath
 
+
 class WmiiConfig(object):
     auto_fullscreen = True
     main = None
@@ -44,10 +45,11 @@ class WmiiConfig(object):
     follow_mouse_focus = False
 
 
-wmii_config = lambda x: \
-    no_xinerama(pytest.mark.parametrize("qtile", [WmiiConfig], indirect=True)(x))
+def wmii_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [WmiiConfig], indirect=True)(x))
 
 # This currently only tests the window focus cycle
+
 
 @wmii_config
 def test_wmii_window_focus_cycle(qtile):
