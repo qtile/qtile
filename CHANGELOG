@@ -1,3 +1,14 @@
+qtile 0.13.0, TBA:
+    !!! Config breakage !!
+        - the wallpaper widget now takes "cycle" or "random" as special
+        arguments to the wallpaper option instead of seperate options
+
+     * features
+        - wallpapers can now be loaded from several different directories
+        - wallpapers can be set to change within an interval
+     * bugfixes
+        - various bugfixes relating to the wallpaper widget
+
 qtile 0.12.0, released 2018-07-20:
     !!! Config breakage !!!
         - Tile layout commands up/down/shuffle_up/shuffle_down changed to be

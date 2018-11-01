@@ -25,7 +25,7 @@ import pytest
 
 from libqtile.config import Screen
 from libqtile.bar import Bar
-from libqtile.widget import TextBox, ThermalSensor
+from libqtile.widget import TextBox, ThermalSensor, Wallpaper
 
 from .conftest import BareConfig
 
