@@ -97,7 +97,7 @@ class _Server(ipc.Server):
             return (SUCCESS, cmd(*args, **kwargs))
         except CommandError as v:
             return (ERROR, v.args[0])
-        except Exception as v:
+        except Exception:
             return (EXCEPTION, traceback.format_exc())
 
 
