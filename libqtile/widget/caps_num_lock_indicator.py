@@ -40,12 +40,8 @@ class CapsNumLockIndicator(base.ThreadPoolText):
             indicators = re.findall(r"(Caps|Num)\s+Lock:\s*(\w*)", output)
             return indicators
 
-    def status(self):
-        """Return a string with the Caps Lock/Num Lock status."""
+    def poll(self):
+        """Poll content for the text box."""
         indicators = self.get_indicators()
         status = " ".join([" ".join(indicator) for indicator in indicators])
         return status
-
-    def poll(self):
-        """Poll content for the text box."""
-        return self.status()
