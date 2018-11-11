@@ -28,7 +28,6 @@
 import pytest
 import subprocess
 import time
-import logging
 
 import libqtile
 import libqtile.layout
@@ -39,6 +38,8 @@ import libqtile.manager
 import libqtile.config
 import libqtile.hook
 import libqtile.confreader
+
+import logging
 
 from .conftest import whereis, BareConfig, no_xinerama, retry
 
