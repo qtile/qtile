@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from contextlib import contextmanager
 from . import base
 
@@ -66,7 +66,8 @@ class Clock(base.InLoopPollText):
     # theoreticaly call our method too early and we could get something
     # like (x-1).999 instead of x.000
     def _get_time(self):
-        return (datetime.now() + self.DELTA).strftime(self.format)
+        now = datetime.now(timezone.utc).astimezone()
+        return (now + self.DELTA).strftime(self.format)
 
     def poll(self):
         # We use None as a sentinel here because C's strftime defaults to UTC
