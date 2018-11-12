@@ -87,7 +87,7 @@ class Columns(Layout):
     presented from the stack of windows.  Columns and windows can be
     resized and windows can be shuffled around.
 
-    This layout can also emulate "Wmii", "Verical", and "Max", depending
+    This layout can also emulate "Wmii", "Vertical", and "Max", depending
     on the default parameters.
 
     An example key configuration is::
