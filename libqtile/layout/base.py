@@ -449,6 +449,7 @@ class _ClientList(object):
             self.clients.insert(pos, client)
         else:
             self.clients.append(client)
+        self.current_client = client
 
     def appendHead(self, client):
         """
