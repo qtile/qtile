@@ -22,11 +22,25 @@
 # SOFTWARE.
 
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, tzinfo
 from contextlib import contextmanager
 from . import base
 
 import os
+
+
+# just use datetime.timezone.utc instead when we drop Python 2.7
+class UTC(tzinfo):
+    def utcoffset(self, dt):
+        return timedelta(0)
+
+    def tzname(self, dt):
+        return "UTC"
+
+    dst = utcoffset
+
+
+utc = UTC()
 
 
 @contextmanager
@@ -66,7 +80,7 @@ class Clock(base.InLoopPollText):
     # theoreticaly call our method too early and we could get something
     # like (x-1).999 instead of x.000
     def _get_time(self):
-        now = datetime.now(timezone.utc).astimezone()
+        now = datetime.now(utc).astimezone()
         return (now + self.DELTA).strftime(self.format)
 
     def poll(self):
