@@ -33,6 +33,9 @@ class Wmii(Columns):
         ("border_normal_stack", "#000022",
          "Border colour for un-focused windows in stacked columns."),
         ("num_columns", 1, "Preferred number of columns."),
+        ("insert_position", 1,
+         "Position relative to the current window where new ones are inserted "
+         "(0 means right above the current window, 1 means right after)."),
     ]
 
     def __init__(self, **config):

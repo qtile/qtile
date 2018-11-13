@@ -121,7 +121,7 @@ class Columns(Layout):
         ("num_columns", 2, "Preferred number of columns."),
         ("grow_amount", 10, "Amount by which to grow a window/column."),
         ("fair", False, "Add new windows to the column with least windows."),
-        ("insert_position", 1,
+        ("insert_position", 0,
          "Position relative to the current window where new ones are inserted "
          "(0 means right above the current window, 1 means right after)."),
     ]
