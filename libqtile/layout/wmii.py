@@ -43,7 +43,7 @@ class Wmii(Columns):
             "Wmii layout is deprecated in favor of Columns.",
             category=DeprecationWarning,
             stacklevel=2)
-        for key in defaults:
+        for key in Wmii.defaults:
             if key not in config:
-                config[key] = defaults[key]
+                config[key] = Wmii.defaults[key]
         Columns.__init__(self, **config)
