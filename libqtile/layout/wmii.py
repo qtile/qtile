@@ -44,6 +44,5 @@ class Wmii(Columns):
             category=DeprecationWarning,
             stacklevel=2)
         for key, value, _ in Wmii.defaults:
-            if key not in config:
-                config[key] = value
+            config.setdefault(key, value)
         Columns.__init__(self, **config)
