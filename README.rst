@@ -9,7 +9,7 @@ A full-featured, pure-Python tiling window manager
 
 :Website: http://www.qtile.org
 :Source: https://github.com/qtile/qtile
-:Documentation: http://qtile.readthedocs.io/en/latest/
+:Documentation: https://qtile.readthedocs.io/en/latest/
 :License: MIT License
 
 Features
