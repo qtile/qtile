@@ -58,6 +58,7 @@ from . import hook
 from . import utils
 from . import window
 from . import xcbq
+from . import pangocffi
 
 
 if sys.version_info >= (3, 3):
@@ -132,6 +133,8 @@ class Qtile(command.CommandObject):
                 EventMask.LeaveWindow
             )
         )
+
+        self.configure_dpi()
 
         self.root.set_property(
             '_NET_SUPPORTED',
@@ -312,6 +315,18 @@ class Qtile(command.CommandObject):
         except ImportError:
             logger.warning("importing dbus/gobject failed, dbus will not work.")
             self._glib_loop = None
+
+    def configure_dpi(self):
+        # For whatever reason, self.conn.default_screen.width_in_millimeters is
+        # basically just wrong most of the time. Instead, we query xrandr and
+        # add up each of the outputs individually.
+        dpi = self.conn.randr.find_dpi(self.root.wid)
+        dpi = dpi * getattr(self.config, "dpi_scale", 1)
+
+        self.root.set_property("RESOURCE_MANAGER", "Xft.dpi: %d\n" % dpi,
+                               type="STRING", format=8,
+                               mode=xcffib.xproto.PropMode.Append)
+        pangocffi.set_default_dpi(dpi)
 
     def finalize(self):
         self._finalize = True

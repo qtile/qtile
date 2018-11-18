@@ -49,6 +49,7 @@ class Config(object):
         "extension_defaults",
         "bring_front_click",
         "wmname",
+        "dpi_scale",
     ]
 
     def __init__(self, **settings):
