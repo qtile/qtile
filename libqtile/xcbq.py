@@ -632,7 +632,8 @@ class Window(object):
             self.wid, mask, values
         )
 
-    def set_property(self, name, value, type=None, format=None):
+    def set_property(self, name, value, type=None, format=None,
+                     mode=xcffib.xproto.PropMode.Replace):
         """
         Parameters
         ==========
@@ -675,7 +676,7 @@ class Window(object):
 
         try:
             self.conn.conn.core.ChangePropertyChecked(
-                xcffib.xproto.PropMode.Replace,
+                mode,
                 self.wid,
                 self.conn.atoms[name],
                 self.conn.atoms[type],
