@@ -187,3 +187,10 @@ def markup_escape_text(text):
     if six.PY3:
         return ffi.string(ret).decode()
     return ffi.string(ret)
+
+
+def set_default_dpi(dpi):
+    # Note: this is per-thread. However, we're single threaded, so it's fine.
+    m = pangocairo.pango_cairo_font_map_get_default()
+    pangocairo.pango_cairo_font_map_set_resolution(m, float(dpi))
+    pangocairo.pango_cairo_font_map_set_default(m)

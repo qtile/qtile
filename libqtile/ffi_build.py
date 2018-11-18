@@ -35,6 +35,7 @@ pango_ffi.cdef("""
     typedef ... PangoLayout;
     typedef ... PangoFontDescription;
     typedef ... PangoAttrList;
+    typedef ... PangoCairoFontMap;
     typedef enum {
         PANGO_ALIGN_LEFT,
         PANGO_ALIGN_CENTER,
@@ -139,6 +140,15 @@ pango_ffi.cdef("""
     gchar *
     g_markup_escape_text(const gchar *text,
                          gssize length);
+
+    // https://developer.gnome.org/pango/stable/pango-Cairo-Rendering.html
+    PangoCairoFontMap *
+    pango_cairo_font_map_get_default (void);
+    void
+    pango_cairo_font_map_set_default (PangoCairoFontMap *fontmap);
+    void
+    pango_cairo_font_map_set_resolution (PangoCairoFontMap *fontmap,
+                                         double dpi);
 """)
 
 xcursors_ffi = FFI()
