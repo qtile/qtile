@@ -28,3 +28,4 @@ def safe_import(module_name, class_name):
 safe_import("base", "RunCommand")
 safe_import("dmenu", ["Dmenu", "DmenuRun", "J4DmenuDesktop"])
 safe_import("window_list", "WindowList")
+safe_import("command_set", "CommandSet")

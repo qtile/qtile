@@ -1,4 +1,4 @@
-# Copyright (C) 2016, zordsdavini
+# Copyright (C) 2018, zordsdavini
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,46 +18,48 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from os import system
+
 from .dmenu import Dmenu
 
 
-class WindowList(Dmenu):
+class CommandSet(Dmenu):
     """
-    Give vertical list of all open windows in dmenu. Switch to selected.
+    Give list of commands to be executed in dmenu style.
+
+    ex. manage mocp deamon:
+
+    Key([mod], 'm', lazy.run_extension(extension.CommandSet(
+        commands={
+            'play/pause': '[ $(mocp -i | wc -l) -lt 2 ] && mocp -p || mocp -G',
+            'next': 'mocp -f',
+            'previous': 'mocp -r',
+            'quit': 'mocp -x',
+            'open': 'urxvt -e mocp',
+            'shuffle': 'mocp -t shuffle',
+            'repeat': 'mocp -t repeat',
+            },
+        pre_commands=['[ $(mocp -i | wc -l) -lt 1 ] && mocp -S'],
+        **Theme.dmenu))),
     """
 
     defaults = [
-        ("item_format", "{group}.{id}: {window}", "the format for the menu items"),
-        ("all_groups", True, "If True, list windows from all groups; otherwise only from the current group"),
-        ("dmenu_lines", 80, "Give lines vertically. Set to None get inline"),
+        ("commands", {}, "dictionary of commands where key is runable command"),
+        ("pre_commands", [], "list of commands to be executed before getting dmenu answer"),
     ]
 
     def __init__(self, **config):
         Dmenu.__init__(self, **config)
-        self.add_defaults(WindowList.defaults)
+        self.add_defaults(CommandSet.defaults)
 
     def _configure(self, qtile):
         Dmenu._configure(self, qtile)
 
-    def list_windows(self):
-        id = 0
-        self.item_to_win = {}
-
-        if self.all_groups:
-            windows = self.qtile.windowMap.values()
-        else:
-            windows = self.qtile.currentGroup.windows
-
-        for win in windows:
-            if win.group:
-                item = self.item_format.format(
-                    group=win.group.label or win.group.name, id=id, window=win.name)
-                self.item_to_win[item] = win
-                id += 1
-
     def run(self):
-        self.list_windows()
-        out = super(WindowList, self).run(items=self.item_to_win.keys())
+        for cmd in self.pre_commands:
+            system(cmd)
+
+        out = super(CommandSet, self).run(items=self.commands.keys())
 
         try:
             sout = out.rstrip('\n')
@@ -67,12 +69,7 @@ class WindowList(Dmenu):
             # list
             return
 
-        try:
-            win = self.item_to_win[sout]
-        except KeyError:
-            # The selected window got closed while the menu was open?
+        if sout not in self.commands:
             return
 
-        screen = self.qtile.currentScreen
-        screen.setGroup(win.group)
-        win.group.focus(win)
+        system(self.commands[sout])

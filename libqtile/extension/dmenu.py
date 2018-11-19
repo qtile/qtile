@@ -89,11 +89,8 @@ class Dmenu(base.RunCommand):
             self.configured_command.extend(("-h", str(self.dmenu_height)))
 
     def run(self, items=None):
-        if items:
-            if self.dmenu_lines:
-                lines = min(len(items), self.dmenu_lines)
-            else:
-                lines = len(items)
+        if items and self.dmenu_lines:
+            lines = min(len(items), self.dmenu_lines)
             self.configured_command.extend(("-l", str(lines)))
 
         proc = super(Dmenu, self).run()
