@@ -41,11 +41,12 @@ class CommandSet(Dmenu):
             },
         pre_commands=['[ $(mocp -i | wc -l) -lt 1 ] && mocp -S'],
         **Theme.dmenu))),
+
     """
 
     defaults = [
-        ("commands", {}, "dictionary of commands where key is runable command"),
-        ("pre_commands", [], "list of commands to be executed before getting dmenu answer"),
+        ("commands", None, "dictionary of commands where key is runable command"),
+        ("pre_commands", None, "list of commands to be executed before getting dmenu answer"),
     ]
 
     def __init__(self, **config):
@@ -56,8 +57,12 @@ class CommandSet(Dmenu):
         Dmenu._configure(self, qtile)
 
     def run(self):
-        for cmd in self.pre_commands:
-            system(cmd)
+        if not self.commands:
+            return
+
+        if self.pre_commands:
+            for cmd in self.pre_commands:
+                system(cmd)
 
         out = super(CommandSet, self).run(items=self.commands.keys())
 
