@@ -52,7 +52,7 @@ EXCEPTION = 2
 SOCKBASE = "qtilesocket.%s"
 
 
-def formatSelector(lst):
+def format_selectors(lst):
     """
         Takes a list of (name, sel) tuples, and returns a formatted
         selector expression.
@@ -86,8 +86,8 @@ class _Server(ipc.Server):
         try:
             obj = self.qtile.select(selectors)
         except _SelectError as v:
-            e = formatSelector([(v.name, v.sel)])
-            s = formatSelector(selectors)
+            e = format_selectors([(v.name, v.sel)])
+            s = format_selectors(selectors)
             return (ERROR, "No object %s in path '%s'" % (e, s))
         cmd = obj.command(name)
         if not cmd:
@@ -132,7 +132,7 @@ class _CommandTree(six.with_metaclass(abc.ABCMeta)):
         s = self.selectors[:]
         if self.name:
             s += [(self.name, self.myselector)]
-        return formatSelector(s)
+        return format_selectors(s)
 
     @property
     @abc.abstractmethod
