@@ -221,11 +221,11 @@ class Qtile(command.CommandObject):
             pass
         self.config.mouse += (Click([], "Button1", command.lazy.function(noop), focus="after"),)
 
-        self.mouseMap = {}
+        self.mouse_map = {}
         for i in self.config.mouse:
-            if self.mouseMap.get(i.button_code) is None:
-                self.mouseMap[i.button_code] = []
-            self.mouseMap[i.button_code].append(i)
+            if self.mouse_map.get(i.button_code) is None:
+                self.mouse_map[i.button_code] = []
+            self.mouse_map[i.button_code].append(i)
 
         self.grab_mouse()
 
@@ -938,7 +938,7 @@ class Qtile(command.CommandObject):
         if self.numlockMask:
             state = e.state | self.numlockMask
 
-        k = self.mouseMap.get(button_code)
+        k = self.mouse_map.get(button_code)
         for m in k:
             if not m or m.modmask & self.validMask != state & self.validMask:
                 logger.info("Ignoring unknown button: %s" % button_code)
@@ -989,7 +989,7 @@ class Qtile(command.CommandObject):
         state = e.state & ~xcbq.AllButtonsMask
         if self.numlockMask:
             state = state | self.numlockMask
-        k = self.mouseMap.get(button_code)
+        k = self.mouse_map.get(button_code)
         for m in k:
             if not m:
                 logger.info(
