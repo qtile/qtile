@@ -626,8 +626,8 @@ class Window(object):
         )
 
     def set_cursor(self, name):
-        cursorId = self.conn.cursors[name]
-        mask, values = AttributeMasks(cursor=cursorId)
+        cursor_id = self.conn.cursors[name]
+        mask, values = AttributeMasks(cursor=cursor_id)
         self.conn.conn.core.ChangeWindowAttributesChecked(
             self.wid, mask, values
         )
