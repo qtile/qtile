@@ -668,7 +668,7 @@ class Qtile(command.CommandObject):
                     xcffib.xproto.GrabMode.Async,
                 )
 
-    def grabKeys(self):
+    def grab_keys(self):
         self.root.ungrab_key(None, None)
         for key in self.keyMap.values():
             self.mapKey(key)
@@ -1048,7 +1048,7 @@ class Qtile(command.CommandObject):
     def handle_MappingNotify(self, e):
         self.conn.refresh_keymap()
         if e.request == xcffib.xproto.Mapping.Keyboard:
-            self.grabKeys()
+            self.grab_keys()
 
     def handle_MapRequest(self, e):
         w = xcbq.Window(self.conn, e.window)
