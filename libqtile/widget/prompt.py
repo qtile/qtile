@@ -438,7 +438,7 @@ class Prompt(base._TextBox):
         self.display = pangocffi.markup_escape_text(self.display)
         self.active = True
         self.userInput = ""
-        self.archivedInput = ""
+        self.archived_input = ""
         self.show_cursor = self.cursor
         self.cursor_position = 0
         self.callback = callback
@@ -475,7 +475,7 @@ class Prompt(base._TextBox):
 
     def _update(self):
         if self.active:
-            self.text = self.archivedInput or self.userInput
+            self.text = self.archived_input or self.userInput
             cursor = pangocffi.markup_escape_text(" ")
             if self.cursor_position < len(self.text):
                 txt1 = self.text[:self.cursor_position]
@@ -501,9 +501,9 @@ class Prompt(base._TextBox):
     def _history_to_input(self):
         # Move actual command (when exploring history) to user input and update
         # history position (right after the end)
-        if self.archivedInput:
-            self.userInput = self.archivedInput
-            self.archivedInput = ""
+        if self.archived_input:
+            self.userInput = self.archived_input
+            self.archived_input = ""
             self.position = len(self.completer_history)
 
     def _insert_before_cursor(self, charcode):
@@ -593,8 +593,8 @@ class Prompt(base._TextBox):
                 self._alert()
             else:
                 self.position -= 1
-                self.archivedInput = self.completer_history[self.position]
-                self.cursor_position = len(self.archivedInput)
+                self.archived_input = self.completer_history[self.position]
+                self.cursor_position = len(self.archived_input)
 
     def _get_next_cmd(self):
         # Get the next command in history.
@@ -605,10 +605,10 @@ class Prompt(base._TextBox):
             elif self.position < len(self.completer_history):
                 self.position += 1
                 if self.position == len(self.completer_history):
-                    self.archivedInput = ""
+                    self.archived_input = ""
                 else:
-                    self.archivedInput = self.completer_history[self.position]
-                self.cursor_position = len(self.archivedInput)
+                    self.archived_input = self.completer_history[self.position]
+                self.cursor_position = len(self.archived_input)
 
     def _cursor_to_left(self):
         # Move cursor to left, if possible
@@ -619,7 +619,7 @@ class Prompt(base._TextBox):
 
     def _cursor_to_right(self):
         # move cursor to right, if possible
-        command = self.archivedInput or self.userInput
+        command = self.archived_input or self.userInput
         if self.cursor_position < len(command):
             self.cursor_position += 1
         else:
