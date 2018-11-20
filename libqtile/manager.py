@@ -190,10 +190,10 @@ class Qtile(command.CommandObject):
         self.setup_eventloop()
         self.server = command._Server(self.fname, self, config, self._eventloop)
 
-        self.currentScreen = None
+        self.current_screen = None
         self.screens = []
         self._process_screens()
-        self.currentScreen = self.screens[0]
+        self.current_screen = self.screens[0]
         self._drag = None
 
         self.ignoreEvents = set([
@@ -363,8 +363,8 @@ class Qtile(command.CommandObject):
         for i, s in enumerate(self.config.fake_screens):
             # should have x,y, width and height set
             s._configure(self, i, s.x, s.y, s.width, s.height, self.groups[i])
-            if not self.currentScreen:
-                self.currentScreen = s
+            if not self.current_screen:
+                self.current_screen = s
             self.screens.append(s)
 
     def _process_screens(self):
@@ -394,8 +394,8 @@ class Qtile(command.CommandObject):
                 scr = Screen()
             else:
                 scr = self.config.screens[i]
-            if not self.currentScreen:
-                self.currentScreen = scr
+            if not self.current_screen:
+                self.current_screen = scr
             scr._configure(
                 self,
                 i,
@@ -412,7 +412,7 @@ class Qtile(command.CommandObject):
                 s = self.config.screens[0]
             else:
                 s = Screen()
-            self.currentScreen = s
+            self.current_screen = s
             s._configure(
                 self,
                 0, 0, 0,
@@ -455,7 +455,7 @@ class Qtile(command.CommandObject):
         try:
             index = self.groups.index(self.current_group)
         # TODO: we should really only except ValueError here, AttributeError is
-        # an annoying chicken and egg because we're accessing currentScreen
+        # an annoying chicken and egg because we're accessing current_screen
         # (via current_group), and when we set up the initial groups, there
         # aren't any screens yet. This can probably be changed when #475 is
         # fixed.
@@ -501,7 +501,7 @@ class Qtile(command.CommandObject):
             for i in list(group.windows):
                 i.togroup(target.name)
             if self.current_group.name == name:
-                self.currentScreen.setGroup(target, save_prev=False)
+                self.current_screen.setGroup(target, save_prev=False)
             self.groups.remove(group)
             del(self.groupMap[name])
             hook.fire("delgroup", self, name)
@@ -534,11 +534,11 @@ class Qtile(command.CommandObject):
 
     @property
     def current_group(self):
-        return self.currentScreen.group
+        return self.current_screen.group
 
     @property
     def currentWindow(self):
-        return self.currentScreen.group.currentWindow
+        return self.current_screen.group.currentWindow
 
     def scan(self):
         _, _, children = self.root.query_tree()
@@ -576,23 +576,23 @@ class Qtile(command.CommandObject):
         if old_strut:
             (old_left, old_right, old_top, old_bottom) = old_strut[:4]
             if not left and old_left:
-                self.currentScreen.left = None
+                self.current_screen.left = None
             elif not right and old_right:
-                self.currentScreen.right = None
+                self.current_screen.right = None
             elif not top and old_top:
-                self.currentScreen.top = None
+                self.current_screen.top = None
             elif not bottom and old_bottom:
-                self.currentScreen.bottom = None
+                self.current_screen.bottom = None
 
         if top:
-            self.currentScreen.top = Gap(top)
+            self.current_screen.top = Gap(top)
         elif bottom:
-            self.currentScreen.bottom = Gap(bottom)
+            self.current_screen.bottom = Gap(bottom)
         elif left:
-            self.currentScreen.left = Gap(left)
+            self.current_screen.left = Gap(left)
         elif right:
-            self.currentScreen.right = Gap(right)
-        self.currentScreen.resize()
+            self.current_screen.right = Gap(right)
+        self.current_screen.resize()
 
     def manage(self, w):
         try:
@@ -617,7 +617,7 @@ class Qtile(command.CommandObject):
                     return
 
                 if w.get_wm_type() == "dock" or c.strut:
-                    c.static(self.currentScreen.index)
+                    c.static(self.current_screen.index)
                 else:
                     hook.fire("client_new", c)
 
@@ -628,7 +628,7 @@ class Qtile(command.CommandObject):
                 self.windowMap[w.wid] = c
                 # Window may have been bound to a group in the hook.
                 if not c.group:
-                    self.currentScreen.group.add(c, focus=c.can_steal_focus())
+                    self.current_screen.group.add(c, focus=c.can_steal_focus())
                 self.update_client_list()
                 hook.fire("client_managed", c)
             return c
@@ -882,7 +882,7 @@ class Qtile(command.CommandObject):
         if atoms["_NET_CURRENT_DESKTOP"] == opcode:
             index = data.data32[0]
             try:
-                self.currentScreen.setGroup(self.groups[index])
+                self.current_screen.setGroup(self.groups[index])
             except IndexError:
                 logger.info("Invalid Desktop Index: %s" % index)
 
@@ -1022,7 +1022,7 @@ class Qtile(command.CommandObject):
 
     def handle_ConfigureNotify(self, e):
         """Handle xrandr events"""
-        screen = self.currentScreen
+        screen = self.current_screen
         if e.window == self.root.wid and \
                 e.width != screen.width and \
                 e.height != screen.height:
@@ -1082,9 +1082,9 @@ class Qtile(command.CommandObject):
         """Have Qtile move to screen and put focus there"""
         if n >= len(self.screens):
             return
-        old = self.currentScreen
-        self.currentScreen = self.screens[n]
-        if old != self.currentScreen:
+        old = self.current_screen
+        self.current_screen = self.screens[n]
+        if old != self.current_screen:
             hook.fire("current_screen_change")
             old.group.layoutAll()
             self.current_group.focus(self.currentWindow, warp)
@@ -1103,7 +1103,7 @@ class Qtile(command.CommandObject):
         elif name == "widget":
             return False, list(self.widgetMap.keys())
         elif name == "bar":
-            return False, [x.position for x in self.currentScreen.gaps]
+            return False, [x.position for x in self.current_screen.gaps]
         elif name == "window":
             return True, self.listWID()
         elif name == "screen":
@@ -1123,7 +1123,7 @@ class Qtile(command.CommandObject):
         elif name == "widget":
             return self.widgetMap.get(sel)
         elif name == "bar":
-            return getattr(self.currentScreen, sel)
+            return getattr(self.current_screen, sel)
         elif name == "window":
             if sel is None:
                 return self.currentWindow
@@ -1131,7 +1131,7 @@ class Qtile(command.CommandObject):
                 return self.client_from_wid(sel)
         elif name == "screen":
             if sel is None:
-                return self.currentScreen
+                return self.current_screen
             else:
                 return utils.lget(self.screens, sel)
 
@@ -1490,13 +1490,13 @@ class Qtile(command.CommandObject):
     def cmd_next_screen(self):
         """Move to next screen"""
         return self.toScreen(
-            (self.screens.index(self.currentScreen) + 1) % len(self.screens)
+            (self.screens.index(self.current_screen) + 1) % len(self.screens)
         )
 
     def cmd_prev_screen(self):
         """Move to the previous screen"""
         return self.toScreen(
-            (self.screens.index(self.currentScreen) - 1) % len(self.screens)
+            (self.screens.index(self.current_screen) - 1) % len(self.screens)
         )
 
     def cmd_windows(self):
@@ -1542,7 +1542,7 @@ class Qtile(command.CommandObject):
         window = self.windowMap.get(wid)
         if window:
             if not window.group.screen:
-                self.currentScreen.setGroup(window.group)
+                self.current_screen.setGroup(window.group)
             window.group.focus(window, False)
 
     def cmd_findwindow(self, prompt="window", widget="prompt"):
@@ -1765,7 +1765,7 @@ class Qtile(command.CommandObject):
             one of: "top", "bottom", "left", "right", or "all" (default: "all")
         """
         if position in ["top", "bottom", "left", "right"]:
-            bar = getattr(self.currentScreen, position)
+            bar = getattr(self.current_screen, position)
             if bar:
                 bar.show(not bar.is_show())
                 self.current_group.layoutAll()
@@ -1773,7 +1773,7 @@ class Qtile(command.CommandObject):
                 logger.warning(
                     "Not found bar in position '%s' for hide/show." % position)
         elif position == "all":
-            screen = self.currentScreen
+            screen = self.current_screen
             is_show = None
             for bar in [screen.left, screen.right, screen.top, screen.bottom]:
                 if bar:

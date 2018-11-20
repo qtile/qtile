@@ -776,7 +776,7 @@ class Window(_Window):
         if group is not None:
             group.add(self)
             self._group = group
-            if group != qtile.currentScreen.group:
+            if group != qtile.current_screen.group:
                 self.hide()
 
         # add window to the save-set, so it gets mapped when qtile dies
@@ -1055,7 +1055,7 @@ class Window(_Window):
     def toscreen(self, index=None):
         """ Move window to a specified screen, or the current screen. """
         if index is None:
-            screen = self.qtile.currentScreen
+            screen = self.qtile.current_screen
         else:
             try:
                 screen = self.qtile.screens[index]
@@ -1102,7 +1102,7 @@ class Window(_Window):
                 self.group.currentWindow != self:
             self.group.focus(self, False)
         if self.group.screen and \
-                self.qtile.currentScreen != self.group.screen and \
+                self.qtile.current_screen != self.group.screen and \
                 self.qtile.config.follow_mouse_focus:
             self.qtile.toScreen(self.group.screen.index, False)
         return True
@@ -1197,17 +1197,17 @@ class Window(_Window):
             source = data.data32[0]
             if source == 2:  # XCB_EWMH_CLIENT_SOURCE_TYPE_NORMAL
                 logger.info("Focusing window by pager")
-                self.qtile.currentScreen.setGroup(self.group)
+                self.qtile.current_screen.setGroup(self.group)
                 self.group.focus(self)
             else:  # XCB_EWMH_CLIENT_SOURCE_TYPE_OTHER
                 focus_behavior = self.qtile.config.focus_on_window_activation
                 if focus_behavior == "focus":
                     logger.info("Focusing window")
-                    self.qtile.currentScreen.setGroup(self.group)
+                    self.qtile.current_screen.setGroup(self.group)
                     self.group.focus(self)
-                elif focus_behavior == "smart" and self.group.screen and self.group.screen == self.qtile.currentScreen:
+                elif focus_behavior == "smart" and self.group.screen and self.group.screen == self.qtile.current_screen:
                     logger.info("Focusing window")
-                    self.qtile.currentScreen.setGroup(self.group)
+                    self.qtile.current_screen.setGroup(self.group)
                     self.group.focus(self)
                 elif focus_behavior == "urgent" or (focus_behavior == "smart" and not self.group.screen):
                     logger.info("Setting urgent flag for window")

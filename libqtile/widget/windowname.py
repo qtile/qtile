@@ -53,7 +53,7 @@ class WindowName(base._TextBox):
 
     def update(self, *args):
         if self.for_current_screen:
-            w = self.qtile.currentScreen.group.currentWindow
+            w = self.qtile.current_screen.group.currentWindow
         else:
             w = self.bar.screen.group.currentWindow
         state = ''

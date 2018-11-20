@@ -51,7 +51,7 @@ class CurrentScreen(base._TextBox):
         hook.subscribe.current_screen_change(hook_response)
 
     def update_text(self):
-        if self.qtile.currentScreen == self.bar.screen:
+        if self.qtile.current_screen == self.bar.screen:
             self.text = self.active_text
             self.foreground = self.active_color
         else:
