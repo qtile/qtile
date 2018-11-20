@@ -111,7 +111,7 @@ class Qtile(command.CommandObject):
         self.widgetMap = {}
         self.groups_map = {}
         self.groups = []
-        self.keyMap = {}
+        self.keys_map = {}
 
         # Find the modifier mask for the numlock key, if there is one:
         nc = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
@@ -430,7 +430,7 @@ class Qtile(command.CommandObject):
             yield self.numlockMask | xcbq.ModMasks["lock"]
 
     def mapKey(self, key):
-        self.keyMap[(key.keysym, key.modmask & self.validMask)] = key
+        self.keys_map[(key.keysym, key.modmask & self.validMask)] = key
         code = self.conn.keysym_to_keycode(key.keysym)
         for amask in self._auto_modmasks():
             self.root.grab_key(
@@ -443,13 +443,13 @@ class Qtile(command.CommandObject):
 
     def unmapKey(self, key):
         key_index = (key.keysym, key.modmask & self.validMask)
-        if key_index not in self.keyMap:
+        if key_index not in self.keys_map:
             return
 
         code = self.conn.keysym_to_keycode(key.keysym)
         for amask in self._auto_modmasks():
             self.root.ungrab_key(code, key.modmask | amask)
-        del(self.keyMap[key_index])
+        del(self.keys_map[key_index])
 
     def update_net_desktops(self):
         try:
@@ -670,7 +670,7 @@ class Qtile(command.CommandObject):
 
     def grab_keys(self):
         self.root.ungrab_key(None, None)
-        for key in self.keyMap.values():
+        for key in self.keys_map.values():
             self.mapKey(key)
 
     def get_target_chain(self, ename, e):
@@ -891,7 +891,7 @@ class Qtile(command.CommandObject):
         state = e.state
         if self.numlockMask:
             state = e.state | self.numlockMask
-        k = self.keyMap.get((keysym, state & self.validMask))
+        k = self.keys_map.get((keysym, state & self.validMask))
         if not k:
             logger.info("Ignoring unknown keysym: %s" % keysym)
             return
@@ -1258,7 +1258,7 @@ class Qtile(command.CommandObject):
         result.add(["KeySym", "Mod", "Command", "Desc"])
         result.add([])
         rows = []
-        for (ks, kmm), k in self.keyMap.items():
+        for (ks, kmm), k in self.keys_map.items():
             if not k.commands:
                 continue
             name = ", ".join(xcbq.rkeysyms.get(ks, ("<unknown>", )))
