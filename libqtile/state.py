@@ -49,7 +49,7 @@ class QtileState(object):
             try:
                 qtile.groupMap[group].layout = layout
             except KeyError:
-                qtile.addGroup(group, layout, label=label)
+                qtile.add_group(group, layout, label=label)
 
         for (screen, group) in self.screens.items():
             try:
