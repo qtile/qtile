@@ -271,19 +271,19 @@ class GroupBox(_GroupBase):
     def button_press(self, x, y, button):
         self.clicked = None
         group = None
-        curGroup = self.qtile.currentGroup
+        current_group = self.qtile.currentGroup
 
         if button == (5 if not self.invert_mouse_wheel else 4):
             if self.use_mouse_wheel:
                 i = itertools.cycle(self.qtile.groups)
-                while next(i) != curGroup:
+                while next(i) != current_group:
                     pass
                 while group is None or group not in self.groups:
                     group = next(i)
         elif button == (4 if not self.invert_mouse_wheel else 5):
             if self.use_mouse_wheel:
                 i = itertools.cycle(reversed(self.qtile.groups))
-                while next(i) != curGroup:
+                while next(i) != current_group:
                     pass
                 while group is None or group not in self.groups:
                     group = next(i)
