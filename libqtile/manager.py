@@ -197,7 +197,7 @@ class Qtile(command.CommandObject):
         self.current_screen = self.screens[0]
         self._drag = None
 
-        self.ignoreEvents = set([
+        self.ignored_events = set([
             xcffib.xproto.KeyReleaseEvent,
             xcffib.xproto.ReparentNotifyEvent,
             xcffib.xproto.CreateNotifyEvent,
@@ -724,7 +724,7 @@ class Qtile(command.CommandObject):
 
                 if ename.endswith("Event"):
                     ename = ename[:-5]
-                if e.__class__ not in self.ignoreEvents:
+                if e.__class__ not in self.ignored_events:
                     logger.debug(ename)
                     for h in self.get_target_chain(ename, e):
                         logger.info("Handling: %s" % ename)
