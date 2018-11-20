@@ -381,7 +381,7 @@ class _Window(command.CommandObject):
         else:
             return
 
-    def getOpacity(self):
+    def get_opacity(self):
         opacity = self.window.get_property(
             "_NET_WM_WINDOW_OPACITY", unpack=int
         )
@@ -393,7 +393,7 @@ class _Window(command.CommandObject):
             as_float = round(value / 0xffffffff, 2)
             return as_float
 
-    opacity = property(getOpacity, setOpacity)
+    opacity = property(get_opacity, setOpacity)
 
     def kill(self):
         if "WM_DELETE_WINDOW" in self.window.get_wm_protocols():
