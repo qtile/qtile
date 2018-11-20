@@ -89,7 +89,7 @@ class Tile(_SimpleLayoutBase):
             masters = [c for c in self.clients if match.compare(c)]
             for client in reversed(masters):
                 self.clients.remove(client)
-                self.clients.appendHead(client)
+                self.clients.append_head(client)
 
     def shift(self, idx1, idx2):
         if self.clients:
@@ -105,7 +105,7 @@ class Tile(_SimpleLayoutBase):
         if self.add_after_last:
             self.clients.append(client)
         elif self.add_on_top:
-            self.clients.appendHead(client)
+            self.clients.append_head(client)
         else:
             self.clients.add(client, offset_to_current)
         self.resetMaster()

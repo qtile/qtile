@@ -451,7 +451,7 @@ class _ClientList(object):
             self.clients.append(client)
         self.current_client = client
 
-    def appendHead(self, client):
+    def append_head(self, client):
         """
         Append the given client in front of list.
         """
