@@ -483,7 +483,7 @@ class Qtile(command.CommandObject):
             return True
         return False
 
-    def delGroup(self, name):
+    def delete_group(self, name):
         # one group per screen is needed
         if len(self.groups) == len(self.screens):
             raise ValueError("Can't delete all groups.")
@@ -1700,7 +1700,7 @@ class Qtile(command.CommandObject):
 
     def cmd_delgroup(self, group):
         """Delete a group with the given name"""
-        return self.delGroup(group)
+        return self.delete_group(group)
 
     def cmd_add_rule(self, match_args, rule_args, min_priorty=False):
         """Add a dgroup rule, returns rule_id needed to remove it

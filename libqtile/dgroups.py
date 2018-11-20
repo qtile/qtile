@@ -244,7 +244,7 @@ class DGroups(object):
             if group and group.name in self.groupMap and \
                     not self.groupMap[group.name].persist and \
                     len(group.windows) <= 0:
-                self.qtile.delGroup(group.name)
+                self.qtile.delete_group(group.name)
                 self.sort_groups()
             del self.timeout[client]
 
