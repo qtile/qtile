@@ -208,7 +208,7 @@ class DGroups(object):
 
         # If app doesn't have a group
         if not group_set:
-            current_group = self.qtile.currentGroup.name
+            current_group = self.qtile.current_group.name
             if current_group in self.groupMap and \
                     self.groupMap[current_group].exclusive and \
                     not intrusive:

@@ -271,7 +271,7 @@ class GroupBox(_GroupBase):
     def button_press(self, x, y, button):
         self.clicked = None
         group = None
-        current_group = self.qtile.currentGroup
+        current_group = self.qtile.current_group
 
         if button == (5 if not self.invert_mouse_wheel else 4):
             if self.use_mouse_wheel:
