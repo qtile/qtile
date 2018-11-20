@@ -1105,7 +1105,7 @@ class Qtile(command.CommandObject):
         elif name == "bar":
             return False, [x.position for x in self.current_screen.gaps]
         elif name == "window":
-            return True, self.listWID()
+            return True, self.list_wids()
         elif name == "screen":
             return True, list(range(len(self.screens)))
 
@@ -1135,7 +1135,7 @@ class Qtile(command.CommandObject):
             else:
                 return utils.lget(self.screens, sel)
 
-    def listWID(self):
+    def list_wids(self):
         return [i.window.wid for i in self.windowMap.values()]
 
     def client_from_wid(self, wid):
