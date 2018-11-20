@@ -228,7 +228,7 @@ class Qtile(command.CommandObject):
                 self.mouseMap[i.button_code] = []
             self.mouseMap[i.button_code].append(i)
 
-        self.grabMouse()
+        self.grab_mouse()
 
         # no_spawn is set when we are restarting; we only want to run the
         # startup hook once.
@@ -647,7 +647,7 @@ class Qtile(command.CommandObject):
         # TODO: check stack order
         self.root.set_property("_NET_CLIENT_LIST_STACKING", windows)
 
-    def grabMouse(self):
+    def grab_mouse(self):
         self.root.ungrab_button(None, None)
         for i in self.config.mouse:
             if isinstance(i, Click) and i.focus:
