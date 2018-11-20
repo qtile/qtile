@@ -469,7 +469,7 @@ class Qtile(command.CommandObject):
         )
         self.root.set_property("_NET_CURRENT_DESKTOP", index)
 
-    def addGroup(self, name, layout=None, layouts=None, label=None):
+    def add_group(self, name, layout=None, layouts=None, label=None):
         if name not in self.groupMap.keys():
             g = _Group(name, layout, label=label)
             self.groups.append(g)
@@ -1138,7 +1138,7 @@ class Qtile(command.CommandObject):
     def moveToGroup(self, group):
         """Create a group if it doesn't exist and move a windows there"""
         if self.currentWindow and group:
-            self.addGroup(group)
+            self.add_group(group)
             self.currentWindow.togroup(group)
 
     def _items(self, name):
@@ -1742,7 +1742,7 @@ class Qtile(command.CommandObject):
 
     def cmd_addgroup(self, group, label=None, layout=None, layouts=None):
         """Add a group with the given name"""
-        return self.addGroup(name=group, layout=layout, layouts=layouts, label=label)
+        return self.add_group(name=group, layout=layout, layouts=layouts, label=label)
 
     def cmd_delgroup(self, group):
         """Delete a group with the given name"""
