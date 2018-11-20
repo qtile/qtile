@@ -1036,7 +1036,7 @@ class Window(_Window):
         if groupName is None:
             group = self.qtile.current_group
         else:
-            group = self.qtile.groupMap.get(groupName)
+            group = self.qtile.groups_map.get(groupName)
             if group is None:
                 raise command.CommandError("No such group: %s" % groupName)
 
