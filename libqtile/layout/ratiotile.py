@@ -233,7 +233,7 @@ class RatioTile(_SimpleLayoutBase):
 
     def add(self, w):
         self.dirty = True
-        self.clients.appendHead(w)
+        self.clients.append_head(w)
 
     def remove(self, w):
         self.dirty = True
