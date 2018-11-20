@@ -30,7 +30,7 @@ import pytest
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from .layout_utils import assert_dimensions, assertFocused, assertFocusPath
+from .layout_utils import assert_dimensions, assertFocused, assert_focus_path
 from ..conftest import no_xinerama
 
 
@@ -93,15 +93,15 @@ def test_slice_focus(qtile):
     assertFocused(qtile, 'two')
     slice = qtile.testWindow('slice')
     assertFocused(qtile, 'slice')
-    assertFocusPath(qtile, 'slice')
+    assert_focus_path(qtile, 'slice')
     qtile.testWindow('three')
-    assertFocusPath(qtile, 'two', 'one', 'slice', 'three')
+    assert_focus_path(qtile, 'two', 'one', 'slice', 'three')
     qtile.kill_window(two)
-    assertFocusPath(qtile, 'one', 'slice', 'three')
+    assert_focus_path(qtile, 'one', 'slice', 'three')
     qtile.kill_window(slice)
-    assertFocusPath(qtile, 'one', 'three')
+    assert_focus_path(qtile, 'one', 'three')
     slice = qtile.testWindow('slice')
-    assertFocusPath(qtile, 'three', 'one', 'slice')
+    assert_focus_path(qtile, 'three', 'one', 'slice')
 
 
 @slice_config

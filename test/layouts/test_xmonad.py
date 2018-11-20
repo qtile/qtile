@@ -23,7 +23,7 @@ import pytest
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from .layout_utils import assert_dimensions, assertFocused, assertFocusPath
+from .layout_utils import assert_dimensions, assertFocused, assert_focus_path
 from ..conftest import no_xinerama
 
 
@@ -617,7 +617,7 @@ def test_tall_window_focus_cycle(qtile):
 
     # starting from the last tiled client, we first cycle through floating ones,
     # and afterwards through the tiled
-    assertFocusPath(qtile, 'float1', 'float2', 'one', 'two', 'three')
+    assert_focus_path(qtile, 'float1', 'float2', 'one', 'two', 'three')
 
 
 @monadwide_config
@@ -637,4 +637,4 @@ def test_wide_window_focus_cycle(qtile):
     assertFocused(qtile, "three")
 
     # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'float1', 'float2', 'one', 'two', 'three')
+    assert_focus_path(qtile, 'float1', 'float2', 'one', 'two', 'three')
