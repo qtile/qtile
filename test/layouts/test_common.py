@@ -24,7 +24,7 @@ from libqtile import layout
 import libqtile.manager
 import libqtile.config
 import libqtile.hook
-from .layout_utils import assertFocused, assertFocusPathUnordered
+from .layout_utils import assertFocused, assert_focus_path_unordered
 
 
 class AllLayoutsConfig(object):
@@ -133,7 +133,7 @@ def test_focus_cycle(qtile):
     assertFocused(qtile, "three")
 
     # Assert that the layout cycles the focus on all windows
-    assertFocusPathUnordered(qtile, 'float1', 'float2', 'one', 'two', 'three')
+    assert_focus_path_unordered(qtile, 'float1', 'float2', 'one', 'two', 'three')
 
 
 @each_layout_config

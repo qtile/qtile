@@ -23,7 +23,7 @@ from libqtile import layout
 import libqtile.manager
 import libqtile.config
 from ..conftest import no_xinerama
-from .layout_utils import assertFocused, assertFocusPath
+from .layout_utils import assertFocused, assert_focus_path
 
 
 class BspConfig(object):
@@ -68,4 +68,4 @@ def test_bsp_window_focus_cycle(qtile):
     assertFocused(qtile, "three")
 
     # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'two', 'float1', 'float2', 'one', 'three')
+    assert_focus_path(qtile, 'two', 'float1', 'float2', 'one', 'three')

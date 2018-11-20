@@ -30,7 +30,7 @@ import pytest
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from .layout_utils import assert_dimensions, assertFocused, assertFocusPath
+from .layout_utils import assert_dimensions, assertFocused, assert_focus_path
 from ..conftest import no_xinerama
 
 
@@ -61,7 +61,7 @@ def test_zoomy_one(qtile):
     assert_dimensions(qtile, 0, 0, 600, 600)
     qtile.testWindow('three')
     assert_dimensions(qtile, 0, 0, 600, 600)
-    assertFocusPath(qtile, 'two', 'one', 'three')
+    assert_focus_path(qtile, 'two', 'one', 'three')
     # TODO(pc) find a way to check size of inactive windows
 
 
@@ -82,4 +82,4 @@ def test_zoomy_window_focus_cycle(qtile):
     assertFocused(qtile, "three")
 
     # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'two', 'one', 'float1', 'float2', 'three')
+    assert_focus_path(qtile, 'two', 'one', 'float1', 'float2', 'three')

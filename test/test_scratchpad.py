@@ -30,7 +30,7 @@ import libqtile.scratchpad
 # import .conftest
 from .conftest import retry
 from .conftest import no_xinerama
-from .layouts.layout_utils import assertFocused, assertFocusPath
+from .layouts.layout_utils import assertFocused, assert_focus_path
 
 
 class ScratchPadBaseConfic(object):
@@ -125,7 +125,7 @@ def test_focus_cycle(qtile):
     # check all windows
     assert sorted(qtile.c.group["a"].info()['windows']) == ['dd-a', 'dd-b', 'one', 'two']
 
-    assertFocusPath(qtile, 'one', 'two', 'dd-a', 'dd-b')
+    assert_focus_path(qtile, 'one', 'two', 'dd-a', 'dd-b')
 
 
 @scratchpad_config

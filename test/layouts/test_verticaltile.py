@@ -32,7 +32,7 @@ import libqtile.manager
 import libqtile.config
 from .layout_utils import assert_dimensions
 from ..conftest import no_xinerama
-from .layout_utils import assertFocused, assertFocusPath
+from .layout_utils import assertFocused, assert_focus_path
 
 
 class VerticalTileConfig(object):
@@ -95,4 +95,4 @@ def test_verticaltile_window_focus_cycle(qtile):
     assertFocused(qtile, "three")
 
     # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'float1', 'float2', 'one', 'two', 'three')
+    assert_focus_path(qtile, 'float1', 'float2', 'one', 'two', 'three')
