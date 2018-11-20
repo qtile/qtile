@@ -47,13 +47,13 @@ class QtileState(object):
         """
         for (group, layout, label) in self.groups:
             try:
-                qtile.groupMap[group].layout = layout
+                qtile.groups_map[group].layout = layout
             except KeyError:
                 qtile.add_group(group, layout, label=label)
 
         for (screen, group) in self.screens.items():
             try:
-                group = qtile.groupMap[group]
+                group = qtile.groups_map[group]
                 qtile.screens[screen].setGroup(group)
             except (KeyError, IndexError):
                 pass  # group or screen missing

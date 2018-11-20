@@ -417,7 +417,7 @@ class Screen(command.CommandObject):
 
     def cmd_toggle_group(self, group_name=None):
         """Switch to the selected group or to the previously active one"""
-        group = self.qtile.groupMap.get(group_name)
+        group = self.qtile.groups_map.get(group_name)
         if group in (self.group, None):
             group = self.previous_group
         self.setGroup(group)

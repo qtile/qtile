@@ -109,7 +109,7 @@ class Qtile(command.CommandObject):
 
         self.windowMap = {}
         self.widgetMap = {}
-        self.groupMap = {}
+        self.groups_map = {}
         self.groups = []
         self.keyMap = {}
 
@@ -177,7 +177,7 @@ class Qtile(command.CommandObject):
             installed_extension._configure(self)
 
         for i in self.groups:
-            self.groupMap[i.name] = i
+            self.groups_map[i.name] = i
 
         for grp in self.config.groups:
             if isinstance(grp, ScratchPadConfig):
@@ -185,7 +185,7 @@ class Qtile(command.CommandObject):
                 sp._configure([self.config.floating_layout],
                               self.config.floating_layout, self)
                 self.groups.append(sp)
-                self.groupMap[sp.name] = sp
+                self.groups_map[sp.name] = sp
 
         self.setup_eventloop()
         self.server = command._Server(self.fname, self, config, self._eventloop)
@@ -469,13 +469,13 @@ class Qtile(command.CommandObject):
         self.root.set_property("_NET_CURRENT_DESKTOP", index)
 
     def add_group(self, name, layout=None, layouts=None, label=None):
-        if name not in self.groupMap.keys():
+        if name not in self.groups_map.keys():
             g = _Group(name, layout, label=label)
             self.groups.append(g)
             if not layouts:
                 layouts = self.config.layouts
             g._configure(layouts, self.config.floating_layout, self)
-            self.groupMap[name] = g
+            self.groups_map[name] = g
             hook.fire("addgroup", self, name)
             hook.fire("changegroup")
             self.update_net_desktops()
@@ -487,8 +487,8 @@ class Qtile(command.CommandObject):
         # one group per screen is needed
         if len(self.groups) == len(self.screens):
             raise ValueError("Can't delete all groups.")
-        if name in self.groupMap.keys():
-            group = self.groupMap[name]
+        if name in self.groups_map.keys():
+            group = self.groups_map[name]
             if group.screen and group.screen.previous_group:
                 target = group.screen.previous_group
             else:
@@ -503,7 +503,7 @@ class Qtile(command.CommandObject):
             if self.current_group.name == name:
                 self.current_screen.setGroup(target, save_prev=False)
             self.groups.remove(group)
-            del(self.groupMap[name])
+            del(self.groups_map[name])
             hook.fire("delgroup", self, name)
             hook.fire("changegroup")
             self.update_net_desktops()
@@ -1097,7 +1097,7 @@ class Qtile(command.CommandObject):
 
     def _items(self, name):
         if name == "group":
-            return True, list(self.groupMap.keys())
+            return True, list(self.groups_map.keys())
         elif name == "layout":
             return True, list(range(len(self.current_group.layouts)))
         elif name == "widget":
@@ -1114,7 +1114,7 @@ class Qtile(command.CommandObject):
             if sel is None:
                 return self.current_group
             else:
-                return self.groupMap.get(sel)
+                return self.groups_map.get(sel)
         elif name == "layout":
             if sel is None:
                 return self.current_group.layout
@@ -1288,7 +1288,7 @@ class Qtile(command.CommandObject):
             Group name. If not specified, the current group is assumed.
         """
         if group:
-            group = self.groupMap.get(group)
+            group = self.groups_map.get(group)
         else:
             group = self.current_group
         group.toLayoutIndex(index)
@@ -1302,7 +1302,7 @@ class Qtile(command.CommandObject):
             Group name. If not specified, the current group is assumed
         """
         if group:
-            group = self.groupMap.get(group)
+            group = self.groups_map.get(group)
         else:
             group = self.current_group
         group.nextLayout()
@@ -1316,7 +1316,7 @@ class Qtile(command.CommandObject):
             Group name. If not specified, the current group is assumed
         """
         if group:
-            group = self.groupMap.get(group)
+            group = self.groups_map.get(group)
         else:
             group = self.current_group
         group.prevLayout()
@@ -1523,11 +1523,11 @@ class Qtile(command.CommandObject):
 
     def cmd_switch_groups(self, groupa, groupb):
         """Switch position of groupa to groupb"""
-        if groupa not in self.groupMap or groupb not in self.groupMap:
+        if groupa not in self.groups_map or groupb not in self.groups_map:
             return
 
-        indexa = self.groups.index(self.groupMap[groupa])
-        indexb = self.groups.index(self.groupMap[groupb])
+        indexa = self.groups.index(self.groups_map[groupa])
+        indexb = self.groups.index(self.groups_map[groupb])
 
         self.groups[indexa], self.groups[indexb] = \
             self.groups[indexb], self.groups[indexa]
@@ -1610,7 +1610,7 @@ class Qtile(command.CommandObject):
         def f(group):
             if group:
                 try:
-                    self.groupMap[group].cmd_toscreen()
+                    self.groups_map[group].cmd_toscreen()
                 except KeyError:
                     logger.info(u"No group named '{0:s}' present.".format(group))
 

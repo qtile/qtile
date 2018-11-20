@@ -77,7 +77,7 @@ class DGroups(object):
         self.qtile = qtile
 
         self.groups = dgroups
-        self.groupMap = {}
+        self.groups_map = {}
 
         self.rules = []
         self.rules_map = {}
@@ -116,7 +116,7 @@ class DGroups(object):
             logger.warn('Rule "%s" not found', rule_id)
 
     def add_dgroup(self, group, start=False):
-        self.groupMap[group.name] = group
+        self.groups_map[group.name] = group
         rules = [Rule(m, group=group.name) for m in group.matches]
         self.rules.extend(rules)
         if start:
@@ -148,7 +148,7 @@ class DGroups(object):
             )
 
     def _addgroup(self, qtile, group_name):
-        if group_name not in self.groupMap:
+        if group_name not in self.groups_map:
             self.add_dgroup(Group(group_name, persist=False))
 
     def _add(self, client):
@@ -172,10 +172,10 @@ class DGroups(object):
             # Matching Rules
             if rule.matches(client):
                 if rule.group:
-                    if rule.group in self.groupMap:
-                        layout = self.groupMap[rule.group].layout
-                        layouts = self.groupMap[rule.group].layouts
-                        label = self.groupMap[rule.group].label
+                    if rule.group in self.groups_map:
+                        layout = self.groups_map[rule.group].layout
+                        layouts = self.groups_map[rule.group].layouts
+                        label = self.groups_map[rule.group].label
                     else:
                         layout = None
                         layouts = None
@@ -185,8 +185,8 @@ class DGroups(object):
 
                     group_set = True
 
-                    group_obj = self.qtile.groupMap[rule.group]
-                    group = self.groupMap.get(rule.group)
+                    group_obj = self.qtile.groups_map[rule.group]
+                    group = self.groups_map.get(rule.group)
                     if group and group_added:
                         for k, v in list(group.layout_opts.items()):
                             if isinstance(v, collections.Callable):
@@ -209,8 +209,8 @@ class DGroups(object):
         # If app doesn't have a group
         if not group_set:
             current_group = self.qtile.current_group.name
-            if current_group in self.groupMap and \
-                    self.groupMap[current_group].exclusive and \
+            if current_group in self.groups_map and \
+                    self.groups_map[current_group].exclusive and \
                     not intrusive:
 
                 wm_class = client.window.get_wm_class()
@@ -231,7 +231,7 @@ class DGroups(object):
 
     def sort_groups(self):
         grps = self.qtile.groups
-        sorted_grps = sorted(grps, key=lambda g: self.groupMap[g.name].position)
+        sorted_grps = sorted(grps, key=lambda g: self.groups_map[g.name].position)
         if grps != sorted_grps:
             self.qtile.groups = sorted_grps
             libqtile.hook.fire("changegroup")
@@ -241,8 +241,8 @@ class DGroups(object):
 
         def delete_client():
             # Delete group if empty and don't persist
-            if group and group.name in self.groupMap and \
-                    not self.groupMap[group.name].persist and \
+            if group and group.name in self.groups_map and \
+                    not self.groups_map[group.name].persist and \
                     len(group.windows) <= 0:
                 self.qtile.delete_group(group.name)
                 self.sort_groups()
