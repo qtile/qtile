@@ -60,11 +60,11 @@ class _Group(command.CommandObject):
         # complete set
         self.focusHistory = []
         self.screen = None
-        self.currentLayout = None
+        self.current_layout = None
 
     def _configure(self, layouts, floating_layout, qtile):
         self.screen = None
-        self.currentLayout = 0
+        self.current_layout = 0
         self.focusHistory = []
         self.windows = set()
         self.qtile = qtile
@@ -104,7 +104,7 @@ class _Group(command.CommandObject):
 
     @property
     def layout(self):
-        return self.layouts[self.currentLayout]
+        return self.layouts[self.current_layout]
 
     @layout.setter
     def layout(self, layout):
@@ -116,10 +116,10 @@ class _Group(command.CommandObject):
         """
         for index, obj in enumerate(self.layouts):
             if obj.name == layout:
-                self.currentLayout = index
+                self.current_layout = index
                 hook.fire(
                     "layout_change",
-                    self.layouts[self.currentLayout],
+                    self.layouts[self.current_layout],
                     self
                 )
                 self.layoutAll()
@@ -129,17 +129,17 @@ class _Group(command.CommandObject):
     def toLayoutIndex(self, index):
         assert 0 <= index < len(self.layouts), "layout index out of bounds"
         self.layout.hide()
-        self.currentLayout = index
-        hook.fire("layout_change", self.layouts[self.currentLayout], self)
+        self.current_layout = index
+        hook.fire("layout_change", self.layouts[self.current_layout], self)
         self.layoutAll()
         screen = self.screen.get_rect()
         self.layout.show(screen)
 
     def nextLayout(self):
-        self.toLayoutIndex((self.currentLayout + 1) % (len(self.layouts)))
+        self.toLayoutIndex((self.current_layout + 1) % (len(self.layouts)))
 
     def prevLayout(self):
-        self.toLayoutIndex((self.currentLayout - 1) % (len(self.layouts)))
+        self.toLayoutIndex((self.current_layout - 1) % (len(self.layouts)))
 
     def layoutAll(self, warp=False):
         """Layout the floating layer, then the current layout.

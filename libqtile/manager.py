@@ -529,7 +529,7 @@ class Qtile(command.CommandObject):
         return self.conn.screens[0].default_colormap.alloc_color(name).pixel
 
     @property
-    def currentLayout(self):
+    def current_layout(self):
         return self.current_group.layout
 
     @property

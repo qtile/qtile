@@ -344,7 +344,7 @@ class Screen(command.CommandObject):
         hook.fire("focus_change")
         hook.fire(
             "layout_change",
-            self.group.layouts[self.group.currentLayout],
+            self.group.layouts[self.group.current_layout],
             self.group
         )
 
