@@ -48,7 +48,7 @@ class _Group(command.CommandObject):
     def __init__(self, name, layout=None, label=None):
         self.name = name
         self.label = name if label is None else label
-        self.customLayout = layout  # will be set on _configure
+        self.custom_layout = layout  # will be set on _configure
         self.windows = set()
         self.qtile = None
         self.layouts = []
@@ -70,9 +70,9 @@ class _Group(command.CommandObject):
         self.qtile = qtile
         self.layouts = [i.clone(self) for i in layouts]
         self.floating_layout = floating_layout
-        if self.customLayout is not None:
-            self.layout = self.customLayout
-            self.customLayout = None
+        if self.custom_layout is not None:
+            self.layout = self.custom_layout
+            self.custom_layout = None
 
     @property
     def current_window(self):
