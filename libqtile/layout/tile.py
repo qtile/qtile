@@ -113,7 +113,7 @@ class Tile(_SimpleLayoutBase):
     def configure(self, client, screen):
         screenWidth = screen.width
         screenHeight = screen.height
-        borderWidth = self.border_width
+        border_width = self.border_width
         if self.clients and client in self.clients:
             pos = self.clients.index(client)
             if client in self.master_windows:
@@ -135,9 +135,9 @@ class Tile(_SimpleLayoutBase):
             client.place(
                 x,
                 y,
-                w - borderWidth * 2,
-                h - borderWidth * 2,
-                borderWidth,
+                w - border_width * 2,
+                h - border_width * 2,
+                border_width,
                 bc,
                 margin=self.margin,
             )
