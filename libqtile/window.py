@@ -421,7 +421,7 @@ class _Window(command.CommandObject):
 
     def hide(self):
         # We don't want to get the UnmapNotify for this unmap
-        with self.disableMask(xcffib.xproto.EventMask.StructureNotify):
+        with self.disable_mask(xcffib.xproto.EventMask.StructureNotify):
             self.window.unmap()
         self.hidden = True
 
@@ -431,12 +431,12 @@ class _Window(command.CommandObject):
         self.hidden = False
 
     @contextlib.contextmanager
-    def disableMask(self, mask):
-        self._disableMask(mask)
+    def disable_mask(self, mask):
+        self._disable_mask(mask)
         yield
         self._resetMask()
 
-    def _disableMask(self, mask):
+    def _disable_mask(self, mask):
         self.window.set_attribute(
             eventmask=self._windowMask & (~mask)
         )
