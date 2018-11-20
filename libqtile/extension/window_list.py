@@ -72,6 +72,6 @@ class WindowList(Dmenu):
             # The selected window got closed while the menu was open?
             return
 
-        screen = self.qtile.currentScreen
+        screen = self.qtile.current_screen
         screen.setGroup(win.group)
         win.group.focus(win)

@@ -187,7 +187,7 @@ class DropDownToggler(WindowVisibilityToggler):
         """
         if (not self.visible) or (not self.shown):
             win = self.window
-            screen = win.qtile.currentScreen
+            screen = win.qtile.current_screen
             # calculate windows floating position and width/height
             # these may differ for screens, and thus always recalculated.
             win.x = int(screen.dx + self.x * screen.dwidth)

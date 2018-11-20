@@ -37,7 +37,7 @@ class QtileState(object):
             self.groups.append((group.name, group.layout.name, group.label))
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
-            if screen == qtile.currentScreen:
+            if screen == qtile.current_screen:
                 self.current_screen = index
 
     def apply(self, qtile):
