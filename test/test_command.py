@@ -104,10 +104,10 @@ class TestCommands(libqtile.command.CommandObject):
 
 def test_doc():
     c = TestCommands()
-    assert "one()" in c.doc("one")
-    assert "one_self()" in c.doc("one_self")
-    assert "two(a)" in c.doc("two")
-    assert "three(a, b=99)" in c.doc("three")
+    assert "one()" in c.cmd_doc("one")
+    assert "one_self()" in c.cmd_doc("one_self")
+    assert "two(a)" in c.cmd_doc("two")
+    assert "three(a, b=99)" in c.cmd_doc("three")
 
 
 def test_commands():

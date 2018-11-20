@@ -418,7 +418,7 @@ class CommandObject(six.with_metaclass(abc.ABCMeta)):
         """
         return self.items(name)
 
-    def docSig(self, name):
+    def get_command_signature(self, name):
         # inspect.signature introduced in Python 3.3
         if sys.version_info < (3, 3):
             args, varargs, varkw, defaults = inspect.getargspec(self.command(name))
@@ -426,19 +426,19 @@ class CommandObject(six.with_metaclass(abc.ABCMeta)):
                 args = args[1:]
             return name + inspect.formatargspec(args, varargs, varkw, defaults)
 
-        sig = inspect.signature(self.command(name))
-        args = list(sig.parameters)
+        signature = inspect.signature(self.command(name))
+        args = list(signature.parameters)
         if args and args[0] == "self":
             args = args[1:]
-            sig = sig.replace(parameters=args)
-        return name + str(sig)
+            signature = signature.replace(parameters=args)
+        return name + str(signature)
 
-    def docText(self, name):
+    def get_command_docstring(self, name):
         return inspect.getdoc(self.command(name)) or ""
 
-    def doc(self, name):
-        spec = self.docSig(name)
-        htext = self.docText(name)
+    def get_command_documentation(self, name):
+        spec = self.get_command_signature(name)
+        htext = self.get_command_docstring(name)
         return spec + '\n' + htext
 
     def cmd_doc(self, name):
@@ -447,7 +447,7 @@ class CommandObject(six.with_metaclass(abc.ABCMeta)):
         Used by __qsh__ to provide online help.
         """
         if name in self.commands:
-            return self.doc(name)
+            return self.get_command_documentation(name)
         else:
             raise CommandError("No such command: %s" % name)
 
