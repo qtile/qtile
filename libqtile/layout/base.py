@@ -599,7 +599,7 @@ class _SimpleLayoutBase(Layout):
 
     def focus(self, client):
         self.clients.current_client = client
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def focus_first(self):
         return self.clients.focus_first()
