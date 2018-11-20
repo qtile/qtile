@@ -304,7 +304,7 @@ class _Call(object):
                 if q.currentWindow.floating:
                     return True
                 return False
-            if q.currentLayout.name != self.layout:
+            if q.current_layout.name != self.layout:
                 return False
             if q.currentWindow and q.currentWindow.floating \
                     and not self.when_floating:
