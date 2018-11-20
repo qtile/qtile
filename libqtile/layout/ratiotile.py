@@ -301,7 +301,7 @@ class RatioTile(_SimpleLayoutBase):
     def shuffle(self, function):
         if self.clients:
             function(self.clients)
-            self.group.layoutAll()
+            self.group.layout_all()
 
     cmd_down = _SimpleLayoutBase.previous
     cmd_up = _SimpleLayoutBase.next
@@ -312,20 +312,20 @@ class RatioTile(_SimpleLayoutBase):
     def cmd_shuffle_down(self):
         if self.clients:
             self.clients.rotate_up()
-            self.self.group.layoutAll()
+            self.self.group.layout_all()
 
     def cmd_shuffle_up(self):
         if self.clients:
             self.clients.rotate_down()
-            self.self.group.layoutAll()
+            self.self.group.layout_all()
 
     def cmd_decrease_ratio(self):
         new_ratio = self.ratio - self.ratio_increment
         if new_ratio < 0:
             return
         self.ratio = new_ratio
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_increase_ratio(self):
         self.ratio += self.ratio_increment
-        self.group.layoutAll()
+        self.group.layout_all()

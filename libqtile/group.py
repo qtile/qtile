@@ -122,7 +122,7 @@ class _Group(command.CommandObject):
                     self.layouts[self.current_layout],
                     self
                 )
-                self.layoutAll()
+                self.layout_all()
                 return
         raise ValueError("No such layout: %s" % layout)
 
@@ -131,7 +131,7 @@ class _Group(command.CommandObject):
         self.layout.hide()
         self.current_layout = index
         hook.fire("layout_change", self.layouts[self.current_layout], self)
-        self.layoutAll()
+        self.layout_all()
         screen = self.screen.get_rect()
         self.layout.show(screen)
 
@@ -141,7 +141,7 @@ class _Group(command.CommandObject):
     def prevLayout(self):
         self.toLayoutIndex((self.current_layout - 1) % (len(self.layouts)))
 
-    def layoutAll(self, warp=False):
+    def layout_all(self, warp=False):
         """Layout the floating layer, then the current layout.
 
         If we have have a current_window give it focus, optionally moving warp
@@ -175,7 +175,7 @@ class _Group(command.CommandObject):
         if self.screen:
             # move all floating guys offset to new screen
             self.floating_layout.to_screen(self, self.screen)
-            self.layoutAll()
+            self.layout_all()
             rect = self.screen.get_rect()
             self.floating_layout.show(rect)
             self.layout.show(rect)
@@ -204,7 +204,7 @@ class _Group(command.CommandObject):
 
         If win is in the group, blur any windows and call ``focus`` on the
         layout (in case it wants to track anything), fire focus_change hook and
-        invoke layoutAll.
+        invoke layout_all.
 
         Parameters
         ==========
@@ -233,7 +233,7 @@ class _Group(command.CommandObject):
                 for l in self.layouts:
                     l.focus(win)
             hook.fire("focus_change")
-            self.layoutAll(warp)
+            self.layout_all(warp)
 
     def info(self):
         return dict(
@@ -302,7 +302,7 @@ class _Group(command.CommandObject):
             if not nextfocus:
                 hook.fire("focus_change")
         elif self.screen:
-            self.layoutAll()
+            self.layout_all()
 
     def mark_floating(self, win, floating):
         if floating:
@@ -324,7 +324,7 @@ class _Group(command.CommandObject):
                 i.add(win)
                 if win is self.current_window:
                     i.focus(win)
-        self.layoutAll()
+        self.layout_all()
 
     def _items(self, name):
         if name == "layout":
@@ -415,7 +415,7 @@ class _Group(command.CommandObject):
         """Unminimise all windows in this group"""
         for w in self.windows:
             w.minimized = False
-        self.layoutAll()
+        self.layout_all()
 
     def cmd_next_window(self):
         """

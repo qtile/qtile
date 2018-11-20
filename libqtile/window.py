@@ -318,7 +318,7 @@ class _Window(command.CommandObject):
             hook.fire('client_urgent_hint_changed', self)
 
         if getattr(self, 'group', None):
-            self.group.layoutAll()
+            self.group.layout_all()
 
         return
 
@@ -1434,5 +1434,5 @@ class Window(_Window):
                 index2 = clients.index(window)
                 clients[index1], clients[index2] = clients[index2], clients[index1]
                 self.group.layout.focused = index2
-                self.group.layoutAll()
+                self.group.layout_all()
                 break

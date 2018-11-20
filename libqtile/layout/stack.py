@@ -264,7 +264,7 @@ class Stack(Layout):
     def cmd_toggle_split(self):
         """Toggle vertical split on the current stack"""
         self.current_stack.toggleSplit()
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_down(self):
         """Switch to the next window in this stack"""
@@ -279,12 +279,12 @@ class Stack(Layout):
     def cmd_shuffle_up(self):
         """Shuffle the order of this stack up"""
         self.current_stack.rotate_up()
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_shuffle_down(self):
         """Shuffle the order of this stack down"""
         self.current_stack.rotate_down()
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_delete(self):
         """Delete the current stack from the layout"""
@@ -296,12 +296,12 @@ class Stack(Layout):
         if self.autosplit:
             newstack.split = True
         self.stacks.append(newstack)
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_rotate(self):
         """Rotate order of the stacks"""
         utils.shuffleUp(self.stacks)
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_next(self):
         """Focus next stack"""
@@ -331,7 +331,7 @@ class Stack(Layout):
         self.current_stack.remove(win)
         self.stacks[next].add(win)
         self.stacks[next].focus(win)
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_info(self):
         return self.info()

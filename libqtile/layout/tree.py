@@ -631,11 +631,11 @@ class TreeTab(Layout):
 
     def cmd_increase_ratio(self):
         self.panel_width += 10
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_decrease_ratio(self):
         self.panel_width -= 10
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def _create_drawer(self):
         if self._drawer is None:

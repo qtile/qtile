@@ -178,12 +178,12 @@ class VerticalTile(_SimpleLayoutBase):
     def grow(self):
         if self.ratio + self.steps < 1:
             self.ratio += self.steps
-            self.group.layoutAll()
+            self.group.layout_all()
 
     def shrink(self):
         if self.ratio - self.steps > 0:
             self.ratio -= self.steps
-            self.group.layoutAll()
+            self.group.layout_all()
 
     cmd_previous = _SimpleLayoutBase.previous
     cmd_next = _SimpleLayoutBase.next
@@ -193,20 +193,20 @@ class VerticalTile(_SimpleLayoutBase):
 
     def cmd_shuffle_up(self):
         self.clients.shuffle_up()
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_shuffle_down(self):
         self.clients.shuffle_down()
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_maximize(self):
         if self.clients:
             self.maximized = self.clients.current_client
-            self.group.layoutAll()
+            self.group.layout_all()
 
     def cmd_normalize(self):
         self.maximized = None
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_grow(self):
         if not self.maximized:

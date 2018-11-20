@@ -71,14 +71,14 @@ class Tile(_SimpleLayoutBase):
             self.clients.shuffle_up()
         else:
             self.clients.rotate_down()
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def down(self):
         if self.shift_windows:
             self.clients.shuffle_down()
         else:
             self.clients.rotate_up()
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def resetMaster(self, match=None):
         if not match and self.master_match:
@@ -95,7 +95,7 @@ class Tile(_SimpleLayoutBase):
         if self.clients:
             self.clients[idx1], self.clients[idx2] = \
                 self.clients[idx2], self.clients[idx1]
-            self.group.layoutAll(True)
+            self.group.layout_all(True)
 
     def clone(self, group):
         c = _SimpleLayoutBase.clone(self, group)
@@ -171,18 +171,18 @@ class Tile(_SimpleLayoutBase):
 
     def cmd_decrease_ratio(self):
         self.ratio -= self.ratio_increment
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_increase_ratio(self):
         self.ratio += self.ratio_increment
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_decrease_nmaster(self):
         self.master -= 1
         if self.master <= 0:
             self.master = 1
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_increase_nmaster(self):
         self.master += 1
-        self.group.layoutAll()
+        self.group.layout_all()

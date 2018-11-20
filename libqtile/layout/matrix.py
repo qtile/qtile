@@ -174,9 +174,9 @@ class Matrix(_SimpleLayoutBase):
     def cmd_delete(self):
         """Decrease number of columns"""
         self.columns -= 1
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_add(self):
         """Increase number of columns"""
         self.columns += 1
-        self.group.layoutAll()
+        self.group.layout_all()

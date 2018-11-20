@@ -1132,7 +1132,7 @@ class Qtile(command.CommandObject):
         self.current_screen = self.screens[n]
         if old != self.current_screen:
             hook.fire("current_screen_change")
-            old.group.layoutAll()
+            old.group.layout_all()
             self.current_group.focus(self.current_window, warp)
 
     def moveToGroup(self, group):
@@ -1814,7 +1814,7 @@ class Qtile(command.CommandObject):
             bar = getattr(self.current_screen, position)
             if bar:
                 bar.show(not bar.is_show())
-                self.current_group.layoutAll()
+                self.current_group.layout_all()
             else:
                 logger.warning(
                     "Not found bar in position '%s' for hide/show." % position)
@@ -1827,7 +1827,7 @@ class Qtile(command.CommandObject):
                         is_show = not bar.is_show()
                     bar.show(is_show)
             if is_show is not None:
-                self.current_group.layoutAll()
+                self.current_group.layout_all()
             else:
                 logger.warning("Not found bar for hide/show.")
         else:
