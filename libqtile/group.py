@@ -148,7 +148,7 @@ class _Group(command.CommandObject):
         to it.
         """
         if self.screen and len(self.windows):
-            with self.disableMask(xcffib.xproto.EventMask.EnterWindow):
+            with self.disable_mask(xcffib.xproto.EventMask.EnterWindow):
                 normal = [x for x in self.windows if not x.floating]
                 floating = [
                     x for x in self.windows
@@ -184,17 +184,17 @@ class _Group(command.CommandObject):
 
     def hide(self):
         self.screen = None
-        with self.disableMask(xcffib.xproto.EventMask.EnterWindow |
-                              xcffib.xproto.EventMask.FocusChange |
-                              xcffib.xproto.EventMask.LeaveWindow):
+        with self.disable_mask(xcffib.xproto.EventMask.EnterWindow |
+                               xcffib.xproto.EventMask.FocusChange |
+                               xcffib.xproto.EventMask.LeaveWindow):
             for i in self.windows:
                 i.hide()
             self.layout.hide()
 
     @contextlib.contextmanager
-    def disableMask(self, mask):
+    def disable_mask(self, mask):
         for i in self.windows:
-            i._disableMask(mask)
+            i._disable_mask(mask)
         yield
         for i in self.windows:
             i._resetMask()
