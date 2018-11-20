@@ -688,7 +688,7 @@ class Qtile(command.CommandObject):
         chain = []
         handler = "handle_%s" % ename
         # Certain events expose the affected window id as an "event" attribute.
-        eventEvents = [
+        event_events = [
             "EnterNotify",
             "ButtonPress",
             "ButtonRelease",
@@ -698,7 +698,7 @@ class Qtile(command.CommandObject):
             c = self.windowMap.get(e.window)
         elif hasattr(e, "drawable"):
             c = self.windowMap.get(e.drawable)
-        elif ename in eventEvents:
+        elif ename in event_events:
             c = self.windowMap.get(e.event)
         else:
             c = None
