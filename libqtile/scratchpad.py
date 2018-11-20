@@ -166,7 +166,7 @@ class DropDownToggler(WindowVisibilityToggler):
         self.y = ddconfig.y
         self.width = ddconfig.width
         self.height = ddconfig.height
-        window.setOpacity(ddconfig.opacity)
+        window.set_opacity(ddconfig.opacity)
         WindowVisibilityToggler.__init__(
             self, scratchpad_name, window, ddconfig.on_focus_lost_hide, ddconfig.warp_pointer
         )

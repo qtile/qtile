@@ -374,7 +374,7 @@ class _Window(command.CommandObject):
         if val in (WithdrawnState, NormalState, IconicState):
             self.window.set_property('WM_STATE', [val, 0])
 
-    def setOpacity(self, opacity):
+    def set_opacity(self, opacity):
         if 0.0 <= opacity <= 1.0:
             real_opacity = int(opacity * 0xffffffff)
             self.window.set_property('_NET_WM_WINDOW_OPACITY', real_opacity)
@@ -393,7 +393,7 @@ class _Window(command.CommandObject):
             as_float = round(value / 0xffffffff, 2)
             return as_float
 
-    opacity = property(get_opacity, setOpacity)
+    opacity = property(get_opacity, set_opacity)
 
     def kill(self):
         if "WM_DELETE_WINDOW" in self.window.get_wm_protocols():
