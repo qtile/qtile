@@ -214,7 +214,7 @@ class Qtile(command.CommandObject):
 
         # Map and Grab keys
         for key in self.config.keys:
-            self.mapKey(key)
+            self.map_key(key)
 
         # It fixes problems with focus when clicking windows of some specific clients like xterm
         def noop(qtile):
@@ -429,7 +429,7 @@ class Qtile(command.CommandObject):
             yield self.numlockMask
             yield self.numlockMask | xcbq.ModMasks["lock"]
 
-    def mapKey(self, key):
+    def map_key(self, key):
         self.keys_map[(key.keysym, key.modmask & self.validMask)] = key
         code = self.conn.keysym_to_keycode(key.keysym)
         for amask in self._auto_modmasks():
@@ -441,7 +441,7 @@ class Qtile(command.CommandObject):
                 xcffib.xproto.GrabMode.Async,
             )
 
-    def unmapKey(self, key):
+    def unmap_key(self, key):
         key_index = (key.keysym, key.modmask & self.validMask)
         if key_index not in self.keys_map:
             return
@@ -671,7 +671,7 @@ class Qtile(command.CommandObject):
     def grab_keys(self):
         self.root.ungrab_key(None, None)
         for key in self.keys_map.values():
-            self.mapKey(key)
+            self.map_key(key)
 
     def get_target_chain(self, ename, e):
         """Returns a chain of targets that can handle this event
