@@ -43,7 +43,7 @@ class DebugInfo(base._TextBox):
         w = self.bar.screen.group.currentWindow
 
         if isinstance(w.group.layout, layout.Stack):
-            stack = w.group.layout.currentStack
+            stack = w.group.layout.current_stack
             stack_offset = w.group.layout.current_stack_offset
             idx = stack.lst.index(w)
             current = stack.current
