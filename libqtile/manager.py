@@ -1135,7 +1135,7 @@ class Qtile(command.CommandObject):
             old.group.layout_all()
             self.current_group.focus(self.current_window, warp)
 
-    def moveToGroup(self, group):
+    def move_to_group(self, group):
         """Create a group if it doesn't exist and move a windows there"""
         if self.current_window and group:
             self.add_group(group)
@@ -1641,7 +1641,7 @@ class Qtile(command.CommandObject):
             logger.error("No widget named '{0:s}' present.".format(widget))
             return
 
-        mb.startInput(prompt, self.moveToGroup, "group", strict_completer=True)
+        mb.startInput(prompt, self.move_to_group, "group", strict_completer=True)
 
     def cmd_switchgroup(self, prompt="group", widget="prompt"):
         """Launch prompt widget to switch to a given group to the current screen
