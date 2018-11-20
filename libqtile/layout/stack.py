@@ -193,17 +193,17 @@ class Stack(Layout):
             self.currentStack.add(client)
 
     def remove(self, client):
-        currentOffset = self.currentStackOffset
+        current_offset = self.currentStackOffset
         for i in self.stacks:
             if client in i:
                 i.remove(client)
                 break
-        if self.stacks[currentOffset].cw:
-            return self.stacks[currentOffset].cw
+        if self.stacks[current_offset].cw:
+            return self.stacks[current_offset].cw
         else:
             n = self._findNext(
                 list(reversed(self.stacks)),
-                len(self.stacks) - currentOffset - 1
+                len(self.stacks) - current_offset - 1
             )
             if n:
                 return n.cw
