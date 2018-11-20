@@ -1174,7 +1174,7 @@ class Qtile(command.CommandObject):
             if sel is None:
                 return self.currentWindow
             else:
-                return self.clientFromWID(sel)
+                return self.client_from_wid(sel)
         elif name == "screen":
             if sel is None:
                 return self.currentScreen
@@ -1184,7 +1184,7 @@ class Qtile(command.CommandObject):
     def listWID(self):
         return [i.window.wid for i in self.windowMap.values()]
 
-    def clientFromWID(self, wid):
+    def client_from_wid(self, wid):
         for i in self.windowMap.values():
             if i.window.wid == wid:
                 return i
