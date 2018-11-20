@@ -97,8 +97,8 @@ class Qtile(command.CommandObject):
         if not fname:
             # Dots might appear in the host part of the display name
             # during remote X sessions. Let's strip the host part first.
-            displayNum = display_name.partition(":")[2]
-            if "." not in displayNum:
+            display_number = display_name.partition(":")[2]
+            if "." not in display_number:
                 display_name += ".0"
             fname = command.find_sockfile(display_name)
 
