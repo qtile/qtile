@@ -82,27 +82,27 @@ else:
 class Qtile(command.CommandObject):
     """This object is the `root` of the command graph"""
 
-    def __init__(self, config, displayName=None, fname=None, no_spawn=False, state=None):
+    def __init__(self, config, display_name=None, fname=None, no_spawn=False, state=None):
         self._restart = False
         self.no_spawn = no_spawn
 
         self._eventloop = None
         self._finalize = False
 
-        if not displayName:
-            displayName = os.environ.get("DISPLAY")
-            if not displayName:
+        if not display_name:
+            display_name = os.environ.get("DISPLAY")
+            if not display_name:
                 raise QtileError("No DISPLAY set.")
 
         if not fname:
             # Dots might appear in the host part of the display name
             # during remote X sessions. Let's strip the host part first.
-            displayNum = displayName.partition(":")[2]
+            displayNum = display_name.partition(":")[2]
             if "." not in displayNum:
-                displayName += ".0"
-            fname = command.find_sockfile(displayName)
+                display_name += ".0"
+            fname = command.find_sockfile(display_name)
 
-        self.conn = xcbq.Connection(displayName)
+        self.conn = xcbq.Connection(display_name)
         self.config = config
         self.fname = fname
         hook.init(self)
