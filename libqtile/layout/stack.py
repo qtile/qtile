@@ -76,10 +76,10 @@ class Stack(Layout):
 
     @property
     def currentStack(self):
-        return self.stacks[self.currentStackOffset]
+        return self.stacks[self.current_stack_offset]
 
     @property
-    def currentStackOffset(self):
+    def current_stack_offset(self):
         for i, s in enumerate(self.stacks):
             if self.group.currentWindow in s:
                 return i
@@ -109,7 +109,7 @@ class Stack(Layout):
 
     def deleteCurrentStack(self):
         if len(self.stacks) > 1:
-            off = self.currentStackOffset or 0
+            off = self.current_stack_offset or 0
             s = self.stacks[off]
             self.stacks.remove(s)
             off = min(off, len(self.stacks) - 1)
@@ -123,7 +123,7 @@ class Stack(Layout):
     def nextStack(self):
         n = self._findNext(
             self.stacks,
-            self.currentStackOffset
+            self.current_stack_offset
         )
         if n:
             self.group.focus(n.cw, True)
@@ -131,7 +131,7 @@ class Stack(Layout):
     def previousStack(self):
         n = self._findNext(
             list(reversed(self.stacks)),
-            len(self.stacks) - self.currentStackOffset - 1
+            len(self.stacks) - self.current_stack_offset - 1
         )
         if n:
             self.group.focus(n.cw, True)
@@ -193,7 +193,7 @@ class Stack(Layout):
             self.currentStack.add(client)
 
     def remove(self, client):
-        current_offset = self.currentStackOffset
+        current_offset = self.current_stack_offset
         for i in self.stacks:
             if client in i:
                 i.remove(client)
@@ -257,7 +257,7 @@ class Stack(Layout):
     def info(self):
         d = Layout.info(self)
         d["stacks"] = [i.info() for i in self.stacks]
-        d["current_stack"] = self.currentStackOffset
+        d["current_stack"] = self.current_stack_offset
         d["clients"] = [c.name for c in self.clients]
         return d
 
@@ -313,11 +313,11 @@ class Stack(Layout):
 
     def cmd_client_to_next(self):
         """Send the current client to the next stack"""
-        return self.cmd_client_to_stack(self.currentStackOffset + 1)
+        return self.cmd_client_to_stack(self.current_stack_offset + 1)
 
     def cmd_client_to_previous(self):
         """Send the current client to the previous stack"""
-        return self.cmd_client_to_stack(self.currentStackOffset - 1)
+        return self.cmd_client_to_stack(self.current_stack_offset - 1)
 
     def cmd_client_to_stack(self, n):
         """
