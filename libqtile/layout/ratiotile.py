@@ -276,9 +276,9 @@ class RatioTile(_SimpleLayoutBase):
             return
         x, y, w, h = self.layout_info[idx]
         if win.has_focus:
-            bc = self.group.qtile.colorPixel(self.border_focus)
+            bc = self.group.qtile.color_pixel(self.border_focus)
         else:
-            bc = self.group.qtile.colorPixel(self.border_normal)
+            bc = self.group.qtile.color_pixel(self.border_normal)
         win.place(
             x,
             y,

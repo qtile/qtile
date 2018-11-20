@@ -525,7 +525,7 @@ class Qtile(command.CommandObject):
             self.widgetMap[w.name] = w
 
     @utils.lru_cache()
-    def colorPixel(self, name):
+    def color_pixel(self, name):
         return self.conn.screens[0].default_colormap.alloc_color(name).pixel
 
     @property
