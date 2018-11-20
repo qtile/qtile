@@ -149,7 +149,7 @@ class WindowVisibilityToggler(object):
         if self.shown:
             current_group = self.window.qtile.current_group
             if (self.window.group is not current_group or
-                    self.window is not current_group.currentWindow):
+                    self.window is not current_group.current_window):
                 if self.on_focus_lost_hide:
                     self.hide()
 

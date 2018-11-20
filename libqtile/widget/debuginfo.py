@@ -40,7 +40,7 @@ class DebugInfo(base._TextBox):
     def update(self, *args):
         old_layout_width = self.layout.width
 
-        w = self.bar.screen.group.currentWindow
+        w = self.bar.screen.group.current_window
 
         if isinstance(w.group.layout, layout.Stack):
             stack = w.group.layout.current_stack

@@ -81,7 +81,7 @@ class Stack(Layout):
     @property
     def current_stack_offset(self):
         for i, s in enumerate(self.stacks):
-            if self.group.currentWindow in s:
+            if self.group.current_window in s:
                 return i
         return 0
 

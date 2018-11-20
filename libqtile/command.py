@@ -301,12 +301,12 @@ class _Call(object):
     def check(self, q):
         if self.layout:
             if self.layout == 'floating':
-                if q.currentWindow.floating:
+                if q.current_window.floating:
                     return True
                 return False
             if q.current_layout.name != self.layout:
                 return False
-            if q.currentWindow and q.currentWindow.floating \
+            if q.current_window and q.current_window.floating \
                     and not self.when_floating:
                 return False
         return True
