@@ -150,6 +150,12 @@ configuration variables that control specific aspects of Qtile's behavior:
     * - wmname
       - "LG3D"
       - TODO
+    * - dpi_scale
+      - 1
+      - By default, qtile calculates the average physical DPI of all the
+        outputs attached and sets XFT and other applications to use that.
+        However, on some displays the physical DPI is *very* high; this allows
+        scaling it to something more reasonable.
 
 Testing your configuration
 ==========================
