@@ -538,8 +538,8 @@ class Qtile(command.CommandObject):
         return self.current_screen.group
 
     @property
-    def currentWindow(self):
-        return self.current_screen.group.currentWindow
+    def current_window(self):
+        return self.current_screen.group.current_window
 
     def scan(self):
         _, _, children = self.root.query_tree()
@@ -1133,13 +1133,13 @@ class Qtile(command.CommandObject):
         if old != self.current_screen:
             hook.fire("current_screen_change")
             old.group.layoutAll()
-            self.current_group.focus(self.currentWindow, warp)
+            self.current_group.focus(self.current_window, warp)
 
     def moveToGroup(self, group):
         """Create a group if it doesn't exist and move a windows there"""
-        if self.currentWindow and group:
+        if self.current_window and group:
             self.add_group(group)
-            self.currentWindow.togroup(group)
+            self.current_window.togroup(group)
 
     def _items(self, name):
         if name == "group":
@@ -1172,7 +1172,7 @@ class Qtile(command.CommandObject):
             return getattr(self.current_screen, sel)
         elif name == "window":
             if sel is None:
-                return self.currentWindow
+                return self.current_window
             else:
                 return self.client_from_wid(sel)
         elif name == "screen":
@@ -1632,7 +1632,7 @@ class Qtile(command.CommandObject):
         widget :
             Name of the prompt widget (default: "prompt")
         """
-        if not self.currentWindow:
+        if not self.current_window:
             logger.warning("No window to move")
             return
 

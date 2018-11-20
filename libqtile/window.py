@@ -250,7 +250,7 @@ class _Window(command.CommandObject):
 
     @property
     def has_focus(self):
-        return self == self.qtile.currentWindow
+        return self == self.qtile.current_window
 
     def updateName(self):
         try:
@@ -310,7 +310,7 @@ class _Window(command.CommandObject):
             self.hints.update(normh)
 
         if h and 'UrgencyHint' in h['flags']:
-            if self.qtile.currentWindow != self:
+            if self.qtile.current_window != self:
                 self.hints['urgent'] = True
                 hook.fire('client_urgent_hint_changed', self)
         elif self.urgent:
@@ -1099,7 +1099,7 @@ class Window(_Window):
     def handle_EnterNotify(self, e):
         hook.fire("client_mouse_enter", self)
         if self.qtile.config.follow_mouse_focus and \
-                self.group.currentWindow != self:
+                self.group.current_window != self:
             self.group.focus(self, False)
         if self.group.screen and \
                 self.qtile.current_screen != self.group.screen and \
@@ -1108,7 +1108,7 @@ class Window(_Window):
         return True
 
     def handle_ConfigureRequest(self, e):
-        if self.qtile._drag and self.qtile.currentWindow == self:
+        if self.qtile._drag and self.qtile.current_window == self:
             # ignore requests while user is dragging window
             return
         if getattr(self, 'floating', False):
@@ -1254,7 +1254,7 @@ class Window(_Window):
             self.updateState()
         elif name == "_NET_WM_USER_TIME":
             if not self.qtile.config.follow_mouse_focus and \
-                    self.group.currentWindow != self:
+                    self.group.current_window != self:
                 self.group.focus(self, False)
         else:
             logger.info("Unknown window property: %s", name)

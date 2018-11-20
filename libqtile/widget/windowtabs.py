@@ -66,7 +66,7 @@ class WindowTabs(base._TextBox):
             elif w.floating:
                 state = 'V '
             task = "%s%s" % (state, w.name if w and w.name else " ")
-            if w is self.bar.screen.group.currentWindow:
+            if w is self.bar.screen.group.current_window:
                 task = task.join(self.selected)
             names.append(task)
         self.text = self.separator.join(names)

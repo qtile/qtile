@@ -271,7 +271,7 @@ class Bar(Gap, configurable.Configurable):
             widget_ungrab_keyboard() must be called.
         """
         self.window.handle_KeyPress = widget.handle_KeyPress
-        self.saved_focus = self.qtile.currentWindow
+        self.saved_focus = self.qtile.current_window
         self.window.window.set_input_focus()
 
     def widget_ungrab_keyboard(self):

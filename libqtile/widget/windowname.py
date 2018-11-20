@@ -53,9 +53,9 @@ class WindowName(base._TextBox):
 
     def update(self, *args):
         if self.for_current_screen:
-            w = self.qtile.current_screen.group.currentWindow
+            w = self.qtile.current_screen.group.current_window
         else:
-            w = self.bar.screen.group.currentWindow
+            w = self.bar.screen.group.current_window
         state = ''
         if self.show_state and w is not None:
             if w.maximized:

@@ -364,7 +364,7 @@ class Screen(command.CommandObject):
                 return utils.lget(self.group.layouts, sel)
         elif name == "window":
             if sel is None:
-                return self.group.currentWindow
+                return self.group.current_window
             else:
                 for i in self.group.windows:
                     if i.window.wid == sel:

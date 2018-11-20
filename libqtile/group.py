@@ -75,15 +75,15 @@ class _Group(command.CommandObject):
             self.customLayout = None
 
     @property
-    def currentWindow(self):
+    def current_window(self):
         try:
             return self.focusHistory[-1]
         except IndexError:
             # no window has focus
             return None
 
-    @currentWindow.setter
-    def currentWindow(self, win):
+    @current_window.setter
+    def current_window(self, win):
         try:
             self.focusHistory.remove(win)
         except ValueError:
@@ -99,7 +99,7 @@ class _Group(command.CommandObject):
             return False
         else:
             del self.focusHistory[index]
-            # return True if win was the last item (i.e. it was currentWindow)
+            # return True if win was the last item (i.e. it was current_window)
             return index == len(self.focusHistory)
 
     @property
@@ -144,7 +144,7 @@ class _Group(command.CommandObject):
     def layoutAll(self, warp=False):
         """Layout the floating layer, then the current layout.
 
-        If we have have a currentWindow give it focus, optionally moving warp
+        If we have have a current_window give it focus, optionally moving warp
         to it.
         """
         if self.screen and len(self.windows):
@@ -163,9 +163,9 @@ class _Group(command.CommandObject):
                                          self.layout.name)
                 if floating:
                     self.floating_layout.layout(floating, screen)
-                if self.currentWindow and \
+                if self.current_window and \
                         self.screen == self.qtile.current_screen:
-                    self.currentWindow.focus(warp)
+                    self.current_window.focus(warp)
 
     def _setScreen(self, screen):
         """Set this group's screen to new_screen"""
@@ -223,7 +223,7 @@ class _Group(command.CommandObject):
         if win:
             if win not in self.windows:
                 return
-            self.currentWindow = win
+            self.current_window = win
             if win.floating:
                 for l in self.layouts:
                     l.blur()
@@ -239,7 +239,7 @@ class _Group(command.CommandObject):
         return dict(
             name=self.name,
             label=self.label,
-            focus=self.currentWindow.name if self.currentWindow else None,
+            focus=self.current_window.name if self.current_window else None,
             windows=[i.name for i in self.windows],
             focusHistory=[i.name for i in self.focusHistory],
             layout=self.layout.name,
@@ -280,7 +280,7 @@ class _Group(command.CommandObject):
             nextfocus = self.floating_layout.remove(win)
 
             nextfocus = nextfocus or \
-                self.currentWindow or \
+                self.current_window or \
                 self.layout.focus_first() or \
                 self.floating_layout.focus_first(group=self)
         else:
@@ -292,7 +292,7 @@ class _Group(command.CommandObject):
 
             nextfocus = nextfocus or \
                 self.floating_layout.focus_first(group=self) or \
-                self.currentWindow or \
+                self.current_window or \
                 self.layout.focus_first()
 
         # a notification may not have focus
@@ -312,17 +312,17 @@ class _Group(command.CommandObject):
             else:
                 for i in self.layouts:
                     i.remove(win)
-                    if win is self.currentWindow:
+                    if win is self.current_window:
                         i.blur()
                 self.floating_layout.add(win)
-                if win is self.currentWindow:
+                if win is self.current_window:
                     self.floating_layout.focus(win)
         else:
             self.floating_layout.remove(win)
             self.floating_layout.blur()
             for i in self.layouts:
                 i.add(win)
-                if win is self.currentWindow:
+                if win is self.current_window:
                     i.focus(win)
         self.layoutAll()
 
@@ -342,7 +342,7 @@ class _Group(command.CommandObject):
                 return utils.lget(self.layouts, sel)
         elif name == "window":
             if sel is None:
-                return self.currentWindow
+                return self.current_window
             else:
                 for i in self.windows:
                     if i.window.wid == sel:
@@ -427,12 +427,12 @@ class _Group(command.CommandObject):
         """
         if not self.windows:
             return
-        if self.currentWindow.floating:
-            nxt = self.floating_layout.focus_next(self.currentWindow) or \
+        if self.current_window.floating:
+            nxt = self.floating_layout.focus_next(self.current_window) or \
                 self.layout.focus_first() or \
                 self.floating_layout.focus_first(group=self)
         else:
-            nxt = self.layout.focus_next(self.currentWindow) or \
+            nxt = self.layout.focus_next(self.current_window) or \
                 self.floating_layout.focus_first(group=self) or \
                 self.layout.focus_first()
         self.focus(nxt, True)
@@ -447,12 +447,12 @@ class _Group(command.CommandObject):
         """
         if not self.windows:
             return
-        if self.currentWindow.floating:
-            nxt = self.floating_layout.focus_previous(self.currentWindow) or \
+        if self.current_window.floating:
+            nxt = self.floating_layout.focus_previous(self.current_window) or \
                 self.layout.focus_last() or \
                 self.floating_layout.focus_last(group=self)
         else:
-            nxt = self.layout.focus_previous(self.currentWindow) or \
+            nxt = self.layout.focus_previous(self.current_window) or \
                 self.floating_layout.focus_last(group=self) or \
                 self.layout.focus_last()
         self.focus(nxt, True)
