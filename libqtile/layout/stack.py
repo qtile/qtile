@@ -107,7 +107,7 @@ class Stack(Layout):
                 if i:
                     return i
 
-    def deleteCurrentStack(self):
+    def delete_current_stack(self):
         if len(self.stacks) > 1:
             off = self.current_stack_offset or 0
             s = self.stacks[off]
@@ -288,7 +288,7 @@ class Stack(Layout):
 
     def cmd_delete(self):
         """Delete the current stack from the layout"""
-        self.deleteCurrentStack()
+        self.delete_current_stack()
 
     def cmd_add(self):
         """Add another stack to the layout"""
