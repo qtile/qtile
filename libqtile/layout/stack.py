@@ -221,9 +221,9 @@ class Stack(Layout):
         else:
             px = self.group.qtile.color_pixel(self.border_normal)
 
-        columnWidth = int(screen.width / len(self.stacks))
-        xoffset = screen.x + i * columnWidth
-        winWidth = columnWidth - 2 * self.border_width
+        column_width = int(screen.width / len(self.stacks))
+        xoffset = screen.x + i * column_width
+        winWidth = column_width - 2 * self.border_width
 
         if s.split:
             column_height = int(screen.height / len(s))
