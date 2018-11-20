@@ -187,9 +187,9 @@ class Floating(Layout):
             return
 
         if client.has_focus:
-            bc = client.group.qtile.colorPixel(self.border_focus)
+            bc = client.group.qtile.color_pixel(self.border_focus)
         else:
-            bc = client.group.qtile.colorPixel(self.border_normal)
+            bc = client.group.qtile.color_pixel(self.border_normal)
         if client.maximized:
             bw = self.max_border_width
         elif client.fullscreen:

@@ -1062,9 +1062,9 @@ def test_minimal__(qtile):
 
 
 @manager_config
-def test_colorPixel(qtile):
+def test_color_pixel(qtile):
     # test for #394
-    qtile.c.eval("self.colorPixel(\"ffffff\")")
+    qtile.c.eval("self.color_pixel(\"ffffff\")")
 
 
 @manager_config
