@@ -31,7 +31,7 @@ from libqtile import layout
 import libqtile.manager
 import libqtile.config
 from ..conftest import no_xinerama
-from .layout_utils import assertFocused, assert_focus_path
+from .layout_utils import assert_focused, assert_focus_path
 
 
 class StackConfig(object):
@@ -247,7 +247,7 @@ def test_stack_window_focus_cycle(qtile):
     # test preconditions, stack adds clients at pos of current
     assert qtile.c.layout.info()['clients'] == ['three', 'one', 'two']
     # last added window has focus
-    assertFocused(qtile, "three")
+    assert_focused(qtile, "three")
 
     # assert window focus cycle, according to order in layout
     assert_focus_path(qtile, 'one', 'two', 'float1', 'float2', 'three')

@@ -24,7 +24,7 @@ from libqtile import layout
 import libqtile.manager
 import libqtile.config
 import libqtile.hook
-from .layout_utils import assertFocused, assert_focus_path_unordered
+from .layout_utils import assert_focused, assert_focus_path_unordered
 
 
 class AllLayoutsConfig(object):
@@ -110,7 +110,7 @@ def test_window_types(qtile):
     # A dialog should take focus and be floating
     qtile.testDialog("dialog")
     qtile.c.window.info()['floating'] is True
-    assertFocused(qtile, "dialog")
+    assert_focused(qtile, "dialog")
 
     # A notification shouldn't steal focus and should be floating
     qtile.testNotification("notification")
@@ -130,7 +130,7 @@ def test_focus_cycle(qtile):
 
     # Test preconditions (the order of items in 'clients' is managed by each layout)
     assert set(qtile.c.layout.info()['clients']) == {'one', 'two', 'three'}
-    assertFocused(qtile, "three")
+    assert_focused(qtile, "three")
 
     # Assert that the layout cycles the focus on all windows
     assert_focus_path_unordered(qtile, 'float1', 'float2', 'one', 'two', 'three')
@@ -144,31 +144,31 @@ def test_focus_back(qtile):
     # Nothing must happen with only one window
     qtile.testWindow("one")
     qtile.c.group.focus_back()
-    assertFocused(qtile, "one")
+    assert_focused(qtile, "one")
 
     # 2 windows
     two = qtile.testWindow("two")
-    assertFocused(qtile, "two")
+    assert_focused(qtile, "two")
     qtile.c.group.focus_back()
-    assertFocused(qtile, "one")
+    assert_focused(qtile, "one")
     qtile.c.group.focus_back()
-    assertFocused(qtile, "two")
+    assert_focused(qtile, "two")
 
     # Float a window
     three = qtile.testWindow("three")
     qtile.c.group.focus_back()
-    assertFocused(qtile, "two")
+    assert_focused(qtile, "two")
     qtile.c.window.toggle_floating()
     qtile.c.group.focus_back()
-    assertFocused(qtile, "three")
+    assert_focused(qtile, "three")
 
     # If the previous window is killed, the further previous one must be focused
     qtile.testWindow("four")
     qtile.kill_window(two)
     qtile.kill_window(three)
-    assertFocused(qtile, "four")
+    assert_focused(qtile, "four")
     qtile.c.group.focus_back()
-    assertFocused(qtile, "one")
+    assert_focused(qtile, "one")
 
 
 # TODO: Test more events
@@ -194,10 +194,10 @@ def test_focus_change_event(qtile):
     assert qtile.c.get_test_data()['focus_change'] == 5
 
     # Switching window must fire only 1 focus_change event
-    assertFocused(qtile, "three")
+    assert_focused(qtile, "three")
     qtile.c.group.focus_by_name("one")
     assert qtile.c.get_test_data()['focus_change'] == 6
-    assertFocused(qtile, "one")
+    assert_focused(qtile, "one")
 
     # Focusing the current window must fire another focus_change event
     qtile.c.group.focus_by_name("one")
@@ -210,7 +210,7 @@ def test_focus_change_event(qtile):
     assert qtile.c.get_test_data()['focus_change'] == 7
 
     # Removing the focused window must fire only 1 focus_change event
-    assertFocused(qtile, "one")
+    assert_focused(qtile, "one")
     assert qtile.c.group.info()['focusHistory'] == ["two", "three", "one"]
     qtile.kill_window(one)
     assert qtile.c.get_test_data()['focus_change'] == 8
@@ -226,7 +226,7 @@ def test_focus_change_event(qtile):
     # Removing a non-focused window must not fire focus_change events
     qtile.kill_window(two)
     assert qtile.c.get_test_data()['focus_change'] == 9
-    assertFocused(qtile, "three")
+    assert_focused(qtile, "three")
 
     # Removing the last window must still generate 1 focus_change event
     qtile.kill_window(three)
@@ -239,7 +239,7 @@ def test_remove(qtile):
     one = qtile.testWindow("one")
     two = qtile.testWindow("two")
     three = qtile.testWindow("three")
-    assertFocused(qtile, "three")
+    assert_focused(qtile, "three")
     assert qtile.c.group.info()['focusHistory'] == ["one", "two", "three"]
 
     # Removing a focused window must focus another (which one depends on the layout)
@@ -249,12 +249,12 @@ def test_remove(qtile):
     # To continue testing, explicitly set focus on 'two'
     qtile.c.group.focus_by_name("two")
     qtile.testWindow("four")
-    assertFocused(qtile, "four")
+    assert_focused(qtile, "four")
     assert qtile.c.group.info()['focusHistory'] == ["one", "two", "four"]
 
     # Removing a non-focused window must not change the current focus
     qtile.kill_window(two)
-    assertFocused(qtile, "four")
+    assert_focused(qtile, "four")
     assert qtile.c.group.info()['focusHistory'] == ["one", "four"]
 
     # Add more windows and shuffle the focus order
@@ -263,13 +263,13 @@ def test_remove(qtile):
     qtile.c.group.focus_by_name("one")
     seven = qtile.testWindow("seven")
     qtile.c.group.focus_by_name("six")
-    assertFocused(qtile, "six")
+    assert_focused(qtile, "six")
     assert qtile.c.group.info()['focusHistory'] == ["four", "five", "one",
                                                     "seven", "six"]
 
     qtile.kill_window(five)
     qtile.kill_window(one)
-    assertFocused(qtile, "six")
+    assert_focused(qtile, "six")
     assert qtile.c.group.info()['focusHistory'] == ["four", "seven", "six"]
 
     qtile.c.group.focus_by_name("seven")
@@ -284,23 +284,23 @@ def test_remove_floating(qtile):
     one = qtile.testWindow("one")
     qtile.testWindow("two")
     float1 = qtile.testDialog("float1")
-    assertFocused(qtile, "float1")
+    assert_focused(qtile, "float1")
     assert set(qtile.c.layout.info()['clients']) == {"one", "two"}
     assert qtile.c.group.info()['focusHistory'] == ["one", "two", "float1"]
 
     # Removing a focused floating window must focus the one that was focused before
     qtile.kill_window(float1)
-    assertFocused(qtile, "two")
+    assert_focused(qtile, "two")
     assert qtile.c.group.info()['focusHistory'] == ["one", "two"]
 
     float2 = qtile.testDialog("float2")
-    assertFocused(qtile, "float2")
+    assert_focused(qtile, "float2")
     assert qtile.c.group.info()['focusHistory'] == ["one", "two", "float2"]
 
     # Removing a non-focused floating window must not change the current focus
     qtile.c.group.focus_by_name("two")
     qtile.kill_window(float2)
-    assertFocused(qtile, "two")
+    assert_focused(qtile, "two")
     assert qtile.c.group.info()['focusHistory'] == ["one", "two"]
 
     # Add more windows and shuffle the focus order
@@ -315,19 +315,19 @@ def test_remove_floating(qtile):
                                                     "float5", "three", "float3"]
 
     qtile.kill_window(one)
-    assertFocused(qtile, "float3")
+    assert_focused(qtile, "float3")
     assert qtile.c.group.info()['focusHistory'] == ["two", "float4",
                                                     "float5", "three", "float3"]
 
     qtile.kill_window(float5)
-    assertFocused(qtile, "float3")
+    assert_focused(qtile, "float3")
     assert qtile.c.group.info()['focusHistory'] == ["two", "float4", "three", "float3"]
 
     # The focus must be given to the previous window even if it's floating
     qtile.c.group.focus_by_name("float4")
     assert qtile.c.group.info()['focusHistory'] == ["two", "three", "float3", "float4"]
     qtile.kill_window(float4)
-    assertFocused(qtile, "float3")
+    assert_focused(qtile, "float3")
     assert qtile.c.group.info()['focusHistory'] == ["two", "three", "float3"]
 
     four = qtile.testWindow("four")
@@ -345,7 +345,7 @@ def test_remove_floating(qtile):
     qtile.kill_window(float6)
     assert qtile.c.group.info()['focusHistory'] == ["two", "three", "float3"]
     qtile.kill_window(float3)
-    assertFocused(qtile, "three")
+    assert_focused(qtile, "three")
     assert qtile.c.group.info()['focusHistory'] == ["two", "three"]
 
 
@@ -369,7 +369,7 @@ def test_desktop_notifications(qtile):
 
     # Another notification is fired, but the focus must not change
     notif3 = qtile.testNotification("notif3")
-    assertFocused(qtile, 'one')
+    assert_focused(qtile, 'one')
     qtile.kill_window(notif3)
 
     # Complicate the scenario with multiple windows and notifications
@@ -409,7 +409,7 @@ def test_cycle_layouts(qtile):
     qtile.testWindow("three")
     qtile.testWindow("four")
     qtile.c.group.focus_by_name("three")
-    assertFocused(qtile, "three")
+    assert_focused(qtile, "three")
 
     # Cycling all the layouts must keep the current window focused
     initial_layout_name = qtile.c.layout.info()['name']

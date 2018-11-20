@@ -23,7 +23,7 @@ import pytest
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from .layout_utils import assert_dimensions, assertFocused, assert_focus_path
+from .layout_utils import assert_dimensions, assert_focused, assert_focus_path
 from ..conftest import no_xinerama
 
 
@@ -113,20 +113,20 @@ def test_tall_add_clients(qtile):
     qtile.testWindow('two')
     assert qtile.c.layout.info()["main"] == 'one'
     assert qtile.c.layout.info()["secondary"] == ['two']
-    assertFocused(qtile, 'two')
+    assert_focused(qtile, 'two')
 
     qtile.testWindow('three')
     assert qtile.c.layout.info()["main"] == 'one'
     assert qtile.c.layout.info()["secondary"] == ['two', 'three']
-    assertFocused(qtile, 'three')
+    assert_focused(qtile, 'three')
 
     qtile.c.layout.previous()
-    assertFocused(qtile, 'two')
+    assert_focused(qtile, 'two')
 
     qtile.testWindow('four')
     assert qtile.c.layout.info()["main"] == 'one'
     assert qtile.c.layout.info()["secondary"] == ['two', 'four', 'three']
-    assertFocused(qtile, 'four')
+    assert_focused(qtile, 'four')
 
 
 @monadwide_config
@@ -135,20 +135,20 @@ def test_wide_add_clients(qtile):
     qtile.testWindow('two')
     assert qtile.c.layout.info()["main"] == 'one'
     assert qtile.c.layout.info()["secondary"] == ['two']
-    assertFocused(qtile, 'two')
+    assert_focused(qtile, 'two')
 
     qtile.testWindow('three')
     assert qtile.c.layout.info()["main"] == 'one'
     assert qtile.c.layout.info()["secondary"] == ['two', 'three']
-    assertFocused(qtile, 'three')
+    assert_focused(qtile, 'three')
 
     qtile.c.layout.previous()
-    assertFocused(qtile, 'two')
+    assert_focused(qtile, 'two')
 
     qtile.testWindow('four')
     assert qtile.c.layout.info()["main"] == 'one'
     assert qtile.c.layout.info()["secondary"] == ['two', 'four', 'three']
-    assertFocused(qtile, 'four')
+    assert_focused(qtile, 'four')
 
 
 @monadtallmargins_config
@@ -157,11 +157,11 @@ def test_tall_margins(qtile):
     assert_dimensions(qtile, 4, 4, 788, 588)
 
     qtile.testWindow('two')
-    assertFocused(qtile, 'two')
+    assert_focused(qtile, 'two')
     assert_dimensions(qtile, 404, 4, 388, 588)
 
     qtile.c.layout.previous()
-    assertFocused(qtile, 'one')
+    assert_focused(qtile, 'one')
     assert_dimensions(qtile, 4, 4, 392, 588)
 
 
@@ -171,11 +171,11 @@ def test_wide_margins(qtile):
     assert_dimensions(qtile, 4, 4, 788, 588)
 
     qtile.testWindow('two')
-    assertFocused(qtile, 'two')
+    assert_focused(qtile, 'two')
     assert_dimensions(qtile, 4, 304, 788, 288)
 
     qtile.c.layout.previous()
-    assertFocused(qtile, 'one')
+    assert_focused(qtile, 'one')
     assert_dimensions(qtile, 4, 4, 788, 292)
 
 
@@ -186,7 +186,7 @@ def test_tall_growmain_solosecondary(qtile):
 
     qtile.testWindow('two')
     qtile.c.layout.previous()
-    assertFocused(qtile, 'one')
+    assert_focused(qtile, 'one')
 
     assert_dimensions(qtile, 0, 0, 396, 596)
     qtile.c.layout.grow()
@@ -213,7 +213,7 @@ def test_wide_growmain_solosecondary(qtile):
 
     qtile.testWindow('two')
     qtile.c.layout.previous()
-    assertFocused(qtile, 'one')
+    assert_focused(qtile, 'one')
 
     assert_dimensions(qtile, 0, 0, 796, 296)
     qtile.c.layout.grow()
@@ -242,7 +242,7 @@ def test_tall_growmain_multiplesecondary(qtile):
     qtile.testWindow('three')
     qtile.c.layout.previous()
     qtile.c.layout.previous()
-    assertFocused(qtile, 'one')
+    assert_focused(qtile, 'one')
 
     assert_dimensions(qtile, 0, 0, 396, 596)
     qtile.c.layout.grow()
@@ -271,7 +271,7 @@ def test_wide_growmain_multiplesecondary(qtile):
     qtile.testWindow('three')
     qtile.c.layout.previous()
     qtile.c.layout.previous()
-    assertFocused(qtile, 'one')
+    assert_focused(qtile, 'one')
 
     assert_dimensions(qtile, 0, 0, 796, 296)
     qtile.c.layout.grow()
@@ -297,7 +297,7 @@ def test_tall_growsecondary_solosecondary(qtile):
     assert_dimensions(qtile, 0, 0, 796, 596)
 
     qtile.testWindow('two')
-    assertFocused(qtile, 'two')
+    assert_focused(qtile, 'two')
 
     assert_dimensions(qtile, 400, 0, 396, 596)
     qtile.c.layout.grow()
@@ -323,7 +323,7 @@ def test_wide_growsecondary_solosecondary(qtile):
     assert_dimensions(qtile, 0, 0, 796, 596)
 
     qtile.testWindow('two')
-    assertFocused(qtile, 'two')
+    assert_focused(qtile, 'two')
 
     assert_dimensions(qtile, 0, 300, 796, 296)
     qtile.c.layout.grow()
@@ -351,7 +351,7 @@ def test_tall_growsecondary_multiplesecondary(qtile):
     qtile.testWindow('two')
     qtile.testWindow('three')
     qtile.c.layout.previous()
-    assertFocused(qtile, 'two')
+    assert_focused(qtile, 'two')
 
     assert_dimensions(qtile, 400, 0, 396, 296)
     # Grow 20 pixels
@@ -379,7 +379,7 @@ def test_wide_growsecondary_multiplesecondary(qtile):
     qtile.testWindow('two')
     qtile.testWindow('three')
     qtile.c.layout.previous()
-    assertFocused(qtile, 'two')
+    assert_focused(qtile, 'two')
 
     assert_dimensions(qtile, 0, 300, 396, 296)
     # Grow 20 pixels
@@ -407,30 +407,30 @@ def test_tall_flip(qtile):
 
     # Check all the dimensions
     qtile.c.layout.next()
-    assertFocused(qtile, 'one')
+    assert_focused(qtile, 'one')
     assert_dimensions(qtile, 0, 0, 396, 596)
 
     qtile.c.layout.next()
-    assertFocused(qtile, 'two')
+    assert_focused(qtile, 'two')
     assert_dimensions(qtile, 400, 0, 396, 296)
 
     qtile.c.layout.next()
-    assertFocused(qtile, 'three')
+    assert_focused(qtile, 'three')
     assert_dimensions(qtile, 400, 300, 396, 296)
 
     # Now flip it and do it again
     qtile.c.layout.flip()
 
     qtile.c.layout.next()
-    assertFocused(qtile, 'one')
+    assert_focused(qtile, 'one')
     assert_dimensions(qtile, 400, 0, 396, 596)
 
     qtile.c.layout.next()
-    assertFocused(qtile, 'two')
+    assert_focused(qtile, 'two')
     assert_dimensions(qtile, 0, 0, 396, 296)
 
     qtile.c.layout.next()
-    assertFocused(qtile, 'three')
+    assert_focused(qtile, 'three')
     assert_dimensions(qtile, 0, 300, 396, 296)
 
 
@@ -442,30 +442,30 @@ def test_wide_flip(qtile):
 
     # Check all the dimensions
     qtile.c.layout.next()
-    assertFocused(qtile, 'one')
+    assert_focused(qtile, 'one')
     assert_dimensions(qtile, 0, 0, 796, 296)
 
     qtile.c.layout.next()
-    assertFocused(qtile, 'two')
+    assert_focused(qtile, 'two')
     assert_dimensions(qtile, 0, 300, 396, 296)
 
     qtile.c.layout.next()
-    assertFocused(qtile, 'three')
+    assert_focused(qtile, 'three')
     assert_dimensions(qtile, 400, 300, 396, 296)
 
     # Now flip it and do it again
     qtile.c.layout.flip()
 
     qtile.c.layout.next()
-    assertFocused(qtile, 'one')
+    assert_focused(qtile, 'one')
     assert_dimensions(qtile, 0, 300, 796, 296)
 
     qtile.c.layout.next()
-    assertFocused(qtile, 'two')
+    assert_focused(qtile, 'two')
     assert_dimensions(qtile, 0, 0, 396, 296)
 
     qtile.c.layout.next()
-    assertFocused(qtile, 'three')
+    assert_focused(qtile, 'three')
     assert_dimensions(qtile, 400, 0, 396, 296)
 
 
@@ -613,7 +613,7 @@ def test_tall_window_focus_cycle(qtile):
     # test preconditions
     assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
     # last added window has focus
-    assertFocused(qtile, "three")
+    assert_focused(qtile, "three")
 
     # starting from the last tiled client, we first cycle through floating ones,
     # and afterwards through the tiled
@@ -634,7 +634,7 @@ def test_wide_window_focus_cycle(qtile):
     # test preconditions
     assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
     # last added window has focus
-    assertFocused(qtile, "three")
+    assert_focused(qtile, "three")
 
     # assert window focus cycle, according to order in layout
     assert_focus_path(qtile, 'float1', 'float2', 'one', 'two', 'three')

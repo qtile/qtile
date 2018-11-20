@@ -23,7 +23,7 @@ import pytest
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from .layout_utils import assertFocused
+from .layout_utils import assert_focused
 from ..conftest import no_xinerama
 
 
@@ -57,20 +57,20 @@ def test_float_next_prev_window(qtile):
     self.testWindow("three")
 
     # focus previous windows
-    assertFocused(self, "three")
+    assert_focused(self, "three")
     self.c.group.prev_window()
-    assertFocused(self, "two")
+    assert_focused(self, "two")
     self.c.group.prev_window()
-    assertFocused(self, "one")
+    assert_focused(self, "one")
     # checking that it loops around properly
     self.c.group.prev_window()
-    assertFocused(self, "three")
+    assert_focused(self, "three")
 
     # focus next windows
     # checking that it loops around properly
     self.c.group.next_window()
-    assertFocused(self, "one")
+    assert_focused(self, "one")
     self.c.group.next_window()
-    assertFocused(self, "two")
+    assert_focused(self, "two")
     self.c.group.next_window()
-    assertFocused(self, "three")
+    assert_focused(self, "three")
