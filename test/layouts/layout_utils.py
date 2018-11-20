@@ -33,7 +33,7 @@ def assertFocused(self, name):
         info['name'], name)
 
 
-def assertDimensions(self, x, y, w, h, win=None):
+def assert_dimensions(self, x, y, w, h, win=None):
     """Asserts dimensions of window"""
     if win is None:
         win = self.c.window
