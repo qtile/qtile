@@ -53,19 +53,19 @@ class _Group(command.CommandObject):
         self.qtile = None
         self.layouts = []
         self.floating_layout = None
-        # self.focusHistory lists the group's windows in the order they
+        # self.focus_history lists the group's windows in the order they
         # received focus, from the oldest (first item) to the currently
         # focused window (last item); NB the list does *not* contain any
         # windows that never received focus; refer to self.windows for the
         # complete set
-        self.focusHistory = []
+        self.focus_history = []
         self.screen = None
         self.current_layout = None
 
     def _configure(self, layouts, floating_layout, qtile):
         self.screen = None
         self.current_layout = 0
-        self.focusHistory = []
+        self.focus_history = []
         self.windows = set()
         self.qtile = qtile
         self.layouts = [i.clone(self) for i in layouts]
@@ -77,7 +77,7 @@ class _Group(command.CommandObject):
     @property
     def current_window(self):
         try:
-            return self.focusHistory[-1]
+            return self.focus_history[-1]
         except IndexError:
             # no window has focus
             return None
@@ -85,22 +85,22 @@ class _Group(command.CommandObject):
     @current_window.setter
     def current_window(self, win):
         try:
-            self.focusHistory.remove(win)
+            self.focus_history.remove(win)
         except ValueError:
             # win has never received focus before
             pass
-        self.focusHistory.append(win)
+        self.focus_history.append(win)
 
     def _remove_from_focus_history(self, win):
         try:
-            index = self.focusHistory.index(win)
+            index = self.focus_history.index(win)
         except ValueError:
             # win has never received focus
             return False
         else:
-            del self.focusHistory[index]
+            del self.focus_history[index]
             # return True if win was the last item (i.e. it was current_window)
-            return index == len(self.focusHistory)
+            return index == len(self.focus_history)
 
     @property
     def layout(self):
@@ -241,7 +241,7 @@ class _Group(command.CommandObject):
             label=self.label,
             focus=self.current_window.name if self.current_window else None,
             windows=[i.name for i in self.windows],
-            focusHistory=[i.name for i in self.focusHistory],
+            focus_history=[i.name for i in self.focus_history],
             layout=self.layout.name,
             layouts=[l.name for l in self.layouts],
             floating_info=self.floating_layout.info(),
@@ -466,7 +466,7 @@ class _Group(command.CommandObject):
         windows ever received focus.
         """
         try:
-            win = self.focusHistory[-2]
+            win = self.focus_history[-2]
         except IndexError:
             pass
         else:
