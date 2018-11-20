@@ -44,10 +44,10 @@ class DebugInfo(base._TextBox):
 
         if isinstance(w.group.layout, layout.Stack):
             stack = w.group.layout.currentStack
-            stackOffset = w.group.layout.current_stack_offset
+            stack_offset = w.group.layout.current_stack_offset
             idx = stack.lst.index(w)
             current = stack.current
-            self.text = "Stack: %s Idx: %s Cur: %s" % (stackOffset,
+            self.text = "Stack: %s Idx: %s Cur: %s" % (stack_offset,
                                                        idx,
                                                        current)
         elif isinstance(w.group.layout, layout.TreeTab):
