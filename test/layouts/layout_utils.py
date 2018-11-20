@@ -26,7 +26,7 @@
 # SOFTWARE.
 
 
-def assertFocused(self, name):
+def assert_focused(self, name):
     """Asserts that window with specified name is currently focused"""
     info = self.c.window.info()
     assert info['name'] == name, 'Got {0!r}, expected {1!r}'.format(
@@ -51,18 +51,18 @@ def assert_focus_path(self, *names):
     """
     for i in names:
         self.c.group.next_window()
-        assertFocused(self, i)
+        assert_focused(self, i)
     # let's check twice for sure
     for i in names:
         self.c.group.next_window()
-        assertFocused(self, i)
+        assert_focused(self, i)
     # Ok, let's check backwards now
     for i in reversed(names):
-        assertFocused(self, i)
+        assert_focused(self, i)
         self.c.group.prev_window()
     # and twice for sure
     for i in reversed(names):
-        assertFocused(self, i)
+        assert_focused(self, i)
         self.c.group.prev_window()
 
 
