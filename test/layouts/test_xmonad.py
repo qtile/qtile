@@ -23,7 +23,7 @@ import pytest
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from .layout_utils import assertDimensions, assertFocused, assertFocusPath
+from .layout_utils import assert_dimensions, assertFocused, assertFocusPath
 from ..conftest import no_xinerama
 
 
@@ -154,89 +154,89 @@ def test_wide_add_clients(qtile):
 @monadtallmargins_config
 def test_tall_margins(qtile):
     qtile.testWindow('one')
-    assertDimensions(qtile, 4, 4, 788, 588)
+    assert_dimensions(qtile, 4, 4, 788, 588)
 
     qtile.testWindow('two')
     assertFocused(qtile, 'two')
-    assertDimensions(qtile, 404, 4, 388, 588)
+    assert_dimensions(qtile, 404, 4, 388, 588)
 
     qtile.c.layout.previous()
     assertFocused(qtile, 'one')
-    assertDimensions(qtile, 4, 4, 392, 588)
+    assert_dimensions(qtile, 4, 4, 392, 588)
 
 
 @monadwidemargins_config
 def test_wide_margins(qtile):
     qtile.testWindow('one')
-    assertDimensions(qtile, 4, 4, 788, 588)
+    assert_dimensions(qtile, 4, 4, 788, 588)
 
     qtile.testWindow('two')
     assertFocused(qtile, 'two')
-    assertDimensions(qtile, 4, 304, 788, 288)
+    assert_dimensions(qtile, 4, 304, 788, 288)
 
     qtile.c.layout.previous()
     assertFocused(qtile, 'one')
-    assertDimensions(qtile, 4, 4, 788, 292)
+    assert_dimensions(qtile, 4, 4, 788, 292)
 
 
 @monadtall_config
 def test_tall_growmain_solosecondary(qtile):
     qtile.testWindow('one')
-    assertDimensions(qtile, 0, 0, 796, 596)
+    assert_dimensions(qtile, 0, 0, 796, 596)
 
     qtile.testWindow('two')
     qtile.c.layout.previous()
     assertFocused(qtile, 'one')
 
-    assertDimensions(qtile, 0, 0, 396, 596)
+    assert_dimensions(qtile, 0, 0, 396, 596)
     qtile.c.layout.grow()
     # Grows 5% of 800 = 40 pixels
-    assertDimensions(qtile, 0, 0, 436, 596)
+    assert_dimensions(qtile, 0, 0, 436, 596)
     qtile.c.layout.shrink()
-    assertDimensions(qtile, 0, 0, 396, 596)
+    assert_dimensions(qtile, 0, 0, 396, 596)
 
     # Max width is 75% of 800 = 600 pixels
     for _ in range(10):
         qtile.c.layout.grow()
-    assertDimensions(qtile, 0, 0, 596, 596)
+    assert_dimensions(qtile, 0, 0, 596, 596)
 
     # Min width is 25% of 800 = 200 pixels
     for _ in range(10):
         qtile.c.layout.shrink()
-    assertDimensions(qtile, 0, 0, 196, 596)
+    assert_dimensions(qtile, 0, 0, 196, 596)
 
 
 @monadwide_config
 def test_wide_growmain_solosecondary(qtile):
     qtile.testWindow('one')
-    assertDimensions(qtile, 0, 0, 796, 596)
+    assert_dimensions(qtile, 0, 0, 796, 596)
 
     qtile.testWindow('two')
     qtile.c.layout.previous()
     assertFocused(qtile, 'one')
 
-    assertDimensions(qtile, 0, 0, 796, 296)
+    assert_dimensions(qtile, 0, 0, 796, 296)
     qtile.c.layout.grow()
     # Grows 5% of 800 = 30 pixels
-    assertDimensions(qtile, 0, 0, 796, 326)
+    assert_dimensions(qtile, 0, 0, 796, 326)
     qtile.c.layout.shrink()
-    assertDimensions(qtile, 0, 0, 796, 296)
+    assert_dimensions(qtile, 0, 0, 796, 296)
 
     # Max width is 75% of 600 = 450 pixels
     for _ in range(10):
         qtile.c.layout.grow()
-    assertDimensions(qtile, 0, 0, 796, 446)
+    assert_dimensions(qtile, 0, 0, 796, 446)
 
     # Min width is 25% of 600 = 150 pixels
     for _ in range(10):
         qtile.c.layout.shrink()
-    assertDimensions(qtile, 0, 0, 796, 146)
+    assert_dimensions(qtile, 0, 0, 796, 146)
 
 
 @monadtall_config
 def test_tall_growmain_multiplesecondary(qtile):
     qtile.testWindow('one')
-    assertDimensions(qtile, 0, 0, 796, 596)
+    assert_dimensions(qtile, 0, 0, 796, 596)
 
     qtile.testWindow('two')
     qtile.testWindow('three')
@@ -244,28 +244,28 @@ def test_tall_growmain_multiplesecondary(qtile):
     qtile.c.layout.previous()
     assertFocused(qtile, 'one')
 
-    assertDimensions(qtile, 0, 0, 396, 596)
+    assert_dimensions(qtile, 0, 0, 396, 596)
     qtile.c.layout.grow()
     # Grows 5% of 800 = 40 pixels
-    assertDimensions(qtile, 0, 0, 436, 596)
+    assert_dimensions(qtile, 0, 0, 436, 596)
     qtile.c.layout.shrink()
-    assertDimensions(qtile, 0, 0, 396, 596)
+    assert_dimensions(qtile, 0, 0, 396, 596)
 
     # Max width is 75% of 800 = 600 pixels
     for _ in range(10):
         qtile.c.layout.grow()
-    assertDimensions(qtile, 0, 0, 596, 596)
+    assert_dimensions(qtile, 0, 0, 596, 596)
 
     # Min width is 25% of 800 = 200 pixels
     for _ in range(10):
         qtile.c.layout.shrink()
-    assertDimensions(qtile, 0, 0, 196, 596)
+    assert_dimensions(qtile, 0, 0, 196, 596)
 
 
 @monadwide_config
 def test_wide_growmain_multiplesecondary(qtile):
     qtile.testWindow('one')
-    assertDimensions(qtile, 0, 0, 796, 596)
+    assert_dimensions(qtile, 0, 0, 796, 596)
 
     qtile.testWindow('two')
     qtile.testWindow('three')
@@ -273,130 +273,130 @@ def test_wide_growmain_multiplesecondary(qtile):
     qtile.c.layout.previous()
     assertFocused(qtile, 'one')
 
-    assertDimensions(qtile, 0, 0, 796, 296)
+    assert_dimensions(qtile, 0, 0, 796, 296)
     qtile.c.layout.grow()
     # Grows 5% of 600 = 30 pixels
-    assertDimensions(qtile, 0, 0, 796, 326)
+    assert_dimensions(qtile, 0, 0, 796, 326)
     qtile.c.layout.shrink()
-    assertDimensions(qtile, 0, 0, 796, 296)
+    assert_dimensions(qtile, 0, 0, 796, 296)
 
     # Max width is 75% of 600 = 450 pixels
     for _ in range(10):
         qtile.c.layout.grow()
-    assertDimensions(qtile, 0, 0, 796, 446)
+    assert_dimensions(qtile, 0, 0, 796, 446)
 
     # Min width is 25% of 600 = 150 pixels
     for _ in range(10):
         qtile.c.layout.shrink()
-    assertDimensions(qtile, 0, 0, 796, 146)
+    assert_dimensions(qtile, 0, 0, 796, 146)
 
 
 @monadtall_config
 def test_tall_growsecondary_solosecondary(qtile):
     qtile.testWindow('one')
-    assertDimensions(qtile, 0, 0, 796, 596)
+    assert_dimensions(qtile, 0, 0, 796, 596)
 
     qtile.testWindow('two')
     assertFocused(qtile, 'two')
 
-    assertDimensions(qtile, 400, 0, 396, 596)
+    assert_dimensions(qtile, 400, 0, 396, 596)
     qtile.c.layout.grow()
     # Grows 5% of 800 = 40 pixels
-    assertDimensions(qtile, 360, 0, 436, 596)
+    assert_dimensions(qtile, 360, 0, 436, 596)
     qtile.c.layout.shrink()
-    assertDimensions(qtile, 400, 0, 396, 596)
+    assert_dimensions(qtile, 400, 0, 396, 596)
 
     # Max width is 75% of 800 = 600 pixels
     for _ in range(10):
         qtile.c.layout.grow()
-    assertDimensions(qtile, 200, 0, 596, 596)
+    assert_dimensions(qtile, 200, 0, 596, 596)
 
     # Min width is 25% of 800 = 200 pixels
     for _ in range(10):
         qtile.c.layout.shrink()
-    assertDimensions(qtile, 600, 0, 196, 596)
+    assert_dimensions(qtile, 600, 0, 196, 596)
 
 
 @monadwide_config
 def test_wide_growsecondary_solosecondary(qtile):
     qtile.testWindow('one')
-    assertDimensions(qtile, 0, 0, 796, 596)
+    assert_dimensions(qtile, 0, 0, 796, 596)
 
     qtile.testWindow('two')
     assertFocused(qtile, 'two')
 
-    assertDimensions(qtile, 0, 300, 796, 296)
+    assert_dimensions(qtile, 0, 300, 796, 296)
     qtile.c.layout.grow()
     # Grows 5% of 600 = 30 pixels
-    assertDimensions(qtile, 0, 270, 796, 326)
+    assert_dimensions(qtile, 0, 270, 796, 326)
     qtile.c.layout.shrink()
-    assertDimensions(qtile, 0, 300, 796, 296)
+    assert_dimensions(qtile, 0, 300, 796, 296)
 
     # Max width is 75% of 600 = 450 pixels
     for _ in range(10):
         qtile.c.layout.grow()
-    assertDimensions(qtile, 0, 150, 796, 446)
+    assert_dimensions(qtile, 0, 150, 796, 446)
 
     # Min width is 25% of 600 = 150 pixels
     for _ in range(10):
         qtile.c.layout.shrink()
-    assertDimensions(qtile, 0, 450, 796, 146)
+    assert_dimensions(qtile, 0, 450, 796, 146)
 
 
 @monadtall_config
 def test_tall_growsecondary_multiplesecondary(qtile):
     qtile.testWindow('one')
-    assertDimensions(qtile, 0, 0, 796, 596)
+    assert_dimensions(qtile, 0, 0, 796, 596)
 
     qtile.testWindow('two')
     qtile.testWindow('three')
     qtile.c.layout.previous()
     assertFocused(qtile, 'two')
 
-    assertDimensions(qtile, 400, 0, 396, 296)
+    assert_dimensions(qtile, 400, 0, 396, 296)
     # Grow 20 pixels
     qtile.c.layout.grow()
-    assertDimensions(qtile, 400, 0, 396, 316)
+    assert_dimensions(qtile, 400, 0, 396, 316)
     qtile.c.layout.shrink()
-    assertDimensions(qtile, 400, 0, 396, 296)
+    assert_dimensions(qtile, 400, 0, 396, 296)
 
     # Min height of other is 85 pixels, leaving 515
     for _ in range(20):
         qtile.c.layout.grow()
-    assertDimensions(qtile, 400, 0, 396, 511)
+    assert_dimensions(qtile, 400, 0, 396, 511)
 
     # Min height of qtile is 85 pixels
     for _ in range(40):
         qtile.c.layout.shrink()
-    assertDimensions(qtile, 400, 0, 396, 85)
+    assert_dimensions(qtile, 400, 0, 396, 85)
 
 
 @monadwide_config
 def test_wide_growsecondary_multiplesecondary(qtile):
     qtile.testWindow('one')
-    assertDimensions(qtile, 0, 0, 796, 596)
+    assert_dimensions(qtile, 0, 0, 796, 596)
 
     qtile.testWindow('two')
     qtile.testWindow('three')
     qtile.c.layout.previous()
     assertFocused(qtile, 'two')
 
-    assertDimensions(qtile, 0, 300, 396, 296)
+    assert_dimensions(qtile, 0, 300, 396, 296)
     # Grow 20 pixels
     qtile.c.layout.grow()
-    assertDimensions(qtile, 0, 300, 416, 296)
+    assert_dimensions(qtile, 0, 300, 416, 296)
     qtile.c.layout.shrink()
-    assertDimensions(qtile, 0, 300, 396, 296)
+    assert_dimensions(qtile, 0, 300, 396, 296)
 
     # Min width of other is 85 pixels, leaving 715
     for _ in range(20):
         qtile.c.layout.grow()
-    assertDimensions(qtile, 0, 300, 710, 296)  # TODO why not 711 ?
+    assert_dimensions(qtile, 0, 300, 710, 296)  # TODO why not 711 ?
 
     # Min width of qtile is 85 pixels
     for _ in range(40):
         qtile.c.layout.shrink()
-    assertDimensions(qtile, 0, 300, 85, 296)
+    assert_dimensions(qtile, 0, 300, 85, 296)
 
 
 @monadtall_config
@@ -408,30 +408,30 @@ def test_tall_flip(qtile):
     # Check all the dimensions
     qtile.c.layout.next()
     assertFocused(qtile, 'one')
-    assertDimensions(qtile, 0, 0, 396, 596)
+    assert_dimensions(qtile, 0, 0, 396, 596)
 
     qtile.c.layout.next()
     assertFocused(qtile, 'two')
-    assertDimensions(qtile, 400, 0, 396, 296)
+    assert_dimensions(qtile, 400, 0, 396, 296)
 
     qtile.c.layout.next()
     assertFocused(qtile, 'three')
-    assertDimensions(qtile, 400, 300, 396, 296)
+    assert_dimensions(qtile, 400, 300, 396, 296)
 
     # Now flip it and do it again
     qtile.c.layout.flip()
 
     qtile.c.layout.next()
     assertFocused(qtile, 'one')
-    assertDimensions(qtile, 400, 0, 396, 596)
+    assert_dimensions(qtile, 400, 0, 396, 596)
 
     qtile.c.layout.next()
     assertFocused(qtile, 'two')
-    assertDimensions(qtile, 0, 0, 396, 296)
+    assert_dimensions(qtile, 0, 0, 396, 296)
 
     qtile.c.layout.next()
     assertFocused(qtile, 'three')
-    assertDimensions(qtile, 0, 300, 396, 296)
+    assert_dimensions(qtile, 0, 300, 396, 296)
 
 
 @monadwide_config
@@ -443,30 +443,30 @@ def test_wide_flip(qtile):
     # Check all the dimensions
     qtile.c.layout.next()
     assertFocused(qtile, 'one')
-    assertDimensions(qtile, 0, 0, 796, 296)
+    assert_dimensions(qtile, 0, 0, 796, 296)
 
     qtile.c.layout.next()
     assertFocused(qtile, 'two')
-    assertDimensions(qtile, 0, 300, 396, 296)
+    assert_dimensions(qtile, 0, 300, 396, 296)
 
     qtile.c.layout.next()
     assertFocused(qtile, 'three')
-    assertDimensions(qtile, 400, 300, 396, 296)
+    assert_dimensions(qtile, 400, 300, 396, 296)
 
     # Now flip it and do it again
     qtile.c.layout.flip()
 
     qtile.c.layout.next()
     assertFocused(qtile, 'one')
-    assertDimensions(qtile, 0, 300, 796, 296)
+    assert_dimensions(qtile, 0, 300, 796, 296)
 
     qtile.c.layout.next()
     assertFocused(qtile, 'two')
-    assertDimensions(qtile, 0, 0, 396, 296)
+    assert_dimensions(qtile, 0, 0, 396, 296)
 
     qtile.c.layout.next()
     assertFocused(qtile, 'three')
-    assertDimensions(qtile, 400, 0, 396, 296)
+    assert_dimensions(qtile, 400, 0, 396, 296)
 
 
 @monadtall_config

@@ -30,7 +30,7 @@ import pytest
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from .layout_utils import assertDimensions
+from .layout_utils import assert_dimensions
 from ..conftest import no_xinerama
 from .layout_utils import assertFocused, assertFocusPath
 
@@ -60,22 +60,22 @@ def verticaltile_config(x):
 @verticaltile_config
 def test_verticaltile_simple(qtile):
     qtile.testWindow("one")
-    assertDimensions(qtile, 0, 0, 800, 600)
+    assert_dimensions(qtile, 0, 0, 800, 600)
     qtile.testWindow("two")
-    assertDimensions(qtile, 0, 300, 798, 298)
+    assert_dimensions(qtile, 0, 300, 798, 298)
     qtile.testWindow("three")
-    assertDimensions(qtile, 0, 400, 798, 198)
+    assert_dimensions(qtile, 0, 400, 798, 198)
 
 
 @verticaltile_config
 def test_verticaltile_maximize(qtile):
     qtile.testWindow("one")
-    assertDimensions(qtile, 0, 0, 800, 600)
+    assert_dimensions(qtile, 0, 0, 800, 600)
     qtile.testWindow("two")
-    assertDimensions(qtile, 0, 300, 798, 298)
+    assert_dimensions(qtile, 0, 300, 798, 298)
     # Maximize the bottom layout, taking 75% of space
     qtile.c.layout.maximize()
-    assertDimensions(qtile, 0, 150, 798, 448)
+    assert_dimensions(qtile, 0, 150, 798, 448)
 
 
 @verticaltile_config

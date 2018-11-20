@@ -30,7 +30,7 @@ import pytest
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from .layout_utils import assertDimensions, assertFocused, assertFocusPath
+from .layout_utils import assert_dimensions, assertFocused, assertFocusPath
 from ..conftest import no_xinerama
 
 
@@ -64,25 +64,25 @@ def slice_config(x):
 @slice_config
 def test_no_slice(qtile):
     qtile.testWindow('one')
-    assertDimensions(qtile, 200, 0, 600, 600)
+    assert_dimensions(qtile, 200, 0, 600, 600)
     qtile.testWindow('two')
-    assertDimensions(qtile, 200, 0, 600, 600)
+    assert_dimensions(qtile, 200, 0, 600, 600)
 
 
 @slice_config
 def test_slice_first(qtile):
     qtile.testWindow('slice')
-    assertDimensions(qtile, 0, 0, 200, 600)
+    assert_dimensions(qtile, 0, 0, 200, 600)
     qtile.testWindow('two')
-    assertDimensions(qtile, 200, 0, 600, 600)
+    assert_dimensions(qtile, 200, 0, 600, 600)
 
 
 @slice_config
 def test_slice_last(qtile):
     qtile.testWindow('one')
-    assertDimensions(qtile, 200, 0, 600, 600)
+    assert_dimensions(qtile, 200, 0, 600, 600)
     qtile.testWindow('slice')
-    assertDimensions(qtile, 0, 0, 200, 600)
+    assert_dimensions(qtile, 0, 0, 200, 600)
 
 
 @slice_config
@@ -107,22 +107,22 @@ def test_slice_focus(qtile):
 @slice_config
 def test_all_slices(qtile):
     qtile.testWindow('slice')  # left
-    assertDimensions(qtile, 0, 0, 200, 600)
+    assert_dimensions(qtile, 0, 0, 200, 600)
     qtile.c.next_layout()  # right
-    assertDimensions(qtile, 600, 0, 200, 600)
+    assert_dimensions(qtile, 600, 0, 200, 600)
     qtile.c.next_layout()  # top
-    assertDimensions(qtile, 0, 0, 800, 200)
+    assert_dimensions(qtile, 0, 0, 800, 200)
     qtile.c.next_layout()  # bottom
-    assertDimensions(qtile, 0, 400, 800, 200)
+    assert_dimensions(qtile, 0, 400, 800, 200)
     qtile.c.next_layout()  # left again
     qtile.testWindow('one')
-    assertDimensions(qtile, 200, 0, 600, 600)
+    assert_dimensions(qtile, 200, 0, 600, 600)
     qtile.c.next_layout()  # right
-    assertDimensions(qtile, 0, 0, 600, 600)
+    assert_dimensions(qtile, 0, 0, 600, 600)
     qtile.c.next_layout()  # top
-    assertDimensions(qtile, 0, 200, 800, 400)
+    assert_dimensions(qtile, 0, 200, 800, 400)
     qtile.c.next_layout()  # bottom
-    assertDimensions(qtile, 0, 0, 800, 400)
+    assert_dimensions(qtile, 0, 0, 800, 400)
 
 
 @slice_config
