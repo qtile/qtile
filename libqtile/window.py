@@ -1034,7 +1034,7 @@ class Window(_Window):
     def togroup(self, groupName=None):
         """Move window to a specified group"""
         if groupName is None:
-            group = self.qtile.currentGroup
+            group = self.qtile.current_group
         else:
             group = self.qtile.groupMap.get(groupName)
             if group is None:

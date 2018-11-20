@@ -76,7 +76,7 @@ class WindowVisibilityToggler(object):
         if self.window.group is None:
             return False
         return (self.window.group.name != self.scratchpad_name and
-                self.window.group is self.window.qtile.currentGroup)
+                self.window.group is self.window.qtile.current_group)
 
     def toggle(self):
         """
@@ -147,9 +147,9 @@ class WindowVisibilityToggler(object):
         get hidden (by call to hide) or even killed.
         """
         if self.shown:
-            currentGroup = self.window.qtile.currentGroup
-            if (self.window.group is not currentGroup or
-                    self.window is not currentGroup.currentWindow):
+            current_group = self.window.qtile.current_group
+            if (self.window.group is not current_group or
+                    self.window is not current_group.currentWindow):
                 if self.on_focus_lost_hide:
                     self.hide()
 

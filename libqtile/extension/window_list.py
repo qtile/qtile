@@ -45,7 +45,7 @@ class WindowList(Dmenu):
         if self.all_groups:
             windows = self.qtile.windowMap.values()
         else:
-            windows = self.qtile.currentGroup.windows
+            windows = self.qtile.current_group.windows
 
         for win in windows:
             if win.group:

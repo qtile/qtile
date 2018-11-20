@@ -454,10 +454,10 @@ class Qtile(command.CommandObject):
 
     def update_net_desktops(self):
         try:
-            index = self.groups.index(self.currentGroup)
+            index = self.groups.index(self.current_group)
         # TODO: we should really only except ValueError here, AttributeError is
         # an annoying chicken and egg because we're accessing currentScreen
-        # (via currentGroup), and when we set up the initial groups, there
+        # (via current_group), and when we set up the initial groups, there
         # aren't any screens yet. This can probably be changed when #475 is
         # fixed.
         except (ValueError, AttributeError):
@@ -501,7 +501,7 @@ class Qtile(command.CommandObject):
                 target = target.prevGroup()
             for i in list(group.windows):
                 i.togroup(target.name)
-            if self.currentGroup.name == name:
+            if self.current_group.name == name:
                 self.currentScreen.setGroup(target, save_prev=False)
             self.groups.remove(group)
             del(self.groupMap[name])
@@ -531,10 +531,10 @@ class Qtile(command.CommandObject):
 
     @property
     def currentLayout(self):
-        return self.currentGroup.layout
+        return self.current_group.layout
 
     @property
-    def currentGroup(self):
+    def current_group(self):
         return self.currentScreen.group
 
     @property
@@ -972,7 +972,7 @@ class Qtile(command.CommandObject):
 
         window = self.windowMap.get(wnd)
         if window and not window.window.get_property('QTILE_INTERNAL'):
-            self.currentGroup.focus(self.windowMap.get(wnd), False)
+            self.current_group.focus(self.windowMap.get(wnd), False)
             self.windowMap.get(wnd).focus(False)
 
         self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
@@ -1133,7 +1133,7 @@ class Qtile(command.CommandObject):
         if old != self.currentScreen:
             hook.fire("current_screen_change")
             old.group.layoutAll()
-            self.currentGroup.focus(self.currentWindow, warp)
+            self.current_group.focus(self.currentWindow, warp)
 
     def moveToGroup(self, group):
         """Create a group if it doesn't exist and move a windows there"""
@@ -1145,7 +1145,7 @@ class Qtile(command.CommandObject):
         if name == "group":
             return True, list(self.groupMap.keys())
         elif name == "layout":
-            return True, list(range(len(self.currentGroup.layouts)))
+            return True, list(range(len(self.current_group.layouts)))
         elif name == "widget":
             return False, list(self.widgetMap.keys())
         elif name == "bar":
@@ -1158,14 +1158,14 @@ class Qtile(command.CommandObject):
     def _select(self, name, sel):
         if name == "group":
             if sel is None:
-                return self.currentGroup
+                return self.current_group
             else:
                 return self.groupMap.get(sel)
         elif name == "layout":
             if sel is None:
-                return self.currentGroup.layout
+                return self.current_group.layout
             else:
-                return utils.lget(self.currentGroup.layouts, sel)
+                return utils.lget(self.current_group.layouts, sel)
         elif name == "widget":
             return self.widgetMap.get(sel)
         elif name == "bar":
@@ -1336,7 +1336,7 @@ class Qtile(command.CommandObject):
         if group:
             group = self.groupMap.get(group)
         else:
-            group = self.currentGroup
+            group = self.current_group
         group.toLayoutIndex(index)
 
     def cmd_next_layout(self, group=None):
@@ -1350,7 +1350,7 @@ class Qtile(command.CommandObject):
         if group:
             group = self.groupMap.get(group)
         else:
-            group = self.currentGroup
+            group = self.current_group
         group.nextLayout()
 
     def cmd_prev_layout(self, group=None):
@@ -1364,7 +1364,7 @@ class Qtile(command.CommandObject):
         if group:
             group = self.groupMap.get(group)
         else:
-            group = self.currentGroup
+            group = self.current_group
         group.prevLayout()
 
     def cmd_screens(self):
@@ -1814,7 +1814,7 @@ class Qtile(command.CommandObject):
             bar = getattr(self.currentScreen, position)
             if bar:
                 bar.show(not bar.is_show())
-                self.currentGroup.layoutAll()
+                self.current_group.layoutAll()
             else:
                 logger.warning(
                     "Not found bar in position '%s' for hide/show." % position)
@@ -1827,7 +1827,7 @@ class Qtile(command.CommandObject):
                         is_show = not bar.is_show()
                     bar.show(is_show)
             if is_show is not None:
-                self.currentGroup.layoutAll()
+                self.current_group.layoutAll()
             else:
                 logger.warning("Not found bar for hide/show.")
         else:
