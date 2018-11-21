@@ -112,7 +112,7 @@ class Tile(_SimpleLayoutBase):
 
     def configure(self, client, screen):
         screenWidth = screen.width
-        screenHeight = screen.height
+        screen_height = screen.height
         border_width = self.border_width
         if self.clients and client in self.clients:
             pos = self.clients.index(client)
@@ -120,12 +120,12 @@ class Tile(_SimpleLayoutBase):
                 w = int(screenWidth * self.ratio) \
                     if len(self.slave_windows) or not self.expand \
                     else screenWidth
-                h = screenHeight // self.master
+                h = screen_height // self.master
                 x = screen.x
                 y = screen.y + pos * h
             else:
                 w = screenWidth - int(screenWidth * self.ratio)
-                h = screenHeight // (len(self.slave_windows))
+                h = screen_height // (len(self.slave_windows))
                 x = screen.x + int(screenWidth * self.ratio)
                 y = screen.y + self.clients[self.master:].index(client) * h
             if client.has_focus:
