@@ -173,7 +173,7 @@ def test_basic(qtile):
     assert qtile.c.screen.info() == {
         'y': 480, 'x': 0, 'index': 2, 'width': 500, 'height': 400}
     qtile.c.to_screen(3)
-    qtile.testXclock()
+    qtile.test_xclock()
     assert qtile.c.screen.info() == {'y': 580, 'x': 500, 'index': 3, 'width': 400, 'height': 400}
 
 
@@ -200,7 +200,7 @@ def test_gaps(qtile):
 @fakescreen_config
 def test_maximize_with_move_to_screen(qtile):
     """Ensure that maximize respects bars"""
-    qtile.testXclock()
+    qtile.test_xclock()
     qtile.c.window.toggle_maximize()
     assert qtile.c.window.info()['width'] == 564
     assert qtile.c.window.info()['height'] == 456
@@ -228,7 +228,7 @@ def test_float_first_on_second_screen(qtile):
     assert qtile.c.screen.info() == {
         'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
 
-    qtile.testXclock()
+    qtile.test_xclock()
     # I don't know where y=30, x=12 comes from...
     assert qtile.c.window.info()['float_info'] == {
         'y': 30, 'x': 12, 'width': 164, 'height': 164
@@ -250,7 +250,7 @@ def test_float_first_on_second_screen(qtile):
 def test_float_change_screens(qtile):
     # add some eyes, and float clock
     qtile.testXeyes()
-    qtile.testXclock()
+    qtile.test_xclock()
     qtile.c.window.toggle_floating()
     assert set(qtile.c.group.info()['windows']) == set(('xeyes', 'xclock'))
     assert qtile.c.group.info()['floating_info']['clients'] == ['xclock']
@@ -332,7 +332,7 @@ def test_float_change_screens(qtile):
 
 @fakescreen_config
 def test_float_outside_edges(qtile):
-    qtile.testXclock()
+    qtile.test_xclock()
     qtile.c.window.toggle_floating()
     assert qtile.c.window.info()['width'] == 164
     assert qtile.c.window.info()['height'] == 164
@@ -389,7 +389,7 @@ def test_hammer_tile(qtile):
     qtile.c.next_layout()
     qtile.c.next_layout()
     for i in range(7):
-        qtile.testXclock()
+        qtile.test_xclock()
     for i in range(30):
 
         qtile.c.to_screen((i + 1) % 4)
@@ -404,7 +404,7 @@ def test_hammer_ratio_tile(qtile):
     # change to ratio tile layout
     qtile.c.next_layout()
     for i in range(7):
-        qtile.testXclock()
+        qtile.test_xclock()
     for i in range(30):
         qtile.c.to_screen((i + 1) % 4)
         qtile.c.group['a'].toscreen()
@@ -418,7 +418,7 @@ def test_ratio_to_fourth_screen(qtile):
     # change to ratio tile layout
     qtile.c.next_layout()
     for i in range(7):
-        qtile.testXclock()
+        qtile.test_xclock()
     qtile.c.to_screen(1)
     qtile.c.group['a'].toscreen()
     assert qtile.c.group['a'].info()['windows'] == [

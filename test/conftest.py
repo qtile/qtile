@@ -381,7 +381,7 @@ class Qtile(object):
         # explicitly killed
         return self.test_tkwindow(name, "notification")
 
-    def testXclock(self):
+    def test_xclock(self):
         path = whereis("xclock")
         return self._spawn_window(path)
 
