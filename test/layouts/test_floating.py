@@ -52,9 +52,9 @@ def test_float_next_prev_window(qtile):
     self = qtile
 
     # spawn three windows
-    self.testWindow("one")
-    self.testWindow("two")
-    self.testWindow("three")
+    self.test_window("one")
+    self.test_window("two")
+    self.test_window("three")
 
     # focus previous windows
     assert_focused(self, "three")

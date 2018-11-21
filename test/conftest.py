@@ -361,7 +361,7 @@ class Qtile(object):
         if not success():
             raise AssertionError("Window could not be killed...")
 
-    def testWindow(self, name):
+    def test_window(self, name):
         return self._spawn_script("window.py", self.display, name)
 
     def test_tkwindow(self, name, wm_type):

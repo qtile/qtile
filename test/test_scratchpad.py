@@ -76,7 +76,7 @@ def test_toggling(qtile):
     # adjust command for current display
     qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s' % qtile.display)
 
-    qtile.testWindow("one")
+    qtile.test_window("one")
     assert qtile.c.group["a"].info()['windows'] == ['one']
 
     # First toggling: wait for window
@@ -106,7 +106,7 @@ def test_focus_cycle(qtile):
     qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s' % qtile.display)
     qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-b', command='xterm -T dd-b -display %s' % qtile.display)
 
-    qtile.testWindow("one")
+    qtile.test_window("one")
     # spawn dd-a by toggling
     assert_focused(qtile, 'one')
 
@@ -114,7 +114,7 @@ def test_focus_cycle(qtile):
     is_spawned(qtile, 'dd-a')
     assert_focused(qtile, 'dd-a')
 
-    qtile.testWindow("two")
+    qtile.test_window("two")
     assert_focused(qtile, 'two')
 
     # spawn dd-b by toggling
@@ -134,7 +134,7 @@ def test_focus_lost_hide(qtile):
     qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-c', command='xterm -T dd-c -display %s' % qtile.display)
     qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-d', command='xterm -T dd-d -display %s' % qtile.display)
 
-    qtile.testWindow("one")
+    qtile.test_window("one")
     assert_focused(qtile, 'one')
 
     # spawn dd-c by toggling
@@ -144,7 +144,7 @@ def test_focus_lost_hide(qtile):
     assert sorted(qtile.c.group["a"].info()['windows']) == ['dd-c', 'one']
 
     # New Window with Focus --> hide current DropDown
-    qtile.testWindow("two")
+    qtile.test_window("two")
     assert_focused(qtile, 'two')
     assert sorted(qtile.c.group["a"].info()['windows']) == ['one', 'two']
     assert sorted(qtile.c.group["SCRATCHPAD"].info()['windows']) == ['dd-c']
@@ -186,7 +186,7 @@ def test_kill(qtile):
     # adjust command for current display
     qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s' % qtile.display)
 
-    qtile.testWindow("one")
+    qtile.test_window("one")
     assert_focused(qtile, 'one')
 
     # dd-a has no window associated yet
@@ -210,7 +210,7 @@ def test_floating_toggle(qtile):
     # adjust command for current display
     qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s' % qtile.display)
 
-    qtile.testWindow("one")
+    qtile.test_window("one")
     assert_focused(qtile, 'one')
 
     # dd-a has no window associated yet

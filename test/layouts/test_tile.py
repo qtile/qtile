@@ -60,9 +60,9 @@ def tile_config(x):
 
 @tile_config
 def test_tile_updown(qtile):
-    qtile.testWindow("one")
-    qtile.testWindow("two")
-    qtile.testWindow("three")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("three")
     assert qtile.c.layout.info()["clients"] == ["three", "two", "one"]
     qtile.c.layout.shuffle_down()
     assert qtile.c.layout.info()["clients"] == ["two", "one", "three"]
@@ -72,9 +72,9 @@ def test_tile_updown(qtile):
 
 @tile_config
 def test_tile_nextprev(qtile):
-    qtile.testWindow("one")
-    qtile.testWindow("two")
-    qtile.testWindow("three")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("three")
 
     assert qtile.c.layout.info()["clients"] == ["three", "two", "one"]
     assert qtile.c.groups()["a"]["focus"] == "three"
@@ -96,9 +96,9 @@ def test_tile_nextprev(qtile):
 
 @tile_config
 def test_tile_master_and_slave(qtile):
-    qtile.testWindow("one")
-    qtile.testWindow("two")
-    qtile.testWindow("three")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("three")
 
     assert qtile.c.layout.info()["master"] == ["three"]
     assert qtile.c.layout.info()["slave"] == ["two", "one"]
@@ -110,9 +110,9 @@ def test_tile_master_and_slave(qtile):
 
 @tile_config
 def test_tile_remove(qtile):
-    one = qtile.testWindow("one")
-    qtile.testWindow("two")
-    three = qtile.testWindow("three")
+    one = qtile.test_window("one")
+    qtile.test_window("two")
+    three = qtile.test_window("three")
 
     assert qtile.c.layout.info()["master"] == ["three"]
     qtile.kill_window(one)
@@ -124,13 +124,13 @@ def test_tile_remove(qtile):
 @tile_config
 def test_tile_window_focus_cycle(qtile):
     # setup 3 tiled and two floating clients
-    qtile.testWindow("one")
-    qtile.testWindow("two")
-    qtile.testWindow("float1")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("float1")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("float2")
+    qtile.test_window("float2")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("three")
+    qtile.test_window("three")
 
     # test preconditions, Tile adds (by default) clients at pos of current
     assert qtile.c.layout.info()['clients'] == ['three', 'two', 'one']
