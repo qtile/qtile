@@ -43,7 +43,7 @@ class _Column(_ClientList):
             ))
         return info
 
-    def toggleSplit(self):
+    def toggle_split(self):
         self.split = not self.split
 
     def add(self, client, height=100):
@@ -297,7 +297,7 @@ class Columns(Layout):
             return self.columns[idx - 1].focus_last()
 
     def cmd_toggle_split(self):
-        self.cc.toggleSplit()
+        self.cc.toggle_split()
         self.group.layout_all()
 
     def cmd_left(self):

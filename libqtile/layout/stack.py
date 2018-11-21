@@ -33,7 +33,7 @@ class _WinStack(_ClientList):
         _ClientList.__init__(self)
         self.split = autosplit
 
-    def toggleSplit(self):
+    def toggle_split(self):
         self.split = False if self.split else True
 
     def __str__(self):
@@ -263,7 +263,7 @@ class Stack(Layout):
 
     def cmd_toggle_split(self):
         """Toggle vertical split on the current stack"""
-        self.current_stack.toggleSplit()
+        self.current_stack.toggle_split()
         self.group.layout_all()
 
     def cmd_down(self):
