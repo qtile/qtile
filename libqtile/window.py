@@ -252,7 +252,7 @@ class _Window(command.CommandObject):
     def has_focus(self):
         return self == self.qtile.current_window
 
-    def updateName(self):
+    def update_name(self):
         try:
             self.name = self.window.get_name()
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
@@ -694,7 +694,7 @@ class Static(_Window):
     def __init__(self, win, qtile, screen,
                  x=None, y=None, width=None, height=None):
         _Window.__init__(self, win, qtile)
-        self.updateName()
+        self.update_name()
         self.conf_x = x
         self.conf_y = y
         self.conf_width = width
@@ -762,7 +762,7 @@ class Window(_Window):
     def __init__(self, window, qtile):
         _Window.__init__(self, window, qtile)
         self._group = None
-        self.updateName()
+        self.update_name()
         # add to group by position according to _NET_WM_DESKTOP property
         group = None
         index = window.get_wm_desktop()
@@ -1225,11 +1225,11 @@ class Window(_Window):
         elif name == "WM_NORMAL_HINTS":
             self.update_hints()
         elif name == "WM_NAME":
-            self.updateName()
+            self.update_name()
         elif name == "_NET_WM_NAME":
-            self.updateName()
+            self.update_name()
         elif name == "_NET_WM_VISIBLE_NAME":
-            self.updateName()
+            self.update_name()
         elif name == "WM_ICON_NAME":
             pass
         elif name == "_NET_WM_ICON_NAME":
