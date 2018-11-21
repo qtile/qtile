@@ -368,11 +368,11 @@ class Qtile(object):
     def testWindow(self, name):
         return self._spawn_script("window.py", self.display, name)
 
-    def testTkWindow(self, name, wm_type):
+    def test_tkwindow(self, name, wm_type):
         return self._spawn_script("tkwindow.py", name, wm_type)
 
     def test_dialog(self, name="dialog"):
-        return self.testTkWindow(name, "dialog")
+        return self.test_tkwindow(name, "dialog")
 
     def test_notification(self, name="notification"):
         """
@@ -383,7 +383,7 @@ class Qtile(object):
         # Don't use a real notification, e.g. notify-send or
         # zenity --notification, since we want to keep the process on until
         # explicitly killed
-        return self.testTkWindow(name, "notification")
+        return self.test_tkwindow(name, "notification")
 
     def testXclock(self):
         path = whereis("xclock")
