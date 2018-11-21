@@ -408,7 +408,7 @@ class _Group(command.CommandObject):
     def prevGroup(self, skip_empty=False, skip_managed=False):
         return self._dirGroup(-1, skip_empty, skip_managed)
 
-    def nextGroup(self, skip_empty=False, skip_managed=False):
+    def get_next_group(self, skip_empty=False, skip_managed=False):
         return self._dirGroup(1, skip_empty, skip_managed)
 
     def cmd_unminimize_all(self):
