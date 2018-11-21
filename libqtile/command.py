@@ -156,13 +156,13 @@ class _CommandTree(six.with_metaclass(abc.ABCMeta)):
         return self.__class__(self.selectors, select, self)
 
     def __getattr__(self, name):
-        nextSelector = self.selectors[:]
+        next_selector = self.selectors[:]
         if self.name:
-            nextSelector.append((self.name, self.myselector))
+            next_selector.append((self.name, self.myselector))
         if name in self._contains:
-            return _TreeMap[name](nextSelector, None, self)
+            return _TreeMap[name](next_selector, None, self)
         else:
-            return _Command(self.call, nextSelector, name)
+            return _Command(self.call, next_selector, name)
 
 
 class _TLayout(_CommandTree):
