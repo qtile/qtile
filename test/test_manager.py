@@ -490,7 +490,7 @@ def test_float_max_min_combo(qtile):
     # change to 2 col stack
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
-    self.testXcalc()
+    self.test_xcalc()
     self.testXeyes()
 
     assert self.c.group.info()['focus'] == 'xeyes'
@@ -536,7 +536,7 @@ def test_toggle_fullscreen(qtile):
     # change to 2 col stack
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
-    self.testXcalc()
+    self.test_xcalc()
     self.testXeyes()
 
     assert self.c.group.info()['focus'] == 'xeyes'
@@ -574,7 +574,7 @@ def test_toggle_max(qtile):
     # change to 2 col stack
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
-    self.testXcalc()
+    self.test_xcalc()
     self.testXeyes()
 
     assert self.c.group.info()['focus'] == 'xeyes'
@@ -610,7 +610,7 @@ def test_toggle_min(qtile):
     # change to 2 col stack
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
-    self.testXcalc()
+    self.test_xcalc()
     self.testXeyes()
 
     assert self.c.group.info()['focus'] == 'xeyes'
@@ -667,7 +667,7 @@ def test_floating_focus(qtile):
     # change to 2 col stack
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
-    self.testXcalc()
+    self.test_xcalc()
     self.testXeyes()
     # self.test_window("one")
     assert self.c.window.info()['width'] == 398
@@ -845,7 +845,7 @@ def test_xeyes(qtile):
 @pytest.mark.parametrize("qtile", [BareConfig, ManagerConfig], indirect=True)
 @pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
 def test_xcalc(qtile):
-    qtile.testXcalc()
+    qtile.test_xcalc()
 
 
 @pytest.mark.parametrize("qtile", [BareConfig, ManagerConfig], indirect=True)
@@ -853,7 +853,7 @@ def test_xcalc(qtile):
 def test_xcalc_kill_window(qtile):
     self = qtile
 
-    self.testXcalc()
+    self.test_xcalc()
     window_info = self.c.window.info()
     self.c.window.kill()
     assert_window_died(self.c, window_info)
