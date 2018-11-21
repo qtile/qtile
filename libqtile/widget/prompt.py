@@ -305,7 +305,7 @@ class CommandCompleter(object):
 class Prompt(base._TextBox):
     """A widget that prompts for user input
 
-    Input should be started using the ``.startInput()`` method on this class.
+    Input should be started using the ``.start_input()`` method on this class.
     """
     completers = {
         "file": FileCompleter,
@@ -405,8 +405,8 @@ class Prompt(base._TextBox):
 
         hook.subscribe.client_focus(f)
 
-    def startInput(self, prompt, callback,
-                   complete=None, strict_completer=False):
+    def start_input(self, prompt, callback,
+                    complete=None, strict_completer=False):
         """Run the prompt
 
         Displays a prompt and starts to take one line of keyboard input from
@@ -680,7 +680,7 @@ class Prompt(base._TextBox):
             self, prompt, object_name, cmd_name, selector=None, completer=None):
         """
         Execute a cmd of any object. For example layout, group, window, widget
-        , etc with a string that is obtained from startInput.
+        , etc with a string that is obtained from start_input.
 
         Parameters
         ==========
@@ -720,7 +720,7 @@ class Prompt(base._TextBox):
             if args:
                 cmd(args)
 
-        self.startInput(prompt, f, completer)
+        self.start_input(prompt, f, completer)
 
     def _dedup_history(self):
         """Filter the history deque, clearing all duplicate values."""

@@ -1606,7 +1606,7 @@ class Qtile(command.CommandObject):
             logger.error("No widget named '{0:s}' present.".format(widget))
             return
 
-        mb.startInput(
+        mb.start_input(
             prompt,
             self.find_window,
             "window",
@@ -1641,7 +1641,7 @@ class Qtile(command.CommandObject):
             logger.error("No widget named '{0:s}' present.".format(widget))
             return
 
-        mb.startInput(prompt, self.move_to_group, "group", strict_completer=True)
+        mb.start_input(prompt, self.move_to_group, "group", strict_completer=True)
 
     def cmd_switchgroup(self, prompt="group", widget="prompt"):
         """Launch prompt widget to switch to a given group to the current screen
@@ -1665,7 +1665,7 @@ class Qtile(command.CommandObject):
             logger.warning("No widget named '{0:s}' present.".format(widget))
             return
 
-        mb.startInput(prompt, f, "group", strict_completer=True)
+        mb.start_input(prompt, f, "group", strict_completer=True)
 
     def cmd_spawncmd(self, prompt="spawn", widget="prompt",
                      command="%s", complete="cmd"):
@@ -1687,7 +1687,7 @@ class Qtile(command.CommandObject):
                 self.cmd_spawn(command % args)
         try:
             mb = self.widgetMap[widget]
-            mb.startInput(prompt, f, complete)
+            mb.start_input(prompt, f, complete)
         except KeyError:
             logger.error("No widget named '{0:s}' present.".format(widget))
 
@@ -1738,7 +1738,7 @@ class Qtile(command.CommandObject):
         if not mb:
             logger.error("No widget named {0:s} present.".format(widget))
             return
-        mb.startInput(prompt, f, "qshell")
+        mb.start_input(prompt, f, "qshell")
 
     def cmd_addgroup(self, group, label=None, layout=None, layouts=None):
         """Add a group with the given name"""
