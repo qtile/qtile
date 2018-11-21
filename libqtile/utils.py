@@ -69,7 +69,7 @@ def translate_modifiers(mask):
     return r
 
 
-def shuffleUp(lst):
+def shuffle_up(lst):
     if len(lst) > 1:
         c = lst[-1]
         lst.remove(c)
