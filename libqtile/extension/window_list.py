@@ -43,7 +43,7 @@ class WindowList(Dmenu):
         self.item_to_win = {}
 
         if self.all_groups:
-            windows = self.qtile.windowMap.values()
+            windows = self.qtile.windows_map.values()
         else:
             windows = self.qtile.current_group.windows
 

@@ -82,7 +82,7 @@ class Icon(window._Window):
 
     def handle_DestroyNotify(self, event):
         wid = event.window
-        del(self.qtile.windowMap[wid])
+        del(self.qtile.windows_map[wid])
         del(self.systray.icons[wid])
         self.systray.bar.draw()
         return False
@@ -118,7 +118,7 @@ class Systray(window._Window, base._Widget):
         base._Widget._configure(self, qtile, bar)
         win = qtile.conn.create_window(-1, -1, 1, 1)
         window._Window.__init__(self, xcbq.Window(qtile.conn, win.wid), qtile)
-        qtile.windowMap[win.wid] = self
+        qtile.windows_map[win.wid] = self
 
         # Even when we have multiple "Screen"s, we are setting up as the system
         # tray on a particular X display, that is the screen we need to
@@ -162,7 +162,7 @@ class Systray(window._Window, base._Widget):
             w = xcbq.Window(self.qtile.conn, wid)
             icon = Icon(w, self.qtile, self)
             self.icons[wid] = icon
-            self.qtile.windowMap[wid] = icon
+            self.qtile.windows_map[wid] = icon
 
             conn.core.ChangeSaveSet(SetMode.Insert, wid)
             conn.core.ReparentWindow(wid, parent.wid, 0, 0)

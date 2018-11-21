@@ -770,7 +770,7 @@ class Window(_Window):
             group = qtile.groups[index]
         elif index is None:
             transient_for = window.get_wm_transient_for()
-            win = qtile.windowMap.get(transient_for)
+            win = qtile.windows_map.get(transient_for)
             if win is not None:
                 group = win._group
         if group is not None:
@@ -952,7 +952,7 @@ class Window(_Window):
         if self.group:
             self.group.remove(self)
         s = Static(self.window, self.qtile, screen, x, y, width, height)
-        self.qtile.windowMap[self.window.wid] = s
+        self.qtile.windows_map[self.window.wid] = s
         hook.fire("client_managed", s)
         return s
 
