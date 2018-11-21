@@ -1319,7 +1319,7 @@ class Qtile(command.CommandObject):
             group = self.groups_map.get(group)
         else:
             group = self.current_group
-        group.prevLayout()
+        group.use_previous_layout()
 
     def cmd_screens(self):
         """Return a list of dictionaries providing information on all screens"""
