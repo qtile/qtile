@@ -108,7 +108,7 @@ def test_window_types(qtile):
     qtile.testWindow("one")
 
     # A dialog should take focus and be floating
-    qtile.testDialog("dialog")
+    qtile.test_dialog("dialog")
     qtile.c.window.info()['floating'] is True
     assert_focused(qtile, "dialog")
 
@@ -124,8 +124,8 @@ def test_focus_cycle(qtile):
 
     qtile.testWindow("one")
     qtile.testWindow("two")
-    qtile.testDialog("float1")
-    qtile.testDialog("float2")
+    qtile.test_dialog("float1")
+    qtile.test_dialog("float2")
     qtile.testWindow("three")
 
     # Test preconditions (the order of items in 'clients' is managed by each layout)
@@ -283,7 +283,7 @@ def test_remove_floating(qtile):
 
     one = qtile.testWindow("one")
     qtile.testWindow("two")
-    float1 = qtile.testDialog("float1")
+    float1 = qtile.test_dialog("float1")
     assert_focused(qtile, "float1")
     assert set(qtile.c.layout.info()['clients']) == {"one", "two"}
     assert qtile.c.group.info()['focus_history'] == ["one", "two", "float1"]
@@ -293,7 +293,7 @@ def test_remove_floating(qtile):
     assert_focused(qtile, "two")
     assert qtile.c.group.info()['focus_history'] == ["one", "two"]
 
-    float2 = qtile.testDialog("float2")
+    float2 = qtile.test_dialog("float2")
     assert_focused(qtile, "float2")
     assert qtile.c.group.info()['focus_history'] == ["one", "two", "float2"]
 
@@ -305,10 +305,10 @@ def test_remove_floating(qtile):
 
     # Add more windows and shuffle the focus order
     qtile.testWindow("three")
-    float3 = qtile.testDialog("float3")
+    float3 = qtile.test_dialog("float3")
     qtile.c.group.focus_by_name("one")
-    float4 = qtile.testDialog("float4")
-    float5 = qtile.testDialog("float5")
+    float4 = qtile.test_dialog("float4")
+    float5 = qtile.test_dialog("float5")
     qtile.c.group.focus_by_name("three")
     qtile.c.group.focus_by_name("float3")
     assert qtile.c.group.info()['focus_history'] == ["two", "one", "float4",
@@ -331,7 +331,7 @@ def test_remove_floating(qtile):
     assert qtile.c.group.info()['focus_history'] == ["two", "three", "float3"]
 
     four = qtile.testWindow("four")
-    float6 = qtile.testDialog("float6")
+    float6 = qtile.test_dialog("float6")
     five = qtile.testWindow("five")
     qtile.c.group.focus_by_name("float3")
     assert qtile.c.group.info()['focus_history'] == ["two", "three", "four",
@@ -374,13 +374,13 @@ def test_desktop_notifications(qtile):
 
     # Complicate the scenario with multiple windows and notifications
 
-    dialog1 = qtile.testDialog("dialog1")
+    dialog1 = qtile.test_dialog("dialog1")
     qtile.testWindow("two")
     notif4 = qtile.testNotification("notif4")
     notif5 = qtile.testNotification("notif5")
     assert qtile.c.group.info()['focus_history'] == ["one", "dialog1", "two"]
 
-    dialog2 = qtile.testDialog("dialog2")
+    dialog2 = qtile.test_dialog("dialog2")
     qtile.kill_window(notif5)
     qtile.testWindow("three")
     qtile.kill_window(one)
@@ -392,7 +392,7 @@ def test_desktop_notifications(qtile):
     assert qtile.c.group.info()['focus_history'] == ["dialog1", "dialog2",
                                                      "three", "two"]
 
-    qtile.testDialog("dialog3")
+    qtile.test_dialog("dialog3")
     qtile.kill_window(dialog1)
     qtile.kill_window(dialog2)
     qtile.kill_window(notif6)

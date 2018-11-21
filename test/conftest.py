@@ -367,7 +367,7 @@ class Qtile(object):
     def testTkWindow(self, name, wm_type):
         return self._spawn_script("tkwindow.py", name, wm_type)
 
-    def testDialog(self, name="dialog"):
+    def test_dialog(self, name="dialog"):
         return self.testTkWindow(name, "dialog")
 
     def testNotification(self, name="notification"):
