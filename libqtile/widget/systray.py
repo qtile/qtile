@@ -51,7 +51,7 @@ class Icon(window._Window):
 
     def update_size(self):
         icon_size = self.systray.icon_size
-        self.updateHints()
+        self.update_hints()
 
         try:
             width = self.hints["min_width"]
