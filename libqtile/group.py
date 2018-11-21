@@ -135,7 +135,7 @@ class _Group(command.CommandObject):
         screen = self.screen.get_rect()
         self.layout.show(screen)
 
-    def nextLayout(self):
+    def use_next_layout(self):
         self.toLayoutIndex((self.current_layout + 1) % (len(self.layouts)))
 
     def prevLayout(self):
