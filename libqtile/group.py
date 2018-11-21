@@ -138,7 +138,7 @@ class _Group(command.CommandObject):
     def use_next_layout(self):
         self.toLayoutIndex((self.current_layout + 1) % (len(self.layouts)))
 
-    def prevLayout(self):
+    def use_previous_layout(self):
         self.toLayoutIndex((self.current_layout - 1) % (len(self.layouts)))
 
     def layout_all(self, warp=False):
