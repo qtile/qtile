@@ -117,7 +117,7 @@ class Qtile(command.CommandObject):
         # Find the modifier mask for the numlock key, if there is one:
         nc = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
         self.numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(nc), 0)
-        self.validMask = ~(self.numlock_mask | xcbq.ModMasks["lock"])
+        self.valid_mask = ~(self.numlock_mask | xcbq.ModMasks["lock"])
 
         # Because we only do Xinerama multi-screening,
         # we can assume that the first
@@ -431,7 +431,7 @@ class Qtile(command.CommandObject):
             yield self.numlock_mask | xcbq.ModMasks["lock"]
 
     def map_key(self, key):
-        self.keys_map[(key.keysym, key.modmask & self.validMask)] = key
+        self.keys_map[(key.keysym, key.modmask & self.valid_mask)] = key
         code = self.conn.keysym_to_keycode(key.keysym)
         for amask in self._auto_modmasks():
             self.root.grab_key(
@@ -443,7 +443,7 @@ class Qtile(command.CommandObject):
             )
 
     def unmap_key(self, key):
-        key_index = (key.keysym, key.modmask & self.validMask)
+        key_index = (key.keysym, key.modmask & self.valid_mask)
         if key_index not in self.keys_map:
             return
 
@@ -937,7 +937,7 @@ class Qtile(command.CommandObject):
         state = e.state
         if self.numlock_mask:
             state = e.state | self.numlock_mask
-        k = self.keys_map.get((keysym, state & self.validMask))
+        k = self.keys_map.get((keysym, state & self.valid_mask))
         if not k:
             logger.info("Ignoring unknown keysym: %s" % keysym)
             return
@@ -986,7 +986,7 @@ class Qtile(command.CommandObject):
 
         k = self.mouse_map.get(button_code)
         for m in k:
-            if not m or m.modmask & self.validMask != state & self.validMask:
+            if not m or m.modmask & self.valid_mask != state & self.valid_mask:
                 logger.info("Ignoring unknown button: %s" % button_code)
                 continue
             if isinstance(m, Click):
