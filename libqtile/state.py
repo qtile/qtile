@@ -58,4 +58,4 @@ class QtileState(object):
             except (KeyError, IndexError):
                 pass  # group or screen missing
 
-        qtile.toScreen(self.current_screen)
+        qtile.focus_screen(self.current_screen)
