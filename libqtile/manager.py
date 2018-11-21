@@ -501,7 +501,7 @@ class Qtile(command.CommandObject):
             for i in list(group.windows):
                 i.togroup(target.name)
             if self.current_group.name == name:
-                self.current_screen.setGroup(target, save_prev=False)
+                self.current_screen.set_group(target, save_prev=False)
             self.groups.remove(group)
             del(self.groups_map[name])
             hook.fire("delgroup", self, name)
@@ -882,7 +882,7 @@ class Qtile(command.CommandObject):
         if atoms["_NET_CURRENT_DESKTOP"] == opcode:
             index = data.data32[0]
             try:
-                self.current_screen.setGroup(self.groups[index])
+                self.current_screen.set_group(self.groups[index])
             except IndexError:
                 logger.info("Invalid Desktop Index: %s" % index)
 
@@ -1542,7 +1542,7 @@ class Qtile(command.CommandObject):
         window = self.windowMap.get(wid)
         if window:
             if not window.group.screen:
-                self.current_screen.setGroup(window.group)
+                self.current_screen.set_group(window.group)
             window.group.focus(window, False)
 
     def cmd_findwindow(self, prompt="window", widget="prompt"):

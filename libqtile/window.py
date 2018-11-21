@@ -1197,17 +1197,17 @@ class Window(_Window):
             source = data.data32[0]
             if source == 2:  # XCB_EWMH_CLIENT_SOURCE_TYPE_NORMAL
                 logger.info("Focusing window by pager")
-                self.qtile.current_screen.setGroup(self.group)
+                self.qtile.current_screen.set_group(self.group)
                 self.group.focus(self)
             else:  # XCB_EWMH_CLIENT_SOURCE_TYPE_OTHER
                 focus_behavior = self.qtile.config.focus_on_window_activation
                 if focus_behavior == "focus":
                     logger.info("Focusing window")
-                    self.qtile.current_screen.setGroup(self.group)
+                    self.qtile.current_screen.set_group(self.group)
                     self.group.focus(self)
                 elif focus_behavior == "smart" and self.group.screen and self.group.screen == self.qtile.current_screen:
                     logger.info("Focusing window")
-                    self.qtile.current_screen.setGroup(self.group)
+                    self.qtile.current_screen.set_group(self.group)
                     self.group.focus(self)
                 elif focus_behavior == "urgent" or (focus_behavior == "smart" and not self.group.screen):
                     logger.info("Setting urgent flag for window")

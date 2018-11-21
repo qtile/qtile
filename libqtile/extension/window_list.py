@@ -73,5 +73,5 @@ class WindowList(Dmenu):
             return
 
         screen = self.qtile.current_screen
-        screen.setGroup(win.group)
+        screen.set_group(win.group)
         win.group.focus(win)

@@ -379,7 +379,7 @@ class _Group(command.CommandObject):
             screen = self.qtile.current_screen
         else:
             screen = self.qtile.screens[screen]
-        screen.setGroup(self)
+        screen.set_group(self)
 
     def _dirGroup(self, direction, skip_empty=False, skip_managed=False):
         """Find a group walking the groups list in the specified direction
