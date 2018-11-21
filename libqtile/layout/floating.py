@@ -205,7 +205,7 @@ class Floating(Layout):
         except AttributeError:
             # this window hasn't been placed before, let's put it in a sensible spot
             transient_for = client.window.get_wm_transient_for()
-            win = client.group.qtile.windowMap.get(transient_for)
+            win = client.group.qtile.windows_map.get(transient_for)
             if win is not None:
                 # if transient for a window, place in the center of the window
                 center_x = win.x + win.width / 2

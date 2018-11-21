@@ -212,7 +212,7 @@ class WindowCompleter(object):
         """Returns the next completion for txt, or None if there is no completion"""
         if not self.lookup:
             self.lookup = []
-            for wid, window in self.qtile.windowMap.items():
+            for wid, window in self.qtile.windows_map.items():
                 if window.group and window.name.lower().startswith(txt):
                     self.lookup.append((window.name, wid))
 

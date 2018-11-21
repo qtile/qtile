@@ -108,7 +108,7 @@ class Qtile(command.CommandObject):
         self.fname = fname
         hook.init(self)
 
-        self.windowMap = {}
+        self.windows_map = {}
         self.widgets_map = {}
         self.groups_map = {}
         self.groups = []
@@ -557,13 +557,13 @@ class Qtile(command.CommandObject):
             self.manage(item)
 
     def unmanage(self, win):
-        c = self.windowMap.get(win)
+        c = self.windows_map.get(win)
         if c:
             hook.fire("client_killed", c)
             self.reset_gaps(c)
             if getattr(c, "group", None):
                 c.group.remove(c)
-            del self.windowMap[win]
+            del self.windows_map[win]
             self.update_client_list()
 
     def reset_gaps(self, c):
@@ -604,13 +604,13 @@ class Qtile(command.CommandObject):
         if attrs and attrs.override_redirect:
             return
 
-        if w.wid not in self.windowMap:
+        if w.wid not in self.windows_map:
             if internal:
                 try:
                     c = window.Internal(w, self)
                 except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
                     return
-                self.windowMap[w.wid] = c
+                self.windows_map[w.wid] = c
             else:
                 try:
                     c = window.Window(w, self)
@@ -626,7 +626,7 @@ class Qtile(command.CommandObject):
                 # it's been declared static in hook.
                 if c.defunct:
                     return
-                self.windowMap[w.wid] = c
+                self.windows_map[w.wid] = c
                 # Window may have been bound to a group in the hook.
                 if not c.group:
                     self.current_screen.group.add(c, focus=c.can_steal_focus())
@@ -634,7 +634,7 @@ class Qtile(command.CommandObject):
                 hook.fire("client_managed", c)
             return c
         else:
-            return self.windowMap[w.wid]
+            return self.windows_map[w.wid]
 
     def update_client_list(self):
         """Updates the client stack list
@@ -642,7 +642,7 @@ class Qtile(command.CommandObject):
         This is needed for third party tasklists and drag and drop of tabs in
         chrome
         """
-        windows = [wid for wid, c in self.windowMap.items() if c.group]
+        windows = [wid for wid, c in self.windows_map.items() if c.group]
         self.root.set_property("_NET_CLIENT_LIST", windows)
         # TODO: check stack order
         self.root.set_property("_NET_CLIENT_LIST_STACKING", windows)
@@ -695,11 +695,11 @@ class Qtile(command.CommandObject):
             "KeyPress",
         ]
         if hasattr(e, "window"):
-            c = self.windowMap.get(e.window)
+            c = self.windows_map.get(e.window)
         elif hasattr(e, "drawable"):
-            c = self.windowMap.get(e.drawable)
+            c = self.windows_map.get(e.drawable)
         elif ename in event_events:
-            c = self.windowMap.get(e.event)
+            c = self.windows_map.get(e.event)
         else:
             c = None
 
@@ -912,7 +912,7 @@ class Qtile(command.CommandObject):
             hook.fire("selection_change", name, self.selection[name])
 
     def handle_EnterNotify(self, e):
-        if e.event in self.windowMap:
+        if e.event in self.windows_map:
             return True
         s = self.find_screen(e.root_x, e.root_y)
         if s:
@@ -970,10 +970,10 @@ class Qtile(command.CommandObject):
                 [xcffib.xproto.StackMode.Above]
             )
 
-        window = self.windowMap.get(wnd)
+        window = self.windows_map.get(wnd)
         if window and not window.window.get_property('QTILE_INTERNAL'):
-            self.current_group.focus(self.windowMap.get(wnd), False)
-            self.windowMap.get(wnd).focus(False)
+            self.current_group.focus(self.windows_map.get(wnd), False)
+            self.windows_map.get(wnd).focus(False)
 
         self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
         self.conn.conn.flush()
@@ -1108,7 +1108,7 @@ class Qtile(command.CommandObject):
 
     def handle_UnmapNotify(self, e):
         if e.event != self.root.wid:
-            c = self.windowMap.get(e.window)
+            c = self.windows_map.get(e.window)
             if c and getattr(c, "group", None):
                 try:
                     c.window.unmap()
@@ -1182,10 +1182,10 @@ class Qtile(command.CommandObject):
                 return utils.lget(self.screens, sel)
 
     def list_wids(self):
-        return [i.window.wid for i in self.windowMap.values()]
+        return [i.window.wid for i in self.windows_map.values()]
 
     def client_from_wid(self, wid):
-        for i in self.windowMap.values():
+        for i in self.windows_map.values():
             if i.window.wid == wid:
                 return i
         return None
@@ -1548,14 +1548,14 @@ class Qtile(command.CommandObject):
     def cmd_windows(self):
         """Return info for each client window"""
         return [
-            i.info() for i in self.windowMap.values()
+            i.info() for i in self.windows_map.values()
             if not isinstance(i, window.Internal)
         ]
 
     def cmd_internal_windows(self):
         """Return info for each internal window (bars, for example)"""
         return [
-            i.info() for i in self.windowMap.values()
+            i.info() for i in self.windows_map.values()
             if isinstance(i, window.Internal)
         ]
 
@@ -1585,7 +1585,7 @@ class Qtile(command.CommandObject):
                 w.group = group
 
     def find_window(self, wid):
-        window = self.windowMap.get(wid)
+        window = self.windows_map.get(wid)
         if window:
             if not window.group.screen:
                 self.current_screen.set_group(window.group)
@@ -1616,7 +1616,7 @@ class Qtile(command.CommandObject):
     def cmd_next_urgent(self):
         """Focus next window with urgent hint"""
         try:
-            nxt = [w for w in self.windowMap.values() if w.urgent][0]
+            nxt = [w for w in self.windows_map.values() if w.urgent][0]
             nxt.group.cmd_toscreen()
             nxt.group.focus(nxt)
         except IndexError:
