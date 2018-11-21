@@ -25,6 +25,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 import pytest
 import subprocess
 import time
@@ -38,6 +39,7 @@ import libqtile.manager
 import libqtile.config
 import libqtile.hook
 import libqtile.confreader
+
 
 from .conftest import whereis, BareConfig, no_xinerama, retry
 
@@ -1058,3 +1060,24 @@ def test_minimal__(qtile):
 def test_colorPixel(qtile):
     # test for #394
     qtile.c.eval("self.colorPixel(\"ffffff\")")
+
+
+@manager_config
+def test_change_loglevel(qtile):
+    assert qtile.c.loglevel() == logging.INFO
+    assert qtile.c.loglevelname() == 'INFO'
+    qtile.c.debug()
+    assert qtile.c.loglevel() == logging.DEBUG
+    assert qtile.c.loglevelname() == 'DEBUG'
+    qtile.c.info()
+    assert qtile.c.loglevel() == logging.INFO
+    assert qtile.c.loglevelname() == 'INFO'
+    qtile.c.warning()
+    assert qtile.c.loglevel() == logging.WARNING
+    assert qtile.c.loglevelname() == 'WARNING'
+    qtile.c.error()
+    assert qtile.c.loglevel() == logging.ERROR
+    assert qtile.c.loglevelname() == 'ERROR'
+    qtile.c.critical()
+    assert qtile.c.loglevel() == logging.CRITICAL
+    assert qtile.c.loglevelname() == 'CRITICAL'
