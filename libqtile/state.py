@@ -54,7 +54,7 @@ class QtileState(object):
         for (screen, group) in self.screens.items():
             try:
                 group = qtile.groups_map[group]
-                qtile.screens[screen].setGroup(group)
+                qtile.screens[screen].set_group(group)
             except (KeyError, IndexError):
                 pass  # group or screen missing
 

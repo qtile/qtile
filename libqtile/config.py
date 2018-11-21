@@ -267,7 +267,7 @@ class Screen(command.CommandObject):
         self.y = y
         self.width = width
         self.height = height
-        self.setGroup(group)
+        self.set_group(group)
         for i in self.gaps:
             i._configure(qtile, self)
 
@@ -304,7 +304,7 @@ class Screen(command.CommandObject):
     def get_rect(self):
         return ScreenRect(self.dx, self.dy, self.dwidth, self.dheight)
 
-    def setGroup(self, new_group, save_prev=True):
+    def set_group(self, new_group, save_prev=True):
         """Put group on this screen"""
         if new_group.screen == self:
             return
@@ -406,13 +406,13 @@ class Screen(command.CommandObject):
     def cmd_next_group(self, skip_empty=False, skip_managed=False):
         """Switch to the next group"""
         n = self.group.get_next_group(skip_empty, skip_managed)
-        self.setGroup(n)
+        self.set_group(n)
         return n.name
 
     def cmd_prev_group(self, skip_empty=False, skip_managed=False):
         """Switch to the previous group"""
         n = self.group.get_previous_group(skip_empty, skip_managed)
-        self.setGroup(n)
+        self.set_group(n)
         return n.name
 
     def cmd_toggle_group(self, group_name=None):
@@ -420,7 +420,7 @@ class Screen(command.CommandObject):
         group = self.qtile.groups_map.get(group_name)
         if group in (self.group, None):
             group = self.previous_group
-        self.setGroup(group)
+        self.set_group(group)
 
     def cmd_togglegroup(self, groupName=None):
         """Switch to the selected group or to the previously active one

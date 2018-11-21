@@ -195,7 +195,7 @@ class DGroups(object):
                                 setattr(group_obj.layout, k, v)
                         affinity = group.screen_affinity
                         if affinity and len(self.qtile.screens) > affinity:
-                            self.qtile.screens[affinity].setGroup(group_obj)
+                            self.qtile.screens[affinity].set_group(group_obj)
 
                 if rule.float:
                     client.enablefloating()

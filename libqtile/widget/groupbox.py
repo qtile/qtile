@@ -293,7 +293,7 @@ class GroupBox(_GroupBase):
                 self.clicked = group
 
         if group:
-            self.bar.screen.setGroup(group)
+            self.bar.screen.set_group(group)
 
     def button_release(self, x, y, button):
         if button not in (5, 4):
