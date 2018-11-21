@@ -1064,14 +1064,20 @@ def test_colorPixel(qtile):
 
 @manager_config
 def test_change_loglevel(qtile):
-    assert qtile.c.loglevel() == (logging.getLevelName(logging.INFO), logging.INFO)
+    assert qtile.c.loglevel() == logging.INFO
+    assert qtile.c.loglevelname() == 'INFO'
     qtile.c.debug()
-    assert qtile.c.loglevel() == (logging.getLevelName(logging.DEBUG), logging.DEBUG)
+    assert qtile.c.loglevel() == logging.DEBUG
+    assert qtile.c.loglevelname() == 'DEBUG'
     qtile.c.info()
-    assert qtile.c.loglevel() == (logging.getLevelName(logging.INFO), logging.INFO)
+    assert qtile.c.loglevel() == logging.INFO
+    assert qtile.c.loglevelname() == 'INFO'
     qtile.c.warning()
-    assert qtile.c.loglevel() == (logging.getLevelName(logging.WARNING), logging.WARNING)
+    assert qtile.c.loglevel() == logging.WARNING
+    assert qtile.c.loglevelname() == 'WARNING'
     qtile.c.error()
-    assert qtile.c.loglevel() == (logging.getLevelName(logging.ERROR), logging.ERROR)
+    assert qtile.c.loglevel() == logging.ERROR
+    assert qtile.c.loglevelname() == 'ERROR'
     qtile.c.critical()
-    assert qtile.c.loglevel() == (logging.getLevelName(logging.CRITICAL), logging.CRITICAL)
+    assert qtile.c.loglevel() == logging.CRITICAL
+    assert qtile.c.loglevelname() == 'CRITICAL'
