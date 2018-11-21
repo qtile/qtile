@@ -1305,7 +1305,7 @@ class Qtile(command.CommandObject):
             group = self.groups_map.get(group)
         else:
             group = self.current_group
-        group.nextLayout()
+        group.use_next_layout()
 
     def cmd_prev_layout(self, group=None):
         """Switch to the previous layout.
