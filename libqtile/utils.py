@@ -76,7 +76,7 @@ def shuffleUp(lst):
         lst.insert(0, c)
 
 
-def shuffleDown(lst):
+def shuffle_down(lst):
     if len(lst) > 1:
         c = lst[0]
         lst.remove(c)

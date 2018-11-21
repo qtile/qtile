@@ -114,5 +114,5 @@ def test_shuffle():
     test_l = list(range(3))
     utils.shuffleUp(test_l)
     assert test_l != list(range(3))
-    utils.shuffleDown(test_l)
+    utils.shuffle_down(test_l)
     assert test_l == list(range(3))
