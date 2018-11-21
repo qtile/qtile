@@ -385,7 +385,7 @@ class Qtile(object):
         path = whereis("xclock")
         return self._spawn_window(path)
 
-    def testXeyes(self):
+    def test_xeyes(self):
         path = whereis("xeyes")
         return self._spawn_window(path)
 

@@ -100,7 +100,7 @@ def test_screen_dim(qtile):
     assert qtile.c.group.info()["focus"] == 'xclock'
 
     qtile.c.to_screen(1)
-    qtile.testXeyes()
+    qtile.test_xeyes()
     assert qtile.c.screen.info()["index"] == 1
     assert qtile.c.screen.info()["x"] == 800
     assert qtile.c.screen.info()["width"] == 640
@@ -379,7 +379,7 @@ def test_toggle_group(qtile):
 def test_inspect_xeyes(qtile):
     self = qtile
 
-    self.testXeyes()
+    self.test_xeyes()
     assert self.c.window.inspect()
 
 
@@ -397,7 +397,7 @@ def test_inspect_xclock(qtile):
 def test_static(qtile):
     self = qtile
 
-    self.testXeyes()
+    self.test_xeyes()
     self.test_window("one")
     self.c.window[self.c.window.info()["id"]].static(0, 0, 0, 100, 100)
 
@@ -407,7 +407,7 @@ def test_static(qtile):
 def test_match(qtile):
     self = qtile
 
-    self.testXeyes()
+    self.test_xeyes()
     assert self.c.window.match(wname="xeyes")
     assert not self.c.window.match(wname="nonexistent")
 
@@ -452,7 +452,7 @@ def test_last_float_size(qtile):
     """
     self = qtile
 
-    self.testXeyes()
+    self.test_xeyes()
     assert self.c.window.info()['name'] == 'xeyes'
     assert self.c.window.info()['width'] == 798
     assert self.c.window.info()['height'] == 578
@@ -491,7 +491,7 @@ def test_float_max_min_combo(qtile):
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
     self.test_xcalc()
-    self.testXeyes()
+    self.test_xeyes()
 
     assert self.c.group.info()['focus'] == 'xeyes'
     assert self.c.window.info()['width'] == 398
@@ -537,7 +537,7 @@ def test_toggle_fullscreen(qtile):
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
     self.test_xcalc()
-    self.testXeyes()
+    self.test_xeyes()
 
     assert self.c.group.info()['focus'] == 'xeyes'
     assert self.c.window.info()['width'] == 398
@@ -575,7 +575,7 @@ def test_toggle_max(qtile):
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
     self.test_xcalc()
-    self.testXeyes()
+    self.test_xeyes()
 
     assert self.c.group.info()['focus'] == 'xeyes'
     assert self.c.window.info()['width'] == 398
@@ -611,7 +611,7 @@ def test_toggle_min(qtile):
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
     self.test_xcalc()
-    self.testXeyes()
+    self.test_xeyes()
 
     assert self.c.group.info()['focus'] == 'xeyes'
     assert self.c.window.info()['width'] == 398
@@ -645,7 +645,7 @@ def test_toggle_min(qtile):
 def test_toggle_floating(qtile):
     self = qtile
 
-    self.testXeyes()
+    self.test_xeyes()
     assert self.c.window.info()['floating'] is False
     self.c.window.toggle_floating()
     assert self.c.window.info()['floating'] is True
@@ -668,7 +668,7 @@ def test_floating_focus(qtile):
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
     self.test_xcalc()
-    self.testXeyes()
+    self.test_xeyes()
     # self.test_window("one")
     assert self.c.window.info()['width'] == 398
     assert self.c.window.info()['height'] == 578
@@ -715,7 +715,7 @@ def test_floating_focus(qtile):
 def test_move_floating(qtile):
     self = qtile
 
-    self.testXeyes()
+    self.test_xeyes()
     # self.test_window("one")
     assert self.c.window.info()['width'] == 798
     assert self.c.window.info()['height'] == 578
@@ -839,7 +839,7 @@ def test_focus_stays_on_layout_switch(qtile):
 @pytest.mark.parametrize("qtile", [BareConfig, ManagerConfig], indirect=True)
 @pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
 def test_xeyes(qtile):
-    qtile.testXeyes()
+    qtile.test_xeyes()
 
 
 @pytest.mark.parametrize("qtile", [BareConfig, ManagerConfig], indirect=True)
