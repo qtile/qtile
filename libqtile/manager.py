@@ -115,8 +115,8 @@ class Qtile(command.CommandObject):
 
         # Find the modifier mask for the numlock key, if there is one:
         nc = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
-        self.numlockMask = xcbq.ModMasks.get(self.conn.get_modifier(nc), 0)
-        self.validMask = ~(self.numlockMask | xcbq.ModMasks["lock"])
+        self.numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(nc), 0)
+        self.validMask = ~(self.numlock_mask | xcbq.ModMasks["lock"])
 
         # Because we only do Xinerama multi-screening,
         # we can assume that the first
@@ -425,9 +425,9 @@ class Qtile(command.CommandObject):
     def _auto_modmasks(self):
         yield 0
         yield xcbq.ModMasks["lock"]
-        if self.numlockMask:
-            yield self.numlockMask
-            yield self.numlockMask | xcbq.ModMasks["lock"]
+        if self.numlock_mask:
+            yield self.numlock_mask
+            yield self.numlock_mask | xcbq.ModMasks["lock"]
 
     def map_key(self, key):
         self.keys_map[(key.keysym, key.modmask & self.validMask)] = key
@@ -889,8 +889,8 @@ class Qtile(command.CommandObject):
     def handle_KeyPress(self, e):
         keysym = self.conn.code_to_syms[e.detail][0]
         state = e.state
-        if self.numlockMask:
-            state = e.state | self.numlockMask
+        if self.numlock_mask:
+            state = e.state | self.numlock_mask
         k = self.keys_map.get((keysym, state & self.validMask))
         if not k:
             logger.info("Ignoring unknown keysym: %s" % keysym)
@@ -935,8 +935,8 @@ class Qtile(command.CommandObject):
     def handle_ButtonPress(self, e):
         button_code = e.detail
         state = e.state
-        if self.numlockMask:
-            state = e.state | self.numlockMask
+        if self.numlock_mask:
+            state = e.state | self.numlock_mask
 
         k = self.mouse_map.get(button_code)
         for m in k:
@@ -987,8 +987,8 @@ class Qtile(command.CommandObject):
     def handle_ButtonRelease(self, e):
         button_code = e.detail
         state = e.state & ~xcbq.AllButtonsMask
-        if self.numlockMask:
-            state = state | self.numlockMask
+        if self.numlock_mask:
+            state = state | self.numlock_mask
         k = self.mouse_map.get(button_code)
         for m in k:
             if not m:
