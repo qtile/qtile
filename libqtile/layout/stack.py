@@ -128,7 +128,7 @@ class Stack(Layout):
         if n:
             self.group.focus(n.cw, True)
 
-    def previousStack(self):
+    def previous_stack(self):
         n = self._findNext(
             list(reversed(self.stacks)),
             len(self.stacks) - self.current_stack_offset - 1
@@ -309,7 +309,7 @@ class Stack(Layout):
 
     def cmd_previous(self):
         """Focus previous stack"""
-        return self.previousStack()
+        return self.previous_stack()
 
     def cmd_client_to_next(self):
         """Send the current client to the next stack"""
