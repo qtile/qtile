@@ -210,7 +210,7 @@ class _Window(command.CommandObject):
             'base_width': 0,
             'base_height': 0,
         }
-        self.updateHints()
+        self.update_hints()
 
     x = property(fset=_geometry_setter("x"), fget=_geometry_getter("x"))
     y = property(fset=_geometry_setter("y"), fget=_geometry_getter("y"))
@@ -259,7 +259,7 @@ class _Window(command.CommandObject):
             return
         hook.fire('client_name_updated', self)
 
-    def updateHints(self):
+    def update_hints(self):
         """Update the local copy of the window's WM_HINTS
 
         See http://tronche.com/gui/x/icccm/sec-4.html#WM_HINTS
@@ -1221,9 +1221,9 @@ class Window(_Window):
         if name == "WM_TRANSIENT_FOR":
             pass
         elif name == "WM_HINTS":
-            self.updateHints()
+            self.update_hints()
         elif name == "WM_NORMAL_HINTS":
-            self.updateHints()
+            self.update_hints()
         elif name == "WM_NAME":
             self.updateName()
         elif name == "_NET_WM_NAME":
