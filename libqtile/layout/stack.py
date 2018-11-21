@@ -300,7 +300,7 @@ class Stack(Layout):
 
     def cmd_rotate(self):
         """Rotate order of the stacks"""
-        utils.shuffleUp(self.stacks)
+        utils.shuffle_up(self.stacks)
         self.group.layout_all()
 
     def cmd_next(self):
