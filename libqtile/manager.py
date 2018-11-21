@@ -1291,7 +1291,7 @@ class Qtile(command.CommandObject):
             group = self.groups_map.get(group)
         else:
             group = self.current_group
-        group.toLayoutIndex(index)
+        group.use_layout(index)
 
     def cmd_next_layout(self, group=None):
         """Switch to the next layout.
