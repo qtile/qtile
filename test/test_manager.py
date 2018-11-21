@@ -25,6 +25,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
 import pytest
 import subprocess
 import time
@@ -39,7 +40,6 @@ import libqtile.config
 import libqtile.hook
 import libqtile.confreader
 
-import logging
 
 from .conftest import whereis, BareConfig, no_xinerama, retry
 
