@@ -120,7 +120,7 @@ class Stack(Layout):
                     False
                 )
 
-    def nextStack(self):
+    def next_stack(self):
         n = self._findNext(
             self.stacks,
             self.current_stack_offset
@@ -305,7 +305,7 @@ class Stack(Layout):
 
     def cmd_next(self):
         """Focus next stack"""
-        return self.nextStack()
+        return self.next_stack()
 
     def cmd_previous(self):
         """Focus previous stack"""
