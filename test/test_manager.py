@@ -92,7 +92,7 @@ manager_config = pytest.mark.parametrize("qtile", [ManagerConfig], indirect=True
 def test_screen_dim(qtile):
     # self.c.restart()
 
-    qtile.testXclock()
+    qtile.test_xclock()
     assert qtile.c.screen.info()["index"] == 0
     assert qtile.c.screen.info()["x"] == 0
     assert qtile.c.screen.info()["width"] == 800
@@ -120,7 +120,7 @@ def test_screen_dim(qtile):
 def test_clone_dim(qtile):
     self = qtile
 
-    self.testXclock()
+    self.test_xclock()
     assert self.c.screen.info()["index"] == 0
     assert self.c.screen.info()["x"] == 0
     assert self.c.screen.info()["width"] == 800
@@ -388,7 +388,7 @@ def test_inspect_xeyes(qtile):
 def test_inspect_xclock(qtile):
     self = qtile
 
-    self.testXclock()
+    self.test_xclock()
     assert self.c.window.inspect()["wm_class"]
 
 
@@ -420,7 +420,7 @@ def test_default_float(qtile):
     # change to 2 col stack
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
-    self.testXclock()
+    self.test_xclock()
 
     assert self.c.group.info()['focus'] == 'xclock'
     assert self.c.window.info()['width'] == 164
