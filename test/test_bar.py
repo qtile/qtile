@@ -116,7 +116,7 @@ def test_completion():
 
 @gb_config
 def test_draw(qtile):
-    qtile.testWindow("one")
+    qtile.test_window("one")
     b = qtile.c.bar["bottom"].info()
     assert b["widgets"][0]["name"] == "groupbox"
 

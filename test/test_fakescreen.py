@@ -158,12 +158,12 @@ fakescreen_config = pytest.mark.parametrize("xephyr, qtile", [(xephyr_config, Fa
 
 @fakescreen_config
 def test_basic(qtile):
-    qtile.testWindow("zero")
+    qtile.test_window("zero")
     assert qtile.c.layout.info()["clients"] == ["zero"]
     assert qtile.c.screen.info() == {
         'y': 0, 'x': 0, 'index': 0, 'width': 600, 'height': 480}
     qtile.c.to_screen(1)
-    qtile.testWindow("one")
+    qtile.test_window("one")
     assert qtile.c.layout.info()["clients"] == ["one"]
     assert qtile.c.screen.info() == {
         'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}

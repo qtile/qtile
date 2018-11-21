@@ -105,7 +105,7 @@ each_layout_config_events = pytest.mark.parametrize("qtile", AllLayoutsConfigEve
 @each_layout_config
 def test_window_types(qtile):
     pytest.importorskip("Tkinter")
-    qtile.testWindow("one")
+    qtile.test_window("one")
 
     # A dialog should take focus and be floating
     qtile.test_dialog("dialog")
@@ -122,11 +122,11 @@ def test_window_types(qtile):
 def test_focus_cycle(qtile):
     pytest.importorskip("Tkinter")
 
-    qtile.testWindow("one")
-    qtile.testWindow("two")
+    qtile.test_window("one")
+    qtile.test_window("two")
     qtile.test_dialog("float1")
     qtile.test_dialog("float2")
-    qtile.testWindow("three")
+    qtile.test_window("three")
 
     # Test preconditions (the order of items in 'clients' is managed by each layout)
     assert set(qtile.c.layout.info()['clients']) == {'one', 'two', 'three'}
@@ -142,12 +142,12 @@ def test_focus_back(qtile):
     qtile.c.group.focus_back()
 
     # Nothing must happen with only one window
-    qtile.testWindow("one")
+    qtile.test_window("one")
     qtile.c.group.focus_back()
     assert_focused(qtile, "one")
 
     # 2 windows
-    two = qtile.testWindow("two")
+    two = qtile.test_window("two")
     assert_focused(qtile, "two")
     qtile.c.group.focus_back()
     assert_focused(qtile, "one")
@@ -155,7 +155,7 @@ def test_focus_back(qtile):
     assert_focused(qtile, "two")
 
     # Float a window
-    three = qtile.testWindow("three")
+    three = qtile.test_window("three")
     qtile.c.group.focus_back()
     assert_focused(qtile, "two")
     qtile.c.window.toggle_floating()
@@ -163,7 +163,7 @@ def test_focus_back(qtile):
     assert_focused(qtile, "three")
 
     # If the previous window is killed, the further previous one must be focused
-    qtile.testWindow("four")
+    qtile.test_window("four")
     qtile.kill_window(two)
     qtile.kill_window(three)
     assert_focused(qtile, "four")
@@ -186,11 +186,11 @@ def test_focus_change_event(qtile):
     assert qtile.c.get_test_data()['focus_change'] == 2
 
     # Spawning a window must fire only 1 focus_change event
-    one = qtile.testWindow("one")
+    one = qtile.test_window("one")
     assert qtile.c.get_test_data()['focus_change'] == 3
-    two = qtile.testWindow("two")
+    two = qtile.test_window("two")
     assert qtile.c.get_test_data()['focus_change'] == 4
-    three = qtile.testWindow("three")
+    three = qtile.test_window("three")
     assert qtile.c.get_test_data()['focus_change'] == 5
 
     # Switching window must fire only 1 focus_change event
@@ -236,9 +236,9 @@ def test_focus_change_event(qtile):
 
 @each_layout_config
 def test_remove(qtile):
-    one = qtile.testWindow("one")
-    two = qtile.testWindow("two")
-    three = qtile.testWindow("three")
+    one = qtile.test_window("one")
+    two = qtile.test_window("two")
+    three = qtile.test_window("three")
     assert_focused(qtile, "three")
     assert qtile.c.group.info()['focus_history'] == ["one", "two", "three"]
 
@@ -248,7 +248,7 @@ def test_remove(qtile):
 
     # To continue testing, explicitly set focus on 'two'
     qtile.c.group.focus_by_name("two")
-    qtile.testWindow("four")
+    qtile.test_window("four")
     assert_focused(qtile, "four")
     assert qtile.c.group.info()['focus_history'] == ["one", "two", "four"]
 
@@ -258,10 +258,10 @@ def test_remove(qtile):
     assert qtile.c.group.info()['focus_history'] == ["one", "four"]
 
     # Add more windows and shuffle the focus order
-    five = qtile.testWindow("five")
-    qtile.testWindow("six")
+    five = qtile.test_window("five")
+    qtile.test_window("six")
     qtile.c.group.focus_by_name("one")
-    seven = qtile.testWindow("seven")
+    seven = qtile.test_window("seven")
     qtile.c.group.focus_by_name("six")
     assert_focused(qtile, "six")
     assert qtile.c.group.info()['focus_history'] == ["four", "five", "one",
@@ -281,8 +281,8 @@ def test_remove(qtile):
 def test_remove_floating(qtile):
     pytest.importorskip("Tkinter")
 
-    one = qtile.testWindow("one")
-    qtile.testWindow("two")
+    one = qtile.test_window("one")
+    qtile.test_window("two")
     float1 = qtile.test_dialog("float1")
     assert_focused(qtile, "float1")
     assert set(qtile.c.layout.info()['clients']) == {"one", "two"}
@@ -304,7 +304,7 @@ def test_remove_floating(qtile):
     assert qtile.c.group.info()['focus_history'] == ["one", "two"]
 
     # Add more windows and shuffle the focus order
-    qtile.testWindow("three")
+    qtile.test_window("three")
     float3 = qtile.test_dialog("float3")
     qtile.c.group.focus_by_name("one")
     float4 = qtile.test_dialog("float4")
@@ -330,9 +330,9 @@ def test_remove_floating(qtile):
     assert_focused(qtile, "float3")
     assert qtile.c.group.info()['focus_history'] == ["two", "three", "float3"]
 
-    four = qtile.testWindow("four")
+    four = qtile.test_window("four")
     float6 = qtile.test_dialog("float6")
-    five = qtile.testWindow("five")
+    five = qtile.test_window("five")
     qtile.c.group.focus_by_name("float3")
     assert qtile.c.group.info()['focus_history'] == ["two", "three", "four",
                                                      "float6", "five", "float3"]
@@ -363,7 +363,7 @@ def test_desktop_notifications(qtile):
 
     # A window is spawned while a notification is displayed
     notif2 = qtile.test_notification("notif2")
-    one = qtile.testWindow("one")
+    one = qtile.test_window("one")
     assert qtile.c.group.info()['focus_history'] == ["one"]
     qtile.kill_window(notif2)
 
@@ -375,14 +375,14 @@ def test_desktop_notifications(qtile):
     # Complicate the scenario with multiple windows and notifications
 
     dialog1 = qtile.test_dialog("dialog1")
-    qtile.testWindow("two")
+    qtile.test_window("two")
     notif4 = qtile.test_notification("notif4")
     notif5 = qtile.test_notification("notif5")
     assert qtile.c.group.info()['focus_history'] == ["one", "dialog1", "two"]
 
     dialog2 = qtile.test_dialog("dialog2")
     qtile.kill_window(notif5)
-    qtile.testWindow("three")
+    qtile.test_window("three")
     qtile.kill_window(one)
     qtile.c.group.focus_by_name("two")
     notif6 = qtile.test_notification("notif6")
@@ -404,10 +404,10 @@ def test_desktop_notifications(qtile):
 
 @all_layouts_config
 def test_cycle_layouts(qtile):
-    qtile.testWindow("one")
-    qtile.testWindow("two")
-    qtile.testWindow("three")
-    qtile.testWindow("four")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("three")
+    qtile.test_window("four")
     qtile.c.group.focus_by_name("three")
     assert_focused(qtile, "three")
 

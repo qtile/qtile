@@ -109,13 +109,13 @@ def monadwidemargins_config(x):
 
 @monadtall_config
 def test_tall_add_clients(qtile):
-    qtile.testWindow('one')
-    qtile.testWindow('two')
+    qtile.test_window('one')
+    qtile.test_window('two')
     assert qtile.c.layout.info()["main"] == 'one'
     assert qtile.c.layout.info()["secondary"] == ['two']
     assert_focused(qtile, 'two')
 
-    qtile.testWindow('three')
+    qtile.test_window('three')
     assert qtile.c.layout.info()["main"] == 'one'
     assert qtile.c.layout.info()["secondary"] == ['two', 'three']
     assert_focused(qtile, 'three')
@@ -123,7 +123,7 @@ def test_tall_add_clients(qtile):
     qtile.c.layout.previous()
     assert_focused(qtile, 'two')
 
-    qtile.testWindow('four')
+    qtile.test_window('four')
     assert qtile.c.layout.info()["main"] == 'one'
     assert qtile.c.layout.info()["secondary"] == ['two', 'four', 'three']
     assert_focused(qtile, 'four')
@@ -131,13 +131,13 @@ def test_tall_add_clients(qtile):
 
 @monadwide_config
 def test_wide_add_clients(qtile):
-    qtile.testWindow('one')
-    qtile.testWindow('two')
+    qtile.test_window('one')
+    qtile.test_window('two')
     assert qtile.c.layout.info()["main"] == 'one'
     assert qtile.c.layout.info()["secondary"] == ['two']
     assert_focused(qtile, 'two')
 
-    qtile.testWindow('three')
+    qtile.test_window('three')
     assert qtile.c.layout.info()["main"] == 'one'
     assert qtile.c.layout.info()["secondary"] == ['two', 'three']
     assert_focused(qtile, 'three')
@@ -145,7 +145,7 @@ def test_wide_add_clients(qtile):
     qtile.c.layout.previous()
     assert_focused(qtile, 'two')
 
-    qtile.testWindow('four')
+    qtile.test_window('four')
     assert qtile.c.layout.info()["main"] == 'one'
     assert qtile.c.layout.info()["secondary"] == ['two', 'four', 'three']
     assert_focused(qtile, 'four')
@@ -153,10 +153,10 @@ def test_wide_add_clients(qtile):
 
 @monadtallmargins_config
 def test_tall_margins(qtile):
-    qtile.testWindow('one')
+    qtile.test_window('one')
     assert_dimensions(qtile, 4, 4, 788, 588)
 
-    qtile.testWindow('two')
+    qtile.test_window('two')
     assert_focused(qtile, 'two')
     assert_dimensions(qtile, 404, 4, 388, 588)
 
@@ -167,10 +167,10 @@ def test_tall_margins(qtile):
 
 @monadwidemargins_config
 def test_wide_margins(qtile):
-    qtile.testWindow('one')
+    qtile.test_window('one')
     assert_dimensions(qtile, 4, 4, 788, 588)
 
-    qtile.testWindow('two')
+    qtile.test_window('two')
     assert_focused(qtile, 'two')
     assert_dimensions(qtile, 4, 304, 788, 288)
 
@@ -181,10 +181,10 @@ def test_wide_margins(qtile):
 
 @monadtall_config
 def test_tall_growmain_solosecondary(qtile):
-    qtile.testWindow('one')
+    qtile.test_window('one')
     assert_dimensions(qtile, 0, 0, 796, 596)
 
-    qtile.testWindow('two')
+    qtile.test_window('two')
     qtile.c.layout.previous()
     assert_focused(qtile, 'one')
 
@@ -208,10 +208,10 @@ def test_tall_growmain_solosecondary(qtile):
 
 @monadwide_config
 def test_wide_growmain_solosecondary(qtile):
-    qtile.testWindow('one')
+    qtile.test_window('one')
     assert_dimensions(qtile, 0, 0, 796, 596)
 
-    qtile.testWindow('two')
+    qtile.test_window('two')
     qtile.c.layout.previous()
     assert_focused(qtile, 'one')
 
@@ -235,11 +235,11 @@ def test_wide_growmain_solosecondary(qtile):
 
 @monadtall_config
 def test_tall_growmain_multiplesecondary(qtile):
-    qtile.testWindow('one')
+    qtile.test_window('one')
     assert_dimensions(qtile, 0, 0, 796, 596)
 
-    qtile.testWindow('two')
-    qtile.testWindow('three')
+    qtile.test_window('two')
+    qtile.test_window('three')
     qtile.c.layout.previous()
     qtile.c.layout.previous()
     assert_focused(qtile, 'one')
@@ -264,11 +264,11 @@ def test_tall_growmain_multiplesecondary(qtile):
 
 @monadwide_config
 def test_wide_growmain_multiplesecondary(qtile):
-    qtile.testWindow('one')
+    qtile.test_window('one')
     assert_dimensions(qtile, 0, 0, 796, 596)
 
-    qtile.testWindow('two')
-    qtile.testWindow('three')
+    qtile.test_window('two')
+    qtile.test_window('three')
     qtile.c.layout.previous()
     qtile.c.layout.previous()
     assert_focused(qtile, 'one')
@@ -293,10 +293,10 @@ def test_wide_growmain_multiplesecondary(qtile):
 
 @monadtall_config
 def test_tall_growsecondary_solosecondary(qtile):
-    qtile.testWindow('one')
+    qtile.test_window('one')
     assert_dimensions(qtile, 0, 0, 796, 596)
 
-    qtile.testWindow('two')
+    qtile.test_window('two')
     assert_focused(qtile, 'two')
 
     assert_dimensions(qtile, 400, 0, 396, 596)
@@ -319,10 +319,10 @@ def test_tall_growsecondary_solosecondary(qtile):
 
 @monadwide_config
 def test_wide_growsecondary_solosecondary(qtile):
-    qtile.testWindow('one')
+    qtile.test_window('one')
     assert_dimensions(qtile, 0, 0, 796, 596)
 
-    qtile.testWindow('two')
+    qtile.test_window('two')
     assert_focused(qtile, 'two')
 
     assert_dimensions(qtile, 0, 300, 796, 296)
@@ -345,11 +345,11 @@ def test_wide_growsecondary_solosecondary(qtile):
 
 @monadtall_config
 def test_tall_growsecondary_multiplesecondary(qtile):
-    qtile.testWindow('one')
+    qtile.test_window('one')
     assert_dimensions(qtile, 0, 0, 796, 596)
 
-    qtile.testWindow('two')
-    qtile.testWindow('three')
+    qtile.test_window('two')
+    qtile.test_window('three')
     qtile.c.layout.previous()
     assert_focused(qtile, 'two')
 
@@ -373,11 +373,11 @@ def test_tall_growsecondary_multiplesecondary(qtile):
 
 @monadwide_config
 def test_wide_growsecondary_multiplesecondary(qtile):
-    qtile.testWindow('one')
+    qtile.test_window('one')
     assert_dimensions(qtile, 0, 0, 796, 596)
 
-    qtile.testWindow('two')
-    qtile.testWindow('three')
+    qtile.test_window('two')
+    qtile.test_window('three')
     qtile.c.layout.previous()
     assert_focused(qtile, 'two')
 
@@ -401,9 +401,9 @@ def test_wide_growsecondary_multiplesecondary(qtile):
 
 @monadtall_config
 def test_tall_flip(qtile):
-    qtile.testWindow('one')
-    qtile.testWindow('two')
-    qtile.testWindow('three')
+    qtile.test_window('one')
+    qtile.test_window('two')
+    qtile.test_window('three')
 
     # Check all the dimensions
     qtile.c.layout.next()
@@ -436,9 +436,9 @@ def test_tall_flip(qtile):
 
 @monadwide_config
 def test_wide_flip(qtile):
-    qtile.testWindow('one')
-    qtile.testWindow('two')
-    qtile.testWindow('three')
+    qtile.test_window('one')
+    qtile.test_window('two')
+    qtile.test_window('three')
 
     # Check all the dimensions
     qtile.c.layout.next()
@@ -471,10 +471,10 @@ def test_wide_flip(qtile):
 
 @monadtall_config
 def test_tall_shuffle(qtile):
-    qtile.testWindow('one')
-    qtile.testWindow('two')
-    qtile.testWindow('three')
-    qtile.testWindow('four')
+    qtile.test_window('one')
+    qtile.test_window('two')
+    qtile.test_window('three')
+    qtile.test_window('four')
 
     assert qtile.c.layout.info()['main'] == 'one'
     assert qtile.c.layout.info()['secondary'] == ['two', 'three', 'four']
@@ -494,10 +494,10 @@ def test_tall_shuffle(qtile):
 
 @monadwide_config
 def test_wide_shuffle(qtile):
-    qtile.testWindow('one')
-    qtile.testWindow('two')
-    qtile.testWindow('three')
-    qtile.testWindow('four')
+    qtile.test_window('one')
+    qtile.test_window('two')
+    qtile.test_window('three')
+    qtile.test_window('four')
 
     assert qtile.c.layout.info()['main'] == 'one'
     assert qtile.c.layout.info()['secondary'] == ['two', 'three', 'four']
@@ -517,10 +517,10 @@ def test_wide_shuffle(qtile):
 
 @monadtall_config
 def test_tall_swap(qtile):
-    qtile.testWindow('one')
-    qtile.testWindow('two')
-    qtile.testWindow('three')
-    qtile.testWindow('focused')
+    qtile.test_window('one')
+    qtile.test_window('two')
+    qtile.test_window('three')
+    qtile.test_window('focused')
 
     assert qtile.c.layout.info()['main'] == 'one'
     assert qtile.c.layout.info()['secondary'] == ['two', 'three', 'focused']
@@ -559,10 +559,10 @@ def test_tall_swap(qtile):
 
 @monadwide_config
 def test_wide_swap(qtile):
-    qtile.testWindow('one')
-    qtile.testWindow('two')
-    qtile.testWindow('three')
-    qtile.testWindow('focused')
+    qtile.test_window('one')
+    qtile.test_window('two')
+    qtile.test_window('three')
+    qtile.test_window('focused')
 
     assert qtile.c.layout.info()['main'] == 'one'
     assert qtile.c.layout.info()['secondary'] == ['two', 'three', 'focused']
@@ -602,13 +602,13 @@ def test_wide_swap(qtile):
 @monadtall_config
 def test_tall_window_focus_cycle(qtile):
     # setup 3 tiled and two floating clients
-    qtile.testWindow("one")
-    qtile.testWindow("two")
-    qtile.testWindow("float1")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("float1")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("float2")
+    qtile.test_window("float2")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("three")
+    qtile.test_window("three")
 
     # test preconditions
     assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
@@ -623,13 +623,13 @@ def test_tall_window_focus_cycle(qtile):
 @monadwide_config
 def test_wide_window_focus_cycle(qtile):
     # setup 3 tiled and two floating clients
-    qtile.testWindow("one")
-    qtile.testWindow("two")
-    qtile.testWindow("float1")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("float1")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("float2")
+    qtile.test_window("float2")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("three")
+    qtile.test_window("three")
 
     # test preconditions
     assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']

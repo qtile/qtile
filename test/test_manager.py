@@ -137,9 +137,9 @@ def test_to_screen(qtile):
     assert self.c.screen.info()["index"] == 0
     self.c.to_screen(1)
     assert self.c.screen.info()["index"] == 1
-    self.testWindow("one")
+    self.test_window("one")
     self.c.to_screen(0)
-    self.testWindow("two")
+    self.test_window("two")
 
     ga = self.c.groups()["a"]
     assert ga["windows"] == ["two"]
@@ -160,7 +160,7 @@ def test_to_screen(qtile):
 def test_togroup(qtile):
     self = qtile
 
-    self.testWindow("one")
+    self.test_window("one")
     with pytest.raises(libqtile.command.CommandError):
         self.c.window.togroup("nonexistent")
     assert self.c.groups()["a"]["focus"] == "one"
@@ -207,8 +207,8 @@ def test_events(qtile):
 def test_keypress(qtile):
     self = qtile
 
-    self.testWindow("one")
-    self.testWindow("two")
+    self.test_window("one")
+    self.test_window("two")
     v = self.c.simulate_keypress(["unknown"], "j")
     assert v.startswith("Unknown modifier")
     assert self.c.groups()["a"]["focus"] == "two"
@@ -240,7 +240,7 @@ def assert_window_died(client, window_info):
 @manager_config
 @no_xinerama
 def test_kill_window(qtile):
-    qtile.testWindow("one")
+    qtile.test_window("one")
     qtile.testwindows = []
     window_info = qtile.c.window.info()
     qtile.c.window[window_info["id"]].kill()
@@ -253,11 +253,11 @@ def test_kill_other(qtile):
     self = qtile
 
     self.c.group.setlayout("tile")
-    one = self.testWindow("one")
+    one = self.test_window("one")
     assert self.c.window.info()["width"] == 798
     window_one_info = self.c.window.info()
     assert self.c.window.info()["height"] == 578
-    two = self.testWindow("two")
+    two = self.test_window("two")
     assert self.c.window.info()["name"] == "two"
     assert self.c.window.info()["width"] == 398
     assert self.c.window.info()["height"] == 578
@@ -287,8 +287,8 @@ def test_regression_groupswitch(qtile):
 def test_next_layout(qtile):
     self = qtile
 
-    self.testWindow("one")
-    self.testWindow("two")
+    self.test_window("one")
+    self.test_window("two")
     assert len(self.c.layout.info()["stacks"]) == 1
     self.c.next_layout()
     assert len(self.c.layout.info()["stacks"]) == 2
@@ -313,7 +313,7 @@ def test_setlayout(qtile):
 def test_adddelgroup(qtile):
     self = qtile
 
-    self.testWindow("one")
+    self.test_window("one")
     self.c.addgroup("dummygroup")
     self.c.addgroup("testgroup")
     assert "testgroup" in self.c.groups().keys()
@@ -339,7 +339,7 @@ def test_adddelgroup(qtile):
 def test_delgroup(qtile):
     self = qtile
 
-    self.testWindow("one")
+    self.test_window("one")
     for i in ['a', 'd', 'c']:
         self.c.delgroup(i)
     with pytest.raises(libqtile.command.CommandException):
@@ -398,7 +398,7 @@ def test_static(qtile):
     self = qtile
 
     self.testXeyes()
-    self.testWindow("one")
+    self.test_window("one")
     self.c.window[self.c.window.info()["id"]].static(0, 0, 0, 100, 100)
 
 
@@ -669,7 +669,7 @@ def test_floating_focus(qtile):
     assert len(self.c.layout.info()["stacks"]) == 2
     self.testXcalc()
     self.testXeyes()
-    # self.testWindow("one")
+    # self.test_window("one")
     assert self.c.window.info()['width'] == 398
     assert self.c.window.info()['height'] == 578
     self.c.window.toggle_floating()
@@ -716,7 +716,7 @@ def test_move_floating(qtile):
     self = qtile
 
     self.testXeyes()
-    # self.testWindow("one")
+    # self.test_window("one")
     assert self.c.window.info()['width'] == 798
     assert self.c.window.info()['height'] == 578
 
@@ -770,7 +770,7 @@ def test_screens(qtile):
 def test_rotate(qtile):
     self = qtile
 
-    self.testWindow("one")
+    self.test_window("one")
     s = self.c.screens()[0]
     height, width = s["height"], s["width"]
     subprocess.call(
@@ -799,7 +799,7 @@ def test_rotate(qtile):
 def test_resize_(qtile):
     self = qtile
 
-    self.testWindow("one")
+    self.test_window("one")
     subprocess.call(
         [
             "xrandr",
@@ -820,8 +820,8 @@ def test_resize_(qtile):
 @manager_config
 @no_xinerama
 def test_focus_stays_on_layout_switch(qtile):
-    qtile.testWindow("one")
-    qtile.testWindow("two")
+    qtile.test_window("one")
+    qtile.test_window("two")
 
     # switch to a double stack layout
     qtile.c.next_layout()
@@ -864,12 +864,12 @@ def test_xcalc_kill_window(qtile):
 def test_map_request(qtile):
     self = qtile
 
-    self.testWindow("one")
+    self.test_window("one")
     info = self.c.groups()["a"]
     assert "one" in info["windows"]
     assert info["focus"] == "one"
 
-    self.testWindow("two")
+    self.test_window("two")
     info = self.c.groups()["a"]
     assert "two" in info["windows"]
     assert info["focus"] == "two"
@@ -880,9 +880,9 @@ def test_map_request(qtile):
 def test_unmap(qtile):
     self = qtile
 
-    one = self.testWindow("one")
-    two = self.testWindow("two")
-    three = self.testWindow("three")
+    one = self.test_window("one")
+    two = self.test_window("two")
+    three = self.test_window("three")
     info = self.c.groups()["a"]
     assert info["focus"] == "three"
 
@@ -909,7 +909,7 @@ def test_unmap(qtile):
 def test_setgroup(qtile):
     self = qtile
 
-    self.testWindow("one")
+    self.test_window("one")
     self.c.group["b"].toscreen()
     self.groupconsistency()
     if len(self.c.screens()) == 1:
@@ -927,8 +927,8 @@ def test_setgroup(qtile):
 def test_unmap_noscreen(qtile):
     self = qtile
 
-    self.testWindow("one")
-    pid = self.testWindow("two")
+    self.test_window("one")
+    pid = self.test_window("two")
     assert len(self.c.windows()) == 2
     self.c.group["c"].toscreen()
     self.groupconsistency()
@@ -1030,7 +1030,7 @@ clientnew_config = pytest.mark.parametrize("qtile", [ClientNewStaticConfig], ind
 def test_minimal_(qtile):
     self = qtile
 
-    a = self.testWindow("one")
+    a = self.test_window("one")
     self.kill_window(a)
 
 
@@ -1056,7 +1056,7 @@ togroup_config = pytest.mark.parametrize("qtile", [ToGroupConfig], indirect=True
 def test_minimal__(qtile):
     qtile.c.group["d"].toscreen()
     qtile.c.group["a"].toscreen()
-    a = qtile.testWindow("one")
+    a = qtile.test_window("one")
     assert len(qtile.c.group["d"].info()["windows"]) == 1
     qtile.kill_window(a)
 

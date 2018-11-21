@@ -55,11 +55,11 @@ def zoomy_config(x):
 
 @zoomy_config
 def test_zoomy_one(qtile):
-    qtile.testWindow('one')
+    qtile.test_window('one')
     assert_dimensions(qtile, 0, 0, 600, 600)
-    qtile.testWindow('two')
+    qtile.test_window('two')
     assert_dimensions(qtile, 0, 0, 600, 600)
-    qtile.testWindow('three')
+    qtile.test_window('three')
     assert_dimensions(qtile, 0, 0, 600, 600)
     assert_focus_path(qtile, 'two', 'one', 'three')
     # TODO(pc) find a way to check size of inactive windows
@@ -68,13 +68,13 @@ def test_zoomy_one(qtile):
 @zoomy_config
 def test_zoomy_window_focus_cycle(qtile):
     # setup 3 tiled and two floating clients
-    qtile.testWindow("one")
-    qtile.testWindow("two")
-    qtile.testWindow("float1")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("float1")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("float2")
+    qtile.test_window("float2")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("three")
+    qtile.test_window("three")
 
     # test preconditions, Zoomy adds clients at head
     assert qtile.c.layout.info()['clients'] == ['three', 'two', 'one']

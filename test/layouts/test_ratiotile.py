@@ -62,7 +62,7 @@ def ratiotile_config(x):
 @ratiotile_config
 def test_ratiotile_add_windows(qtile):
     for i in range(12):
-        qtile.testWindow(str(i))
+        qtile.test_window(str(i))
         if i == 0:
             assert qtile.c.layout.info()['layout_info'] == [
                 (0, 0, 800, 600)]
@@ -129,7 +129,7 @@ def test_ratiotile_add_windows(qtile):
 def test_ratiotile_add_windows_golden_ratio(qtile):
     qtile.c.next_layout()
     for i in range(12):
-        qtile.testWindow(str(i))
+        qtile.test_window(str(i))
         if i == 0:
             assert qtile.c.layout.info()['layout_info'] == [
                 (0, 0, 800, 600)]
@@ -170,9 +170,9 @@ def test_ratiotile_add_windows_golden_ratio(qtile):
 
 @ratiotile_config
 def test_ratiotile_basic(qtile):
-    qtile.testWindow("one")
-    qtile.testWindow("two")
-    qtile.testWindow("three")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("three")
     sleep(0.1)
     assert qtile.c.window.info()['width'] == 264
     assert qtile.c.window.info()['height'] == 598
@@ -198,13 +198,13 @@ def test_ratiotile_basic(qtile):
 @ratiotile_config
 def test_ratiotile_window_focus_cycle(qtile):
     # setup 3 tiled and two floating clients
-    qtile.testWindow("one")
-    qtile.testWindow("two")
-    qtile.testWindow("float1")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("float1")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("float2")
+    qtile.test_window("float2")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("three")
+    qtile.test_window("three")
 
     # test preconditions, RatioTile adds clients to head
     assert qtile.c.layout.info()['clients'] == ['three', 'two', 'one']
