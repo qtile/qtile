@@ -38,7 +38,7 @@ from . import command
 from . import ipc
 
 
-def terminalWidth():
+def terminal_width():
     width = None
     try:
         cr = struct.unpack('hh', fcntl.ioctl(0, termios.TIOCGWINSZ, '1234'))
@@ -55,7 +55,7 @@ class QSh(object):
         self.current = client
         self.completekey = completekey
         self.builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
-        self.termwidth = terminalWidth()
+        self.termwidth = terminal_width()
 
     def _complete(self, buf, arg):
         if not re.search(r" |\(", buf) or buf.startswith("help "):
@@ -92,7 +92,7 @@ class QSh(object):
 
     def columnize(self, lst, update_termwidth=True):
         if update_termwidth:
-            self.termwidth = terminalWidth()
+            self.termwidth = terminal_width()
 
         ret = []
         if lst:
