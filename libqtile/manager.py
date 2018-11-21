@@ -492,12 +492,12 @@ class Qtile(command.CommandObject):
             if group.screen and group.screen.previous_group:
                 target = group.screen.previous_group
             else:
-                target = group.prevGroup()
+                target = group.get_previous_group()
 
             # Find a group that's not currently on a screen to bring to the
             # front. This will terminate because of our check above.
             while target.screen:
-                target = target.prevGroup()
+                target = target.get_previous_group()
             for i in list(group.windows):
                 i.togroup(target.name)
             if self.current_group.name == name:

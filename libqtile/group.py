@@ -405,7 +405,7 @@ class _Group(command.CommandObject):
         index = (groups.index(self) + direction) % len(groups)
         return groups[index]
 
-    def prevGroup(self, skip_empty=False, skip_managed=False):
+    def get_previous_group(self, skip_empty=False, skip_managed=False):
         return self._dirGroup(-1, skip_empty, skip_managed)
 
     def get_next_group(self, skip_empty=False, skip_managed=False):
