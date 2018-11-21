@@ -168,7 +168,7 @@ def test_basic(qtile):
     assert qtile.c.screen.info() == {
         'y': 0, 'x': 600, 'index': 1, 'width': 300, 'height': 580}
     qtile.c.to_screen(2)
-    qtile.testXeyes()
+    qtile.test_xeyes()
     assert qtile.c.screen.info() == {
         'y': 480, 'x': 0, 'index': 2, 'width': 500, 'height': 400}
     qtile.c.to_screen(3)
@@ -248,7 +248,7 @@ def test_float_first_on_second_screen(qtile):
 @fakescreen_config
 def test_float_change_screens(qtile):
     # add some eyes, and float clock
-    qtile.testXeyes()
+    qtile.test_xeyes()
     qtile.test_xclock()
     qtile.c.window.toggle_floating()
     assert set(qtile.c.group.info()['windows']) == set(('xeyes', 'xclock'))

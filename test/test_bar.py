@@ -212,7 +212,7 @@ class DWidget(object):
 
 @geom_config
 def test_geometry(qtile):
-    qtile.testXeyes()
+    qtile.test_xeyes()
     g = qtile.c.screens()[0]["gaps"]
     assert g["top"] == (0, 0, 800, 10)
     assert g["bottom"] == (0, 590, 800, 10)
