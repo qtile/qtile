@@ -80,7 +80,7 @@ class Tile(_SimpleLayoutBase):
             self.clients.rotate_up()
         self.group.layout_all()
 
-    def resetMaster(self, match=None):
+    def reset_master(self, match=None):
         if not match and self.master_match:
             match = self.master_match
         else:
@@ -108,7 +108,7 @@ class Tile(_SimpleLayoutBase):
             self.clients.append_head(client)
         else:
             self.clients.add(client, offset_to_current)
-        self.resetMaster()
+        self.reset_master()
 
     def configure(self, client, screen):
         screenWidth = screen.width
