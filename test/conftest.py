@@ -389,7 +389,7 @@ class Qtile(object):
         path = whereis("xeyes")
         return self._spawn_window(path)
 
-    def testGkrellm(self):
+    def test_gkrellm(self):
         path = whereis("gkrellm")
         return self._spawn_window(path)
 

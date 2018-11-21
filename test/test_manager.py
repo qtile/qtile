@@ -1037,7 +1037,7 @@ def test_minimal_(qtile):
 @pytest.mark.skipif(whereis("gkrellm") is None, reason="gkrellm not found")
 @clientnew_config
 def test_gkrellm(qtile):
-    qtile.testGkrellm()
+    qtile.test_gkrellm()
     time.sleep(0.1)
 
 
