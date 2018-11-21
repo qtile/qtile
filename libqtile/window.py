@@ -322,7 +322,7 @@ class _Window(command.CommandObject):
 
         return
 
-    def updateState(self):
+    def update_state(self):
         triggered = ['urgent']
 
         if self.qtile.config.auto_fullscreen:
@@ -1127,7 +1127,7 @@ class Window(_Window):
                 width, height,
                 self.borderwidth, self.bordercolor,
             )
-        self.updateState()
+        self.update_state()
         return False
 
     def update_wm_net_icon(self):
@@ -1243,15 +1243,15 @@ class Window(_Window):
         elif name == "WM_STATE":
             pass
         elif name == "_NET_WM_STATE":
-            self.updateState()
+            self.update_state()
         elif name == "WM_PROTOCOLS":
             pass
         elif name == "_NET_WM_DESKTOP":
             # Some windows set the state(fullscreen) when starts,
-            # updateState is here because the group and the screen
+            # update_state is here because the group and the screen
             # are set when the property is emitted
-            # self.updateState()
-            self.updateState()
+            # self.update_state()
+            self.update_state()
         elif name == "_NET_WM_USER_TIME":
             if not self.qtile.config.follow_mouse_focus and \
                     self.group.current_window != self:
