@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Copyright (C) 2018 Juan Riquelme González
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -16,33 +19,34 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import warnings
+from . import base
 
-from .columns import Columns
+import re
+import subprocess
 
 
-class Wmii(Columns):
-    """This layout is deprecated in favor of `Columns`.
+class CapsNumLockIndicator(base.ThreadPoolText):
+    """Really simple widget to show the current Caps/Num Lock state."""
 
-    The only difference between the two are the default parameters.
-    """
-    defaults = [
-        ("name", "wmii", "Name of this layout."),
-        ("border_focus_stack", "#0000ff",
-         "Border colour for the focused window in stacked columns."),
-        ("border_normal_stack", "#000022",
-         "Border colour for un-focused windows in stacked columns."),
-        ("num_columns", 1, "Preferred number of columns."),
-        ("insert_position", 1,
-         "Position relative to the current window where new ones are inserted "
-         "(0 means right above the current window, 1 means right after)."),
-    ]
+    orientations = base.ORIENTATION_HORIZONTAL
+    defaults = [('update_interval', 0.5, 'Update Time in seconds.')]
 
     def __init__(self, **config):
-        warnings.warn(
-            "Wmii layout is deprecated in favor of Columns.",
-            category=DeprecationWarning,
-            stacklevel=2)
-        for key, value, _ in Wmii.defaults:
-            config.setdefault(key, value)
-        Columns.__init__(self, **config)
+        base.ThreadPoolText.__init__(self, "", **config)
+        self.add_defaults(CapsNumLockIndicator.defaults)
+
+    def get_indicators(self):
+        """Return a list with the current state of the keys."""
+        try:
+            output = self.call_process(['xset', 'q'])
+        except subprocess.CalledProcessError as err:
+            output = err.output.decode()
+        if output.startswith("Keyboard"):
+            indicators = re.findall(r"(Caps|Num)\s+Lock:\s*(\w*)", output)
+            return indicators
+
+    def poll(self):
+        """Poll content for the text box."""
+        indicators = self.get_indicators()
+        status = " ".join([" ".join(indicator) for indicator in indicators])
+        return status

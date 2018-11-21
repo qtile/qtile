@@ -39,6 +39,7 @@ def configure(window):
         border_width=1,
     )
 
+
 for i in range(20):
     try:
         conn = xcffib.connect(display=sys.argv[1])

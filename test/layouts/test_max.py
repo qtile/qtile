@@ -33,6 +33,7 @@ import libqtile.config
 from ..conftest import no_xinerama
 from .layout_utils import assertFocused, assertFocusPath
 
+
 class MaxConfig(object):
     auto_fullscreen = True
     main = None
@@ -51,8 +52,8 @@ class MaxConfig(object):
     screens = []
 
 
-max_config = lambda x: \
-    no_xinerama(pytest.mark.parametrize("qtile", [MaxConfig], indirect=True)(x))
+def max_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [MaxConfig], indirect=True)(x))
 
 
 @max_config

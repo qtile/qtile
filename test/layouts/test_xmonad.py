@@ -26,6 +26,7 @@ import libqtile.config
 from .layout_utils import assertDimensions, assertFocused, assertFocusPath
 from ..conftest import no_xinerama
 
+
 class MonadTallConfig(object):
     auto_fullscreen = True
     main = None
@@ -42,8 +43,8 @@ class MonadTallConfig(object):
     follow_mouse_focus = False
 
 
-monadtall_config = lambda x: \
-    no_xinerama(pytest.mark.parametrize("qtile", [MonadTallConfig], indirect=True)(x))
+def monadtall_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [MonadTallConfig], indirect=True)(x))
 
 
 class MonadTallMarginsConfig(object):
@@ -62,8 +63,8 @@ class MonadTallMarginsConfig(object):
     follow_mouse_focus = False
 
 
-monadtallmargins_config = lambda x: \
-    no_xinerama(pytest.mark.parametrize("qtile", [MonadTallMarginsConfig], indirect=True)(x))
+def monadtallmargins_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [MonadTallMarginsConfig], indirect=True)(x))
 
 
 class MonadWideConfig(object):
@@ -82,8 +83,8 @@ class MonadWideConfig(object):
     follow_mouse_focus = False
 
 
-monadwide_config = lambda x: \
-    no_xinerama(pytest.mark.parametrize("qtile", [MonadWideConfig], indirect=True)(x))
+def monadwide_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [MonadWideConfig], indirect=True)(x))
 
 
 class MonadWideMarginsConfig(object):
@@ -102,8 +103,8 @@ class MonadWideMarginsConfig(object):
     follow_mouse_focus = False
 
 
-monadwidemargins_config = lambda x: \
-    no_xinerama(pytest.mark.parametrize("qtile", [MonadWideMarginsConfig], indirect=True)(x))
+def monadwidemargins_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [MonadWideMarginsConfig], indirect=True)(x))
 
 
 @monadtall_config
@@ -368,7 +369,6 @@ def test_tall_growsecondary_multiplesecondary(qtile):
     for _ in range(40):
         qtile.c.layout.shrink()
     assertDimensions(qtile, 400, 0, 396, 85)
-
 
 
 @monadwide_config

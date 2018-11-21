@@ -57,8 +57,8 @@ class SliceConfig(object):
     follow_mouse_focus = False
 
 
-slice_config = lambda x: \
-    no_xinerama(pytest.mark.parametrize("qtile", [SliceConfig], indirect=True)(x))
+def slice_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [SliceConfig], indirect=True)(x))
 
 
 @slice_config
@@ -87,14 +87,14 @@ def test_slice_last(qtile):
 
 @slice_config
 def test_slice_focus(qtile):
-    one = qtile.testWindow('one')
+    qtile.testWindow('one')
     assertFocused(qtile, 'one')
     two = qtile.testWindow('two')
     assertFocused(qtile, 'two')
     slice = qtile.testWindow('slice')
     assertFocused(qtile, 'slice')
     assertFocusPath(qtile, 'slice')
-    three = qtile.testWindow('three')
+    qtile.testWindow('three')
     assertFocusPath(qtile, 'two', 'one', 'slice', 'three')
     qtile.kill_window(two)
     assertFocusPath(qtile, 'one', 'slice', 'three')

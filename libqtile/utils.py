@@ -121,7 +121,7 @@ if sys.version_info < (3, 3):
                     return ret
             return wrap
 else:
-    from functools import lru_cache
+    from functools import lru_cache  # noqa: F401
 
 
 def rgb(x):
@@ -229,14 +229,11 @@ def get_cache_dir():
     return cache_directory
 
 
-def describe_attributes(obj, attrs, func=None):
+def describe_attributes(obj, attrs, func=lambda x: x):
     """
     Helper for __repr__ functions to list attributes with truthy values only
     (or values that return a truthy value by func)
     """
-
-    if not func:
-        func = lambda x: x  # flake8: noqa
 
     pairs = []
 

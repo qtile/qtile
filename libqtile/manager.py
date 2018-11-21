@@ -741,7 +741,7 @@ class Qtile(command.CommandObject):
             except (WindowError, AccessError, DrawableError):
                 pass
 
-            except Exception as e:
+            except Exception:
                 error_code = self.conn.conn.has_error()
                 if error_code:
                     error_string = xcbq.XCB_CONN_ERRORS[error_code]
@@ -1661,7 +1661,7 @@ class Qtile(command.CommandObject):
         def f(cmd):
             if cmd:
                 # c here is used in eval() below
-                c = command.CommandRoot(self)  # noqa
+                c = command.CommandRoot(self)  # noqa: F841
                 try:
                     cmd_arg = str(cmd).split(' ')
                 except AttributeError:

@@ -111,8 +111,8 @@ def test_scrub_to_utf8():
 
 
 def test_shuffle():
-    l = list(range(3))
-    utils.shuffleUp(l)
-    assert l != list(range(3))
-    utils.shuffleDown(l)
-    assert l == list(range(3))
+    test_l = list(range(3))
+    utils.shuffleUp(test_l)
+    assert test_l != list(range(3))
+    utils.shuffleDown(test_l)
+    assert test_l == list(range(3))

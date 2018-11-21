@@ -53,8 +53,8 @@ class VerticalTileConfig(object):
     screens = []
 
 
-verticaltile_config = lambda x: \
-    no_xinerama(pytest.mark.parametrize("qtile", [VerticalTileConfig], indirect=True)(x))
+def verticaltile_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [VerticalTileConfig], indirect=True)(x))
 
 
 @verticaltile_config
@@ -76,6 +76,7 @@ def test_verticaltile_maximize(qtile):
     # Maximize the bottom layout, taking 75% of space
     qtile.c.layout.maximize()
     assertDimensions(qtile, 0, 150, 798, 448)
+
 
 @verticaltile_config
 def test_verticaltile_window_focus_cycle(qtile):

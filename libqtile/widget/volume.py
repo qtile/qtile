@@ -44,7 +44,7 @@ __all__ = [
     'Volume',
 ]
 
-re_vol = re.compile('\[(\d?\d?\d?)%\]')
+re_vol = re.compile(r'\[(\d?\d?\d?)%\]')
 BUTTON_UP = 4
 BUTTON_DOWN = 5
 BUTTON_MUTE = 1

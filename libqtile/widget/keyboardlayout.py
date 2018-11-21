@@ -28,8 +28,8 @@ from . import base
 from libqtile.log_utils import logger
 
 
-kb_layout_regex = re.compile('layout:\s+(?P<layout>\w+)')
-kb_variant_regex = re.compile('variant:\s+(?P<variant>\w+)')
+kb_layout_regex = re.compile(r'layout:\s+(?P<layout>\w+)')
+kb_variant_regex = re.compile(r'variant:\s+(?P<variant>\w+)')
 
 
 class KeyboardLayout(base.InLoopPollText):

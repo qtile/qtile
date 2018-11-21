@@ -174,8 +174,7 @@ def test_basic(qtile):
         'y': 480, 'x': 0, 'index': 2, 'width': 500, 'height': 400}
     qtile.c.to_screen(3)
     qtile.testXclock()
-    assert qtile.c.screen.info() == {
-        'y': 580, 'x': 500, 'index': 3, 'width': 400, 'height': 400}
+    assert qtile.c.screen.info() == {'y': 580, 'x': 500, 'index': 3, 'width': 400, 'height': 400}
 
 
 @fakescreen_config
@@ -342,7 +341,7 @@ def test_float_outside_edges(qtile):
     assert qtile.c.window.info()['y'] == 0
     # empty because window is floating
     assert qtile.c.layout.info() == {
-        'clients': [], 'current' : 0, 'group': 'a', 'name': 'max'}
+        'clients': [], 'current': 0, 'group': 'a', 'name': 'max'}
 
     # move left, but some still on screen 0
     qtile.c.window.move_floating(-30, 20, 42, 42)
@@ -392,15 +391,6 @@ def test_hammer_tile(qtile):
     for i in range(7):
         qtile.testXclock()
     for i in range(30):
-        old_group = (i + 1) % 4
-        if old_group == 0:
-            name = 'a'
-        elif old_group == 1:
-            name = 'b'
-        elif old_group == 2:
-            name = 'c'
-        elif old_group == 3:
-            name = 'd'
 
         qtile.c.to_screen((i + 1) % 4)
         qtile.c.group['a'].toscreen()
@@ -416,16 +406,6 @@ def test_hammer_ratio_tile(qtile):
     for i in range(7):
         qtile.testXclock()
     for i in range(30):
-        old_group = (i + 1) % 4
-        if old_group == 0:
-            name = 'a'
-        elif old_group == 1:
-            name = 'b'
-        elif old_group == 2:
-            name = 'c'
-        elif old_group == 3:
-            name = 'd'
-
         qtile.c.to_screen((i + 1) % 4)
         qtile.c.group['a'].toscreen()
     assert qtile.c.group['a'].info()['windows'] == [

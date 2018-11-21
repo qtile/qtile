@@ -55,8 +55,8 @@ class RatioTileConfig(object):
     follow_mouse_focus = False
 
 
-ratiotile_config = lambda x: \
-    no_xinerama(pytest.mark.parametrize("qtile", [RatioTileConfig], indirect=True)(x))
+def ratiotile_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [RatioTileConfig], indirect=True)(x))
 
 
 @ratiotile_config
@@ -193,6 +193,7 @@ def test_ratiotile_basic(qtile):
     assert qtile.c.window.info()['x'] == 532
     assert qtile.c.window.info()['y'] == 0
     assert qtile.c.window.info()['name'] == 'one'
+
 
 @ratiotile_config
 def test_ratiotile_window_focus_cycle(qtile):

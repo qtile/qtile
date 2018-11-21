@@ -72,7 +72,7 @@ class ThermalSensor(base.InLoopPollText):
              ).format(degrees=u"\xc2\xb0" if PY2 else u"\xb0"),
             re.UNICODE | re.VERBOSE
         )
-        self.value_temp = re.compile("\d+\.\d+")
+        self.value_temp = re.compile(r"\d+\.\d+")
         temp_values = self.get_temp_sensors()
         self.foreground_normal = self.foreground
 

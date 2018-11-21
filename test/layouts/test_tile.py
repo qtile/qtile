@@ -33,6 +33,7 @@ import libqtile.config
 from ..conftest import no_xinerama
 from .layout_utils import assertFocused, assertFocusPath
 
+
 class TileConfig(object):
     auto_fullscreen = True
     main = None
@@ -53,8 +54,8 @@ class TileConfig(object):
     follow_mouse_focus = False
 
 
-tile_config = lambda x: \
-    no_xinerama(pytest.mark.parametrize("qtile", [TileConfig], indirect=True)(x))
+def tile_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [TileConfig], indirect=True)(x))
 
 
 @tile_config
@@ -118,6 +119,7 @@ def test_tile_remove(qtile):
     assert qtile.c.layout.info()["master"] == ["three"]
     qtile.kill_window(three)
     assert qtile.c.layout.info()["master"] == ["two"]
+
 
 @tile_config
 def test_tile_window_focus_cycle(qtile):
