@@ -411,7 +411,7 @@ class Screen(command.CommandObject):
 
     def cmd_prev_group(self, skip_empty=False, skip_managed=False):
         """Switch to the previous group"""
-        n = self.group.prevGroup(skip_empty, skip_managed)
+        n = self.group.get_previous_group(skip_empty, skip_managed)
         self.setGroup(n)
         return n.name
 
