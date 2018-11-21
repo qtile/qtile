@@ -109,7 +109,7 @@ class Qtile(command.CommandObject):
         hook.init(self)
 
         self.windowMap = {}
-        self.widgetMap = {}
+        self.widgets_map = {}
         self.groups_map = {}
         self.groups = []
         self.keys_map = {}
@@ -330,7 +330,7 @@ class Qtile(command.CommandObject):
 
         try:
 
-            for w in self.widgetMap.values():
+            for w in self.widgets_map.values():
                 w.finalize()
 
             for l in self.config.layouts:
@@ -521,9 +521,9 @@ class Qtile(command.CommandObject):
         debug info for widgets with the same name, set the name yourself.
         """
         if w.name:
-            if w.name in self.widgetMap:
+            if w.name in self.widgets_map:
                 return
-            self.widgetMap[w.name] = w
+            self.widgets_map[w.name] = w
 
     @utils.lru_cache()
     def color_pixel(self, name):
@@ -1147,7 +1147,7 @@ class Qtile(command.CommandObject):
         elif name == "layout":
             return True, list(range(len(self.current_group.layouts)))
         elif name == "widget":
-            return False, list(self.widgetMap.keys())
+            return False, list(self.widgets_map.keys())
         elif name == "bar":
             return False, [x.position for x in self.current_screen.gaps]
         elif name == "window":
@@ -1167,7 +1167,7 @@ class Qtile(command.CommandObject):
             else:
                 return utils.lget(self.current_group.layouts, sel)
         elif name == "widget":
-            return self.widgetMap.get(sel)
+            return self.widgets_map.get(sel)
         elif name == "bar":
             return getattr(self.current_screen, sel)
         elif name == "window":
@@ -1321,7 +1321,7 @@ class Qtile(command.CommandObject):
 
     def cmd_list_widgets(self):
         """List of all addressible widget names"""
-        return list(self.widgetMap.keys())
+        return list(self.widgets_map.keys())
 
     def cmd_to_layout_index(self, index, group=None):
         """Switch to the layout with the given index in self.layouts.
@@ -1601,7 +1601,7 @@ class Qtile(command.CommandObject):
         widget :
             Name of the prompt widget (default: "prompt")
         """
-        mb = self.widgetMap.get(widget)
+        mb = self.widgets_map.get(widget)
         if not mb:
             logger.error("No widget named '{0:s}' present.".format(widget))
             return
@@ -1636,7 +1636,7 @@ class Qtile(command.CommandObject):
             logger.warning("No window to move")
             return
 
-        mb = self.widgetMap.get(widget)
+        mb = self.widgets_map.get(widget)
         if not mb:
             logger.error("No widget named '{0:s}' present.".format(widget))
             return
@@ -1660,7 +1660,7 @@ class Qtile(command.CommandObject):
                 except KeyError:
                     logger.info(u"No group named '{0:s}' present.".format(group))
 
-        mb = self.widgetMap.get(widget)
+        mb = self.widgets_map.get(widget)
         if not mb:
             logger.warning("No widget named '{0:s}' present.".format(widget))
             return
@@ -1686,7 +1686,7 @@ class Qtile(command.CommandObject):
             if args:
                 self.cmd_spawn(command % args)
         try:
-            mb = self.widgetMap[widget]
+            mb = self.widgets_map[widget]
             mb.start_input(prompt, f, complete)
         except KeyError:
             logger.error("No widget named '{0:s}' present.".format(widget))
@@ -1734,7 +1734,7 @@ class Qtile(command.CommandObject):
                         self.cmd_spawn('{0:s} "{1:s}"'.format(messenger, message))
                     logger.info(result)
 
-        mb = self.widgetMap[widget]
+        mb = self.widgets_map[widget]
         if not mb:
             logger.error("No widget named {0:s} present.".format(widget))
             return
