@@ -111,22 +111,22 @@ class Tile(_SimpleLayoutBase):
         self.reset_master()
 
     def configure(self, client, screen):
-        screenWidth = screen.width
+        screen_width = screen.width
         screen_height = screen.height
         border_width = self.border_width
         if self.clients and client in self.clients:
             pos = self.clients.index(client)
             if client in self.master_windows:
-                w = int(screenWidth * self.ratio) \
+                w = int(screen_width * self.ratio) \
                     if len(self.slave_windows) or not self.expand \
-                    else screenWidth
+                    else screen_width
                 h = screen_height // self.master
                 x = screen.x
                 y = screen.y + pos * h
             else:
-                w = screenWidth - int(screenWidth * self.ratio)
+                w = screen_width - int(screen_width * self.ratio)
                 h = screen_height // (len(self.slave_windows))
-                x = screen.x + int(screenWidth * self.ratio)
+                x = screen.x + int(screen_width * self.ratio)
                 y = screen.y + self.clients[self.master:].index(client) * h
             if client.has_focus:
                 bc = self.group.qtile.color_pixel(self.border_focus)
