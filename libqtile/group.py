@@ -126,7 +126,7 @@ class _Group(command.CommandObject):
                 return
         raise ValueError("No such layout: %s" % layout)
 
-    def toLayoutIndex(self, index):
+    def use_layout(self, index):
         assert 0 <= index < len(self.layouts), "layout index out of bounds"
         self.layout.hide()
         self.current_layout = index
@@ -136,10 +136,10 @@ class _Group(command.CommandObject):
         self.layout.show(screen)
 
     def use_next_layout(self):
-        self.toLayoutIndex((self.current_layout + 1) % (len(self.layouts)))
+        self.use_layout((self.current_layout + 1) % (len(self.layouts)))
 
     def use_previous_layout(self):
-        self.toLayoutIndex((self.current_layout - 1) % (len(self.layouts)))
+        self.use_layout((self.current_layout - 1) % (len(self.layouts)))
 
     def layout_all(self, warp=False):
         """Layout the floating layer, then the current layout.
