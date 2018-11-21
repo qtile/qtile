@@ -405,7 +405,7 @@ class Screen(command.CommandObject):
 
     def cmd_next_group(self, skip_empty=False, skip_managed=False):
         """Switch to the next group"""
-        n = self.group.nextGroup(skip_empty, skip_managed)
+        n = self.group.get_next_group(skip_empty, skip_managed)
         self.setGroup(n)
         return n.name
 
