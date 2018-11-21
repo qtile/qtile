@@ -393,7 +393,7 @@ class Qtile(object):
         path = whereis("gkrellm")
         return self._spawn_window(path)
 
-    def testXcalc(self):
+    def test_xcalc(self):
         path = whereis("xcalc")
         return self._spawn_window(path)
 
