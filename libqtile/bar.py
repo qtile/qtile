@@ -201,7 +201,7 @@ class Bar(Gap, configurable.Configurable):
         self.window.unhide()
 
         for i in self.widgets:
-            qtile.registerWidget(i)
+            qtile.register_widget(i)
             i._configure(qtile, self)
         self._resize(self.length, self.widgets)
 

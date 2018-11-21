@@ -509,7 +509,7 @@ class Qtile(command.CommandObject):
             hook.fire("changegroup")
             self.update_net_desktops()
 
-    def registerWidget(self, w):
+    def register_widget(self, w):
         """Register a bar widget
 
         If a widget with the same name already exists, this will silently
