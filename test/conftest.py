@@ -374,7 +374,7 @@ class Qtile(object):
     def test_dialog(self, name="dialog"):
         return self.testTkWindow(name, "dialog")
 
-    def testNotification(self, name="notification"):
+    def test_notification(self, name="notification"):
         """
         Simulate a notification window. Note that, for testing purposes, this
         process must be killed explicitly, unlike actual notifications which

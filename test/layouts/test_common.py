@@ -113,7 +113,7 @@ def test_window_types(qtile):
     assert_focused(qtile, "dialog")
 
     # A notification shouldn't steal focus and should be floating
-    qtile.testNotification("notification")
+    qtile.test_notification("notification")
     assert qtile.c.group.info()['focus'] != 'notification'
     qtile.c.group.info_by_name('notification')['floating'] is True
 
@@ -357,18 +357,18 @@ def test_desktop_notifications(qtile):
     # focus when they spawn, so test them separately
 
     # A notification fired in an empty group must not take focus
-    notif1 = qtile.testNotification("notif1")
+    notif1 = qtile.test_notification("notif1")
     assert qtile.c.group.info()['focus'] is None
     qtile.kill_window(notif1)
 
     # A window is spawned while a notification is displayed
-    notif2 = qtile.testNotification("notif2")
+    notif2 = qtile.test_notification("notif2")
     one = qtile.testWindow("one")
     assert qtile.c.group.info()['focus_history'] == ["one"]
     qtile.kill_window(notif2)
 
     # Another notification is fired, but the focus must not change
-    notif3 = qtile.testNotification("notif3")
+    notif3 = qtile.test_notification("notif3")
     assert_focused(qtile, 'one')
     qtile.kill_window(notif3)
 
@@ -376,8 +376,8 @@ def test_desktop_notifications(qtile):
 
     dialog1 = qtile.test_dialog("dialog1")
     qtile.testWindow("two")
-    notif4 = qtile.testNotification("notif4")
-    notif5 = qtile.testNotification("notif5")
+    notif4 = qtile.test_notification("notif4")
+    notif5 = qtile.test_notification("notif5")
     assert qtile.c.group.info()['focus_history'] == ["one", "dialog1", "two"]
 
     dialog2 = qtile.test_dialog("dialog2")
@@ -385,10 +385,10 @@ def test_desktop_notifications(qtile):
     qtile.testWindow("three")
     qtile.kill_window(one)
     qtile.c.group.focus_by_name("two")
-    notif6 = qtile.testNotification("notif6")
-    notif7 = qtile.testNotification("notif7")
+    notif6 = qtile.test_notification("notif6")
+    notif7 = qtile.test_notification("notif7")
     qtile.kill_window(notif4)
-    notif8 = qtile.testNotification("notif8")
+    notif8 = qtile.test_notification("notif8")
     assert qtile.c.group.info()['focus_history'] == ["dialog1", "dialog2",
                                                      "three", "two"]
 
