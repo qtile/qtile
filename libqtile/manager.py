@@ -1197,7 +1197,10 @@ class Qtile(command.CommandObject):
         logger.critical('Switching to CRITICAL threshold')
 
     def cmd_loglevel(self):
-        return (logging.getLevelName(logger.level), logger.level)
+        return logger.level
+
+    def cmd_loglevelname(self):
+        return logging.getLevelName(logger.level)
 
     def cmd_pause(self):
         """Drops into pdb"""
