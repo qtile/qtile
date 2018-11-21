@@ -870,7 +870,7 @@ class Qtile(command.CommandObject):
             return True
         s = self.find_screen(e.root_x, e.root_y)
         if s:
-            self.toScreen(s.index, warp=False)
+            self.focus_screen(s.index, warp=False)
 
     def handle_ClientMessage(self, event):
         atoms = self.conn.atoms
@@ -1078,7 +1078,7 @@ class Qtile(command.CommandObject):
     def handle_ScreenChangeNotify(self, e):
         hook.fire("screen_change", self, e)
 
-    def toScreen(self, n, warp=True):
+    def focus_screen(self, n, warp=True):
         """Have Qtile move to screen and put focus there"""
         if n >= len(self.screens):
             return
@@ -1485,17 +1485,17 @@ class Qtile(command.CommandObject):
 
             to_screen(0)
         """
-        return self.toScreen(n)
+        return self.focus_screen(n)
 
     def cmd_next_screen(self):
         """Move to next screen"""
-        return self.toScreen(
+        return self.focus_screen(
             (self.screens.index(self.current_screen) + 1) % len(self.screens)
         )
 
     def cmd_prev_screen(self):
         """Move to the previous screen"""
-        return self.toScreen(
+        return self.focus_screen(
             (self.screens.index(self.current_screen) - 1) % len(self.screens)
         )
 

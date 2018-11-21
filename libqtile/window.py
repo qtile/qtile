@@ -984,7 +984,7 @@ class Window(_Window):
         if self.group and screen is not None and screen != self.group.screen:
             self.group.remove(self, force=True)
             screen.group.add(self, force=True)
-            self.qtile.toScreen(screen.index)
+            self.qtile.focus_screen(screen.index)
 
         self._reconfigure_floating()
 
@@ -1104,7 +1104,7 @@ class Window(_Window):
         if self.group.screen and \
                 self.qtile.current_screen != self.group.screen and \
                 self.qtile.config.follow_mouse_focus:
-            self.qtile.toScreen(self.group.screen.index, False)
+            self.qtile.focus_screen(self.group.screen.index, False)
         return True
 
     def handle_ConfigureRequest(self, e):
