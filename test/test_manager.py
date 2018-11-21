@@ -1061,6 +1061,7 @@ def test_colorPixel(qtile):
     # test for #394
     qtile.c.eval("self.colorPixel(\"ffffff\")")
 
+
 @manager_config
 def test_change_loglevel(qtile):
     assert qtile.c.loglevel() == (logging.getLevelName(logging.INFO), logging.INFO)
