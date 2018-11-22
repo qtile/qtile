@@ -136,7 +136,7 @@ class QSh(object):
         except command.CommandError:
             return []
 
-    def _findNode(self, src, *path):
+    def _find_node(self, src, *path):
         """Returns a node, or None if no such node exists"""
         if not path:
             return src
@@ -157,7 +157,7 @@ class QSh(object):
                     next = src[tpath]
         if next:
             if path[1:]:
-                return self._findNode(next, *path[1:])
+                return self._find_node(next, *path[1:])
             else:
                 return next
         else:
@@ -166,7 +166,7 @@ class QSh(object):
     def _findPath(self, path):
         root = self.clientroot if path.startswith("/") else self.current
         parts = [i for i in path.split("/") if i]
-        return self._findNode(root, *parts)
+        return self._find_node(root, *parts)
 
     def do_cd(self, arg):
         """Change to another path.
