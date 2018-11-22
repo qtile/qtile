@@ -155,14 +155,14 @@ def _float_setter(attr):
 
 
 class _Window(command.CommandObject):
-    _windowMask = 0  # override in child class
+    _window_mask = 0  # override in child class
 
     def __init__(self, window, qtile):
         self.window, self.qtile = window, qtile
         self.hidden = True
         self.group = None
         self.icons = {}
-        window.set_attribute(eventmask=self._windowMask)
+        window.set_attribute(eventmask=self._window_mask)
 
         self._float_info = {
             'x': None,
@@ -438,12 +438,12 @@ class _Window(command.CommandObject):
 
     def _disable_mask(self, mask):
         self.window.set_attribute(
-            eventmask=self._windowMask & (~mask)
+            eventmask=self._window_mask & (~mask)
         )
 
     def _reset_mask(self):
         self.window.set_attribute(
-            eventmask=self._windowMask
+            eventmask=self._window_mask
         )
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
@@ -655,7 +655,7 @@ class _Window(command.CommandObject):
 
 class Internal(_Window):
     """An internal window, that should not be managed by qtile"""
-    _windowMask = EventMask.StructureNotify | \
+    _window_mask = EventMask.StructureNotify | \
         EventMask.PropertyChange | \
         EventMask.EnterWindow | \
         EventMask.FocusChange | \
@@ -685,7 +685,7 @@ class Internal(_Window):
 
 class Static(_Window):
     """An internal window, that should not be managed by qtile"""
-    _windowMask = EventMask.StructureNotify | \
+    _window_mask = EventMask.StructureNotify | \
         EventMask.PropertyChange | \
         EventMask.EnterWindow | \
         EventMask.FocusChange | \
@@ -752,7 +752,7 @@ class Static(_Window):
 
 
 class Window(_Window):
-    _windowMask = EventMask.StructureNotify | \
+    _window_mask = EventMask.StructureNotify | \
         EventMask.PropertyChange | \
         EventMask.EnterWindow | \
         EventMask.FocusChange

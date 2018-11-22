@@ -40,7 +40,7 @@ XEMBED_PROTOCOL_VERSION = 0
 
 
 class Icon(window._Window):
-    _windowMask = EventMask.StructureNotify | \
+    _window_mask = EventMask.StructureNotify | \
         EventMask.PropertyChange | \
         EventMask.Exposure
 
@@ -93,7 +93,7 @@ class Icon(window._Window):
 class Systray(window._Window, base._Widget):
     """A widget that manages system tray"""
 
-    _windowMask = EventMask.StructureNotify | \
+    _window_mask = EventMask.StructureNotify | \
         EventMask.Exposure
 
     orientations = base.ORIENTATION_HORIZONTAL
