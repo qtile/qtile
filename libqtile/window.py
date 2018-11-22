@@ -1031,14 +1031,14 @@ class Window(_Window):
             self.height = h
         self._reconfigure_floating(new_float_state=new_float_state)
 
-    def togroup(self, groupName=None):
+    def togroup(self, group_name=None):
         """Move window to a specified group"""
-        if groupName is None:
+        if group_name is None:
             group = self.qtile.current_group
         else:
-            group = self.qtile.groups_map.get(groupName)
+            group = self.qtile.groups_map.get(group_name)
             if group is None:
-                raise command.CommandError("No such group: %s" % groupName)
+                raise command.CommandError("No such group: %s" % group_name)
 
         if self.group is not group:
             self.hide()
@@ -1293,7 +1293,7 @@ class Window(_Window):
         """
         self.kill()
 
-    def cmd_togroup(self, groupName=None):
+    def cmd_togroup(self, groupName=None):  # noqa: 803
         """Move window to a specified group.
 
         If groupName is not specified, we assume the current group
