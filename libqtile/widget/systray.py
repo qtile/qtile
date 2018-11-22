@@ -71,7 +71,7 @@ class Icon(window._Window):
         self.height = height
         return False
 
-    def handle_PropertyNotify(self, e):
+    def handle_PropertyNotify(self, e):  # noqa: N802
         name = self.qtile.conn.atoms.get_name(e.atom)
         if name == "_XEMBED_INFO":
             info = self.window.get_property('_XEMBED_INFO', unpack=int)
@@ -80,7 +80,7 @@ class Icon(window._Window):
 
         return False
 
-    def handle_DestroyNotify(self, event):
+    def handle_DestroyNotify(self, event):  # noqa: N802
         wid = event.window
         del(self.qtile.windows_map[wid])
         del(self.systray.icons[wid])
@@ -147,7 +147,7 @@ class Systray(window._Window, base._Widget):
         )
         qtile.root.send_event(event, mask=EventMask.StructureNotify)
 
-    def handle_ClientMessage(self, event):
+    def handle_ClientMessage(self, event):  # noqa: N802
         atoms = self.qtile.conn.atoms
 
         opcode = event.type

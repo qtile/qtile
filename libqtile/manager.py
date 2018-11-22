@@ -832,7 +832,7 @@ class Qtile(command.CommandObject):
                 closest_screen = s
         return closest_screen
 
-    def handle_SelectionNotify(self, e):
+    def handle_SelectionNotify(self, e):  # noqa: N802
         if not getattr(e, "owner", None):
             return
 
@@ -851,7 +851,7 @@ class Qtile(command.CommandObject):
                                              TYPE, selection,
                                              xcffib.CurrentTime)
 
-    def handle_PropertyNotify(self, e):
+    def handle_PropertyNotify(self, e):  # noqa: N802
         name = self.conn.atoms.get_name(e.atom)
         # it's the selection property
         if name in ("PRIMARY", "CLIPBOARD"):
@@ -865,14 +865,14 @@ class Qtile(command.CommandObject):
             self.selection[name]["selection"] = value
             hook.fire("selection_change", name, self.selection[name])
 
-    def handle_EnterNotify(self, e):
+    def handle_EnterNotify(self, e):  # noqa: N802
         if e.event in self.windows_map:
             return True
         s = self.find_screen(e.root_x, e.root_y)
         if s:
             self.focus_screen(s.index, warp=False)
 
-    def handle_ClientMessage(self, event):
+    def handle_ClientMessage(self, event):  # noqa: N802
         atoms = self.conn.atoms
 
         opcode = event.type
@@ -886,7 +886,7 @@ class Qtile(command.CommandObject):
             except IndexError:
                 logger.info("Invalid Desktop Index: %s" % index)
 
-    def handle_KeyPress(self, e):
+    def handle_KeyPress(self, e):  # noqa: N802
         keysym = self.conn.code_to_syms[e.detail][0]
         state = e.state
         if self.numlock_mask:
@@ -932,7 +932,7 @@ class Qtile(command.CommandObject):
         self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
         self.conn.conn.flush()
 
-    def handle_ButtonPress(self, e):
+    def handle_ButtonPress(self, e):  # noqa: N802
         button_code = e.detail
         state = e.state
         if self.numlock_mask:
@@ -984,7 +984,7 @@ class Qtile(command.CommandObject):
                     xcffib.xproto.GrabMode.Async,
                 )
 
-    def handle_ButtonRelease(self, e):
+    def handle_ButtonRelease(self, e):  # noqa: N802
         button_code = e.detail
         state = e.state & ~xcbq.AllButtonsMask
         if self.numlock_mask:
@@ -1000,7 +1000,7 @@ class Qtile(command.CommandObject):
                 self._drag = None
                 self.root.ungrab_pointer()
 
-    def handle_MotionNotify(self, e):
+    def handle_MotionNotify(self, e):  # noqa: N802
         if self._drag is None:
             return
         ox, oy, rx, ry, cmd = self._drag
@@ -1020,7 +1020,7 @@ class Qtile(command.CommandObject):
                             "Mouse command error %s: %s" % (i.name, val)
                         )
 
-    def handle_ConfigureNotify(self, e):
+    def handle_ConfigureNotify(self, e):  # noqa: N802
         """Handle xrandr events"""
         screen = self.current_screen
         if e.window == self.root.wid and \
@@ -1028,7 +1028,7 @@ class Qtile(command.CommandObject):
                 e.height != screen.height:
             screen.resize(0, 0, e.width, e.height)
 
-    def handle_ConfigureRequest(self, e):
+    def handle_ConfigureRequest(self, e):  # noqa: N802
         # It's not managed, or not mapped, so we just obey it.
         cw = xcffib.xproto.ConfigWindow
         args = {}
@@ -1045,22 +1045,22 @@ class Qtile(command.CommandObject):
         w = xcbq.Window(self.conn, e.window)
         w.configure(**args)
 
-    def handle_MappingNotify(self, e):
+    def handle_MappingNotify(self, e):  # noqa: N802
         self.conn.refresh_keymap()
         if e.request == xcffib.xproto.Mapping.Keyboard:
             self.grab_keys()
 
-    def handle_MapRequest(self, e):
+    def handle_MapRequest(self, e):  # noqa: N802
         w = xcbq.Window(self.conn, e.window)
         c = self.manage(w)
         if c and (not c.group or not c.group.screen):
             return
         w.map()
 
-    def handle_DestroyNotify(self, e):
+    def handle_DestroyNotify(self, e):  # noqa: N802
         self.unmanage(e.window)
 
-    def handle_UnmapNotify(self, e):
+    def handle_UnmapNotify(self, e):  # noqa: N802
         if e.event != self.root.wid:
             c = self.windows_map.get(e.window)
             if c and getattr(c, "group", None):
@@ -1075,7 +1075,7 @@ class Qtile(command.CommandObject):
                     pass
             self.unmanage(e.window)
 
-    def handle_ScreenChangeNotify(self, e):
+    def handle_ScreenChangeNotify(self, e):  # noqa: N802
         hook.fire("screen_change", self, e)
 
     def focus_screen(self, n, warp=True):

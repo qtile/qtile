@@ -233,7 +233,7 @@ class Bar(Gap, configurable.Configurable):
                 i.offsety = offset
                 offset += i.length
 
-    def handle_Expose(self, e):
+    def handle_Expose(self, e):  # noqa: N802
         self.draw()
 
     def get_widget_in_position(self, e):
@@ -246,7 +246,7 @@ class Bar(Gap, configurable.Configurable):
                 if e.event_y < i.offsety + i.length:
                     return i
 
-    def handle_ButtonPress(self, e):
+    def handle_ButtonPress(self, e):  # noqa: N802
         widget = self.get_widget_in_position(e)
         if widget:
             widget.button_press(
@@ -255,7 +255,7 @@ class Bar(Gap, configurable.Configurable):
                 e.detail
             )
 
-    def handle_ButtonRelease(self, e):
+    def handle_ButtonRelease(self, e):  # noqa: N802
         widget = self.get_widget_in_position(e)
         if widget:
             widget.button_release(

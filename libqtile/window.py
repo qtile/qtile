@@ -708,7 +708,7 @@ class Static(_Window):
             self.place(x, y, width, height, 0, 0)
         self.update_strut()
 
-    def handle_ConfigureRequest(self, e):
+    def handle_ConfigureRequest(self, e):  # noqa: N802
         cw = xcffib.xproto.ConfigWindow
         if self.conf_x is None and e.value_mask & cw.X:
             self.x = e.x
@@ -742,7 +742,7 @@ class Static(_Window):
         self.qtile.update_gaps(strut, self.strut)
         self.strut = strut
 
-    def handle_PropertyNotify(self, e):
+    def handle_PropertyNotify(self, e):  # noqa: N802
         name = self.qtile.conn.atoms.get_name(e.atom)
         if name in ("_NET_WM_STRUT_PARTIAL", "_NET_WM_STRUT"):
             self.update_strut()
@@ -1096,7 +1096,7 @@ class Window(_Window):
 
         return False
 
-    def handle_EnterNotify(self, e):
+    def handle_EnterNotify(self, e):  # noqa: N802
         hook.fire("client_mouse_enter", self)
         if self.qtile.config.follow_mouse_focus and \
                 self.group.current_window != self:
@@ -1107,7 +1107,7 @@ class Window(_Window):
             self.qtile.focus_screen(self.group.screen.index, False)
         return True
 
-    def handle_ConfigureRequest(self, e):
+    def handle_ConfigureRequest(self, e):  # noqa: N802
         if self.qtile._drag and self.qtile.current_window == self:
             # ignore requests while user is dragging window
             return
@@ -1165,7 +1165,7 @@ class Window(_Window):
         self.icons = icons
         hook.fire("net_wm_icon_change", self)
 
-    def handle_ClientMessage(self, event):
+    def handle_ClientMessage(self, event):  # noqa: N802
         atoms = self.qtile.conn.atoms
 
         opcode = event.type
@@ -1215,7 +1215,7 @@ class Window(_Window):
                 else:
                     logger.info("Ignoring focus request")
 
-    def handle_PropertyNotify(self, e):
+    def handle_PropertyNotify(self, e):  # noqa: N802
         name = self.qtile.conn.atoms.get_name(e.atom)
         logger.debug("PropertyNotifyEvent: %s", name)
         if name == "WM_TRANSIENT_FOR":

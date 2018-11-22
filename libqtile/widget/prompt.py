@@ -641,7 +641,7 @@ class Prompt(base._TextBox):
                 self.completer.reset()
             return self.keyhandlers[k]
 
-    def handle_KeyPress(self, e):
+    def handle_KeyPress(self, e):  # noqa: N802
         """KeyPress handler for the minibuffer.
 
         Currently only supports ASCII characters.
