@@ -385,9 +385,9 @@ class XFixes(object):
                               xcffib.xfixes.MINOR_VERSION)
 
     def select_selection_input(self, window, selection="PRIMARY"):
-        SELECTION = self.conn.atoms[selection]
+        _selection = self.conn.atoms[selection]
         self.conn.xfixes.ext.SelectSelectionInput(window.wid,
-                                                  SELECTION,
+                                                  _selection,
                                                   self.selection_mask)
 
 
