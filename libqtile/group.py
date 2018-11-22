@@ -197,7 +197,7 @@ class _Group(command.CommandObject):
             i._disable_mask(mask)
         yield
         for i in self.windows:
-            i._resetMask()
+            i._reset_mask()
 
     def focus(self, win, warp=True, force=False):
         """Focus the given window
