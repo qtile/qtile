@@ -49,16 +49,16 @@ class AllLayoutsConfig(object):
         # Retrieve the layouts dynamically (i.e. do not hard-code a list) to
         # prevent forgetting to add new future layouts
         for layout_name in dir(layout):
-            Layout = getattr(layout, layout_name)
+            layout_cls = getattr(layout, layout_name)
             try:
-                test = issubclass(Layout, layout.base.Layout)
+                test = issubclass(layout_cls, layout.base.Layout)
             except TypeError:
                 pass
             else:
                 # Explicitly exclude the Slice layout, since it depends on
                 # other layouts (tested here) and has its own specific tests
                 if test and layout_name != 'Slice':
-                    yield layout_name, Layout
+                    yield layout_name, layout_cls
 
     @classmethod
     def generate(cls):
@@ -67,8 +67,8 @@ class AllLayoutsConfig(object):
         Each configuration has only the tested layout (i.e. 1 item) in the
         'layouts' variable.
         """
-        return [type(layout_name, (cls, ), {'layouts': [Layout()]})
-                for layout_name, Layout in cls.iter_layouts()]
+        return [type(layout_name, (cls, ), {'layouts': [layout_cls()]})
+                for layout_name, layout_cls in cls.iter_layouts()]
 
 
 class AllLayouts(AllLayoutsConfig):
@@ -76,7 +76,7 @@ class AllLayouts(AllLayoutsConfig):
     Like AllLayoutsConfig, but all the layouts in the repo are installed
     together in the 'layouts' variable.
     """
-    layouts = [Layout() for layout_name, Layout
+    layouts = [layout_cls() for layout_name, layout_cls
                in AllLayoutsConfig.iter_layouts()]
 
 
