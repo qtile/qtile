@@ -255,8 +255,8 @@ class Qtile(command.CommandObject):
         hook.fire("startup_complete")
 
     def setup_selection(self):
-        PRIMARY = self.conn.atoms["PRIMARY"]
-        CLIPBOARD = self.conn.atoms["CLIPBOARD"]
+        primary = self.conn.atoms["PRIMARY"]
+        clipboard = self.conn.atoms["CLIPBOARD"]
 
         self.selection_window = self.conn.create_window(-1, -1, 1, 1)
         self.selection_window.set_attribute(eventmask=EventMask.PropertyChange)
@@ -265,14 +265,14 @@ class Qtile(command.CommandObject):
         self.conn.xfixes.select_selection_input(self.selection_window,
                                                 "CLIPBOARD")
 
-        r = self.conn.conn.core.GetSelectionOwner(PRIMARY).reply()
+        r = self.conn.conn.core.GetSelectionOwner(primary).reply()
         self.selection["PRIMARY"]["owner"] = r.owner
-        r = self.conn.conn.core.GetSelectionOwner(CLIPBOARD).reply()
+        r = self.conn.conn.core.GetSelectionOwner(clipboard).reply()
         self.selection["CLIPBOARD"]["owner"] = r.owner
 
         # ask for selection on starup
-        self.convert_selection(PRIMARY)
-        self.convert_selection(CLIPBOARD)
+        self.convert_selection(primary)
+        self.convert_selection(clipboard)
 
     def setup_eventloop(self):
         self._eventloop = asyncio.new_event_loop()
