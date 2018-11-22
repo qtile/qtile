@@ -65,7 +65,7 @@ class QSh(object):
         elif buf.startswith("cd ") or buf.startswith("ls "):
             last_slash = arg.rfind("/") + 1
             path, last = arg[:last_slash], arg[last_slash:]
-            node = self._findPath(path)
+            node = self._find_path(path)
             options = [str(i) for i in self._ls(node)]
             lst = []
             if path and not path.endswith("/"):
@@ -163,7 +163,7 @@ class QSh(object):
         else:
             return None
 
-    def _findPath(self, path):
+    def _find_path(self, path):
         root = self.clientroot if path.startswith("/") else self.current
         parts = [i for i in path.split("/") if i]
         return self._find_node(root, *parts)
@@ -178,7 +178,7 @@ class QSh(object):
 
             cd ../layout
         """
-        next = self._findPath(arg)
+        next = self._find_path(arg)
         if next:
             self.current = next
             return self.current.path or '/'
@@ -196,7 +196,7 @@ class QSh(object):
         """
         path = self.current
         if arg:
-            path = self._findPath(arg)
+            path = self._find_path(arg)
             if not path:
                 return "No such path."
 
