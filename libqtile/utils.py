@@ -84,7 +84,7 @@ def shuffle_down(lst):
 
 
 if sys.version_info < (3, 3):
-    class lru_cache(object):
+    class lru_cache(object):  # noqa: N801
         """
             A decorator that implements a self-expiring LRU cache for class
             methods (not functions!).
