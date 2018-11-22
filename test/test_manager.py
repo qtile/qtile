@@ -1027,7 +1027,7 @@ clientnew_config = pytest.mark.parametrize("qtile", [ClientNewStaticConfig], ind
 
 
 @clientnew_config
-def test_minimal_(qtile):
+def test_clientnew_config(qtile):
     self = qtile
 
     a = self.test_window("one")
@@ -1053,7 +1053,7 @@ togroup_config = pytest.mark.parametrize("qtile", [ToGroupConfig], indirect=True
 
 
 @togroup_config
-def test_minimal__(qtile):
+def test_togroup_config(qtile):
     qtile.c.group["d"].toscreen()
     qtile.c.group["a"].toscreen()
     a = qtile.test_window("one")
