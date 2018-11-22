@@ -28,7 +28,7 @@ import libqtile.config
 import libqtile.scratchpad
 
 # import .conftest
-from .conftest import retry
+from .conftest import Retry
 from .conftest import no_xinerama
 from .layouts.layout_utils import assert_focused, assert_focus_path
 
@@ -58,13 +58,13 @@ def scratchpad_config(x):
     return no_xinerama(pytest.mark.parametrize("qtile", [ScratchPadBaseConfic], indirect=True)(x))
 
 
-@retry(ignore_exceptions=(KeyError,))
+@Retry(ignore_exceptions=(KeyError,))
 def is_spawned(qtile, name):
     qtile.c.group["SCRATCHPAD"].dropdown_info(name)['window']
     return True
 
 
-@retry(ignore_exceptions=(ValueError,))
+@Retry(ignore_exceptions=(ValueError,))
 def is_killed(qtile, name):
     if 'window' not in qtile.c.group["SCRATCHPAD"].dropdown_info(name):
         return True

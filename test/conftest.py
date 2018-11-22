@@ -53,7 +53,7 @@ max_sleep = 5.0
 sleep_time = 0.1
 
 
-class retry:
+class Retry:
     def __init__(self, fail_msg='retry failed!', ignore_exceptions=(),
                  dt=sleep_time, tmax=max_sleep, return_on_fail=False):
         self.fail_msg = fail_msg
@@ -83,14 +83,14 @@ class retry:
         return wrapper
 
 
-@retry(ignore_exceptions=(xcffib.ConnectionException,), return_on_fail=True)
+@Retry(ignore_exceptions=(xcffib.ConnectionException,), return_on_fail=True)
 def can_connect_x11(disp=':0'):
     conn = xcffib.connect(display=disp)
     conn.disconnect()
     return True
 
 
-@retry(ignore_exceptions=(libqtile.ipc.IPCError,), return_on_fail=True)
+@Retry(ignore_exceptions=(libqtile.ipc.IPCError,), return_on_fail=True)
 def can_connect_qtile(socket_path):
     client = libqtile.command.Client(socket_path)
     val = client.status()
@@ -323,7 +323,7 @@ class Qtile(object):
         start = len(client.windows())
         proc = subprocess.Popen(args, env={"DISPLAY": self.display})
 
-        @retry(ignore_exceptions=(RuntimeError,))
+        @Retry(ignore_exceptions=(RuntimeError,))
         def success():
             while proc.poll() is None:
                 if len(client.windows()) > start:
@@ -356,7 +356,7 @@ class Qtile(object):
         proc.wait()
         self.testwindows.remove(proc)
 
-        @retry(ignore_exceptions=(ValueError,))
+        @Retry(ignore_exceptions=(ValueError,))
         def success():
             if len(self.c.windows()) < start:
                 return True
