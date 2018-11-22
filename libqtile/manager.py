@@ -891,10 +891,10 @@ class Qtile(command.CommandObject):
         hook.fire("selection_notify", name, self.selection[name])
 
     def convert_selection(self, selection, _type="UTF8_STRING"):
-        TYPE = self.conn.atoms[_type]
+        type_atom = self.conn.atoms[_type]
         self.conn.conn.core.ConvertSelection(self.selection_window.wid,
                                              selection,
-                                             TYPE, selection,
+                                             type_atom, selection,
                                              xcffib.CurrentTime)
 
     def handle_PropertyNotify(self, e):  # noqa: N802
