@@ -326,19 +326,19 @@ class Screen(command.CommandObject):
             s2 = new_group.screen
 
             s2.group = g1
-            g1._setScreen(s2)
+            g1._set_screen(s2)
             s1.group = g2
-            g2._setScreen(s1)
+            g2._set_screen(s1)
         else:
             old_group = self.group
             self.group = new_group
 
             # display clients of the new group and then hide from old group
             # to remove the screen flickering
-            new_group._setScreen(self)
+            new_group._set_screen(self)
 
             if old_group is not None:
-                old_group._setScreen(None)
+                old_group._set_screen(None)
 
         hook.fire("setgroup")
         hook.fire("focus_change")

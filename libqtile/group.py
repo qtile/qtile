@@ -167,7 +167,7 @@ class _Group(command.CommandObject):
                         self.screen == self.qtile.current_screen:
                     self.current_window.focus(warp)
 
-    def _setScreen(self, screen):
+    def _set_screen(self, screen):
         """Set this group's screen to new_screen"""
         if screen == self.screen:
             return
