@@ -98,7 +98,7 @@ class Stack(Layout):
         c.stacks = [_WinStack(autosplit=self.autosplit) for i in self.stacks]
         return c
 
-    def _findNext(self, lst, offset):
+    def _find_next(self, lst, offset):
         for i in lst[offset + 1:]:
             if i:
                 return i
@@ -121,7 +121,7 @@ class Stack(Layout):
                 )
 
     def next_stack(self):
-        n = self._findNext(
+        n = self._find_next(
             self.stacks,
             self.current_stack_offset
         )
@@ -129,7 +129,7 @@ class Stack(Layout):
             self.group.focus(n.cw, True)
 
     def previous_stack(self):
-        n = self._findNext(
+        n = self._find_next(
             list(reversed(self.stacks)),
             len(self.stacks) - self.current_stack_offset - 1
         )
@@ -201,7 +201,7 @@ class Stack(Layout):
         if self.stacks[current_offset].cw:
             return self.stacks[current_offset].cw
         else:
-            n = self._findNext(
+            n = self._find_next(
                 list(reversed(self.stacks)),
                 len(self.stacks) - current_offset - 1
             )
