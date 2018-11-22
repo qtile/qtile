@@ -50,27 +50,25 @@ if has_dbus:
             self.manager = manager
 
         @service.method(BUS_NAME, in_signature='', out_signature='as')
-        def GetCapabilities(self):
+        def GetCapabilities(self):  # noqa: N802
             return ('body')
 
-        @service.method(
-            BUS_NAME, in_signature='susssasa{sv}i', out_signature='u'
-        )
-        def Notify(self, app_name, replaces_id, app_icon, summary,
+        @service.method(BUS_NAME, in_signature='susssasa{sv}i', out_signature='u')
+        def Notify(self, app_name, replaces_id, app_icon, summary,  # noqa: N802
                    body, actions, hints, timeout):
             notif = Notification(summary, body, timeout, hints)
             return self.manager.add(notif)
 
         @service.method(BUS_NAME, in_signature='u', out_signature='')
-        def CloseNotification(self, id):
+        def CloseNotification(self, id):  # noqa: N802
             pass
 
         @service.signal(BUS_NAME, signature='uu')
-        def NotificationClosed(self, id_in, reason_in):
+        def NotificationClosed(self, id_in, reason_in):  # noqa: N802
             pass
 
         @service.method(BUS_NAME, in_signature='', out_signature='ssss')
-        def GetServerInformation(self):
+        def GetServerInformation(self):  # noqa: N802
             return ("qtile-notify-daemon", "qtile", "1.0", "1")
 
 
