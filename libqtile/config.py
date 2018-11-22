@@ -422,7 +422,7 @@ class Screen(command.CommandObject):
             group = self.previous_group
         self.set_group(group)
 
-    def cmd_togglegroup(self, groupName=None):
+    def cmd_togglegroup(self, groupName=None):  # noqa
         """Switch to the selected group or to the previously active one
 
         Deprecated: use toggle_group()"""
