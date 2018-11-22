@@ -439,7 +439,7 @@ class Window(object):
         self.conn = conn
         self.wid = wid
 
-    def _propertyString(self, r):
+    def _property_string(self, r):
         """Extract a string from a window property reply message"""
         return r.value.to_string()
 
@@ -493,7 +493,7 @@ class Window(object):
             xcffib.xproto.GetPropertyType.Any
         )
         if r:
-            return self._propertyString(r)
+            return self._property_string(r)
 
     def get_wm_hints(self):
         wm_hints = self.get_property("WM_HINTS", xcffib.xproto.GetPropertyType.Any)
@@ -548,14 +548,14 @@ class Window(object):
         """Return an (instance, class) tuple if WM_CLASS exists, or None"""
         r = self.get_property("WM_CLASS", "STRING")
         if r:
-            s = self._propertyString(r)
+            s = self._property_string(r)
             return tuple(s.strip("\0").split("\0"))
         return tuple()
 
     def get_wm_window_role(self):
         r = self.get_property("WM_WINDOW_ROLE", "STRING")
         if r:
-            return self._propertyString(r)
+            return self._property_string(r)
 
     def get_wm_transient_for(self):
         r = self.get_property("WM_TRANSIENT_FOR", "WINDOW", unpack=int)
