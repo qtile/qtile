@@ -434,14 +434,14 @@ class _Window(command.CommandObject):
     def disable_mask(self, mask):
         self._disable_mask(mask)
         yield
-        self._resetMask()
+        self._reset_mask()
 
     def _disable_mask(self, mask):
         self.window.set_attribute(
             eventmask=self._windowMask & (~mask)
         )
 
-    def _resetMask(self):
+    def _reset_mask(self):
         self.window.set_attribute(
             eventmask=self._windowMask
         )
