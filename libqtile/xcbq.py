@@ -443,7 +443,7 @@ class Window(object):
         """Extract a string from a window property reply message"""
         return r.value.to_string()
 
-    def _propertyUTF8(self, r):
+    def _property_utf8(self, r):
         return r.value.to_utf8()
 
     def send_event(self, synthevent, mask=EventMask.NoEvent):
@@ -478,15 +478,15 @@ class Window(object):
         """
         r = self.get_property("_NET_WM_VISIBLE_NAME", "UTF8_STRING")
         if r:
-            return self._propertyUTF8(r)
+            return self._property_utf8(r)
 
         r = self.get_property("_NET_WM_NAME", "UTF8_STRING")
         if r:
-            return self._propertyUTF8(r)
+            return self._property_utf8(r)
 
         r = self.get_property(xcffib.xproto.Atom.WM_NAME, "UTF8_STRING")
         if r:
-            return self._propertyUTF8(r)
+            return self._property_utf8(r)
 
         r = self.get_property(
             xcffib.xproto.Atom.WM_NAME,
@@ -566,16 +566,16 @@ class Window(object):
     def get_wm_icon_name(self):
         r = self.get_property("_NET_WM_ICON_NAME", "UTF8_STRING")
         if r:
-            return self._propertyUTF8(r)
+            return self._property_utf8(r)
 
         r = self.get_property("WM_ICON_NAME", "STRING")
         if r:
-            return self._propertyUTF8(r)
+            return self._property_utf8(r)
 
     def get_wm_client_machine(self):
         r = self.get_property("WM_CLIENT_MACHINE", "STRING")
         if r:
-            return self._propertyUTF8(r)
+            return self._property_utf8(r)
 
     def get_geometry(self):
         q = self.conn.conn.core.GetGeometry(self.wid)
