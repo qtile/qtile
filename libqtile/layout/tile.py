@@ -44,7 +44,7 @@ class Tile(_SimpleLayoutBase):
         ("margin", 0, "Margin of the layout"),
     ]
 
-    def __init__(self, ratio=0.618, masterWindows=1, expand=True,
+    def __init__(self, ratio=0.618, masterWindows=1, expand=True,  # noqa: N803
                  ratio_increment=0.05, add_on_top=True, add_after_last=False,
                  shift_windows=False, master_match=None, **config):
         _SimpleLayoutBase.__init__(self, **config)
