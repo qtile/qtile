@@ -41,7 +41,7 @@ import libqtile.hook
 import libqtile.confreader
 
 
-from .conftest import whereis, BareConfig, no_xinerama, retry
+from .conftest import whereis, BareConfig, no_xinerama, Retry
 
 
 class ManagerConfig(object):
@@ -179,7 +179,7 @@ def test_resize(qtile):
     self = qtile
     self.c.screen[0].resize(x=10, y=10, w=100, h=100)
 
-    @retry(ignore_exceptions=(AssertionError), fail_msg="Screen didn't resize")
+    @Retry(ignore_exceptions=(AssertionError), fail_msg="Screen didn't resize")
     def run():
         d = self.c.screen[0].info()
         assert d['width'] == 100
@@ -230,7 +230,7 @@ def test_spawn_list(qtile):
     assert int(qtile.c.spawn(["echo", "true"])) > 1
 
 
-@retry(ignore_exceptions=(AssertionError,), fail_msg='Window did not die!')
+@Retry(ignore_exceptions=(AssertionError,), fail_msg='Window did not die!')
 def assert_window_died(client, window_info):
     client.sync()
     wid = window_info['id']
@@ -784,7 +784,7 @@ def test_rotate(qtile):
         stdout=subprocess.PIPE
     )
 
-    @retry(ignore_exceptions=(AssertionError,), fail_msg="Screen did not rotate")
+    @Retry(ignore_exceptions=(AssertionError,), fail_msg="Screen did not rotate")
     def run():
         s = self.c.screens()[0]
         assert s['width'] == height
@@ -808,7 +808,7 @@ def test_resize_(qtile):
         ]
     )
 
-    @retry(ignore_exceptions=(AssertionError,), fail_msg="Screen did not resize")
+    @Retry(ignore_exceptions=(AssertionError,), fail_msg="Screen did not resize")
     def run():
         d = self.c.screen.info()
         assert d['width'] == 480
