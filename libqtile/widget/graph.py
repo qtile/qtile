@@ -419,7 +419,7 @@ class HDDBusyGraph(_Graph):
         )
         self._prev = 0
 
-    def _getActivity(self):
+    def _get_values(self):
         try:
             # io_ticks is field number 9
             with open(self.path) as f:
@@ -431,4 +431,5 @@ class HDDBusyGraph(_Graph):
         return activity
 
     def update_graph(self):
-        self.push(self._getActivity())
+        val = self._get_values()
+        self.push(val)
