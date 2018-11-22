@@ -381,7 +381,7 @@ class _Group(command.CommandObject):
             screen = self.qtile.screens[screen]
         screen.set_group(self)
 
-    def _dirGroup(self, direction, skip_empty=False, skip_managed=False):
+    def _get_group(self, direction, skip_empty=False, skip_managed=False):
         """Find a group walking the groups list in the specified direction
 
         Parameters
@@ -406,10 +406,10 @@ class _Group(command.CommandObject):
         return groups[index]
 
     def get_previous_group(self, skip_empty=False, skip_managed=False):
-        return self._dirGroup(-1, skip_empty, skip_managed)
+        return self._get_group(-1, skip_empty, skip_managed)
 
     def get_next_group(self, skip_empty=False, skip_managed=False):
-        return self._dirGroup(1, skip_empty, skip_managed)
+        return self._get_group(1, skip_empty, skip_managed)
 
     def cmd_unminimize_all(self):
         """Unminimise all windows in this group"""
