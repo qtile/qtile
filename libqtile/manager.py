@@ -1694,9 +1694,9 @@ class Qtile(command.CommandObject):
             return
         mb.startInput(prompt, f, "qshell")
 
-    def cmd_addgroup(self, group, label=None):
+    def cmd_addgroup(self, group, label=None, layout=None, layouts=None):
         """Add a group with the given name"""
-        return self.addGroup(group, label=label)
+        return self.addGroup(name=group, layout=layout, layouts=layouts, label=label)
 
     def cmd_delgroup(self, group):
         """Delete a group with the given name"""
