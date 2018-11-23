@@ -332,8 +332,6 @@ def test_adddelgroup(qtile):
     # Assert that setting layout via cmd_addgroup works
     self.c.addgroup("testgroup2", layout='max')
     assert self.c.groups()["testgroup2"]['layout'] == 'max'
-    self.c.addgroup("testgroup3", layout='monadtall')
-    assert self.c.groups()["testgroup3"]['layout'] == 'monadtall'
 
 
 @manager_config
