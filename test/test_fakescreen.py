@@ -144,8 +144,7 @@ class FakeScreenConfig(object):
             x=500, y=580, width=400, height=400
         ),
     ]
-
-    screens = fake_screens
+    screens = []
 
 
 xephyr_config = {

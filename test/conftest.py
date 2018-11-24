@@ -55,11 +55,12 @@ sleep_time = 0.1
 
 class retry:
     def __init__(self, fail_msg='retry failed!', ignore_exceptions=(),
-                 dt=sleep_time, tmax=max_sleep):
+                 dt=sleep_time, tmax=max_sleep, return_on_fail=False):
         self.fail_msg = fail_msg
         self.ignore_exceptions = ignore_exceptions
         self.dt = dt
         self.tmax = tmax
+        self.return_on_fail = return_on_fail
 
     def __call__(self, fn):
         @functools.wraps(fn)
@@ -75,18 +76,21 @@ class retry:
                     pass
                 time.sleep(dt)
                 dt *= 1.5
-            raise AssertionError(self.fail_msg)
+            if self.return_on_fail:
+                return False
+            else:
+                raise AssertionError(self.fail_msg)
         return wrapper
 
 
-@retry(ignore_exceptions=(xcffib.ConnectionException,))
+@retry(ignore_exceptions=(xcffib.ConnectionException,), return_on_fail=True)
 def can_connect_x11(disp=':0'):
     conn = xcffib.connect(display=disp)
     conn.disconnect()
     return True
 
 
-@retry(ignore_exceptions=(libqtile.ipc.IPCError,))
+@retry(ignore_exceptions=(libqtile.ipc.IPCError,), return_on_fail=True)
 def can_connect_qtile(socket_path):
     client = libqtile.command.Client(socket_path)
     val = client.status()
