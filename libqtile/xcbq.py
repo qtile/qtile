@@ -374,23 +374,30 @@ class RandR(object):
 
     def find_dpi(self, root):
         res = self.ext.GetScreenResources(root).reply()
-        widthPX = 0
-        heightPX = 0
-        widthMM = 0
-        heightMM = 0
+        width_px = 0
+        height_px = 0
+        width_mm = 0
+        height_mm = 0
 
         for crtc in res.crtcs:
             info = self.ext.GetCrtcInfo(crtc, xcffib.CurrentTime).reply()
-            widthPX += info.width
-            heightPX += info.height
+            width_px += info.width
+            height_px += info.height
 
         for output in res.outputs:
             info = self.ext.GetOutputInfo(output, xcffib.CurrentTime).reply()
-            widthMM += info.mm_width
-            heightMM += info.mm_height
+            width_mm += info.mm_width
+            height_mm += info.mm_height
 
-        widthDPI = widthPX * 25.4 / widthMM
-        heightDPI = heightPX * 25.4 / heightMM
+        # It's possible that xrandr isn't present (super old X server, but more
+        # likely in Xephyr, where sometimes we don't load it). In this case, we
+        # won't see any crtcs, so we can't really figure out what the DPI is.
+        # So let's just return the universal default.
+        if width_mm == 0:
+            return 96
+
+        widthDPI = width_px * 25.4 / width_mm
+        heightDPI = height_px * 25.4 / height_mm
 
         return (widthDPI + heightDPI) / 2.0
 
