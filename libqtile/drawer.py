@@ -44,7 +44,7 @@ class TextLayout(object):
     def __init__(self, drawer, text, colour, font_family, font_size,
                  font_shadow, wrap=True, markup=False):
         self.drawer, self.colour = drawer, colour
-        layout = drawer.ctx.create_layout()
+        layout = pangocffi.PangoLayout(drawer.ctx)
         layout.set_alignment(pangocffi.ALIGN_CENTER)
         if not wrap:  # pango wraps by default
             layout.set_ellipsize(pangocffi.ELLIPSIZE_END)
@@ -129,7 +129,7 @@ class TextLayout(object):
 
         self.drawer.set_source_rgb(self.colour)
         self.drawer.ctx.move_to(x, y)
-        self.drawer.ctx.show_layout(self.layout)
+        self.layout.show()
 
     def framed(self, border_width, border_color, pad_x, pad_y, highlight_color=None):
         return TextFrame(self, border_width, border_color, pad_x, pad_y, highlight_color=highlight_color)
@@ -322,7 +322,8 @@ class Drawer(object):
                     return v
 
     def new_ctx(self):
-        return pangocffi.patch_cairo_context(cairocffi.Context(self.surface))
+        ctx = cairocffi.Context(self.surface)
+        return ctx
 
     def set_source_rgb(self, colour):
         if type(colour) == list:
