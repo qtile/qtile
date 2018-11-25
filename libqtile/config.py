@@ -247,10 +247,16 @@ class Screen(command.CommandObject):
         self.group = None
         self.previous_group = None
 
-        self.top = top
-        self.bottom = bottom
-        self.left = left
-        self.right = right
+        for position in ("top", "bottom", "left", "right"):
+            gaps_or_gap = locals()[position]
+            if isinstance(gaps_or_gap, (list, tuple)):
+                gaps = gaps_or_gap
+            elif gaps_or_gap is not None:
+                gaps = [gaps_or_gap]
+            else:
+                gaps = []
+            setattr(self, position, gaps)
+
         self.qtile = None
         self.index = None
         # x position of upper left corner can be > 0
@@ -273,32 +279,32 @@ class Screen(command.CommandObject):
 
     @property
     def gaps(self):
-        return (i for i in [self.top, self.bottom, self.left, self.right] if i)
+        return self.top + self.bottom + self.left + self.right
 
     @property
     def dx(self):
-        return self.x + self.left.size if self.left else self.x
+        return self.x + sum(gap.size for gap in self.left)
 
     @property
     def dy(self):
-        return self.y + self.top.size if self.top else self.y
+        return self.y + sum(gap.size for gap in self.top)
 
     @property
     def dwidth(self):
         val = self.width
-        if self.left:
-            val -= self.left.size
+        for gap in self.left:
+            val -= gap.size
         if self.right:
-            val -= self.right.size
+            val -= gap.size
         return val
 
     @property
     def dheight(self):
         val = self.height
-        if self.top:
-            val -= self.top.size
-        if self.bottom:
-            val -= self.bottom.size
+        for gap in self.top:
+            val -= gap.size
+        for gap in self.bottom:
+            val -= gap.size
         return val
 
     def get_rect(self):
@@ -382,9 +388,8 @@ class Screen(command.CommandObject):
         if h is None:
             h = self.height
         self._configure(self.qtile, self.index, x, y, w, h, self.group)
-        for bar in [self.top, self.bottom, self.left, self.right]:
-            if bar:
-                bar.draw()
+        for gap in self.gaps:
+            gap.draw()
         self.qtile.call_soon(self.group.layoutAll)
 
     def cmd_info(self):

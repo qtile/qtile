@@ -336,9 +336,8 @@ class Qtile(command.CommandObject):
                 l.finalize()
 
             for screen in self.screens:
-                for bar in [screen.top, screen.bottom, screen.left, screen.right]:
-                    if bar is not None:
-                        bar.finalize()
+                for gap in screen.gaps:
+                    gap.finalize()
 
             logger.info('Removing io watch')
             fd = self.conn.conn.get_file_descriptor()
@@ -1331,10 +1330,10 @@ class Qtile(command.CommandObject):
             width=i.width,
             height=i.height,
             gaps=dict(
-                top=i.top.geometry() if i.top else None,
-                bottom=i.bottom.geometry() if i.bottom else None,
-                left=i.left.geometry() if i.left else None,
-                right=i.right.geometry() if i.right else None,
+                top=[gap.geometry() for gap in i.top],
+                bottom=[gap.geometry() for gap in i.bottom],
+                left=[gap.geometry() for gap in i.left],
+                right=[gap.geometry() for gap in i.right],
             )
         ) for i in self.screens]
         return lst
@@ -1765,25 +1764,18 @@ class Qtile(command.CommandObject):
             one of: "top", "bottom", "left", "right", or "all" (default: "all")
         """
         if position in ["top", "bottom", "left", "right"]:
-            bar = getattr(self.currentScreen, position)
-            if bar:
-                bar.show(not bar.is_show())
-                self.currentGroup.layoutAll()
-            else:
-                logger.warning(
-                    "Not found bar in position '%s' for hide/show." % position)
+            gaps = getattr(self.currentScreen, position)
+            for gap in gaps:
+                gap.show(not gap.is_show())
+            self.currentGroup.layoutAll()
         elif position == "all":
-            screen = self.currentScreen
             is_show = None
-            for bar in [screen.left, screen.right, screen.top, screen.bottom]:
-                if bar:
-                    if is_show is None:
-                        is_show = not bar.is_show()
-                    bar.show(is_show)
+            for gap in self.currentScreen.gaps:
+                if is_show is None:
+                    is_show = not gap.is_show()
+                    gap.show(is_show)
             if is_show is not None:
                 self.currentGroup.layoutAll()
-            else:
-                logger.warning("Not found bar for hide/show.")
         else:
             logger.error("Invalid position value:{0:s}".format(position))
 
