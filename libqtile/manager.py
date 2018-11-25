@@ -1102,7 +1102,12 @@ class Qtile(command.CommandObject):
         elif name == "widget":
             return False, list(self.widgetMap.keys())
         elif name == "bar":
-            return False, [x.position for x in self.currentScreen.gaps]
+            keys = []
+            for gap in self.currentScreen.gaps:
+                position = getattr(self.currentScreen, gap.position)
+                index = position.index(gap)
+                keys.append("{}_{}".format(gap.position, index))
+            return False, keys
         elif name == "window":
             return True, self.listWID()
         elif name == "screen":
@@ -1122,7 +1127,8 @@ class Qtile(command.CommandObject):
         elif name == "widget":
             return self.widgetMap.get(sel)
         elif name == "bar":
-            return getattr(self.currentScreen, sel)
+            position, index = sel.split("_")
+            return getattr(self.currentScreen, position)[int(index)]
         elif name == "window":
             if sel is None:
                 return self.currentWindow

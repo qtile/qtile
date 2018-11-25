@@ -360,7 +360,12 @@ class Screen(command.CommandObject):
         elif name == "window":
             return (True, [i.window.wid for i in self.group.windows])
         elif name == "bar":
-            return (False, [x.position for x in self.gaps])
+            keys = []
+            for gap in self.gaps:
+                position = getattr(self, gap.position)
+                index = position.index(gap)
+                keys.append("{}_{}".format(gap.position, index))
+            return False, keys
 
     def _select(self, name, sel):
         if name == "layout":
@@ -376,7 +381,8 @@ class Screen(command.CommandObject):
                     if i.window.wid == sel:
                         return i
         elif name == "bar":
-            return getattr(self, sel)
+            position, index = sel.split("_")
+            return getattr(self, position)[int(index)]
 
     def resize(self, x=None, y=None, w=None, h=None):
         if x is None:

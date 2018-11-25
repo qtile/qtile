@@ -975,7 +975,7 @@ def test_dheight():
     s = TScreen(top=libqtile.bar.Gap(10))
     s._configure(None, 0, 0, 0, 100, 100, None)
     assert s.dheight == 90
-    s.bottom = libqtile.bar.Gap(10)
+    s.bottom = [libqtile.bar.Gap(10)]
     assert s.dheight == 80
 
 

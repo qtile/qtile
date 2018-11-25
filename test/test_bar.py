@@ -117,7 +117,7 @@ def test_completion():
 @gb_config
 def test_draw(qtile):
     qtile.testWindow("one")
-    b = qtile.c.bar["bottom"].info()
+    b = qtile.c.bar["bottom_0"].info()
     assert b["widgets"][0]["name"] == "groupbox"
 
 
@@ -163,7 +163,7 @@ def test_textbox_errors(qtile):
 def test_groupbox_button_press(qtile):
     qtile.c.group["ccc"].toscreen()
     assert qtile.c.groups()["a"]["screen"] is None
-    qtile.c.bar["bottom"].fake_button_press(0, "bottom", 10, 10, 1)
+    qtile.c.bar["bottom_0"].fake_button_press(0, "bottom", 10, 10, 1)
     assert qtile.c.groups()["a"]["screen"] == 0
 
 
@@ -214,10 +214,10 @@ class DWidget(object):
 def test_geometry(qtile):
     qtile.testXeyes()
     g = qtile.c.screens()[0]["gaps"]
-    assert g["top"] == (0, 0, 800, 10)
-    assert g["bottom"] == (0, 590, 800, 10)
-    assert g["left"] == (0, 10, 10, 580)
-    assert g["right"] == (790, 10, 10, 580)
+    assert g["top"] == [(0, 0, 800, 10)]
+    assert g["bottom"] == [(0, 590, 800, 10)]
+    assert g["left"] == [(0, 10, 10, 580)]
+    assert g["right"] == [(790, 10, 10, 580)]
     assert len(qtile.c.windows()) == 1
     geom = qtile.c.windows()[0]
     assert geom["x"] == 10
@@ -226,7 +226,7 @@ def test_geometry(qtile):
     assert geom["height"] == 578
     internal = qtile.c.internal_windows()
     assert len(internal) == 4
-    wid = qtile.c.bar["bottom"].info()["window"]
+    wid = qtile.c.bar["bottom_0"].info()["window"]
     assert qtile.c.window[wid].inspect()
 
 
@@ -375,7 +375,7 @@ def test_basic(qtile_nospawn):
 
     qtile_nospawn.start(config)
 
-    i = qtile_nospawn.c.bar["bottom"].info()
+    i = qtile_nospawn.c.bar["bottom_0"].info()
     assert i["widgets"][0]["offset"] == 0
     assert i["widgets"][1]["offset"] == 10
     assert i["widgets"][1]["width"] == 780
@@ -398,7 +398,7 @@ def test_singlespacer(qtile_nospawn):
 
     qtile_nospawn.start(config)
 
-    i = qtile_nospawn.c.bar["bottom"].info()
+    i = qtile_nospawn.c.bar["bottom_0"].info()
     assert i["widgets"][0]["offset"] == 0
     assert i["widgets"][0]["width"] == 800
     libqtile.hook.clear()
@@ -420,7 +420,7 @@ def test_nospacer(qtile_nospawn):
 
     qtile_nospawn.start(config)
 
-    i = qtile_nospawn.c.bar["bottom"].info()
+    i = qtile_nospawn.c.bar["bottom_0"].info()
     assert i["widgets"][0]["offset"] == 0
     assert i["widgets"][1]["offset"] == 10
     libqtile.hook.clear()
