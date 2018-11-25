@@ -212,10 +212,10 @@ class DWidget:
 def test_geometry(qtile):
     qtile.test_xeyes()
     g = qtile.c.screens()[0]["gaps"]
-    assert g["top"] == (0, 0, 800, 10)
-    assert g["bottom"] == (0, 590, 800, 10)
-    assert g["left"] == (0, 10, 10, 580)
-    assert g["right"] == (790, 10, 10, 580)
+    assert g["top"] == [(0, 0, 800, 10)]
+    assert g["bottom"] == [(0, 590, 800, 10)]
+    assert g["left"] == [(0, 10, 10, 580)]
+    assert g["right"] == [(790, 10, 10, 580)]
     assert len(qtile.c.windows()) == 1
     geom = qtile.c.windows()[0]
     assert geom["x"] == 10

@@ -61,21 +61,21 @@ class Gap(CommandObject):
         self.screen = screen
         # If both horizontal and vertical gaps are present, screen corners are
         # given to the horizontal ones
-        if screen.top is self:
+        if self.position == "top":
             self.x = screen.x
             self.y = screen.y
             self.length = screen.width
             self.width = self.length
             self.height = self.size
             self.horizontal = True
-        elif screen.bottom is self:
+        elif self.position == "bottom":
             self.x = screen.x
             self.y = screen.dy + screen.dheight
             self.length = screen.width
             self.width = self.length
             self.height = self.size
             self.horizontal = True
-        elif screen.left is self:
+        elif self.position == "left":
             self.x = screen.x
             self.y = screen.dy
             self.length = screen.dheight
@@ -110,7 +110,7 @@ class Gap(CommandObject):
     @property
     def position(self):
         for i in ["top", "bottom", "left", "right"]:
-            if getattr(self.screen, i) is self:
+            if self in getattr(self.screen, i):
                 return i
 
     def info(self):
