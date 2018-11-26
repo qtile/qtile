@@ -179,21 +179,21 @@ def test_basic(qtile):
 @fakescreen_config
 def test_gaps(qtile):
     g = qtile.c.screens()[0]["gaps"]
-    assert g["bottom"] == (0, 456, 600, 24)
-    assert g["left"] == (0, 0, 16, 456)
-    assert g["right"] == (580, 0, 20, 456)
+    assert g["bottom"] == [(0, 456, 600, 24)]
+    assert g["left"] == [(0, 0, 16, 456)]
+    assert g["right"] == [(580, 0, 20, 456)]
     g = qtile.c.screens()[1]["gaps"]
-    assert g["top"] == (600, 0, 300, 30)
-    assert g["bottom"] == (600, 556, 300, 24)
-    assert g["left"] == (600, 30, 12, 526)
+    assert g["top"] == [(600, 0, 300, 30)]
+    assert g["bottom"] == [(600, 556, 300, 24)]
+    assert g["left"] == [(600, 30, 12, 526)]
     g = qtile.c.screens()[2]["gaps"]
-    assert g["top"] == (0, 480, 500, 30)
-    assert g["bottom"] == (0, 864, 500, 16)
-    assert g["right"] == (460, 510, 40, 354)
+    assert g["top"] == [(0, 480, 500, 30)]
+    assert g["bottom"] == [(0, 864, 500, 16)]
+    assert g["right"] == [(460, 510, 40, 354)]
     g = qtile.c.screens()[3]["gaps"]
-    assert g["top"] == (500, 580, 400, 30)
-    assert g["left"] == (500, 610, 20, 370)
-    assert g["right"] == (876, 610, 24, 370)
+    assert g["top"] == [(500, 580, 400, 30)]
+    assert g["left"] == [(500, 610, 20, 370)]
+    assert g["right"] == [(876, 610, 24, 370)]
 
 
 @fakescreen_config

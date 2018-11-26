@@ -294,7 +294,7 @@ class Screen(command.CommandObject):
         val = self.width
         for gap in self.left:
             val -= gap.size
-        if self.right:
+        for gap in self.right:
             val -= gap.size
         return val
 
