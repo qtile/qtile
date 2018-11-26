@@ -49,7 +49,7 @@ HEIGHT = 600
 SECOND_WIDTH = 640
 SECOND_HEIGHT = 480
 
-max_sleep = 20.0
+max_sleep = 5.0
 sleep_time = 0.1
 
 
