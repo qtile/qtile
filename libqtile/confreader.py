@@ -43,6 +43,7 @@ class Config(object):
         "layouts",
         "floating_layout",
         "screens",
+        "fake_screens",
         "main",
         "auto_fullscreen",
         "widget_defaults",
