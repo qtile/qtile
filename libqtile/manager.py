@@ -773,7 +773,7 @@ class Qtile(command.CommandObject):
         for pid in pids:
             try:
                 os.kill(pid, signal.SIGTERM)
-            except ProcessLookupError:
+            except OSError:
                 # might have died recently
                 pass
 
@@ -782,7 +782,7 @@ class Qtile(command.CommandObject):
             try:
                 os.kill(pid, 0)
                 return True
-            except ProcessLookupError:
+            except OSError:
                 return False
 
         # give everyone a little time to exit and write their state. but don't
