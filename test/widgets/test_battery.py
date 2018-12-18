@@ -4,6 +4,7 @@ from libqtile import images
 import cairocffi
 from .conftest import TEST_DIR
 
+
 def test_images_fail():
     """Test BatteryIcon() with a bad theme_path
 
@@ -12,6 +13,7 @@ def test_images_fail():
     battery = BatteryIcon(theme_path=TEST_DIR)
     with pytest.raises(images.LoadingError):
         battery.setup_images()
+
 
 def test_images_good(tmpdir, fake_bar, svg_img_as_pypath):
     """Test BatteryIcon() with a good theme_path
@@ -29,6 +31,7 @@ def test_images_good(tmpdir, fake_bar, svg_img_as_pypath):
     assert len(batt.surfaces) == len(BatteryIcon.icon_names)
     for name, surfpat in batt.surfaces.items():
         assert isinstance(surfpat, cairocffi.SurfacePattern)
+
 
 def test_images_default(fake_bar):
     """Test BatteryIcon() with the default theme_path

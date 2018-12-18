@@ -4,10 +4,12 @@ from libqtile import images
 import cairocffi
 from .conftest import TEST_DIR
 
+
 def test_images_fail():
     vol = Volume(theme_path=TEST_DIR)
     with pytest.raises(images.LoadingError):
         vol.setup_images()
+
 
 def test_images_good(tmpdir, fake_bar, svg_img_as_pypath):
     names = (

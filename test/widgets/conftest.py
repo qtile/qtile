@@ -1,6 +1,7 @@
 import pytest
 import os
 
+
 @pytest.fixture(scope='function')
 def fake_bar():
     from libqtile.bar import Bar
@@ -9,8 +10,10 @@ def fake_bar():
     b.height = height
     return b
 
+
 TEST_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(os.path.dirname(TEST_DIR), 'data')
+
 
 @pytest.fixture(scope='module')
 def svg_img_as_pypath():

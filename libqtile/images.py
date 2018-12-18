@@ -23,10 +23,13 @@ import os
 import re
 from collections import namedtuple, defaultdict, OrderedDict
 
+
 class LoadingError(Exception):
     pass
 
+
 _SurfaceInfo = namedtuple('_SurfaceInfo', ('surface', 'file_type'))
+
 
 def _decode_to_image_surface(bytes_img, width=None, height=None):
     try:
@@ -42,6 +45,7 @@ def _decode_to_image_surface(bytes_img, width=None, height=None):
         surf, fmt = cairocffi.pixbuf.decode_to_image_surface(bytes_img)
         return _SurfaceInfo(surf, fmt)
 
+
 def get_cairo_surface(bytes_img, width=None, height=None):
     try:
         surf = cairocffi.ImageSurface.create_from_png(io.BytesIO(bytes_img))
@@ -53,6 +57,7 @@ def get_cairo_surface(bytes_img, width=None, height=None):
     except cairocffi.pixbuf.ImageLoadingError:
         pass
     raise LoadingError("Couldn't load image!")
+
 
 def get_cairo_pattern(surface, width=None, height=None, theta=0.0):
     """Return a SurfacePattern from an ImageSurface.
@@ -90,6 +95,7 @@ def get_cairo_pattern(surface, width=None, height=None, theta=0.0):
     pattern.set_matrix(matrix)
     return pattern
 
+
 class _Descriptor(object):
     def __init__(self, name=None, default=None, **opts):
         self.name = name
@@ -116,10 +122,12 @@ class _Descriptor(object):
     def __delete__(self, obj):
         delattr(obj, self.under_name)
 
+
 class _Resetter(_Descriptor):
     def __set__(self, obj, value):
         super(_Resetter, self).__set__(obj, value)
         obj._reset()
+
 
 class _PixelSize(_Resetter):
     def __set__(self, obj, value):
@@ -130,10 +138,12 @@ class _PixelSize(_Resetter):
         size = obj.default_size
         return getattr(size, self.name)
 
+
 class _Rotation(_Resetter):
     def __set__(self, obj, value):
         value = float(value)
         super(_Rotation, self).__set__(obj, value)
+
 
 _ImgSize = namedtuple('_ImgSize', ('width', 'height'))
 
@@ -311,7 +321,7 @@ def get_matching_files(dirpath='.', explicit_filetype=False, *names):
     if explicit_filetype:
         pat_str += '$'
     else:
-        pat_str += '\\.(?P<suffix>\w+)$'
+        pat_str += r'\.(?P<suffix>\w+)$'
     regex_pattern = re.compile(pat_str, flags=re.IGNORECASE)
 
     d_total = defaultdict(list)
@@ -325,6 +335,7 @@ def get_matching_files(dirpath='.', explicit_filetype=False, *names):
             filename = name
         d_total[name].append(join_path(directory, filename))
     return d_total
+
 
 class Loader(object):
     """Loader - create Img() instances from image names

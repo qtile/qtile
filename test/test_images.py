@@ -3,6 +3,7 @@ test_images.py contains unittests for libqtile.images.Img
 and its supporting code.
 """
 from __future__ import division
+
 import pytest
 import libqtile.images as images
 import cairocffi
@@ -17,6 +18,7 @@ PNGS = glob(path.join(DATA_DIR, '*', '*.png'))
 SVGS = glob(path.join(DATA_DIR, '*', '*.svg'))
 ALL_IMAGES = glob(path.join(DATA_DIR, '*', '*'))
 
+
 @pytest.fixture(
     scope='function',
     params=ALL_IMAGES,
@@ -26,6 +28,7 @@ def path_n_bytes_image(request):
     with open(fpath, 'rb') as fobj:
         bobj = fobj.read()
     return fpath, bobj
+
 
 @pytest.fixture(
     scope='function',
@@ -37,9 +40,11 @@ def path_n_bytes_image_pngs(request):
         bobj = fobj.read()
     return fpath, bobj
 
+
 @pytest.fixture(scope='function')
 def png_img():
     return images.Img.from_path(PNGS[0])
+
 
 def test_get_cairo_surface(path_n_bytes_image):
     path, bytes_image = path_n_bytes_image
@@ -47,20 +52,22 @@ def test_get_cairo_surface(path_n_bytes_image):
     assert isinstance(surf_info.surface, cairocffi.ImageSurface)
     assert path.split('.')[-1].lower() == surf_info.file_type
 
+
 def test_get_cairo_surface_bad_input():
     with pytest.raises(images.LoadingError):
-        surf = images.get_cairo_surface(b'asdfasfdi3')
+        images.get_cairo_surface(b'asdfasfdi3')
+
 
 def assert_approx_equal(vec0, vec1):
     approx = pytest.approx
     for val0, val1 in zip(vec0, vec1):
         assert val0 == approx(val1)
 
+
 class TestImg(object):
     def test_init(self, path_n_bytes_image):
         path, bytes_image = path_n_bytes_image
         img = images.Img(bytes_image)
-        ftype = path.split('.')[-1].lower()
         assert isinstance(img.surface, cairocffi.ImageSurface)
         del img.surface
         assert isinstance(img.surface, cairocffi.ImageSurface)
@@ -142,6 +149,7 @@ class TestImg(object):
         del img.theta
         assert img.theta == pytest.approx(0.0)
 
+
 class TestImgScale(object):
     def test_scale(self, png_img):
         size = png_img.default_size
@@ -174,6 +182,7 @@ class TestImgScale(object):
     def test_scale_fail(self, png_img):
         with pytest.raises(ValueError):
             png_img.scale()
+
 
 class TestImgResize(object):
     def test_resize(self, png_img):
@@ -255,4 +264,4 @@ class TestLoader(object):
     def test_load_file_missing(self, loader):
         names = ('audio-asdlfjasdvolume-muted', 'audio-volume-muted')
         with pytest.raises(images.LoadingError):
-            result = loader(*names)
+            loader(*names)

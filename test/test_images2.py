@@ -14,6 +14,7 @@ from collections import namedtuple
 from os import path
 from glob import glob
 
+
 def get_imagemagick_version():
     "Get the installed imagemagick version from the convert utility"
     p = sp.Popen(['convert', '-version'], stdout=sp.PIPE, stderr=sp.PIPE)
@@ -26,6 +27,7 @@ def get_imagemagick_version():
     vals = version.split('.')
     return [int(x) for x in vals]
 
+
 def should_skip():
     "Check if tests should be skipped due to old imagemagick version."
     min_version = (6, 9)        # minimum imagemagick version
@@ -36,6 +38,7 @@ def should_skip():
     actual_version = tuple(actual_version[:2])
     return actual_version < min_version
 
+
 pytestmark = pytest.mark.skipif(should_skip(), reason="recent version of imagemagick not found")
 
 TEST_DIR = path.dirname(path.abspath(__file__))
@@ -43,6 +46,7 @@ DATA_DIR = path.join(TEST_DIR, 'data')
 SVGS = glob(path.join(DATA_DIR, '*', '*.svg'))
 metrics = ('AE', 'FUZZ', 'MAE', 'MEPP', 'MSE', 'PAE', 'PHASH', 'PSNR', 'RMSE')
 ImgDistortion = namedtuple('ImgDistortion', metrics)
+
 
 def compare_images(test_img, reference_img, metric='MAE'):
     """Compare images at paths test_img and reference_img
@@ -68,6 +72,7 @@ def compare_images(test_img, reference_img, metric='MAE'):
     print('cmd', cmd)
     return float(stdout.decode().strip())
 
+
 def compare_images_all_metrics(test_img, reference_img):
     """Compare images at paths test_img and reference_img
 
@@ -79,11 +84,13 @@ def compare_images_all_metrics(test_img, reference_img):
         vals.append(compare_images(test_img, reference_img, metric))
     return ImgDistortion._make(vals)
 
+
 @pytest.fixture(scope='function', params=SVGS)
 def svg_img(request):
     "svg_img returns an instance of libqtile.images.Img()"
     fpath = request.param
     return images.Img.from_path(fpath)
+
 
 @pytest.fixture(scope='function')
 def comparison_images(svg_img):
@@ -92,23 +99,21 @@ def comparison_images(svg_img):
     path_good = path.join(DATA_DIR, 'comparison_images', name+'_good.png')
     path_bad = path.join(DATA_DIR, 'comparison_images', name+'_bad.png')
     return path_bad, path_good
-    
+
+
 @pytest.fixture(scope='function')
 def distortion_bad(svg_img, comparison_images):
     path_bad, path_good = comparison_images
-    name = svg_img.name
     return compare_images_all_metrics(path_bad, path_good)
+
 
 def assert_distortion_less_than(distortion, bad_distortion, factor=0.3):
     for test_val, bad_val in zip(distortion, bad_distortion):
         assert test_val < (bad_val * factor)
 
+
 def test_svg_scaling(svg_img, distortion_bad, comparison_images, tmpdir):
     path_bad, path_good = comparison_images
-    scaling_factor = 20
-    print(svg_img.path)
-    print(distortion_bad)
-    print(tmpdir.dirpath())
     dpath = tmpdir.dirpath
 
     name = svg_img.name

@@ -1,3 +1,7 @@
+qtile x.x.x, released 2018-XX-XX:
+    * features
+        - add svg handling for images
+
 qtile 0.12.0, released 2018-07-20:
     !!! Config breakage !!!
         - Tile layout commands up/down/shuffle_up/shuffle_down changed to be
