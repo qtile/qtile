@@ -30,15 +30,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
 import re
 import subprocess
 
-import cairocffi
-
 from . import base
 from .. import bar
-from libqtile.log_utils import logger
 
 __all__ = [
     'Volume',
@@ -172,41 +168,20 @@ class Volume(base._TextBox):
                 self.text = '%s%%' % self.volume
 
     def setup_images(self):
-        for img_name in (
+        from .. import images
+        names = (
             'audio-volume-high',
             'audio-volume-low',
             'audio-volume-medium',
-            'audio-volume-muted'
-        ):
-
-            try:
-                img = cairocffi.ImageSurface.create_from_png(
-                    os.path.join(self.theme_path, '%s.png' % img_name)
-                )
-            except cairocffi.Error:
-                self.theme_path = None
-                self.length_type = bar.CALCULATED
-                logger.exception('Volume switching to text mode')
-                return
-            input_width = img.get_width()
-            input_height = img.get_height()
-
-            sp = input_height / float(self.bar.height - 1)
-
-            width = input_width / sp
-            if width > self.length:
-                self.length = int(width) + self.actual_padding * 2
-
-            imgpat = cairocffi.SurfacePattern(img)
-
-            scaler = cairocffi.Matrix()
-
-            scaler.scale(sp, sp)
-            scaler.translate(self.actual_padding * -1, 0)
-            imgpat.set_matrix(scaler)
-
-            imgpat.set_filter(cairocffi.FILTER_BEST)
-            self.surfaces[img_name] = imgpat
+            'audio-volume-muted',
+        )
+        d_images = images.Loader(self.theme_path)(*names)
+        for name, img in d_images.items():
+            new_height = self.bar.height - 1
+            img.resize(height=new_height)
+            if img.width > self.length:
+                self.length = img.width + self.actual_padding * 2
+            self.surfaces[name] = img.pattern
 
     def get_volume(self):
         try:
