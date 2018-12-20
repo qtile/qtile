@@ -38,6 +38,7 @@ from libqtile.log_utils import logger
 from os import statvfs
 import time
 import platform
+import psutil
 
 __all__ = [
     'CPUGraph',
@@ -200,30 +201,21 @@ class CPUGraph(_Graph):
         self.oldvalues = self._getvalues()
 
     def _getvalues(self):
-        proc = '/proc/stat'
-        if platform.system() == "FreeBSD":
-            proc = '/compat/linux' + proc
 
-        with open(proc) as file:
-            lines = file.readlines()
+        if isinstance(self.core, int):
+            if self.core > cpu_count - 1:
+                raise ValueError("No such core: {}".format(self.core))
+            user = psutil.cpu_times(percpu=True)[self.core].user * 100
+            nice = psutil.cpu_times(percpu=True)[self.core].nice * 100
+            sys  = psutil.cpu_times(percpu=True)[self.core].system * 100
+            idle = psutil.cpu_times(percpu=True)[self.core].idle * 100
+        else:
+            user = psutil.cpu_times().user * 100
+            nice = psutil.cpu_times().nice * 100
+            sys  = psutil.cpu_times().system * 100
+            idle = psutil.cpu_times().idle * 100
 
-            # default to all cores (first line)
-            line = lines.pop(0)
-
-            # core specified, grab the corresponding line
-            if isinstance(self.core, int):
-                # we already removed the first line from the list,
-                # so it's 0 indexed now :D
-                line = lines[self.core]
-
-                if not line.startswith("cpu%s" % self.core):
-                    raise ValueError("No such core: %s" % self.core)
-            if platform.system() == 'FreeBSD':
-                name, user, nice, sys, idle = line.split(None, 4)
-            else:
-                name, user, nice, sys, idle, iowait, tail = line.split(None, 6)
-
-            return (int(user), int(nice), int(sys), int(idle))
+        return (int(user), int(nice), int(sys), int(idle))
 
     def update_graph(self):
         nval = self._getvalues()
@@ -244,18 +236,11 @@ class CPUGraph(_Graph):
 
 def get_meminfo():
     val = {}
-    proc = '/proc/meminfo'
-    if platform.system() == "FreeBSD":
-        proc = "/compat/linux" + proc
-    with open(proc) as file:
-        for line in file:
-            if line.lstrip().startswith("total"):
-                pass
-            else:
-                key, tail = line.strip().split(':')
-                uv = tail.split()
-                val[key] = int(uv[0])
-    val['MemUsed'] = val['MemTotal'] - val['MemFree']
+    val['MemUsed'] = int(psutil.virtual_memory().used / 1024)
+    val['MemTotal'] = int(psutil.virtual_memory().total / 1024)
+    val['Buffers'] = int(psutil.virtual_memory().buffers / 1024)
+    val['Cached'] = int(psutil.virtual_memory().cached / 1024)
+    val['MemFree'] = val['MemTotal'] - val['MemUsed']
     return val
 
 
