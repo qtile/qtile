@@ -26,8 +26,8 @@ from libqtile.widget import base
 
 def get_meminfo():
     val = {}
-    val['MemUsed'] = int(dict(psutil.virtual_memory()._asdict())['used'] / 1024 / 1024)
-    val['MemTotal'] = int(dict(psutil.virtual_memory()._asdict())['total'] / 1024 / 1024)
+    val['MemUsed'] = int(psutil.virtual_memory().used / 1024 / 1024)
+    val['MemTotal'] = int(psutil.virtual_memory().total / 1024 / 1024)
     val['MemFree'] = val['MemTotal'] - val['MemUsed']
     return val
 
@@ -36,7 +36,7 @@ class Memory(base.InLoopPollText):
     """Displays memory usage"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("fmt", "{MemUsed}M/{MemTotal}M", "see /proc/meminfo for field names")
+        ("fmt", "{MemUsed}M/{MemTotal}M", "Formatting for field names")
     ]
 
     def __init__(self, **config):

@@ -6,6 +6,7 @@
 #
 cairocffi==0.8.0
 cffi==1.11.5
+psutil==5.4.8
 pycparser==2.18           # via cffi
 six==1.11.0
 xcffib==0.5.1

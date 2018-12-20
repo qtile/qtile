@@ -2,3 +2,4 @@ xcffib
 cairocffi
 cffi
 six
+psutil
