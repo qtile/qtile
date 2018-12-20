@@ -42,7 +42,7 @@ MemFree: Returns amount of memory free
 """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("fmt", "{MemUsed}M/{MemTotal}M", "Formatting for field names. Named modeled after Linux /proc, but portable with other Unices")
+        ("fmt", "{MemUsed}M/{MemTotal}M", "Formatting for field names.")
     ]
 
     def __init__(self, **config):
