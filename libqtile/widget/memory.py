@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2015 Jörg Thalheim (Mic92)
+# -*- coding: utf-8 -*- # Copyright (c) 2015 Jörg Thalheim (Mic92)
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,17 +18,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 from __future__ import division
+
+import psutil
+
 from libqtile.widget import base
 
 
 def get_meminfo():
     val = {}
-    with open('/proc/meminfo') as file:
-        for line in file:
-            key, tail = line.split(':')
-            uv = tail.split()
-            val[key] = int(uv[0]) // 1000
-    val['MemUsed'] = val['MemTotal'] - val['MemFree']
+    val['MemUsed'] = int(dict(psutil.virtual_memory()._asdict())['used'] / 1024)
+    val['MemTotal'] = int(dict(psutil.virtual_memory()._asdict())['total'] / 1024)
+    val['MemFree'] = val['MemTotal'] - val['MemUsed']
     return val
 
 
