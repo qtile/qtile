@@ -37,7 +37,6 @@ from . import base
 from libqtile.log_utils import logger
 from os import statvfs
 import time
-import platform
 import psutil
 
 __all__ = [
@@ -203,16 +202,16 @@ class CPUGraph(_Graph):
     def _getvalues(self):
 
         if isinstance(self.core, int):
-            if self.core > cpu_count - 1:
+            if self.core > psutil.cpu_count() - 1:
                 raise ValueError("No such core: {}".format(self.core))
             user = psutil.cpu_times(percpu=True)[self.core].user * 100
             nice = psutil.cpu_times(percpu=True)[self.core].nice * 100
-            sys  = psutil.cpu_times(percpu=True)[self.core].system * 100
+            sys = psutil.cpu_times(percpu=True)[self.core].system * 100
             idle = psutil.cpu_times(percpu=True)[self.core].idle * 100
         else:
             user = psutil.cpu_times().user * 100
             nice = psutil.cpu_times().nice * 100
-            sys  = psutil.cpu_times().system * 100
+            sys = psutil.cpu_times().system * 100
             idle = psutil.cpu_times().idle * 100
 
         return (int(user), int(nice), int(sys), int(idle))
