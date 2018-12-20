@@ -24,24 +24,24 @@ import psutil
 from libqtile.widget import base
 
 
-def get_meminfo():
+def get_swapinfo():
     val = {}
-    val['MemUsed'] = int(dict(psutil.virtual_memory()._asdict())['used'] / 1024 / 1024)
-    val['MemTotal'] = int(dict(psutil.virtual_memory()._asdict())['total'] / 1024 / 1024)
-    val['MemFree'] = val['MemTotal'] - val['MemUsed']
+    val['SwapUsed'] = int(dict(psutil.swap_memory()._asdict())['used'] / 1024 / 1024)
+    val['SwapTotal'] = int(dict(psutil.swap_memory()._asdict())['total'] / 1024 / 1024)
+    val['SwapFree'] = val['SwapTotal'] - val['SwapUsed']
     return val
 
 
-class Memory(base.InLoopPollText):
+class Swap(base.InLoopPollText):
     """Displays memory usage"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("fmt", "{MemUsed}M/{MemTotal}M", "see /proc/meminfo for field names")
+        ("fmt", "{SwapUsed}M/{SwapTotal}M", "Format field names")
     ]
 
     def __init__(self, **config):
-        super(Memory, self).__init__(**config)
-        self.add_defaults(Memory.defaults)
+        super(Swap, self).__init__(**config)
+        self.add_defaults(Swap.defaults)
 
     def poll(self):
-        return self.fmt.format(**get_meminfo())
+        return self.fmt.format(**get_swapinfo())
