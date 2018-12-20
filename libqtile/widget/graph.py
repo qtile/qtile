@@ -204,15 +204,14 @@ class CPUGraph(_Graph):
         if isinstance(self.core, int):
             if self.core > psutil.cpu_count() - 1:
                 raise ValueError("No such core: {}".format(self.core))
-            user = psutil.cpu_times(percpu=True)[self.core].user * 100
-            nice = psutil.cpu_times(percpu=True)[self.core].nice * 100
-            sys = psutil.cpu_times(percpu=True)[self.core].system * 100
-            idle = psutil.cpu_times(percpu=True)[self.core].idle * 100
+            cpu = psutil.cpu_times(percpu=True)[self.core]
         else:
-            user = psutil.cpu_times().user * 100
-            nice = psutil.cpu_times().nice * 100
-            sys = psutil.cpu_times().system * 100
-            idle = psutil.cpu_times().idle * 100
+            cpu = psutil.cpu_times()
+
+        user = cpu.user * 100
+        nice = cpu.nice * 100
+        sys = cpu.system * 100
+        idle = cpu.idle * 100
 
         return (int(user), int(nice), int(sys), int(idle))
 
@@ -235,14 +234,16 @@ class CPUGraph(_Graph):
 
 def get_meminfo():
     val = {}
-    val['MemUsed'] = int(psutil.virtual_memory().used / 1024 / 1024)
-    val['MemTotal'] = int(psutil.virtual_memory().total / 1024 / 1024)
-    val['MemFree'] = int(psutil.virtual_memory().free / 1024 / 1024)
-    val['Buffers'] = int(psutil.virtual_memory().buffers / 1024 / 1024)
-    val['Cached'] = int(psutil.virtual_memory().cached / 1024 / 1024)
-    val['SwapTotal'] = int(psutil.swap_memory().total / 1024 / 1024)
-    val['SwapUsed'] = int(psutil.swap_memory().used / 1024 / 1024)
-    val['SwapFree'] = int(psutil.swap_memory().free / 1024 / 1024)
+    mem = psutil.virtual_memory()
+    swap = psutil.swap_memory()
+    val['MemUsed'] = int(mem.used / 1024 / 1024)
+    val['MemTotal'] = int(mem.total / 1024 / 1024)
+    val['MemFree'] = int(mem.free / 1024 / 1024)
+    val['Buffers'] = int(mem.buffers / 1024 / 1024)
+    val['Cached'] = int(mem.cached / 1024 / 1024)
+    val['SwapTotal'] = int(mem.total / 1024 / 1024)
+    val['SwapUsed'] = int(swap.used / 1024 / 1024)
+    val['SwapFree'] = int(swap.free / 1024 / 1024)
     return val
 
 
