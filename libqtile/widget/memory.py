@@ -34,10 +34,15 @@ def get_meminfo():
 
 
 class Memory(base.InLoopPollText):
-    """Displays memory usage"""
+    """Displays memory usage
+
+MemUsed: Returns memory in use
+MemTotal: Returns total amount of memory
+MemFree: Returns amount of memory free
+"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("fmt", "{MemUsed}M/{MemTotal}M", "Formatting for field names")
+        ("fmt", "{MemUsed}M/{MemTotal}M", "Formatting for field names. Named modeled after Linux /proc, but portable with other Unices")
     ]
 
     def __init__(self, **config):

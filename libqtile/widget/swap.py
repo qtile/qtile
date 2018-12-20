@@ -33,7 +33,11 @@ def get_swapinfo():
 
 
 class Swap(base.InLoopPollText):
-    """Displays memory usage"""
+    """Displays swap usage
+SwapUsed: Returns swap used
+SwapTotal: Returns total amount of swap space
+SwapFree: Returns amount of swap free
+"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("fmt", "{SwapUsed}M/{SwapTotal}M", "Format field names")
