@@ -236,11 +236,14 @@ class CPUGraph(_Graph):
 
 def get_meminfo():
     val = {}
-    val['MemUsed'] = int(psutil.virtual_memory().used / 1024)
-    val['MemTotal'] = int(psutil.virtual_memory().total / 1024)
-    val['Buffers'] = int(psutil.virtual_memory().buffers / 1024)
-    val['Cached'] = int(psutil.virtual_memory().cached / 1024)
-    val['MemFree'] = val['MemTotal'] - val['MemUsed']
+    val['MemUsed'] = int(psutil.virtual_memory().used / 1024 / 1024)
+    val['MemTotal'] = int(psutil.virtual_memory().total / 1024 / 1024)
+    val['MemFree'] = int(psutil.virtual_memory().free / 1024 / 1024)
+    val['Buffers'] = int(psutil.virtual_memory().buffers / 1024 / 1024)
+    val['Cached'] = int(psutil.virtual_memory().cached / 1024 / 1024)
+    val['SwapTotal'] = int(psutil.swap_memory().total / 1024 / 1024)
+    val['SwapUsed'] = int(psutil.swap_memory().used / 1024 / 1024)
+    val['SwapFree'] = int(psutil.swap_memory().free / 1024 / 1024)
     return val
 
 
