@@ -26,10 +26,11 @@ from libqtile.widget import base
 
 
 def get_meminfo():
+    mem = psutil.virtual_memory()
     val = {}
-    val['MemUsed'] = int(psutil.virtual_memory().used / 1024 / 1024)
-    val['MemTotal'] = int(psutil.virtual_memory().total / 1024 / 1024)
-    val['MemFree'] = val['MemTotal'] - val['MemUsed']
+    val['MemUsed'] = int(mem.used / 1024 / 1024)
+    val['MemTotal'] = int(mem.total / 1024 / 1024)
+    val['MemFree'] = int(mem.free / 1024 / 1024)
     return val
 
 

@@ -25,10 +25,11 @@ from libqtile.widget import base
 
 
 def get_swapinfo():
+    swap = psutil.swap_memory()
     val = {}
-    val['SwapUsed'] = int(psutil.swap_memory().used / 1024 / 1024)
-    val['SwapTotal'] = int(psutil.swap_memory().total / 1024 / 1024)
-    val['SwapFree'] = val['SwapTotal'] - val['SwapUsed']
+    val['SwapUsed'] = int(swap.used / 1024 / 1024)
+    val['SwapTotal'] = int(swap.total / 1024 / 1024)
+    val['SwapFree'] = int(swap.total / 1024 / 1024)
     return val
 
 
