@@ -38,6 +38,7 @@ from libqtile.log_utils import logger
 from os import statvfs
 import time
 import psutil
+import operator
 
 __all__ = [
     'CPUGraph',
@@ -321,22 +322,17 @@ class NetGraph(_Graph):
                     "falling back to 'eth0'"
                 )
                 self.interface = "eth0"
-        self.filename = '/sys/class/net/{interface}/statistics/{type}'.format(
-            interface=self.interface,
-            type=self.bandwidth_type == 'down' and 'rx_bytes' or 'tx_bytes'
-        )
+        if self.bandwidth_type is not "down" and self.bandwidth_type is not "up":
+            raise ValueError("bandwidth type {} not known!".format(self.bandwidth_type))
         self.bytes = 0
         self.bytes = self._getValues()
 
     def _getValues(self):
-        try:
-            with open(self.filename) as file:
-                val = int(file.read())
-                rval = val - self.bytes
-                self.bytes = val
-                return rval
-        except IOError:
-            return 0
+        net = psutil.net_io_counters(pernic=True)
+        if self.bandwidth_type == "up":
+            return net[self.interface].bytes_sent
+        if self.bandwidth_type == "down":
+            return net[self.interface].bytes_recv
 
     def update_graph(self):
         val = self._getValues()
@@ -344,18 +340,19 @@ class NetGraph(_Graph):
 
     @staticmethod
     def get_main_iface():
-        def make_route(line):
-            return dict(zip(['iface', 'dest'], line.split()))
-        with open('/proc/net/route', 'r') as fp:
-            lines = fp.readlines()
-        routes = [make_route(line) for line in lines[1:]]
-        try:
-            return next(
-                (r for r in routes if not int(r['dest'], 16)),
-                routes[0]
-            )['iface']
-        except (KeyError, IndexError, ValueError):
-            raise RuntimeError('No valid interfaces available')
+
+        # XXX: psutil doesn't have the facility to get the main interface,
+        # so I'll just return the interface that has received the most traffic.
+        #
+        # I could do this with netifaces, but that's another dependency.
+        #
+        # Oh. and there is probably a better way to do this.
+
+        net = psutil.net_io_counters(pernic=True)
+        iface = {}
+        for entry in net:
+            iface[entry] = net[entry].bytes_recv
+        return sorted(iface.items(), key=operator.itemgetter(1))[-1][0]
 
 
 class HDDGraph(_Graph):

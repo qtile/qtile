@@ -20,6 +20,8 @@
 
 from __future__ import division
 
+import psutil
+
 from libqtile.log_utils import logger
 from . import base
 
@@ -55,16 +57,15 @@ class Net(base.ThreadedPollText):
         return b, letter
 
     def get_stats(self):
-        lines = []  # type: List[str]
-        with open('/proc/net/dev', 'r') as f:
-            lines = f.readlines()[2:]
+
         interfaces = {}
-        for s in lines:
-            int_s = s.split()
-            name = int_s[0][:-1]
-            down = float(int_s[1])
-            up = float(int_s[-8])
+        net = psutil.net_io_counters(pernic=True)
+        for iface in net:
+            name = iface
+            down = net[iface].bytes_recv
+            up = net[iface].bytes_sent
             interfaces[name] = {'down': down, 'up': up}
+
         return interfaces
 
     def _format(self, down, up):
