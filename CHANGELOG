@@ -1,6 +1,21 @@
-qtile x.x.x, released 2018-XX-XX:
+qtile 0.13.0, released 2018-12-23:
+    !!! deprecation warning !!!
+        - wmii layout is deprecated in terms of columns layout, which has the
+          same behavior with different defaults, see the wmii definition for
+          more details
     * features
         - add svg handling for images
+        - allow addgroup command to set the layout
+        - add command to get current log level
+        - allow groupbox to hide unused groups
+        - add caps lock indicator widget
+        - add custom_command to check_update widget
+    * bugfixes
+        - better shutdown handling
+        - fix clientlist current client tracking
+        - fix typo in up command on ratiotile layout
+        - various fixes to check_update widget
+        - fix 0 case for resize screen
 
 qtile 0.12.0, released 2018-07-20:
     !!! Config breakage !!!
