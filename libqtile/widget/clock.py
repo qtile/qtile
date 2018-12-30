@@ -80,6 +80,7 @@ class Clock(base.InLoopPollText):
     # theoreticaly call our method too early and we could get something
     # like (x-1).999 instead of x.000
     def _get_time(self):
+        time.tzset()
         now = datetime.now(utc).astimezone()
         return (now + self.DELTA).strftime(self.format)
 
