@@ -47,7 +47,6 @@ utc = UTC()
 def tz(the_tz):
     orig = os.environ.get('TZ')
     os.environ['TZ'] = the_tz
-    time.tzset()
     yield
     if orig is not None:
         os.environ['TZ'] = orig
