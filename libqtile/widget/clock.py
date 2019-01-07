@@ -22,25 +22,13 @@
 # SOFTWARE.
 
 import time
-from datetime import datetime, timedelta
-from contextlib import contextmanager
+from datetime import datetime, timedelta, timezone
 from . import base
 
-import os
-
-from datetime import timezone
-
-
-@contextmanager
-def tz(the_tz):
-    orig = os.environ.get('TZ')
-    os.environ['TZ'] = the_tz
-    yield
-    if orig is not None:
-        os.environ['TZ'] = orig
-    else:
-        del os.environ['TZ']
-    time.tzset()
+try:
+    import pytz
+except ImportError:
+    pytz = None
 
 
 class Clock(base.InLoopPollText):
@@ -58,6 +46,8 @@ class Clock(base.InLoopPollText):
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(Clock.defaults)
+        if pytz and isinstance(self.timezone, str):
+            self.timezone = pytz.timezone(self.timezone)
 
     def tick(self):
         self.update(self.poll())
@@ -66,16 +56,9 @@ class Clock(base.InLoopPollText):
     # adding .5 to get a proper seconds value because glib could
     # theoreticaly call our method too early and we could get something
     # like (x-1).999 instead of x.000
-    def _get_time(self):
-        time.tzset()
-        now = datetime.now(timezone.utc).astimezone()
-        return (now + self.DELTA).strftime(self.format)
-
     def poll(self):
-        # We use None as a sentinel here because C's strftime defaults to UTC
-        # if TZ=''.
-        if self.timezone is not None:
-            with tz(self.timezone):
-                return self._get_time()
+        if self.timezone:
+            now = datetime.now(timezone.utc).astimezone(self.timezone)
         else:
-            return self._get_time()
+            now = datetime.now(timezone.utc).astimezone()
+        return (now + self.DELTA).strftime(self.format)
