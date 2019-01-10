@@ -21,33 +21,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import six
 import time
-from datetime import datetime, timedelta, tzinfo
+from datetime import datetime, timedelta
 from contextlib import contextmanager
 from . import base
 
 import os
 
-
-# just use datetime.timezone.utc instead when we drop Python 2.7
-class UTC(tzinfo):
-    def utcoffset(self, dt):
-        return timedelta(0)
-
-    def tzname(self, dt):
-        return "UTC"
-
-    dst = utcoffset
-
-
-utc = UTC()
+if six.PY3:
+    from datetime import timezone
 
 
 @contextmanager
 def tz(the_tz):
     orig = os.environ.get('TZ')
     os.environ['TZ'] = the_tz
-    time.tzset()
     yield
     if orig is not None:
         os.environ['TZ'] = orig
@@ -80,7 +69,11 @@ class Clock(base.InLoopPollText):
     # theoreticaly call our method too early and we could get something
     # like (x-1).999 instead of x.000
     def _get_time(self):
-        now = datetime.now(utc).astimezone()
+        time.tzset()
+        if six.PY3:
+            now = datetime.now(timezone.utc).astimezone()
+        else:
+            now = datetime.now()
         return (now + self.DELTA).strftime(self.format)
 
     def poll(self):

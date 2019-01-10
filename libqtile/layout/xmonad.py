@@ -147,6 +147,7 @@ class MonadTall(_SimpleLayoutBase):
         ("border_normal", "#000000", "Border colour for un-focused windows."),
         ("border_width", 2, "Border width."),
         ("single_border_width", None, "Border width for single window"),
+        ("single_margin", None, "Margin size for single window"),
         ("name", "xmonadtall", "Name of this layout."),
         ("margin", 0, "Margin of the layout"),
         ("ratio", .5,
@@ -173,6 +174,8 @@ class MonadTall(_SimpleLayoutBase):
         self.add_defaults(MonadTall.defaults)
         if self.single_border_width is None:
             self.single_border_width = self.border_width
+        if self.single_margin is None:
+            self.single_margin = self.margin
         self.relative_sizes = []
 
     @property
@@ -289,7 +292,7 @@ class MonadTall(_SimpleLayoutBase):
                 self.group.screen.dheight - 2 * self.single_border_width,
                 self.single_border_width,
                 px,
-                margin=self.margin,
+                margin=self.single_margin,
             )
             client.unhide()
             return
