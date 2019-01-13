@@ -419,13 +419,6 @@ class CommandObject(six.with_metaclass(abc.ABCMeta)):
         return self.items(name)
 
     def get_command_signature(self, name):
-        # inspect.signature introduced in Python 3.3
-        if sys.version_info < (3, 3):
-            args, varargs, varkw, defaults = inspect.getargspec(self.command(name))
-            if args and args[0] == "self":
-                args = args[1:]
-            return name + inspect.formatargspec(args, varargs, varkw, defaults)
-
         signature = inspect.signature(self.command(name))
         args = list(signature.parameters)
         if args and args[0] == "self":

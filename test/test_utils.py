@@ -76,10 +76,6 @@ def test_lrucache_maintains_size():
     f.one(1)
     f.one(2)
     f.one(3)
-    # we only need these checks for the homebuilt LRU cache
-    if sys.version_info < (3, 3):
-        assert len(f._cached_one) == 2
-        assert len(f._cachelist_one) == 2
 
 
 def test_rgb_from_hex_number():

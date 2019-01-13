@@ -60,24 +60,16 @@ from . import window
 from . import xcbq
 
 
-if sys.version_info >= (3, 3):
-    def _import_module(module_name, dir_path):
-        import importlib
-        file_name = os.path.join(dir_path, module_name) + '.py'
-        f = importlib.machinery.SourceFileLoader(module_name, file_name)
-        module = f.load_module()
-        return module
-else:
-    def _import_module(module_name, dir_path):
-        import imp
-        fp = None
-        try:
-            fp, pathname, description = imp.find_module(module_name, [dir_path])
-            module = imp.load_module(module_name, fp, pathname, description)
-        finally:
-            if fp:
-                fp.close()
-        return module
+def _import_module(module_name, dir_path):
+    import imp
+    fp = None
+    try:
+        fp, pathname, description = imp.find_module(module_name, [dir_path])
+        module = imp.load_module(module_name, fp, pathname, description)
+    finally:
+        if fp:
+            fp.close()
+    return module
 
 
 class Qtile(command.CommandObject):

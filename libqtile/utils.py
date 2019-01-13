@@ -83,45 +83,7 @@ def shuffle_down(lst):
         lst.append(c)
 
 
-if sys.version_info < (3, 3):
-    class lru_cache(object):  # noqa: N801
-        """
-            A decorator that implements a self-expiring LRU cache for class
-            methods (not functions!).
-
-            Cache data is tracked as attributes on the object itself. There is
-            therefore a separate cache for each object instance.
-        """
-        def __init__(self, maxsize=128, typed=False):
-            self.size = maxsize
-
-        def __call__(self, f):
-            cache_name = "_cached_{0}".format(f.__name__)
-            cache_list_name = "_cachelist_{0}".format(f.__name__)
-            size = self.size
-
-            @functools.wraps(f)
-            def wrap(self, *args):
-                if not hasattr(self, cache_name):
-                    setattr(self, cache_name, {})
-                    setattr(self, cache_list_name, [])
-                cache = getattr(self, cache_name)
-                cache_list = getattr(self, cache_list_name)
-                if args in cache:
-                    cache_list.remove(args)
-                    cache_list.insert(0, args)
-                    return cache[args]
-                else:
-                    ret = f(self, *args)
-                    cache_list.insert(0, args)
-                    cache[args] = ret
-                    if len(cache_list) > size:
-                        d = cache_list.pop()
-                        cache.pop(d)
-                    return ret
-            return wrap
-else:
-    from functools import lru_cache  # noqa: F401
+from functools import lru_cache  # noqa: F401
 
 
 def rgb(x):
