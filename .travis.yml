@@ -34,6 +34,8 @@ addons:
     - xserver-xephyr
     - xvfb
     - graphviz # for docs
+    - xterm
+
 
 install:
   - pip install tox
