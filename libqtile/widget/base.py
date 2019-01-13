@@ -35,10 +35,7 @@ import subprocess
 import threading
 import warnings
 
-try:
-    from typing import Any, List, Tuple  # noqa: F401
-except ImportError:
-    pass
+from typing import Any, List, Tuple
 
 
 # Each widget class must define which bar orientation(s) it supports by setting

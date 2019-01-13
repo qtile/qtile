@@ -16,10 +16,7 @@ except ImportError:
     def xmlparse(body):
         raise Exception("no xmltodict library")
 
-try:
-    from typing import Any, List, Tuple  # noqa: F401
-except ImportError:
-    pass
+from typing import Any, List, Tuple
 
 
 class GenPollText(base.ThreadedPollText):

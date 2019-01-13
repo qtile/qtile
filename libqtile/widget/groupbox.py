@@ -35,10 +35,7 @@ import itertools
 from .. import bar, hook
 from . import base
 
-try:
-    from typing import Any, List, Tuple  # noqa: F401
-except ImportError:
-    pass
+from typing import Any, List, Tuple
 
 
 class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):

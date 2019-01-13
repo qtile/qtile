@@ -24,10 +24,7 @@
 import os
 from . import base
 
-try:
-    from typing import Dict  # noqa: F401
-except ImportError:
-    pass
+from typing import Dict
 
 BACKLIGHT_DIR = '/sys/class/backlight'
 

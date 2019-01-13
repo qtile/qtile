@@ -24,10 +24,7 @@ from abc import ABCMeta, abstractmethod
 
 from .. import command, configurable
 
-try:
-    from typing import Any, List, Tuple  # noqa: F401
-except ImportError:
-    pass
+from typing import Any, List, Tuple
 
 
 class Layout(command.CommandObject, configurable.Configurable, metaclass=ABCMeta):

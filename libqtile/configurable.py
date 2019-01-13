@@ -18,10 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-try:
-    from typing import Dict  # noqa: F401
-except ImportError:
-    pass
+from typing import Dict
 
 
 class Configurable(object):

@@ -22,10 +22,7 @@ import shlex
 from subprocess import Popen, PIPE
 from .. import configurable
 
-try:
-    from typing import Any, List, Tuple  # noqa: F401
-except ImportError:
-    pass
+from typing import Any, List, Tuple
 
 
 class _Extension(configurable.Configurable):

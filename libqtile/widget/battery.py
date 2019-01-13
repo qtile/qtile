@@ -34,10 +34,7 @@ from libqtile.log_utils import logger
 from . import base
 from .. import images
 
-try:
-    from typing import Dict  # noqa: F401
-except ImportError:
-    pass
+from typing import Dict
 
 BAT_DIR = '/sys/class/power_supply'
 CHARGED = 'Full'

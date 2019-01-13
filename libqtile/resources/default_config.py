@@ -28,10 +28,7 @@ from libqtile.config import Key, Screen, Group, Drag, Click
 from libqtile.command import lazy
 from libqtile import layout, bar, widget
 
-try:
-    from typing import List  # noqa: F401
-except ImportError:
-    pass
+from typing import List
 
 mod = "mod4"
 

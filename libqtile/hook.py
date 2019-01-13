@@ -33,10 +33,7 @@
 from .log_utils import logger
 from . import utils
 
-try:
-    from typing import Dict, Set  # noqa: F401
-except ImportError:
-    pass
+from typing import Dict, Set
 
 
 subscriptions = {}  # type: Dict
