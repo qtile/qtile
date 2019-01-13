@@ -79,10 +79,10 @@ def get_cairo_pattern(surface, width=None, height=None, theta=0.0):
         tr_height = surf_height / height
     matrix.scale(tr_width, tr_height)
 
-    EPSILON = 1.0e-6
-    PI = 3.141592653589793
-    if abs(theta) > EPSILON:
-        theta_rad = PI / 180.0 * theta
+    epsilon = 1.0e-6
+    pi = 3.141592653589793
+    if abs(theta) > epsilon:
+        theta_rad = pi / 180.0 * theta
         mat_rot = cairocffi.Matrix()
         # https://cairographics.org/cookbook/transform_about_point/
         xt = surf_width * tr_width * 0.5
