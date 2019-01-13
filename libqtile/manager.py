@@ -317,6 +317,13 @@ class Qtile(command.CommandObject):
             self._glib_loop = None
 
     def configure_dpi(self):
+        # don't set the dpi if it's already been set.
+        resources = self.root.get_property("RESOURCE_MANAGER", type="STRING", unpack=str)
+        if resources:
+            for r in resources.split("\n"):
+                if r.lower().startswith("xft.dpi"):
+                    return
+
         # For whatever reason, self.conn.default_screen.width_in_millimeters is
         # basically just wrong most of the time. Instead, we query xrandr and
         # add up each of the outputs individually.

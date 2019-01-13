@@ -256,6 +256,8 @@ class Qtile(object):
             try:
                 init_log(logging.INFO, log_path=None, log_color=False)
                 q = QtileManager(config_class(), self.display, self.sockfile)
+                q.root.set_property("RESOURCE_MANAGER", "Xft.dpi: 96\n", type="STRING",
+                                    format=8, mode=xcffib.xproto.PropMode.Append)
                 q.loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
