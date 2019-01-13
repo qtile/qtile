@@ -18,14 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-try:
-    import tracemalloc
-    has_tracemalloc = True
-except ImportError:
-    has_tracemalloc = False
-
 from libqtile.dgroups import DGroups
 from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
+import asyncio
 import io
 import logging
 import os
@@ -40,8 +35,8 @@ import xcffib.xproto
 import six
 import time
 import warnings
+import tracemalloc
 
-from .asyncio_compat import asyncio
 from .config import Drag, Click, Screen, Match, Rule
 from .config import ScratchPad as ScratchPadConfig
 from .group import _Group
@@ -1837,10 +1832,6 @@ class Qtile(command.CommandObject):
 
         Running tracemalloc is required for qtile-top
         """
-        if not has_tracemalloc:
-            logger.warning('No tracemalloc module')
-            raise command.CommandError("No tracemalloc module")
-
         if not tracemalloc.is_tracing():
             tracemalloc.start()
         else:
@@ -1848,10 +1839,6 @@ class Qtile(command.CommandObject):
 
     def cmd_tracemalloc_dump(self):
         """Dump tracemalloc snapshot"""
-        if not has_tracemalloc:
-            logger.warning('No tracemalloc module')
-            raise command.CommandError("No tracemalloc module")
-
         if not tracemalloc.is_tracing():
             return [False, "Trace not started"]
         cache_directory = get_cache_dir()
