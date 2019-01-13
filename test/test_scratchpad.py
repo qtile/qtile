@@ -39,10 +39,10 @@ class ScratchPadBaseConfic(object):
     screens = []
     groups = [
         libqtile.config.ScratchPad('SCRATCHPAD', dropdowns=[
-            libqtile.config.DropDown('dd-a', 'xterm -T dd-a', on_focus_lost_hide=False),
-            libqtile.config.DropDown('dd-b', 'xterm -T dd-b', on_focus_lost_hide=False),
-            libqtile.config.DropDown('dd-c', 'xterm -T dd-c', on_focus_lost_hide=True),
-            libqtile.config.DropDown('dd-d', 'xterm -T dd-d', on_focus_lost_hide=True)
+            libqtile.config.DropDown('dd-a', 'xterm -T dd-a sh', on_focus_lost_hide=False),
+            libqtile.config.DropDown('dd-b', 'xterm -T dd-b sh', on_focus_lost_hide=False),
+            libqtile.config.DropDown('dd-c', 'xterm -T dd-c sh', on_focus_lost_hide=True),
+            libqtile.config.DropDown('dd-d', 'xterm -T dd-d sh', on_focus_lost_hide=True)
         ]),
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
@@ -74,7 +74,7 @@ def is_killed(qtile, name):
 @scratchpad_config
 def test_toggling(qtile):
     # adjust command for current display
-    qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s' % qtile.display)
+    qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s sh' % qtile.display)
 
     qtile.test_window("one")
     assert qtile.c.group["a"].info()['windows'] == ['one']
@@ -103,8 +103,8 @@ def test_toggling(qtile):
 @scratchpad_config
 def test_focus_cycle(qtile):
     # adjust command for current display
-    qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s' % qtile.display)
-    qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-b', command='xterm -T dd-b -display %s' % qtile.display)
+    qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s sh' % qtile.display)
+    qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-b', command='xterm -T dd-b -display %s sh' % qtile.display)
 
     qtile.test_window("one")
     # spawn dd-a by toggling
@@ -131,8 +131,8 @@ def test_focus_cycle(qtile):
 @scratchpad_config
 def test_focus_lost_hide(qtile):
     # adjust command for current display
-    qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-c', command='xterm -T dd-c -display %s' % qtile.display)
-    qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-d', command='xterm -T dd-d -display %s' % qtile.display)
+    qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-c', command='xterm -T dd-c -display %s sh' % qtile.display)
+    qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-d', command='xterm -T dd-d -display %s sh' % qtile.display)
 
     qtile.test_window("one")
     assert_focused(qtile, 'one')
@@ -184,7 +184,7 @@ def test_focus_lost_hide(qtile):
 @scratchpad_config
 def test_kill(qtile):
     # adjust command for current display
-    qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s' % qtile.display)
+    qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s sh' % qtile.display)
 
     qtile.test_window("one")
     assert_focused(qtile, 'one')
@@ -208,7 +208,7 @@ def test_kill(qtile):
 @scratchpad_config
 def test_floating_toggle(qtile):
     # adjust command for current display
-    qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s' % qtile.display)
+    qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s sh' % qtile.display)
 
     qtile.test_window("one")
     assert_focused(qtile, 'one')
