@@ -169,7 +169,7 @@ def catch_exception_and_warn(warning=Warning, return_on_exception=None,
             try:
                 return_value = func(*args, **kwargs)
             except excepts as err:
-                logger.warn(err.strerror)
+                logger.warning(err.strerror)
                 warnings.warn(err.strerror, warning)
             return return_value
         return wrapper
