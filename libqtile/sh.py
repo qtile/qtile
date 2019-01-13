@@ -38,7 +38,7 @@ from . import command
 from . import ipc
 
 
-def terminalWidth():
+def terminal_width():
     width = None
     try:
         cr = struct.unpack('hh', fcntl.ioctl(0, termios.TIOCGWINSZ, '1234'))
@@ -55,7 +55,7 @@ class QSh(object):
         self.current = client
         self.completekey = completekey
         self.builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
-        self.termwidth = terminalWidth()
+        self.termwidth = terminal_width()
 
     def _complete(self, buf, arg):
         if not re.search(r" |\(", buf) or buf.startswith("help "):
@@ -65,7 +65,7 @@ class QSh(object):
         elif buf.startswith("cd ") or buf.startswith("ls "):
             last_slash = arg.rfind("/") + 1
             path, last = arg[:last_slash], arg[last_slash:]
-            node = self._findPath(path)
+            node = self._find_path(path)
             options = [str(i) for i in self._ls(node)]
             lst = []
             if path and not path.endswith("/"):
@@ -92,7 +92,7 @@ class QSh(object):
 
     def columnize(self, lst, update_termwidth=True):
         if update_termwidth:
-            self.termwidth = terminalWidth()
+            self.termwidth = terminal_width()
 
         ret = []
         if lst:
@@ -136,7 +136,7 @@ class QSh(object):
         except command.CommandError:
             return []
 
-    def _findNode(self, src, *path):
+    def _find_node(self, src, *path):
         """Returns a node, or None if no such node exists"""
         if not path:
             return src
@@ -157,16 +157,16 @@ class QSh(object):
                     next = src[tpath]
         if next:
             if path[1:]:
-                return self._findNode(next, *path[1:])
+                return self._find_node(next, *path[1:])
             else:
                 return next
         else:
             return None
 
-    def _findPath(self, path):
+    def _find_path(self, path):
         root = self.clientroot if path.startswith("/") else self.current
         parts = [i for i in path.split("/") if i]
-        return self._findNode(root, *parts)
+        return self._find_node(root, *parts)
 
     def do_cd(self, arg):
         """Change to another path.
@@ -178,7 +178,7 @@ class QSh(object):
 
             cd ../layout
         """
-        next = self._findPath(arg)
+        next = self._find_path(arg)
         if next:
             self.current = next
             return self.current.path or '/'
@@ -196,7 +196,7 @@ class QSh(object):
         """
         path = self.current
         if arg:
-            path = self._findPath(arg)
+            path = self._find_path(arg)
             if not path:
                 return "No such path."
 

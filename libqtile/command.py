@@ -52,7 +52,7 @@ EXCEPTION = 2
 SOCKBASE = "qtilesocket.%s"
 
 
-def formatSelector(lst):
+def format_selectors(lst):
     """
         Takes a list of (name, sel) tuples, and returns a formatted
         selector expression.
@@ -86,8 +86,8 @@ class _Server(ipc.Server):
         try:
             obj = self.qtile.select(selectors)
         except _SelectError as v:
-            e = formatSelector([(v.name, v.sel)])
-            s = formatSelector(selectors)
+            e = format_selectors([(v.name, v.sel)])
+            s = format_selectors(selectors)
             return (ERROR, "No object %s in path '%s'" % (e, s))
         cmd = obj.command(name)
         if not cmd:
@@ -132,7 +132,7 @@ class _CommandTree(six.with_metaclass(abc.ABCMeta)):
         s = self.selectors[:]
         if self.name:
             s += [(self.name, self.myselector)]
-        return formatSelector(s)
+        return format_selectors(s)
 
     @property
     @abc.abstractmethod
@@ -156,13 +156,13 @@ class _CommandTree(six.with_metaclass(abc.ABCMeta)):
         return self.__class__(self.selectors, select, self)
 
     def __getattr__(self, name):
-        nextSelector = self.selectors[:]
+        next_selector = self.selectors[:]
         if self.name:
-            nextSelector.append((self.name, self.myselector))
+            next_selector.append((self.name, self.myselector))
         if name in self._contains:
-            return _TreeMap[name](nextSelector, None, self)
+            return _TreeMap[name](next_selector, None, self)
         else:
-            return _Command(self.call, nextSelector, name)
+            return _Command(self.call, next_selector, name)
 
 
 class _TLayout(_CommandTree):
@@ -301,12 +301,12 @@ class _Call(object):
     def check(self, q):
         if self.layout:
             if self.layout == 'floating':
-                if q.currentWindow.floating:
+                if q.current_window.floating:
                     return True
                 return False
-            if q.currentLayout.name != self.layout:
+            if q.current_layout.name != self.layout:
                 return False
-            if q.currentWindow and q.currentWindow.floating \
+            if q.current_window and q.current_window.floating \
                     and not self.when_floating:
                 return False
         return True
@@ -418,7 +418,7 @@ class CommandObject(six.with_metaclass(abc.ABCMeta)):
         """
         return self.items(name)
 
-    def docSig(self, name):
+    def get_command_signature(self, name):
         # inspect.signature introduced in Python 3.3
         if sys.version_info < (3, 3):
             args, varargs, varkw, defaults = inspect.getargspec(self.command(name))
@@ -426,19 +426,19 @@ class CommandObject(six.with_metaclass(abc.ABCMeta)):
                 args = args[1:]
             return name + inspect.formatargspec(args, varargs, varkw, defaults)
 
-        sig = inspect.signature(self.command(name))
-        args = list(sig.parameters)
+        signature = inspect.signature(self.command(name))
+        args = list(signature.parameters)
         if args and args[0] == "self":
             args = args[1:]
-            sig = sig.replace(parameters=args)
-        return name + str(sig)
+            signature = signature.replace(parameters=args)
+        return name + str(signature)
 
-    def docText(self, name):
+    def get_command_docstring(self, name):
         return inspect.getdoc(self.command(name)) or ""
 
-    def doc(self, name):
-        spec = self.docSig(name)
-        htext = self.docText(name)
+    def get_command_documentation(self, name):
+        spec = self.get_command_signature(name)
+        htext = self.get_command_docstring(name)
         return spec + '\n' + htext
 
     def cmd_doc(self, name):
@@ -447,7 +447,7 @@ class CommandObject(six.with_metaclass(abc.ABCMeta)):
         Used by __qsh__ to provide online help.
         """
         if name in self.commands:
-            return self.doc(name)
+            return self.get_command_documentation(name)
         else:
             raise CommandError("No such command: %s" % name)
 

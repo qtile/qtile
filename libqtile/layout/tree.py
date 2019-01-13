@@ -424,13 +424,13 @@ class TreeTab(Layout):
             100
         )
         self._create_drawer()
-        self._panel.handle_Expose = self._panel_Expose
-        self._panel.handle_ButtonPress = self._panel_ButtonPress
-        self.group.qtile.windowMap[self._panel.window.wid] = self._panel
+        self._panel.handle_Expose = self._handle_Expose
+        self._panel.handle_ButtonPress = self._handle_ButtonPress
+        self.group.qtile.windows_map[self._panel.window.wid] = self._panel
         hook.subscribe.client_name_updated(self.draw_panel)
         hook.subscribe.focus_change(self.draw_panel)
 
-    def _panel_Expose(self, e):
+    def _handle_Expose(self, e):  # noqa: N802
         self.draw_panel()
 
     def draw_panel(self, *args):
@@ -440,7 +440,7 @@ class TreeTab(Layout):
         self._tree.draw(self, 0)
         self._drawer.draw(offsetx=0, width=self.panel_width)
 
-    def _panel_ButtonPress(self, event):
+    def _handle_ButtonPress(self, event):  # noqa: N802
         node = self._tree.button_press(event.event_x, event.event_y)
         if node:
             self.group.focus(node.window, False)
@@ -631,11 +631,11 @@ class TreeTab(Layout):
 
     def cmd_increase_ratio(self):
         self.panel_width += 10
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_decrease_ratio(self):
         self.panel_width -= 10
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def _create_drawer(self):
         if self._drawer is None:

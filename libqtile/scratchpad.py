@@ -76,7 +76,7 @@ class WindowVisibilityToggler(object):
         if self.window.group is None:
             return False
         return (self.window.group.name != self.scratchpad_name and
-                self.window.group is self.window.qtile.currentGroup)
+                self.window.group is self.window.qtile.current_group)
 
     def toggle(self):
         """
@@ -147,9 +147,9 @@ class WindowVisibilityToggler(object):
         get hidden (by call to hide) or even killed.
         """
         if self.shown:
-            currentGroup = self.window.qtile.currentGroup
-            if (self.window.group is not currentGroup or
-                    self.window is not currentGroup.currentWindow):
+            current_group = self.window.qtile.current_group
+            if (self.window.group is not current_group or
+                    self.window is not current_group.current_window):
                 if self.on_focus_lost_hide:
                     self.hide()
 
@@ -166,7 +166,7 @@ class DropDownToggler(WindowVisibilityToggler):
         self.y = ddconfig.y
         self.width = ddconfig.width
         self.height = ddconfig.height
-        window.setOpacity(ddconfig.opacity)
+        window.set_opacity(ddconfig.opacity)
         WindowVisibilityToggler.__init__(
             self, scratchpad_name, window, ddconfig.on_focus_lost_hide, ddconfig.warp_pointer
         )
@@ -187,7 +187,7 @@ class DropDownToggler(WindowVisibilityToggler):
         """
         if (not self.visible) or (not self.shown):
             win = self.window
-            screen = win.qtile.currentScreen
+            screen = win.qtile.current_screen
             # calculate windows floating position and width/height
             # these may differ for screens, and thus always recalculated.
             win.x = int(screen.dx + self.x * screen.dwidth)

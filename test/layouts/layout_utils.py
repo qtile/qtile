@@ -26,14 +26,14 @@
 # SOFTWARE.
 
 
-def assertFocused(self, name):
+def assert_focused(self, name):
     """Asserts that window with specified name is currently focused"""
     info = self.c.window.info()
     assert info['name'] == name, 'Got {0!r}, expected {1!r}'.format(
         info['name'], name)
 
 
-def assertDimensions(self, x, y, w, h, win=None):
+def assert_dimensions(self, x, y, w, h, win=None):
     """Asserts dimensions of window"""
     if win is None:
         win = self.c.window
@@ -44,31 +44,31 @@ def assertDimensions(self, x, y, w, h, win=None):
     assert info['height'] == h, info
 
 
-def assertFocusPath(self, *names):
+def assert_focus_path(self, *names):
     """
     Asserts that subsequent calls to next_window() focus the open windows in
     the given order (and prev_window() in the reverse order)
     """
     for i in names:
         self.c.group.next_window()
-        assertFocused(self, i)
+        assert_focused(self, i)
     # let's check twice for sure
     for i in names:
         self.c.group.next_window()
-        assertFocused(self, i)
+        assert_focused(self, i)
     # Ok, let's check backwards now
     for i in reversed(names):
-        assertFocused(self, i)
+        assert_focused(self, i)
         self.c.group.prev_window()
     # and twice for sure
     for i in reversed(names):
-        assertFocused(self, i)
+        assert_focused(self, i)
         self.c.group.prev_window()
 
 
-def assertFocusPathUnordered(self, *names):
+def assert_focus_path_unordered(self, *names):
     """
-    Wrapper of assertFocusPath that allows the actual focus path to be
+    Wrapper of assert_focus_path that allows the actual focus path to be
     different from the given one, as long as:
     1) the focus order is always the same at every forward cycle
     2) the focus order is always the opposite at every reverse cycle
@@ -82,4 +82,4 @@ def assertFocusPathUnordered(self, *names):
         assert wname in unordered_names
         unordered_names.remove(wname)
         ordered_names.append(wname)
-    assertFocusPath(ordered_names)
+    assert_focus_path(ordered_names)

@@ -53,7 +53,7 @@ max_sleep = 5.0
 sleep_time = 0.1
 
 
-class retry:
+class Retry:
     def __init__(self, fail_msg='retry failed!', ignore_exceptions=(),
                  dt=sleep_time, tmax=max_sleep, return_on_fail=False):
         self.fail_msg = fail_msg
@@ -83,14 +83,14 @@ class retry:
         return wrapper
 
 
-@retry(ignore_exceptions=(xcffib.ConnectionException,), return_on_fail=True)
+@Retry(ignore_exceptions=(xcffib.ConnectionException,), return_on_fail=True)
 def can_connect_x11(disp=':0'):
     conn = xcffib.connect(display=disp)
     conn.disconnect()
     return True
 
 
-@retry(ignore_exceptions=(libqtile.ipc.IPCError,), return_on_fail=True)
+@Retry(ignore_exceptions=(libqtile.ipc.IPCError,), return_on_fail=True)
 def can_connect_qtile(socket_path):
     client = libqtile.command.Client(socket_path)
     val = client.status()
@@ -323,7 +323,7 @@ class Qtile(object):
         start = len(client.windows())
         proc = subprocess.Popen(args, env={"DISPLAY": self.display})
 
-        @retry(ignore_exceptions=(RuntimeError,))
+        @Retry(ignore_exceptions=(RuntimeError,))
         def success():
             while proc.poll() is None:
                 if len(client.windows()) > start:
@@ -356,7 +356,7 @@ class Qtile(object):
         proc.wait()
         self.testwindows.remove(proc)
 
-        @retry(ignore_exceptions=(ValueError,))
+        @Retry(ignore_exceptions=(ValueError,))
         def success():
             if len(self.c.windows()) < start:
                 return True
@@ -365,16 +365,16 @@ class Qtile(object):
         if not success():
             raise AssertionError("Window could not be killed...")
 
-    def testWindow(self, name):
+    def test_window(self, name):
         return self._spawn_script("window.py", self.display, name)
 
-    def testTkWindow(self, name, wm_type):
+    def test_tkwindow(self, name, wm_type):
         return self._spawn_script("tkwindow.py", name, wm_type)
 
-    def testDialog(self, name="dialog"):
-        return self.testTkWindow(name, "dialog")
+    def test_dialog(self, name="dialog"):
+        return self.test_tkwindow(name, "dialog")
 
-    def testNotification(self, name="notification"):
+    def test_notification(self, name="notification"):
         """
         Simulate a notification window. Note that, for testing purposes, this
         process must be killed explicitly, unlike actual notifications which
@@ -383,21 +383,21 @@ class Qtile(object):
         # Don't use a real notification, e.g. notify-send or
         # zenity --notification, since we want to keep the process on until
         # explicitly killed
-        return self.testTkWindow(name, "notification")
+        return self.test_tkwindow(name, "notification")
 
-    def testXclock(self):
+    def test_xclock(self):
         path = whereis("xclock")
         return self._spawn_window(path)
 
-    def testXeyes(self):
+    def test_xeyes(self):
         path = whereis("xeyes")
         return self._spawn_window(path)
 
-    def testGkrellm(self):
+    def test_gkrellm(self):
         path = whereis("gkrellm")
         return self._spawn_window(path)
 
-    def testXcalc(self):
+    def test_xcalc(self):
         path = whereis("xcalc")
         return self._spawn_window(path)
 

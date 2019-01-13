@@ -48,7 +48,7 @@ class Zoomy(_SimpleLayoutBase):
         self.add_defaults(Zoomy.defaults)
 
     def add(self, client):
-        self.clients.appendHead(client)
+        self.clients.append_head(client)
 
     def configure(self, client, screen):
         left, right = screen.hsplit(screen.width - self.columnwidth)

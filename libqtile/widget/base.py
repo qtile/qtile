@@ -216,7 +216,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
         """
             Utility function for quick retrieval of a widget by name.
         """
-        w = q.widgetMap.get(name)
+        w = q.widgets_map.get(name)
         if not w:
             raise command.CommandError("No such widget: %s" % name)
         return w

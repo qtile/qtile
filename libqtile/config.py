@@ -267,7 +267,7 @@ class Screen(command.CommandObject):
         self.y = y
         self.width = width
         self.height = height
-        self.setGroup(group)
+        self.set_group(group)
         for i in self.gaps:
             i._configure(qtile, self)
 
@@ -304,7 +304,7 @@ class Screen(command.CommandObject):
     def get_rect(self):
         return ScreenRect(self.dx, self.dy, self.dwidth, self.dheight)
 
-    def setGroup(self, new_group, save_prev=True):
+    def set_group(self, new_group, save_prev=True):
         """Put group on this screen"""
         if new_group.screen == self:
             return
@@ -326,25 +326,25 @@ class Screen(command.CommandObject):
             s2 = new_group.screen
 
             s2.group = g1
-            g1._setScreen(s2)
+            g1._set_screen(s2)
             s1.group = g2
-            g2._setScreen(s1)
+            g2._set_screen(s1)
         else:
             old_group = self.group
             self.group = new_group
 
             # display clients of the new group and then hide from old group
             # to remove the screen flickering
-            new_group._setScreen(self)
+            new_group._set_screen(self)
 
             if old_group is not None:
-                old_group._setScreen(None)
+                old_group._set_screen(None)
 
         hook.fire("setgroup")
         hook.fire("focus_change")
         hook.fire(
             "layout_change",
-            self.group.layouts[self.group.currentLayout],
+            self.group.layouts[self.group.current_layout],
             self.group
         )
 
@@ -364,7 +364,7 @@ class Screen(command.CommandObject):
                 return utils.lget(self.group.layouts, sel)
         elif name == "window":
             if sel is None:
-                return self.group.currentWindow
+                return self.group.current_window
             else:
                 for i in self.group.windows:
                     if i.window.wid == sel:
@@ -385,7 +385,7 @@ class Screen(command.CommandObject):
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
                 bar.draw()
-        self.qtile.call_soon(self.group.layoutAll)
+        self.qtile.call_soon(self.group.layout_all)
 
     def cmd_info(self):
         """
@@ -405,24 +405,24 @@ class Screen(command.CommandObject):
 
     def cmd_next_group(self, skip_empty=False, skip_managed=False):
         """Switch to the next group"""
-        n = self.group.nextGroup(skip_empty, skip_managed)
-        self.setGroup(n)
+        n = self.group.get_next_group(skip_empty, skip_managed)
+        self.set_group(n)
         return n.name
 
     def cmd_prev_group(self, skip_empty=False, skip_managed=False):
         """Switch to the previous group"""
-        n = self.group.prevGroup(skip_empty, skip_managed)
-        self.setGroup(n)
+        n = self.group.get_previous_group(skip_empty, skip_managed)
+        self.set_group(n)
         return n.name
 
     def cmd_toggle_group(self, group_name=None):
         """Switch to the selected group or to the previously active one"""
-        group = self.qtile.groupMap.get(group_name)
+        group = self.qtile.groups_map.get(group_name)
         if group in (self.group, None):
             group = self.previous_group
-        self.setGroup(group)
+        self.set_group(group)
 
-    def cmd_togglegroup(self, groupName=None):
+    def cmd_togglegroup(self, groupName=None):  # noqa
         """Switch to the selected group or to the previously active one
 
         Deprecated: use toggle_group()"""

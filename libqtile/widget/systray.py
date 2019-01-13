@@ -40,7 +40,7 @@ XEMBED_PROTOCOL_VERSION = 0
 
 
 class Icon(window._Window):
-    _windowMask = EventMask.StructureNotify | \
+    _window_mask = EventMask.StructureNotify | \
         EventMask.PropertyChange | \
         EventMask.Exposure
 
@@ -51,7 +51,7 @@ class Icon(window._Window):
 
     def update_size(self):
         icon_size = self.systray.icon_size
-        self.updateHints()
+        self.update_hints()
 
         try:
             width = self.hints["min_width"]
@@ -71,7 +71,7 @@ class Icon(window._Window):
         self.height = height
         return False
 
-    def handle_PropertyNotify(self, e):
+    def handle_PropertyNotify(self, e):  # noqa: N802
         name = self.qtile.conn.atoms.get_name(e.atom)
         if name == "_XEMBED_INFO":
             info = self.window.get_property('_XEMBED_INFO', unpack=int)
@@ -80,9 +80,9 @@ class Icon(window._Window):
 
         return False
 
-    def handle_DestroyNotify(self, event):
+    def handle_DestroyNotify(self, event):  # noqa: N802
         wid = event.window
-        del(self.qtile.windowMap[wid])
+        del(self.qtile.windows_map[wid])
         del(self.systray.icons[wid])
         self.systray.bar.draw()
         return False
@@ -93,7 +93,7 @@ class Icon(window._Window):
 class Systray(window._Window, base._Widget):
     """A widget that manages system tray"""
 
-    _windowMask = EventMask.StructureNotify | \
+    _window_mask = EventMask.StructureNotify | \
         EventMask.Exposure
 
     orientations = base.ORIENTATION_HORIZONTAL
@@ -118,13 +118,13 @@ class Systray(window._Window, base._Widget):
         base._Widget._configure(self, qtile, bar)
         win = qtile.conn.create_window(-1, -1, 1, 1)
         window._Window.__init__(self, xcbq.Window(qtile.conn, win.wid), qtile)
-        qtile.windowMap[win.wid] = self
+        qtile.windows_map[win.wid] = self
 
         # Even when we have multiple "Screen"s, we are setting up as the system
         # tray on a particular X display, that is the screen we need to
         # reference in the atom
-        if qtile.currentScreen:
-            self.screen = qtile.currentScreen.index
+        if qtile.current_screen:
+            self.screen = qtile.current_screen.index
         self.bar = bar
         atoms = qtile.conn.atoms
 
@@ -147,7 +147,7 @@ class Systray(window._Window, base._Widget):
         )
         qtile.root.send_event(event, mask=EventMask.StructureNotify)
 
-    def handle_ClientMessage(self, event):
+    def handle_ClientMessage(self, event):  # noqa: N802
         atoms = self.qtile.conn.atoms
 
         opcode = event.type
@@ -162,7 +162,7 @@ class Systray(window._Window, base._Widget):
             w = xcbq.Window(self.qtile.conn, wid)
             icon = Icon(w, self.qtile, self)
             self.icons[wid] = icon
-            self.qtile.windowMap[wid] = icon
+            self.qtile.windows_map[wid] = icon
 
             conn.core.ChangeSaveSet(SetMode.Insert, wid)
             conn.core.ReparentWindow(wid, parent.wid, 0, 0)

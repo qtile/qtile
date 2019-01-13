@@ -30,9 +30,9 @@ import pytest
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from .layout_utils import assertDimensions
+from .layout_utils import assert_dimensions
 from ..conftest import no_xinerama
-from .layout_utils import assertFocused, assertFocusPath
+from .layout_utils import assert_focused, assert_focus_path
 
 
 class VerticalTileConfig(object):
@@ -59,40 +59,40 @@ def verticaltile_config(x):
 
 @verticaltile_config
 def test_verticaltile_simple(qtile):
-    qtile.testWindow("one")
-    assertDimensions(qtile, 0, 0, 800, 600)
-    qtile.testWindow("two")
-    assertDimensions(qtile, 0, 300, 798, 298)
-    qtile.testWindow("three")
-    assertDimensions(qtile, 0, 400, 798, 198)
+    qtile.test_window("one")
+    assert_dimensions(qtile, 0, 0, 800, 600)
+    qtile.test_window("two")
+    assert_dimensions(qtile, 0, 300, 798, 298)
+    qtile.test_window("three")
+    assert_dimensions(qtile, 0, 400, 798, 198)
 
 
 @verticaltile_config
 def test_verticaltile_maximize(qtile):
-    qtile.testWindow("one")
-    assertDimensions(qtile, 0, 0, 800, 600)
-    qtile.testWindow("two")
-    assertDimensions(qtile, 0, 300, 798, 298)
+    qtile.test_window("one")
+    assert_dimensions(qtile, 0, 0, 800, 600)
+    qtile.test_window("two")
+    assert_dimensions(qtile, 0, 300, 798, 298)
     # Maximize the bottom layout, taking 75% of space
     qtile.c.layout.maximize()
-    assertDimensions(qtile, 0, 150, 798, 448)
+    assert_dimensions(qtile, 0, 150, 798, 448)
 
 
 @verticaltile_config
 def test_verticaltile_window_focus_cycle(qtile):
     # setup 3 tiled and two floating clients
-    qtile.testWindow("one")
-    qtile.testWindow("two")
-    qtile.testWindow("float1")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("float1")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("float2")
+    qtile.test_window("float2")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("three")
+    qtile.test_window("three")
 
     # test preconditions
     assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
     # last added window has focus
-    assertFocused(qtile, "three")
+    assert_focused(qtile, "three")
 
     # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'float1', 'float2', 'one', 'two', 'three')
+    assert_focus_path(qtile, 'float1', 'float2', 'one', 'two', 'three')

@@ -43,9 +43,9 @@ class WindowList(Dmenu):
         self.item_to_win = {}
 
         if self.all_groups:
-            windows = self.qtile.windowMap.values()
+            windows = self.qtile.windows_map.values()
         else:
-            windows = self.qtile.currentGroup.windows
+            windows = self.qtile.current_group.windows
 
         for win in windows:
             if win.group:
@@ -72,6 +72,6 @@ class WindowList(Dmenu):
             # The selected window got closed while the menu was open?
             return
 
-        screen = self.qtile.currentScreen
-        screen.setGroup(win.group)
+        screen = self.qtile.current_screen
+        screen.set_group(win.group)
         win.group.focus(win)

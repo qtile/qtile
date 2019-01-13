@@ -338,9 +338,9 @@ class NetGraph(_Graph):
             type=self.bandwidth_type == 'down' and 'rx_bytes' or 'tx_bytes'
         )
         self.bytes = 0
-        self.bytes = self._getValues()
+        self.bytes = self._get_values()
 
-    def _getValues(self):
+    def _get_values(self):
         try:
             with open(self.filename) as file:
                 val = int(file.read())
@@ -351,7 +351,7 @@ class NetGraph(_Graph):
             return 0
 
     def update_graph(self):
-        val = self._getValues()
+        val = self._get_values()
         self.push(val)
 
     @staticmethod
@@ -384,10 +384,10 @@ class HDDGraph(_Graph):
         self.add_defaults(HDDGraph.defaults)
         stats = statvfs(self.path)
         self.maxvalue = stats.f_blocks * stats.f_frsize
-        values = self._getValues()
+        values = self._get_values()
         self.fulfill(values)
 
-    def _getValues(self):
+    def _get_values(self):
         stats = statvfs(self.path)
         if self.space_type == 'used':
             return (stats.f_blocks - stats.f_bfree) * stats.f_frsize
@@ -395,7 +395,7 @@ class HDDGraph(_Graph):
             return stats.f_bavail * stats.f_frsize
 
     def update_graph(self):
-        val = self._getValues()
+        val = self._get_values()
         self.push(val)
 
 
@@ -419,7 +419,7 @@ class HDDBusyGraph(_Graph):
         )
         self._prev = 0
 
-    def _getActivity(self):
+    def _get_values(self):
         try:
             # io_ticks is field number 9
             with open(self.path) as f:
@@ -431,4 +431,5 @@ class HDDBusyGraph(_Graph):
         return activity
 
     def update_graph(self):
-        self.push(self._getActivity())
+        val = self._get_values()
+        self.push(val)

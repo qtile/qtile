@@ -72,8 +72,8 @@ call_config = pytest.mark.parametrize("qtile", [CallConfig], indirect=True)
 
 @call_config
 def test_layout_filter(qtile):
-    qtile.testWindow("one")
-    qtile.testWindow("two")
+    qtile.test_window("one")
+    qtile.test_window("two")
     assert qtile.c.groups()["a"]["focus"] == "two"
     qtile.c.simulate_keypress(["control"], "j")
     assert qtile.c.groups()["a"]["focus"] == "one"
@@ -104,10 +104,10 @@ class TestCommands(libqtile.command.CommandObject):
 
 def test_doc():
     c = TestCommands()
-    assert "one()" in c.doc("one")
-    assert "one_self()" in c.doc("one_self")
-    assert "two(a)" in c.doc("two")
-    assert "three(a, b=99)" in c.doc("three")
+    assert "one()" in c.cmd_doc("one")
+    assert "one_self()" in c.cmd_doc("one_self")
+    assert "two(a)" in c.cmd_doc("two")
+    assert "three(a, b=99)" in c.cmd_doc("three")
 
 
 def test_commands():
@@ -254,7 +254,7 @@ def test_select_qtile(qtile):
 
     assert qtile.c.bar["bottom"].info()["position"] == "bottom"
 
-    qtile.testWindow("one")
+    qtile.test_window("one")
     wid = qtile.c.window.info()["id"]
     assert qtile.c.window[wid].info()["id"] == wid
 
@@ -271,7 +271,7 @@ def test_items_group(qtile):
     g = qtile.c.group
     assert g.items("layout") == (True, [0, 1, 2])
 
-    qtile.testWindow("test")
+    qtile.test_window("test")
     wid = qtile.c.window.info()["id"]
     assert g.items("window") == (True, [wid])
 
@@ -287,7 +287,7 @@ def test_select_group(qtile):
 
     with pytest.raises(libqtile.command.CommandError):
         qtile.c.group.window.info()
-    qtile.testWindow("test")
+    qtile.test_window("test")
     wid = qtile.c.window.info()["id"]
 
     assert g.window.info()["id"] == wid
@@ -306,7 +306,7 @@ def test_items_screen(qtile):
     s = qtile.c.screen
     assert s.items("layout") == (True, [0, 1, 2])
 
-    qtile.testWindow("test")
+    qtile.test_window("test")
     wid = qtile.c.window.info()["id"]
     assert s.items("window") == (True, [wid])
 
@@ -324,7 +324,7 @@ def test_select_screen(qtile):
         qtile.c.window.info()
     with pytest.raises(libqtile.command.CommandError):
         qtile.c.window[2].info()
-    qtile.testWindow("test")
+    qtile.test_window("test")
     wid = qtile.c.window.info()["id"]
     assert s.window.info()["id"] == wid
     assert s.window[wid].info()["id"] == wid
@@ -369,7 +369,7 @@ def test_select_layout(qtile):
 
 @server_config
 def test_items_window(qtile):
-    qtile.testWindow("test")
+    qtile.test_window("test")
     qtile.c.window.info()["id"]
 
     assert qtile.c.window.items("group") == (True, None)
@@ -379,7 +379,7 @@ def test_items_window(qtile):
 
 @server_config
 def test_select_window(qtile):
-    qtile.testWindow("test")
+    qtile.test_window("test")
     qtile.c.window.info()["id"]
 
     assert qtile.c.window.group.info()["name"] == "a"

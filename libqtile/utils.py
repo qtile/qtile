@@ -69,14 +69,14 @@ def translate_modifiers(mask):
     return r
 
 
-def shuffleUp(lst):
+def shuffle_up(lst):
     if len(lst) > 1:
         c = lst[-1]
         lst.remove(c)
         lst.insert(0, c)
 
 
-def shuffleDown(lst):
+def shuffle_down(lst):
     if len(lst) > 1:
         c = lst[0]
         lst.remove(c)
@@ -84,7 +84,7 @@ def shuffleDown(lst):
 
 
 if sys.version_info < (3, 3):
-    class lru_cache(object):
+    class lru_cache(object):  # noqa: N801
         """
             A decorator that implements a self-expiring LRU cache for class
             methods (not functions!).

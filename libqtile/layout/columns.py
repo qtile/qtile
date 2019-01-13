@@ -43,7 +43,7 @@ class _Column(_ClientList):
             ))
         return info
 
-    def toggleSplit(self):
+    def toggle_split(self):
         self.split = not self.split
 
     def add(self, client, height=100):
@@ -214,11 +214,11 @@ class Columns(Layout):
             client.hide()
             return
         if client.has_focus:
-            color = self.group.qtile.colorPixel(self.border_focus if col.split
-                                                else self.border_focus_stack)
+            color = self.group.qtile.color_pixel(self.border_focus if col.split
+                                                 else self.border_focus_stack)
         else:
-            color = self.group.qtile.colorPixel(self.border_normal if col.split
-                                                else self.border_normal_stack)
+            color = self.group.qtile.color_pixel(self.border_normal if col.split
+                                                 else self.border_normal_stack)
         if len(self.columns) == 1 and (len(col) == 1 or not col.split):
             border = 0
         else:
@@ -297,8 +297,8 @@ class Columns(Layout):
             return self.columns[idx - 1].focus_last()
 
     def cmd_toggle_split(self):
-        self.cc.toggleSplit()
-        self.group.layoutAll()
+        self.cc.toggle_split()
+        self.group.layout_all()
 
     def cmd_left(self):
         if len(self.columns) > 1:
@@ -359,7 +359,7 @@ class Columns(Layout):
             self.current = 0
         else:
             return
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_shuffle_right(self):
         cur = self.cc
@@ -380,31 +380,31 @@ class Columns(Layout):
             self.current = len(self.columns) - 1
         else:
             return
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_shuffle_up(self):
         if self.cc.current_index > 0:
             self.cc.shuffle_up()
-            self.group.layoutAll()
+            self.group.layout_all()
 
     def cmd_shuffle_down(self):
         if self.cc.current_index + 1 < len(self.cc):
             self.cc.shuffle_down()
-            self.group.layoutAll()
+            self.group.layout_all()
 
     def cmd_grow_left(self):
         if self.current > 0:
             if self.columns[self.current - 1].width > self.grow_amount:
                 self.columns[self.current - 1].width -= self.grow_amount
                 self.cc.width += self.grow_amount
-                self.group.layoutAll()
+                self.group.layout_all()
 
     def cmd_grow_right(self):
         if self.current + 1 < len(self.columns):
             if self.columns[self.current + 1].width > self.grow_amount:
                 self.columns[self.current + 1].width -= self.grow_amount
                 self.cc.width += self.grow_amount
-                self.group.layoutAll()
+                self.group.layout_all()
 
     def cmd_grow_up(self):
         col = self.cc
@@ -412,7 +412,7 @@ class Columns(Layout):
             if col.heights[col[col.current - 1]] > self.grow_amount:
                 col.heights[col[col.current - 1]] -= self.grow_amount
                 col.heights[col.cw] += self.grow_amount
-                self.group.layoutAll()
+                self.group.layout_all()
 
     def cmd_grow_down(self):
         col = self.cc
@@ -420,11 +420,11 @@ class Columns(Layout):
             if col.heights[col[col.current + 1]] > self.grow_amount:
                 col.heights[col[col.current + 1]] -= self.grow_amount
                 col.heights[col.cw] += self.grow_amount
-                self.group.layoutAll()
+                self.group.layout_all()
 
     def cmd_normalize(self):
         for col in self.columns:
             for client in col:
                 col.heights[client] = 100
             col.width = 100
-        self.group.layoutAll()
+        self.group.layout_all()

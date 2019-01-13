@@ -37,7 +37,7 @@ class QtileState(object):
             self.groups.append((group.name, group.layout.name, group.label))
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
-            if screen == qtile.currentScreen:
+            if screen == qtile.current_screen:
                 self.current_screen = index
 
     def apply(self, qtile):
@@ -47,15 +47,15 @@ class QtileState(object):
         """
         for (group, layout, label) in self.groups:
             try:
-                qtile.groupMap[group].layout = layout
+                qtile.groups_map[group].layout = layout
             except KeyError:
-                qtile.addGroup(group, layout, label=label)
+                qtile.add_group(group, layout, label=label)
 
         for (screen, group) in self.screens.items():
             try:
-                group = qtile.groupMap[group]
-                qtile.screens[screen].setGroup(group)
+                group = qtile.groups_map[group]
+                qtile.screens[screen].set_group(group)
             except (KeyError, IndexError):
                 pass  # group or screen missing
 
-        qtile.toScreen(self.current_screen)
+        qtile.focus_screen(self.current_screen)

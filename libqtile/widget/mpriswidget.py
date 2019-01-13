@@ -30,6 +30,23 @@ from libqtile.log_utils import logger
 from . import base
 
 
+def ensure_connected(f):
+    """Tries to connect to the player
+
+    It *should* be successful if the player is alive
+    """
+    def wrapper(self, *args, **kwargs):
+        try:
+            self.iface.GetMetadata()
+        except (dbus.exceptions.DBusException, AttributeError):
+            # except AttributeError because
+            # self.iface won't exist if we haven't
+            # _connect()ed yet
+            self._connect()
+        return f(self, *args, **kwargs)
+    return wrapper
+
+
 class Mpris(base._TextBox):
     """MPRIS player widget
 
@@ -115,23 +132,6 @@ class Mpris(base._TextBox):
                 # It disconnected :-(
                 self.connected = False
             self.update()
-
-    def ensure_connected(f):
-        """Tries to connect to the player
-
-        It *should* be successful if the player is alive
-        """
-        def wrapper(*args, **kwargs):
-            self = args[0]
-            try:
-                self.iface.GetMetadata()
-            except (dbus.exceptions.DBusException, AttributeError):
-                # except AttributeError because
-                # self.iface won't exist if we haven't
-                # _connect()ed yet
-                self._connect()
-            return f(*args, **kwargs)
-        return wrapper
 
     @ensure_connected
     def update(self):

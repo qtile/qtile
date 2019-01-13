@@ -30,7 +30,7 @@ import pytest
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from .layout_utils import assertDimensions, assertFocused, assertFocusPath
+from .layout_utils import assert_dimensions, assert_focused, assert_focus_path
 from ..conftest import no_xinerama
 
 
@@ -55,31 +55,31 @@ def zoomy_config(x):
 
 @zoomy_config
 def test_zoomy_one(qtile):
-    qtile.testWindow('one')
-    assertDimensions(qtile, 0, 0, 600, 600)
-    qtile.testWindow('two')
-    assertDimensions(qtile, 0, 0, 600, 600)
-    qtile.testWindow('three')
-    assertDimensions(qtile, 0, 0, 600, 600)
-    assertFocusPath(qtile, 'two', 'one', 'three')
+    qtile.test_window('one')
+    assert_dimensions(qtile, 0, 0, 600, 600)
+    qtile.test_window('two')
+    assert_dimensions(qtile, 0, 0, 600, 600)
+    qtile.test_window('three')
+    assert_dimensions(qtile, 0, 0, 600, 600)
+    assert_focus_path(qtile, 'two', 'one', 'three')
     # TODO(pc) find a way to check size of inactive windows
 
 
 @zoomy_config
 def test_zoomy_window_focus_cycle(qtile):
     # setup 3 tiled and two floating clients
-    qtile.testWindow("one")
-    qtile.testWindow("two")
-    qtile.testWindow("float1")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("float1")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("float2")
+    qtile.test_window("float2")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("three")
+    qtile.test_window("three")
 
     # test preconditions, Zoomy adds clients at head
     assert qtile.c.layout.info()['clients'] == ['three', 'two', 'one']
     # last added window has focus
-    assertFocused(qtile, "three")
+    assert_focused(qtile, "three")
 
     # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'two', 'one', 'float1', 'float2', 'three')
+    assert_focus_path(qtile, 'two', 'one', 'float1', 'float2', 'three')

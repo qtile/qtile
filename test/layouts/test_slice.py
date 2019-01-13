@@ -30,7 +30,7 @@ import pytest
 from libqtile import layout
 import libqtile.manager
 import libqtile.config
-from .layout_utils import assertDimensions, assertFocused, assertFocusPath
+from .layout_utils import assert_dimensions, assert_focused, assert_focus_path
 from ..conftest import no_xinerama
 
 
@@ -63,73 +63,73 @@ def slice_config(x):
 
 @slice_config
 def test_no_slice(qtile):
-    qtile.testWindow('one')
-    assertDimensions(qtile, 200, 0, 600, 600)
-    qtile.testWindow('two')
-    assertDimensions(qtile, 200, 0, 600, 600)
+    qtile.test_window('one')
+    assert_dimensions(qtile, 200, 0, 600, 600)
+    qtile.test_window('two')
+    assert_dimensions(qtile, 200, 0, 600, 600)
 
 
 @slice_config
 def test_slice_first(qtile):
-    qtile.testWindow('slice')
-    assertDimensions(qtile, 0, 0, 200, 600)
-    qtile.testWindow('two')
-    assertDimensions(qtile, 200, 0, 600, 600)
+    qtile.test_window('slice')
+    assert_dimensions(qtile, 0, 0, 200, 600)
+    qtile.test_window('two')
+    assert_dimensions(qtile, 200, 0, 600, 600)
 
 
 @slice_config
 def test_slice_last(qtile):
-    qtile.testWindow('one')
-    assertDimensions(qtile, 200, 0, 600, 600)
-    qtile.testWindow('slice')
-    assertDimensions(qtile, 0, 0, 200, 600)
+    qtile.test_window('one')
+    assert_dimensions(qtile, 200, 0, 600, 600)
+    qtile.test_window('slice')
+    assert_dimensions(qtile, 0, 0, 200, 600)
 
 
 @slice_config
 def test_slice_focus(qtile):
-    qtile.testWindow('one')
-    assertFocused(qtile, 'one')
-    two = qtile.testWindow('two')
-    assertFocused(qtile, 'two')
-    slice = qtile.testWindow('slice')
-    assertFocused(qtile, 'slice')
-    assertFocusPath(qtile, 'slice')
-    qtile.testWindow('three')
-    assertFocusPath(qtile, 'two', 'one', 'slice', 'three')
+    qtile.test_window('one')
+    assert_focused(qtile, 'one')
+    two = qtile.test_window('two')
+    assert_focused(qtile, 'two')
+    slice = qtile.test_window('slice')
+    assert_focused(qtile, 'slice')
+    assert_focus_path(qtile, 'slice')
+    qtile.test_window('three')
+    assert_focus_path(qtile, 'two', 'one', 'slice', 'three')
     qtile.kill_window(two)
-    assertFocusPath(qtile, 'one', 'slice', 'three')
+    assert_focus_path(qtile, 'one', 'slice', 'three')
     qtile.kill_window(slice)
-    assertFocusPath(qtile, 'one', 'three')
-    slice = qtile.testWindow('slice')
-    assertFocusPath(qtile, 'three', 'one', 'slice')
+    assert_focus_path(qtile, 'one', 'three')
+    slice = qtile.test_window('slice')
+    assert_focus_path(qtile, 'three', 'one', 'slice')
 
 
 @slice_config
 def test_all_slices(qtile):
-    qtile.testWindow('slice')  # left
-    assertDimensions(qtile, 0, 0, 200, 600)
+    qtile.test_window('slice')  # left
+    assert_dimensions(qtile, 0, 0, 200, 600)
     qtile.c.next_layout()  # right
-    assertDimensions(qtile, 600, 0, 200, 600)
+    assert_dimensions(qtile, 600, 0, 200, 600)
     qtile.c.next_layout()  # top
-    assertDimensions(qtile, 0, 0, 800, 200)
+    assert_dimensions(qtile, 0, 0, 800, 200)
     qtile.c.next_layout()  # bottom
-    assertDimensions(qtile, 0, 400, 800, 200)
+    assert_dimensions(qtile, 0, 400, 800, 200)
     qtile.c.next_layout()  # left again
-    qtile.testWindow('one')
-    assertDimensions(qtile, 200, 0, 600, 600)
+    qtile.test_window('one')
+    assert_dimensions(qtile, 200, 0, 600, 600)
     qtile.c.next_layout()  # right
-    assertDimensions(qtile, 0, 0, 600, 600)
+    assert_dimensions(qtile, 0, 0, 600, 600)
     qtile.c.next_layout()  # top
-    assertDimensions(qtile, 0, 200, 800, 400)
+    assert_dimensions(qtile, 0, 200, 800, 400)
     qtile.c.next_layout()  # bottom
-    assertDimensions(qtile, 0, 0, 800, 400)
+    assert_dimensions(qtile, 0, 0, 800, 400)
 
 
 @slice_config
 def test_command_propagation(qtile):
-    qtile.testWindow('slice')
-    qtile.testWindow('one')
-    qtile.testWindow('two')
+    qtile.test_window('slice')
+    qtile.test_window('one')
+    qtile.test_window('two')
     info = qtile.c.layout.info()
     assert info['name'] == 'slice', info['name']
     org_height = qtile.c.window.info()['height']

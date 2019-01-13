@@ -322,7 +322,7 @@ class Drawer(object):
                     return v
 
     def new_ctx(self):
-        return pangocffi.CairoContext(cairocffi.Context(self.surface))
+        return pangocffi.patch_cairo_context(cairocffi.Context(self.surface))
 
     def set_source_rgb(self, colour):
         if type(colour) == list:

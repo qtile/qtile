@@ -23,7 +23,7 @@ from libqtile import layout
 import libqtile.manager
 import libqtile.config
 from ..conftest import no_xinerama
-from .layout_utils import assertFocused, assertFocusPath
+from .layout_utils import assert_focused, assert_focus_path
 
 
 class BspConfig(object):
@@ -54,18 +54,18 @@ def bsp_config(x):
 @bsp_config
 def test_bsp_window_focus_cycle(qtile):
     # setup 3 tiled and two floating clients
-    qtile.testWindow("one")
-    qtile.testWindow("two")
-    qtile.testWindow("float1")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("float1")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("float2")
+    qtile.test_window("float2")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("three")
+    qtile.test_window("three")
 
     # test preconditions, columns adds clients at pos of current, in two stacks
     assert qtile.c.layout.info()['clients'] == ['one', 'three', 'two']
     # last added window has focus
-    assertFocused(qtile, "three")
+    assert_focused(qtile, "three")
 
     # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'two', 'float1', 'float2', 'one', 'three')
+    assert_focus_path(qtile, 'two', 'float1', 'float2', 'one', 'three')

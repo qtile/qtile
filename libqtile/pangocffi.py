@@ -63,7 +63,7 @@ pango = ffi.dlopen('libpango-1.0.so.0')
 pangocairo = ffi.dlopen('libpangocairo-1.0.so.0')
 
 
-def CairoContext(cairo_t):
+def patch_cairo_context(cairo_t):
     def create_layout():
         return PangoLayout(cairo_t._pointer)
     cairo_t.create_layout = create_layout

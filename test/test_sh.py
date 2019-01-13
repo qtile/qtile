@@ -71,26 +71,26 @@ def test_ls(qtile):
 
 
 @sh_config
-def test_findNode(qtile):
+def test_find_node(qtile):
     qtile.sh = libqtile.sh.QSh(qtile.c)
-    n = qtile.sh._findNode(qtile.sh.current, "layout")
+    n = qtile.sh._find_node(qtile.sh.current, "layout")
     assert n.path == "layout"
     assert n.parent
 
-    n = qtile.sh._findNode(n, "0")
+    n = qtile.sh._find_node(n, "0")
     assert n.path == "layout[0]"
 
-    n = qtile.sh._findNode(n, "..")
+    n = qtile.sh._find_node(n, "..")
     assert n.path == "layout"
 
-    n = qtile.sh._findNode(n, "0", "..")
+    n = qtile.sh._find_node(n, "0", "..")
     assert n.path == "layout"
 
-    n = qtile.sh._findNode(n, "..", "layout", 0)
+    n = qtile.sh._find_node(n, "..", "layout", 0)
     assert n.path == "layout[0]"
 
-    assert not qtile.sh._findNode(n, "wibble")
-    assert not qtile.sh._findNode(n, "..", "0", "wibble")
+    assert not qtile.sh._find_node(n, "wibble")
+    assert not qtile.sh._find_node(n, "..", "0", "wibble")
 
 
 @sh_config

@@ -385,9 +385,9 @@ class XFixes(object):
                               xcffib.xfixes.MINOR_VERSION)
 
     def select_selection_input(self, window, selection="PRIMARY"):
-        SELECTION = self.conn.atoms[selection]
+        _selection = self.conn.atoms[selection]
         self.conn.xfixes.ext.SelectSelectionInput(window.wid,
-                                                  SELECTION,
+                                                  _selection,
                                                   self.selection_mask)
 
 
@@ -439,11 +439,11 @@ class Window(object):
         self.conn = conn
         self.wid = wid
 
-    def _propertyString(self, r):
+    def _property_string(self, r):
         """Extract a string from a window property reply message"""
         return r.value.to_string()
 
-    def _propertyUTF8(self, r):
+    def _property_utf8(self, r):
         return r.value.to_utf8()
 
     def send_event(self, synthevent, mask=EventMask.NoEvent):
@@ -478,22 +478,22 @@ class Window(object):
         """
         r = self.get_property("_NET_WM_VISIBLE_NAME", "UTF8_STRING")
         if r:
-            return self._propertyUTF8(r)
+            return self._property_utf8(r)
 
         r = self.get_property("_NET_WM_NAME", "UTF8_STRING")
         if r:
-            return self._propertyUTF8(r)
+            return self._property_utf8(r)
 
         r = self.get_property(xcffib.xproto.Atom.WM_NAME, "UTF8_STRING")
         if r:
-            return self._propertyUTF8(r)
+            return self._property_utf8(r)
 
         r = self.get_property(
             xcffib.xproto.Atom.WM_NAME,
             xcffib.xproto.GetPropertyType.Any
         )
         if r:
-            return self._propertyString(r)
+            return self._property_string(r)
 
     def get_wm_hints(self):
         wm_hints = self.get_property("WM_HINTS", xcffib.xproto.GetPropertyType.Any)
@@ -548,14 +548,14 @@ class Window(object):
         """Return an (instance, class) tuple if WM_CLASS exists, or None"""
         r = self.get_property("WM_CLASS", "STRING")
         if r:
-            s = self._propertyString(r)
+            s = self._property_string(r)
             return tuple(s.strip("\0").split("\0"))
         return tuple()
 
     def get_wm_window_role(self):
         r = self.get_property("WM_WINDOW_ROLE", "STRING")
         if r:
-            return self._propertyString(r)
+            return self._property_string(r)
 
     def get_wm_transient_for(self):
         r = self.get_property("WM_TRANSIENT_FOR", "WINDOW", unpack=int)
@@ -566,16 +566,16 @@ class Window(object):
     def get_wm_icon_name(self):
         r = self.get_property("_NET_WM_ICON_NAME", "UTF8_STRING")
         if r:
-            return self._propertyUTF8(r)
+            return self._property_utf8(r)
 
         r = self.get_property("WM_ICON_NAME", "STRING")
         if r:
-            return self._propertyUTF8(r)
+            return self._property_utf8(r)
 
     def get_wm_client_machine(self):
         r = self.get_property("WM_CLIENT_MACHINE", "STRING")
         if r:
-            return self._propertyUTF8(r)
+            return self._property_utf8(r)
 
     def get_geometry(self):
         q = self.conn.conn.core.GetGeometry(self.wid)
@@ -626,8 +626,8 @@ class Window(object):
         )
 
     def set_cursor(self, name):
-        cursorId = self.conn.cursors[name]
-        mask, values = AttributeMasks(cursor=cursorId)
+        cursor_id = self.conn.cursors[name]
+        mask, values = AttributeMasks(cursor=cursor_id)
         self.conn.conn.core.ChangeWindowAttributesChecked(
             self.wid, mask, values
         )

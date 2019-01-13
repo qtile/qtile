@@ -31,7 +31,7 @@ from libqtile import layout
 import libqtile.manager
 import libqtile.config
 from ..conftest import no_xinerama
-from .layout_utils import assertFocused, assertFocusPath
+from .layout_utils import assert_focused, assert_focus_path
 
 
 class MaxConfig(object):
@@ -58,17 +58,17 @@ def max_config(x):
 
 @max_config
 def test_max_simple(qtile):
-    qtile.testWindow("one")
+    qtile.test_window("one")
     assert qtile.c.layout.info()["clients"] == ["one"]
-    qtile.testWindow("two")
+    qtile.test_window("two")
     assert qtile.c.layout.info()["clients"] == ["one", "two"]
 
 
 @max_config
 def test_max_updown(qtile):
-    qtile.testWindow("one")
-    qtile.testWindow("two")
-    qtile.testWindow("three")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("three")
     assert qtile.c.layout.info()["clients"] == ["one", "two", "three"]
     qtile.c.layout.up()
     assert qtile.c.groups()["a"]["focus"] == "two"
@@ -78,8 +78,8 @@ def test_max_updown(qtile):
 
 @max_config
 def test_max_remove(qtile):
-    qtile.testWindow("one")
-    two = qtile.testWindow("two")
+    qtile.test_window("one")
+    two = qtile.test_window("two")
     assert qtile.c.layout.info()["clients"] == ["one", "two"]
     qtile.kill_window(two)
     assert qtile.c.layout.info()["clients"] == ["one"]
@@ -88,18 +88,18 @@ def test_max_remove(qtile):
 @max_config
 def test_max_window_focus_cycle(qtile):
     # setup 3 tiled and two floating clients
-    qtile.testWindow("one")
-    qtile.testWindow("two")
-    qtile.testWindow("float1")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("float1")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("float2")
+    qtile.test_window("float2")
     qtile.c.window.toggle_floating()
-    qtile.testWindow("three")
+    qtile.test_window("three")
 
     # test preconditions
     assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
     # last added window has focus
-    assertFocused(qtile, "three")
+    assert_focused(qtile, "three")
 
     # assert window focus cycle, according to order in layout
-    assertFocusPath(qtile, 'float1', 'float2', 'one', 'two', 'three')
+    assert_focus_path(qtile, 'float1', 'float2', 'one', 'two', 'three')
