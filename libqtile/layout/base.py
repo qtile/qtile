@@ -33,12 +33,12 @@ class Layout(command.CommandObject, configurable.Configurable, metaclass=ABCMeta
     def _name(cls):
         return cls.__class__.__name__.lower()
 
-    defaults = [(
+    defaults: List[Tuple[str, Any, str]] = [(
         "name",
         None,
         "The name of this layout"
         " (usually the class' name in lowercase, e.g. 'max')"
-    )]  # type: List[Tuple[str, Any, str]]
+    )]
 
     def __init__(self, **config):
         # name is a little odd; we can't resolve it until the class is defined

@@ -39,10 +39,10 @@ from typing import Any, List, Tuple
 
 
 class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):
-    defaults = [
+    defaults: List[Tuple[str, Any, str]] = [
         ("borderwidth", 3, "Current group border width"),
         ("center_aligned", False, "center-aligned group box"),
-    ]  # type: List[Tuple[str, Any, str]]
+    ]
 
     def __init__(self, **config):
         base._TextBox.__init__(self, width=bar.CALCULATED, **config)

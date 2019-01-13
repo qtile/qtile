@@ -95,7 +95,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
     orientations = ORIENTATION_BOTH
     offsetx = None
     offsety = None
-    defaults = [("background", None, "Widget background color")]  # type: List[Tuple[str, Any, str]]
+    defaults: List[Tuple[str, Any, str]] = [("background", None, "Widget background color")]
 
     def __init__(self, length, **config):
         """

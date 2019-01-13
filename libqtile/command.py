@@ -22,7 +22,6 @@ import abc
 import inspect
 import traceback
 import os
-import sys
 
 from . import ipc
 from .utils import get_cache_dir

@@ -39,7 +39,7 @@ class GenPollText(base.ThreadedPollText):
 class GenPollUrl(base.ThreadedPollText):
     """A generic text widget that polls an url and parses it using parse function"""
     orientations = base.ORIENTATION_HORIZONTAL
-    defaults = [
+    defaults: List[Tuple[str, Any, str]] = [
         ('url', None, 'Url'),
         ('data', None, 'Post Data'),
         ('parse', None, 'Parse Function'),
@@ -47,7 +47,7 @@ class GenPollUrl(base.ThreadedPollText):
         ('user_agent', 'Qtile', 'Set the user agent'),
         ('headers', {}, 'Extra Headers'),
         ('xml', False, 'Is XML?'),
-    ]  # type: List[Tuple[str, Any, str]]
+    ]
 
     def __init__(self, **config):
         base.ThreadedPollText.__init__(self, **config)

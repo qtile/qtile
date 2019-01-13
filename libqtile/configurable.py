@@ -22,7 +22,7 @@ from typing import Dict
 
 
 class Configurable(object):
-    global_defaults = {}  # type: Dict
+    global_defaults: Dict = {}
 
     def __init__(self, **config):
         self._variable_defaults = {}

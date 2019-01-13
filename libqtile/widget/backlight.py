@@ -32,7 +32,7 @@ BACKLIGHT_DIR = '/sys/class/backlight'
 class Backlight(base.InLoopPollText):
     """A simple widget to show the current brightness of a monitor"""
 
-    filenames = {}  # type: Dict
+    filenames: Dict = {}
 
     orientations = base.ORIENTATION_HORIZONTAL
 

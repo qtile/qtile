@@ -21,11 +21,9 @@
 import functools
 import os
 import operator
-import sys
 import warnings
 import traceback
 import importlib
-import functools
 
 from . import xcbq
 from .log_utils import logger

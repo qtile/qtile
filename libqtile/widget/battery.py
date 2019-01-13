@@ -67,7 +67,7 @@ def _get_battery_name():
 class _Battery(base._TextBox):
     """Base battery class"""
 
-    filenames = {}  # type: Dict
+    filenames: Dict = {}
 
     defaults = [
         ('battery_name', _get_battery_name(), 'ACPI name of a battery, usually BAT0'),

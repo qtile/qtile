@@ -36,8 +36,8 @@ from . import utils
 from typing import Dict, Set
 
 
-subscriptions = {}  # type: Dict
-SKIPLOG = set()  # type: Set
+subscriptions: Dict = {}
+SKIPLOG: Set = set()
 qtile = None
 
 

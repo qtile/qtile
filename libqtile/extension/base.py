@@ -28,7 +28,7 @@ from typing import Any, List, Tuple
 class _Extension(configurable.Configurable):
     """Base Extension class"""
 
-    installed_extensions = []  # type: List
+    installed_extensions: List = []
 
     defaults = [
         ("font", "sans", "defines the font name to be used"),
@@ -64,13 +64,13 @@ class RunCommand(_Extension):
     Also consider simply using lazy.spawn() or writing a
     `client <http://docs.qtile.org/en/latest/manual/commands/scripting.html>`_.
     """
-    defaults = [
+    defaults: List[Tuple[str, Any, str]] = [
         # NOTE: Do not use a list as a default value, since it would be shared
         #       among all the objects inheriting this class, and if one of them
         #       modified it, all the other objects would see the modified list;
         #       use a string or a tuple instead, which are immutable
         ("command", None, "the command to be launched (string or list with arguments)"),
-    ]  # type: List[Tuple[str, Any, str]]
+    ]
 
     def __init__(self, **config):
         _Extension.__init__(self, **config)

@@ -177,7 +177,7 @@ class Mpd2(base.ThreadPoolText):
 
         fmt = self.status_format
         if not isinstance(fmt, str):
-            fmt = u(fmt)
+            fmt = str(fmt)
 
         try:
             formatted = fmt.format(play_status=play_status, **status)
