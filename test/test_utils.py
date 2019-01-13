@@ -22,8 +22,6 @@
 
 import sys
 
-import six
-
 import libqtile.utils as utils
 
 
@@ -103,7 +101,7 @@ def test_rgb_from_base10_tuple_with_alpha():
 
 
 def test_scrub_to_utf8():
-    assert utils.scrub_to_utf8(six.b("foo")) == six.u("foo")
+    assert utils.scrub_to_utf8(b"foo") == u"foo"
 
 
 def test_shuffle():

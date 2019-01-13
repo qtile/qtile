@@ -29,8 +29,7 @@ from . import base
 from .generic_poll_text import GenPollUrl
 from xml.dom import minidom
 
-
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 
 QUERY_URL = 'http://query.yahooapis.com/v1/public/yql?'
 WEATHER_URL = 'http://weather.yahooapis.com/forecastrss?'

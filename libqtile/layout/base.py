@@ -20,7 +20,6 @@
 # SOFTWARE.
 
 import copy
-import six
 from abc import ABCMeta, abstractmethod
 
 from .. import command, configurable
@@ -31,8 +30,7 @@ except ImportError:
     pass
 
 
-@six.add_metaclass(ABCMeta)
-class Layout(command.CommandObject, configurable.Configurable):
+class Layout(command.CommandObject, configurable.Configurable, metaclass=ABCMeta):
     """This class defines the API that should be exposed by all layouts"""
     @classmethod
     def _name(cls):

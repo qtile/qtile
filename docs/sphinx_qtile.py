@@ -24,9 +24,10 @@ from docutils.statemachine import ViewList
 from docutils.parsers.rst import Directive
 from jinja2 import Template
 from libqtile import command, configurable, widget
-from six import class_types
-from six.moves import builtins, reduce
 from sphinx.util.nodes import nested_parse_with_titles
+import functools
+import inspect
+import builtins
 
 
 qtile_module_template = Template('''
@@ -75,7 +76,7 @@ qtile_hooks_template = Template('''
 # Adapted from sphinxcontrib-httpdomain
 def import_object(module_name, expr):
     mod = __import__(module_name)
-    mod = reduce(getattr, module_name.split('.')[1:], mod)
+    mod = functools.reduce(getattr, module_name.split('.')[1:], mod)
     globals = builtins
     if not isinstance(globals, dict):
         globals = globals.__dict__
@@ -172,7 +173,7 @@ class QtileModule(SimpleDirectiveMixin, Directive):
 
         for item in dir(module):
             obj = import_object(self.arguments[0], item)
-            if not isinstance(obj, class_types) and (BaseClass and
+            if not inspect.isclass(obj) and (BaseClass and
                 not isinstance(obj, BaseClass)):
                 continue
 

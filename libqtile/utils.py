@@ -25,9 +25,7 @@ import sys
 import warnings
 import traceback
 import importlib
-
-import six
-from six.moves import reduce
+import functools
 
 from . import xcbq
 from .log_utils import logger
@@ -56,7 +54,7 @@ def translate_masks(modifiers):
         except KeyError:
             raise KeyError("Unknown modifier: %s" % i)
     if masks:
-        return reduce(operator.or_, masks)
+        return functools.reduce(operator.or_, masks)
     else:
         return 0
 
@@ -103,7 +101,7 @@ def rgb(x):
         else:
             alpha = 1
         return (x[0] / 255.0, x[1] / 255.0, x[2] / 255.0, alpha)
-    elif isinstance(x, six.string_types):
+    elif isinstance(x, str):
         if x.startswith("#"):
             x = x[1:]
         if "." in x:
@@ -127,7 +125,7 @@ def hex(x):
 def scrub_to_utf8(text):
     if not text:
         return u""
-    elif isinstance(text, six.text_type):
+    elif isinstance(text, str):
         return text
     else:
         return text.decode("utf-8", "ignore")

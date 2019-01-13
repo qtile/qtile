@@ -32,7 +32,6 @@ import traceback
 import xcffib
 import xcffib.xinerama
 import xcffib.xproto
-import six
 import time
 import warnings
 import tracemalloc
@@ -1430,7 +1429,7 @@ class Qtile(command.CommandObject):
 
             spawn(["xterm", "-T", "Temporary terminal"])
         """
-        if isinstance(cmd, six.string_types):
+        if isinstance(cmd, str):
             args = shlex.split(cmd)
         else:
             args = list(cmd)

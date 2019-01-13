@@ -31,7 +31,6 @@
 
 from libqtile.log_utils import logger
 from .. import command, bar, configurable, drawer, confreader
-import six
 import subprocess
 import threading
 import warnings
@@ -117,7 +116,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
             self.length_type = length
             self.length = 0
         else:
-            assert isinstance(length, six.integer_types)
+            assert isinstance(length, int)
             self.length_type = bar.STATIC
             self.length = length
         self.configured = False
@@ -267,9 +266,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
             Python 3.
         """
         output = subprocess.check_output(command, **kwargs)
-        if six.PY3:
-            output = output.decode()
-        return output
+        output = output.decode()
 
     def _wrapper(self, method, *method_args):
         try:
@@ -311,7 +308,7 @@ class _TextBox(_Widget):
 
     @text.setter
     def text(self, value):
-        assert value is None or isinstance(value, six.string_types)
+        assert value is None or isinstance(value, str)
         self._text = value
         if self.layout:
             self.layout.text = value

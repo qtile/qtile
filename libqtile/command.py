@@ -22,7 +22,6 @@ import abc
 import inspect
 import traceback
 import os
-import six
 import sys
 
 from . import ipc
@@ -116,7 +115,7 @@ class _Command(object):
         return self.call(self.selectors, self.name, *args, **kwargs)
 
 
-class _CommandTree(six.with_metaclass(abc.ABCMeta)):
+class _CommandTree(metaclass=abc.ABCMeta):
     """A hierarchical collection of objects that contain commands
 
     CommandTree objects act as containers, allowing them to be nested. The
@@ -205,7 +204,7 @@ _TreeMap = {
 }
 
 
-class _CommandRoot(six.with_metaclass(abc.ABCMeta, _CommandTree)):
+class _CommandRoot(_CommandTree, metaclass=abc.ABCMeta):
     """This class constructs the entire hierarchy of callable commands from a conf object"""
     name = None
     _contains = ["layout", "widget", "screen", "bar", "window", "group"]
@@ -320,7 +319,7 @@ class _LazyTree(_CommandRoot):
 lazy = _LazyTree()
 
 
-class CommandObject(six.with_metaclass(abc.ABCMeta)):
+class CommandObject(metaclass=abc.ABCMeta):
     """Base class for objects that expose commands
 
     Each command should be a method named `cmd_X`, where X is the command name.

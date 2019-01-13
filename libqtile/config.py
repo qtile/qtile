@@ -30,8 +30,8 @@ from . import configurable
 from . import hook
 from . import utils
 from . import xcbq
+import sys
 
-from six import MAXSIZE
 import warnings
 
 
@@ -468,7 +468,7 @@ class Group(object):
     """
     def __init__(self, name, matches=None, exclusive=False,
                  spawn=None, layout=None, layouts=None, persist=True, init=True,
-                 layout_opts=None, screen_affinity=None, position=MAXSIZE,
+                 layout_opts=None, screen_affinity=None, position=sys.maxsize,
                  label=None):
         self.name = name
         self.label = label
@@ -511,7 +511,7 @@ class ScratchPad(Group):
         The display name of the ScratchPad group. Defaults to the empty string
         such that the group is hidden in ``GroupList`` widget.
     """
-    def __init__(self, name, dropdowns=None, position=MAXSIZE, label=''):
+    def __init__(self, name, dropdowns=None, position=sys.maxsize, label=''):
         Group.__init__(self, name, layout='floating', layouts=['floating'],
                        init=False, position=position, label=label)
         self.dropdowns = dropdowns if dropdowns is not None else []

@@ -43,8 +43,5 @@ Built-in Layouts
 .. qtile_class:: libqtile.layout.verticaltile.VerticalTile
     :no-commands:
 
-.. qtile_class:: libqtile.layout.wmii.Wmii
-    :no-commands:
-
 .. qtile_class:: libqtile.layout.zoomy.Zoomy
     :no-commands:

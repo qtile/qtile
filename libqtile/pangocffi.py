@@ -46,7 +46,6 @@
 #
 # This is not intended to be a complete cffi-based pango binding.
 
-import six
 
 try:
     from libqtile._ffi_pango import ffi
@@ -171,19 +170,16 @@ def parse_markup(value, accel_marker=0):
     attr_list = ffi.new("PangoAttrList**")
     text = ffi.new("char**")
     error = ffi.new("GError**")
-    if six.PY3:
-        value = value.encode()
+    value = value.encode()
 
     ret = pango.pango_parse_markup(value, -1, accel_marker, attr_list, text, ffi.NULL, error)
 
     if ret == 0:
         raise Exception("parse_markup() failed for %s" % value)
 
-    return attr_list[0], ffi.string(text[0]), six.unichr(accel_marker)
+    return attr_list[0], ffi.string(text[0]), chr(accel_marker)
 
 
 def markup_escape_text(text):
     ret = gobject.g_markup_escape_text(text.encode('utf-8'), -1)
-    if six.PY3:
-        return ffi.string(ret).decode()
-    return ffi.string(ret)
+    return ffi.string(ret).decode()

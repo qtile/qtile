@@ -26,7 +26,6 @@
 
 from . import base
 
-import six
 import os.path
 import mailbox
 
@@ -47,7 +46,7 @@ class Maildir(base.ThreadedPollText):
 
         # if it looks like a list of strings then we just convert them
         # and use the name as the label
-        if isinstance(self.subFolders[0], six.string_types):
+        if isinstance(self.subFolders[0], str):
             self.subFolders = [
                 {"path": folder, "label": folder}
                 for folder in self.subFolders

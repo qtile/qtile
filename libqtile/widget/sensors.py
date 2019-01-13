@@ -27,8 +27,6 @@
 import re
 from subprocess import CalledProcessError
 
-from six import PY2
-
 from . import base
 from ..utils import (
     UnixCommandNotFound, UnixCommandRuntimeError, catch_exception_and_warn
@@ -69,7 +67,7 @@ class ThermalSensor(base.InLoopPollText):
              r"(\d+\.\d+)"   # temp value
              u"({degrees}"   # degree symbol match
              u"[C|F])"       # Celsius or Fahrenheit
-             ).format(degrees=u"\xc2\xb0" if PY2 else u"\xb0"),
+             ).format(degrees=u"\xb0"),
             re.UNICODE | re.VERBOSE
         )
         self.value_temp = re.compile(r"\d+\.\d+")
@@ -97,6 +95,8 @@ class ThermalSensor(base.InLoopPollText):
         if not self.metric:
             command.append("-f")
         sensors_out = self.call_process(command)
+        if not sensors_out:
+            return None
         return self._format_sensors_output(sensors_out)
 
     def _format_sensors_output(self, sensors_out):

@@ -88,7 +88,7 @@ if '_cffi_backend' in sys.builtin_module_names:  # pypy has cffi builtin
 else:
     requires_cffi = "cffi>=1.1.0"
 
-dependencies = ['xcffib>=0.5.0', 'cairocffi>=0.9[xcb]', 'six>=1.4.1', requires_cffi]
+dependencies = ['xcffib>=0.5.0', 'cairocffi>=0.9[xcb]', requires_cffi]
 
 setup(
     name="qtile",
