@@ -216,10 +216,6 @@ def safe_import(module_names, class_name, globals_, fallback=None):
             safe_import(module_names, name, globals_)
         return
     package = __package__
-    # TODO: remove when we really want to drop 3.2 support
-    # python 3.2 don't set __package__
-    if not package:
-        package = __name__
     try:
         module = importlib.import_module(module_path, package)
         globals_[class_name] = getattr(module, class_name)
