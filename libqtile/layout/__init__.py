@@ -35,6 +35,5 @@ from .stack import Stack
 from .tile import Tile
 from .tree import TreeTab
 from .verticaltile import VerticalTile
-from .wmii import Wmii
 from .xmonad import MonadTall, MonadWide
 from .zoomy import Zoomy
