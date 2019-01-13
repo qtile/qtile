@@ -13,11 +13,7 @@
 
 import os
 import sys
-try:
-    # Python >=3.3
-    from unittest.mock import MagicMock
-except ImportError:
-    from mock import MagicMock
+from unittest.mock import MagicMock
 
 
 class Mock(MagicMock):
