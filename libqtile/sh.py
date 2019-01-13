@@ -20,7 +20,6 @@
 """
     A command shell for Qtile.
 """
-from __future__ import division, print_function
 
 import fcntl
 import inspect

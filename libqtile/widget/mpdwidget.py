@@ -37,8 +37,6 @@
 # TODO: some kind of templating to make shown info configurable
 # TODO: best practice to handle failures? just write to stderr?
 
-from __future__ import division
-
 import re
 import time
 

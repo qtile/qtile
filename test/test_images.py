@@ -2,8 +2,6 @@
 test_images.py contains unittests for libqtile.images.Img
 and its supporting code.
 """
-from __future__ import division
-
 import pytest
 import libqtile.images as images
 import cairocffi

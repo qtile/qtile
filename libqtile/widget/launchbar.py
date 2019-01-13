@@ -40,9 +40,6 @@ To execute a python command in qtile, begin with by 'qshell:'
 
 
 """
-
-from __future__ import division
-
 from libqtile import bar
 from libqtile.log_utils import logger
 from libqtile.widget import base

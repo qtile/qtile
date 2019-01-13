@@ -34,7 +34,6 @@
     A minimal EWMH-aware OO layer over xpyb. This is NOT intended to be
     complete - it only implements the subset of functionalty needed by qtile.
 """
-from __future__ import print_function, division
 import six
 from collections import OrderedDict
 from itertools import repeat, chain
