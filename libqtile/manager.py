@@ -766,7 +766,7 @@ class Qtile(command.CommandObject):
             if not isinstance(win, window.Window):
                 return None
             return win.window.get_net_wm_pid()
-        pids = map(get_interesting_pid, self.windowMap.values())
+        pids = map(get_interesting_pid, self.windows_map.values())
         pids = list(filter(lambda x: x is not None, pids))
 
         # Give the windows a chance to shut down nicely.
