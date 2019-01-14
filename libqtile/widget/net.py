@@ -20,6 +20,8 @@
 from libqtile.log_utils import logger
 from . import base
 
+from typing import List
+
 
 class Net(base.ThreadedPollText):
     """Displays interface down and up speed"""
@@ -52,7 +54,7 @@ class Net(base.ThreadedPollText):
         return b, letter
 
     def get_stats(self):
-        lines: List[str]= []
+        lines: List[str] = []
         with open('/proc/net/dev', 'r') as f:
             lines = f.readlines()[2:]
         interfaces = {}

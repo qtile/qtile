@@ -496,8 +496,7 @@ class ThreadPoolText(_TextBox):
     ]
 
     def __init__(self, text, **config):
-        super().__init__(text, width=bar.CALCULATED,
-                                             **config)
+        super().__init__(text, width=bar.CALCULATED, **config)
         self.add_defaults(ThreadPoolText.defaults)
 
     def timer_setup(self):
