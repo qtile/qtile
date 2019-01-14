@@ -70,7 +70,7 @@ class Mpd(base.ThreadPoolText):
     ]
 
     def __init__(self, **config):
-        super(Mpd, self).__init__('MPD Widget', **config)
+        super().__init__('MPD Widget', **config)
         self.add_defaults(Mpd.defaults)
         self.inc = 2
         self.client = mpd.MPDClient()
@@ -121,7 +121,7 @@ class Mpd(base.ThreadPoolText):
         return True
 
     def _configure(self, qtile, bar):
-        super(Mpd, self)._configure(qtile, bar)
+        super()._configure(qtile, bar)
         self.layout = self.drawer.textlayout(
             self.text,
             self.foreground,

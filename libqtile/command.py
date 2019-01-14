@@ -260,7 +260,7 @@ class Client(_CommandRoot):
 class CommandRoot(_CommandRoot):
     def __init__(self, qtile):
         self.qtile = qtile
-        super(CommandRoot, self).__init__()
+        super().__init__()
 
     def call(self, selectors, name, *args, **kwargs):
         state, val = self.qtile.server.call((selectors, name, args, kwargs))

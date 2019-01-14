@@ -95,7 +95,7 @@ class Mpd2(base.ThreadPoolText):
 
     def __init__(self, status_format=default_format,
                  prepare_status=prepare_status, **config):
-        super(Mpd2, self).__init__(None, **config)
+        super().__init__(None, **config)
         self.add_defaults(Mpd2.defaults)
         self.status_format = status_format
         self.prepare_status = prepare_status
@@ -191,7 +191,7 @@ class Mpd2(base.ThreadPoolText):
             self.prepare_status[key](status, key, self.space)
 
     def finalize(self):
-        super(Mpd2, self).finalize()
+        super().finalize()
 
         try:
             self.client.close()

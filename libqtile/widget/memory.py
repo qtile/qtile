@@ -40,7 +40,7 @@ class Memory(base.InLoopPollText):
     ]
 
     def __init__(self, **config):
-        super(Memory, self).__init__(**config)
+        super().__init__(**config)
         self.add_defaults(Memory.defaults)
 
     def poll(self):

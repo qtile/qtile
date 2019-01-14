@@ -95,7 +95,7 @@ class Dmenu(base.RunCommand):
                 lines = len(items)
             self.configured_command.extend(("-l", str(lines)))
 
-        proc = super(Dmenu, self).run()
+        proc = super().run()
 
         if items:
             input_str = "\n".join([i for i in items]) + "\n"

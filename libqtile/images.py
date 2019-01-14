@@ -124,14 +124,14 @@ class _Descriptor:
 
 class _Resetter(_Descriptor):
     def __set__(self, obj, value):
-        super(_Resetter, self).__set__(obj, value)
+        super().__set__(obj, value)
         obj._reset()
 
 
 class _PixelSize(_Resetter):
     def __set__(self, obj, value):
         value = max(round(value), 1)
-        super(_PixelSize, self).__set__(obj, value)
+        super().__set__(obj, value)
 
     def get_default(self, obj):
         size = obj.default_size
@@ -141,7 +141,7 @@ class _PixelSize(_Resetter):
 class _Rotation(_Resetter):
     def __set__(self, obj, value):
         value = float(value)
-        super(_Rotation, self).__set__(obj, value)
+        super().__set__(obj, value)
 
 
 _ImgSize = namedtuple('_ImgSize', ('width', 'height'))

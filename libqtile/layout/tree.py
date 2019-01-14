@@ -147,7 +147,7 @@ class TreeNode:
 
 class Root(TreeNode):
     def __init__(self, sections, default_section=None):
-        super(Root, self).__init__()
+        super().__init__()
         self.sections = {}
         for section in sections:
             self.add_section(section)
@@ -214,7 +214,7 @@ class Root(TreeNode):
 
 class Section(TreeNode):
     def __init__(self, title):
-        super(Section, self).__init__()
+        super().__init__()
         self.title = title
 
     def draw(self, layout, top, level=0):
@@ -240,14 +240,14 @@ class Section(TreeNode):
             layout.section_padding
 
         # run the TreeNode draw to draw children (if expanded)
-        top = super(Section, self).draw(layout, top, level)
+        top = super().draw(layout, top, level)
 
         return top + layout.section_bottom
 
 
 class Window(TreeNode):
     def __init__(self, win):
-        super(Window, self).__init__()
+        super().__init__()
         self.window = win
         self._title_top = None
 
@@ -279,13 +279,13 @@ class Window(TreeNode):
         top += framed.height + layout.vspace + layout.border_width
 
         # run the TreeNode draw to draw children (if expanded)
-        return super(Window, self).draw(layout, top, level + 1)
+        return super().draw(layout, top, level + 1)
 
     def button_press(self, x, y):
         """Returns self if clicked on title else returns sibling"""
         if self._title_top <= y < self._children_top:
             return self
-        return super(Window, self).button_press(x, y)
+        return super().button_press(x, y)
 
     def remove(self):
         """Removes this Window

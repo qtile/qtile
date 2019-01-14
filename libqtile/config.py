@@ -167,21 +167,21 @@ class EzConfig:
 class EzKey(EzConfig, Key):
     def __init__(self, keydef, *commands):
         modkeys, key = self.parse(keydef)
-        super(EzKey, self).__init__(modkeys, key, *commands)
+        super().__init__(modkeys, key, *commands)
 
 
 class EzClick(EzConfig, Click):
     def __init__(self, btndef, *commands, **kwargs):
         modkeys, button = self.parse(btndef)
         button = 'Button%s' % button
-        super(EzClick, self).__init__(modkeys, button, *commands, **kwargs)
+        super().__init__(modkeys, button, *commands, **kwargs)
 
 
 class EzDrag(EzConfig, Drag):
     def __init__(self, btndef, *commands, **kwargs):
         modkeys, button = self.parse(btndef)
         button = 'Button%s' % button
-        super(EzDrag, self).__init__(modkeys, button, *commands, **kwargs)
+        super().__init__(modkeys, button, *commands, **kwargs)
 
 
 class ScreenRect:

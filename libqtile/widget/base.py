@@ -60,7 +60,7 @@ from typing import Any, List, Tuple
 # +------------------------+--------------------+--------------------+
 class _Orientations(int):
     def __new__(cls, value, doc):
-        return super(_Orientations, cls).__new__(cls, value)
+        return super().__new__(cls, value)
 
     def __init__(self, value, doc):
         self.doc = doc
@@ -496,7 +496,7 @@ class ThreadPoolText(_TextBox):
     ]
 
     def __init__(self, text, **config):
-        super(ThreadPoolText, self).__init__(text, width=bar.CALCULATED,
+        super().__init__(text, width=bar.CALCULATED,
                                              **config)
         self.add_defaults(ThreadPoolText.defaults)
 
