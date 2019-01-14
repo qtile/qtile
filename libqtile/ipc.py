@@ -24,6 +24,7 @@
     run the same Python version, and that clients must be trusted (as
     un-marshalling untrusted data can result in arbitrary code execution).
 """
+import asyncio
 import marshal
 import os.path
 import socket
@@ -31,7 +32,6 @@ import struct
 import fcntl
 import json
 
-from .asyncio_compat import asyncio
 from .log_utils import logger
 
 HDRLEN = 4

@@ -23,12 +23,7 @@ import os
 import sys
 
 from jupyter_client.kernelspec import install_kernel_spec
-
-# On Python 3, TemporaryDirectory works with context manager
-try:
-    from tempfile import TemporaryDirectory
-except ImportError:
-    from IPython.utils.tempdir import TemporaryDirectory
+from tempfile import TemporaryDirectory
 
 kernel_json = {
     "argv": [sys.executable, "-m", "libqtile.interactive.iqshell_kernel", "-f", "{connection_file}"],

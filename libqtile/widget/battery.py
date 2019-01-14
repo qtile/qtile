@@ -28,19 +28,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-from __future__ import division
-
 import os
 from libqtile import bar
 from libqtile.log_utils import logger
 from . import base
 from .. import images
 
-try:
-    from typing import Dict  # noqa: F401
-except ImportError:
-    pass
+from typing import Dict
 
 BAT_DIR = '/sys/class/power_supply'
 CHARGED = 'Full'
@@ -73,7 +67,7 @@ def _get_battery_name():
 class _Battery(base._TextBox):
     """Base battery class"""
 
-    filenames = {}  # type: Dict
+    filenames: Dict = {}
 
     defaults = [
         ('battery_name', _get_battery_name(), 'ACPI name of a battery, usually BAT0'),

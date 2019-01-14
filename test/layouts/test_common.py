@@ -104,7 +104,7 @@ each_layout_config_events = pytest.mark.parametrize("qtile", AllLayoutsConfigEve
 
 @each_layout_config
 def test_window_types(qtile):
-    pytest.importorskip("Tkinter")
+    pytest.importorskip("tkinter")
     qtile.test_window("one")
 
     # A dialog should take focus and be floating
@@ -120,7 +120,7 @@ def test_window_types(qtile):
 
 @each_layout_config
 def test_focus_cycle(qtile):
-    pytest.importorskip("Tkinter")
+    pytest.importorskip("tkinter")
 
     qtile.test_window("one")
     qtile.test_window("two")
@@ -279,7 +279,7 @@ def test_remove(qtile):
 
 @each_layout_config
 def test_remove_floating(qtile):
-    pytest.importorskip("Tkinter")
+    pytest.importorskip("tkinter")
 
     one = qtile.test_window("one")
     qtile.test_window("two")
@@ -351,7 +351,7 @@ def test_remove_floating(qtile):
 
 @each_layout_config
 def test_desktop_notifications(qtile):
-    pytest.importorskip("Tkinter")
+    pytest.importorskip("tkinter")
 
     # Unlike normal floating windows such as dialogs, notifications don't steal
     # focus when they spawn, so test them separately

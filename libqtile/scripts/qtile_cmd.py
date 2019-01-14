@@ -25,7 +25,6 @@
     This can be used standalone or in other shell scripts.
 """
 
-from __future__ import print_function
 import pprint
 import argparse
 from libqtile.command import Client

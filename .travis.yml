@@ -1,43 +1,27 @@
 sudo: false
-dist: trusty
+dist: xenial
 language: python
 
 matrix:
     include:
-        - python: 2.7  # these are just to make travis's UI a bit prettier
-          env: TOXENV=py27-trollius
-        - python: 3.4
-          env: TOXENV=py34
-        - python: 3.5
-          env: TOXENV=py35
         - python: 3.6
           env: TOXENV=py36
+        - python: 3.7
+          env: TOXENV=py37
         - python: nightly
           env: TOXENV=py-nightly
-
-        - python: pypy
-          env: TOXENV=pypy-trollius
-        - python: pypy3
-          env: TOXENV=pypy3
-
-        - python: 3.6
+        - python: 3.7
           env: TOXENV=packaging
-        - python: 3.6
+        - python: 3.7
           env: TOXENV=docs
-        - python: 3.6
+        - python: 3.7
           env: TOXENV=pep8
-        - python: 2.7
-          env: TOXENV=pep8
-        - python: 3.6
+        - python: 3.7
           env: TOXENV=mypy
 
     allow_failures:
         - python: nightly
           env: TOXENV=py-nightly
-        - python: pypy
-          env: TOXENV=pypy-trollius
-        - python: pypy3
-          env: TOXENV=pypy3
 
 cache:
   directories:
@@ -50,6 +34,8 @@ addons:
     - xserver-xephyr
     - xvfb
     - graphviz # for docs
+    - xterm
+
 
 install:
   - pip install tox

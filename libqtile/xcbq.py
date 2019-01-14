@@ -34,8 +34,6 @@
     A minimal EWMH-aware OO layer over xpyb. This is NOT intended to be
     complete - it only implements the subset of functionalty needed by qtile.
 """
-from __future__ import print_function, division
-import six
 from collections import OrderedDict
 from itertools import repeat, chain
 
@@ -653,15 +651,9 @@ class Window(object):
                 )
 
         try:
-            if isinstance(value, six.string_types):
+            if isinstance(value, str):
                 # xcffib will pack the bytes, but we should encode them properly
-                if six.PY3:
-                    value = value.encode()
-                elif not isinstance(value, str):
-                    # This will only run for Python 2 unicode strings, can't
-                    # use 'isinstance(value, unicode)' because Py 3 does not
-                    # have unicode and pyflakes complains
-                    value = value.encode('utf-8')
+                value = value.encode()
             else:
                 # if this runs without error, the value is already a list, don't wrap it
                 next(iter(value))
@@ -706,10 +698,10 @@ class Window(object):
             r = self.conn.conn.core.GetProperty(
                 False, self.wid,
                 self.conn.atoms[prop]
-                if isinstance(prop, six.string_types)
+                if isinstance(prop, str)
                 else prop,
                 self.conn.atoms[type]
-                if isinstance(type, six.string_types)
+                if isinstance(type, str)
                 else type,
                 0, (2 ** 32) - 1
             ).reply()

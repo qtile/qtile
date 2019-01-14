@@ -18,16 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import division
-
-try:
-    import tracemalloc
-    has_tracemalloc = True
-except ImportError:
-    has_tracemalloc = False
-
 from libqtile.dgroups import DGroups
 from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
+import asyncio
 import io
 import logging
 import os
@@ -39,11 +32,10 @@ import traceback
 import xcffib
 import xcffib.xinerama
 import xcffib.xproto
-import six
 import time
 import warnings
+import tracemalloc
 
-from .asyncio_compat import asyncio
 from .config import Drag, Click, Screen, Match, Rule
 from .config import ScratchPad as ScratchPadConfig
 from .group import _Group
@@ -60,24 +52,16 @@ from . import window
 from . import xcbq
 
 
-if sys.version_info >= (3, 3):
-    def _import_module(module_name, dir_path):
-        import importlib
-        file_name = os.path.join(dir_path, module_name) + '.py'
-        f = importlib.machinery.SourceFileLoader(module_name, file_name)
-        module = f.load_module()
-        return module
-else:
-    def _import_module(module_name, dir_path):
-        import imp
-        fp = None
-        try:
-            fp, pathname, description = imp.find_module(module_name, [dir_path])
-            module = imp.load_module(module_name, fp, pathname, description)
-        finally:
-            if fp:
-                fp.close()
-        return module
+def _import_module(module_name, dir_path):
+    import imp
+    fp = None
+    try:
+        fp, pathname, description = imp.find_module(module_name, [dir_path])
+        module = imp.load_module(module_name, fp, pathname, description)
+    finally:
+        if fp:
+            fp.close()
+    return module
 
 
 class Qtile(command.CommandObject):
@@ -1445,7 +1429,7 @@ class Qtile(command.CommandObject):
 
             spawn(["xterm", "-T", "Temporary terminal"])
         """
-        if isinstance(cmd, six.string_types):
+        if isinstance(cmd, str):
             args = shlex.split(cmd)
         else:
             args = list(cmd)
@@ -1847,10 +1831,6 @@ class Qtile(command.CommandObject):
 
         Running tracemalloc is required for qtile-top
         """
-        if not has_tracemalloc:
-            logger.warning('No tracemalloc module')
-            raise command.CommandError("No tracemalloc module")
-
         if not tracemalloc.is_tracing():
             tracemalloc.start()
         else:
@@ -1858,10 +1838,6 @@ class Qtile(command.CommandObject):
 
     def cmd_tracemalloc_dump(self):
         """Dump tracemalloc snapshot"""
-        if not has_tracemalloc:
-            logger.warning('No tracemalloc module')
-            raise command.CommandError("No tracemalloc module")
-
         if not tracemalloc.is_tracing():
             return [False, "Trace not started"]
         cache_directory = get_cache_dir()

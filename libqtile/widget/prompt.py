@@ -34,7 +34,6 @@
 import glob
 import os
 import pickle
-import six
 import string
 from collections import OrderedDict, deque
 
@@ -562,13 +561,7 @@ class Prompt(base._TextBox):
 
                 if self.position < self.max_history:
                     self.position += 1
-                if six.PY3:
-                    os.makedirs(os.path.dirname(self.history_path), exist_ok=True)
-                else:
-                    try:
-                        os.makedirs(os.path.dirname(self.history_path))
-                    except OSError:  # file exists
-                        pass
+                os.makedirs(os.path.dirname(self.history_path), exist_ok=True)
                 with open(self.history_path, mode='wb') as f:
                     pickle.dump(self.history, f, protocol=2)
             self.callback(self.user_input)

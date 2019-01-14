@@ -11,6 +11,7 @@ exclude requirements.txt
 exclude requirements-dev.txt
 exclude libqtile/_ffi*.py
 exclude Makefile
+exclude dev.sh
 
 graft libqtile/resources
 graft resources

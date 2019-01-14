@@ -23,7 +23,6 @@
 # SOFTWARE.
 
 import pytest
-import six
 
 import libqtile.layout
 import libqtile.bar
@@ -156,7 +155,7 @@ def test_textbox_errors(qtile):
     qtile.c.widget["text"].update(None)
     qtile.c.widget["text"].update("".join(chr(i) for i in range(255)))
     qtile.c.widget["text"].update("V\xE2r\xE2na\xE7\xEE")
-    qtile.c.widget["text"].update(six.u("\ua000"))
+    qtile.c.widget["text"].update("\ua000")
 
 
 @gb_config

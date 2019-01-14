@@ -88,7 +88,7 @@ if '_cffi_backend' in sys.builtin_module_names:  # pypy has cffi builtin
 else:
     requires_cffi = "cffi>=1.1.0"
 
-dependencies = ['xcffib>=0.5.0', 'cairocffi>=0.9[xcb]', 'six>=1.4.1', requires_cffi]
+dependencies = ['xcffib>=0.5.0', 'cairocffi>=0.9[xcb]', requires_cffi]
 
 setup(
     name="qtile",
@@ -100,13 +100,9 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: Implementation :: CPython",
-        "Programming Language :: Python :: Implementation :: PyPy",
         "Operating System :: Unix",
         "Topic :: Desktop Environment :: Window Managers",
     ],
@@ -120,9 +116,6 @@ setup(
     install_requires=dependencies,
     setup_requires=dependencies,
     extras_require={
-        ':python_version=="2.7"': [
-            'trollius',
-        ],
         'ipython': ["ipykernel", "jupyter_console"],
     },
     packages=['libqtile',

@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 import locale
 
 from .generic_poll_text import GenPollUrl

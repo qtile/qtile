@@ -25,15 +25,12 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-from __future__ import division
-
 from . import base
 from .. import bar, hook
 from ..log_utils import logger
-import six
 import os
 import cairocffi
+import inspect
 from ..layout.base import Layout
 from .. import layout as layout_module
 
@@ -166,7 +163,7 @@ class CurrentLayoutIcon(base._TextBox):
             layout_class_name.lower()
             for layout_class, layout_class_name
             in map(lambda x: (getattr(layout_module, x), x), dir(layout_module))
-            if isinstance(layout_class, six.class_types) and issubclass(layout_class, Layout)
+            if inspect.isclass(layout_class) and issubclass(layout_class, Layout)
         ]
 
     def _update_icon_paths(self):

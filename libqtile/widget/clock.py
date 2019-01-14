@@ -21,7 +21,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import six
 import time
 from datetime import datetime, timedelta
 from contextlib import contextmanager
@@ -29,8 +28,7 @@ from . import base
 
 import os
 
-if six.PY3:
-    from datetime import timezone
+from datetime import timezone
 
 
 @contextmanager
@@ -70,10 +68,7 @@ class Clock(base.InLoopPollText):
     # like (x-1).999 instead of x.000
     def _get_time(self):
         time.tzset()
-        if six.PY3:
-            now = datetime.now(timezone.utc).astimezone()
-        else:
-            now = datetime.now()
+        now = datetime.now(timezone.utc).astimezone()
         return (now + self.DELTA).strftime(self.format)
 
     def poll(self):

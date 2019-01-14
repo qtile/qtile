@@ -20,7 +20,6 @@
 """
     A command shell for Qtile.
 """
-from __future__ import division, print_function
 
 import fcntl
 import inspect
@@ -29,10 +28,7 @@ import re
 import readline
 import sys
 import struct
-import six
 import termios
-
-from six.moves import input
 
 from . import command
 from . import ipc
@@ -328,7 +324,7 @@ class QSh(object):
                 continue
 
             val = self.process_command(line)
-            if isinstance(val, six.string_types):
+            if isinstance(val, str):
                 print(val)
             elif val:
                 pprint.pprint(val)

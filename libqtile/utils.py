@@ -21,13 +21,9 @@
 import functools
 import os
 import operator
-import sys
 import warnings
 import traceback
 import importlib
-
-import six
-from six.moves import reduce
 
 from . import xcbq
 from .log_utils import logger
@@ -56,7 +52,7 @@ def translate_masks(modifiers):
         except KeyError:
             raise KeyError("Unknown modifier: %s" % i)
     if masks:
-        return reduce(operator.or_, masks)
+        return functools.reduce(operator.or_, masks)
     else:
         return 0
 
@@ -83,45 +79,7 @@ def shuffle_down(lst):
         lst.append(c)
 
 
-if sys.version_info < (3, 3):
-    class lru_cache(object):  # noqa: N801
-        """
-            A decorator that implements a self-expiring LRU cache for class
-            methods (not functions!).
-
-            Cache data is tracked as attributes on the object itself. There is
-            therefore a separate cache for each object instance.
-        """
-        def __init__(self, maxsize=128, typed=False):
-            self.size = maxsize
-
-        def __call__(self, f):
-            cache_name = "_cached_{0}".format(f.__name__)
-            cache_list_name = "_cachelist_{0}".format(f.__name__)
-            size = self.size
-
-            @functools.wraps(f)
-            def wrap(self, *args):
-                if not hasattr(self, cache_name):
-                    setattr(self, cache_name, {})
-                    setattr(self, cache_list_name, [])
-                cache = getattr(self, cache_name)
-                cache_list = getattr(self, cache_list_name)
-                if args in cache:
-                    cache_list.remove(args)
-                    cache_list.insert(0, args)
-                    return cache[args]
-                else:
-                    ret = f(self, *args)
-                    cache_list.insert(0, args)
-                    cache[args] = ret
-                    if len(cache_list) > size:
-                        d = cache_list.pop()
-                        cache.pop(d)
-                    return ret
-            return wrap
-else:
-    from functools import lru_cache  # noqa: F401
+from functools import lru_cache  # noqa: F401
 
 
 def rgb(x):
@@ -141,7 +99,7 @@ def rgb(x):
         else:
             alpha = 1
         return (x[0] / 255.0, x[1] / 255.0, x[2] / 255.0, alpha)
-    elif isinstance(x, six.string_types):
+    elif isinstance(x, str):
         if x.startswith("#"):
             x = x[1:]
         if "." in x:
@@ -165,7 +123,7 @@ def hex(x):
 def scrub_to_utf8(text):
     if not text:
         return u""
-    elif isinstance(text, six.text_type):
+    elif isinstance(text, str):
         return text
     else:
         return text.decode("utf-8", "ignore")
@@ -207,7 +165,7 @@ def catch_exception_and_warn(warning=Warning, return_on_exception=None,
             try:
                 return_value = func(*args, **kwargs)
             except excepts as err:
-                logger.warn(err.strerror)
+                logger.warning(err.strerror)
                 warnings.warn(err.strerror, warning)
             return return_value
         return wrapper
@@ -256,10 +214,6 @@ def safe_import(module_names, class_name, globals_, fallback=None):
             safe_import(module_names, name, globals_)
         return
     package = __package__
-    # TODO: remove when we really want to drop 3.2 support
-    # python 3.2 don't set __package__
-    if not package:
-        package = __name__
     try:
         module = importlib.import_module(module_path, package)
         globals_[class_name] = getattr(module, class_name)

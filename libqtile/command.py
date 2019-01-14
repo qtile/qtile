@@ -22,8 +22,6 @@ import abc
 import inspect
 import traceback
 import os
-import six
-import sys
 
 from . import ipc
 from .utils import get_cache_dir
@@ -116,7 +114,7 @@ class _Command(object):
         return self.call(self.selectors, self.name, *args, **kwargs)
 
 
-class _CommandTree(six.with_metaclass(abc.ABCMeta)):
+class _CommandTree(metaclass=abc.ABCMeta):
     """A hierarchical collection of objects that contain commands
 
     CommandTree objects act as containers, allowing them to be nested. The
@@ -205,7 +203,7 @@ _TreeMap = {
 }
 
 
-class _CommandRoot(six.with_metaclass(abc.ABCMeta, _CommandTree)):
+class _CommandRoot(_CommandTree, metaclass=abc.ABCMeta):
     """This class constructs the entire hierarchy of callable commands from a conf object"""
     name = None
     _contains = ["layout", "widget", "screen", "bar", "window", "group"]
@@ -320,7 +318,7 @@ class _LazyTree(_CommandRoot):
 lazy = _LazyTree()
 
 
-class CommandObject(six.with_metaclass(abc.ABCMeta)):
+class CommandObject(metaclass=abc.ABCMeta):
     """Base class for objects that expose commands
 
     Each command should be a method named `cmd_X`, where X is the command name.
@@ -419,13 +417,6 @@ class CommandObject(six.with_metaclass(abc.ABCMeta)):
         return self.items(name)
 
     def get_command_signature(self, name):
-        # inspect.signature introduced in Python 3.3
-        if sys.version_info < (3, 3):
-            args, varargs, varkw, defaults = inspect.getargspec(self.command(name))
-            if args and args[0] == "self":
-                args = args[1:]
-            return name + inspect.formatargspec(args, varargs, varkw, defaults)
-
         signature = inspect.signature(self.command(name))
         args = list(signature.parameters)
         if args and args[0] == "self":

@@ -23,7 +23,6 @@
     This program is carefully crafted to exercise a number of corner-cases in
     Qtile.
 """
-from __future__ import print_function
 import sys
 import time
 import xcffib

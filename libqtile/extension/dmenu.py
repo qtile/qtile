@@ -18,7 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import six
 import shlex
 from . import base
 
@@ -99,7 +98,7 @@ class Dmenu(base.RunCommand):
         proc = super(Dmenu, self).run()
 
         if items:
-            input_str = "\n".join([six.u(i) for i in items]) + "\n"
+            input_str = "\n".join([i for i in items]) + "\n"
             return proc.communicate(str.encode(input_str))[0].decode('utf-8')
 
         return proc
