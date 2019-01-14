@@ -21,6 +21,7 @@
 from libqtile.dgroups import DGroups
 from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
 import asyncio
+import functools
 import io
 import logging
 import os
@@ -509,7 +510,7 @@ class Qtile(command.CommandObject):
                 return
             self.widgets_map[w.name] = w
 
-    @utils.lru_cache()
+    @functools.lru_cache()
     def color_pixel(self, name):
         return self.conn.screens[0].default_colormap.alloc_color(name).pixel
 

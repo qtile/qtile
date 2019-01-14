@@ -79,9 +79,6 @@ def shuffle_down(lst):
         lst.append(c)
 
 
-from functools import lru_cache  # noqa: F401
-
-
 def rgb(x):
     """
         Returns a valid RGBA tuple.

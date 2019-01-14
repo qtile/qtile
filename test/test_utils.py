@@ -23,55 +23,9 @@
 import libqtile.utils as utils
 
 
-class Foo:
-    ran = False
-
-    @utils.lru_cache(2)
-    def one(self, x):
-        self.ran = True
-        return x
-
-
 def test_translate_masks():
     assert utils.translate_masks(["shift", "control"])
     assert utils.translate_masks([]) == 0
-
-
-def test_lrucache_works_as_decorator():
-    f = Foo()
-    assert f.one(1) == 1
-    assert f.one('test') == 'test'
-
-
-def test_lrucache_caches():
-    f = Foo()
-    f.one(1)
-    f.one(2)
-    f.ran = False
-    f.one(1)
-    assert not f.ran
-    f.one(2)
-    assert not f.ran
-
-
-def test_lrucache_discards_lru_item():
-    f = Foo()
-    f.one(1)
-    assert f.ran
-    f.ran = False
-    f.one(1)
-    assert not f.ran
-    f.one(2)
-    f.one(3)
-    f.one(1)
-    assert f.ran
-
-
-def test_lrucache_maintains_size():
-    f = Foo()
-    f.one(1)
-    f.one(2)
-    f.one(3)
 
 
 def test_rgb_from_hex_number():
