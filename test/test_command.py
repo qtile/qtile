@@ -32,7 +32,7 @@ import libqtile.bar
 import libqtile.widget
 
 
-class CallConfig(object):
+class CallConfig:
     keys = [
         libqtile.config.Key(
             ["control"], "j",
@@ -159,7 +159,7 @@ def test_selectors():
     assert g.selectors == []
 
 
-class ServerConfig(object):
+class ServerConfig:
     auto_fullscreen = True
     keys = []
     mouse = []

@@ -27,7 +27,7 @@ from .layout_utils import assert_dimensions, assert_focused, assert_focus_path
 from ..conftest import no_xinerama
 
 
-class MonadTallConfig(object):
+class MonadTallConfig:
     auto_fullscreen = True
     main = None
     groups = [
@@ -47,7 +47,7 @@ def monadtall_config(x):
     return no_xinerama(pytest.mark.parametrize("qtile", [MonadTallConfig], indirect=True)(x))
 
 
-class MonadTallMarginsConfig(object):
+class MonadTallMarginsConfig:
     auto_fullscreen = True
     main = None
     groups = [
@@ -67,7 +67,7 @@ def monadtallmargins_config(x):
     return no_xinerama(pytest.mark.parametrize("qtile", [MonadTallMarginsConfig], indirect=True)(x))
 
 
-class MonadWideConfig(object):
+class MonadWideConfig:
     auto_fullscreen = True
     main = None
     groups = [
@@ -87,7 +87,7 @@ def monadwide_config(x):
     return no_xinerama(pytest.mark.parametrize("qtile", [MonadWideConfig], indirect=True)(x))
 
 
-class MonadWideMarginsConfig(object):
+class MonadWideMarginsConfig:
     auto_fullscreen = True
     main = None
     groups = [

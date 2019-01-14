@@ -122,7 +122,7 @@ class Gap(command.CommandObject):
         return self.info()
 
 
-class Obj(object):
+class Obj:
     def __init__(self, name):
         self.name = name
 
@@ -329,7 +329,7 @@ class Bar(Gap, configurable.Configurable):
             :screen The integer screen offset
             :position One of "top", "bottom", "left", or "right"
         """
-        class _Fake(object):
+        class _Fake:
             pass
         fake = _Fake()
         fake.event_x = x

@@ -111,7 +111,7 @@ def whereis(program):
     return None
 
 
-class BareConfig(object):
+class BareConfig:
     auto_fullscreen = True
     groups = [
         libqtile.config.Group("a"),
@@ -142,7 +142,7 @@ class BareConfig(object):
     follow_mouse_focus = False
 
 
-class Xephyr(object):
+class Xephyr:
     """Spawn Xephyr instance
 
     Set-up a Xephyr instance with the given parameters.  The Xephyr instance
@@ -230,7 +230,7 @@ class Xephyr(object):
         self.proc = None
 
 
-class Qtile(object):
+class Qtile:
     """Spawn a Qtile instance
 
     Setup a qtile server instance on the given display, with the given socket

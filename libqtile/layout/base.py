@@ -351,7 +351,7 @@ class Delegate(Layout):
         return d
 
 
-class _ClientList(object):
+class _ClientList:
     """
     ClientList maintains a list of clients and a current client.
 

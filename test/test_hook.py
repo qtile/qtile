@@ -36,7 +36,7 @@ from .conftest import BareConfig
 # 1. Check all hooks that can be fired
 
 
-class Call(object):
+class Call:
     def __init__(self, val):
         self.val = val
 
@@ -46,7 +46,7 @@ class Call(object):
 
 @pytest.yield_fixture
 def hook_fixture():
-    class Dummy(object):
+    class Dummy:
         pass
 
     dummy = Dummy()

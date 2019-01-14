@@ -37,7 +37,7 @@ from . import pangocffi
 from . import utils
 
 
-class TextLayout(object):
+class TextLayout:
     def __init__(self, drawer, text, colour, font_family, font_size,
                  font_shadow, wrap=True, markup=False):
         self.drawer, self.colour = drawer, colour
@@ -132,7 +132,7 @@ class TextLayout(object):
         return TextFrame(self, border_width, border_color, pad_x, pad_y, highlight_color=highlight_color)
 
 
-class TextFrame(object):
+class TextFrame:
     def __init__(self, layout, border_width, border_color, pad_x, pad_y, highlight_color=None):
         self.layout = layout
         self.border_width = border_width
@@ -202,7 +202,7 @@ class TextFrame(object):
         return self.layout.width + self.pad_left + self.pad_right
 
 
-class Drawer(object):
+class Drawer:
     """ A helper class for drawing and text layout.
 
     We have a drawer object for each widget in the bar. The underlying surface

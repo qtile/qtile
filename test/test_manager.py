@@ -44,7 +44,7 @@ import libqtile.confreader
 from .conftest import whereis, BareConfig, no_xinerama, Retry
 
 
-class ManagerConfig(object):
+class ManagerConfig:
     auto_fullscreen = True
     groups = [
         libqtile.config.Group("a"),
@@ -979,7 +979,7 @@ def test_dheight():
     assert s.dheight == 80
 
 
-class _Config(object):
+class _Config:
     groups = [
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),

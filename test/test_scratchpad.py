@@ -33,7 +33,7 @@ from .conftest import no_xinerama
 from .layouts.layout_utils import assert_focused, assert_focus_path
 
 
-class ScratchPadBaseConfic(object):
+class ScratchPadBaseConfic:
     auto_fullscreen = True
     main = None
     screens = []

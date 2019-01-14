@@ -41,7 +41,7 @@ class IPCError(Exception):
     pass
 
 
-class _IPC(object):
+class _IPC:
     def _unpack(self, data):
 
         if data is None:
@@ -131,7 +131,7 @@ class _ClientProtocol(asyncio.Protocol, _IPC):
             self.reply.set_exception(IPCError)
 
 
-class Client(object):
+class Client:
     def __init__(self, fname, is_json=False):
         self.fname = fname
         self.loop = asyncio.get_event_loop()
@@ -216,7 +216,7 @@ class _ServerProtocol(asyncio.Protocol, _IPC):
         self.transport.write_eof()
 
 
-class Server(object):
+class Server:
     def __init__(self, fname, handler, loop):
         self.fname = fname
         self.handler = handler

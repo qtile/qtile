@@ -21,7 +21,7 @@
 from typing import Dict
 
 
-class Configurable(object):
+class Configurable:
     global_defaults: Dict = {}
 
     def __init__(self, **config):
@@ -58,7 +58,7 @@ class Configurable(object):
             return (False, None)
 
 
-class ExtraFallback(object):
+class ExtraFallback:
     """Adds another layer of fallback to attributes
 
     Used to look up a different attribute name

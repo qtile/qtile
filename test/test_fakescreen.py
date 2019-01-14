@@ -58,7 +58,7 @@ GRAPH_KW = dict(line_width=1,
 # also D goes down below the others
 
 
-class FakeScreenConfig(object):
+class FakeScreenConfig:
     auto_fullscreen = True
     main = None
     groups = [

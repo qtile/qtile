@@ -35,7 +35,7 @@ from .. import drawer, hook, window
 to_superscript = dict(zip(map(ord, u'0123456789'), map(ord, u'⁰¹²³⁴⁵⁶⁷⁸⁹')))
 
 
-class TreeNode(object):
+class TreeNode:
     def __init__(self):
         self.children = []
         self.parent = None

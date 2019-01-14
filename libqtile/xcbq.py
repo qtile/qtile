@@ -212,7 +212,7 @@ XCB_CONN_ERRORS = {
 }
 
 
-class MaskMap(object):
+class MaskMap:
     """
         A general utility class that encapsulates the way the mask/value idiom
         works in xpyb. It understands a special attribute _maskvalue on
@@ -250,7 +250,7 @@ ConfigureMasks = MaskMap(xcffib.xproto.ConfigWindow)
 AttributeMasks = MaskMap(CW)
 
 
-class AtomCache(object):
+class AtomCache:
     def __init__(self, conn):
         self.conn = conn
         self.atoms = {}
@@ -286,7 +286,7 @@ class AtomCache(object):
         return self.atoms[key]
 
 
-class _Wrapper(object):
+class _Wrapper:
     def __init__(self, wrapped):
         self.wrapped = wrapped
 
@@ -304,7 +304,7 @@ class Screen(_Wrapper):
         self.root = Window(conn, self.root)
 
 
-class PseudoScreen(object):
+class PseudoScreen:
     """
         This may be a Xinerama screen or a RandR CRTC, both of which are
         rectangular sections of an actual Screen.
@@ -317,7 +317,7 @@ class PseudoScreen(object):
         self.height = height
 
 
-class Colormap(object):
+class Colormap:
     def __init__(self, conn, cid):
         self.conn = conn
         self.cid = cid
@@ -340,7 +340,7 @@ class Colormap(object):
             return self.conn.conn.core.AllocColor(self.cid, r, g, b).reply()
 
 
-class Xinerama(object):
+class Xinerama:
     def __init__(self, conn):
         self.ext = conn.conn(xcffib.xinerama.key)
 
@@ -349,7 +349,7 @@ class Xinerama(object):
         return r.screen_info
 
 
-class RandR(object):
+class RandR:
     def __init__(self, conn):
         self.ext = conn.conn(xcffib.randr.key)
         self.ext.SelectInput(
@@ -371,7 +371,7 @@ class RandR(object):
         return crtc_list
 
 
-class XFixes(object):
+class XFixes:
     selection_mask = SelectionEventMask.SetSelectionOwner | \
         SelectionEventMask.SelectionClientClose | \
         SelectionEventMask.SelectionWindowDestroy
@@ -389,7 +389,7 @@ class XFixes(object):
                                                   self.selection_mask)
 
 
-class NetWmState(object):
+class NetWmState:
     """NetWmState is a descriptor for _NET_WM_STATE_* properties"""
     def __init__(self, prop_name):
         self.prop_name = prop_name
@@ -432,7 +432,7 @@ def _add_net_wm_state(cls):
 
 
 @_add_net_wm_state
-class Window(object):
+class Window:
     def __init__(self, conn, wid):
         self.conn = conn
         self.wid = wid
@@ -807,7 +807,7 @@ class Window(object):
         return root, parent, [Window(self.conn, i) for i in q.children]
 
 
-class Font(object):
+class Font:
     def __init__(self, conn, fid):
         self.conn = conn
         self.fid = fid
@@ -822,7 +822,7 @@ class Font(object):
         return x
 
 
-class Connection(object):
+class Connection:
     _extmap = {
         "xinerama": Xinerama,
         "randr": RandR,

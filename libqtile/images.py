@@ -95,7 +95,7 @@ def get_cairo_pattern(surface, width=None, height=None, theta=0.0):
     return pattern
 
 
-class _Descriptor(object):
+class _Descriptor:
     def __init__(self, name=None, default=None, **opts):
         self.name = name
         self.under_name = '_' + name
@@ -147,7 +147,7 @@ class _Rotation(_Resetter):
 _ImgSize = namedtuple('_ImgSize', ('width', 'height'))
 
 
-class Img(object):
+class Img:
     """Img is a class which creates & manipulates cairo SurfacePatterns from an image
 
     There are two constructors Img(...) and Img.from_path(...)
@@ -336,7 +336,7 @@ def get_matching_files(dirpath='.', explicit_filetype=False, *names):
     return d_total
 
 
-class Loader(object):
+class Loader:
     """Loader - create Img() instances from image names
 
     load icons with Loader e.g.,

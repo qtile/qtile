@@ -50,7 +50,7 @@ def clear():
     subscriptions.clear()
 
 
-class Subscribe(object):
+class Subscribe:
     def __init__(self):
         hooks = set([])
         for i in dir(self):

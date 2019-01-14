@@ -25,7 +25,7 @@ import sys
 import tkinter
 
 
-class Window(object):
+class Window:
     def __init__(self, title, wm_type):
         self.win = tkinter.Tk()
         self.win.title(title)

@@ -74,7 +74,7 @@ ELLIPSIZE_END = pango.PANGO_ELLIPSIZE_END
 units_from_double = pango.pango_units_from_double
 
 
-class PangoLayout(object):
+class PangoLayout:
     def __init__(self, cairo_t):
         self._cairo_t = cairo_t
         self._pointer = pangocairo.pango_cairo_create_layout(cairo_t)
@@ -130,7 +130,7 @@ class PangoLayout(object):
         pango.pango_layout_set_width(self._pointer, width)
 
 
-class FontDescription(object):
+class FontDescription:
     def __init__(self, pointer=None):
         if pointer is None:
             self._pointer = pango.pango_font_description_new()

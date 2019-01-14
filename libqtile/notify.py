@@ -72,7 +72,7 @@ if has_dbus:
             return ("qtile-notify-daemon", "qtile", "1.0", "1")
 
 
-class Notification(object):
+class Notification:
     def __init__(self, summary, body='', timeout=-1, hints=None):
         self.summary = summary
         self.hints = hints or {}
@@ -80,7 +80,7 @@ class Notification(object):
         self.timeout = timeout
 
 
-class NotificationManager(object):
+class NotificationManager:
     def __init__(self):
         self.notifications = []
         self.callbacks = []

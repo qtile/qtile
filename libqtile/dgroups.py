@@ -70,7 +70,7 @@ def simple_key_binder(mod, keynames=None):
     return func
 
 
-class DGroups(object):
+class DGroups:
     """Dynamic Groups"""
     def __init__(self, qtile, dgroups, key_binder=None, delay=1):
         self.qtile = qtile

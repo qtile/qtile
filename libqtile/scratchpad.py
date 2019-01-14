@@ -24,7 +24,7 @@ from . import hook, window, utils
 from .log_utils import logger
 
 
-class WindowVisibilityToggler(object):
+class WindowVisibilityToggler:
     """
     WindowVisibilityToggler is a wrapper for a window, used in ScratchPad group
     to toggle visibility of a window by toggling the group it belongs to.

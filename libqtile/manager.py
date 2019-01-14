@@ -1254,7 +1254,7 @@ class Qtile(command.CommandObject):
 
     def cmd_display_kb(self, *args):
         """Display table of key bindings"""
-        class FormatTable(object):
+        class FormatTable:
             def __init__(self):
                 self.max_col_size = []
                 self.rows = []
@@ -1390,7 +1390,7 @@ class Qtile(command.CommandObject):
             raise command.CommandError("Unknown key: {0:s}".format(key))
         keycode = self.conn.first_sym_to_code[keysym]
 
-        class DummyEv(object):
+        class DummyEv:
             pass
 
         d = DummyEv()

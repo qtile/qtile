@@ -62,7 +62,7 @@ def assert_approx_equal(vec0, vec1):
         assert val0 == approx(val1)
 
 
-class TestImg(object):
+class TestImg:
     def test_init(self, path_n_bytes_image):
         path, bytes_image = path_n_bytes_image
         img = images.Img(bytes_image)
@@ -148,7 +148,7 @@ class TestImg(object):
         assert img.theta == pytest.approx(0.0)
 
 
-class TestImgScale(object):
+class TestImgScale:
     def test_scale(self, png_img):
         size = png_img.default_size
         png_img.scale(2, 3)
@@ -182,7 +182,7 @@ class TestImgScale(object):
             png_img.scale()
 
 
-class TestImgResize(object):
+class TestImgResize:
     def test_resize(self, png_img):
         png_img.resize(100, 100)
         assert png_img.width == 100
@@ -203,7 +203,7 @@ class TestImgResize(object):
         assert (png_img.width / png_img.height) == pytest.approx(ratio)
 
 
-class TestGetMatchingFiles(object):
+class TestGetMatchingFiles:
     def test_audio_volume_muted(self):
         name = 'audio-volume-muted'
         dfiles = images.get_matching_files(
@@ -239,7 +239,7 @@ class TestGetMatchingFiles(object):
             assert len(dfiles[name]) == length
 
 
-class TestLoader(object):
+class TestLoader:
     @pytest.fixture(scope='function')
     def loader(self):
         png_dir = path.join(DATA_DIR, 'png')

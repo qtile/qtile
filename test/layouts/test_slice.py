@@ -34,7 +34,7 @@ from .layout_utils import assert_dimensions, assert_focused, assert_focus_path
 from ..conftest import no_xinerama
 
 
-class SliceConfig(object):
+class SliceConfig:
     auto_fullscreen = True
     main = None
     groups = [

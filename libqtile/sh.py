@@ -44,7 +44,7 @@ def terminal_width():
     return width or 80
 
 
-class QSh(object):
+class QSh:
     """Qtile shell instance"""
     def __init__(self, client, completekey="tab"):
         self.clientroot = client

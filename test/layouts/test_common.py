@@ -27,7 +27,7 @@ import libqtile.hook
 from .layout_utils import assert_focused, assert_focus_path_unordered
 
 
-class AllLayoutsConfig(object):
+class AllLayoutsConfig:
     """
     Ensure that all layouts behave consistently in some common scenarios.
     """

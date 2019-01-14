@@ -38,7 +38,7 @@ COLROW = 2  # do cols top to bottom, left to right
 GOLDEN_RATIO = 1.618
 
 
-class GridInfo(object):
+class GridInfo:
     """
     Calculates sizes for grids
     >>> gi = GridInfo(.5, 5, 600, 480)

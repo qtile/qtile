@@ -35,7 +35,7 @@ import sys
 import warnings
 
 
-class Key(object):
+class Key:
     """Defines a keybinding.
 
     Parameters
@@ -68,7 +68,7 @@ class Key(object):
         return "<Key (%s, %s)>" % (self.modifiers, self.key)
 
 
-class Drag(object):
+class Drag:
     """Defines binding of a mouse to some dragging action
 
     On each motion event command is executed with two extra parameters added x
@@ -93,7 +93,7 @@ class Drag(object):
         return "<Drag (%s, %s)>" % (self.modifiers, self.button)
 
 
-class Click(object):
+class Click:
     """Defines binding of a mouse click
 
     It focuses clicked window by default.  If you want to prevent it, pass
@@ -114,7 +114,7 @@ class Click(object):
         return "<Click (%s, %s)>" % (self.modifiers, self.button)
 
 
-class EzConfig(object):
+class EzConfig:
     """
     Helper class for defining key and button bindings in an emacs-like format.
     Inspired by Xmonad's XMonad.Util.EZConfig.
@@ -184,7 +184,7 @@ class EzDrag(EzConfig, Drag):
         super(EzDrag, self).__init__(modkeys, button, *commands, **kwargs)
 
 
-class ScreenRect(object):
+class ScreenRect:
 
     def __init__(self, x, y, width, height):
         self.x = x
@@ -430,7 +430,7 @@ class Screen(command.CommandObject):
         self.cmd_toggle_group(groupName)
 
 
-class Group(object):
+class Group:
     """Represents a "dynamic" group
 
     These groups can spawn apps, only allow certain Matched windows to be on
@@ -521,7 +521,7 @@ class ScratchPad(Group):
             self.name, ', '.join(dd.name for dd in self.dropdowns))
 
 
-class Match(object):
+class Match:
     """Match for dynamic groups
 
     It can match by title, class or role.
@@ -616,7 +616,7 @@ class Match(object):
         return '<Match %s>' % self._rules
 
 
-class Rule(object):
+class Rule:
     """How to act on a Match
 
     A Rule contains a Match object, and a specification about what to do when

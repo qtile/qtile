@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 
-class QtileState(object):
+class QtileState:
     """Represents the state of the qtile object
 
     Primarily used for restoring state across restarts; any additional state

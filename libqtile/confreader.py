@@ -30,7 +30,7 @@ class ConfigError(Exception):
     pass
 
 
-class Config(object):
+class Config:
     settings_keys = [
         "keys",
         "mouse",

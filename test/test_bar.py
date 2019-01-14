@@ -32,7 +32,7 @@ import libqtile.config
 import libqtile.confreader
 
 
-class GBConfig(object):
+class GBConfig:
     auto_fullscreen = True
     keys = []
     mouse = []
@@ -166,7 +166,7 @@ def test_groupbox_button_press(qtile):
     assert qtile.c.groups()["a"]["screen"] == 0
 
 
-class GeomConf(object):
+class GeomConf:
     auto_fullscreen = False
     main = None
     keys = []
@@ -204,7 +204,7 @@ class DBarV(libqtile.bar.Bar):
         self.horizontal = False
 
 
-class DWidget(object):
+class DWidget:
     def __init__(self, length, length_type):
         self.length, self.length_type = length, length_type
 
@@ -300,7 +300,7 @@ class ExampleWidget(libqtile.widget.base._Widget):
         pass
 
 
-class IncompatibleWidgetConf(object):
+class IncompatibleWidgetConf:
     main = None
     keys = []
     mouse = []
@@ -329,7 +329,7 @@ def test_incompatible_widget(qtile_nospawn):
         qtile_nospawn.create_manager(config)
 
 
-class MultiStretchConf(object):
+class MultiStretchConf:
     main = None
     keys = []
     mouse = []

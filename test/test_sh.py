@@ -30,7 +30,7 @@ import libqtile.manager
 import libqtile.config
 
 
-class ShConfig(object):
+class ShConfig:
     keys = []
     mouse = []
     groups = [

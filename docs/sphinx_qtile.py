@@ -83,7 +83,7 @@ def import_object(module_name, expr):
     return eval(expr, globals, mod.__dict__)
 
 
-class SimpleDirectiveMixin(object):
+class SimpleDirectiveMixin:
     has_content = True
     required_arguments = 1
 

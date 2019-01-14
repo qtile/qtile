@@ -23,7 +23,7 @@
 import libqtile.utils as utils
 
 
-class Foo(object):
+class Foo:
     ran = False
 
     @utils.lru_cache(2)
