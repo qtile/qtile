@@ -955,7 +955,6 @@ class Window(_Window):
 
     def tweak_float(self, x=None, y=None, dx=0, dy=0,
                     w=None, h=None, dw=0, dh=0):
-        print(x, y)
         if x is not None:
             self.x = x
         self.x += dx
@@ -1005,7 +1004,6 @@ class Window(_Window):
             if self.hints['base_height'] and self.hints['height_inc']:
                 height -= (height - self.hints['base_height']) % self.hints['height_inc']
 
-            print("placing", self.x, self.y, width, height)
             self.place(
                 self.x, self.y,
                 width, height,

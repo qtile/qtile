@@ -65,8 +65,8 @@ class ThermalSensor(base.InLoopPollText):
             (r"\n([\w ]+):"  # Sensor tag name
              r"\s+[+|-]"     # temp signed
              r"(\d+\.\d+)"   # temp value
-             u"({degrees}"   # degree symbol match
-             u"[C|F])"       # Celsius or Fahrenheit
+             "({degrees}"   # degree symbol match
+             "[C|F])"       # Celsius or Fahrenheit
              ).format(degrees=u"\xb0"),
             re.UNICODE | re.VERBOSE
         )

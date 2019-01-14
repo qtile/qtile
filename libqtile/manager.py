@@ -890,7 +890,7 @@ class Qtile(command.CommandObject):
 
             # If the selection property is None, it is unset, which means the
             # clipboard is empty.
-            value = prop and prop.value.to_utf8() or u""
+            value = prop and prop.value.to_utf8() or ""
 
             self.selection[name]["selection"] = value
             hook.fire("selection_change", name, self.selection[name])
@@ -1387,7 +1387,7 @@ class Qtile(command.CommandObject):
         # FIXME: This needs to be done with sendevent, once we have that fixed.
         keysym = xcbq.keysyms.get(key)
         if keysym is None:
-            raise command.CommandError(u"Unknown key: {0:s}".format(key))
+            raise command.CommandError("Unknown key: {0:s}".format(key))
         keycode = self.conn.first_sym_to_code[keysym]
 
         class DummyEv(object):
@@ -1642,7 +1642,7 @@ class Qtile(command.CommandObject):
                 try:
                     self.groups_map[group].cmd_toscreen()
                 except KeyError:
-                    logger.info(u"No group named '{0:s}' present.".format(group))
+                    logger.info("No group named '{0:s}' present.".format(group))
 
         mb = self.widgets_map.get(widget)
         if not mb:

@@ -87,7 +87,7 @@ class TreeNode(object):
     def add_superscript(self, title):
         """Prepend superscript denoting the number of hidden children"""
         if not self.expanded and self.children:
-            return u"{:d}".format(
+            return "{:d}".format(
                 len(self.children)
             ).translate(to_superscript).encode('utf-8') + title
         return title

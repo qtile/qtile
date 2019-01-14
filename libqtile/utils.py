@@ -122,7 +122,7 @@ def hex(x):
 
 def scrub_to_utf8(text):
     if not text:
-        return u""
+        return ""
     elif isinstance(text, str):
         return text
     else:

@@ -91,7 +91,7 @@ class Net(base.ThreadedPollText):
 
             down, up = self._format(down, up)
 
-            str_base = u"%s%s \u2193\u2191 %s%s"
+            str_base = "%s%s \u2193\u2191 %s%s"
 
             self.interfaces = new_int
             return str_base % (down, down_letter, up, up_letter)
