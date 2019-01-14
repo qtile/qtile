@@ -52,7 +52,7 @@ class Net(base.ThreadedPollText):
         return b, letter
 
     def get_stats(self):
-        lines = []  # type: List[str]
+        lines: List[str]= []
         with open('/proc/net/dev', 'r') as f:
             lines = f.readlines()[2:]
         interfaces = {}
