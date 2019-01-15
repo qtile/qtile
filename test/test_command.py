@@ -25,7 +25,6 @@ import pytest
 
 import libqtile
 import libqtile.confreader
-import libqtile.manager
 import libqtile.config
 import libqtile.layout
 import libqtile.bar

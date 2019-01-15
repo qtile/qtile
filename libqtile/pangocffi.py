@@ -50,7 +50,7 @@
 try:
     from libqtile._ffi_pango import ffi
 except ImportError:
-    raise ImportError("No module named libqtile._ffi_pango, be sure to run `python ./libqtile/ffi_build.py`")
+    raise ImportError("No module named libqtile._ffi_pango, be sure to run `./scripts/ffibuild`")
 
 gobject = ffi.dlopen('libgobject-2.0.so.0')
 pango = ffi.dlopen('libpango-1.0.so.0')

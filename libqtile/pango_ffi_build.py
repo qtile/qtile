@@ -22,7 +22,6 @@
 # SOFTWARE.
 
 from cffi import FFI
-from xcffib.ffi_build import ffi as xcffib_ffi
 from cairocffi.ffi_build import ffi as cairocffi_ffi
 
 pango_ffi = FFI()
@@ -141,29 +140,5 @@ pango_ffi.cdef("""
                          gssize length);
 """)
 
-xcursors_ffi = FFI()
-xcursors_ffi.set_source("libqtile._ffi_xcursors", None)
-
-xcursors_ffi.include(xcffib_ffi)
-
-xcursors_ffi.cdef("""
-    typedef uint32_t xcb_cursor_t;
-    typedef struct xcb_cursor_context_t xcb_cursor_context_t;
-
-    int xcb_cursor_context_new(
-        xcb_connection_t *conn,
-        xcb_screen_t *screen,
-        xcb_cursor_context_t **ctx
-        );
-
-    xcb_cursor_t xcb_cursor_load_cursor(
-        xcb_cursor_context_t *ctx,
-        const char *name
-        );
-
-    void xcb_cursor_context_free(xcb_cursor_context_t *ctx);
-""")
-
 if __name__ == "__main__":
     pango_ffi.compile()
-    xcursors_ffi.compile()

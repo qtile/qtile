@@ -35,7 +35,7 @@ import libqtile.layout
 import libqtile.bar
 import libqtile.command
 import libqtile.widget
-import libqtile.manager
+import libqtile.core.manager
 import libqtile.config
 import libqtile.hook
 import libqtile.confreader
@@ -940,9 +940,9 @@ def test_unmap_noscreen(qtile):
 
 
 def test_init():
-    with pytest.raises(libqtile.manager.QtileError):
+    with pytest.raises(libqtile.core.manager.QtileError):
         libqtile.config.Key([], "unknown", libqtile.command._Call("base", None, "foo"))
-    with pytest.raises(libqtile.manager.QtileError):
+    with pytest.raises(libqtile.core.manager.QtileError):
         libqtile.config.Key(["unknown"], "x", libqtile.command._Call("base", None, "foo"))
 
 

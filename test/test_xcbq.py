@@ -1,7 +1,7 @@
 import pytest
 from xvfbwrapper import Xvfb
 import xcffib
-from libqtile import xcbq
+from libqtile.core import xcbq
 
 
 @pytest.fixture(scope='function', autouse=True)

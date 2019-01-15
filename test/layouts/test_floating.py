@@ -21,7 +21,6 @@
 import pytest
 
 from libqtile import layout
-import libqtile.manager
 import libqtile.config
 from .layout_utils import assert_focused
 from ..conftest import no_xinerama

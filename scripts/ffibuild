@@ -1,0 +1,5 @@
+#!/bin/sh
+echo "building pango"
+python ./libqtile/pango_ffi_build.py
+echo "building xcursors"
+python ./libqtile/core/xcursors_ffi_build.py

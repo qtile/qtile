@@ -41,7 +41,8 @@ from libqtile.log_utils import logger
 from libqtile.command import _SelectError
 
 from . import base
-from .. import bar, command, hook, pangocffi, utils, xcbq, xkeysyms
+from .. import bar, command, hook, pangocffi, utils, xkeysyms
+from ..core import xcbq
 
 
 class NullCompleter:

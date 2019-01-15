@@ -26,7 +26,6 @@ import libqtile
 import libqtile.sh
 import libqtile.confreader
 import libqtile.layout
-import libqtile.manager
 import libqtile.config
 
 
