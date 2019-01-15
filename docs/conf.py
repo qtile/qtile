@@ -25,7 +25,7 @@ class Mock(MagicMock):
 
 MOCK_MODULES = [
     'libqtile._ffi_pango',
-    'libqtile._ffi_xcursors',
+    'libqtile.core._ffi_xcursors',
     'cairocffi',
     'cffi',
     'dateutil',

@@ -37,19 +37,19 @@ import time
 import warnings
 import tracemalloc
 
-from .config import Drag, Click, Screen, Match, Rule
-from .config import ScratchPad as ScratchPadConfig
-from .group import _Group
-from .scratchpad import ScratchPad
-from .log_utils import logger
-from .state import QtileState
-from .utils import QtileError, get_cache_dir
-from .widget.base import _Widget
-from .extension.base import _Extension
-from . import command
-from . import hook
-from . import utils
-from . import window
+from ..config import Drag, Click, Screen, Match, Rule
+from ..config import ScratchPad as ScratchPadConfig
+from ..group import _Group
+from ..scratchpad import ScratchPad
+from ..log_utils import logger
+from ..state import QtileState
+from ..utils import QtileError, get_cache_dir
+from ..widget.base import _Widget
+from ..extension.base import _Extension
+from .. import command
+from .. import hook
+from .. import utils
+from .. import window
 from . import xcbq
 
 

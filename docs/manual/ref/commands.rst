@@ -10,7 +10,7 @@ those given here.
 
 .. _qtile_commands:
 
-.. qtile_class:: libqtile.manager.Qtile
+.. qtile_class:: libqtile.core.manager.Qtile
 
 .. qtile_class:: libqtile.bar.Bar
    :noindex:

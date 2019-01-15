@@ -119,6 +119,7 @@ setup(
         'ipython': ["ipykernel", "jupyter_console"],
     },
     packages=['libqtile',
+              'libqtile.core',
               'libqtile.interactive',
               'libqtile.layout',
               'libqtile.scripts',
@@ -150,7 +151,7 @@ setup(
                             'resources/qshell.1'])],
     cmdclass={'install': CheckCairoXcb},
     cffi_modules=[
-        'libqtile/ffi_build.py:pango_ffi',
-        'libqtile/ffi_build.py:xcursors_ffi',
+        'libqtile/pango_ffi_build.py:pango_ffi',
+        'libqtile/core/xcursors_ffi_build.py:xcursors_ffi',
     ],
 )

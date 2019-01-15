@@ -22,7 +22,7 @@
 # SOFTWARE.
 import libqtile
 import libqtile.ipc
-from libqtile.manager import Qtile as QtileManager
+from libqtile.core.manager import Qtile as QtileManager
 from libqtile.log_utils import init_log
 
 import functools

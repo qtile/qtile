@@ -1,9 +1,9 @@
-from .log_utils import logger
+from ..log_utils import logger
 
 try:
     from ._ffi_xcursors import ffi
 except ImportError:
-    raise ImportError("No module named libqtile._ffi_xcursors, be sure to run `python ./libqtile/ffi_build.py`")
+    raise ImportError("No module named libqtile.core._ffi_xcursors, be sure to run `./scripts/ffibuild`")
 
 
 # Stolen from samurai-x

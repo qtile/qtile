@@ -22,7 +22,8 @@
 # SOFTWARE.
 
 from . import base
-from .. import bar, hook, xcbq
+from .. import bar, hook
+from ..core import xcbq
 
 
 class Clipboard(base._TextBox):

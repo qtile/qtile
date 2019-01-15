@@ -25,7 +25,7 @@ import warnings
 import traceback
 import importlib
 
-from . import xcbq
+from .core import xcbq
 from .log_utils import logger
 
 

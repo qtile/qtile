@@ -29,7 +29,7 @@ from . import command
 from . import configurable
 from . import hook
 from . import utils
-from . import xcbq
+from .core import xcbq
 import sys
 
 import warnings
