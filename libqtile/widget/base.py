@@ -264,6 +264,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
         """
         output = subprocess.check_output(command, **kwargs)
         output = output.decode()
+        return output
 
     def _wrapper(self, method, *method_args):
         try:
