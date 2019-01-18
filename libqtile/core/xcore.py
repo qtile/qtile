@@ -1,13 +1,13 @@
 
 import typing
 
-from . import types
+from . import base
 from . import xcbq
 
 
-class XCore(types.Core):
+class XCore(base.Core):
     def get_keys(self) -> typing.List[str]:
-        return xcbq.keysyms.keys()
+        return list(xcbq.keysyms.keys())
 
     def get_modifiers(self) -> typing.List[str]:
-        return xcbq.ModMasks.keys()
+        return list(xcbq.ModMasks.keys())

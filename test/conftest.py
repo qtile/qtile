@@ -23,6 +23,7 @@
 import libqtile
 import libqtile.ipc
 from libqtile.core.manager import Qtile as QtileManager
+from libqtile.core import xcore
 from libqtile.log_utils import init_log
 
 import functools
@@ -257,9 +258,10 @@ class Qtile:
 
         def run_qtile():
             llvl = logging.DEBUG if pytest.config.getoption("--debuglog") else logging.INFO
+            kore = xcore.XCore()
             try:
                 init_log(llvl, log_path=None, log_color=False)
-                q = QtileManager(config_class(), self.display, self.sockfile)
+                q = QtileManager(kore, config_class(), self.display, self.sockfile)
                 q.loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
@@ -285,7 +287,8 @@ class Qtile:
         """
         llvl = logging.DEBUG if pytest.config.getoption("--debuglog") else logging.INFO
         init_log(llvl, log_path=None, log_color=False)
-        return QtileManager(config_class(), self.display, self.sockfile)
+        kore = xcore.XCore()
+        return QtileManager(kore, config_class(), self.display, self.sockfile)
 
     def terminate(self):
         if self.proc is None:

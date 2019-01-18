@@ -24,6 +24,10 @@
 # SOFTWARE.
 import os
 import sys
+import typing
+
+from .core import base
+from . import config
 
 
 class ConfigError(Exception):
@@ -50,6 +54,8 @@ class Config:
         "bring_front_click",
         "wmname",
     ]
+    keys: typing.List[config.Key]
+    mouse: typing.List[config.Mouse]
 
     def __init__(self, **settings):
         """Create a Config() object from settings
@@ -85,7 +91,7 @@ class Config:
             pass
 
     @classmethod
-    def from_file(cls, path):
+    def from_file(cls, kore: base.Core, path: str):
         "Create a Config() object from the python file located at path."
         try:
             sys.path.insert(0, os.path.dirname(path))
@@ -96,4 +102,23 @@ class Config:
             logger.exception('Could not import config file %r', path)
             tb = traceback.format_exc()
             raise ConfigError(tb)
-        return cls(**vars(config))
+        cnf = cls(**vars(config))
+        cnf.validate(kore)
+        return cnf
+
+    def validate(self, kore: base.Core) -> None:
+        """
+            Validate the configuration against the core.
+        """
+        valid_keys = kore.get_keys()
+        valid_mods = kore.get_modifiers()
+        for k in self.keys:
+            if k.key not in valid_keys:
+                raise ConfigError("No such key: %s" % k.key)
+            for m in k.modifiers:
+                if m not in valid_mods:
+                    raise ConfigError("No such modifier: %s" % m)
+        for ms in self.mouse:
+            for m in ms.modifiers:
+                if m not in valid_mods:
+                    raise ConfigError("No such modifier: %s" % m)

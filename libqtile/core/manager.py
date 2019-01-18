@@ -67,8 +67,15 @@ def _import_module(module_name, dir_path):
 
 class Qtile(command.CommandObject):
     """This object is the `root` of the command graph"""
-
-    def __init__(self, config, display_name=None, fname=None, no_spawn=False, state=None):
+    def __init__(
+        self,
+        kore,
+        config,
+        display_name=None,
+        fname=None,
+        no_spawn=False,
+        state=None
+    ):
         self._restart = False
         self.no_spawn = no_spawn
 
@@ -1408,8 +1415,10 @@ class Qtile(command.CommandObject):
             keysym = xcbq.keysyms.get(key)
         except xcbq.XCBQError as e:
             raise command.CommandError(str(e))
+
         class DummyEv:
             pass
+
         d = DummyEv()
         d.detail = self.conn.first_sym_to_code[keysym]
         d.state = modmasks

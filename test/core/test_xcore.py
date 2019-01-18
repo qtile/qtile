@@ -9,4 +9,3 @@ def test_keys(qtile):
     xc = xcore.XCore()
     assert "a" in xc.get_keys()
     assert "shift" in xc.get_modifiers()
-

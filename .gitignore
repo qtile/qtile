@@ -41,3 +41,4 @@ debian/*debhelper
 .mypy_cache/
 .tags
 venv
+.coverage.*

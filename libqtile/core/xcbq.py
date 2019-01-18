@@ -1005,4 +1005,3 @@ def translate_masks(modifiers: typing.List[str]) -> int:
         return functools.reduce(operator.or_, masks)
     else:
         return 0
-

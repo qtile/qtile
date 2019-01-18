@@ -65,4 +65,3 @@ def test_masks():
 def test_translate_masks():
     assert xcbq.translate_masks(["shift", "control"])
     assert xcbq.translate_masks([]) == 0
-

@@ -25,22 +25,42 @@ import pytest
 
 from libqtile import confreader
 from libqtile import config, utils
+from libqtile.core import xcore
 
 tests_dir = os.path.dirname(os.path.realpath(__file__))
 
 
-def test_syntaxerr():
+def test_validate():
+    xc = xcore.XCore()
+    f = confreader.Config.from_file(xc, os.path.join(tests_dir, "configs", "basic.py"))
+    f.validate(xc)
+    f.keys[0].key = "nonexistent"
     with pytest.raises(confreader.ConfigError):
-        confreader.Config.from_file(os.path.join(tests_dir, "configs", "syntaxerr.py"))
+        f.validate(xc)
+
+    f.keys[0].key = "x"
+    f = confreader.Config.from_file(xc, os.path.join(tests_dir, "configs", "basic.py"))
+    f.keys[0].modifiers = ["nonexistent"]
+    with pytest.raises(confreader.ConfigError):
+        f.validate(xc)
+    f.keys[0].modifiers = ["shift"]
+
+
+def test_syntaxerr():
+    xc = xcore.XCore()
+    with pytest.raises(confreader.ConfigError):
+        confreader.Config.from_file(xc, os.path.join(tests_dir, "configs", "syntaxerr.py"))
 
 
 def test_basic():
-    f = confreader.Config.from_file(os.path.join(tests_dir, "configs", "basic.py"))
+    xc = xcore.XCore()
+    f = confreader.Config.from_file(xc, os.path.join(tests_dir, "configs", "basic.py"))
     assert f.keys
 
 
 def test_falls_back():
-    f = confreader.Config.from_file(os.path.join(tests_dir, "configs", "basic.py"))
+    xc = xcore.XCore()
+    f = confreader.Config.from_file(xc, os.path.join(tests_dir, "configs", "basic.py"))
 
     # We just care that it has a default, we don't actually care what the
     # default is; don't assert anything at all about the default in case
