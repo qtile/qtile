@@ -36,6 +36,8 @@
 """
 from collections import OrderedDict
 from itertools import repeat, chain
+import operator
+import functools
 
 from xcffib.xproto import CW, WindowClass, EventMask
 from xcffib.xfixes import SelectionEventMask
@@ -966,3 +968,29 @@ class Connection:
             i.name.to_string().lower()
             for i in self.conn.core.ListExtensions().reply().names
         )
+
+
+def translate_modifiers(mask):
+    r = []
+    for k, v in ModMasks.items():
+        if mask & v:
+            r.append(k)
+    return r
+
+
+def translate_masks(modifiers):
+    """
+    Translate a modifier mask specified as a list of strings into an or-ed
+    bit representation.
+    """
+    masks = []
+    for i in modifiers:
+        try:
+            masks.append(ModMasks[i])
+        except KeyError:
+            raise KeyError("Unknown modifier: %s" % i)
+    if masks:
+        return functools.reduce(operator.or_, masks)
+    else:
+        return 0
+

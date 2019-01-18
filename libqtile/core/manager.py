@@ -1293,7 +1293,7 @@ class Qtile(command.CommandObject):
             if not k.commands:
                 continue
             name = ", ".join(xcbq.rkeysyms.get(ks, ("<unknown>", )))
-            modifiers = ", ".join(utils.translate_modifiers(kmm))
+            modifiers = ", ".join(xcbq.translate_modifiers(kmm))
             allargs = ", ".join(
                 [repr(value) for value in k.commands[0].args] +
                 ["%s = %s" % (keyword, repr(value)) for keyword, value in k.commands[0].kwargs.items()]
@@ -1397,7 +1397,7 @@ class Qtile(command.CommandObject):
         d = DummyEv()
         d.detail = keycode
         try:
-            d.state = utils.translate_masks(modifiers)
+            d.state = xcbq.translate_masks(modifiers)
         except KeyError as v:
             return v.args[0]
         self.handle_KeyPress(d)
