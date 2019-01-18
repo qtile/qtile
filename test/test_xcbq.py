@@ -60,3 +60,9 @@ def test_masks():
     assert set(vals) == set(d.values())
     with pytest.raises(ValueError):
         mask, vals = cfgmasks(asdf=32, **d)
+
+
+def test_translate_masks():
+    assert xcbq.translate_masks(["shift", "control"])
+    assert xcbq.translate_masks([]) == 0
+

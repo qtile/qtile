@@ -416,25 +416,34 @@ class Qtile(command.CommandObject):
             yield self.numlock_mask | xcbq.ModMasks["lock"]
 
     def map_key(self, key):
-        self.keys_map[(key.keysym, key.modmask & self.valid_mask)] = key
-        code = self.conn.keysym_to_keycode(key.keysym)
+        try:
+            keysym = xcbq.get_keysym(key.key)
+            modmask = xcbq.translate_masks(key.modifiers)
+        except xcbq.XCBQError as e:
+            raise utils.QtileError(e)
+        self.keys_map[(keysym, modmask & self.valid_mask)] = key
+        code = self.conn.keysym_to_keycode(keysym)
         for amask in self._auto_modmasks():
             self.root.grab_key(
                 code,
-                key.modmask | amask,
+                modmask | amask,
                 True,
                 xcffib.xproto.GrabMode.Async,
                 xcffib.xproto.GrabMode.Async,
             )
 
     def unmap_key(self, key):
-        key_index = (key.keysym, key.modmask & self.valid_mask)
+        try:
+            keysym = xcbq.get_keysym(key.key)
+            modmask = xcbq.translate_masks(key.modifiers)
+        except xcbq.XCBQError as e:
+            raise utils.QtileError(e)
+        key_index = (keysym, modmask & self.valid_mask)
         if key_index not in self.keys_map:
             return
-
-        code = self.conn.keysym_to_keycode(key.keysym)
+        code = self.conn.keysym_to_keycode(keysym)
         for amask in self._auto_modmasks():
-            self.root.ungrab_key(code, key.modmask | amask)
+            self.root.ungrab_key(code, modmask | amask)
         del(self.keys_map[key_index])
 
     def update_net_desktops(self):
@@ -635,6 +644,10 @@ class Qtile(command.CommandObject):
     def grab_mouse(self):
         self.root.ungrab_button(None, None)
         for i in self.config.mouse:
+            try:
+                modmask = xcbq.translate_masks(i.modifiers)
+            except xcbq.XCBQError as e:
+                raise utils.QtileError(e)
             if isinstance(i, Click) and i.focus:
                 # Make a freezing grab on mouse button to gain focus
                 # Event will propagate to target window
@@ -647,7 +660,7 @@ class Qtile(command.CommandObject):
             for amask in self._auto_modmasks():
                 self.root.grab_button(
                     i.button_code,
-                    i.modmask | amask,
+                    modmask | amask,
                     True,
                     eventmask,
                     grabmode,
@@ -971,7 +984,11 @@ class Qtile(command.CommandObject):
 
         k = self.mouse_map.get(button_code)
         for m in k:
-            if not m or m.modmask & self.valid_mask != state & self.valid_mask:
+            try:
+                modmask = xcbq.translate_masks(m.modifiers)
+            except xcbq.XCBQError as e:
+                raise utils.QtileError(e)
+            if not m or modmask & self.valid_mask != state & self.valid_mask:
                 logger.info("Ignoring unknown button: %s" % button_code)
                 continue
             if isinstance(m, Click):
@@ -1386,20 +1403,16 @@ class Qtile(command.CommandObject):
             simulate_keypress(["control", "mod2"], "k")
         """
         # FIXME: This needs to be done with sendevent, once we have that fixed.
-        keysym = xcbq.keysyms.get(key)
-        if keysym is None:
-            raise command.CommandError("Unknown key: {0:s}".format(key))
-        keycode = self.conn.first_sym_to_code[keysym]
-
+        try:
+            modmasks = xcbq.translate_masks(modifiers)
+            keysym = xcbq.keysyms.get(key)
+        except xcbq.XCBQError as e:
+            raise command.CommandError(str(e))
         class DummyEv:
             pass
-
         d = DummyEv()
-        d.detail = keycode
-        try:
-            d.state = xcbq.translate_masks(modifiers)
-        except KeyError as v:
-            return v.args[0]
+        d.detail = self.conn.first_sym_to_code[keysym]
+        d.state = modmasks
         self.handle_KeyPress(d)
 
     def cmd_restart(self):
