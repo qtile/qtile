@@ -1,7 +1,12 @@
 from abc import ABCMeta, abstractmethod
+import typing
 
 
 class Core(metaclass=ABCMeta):
-    pass
+    @abstractmethod
+    def get_keys(self) -> typing.List[str]:
+        pass
 
-
+    @abstractmethod
+    def get_modifiers(self) -> typing.List[str]:
+        pass

@@ -267,7 +267,7 @@ class Qtile(command.CommandObject):
             lambda x, y: logger.exception("Got an exception in poll loop")
         )
 
-        logger.info('Adding io watch')
+        logger.debug('Adding io watch')
         fd = self.conn.conn.get_file_descriptor()
         self._eventloop.add_reader(fd, self._xpoll)
 
@@ -326,7 +326,7 @@ class Qtile(command.CommandObject):
                     if bar is not None:
                         bar.finalize()
 
-            logger.info('Removing io watch')
+            logger.debug('Removing io watch')
             fd = self.conn.conn.get_file_descriptor()
             self._eventloop.remove_reader(fd)
             self.conn.finalize()
@@ -725,7 +725,7 @@ class Qtile(command.CommandObject):
                 if e.__class__ not in self.ignored_events:
                     logger.debug(ename)
                     for h in self.get_target_chain(ename, e):
-                        logger.info("Handling: %s" % ename)
+                        logger.debug("Handling: %s" % ename)
                         r = h(e)
                         if not r:
                             break
@@ -797,7 +797,7 @@ class Qtile(command.CommandObject):
         if not self._restart:
             self.graceful_shutdown()
 
-        logger.info('Stopping eventloop')
+        logger.debug('Stopping eventloop')
         self._eventloop.stop()
 
     def loop(self):
@@ -1730,7 +1730,7 @@ class Qtile(command.CommandObject):
                     message = pformat(result)
                     if messenger:
                         self.cmd_spawn('{0:s} "{1:s}"'.format(messenger, message))
-                    logger.info(result)
+                    logger.debug(result)
 
         mb = self.widgets_map[widget]
         if not mb:
@@ -1836,8 +1836,8 @@ class Qtile(command.CommandObject):
         buf = io.BytesIO()
         pickle.dump(QtileState(self), buf, protocol=0)
         state = buf.getvalue().decode()
-        logger.info('State = ')
-        logger.info(''.join(state.split('\n')))
+        logger.debug('State = ')
+        logger.debug(''.join(state.split('\n')))
         return state
 
     def cmd_tracemalloc_toggle(self):

@@ -50,6 +50,12 @@ max_sleep = 5.0
 sleep_time = 0.1
 
 
+def pytest_addoption(parser):
+    parser.addoption(
+        "--debuglog", action="store_true", default=False, help="enable debug output"
+    )
+
+
 class Retry:
     def __init__(self, fail_msg='retry failed!', ignore_exceptions=(),
                  dt=sleep_time, tmax=max_sleep, return_on_fail=False):
@@ -250,8 +256,9 @@ class Qtile:
         rpipe, wpipe = multiprocessing.Pipe()
 
         def run_qtile():
+            llvl = logging.DEBUG if pytest.config.getoption("--debuglog") else logging.INFO
             try:
-                init_log(logging.INFO, log_path=None, log_color=False)
+                init_log(llvl, log_path=None, log_color=False)
                 q = QtileManager(config_class(), self.display, self.sockfile)
                 q.loop()
             except Exception:
@@ -276,7 +283,8 @@ class Qtile:
         an error and the returned manager should not be started, otherwise this
         will likely block the thread.
         """
-        init_log(logging.INFO, log_path=None, log_color=False)
+        llvl = logging.DEBUG if pytest.config.getoption("--debuglog") else logging.INFO
+        init_log(llvl, log_path=None, log_color=False)
         return QtileManager(config_class(), self.display, self.sockfile)
 
     def terminate(self):
