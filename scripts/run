@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# This is a utility script that activates the venv and runs qtile with one
+# command. It's useful for display manager configurations that run your current
+# development version of qtile.
+
+scriptdir=$(dirname -- "$(readlink -f -- "$BASH_SOURCE")")
+cd "$scriptdir/.."
+source ./venv/bin/activate
+./bin/qtile
