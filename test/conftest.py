@@ -262,6 +262,7 @@ class Qtile:
             try:
                 init_log(llvl, log_path=None, log_color=False)
                 q = QtileManager(kore, config_class(), self.display, self.sockfile)
+                q.start()
                 q.loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
@@ -288,7 +289,9 @@ class Qtile:
         llvl = logging.DEBUG if pytest.config.getoption("--debuglog") else logging.INFO
         init_log(llvl, log_path=None, log_color=False)
         kore = xcore.XCore()
-        return QtileManager(kore, config_class(), self.display, self.sockfile)
+        q = QtileManager(kore, config_class(), self.display, self.sockfile)
+        q.start()
+        return q
 
     def terminate(self):
         if self.proc is None:
@@ -452,7 +455,6 @@ def qtile(request, xephyr):
         q = Qtile(sockfile, xephyr.display)
         try:
             q.start(config)
-
             yield q
         finally:
             q.terminate()
@@ -463,7 +465,6 @@ def qtile_nospawn(request, xephyr):
     with tempfile.NamedTemporaryFile() as f:
         sockfile = f.name
         q = Qtile(sockfile, xephyr.display)
-
         try:
             yield q
         finally:

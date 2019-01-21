@@ -116,13 +116,15 @@ def make_qtile():
     # XXX: the import is here because we need to call init_log
     # before start importing stuff
     from libqtile.core import manager
-    return manager.Qtile(
+    q = manager.Qtile(
         kore,
         config,
         fname=options.socket,
         no_spawn=options.no_spawn,
-        state=options.state,
+
     )
+    q.start(state=options.state)
+    return q
 
 
 def main():

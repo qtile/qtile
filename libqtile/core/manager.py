@@ -74,43 +74,63 @@ class Qtile(command.CommandObject):
         display_name=None,
         fname=None,
         no_spawn=False,
-        state=None
     ):
-        self._restart = False
+        self.kore = kore
+        self.config = config
+        self.display_name = display_name
         self.no_spawn = no_spawn
+        self.fname = fname
 
+        self.dgroups = None
+        self._restart = False
         self._eventloop = None
         self._finalize = False
-
-        if not display_name:
-            display_name = os.environ.get("DISPLAY")
-            if not display_name:
-                raise QtileError("No DISPLAY set.")
-
-        if not fname:
-            # Dots might appear in the host part of the display name
-            # during remote X sessions. Let's strip the host part first.
-            display_number = display_name.partition(":")[2]
-            if "." not in display_number:
-                display_name += ".0"
-            fname = command.find_sockfile(display_name)
-
-        self.conn = xcbq.Connection(display_name)
-        self.config = config
-        self.fname = fname
-        hook.init(self)
-
         self.windows_map = {}
         self.widgets_map = {}
         self.groups_map = {}
         self.groups = []
         self.keys_map = {}
+        self.current_screen = None
+        self.screens = []
+        self._drag = None
+        self.ignored_events = set([
+            xcffib.xproto.KeyReleaseEvent,
+            xcffib.xproto.ReparentNotifyEvent,
+            xcffib.xproto.CreateNotifyEvent,
+            # DWM handles this to help "broken focusing windows".
+            xcffib.xproto.MapNotifyEvent,
+            xcffib.xproto.LeaveNotifyEvent,
+            xcffib.xproto.FocusOutEvent,
+            xcffib.xproto.FocusInEvent,
+            xcffib.xproto.NoExposureEvent
+        ])
+        self.selection = {
+            "PRIMARY": {"owner": None, "selection": ""},
+            "CLIPBOARD": {"owner": None, "selection": ""}
+        }
+        hook.init(self)
+
+    def start(self, state=None):
+        self.conn = xcbq.Connection(self.display_name)
+        self.conn.xsync()
+        self._xpoll()
+
+        if not self.display_name:
+            self.display_name = os.environ.get("DISPLAY")
+            if not self.display_name:
+                raise QtileError("No DISPLAY set.")
+        if not self.fname:
+            # Dots might appear in the host part of the display name
+            # during remote X sessions. Let's strip the host part first.
+            display_number = self.display_name.partition(":")[2]
+            if "." not in display_number:
+                self.display_name += ".0"
+            self.fname = command.find_sockfile(self.display_name)
 
         # Find the modifier mask for the numlock key, if there is one:
         nc = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
         self.numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(nc), 0)
         self.valid_mask = ~(self.numlock_mask | xcbq.ModMasks["lock"])
-
         # Because we only do Xinerama multi-screening,
         # we can assume that the first
         # screen's root is _the_ root.
@@ -124,54 +144,44 @@ class Qtile(command.CommandObject):
                 EventMask.LeaveWindow
             )
         )
-
         self.root.set_property(
             '_NET_SUPPORTED',
             [self.conn.atoms[x] for x in xcbq.SUPPORTED_ATOMS]
         )
-
         self.supporting_wm_check_window = self.conn.create_window(-1, -1, 1, 1)
         self.root.set_property(
             '_NET_SUPPORTING_WM_CHECK',
             self.supporting_wm_check_window.wid
         )
-
         # setup the default cursor
         self.root.set_cursor('left_ptr')
-
         wmname = getattr(self.config, "wmname", "qtile")
         self.supporting_wm_check_window.set_property('_NET_WM_NAME', wmname)
         self.supporting_wm_check_window.set_property(
             '_NET_SUPPORTING_WM_CHECK',
             self.supporting_wm_check_window.wid
         )
+        if self.config.main:
+            self.config.main(self)
 
-        if config.main:
-            config.main(self)
-
-        self.dgroups = None
         if self.config.groups:
             key_binder = None
             if hasattr(self.config, 'dgroups_key_binder'):
                 key_binder = self.config.dgroups_key_binder
             self.dgroups = DGroups(self, self.config.groups, key_binder)
-
-        if hasattr(config, "widget_defaults") and config.widget_defaults:
-            _Widget.global_defaults = config.widget_defaults
+        if hasattr(self.config, "widget_defaults") and self.config.widget_defaults:
+            _Widget.global_defaults = self.config.widget_defaults
         else:
             _Widget.global_defaults = {}
-
-        if hasattr(config, "extension_defaults") and config.extension_defaults:
-            _Extension.global_defaults = config.extension_defaults
+        if hasattr(self.config, "extension_defaults") and self.config.extension_defaults:
+            _Extension.global_defaults = self.config.extension_defaults
         else:
             _Extension.global_defaults = {}
-
         for installed_extension in _Extension.installed_extensions:
             installed_extension._configure(self)
 
         for i in self.groups:
             self.groups_map[i.name] = i
-
         for grp in self.config.groups:
             if isinstance(grp, ScratchPadConfig):
                 sp = ScratchPad(grp.name, grp.dropdowns, grp.label)
@@ -181,29 +191,12 @@ class Qtile(command.CommandObject):
                 self.groups_map[sp.name] = sp
 
         self.setup_eventloop()
-        self.server = command._Server(self.fname, self, config, self._eventloop)
+        self.server = command._Server(self.fname, self, self.config, self._eventloop)
 
-        self.current_screen = None
-        self.screens = []
         self._process_screens()
         self.current_screen = self.screens[0]
-        self._drag = None
-
-        self.ignored_events = set([
-            xcffib.xproto.KeyReleaseEvent,
-            xcffib.xproto.ReparentNotifyEvent,
-            xcffib.xproto.CreateNotifyEvent,
-            # DWM handles this to help "broken focusing windows".
-            xcffib.xproto.MapNotifyEvent,
-            xcffib.xproto.LeaveNotifyEvent,
-            xcffib.xproto.FocusOutEvent,
-            xcffib.xproto.FocusInEvent,
-            xcffib.xproto.NoExposureEvent
-        ])
 
         self.conn.flush()
-        self.conn.xsync()
-        self._xpoll()
 
         # Map and Grab keys
         for key in self.config.keys:
@@ -224,7 +217,7 @@ class Qtile(command.CommandObject):
 
         # no_spawn is set when we are restarting; we only want to run the
         # startup hook once.
-        if not no_spawn:
+        if not self.no_spawn:
             hook.fire("startup_once")
         hook.fire("startup")
 
@@ -239,10 +232,6 @@ class Qtile(command.CommandObject):
         self.update_net_desktops()
         hook.subscribe.setgroup(self.update_net_desktops)
 
-        self.selection = {
-            "PRIMARY": {"owner": None, "selection": ""},
-            "CLIPBOARD": {"owner": None, "selection": ""}
-        }
         self.setup_selection()
         hook.fire("startup_complete")
 
