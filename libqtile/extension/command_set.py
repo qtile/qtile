@@ -41,6 +41,7 @@ class CommandSet(Dmenu):
             },
         pre_commands=['[ $(mocp -i | wc -l) -lt 1 ] && mocp -S'],
         **Theme.dmenu))),
+
     """
 
     defaults = [
