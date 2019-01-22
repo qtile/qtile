@@ -365,7 +365,7 @@ def fire(event, *args, **kwargs):
     if event not in subscribe.hooks:
         raise utils.QtileError("Unknown event: %s" % event)
     if event not in SKIPLOG:
-        logger.info("Internal event: %s(%s, %s)", event, args, kwargs)
+        logger.debug("Internal event: %s(%s, %s)", event, args, kwargs)
     for i in subscriptions.get(event, []):
         try:
             i(*args, **kwargs)

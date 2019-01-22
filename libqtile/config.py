@@ -29,7 +29,6 @@ from . import command
 from . import configurable
 from . import hook
 from . import utils
-from .core import xcbq
 import sys
 
 import warnings
@@ -56,19 +55,21 @@ class Key:
         self.key = key
         self.commands = commands
         self.desc = kwds.get("desc", "")
-        if key not in xcbq.keysyms:
-            raise utils.QtileError("Unknown key: %s" % key)
-        self.keysym = xcbq.keysyms[key]
-        try:
-            self.modmask = utils.translate_masks(self.modifiers)
-        except KeyError as v:
-            raise utils.QtileError(v)
 
     def __repr__(self):
         return "<Key (%s, %s)>" % (self.modifiers, self.key)
 
 
-class Drag:
+class Mouse:
+    def __init__(self, modifiers, button, *commands, **kwargs):
+        self.focus = kwargs.get("focus", "before")
+        self.modifiers = modifiers
+        self.button = button
+        self.commands = commands
+        self.button_code = int(self.button.replace('Button', ''))
+
+
+class Drag(Mouse):
     """Defines binding of a mouse to some dragging action
 
     On each motion event command is executed with two extra parameters added x
@@ -77,38 +78,18 @@ class Drag:
     It focuses clicked window by default.  If you want to prevent it pass,
     `focus=None` as an argument
     """
-    def __init__(self, modifiers, button, *commands, **kwargs):
-        self.start = kwargs.get("start")
-        self.focus = kwargs.get("focus", "before")
-        self.modifiers = modifiers
-        self.button = button
-        self.commands = commands
-        try:
-            self.button_code = int(self.button.replace('Button', ''))
-            self.modmask = utils.translate_masks(self.modifiers)
-        except KeyError as v:
-            raise utils.QtileError(v)
-
     def __repr__(self):
         return "<Drag (%s, %s)>" % (self.modifiers, self.button)
 
 
-class Click:
+class Click(Mouse):
     """Defines binding of a mouse click
 
     It focuses clicked window by default.  If you want to prevent it, pass
     `focus=None` as an argument
     """
     def __init__(self, modifiers, button, *commands, **kwargs):
-        self.focus = kwargs.get("focus", "before")
-        self.modifiers = modifiers
-        self.button = button
-        self.commands = commands
-        try:
-            self.button_code = int(self.button.replace('Button', ''))
-            self.modmask = utils.translate_masks(self.modifiers)
-        except KeyError as v:
-            raise utils.QtileError(v)
+        super().__init__(modifiers, button, *commands, **kwargs)
 
     def __repr__(self):
         return "<Click (%s, %s)>" % (self.modifiers, self.button)

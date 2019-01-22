@@ -90,7 +90,7 @@ class _Server(ipc.Server):
         cmd = obj.command(name)
         if not cmd:
             return (ERROR, "No such command.")
-        logger.info("Command: %s(%s, %s)", name, args, kwargs)
+        logger.debug("Command: %s(%s, %s)", name, args, kwargs)
         try:
             return (SUCCESS, cmd(*args, **kwargs))
         except CommandError as v:

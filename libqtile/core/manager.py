@@ -67,8 +67,15 @@ def _import_module(module_name, dir_path):
 
 class Qtile(command.CommandObject):
     """This object is the `root` of the command graph"""
-
-    def __init__(self, config, display_name=None, fname=None, no_spawn=False, state=None):
+    def __init__(
+        self,
+        kore,
+        config,
+        display_name=None,
+        fname=None,
+        no_spawn=False,
+        state=None
+    ):
         self._restart = False
         self.no_spawn = no_spawn
 
@@ -267,7 +274,7 @@ class Qtile(command.CommandObject):
             lambda x, y: logger.exception("Got an exception in poll loop")
         )
 
-        logger.info('Adding io watch')
+        logger.debug('Adding io watch')
         fd = self.conn.conn.get_file_descriptor()
         self._eventloop.add_reader(fd, self._xpoll)
 
@@ -326,7 +333,7 @@ class Qtile(command.CommandObject):
                     if bar is not None:
                         bar.finalize()
 
-            logger.info('Removing io watch')
+            logger.debug('Removing io watch')
             fd = self.conn.conn.get_file_descriptor()
             self._eventloop.remove_reader(fd)
             self.conn.finalize()
@@ -416,25 +423,34 @@ class Qtile(command.CommandObject):
             yield self.numlock_mask | xcbq.ModMasks["lock"]
 
     def map_key(self, key):
-        self.keys_map[(key.keysym, key.modmask & self.valid_mask)] = key
-        code = self.conn.keysym_to_keycode(key.keysym)
+        try:
+            keysym = xcbq.get_keysym(key.key)
+            modmask = xcbq.translate_masks(key.modifiers)
+        except xcbq.XCBQError as e:
+            raise utils.QtileError(e)
+        self.keys_map[(keysym, modmask & self.valid_mask)] = key
+        code = self.conn.keysym_to_keycode(keysym)
         for amask in self._auto_modmasks():
             self.root.grab_key(
                 code,
-                key.modmask | amask,
+                modmask | amask,
                 True,
                 xcffib.xproto.GrabMode.Async,
                 xcffib.xproto.GrabMode.Async,
             )
 
     def unmap_key(self, key):
-        key_index = (key.keysym, key.modmask & self.valid_mask)
+        try:
+            keysym = xcbq.get_keysym(key.key)
+            modmask = xcbq.translate_masks(key.modifiers)
+        except xcbq.XCBQError as e:
+            raise utils.QtileError(e)
+        key_index = (keysym, modmask & self.valid_mask)
         if key_index not in self.keys_map:
             return
-
-        code = self.conn.keysym_to_keycode(key.keysym)
+        code = self.conn.keysym_to_keycode(keysym)
         for amask in self._auto_modmasks():
-            self.root.ungrab_key(code, key.modmask | amask)
+            self.root.ungrab_key(code, modmask | amask)
         del(self.keys_map[key_index])
 
     def update_net_desktops(self):
@@ -635,6 +651,10 @@ class Qtile(command.CommandObject):
     def grab_mouse(self):
         self.root.ungrab_button(None, None)
         for i in self.config.mouse:
+            try:
+                modmask = xcbq.translate_masks(i.modifiers)
+            except xcbq.XCBQError as e:
+                raise utils.QtileError(e)
             if isinstance(i, Click) and i.focus:
                 # Make a freezing grab on mouse button to gain focus
                 # Event will propagate to target window
@@ -647,7 +667,7 @@ class Qtile(command.CommandObject):
             for amask in self._auto_modmasks():
                 self.root.grab_button(
                     i.button_code,
-                    i.modmask | amask,
+                    modmask | amask,
                     True,
                     eventmask,
                     grabmode,
@@ -712,7 +732,7 @@ class Qtile(command.CommandObject):
                 if e.__class__ not in self.ignored_events:
                     logger.debug(ename)
                     for h in self.get_target_chain(ename, e):
-                        logger.info("Handling: %s" % ename)
+                        logger.debug("Handling: %s" % ename)
                         r = h(e)
                         if not r:
                             break
@@ -784,7 +804,7 @@ class Qtile(command.CommandObject):
         if not self._restart:
             self.graceful_shutdown()
 
-        logger.info('Stopping eventloop')
+        logger.debug('Stopping eventloop')
         self._eventloop.stop()
 
     def loop(self):
@@ -971,7 +991,11 @@ class Qtile(command.CommandObject):
 
         k = self.mouse_map.get(button_code)
         for m in k:
-            if not m or m.modmask & self.valid_mask != state & self.valid_mask:
+            try:
+                modmask = xcbq.translate_masks(m.modifiers)
+            except xcbq.XCBQError as e:
+                raise utils.QtileError(e)
+            if not m or modmask & self.valid_mask != state & self.valid_mask:
                 logger.info("Ignoring unknown button: %s" % button_code)
                 continue
             if isinstance(m, Click):
@@ -1293,7 +1317,7 @@ class Qtile(command.CommandObject):
             if not k.commands:
                 continue
             name = ", ".join(xcbq.rkeysyms.get(ks, ("<unknown>", )))
-            modifiers = ", ".join(utils.translate_modifiers(kmm))
+            modifiers = ", ".join(xcbq.translate_modifiers(kmm))
             allargs = ", ".join(
                 [repr(value) for value in k.commands[0].args] +
                 ["%s = %s" % (keyword, repr(value)) for keyword, value in k.commands[0].kwargs.items()]
@@ -1386,20 +1410,18 @@ class Qtile(command.CommandObject):
             simulate_keypress(["control", "mod2"], "k")
         """
         # FIXME: This needs to be done with sendevent, once we have that fixed.
-        keysym = xcbq.keysyms.get(key)
-        if keysym is None:
-            raise command.CommandError("Unknown key: {0:s}".format(key))
-        keycode = self.conn.first_sym_to_code[keysym]
+        try:
+            modmasks = xcbq.translate_masks(modifiers)
+            keysym = xcbq.keysyms.get(key)
+        except xcbq.XCBQError as e:
+            raise command.CommandError(str(e))
 
         class DummyEv:
             pass
 
         d = DummyEv()
-        d.detail = keycode
-        try:
-            d.state = utils.translate_masks(modifiers)
-        except KeyError as v:
-            return v.args[0]
+        d.detail = self.conn.first_sym_to_code[keysym]
+        d.state = modmasks
         self.handle_KeyPress(d)
 
     def cmd_restart(self):
@@ -1717,7 +1739,7 @@ class Qtile(command.CommandObject):
                     message = pformat(result)
                     if messenger:
                         self.cmd_spawn('{0:s} "{1:s}"'.format(messenger, message))
-                    logger.info(result)
+                    logger.debug(result)
 
         mb = self.widgets_map[widget]
         if not mb:
@@ -1823,8 +1845,8 @@ class Qtile(command.CommandObject):
         buf = io.BytesIO()
         pickle.dump(QtileState(self), buf, protocol=0)
         state = buf.getvalue().decode()
-        logger.info('State = ')
-        logger.info(''.join(state.split('\n')))
+        logger.debug('State = ')
+        logger.debug(''.join(state.split('\n')))
         return state
 
     def cmd_tracemalloc_toggle(self):

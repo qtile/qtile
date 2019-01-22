@@ -209,8 +209,8 @@ def test_keypress(qtile):
 
     self.test_window("one")
     self.test_window("two")
-    v = self.c.simulate_keypress(["unknown"], "j")
-    assert v.startswith("Unknown modifier")
+    with pytest.raises(libqtile.command.CommandError):
+        self.c.simulate_keypress(["unknown"], "j")
     assert self.c.groups()["a"]["focus"] == "two"
     self.c.simulate_keypress(["control"], "j")
     assert self.c.groups()["a"]["focus"] == "one"
@@ -926,7 +926,6 @@ def test_setgroup(qtile):
 @pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
 def test_unmap_noscreen(qtile):
     self = qtile
-
     self.test_window("one")
     pid = self.test_window("two")
     assert len(self.c.windows()) == 2
@@ -939,11 +938,11 @@ def test_unmap_noscreen(qtile):
     assert self.c.groups()["a"]["focus"] == "one"
 
 
-def test_init():
-    with pytest.raises(libqtile.core.manager.QtileError):
-        libqtile.config.Key([], "unknown", libqtile.command._Call("base", None, "foo"))
-    with pytest.raises(libqtile.core.manager.QtileError):
-        libqtile.config.Key(["unknown"], "x", libqtile.command._Call("base", None, "foo"))
+# def test_init():
+#     with pytest.raises(libqtile.core.manager.QtileError):
+#         libqtile.config.Key([], "unknown", libqtile.command._Call("base", None, "foo"))
+#     with pytest.raises(libqtile.core.manager.QtileError):
+#         libqtile.config.Key(["unknown"], "x", libqtile.command._Call("base", None, "foo"))
 
 
 class TScreen(libqtile.config.Screen):

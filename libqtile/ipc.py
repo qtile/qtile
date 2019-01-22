@@ -181,15 +181,15 @@ class _ServerProtocol(asyncio.Protocol, _IPC):
 
     def connection_made(self, transport):
         self.transport = transport
-        logger.info('Connection made to server')
+        logger.debug('Connection made to server')
         self.data = b''
 
     def data_received(self, recv):
-        logger.info('Data received by server')
+        logger.debug('Data received by server')
         self.data += recv
 
     def eof_received(self):
-        logger.info('EOF received by server')
+        logger.debug('EOF received by server')
         try:
             req, is_json = self._unpack(self.data)
         except IPCError:
@@ -200,7 +200,7 @@ class _ServerProtocol(asyncio.Protocol, _IPC):
             self.data = None
 
         if req[1] == 'restart':
-            logger.info('Closing connection on restart')
+            logger.debug('Closing connection on restart')
             self.transport.write_eof()
 
         rep = self.handler(req)
@@ -210,9 +210,9 @@ class _ServerProtocol(asyncio.Protocol, _IPC):
         else:
             result = self._pack(rep)
 
-        logger.info('Sending result on receive EOF')
+        logger.debug('Sending result on receive EOF')
         self.transport.write(result)
-        logger.info('Closing connection on receive EOF')
+        logger.debug('Closing connection on receive EOF')
         self.transport.write_eof()
 
 
@@ -236,7 +236,7 @@ class Server:
         self.sock.bind(self.fname)
 
     def close(self):
-        logger.info('Stopping server on server close')
+        logger.debug('Stopping server on server close')
         self.server.close()
         self.sock.close()
 
@@ -244,5 +244,5 @@ class Server:
         serverprotocol = _ServerProtocol(self.handler)
         server_coroutine = self.loop.create_unix_server(lambda: serverprotocol, sock=self.sock, backlog=5)
 
-        logger.info('Starting server')
+        logger.debug('Starting server')
         self.server = self.loop.run_until_complete(server_coroutine)

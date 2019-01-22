@@ -36,6 +36,9 @@
 """
 from collections import OrderedDict
 from itertools import repeat, chain
+import operator
+import functools
+import typing
 
 from xcffib.xproto import CW, WindowClass, EventMask
 from xcffib.xfixes import SelectionEventMask
@@ -50,6 +53,10 @@ from ..log_utils import logger
 from .xcursors import Cursors
 
 keysyms = xkeysyms.keysyms
+
+
+class XCBQError(Exception):
+    pass
 
 
 def rdict(d):
@@ -966,3 +973,35 @@ class Connection:
             i.name.to_string().lower()
             for i in self.conn.core.ListExtensions().reply().names
         )
+
+
+def get_keysym(key: str) -> int:
+    keysym = keysyms.get(key)
+    if not keysym:
+        raise XCBQError("Unknown key: %s" % key)
+    return keysym
+
+
+def translate_modifiers(mask: int) -> typing.List[str]:
+    r = []
+    for k, v in ModMasks.items():
+        if mask & v:
+            r.append(k)
+    return r
+
+
+def translate_masks(modifiers: typing.List[str]) -> int:
+    """
+    Translate a modifier mask specified as a list of strings into an or-ed
+    bit representation.
+    """
+    masks = []
+    for i in modifiers:
+        try:
+            masks.append(ModMasks[i])
+        except KeyError as e:
+            raise XCBQError("Unknown modifier: %s" % i) from e
+    if masks:
+        return functools.reduce(operator.or_, masks)
+    else:
+        return 0

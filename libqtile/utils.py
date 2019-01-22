@@ -20,12 +20,10 @@
 
 import functools
 import os
-import operator
 import warnings
 import traceback
 import importlib
 
-from .core import xcbq
 from .log_utils import logger
 
 
@@ -38,31 +36,6 @@ def lget(o, v):
         return o[v]
     except (IndexError, TypeError):
         return None
-
-
-def translate_masks(modifiers):
-    """
-    Translate a modifier mask specified as a list of strings into an or-ed
-    bit representation.
-    """
-    masks = []
-    for i in modifiers:
-        try:
-            masks.append(xcbq.ModMasks[i])
-        except KeyError:
-            raise KeyError("Unknown modifier: %s" % i)
-    if masks:
-        return functools.reduce(operator.or_, masks)
-    else:
-        return 0
-
-
-def translate_modifiers(mask):
-    r = []
-    for k, v in xcbq.ModMasks.items():
-        if mask & v:
-            r.append(k)
-    return r
 
 
 def shuffle_up(lst):

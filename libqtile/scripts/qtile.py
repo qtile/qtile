@@ -27,6 +27,7 @@ from os import path, getenv
 
 from libqtile.log_utils import init_log, logger
 from libqtile import confreader
+from libqtile.core import xcore
 
 locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())  # type: ignore
 
@@ -103,8 +104,9 @@ def make_qtile():
     log_level = getattr(logging, options.log_level)
     init_log(log_level=log_level)
 
+    kore = xcore.XCore()
     try:
-        config = confreader.Config.from_file(options.configfile)
+        config = confreader.Config.from_file(kore, options.configfile)
     except Exception as e:
         logger.exception('Error while reading config file (%s)', e)
         config = confreader.Config()
@@ -115,6 +117,7 @@ def make_qtile():
     # before start importing stuff
     from libqtile.core import manager
     return manager.Qtile(
+        kore,
         config,
         fname=options.socket,
         no_spawn=options.no_spawn,

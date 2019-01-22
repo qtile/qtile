@@ -23,11 +23,6 @@
 import libqtile.utils as utils
 
 
-def test_translate_masks():
-    assert utils.translate_masks(["shift", "control"])
-    assert utils.translate_masks([]) == 0
-
-
 def test_rgb_from_hex_number():
     assert utils.rgb("ff00ff") == (1, 0, 1, 1)
 
