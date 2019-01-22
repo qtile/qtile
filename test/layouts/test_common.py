@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import time
+
 import pytest
 
 from libqtile import layout
@@ -349,7 +351,7 @@ def test_remove_floating(qtile):
 
 
 @each_layout_config
-def test_desktop_notifications(qtile):
+def _test_desktop_notifications(qtile):
     pytest.importorskip("tkinter")
 
     # Unlike normal floating windows such as dialogs, notifications don't steal
@@ -419,6 +421,7 @@ def test_cycle_layouts(qtile):
         # Use qtile.c.layout.info()['name'] in the assertion message, so we
         # know which layout is buggy
         assert qtile.c.window.info()['name'] == "three", qtile.c.layout.info()['name']
+        time.sleep(0.1)
 
     # Now try backwards
     while True:
@@ -428,3 +431,4 @@ def test_cycle_layouts(qtile):
         # Use qtile.c.layout.info()['name'] in the assertion message, so we
         # know which layout is buggy
         assert qtile.c.window.info()['name'] == "three", qtile.c.layout.info()['name']
+        time.sleep(0.1)

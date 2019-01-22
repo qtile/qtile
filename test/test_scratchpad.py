@@ -59,7 +59,7 @@ def scratchpad_config(x):
 
 @Retry(ignore_exceptions=(KeyError,))
 def is_spawned(qtile, name):
-    qtile.c.group["SCRATCHPAD"].dropdown_info(name)['window']
+    qtile.c.group["SCRATCHPAD"].dropdown_info(name)["window"]
     return True
 
 
@@ -73,7 +73,9 @@ def is_killed(qtile, name):
 @scratchpad_config
 def test_toggling(qtile):
     # adjust command for current display
-    qtile.c.group["SCRATCHPAD"].dropdown_reconfigure('dd-a', command='xterm -T dd-a -display %s sh' % qtile.display)
+    qtile.c.group["SCRATCHPAD"].dropdown_reconfigure(
+        'dd-a', command='xterm -T dd-a -display %s sh' % qtile.display,
+    )
 
     qtile.test_window("one")
     assert qtile.c.group["a"].info()['windows'] == ['one']

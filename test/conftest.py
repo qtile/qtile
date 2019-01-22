@@ -47,7 +47,7 @@ HEIGHT = 600
 SECOND_WIDTH = 640
 SECOND_HEIGHT = 480
 
-max_sleep = 5.0
+max_sleep = 15.0
 sleep_time = 0.1
 
 
@@ -261,8 +261,8 @@ class Qtile:
             kore = xcore.XCore()
             try:
                 init_log(llvl, log_path=None, log_color=False)
-                q = QtileManager(kore, config_class(), self.display, self.sockfile)
-                q.start()
+                q = QtileManager(kore, config_class(), fname=self.sockfile)
+                q.start(display=self.display)
                 q.loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
@@ -289,8 +289,8 @@ class Qtile:
         llvl = logging.DEBUG if pytest.config.getoption("--debuglog") else logging.INFO
         init_log(llvl, log_path=None, log_color=False)
         kore = xcore.XCore()
-        q = QtileManager(kore, config_class(), self.display, self.sockfile)
-        q.start()
+        q = QtileManager(kore, config_class(), fname=self.sockfile)
+        q.start(display=self.display)
         return q
 
     def terminate(self):
@@ -339,6 +339,7 @@ class Qtile:
             while proc.poll() is None:
                 if len(client.windows()) > start:
                     return True
+                time.sleep(0.1)
             return False
         if success():
             self.testwindows.append(proc)

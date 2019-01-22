@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 from libqtile.dgroups import DGroups
-from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
+from xcffib.xproto import EventMask
 import asyncio
 import functools
 import io
@@ -51,6 +51,7 @@ from .. import hook
 from .. import utils
 from .. import window
 from . import xcbq
+from . import base
 
 
 def _import_module(module_name, dir_path):
@@ -71,16 +72,15 @@ class Qtile(command.CommandObject):
         self,
         kore,
         config,
-        display_name=None,
         fname=None,
         no_spawn=False,
     ):
         self.kore = kore
         self.config = config
-        self.display_name = display_name
         self.no_spawn = no_spawn
         self.fname = fname
 
+        self.event_queue = None
         self.dgroups = None
         self._restart = False
         self._eventloop = None
@@ -93,40 +93,42 @@ class Qtile(command.CommandObject):
         self.current_screen = None
         self.screens = []
         self._drag = None
-        self.ignored_events = set([
-            xcffib.xproto.KeyReleaseEvent,
-            xcffib.xproto.ReparentNotifyEvent,
-            xcffib.xproto.CreateNotifyEvent,
-            # DWM handles this to help "broken focusing windows".
-            xcffib.xproto.MapNotifyEvent,
-            xcffib.xproto.LeaveNotifyEvent,
-            xcffib.xproto.FocusOutEvent,
-            xcffib.xproto.FocusInEvent,
-            xcffib.xproto.NoExposureEvent
-        ])
+        # FIXME: This should be removed, once we've refactored the brittle tests
+        # that depend on this attribute.
+        self.display = None
         self.selection = {
             "PRIMARY": {"owner": None, "selection": ""},
             "CLIPBOARD": {"owner": None, "selection": ""}
         }
         hook.init(self)
 
-    def start(self, state=None):
-        self.conn = xcbq.Connection(self.display_name)
-        self.conn.xsync()
-        self._xpoll()
+    def start(self, display=None, state=None):
+        self._eventloop = asyncio.new_event_loop()
+        self._eventloop.add_signal_handler(signal.SIGINT, self.stop)
+        self._eventloop.add_signal_handler(signal.SIGTERM, self.stop)
+        self._eventloop.set_exception_handler(
+            lambda x, y: logger.exception("Got an exception in poll loop")
+        )
+        self.event_queue = asyncio.Queue(loop=self._eventloop)
 
-        if not self.display_name:
-            self.display_name = os.environ.get("DISPLAY")
-            if not self.display_name:
+        self.kore.start(display, self._eventloop, self.event_queue)
+        self.conn = self.kore.conn
+
+        if not display:
+            display = os.environ.get("DISPLAY")
+            if not display:
                 raise QtileError("No DISPLAY set.")
+        self.display = display
+
         if not self.fname:
             # Dots might appear in the host part of the display name
             # during remote X sessions. Let's strip the host part first.
-            display_number = self.display_name.partition(":")[2]
+            display_number = display.partition(":")[2]
             if "." not in display_number:
-                self.display_name += ".0"
-            self.fname = command.find_sockfile(self.display_name)
+                display += ".0"
+            self.fname = command.find_sockfile(display)
 
+        self.setup_python_dbus()
         # Find the modifier mask for the numlock key, if there is one:
         nc = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
         self.numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(nc), 0)
@@ -190,7 +192,6 @@ class Qtile(command.CommandObject):
                 self.groups.append(sp)
                 self.groups_map[sp.name] = sp
 
-        self.setup_eventloop()
         self.server = command._Server(self.fname, self, self.config, self._eventloop)
 
         self._process_screens()
@@ -234,6 +235,7 @@ class Qtile(command.CommandObject):
 
         self.setup_selection()
         hook.fire("startup_complete")
+        self._eventloop.create_task(self.process_events())
 
     def setup_selection(self):
         primary = self.conn.atoms["PRIMARY"]
@@ -254,20 +256,6 @@ class Qtile(command.CommandObject):
         # ask for selection on starup
         self.convert_selection(primary)
         self.convert_selection(clipboard)
-
-    def setup_eventloop(self):
-        self._eventloop = asyncio.new_event_loop()
-        self._eventloop.add_signal_handler(signal.SIGINT, self.stop)
-        self._eventloop.add_signal_handler(signal.SIGTERM, self.stop)
-        self._eventloop.set_exception_handler(
-            lambda x, y: logger.exception("Got an exception in poll loop")
-        )
-
-        logger.debug('Adding io watch')
-        fd = self.conn.conn.get_file_descriptor()
-        self._eventloop.add_reader(fd, self._xpoll)
-
-        self.setup_python_dbus()
 
     def setup_python_dbus(self):
         # This is a little strange. python-dbus internally depends on gobject,
@@ -291,12 +279,11 @@ class Qtile(command.CommandObject):
                         logger.exception("got exception from gobject")
             self._glib_loop = self.run_in_executor(gobject_thread)
         except ImportError:
-            logger.warning("importing dbus/gobject failed, dbus will not work.")
+            logger.debug("importing dbus/gobject failed, dbus will not work.")
             self._glib_loop = None
 
     def finalize(self):
         self._finalize = True
-
         self._eventloop.remove_signal_handler(signal.SIGINT)
         self._eventloop.remove_signal_handler(signal.SIGTERM)
         self._eventloop.set_exception_handler(None)
@@ -310,7 +297,6 @@ class Qtile(command.CommandObject):
                 pass
 
         try:
-
             for w in self.widgets_map.values():
                 w.finalize()
 
@@ -322,14 +308,13 @@ class Qtile(command.CommandObject):
                     if bar is not None:
                         bar.finalize()
 
-            logger.debug('Removing io watch')
-            fd = self.conn.conn.get_file_descriptor()
-            self._eventloop.remove_reader(fd)
             self.conn.finalize()
             self.server.close()
         except:  # noqa: E722
             logger.exception('exception during finalize')
         finally:
+            for p in self._eventloop.Task.all_tasks():
+                p.cancel()
             self._eventloop.close()
             self._eventloop = None
         if self._restart:
@@ -707,45 +692,26 @@ class Qtile(command.CommandObject):
             logger.info("Unhandled event: %r" % ename)
         return chain
 
-    def _xpoll(self):
+    async def process_events(self):
         while True:
+            e = await self.event_queue.get()
+            if isinstance(e, base.ShutdownEvent):
+                logger.info("shutting down")
+                self.stop()
+                return
+
+            ename = e.__class__.__name__
+            if ename.endswith("Event"):
+                ename = ename[:-5]
+            logger.debug(ename)
             try:
-                e = self.conn.conn.poll_for_event()
-                if not e:
-                    break
-
-                ename = e.__class__.__name__
-
-                if ename.endswith("Event"):
-                    ename = ename[:-5]
-                if e.__class__ not in self.ignored_events:
-                    logger.debug(ename)
-                    for h in self.get_target_chain(ename, e):
-                        logger.debug("Handling: %s" % ename)
-                        r = h(e)
-                        if not r:
-                            break
-            # Catch some bad X exceptions. Since X is event based, race
-            # conditions can occur almost anywhere in the code. For
-            # example, if a window is created and then immediately
-            # destroyed (before the event handler is evoked), when the
-            # event handler tries to examine the window properties, it
-            # will throw a WindowError exception. We can essentially
-            # ignore it, since the window is already dead and we've got
-            # another event in the queue notifying us to clean it up.
-            except (WindowError, AccessError, DrawableError):
-                pass
-
+                for h in self.get_target_chain(ename, e):
+                    logger.debug("Handling: %s" % ename)
+                    r = h(e)
+                    if not r:
+                        break
             except Exception:
-                error_code = self.conn.conn.has_error()
-                if error_code:
-                    error_string = xcbq.XCB_CONN_ERRORS[error_code]
-                    logger.exception("Shutting down due to X connection error %s (%s)" % (error_string, error_code))
-                    self.stop()
-                    return
-
-                logger.exception("Got an exception in poll loop")
-        self.conn.flush()
+                logger.exception("Exception in poll loop")
 
     def graceful_shutdown(self):
         """
@@ -1485,7 +1451,6 @@ class Qtile(command.CommandObject):
 
                     os.dup2(fd, 1)
                     os.dup2(fd, 2)
-
                 try:
                     os.execvp(args[0], args)
                 except OSError as e:
