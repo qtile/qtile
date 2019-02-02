@@ -175,7 +175,7 @@ class _Group(command.CommandObject):
         if self.screen:
             # move all floating guys offset to new screen
             self.floating_layout.to_screen(self, self.screen)
-            self.layout_all()
+            self.layout_all(warp=self.qtile.config.cursor_warp)
             rect = self.screen.get_rect()
             self.floating_layout.show(rect)
             self.layout.show(rect)
