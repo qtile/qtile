@@ -1,3 +1,15 @@
+qtile x.x.x, released xxxx-xx-xx:
+    !!! Config breakage !!!
+        - Many internal things were renamed from camel case to snake case. If
+          your config uses main(), or any lazy.function() invocations that
+          interact directly with the qtile object, you may need to forward port
+          them. Also note that we do *not* consider the qtile object to be a
+          stable api, so you will need to continue forward porting these things
+          for future refactorings (for wayland, etc.). A better approach may be
+          to add an upstream API for what you want to do ;)
+        - Maildir's subFolder and maildirPath changed to maildir_path and
+          sub_folder.
+
 qtile 0.13.0, released 2018-12-23:
     !!! deprecation warning !!!
         - wmii layout is deprecated in terms of columns layout, which has the
