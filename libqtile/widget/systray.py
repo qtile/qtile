@@ -85,7 +85,7 @@ class Icon(window._Window):
         self.systray.bar.draw()
         return False
 
-    handle_UnmapNotify = handle_DestroyNotify
+    handle_UnmapNotify = handle_DestroyNotify  # noqa: N815
 
 
 class Systray(window._Window, base._Widget):
