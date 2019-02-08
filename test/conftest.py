@@ -25,6 +25,7 @@ import libqtile.ipc
 from libqtile.core.manager import Qtile as QtileManager
 from libqtile.core import xcore
 from libqtile.log_utils import init_log
+from libqtile.resources import default_config
 
 import functools
 import logging
@@ -288,7 +289,12 @@ class Qtile:
         llvl = logging.DEBUG if pytest.config.getoption("--debuglog") else logging.INFO
         init_log(llvl, log_path=None, log_color=False)
         kore = xcore.XCore()
-        return QtileManager(kore, config_class(), self.display, self.sockfile)
+        config = config_class()
+        for attr in dir(default_config):
+            if not hasattr(config, attr):
+                setattr(config, attr, getattr(default_config, attr))
+
+        return QtileManager(kore, config, self.display, self.sockfile)
 
     def terminate(self):
         if self.proc is None:
@@ -446,6 +452,10 @@ def xephyr(request, xvfb):
 @pytest.fixture(scope="function")
 def qtile(request, xephyr):
     config = getattr(request, "param", BareConfig)
+
+    for attr in dir(default_config):
+        if not hasattr(config, attr):
+            setattr(config, attr, getattr(default_config, attr))
 
     with tempfile.NamedTemporaryFile() as f:
         sockfile = f.name
