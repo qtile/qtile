@@ -27,6 +27,7 @@ from libqtile.core import xcore
 from libqtile.log_utils import init_log
 from libqtile.resources import default_config
 
+import fcntl
 import functools
 import logging
 import multiprocessing
@@ -106,8 +107,17 @@ def can_connect_qtile(socket_path):
 
 def _find_display():
     """Returns the next available display"""
-    xvfb = Xvfb()
-    return xvfb._get_next_unused_display()
+    for i in range(10, 50):
+        lockfile = os.path.join(tempfile.tempdir, ".X{0}-lock".format(i))
+        try:
+            with open(lockfile, "w"):
+                os.remove(lockfile)
+        except PermissionError:
+            # The X server makes this file with 222 perms, so PermissionError
+            # means that it's already in use, because we couldn't open it for
+            # writing.
+            continue
+    raise Exception("couldn't find free X socket")
 
 
 def whereis(program):
