@@ -27,6 +27,7 @@ from libqtile.core import xcore
 from libqtile.log_utils import init_log
 from libqtile.resources import default_config
 
+import fcntl
 import functools
 import logging
 import multiprocessing
@@ -106,8 +107,22 @@ def can_connect_qtile(socket_path):
 
 def _find_display():
     """Returns the next available display"""
-    xvfb = Xvfb()
-    return xvfb._get_next_unused_display()
+    for i in range(10, 50):
+        lockfile = os.path.join(tempfile.tempdir, ".X{0}-lock".format(i))
+        try:
+            f = open(lockfile, "w")
+            try:
+                fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                return f, i
+            except BlockingIOError:
+                f.close()
+                continue
+        except PermissionError:
+            # The X server makes this file with 222 perms, so PermissionError
+            # means that it's already in use, because we couldn't open it for
+            # writing.
+            continue
+    raise Exception("couldn't find free X socket")
 
 
 def whereis(program):
@@ -176,6 +191,7 @@ class Xephyr:
 
         self.proc = None  # Handle to Xephyr instance, subprocess.Popen object
         self.display = None
+        self.lockfile = None
 
     def __enter__(self):
         self.start_xephyr()
@@ -192,7 +208,8 @@ class Xephyr:
         which is used to setup the instance.
         """
         # get a new display
-        self.display = ":{}".format(_find_display())
+        self.lockfile, display = _find_display()
+        self.display = ":{}".format(display)
 
         # build up arguments
         args = [
@@ -224,6 +241,10 @@ class Xephyr:
             ))
 
     def stop_xephyr(self):
+        if self.lockfile is not None:
+            self.lockfile.close()
+            os.remove(self.lockfile.name)
+
         """Stop the Xephyr instance"""
         # Xephyr must be started first
         if self.proc is None:
