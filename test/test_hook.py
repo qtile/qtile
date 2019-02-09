@@ -29,6 +29,7 @@ import libqtile.core
 import libqtile.utils
 import libqtile.hook
 import logging
+from libqtile.resources import default_config
 
 from .conftest import BareConfig
 
@@ -95,6 +96,9 @@ def test_can_unsubscribe_from_hook():
 
 def test_can_subscribe_to_startup_hooks(qtile_nospawn):
     config = BareConfig
+    for attr in dir(default_config):
+        if not hasattr(config, attr):
+            setattr(config, attr, getattr(default_config, attr))
     self = qtile_nospawn
 
     self.startup_once_calls = Value('i', 0)
