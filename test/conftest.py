@@ -321,10 +321,6 @@ class Qtile:
         if self.proc is None:
             print("Qtile is not alive", file=sys.stderr)
         else:
-            # try to send SIGTERM and wait up to 10 sec to quit
-            self.proc.terminate()
-            self.proc.join(10)
-
             if self.proc.is_alive():
                 # desperate times... this probably messes with multiprocessing...
                 try:
