@@ -29,7 +29,7 @@ class WindowList(Dmenu):
     defaults = [
         ("item_format", "{group}.{id}: {window}", "the format for the menu items"),
         ("all_groups", True, "If True, list windows from all groups; otherwise only from the current group"),
-        ("dmenu_lines", 80, "Give lines vertically. Set to None get inline"),
+        ("dmenu_lines", "80", "Give lines vertically. Set to None get inline"),
     ]
 
     def __init__(self, **config):
