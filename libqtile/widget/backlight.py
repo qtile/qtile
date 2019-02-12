@@ -55,7 +55,8 @@ class Backlight(base.InLoopPollText):
         ),
         ('update_interval', .2, 'The delay in seconds between updates'),
         ('step', 10, 'Percent of backlight every scroll changed'),
-        ('format', '{percent: 2.0%}', 'Display format')
+        ('format', '{percent: 2.0%}', 'Display format'),
+        ('change_command', 'xbacklight -set %s', 'Execute command to change value')
     ]
 
     def __init__(self, **config):
@@ -84,7 +85,7 @@ class Backlight(base.InLoopPollText):
         return self.format.format(percent=percent)
 
     def change_backlight(self, value):
-        self.call_process(["xbacklight", "-set", str(value)])
+        self.call_process((self.change_command % value).split())
 
     def button_press(self, x, y, button):
         if self.future and not self.future.done():
