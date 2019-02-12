@@ -5,7 +5,6 @@ default:
 	@echo "'make ckpatch'" to check a patch
 	@echo "'make clean'" to clean generated files
 	@echo "'make man'" to generate sphinx documentation
-	@echo "'make update-requirements'" to update the requirements files
 
 .PHONY: check
 check:
@@ -35,7 +34,3 @@ clean:
 man:
 	python setup.py build_sphinx -b man
 	cp build/sphinx/man/* resources/
-
-.PHONY: update-requirements
-update-requirements:
-	pip-compile requirements.in
