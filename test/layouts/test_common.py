@@ -30,17 +30,14 @@ class AllLayoutsConfig:
     """
     Ensure that all layouts behave consistently in some common scenarios.
     """
-    auto_fullscreen = True
-    main = None
     groups = [
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
         libqtile.config.Group("c"),
         libqtile.config.Group("d"),
     ]
+    follow_mouse_focus = False
     floating_layout = libqtile.layout.floating.Floating()
-    keys = []
-    mouse = []
     screens = []
 
     @staticmethod
