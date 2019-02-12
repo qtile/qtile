@@ -19,7 +19,6 @@
 # SOFTWARE.
 
 from os import system
-
 from .dmenu import Dmenu
 
 
@@ -29,18 +28,21 @@ class CommandSet(Dmenu):
 
     ex. manage mocp deamon:
 
-    Key([mod], 'm', lazy.run_extension(extension.CommandSet(
-        commands={
-            'play/pause': '[ $(mocp -i | wc -l) -lt 2 ] && mocp -p || mocp -G',
-            'next': 'mocp -f',
-            'previous': 'mocp -r',
-            'quit': 'mocp -x',
-            'open': 'urxvt -e mocp',
-            'shuffle': 'mocp -t shuffle',
-            'repeat': 'mocp -t repeat',
-            },
-        pre_commands=['[ $(mocp -i | wc -l) -lt 1 ] && mocp -S'],
-        **Theme.dmenu))),
+    .. code-block:: python
+
+        Key([mod], 'm', lazy.run_extension(extension.CommandSet(
+            commands={
+                'play/pause': '[ $(mocp -i | wc -l) -lt 2 ] && mocp -p || mocp -G',
+                'next': 'mocp -f',
+                'previous': 'mocp -r',
+                'quit': 'mocp -x',
+                'open': 'urxvt -e mocp',
+                'shuffle': 'mocp -t shuffle',
+                'repeat': 'mocp -t repeat',
+                },
+            pre_commands=['[ $(mocp -i | wc -l) -lt 1 ] && mocp -S'],
+            **Theme.dmenu))),
+
     """
 
     defaults = [
