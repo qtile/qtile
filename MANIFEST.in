@@ -6,7 +6,6 @@ include CONTRIBUTING.md
 
 exclude .coveragerc
 exclude tox.ini
-exclude requirements.in
 exclude requirements.txt
 exclude requirements-dev.txt
 exclude libqtile/_ffi*.py

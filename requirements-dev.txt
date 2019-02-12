@@ -1,5 +1,4 @@
 flake8
 pep8-naming
 pytest-cov
-pip-tools
 xvfbwrapper
