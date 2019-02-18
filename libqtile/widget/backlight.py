@@ -22,6 +22,7 @@
 # SOFTWARE.
 
 import os
+import shlex
 from . import base
 
 try:
@@ -85,7 +86,7 @@ class Backlight(base.InLoopPollText):
         return self.format.format(percent=percent)
 
     def change_backlight(self, value):
-        self.call_process((self.change_command % value).split())
+        self.call_process(shlex.split(self.change_command % value))
 
     def button_press(self, x, y, button):
         if self.future and not self.future.done():
