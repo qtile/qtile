@@ -83,7 +83,7 @@ class CheckUpdates(base.ThreadedPollText):
 
     def _set_colour(self, num_updates):
         # type: (str) -> None
-        if num_updates:
+        if int(num_updates) > 0:
             self.layout.colour = self.colour_have_updates
         else:
             self.layout.colour = self.colour_no_updates
