@@ -67,7 +67,7 @@ class Mouse:
         self.button = button
         self.commands = commands
         self.button_code = int(self.button.replace('Button', ''))
-        for k,v in kwargs.items():
+        for k, v in kwargs.items():
             setattr(self, k, v)
 
 
