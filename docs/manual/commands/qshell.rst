@@ -83,14 +83,14 @@ Reference
 Qsh
 ---
 
-.. autoclass:: libqtile.sh.QSh
+.. autoclass:: liblavinder.sh.QSh
 
-   .. automethod:: libqtile.sh.QSh.do_cd
+   .. automethod:: liblavinder.sh.QSh.do_cd
 
-   .. automethod:: libqtile.sh.QSh.do_exit
+   .. automethod:: liblavinder.sh.QSh.do_exit
 
-   .. automethod:: libqtile.sh.QSh.do_ls
+   .. automethod:: liblavinder.sh.QSh.do_ls
 
-   .. automethod:: libqtile.sh.QSh.do_pwd
+   .. automethod:: liblavinder.sh.QSh.do_pwd
 
-   .. automethod:: libqtile.sh.QSh.do_help
+   .. automethod:: liblavinder.sh.QSh.do_help

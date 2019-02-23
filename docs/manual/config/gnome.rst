@@ -12,7 +12,7 @@ be on your $PATH.
 
     import subprocess
     import os
-    from libqtile import hook
+    from liblavinder import hook
 
     @hook.subscribe.startup
     def dbus_register():
@@ -25,40 +25,40 @@ be on your $PATH.
                           '--dest=org.gnome.SessionManager',
                           '/org/gnome/SessionManager',
                           'org.gnome.SessionManager.RegisterClient',
-                          'string:qtile',
+                          'string:lavinder',
                           'string:' + id])
 
 This adds a new entry "Qtile GNOME" to GDM's login screen.
 
 ::
 
-    $ cat /usr/share/xsessions/qtile_gnome.desktop
+    $ cat /usr/share/xsessions/lavinder_gnome.desktop
     [Desktop Entry]
     Name=Qtile GNOME
     Comment=Tiling window manager
     TryExec=/usr/bin/gnome-session
-    Exec=gnome-session --session=qtile
+    Exec=gnome-session --session=lavinder
     Type=XSession
 
 The custom session for gnome-session.
 
 ::
 
-    $ cat /usr/share/gnome-session/sessions/qtile.session
+    $ cat /usr/share/gnome-session/sessions/lavinder.session
     [GNOME Session]
     Name=Qtile session
-    RequiredComponents=qtile;gnome-settings-daemon;
+    RequiredComponents=lavinder;gnome-settings-daemon;
 
 So that Qtile starts automatically on login.
 
 ::
 
-    $ cat /usr/share/applications/qtile.desktop
+    $ cat /usr/share/applications/lavinder.desktop
     [Desktop Entry]
     Type=Application
     Encoding=UTF-8
     Name=Qtile
-    Exec=qtile
+    Exec=lavinder
     NoDisplay=true
     X-GNOME-WMName=Qtile
     X-GNOME-Autostart-Phase=WindowManager

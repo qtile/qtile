@@ -98,7 +98,7 @@ Based on your Python version, there are different ways to install this:
 dbus/gobject
 ------------
 
-Until someone comes along and writes an asyncio-based dbus library, qtile will
+Until someone comes along and writes an asyncio-based dbus library, lavinder will
 depend on ``python-dbus`` to interact with dbus. This means that if you want
 to use things like notification daemon or mpris widgets, you'll need to
 install python-gobject and python-dbus. Qtile will run fine without these,
@@ -107,19 +107,19 @@ although it will emit a warning that some things won't work.
 Qtile
 -----
 
-With the dependencies in place, you can now install qtile:
+With the dependencies in place, you can now install lavinder:
 
 .. code-block:: bash
 
-    git clone git://github.com/qtile/qtile.git
-    cd qtile
+    git clone git://github.com/lavinder/lavinder.git
+    cd lavinder
     sudo python setup.py install
 
 Stable versions of Qtile can be installed from PyPI:
 
 .. code-block:: bash
 
-    pip install qtile
+    pip install lavinder
 
 As long as the necessary libraries are in place, this can be done at any point,
 however, it is recommended that you first install xcffib to ensure the

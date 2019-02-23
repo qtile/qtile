@@ -44,7 +44,7 @@ the Client object:
 
 .. code-block:: python
 
-    from libqtile.command import Client
+    from liblavinder.command import Client
     c = Client()
     print c.status()
 
@@ -58,7 +58,7 @@ so:
 
 To access a specific group, regardless of whether or not it is current, we use
 the Python containment syntax. This command sends group "b" to screen 1 (by the
-:meth:`libqtile.config.Group.to_screen` method):
+:meth:`liblavinder.config.Group.to_screen` method):
 
 .. code-block:: python
 
@@ -81,7 +81,7 @@ node, and we get an exception:
 
 .. code-block:: python
 
-    libqtile.command.CommandError: No object screen in path 'group['b'].screen'
+    liblavinder.command.CommandError: No object screen in path 'group['b'].screen'
 
 
 The graph is not a tree, since it can contain cycles. This path (redundantly)

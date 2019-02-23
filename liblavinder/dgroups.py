@@ -1,0 +1,254 @@
+# Copyright (c) 2011-2012 Florian Mounier
+# Copyright (c) 2012-2014 roger
+# Copyright (c) 2012 Craig Barnes
+# Copyright (c) 2012-2014 Tycho Andersen
+# Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2014 ramnes
+# Copyright (c) 2014 Sebastian Kricner
+# Copyright (c) 2014 Sean Vig
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+import collections
+
+import liblavinder.hook
+from liblavinder.config import Key
+from liblavinder.command import lazy
+from liblavinder.config import Group
+from liblavinder.config import Rule
+from liblavinder.config import Match
+from liblavinder.log_utils import logger
+
+
+def simple_key_binder(mod, keynames=None):
+    """Bind keys to mod+group position or to the keys specified as second argument"""
+    def func(dgroup):
+        # unbind all
+        for key in dgroup.keys[:]:
+            dgroup.lavinder.unmap_key(key)
+            dgroup.keys.remove(key)
+
+        if keynames:
+            keys = keynames
+        else:
+            # keys 1 to 9 and 0
+            keys = list(map(str, list(range(1, 10)) + [0]))
+
+        # bind all keys
+        for keyname, group in zip(keys, dgroup.lavinder.groups):
+            name = group.name
+            key = Key([mod], keyname, lazy.group[name].toscreen())
+            key_s = Key([mod, "shift"], keyname, lazy.window.togroup(name))
+            key_c = Key(
+                [mod, "control"],
+                keyname,
+                lazy.group.switch_groups(name)
+            )
+            dgroup.keys.append(key)
+            dgroup.keys.append(key_s)
+            dgroup.keys.append(key_c)
+            dgroup.lavinder.map_key(key)
+            dgroup.lavinder.map_key(key_s)
+            dgroup.lavinder.map_key(key_c)
+
+    return func
+
+
+class DGroups:
+    """Dynamic Groups"""
+    def __init__(self, lavinder, dgroups, key_binder=None, delay=1):
+        self.lavinder = lavinder
+
+        self.groups = dgroups
+        self.groups_map = {}
+
+        self.rules = []
+        self.rules_map = {}
+        self.last_rule_id = 0
+
+        for rule in getattr(lavinder.config, 'dgroups_app_rules', []):
+            self.add_rule(rule)
+
+        self.keys = []
+
+        self.key_binder = key_binder
+
+        self._setup_hooks()
+        self._setup_groups()
+
+        self.delay = delay
+
+        self.timeout = {}
+
+    def add_rule(self, rule, last=True):
+        rule_id = self.last_rule_id
+        self.rules_map[rule_id] = rule
+        if last:
+            self.rules.append(rule)
+        else:
+            self.rules.insert(0, rule)
+        self.last_rule_id += 1
+        return rule_id
+
+    def remove_rule(self, rule_id):
+        rule = self.rules_map.get(rule_id)
+        if rule:
+            self.rules.remove(rule)
+            del self.rules_map[rule_id]
+        else:
+            logger.warn('Rule "%s" not found', rule_id)
+
+    def add_dgroup(self, group, start=False):
+        self.groups_map[group.name] = group
+        rules = [Rule(m, group=group.name) for m in group.matches]
+        self.rules.extend(rules)
+        if start:
+            self.lavinder.add_group(group.name, group.layout, group.layouts, group.label)
+
+    def _setup_groups(self):
+        for group in self.groups:
+            self.add_dgroup(group, group.init)
+
+            if group.spawn and not self.lavinder.no_spawn:
+                if isinstance(group.spawn, str):
+                    spawns = [group.spawn]
+                else:
+                    spawns = group.spawn
+                for spawn in spawns:
+                    pid = self.lavinder.cmd_spawn(spawn)
+                    self.add_rule(Rule(Match(net_wm_pid=[pid]), group.name))
+
+    def _setup_hooks(self):
+        liblavinder.hook.subscribe.addgroup(self._addgroup)
+        liblavinder.hook.subscribe.client_new(self._add)
+        liblavinder.hook.subscribe.client_killed(self._del)
+        if self.key_binder:
+            liblavinder.hook.subscribe.setgroup(
+                lambda: self.key_binder(self)
+            )
+            liblavinder.hook.subscribe.changegroup(
+                lambda: self.key_binder(self)
+            )
+
+    def _addgroup(self, lavinder, group_name):
+        if group_name not in self.groups_map:
+            self.add_dgroup(Group(group_name, persist=False))
+
+    def _add(self, client):
+        if client in self.timeout:
+            logger.info('Remove dgroup source')
+            self.timeout.pop(client).cancel()
+
+        # ignore static windows
+        if client.defunct:
+            return
+
+        # ignore windows whose groups is already set (e.g. from another hook or
+        # when it was set on state restore)
+        if client.group is not None:
+            return
+
+        group_set = False
+        intrusive = False
+
+        for rule in self.rules:
+            # Matching Rules
+            if rule.matches(client):
+                if rule.group:
+                    if rule.group in self.groups_map:
+                        layout = self.groups_map[rule.group].layout
+                        layouts = self.groups_map[rule.group].layouts
+                        label = self.groups_map[rule.group].label
+                    else:
+                        layout = None
+                        layouts = None
+                        label = None
+                    group_added = self.lavinder.add_group(rule.group, layout, layouts, label)
+                    client.togroup(rule.group)
+
+                    group_set = True
+
+                    group_obj = self.lavinder.groups_map[rule.group]
+                    group = self.groups_map.get(rule.group)
+                    if group and group_added:
+                        for k, v in list(group.layout_opts.items()):
+                            if isinstance(v, collections.Callable):
+                                v(group_obj.layout)
+                            else:
+                                setattr(group_obj.layout, k, v)
+                        affinity = group.screen_affinity
+                        if affinity and len(self.lavinder.screens) > affinity:
+                            self.lavinder.screens[affinity].set_group(group_obj)
+
+                if rule.float:
+                    client.enablefloating()
+
+                if rule.intrusive:
+                    intrusive = rule.intrusive
+
+                if rule.break_on_match:
+                    break
+
+        # If app doesn't have a group
+        if not group_set:
+            current_group = self.lavinder.current_group.name
+            if current_group in self.groups_map and \
+                    self.groups_map[current_group].exclusive and \
+                    not intrusive:
+
+                wm_class = client.window.get_wm_class()
+
+                if wm_class:
+                    if len(wm_class) > 1:
+                        wm_class = wm_class[1]
+                    else:
+                        wm_class = wm_class[0]
+
+                    group_name = wm_class
+                else:
+                    group_name = client.name or 'Unnamed'
+
+                self.add_dgroup(Group(group_name, persist=False), start=True)
+                client.togroup(group_name)
+        self.sort_groups()
+
+    def sort_groups(self):
+        grps = self.lavinder.groups
+        sorted_grps = sorted(grps, key=lambda g: self.groups_map[g.name].position)
+        if grps != sorted_grps:
+            self.lavinder.groups = sorted_grps
+            liblavinder.hook.fire("changegroup")
+
+    def _del(self, client):
+        group = client.group
+
+        def delete_client():
+            # Delete group if empty and don't persist
+            if group and group.name in self.groups_map and \
+                    not self.groups_map[group.name].persist and \
+                    len(group.windows) <= 0:
+                self.lavinder.delete_group(group.name)
+                self.sort_groups()
+            del self.timeout[client]
+
+        # Wait the delay until really delete the group
+        logger.info('Add dgroup timer')
+        self.timeout[client] = self.lavinder.call_later(
+            self.delay, delete_client
+        )

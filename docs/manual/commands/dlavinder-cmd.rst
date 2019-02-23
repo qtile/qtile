@@ -1,30 +1,30 @@
-dqtile-cmd
+dlavinder-cmd
 ==========
 
-A Rofi/dmenu interface to qtile-cmd. Accepts all arguments of qtile-cmd.
+A Rofi/dmenu interface to lavinder-cmd. Accepts all arguments of lavinder-cmd.
 
 Examples:
 ---------
 
-Output of ``dqtile-cmd -o cmd``
+Output of ``dlavinder-cmd -o cmd``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. image:: dqtile-cmd.png
+.. image:: dlavinder-cmd.png
 
-Output of ``dqtile-cmd -h``
+Output of ``dlavinder-cmd -h``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: text
 
-    dqtile-cmd
+    dlavinder-cmd
 
-        A Rofi/dmenu interface to qtile-cmd. Excepts all arguments of qtile-cmd
+        A Rofi/dmenu interface to lavinder-cmd. Excepts all arguments of lavinder-cmd
         (see below).
 
-    usage: dqtile-cmd [-h] [--object OBJ_SPEC [OBJ_SPEC ...]]
+    usage: dlavinder-cmd [-h] [--object OBJ_SPEC [OBJ_SPEC ...]]
                       [--function FUNCTION] [--args ARGS [ARGS ...]] [--info]
 
-    Simple tool to expose qtile.command functionality to shell.
+    Simple tool to expose lavinder.command functionality to shell.
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -39,10 +39,10 @@ Output of ``dqtile-cmd -h``
                             documentation for function.
 
     Examples:
-     dqtile-cmd
-     dqtile-cmd -o cmd
-     dqtile-cmd -o cmd -f prev_layout -i
-     dqtile-cmd -o cmd -f prev_layout -a 3 # prev_layout on group 3
-     dqtile-cmd -o group 3 -f focus_back
+     dlavinder-cmd
+     dlavinder-cmd -o cmd
+     dlavinder-cmd -o cmd -f prev_layout -i
+     dlavinder-cmd -o cmd -f prev_layout -a 3 # prev_layout on group 3
+     dlavinder-cmd -o group 3 -f focus_back
 
     If both rofi and dmenu are present rofi will be selected as default, to change this us --force-dmenu as the first argument.

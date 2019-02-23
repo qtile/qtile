@@ -20,7 +20,7 @@ Example
 
 ::
 
-    from libqtile import layout
+    from liblavinder import layout
     layouts = [
         layout.Max(),
         layout.Stack(stacks=2)

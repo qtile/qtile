@@ -3,12 +3,12 @@ Keys
 ====
 
 The ``keys`` variable defines Qtile's key bindings. Individual key bindings are
-defined with :class:`libqtile.config.Key` as demonstrated in the following
+defined with :class:`liblavinder.config.Key` as demonstrated in the following
 example. Note that you may specify more than one callback functions.
 
 ::
 
-   from libqtile.config import Key
+   from liblavinder.config import Key
 
    keys = [
       # Pressing "Meta + Shift + a".
@@ -22,10 +22,10 @@ example. Note that you may specify more than one callback functions.
    ]
 
 The above may also be written more concisely with the help of the
-:class:`libqtile.config.EzKey` helper class. The following example is
+:class:`liblavinder.config.EzKey` helper class. The following example is
 functionally equivalent to the above::
 
-    from libqtile.config import EzKey as Key
+    from liblavinder.config import EzKey as Key
 
     keys = [
        Key("M-S-a", callback, ...),
@@ -68,7 +68,7 @@ Special keys
 ============
 
 These are most commonly used special keys. For complete list please see
-`the code <https://github.com/qtile/qtile/blob/develop/libqtile/xkeysyms.py>`_.
+`the code <https://github.com/lavinder/lavinder/blob/develop/liblavinder/xkeysyms.py>`_.
 You can create bindings on them just like for the regular keys. For example
 ``Key(["mod1"], "F4", lazy.window.kill())``.
 
@@ -93,8 +93,8 @@ You can create bindings on them just like for the regular keys. For example
 Reference
 =========
 
-.. qtile_class:: libqtile.config.Key
+.. lavinder_class:: liblavinder.config.Key
    :no-commands:
 
-.. qtile_class:: libqtile.config.EzConfig
+.. lavinder_class:: liblavinder.config.EzConfig
    :no-commands:

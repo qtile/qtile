@@ -22,10 +22,10 @@ Commands and scripting
     manual/commands/scripting
     manual/commands/qshell
     manual/commands/iqshell
-    manual/commands/qtile-top
-    manual/commands/qtile-run
-    manual/commands/qtile-cmd
-    manual/commands/dqtile-cmd
+    manual/commands/lavinder-top
+    manual/commands/lavinder-run
+    manual/commands/lavinder-cmd
+    manual/commands/dlavinder-cmd
 
 Getting involved
 ================

@@ -6,7 +6,7 @@ Stable versions of Qtile are currently packaged for Arch Linux. To install this 
 
 .. code-block:: bash
 
-    pacman -S qtile
+    pacman -S lavinder
 
 Please see the ArchWiki for more information on `Qtile`_.
 

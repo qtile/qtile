@@ -3,7 +3,7 @@ Mouse
 =====
 
 The ``mouse`` config file variable defines a set of global mouse actions, and
-is a list of :class:`~libqtile.config.Click` and :class:`~libqtile.config.Drag`
+is a list of :class:`~liblavinder.config.Click` and :class:`~liblavinder.config.Drag`
 objects, which define what to do when a window is clicked or dragged.
 
 Example
@@ -11,7 +11,7 @@ Example
 
 ::
 
-    from libqtile.config import Click, Drag
+    from liblavinder.config import Click, Drag
     mouse = [
         Drag([mod], "Button1", lazy.window.set_position_floating(),
             start=lazy.window.get_position()),
@@ -23,7 +23,7 @@ Example
 The above example can also be written more concisely with the help of
 the ``EzClick`` and ``EzDrag`` helpers::
 
-    from libqtile.config import EzClick as Click, EzDrag as Drag
+    from liblavinder.config import EzClick as Click, EzDrag as Drag
 
     mouse = [
         Drag("M-1", lazy.window.set_position_floating(),
@@ -36,8 +36,8 @@ the ``EzClick`` and ``EzDrag`` helpers::
 Reference
 =========
 
-.. qtile_class:: libqtile.config.Click
+.. lavinder_class:: liblavinder.config.Click
    :no-commands:
 
-.. qtile_class:: libqtile.config.Drag
+.. lavinder_class:: liblavinder.config.Drag
    :no-commands:

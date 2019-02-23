@@ -36,7 +36,7 @@ by calling:
 
 .. code-block:: bash
 
-    python libqtile/ffi_build.py
+    python liblavinder/ffi_build.py
 
 Using Xephyr and the test suite
 ===============================
@@ -72,12 +72,12 @@ Just switch to a new tty and run ``startx`` normally to use the ``~/.xinitrc``
 X startup script.
 
 It's likely though that you want to use a different, customized startup script
-for testing purposes, for example ``~/.config/qtile/xinitrc``. You can do so by
+for testing purposes, for example ``~/.config/lavinder/xinitrc``. You can do so by
 launching X with:
 
 .. code-block:: bash
 
-  startx ~/.config/qtile/xinitrc
+  startx ~/.config/lavinder/xinitrc
 
 ``startx`` deals with multiple X sessions automatically. If you want to use
 ``xinit`` instead, you need to first copy ``/etc/X11/xinit/xserverrc`` to
@@ -85,10 +85,10 @@ launching X with:
 
 .. code-block:: bash
 
-  xinit ~/.config/qtile/xinitrc -- :1
+  xinit ~/.config/lavinder/xinitrc -- :1
 
-Examples of custom X startup scripts are available in `qtile-examples
-<https://github.com/qtile/qtile-examples>`_.
+Examples of custom X startup scripts are available in `lavinder-examples
+<https://github.com/lavinder/lavinder-examples>`_.
 
 Capturing an ``xtrace``
 =======================
@@ -99,7 +99,7 @@ Qtile's conversations with the X server. To capture one of these, create an
 
 .. code-block:: bash
 
-  exec xtrace qtile >> ~/qtile.log
+  exec xtrace lavinder >> ~/lavinder.log
 
 This will put the xtrace output in Qtile's logfile as well. You can then
 demonstrate the bug, and paste the contents of this file into the bug report.
@@ -110,7 +110,7 @@ Coding style
 While not all of our code follows `PEP8 <http://www.python.org/dev/peps/pep-0008/>`_,
 we do try to adhere to it where possible. All new code should be PEP8 compliant.
 
-The ``make lint`` command will run a linter with our configuration over libqtile
+The ``make lint`` command will run a linter with our configuration over liblavinder
 to ensure your patch complies with reasonable formatting constraints. We also
 request that git commit messages follow the
 `standard format <http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>`_.
@@ -119,7 +119,7 @@ Deprecation policy
 ==================
 
 When a widget API is changed, you should deprecate the change using
-``libqtile.widget.base.deprecated`` to warn users, in addition to adding it to
+``liblavinder.widget.base.deprecated`` to warn users, in addition to adding it to
 the appropriate place in the changelog. We will typically remove deprecated
 APIs one tag after they are deprecated.
 

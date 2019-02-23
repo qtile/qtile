@@ -4,6 +4,6 @@
 Built-in Extensions
 ===================
 
-.. qtile_module:: libqtile.extension
-    :baseclass: libqtile.extension.base._Extension
+.. lavinder_module:: liblavinder.extension
+    :baseclass: liblavinder.extension.base._Extension
     :no-commands:

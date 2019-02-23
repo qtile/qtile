@@ -2,8 +2,8 @@ To build in a virtual environment (requires the 'virtualenv', 'pip' and 'graphiz
 installed in your distro):
 
 $ cd ./docs
-$ virtualenv qtile
-$ source qtile/bin/activate
+$ virtualenv lavinder
+$ source lavinder/bin/activate
 $ pip install -r requirements.txt
 $ make html
 $ deactivate

@@ -7,4 +7,4 @@ To install this package, run:
 
 .. code-block:: bash
 
-    dnf -y install qtile
+    dnf -y install lavinder

@@ -7,7 +7,7 @@ Qtile packages available via:
 
 .. code-block:: bash
 
-    sudo apt-get install qtile
+    sudo apt-get install lavinder
 
 On older versions of Ubuntu (Wily+) and Debian testing (Stretch), the
 dependencies are available via:

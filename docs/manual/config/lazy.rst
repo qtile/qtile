@@ -12,8 +12,8 @@ Example
 
 ::
 
-    from libqtile.config import Key
-    from libqtile.command import lazy
+    from liblavinder.config import Key
+    from liblavinder.command import lazy
 
     keys = [
         Key(
@@ -30,7 +30,7 @@ Lazy functions
 ==============
 
 This is overview of the commonly used functions for the key bindings.  These
-functions can be called from commands on the :ref:`qtile_commands` object or on
+functions can be called from commands on the :ref:`lavinder_commands` object or on
 another object in the command tree.
 
 Some examples are given below.

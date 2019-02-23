@@ -1,5 +1,5 @@
 =========
-qtile-run
+lavinder-run
 =========
 
 Run a command applying rules to the new windows, ie, you can start a window in
@@ -10,4 +10,4 @@ The Windows must have NET_WM_PID.
 .. code-block:: bash
 
     # run xterm floating on group "test-group"
-    qtile-run -g test-group -f xterm
+    lavinder-run -g test-group -f xterm

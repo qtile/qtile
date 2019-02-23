@@ -24,8 +24,8 @@ class Mock(MagicMock):
         return []
 
 MOCK_MODULES = [
-    'libqtile._ffi_pango',
-    'libqtile.core._ffi_xcursors',
+    'liblavinder._ffi_pango',
+    'liblavinder.core._ffi_xcursors',
     'cairocffi',
     'cffi',
     'dateutil',
@@ -66,7 +66,7 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
     'sphinxcontrib.seqdiag',
-    'sphinx_qtile',
+    'sphinx_lavinder',
     'numpydoc',
 ]
 
@@ -261,7 +261,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('man/qtile', 'qtile', u'Qtile Documentation',
+    ('man/lavinder', 'lavinder', u'Qtile Documentation',
      [u'Tycho Andersen'], 1),
     ('man/qshell', 'qshell', u'Qtile Documentation',
      [u'Tycho Andersen'], 1),

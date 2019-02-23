@@ -5,9 +5,9 @@ Groups
 A group is a container for a bunch of windows, analogous to workspaces in other
 window managers. Each client window managed by the window manager belongs to
 exactly one group. The ``groups`` config file variable should be initialized to
-a list of :class:`~libqtile.dgroups.DGroup` objects.
+a list of :class:`~liblavinder.dgroups.DGroup` objects.
 
-:class:`~libqtile.dgroups.DGroup` objects provide several options for group
+:class:`~liblavinder.dgroups.DGroup` objects provide several options for group
 configuration. Groups can be configured to show and hide themselves when
 they're not empty, spawn applications for them when they start, automatically
 acquire certain groups, and various other options.
@@ -17,7 +17,7 @@ Example
 
 ::
 
-    from libqtile.config import Group, Match
+    from liblavinder.config import Group, Match
     groups = [
         Group("a"),
         Group("b"),
@@ -26,39 +26,39 @@ Example
 
     # allow mod3+1 through mod3+0 to bind to groups; if you bind your groups
     # by hand in your config, you don't need to do this.
-    from libqtile.dgroups import simple_key_binder
+    from liblavinder.dgroups import simple_key_binder
     dgroups_key_binder = simple_key_binder("mod3")
 
 
 Reference
 ---------
 
-.. qtile_class:: libqtile.config.Group
+.. lavinder_class:: liblavinder.config.Group
    :no-commands:
 
-.. autofunction:: libqtile.dgroups.simple_key_binder
+.. autofunction:: liblavinder.dgroups.simple_key_binder
 
 Group Matching
 ==============
 
-.. qtile_class:: libqtile.config.Match
+.. lavinder_class:: liblavinder.config.Match
    :no-commands:
 
-.. qtile_class:: libqtile.config.Rule
+.. lavinder_class:: liblavinder.config.Rule
    :no-commands:
 
 
 ScratchPad and DropDown
 =======================
 
-:class:`~libqtile.config.ScratchPad` is a special - by default invisible -
-group which acts as a container for :class:`~libqtile.config.DropDown`
+:class:`~liblavinder.config.ScratchPad` is a special - by default invisible -
+group which acts as a container for :class:`~liblavinder.config.DropDown`
 configurations. A `DropDown` can be configured to spawn a defined process and
 bind thats process' window to it. The associated window can then be shown and
 hidden by the lazy command ``dropdown_toggle()``
 (see :doc:`/manual/config/lazy`) from the ScratchPad group.
 Thus - for example - your favorite terminal emulator turns into a quake-like
-terminal by the control of qtile.
+terminal by the control of lavinder.
 
 If the DropDown window turns visible it is placed as a floating window on top
 of the current group.
@@ -69,8 +69,8 @@ Example
 
 ::
 
-  from libqtile.config import Group, ScratchPad, DropDown, Key
-  from libqtile.command import lazy
+  from liblavinder.config import Group, ScratchPad, DropDown, Key
+  from liblavinder.command import lazy
   groups = [
       ScratchPad("scratchpad", [
           # define a drop down terminal.
@@ -100,8 +100,8 @@ and ScratchPad, and a new pocess is spawned next time the DropDown is set visibl
 Reference
 ---------
 
-.. qtile_class:: libqtile.config.ScratchPad
+.. lavinder_class:: liblavinder.config.ScratchPad
     :no-commands:
 
-.. qtile_class:: libqtile.config.DropDown
+.. lavinder_class:: liblavinder.config.DropDown
      :no-commands:

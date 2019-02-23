@@ -4,44 +4,44 @@
 Built-in Layouts
 ================
 
-.. qtile_class:: libqtile.layout.floating.Floating
+.. lavinder_class:: liblavinder.layout.floating.Floating
     :no-commands:
 
-.. qtile_class:: libqtile.layout.bsp.Bsp
+.. lavinder_class:: liblavinder.layout.bsp.Bsp
     :no-commands:
 
-.. qtile_class:: libqtile.layout.columns.Columns
+.. lavinder_class:: liblavinder.layout.columns.Columns
     :no-commands:
 
-.. qtile_class:: libqtile.layout.matrix.Matrix
+.. lavinder_class:: liblavinder.layout.matrix.Matrix
     :no-commands:
 
-.. qtile_class:: libqtile.layout.max.Max
+.. lavinder_class:: liblavinder.layout.max.Max
     :no-commands:
 
-.. qtile_class:: libqtile.layout.xmonad.MonadTall
+.. lavinder_class:: liblavinder.layout.xmonad.MonadTall
     :no-commands:
 
-.. qtile_class:: libqtile.layout.xmonad.MonadWide
+.. lavinder_class:: liblavinder.layout.xmonad.MonadWide
     :no-commands:
 
-.. qtile_class:: libqtile.layout.ratiotile.RatioTile
+.. lavinder_class:: liblavinder.layout.ratiotile.RatioTile
     :no-commands:
 
-.. qtile_class:: libqtile.layout.slice.Slice
+.. lavinder_class:: liblavinder.layout.slice.Slice
     :no-commands:
 
-.. qtile_class:: libqtile.layout.stack.Stack
+.. lavinder_class:: liblavinder.layout.stack.Stack
     :no-commands:
 
-.. qtile_class:: libqtile.layout.tile.Tile
+.. lavinder_class:: liblavinder.layout.tile.Tile
     :no-commands:
 
-.. qtile_class:: libqtile.layout.tree.TreeTab
+.. lavinder_class:: liblavinder.layout.tree.TreeTab
     :no-commands:
 
-.. qtile_class:: libqtile.layout.verticaltile.VerticalTile
+.. lavinder_class:: liblavinder.layout.verticaltile.VerticalTile
     :no-commands:
 
-.. qtile_class:: libqtile.layout.zoomy.Zoomy
+.. lavinder_class:: liblavinder.layout.zoomy.Zoomy
     :no-commands:

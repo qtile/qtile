@@ -1,21 +1,21 @@
-qtile-cmd
+lavinder-cmd
 =========
 
-This is a simple tool to expose qtile.command functionality to shell.
+This is a simple tool to expose lavinder.command functionality to shell.
 This can be used standalone or in other shell scripts.
 
 Examples:
 ---------
 
-Output of ``qtile-cmd -h``
+Output of ``lavinder-cmd -h``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: text
 
-    usage: qtile-cmd [-h] [--object OBJ_SPEC [OBJ_SPEC ...]]
+    usage: lavinder-cmd [-h] [--object OBJ_SPEC [OBJ_SPEC ...]]
                      [--function FUNCTION] [--args ARGS [ARGS ...]] [--info]
 
-    Simple tool to expose qtile.command functionality to shell.
+    Simple tool to expose lavinder.command functionality to shell.
 
     optional arguments:
       -h, --help            show this help message and exit
@@ -30,13 +30,13 @@ Output of ``qtile-cmd -h``
                             documentation for function.
 
     Examples:
-     qtile-cmd
-     qtile-cmd -o cmd
-     qtile-cmd -o cmd -f prev_layout -i
-     qtile-cmd -o cmd -f prev_layout -a 3 # prev_layout on group 3
-     qtile-cmd -o group 3 -f focus_back
+     lavinder-cmd
+     lavinder-cmd -o cmd
+     lavinder-cmd -o cmd -f prev_layout -i
+     lavinder-cmd -o cmd -f prev_layout -a 3 # prev_layout on group 3
+     lavinder-cmd -o group 3 -f focus_back
 
-Output of ``qtile-cmd -o group 3``
+Output of ``lavinder-cmd -o group 3``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: text
@@ -58,7 +58,7 @@ Output of ``qtile-cmd -o group 3``
     -o group 3 -f toscreen          * Pull a group to a specified screen.
     -o group 3 -f unminimize_all      Unminimise all windows in this group
 
-Output of ``qtile-cmd -o cmd``
+Output of ``lavinder-cmd -o cmd``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: text
@@ -77,7 +77,7 @@ Output of ``qtile-cmd -o cmd``
     -o cmd -f focus_by_click        * Bring a window to the front
     -o cmd -f function              * Call a function with current object as argument
     -o cmd -f get_info                Prints info for all groups
-    -o cmd -f get_state               Get pickled state for restarting qtile
+    -o cmd -f get_state               Get pickled state for restarting lavinder
     -o cmd -f get_test_data           Returns any content arbitrarily set in the self.test_data attribute.
     -o cmd -f groups                  Return a dictionary containing information for all groups
     -o cmd -f hide_show_bar         * Toggle visibility of a given bar
@@ -91,10 +91,10 @@ Output of ``qtile-cmd -o cmd``
     -o cmd -f pause                   Drops into pdb
     -o cmd -f prev_layout           * Switch to the previous layout.
     -o cmd -f prev_screen             Move to the previous screen
-    -o cmd -f qtile_info              Returns a dictionary of info on the Qtile instance
-    -o cmd -f qtilecmd              * Execute a Qtile command using the client syntax
+    -o cmd -f lavinder_info              Returns a dictionary of info on the Qtile instance
+    -o cmd -f lavindercmd              * Execute a Qtile command using the client syntax
     -o cmd -f remove_rule           * Remove a dgroup rule by rule_id
-    -o cmd -f restart                 Restart qtile
+    -o cmd -f restart                 Restart lavinder
     -o cmd -f run_extension         * Run extensions
     -o cmd -f run_extention         * Deprecated alias for cmd_run_extension()
     -o cmd -f run_external          * Run external Python script

@@ -7,14 +7,14 @@ implementations. To install it, run:
 
 .. code-block:: bash
 
-    emerge -av x11-wm/qtile
+    emerge -av x11-wm/lavinder
 
 You can also install the development version from GitHub:
 
 .. code-block:: bash
 
-    echo "x11-wm/qtile-9999 **" >> /etc/portage/package.accept_keywords
-    emerge -av qtile
+    echo "x11-wm/lavinder-9999 **" >> /etc/portage/package.accept_keywords
+    emerge -av lavinder
 
 Customize
 =========

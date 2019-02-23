@@ -3,22 +3,22 @@ Scripting Commands
 ==================
 
 Here is documented some of the commands available on objects in the command
-tree when running qshell or scripting commands to qtile.  Note that this is an
+tree when running qshell or scripting commands to lavinder.  Note that this is an
 incomplete list, some objects, such as :ref:`layouts <ref_layouts>` and
 :ref:`widgets <ref_widgets>`, may implement their own set of commands beyond
 those given here.
 
-.. _qtile_commands:
+.. _lavinder_commands:
 
-.. qtile_class:: libqtile.core.manager.Qtile
+.. lavinder_class:: liblavinder.core.manager.Qtile
 
-.. qtile_class:: libqtile.bar.Bar
+.. lavinder_class:: liblavinder.bar.Bar
    :noindex:
 
-.. qtile_class:: libqtile.config.Group
+.. lavinder_class:: liblavinder.config.Group
    :noindex:
 
-.. qtile_class:: libqtile.config.Screen
+.. lavinder_class:: liblavinder.config.Screen
    :noindex:
 
-.. qtile_class:: libqtile.window.Window
+.. lavinder_class:: liblavinder.window.Window

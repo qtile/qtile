@@ -17,7 +17,7 @@ Gods. Praise be to the OSG!
     @tych0:  ramnes: it doesn't :)
     @tych0:  cortesi was just looking for the first letter that wasn't registered
              in a domain name with "tile" as a suffix
-    @tych0:  qtile it was :)
+    @tych0:  lavinder it was :)
     cortesi: tych0, dx: we really should have something more compelling to
              explain the name. one day i was swimming at manly beach in sydney,
              where i lived at the time. suddenly, i saw an enormous great white
@@ -27,7 +27,7 @@ Gods. Praise be to the OSG!
              stomach... a scar shaped like the letter "Q".
     cortesi: while it was distracted, i surfed a wave to shore. i knew that i
              had to dedicate my next open source project to the ocean gods, in
-             thanks for my lucky escape. and thus, qtile got its name...
+             thanks for my lucky escape. and thus, lavinder got its name...
 
 When I first start xterm/urxvt/rxvt containing an instance of Vim, I see text and layout corruption. What gives?
 ================================================================================================================

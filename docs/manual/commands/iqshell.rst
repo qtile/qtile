@@ -11,11 +11,11 @@ Dependencies
 ============
 
 In order to run iqshell, you must have `ipykernel`_ and `jupyter_console`_.
-You can install the dependencies when you are installing qtile by running:
+You can install the dependencies when you are installing lavinder by running:
 
 .. code-block:: bash
 
-    $ pip install qtile[ipython]
+    $ pip install lavinder[ipython]
 
 Otherwise, you can just install these two packages separately, either through
 PyPI or through your distribution package manager.
@@ -31,7 +31,7 @@ running:
 
 .. code-block:: bash
 
-    $ python -m libqtile.interactive.iqshell_kernel
+    $ python -m liblavinder.interactive.iqshell_kernel
 
 However, this will merely spawn a kernel instance, you will have to run a
 separate frontend that connects to this kernel.
@@ -41,7 +41,7 @@ Jupyter.  To register the kernel itself, run:
 
 .. code-block:: bash
 
-    $ python -m libqtile.interactive.iqshell_install
+    $ python -m liblavinder.interactive.iqshell_install
 
 If you run this as a non-root user, or pass the ``--user`` flag, this will
 install to the user Jupyter kernel directory.  You can now invoke the kernel

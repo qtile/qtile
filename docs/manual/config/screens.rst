@@ -14,8 +14,8 @@ Tying together screens, bars and widgets, we get something like this:
 
 ::
 
-    from libqtile.config import Screen
-    from libqtile import bar, widget
+    from liblavinder.config import Screen
+    from liblavinder import bar, widget
 
     screens = [
         Screen(
@@ -46,8 +46,8 @@ They can be used like this:
 
 ::
 
-    from libqtile.config import Screen
-    from libqtile import bar, widget
+    from liblavinder.config import Screen
+    from liblavinder import bar, widget
 
     # screens look like this
     #     600         300
@@ -134,16 +134,16 @@ Third-party bars
 There might be some reasons to use third-party bars. For instance you can come
 from another window manager and you have already configured dzen2, xmobar, or
 something else. They definitely can be used with Qtile too. In fact, any
-additional configurations aren't needed. Just run the bar and qtile will adapt.
+additional configurations aren't needed. Just run the bar and lavinder will adapt.
 
 Reference
 =========
 
-.. qtile_class:: libqtile.config.Screen
+.. lavinder_class:: liblavinder.config.Screen
    :no-commands:
 
-.. qtile_class:: libqtile.bar.Bar
+.. lavinder_class:: liblavinder.bar.Bar
    :no-commands:
 
-.. qtile_class:: libqtile.bar.Gap
+.. lavinder_class:: liblavinder.bar.Gap
    :no-commands:

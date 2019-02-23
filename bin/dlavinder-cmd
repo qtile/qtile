@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+usage() {
+    echo "$(tput bold)dlavinder-cmd$(tput sgr0)
+
+    A Rofi/dmenu interface to lavinder-cmd. Accepts all arguments of lavinder-cmd (see below).
+
+    "
+
+    lavinder-cmd -h | sed "s/lavinder-cmd/dlavinder-cmd/"
+
+
+    echo "
+    If both rofi and dmenu are present rofi will be selected as default, to change this us --force-dmenu as the first argument.
+    "
+    exit
+}
+
+case $1 in
+    -h|--help) usage ;;
+    --force-dmenu) FORCE_DMENU=1; shift;;
+esac
+
+action=$(lavinder-cmd $@)
+
+# Path to menu application
+if [[ -n $(command -v rofi) ]]  && [[ -z "$FORCE_DMENU" ]]; then
+    menu="$(command -v rofi) -dmenu -columns 1"
+    global_mesg="Alt-1 	Prompt for args and show function help (if -f is present)..   	Go back to menu.C-u  	Clear inputEsc  	Exit"
+    action=$(echo -e "$action" | $menu -mesg "$global_mesg") # For rofi
+elif [[ -n $(command -v dmenu) ]]; then
+
+    menu="cut -f 1 |  sed -e 's/ *$//g' | $(command -v dmenu)"
+    action=$(echo -e "$action" | eval $menu) # For dmenu
+else
+    echo >&2 "Rofi or dmenu not found"
+    exit
+fi
+
+action_info=$? # get the return code from rofi
+
+action=$(echo "$action"| cut -f 1 |  sed -e 's/ *$//g')
+
+# if kb-mod-1 key was pressed in rofi
+if [ "$action_info" -eq "10" ]; then
+    # only run when -f is present (then -i makes sense)
+    if [[ $action == *"-f"* ]]; then
+        info=$(lavinder-cmd $action -i)
+        action=$($menu -mesg "$global_mesg<b>Help</b>$info" -filter "$action -a ")
+    fi;
+fi;
+
+case $action in
+    "") ;; # exit
+    ..)$0;; # Go back to main menu
+    *) $0 "$action" ;;
+esac

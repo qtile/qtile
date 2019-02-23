@@ -2,4 +2,4 @@
 Built-in Hooks
 ==============
 
-.. qtile_hooks:: libqtile.hook.subscribe
+.. lavinder_hooks:: liblavinder.hook.subscribe
