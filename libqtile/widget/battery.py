@@ -298,7 +298,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         return BatteryStatus(state=state, percent=percent, power=power, time=time)
 
 
-class Battery(base._TextBox):
+class Battery(base.ThreadedPollText):
     """A text-based battery monitoring widget currently supporting FreeBSD"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
@@ -331,17 +331,7 @@ class Battery(base._TextBox):
         """
         return load_battery(**config)
 
-    def timer_setup(self) -> None:
-        self.update()
-        self.timeout_add(self.update_delay, self.timer_setup)
-
-    def _configure(self, qtile, bar) -> None:
-        if self.configured:
-            self.update()
-
-        base._TextBox._configure(self, qtile, bar)
-
-    def _get_text(self) -> str:
+    def poll(self) -> str:
         """Determine the text to display
 
         Function returning a string with battery information to display on the
@@ -353,6 +343,21 @@ class Battery(base._TextBox):
         except RuntimeError as e:
             return f'Error: {e}'
 
+        return self.build_string(status)
+
+    def build_string(self, status: BatteryStatus) -> str:
+        """Determine the string to return for the given battery state
+
+        Parameters
+        ----------
+        status:
+            The current status of the battery
+
+        Returns
+        -------
+        str
+            The string to display for the current status.
+        """
         if self.hide_threshold is not None and status.percent > self.hide_threshold:
             return ''
 
@@ -388,12 +393,6 @@ class Battery(base._TextBox):
             hour=hour,
             min=minute
         )
-
-    def update(self) -> None:
-        ntext = self._get_text()
-        if ntext != self.text:
-            self.text = ntext
-            self.bar.draw()
 
 
 def default_icon_path() -> str:
