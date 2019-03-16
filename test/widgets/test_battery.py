@@ -41,7 +41,7 @@ def test_text_battery_charging(monkeypatch):
         m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery()
 
-    text = batt._get_text()
+    text = batt.poll()
     assert text == "^ 50% 0:28 15.00 W"
 
 
@@ -57,7 +57,7 @@ def test_text_battery_discharging(monkeypatch):
         m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery()
 
-    text = batt._get_text()
+    text = batt.poll()
     assert text == "V 50% 0:28 15.00 W"
 
 
@@ -73,14 +73,14 @@ def test_text_battery_full(monkeypatch):
         m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery()
 
-    text = batt._get_text()
+    text = batt.poll()
     assert text == "Full"
 
     with monkeypatch.context() as m:
         m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery(show_short_text=False)
 
-    text = batt._get_text()
+    text = batt.poll()
     assert text == "= 50% 0:28 15.00 W"
 
 
@@ -96,14 +96,14 @@ def test_text_battery_empty(monkeypatch):
         m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery()
 
-    text = batt._get_text()
+    text = batt.poll()
     assert text == "Empty"
 
     with monkeypatch.context() as m:
         m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery(show_short_text=False)
 
-    text = batt._get_text()
+    text = batt.poll()
     assert text == "x 50% 0:28 15.00 W"
 
     loaded_bat = BatteryStatus(
@@ -117,7 +117,7 @@ def test_text_battery_empty(monkeypatch):
         m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery()
 
-    text = batt._get_text()
+    text = batt.poll()
     assert text == "Empty"
 
 
@@ -133,7 +133,7 @@ def test_text_battery_unknown(monkeypatch):
         m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery()
 
-    text = batt._get_text()
+    text = batt.poll()
     assert text == "? 50% 0:28 15.00 W"
 
 
@@ -149,14 +149,14 @@ def test_text_battery_hidden(monkeypatch):
         m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery(hide_threshold=0.6)
 
-    text = batt._get_text()
+    text = batt.poll()
     assert text != ""
 
     with monkeypatch.context() as m:
         m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery(hide_threshold=0.4)
 
-    text = batt._get_text()
+    text = batt.poll()
     assert text == ""
 
 
@@ -165,7 +165,7 @@ def test_text_battery_error(monkeypatch):
         m.setattr(battery, "load_battery", DummyErrorBattery)
         batt = Battery()
 
-    text = batt._get_text()
+    text = batt.poll()
     assert text == "Error: err"
 
 
