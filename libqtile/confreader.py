@@ -24,7 +24,7 @@
 # SOFTWARE.
 import os
 import sys
-import typing
+from typing import List  # noqa: F401
 
 from .core import base
 from . import config
@@ -54,8 +54,6 @@ class Config:
         "bring_front_click",
         "wmname",
     ]
-    keys: typing.List[config.Key]
-    mouse: typing.List[config.Mouse]
 
     def __init__(self, **settings):
         """Create a Config() object from settings
@@ -63,6 +61,9 @@ class Config:
         Only attributes found in Config.settings_keys will be added to object.
         config attribute precedence is 1.) **settings 2.) self 3.) default_config
         """
+        self.keys = []  # type: List[config.Key]
+        self.mouse = []  # type: List[config.Mouse]
+
         from .resources import default_config
         default = vars(default_config)
         for key in self.settings_keys:
@@ -95,7 +96,7 @@ class Config:
         "Create a Config() object from the python file located at path."
         try:
             sys.path.insert(0, os.path.dirname(path))
-            config = __import__(os.path.basename(path)[:-3])
+            config = __import__(os.path.basename(path)[:-3])  # noqa: F811
         except Exception:
             import traceback
             from .log_utils import logger

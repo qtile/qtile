@@ -34,34 +34,35 @@ import platform
 import re
 
 from abc import ABC, abstractclassmethod
-from enum import Enum, auto, unique
+from enum import Enum, unique
 from pathlib import Path
 from subprocess import check_output, CalledProcessError
-from typing import Any, List, NamedTuple, Optional, Tuple
+from typing import Any, List, NamedTuple, Optional, Tuple  # noqa: F401
 
 from libqtile import bar
 from libqtile.log_utils import logger
-from libqtile.images import Img
+from libqtile.images import Img  # noqa: F401
 from . import base
 from .. import images, configurable
 
-from typing import Dict
+from typing import Dict  # noqa: F401
 
 
 @unique
 class BatteryState(Enum):
-    CHARGING = auto()
-    DISCHARGING = auto()
-    FULL = auto()
-    EMPTY = auto()
-    UNKNOWN = auto()
+    CHARGING = 1
+    DISCHARGING = 2
+    FULL = 3
+    EMPTY = 4
+    UNKNOWN = 5
 
 
-class BatteryStatus(NamedTuple):
-    state: BatteryState
-    percent: float
-    power: float
-    time: int
+BatteryStatus = NamedTuple("BatteryStatus", [
+    ("state", BatteryState),
+    ("percent", float),
+    ("power", float),
+    ("time", int),
+])
 
 
 class _Battery(ABC):
@@ -188,7 +189,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         )
     ]
 
-    filenames: Dict = {}
+    filenames = {}  # type: Dict
 
     BAT_DIR = '/sys/class/power_supply'
 
@@ -341,7 +342,7 @@ class Battery(base.ThreadedPollText):
         try:
             status = self._battery.update_status()
         except RuntimeError as e:
-            return f'Error: {e}'
+            return 'Error: {}'.format(e)
 
         return self.build_string(status)
 
@@ -405,11 +406,11 @@ class BatteryIcon(base._TextBox):
     """Battery life indicator widget."""
 
     orientations = base.ORIENTATION_HORIZONTAL
-    defaults: List[Tuple[str, Any, str]] = [
+    defaults = [
         ('battery', 0, 'Which battery should be monitored'),
         ('update_delay', 60, 'Seconds between status updates'),
         ('theme_path', default_icon_path(), 'Path of the icons'),
-    ]
+    ]  # type: List[Tuple[str, Any, str]]
 
     icon_names = (
         'battery-missing',
@@ -432,7 +433,7 @@ class BatteryIcon(base._TextBox):
         if self.theme_path:
             self.length_type = bar.STATIC
             self.length = 0
-        self.surfaces: Dict[str, Img] = {}
+        self.surfaces = {}  # type: Dict[str, Img]
         self.current_icon = 'battery-missing'
 
         self._battery = self._load_battery(**config)

@@ -35,7 +35,6 @@ import xcffib.xinerama
 import xcffib.xproto
 import time
 import warnings
-import tracemalloc
 
 from ..config import Drag, Click, Screen, Match, Rule
 from ..config import ScratchPad as ScratchPadConfig
@@ -1854,6 +1853,8 @@ class Qtile(command.CommandObject):
 
         Running tracemalloc is required for qtile-top
         """
+        import tracemalloc
+
         if not tracemalloc.is_tracing():
             tracemalloc.start()
         else:
@@ -1861,6 +1862,8 @@ class Qtile(command.CommandObject):
 
     def cmd_tracemalloc_dump(self):
         """Dump tracemalloc snapshot"""
+        import tracemalloc
+
         if not tracemalloc.is_tracing():
             return [False, "Trace not started"]
         cache_directory = get_cache_dir()
