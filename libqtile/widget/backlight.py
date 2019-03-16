@@ -25,7 +25,7 @@ import os
 import shlex
 from . import base
 
-from typing import Dict
+from typing import Dict  # noqa: F401
 
 BACKLIGHT_DIR = '/sys/class/backlight'
 
@@ -33,7 +33,7 @@ BACKLIGHT_DIR = '/sys/class/backlight'
 class Backlight(base.InLoopPollText):
     """A simple widget to show the current brightness of a monitor"""
 
-    filenames: Dict = {}
+    filenames = {}  # type: Dict
 
     orientations = base.ORIENTATION_HORIZONTAL
 

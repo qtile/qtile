@@ -20,7 +20,7 @@
 from libqtile.log_utils import logger
 from . import base
 
-from typing import List
+from typing import List  # noqa: F401
 
 
 class Net(base.ThreadedPollText):
@@ -54,7 +54,7 @@ class Net(base.ThreadedPollText):
         return b, letter
 
     def get_stats(self):
-        lines: List[str] = []
+        lines = []  # type: List[str]
         with open('/proc/net/dev', 'r') as f:
             lines = f.readlines()[2:]
         interfaces = {}
