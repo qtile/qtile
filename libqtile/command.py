@@ -27,13 +27,7 @@ from . import ipc
 from .utils import get_cache_dir
 from .log_utils import logger
 
-
-class CommandError(Exception):
-    pass
-
-
-class CommandException(Exception):
-    pass
+from libqtile.command_client import CommandError, CommandException
 
 
 class _SelectError(Exception):
