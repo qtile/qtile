@@ -28,32 +28,11 @@ def _format_selectors(selectors: List[SelectorType]) -> str:
     """Build the path to the selected command graph node"""
     path_elements = []
     for name, selector in selectors:
-        if selector:
+        if selector is not None:
             path_elements.append("{}[{}]".format(name, selector))
         else:
             path_elements.append(name)
     return ".".join(path_elements)
-
-
-class CommandGraphCall:
-    def __init__(self,
-                 selectors: List[SelectorType],
-                 name: str,
-                 *args,
-                 **kwargs) -> None:
-        """A command graph call that has been fully resolved"""
-        self.selectors = selectors
-        self.name = name
-        self.args = args
-        self.kwargs = kwargs
-
-    def check(self, qtile) -> bool:
-        """Check if the command should be called
-
-        By default, call all commands.  Call can be wrapped to provide
-        additional granularity and selection ability.
-        """
-        return True
 
 
 class _CommandGraphNode(metaclass=abc.ABCMeta):
@@ -102,17 +81,14 @@ class CommandGraphContainer(_CommandGraphNode, metaclass=abc.ABCMeta):
         """The child objects that are contained within this object"""
         pass  # pragma: no cover
 
-    @abc.abstractmethod
-    def __getitem__(self, name: str) -> "CommandGraphContainer":
-        """Select a particular element from within the current container"""
-        pass  # pragma: no cover
-
-    def __getattr__(self, name: str) -> "_CommandGraphNode":
-        """Get the child element of the current container"""
+    def navigate(self, name: str, selector: Optional[str]) -> "_CommandGraphNode":
+        """Navigate from the current node to the specified child"""
         if name in self.children:
-            return _CommandGraphMap[name](None, self)
+            return _CommandGraphMap[name](selector, self)
+        elif selector is not None:
+            raise KeyError("Given node is not an object: {}".format(name))
         else:
-            return Command(name, self)
+            return CommandGraphCall(name, self)
 
 
 class CommandGraphRoot(CommandGraphContainer):
@@ -141,11 +117,8 @@ class CommandGraphRoot(CommandGraphContainer):
         """All of the child elements in the root of the command graph"""
         return ["bar", "group", "layout", "screen", "widget", "window"]
 
-    def __getitem__(self, select: str):
-        raise KeyError("No items in command root: {}".format(select))
 
-
-class Command(_CommandGraphNode):
+class CommandGraphCall(_CommandGraphNode):
     def __init__(self, name: str, parent: CommandGraphContainer):
         """A command to be executed on the selected object
 
@@ -163,38 +136,26 @@ class Command(_CommandGraphNode):
         self._parent = parent
 
     @property
+    def name(self) -> str:
+        """The name of the call to make"""
+        return self._name
+
+    @property
     def parent(self) -> CommandGraphContainer:
+        """The parent of the current node"""
         return self._parent
-
-    def __call__(self, *args, **kwargs) -> CommandGraphCall:
-        """Determine the command invokation
-
-        Parameters
-        ----------
-        args:
-            The args to be passed into the call.
-        kwargs
-            The keyword args to be passed into the call.
-
-        Returns
-        -------
-        CommandGraphCall
-            The call that is being invoked in the command graph.
-        """
-        selectors = self._parent.selectors
-        return CommandGraphCall(selectors, self._name, args, kwargs)
 
     @property
     def path(self) -> str:
         """The path to the current command graph node"""
-        parent_path = self._parent.path
+        parent_path = self.parent.path
         if parent_path:
             return "{}.{}".format(parent_path, self._name)
         else:
             return self._name
 
 
-class _CommandGraphObject(CommandGraphContainer, metaclass=abc.ABCMeta):
+class CommandGraphObject(CommandGraphContainer, metaclass=abc.ABCMeta):
     def __init__(self, selector: Optional[str], parent: CommandGraphContainer):
         """A container object in the command graph
 
@@ -217,7 +178,7 @@ class _CommandGraphObject(CommandGraphContainer, metaclass=abc.ABCMeta):
     @property
     def selectors(self) -> List[SelectorType]:
         """The selectors resolving the location of the node in the command graph"""
-        selectors = self.parent.selectors + [(self._object_type, self.selector)]
+        selectors = self.parent.selectors + [(self.object_type, self.selector)]
         return selectors
 
     @property
@@ -227,45 +188,38 @@ class _CommandGraphObject(CommandGraphContainer, metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def _object_type(self) -> str:
+    def object_type(self) -> str:
         """The type of the current container object"""
         pass  # pragma: no cover
 
-    def __getitem__(self, selection: str) -> "CommandGraphContainer":
-        if self.selector is not None:
-            raise KeyError("Element {} already selected, cannot make selection: {}".format(
-                self.selector, selection
-            ))
-        return self.__class__(selection, self.parent)
 
-
-class _BarGraphNode(_CommandGraphObject):
-    _object_type = "bar"
+class _BarGraphNode(CommandGraphObject):
+    object_type = "bar"
     children = ["screen"]
 
 
-class _GroupGraphNode(_CommandGraphObject):
-    _object_type = "group"
+class _GroupGraphNode(CommandGraphObject):
+    object_type = "group"
     children = ["layout", "window", "screen"]
 
 
-class _LayoutGraphNode(_CommandGraphObject):
-    _object_type = "layout"
+class _LayoutGraphNode(CommandGraphObject):
+    object_type = "layout"
     children = ["group", "window", "screen"]
 
 
-class _ScreenGraphNode(_CommandGraphObject):
-    _object_type = "screen"
+class _ScreenGraphNode(CommandGraphObject):
+    object_type = "screen"
     children = ["layout", "window", "bar"]
 
 
-class _WidgetGraphNode(_CommandGraphObject):
-    _object_type = "widget"
+class _WidgetGraphNode(CommandGraphObject):
+    object_type = "widget"
     children = ["bar", "screen", "group"]
 
 
-class _WindowGraphNode(_CommandGraphObject):
-    _object_type = "window"
+class _WindowGraphNode(CommandGraphObject):
+    object_type = "window"
     children = ["group", "screen", "layout"]
 
 
@@ -276,4 +230,4 @@ _CommandGraphMap = {
     "widget": _WidgetGraphNode,
     "window": _WindowGraphNode,
     "screen": _ScreenGraphNode,
-}  # type: Dict[str, Type[_CommandGraphObject]]
+}  # type: Dict[str, Type[CommandGraphObject]]
