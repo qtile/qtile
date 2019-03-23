@@ -20,12 +20,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import libqtile
-import libqtile.ipc
-from libqtile.core.manager import Qtile as QtileManager
-from libqtile.core import xcore
-from libqtile.log_utils import init_log
-from libqtile.resources import default_config
 
 import functools
 import logging
@@ -41,6 +35,13 @@ import traceback
 import xcffib
 import xcffib.testing
 import xcffib.xproto
+
+import libqtile
+from libqtile.core.manager import Qtile as QtileManager
+from libqtile.core import xcore
+from libqtile.log_utils import init_log
+from libqtile.resources import default_config
+from libqtile import command_client, ipc
 
 # the default sizes for the Xephyr windows
 WIDTH = 800
@@ -95,9 +96,10 @@ def can_connect_x11(disp=':0'):
     return True
 
 
-@Retry(ignore_exceptions=(libqtile.ipc.IPCError,), return_on_fail=True)
+@Retry(ignore_exceptions=(ipc.IPCError,), return_on_fail=True)
 def can_connect_qtile(socket_path):
-    client = libqtile.command.Client(socket_path)
+    ipc_client = ipc.Client(socket_path)
+    client = command_client.Client(ipc_client)
     val = client.status()
     if val == 'OK':
         return True
@@ -272,7 +274,8 @@ class Qtile:
 
         # First, wait for socket to appear
         if can_connect_qtile(self.sockfile):
-            self.c = libqtile.command.Client(self.sockfile)
+            ipc_client = ipc.Client(self.sockfile)
+            self.c = command_client.Client(ipc_client)
             return
         if rpipe.poll(sleep_time):
             error = rpipe.recv()

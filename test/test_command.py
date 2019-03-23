@@ -206,11 +206,12 @@ def test_cmd_commands(qtile):
 
 @server_config
 def test_call_unknown(qtile):
-    with pytest.raises(libqtile.command.CommandError):
-        qtile.c.nonexistent()
+    with pytest.raises(libqtile.command_client.SelectError, match="Not valid child or command"):
+        qtile.c.nonexistent
 
-    with pytest.raises(libqtile.command.CommandError):
-        qtile.c.layout.nonexistent()
+    qtile.c.layout
+    with pytest.raises(libqtile.command_client.SelectError, match="Not valid child or command"):
+        qtile.c.layout.nonexistent
 
 
 @server_config
@@ -235,20 +236,19 @@ def test_items_qtile(qtile):
 
 @server_config
 def test_select_qtile(qtile):
-    assert qtile.c.foo.selectors == []
     assert qtile.c.layout.info()["group"] == "a"
     assert len(qtile.c.layout.info()["stacks"]) == 1
     assert len(qtile.c.layout[2].info()["stacks"]) == 3
-    with pytest.raises(libqtile.command.CommandError):
-        qtile.c.layout[99].info()
+    with pytest.raises(libqtile.command_client.SelectError, match="Available items"):
+        qtile.c.layout[99]
 
     assert qtile.c.group.info()["name"] == "a"
     assert qtile.c.group["c"].info()["name"] == "c"
-    with pytest.raises(libqtile.command.CommandError):
-        qtile.c.group["nonexistent"].info()
+    with pytest.raises(libqtile.command_client.SelectError, match="Available items"):
+        qtile.c.group["nonexistent"]
 
     assert qtile.c.widget["one"].info()["name"] == "one"
-    with pytest.raises(libqtile.command.CommandError):
+    with pytest.raises(libqtile.command_client.CommandError, match="No object widget"):
         qtile.c.widget.info()
 
     assert qtile.c.bar["bottom"].info()["position"] == "bottom"
@@ -259,45 +259,44 @@ def test_select_qtile(qtile):
 
     assert qtile.c.screen.info()["index"] == 0
     assert qtile.c.screen[1].info()["index"] == 1
-    with pytest.raises(libqtile.command.CommandError):
-        qtile.c.screen[22].info()
-    with pytest.raises(libqtile.command.CommandError):
-        qtile.c.screen["foo"].info()
+    with pytest.raises(libqtile.command_client.SelectError, match="Available items"):
+        qtile.c.screen[22]
 
 
 @server_config
 def test_items_group(qtile):
-    g = qtile.c.group
-    assert g.items("layout") == (True, [0, 1, 2])
+    group = qtile.c.group
 
     qtile.test_window("test")
     wid = qtile.c.window.info()["id"]
-    assert g.items("window") == (True, [wid])
 
-    assert g.items("screen") == (True, None)
+    assert group.items("window") == (True, [wid])
+    assert group.items("layout") == (True, [0, 1, 2])
+    assert group.items("screen") == (True, None)
 
 
 @server_config
 def test_select_group(qtile):
-    g = qtile.c.group
-    assert g.layout.info()["group"] == "a"
-    assert len(g.layout.info()["stacks"]) == 1
-    assert len(g.layout[2].info()["stacks"]) == 3
+    group = qtile.c.group
+
+    assert group.layout.info()["group"] == "a"
+    assert len(group.layout.info()["stacks"]) == 1
+    assert len(group.layout[2].info()["stacks"]) == 3
 
     with pytest.raises(libqtile.command.CommandError):
         qtile.c.group.window.info()
     qtile.test_window("test")
     wid = qtile.c.window.info()["id"]
 
-    assert g.window.info()["id"] == wid
-    assert g.window[wid].info()["id"] == wid
-    with pytest.raises(libqtile.command.CommandError):
-        g.window["foo"].info()
+    assert group.window.info()["id"] == wid
+    assert group.window[wid].info()["id"] == wid
+    with pytest.raises(libqtile.command_client.SelectError, match="Available items"):
+        group.window["foo"]
 
-    assert g.screen.info()["index"] == 0
-    assert g["b"].screen.info()["index"] == 1
-    with pytest.raises(libqtile.command.CommandError):
-        g["b"].screen[0].info()
+    assert group.screen.info()["index"] == 0
+    assert group["b"].screen.info()["index"] == 1
+    with pytest.raises(libqtile.command_client.SelectError, match="No items in object"):
+        group.screen[0]
 
 
 @server_config
@@ -314,25 +313,25 @@ def test_items_screen(qtile):
 
 @server_config
 def test_select_screen(qtile):
-    s = qtile.c.screen
-    assert s.layout.info()["group"] == "a"
-    assert len(s.layout.info()["stacks"]) == 1
-    assert len(s.layout[2].info()["stacks"]) == 3
+    screen = qtile.c.screen
+    assert screen.layout.info()["group"] == "a"
+    assert len(screen.layout.info()["stacks"]) == 1
+    assert len(screen.layout[2].info()["stacks"]) == 3
 
     with pytest.raises(libqtile.command.CommandError):
         qtile.c.window.info()
-    with pytest.raises(libqtile.command.CommandError):
-        qtile.c.window[2].info()
+
     qtile.test_window("test")
     wid = qtile.c.window.info()["id"]
-    assert s.window.info()["id"] == wid
-    assert s.window[wid].info()["id"] == wid
+    assert screen.window.info()["id"] == wid
+    assert screen.window[wid].info()["id"] == wid
 
-    with pytest.raises(libqtile.command.CommandError):
-        s.bar.info()
-    with pytest.raises(libqtile.command.CommandError):
-        s.bar["top"].info()
-    assert s.bar["bottom"].info()["position"] == "bottom"
+    with pytest.raises(libqtile.command_client.CommandError, match="No object bar in path"):
+        screen.bar.info()
+    with pytest.raises(libqtile.command_client.SelectError, match="Available items"):
+        screen.bar["top"]
+
+    assert screen.bar["bottom"].info()["position"] == "bottom"
 
 
 @server_config
@@ -357,40 +356,44 @@ def test_items_layout(qtile):
 
 @server_config
 def test_select_layout(qtile):
-    assert qtile.c.layout.screen.info()["index"] == 0
-    with pytest.raises(libqtile.command.CommandError):
-        qtile.c.layout.screen[0].info()
+    layout = qtile.c.layout
 
-    assert qtile.c.layout.group.info()["name"] == "a"
-    with pytest.raises(libqtile.command.CommandError):
-        qtile.c.layout.group["a"].info()
+    assert layout.screen.info()["index"] == 0
+    with pytest.raises(libqtile.command_client.SelectError, match="No items in object"):
+        layout.screen[0]
+
+    assert layout.group.info()["name"] == "a"
+    with pytest.raises(libqtile.command_client.SelectError, match="No items in object"):
+        layout.group["a"]
 
 
 @server_config
 def test_items_window(qtile):
     qtile.test_window("test")
-    qtile.c.window.info()["id"]
+    window = qtile.c.window
+    window.info()["id"]
 
-    assert qtile.c.window.items("group") == (True, None)
-    assert qtile.c.window.items("layout") == (True, [0, 1, 2])
-    assert qtile.c.window.items("screen") == (True, None)
+    assert window.items("group") == (True, None)
+    assert window.items("layout") == (True, [0, 1, 2])
+    assert window.items("screen") == (True, None)
 
 
 @server_config
 def test_select_window(qtile):
     qtile.test_window("test")
-    qtile.c.window.info()["id"]
+    window = qtile.c.window
+    window.info()["id"]
 
-    assert qtile.c.window.group.info()["name"] == "a"
-    with pytest.raises(libqtile.command.CommandError):
-        qtile.c.window.group["a"].info()
+    assert window.group.info()["name"] == "a"
+    with pytest.raises(libqtile.command_client.SelectError, match="No items in object"):
+        window.group["a"]
 
-    assert len(qtile.c.window.layout.info()["stacks"]) == 1
-    assert len(qtile.c.window.layout[1].info()["stacks"]) == 2
+    assert len(window.layout.info()["stacks"]) == 1
+    assert len(window.layout[1].info()["stacks"]) == 2
 
-    assert qtile.c.window.screen.info()["index"] == 0
-    with pytest.raises(libqtile.command.CommandError):
-        qtile.c.window.screen[0].info()
+    assert window.screen.info()["index"] == 0
+    with pytest.raises(libqtile.command_client.SelectError, match="No items in object"):
+        window.screen[0]
 
 
 @server_config
@@ -400,7 +403,7 @@ def test_items_widget(qtile):
 
 @server_config
 def test_select_widget(qtile):
-    w = qtile.c.widget["one"]
-    assert w.bar.info()["position"] == "bottom"
-    with pytest.raises(libqtile.command.CommandError):
-        w.bar["bottom"].info()
+    widget = qtile.c.widget["one"]
+    assert widget.bar.info()["position"] == "bottom"
+    with pytest.raises(libqtile.command_client.SelectError, match="No items in object"):
+        widget.bar["bottom"]
