@@ -46,6 +46,12 @@ class _CommandGraphNode(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
+    def selectors(self) -> List[SelectorType]:
+        """The selectors resolving the location of the node in the command graph"""
+        pass  # pragma: no cover
+
+    @property
+    @abc.abstractmethod
     def parent(self) -> Optional["CommandGraphContainer"]:
         """The parent of the current node"""
         pass  # pragma: no cover
@@ -67,12 +73,6 @@ class CommandGraphContainer(_CommandGraphNode, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def selector(self) -> Optional[str]:
         """The selector for the current node"""
-        pass  # pragma: no cover
-
-    @property
-    @abc.abstractmethod
-    def selectors(self) -> List[SelectorType]:
-        """The selectors resolving the location of the node in the command graph"""
         pass  # pragma: no cover
 
     @property
@@ -139,6 +139,11 @@ class CommandGraphCall(_CommandGraphNode):
     def name(self) -> str:
         """The name of the call to make"""
         return self._name
+
+    @property
+    def selectors(self) -> List[SelectorType]:
+        """The selectors resolving the location of the node in the command graph"""
+        return self.parent.selectors
 
     @property
     def parent(self) -> CommandGraphContainer:
