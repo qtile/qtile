@@ -130,7 +130,7 @@ def test_command_propagation(qtile):
     qtile.test_window('one')
     qtile.test_window('two')
     info = qtile.c.layout.info()
-    assert info['name'] == 'slice', info['name']
+    assert info['name'] == 'slice'
     org_height = qtile.c.window.info()['height']
     qtile.c.layout.toggle_split()
     assert qtile.c.window.info()['height'] != org_height

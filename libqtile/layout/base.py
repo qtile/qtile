@@ -344,6 +344,10 @@ class Delegate(Layout):
             return getattr(self._get_active_layout(), name)
         return super().__getattr__(name)
 
+    @property
+    def commands(self):
+        return self._get_active_layout().commands
+
     def info(self):
         d = Layout.info(self)
         for layout in self._get_layouts():
