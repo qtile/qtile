@@ -31,7 +31,7 @@ import curses
 import linecache
 import tracemalloc
 from tracemalloc import Snapshot
-from libqtile import command
+from libqtile import command, ipc
 
 
 class TraceNotStarted(Exception):
@@ -154,7 +154,11 @@ def main():
     lines = opts.lines
     seconds = opts.seconds
     force_start = opts.force_start
-    client = command.Client(opts.socket)
+    if opts.socket is None:
+        socket = command.find_sockfile()
+    else:
+        socket = opts.socket
+    client = ipc.Client(socket)
 
     try:
         if not opts.raw:
