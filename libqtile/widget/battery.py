@@ -318,7 +318,7 @@ class Battery(base.ThreadedPollText):
     ]
 
     def __init__(self, **config) -> None:
-        base._TextBox.__init__(self, "BAT", bar.CALCULATED, **config)
+        base.ThreadedPollText.__init__(self, "BAT", bar.CALCULATED, **config)
         self.add_defaults(self.defaults)
 
         self._battery = self._load_battery(**config)

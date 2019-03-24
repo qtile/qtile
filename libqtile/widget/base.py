@@ -415,8 +415,8 @@ class InLoopPollText(_TextBox):
             "widget updates whenever the event loop is idle."),
     ]  # type: List[Tuple[str, Any, str]]
 
-    def __init__(self, **config):
-        _TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
+    def __init__(self, default_text="N/A", width=bar.CALCULATED, **config):
+        _TextBox.__init__(self, default_text, width, **config)
         self.add_defaults(InLoopPollText.defaults)
 
     def timer_setup(self):
@@ -463,9 +463,6 @@ class InLoopPollText(_TextBox):
 class ThreadedPollText(InLoopPollText):
     """ A common interface for polling some REST URL, munging the data, and
     rendering the result in a text box. """
-    def __init__(self, **config):
-        InLoopPollText.__init__(self, **config)
-
     def tick(self):
         def worker():
             try:
