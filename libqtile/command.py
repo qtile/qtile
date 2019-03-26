@@ -22,12 +22,14 @@ import abc
 import inspect
 import traceback
 import os
+import warnings
 
 from . import ipc
 from .utils import get_cache_dir
 from .log_utils import logger
 
 from libqtile.command_client import CommandError, CommandException
+from libqtile.lazy import LazyGraph
 
 
 class _SelectError(Exception):
@@ -266,47 +268,10 @@ class CommandRoot(_CommandRoot):
             raise CommandException(val)
 
 
-class _Call:
-    """
-    Parameters
-    ==========
-    command :
-        A string command name specification
-    args :
-        Arguments to be passed to the specified command
-    kwargs :
-        Arguments to be passed to the specified command
-    """
-    def __init__(self, selectors, name, *args, **kwargs):
-        self.selectors = selectors
-        self.name = name
-        self.args = args
-        self.kwargs = kwargs
-        # Conditionals
-        self.layout = None
-
-    def when(self, layout=None, when_floating=True):
-        self.layout = layout
-        self.when_floating = when_floating
-        return self
-
-    def check(self, q):
-        if self.layout:
-            if self.layout == 'floating':
-                if q.current_window.floating:
-                    return True
-                return False
-            if q.current_layout.name != self.layout:
-                return False
-            if q.current_window and q.current_window.floating \
-                    and not self.when_floating:
-                return False
-        return True
-
-
-class _LazyTree(_CommandRoot):
-    def call(self, selectors, name, *args, **kwargs):
-        return _Call(selectors, name, *args, **kwargs)
+class _LazyTree(LazyGraph):
+    def __getattr__(self, *args):
+        warnings.warn("libqtile.command.lazy is deprecated, use libqtile.lazy.lazy", DeprecationWarning)
+        return super().__getattr__(*args)
 
 
 lazy = _LazyTree()
