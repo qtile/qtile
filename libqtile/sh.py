@@ -44,14 +44,32 @@ def terminal_width():
     return width or 80
 
 
+def format_selectors(selectors: List[command_graph.SelectorType]) -> str:
+    """Build the path to the selected command graph node"""
+    path_elements = []
+    for name, selector in selectors:
+        if selector is not None:
+            path_elements.append("{}[{}]".format(name, selector))
+        else:
+            path_elements.append(name)
+    return ".".join(path_elements)
+
+
 class QSh:
     """Qtile shell instance"""
     def __init__(self, client: ipc.Client, completekey="tab") -> None:
         self.client = client
-        self.current_node = command_graph.CommandGraphRoot()  # type: command_graph.CommandGraphContainer
+        self.current_node = command_graph.CommandGraphRoot()  # type: command_graph.CommandGraphNode
         self.completekey = completekey
         self.builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
         self.termwidth = terminal_width()
+
+    def complete(self, arg, state) -> Optional[str]:
+        buf = readline.get_line_buffer()
+        completers = self._complete(buf, arg)
+        if completers and state < len(completers):
+            return completers[state]
+        return None
 
     def _complete(self, buf, arg) -> List[str]:
         if not re.search(r" |\(", buf) or buf.startswith("help "):
@@ -79,15 +97,9 @@ class QSh:
             return lst
         return []
 
-    def complete(self, arg, state):
-        buf = readline.get_line_buffer()
-        completers = self._complete(buf, arg)
-        if completers and state < len(completers):
-            return completers[state]
-
     @property
     def prompt(self) -> str:
-        return "%s> " % self.current_node.path
+        return "{} > ".format(format_selectors(self.current_node.selectors))
 
     def columnize(self, lst, update_termwidth=True):
         if update_termwidth:
@@ -120,11 +132,10 @@ class QSh:
         else:
             raise command_client.CommandException(result)
 
-    def _inspect(self, obj: command_graph.CommandGraphContainer) -> Tuple[Optional[List[str]], Optional[List[str]]]:
+    def _inspect(self, obj: command_graph.CommandGraphNode) -> Tuple[Optional[List[str]], Optional[List[str]]]:
         """Returns an (attrs, keys) tuple"""
         if isinstance(obj, command_graph.CommandGraphObject) and obj.selector is None:
-            items_call = obj.parent.navigate("items", None)
-            assert isinstance(items_call, command_graph.CommandGraphCall)
+            items_call = obj.parent.call("items")
             allow_root, items = self._execute(items_call, (obj.object_type,), {})
             attrs = obj.children if allow_root else None
             return attrs, items
@@ -135,14 +146,13 @@ class QSh:
     def _commands(self) -> List[str]:
         try:
             # calling `.commands()` here triggers `CommandRoot.cmd_commands()`
-            cmd_call = self.current_node.navigate("commands", None)
-            assert isinstance(cmd_call, command_graph.CommandGraphCall)
+            cmd_call = self.current_node.call("commands")
             commands = self._execute(cmd_call, (), {})
             return commands
         except command_client.CommandError:
             return []
 
-    def _ls(self, obj: command_graph.CommandGraphContainer) -> List[str]:
+    def _ls(self, obj: command_graph.CommandGraphNode) -> List[str]:
         attrs, itms = self._inspect(obj)
         all_items = []  # type: List[str]
         if attrs:
@@ -152,8 +162,8 @@ class QSh:
         return all_items
 
     def _find_node(self,
-                   src: command_graph.CommandGraphContainer,
-                   *path: str) -> Optional[command_graph.CommandGraphContainer]:
+                   src: command_graph.CommandGraphNode,
+                   *path: str) -> Optional[command_graph.CommandGraphNode]:
         """Returns a node, or None if no such node exists"""
         if not path:
             return src
@@ -171,13 +181,11 @@ class QSh:
 
                 if attrs and next_path in attrs:
                     nav_node = src.navigate(next_path, None)
-                    assert isinstance(nav_node, command_graph.CommandGraphContainer)
                     next_node = nav_node
                     break
                 elif items and next_path in items:
                     assert isinstance(src, command_graph.CommandGraphObject)
                     nav_node = src.parent.navigate(src.object_type, next_path)
-                    assert isinstance(nav_node, command_graph.CommandGraphContainer)
                     next_node = nav_node
                     break
 
@@ -186,7 +194,7 @@ class QSh:
         else:
             return None
 
-    def _find_path(self, path: str) -> Optional[command_graph.CommandGraphContainer]:
+    def _find_path(self, path: str) -> Optional[command_graph.CommandGraphNode]:
         root = command_graph.CommandGraphRoot() if path.startswith("/") else self.current_node
         parts = [i for i in path.split("/") if i]
         return self._find_node(root, *parts)
@@ -204,7 +212,7 @@ class QSh:
         next_node = self._find_path(arg)
         if next_node is not None:
             self.current_node = next_node
-            return self.current_node.path or '/'
+            return format_selectors(self.current_node.selectors) or '/'
         else:
             return "No such path."
 
@@ -276,8 +284,7 @@ class QSh:
                 ])
             return "\n".join(lst)
         elif arg in self._commands:
-            call = self.current_node.navigate("doc", None)
-            assert isinstance(call, command_graph.CommandGraphCall)
+            call = self.current_node.call("doc")
 
             return self._execute(call, (arg,), {})
         elif arg in self.builtins:
@@ -317,8 +324,7 @@ class QSh:
             if cmd not in self._commands:
                 return "Command does not exist: {}".format(cmd)
 
-            cmd_call = self.current_node.navigate(cmd, None)
-            assert isinstance(cmd_call, command_graph.CommandGraphCall)
+            cmd_call = self.current_node.call(cmd)
 
             try:
                 return self._execute(cmd_call, cmd_args, {})
