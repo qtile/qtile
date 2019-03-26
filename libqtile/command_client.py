@@ -18,18 +18,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple
 
 from libqtile import ipc
 from libqtile.command_graph import (
     CommandGraphCall,
-    CommandGraphNode,
     CommandGraphObject,
     CommandGraphRoot,
+    GraphType,
     SelectorType,
 )
-
-GraphType = Union[CommandGraphNode, CommandGraphCall]
 
 
 class CommandError(Exception):

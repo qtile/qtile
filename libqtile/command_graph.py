@@ -19,9 +19,10 @@
 # SOFTWARE.
 
 import abc
-from typing import Dict, List, Optional, Tuple, Type  # noqa: F401
+from typing import Dict, List, Optional, Tuple, Type, Union  # noqa: F401
 
 SelectorType = Tuple[str, Optional[str]]
+GraphType = Union["CommandGraphNode", "CommandGraphCall"]
 
 
 class CommandGraphNode(metaclass=abc.ABCMeta):
