@@ -32,6 +32,7 @@
 import os
 import platform
 import re
+import warnings
 
 from abc import ABC, abstractclassmethod
 from enum import Enum, unique
@@ -313,11 +314,16 @@ class Battery(base.ThreadedPollText):
         ('show_short_text', True, 'Show "Full" or "Empty" rather than formated text'),
         ('low_percentage', 0.10, "Indicates when to use the low_foreground color 0 < x < 1"),
         ('low_foreground', 'FF0000', 'Font color on low battery'),
-        ('update_delay', 60, 'Seconds between status updates'),
+        ('update_interval', 60, 'Seconds between status updates'),
         ('battery', 0, 'Which battery should be monitored'),
     ]
 
     def __init__(self, **config) -> None:
+        if "update_delay" in config:
+            warnings.warn("Change from using update_delay to update_interval for battery widget, removed in 0.15",
+                          DeprecationWarning)
+            config["update_interval"] = config.pop("update_delay")
+
         base.ThreadedPollText.__init__(self, "BAT", bar.CALCULATED, **config)
         self.add_defaults(self.defaults)
 
@@ -408,7 +414,7 @@ class BatteryIcon(base._TextBox):
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('battery', 0, 'Which battery should be monitored'),
-        ('update_delay', 60, 'Seconds between status updates'),
+        ('update_interval', 60, 'Seconds between status updates'),
         ('theme_path', default_icon_path(), 'Path of the icons'),
     ]  # type: List[Tuple[str, Any, str]]
 
@@ -426,6 +432,11 @@ class BatteryIcon(base._TextBox):
     )
 
     def __init__(self, **config) -> None:
+        if "update_delay" in config:
+            warnings.warn("Change from using update_delay to update_interval for battery widget, removed in 0.15",
+                          DeprecationWarning)
+            config["update_interval"] = config.pop("update_delay")
+
         base._TextBox.__init__(self, "BAT", bar.CALCULATED, **config)
 
         self.add_defaults(self.defaults)
@@ -449,7 +460,7 @@ class BatteryIcon(base._TextBox):
 
     def timer_setup(self) -> None:
         self.update()
-        self.timeout_add(self.update_delay, self.timer_setup)
+        self.timeout_add(self.update_interval, self.timer_setup)
 
     def _configure(self, qtile, bar) -> None:
         base._TextBox._configure(self, qtile, bar)
