@@ -18,17 +18,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 from libqtile import ipc
 from libqtile.command_graph import (
-    _CommandGraphNode,
     CommandGraphCall,
-    CommandGraphContainer,
+    CommandGraphNode,
     CommandGraphObject,
     CommandGraphRoot,
     SelectorType,
 )
+
+GraphType = Union[CommandGraphNode, CommandGraphCall]
 
 
 class CommandError(Exception):
@@ -47,7 +48,7 @@ class SelectError(Exception):
 
 
 class Client:
-    def __init__(self, ipc_client: ipc.Client, *, current_node: _CommandGraphNode = None) -> None:
+    def __init__(self, ipc_client: ipc.Client, *, current_node: GraphType = None) -> None:
         """A client that resolves calls through the gives IPC client
 
         Exposes a similar API to the command graph, but only elements in the
@@ -59,12 +60,12 @@ class Client:
         ipc_client: ipc.Client
             The IPC client that is used to resolve command graph calls, as well
             as navigate the command graph.
-        current_node: _CommandGraphNode
+        current_node: CommandGraphObject
             The current node that is pointed to in the command graph.
         """
         self._client = ipc_client
         if current_node is None:
-            self._current_node = CommandGraphRoot()  # type: _CommandGraphNode
+            self._current_node = CommandGraphRoot()  # type: GraphType
         else:
             self._current_node = current_node
 
@@ -85,26 +86,23 @@ class Client:
         if not isinstance(self._current_node, CommandGraphCall):
             raise SelectError("Invalid call", "", self._current_node.selectors)
 
-        if self._current_node.parent.selector is None:
-            # TODO: check that there is a default object when no selector is given
-            pass
-
         return self._execute(self._current_node, args, kwargs)
 
     def __getattr__(self, name:  str) -> "Client":
         """Get the child element of the currently selected object"""
-        if not isinstance(self._current_node, CommandGraphContainer):
-            raise SelectError("Cannot access children of node", name, self._current_node.selectors)
+        if isinstance(self._current_node, CommandGraphCall):
+            raise SelectError("Cannot select children of call", name, self._current_node.selectors)
 
         if name not in self._current_node.children:
             # we are gaing to resolve a command, check that the command is valid
-            cmd_call = self._current_node.navigate("commands", None)
-            assert isinstance(cmd_call, CommandGraphCall)
+            cmd_call = self._current_node.call("commands")
             commands = self._execute(cmd_call, (), {})
             if name not in commands:
                 raise SelectError("Not valid child or command", name, self._current_node.selectors)
+            next_node = self._current_node.call(name)
+        else:
+            next_node = self._current_node.navigate(name, None)
 
-        next_node = self._current_node.navigate(name, None)
         return self.__class__(self._client, current_node=next_node)
 
     def __getitem__(self, name: str) -> "Client":
@@ -116,8 +114,7 @@ class Client:
             raise SelectError("Selection already made", name, self._current_node.selectors)
 
         # check that the selection is valid
-        items_call = self._current_node.parent.navigate("items", None)
-        assert isinstance(items_call, CommandGraphCall)
+        items_call = self._current_node.parent.call("items")
         _, items = self._execute(items_call, (self._current_node.object_type,), {})
         if items is None:
             raise SelectError("No items in object", name, self._current_node.selectors)
