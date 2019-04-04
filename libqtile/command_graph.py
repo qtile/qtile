@@ -63,13 +63,13 @@ class CommandGraphNode(metaclass=abc.ABCMeta):
         else:
             raise KeyError("Given node is not an object: {}".format(name))
 
-    def call(self, name):
+    def call(self, name: str) -> "CommandGraphCall":
         """Execute the given call on the selected object"""
         return CommandGraphCall(name, self)
 
 
 class CommandGraphCall:
-    def __init__(self, name: str, parent: CommandGraphNode):
+    def __init__(self, name: str, parent: CommandGraphNode) -> None:
         """A command to be executed on the selected object
 
         A terminal node in the command graph, specifying an actual command to
@@ -129,7 +129,7 @@ class CommandGraphRoot(CommandGraphNode):
 
 
 class CommandGraphObject(CommandGraphNode, metaclass=abc.ABCMeta):
-    def __init__(self, selector: Optional[str], parent: CommandGraphNode):
+    def __init__(self, selector: Optional[str], parent: CommandGraphNode) -> None:
         """A container object in the command graph
 
         Parameters
