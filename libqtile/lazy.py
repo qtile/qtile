@@ -35,7 +35,7 @@ class LazyGraph:
             raise SelectError("Cannot select children of call", name, self._current_node.selectors)
 
         if name in self._current_node.children:
-            next_node = self._current_node.navigate(name, None)
+            next_node = self._current_node.navigate(name, None)  # type: GraphType
         else:
             next_node = self._current_node.call(name)
 
