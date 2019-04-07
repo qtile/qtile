@@ -80,6 +80,8 @@ class Qtile(command.CommandObject):
 
         self._eventloop = None
         self._finalize = False
+        self.mouseX = 0
+        self.mouseY = 0
 
         if not display_name:
             display_name = os.environ.get("DISPLAY")
@@ -983,6 +985,8 @@ class Qtile(command.CommandObject):
         self.conn.conn.flush()
 
     def handle_ButtonPress(self, e):  # noqa: N802
+        self.mouseX = e.event_x
+        self.mouseY = e.event_y
         button_code = e.detail
         state = e.state
         if self.numlock_mask:
@@ -1055,6 +1059,8 @@ class Qtile(command.CommandObject):
                 self.root.ungrab_pointer()
 
     def handle_MotionNotify(self, e):  # noqa: N802
+        self.mouseX = e.event_x
+        self.mouseY = e.event_y
         if self._drag is None:
             return
         ox, oy, rx, ry, cmd = self._drag
@@ -1275,6 +1281,9 @@ class Qtile(command.CommandObject):
         """Prints info for all groups"""
         warnings.warn("The `get_info` command is deprecated, use `groups`", DeprecationWarning)
         return self.cmd_groups()
+
+    def get_mouse_position(self):
+      return((self.mouseX, self.mouseY))
 
     def cmd_display_kb(self, *args):
         """Display table of key bindings"""
