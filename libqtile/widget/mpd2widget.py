@@ -3,6 +3,8 @@ from libqtile.log_utils import logger
 
 from socket import error as socket_error
 from mpd import MPDClient, ConnectionError, CommandError
+from collections import defaultdict
+
 
 # Shortcuts
 # TODO: Volume inc/dec support
@@ -26,7 +28,6 @@ play_states = {
     'stop': '\u25a0',
 }
 
-
 def option(char):
     def _convert(elements, key, space):
         if key in elements and elements[key] != '0':
@@ -35,7 +36,7 @@ def option(char):
             elements[key] = space
     return _convert
 
-
+# Changes to formatter will still use this dicitionary.
 prepare_status = {
     'repeat': option('r'),
     'random': option('z'),
@@ -51,14 +52,14 @@ default_format = '{play_status} {artist}/{title} ' +\
 class Mpd2(base.ThreadPoolText):
     """A widget for Music Player Daemon (MPD) based on python-mpd2
 
-    This widget exists since python-mpd library is no more supported.
+    This widget exists since python-mpd library is no longer supported.
 
     Parameters
     ==========
     status_format :
         format string to display status
 
-        Full list of values see in ``status`` and ``currentsong`` commands
+        For a full list of values, see MPDClient.status() and MPDClient.currentsong()
 
         https://musicpd.org/doc/protocol/command_reference.html#command_status
         https://musicpd.org/doc/protocol/tags.html
@@ -67,15 +68,35 @@ class Mpd2(base.ThreadPoolText):
 
         {play_status} {artist}/{title} [{repeat}{random}{single}{consume}{updating_db}]
 
-        ``play_status`` is string from ``play_states`` dict
+        ``play_status`` is a string from ``play_states`` dict
 
-        Note that ``time`` property of song renamed to ``fulltime`` to prevent
+        Note that the ``time`` property of the song renamed to ``fulltime`` to prevent
         conflicts with status information during formating.
 
     prepare_status :
-        dict of functions for replace values in status with custom
+        dict of functions to replace values in status with custom characters.
 
         ``f(status, key, space_element) => str``
+
+        New functionality allows use of a dictionary of plain strings.
+
+        Default::
+
+        status_dict = {
+            'repeat': 'r',
+            'random': 'z',
+            'single': '1',
+            'consume': 'c',
+            'updating_db': 'U'
+        }
+    
+    format_fns :
+        A dict of functions to format the various elements.
+
+        'Tag' : f(str) => str
+
+        Default:: {}
+
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
@@ -86,6 +107,7 @@ class Mpd2(base.ThreadPoolText):
         ('password', None, 'Password for auth on mpd server'),
         ('keys', keys, 'Shortcut keys'),
         ('play_states', play_states, 'Play state mapping'),
+        ('format_fns', {}, 'Dictionary of format methods'),
         ('command', None, 'Executable command by "command" shortcut'),
         ('timeout', 30, 'MPDClient timeout'),
         ('idletimeout', 5, 'MPDClient idle command timeout'),
@@ -165,28 +187,59 @@ class Mpd2(base.ThreadPoolText):
 
         self.update(self.update_status)
 
-    def formatter(self, status, currentsong):
-        play_status = self.play_states[status['state']]
+    def formatter(self, status, current_song):
+        default = 'Undefined'
+        song_info = defaultdict(lambda: default)
+        song_info['play_status'] = self.play_states[status['state']]
 
-        # Dirty hack to prevent keys conflict
-        currentsong['fulltime'] = currentsong['time']
-        del currentsong['time']
+        for k in current_song:
+            song_info[k] = current_song[k]
+        song_info['fulltime'] = song_info['time']
+        del song_info['time']
 
-        self.prepare_formatting(status, currentsong)
-        status.update(currentsong)
+        song_info.update(status)
+        if song_info['updating_db'] == default:
+            song_info['updating_db'] = '0'
+        if not callable(self.prepare_status['repeat']):
+            for k in self.prepare_status:
+                if k in status and status[k] != '0':
+                    # Much more direct.
+                    song_info[k] = self.prepare_status[k]
+                else:
+                    song_info[k] = self.space
+        else:
+            self.prepare_formatting(song_info)
+
+        # 'remaining' isn't actually in the information provided by mpd
+        # so we construct it from 'fulltime' and 'elapsed'.
+        # 'elapsed' is always less than or equal to 'fulltime', if it exists.
+        # Remaining should default to '00:00' if either or both are missing.
+        if 'remaining' in self.status_format:
+            total = float(song_info['fulltime'])\
+                if song_info['fulltime'] != default else 0.0
+            elapsed = float(song_info['elapsed'])\
+                if song_info['elapsed'] != default else 0.0
+            song_info['remaining'] = "{:.2f}".format(float(total - elapsed))
+
+        # Now we apply the user formatting to selected elements in song_info.
+        for fmt_fn in self.format_fns:
+            if fmt_fn in song_info:
+                song_info[fmt_fn] = self.format_fns[fmt_fn](song_info[fmt_fn])                
 
         fmt = self.status_format
         if not isinstance(fmt, str):
             fmt = str(fmt)
 
+        # not sure if the try/except is needed anymore...
         try:
-            formatted = fmt.format(play_status=play_status, **status)
+            formatted = fmt.format(**song_info)
             return formatted
         except KeyError as e:
             logger.exception("mpd client did not return status: {}".format(e.args[0]))
             return "ERROR"
 
-    def prepare_formatting(self, status, currentsong):
+    # Removed an unused parameter from this function.
+    def prepare_formatting(self, status):
         for key in self.prepare_status:
             self.prepare_status[key](status, key, self.space)
 
