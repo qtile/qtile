@@ -28,7 +28,7 @@ from libqtile.command_graph import (
     GraphType,
     SelectorType,
 )
-from libqtile.command_interface import EagerCommandInterface
+from libqtile.command_interface import CommandInterface
 
 
 class CommandError(Exception):
@@ -46,18 +46,18 @@ class SelectError(Exception):
         self.selectors = selectors
 
 
-class EagerCommandClient:
-    def __init__(self, command: EagerCommandInterface, *, current_node: GraphType = None) -> None:
+class CommandClient:
+    def __init__(self, command: CommandInterface, *, current_node: GraphType = None) -> None:
         """A client that resolves calls through the gives client
 
         Exposes a similar API to the command graph, but performs resolution of
         objects.  Any navigation done on the command graph is resolved at the
-        point it is invoked.  This command resolution is done via the eager
-        command interface.
+        point it is invoked.  This command resolution is done via the command
+        interface.
 
         Parameters
         ----------
-        command: EagerCommandInterface
+        command: CommandInterface
             The object that is used to resolve command graph calls, as well as
             navigate the command graph.
         current_node: CommandGraphNode
@@ -77,25 +77,19 @@ class EagerCommandClient:
 
         return self._command.execute(self._current_node, args, kwargs)
 
-    def navigate(self, name: str, selector: Optional[str]) -> "EagerCommandClient":
+    def navigate(self, name: str, selector: Optional[str]) -> "CommandClient":
         if not isinstance(self._current_node, CommandGraphNode):
             raise SelectError("Invalid navigation", "", self._current_node.selectors)
 
         if name not in self._current_node.children:
             raise SelectError("Not valid child", name, self._current_node.selectors)
-        if selector is not None:
-            items_call = self.call("items")
-            items = items_call(name)
-            if items is None:
-                raise SelectError("No items in object", name, self._current_node.selectors)
-            if name not in items:
-                err_str = "Available items: {}".format(",".join(map(str, items)))
-                raise SelectError(err_str, name, self._current_node.selectors)
+        if selector is not None and not self._command.has_item(self._current_node, name, selector):
+            raise SelectError("No items in object", name, self._current_node.selectors)
 
         next_node = self._current_node.navigate(name, selector)
         return self.__class__(self._command, current_node=next_node)
 
-    def call(self, name: str) -> "EagerCommandClient":
+    def call(self, name: str) -> "CommandClient":
         if not isinstance(self._current_node, CommandGraphNode):
             raise SelectError("Invalid navigation", "", self._current_node.selectors)
 
@@ -108,13 +102,12 @@ class EagerCommandClient:
 
 
 class InteractiveCommandClient:
-    def __init__(self, command: EagerCommandInterface, *, current_node: GraphType = None) -> None:
-        """A client that resolves calls through the gives client
+    def __init__(self, command: CommandInterface, *, current_node: GraphType = None) -> None:
+        """An interactive client that resolves calls through the gives client
 
-        Exposes a similar API to the command graph, but performs resolution of
-        objects.  Any navigation done on the command graph is resolved at the
-        point it is invoked.  This command resolution is done via the eager
-        command interface.
+        Exposes the command graph API in such a way that it can be traversed
+        directly on this object.  The command resolution for this object is
+        done via the command interface.
 
         Parameters
         ----------
@@ -145,9 +138,7 @@ class InteractiveCommandClient:
 
         if name not in self._current_node.children:
             # we are gaing to resolve a command, check that the command is valid
-            cmd_call = self.call("commands")
-            commands = cmd_call()
-            if name not in commands:
+            if not self._command.has_command(self._current_node, name):
                 raise SelectError("Not valid child or command", name, self._current_node.selectors)
             next_node = self._current_node.call(name)  # type: GraphType
         else:
@@ -164,15 +155,8 @@ class InteractiveCommandClient:
             raise SelectError("Selection already made", name, self._current_node.selectors)
 
         # check that the selection is valid
-        items_call = self._current_node.parent.call("items")
-        _, items = self._execute(items_call, (self._current_node.object_type,), {})
-        if items is None:
+        if not self._command.has_item(self._current_node.parent, self._current_node.object_type, name):
             raise SelectError("No items in object", name, self._current_node.selectors)
-        if name not in items:
-            err_str = "Available items: {}".format(",".join(map(str, items)))
-            raise SelectError(err_str, name, self._current_node.selectors)
 
-        next_node = self._current_node.parent.navigate(
-            self._current_node.object_type, name
-        )
+        next_node = self._current_node.parent.navigate(self._current_node.object_type, name)
         return self.__class__(self._command, current_node=next_node)

@@ -21,15 +21,16 @@
 from abc import abstractmethod, ABCMeta
 from typing import Any, Dict, Tuple
 
-from libqtile.command_graph import CommandGraphCall
+from libqtile.command_graph import CommandGraphCall, CommandGraphNode
 
 
-class EagerCommandInterface(metaclass=ABCMeta):
+class CommandInterface(metaclass=ABCMeta):
     """
-    Defines an interface which can be used to eagerly evaluate a given call on
-    a command graph.  The implementations of this may use an IPC call to access
-    the running qtile instance remotely, or directly access the qtile instance
-    from within the same process.
+    Defines an interface which can be used to evaluate a given call on a
+    command graph.  The implementations of this may use, for example, an IPC
+    call to access the running qtile instance remotely or directly access the
+    qtile instance from within the same process, or it may return lazily
+    evaluated results.
     """
 
     @abstractmethod
@@ -47,5 +48,43 @@ class EagerCommandInterface(metaclass=ABCMeta):
             The arguments to pass into the command graph call.
         kwargs:
             The keyword arguments to pass into the command graph call.
+        """
+        pass  # pragma: no cover
+
+    @abstractmethod
+    def has_command(self, node: CommandGraphNode, command: str) -> bool:
+        """Check if the given command exists
+
+        Parameters
+        ----------
+        node : CommandGraphNode
+            The node to check for commands
+        command : str
+            The name of the command to check for
+
+        Returns
+        -------
+        bool
+            True if the command is resolved on the given node
+        """
+        pass  # pragma: no cover
+
+    @abstractmethod
+    def has_item(self, node: CommandGraphNode, object_type: str, item: str) -> bool:
+        """Check if the given item exists
+
+        Parameters
+        ----------
+        node : CommandGraphNode
+            The node to check for items
+        object_type : str
+            The type of object to check for items.
+        command : str
+            The name of the item to check for
+
+        Returns
+        -------
+        bool
+            True if the item is resolved on the given node
         """
         pass  # pragma: no cover
