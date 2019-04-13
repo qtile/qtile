@@ -21,12 +21,14 @@ keys = {
     "command": None
 }
 
+
 # To display mpd state
 play_states = {
     'play': '\u25b6',
     'pause': '\u23F8',
     'stop': '\u25a0',
 }
+
 
 def option(char):
     def _convert(elements, key, space):
@@ -35,6 +37,7 @@ def option(char):
         else:
             elements[key] = space
     return _convert
+
 
 # Changes to formatter will still use this dicitionary.
 prepare_status = {
@@ -198,7 +201,7 @@ class Mpd2(base.ThreadPoolText):
         del song_info['time']
 
         song_info.update(status)
-        if song_info['updating_db'] == default:
+        if 'updating_db' in song_info:
             song_info['updating_db'] = '0'
         if not callable(self.prepare_status['repeat']):
             for k in self.prepare_status:
@@ -216,9 +219,9 @@ class Mpd2(base.ThreadPoolText):
         # Remaining should default to '00:00' if either or both are missing.
         if 'remaining' in self.status_format:
             total = float(song_info['fulltime'])\
-                if song_info['fulltime'] != default else 0.0
+                if 'fulltime' in song_info else 0.0
             elapsed = float(song_info['elapsed'])\
-                if song_info['elapsed'] != default else 0.0
+                if 'elapsed' in song_info else 0.0
             song_info['remaining'] = "{:.2f}".format(float(total - elapsed))
 
         # Now we apply the user formatting to selected elements in song_info.
@@ -238,7 +241,6 @@ class Mpd2(base.ThreadPoolText):
             logger.exception("mpd client did not return status: {}".format(e.args[0]))
             return "ERROR"
 
-    # Removed an unused parameter from this function.
     def prepare_formatting(self, status):
         for key in self.prepare_status:
             self.prepare_status[key](status, key, self.space)
