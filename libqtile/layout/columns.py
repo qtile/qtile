@@ -121,6 +121,10 @@ class Columns(Layout):
         ("insert_position", 0,
          "Position relative to the current window where new ones are inserted "
          "(0 means right above the current window, 1 means right after)."),
+        ("wrap_focus_columns", True,
+         "Wrap the screen when moving focus across columns."),
+        ("wrap_focus_rows", True,
+         "Wrap the screen when moving focus across rows."),
     ]
 
     def __init__(self, **config):
@@ -298,26 +302,42 @@ class Columns(Layout):
         self.group.layout_all()
 
     def cmd_left(self):
-        if len(self.columns) > 1:
-            self.current = (self.current - 1) % len(self.columns)
-            self.group.focus(self.cc.cw, True)
+        if self.wrap_focus_columns:
+            if len(self.columns) > 1:
+                self.current = (self.current - 1) % len(self.columns)
+        else:
+            if self.current > 0:
+                self.current = (self.current - 1)
+        self.group.focus(self.cc.cw, True)
 
     def cmd_right(self):
-        if len(self.columns) > 1:
-            self.current = (self.current + 1) % len(self.columns)
-            self.group.focus(self.cc.cw, True)
+        if self.wrap_focus_columns:
+            if len(self.columns) > 1:
+                self.current = (self.current + 1) % len(self.columns)
+        else:
+            if len(self.columns)-1 > self.current:
+                self.current = (self.current + 1)
+        self.group.focus(self.cc.cw, True)
 
     def cmd_up(self):
         col = self.cc
-        if len(col) > 1:
-            col.current_index -= 1
-            self.group.focus(col.cw, True)
+        if self.wrap_focus_rows:
+            if len(col) > 1:
+                col.current_index -= 1
+        else:
+            if col.current_index > 0:
+                col.current_index -= 1
+        self.group.focus(col.cw, True)
 
     def cmd_down(self):
         col = self.cc
-        if len(col) > 1:
-            col.current_index += 1
-            self.group.focus(col.cw, True)
+        if self.wrap_focus_rows:
+            if len(col) > 1:
+                col.current_index += 1
+        else:
+            if col.current_index < len(col)-1:
+                col.current_index += 1
+        self.group.focus(col.cw, True)
 
     def cmd_next(self):
         if self.cc.split and self.cc.current < len(self.cc) - 1:
@@ -395,12 +415,22 @@ class Columns(Layout):
                 self.columns[self.current - 1].width -= self.grow_amount
                 self.cc.width += self.grow_amount
                 self.group.layout_all()
+        else:
+            if self.columns[self.current].width > self.grow_amount:
+                self.columns[1].width += self.grow_amount
+                self.cc.width -= self.grow_amount
+                self.group.layout_all()
 
     def cmd_grow_right(self):
         if self.current + 1 < len(self.columns):
             if self.columns[self.current + 1].width > self.grow_amount:
                 self.columns[self.current + 1].width -= self.grow_amount
                 self.cc.width += self.grow_amount
+                self.group.layout_all()
+        else:
+            if self.cc.width > self.grow_amount:
+                self.cc.width -= self.grow_amount
+                self.columns[self.current - 1].width += self.grow_amount
                 self.group.layout_all()
 
     def cmd_grow_up(self):
