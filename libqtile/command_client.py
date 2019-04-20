@@ -28,7 +28,7 @@ from libqtile.command_graph import (
     GraphType,
     SelectorType,
 )
-from libqtile.command_interface import CommandInterface
+from libqtile.command_object import CommandInterface
 
 
 class CommandError(Exception):
@@ -48,7 +48,7 @@ class SelectError(Exception):
 
 class CommandClient:
     def __init__(self, command: CommandInterface, *, current_node: GraphType = None) -> None:
-        """A client that resolves calls through the gives client
+        """A client that resolves calls through the command object interface
 
         Exposes a similar API to the command graph, but performs resolution of
         objects.  Any navigation done on the command graph is resolved at the
@@ -132,22 +132,55 @@ class InteractiveCommandClient:
         return self._command.execute(self._current_node, args, kwargs)
 
     def __getattr__(self, name:  str) -> "InteractiveCommandClient":
-        """Get the child element of the currently selected object"""
+        """Get the child element of the currently selected object
+
+        Resolve the element specified by the given name, either the child
+        object, or the command on the current object.
+
+        Parameters
+        ----------
+        name : str
+            The name of the element to resolve
+
+        Return
+        ------
+        InteractiveCommandClient
+            The client navigated to the specified name.  Will respresent either
+            a command graph node (if the name is a valid child) or a command
+            graph call (if the name is a valid command).
+        """
         if isinstance(self._current_node, CommandGraphCall):
             raise SelectError("Cannot select children of call", name, self._current_node.selectors)
 
+        # we do not know if the name is a command to be executed, or an object
+        # to navigate to
         if name not in self._current_node.children:
-            # we are gaing to resolve a command, check that the command is valid
+            # we are going to resolve a command, check that the command is valid
             if not self._command.has_command(self._current_node, name):
                 raise SelectError("Not valid child or command", name, self._current_node.selectors)
-            next_node = self._current_node.call(name)  # type: GraphType
+            call_object = self._current_node.call(name)
+            return self.__class__(self._command, current_node=call_object)
         else:
             next_node = self._current_node.navigate(name, None)
-
-        return self.__class__(self._command, current_node=next_node)
+            return self.__class__(self._command, current_node=next_node)
 
     def __getitem__(self, name: str) -> "InteractiveCommandClient":
-        """Get the selected element of the currently selected object"""
+        """Get the selected element of the currently selected object
+
+        From the current command graph object, select the instance with the
+        given name.
+
+        Parameters
+        ----------
+        name : str
+            The name of the item to resolve
+
+        Return
+        ------
+        InteractiveCommandClient
+            The current client, navigated to the specified command graph
+            object.
+        """
         if not isinstance(self._current_node, CommandGraphObject):
             raise SelectError("Unable to make selection on current node", name, self._current_node.selectors)
 
