@@ -24,6 +24,18 @@ from typing import Any, Dict, Tuple
 from libqtile.command_graph import CommandGraphCall, CommandGraphNode
 from libqtile import ipc
 
+SUCCESS = 0
+ERROR = 1
+EXCEPTION = 2
+
+
+class CommandError(Exception):
+    pass
+
+
+class CommandException(Exception):
+    pass
+
 
 class CommandInterface(metaclass=ABCMeta):
     """
@@ -120,7 +132,11 @@ class IPCCommandObject(CommandInterface):
         status, result = self._client.send((
             call.parent.selectors, call.name, args, kwargs
         ))
-        return result
+        if status == SUCCESS:
+            return result
+        if status == ERROR:
+            raise CommandError(result)
+        raise CommandException(result)
 
     def has_command(self, node: CommandGraphNode, command: str) -> bool:
         """Check if the given command exists
@@ -166,5 +182,5 @@ class IPCCommandObject(CommandInterface):
             True if the item is resolved on the given node
         """
         items_call = node.call("items")
-        items = self.execute(items_call, (object_type,), {})
+        _, items = self.execute(items_call, (object_type,), {})
         return item in items

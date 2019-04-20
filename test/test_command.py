@@ -35,11 +35,11 @@ class CallConfig:
     keys = [
         libqtile.config.Key(
             ["control"], "j",
-            libqtile.command._Call([("layout", None)], "down")
+            libqtile.command.lazy.layout.down(),
         ),
         libqtile.config.Key(
             ["control"], "k",
-            libqtile.command._Call([("layout", None)], "up"),
+            libqtile.command.lazy.layout.up(),
         ),
     ]
     mouse = []

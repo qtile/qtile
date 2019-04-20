@@ -18,40 +18,87 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.command_graph import CommandGraphCall, CommandGraphRoot, CommandGraphObject, GraphType
-from libqtile.command_client import SelectError
+from typing import Dict, List, Optional, Tuple  # noqa: F401
+
+from libqtile.command_client import InteractiveCommandClient
+from libqtile.command_object import CommandInterface
+from libqtile.command_graph import CommandGraphCall, CommandGraphNode, SelectorType
 
 
-class LazyGraph:
-    def __init__(self, *, node: GraphType = None):
-        if node is None:
-            self._current_node = CommandGraphRoot()  # type: GraphType
-        else:
-            self._current_node = node
+class LazyCall:
+    def __init__(self, call: CommandGraphCall, args: Tuple, kwargs: Dict) -> None:
+        """The lazily evaluated command graph call
 
-    def __getattr__(self, name:  str) -> "LazyGraph":
-        """Get the child element of the currently selected object"""
-        if isinstance(self._current_node, CommandGraphCall):
-            raise SelectError("Cannot select children of call", name, self._current_node.selectors)
+        Parameters
+        ----------
+        call : CommandGraphCall
+            The call that is made
+        args : Tuple
+            The args passed to the call when it is evaluated.
+        kwargs : Dict
+            The kwargs passed to the call when it is evaluated.
+        """
+        self._call = call
+        self._args = args
+        self._kwargs = kwargs
 
-        if name in self._current_node.children:
-            next_node = self._current_node.navigate(name, None)  # type: GraphType
-        else:
-            next_node = self._current_node.call(name)
+        self._layout = None  # type: Optional[str]
+        self._when_floating = True
 
-        return self.__class__(node=next_node)
+    @property
+    def selectors(self) -> List[SelectorType]:
+        """The selectors for the given call"""
+        return self._call.selectors
 
-    def __getitem__(self, name: str) -> "LazyGraph":
-        """Get the selected element of the currently selected object"""
-        if not isinstance(self._current_node, CommandGraphObject):
-            raise SelectError("Unable to make selection on current node", name, self._current_node.selectors)
+    @property
+    def name(self) -> str:
+        """The name of the given call"""
+        return self._call.name
 
-        if self._current_node.selector is not None:
-            raise SelectError("Selection already made", name, self._current_node.selectors)
+    @property
+    def args(self) -> Tuple:
+        """The args to the given call"""
+        return self._args
 
-        next_node = self._current_node.parent.navigate(self._current_node.object_type, name)
+    @property
+    def kwargs(self) -> Dict:
+        """The kwargs to the given call"""
+        return self._kwargs
 
-        return self.__class__(node=next_node)
+    def when(self, layout=None, when_floating=True):
+        self._layout = layout
+        self._when_floating = when_floating
+
+    def check(self, q) -> bool:
+        if self._layout is not None:
+            if self._layout == 'floating':
+                if q.current_window.floating:
+                    return True
+                return False
+            if q.current_layout.name != self._layout:
+                if q.current_window and q.current_window.floating and not self._when_floating:
+                    return False
+        return True
 
 
-lazy = LazyGraph()
+class LazyCommandObject(CommandInterface):
+    """A lazy loading command object
+
+    Allows all commands and items to be resolved at run time, and returns
+    lazily evaluated commands.
+    """
+
+    def execute(self, call: CommandGraphCall, args: Tuple, kwargs: Dict) -> LazyCall:
+        """Lazily evaluate the given call"""
+        return LazyCall(call, args, kwargs)
+
+    def has_command(self, node: CommandGraphNode, command: str) -> bool:
+        """Lazily resolve the given command"""
+        return True
+
+    def has_item(self, node: CommandGraphNode, object_type: str, item: str) -> bool:
+        """Lazily resolve the given item"""
+        return True
+
+
+lazy = InteractiveCommandClient(LazyCommandObject())

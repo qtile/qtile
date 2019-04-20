@@ -28,8 +28,9 @@ from . import ipc
 from .utils import get_cache_dir
 from .log_utils import logger
 
-from libqtile.command_client import CommandError, CommandException
-from libqtile.lazy import LazyGraph
+from libqtile.command_object import CommandError, CommandException
+from libqtile.command_client import InteractiveCommandClient
+from libqtile.lazy import LazyCommandObject
 
 
 class _SelectError(Exception):
@@ -268,13 +269,13 @@ class CommandRoot(_CommandRoot):
             raise CommandException(val)
 
 
-class _LazyTree(LazyGraph):
-    def __getattr__(self, *args):
+class _LazyTree(InteractiveCommandClient):
+    def __getattr__(self, *args, **kwargs):
         warnings.warn("libqtile.command.lazy is deprecated, use libqtile.lazy.lazy", DeprecationWarning)
-        return super().__getattr__(*args)
+        return super().__getattr__(*args, **kwargs)
 
 
-lazy = _LazyTree()
+lazy = _LazyTree(LazyCommandObject())
 
 
 class CommandObject(metaclass=abc.ABCMeta):

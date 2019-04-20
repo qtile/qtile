@@ -100,7 +100,7 @@ def can_connect_x11(disp=':0'):
 def can_connect_qtile(socket_path):
     ipc_client = ipc.Client(socket_path)
     ipc_command = command_object.IPCCommandObject(ipc_client)
-    client = command_client.Client(ipc_command)
+    client = command_client.InteractiveCommandClient(ipc_command)
     val = client.status()
     if val == 'OK':
         return True
@@ -133,12 +133,12 @@ class BareConfig:
         libqtile.config.Key(
             ["control"],
             "k",
-            libqtile.command._Call([("layout", None)], "up")
+            libqtile.command.lazy.layout.up(),
         ),
         libqtile.config.Key(
             ["control"],
             "j",
-            libqtile.command._Call([("layout", None)], "down")
+            libqtile.command.lazy.layout.down(),
         ),
     ]
     mouse = []
@@ -277,7 +277,7 @@ class Qtile:
         if can_connect_qtile(self.sockfile):
             ipc_client = ipc.Client(self.sockfile)
             ipc_command = command_object.IPCCommandObject(ipc_client)
-            self.c = command_client.Client(ipc_command)
+            self.c = command_client.InteractiveCommandClient(ipc_command)
             return
         if rpipe.poll(sleep_time):
             error = rpipe.recv()

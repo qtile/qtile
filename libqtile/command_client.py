@@ -31,14 +31,6 @@ from libqtile.command_graph import (
 from libqtile.command_object import CommandInterface
 
 
-class CommandError(Exception):
-    pass
-
-
-class CommandException(Exception):
-    pass
-
-
 class SelectError(Exception):
     def __init__(self, err_string: str, name: str, selectors: List[SelectorType]):
         super().__init__(err_string)
