@@ -64,12 +64,12 @@ class ManagerConfig:
         libqtile.config.Key(
             ["control"],
             "k",
-            libqtile.command._Call([("layout", None)], "up")
+            libqtile.command.lazy.layout.up(),
         ),
         libqtile.config.Key(
             ["control"],
             "j",
-            libqtile.command._Call([("layout", None)], "down")
+            libqtile.command.lazy.layout.down(),
         ),
     ]
     mouse = []
@@ -938,13 +938,6 @@ def test_unmap_noscreen(qtile):
     assert self.c.groups()["a"]["focus"] == "one"
 
 
-# def test_init():
-#     with pytest.raises(libqtile.core.manager.QtileError):
-#         libqtile.config.Key([], "unknown", libqtile.command._Call("base", None, "foo"))
-#     with pytest.raises(libqtile.core.manager.QtileError):
-#         libqtile.config.Key(["unknown"], "x", libqtile.command._Call("base", None, "foo"))
-
-
 class TScreen(libqtile.config.Screen):
     def set_group(self, x, save_prev=True):
         pass
@@ -994,12 +987,12 @@ class _Config:
         libqtile.config.Key(
             ["control"],
             "k",
-            libqtile.command._Call([("layout", None)], "up")
+            libqtile.command.lazy.layout.up(),
         ),
         libqtile.config.Key(
             ["control"],
             "j",
-            libqtile.command._Call([("layout", None)], "down")
+            libqtile.command.lazy.layout.down(),
         ),
     ]
     mouse = []
