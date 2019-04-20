@@ -41,7 +41,7 @@ from libqtile.core.manager import Qtile as QtileManager
 from libqtile.core import xcore
 from libqtile.log_utils import init_log
 from libqtile.resources import default_config
-from libqtile import command_client, ipc
+from libqtile import command_client, command_object, ipc
 
 # the default sizes for the Xephyr windows
 WIDTH = 800
@@ -99,7 +99,8 @@ def can_connect_x11(disp=':0'):
 @Retry(ignore_exceptions=(ipc.IPCError,), return_on_fail=True)
 def can_connect_qtile(socket_path):
     ipc_client = ipc.Client(socket_path)
-    client = command_client.Client(ipc_client)
+    ipc_command = command_object.IPCCommandObject(ipc_client)
+    client = command_client.Client(ipc_command)
     val = client.status()
     if val == 'OK':
         return True
@@ -275,7 +276,8 @@ class Qtile:
         # First, wait for socket to appear
         if can_connect_qtile(self.sockfile):
             ipc_client = ipc.Client(self.sockfile)
-            self.c = command_client.Client(ipc_client)
+            ipc_command = command_object.IPCCommandObject(ipc_client)
+            self.c = command_client.Client(ipc_command)
             return
         if rpipe.poll(sleep_time):
             error = rpipe.recv()
