@@ -65,11 +65,11 @@ def main() -> None:
         socket = args.socket
     client = ipc.Client(socket, is_json=args.is_json)
     cmd_object = command_object.IPCCommandObject(client)
+    qsh = sh.QSh(cmd_object)
     if args.pyfile is None:
-        qsh = sh.QSh(cmd_object)
         if args.command is not None:
             qsh.process_line(args.command)
         else:
             qsh.loop()
     else:
-        print(client.run_external(args.pyfile))
+        print(qsh.process_line("run_external({})".format(args.pyfile)))

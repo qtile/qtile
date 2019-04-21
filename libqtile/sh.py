@@ -250,9 +250,9 @@ class QSh:
             bar['top']> pwd
             bar['top']
         """
-        return self._current_node.path or '/'
+        return format_selectors(self._current_node.selectors) or '/'
 
-    def do_help(self, arg):
+    def do_help(self, arg) -> str:
         """Give help on commands and builtins
 
         When invoked without arguments, provides an overview of all commands.
@@ -284,15 +284,14 @@ class QSh:
             return "\n".join(lst)
         elif arg in self._commands:
             call = self._current_node.call("doc")
-
-            return self._execute(call, (arg,), {})
+            return self._client.execute(call, (arg,), {})
         elif arg in self._builtins:
             c = getattr(self, "do_" + arg)
             return inspect.getdoc(c)
         else:
             return "No such command: %s" % arg
 
-    def do_exit(self, args):
+    def do_exit(self, args) -> None:
         """Exit qshell"""
         sys.exit(0)
 
