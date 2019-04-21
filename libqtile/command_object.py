@@ -183,4 +183,4 @@ class IPCCommandObject(CommandInterface):
         """
         items_call = node.call("items")
         _, items = self.execute(items_call, (object_type,), {})
-        return item in items
+        return items is not None and item in items

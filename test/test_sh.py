@@ -25,6 +25,7 @@ import pytest
 from libqtile import config, ipc
 from libqtile.layout import floating, Max
 from libqtile.sh import QSh
+from libqtile.command_object import IPCCommandObject
 
 
 class ShConfig:
@@ -50,7 +51,8 @@ sh_config = pytest.mark.parametrize("qtile", [ShConfig], indirect=True)
 @sh_config
 def test_columnize(qtile):
     client = ipc.Client(qtile.sockfile)
-    sh = QSh(client)
+    command = IPCCommandObject(client)
+    sh = QSh(command)
     assert sh.columnize(["one", "two"]) == "one  two"
 
     sh.termwidth = 1
@@ -64,8 +66,11 @@ def test_columnize(qtile):
 @sh_config
 def test_ls(qtile):
     client = ipc.Client(qtile.sockfile)
-    sh = QSh(client)
+    command = IPCCommandObject(client)
+    sh = QSh(command)
+    assert sh.do_ls("") == "bar/     group/   layout/  screen/  widget/  window/"
     assert sh.do_ls("layout") == "group/   window/  screen/  0/     "
+
     assert sh.do_cd("layout") == "layout"
     assert sh.do_ls("") == "group/   window/  screen/  0/     "
     assert sh.do_ls("screen") == "layout/  window/  bar/   "
@@ -74,7 +79,8 @@ def test_ls(qtile):
 @sh_config
 def test_do_cd(qtile):
     client = ipc.Client(qtile.sockfile)
-    sh = QSh(client)
+    command = IPCCommandObject(client)
+    sh = QSh(command)
     assert sh.do_cd("layout") == 'layout'
     assert sh.do_cd("0") == 'layout[0]'
     assert sh.do_cd("..") == '/'
@@ -85,23 +91,25 @@ def test_do_cd(qtile):
 @sh_config
 def test_call(qtile):
     client = ipc.Client(qtile.sockfile)
-    sh = QSh(client)
-    assert sh.process_command("status()") == "OK"
+    command = IPCCommandObject(client)
+    sh = QSh(command)
+    assert sh.process_line("status()") == "OK"
 
-    v = sh.process_command("nonexistent()")
+    v = sh.process_line("nonexistent()")
     assert v == "Command does not exist: nonexistent"
 
-    v = sh.process_command("status(((")
+    v = sh.process_line("status(((")
     assert v == "Invalid command: status((("
 
-    v = sh.process_command("status(1)")
+    v = sh.process_line("status(1)")
     assert v.startswith("Command exception")
 
 
 @sh_config
 def test_complete(qtile):
     client = ipc.Client(qtile.sockfile)
-    sh = QSh(client)
+    command = IPCCommandObject(client)
+    sh = QSh(command)
     assert sh._complete("c", "c") == [
         "cd",
         "commands",
@@ -118,6 +126,7 @@ def test_complete(qtile):
 @sh_config
 def test_help(qtile):
     client = ipc.Client(qtile.sockfile)
-    sh = QSh(client)
+    command = IPCCommandObject(client)
+    sh = QSh(command)
     assert sh.do_help("nonexistent").startswith("No such command")
     assert sh.do_help("help")
