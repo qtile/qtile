@@ -38,9 +38,10 @@ class Clock(base.InLoopPollText):
     defaults = [
         ('format', '%H:%M', 'A Python datetime format string'),
         ('update_interval', 1., 'Update interval for the clock'),
-        ('timezone', None, 'The timezone to use for this clock, '
-            'e.g. "US/Central" (or anything in /usr/share/zoneinfo). None means '
-            'the default timezone.')
+        ('timezone', None, 'The timezone to use for this clock, either as'
+         ' string if pytz is installed (e.g. "US/Central" or anything in'
+         ' /usr/share/zoneinfo), or as tzinfo (e.g. datetime.timezone.utc).'
+         ' None means the system local timezone and is the default.')
     ]
     DELTA = timedelta(seconds=0.5)
 
