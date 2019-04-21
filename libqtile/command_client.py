@@ -73,10 +73,11 @@ class CommandClient:
         if not isinstance(self._current_node, CommandGraphNode):
             raise SelectError("Invalid navigation", "", self._current_node.selectors)
 
-        if name not in self._current_node.children:
+        if name not in self.children:
             raise SelectError("Not valid child", name, self._current_node.selectors)
-        if selector is not None and not self._command.has_item(self._current_node, name, selector):
-            raise SelectError("No items in object", name, self._current_node.selectors)
+        if selector is not None:
+            if self._command.has_item(self._current_node, name, selector):
+                raise SelectError("Item not available in object", name, self._current_node.selectors)
 
         next_node = self._current_node.navigate(name, selector)
         return self.__class__(self._command, current_node=next_node)
@@ -91,6 +92,24 @@ class CommandClient:
             raise SelectError("Not valid child or command", name, self._current_node.selectors)
         next_node = self._current_node.call(name)
         return self.__class__(self._command, current_node=next_node)
+
+    @property
+    def children(self) -> List[str]:
+        """Get the children of the current location in the command graph"""
+        if isinstance(self._current_node, CommandGraphCall):
+            raise SelectError("No children of command graph call", "", self._current_node.selectors)
+        return self._current_node.children
+
+    @property
+    def root(self) -> "CommandClient":
+        return self.__class__(self._command)
+
+    @property
+    def parent(self) -> "CommandClient":
+        """Get the parent of the current client"""
+        if self._current_node.parent is None:
+            raise SelectError("", "", self._current_node.selectors)
+        return self.__class__(self._command, current_node=self._current_node.parent)
 
 
 class InteractiveCommandClient:
@@ -181,7 +200,7 @@ class InteractiveCommandClient:
 
         # check that the selection is valid
         if not self._command.has_item(self._current_node.parent, self._current_node.object_type, name):
-            raise SelectError("No items in object", name, self._current_node.selectors)
+            raise SelectError("Item not available in object", name, self._current_node.selectors)
 
         next_node = self._current_node.parent.navigate(self._current_node.object_type, name)
         return self.__class__(self._command, current_node=next_node)

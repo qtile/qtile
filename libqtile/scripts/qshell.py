@@ -18,10 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import command, ipc, sh
+from libqtile import command, command_object, ipc, sh
 
 
-def main():
+def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser()
@@ -64,10 +64,11 @@ def main():
     else:
         socket = args.socket
     client = ipc.Client(socket, is_json=args.is_json)
+    cmd_object = command_object.IPCCommandObject(client)
     if args.pyfile is None:
-        qsh = sh.QSh(client)
+        qsh = sh.QSh(cmd_object)
         if args.command is not None:
-            qsh.process_command(args.command)
+            qsh.process_line(args.command)
         else:
             qsh.loop()
     else:
