@@ -24,6 +24,7 @@
 import time
 from datetime import datetime, timedelta, timezone
 from . import base
+from ..log_utils import logger
 
 try:
     import pytz
@@ -46,8 +47,15 @@ class Clock(base.InLoopPollText):
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(Clock.defaults)
-        if pytz and isinstance(self.timezone, str):
-            self.timezone = pytz.timezone(self.timezone)
+        if isinstance(self.timezone, str):
+            if pytz is None:
+                logger.warning('Clock widget can not infer its timezone from a'
+                               ' string without the pytz library. Install pytz'
+                               ' or give it a datetime.tzinfo instance.')
+            else:
+                self.timezone = pytz.timezone(self.timezone)
+        if self.timezone is None:
+            logger.info('Defaulting to the system local timezone.')
 
     def tick(self):
         self.update(self.poll())
