@@ -45,7 +45,7 @@ Contributing
 ============
 
 Please report any suggestions, feature requests, bug reports, or annoyances to
-the Github `issue tracker`_. There are also a few `tips & tricks`_,
+the GitHub `issue tracker`_. There are also a few `tips & tricks`_,
 and `guidelines`_ for contributing in the documentation.
 
 .. _`issue tracker`: https://github.com/qtile/qtile/issues
