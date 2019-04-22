@@ -106,7 +106,7 @@ class CommandInterface(metaclass=ABCMeta):
         pass  # pragma: no cover
 
 
-class QtileCommandObject(CommandInterface):
+class QtileCommandInterface(CommandInterface):
     def __init__(self, command_object: CommandObject):
         """A command object that directly resolves commands
 
@@ -195,7 +195,7 @@ class QtileCommandObject(CommandInterface):
         return True
 
 
-class IPCCommandObject(CommandInterface):
+class IPCCommandInterface(CommandInterface):
     def __init__(self, ipc_client: ipc.Client):
         """Build a command object which resolves commands through IPC calls
 

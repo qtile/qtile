@@ -21,7 +21,7 @@
 from typing import Dict, List, Optional, Tuple  # noqa: F401
 
 from libqtile.command_client import InteractiveCommandClient
-from libqtile.command_object import CommandInterface
+from libqtile.command_interface import CommandInterface
 from libqtile.command_graph import CommandGraphCall, CommandGraphNode, SelectorType
 
 
