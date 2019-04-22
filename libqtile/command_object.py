@@ -18,11 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import traceback
 from abc import abstractmethod, ABCMeta
 from typing import Any, Dict, Tuple
 
-from libqtile.command_graph import CommandGraphCall, CommandGraphNode
 from libqtile import ipc
+from libqtile.command_graph import CommandGraphCall, CommandGraphNode
+from libqtile.command_client import SelectError
+from libqtile.command import format_selectors, CommandObject
+from libqtile.log_utils import logger
 
 SUCCESS = 0
 ERROR = 1
@@ -38,12 +42,11 @@ class CommandException(Exception):
 
 
 class CommandInterface(metaclass=ABCMeta):
-    """
-    Defines an interface which can be used to evaluate a given call on a
-    command graph.  The implementations of this may use, for example, an IPC
-    call to access the running qtile instance remotely or directly access the
-    qtile instance from within the same process, or it may return lazily
-    evaluated results.
+    """Defines an interface which can be used to evaluate a given call on a command graph.
+
+    The implementations of this may use, for example, an IPC call to access the
+    running qtile instance remotely or directly access the qtile instance from
+    within the same process, or it may return lazily evaluated results.
     """
 
     @abstractmethod
@@ -101,6 +104,95 @@ class CommandInterface(metaclass=ABCMeta):
             True if the item is resolved on the given node
         """
         pass  # pragma: no cover
+
+
+class QtileCommandObject(CommandInterface):
+    def __init__(self, command_object: CommandObject):
+        """A command object that directly resolves commands
+
+        Parameters
+        ----------
+        command_object : CommandObject
+            The command object to use for resolving the commands and items
+            against.
+        """
+        self._command_object = command_object
+
+    def execute(self, call: CommandGraphCall, args: Tuple, kwargs: Dict) -> Any:
+        """Execute the given call, returning the result of the execution
+
+        Perform the given command graph call, calling the function with the
+        given arguments and keyword arguments.
+
+        Parameters
+        ----------
+        call: CommandGraphCall
+            The call on the command graph that is to be performed.
+        args:
+            The arguments to pass into the command graph call.
+        kwargs:
+            The keyword arguments to pass into the command graph call.
+        """
+        try:
+            obj = self._command_object.select(call.selectors)
+        except SelectError as v:
+            e = format_selectors([(v.name, v.selectors)])
+            s = format_selectors(call.selectors)
+            return ERROR, "No object %s in path '%s'" % (e, s)
+
+        cmd = obj.command(call.name)
+        if not cmd:
+            return ERROR, "No such command."
+
+        logger.debug("Command: %s(%s, %s)", call.name, args, kwargs)
+        try:
+            return SUCCESS, cmd(*args, **kwargs)
+        except CommandError as v:
+            return ERROR, v.args[0]
+        except Exception:
+            return EXCEPTION, traceback.format_exc()
+
+    def has_command(self, node: CommandGraphNode, command: str) -> bool:
+        """Check if the given command exists
+
+        Parameters
+        ----------
+        node : CommandGraphNode
+            The node to check for commands
+        command : str
+            The name of the command to check for
+
+        Returns
+        -------
+        bool
+            True if the command is resolved on the given node
+        """
+        obj = self._command_object.select(node.selectors)
+        cmd = obj.command(command)
+        return cmd is not None
+
+    def has_item(self, node: CommandGraphNode, object_type: str, item: str) -> bool:
+        """Check if the given item exists
+
+        Parameters
+        ----------
+        node : CommandGraphNode
+            The node to check for items
+        object_type : str
+            The type of object to check for items.
+        command : str
+            The name of the item to check for
+
+        Returns
+        -------
+        bool
+            True if the item is resolved on the given node
+        """
+        try:
+            self._command_object.select(node.selectors + [(object_type, item)])
+        except SelectError:
+            return False
+        return True
 
 
 class IPCCommandObject(CommandInterface):
