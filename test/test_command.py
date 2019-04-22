@@ -328,7 +328,7 @@ def test_select_screen(qtile):
     assert screen.window.info()["id"] == wid
     assert screen.window[wid].info()["id"] == wid
 
-    with pytest.raises(CommandError, match="No object bar in path"):
+    with pytest.raises(CommandError, match="No object"):
         screen.bar.info()
     with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
         screen.bar["top"]
