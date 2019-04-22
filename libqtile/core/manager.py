@@ -1705,7 +1705,7 @@ class Qtile(command.CommandObject):
 
     def cmd_qtilecmd(self, prompt="command",
                      widget="prompt", messenger="xmessage"):
-        """ Execute a Qtile command using the client syntax
+        """Execute a Qtile command using the client syntax
 
         Tab completion aids navigation of the command tree
 
