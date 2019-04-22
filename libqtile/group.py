@@ -30,14 +30,14 @@ import contextlib
 import xcffib
 import xcffib.xproto
 
-from . import command
 from . import hook
 from . import window
 from . import utils
 from .log_utils import logger
+from libqtile.command_object import CommandObject
 
 
-class _Group(command.CommandObject):
+class _Group(CommandObject):
     """A container for a bunch of windows
 
     Analogous to workspaces in other window managers. Each client window

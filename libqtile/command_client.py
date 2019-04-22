@@ -26,16 +26,9 @@ from libqtile.command_graph import (
     CommandGraphObject,
     CommandGraphRoot,
     GraphType,
-    SelectorType,
 )
 from libqtile.command_interface import CommandInterface
-
-
-class SelectError(Exception):
-    def __init__(self, err_string: str, name: str, selectors: List[SelectorType]):
-        super().__init__(err_string)
-        self.name = name
-        self.selectors = selectors
+from libqtile.command_object import SelectError
 
 
 class CommandClient:

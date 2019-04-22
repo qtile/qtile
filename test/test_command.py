@@ -29,6 +29,8 @@ import libqtile.config
 import libqtile.layout
 import libqtile.bar
 import libqtile.widget
+from libqtile.command_interface import CommandError
+from libqtile.command_object import CommandObject
 
 
 class CallConfig:
@@ -80,7 +82,7 @@ def test_layout_filter(qtile):
     assert qtile.c.groups()["a"]["focus"] == "two"
 
 
-class TestCommands(libqtile.command.CommandObject):
+class TestCommands(CommandObject):
     @staticmethod
     def cmd_one():
         pass
@@ -248,7 +250,7 @@ def test_select_qtile(qtile):
         qtile.c.group["nonexistent"]
 
     assert qtile.c.widget["one"].info()["name"] == "one"
-    with pytest.raises(libqtile.command_object.CommandError, match="No object widget"):
+    with pytest.raises(CommandError, match="No object widget"):
         qtile.c.widget.info()
 
     assert qtile.c.bar["bottom"].info()["position"] == "bottom"
@@ -283,7 +285,7 @@ def test_select_group(qtile):
     assert len(group.layout.info()["stacks"]) == 1
     assert len(group.layout[2].info()["stacks"]) == 3
 
-    with pytest.raises(libqtile.command.CommandError):
+    with pytest.raises(CommandError):
         qtile.c.group.window.info()
     qtile.test_window("test")
     wid = qtile.c.window.info()["id"]
@@ -318,7 +320,7 @@ def test_select_screen(qtile):
     assert len(screen.layout.info()["stacks"]) == 1
     assert len(screen.layout[2].info()["stacks"]) == 3
 
-    with pytest.raises(libqtile.command.CommandError):
+    with pytest.raises(CommandError):
         qtile.c.window.info()
 
     qtile.test_window("test")
@@ -326,7 +328,7 @@ def test_select_screen(qtile):
     assert screen.window.info()["id"] == wid
     assert screen.window[wid].info()["id"] == wid
 
-    with pytest.raises(libqtile.command_object.CommandError, match="No object bar in path"):
+    with pytest.raises(CommandError, match="No object bar in path"):
         screen.bar.info()
     with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
         screen.bar["top"]
@@ -344,7 +346,7 @@ def test_select_bar(qtile):
     assert qtile.c.screen[1].bar["bottom"].screen.info()["index"] == 1
     b = qtile.c.bar
     assert b["bottom"].screen.info()["index"] == 0
-    with pytest.raises(libqtile.command.CommandError):
+    with pytest.raises(CommandError):
         b.screen.info()
 
 

@@ -37,8 +37,8 @@ import pickle
 import string
 from collections import OrderedDict, deque
 
+from libqtile.command_object import SelectError
 from libqtile.log_utils import logger
-from libqtile.command import _SelectError
 
 from . import base
 from .. import bar, command, hook, pangocffi, utils, xkeysyms
@@ -702,7 +702,7 @@ class Prompt(base._TextBox):
         """
         try:
             obj = self.qtile.select([(object_name, selector)])
-        except _SelectError:
+        except SelectError:
             logger.warn("cannot select a object")
             return
         cmd = obj.command(cmd_name)

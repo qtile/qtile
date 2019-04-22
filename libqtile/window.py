@@ -25,10 +25,10 @@ import warnings
 from xcffib.xproto import EventMask, StackMode, SetMode
 import xcffib.xproto
 
-from . import command
 from . import utils
 from . import hook
 from .log_utils import logger
+from libqtile.command_object import CommandObject, CommandError
 
 
 # ICCM Constants
@@ -151,7 +151,7 @@ def _float_setter(attr):
     return setter
 
 
-class _Window(command.CommandObject):
+class _Window(CommandObject):
     _window_mask = 0  # override in child class
 
     def __init__(self, window, qtile):
@@ -1033,7 +1033,7 @@ class Window(_Window):
         else:
             group = self.qtile.groups_map.get(group_name)
             if group is None:
-                raise command.CommandError("No such group: %s" % group_name)
+                raise CommandError("No such group: %s" % group_name)
 
         if self.group is not group:
             self.hide()
@@ -1055,7 +1055,7 @@ class Window(_Window):
             try:
                 screen = self.qtile.screens[index]
             except IndexError:
-                raise command.CommandError('No such screen: %d' % index)
+                raise CommandError('No such screen: %d' % index)
         self.togroup(screen.group.name)
 
     def match(self, wname=None, wmclass=None, role=None):
