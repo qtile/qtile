@@ -50,6 +50,7 @@ from .. import hook
 from .. import utils
 from .. import window
 from . import xcbq
+from libqtile.command_object import CommandObject, CommandError, CommandException
 
 
 def _import_module(module_name, dir_path):
@@ -64,7 +65,7 @@ def _import_module(module_name, dir_path):
     return module
 
 
-class Qtile(command.CommandObject):
+class Qtile(CommandObject):
     """This object is the `root` of the command graph"""
     def __init__(
         self,
@@ -1419,7 +1420,7 @@ class Qtile(command.CommandObject):
             modmasks = xcbq.translate_masks(modifiers)
             keysym = xcbq.keysyms.get(key)
         except xcbq.XCBQError as e:
-            raise command.CommandError(str(e))
+            raise CommandError(str(e))
 
         class DummyEv:
             pass
@@ -1733,10 +1734,7 @@ class Qtile(command.CommandObject):
                     return
                 try:
                     result = eval(u'c.{0:s}'.format(cmd))
-                except (
-                        command.CommandError,
-                        command.CommandException,
-                        AttributeError) as err:
+                except (CommandError, CommandException, AttributeError) as err:
                     logger.error(err)
                     result = None
                 if result is not None:

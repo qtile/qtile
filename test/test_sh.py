@@ -25,7 +25,7 @@ import pytest
 from libqtile import config, ipc
 from libqtile.layout import floating, Max
 from libqtile.sh import QSh
-from libqtile.command_object import IPCCommandObject
+from libqtile.command_interface import IPCCommandInterface
 
 
 class ShConfig:
@@ -51,7 +51,7 @@ sh_config = pytest.mark.parametrize("qtile", [ShConfig], indirect=True)
 @sh_config
 def test_columnize(qtile):
     client = ipc.Client(qtile.sockfile)
-    command = IPCCommandObject(client)
+    command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh.columnize(["one", "two"]) == "one  two"
 
@@ -66,7 +66,7 @@ def test_columnize(qtile):
 @sh_config
 def test_ls(qtile):
     client = ipc.Client(qtile.sockfile)
-    command = IPCCommandObject(client)
+    command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh.do_ls("") == "bar/     group/   layout/  screen/  widget/  window/"
     assert sh.do_ls("layout") == "group/   window/  screen/  0/     "
@@ -79,7 +79,7 @@ def test_ls(qtile):
 @sh_config
 def test_do_cd(qtile):
     client = ipc.Client(qtile.sockfile)
-    command = IPCCommandObject(client)
+    command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh.do_cd("layout") == 'layout'
     assert sh.do_cd("0") == 'layout[0]'
@@ -91,7 +91,7 @@ def test_do_cd(qtile):
 @sh_config
 def test_call(qtile):
     client = ipc.Client(qtile.sockfile)
-    command = IPCCommandObject(client)
+    command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh.process_line("status()") == "OK"
 
@@ -108,7 +108,7 @@ def test_call(qtile):
 @sh_config
 def test_complete(qtile):
     client = ipc.Client(qtile.sockfile)
-    command = IPCCommandObject(client)
+    command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh._complete("c", "c") == [
         "cd",
@@ -126,7 +126,7 @@ def test_complete(qtile):
 @sh_config
 def test_help(qtile):
     client = ipc.Client(qtile.sockfile)
-    command = IPCCommandObject(client)
+    command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh.do_help("nonexistent").startswith("No such command")
     assert sh.do_help("help")

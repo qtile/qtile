@@ -18,27 +18,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import traceback
 from abc import abstractmethod, ABCMeta
 from typing import Any, Dict, Tuple
 
 from libqtile import ipc
 from libqtile.command_graph import CommandGraphCall, CommandGraphNode
-from libqtile.command_client import SelectError
-from libqtile.command import format_selectors, CommandObject
+from libqtile.command_object import CommandObject, CommandError, CommandException, SelectError
 from libqtile.log_utils import logger
 
 SUCCESS = 0
 ERROR = 1
 EXCEPTION = 2
-
-
-class CommandError(Exception):
-    pass
-
-
-class CommandException(Exception):
-    pass
 
 
 class CommandInterface(metaclass=ABCMeta):
@@ -133,24 +123,14 @@ class QtileCommandInterface(CommandInterface):
         kwargs:
             The keyword arguments to pass into the command graph call.
         """
-        try:
-            obj = self._command_object.select(call.selectors)
-        except SelectError as v:
-            e = format_selectors([(v.name, v.selectors)])
-            s = format_selectors(call.selectors)
-            return ERROR, "No object %s in path '%s'" % (e, s)
+        obj = self._command_object.select(call.selectors)
 
         cmd = obj.command(call.name)
         if not cmd:
-            return ERROR, "No such command."
+            return "No such command."
 
         logger.debug("Command: %s(%s, %s)", call.name, args, kwargs)
-        try:
-            return SUCCESS, cmd(*args, **kwargs)
-        except CommandError as v:
-            return ERROR, v.args[0]
-        except Exception:
-            return EXCEPTION, traceback.format_exc()
+        return cmd(*args, **kwargs)
 
     def has_command(self, node: CommandGraphNode, command: str) -> bool:
         """Check if the given command exists
