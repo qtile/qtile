@@ -34,7 +34,7 @@ from typing import List
 from libqtile.command import find_sockfile
 from libqtile.ipc import Client
 from libqtile.command_client import InteractiveCommandClient
-from libqtile.command_object import CommandError, CommandException, IPCCommandObject
+from libqtile.command_interface import CommandError, CommandException, IPCCommandInterface
 
 
 def get_formated_info(obj: InteractiveCommandClient, cmd: str, args=True, short=True) -> str:
@@ -189,7 +189,7 @@ def main() -> None:
     if args.obj_spec:
         sock_file = find_sockfile()
         ipc_client = Client(sock_file)
-        cmd_object = IPCCommandObject(ipc_client)
+        cmd_object = IPCCommandInterface(ipc_client)
         cmd_client = InteractiveCommandClient(cmd_object)
         obj = get_object(cmd_client, args.obj_spec)
 

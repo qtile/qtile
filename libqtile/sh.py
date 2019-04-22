@@ -32,7 +32,7 @@ import termios
 from typing import List, Optional, Tuple
 
 from libqtile import command_graph
-from libqtile.command_object import CommandInterface, CommandError, CommandException
+from libqtile.command_interface import CommandInterface, CommandError, CommandException
 
 
 def terminal_width():

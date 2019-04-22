@@ -28,7 +28,7 @@ from libqtile.command_graph import (
     GraphType,
     SelectorType,
 )
-from libqtile.command_object import CommandInterface
+from libqtile.command_interface import CommandInterface
 
 
 class SelectError(Exception):

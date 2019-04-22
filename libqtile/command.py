@@ -28,7 +28,7 @@ from . import ipc
 from .utils import get_cache_dir
 from .log_utils import logger
 
-from libqtile.command_object import CommandError, CommandException
+from libqtile.command_interface import CommandError, CommandException
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.lazy import LazyCommandObject
 
