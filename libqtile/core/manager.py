@@ -1280,7 +1280,7 @@ class Qtile(command.CommandObject):
         return self.cmd_groups()
 
     def get_mouse_position(self):
-      return self.mouse_position
+        return self.mouse_position
 
     def cmd_display_kb(self, *args):
         """Display table of key bindings"""
