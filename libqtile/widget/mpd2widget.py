@@ -224,6 +224,10 @@ class Mpd2(base.ThreadPoolText):
                 if 'elapsed' in song_info else 0.0
             song_info['remaining'] = "{:.2f}".format(float(total - elapsed))
 
+        # because genre can be either a list or a string.
+        if isinstance(song_info['genre'], list):
+            song_info['genre'] = ', '.join(song_info['genre'])
+
         # Now we apply the user formatting to selected elements in song_info.
         for fmt_fn in self.format_fns:
             if fmt_fn in song_info:
