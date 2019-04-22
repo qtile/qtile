@@ -315,7 +315,7 @@ class Columns(Layout):
             if len(self.columns) > 1:
                 self.current = (self.current + 1) % len(self.columns)
         else:
-            if len(self.columns)-1 > self.current:
+            if len(self.columns) - 1 > self.current:
                 self.current = (self.current + 1)
         self.group.focus(self.cc.cw, True)
 
@@ -335,7 +335,7 @@ class Columns(Layout):
             if len(col) > 1:
                 col.current_index += 1
         else:
-            if col.current_index < len(col)-1:
+            if col.current_index < len(col) - 1:
                 col.current_index += 1
         self.group.focus(col.cw, True)
 

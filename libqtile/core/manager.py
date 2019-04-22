@@ -80,7 +80,7 @@ class Qtile(command.CommandObject):
 
         self._eventloop = None
         self._finalize = False
-        self.mouse_position = (0,0)
+        self.mouse_position = (0, 0)
 
         if not display_name:
             display_name = os.environ.get("DISPLAY")
