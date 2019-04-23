@@ -122,44 +122,6 @@ def test_command():
     assert not c.command("nonexistent")
 
 
-class ConcreteCmdRoot(libqtile.command._CommandRoot):
-    def call(self, *args):
-        return args
-
-    def _items(self, name):
-        return None
-
-    def _select(self, name, sel):
-        return None
-
-
-def test_selectors():
-    c = ConcreteCmdRoot()
-
-    s = c.layout.screen.info
-    assert s.selectors == [('layout', None), ('screen', None)]
-
-    assert isinstance(c.info, libqtile.command._Command)
-
-    g = c.group
-    assert isinstance(g, libqtile.command._TGroup)
-    assert g.myselector is None
-
-    g = c.group["one"]
-    assert isinstance(g, libqtile.command._TGroup)
-    assert g.myselector == "one"
-
-    cmd = c.group["one"].foo
-    assert cmd.name == "foo"
-    assert cmd.selectors == [('group', 'one')]
-
-    g = c.group["two"].layout["three"].screen
-    assert g.selectors == [('group', 'two'), ('layout', 'three')]
-
-    g = c.one
-    assert g.selectors == []
-
-
 class ServerConfig:
     auto_fullscreen = True
     keys = []
