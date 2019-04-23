@@ -393,11 +393,15 @@ class _Group(command.CommandObject):
         """
 
         def match(group):
+            from . import scratchpad
+            
             if group is self:
                 return True
             if skip_empty and not group.windows:
                 return False
             if skip_managed and group.screen:
+                return False
+            if isinstance(group, scratchpad.ScratchPad):
                 return False
             return True
 
