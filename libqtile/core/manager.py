@@ -50,6 +50,8 @@ from .. import hook
 from .. import utils
 from .. import window
 from . import xcbq
+from libqtile.command_client import InteractiveCommandClient
+from libqtile.command_interface import QtileCommandInterface
 from libqtile.command_object import CommandObject, CommandError, CommandException
 
 
@@ -1705,7 +1707,7 @@ class Qtile(CommandObject):
             logger.error("No widget named '{0:s}' present.".format(widget))
 
     def cmd_qtilecmd(self, prompt="command",
-                     widget="prompt", messenger="xmessage"):
+                     widget="prompt", messenger="xmessage") -> None:
         """Execute a Qtile command using the client syntax
 
         Tab completion aids navigation of the command tree
@@ -1723,7 +1725,8 @@ class Qtile(CommandObject):
         def f(cmd):
             if cmd:
                 # c here is used in eval() below
-                c = command.CommandRoot(self)  # noqa: F841
+                q = QtileCommandInterface(self)
+                c = InteractiveCommandClient(q)  # noqa: F841
                 try:
                     cmd_arg = str(cmd).split(' ')
                 except AttributeError:
