@@ -2,7 +2,7 @@
 
 HERE=$(dirname $(readlink -f $0))
 SCREEN_SIZE=${SCREEN_SIZE:-800x600}
-XDISPLAY=:1
+XDISPLAY=${XDISPLAY:-:1}
 LOG_LEVEL=${LOG_LEVEL:-INFO}
 if [[ -z PYTHON ]]; then
     PYTHON=python
