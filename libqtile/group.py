@@ -394,7 +394,7 @@ class _Group(command.CommandObject):
 
         def match(group):
             from . import scratchpad
-            
+
             if group is self:
                 return True
             if skip_empty and not group.windows:
