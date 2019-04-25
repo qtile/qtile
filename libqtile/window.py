@@ -159,7 +159,7 @@ class _Window(command.CommandObject):
         self.hidden = True
         self.group = None
         self.icons = {}
-        self.layout_state = {}
+        self.layout_state = None
         window.set_attribute(eventmask=self._window_mask)
 
         self._float_info = {
