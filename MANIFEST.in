@@ -5,6 +5,7 @@ include MANIFEST.in
 include CONTRIBUTING.md
 
 exclude .coveragerc
+exclude .pylintrc
 exclude tox.ini
 exclude requirements.txt
 exclude requirements-dev.txt
