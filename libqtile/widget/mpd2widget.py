@@ -92,7 +92,7 @@ class Mpd2(base.ThreadPoolText):
             'consume': 'c',
             'updating_db': 'U'
         }
-    
+
     format_fns :
         A dict of functions to format the various elements.
 
@@ -231,7 +231,7 @@ class Mpd2(base.ThreadPoolText):
         # Now we apply the user formatting to selected elements in song_info.
         for fmt_fn in self.format_fns:
             if fmt_fn in song_info:
-                song_info[fmt_fn] = self.format_fns[fmt_fn](song_info[fmt_fn])                
+                song_info[fmt_fn] = self.format_fns[fmt_fn](song_info[fmt_fn])
 
         fmt = self.status_format
         if not isinstance(fmt, str):
