@@ -159,6 +159,7 @@ class _Window(command.CommandObject):
         self.hidden = True
         self.group = None
         self.icons = {}
+        self.layout_state = {}
         window.set_attribute(eventmask=self._window_mask)
 
         self._float_info = {
@@ -248,6 +249,12 @@ class _Window(command.CommandObject):
     @property
     def has_focus(self):
         return self == self.qtile.current_window
+
+    def reset_layout_state(self):
+        self.layout_state = {}
+
+    def set_layout_state(self, state):
+        self.layout_state = state
 
     def update_name(self):
         try:
