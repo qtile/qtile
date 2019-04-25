@@ -52,12 +52,12 @@ and `guidelines`_ for contributing in the documentation.
 .. _`tips & tricks`: http://docs.qtile.org/en/latest/manual/hacking.html
 .. _`guidelines`: http://docs.qtile.org/en/latest/manual/contributing.html
 
-.. |travis| image:: https://travis-ci.org/qtile/qtile.svg?branch=develop
+.. |travis| image:: https://travis-ci.org/qtile/qtile.svg?branch=master
     :alt: Build Status
     :target: https://travis-ci.org/qtile/qtile
-.. |coveralls| image:: https://coveralls.io/repos/github/qtile/qtile/badge.svg?branch=develop
+.. |coveralls| image:: https://coveralls.io/repos/github/qtile/qtile/badge.svg?branch=master
     :alt: Build Coverage
-    :target: https://coveralls.io/github/qtile/qtile?branch=develop
+    :target: https://coveralls.io/github/qtile/qtile?branch=master
 .. |rtd| image:: https://readthedocs.org/projects/qtile/badge/?version=latest
     :alt: Documentation Status
     :target: http://docs.qtile.org/en/latest/?badge=latest
