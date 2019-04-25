@@ -1,5 +1,6 @@
 include CHANGELOG
 include LICENSE
+include logo.png
 include README.rst
 include MANIFEST.in
 include CONTRIBUTING.md
