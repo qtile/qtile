@@ -26,26 +26,6 @@ Writing code
 
 To get started writing code for Qtile, check out our guide to :doc:`hacking`.
 
-Git workflow
-------------
-
-Our workflow is based on Vincent Driessen's `successful git branching model
-<http://nvie.com/posts/a-successful-git-branching-model/>`_:
-
-* The ``master`` branch is our current release
-* The ``develop`` branch is what all pull requests should be based against
-* Feature branches are where new features, both major and minor, should be developed.
-
-.. seqdiag:: /_static/diagrams/git-branching-strategy.diag
-
-`git-flow <https://github.com/nvie/gitflow>`_ is a git plugin that helps
-facilitate this branching strategy. It's not required, but can help make
-things a bit easier to manage. There is also a good write up on
-`using git-flow <http://jeffkreeftmeijer.com/2010/why-arent-you-using-git-flow/>`_.
-
-We also request that git commit messages follow the
-`standard format <http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>`_.
-
 Submit a pull request
 ---------------------
 
