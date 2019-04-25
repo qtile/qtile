@@ -251,7 +251,7 @@ class _Window(command.CommandObject):
         return self == self.qtile.current_window
 
     def reset_layout_state(self):
-        self.layout_state = {}
+        self.layout_state = None
 
     def set_layout_state(self, state):
         self.layout_state = state

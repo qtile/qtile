@@ -197,22 +197,24 @@ class MonadTall(_SimpleLayoutBase):
 
     def add(self, client):
         "Add client to layout"
-        if "index" in client.layout_state:
-            self.clients.add(client, client.layout_state["index"])
+
+        # Make sure layout wont crash if another layout puts its state
+        if isinstance(client.layout_state, int):
+            self.clients.add(client, client.layout_state)
         else:
             self.clients.add(client, 0 if self.new_at_current else 1)
 
-        "Cleanup layout state"
+        # Make sure this state will be never reused
         client.reset_layout_state()
 
         self.do_normalize = True
 
     def remove(self, client):
-        "Save layout state"
-        index = self.clients.index(client)
-        client.set_layout_state({"index": index})
-
         "Remove client from layout"
+
+        index = self.clients.index(client)
+        client.set_layout_state(index)
+
         self.do_normalize = True
         return self.clients.remove(client)
 

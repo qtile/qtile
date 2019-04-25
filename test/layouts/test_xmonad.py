@@ -638,6 +638,7 @@ def test_wide_window_focus_cycle(qtile):
     # assert window focus cycle, according to order in layout
     assert_focus_path(qtile, 'float1', 'float2', 'one', 'two', 'three')
 
+
 @monadtall_config
 def test_tall_toggle_fullscreen_order(qtile):
     qtile.test_window('one')
@@ -657,6 +658,7 @@ def test_tall_toggle_fullscreen_order(qtile):
     # make sure layout is unchanged
     assert qtile.c.layout.info()["main"] == 'one'
     assert qtile.c.layout.info()["secondary"] == ['two', 'three']
+
 
 @monadwide_config
 def test_wide_toggle_fullscreen_order(qtile):
