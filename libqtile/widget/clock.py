@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import sys
 import time
 from datetime import datetime, timedelta, timezone
 from . import base
@@ -29,7 +30,7 @@ from ..log_utils import logger
 try:
     import pytz
 except ImportError:
-    pytz = None
+    pass
 
 
 class Clock(base.InLoopPollText):
@@ -49,12 +50,12 @@ class Clock(base.InLoopPollText):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(Clock.defaults)
         if isinstance(self.timezone, str):
-            if pytz is None:
+            if "pytz" in sys.modules:
+                self.timezone = pytz.timezone(self.timezone)
+            else:
                 logger.warning('Clock widget can not infer its timezone from a'
                                ' string without the pytz library. Install pytz'
                                ' or give it a datetime.tzinfo instance.')
-            else:
-                self.timezone = pytz.timezone(self.timezone)
         if self.timezone is None:
             logger.info('Defaulting to the system local timezone.')
 
