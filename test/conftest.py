@@ -36,12 +36,13 @@ import xcffib
 import xcffib.testing
 import xcffib.xproto
 
-import libqtile
+import libqtile.config
 from libqtile.core.manager import Qtile as QtileManager
 from libqtile.core import xcore
 from libqtile.log_utils import init_log
 from libqtile.resources import default_config
 from libqtile import command_client, command_interface, ipc
+from libqtile.lazy import lazy
 
 # the default sizes for the Xephyr windows
 WIDTH = 800
@@ -133,12 +134,12 @@ class BareConfig:
         libqtile.config.Key(
             ["control"],
             "k",
-            libqtile.command.lazy.layout.up(),
+            lazy.layout.up(),
         ),
         libqtile.config.Key(
             ["control"],
             "j",
-            libqtile.command.lazy.layout.down(),
+            lazy.layout.down(),
         ),
     ]
     mouse = []

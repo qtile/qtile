@@ -32,13 +32,13 @@ import time
 
 import libqtile.layout
 import libqtile.bar
-import libqtile.command
 import libqtile.widget
 import libqtile.core.manager
 import libqtile.config
 import libqtile.hook
 import libqtile.confreader
 from libqtile.command_interface import CommandError, CommandException
+from libqtile.lazy import lazy
 
 
 from .conftest import whereis, BareConfig, no_xinerama, Retry
@@ -64,12 +64,12 @@ class ManagerConfig:
         libqtile.config.Key(
             ["control"],
             "k",
-            libqtile.command.lazy.layout.up(),
+            lazy.layout.up(),
         ),
         libqtile.config.Key(
             ["control"],
             "j",
-            libqtile.command.lazy.layout.down(),
+            lazy.layout.down(),
         ),
     ]
     mouse = []
@@ -987,12 +987,12 @@ class _Config:
         libqtile.config.Key(
             ["control"],
             "k",
-            libqtile.command.lazy.layout.up(),
+            lazy.layout.up(),
         ),
         libqtile.config.Key(
             ["control"],
             "j",
-            libqtile.command.lazy.layout.down(),
+            lazy.layout.down(),
         ),
     ]
     mouse = []

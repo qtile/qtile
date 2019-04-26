@@ -23,7 +23,6 @@
 
 import pytest
 
-import libqtile
 import libqtile.confreader
 import libqtile.config
 import libqtile.layout
@@ -31,17 +30,18 @@ import libqtile.bar
 import libqtile.widget
 from libqtile.command_interface import CommandError
 from libqtile.command_object import CommandObject
+from libqtile.lazy import lazy
 
 
 class CallConfig:
     keys = [
         libqtile.config.Key(
             ["control"], "j",
-            libqtile.command.lazy.layout.down(),
+            lazy.layout.down(),
         ),
         libqtile.config.Key(
             ["control"], "k",
-            libqtile.command.lazy.layout.up(),
+            lazy.layout.up(),
         ),
     ]
     mouse = []
