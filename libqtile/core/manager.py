@@ -50,8 +50,9 @@ from .. import hook
 from .. import utils
 from .. import window
 from . import xcbq
+from libqtile import command_interface
 from libqtile.command_client import InteractiveCommandClient
-from libqtile.command_interface import QtileCommandInterface
+from libqtile.command_interface import QtileCommandInterface, IPCCommandServer
 from libqtile.command_object import CommandObject, CommandError, CommandException
 
 
@@ -96,7 +97,7 @@ class Qtile(CommandObject):
             display_number = display_name.partition(":")[2]
             if "." not in display_number:
                 display_name += ".0"
-            fname = command.find_sockfile(display_name)
+            fname = command_interface.find_sockfile(display_name)
 
         self.conn = xcbq.Connection(display_name)
         self.config = config
@@ -184,7 +185,7 @@ class Qtile(CommandObject):
                 self.groups_map[sp.name] = sp
 
         self.setup_eventloop()
-        self.server = command._Server(self.fname, self, config, self._eventloop)
+        self.server = IPCCommandServer(self.fname, self, config, self._eventloop)
 
         self.current_screen = None
         self.screens = []
@@ -954,7 +955,7 @@ class Qtile(CommandObject):
                 status, val = self.server.call(
                     (i.selectors, i.name, i.args, i.kwargs)
                 )
-                if status in (command.ERROR, command.EXCEPTION):
+                if status in (command_interface.ERROR, command_interface.EXCEPTION):
                     logger.error("KB command error %s: %s" % (i.name, val))
         else:
             return
@@ -1011,7 +1012,7 @@ class Qtile(CommandObject):
                             (i.selectors, i.name, i.args, i.kwargs))
                         if m.focus == "after":
                             self.cmd_focus_by_click(e)
-                        if status in (command.ERROR, command.EXCEPTION):
+                        if status in (command_interface.ERROR, command_interface.EXCEPTION):
                             logger.error(
                                 "Mouse command error %s: %s" % (i.name, val)
                             )
@@ -1024,7 +1025,7 @@ class Qtile(CommandObject):
                         self.cmd_focus_by_click(e)
                     status, val = self.server.call(
                         (i.selectors, i.name, i.args, i.kwargs))
-                    if status in (command.ERROR, command.EXCEPTION):
+                    if status in (command_interface.ERROR, command_interface.EXCEPTION):
                         logger.error(
                             "Mouse command error %s: %s" % (i.name, val)
                         )
@@ -1075,7 +1076,7 @@ class Qtile(CommandObject):
                         i.args + (rx + dx, ry + dy, e.event_x, e.event_y),
                         i.kwargs
                     ))
-                    if status in (command.ERROR, command.EXCEPTION):
+                    if status in (command_interface.ERROR, command_interface.EXCEPTION):
                         logger.error(
                             "Mouse command error %s: %s" % (i.name, val)
                         )

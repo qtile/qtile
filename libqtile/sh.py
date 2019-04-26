@@ -32,7 +32,7 @@ import termios
 from typing import List, Optional, Tuple
 
 from libqtile import command_graph
-from libqtile.command_interface import CommandInterface, CommandError, CommandException
+from libqtile.command_interface import format_selectors, CommandInterface, CommandError, CommandException
 
 
 def terminal_width():
@@ -43,17 +43,6 @@ def terminal_width():
     except (IOError, ImportError):
         pass
     return width or 80
-
-
-def format_selectors(selectors: List[command_graph.SelectorType]) -> str:
-    """Build the path to the selected command graph node"""
-    path_elements = []
-    for name, selector in selectors:
-        if selector is not None:
-            path_elements.append("{}[{}]".format(name, selector))
-        else:
-            path_elements.append(name)
-    return ".".join(path_elements)
 
 
 class QSh:

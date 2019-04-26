@@ -18,17 +18,30 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
+import traceback
 from abc import abstractmethod, ABCMeta
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple
 
 from libqtile import ipc
-from libqtile.command_graph import CommandGraphCall, CommandGraphNode
+from libqtile.command_graph import CommandGraphCall, CommandGraphNode, SelectorType
 from libqtile.command_object import CommandObject, CommandError, CommandException, SelectError
 from libqtile.log_utils import logger
 
 SUCCESS = 0
 ERROR = 1
 EXCEPTION = 2
+
+
+def format_selectors(selectors: List[SelectorType]) -> str:
+    """Build the path to the selected command graph node"""
+    path_elements = []
+    for name, selector in selectors:
+        if selector is not None:
+            path_elements.append("{}[{}]".format(name, selector))
+        else:
+            path_elements.append(name)
+    return ".".join(path_elements)
 
 
 class CommandInterface(metaclass=ABCMeta):
@@ -256,3 +269,37 @@ class IPCCommandInterface(CommandInterface):
         items_call = node.call("items")
         _, items = self.execute(items_call, (object_type,), {})
         return items is not None and item in items
+
+
+class IPCCommandServer(ipc.Server):
+    def __init__(self, fname, qtile, conf, eventloop) -> None:
+        """Wrapper around the ipc server for communitacing with the IPCCommandInterface
+
+        Sets up the IPC server such that it will receive and send messages to
+        and from the IPCCommandInterface.
+        """
+        if os.path.exists(fname):
+            os.unlink(fname)
+
+        super().__init__(fname, self.call, eventloop)
+        self.qtile = qtile
+
+    def call(self, data: Tuple[List[SelectorType], str, Tuple, Dict]) -> Tuple[int, Any]:
+        """Receive and parse the given data"""
+        selectors, name, args, kwargs = data
+        try:
+            obj = self.qtile.select(selectors)
+            cmd = obj.command(name)
+        except SelectError as err:
+            sel_string = format_selectors(selectors)
+            return ERROR, "No object {} in path '{}'".format(err.name, sel_string)
+        if not cmd:
+            return ERROR, "No such command"
+
+        logger.debug("Command: %s(%s, %s)", name, args, kwargs)
+        try:
+            return SUCCESS, cmd(*args, **kwargs)
+        except CommandError as err:
+            return ERROR, err.args[0]
+        except Exception:
+            return EXCEPTION, traceback.format_exc()

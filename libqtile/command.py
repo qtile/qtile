@@ -18,74 +18,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import traceback
 import os
 import warnings
 
-from . import ipc
 from .utils import get_cache_dir
-from .log_utils import logger
 
-from libqtile.command_object import SelectError
-from libqtile.command_interface import CommandError
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.lazy import LazyCommandObject
 
 
-SUCCESS = 0
-ERROR = 1
-EXCEPTION = 2
-
 SOCKBASE = "qtilesocket.%s"
-
-
-def format_selectors(lst):
-    """
-        Takes a list of (name, sel) tuples, and returns a formatted
-        selector expression.
-    """
-    expr = []
-    for name, sel in iter(lst):
-        if expr:
-            expr.append(".")
-        expr.append(name)
-        if sel is not None:
-            expr.append("[%s]" % repr(sel))
-    return "".join(expr)
-
-
-class _Server(ipc.Server):
-    def __init__(self, fname, qtile, conf, eventloop):
-        if os.path.exists(fname):
-            os.unlink(fname)
-        ipc.Server.__init__(self, fname, self.call, eventloop)
-        self.qtile = qtile
-        self.widgets = {}
-        for i in conf.screens:
-            for j in i.gaps:
-                if hasattr(j, "widgets"):
-                    for w in j.widgets:
-                        if w.name:
-                            self.widgets[w.name] = w
-
-    def call(self, data):
-        selectors, name, args, kwargs = data
-        try:
-            obj = self.qtile.select(selectors)
-            cmd = obj.command(name)
-        except SelectError as v:
-            e = format_selectors([(v.name, v.selectors)])
-            s = format_selectors(selectors)
-            return (ERROR, "No object %s in path '%s'" % (e, s))
-        if not cmd:
-            return (ERROR, "No such command.")
-        logger.debug("Command: %s(%s, %s)", name, args, kwargs)
-        try:
-            return (SUCCESS, cmd(*args, **kwargs))
-        except CommandError as v:
-            return (ERROR, v.args[0])
-        except Exception:
-            return (EXCEPTION, traceback.format_exc())
 
 
 def find_sockfile(display=None):
