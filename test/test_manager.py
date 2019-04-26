@@ -30,7 +30,6 @@ import pytest
 import subprocess
 import time
 
-import libqtile
 import libqtile.layout
 import libqtile.bar
 import libqtile.command
@@ -39,6 +38,7 @@ import libqtile.core.manager
 import libqtile.config
 import libqtile.hook
 import libqtile.confreader
+from libqtile.command_interface import CommandError, CommandException
 
 
 from .conftest import whereis, BareConfig, no_xinerama, Retry
@@ -161,7 +161,7 @@ def test_togroup(qtile):
     self = qtile
 
     self.test_window("one")
-    with pytest.raises(libqtile.command.CommandError):
+    with pytest.raises(CommandError):
         self.c.window.togroup("nonexistent")
     assert self.c.groups()["a"]["focus"] == "one"
     self.c.window.togroup("a")
@@ -209,7 +209,7 @@ def test_keypress(qtile):
 
     self.test_window("one")
     self.test_window("two")
-    with pytest.raises(libqtile.command.CommandError):
+    with pytest.raises(CommandError):
         self.c.simulate_keypress(["unknown"], "j")
     assert self.c.groups()["a"]["focus"] == "two"
     self.c.simulate_keypress(["control"], "j")
@@ -326,7 +326,7 @@ def test_adddelgroup(qtile):
 
     for i in list(self.c.groups().keys())[:-1]:
         self.c.delgroup(i)
-    with pytest.raises(libqtile.command.CommandException):
+    with pytest.raises(CommandException):
         self.c.delgroup(list(self.c.groups().keys())[0])
 
     # Assert that setting layout via cmd_addgroup works
@@ -342,7 +342,7 @@ def test_delgroup(qtile):
     self.test_window("one")
     for i in ['a', 'd', 'c']:
         self.c.delgroup(i)
-    with pytest.raises(libqtile.command.CommandException):
+    with pytest.raises(CommandException):
         self.c.delgroup('b')
 
 
