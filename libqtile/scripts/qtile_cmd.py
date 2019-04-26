@@ -31,8 +31,7 @@ import sys
 import textwrap
 from typing import List
 
-from libqtile.command import find_sockfile
-from libqtile.ipc import Client
+from libqtile.ipc import find_sockfile, Client
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_interface import CommandError, CommandException, IPCCommandInterface
 

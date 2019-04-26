@@ -20,7 +20,7 @@
 
 from ipykernel.kernelbase import Kernel
 
-from libqtile import command, command_interface, ipc, sh
+from libqtile import command_interface, ipc, sh
 
 
 class QshKernel(Kernel):
@@ -33,7 +33,7 @@ class QshKernel(Kernel):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        socket_path = command.find_sockfile()
+        socket_path = ipc.find_sockfile()
         ipc_client = ipc.Client(socket_path)
         cmd_object = command_interface.IPCCommandInterface(ipc_client)
         self.qsh = sh.QSh(cmd_object)

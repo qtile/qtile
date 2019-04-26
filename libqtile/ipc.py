@@ -33,9 +33,21 @@ import socket
 import struct
 from typing import cast, Any, Callable, Optional, Tuple
 
-from .log_utils import logger
+from libqtile.log_utils import logger
+from libqtile.utils import get_cache_dir
 
 HDRLEN = 4
+
+SOCKBASE = "qtilesocket.%s"
+
+
+def find_sockfile(display: str = None):
+    """Finds the appropriate socket file for the given display"""
+    display = display or os.environ.get('DISPLAY') or ':0.0'
+    if '.' not in display:
+        display += '.0'
+    cache_directory = get_cache_dir()
+    return os.path.join(cache_directory, SOCKBASE % display)
 
 
 class IPCError(Exception):
