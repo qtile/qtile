@@ -45,7 +45,6 @@ from ..state import QtileState
 from ..utils import QtileError, get_cache_dir
 from ..widget.base import _Widget
 from ..extension.base import _Extension
-from .. import command
 from .. import hook
 from .. import utils
 from .. import window
@@ -54,6 +53,7 @@ from libqtile import command_interface
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_interface import QtileCommandInterface, IPCCommandServer
 from libqtile.command_object import CommandObject, CommandError, CommandException
+from libqtile.lazy import lazy
 
 
 def _import_module(module_name, dir_path):
@@ -216,7 +216,7 @@ class Qtile(CommandObject):
         # It fixes problems with focus when clicking windows of some specific clients like xterm
         def noop(qtile):
             pass
-        self.config.mouse += (Click([], "Button1", command.lazy.function(noop), focus="after"),)
+        self.config.mouse += (Click([], "Button1", lazy.function(noop), focus="after"),)
 
         self.mouse_map = {}
         for i in self.config.mouse:
