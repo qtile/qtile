@@ -53,6 +53,7 @@ from libqtile import command_interface
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_interface import QtileCommandInterface, IPCCommandServer
 from libqtile.command_object import CommandObject, CommandError, CommandException
+from libqtile.ipc import find_sockfile
 from libqtile.lazy import lazy
 
 
@@ -97,7 +98,7 @@ class Qtile(CommandObject):
             display_number = display_name.partition(":")[2]
             if "." not in display_number:
                 display_name += ".0"
-            fname = command_interface.find_sockfile(display_name)
+            fname = find_sockfile(display_name)
 
         self.conn = xcbq.Connection(display_name)
         self.config = config

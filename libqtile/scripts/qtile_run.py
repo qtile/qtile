@@ -26,7 +26,7 @@ import atexit
 import argparse
 import subprocess
 
-from libqtile import ipc, command, command_graph
+from libqtile import ipc, command_graph
 
 
 def parse_args():
@@ -70,7 +70,7 @@ def parse_args():
 def main() -> None:
     opts = parse_args()
     if opts.socket is None:
-        socket = command.find_sockfile()
+        socket = ipc.find_sockfile()
     else:
         socket = opts.socket
     client = ipc.Client(socket)

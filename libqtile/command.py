@@ -18,27 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
 import warnings
-
-from .utils import get_cache_dir
 
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.lazy import LazyCommandObject
-
-
-SOCKBASE = "qtilesocket.%s"
-
-
-def find_sockfile(display=None):
-    """
-        Finds the appropriate socket file.
-    """
-    display = display or os.environ.get('DISPLAY') or ':0.0'
-    if '.' not in display:
-        display += '.0'
-    cache_directory = get_cache_dir()
-    return os.path.join(cache_directory, SOCKBASE % display)
 
 
 class _LazyTree(InteractiveCommandClient):
