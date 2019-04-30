@@ -18,6 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+The interface to execute commands on the command graph
+"""
+
 import os
 import traceback
 from abc import abstractmethod, ABCMeta
@@ -68,7 +72,6 @@ class CommandInterface(metaclass=ABCMeta):
         kwargs:
             The keyword arguments to pass into the command graph call.
         """
-        pass  # pragma: no cover
 
     @abstractmethod
     def has_command(self, node: CommandGraphNode, command: str) -> bool:
@@ -86,7 +89,6 @@ class CommandInterface(metaclass=ABCMeta):
         bool
             True if the command is resolved on the given node
         """
-        pass  # pragma: no cover
 
     @abstractmethod
     def has_item(self, node: CommandGraphNode, object_type: str, item: str) -> bool:
@@ -106,10 +108,11 @@ class CommandInterface(metaclass=ABCMeta):
         bool
             True if the item is resolved on the given node
         """
-        pass  # pragma: no cover
 
 
 class QtileCommandInterface(CommandInterface):
+    """Execute the commands via the in process running qtile instance"""
+
     def __init__(self, command_object: CommandObject):
         """A command object that directly resolves commands
 
@@ -189,6 +192,8 @@ class QtileCommandInterface(CommandInterface):
 
 
 class IPCCommandInterface(CommandInterface):
+    """Execute the resolved commands using the IPC connection to a running qtile instance"""
+
     def __init__(self, ipc_client: ipc.Client):
         """Build a command object which resolves commands through IPC calls
 
@@ -272,7 +277,9 @@ class IPCCommandInterface(CommandInterface):
 
 
 class IPCCommandServer(ipc.Server):
-    def __init__(self, fname, qtile, conf, eventloop) -> None:
+    """Execute the object commands for the calls that are sent to it"""
+
+    def __init__(self, fname, qtile, eventloop) -> None:
         """Wrapper around the ipc server for communitacing with the IPCCommandInterface
 
         Sets up the IPC server such that it will receive and send messages to

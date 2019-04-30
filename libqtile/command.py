@@ -18,6 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+The deprecated lazy command objects
+"""
+
 import warnings
 
 from libqtile.command_client import InteractiveCommandClient
@@ -25,9 +29,10 @@ from libqtile.lazy import LazyCommandObject
 
 
 class _LazyTree(InteractiveCommandClient):
-    def __getattr__(self, *args, **kwargs):
+    def __getattr__(self, name: str) -> InteractiveCommandClient:
+        """Get the child element of the currently selected object"""
         warnings.warn("libqtile.command.lazy is deprecated, use libqtile.lazy.lazy", DeprecationWarning)
-        return super().__getattr__(*args, **kwargs)
+        return super().__getattr__(name)
 
 
 lazy = _LazyTree(LazyCommandObject())

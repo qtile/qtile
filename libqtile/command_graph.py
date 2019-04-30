@@ -18,6 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+The objects defining the nodes in the command graph and the navigation of the
+abstract command graph
+"""
+
 import abc
 from typing import Dict, List, Optional, Tuple, Type, Union  # noqa: F401
 
@@ -36,32 +41,27 @@ class CommandGraphNode(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def selector(self) -> Optional[str]:
         """The selector for the current node"""
-        pass  # pragma: no cover
 
     @property
     @abc.abstractmethod
     def selectors(self) -> List[SelectorType]:
         """The selectors resolving the location of the node in the command graph"""
-        pass  # pragma: no cover
 
     @property
     @abc.abstractmethod
     def parent(self) -> Optional["CommandGraphNode"]:
         """The parent of the current node"""
-        pass  # pragma: no cover
 
     @property
     @abc.abstractmethod
     def children(self) -> List[str]:
         """The child objects that are contained within this object"""
-        pass  # pragma: no cover
 
     def navigate(self, name: str, selector: Optional[str]) -> "CommandGraphNode":
         """Navigate from the current node to the specified child"""
         if name in self.children:
-            return _CommandGraphMap[name](selector, self)
-        else:
-            raise KeyError("Given node is not an object: {}".format(name))
+            return _COMMAND_GRAPH_MAP[name](selector, self)
+        raise KeyError("Given node is not an object: {}".format(name))
 
     def call(self, name: str) -> "CommandGraphCall":
         """Execute the given call on the selected object"""
@@ -69,6 +69,8 @@ class CommandGraphNode(metaclass=abc.ABCMeta):
 
 
 class CommandGraphCall:
+    """A call performed on a particular object in the command graph"""
+
     def __init__(self, name: str, parent: CommandGraphNode) -> None:
         """A command to be executed on the selected object
 
@@ -129,6 +131,8 @@ class CommandGraphRoot(CommandGraphNode):
 
 
 class CommandGraphObject(CommandGraphNode, metaclass=abc.ABCMeta):
+    """An object in the command graph that contains a collection of objects"""
+
     def __init__(self, selector: Optional[str], parent: CommandGraphNode) -> None:
         """A container object in the command graph
 
@@ -163,7 +167,6 @@ class CommandGraphObject(CommandGraphNode, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def object_type(self) -> str:
         """The type of the current container object"""
-        pass  # pragma: no cover
 
 
 class _BarGraphNode(CommandGraphObject):
@@ -196,7 +199,7 @@ class _WindowGraphNode(CommandGraphObject):
     children = ["group", "screen", "layout"]
 
 
-_CommandGraphMap = {
+_COMMAND_GRAPH_MAP = {
     "bar": _BarGraphNode,
     "group": _GroupGraphNode,
     "layout": _LayoutGraphNode,
