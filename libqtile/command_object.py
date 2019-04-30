@@ -18,6 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+The objects in the command graph and command resolution on the objects
+"""
+
 import abc
 import inspect
 import traceback
@@ -28,6 +32,8 @@ from libqtile.log_utils import logger
 
 
 class SelectError(Exception):
+    """Error raised in resolving a command graph object"""
+
     def __init__(self, err_string: str, name: str, selectors: List[SelectorType]):
         super().__init__(err_string)
         self.name = name
@@ -35,11 +41,11 @@ class SelectError(Exception):
 
 
 class CommandError(Exception):
-    pass
+    """Error raised in resolving a command"""
 
 
 class CommandException(Exception):
-    pass
+    """Error raised while executing a command"""
 
 
 class CommandObject(metaclass=abc.ABCMeta):
@@ -62,11 +68,13 @@ class CommandObject(metaclass=abc.ABCMeta):
         for name, selector in selectors:
             root, items = obj.items(name)
             # if non-root object and no selector given
+            if root is False and selector is None:
+                raise SelectError("", name, selectors)
             # if no items in container, but selector is given
+            if items is None and selector is not None:
+                raise SelectError("", name, selectors)
             # if selector is not in the list of contained items
-            if (root is False and selector is None) or \
-                    (items is None and selector is not None) or \
-                    (items is not None and selector and selector not in items):
+            if items is not None and selector and selector not in items:
                 raise SelectError("", name, selectors)
 
             obj = obj._select(name, selector)
@@ -99,7 +107,6 @@ class CommandObject(metaclass=abc.ABCMeta):
         Same return as `.items()`. Return `None` if name is not a valid item
         class.
         """
-        pass  # pragma: no cover
 
     @abc.abstractmethod
     def _select(self, name: str, sel: Optional[str]) -> "CommandObject":
@@ -113,13 +120,25 @@ class CommandObject(metaclass=abc.ABCMeta):
 
         Return None if no such object exists
         """
-        pass  # pragma: no cover
 
     def command(self, name: str) -> Callable:
+        """Return the command with the given name
+
+        Parameters
+        ----------
+        name : str
+            The name of the command to fetch.
+
+        Returns
+        -------
+        Callable
+            The command function that can be invoked.
+        """
         return getattr(self, "cmd_" + name, None)
 
     @property
     def commands(self) -> List[str]:
+        """All of the commands on the given object"""
         cmds = [i[4:] for i in dir(self) if i.startswith("cmd_")]
         return cmds
 
@@ -148,8 +167,7 @@ class CommandObject(metaclass=abc.ABCMeta):
             spec = name + signature
             htext = inspect.getdoc(command) or ""
             return spec + '\n' + htext
-        else:
-            raise CommandError("No such command: %s" % name)
+        raise CommandError("No such command: %s" % name)
 
     def _get_command_signature(self, command: Callable) -> str:
         signature = inspect.signature(command)
@@ -183,4 +201,4 @@ class CommandObject(metaclass=abc.ABCMeta):
             function(self, *args, **kwargs)
         except Exception:
             error = traceback.format_exc()
-            logger.error('Exception calling "%s":\n%s' % (function, error))
+            logger.error('Exception calling "%s":\n%s', function, error)

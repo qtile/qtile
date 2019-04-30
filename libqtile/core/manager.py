@@ -186,7 +186,7 @@ class Qtile(CommandObject):
                 self.groups_map[sp.name] = sp
 
         self.setup_eventloop()
-        self.server = IPCCommandServer(self.fname, self, config, self._eventloop)
+        self.server = IPCCommandServer(self.fname, self, self._eventloop)
 
         self.current_screen = None
         self.screens = []

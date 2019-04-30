@@ -18,6 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+The clients that expose the command graph of a given command interface
+
+The clients give the ability to navigate the command graph while providing name
+resolution with the given command graph interface.  When writing functionality
+that interacts with qtile objects, it should favor using the command graph
+clients to do this interaction.
+"""
+
 from typing import Any, List, Optional
 
 from libqtile.command_graph import (
@@ -32,6 +41,8 @@ from libqtile.command_object import SelectError
 
 
 class CommandClient:
+    """The object that resolves the commands"""
+
     def __init__(self, command: CommandInterface, *, current_node: GraphType = None) -> None:
         """A client that resolves calls through the command object interface
 
@@ -63,6 +74,21 @@ class CommandClient:
         return self._command.execute(self._current_node, args, kwargs)
 
     def navigate(self, name: str, selector: Optional[str]) -> "CommandClient":
+        """Resolve the given object in the command graph
+
+        Parameters
+        ----------
+        name : str
+            The name of the command graph object to resolve.
+        selector : Optional[str]
+            If given, the selector to use to select the next object, and if
+            None, then selects the default object.
+
+        Returns
+        -------
+        CommandClient
+            The client with the given command graph object resolved.
+        """
         if not isinstance(self._current_node, CommandGraphNode):
             raise SelectError("Invalid navigation", "", self._current_node.selectors)
 
@@ -76,6 +102,18 @@ class CommandClient:
         return self.__class__(self._command, current_node=next_node)
 
     def call(self, name: str) -> "CommandClient":
+        """Resolve the call into the command graph
+
+        Parameters
+        ----------
+        name : str
+            The name of the command to resolve in the command graph.
+
+        Returns
+        -------
+        CommandClient
+            The client with the command resolved.
+        """
         if not isinstance(self._current_node, CommandGraphNode):
             raise SelectError("Invalid navigation", "", self._current_node.selectors)
 
@@ -95,6 +133,7 @@ class CommandClient:
 
     @property
     def root(self) -> "CommandClient":
+        """Get the root of the command graph"""
         return self.__class__(self._command)
 
     @property
@@ -106,6 +145,10 @@ class CommandClient:
 
 
 class InteractiveCommandClient:
+    """
+    A command graph client that can be used to easily resolve elements interactively
+    """
+
     def __init__(self, command: CommandInterface, *, current_node: GraphType = None) -> None:
         """An interactive client that resolves calls through the gives client
 
@@ -135,7 +178,7 @@ class InteractiveCommandClient:
 
         return self._command.execute(self._current_node, args, kwargs)
 
-    def __getattr__(self, name:  str) -> "InteractiveCommandClient":
+    def __getattr__(self, name: str) -> "InteractiveCommandClient":
         """Get the child element of the currently selected object
 
         Resolve the element specified by the given name, either the child
@@ -164,9 +207,9 @@ class InteractiveCommandClient:
                 raise SelectError("Not valid child or command", name, self._current_node.selectors)
             call_object = self._current_node.call(name)
             return self.__class__(self._command, current_node=call_object)
-        else:
-            next_node = self._current_node.navigate(name, None)
-            return self.__class__(self._command, current_node=next_node)
+
+        next_node = self._current_node.navigate(name, None)
+        return self.__class__(self._command, current_node=next_node)
 
     def __getitem__(self, name: str) -> "InteractiveCommandClient":
         """Get the selected element of the currently selected object
