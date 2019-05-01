@@ -26,7 +26,7 @@ keys = {
 play_states = {
     'play': '\u25b6',
     'pause': '\u23F8',
-    'stop': '\u25a0',
+    'stop': '\u25a0'
 }
 
 
