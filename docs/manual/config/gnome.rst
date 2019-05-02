@@ -42,6 +42,16 @@ This adds a new entry "Qtile GNOME" to GDM's login screen.
 
 The custom session for gnome-session.
 
+For Gnome >= 3.23.2 (Ubuntu >= 17.04, Fedora >= 26, etc.)
+:: 
+
+    $ cat /usr/share/gnome-session/sessions/qtile.session
+    [GNOME Session]
+    Name=Qtile session
+    RequiredComponents=qtile;org.gnome.SettingsDaemon.A11ySettings;org.gnome.SettingsDaemon.Clipboard;org.gnome.SettingsDaemon.Color;org.gnome.SettingsDaemon.Datetime;org.gnome.SettingsDaemon.Housekeeping;org.gnome.SettingsDaemon.Keyboard;org.gnome.SettingsDaemon.MediaKeys;org.gnome.SettingsDaemon.Mouse;org.gnome.SettingsDaemon.Power;org.gnome.SettingsDaemon.PrintNotifications;org.gnome.SettingsDaemon.Rfkill;org.gnome.SettingsDaemon.ScreensaverProxy;org.gnome.SettingsDaemon.Sharing;org.gnome.SettingsDaemon.Smartcard;org.gnome.SettingsDaemon.Sound;org.gnome.SettingsDaemon.Wacom;org.gnome.SettingsDaemon.XSettings;
+
+Or for older Gnome versions
+
 ::
 
     $ cat /usr/share/gnome-session/sessions/qtile.session
