@@ -1,6 +1,5 @@
 include CHANGELOG
 include LICENSE
-include logo.png
 include README.rst
 include MANIFEST.in
 include CONTRIBUTING.md
@@ -13,6 +12,7 @@ exclude requirements-dev.txt
 exclude libqtile/_ffi*.py
 exclude Makefile
 exclude dev.sh
+exclude logo.png
 
 graft libqtile/resources
 graft resources
