@@ -3,3 +3,5 @@ echo "building pango"
 python ./libqtile/pango_ffi_build.py
 echo "building xcursors"
 python ./libqtile/backend/x11/xcursors_ffi_build.py
+echo "building pulseaudio volume control"
+python ./libqtile/widget/pulseaudio_ffi.py
