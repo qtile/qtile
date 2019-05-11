@@ -48,13 +48,13 @@ ffibuilder.cdef("""
         void (*atfork)(void);
     } pa_spawn_api;
     typedef enum pa_context_state {
-        PA_CONTEXT_UNCONNECTED,    /**< The context hasn't been connected yet */
-        PA_CONTEXT_CONNECTING,     /**< A connection is being established */
-        PA_CONTEXT_AUTHORIZING,    /**< The client is authorizing itself to the daemon */
-        PA_CONTEXT_SETTING_NAME,   /**< The client is passing its application name to the daemon */
-        PA_CONTEXT_READY,          /**< The connection is established, the context is ready to execute operations */
-        PA_CONTEXT_FAILED,         /**< The connection failed or was disconnected */
-        PA_CONTEXT_TERMINATED      /**< The connection was terminated cleanly */
+        PA_CONTEXT_UNCONNECTED,
+        PA_CONTEXT_CONNECTING,
+        PA_CONTEXT_AUTHORIZING,
+        PA_CONTEXT_SETTING_NAME,
+        PA_CONTEXT_READY,
+        PA_CONTEXT_FAILED,
+        PA_CONTEXT_TERMINATED
     } pa_context_state_t;
     typedef enum pa_operation_state {
         PA_OPERATION_RUNNING,
@@ -111,13 +111,11 @@ ffibuilder.cdef("""
         PA_SUBSCRIPTION_MASK_SERVER = ...,
         /**< Other global server changes. */
 
-    /** \cond fulldocs */
         PA_SUBSCRIPTION_MASK_AUTOLOAD = ...,
-        /**< \deprecated Autoload table events. */
-    /** \endcond */
+        /** deprecated Autoload table events. */
 
         PA_SUBSCRIPTION_MASK_CARD = ...,
-        /**< Card events. \since 0.9.15 */
+        /** Card events. since 0.9.15 */
 
         PA_SUBSCRIPTION_MASK_ALL = ...,
         /**< Catch all events */
@@ -149,13 +147,11 @@ ffibuilder.cdef("""
         PA_SUBSCRIPTION_EVENT_SERVER = ...,
         /**< Event type: Global server change, only occurring with PA_SUBSCRIPTION_EVENT_CHANGE. */
 
-    /** \cond fulldocs */
         PA_SUBSCRIPTION_EVENT_AUTOLOAD = ...,
-        /**< \deprecated Event type: Autoload table changes. */
-    /** \endcond */
+        /** deprecated Event type: Autoload table changes. */
 
         PA_SUBSCRIPTION_EVENT_CARD = ...,
-        /**< Event type: Card \since 0.9.15 */
+        /**< Event type: Card since 0.9.15 */
 
         PA_SUBSCRIPTION_EVENT_FACILITY_MASK = ...,
         /**< A mask to extract the event type from an event value */
@@ -337,67 +333,73 @@ ffibuilder.cdef("""
 
     /** introspect.h */
     typedef struct pa_sink_port_info {
-        const char *name;                   /**< Name of this port */
-        const char *description;            /**< Description of this port */
-        uint32_t priority;                  /**< The higher this value is, the more useful this port is as a default. */
-        int available;                      /**< A flags (see #pa_port_available), indicating availability status of this port. \since 2.0 */
+        const char *name;
+        const char *description;
+        uint32_t priority;
+        int available;
     } pa_sink_port_info;
     typedef struct pa_sink_info {
-        const char *name;                  /**< Name of the sink */
-        uint32_t index;                    /**< Index of the sink */
-        const char *description;           /**< Description of this sink */
-        pa_sample_spec sample_spec;        /**< Sample spec of this sink */
-        pa_channel_map channel_map;        /**< Channel map */
-        uint32_t owner_module;             /**< Index of the owning module of this sink, or PA_INVALID_INDEX. */
-        pa_cvolume volume;                 /**< Volume of the sink */
-        int mute;                          /**< Mute switch of the sink */
-        uint32_t monitor_source;           /**< Index of the monitor source connected to this sink. */
-        const char *monitor_source_name;   /**< The name of the monitor source. */
-        pa_usec_t latency;                 /**< Length of queued audio in the output buffer. */
-        const char *driver;                /**< Driver name */
-        pa_sink_flags_t flags;             /**< Flags */
-        pa_proplist *proplist;             /**< Property list \since 0.9.11 */
-        pa_usec_t configured_latency;      /**< The latency this device has been configured to. \since 0.9.11 */
-        pa_volume_t base_volume;           /**< Some kind of "base" volume that refers to unamplified/unattenuated volume in the context of the output device. \since 0.9.15 */
-        pa_sink_state_t state;             /**< State \since 0.9.15 */
-        uint32_t n_volume_steps;           /**< Number of volume steps for sinks which do not support arbitrary volumes. \since 0.9.15 */
-        uint32_t card;                     /**< Card index, or PA_INVALID_INDEX. \since 0.9.15 */
-        uint32_t n_ports;                  /**< Number of entries in port array \since 0.9.16 */
-        pa_sink_port_info** ports;         /**< Array of available ports, or NULL. Array is terminated by an entry set to NULL. The number of entries is stored in n_ports. \since 0.9.16 */
-        pa_sink_port_info* active_port;    /**< Pointer to active port in the array, or NULL. \since 0.9.16 */
-        uint8_t n_formats;                 /**< Number of formats supported by the sink. \since 1.0 */
-        pa_format_info **formats;          /**< Array of formats supported by the sink. \since 1.0 */
+        const char *name;
+        uint32_t index;
+        const char *description;
+        pa_sample_spec sample_spec;
+        pa_channel_map channel_map;
+        uint32_t owner_module;
+        pa_cvolume volume;
+        int mute;
+        uint32_t monitor_source;
+        const char *monitor_source_name;
+        pa_usec_t latency;
+        const char *driver;
+        pa_sink_flags_t flags;
+        pa_proplist *proplist;
+        pa_usec_t configured_latency;
+        pa_volume_t base_volume;
+        pa_sink_state_t state;
+        uint32_t n_volume_steps;
+        uint32_t card;
+        uint32_t n_ports;
+        pa_sink_port_info** ports;
+        pa_sink_port_info* active_port;
+        uint8_t n_formats;
+        pa_format_info **formats;
     } pa_sink_info;
 
     typedef void (*pa_sink_info_cb_t)(pa_context *c, const pa_sink_info *i, int eol, void *userdata);
     pa_operation* pa_context_get_sink_info_list(pa_context *c, pa_sink_info_cb_t cb, void *userdata);
 
     typedef struct pa_server_info {
-        const char *user_name;              /**< User name of the daemon process */
-        const char *host_name;              /**< Host name the daemon is running on */
-        const char *server_version;         /**< Version string of the daemon */
-        const char *server_name;            /**< Server package name (usually "pulseaudio") */
-        pa_sample_spec sample_spec;         /**< Default sample specification */
-        const char *default_sink_name;      /**< Name of default sink. */
-        const char *default_source_name;    /**< Name of default source. */
-        uint32_t cookie;                    /**< A random cookie for identifying this instance of PulseAudio. */
-        pa_channel_map channel_map;         /**< Default channel map. \since 0.9.15 */
+        const char *user_name;
+        const char *host_name;
+        const char *server_version;
+        const char *server_name;
+        pa_sample_spec sample_spec;
+        const char *default_sink_name;
+        const char *default_source_name;
+        uint32_t cookie;
+        pa_channel_map channel_map;
     } pa_server_info;
     typedef void (*pa_server_info_cb_t) (pa_context *c, const pa_server_info*i, void *userdata);
     pa_operation* pa_context_get_server_info(pa_context *c, pa_server_info_cb_t cb, void *userdata);
 
 
-    pa_operation* pa_context_set_sink_volume_by_index(pa_context *c, uint32_t idx, const pa_cvolume *volume, pa_context_success_cb_t cb, void *userdata);
-    pa_operation* pa_context_set_sink_volume_by_name(pa_context *c, const char *name, const pa_cvolume *volume, pa_context_success_cb_t cb, void *userdata);
-    pa_operation* pa_context_set_sink_mute_by_index(pa_context *c, uint32_t idx, int mute, pa_context_success_cb_t cb, void *userdata);
-    pa_operation* pa_context_set_sink_mute_by_name(pa_context *c, const char *name, int mute, pa_context_success_cb_t cb, void *userdata);
+    pa_operation* pa_context_set_sink_volume_by_index(
+        pa_context *c, uint32_t idx, const pa_cvolume *volume, pa_context_success_cb_t cb, void *userdata);
+    pa_operation* pa_context_set_sink_volume_by_name(
+        pa_context *c, const char *name, const pa_cvolume *volume, pa_context_success_cb_t cb, void *userdata);
+    pa_operation* pa_context_set_sink_mute_by_index(
+        pa_context *c, uint32_t idx, int mute, pa_context_success_cb_t cb, void *userdata);
+    pa_operation* pa_context_set_sink_mute_by_name(
+        pa_context *c, const char *name, int mute, pa_context_success_cb_t cb, void *userdata);
 
     /** subscribe.h */
     /** Subscription event callback prototype */
-    typedef void (*pa_context_subscribe_cb_t)(pa_context *c, pa_subscription_event_type_t t, uint32_t idx, void *userdata);
+    typedef void (*pa_context_subscribe_cb_t)(
+        pa_context *c, pa_subscription_event_type_t t, uint32_t idx, void *userdata);
 
     /** Enable event notification */
-    pa_operation* pa_context_subscribe(pa_context *c, pa_subscription_mask_t m, pa_context_success_cb_t cb, void *userdata);
+    pa_operation* pa_context_subscribe(
+        pa_context *c, pa_subscription_mask_t m, pa_context_success_cb_t cb, void *userdata);
 
     /** Set the context specific call back function that is called whenever the state of the daemon changes */
     void pa_context_set_subscribe_callback(pa_context *c, pa_context_subscribe_cb_t cb, void *userdata);
@@ -408,7 +410,8 @@ ffibuilder.cdef("""
     extern "Python" void qtile_pa_context_changed(pa_context *c, void *userdata);
     extern "Python" void qtile_on_sink_info(pa_context *c, const pa_sink_info *i, int eol, void *userdata);
     extern "Python" void qtile_on_server_info(pa_context *c, const pa_server_info*i, void *userdata);
-    extern "Python" void qtile_on_sink_update(pa_context *c, pa_subscription_event_type_t t, uint32_t idx, void *userdata);
+    extern "Python" void qtile_on_sink_update(
+        pa_context *c, pa_subscription_event_type_t t, uint32_t idx, void *userdata);
 
 """)
 
