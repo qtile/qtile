@@ -2,7 +2,7 @@
 import subprocess
 
 from . import base
-from .volume import BUTTON_UP, BUTTON_DOWN, BUTTON_MUTE, BUTTON_RIGHT
+from .volume import BUTTON_UP, BUTTON_DOWN, BUTTON_MUTE, BUTTON_RIGHT, Volume
 from ._pulse_audio import lib, ffi
 
 
@@ -31,15 +31,10 @@ def qtile_on_sink_update(context, event_type, sink_index, userdata):
     widget.on_sink_update(event_type, sink_index)
 
 
-class PulseVolume(base.InLoopPollText):
-    defaults = [
-        ("step", 2, "Volume value change in percentage")
-        ("volume_app", 'pavucontrol', "App to control volume"),
-    ]
+class PulseVolume(Volume, base.InLoopPollText):
 
     def __init__(self, **config):
-        base.InLoopPollText.__init__(self, **config)
-        self.add_defaults(PulseVolume.defaults)
+        Volume.__init__(self, **config)
 
         self.connected = None
         self._subscribed = False
@@ -123,6 +118,7 @@ class PulseVolume(base.InLoopPollText):
                 'values': list(sink.volume.values),
                 'volume_steps': sink.n_volume_steps,
             }
+            self.update()
 
     def subscribe_to_sink_events(self):
         op = lib.pa_context_subscribe(
@@ -206,17 +202,39 @@ class PulseVolume(base.InLoopPollText):
             if self.volume_app is not None:
                 subprocess.Popen(self.volume_app)
 
-        self.draw()
+        self.tick()
 
     def poll(self):
         lib.pa_mainloop_iterate(self.loop, 0, ffi.NULL)
 
+    def tick(self):
+        self.poll()
+
+    def update(self):
+        """
+        pretty much same method as in Volume widget except that we don't
+        need to schedule an update
+        """
+        vol = self.get_volume()
+        if vol != self.volume:
+            self.volume = vol
+            # Update the underlying canvas size before actually attempting
+            # to figure out how big it is and draw it.
+            self._update_drawer()
+            self.bar.draw()
+
+    def get_volume(self):
         if self.default_sink:
             if self.default_sink['muted']:
-                return 'M'
+                return -1
             base = self.default_sink['base_volume']
             if not base:
-                return 'N/A'
+                return -1
             current = max(self.default_sink['values'])
-            return str(int(current * 100 / base)) + '%'
-        return 'N/A'
+            return int(current * 100 / base)
+        return -1
+
+    def timer_setup(self):
+        base.InLoopPollText.timer_setup(self)
+        if self.theme_path:
+            self.setup_images()
