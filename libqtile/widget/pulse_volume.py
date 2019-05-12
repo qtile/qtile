@@ -8,33 +8,40 @@ from ._pulse_audio import lib, ffi
 
 @ffi.def_extern()
 def qtile_pa_context_changed(context, userdata):
+    """callback for connecting status update"""
     widget = ffi.from_handle(userdata)
     widget.on_connection_change(context)
 
 
 @ffi.def_extern()
 def qtile_on_sink_info(context, info, eol, userdata):
-    """called for each output sink that server has"""
+    """callback for each output sink that pulseaudio server has"""
     widget = ffi.from_handle(userdata)
     widget.on_sink_info(info, eol)
 
 
 @ffi.def_extern()
 def qtile_on_server_info(context, info, userdata):
+    """callback with a pulseaudio server info"""
     widget = ffi.from_handle(userdata)
     widget.on_server_info(info)
 
 
 @ffi.def_extern()
 def qtile_on_sink_update(context, event_type, sink_index, userdata):
+    """callback for updates made to sinks"""
     widget = ffi.from_handle(userdata)
     widget.on_sink_update(event_type, sink_index)
 
 
 class PulseVolume(Volume, base.InLoopPollText):
+    defaults = [
+        ('limit_max_volume', False, 'Limit maximum volume to 100%'),
+    ]
 
     def __init__(self, **config):
         Volume.__init__(self, **config)
+        self.add_defaults(PulseVolume.defaults)
 
         self.connected = None
         self._subscribed = False
@@ -116,7 +123,6 @@ class PulseVolume(Volume, base.InLoopPollText):
                 'muted': bool(sink.mute),
                 'channels': sink.volume.channels,
                 'values': list(sink.volume.values),
-                'volume_steps': sink.n_volume_steps,
             }
             self.update()
 
@@ -145,6 +151,12 @@ class PulseVolume(Volume, base.InLoopPollText):
             state = lib.pa_operation_get_state(op)
 
     def change_volume(self, volume):
+        """
+        order pulseaudio to apply new volume
+        """
+        # store new volume to "speed up" widget update so that we don't have
+        # to wait a callback from pulseaudio
+        self.default_sink['values'] = list(volume.values)
         op = lib.pa_context_set_sink_volume_by_index(
             self.context,
             self.default_sink['index'],
@@ -166,37 +178,38 @@ class PulseVolume(Volume, base.InLoopPollText):
         self.wait_for_operation(op)
 
     def increase_volume(self, value=2):
-        if self.default_sink:
-            volume = ffi.new('pa_cvolume *', {
-                'channels': self.default_sink['channels'],
-                'values': self.default_sink['values'],
-            })
-            lib.pa_cvolume_inc(
-                volume,
-                int(value * self.default_sink['base_volume'] / 100),
-            )
-            self.default_sink['values'] = list(volume.values)
-            self.change_volume(volume)
+        base = self.default_sink['base_volume']
+        volume = ffi.new('pa_cvolume *', {
+            'channels': self.default_sink['channels'],
+            'values': self.default_sink['values'],
+        })
+        lib.pa_cvolume_inc(
+            volume,
+            int(value * base / 100),
+        )
+        # check that we dont go over 100% in case its set in config
+        if self.limit_max_volume:
+            volume.values = [(i if i <= base else base) for i in volume.values]
+        self.change_volume(volume)
 
     def decrease_volume(self, value=2):
-        if self.default_sink:
-            volume = ffi.new('pa_cvolume *', {
-                'channels': self.default_sink['channels'],
-                'values': self.default_sink['values'],
-            })
-            lib.pa_cvolume_dec(
-                volume,
-                int(value * self.default_sink['base_volume'] / 100),
-            )
-            self.default_sink['values'] = list(volume.values)
-            self.change_volume(volume)
+        volume_level = int(value * self.default_sink['base_volume'] / 100)
+        if not volume_level and max(self.default_sink['values']) == 0:
+            # can't be lower than zero
+            return
+        volume = ffi.new('pa_cvolume *', {
+            'channels': self.default_sink['channels'],
+            'values': self.default_sink['values'],
+        })
+        lib.pa_cvolume_dec(volume, volume_level)
+        self.change_volume(volume)
 
     def button_press(self, x, y, button):
-        if button == BUTTON_DOWN:
+        if self.default_sink and button == BUTTON_DOWN:
             self.decrease_volume(self.step)
-        elif button == BUTTON_UP:
+        elif self.default_sink and button == BUTTON_UP:
             self.increase_volume(self.step)
-        elif button == BUTTON_MUTE:
+        elif self.default_sink and button == BUTTON_MUTE:
             self.mute_volume()
         elif button == BUTTON_RIGHT:
             if self.volume_app is not None:
@@ -212,8 +225,8 @@ class PulseVolume(Volume, base.InLoopPollText):
 
     def update(self):
         """
-        pretty much same method as in Volume widget except that we don't
-        need to schedule an update
+        same method as in Volume widgets except that here we don't need to
+        manually re-schedule update
         """
         vol = self.get_volume()
         if vol != self.volume:
