@@ -249,7 +249,6 @@ class MemoryGraph(_Graph):
     def _getvalues(self):
         val = {}
         mem = psutil.virtual_memory()
-        val['MemUsed'] = int(mem.used / 1024 / 1024)
         val['MemTotal'] = int(mem.total / 1024 / 1024)
         val['MemFree'] = int(mem.free / 1024 / 1024)
         val['Buffers'] = int(mem.buffers / 1024 / 1024)
@@ -272,21 +271,20 @@ class SwapGraph(_Graph):
         _Graph.__init__(self, **config)
         val = self._getvalues()
         self.maxvalue = val['SwapTotal']
-        swap = val['SwapTotal'] - val['SwapFree'] - val.get('SwapCached', 0)
+        swap = val['SwapTotal'] - val['SwapFree']
         self.fulfill(swap)
 
     def _getvalues(self):
         val = {}
         swap = psutil.swap_memory()
         val['SwapTotal'] = int(swap.total / 1024 / 1024)
-        val['SwapUsed'] = int(swap.used / 1024 / 1024)
         val['SwapFree'] = int(swap.free / 1024 / 1024)
         return val
 
     def update_graph(self):
         val = self._getvalues()
 
-        swap = val['SwapTotal'] - val['SwapFree'] - val.get('SwapCached', 0)
+        swap = val['SwapTotal'] - val['SwapFree']
 
         # can change, swapon/off
         if self.maxvalue != val['SwapTotal']:
