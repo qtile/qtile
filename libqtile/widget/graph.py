@@ -317,7 +317,7 @@ class NetGraph(_Graph):
                     "falling back to 'eth0'"
                 )
                 self.interface = "eth0"
-        if self.bandwidth_type is not "down" and self.bandwidth_type is not "up":
+        if self.bandwidth_type != "down" and self.bandwidth_type != "up":
             raise ValueError("bandwidth type {} not known!".format(self.bandwidth_type))
         self.bytes = 0
         self.bytes = self._get_values()
