@@ -233,21 +233,6 @@ class CPUGraph(_Graph):
         self.oldvalues = nval
 
 
-def get_meminfo():
-    val = {}
-    mem = psutil.virtual_memory()
-    swap = psutil.swap_memory()
-    val['MemUsed'] = int(mem.used / 1024 / 1024)
-    val['MemTotal'] = int(mem.total / 1024 / 1024)
-    val['MemFree'] = int(mem.free / 1024 / 1024)
-    val['Buffers'] = int(mem.buffers / 1024 / 1024)
-    val['Cached'] = int(mem.cached / 1024 / 1024)
-    val['SwapTotal'] = int(swap.total / 1024 / 1024)
-    val['SwapUsed'] = int(swap.used / 1024 / 1024)
-    val['SwapFree'] = int(swap.free / 1024 / 1024)
-    return val
-
-
 class MemoryGraph(_Graph):
     """Displays a memory usage graph"""
     orientations = base.ORIENTATION_HORIZONTAL
@@ -262,7 +247,14 @@ class MemoryGraph(_Graph):
         self.fulfill(mem)
 
     def _getvalues(self):
-        return get_meminfo()
+        val = {}
+        mem = psutil.virtual_memory()
+        val['MemUsed'] = int(mem.used / 1024 / 1024)
+        val['MemTotal'] = int(mem.total / 1024 / 1024)
+        val['MemFree'] = int(mem.free / 1024 / 1024)
+        val['Buffers'] = int(mem.buffers / 1024 / 1024)
+        val['Cached'] = int(mem.cached / 1024 / 1024)
+        return val
 
     def update_graph(self):
         val = self._getvalues()
@@ -284,7 +276,12 @@ class SwapGraph(_Graph):
         self.fulfill(swap)
 
     def _getvalues(self):
-        return get_meminfo()
+        val = {}
+        swap = psutil.swap_memory()
+        val['SwapTotal'] = int(swap.total / 1024 / 1024)
+        val['SwapUsed'] = int(swap.used / 1024 / 1024)
+        val['SwapFree'] = int(swap.free / 1024 / 1024)
+        return val
 
     def update_graph(self):
         val = self._getvalues()
