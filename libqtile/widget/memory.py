@@ -22,48 +22,7 @@ import psutil
 
 from libqtile.widget import base
 
-__all__ = [
-    'Memory',
-    'Swap',
-]
-
-
-def get_meminfo():
-    mem = psutil.virtual_memory()
-    swap = psutil.swap_memory()
-    val = {}
-    val['MemUsed'] = mem.used // 1024 // 1024
-    val['MemTotal'] = mem.total // 1024 // 1024
-    val['MemFree'] = mem.free // 1024 // 1024
-    val['Buffers'] = mem.buffers // 1024 // 1024
-    val['Active'] = mem.active // 1024 // 1024
-    val['Inactive'] = mem.inactive // 1024 // 1024
-    val['Shmem'] = mem.shared // 1024 // 1024
-    val['SwapTotal'] = swap.total // 1024 // 1024
-    val['Swapfree'] = swap.free // 1024 // 1024
-    val['SwapUsed'] = swap.used // 1024 // 1024
-
-    return val
-
-
-class Swap(base.ThreadedPollText):
-    """Displays memory usage"
-
-    SwapTotal: Returns total amount of swap
-    SwapFree: Returns amount of swap free
-    SwapUsed: Returns amount of swap in use
-"""
-    orientations = base.ORIENTATION_HORIZONTAL
-    defaults = [
-        ("fmt", "{SwapUsed}M/{SwapTotal}M", "Formatting for field names.")
-    ]
-
-    def __init__(self, **config):
-        super(Swap, self).__init__(**config)
-        self.add_defaults(Swap.defaults)
-
-    def poll(self):
-        return self.fmt.format(**get_meminfo())
+__all__ = ['Memory']
 
 
 class Memory(base.ThreadedPollText):
@@ -76,6 +35,9 @@ class Memory(base.ThreadedPollText):
     Active: Returns active memory
     Inactive: Returns inactive memory
     Shmem: Returns shared memory
+    SwapTotal: Returns total amount of swap
+    SwapFree: Returns amount of swap free
+    SwapUsed: Returns amount of swap in use
 """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
@@ -87,4 +49,17 @@ class Memory(base.ThreadedPollText):
         self.add_defaults(Memory.defaults)
 
     def poll(self):
-        return self.fmt.format(**get_meminfo())
+        mem = psutil.virtual_memory()
+        swap = psutil.swap_memory()
+        val = {}
+        val['MemUsed'] = mem.used // 1024 // 1024
+        val['MemTotal'] = mem.total // 1024 // 1024
+        val['MemFree'] = mem.free // 1024 // 1024
+        val['Buffers'] = mem.buffers // 1024 // 1024
+        val['Active'] = mem.active // 1024 // 1024
+        val['Inactive'] = mem.inactive // 1024 // 1024
+        val['Shmem'] = mem.shared // 1024 // 1024
+        val['SwapTotal'] = swap.total // 1024 // 1024
+        val['Swapfree'] = swap.free // 1024 // 1024
+        val['SwapUsed'] = swap.used // 1024 // 1024
+        return self.fmt.format(**val)
