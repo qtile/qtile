@@ -242,7 +242,7 @@ def get_meminfo():
     val['MemFree'] = int(mem.free / 1024 / 1024)
     val['Buffers'] = int(mem.buffers / 1024 / 1024)
     val['Cached'] = int(mem.cached / 1024 / 1024)
-    val['SwapTotal'] = int(mem.total / 1024 / 1024)
+    val['SwapTotal'] = int(swap.total / 1024 / 1024)
     val['SwapUsed'] = int(swap.used / 1024 / 1024)
     val['SwapFree'] = int(swap.free / 1024 / 1024)
     return val
