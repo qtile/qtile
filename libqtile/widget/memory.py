@@ -18,25 +18,68 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import psutil
+
 from libqtile.widget import base
+
+__all__ = [
+    'Memory',
+    'Swap',
+]
 
 
 def get_meminfo():
+    mem = psutil.virtual_memory()
+    swap = psutil.swap_memory()
     val = {}
-    with open('/proc/meminfo') as file:
-        for line in file:
-            key, tail = line.split(':')
-            uv = tail.split()
-            val[key] = int(uv[0]) // 1000
-    val['MemUsed'] = val['MemTotal'] - val['MemFree']
+    val['MemUsed'] = mem.used // 1024 // 1024
+    val['MemTotal'] = mem.total // 1024 // 1024
+    val['MemFree'] = mem.free // 1024 // 1024
+    val['Buffers'] = mem.buffers // 1024 // 1024
+    val['Active'] = mem.active // 1024 // 1024
+    val['Inactive'] = mem.inactive // 1024 // 1024
+    val['Shmem'] = mem.shared // 1024 // 1024
+    val['SwapTotal'] = swap.total // 1024 // 1024
+    val['Swapfree'] = swap.free // 1024 // 1024
+    val['SwapUsed'] = swap.used // 1024 // 1024
+
     return val
 
 
-class Memory(base.InLoopPollText):
-    """Displays memory usage"""
+class Swap(base.ThreadedPollText):
+    """Displays memory usage"
+
+    SwapTotal: Returns total amount of swap
+    SwapFree: Returns amount of swap free
+    SwapUsed: Returns amount of swap in use
+"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("fmt", "{MemUsed}M/{MemTotal}M", "see /proc/meminfo for field names")
+        ("fmt", "{SwapUsed}M/{SwapTotal}M", "Formatting for field names.")
+    ]
+
+    def __init__(self, **config):
+        super(Swap, self).__init__(**config)
+        self.add_defaults(Swap.defaults)
+
+    def poll(self):
+        return self.fmt.format(**get_meminfo())
+
+
+class Memory(base.ThreadedPollText):
+    """Displays memory/swap usage
+
+    MemUsed: Returns memory in use
+    MemTotal: Returns total amount of memory
+    MemFree: Returns amount of memory free
+    Buffers: Returns buffer amount
+    Active: Returns active memory
+    Inactive: Returns inactive memory
+    Shmem: Returns shared memory
+"""
+    orientations = base.ORIENTATION_HORIZONTAL
+    defaults = [
+        ("fmt", "{MemUsed}M/{MemTotal}M", "Formatting for field names.")
     ]
 
     def __init__(self, **config):
