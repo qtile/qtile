@@ -275,12 +275,12 @@ class Stack(Layout):
 
     def cmd_shuffle_up(self):
         """Shuffle the order of this stack up"""
-        self.current_stack.rotate_up()
+        self.current_stack.shuffle_up()
         self.group.layout_all()
 
     def cmd_shuffle_down(self):
         """Shuffle the order of this stack down"""
-        self.current_stack.rotate_down()
+        self.current_stack.shuffle_down()
         self.group.layout_all()
 
     def cmd_delete(self):
