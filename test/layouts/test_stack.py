@@ -126,12 +126,12 @@ def test_stack_rotation(qtile):
     qtile.test_window("three")
     assert _stacks(qtile) == [["three", "two", "one"]]
     qtile.c.layout.down()
-    assert _stacks(qtile) == [["one", "three", "two"]]
+    assert _stacks(qtile) == [["two", "one", "three"]]
     qtile.c.layout.up()
     assert _stacks(qtile) == [["three", "two", "one"]]
     qtile.c.layout.down()
     qtile.c.layout.down()
-    assert _stacks(qtile) == [["two", "one", "three"]]
+    assert _stacks(qtile) == [["one", "three", "two"]]
 
 
 @stack_config
