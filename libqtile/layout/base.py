@@ -136,6 +136,14 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         pass
 
     @abstractmethod
+    def swap(self, client1, client2):
+        """Called to swap a window with another one
+
+        The layout should exchange the position of the two windows.
+        """
+        pass
+
+    @abstractmethod
     def configure(self, client, screen):
         """Configure the layout
 
@@ -629,6 +637,9 @@ class _SimpleLayoutBase(Layout):
 
     def remove(self, client):
         return self.clients.remove(client)
+
+    def swap(self, client1, client2):
+        return self.clients.swap(client1, client2)
 
     def info(self):
         d = Layout.info(self)

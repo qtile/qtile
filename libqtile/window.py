@@ -1425,10 +1425,6 @@ class Window(_Window):
                 continue
             curx, cury = self.qtile.get_mouse_position()
             if self._is_in_window(curx, cury, window):
-                clients = self.group.layout.clients
-                index1 = clients.index(self)
-                index2 = clients.index(window)
-                clients[index1], clients[index2] = clients[index2], clients[index1]
-                self.group.layout.focused = index2
-                self.group.layout_all()
+                self.group.layout.swap(self, window)
+                self.group.focus(self, force=True)
                 break

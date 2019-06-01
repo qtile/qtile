@@ -205,6 +205,24 @@ class Stack(Layout):
             if n:
                 return n.cw
 
+    def swap(self, client1, client2):
+        stack1 = None
+        stack2 = None
+        for s in self.stacks:
+            if client1 in s:
+                stack1 = s
+            if client2 in s:
+                stack2 = s
+        if not (stack1 and stack2):
+            return
+        if stack1 is stack2:
+            stack1.swap(client1, client2)
+        else:
+            stack1.add(client2)
+            stack2.add(client1)
+            stack1.remove(client1)
+            stack2.remove(client2)
+
     def configure(self, client, screen):
         for i, s in enumerate(self.stacks):
             if client in s:

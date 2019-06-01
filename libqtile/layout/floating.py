@@ -261,6 +261,10 @@ class Floating(Layout):
         d["clients"] = [c.name for c in self.clients]
         return d
 
+    def swap(self, client1, client2):
+        # This can't ever be called, but implement the abstract method
+        pass
+
     def cmd_next(self):
         # This can't ever be called, but implement the abstract method
         pass

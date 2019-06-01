@@ -205,6 +205,24 @@ class Columns(Layout):
             self.remove_column(c)
         return self.columns[self.current].cw
 
+    def swap(self, client1, client2):
+        column1 = None
+        column2 = None
+        for c in self.columns:
+            if client1 in c:
+                column1 = c
+            if client2 in c:
+                column2 = c
+        if not (column1 and column2):
+            return
+        if column1 is column2:
+            column1.swap(client1, client2)
+        else:
+            column1.add(client2)
+            column2.add(client1)
+            column1.remove(client1)
+            column2.remove(client2)
+
     def configure(self, client, screen):
         pos = 0
         for col in self.columns:

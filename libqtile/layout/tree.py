@@ -415,6 +415,9 @@ class TreeTab(Layout):
         del self._nodes[win]
         self.draw_panel()
 
+    def swap(self, client1, client2):
+        pass
+
     def _create_panel(self):
         self._panel = window.Internal.create(
             self.group.qtile,
