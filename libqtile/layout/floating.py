@@ -283,11 +283,9 @@ class Floating(Layout):
         if client not in self.clients:
             return
 
-        next_focus = self.focus_next(client)
         if client is self.focused:
             self.blur()
         self.clients.remove(client)
-        return next_focus
 
     def info(self):
         d = Layout.info(self)

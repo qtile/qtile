@@ -233,7 +233,7 @@ class RatioTile(_SimpleLayoutBase):
 
     def remove(self, w):
         self.dirty = True
-        return _SimpleLayoutBase.remove(self, w)
+        _SimpleLayoutBase.remove(self, w)
 
     def configure(self, win, screen):
         # force recalc

@@ -122,8 +122,6 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         Called whether the layout is current or not. The layout should just
         de-register the window from its data structures, without unmapping the
         window.
-
-        Returns the "next" window that should gain focus or None.
         """
         pass
 
@@ -494,7 +492,7 @@ class _SimpleLayoutBase(Layout):
         return self.clients.add(client, offset_to_current)
 
     def remove(self, client):
-        return self.clients.remove(client)
+        self.clients.remove(client)
 
     def info(self):
         d = Layout.info(self)

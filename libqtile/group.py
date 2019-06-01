@@ -255,32 +255,17 @@ class _Group(CommandObject):
         win.group = None
 
         if win.floating:
-            nextfocus = self.floating_layout.remove(win)
-
-            nextfocus = nextfocus or \
-                self.current_window or \
-                self.layout.focus_first() or \
-                self.floating_layout.focus_first(group=self)
-        else:
-            for i in self.layouts:
-                if i is self.layout:
-                    nextfocus = i.remove(win)
-                else:
-                    i.remove(win)
-
-            nextfocus = nextfocus or \
-                self.floating_layout.focus_first(group=self) or \
-                self.current_window or \
-                self.layout.focus_first()
+            self.floating_layout.remove(win)
+        for i in self.layouts:
+            i.remove(win)
 
         # a notification may not have focus
         if hadfocus:
-            self.focus(nextfocus, warp=True, force=force)
-            # no next focus window means focus changed to nothing
-            if not nextfocus:
+            if self.focus_history:
+                self.focus(self.focus_history[-1], warp=True, force=force)
+            else:
                 hook.fire("focus_change")
-        elif self.screen:
-            self.layout_all()
+        self.layout_all()
 
     def mark_floating(self, win, floating):
         if floating:

@@ -189,14 +189,7 @@ class Slice(Layout):
 
     def remove(self, win):
         lay = self.layouts.pop(win)
-        focus = lay.remove(win)
-        if not focus:
-            layouts = self._get_layouts()
-            idx = layouts.index(lay)
-            while idx < len(layouts) - 1 and not focus:
-                idx += 1
-                focus = layouts[idx].focus_first()
-        return focus
+        lay.remove(win)
 
     def hide(self):
         for lay in self._get_layouts():

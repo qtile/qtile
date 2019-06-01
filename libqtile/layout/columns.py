@@ -215,7 +215,6 @@ class Columns(Layout):
                 break
         if remove is not None:
             self.remove_column(c)
-        return self.columns[self.current].cw
 
     def configure(self, client, screen_rect):
         pos = 0

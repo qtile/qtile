@@ -198,7 +198,6 @@ class Bsp(Layout):
                     self.current = self.root
                 else:
                     self.current = self.get_node(newclient)
-                return newclient
             node.client = None
             self.current = self.root
 

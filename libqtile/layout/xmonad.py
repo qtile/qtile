@@ -212,7 +212,7 @@ class MonadTall(_SimpleLayoutBase):
     def remove(self, client):
         "Remove client from layout"
         self.do_normalize = True
-        return self.clients.remove(client)
+        self.clients.remove(client)
 
     def cmd_normalize(self, redraw=True):
         "Evenly distribute screen-space among secondary clients"

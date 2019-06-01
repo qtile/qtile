@@ -104,7 +104,7 @@ class VerticalTile(_SimpleLayoutBase):
     def remove(self, window):
         if self.maximized is window:
             self.maximized = None
-        return self.clients.remove(window)
+        self.clients.remove(window)
 
     def clone(self, group):
         c = _SimpleLayoutBase.clone(self, group)
