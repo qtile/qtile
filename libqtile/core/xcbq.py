@@ -741,7 +741,7 @@ class Window:
         self.conn.conn.core.MapWindow(self.wid)
 
     def unmap(self):
-        self.conn.conn.core.UnmapWindowChecked(self.wid).check()
+        self.conn.conn.core.UnmapWindowUnchecked(self.wid)
 
     def get_attributes(self):
         return self.conn.conn.core.GetWindowAttributes(self.wid).reply()
