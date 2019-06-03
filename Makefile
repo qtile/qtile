@@ -23,7 +23,7 @@ ckpatch: lint check
 
 .PHONY: clean
 clean:
-	-rm -rf dist qtile.egg-info docs/_build build/
+	-rm -rf dist qtile.egg-info docs/_build build/ .tox/ .mypy_cache/ .pytest_cache/ .eggs/
 
 # This is a little ugly: we want to be able to have users just run
 # 'python setup.py install' to install qtile, but we would also like to install
