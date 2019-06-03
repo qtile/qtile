@@ -18,12 +18,6 @@ On Ubuntu, if testing on Python 3, this can be done with:
 
     sudo apt-get install python3-pytest xserver-xephyr x11-apps
 
-Or, on Python 2:
-
-.. code-block:: bash
-
-    sudo apt-get install python-pytest xserver-xephyr x11-apps
-
 Building cffi module
 ====================
 
