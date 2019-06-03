@@ -39,8 +39,8 @@ import time
 import traceback
 
 import xcffib
+import xcffib.testing
 import xcffib.xproto
-from xvfbwrapper import Xvfb
 
 # the default sizes for the Xephyr windows
 WIDTH = 800
@@ -102,12 +102,6 @@ def can_connect_qtile(socket_path):
     if val == 'OK':
         return True
     return False
-
-
-def _find_display():
-    """Returns the next available display"""
-    xvfb = Xvfb()
-    return xvfb._get_next_unused_display()
 
 
 def whereis(program):
@@ -192,7 +186,7 @@ class Xephyr:
         which is used to setup the instance.
         """
         # get a new display
-        self.display = ":{}".format(_find_display())
+        self.display = ":{}".format(xcffib.testing.find_display())
 
         # build up arguments
         args = [
@@ -236,6 +230,12 @@ class Xephyr:
         self.proc.wait()
 
         self.proc = None
+
+        # clean up the lock file for the display we allocated
+        try:
+            os.remove(xcffib.testing.lock_path(int(self.display[1:])))
+        except OSError:
+            pass
 
 
 class Qtile:
@@ -433,7 +433,7 @@ class Qtile:
 
 @pytest.fixture(scope="session")
 def xvfb():
-    with Xvfb():
+    with xcffib.testing.XvfbTest():
         display = os.environ["DISPLAY"]
         if not can_connect_x11(display):
             raise OSError("Xvfb did not come up")

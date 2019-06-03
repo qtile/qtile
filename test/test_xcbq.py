@@ -1,16 +1,14 @@
+import os
 import pytest
-from xvfbwrapper import Xvfb
 import xcffib
+import xcffib.testing
 from libqtile.core import xcbq
 
 
 @pytest.fixture(scope='function', autouse=True)
 def xdisplay(request):
-    xvfb = Xvfb(width=1280, height=720)
-    xvfb.start()
-    display = ':{}'.format(xvfb.new_display)
-    yield display
-    xvfb.stop()
+    with xcffib.testing.XvfbTest(width=1280, height=720):
+        yield os.environ['DISPLAY']
 
 
 def test_new_window(xdisplay):
