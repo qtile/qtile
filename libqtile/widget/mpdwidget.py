@@ -31,12 +31,6 @@
 # SOFTWARE.
 
 # depends on python-mpd
-
-
-# TODO: check if UI hangs in case of network issues and such
-# TODO: some kind of templating to make shown info configurable
-# TODO: best practice to handle failures? just write to stderr?
-
 import re
 import time
 
