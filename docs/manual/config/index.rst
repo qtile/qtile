@@ -114,10 +114,18 @@ configuration variables that control specific aspects of Qtile's behavior:
         warping to the center of the focused window.
     * - dgroups_key_binder
       - None
-      - TODO
+      - A function which generates group binding hotkeys. It takes a single
+        argument, the DGroups object, and can use that to set up dynamic key
+        bindings.
+
+        A sample implementation is available in `libqtile/dgroups.py
+        <https://github.com/qtile/qtile/blob/master/libqtile/dgroups.py>`_
+        called simple_key_binder(), which will bind groups to mod+shift+0-10 by
+        default.
     * - dgroups_app_rules
       - []
-      - TODO
+      - A list of Rule objects which can send windows to various groups based
+        on matching criteria.
     * - extension_defaults
       - same as `widget_defaults`
       - Default settings for extensions.
