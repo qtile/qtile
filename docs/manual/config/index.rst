@@ -123,7 +123,8 @@ configuration variables that control specific aspects of Qtile's behavior:
       - Default settings for extensions.
     * - floating_layout
       - layout.Floating(float_rules=[...])
-      - TODO
+      - The default floating layout to use. This allows you to set
+        custom floating rules among other things if you wish.
 
         See the configuration file for the default `float_rules`.
     * - focus_on_window_activation
