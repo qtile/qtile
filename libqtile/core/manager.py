@@ -1884,17 +1884,6 @@ class Qtile(command.CommandObject):
         """
         return self.test_data
 
-    def cmd_run_extention(self, cls):
-        """
-        Deprecated alias for cmd_run_extension()
-
-        Note that it was accepting an extension class, not an instance.
-        """
-        # TODO: Remove this method in the future
-        extension = cls()
-        extension._configure(self)
-        return self.cmd_run_extension(extension)
-
     def cmd_run_extension(self, extension):
         """Run extensions"""
         extension.run()
