@@ -21,7 +21,7 @@ Default Configuration
 =====================
 
 The `default configuration
-<https://github.com/qtile/qtile/blob/develop/libqtile/resources/default_config.py>`_
+<https://github.com/qtile/qtile/blob/master/libqtile/resources/default_config.py>`_
 is invoked when qtile cannot find a configuration file. In addition, if qtile
 is restarted via qshell, qtile will load the default configuration if the
 config file it finds has some kind of error in it. The documentation below
