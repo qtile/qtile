@@ -114,6 +114,7 @@ class Columns(Layout):
          "Border colour for un-focused windows in stacked columns."),
         ("border_width", 2, "Border width."),
         ("margin", 0, "Margin of the layout."),
+        ("outer_margin", 0, "Outer margin of the layout."),
         ("split", True, "New columns presentation mode."),
         ("num_columns", 2, "Preferred number of columns."),
         ("grow_amount", 10, "Amount by which to grow a window/column."),
@@ -224,17 +225,19 @@ class Columns(Layout):
             border = 0
         else:
             border = self.border_width
-        width = int(0.5 + col.width * screen.width * 0.01 / len(self.columns))
-        x = screen.x + int(0.5 + pos * screen.width * 0.01 / len(self.columns))
+        inner_width = screen.width - 2 * self.outer_margin
+        width = int(0.5 + col.width * inner_width * 0.01 / len(self.columns))
+        x = screen.x + self.outer_margin + int(0.5 + pos * inner_width * 0.01 / len(self.columns))
         if col.split:
             pos = 0
             for c in col:
                 if client == c:
                     break
                 pos += col.heights[c]
+            inner_height = screen.height - 2 * self.outer_margin
             height = int(
-                0.5 + col.heights[client] * screen.height * 0.01 / len(col))
-            y = screen.y + int(0.5 + pos * screen.height * 0.01 / len(col))
+                0.5 + col.heights[client] * inner_height * 0.01 / len(col))
+            y = screen.y + self.outer_margin + int(0.5 + pos * inner_height * 0.01 / len(col))
             client.place(
                 x,
                 y,
@@ -247,9 +250,9 @@ class Columns(Layout):
         elif client == col.cw:
             client.place(
                 x,
-                screen.y,
+                screen.y + self.outer_margin,
                 width - 2 * border,
-                screen.height - 2 * border,
+                screen.height - 2 * border - 2 * self.outer_margin,
                 border,
                 color,
                 margin=self.margin)
