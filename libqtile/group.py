@@ -248,7 +248,7 @@ class _Group(CommandObject):
         )
 
     def add(self, win, focus=True, force=False):
-        hook.fire("group_window_add")
+        hook.fire("group_window_add", self, win)
         self.windows.add(win)
         win.group = self
         try:
