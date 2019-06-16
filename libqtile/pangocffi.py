@@ -48,7 +48,7 @@
 
 
 try:
-    from libqtile._ffi_pango import ffi
+    from libqtile._ffi_pango import ffi  # pytype: disable=import-error
 except ImportError:
     raise ImportError("No module named libqtile._ffi_pango, be sure to run `./scripts/ffibuild`")
 

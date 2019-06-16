@@ -26,6 +26,8 @@ jobs:
           env: TOXENV=pep8
         - python: 3.8
           env: TOXENV=mypy
+        - python: 3.7
+          env: TOXENV=pytype
 
     allow_failures:
         - python: pypy3
@@ -43,6 +45,7 @@ addons:
     - gkrellm
     - graphviz # for docs
     - imagemagick
+    - libdbus-1-dev
     - x11-apps
     - xserver-xephyr
     - xterm

@@ -39,6 +39,7 @@ debian/*debhelper
 .tox/
 .cache/
 .pytest_cache/
+.pytype/
 .mypy_cache/
 .tags
 venv
