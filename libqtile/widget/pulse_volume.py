@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import subprocess
 
-from . import base
 from .volume import BUTTON_UP, BUTTON_DOWN, BUTTON_MUTE, BUTTON_RIGHT, Volume
 from ._pulse_audio import lib, ffi
 
@@ -34,7 +33,7 @@ def qtile_on_sink_update(context, event_type, sink_index, userdata):
     widget.on_sink_update(event_type, sink_index)
 
 
-class PulseVolume(Volume, base.InLoopPollText):
+class PulseVolume(Volume):
     defaults = [
         ('limit_max_volume', False, 'Limit maximum volume to 100%'),
     ]
@@ -214,14 +213,11 @@ class PulseVolume(Volume, base.InLoopPollText):
         elif button == BUTTON_RIGHT:
             if self.volume_app is not None:
                 subprocess.Popen(self.volume_app)
-
-        self.tick()
+        self.poll()
 
     def poll(self):
         lib.pa_mainloop_iterate(self.loop, 0, ffi.NULL)
-
-    def tick(self):
-        self.poll()
+        self.update()
 
     def update(self):
         """
@@ -248,6 +244,10 @@ class PulseVolume(Volume, base.InLoopPollText):
         return -1
 
     def timer_setup(self):
-        base.InLoopPollText.timer_setup(self)
         if self.theme_path:
             self.setup_images()
+        # in case volume gets changed outside of this widget we would like
+        # to get an updated level
+        self.poll()
+        if self.update_interval is not None:
+            self.timeout_add(self.update_interval, self.timer_setup)
