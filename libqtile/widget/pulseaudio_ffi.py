@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 from cffi import FFI
 
-ffibuilder = FFI()
+pulseaudio_ffi = FFI()
 
-ffibuilder.set_source(
+pulseaudio_ffi.set_source(
     "libqtile.widget._pulse_audio",
     """
     #include "pulse/sample.h"
@@ -19,7 +19,7 @@ ffibuilder.set_source(
     libraries=['pulse'],
 )
 
-ffibuilder.cdef("""
+pulseaudio_ffi.cdef("""
     /** mainloop-api.h */
     typedef struct pa_mainloop_api pa_mainloop_api;
 
@@ -416,4 +416,4 @@ ffibuilder.cdef("""
 """)
 
 if __name__ == '__main__':
-    ffibuilder.compile()
+    pulseaudio_ffi.compile()
