@@ -1,4 +1,4 @@
-qtile 0.14.0, released 2019-xx-xx:
+qtile 0.14.0, released 2019-06-19:
     !!! Python version breakage !!!
         - Python 2 is no longer supported
         - Python 3.4 and older is no longer supported
