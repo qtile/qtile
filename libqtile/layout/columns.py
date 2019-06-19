@@ -415,8 +415,8 @@ class Columns(Layout):
                 self.columns[self.current - 1].width -= self.grow_amount
                 self.cc.width += self.grow_amount
                 self.group.layout_all()
-        else:
-            if self.columns[self.current].width > self.grow_amount:
+        elif len(self.columns) > 1:
+            if self.columns[0].width > self.grow_amount:
                 self.columns[1].width += self.grow_amount
                 self.cc.width -= self.grow_amount
                 self.group.layout_all()
@@ -427,7 +427,7 @@ class Columns(Layout):
                 self.columns[self.current + 1].width -= self.grow_amount
                 self.cc.width += self.grow_amount
                 self.group.layout_all()
-        else:
+        elif len(self.columns) > 1:
             if self.cc.width > self.grow_amount:
                 self.cc.width -= self.grow_amount
                 self.columns[self.current - 1].width += self.grow_amount
@@ -440,6 +440,11 @@ class Columns(Layout):
                 col.heights[col[col.current - 1]] -= self.grow_amount
                 col.heights[col.cw] += self.grow_amount
                 self.group.layout_all()
+        elif len(col) > 1:
+            if col.heights[col.cw] > self.grow_amount:
+                col.heights[col[1]] += self.grow_amount
+                col.heights[col.cw] -= self.grow_amount
+                self.group.layout_all()
 
     def cmd_grow_down(self):
         col = self.cc
@@ -447,6 +452,11 @@ class Columns(Layout):
             if col.heights[col[col.current + 1]] > self.grow_amount:
                 col.heights[col[col.current + 1]] -= self.grow_amount
                 col.heights[col.cw] += self.grow_amount
+                self.group.layout_all()
+        elif len(col) > 1:
+            if col.heights[col.cw] > self.grow_amount:
+                col.heights[col[col.current - 1]] += self.grow_amount
+                col.heights[col.cw] -= self.grow_amount
                 self.group.layout_all()
 
     def cmd_normalize(self):
