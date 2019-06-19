@@ -1,4 +1,7 @@
-qtile x.x.x, released xxxx-xx-xx:
+qtile 0.14.0, released 2019-xx-xx:
+    !!! Python version breakage !!!
+        - Python 2 is no longer supported
+        - Python 3.4 and older is no longer supported
     !!! Config breakage !!!
         - Many internal things were renamed from camel case to snake case. If
           your config uses main(), or any lazy.function() invocations that
@@ -9,6 +12,18 @@ qtile x.x.x, released xxxx-xx-xx:
           to add an upstream API for what you want to do ;)
         - Maildir's subFolder and maildirPath changed to maildir_path and
           sub_folder.
+    * features
+        - add custom `change_command` to backlight widget
+        - add CommandSet extension to list available commands
+        - simplify battery monitoring widget interface and add freebsd
+          compatible battery widget implementation
+        - track last known mouse coordinates on the qtile manager
+        - allow configuration of warping behavior in columns layout
+    * bugfixes
+        - with cursor warp enabled, the cursor is warped on screen change
+        - fix stepping groups to skip the scratch pad group
+        - fix stack layout to properly shuffle
+        - silence errors when unmapping windows
 
 qtile 0.13.0, released 2018-12-23:
     !!! deprecation warning !!!
