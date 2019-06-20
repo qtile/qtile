@@ -86,15 +86,14 @@ class _IPC:
 
     @staticmethod
     def pack(msg: Any) -> bytes:
-        # mashal seems incorrectly annotated to take and return str
-        msg_bytes = cast(bytes, marshal.dumps(msg))
+        msg_bytes = marshal.dumps(msg)
         size = struct.pack("!L", len(msg_bytes))
         return size + msg_bytes
 
     @staticmethod
     def _unpack_body(body: bytes) -> Any:
         # mashal seems incorrectly annotated to take and return str
-        return marshal.loads(cast(str, body))
+        return marshal.loads(body)
 
 
 class _ClientProtocol(asyncio.Protocol):
