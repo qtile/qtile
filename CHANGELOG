@@ -1,3 +1,8 @@
+qtile 0.14.2, released 2019-06-19:
+    * bugfixes
+        - previous release still exhibited same issues with package data,
+          really fix it this time
+
 qtile 0.14.1, released 2019-06-19:
     * bugfixes
         - properly include png files in the package data to install included
