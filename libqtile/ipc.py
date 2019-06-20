@@ -314,8 +314,7 @@ class Server:
 
     def start(self) -> None:
         assert self.server is None
-        serverprotocol = _ServerProtocol(self.handler)
-        server_coroutine = self.loop.create_unix_server(lambda: serverprotocol, sock=self.sock, backlog=5)
+        server_coroutine = self.loop.create_unix_server(lambda: _ServerProtocol(self.handler), sock=self.sock)
 
         logger.debug('Starting server')
         self.server = self.loop.run_until_complete(server_coroutine)
