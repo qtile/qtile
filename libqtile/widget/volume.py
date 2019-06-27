@@ -60,17 +60,15 @@ class Volume(base._TextBox):
         ("padding", 3, "Padding left and right. Calculated if None."),
         ("theme_path", None, "Path of the icons"),
         ("update_interval", 0.2, "Update time in seconds."),
-        ("emoji", False, "Use emoji to display volume states, \
-         only if ``theme_path`` is not set. \
-         The specified font needs to contain the correct unicode characters."),
+        ("emoji", False, "Use emoji to display volume states, only if ``theme_path`` is not set."
+                         "The specified font needs to contain the correct unicode characters."),
         ("mute_command", None, "Mute command"),
         ("volume_app", None, "App to control volume"),
         ("volume_up_command", None, "Volume up command"),
         ("volume_down_command", None, "Volume down command"),
         ("get_volume_command", None, "Command to get the current volume"),
-        ("step", 2, "Volume change for up an down commands in percentage. \
-         Only used if ``volume_up_command`` and \
-         ``volume_down_command`` are not set.")
+        ("step", 2, "Volume change for up an down commands in percentage."
+                    "Only used if ``volume_up_command`` and ``volume_down_command`` are not set.")
     ]
 
     def __init__(self, **config):
@@ -104,24 +102,26 @@ class Volume(base._TextBox):
             if self.volume_down_command is not None:
                 subprocess.call(self.volume_down_command, shell=True)
             else:
-                subprocess.call(
-                    self.create_amixer_command(
-                        '-q', 'sset', self.channel, '%d%%-' % self.step))
+                subprocess.call(self.create_amixer_command('-q',
+                                                           'sset',
+                                                           self.channel,
+                                                           '%d%%-' % self.step))
         elif button == BUTTON_UP:
             if self.volume_up_command is not None:
-                subprocess.call(
-                    self.volume_up_command, shell=True)
+                subprocess.call(self.volume_up_command, shell=True)
             else:
-                subprocess.call(
-                    self.create_amixer_command(
-                        '-q', 'sset', self.channel, '%d%%+' % self.step))
+                subprocess.call(self.create_amixer_command('-q',
+                                                           'sset',
+                                                           self.channel,
+                                                           '%d%%+' % self.step))
         elif button == BUTTON_MUTE:
             if self.mute_command is not None:
                 subprocess.call(self.mute_command, shell=True)
             else:
-                subprocess.call(
-                    self.create_amixer_command(
-                        '-q', 'sset', self.channel, 'toggle'))
+                subprocess.call(self.create_amixer_command('-q',
+                                                           'sset',
+                                                           self.channel,
+                                                           'toggle'))
         elif button == BUTTON_RIGHT:
             if self.volume_app is not None:
                 subprocess.Popen(self.volume_app, shell=True)
