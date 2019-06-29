@@ -218,21 +218,21 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         return 'BAT0'
 
     def _load_file(self, name) -> Optional[Tuple[str, str]]:
-        try:
-            path = os.path.join(self.BAT_DIR, self.battery, name)
-            if 'energy' in name or 'power' in name:
-                value_type = 'uW'
-            elif 'charge' in name:
-                value_type = 'uAh'
-            elif 'current' in name:
-                value_type = 'uA'
-            else:
-                value_type = ''
+        path = os.path.join(self.BAT_DIR, self.battery, name)
+        if 'energy' in name or 'power' in name:
+            value_type = 'uW'
+        elif 'charge' in name:
+            value_type = 'uAh'
+        elif 'current' in name:
+            value_type = 'uA'
+        else:
+            value_type = ''
 
+        try:
             with open(path, 'r') as f:
                 return f.read().strip(), value_type
-        except Exception:
-            logger.exception("Failed to get %s" % name)
+        except FileNotFoundError:
+            logger.debug("Failed to get %s" % name)
         return None
 
     def _get_param(self, name) -> Tuple[str, str]:
