@@ -23,7 +23,7 @@ from docutils import nodes
 from docutils.statemachine import ViewList
 from docutils.parsers.rst import Directive
 from jinja2 import Template
-from libqtile import command, configurable, widget
+from libqtile import command_object, configurable, widget
 from sphinx.util.nodes import nested_parse_with_titles
 import functools
 import inspect
@@ -134,13 +134,14 @@ class QtileClass(SimpleDirectiveMixin, Directive):
             'obj': obj,
             'defaults': defaults,
             'configurable': is_configurable and issubclass(obj, configurable.Configurable),
-            'commandable': is_commandable and issubclass(obj, command.CommandObject),
+            'commandable': is_commandable and issubclass(obj, command_object.CommandObject),
             'is_widget': issubclass(obj, widget.base._Widget),
             'extra_arguments': arguments,
         }
         if context['commandable']:
-            context['commands'] = [attr for attr in dir(obj)
-                if attr.startswith('cmd_')]
+            context['commands'] = [
+                attr for attr in dir(obj) if attr.startswith('cmd_')
+            ]
 
         rst = qtile_class_template.render(**context)
         for line in rst.splitlines():

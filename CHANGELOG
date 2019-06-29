@@ -1,3 +1,13 @@
+qtile 0.14.2, released 2019-06-19:
+    * bugfixes
+        - previous release still exhibited same issues with package data,
+          really fix it this time
+
+qtile 0.14.1, released 2019-06-19:
+    * bugfixes
+        - properly include png files in the package data to install included
+          icons
+
 qtile 0.14.0, released 2019-06-19:
     !!! Python version breakage !!!
         - Python 2 is no longer supported

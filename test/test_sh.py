@@ -22,26 +22,25 @@
 
 import pytest
 
-import libqtile
-import libqtile.sh
-import libqtile.confreader
-import libqtile.layout
-import libqtile.config
+from libqtile import config, ipc
+from libqtile.layout import floating, Max
+from libqtile.sh import QSh
+from libqtile.command_interface import IPCCommandInterface
 
 
 class ShConfig:
     keys = []
     mouse = []
     groups = [
-        libqtile.config.Group("a"),
-        libqtile.config.Group("b"),
+        config.Group("a"),
+        config.Group("b"),
     ]
     layouts = [
-        libqtile.layout.Max(),
+        Max(),
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = floating.Floating()
     screens = [
-        libqtile.config.Screen()
+        config.Screen()
     ]
     main = None
 
@@ -51,88 +50,83 @@ sh_config = pytest.mark.parametrize("qtile", [ShConfig], indirect=True)
 
 @sh_config
 def test_columnize(qtile):
-    qtile.sh = libqtile.sh.QSh(qtile.c)
-    assert qtile.sh.columnize(["one", "two"]) == "one  two"
+    client = ipc.Client(qtile.sockfile)
+    command = IPCCommandInterface(client)
+    sh = QSh(command)
+    assert sh.columnize(["one", "two"]) == "one  two"
 
-    qtile.sh.termwidth = 1
-    assert qtile.sh.columnize(["one", "two"], update_termwidth=False) == "one\ntwo"
+    sh.termwidth = 1
+    assert sh.columnize(["one", "two"], update_termwidth=False) == "one\ntwo"
 
-    qtile.sh.termwidth = 15
-    v = qtile.sh.columnize(["one", "two", "three", "four", "five"], update_termwidth=False)
+    sh.termwidth = 15
+    v = sh.columnize(["one", "two", "three", "four", "five"], update_termwidth=False)
     assert v == 'one    two  \nthree  four \nfive '
 
 
 @sh_config
 def test_ls(qtile):
-    qtile.sh = libqtile.sh.QSh(qtile.c)
-    qtile.sh.do_cd("layout")
-    qtile.sh.do_ls("")
+    client = ipc.Client(qtile.sockfile)
+    command = IPCCommandInterface(client)
+    sh = QSh(command)
+    assert sh.do_ls("") == "bar/     group/   layout/  screen/  widget/  window/"
+    assert sh.do_ls("layout") == "group/   window/  screen/  0/     "
 
-
-@sh_config
-def test_find_node(qtile):
-    qtile.sh = libqtile.sh.QSh(qtile.c)
-    n = qtile.sh._find_node(qtile.sh.current, "layout")
-    assert n.path == "layout"
-    assert n.parent
-
-    n = qtile.sh._find_node(n, "0")
-    assert n.path == "layout[0]"
-
-    n = qtile.sh._find_node(n, "..")
-    assert n.path == "layout"
-
-    n = qtile.sh._find_node(n, "0", "..")
-    assert n.path == "layout"
-
-    n = qtile.sh._find_node(n, "..", "layout", 0)
-    assert n.path == "layout[0]"
-
-    assert not qtile.sh._find_node(n, "wibble")
-    assert not qtile.sh._find_node(n, "..", "0", "wibble")
+    assert sh.do_cd("layout") == "layout"
+    assert sh.do_ls("") == "group/   window/  screen/  0/     "
+    assert sh.do_ls("screen") == "layout/  window/  bar/   "
 
 
 @sh_config
 def test_do_cd(qtile):
-    qtile.sh = libqtile.sh.QSh(qtile.c)
-    assert qtile.sh.do_cd("layout") == 'layout'
-    assert qtile.sh.do_cd("0/wibble") == 'No such path.'
-    assert qtile.sh.do_cd("0/") == 'layout[0]'
+    client = ipc.Client(qtile.sockfile)
+    command = IPCCommandInterface(client)
+    sh = QSh(command)
+    assert sh.do_cd("layout") == 'layout'
+    assert sh.do_cd("0") == 'layout[0]'
+    assert sh.do_cd("..") == '/'
+    assert sh.do_cd("layout") == 'layout'
+    assert sh.do_cd("0/wibble") == 'No such path.'
 
 
 @sh_config
 def test_call(qtile):
-    qtile.sh = libqtile.sh.QSh(qtile.c)
-    assert qtile.sh._call("status", []) == "OK"
+    client = ipc.Client(qtile.sockfile)
+    command = IPCCommandInterface(client)
+    sh = QSh(command)
+    assert sh.process_line("status()") == "OK"
 
-    v = qtile.sh._call("nonexistent", "")
-    assert "No such command" in v
+    v = sh.process_line("nonexistent()")
+    assert v == "Command does not exist: nonexistent"
 
-    v = qtile.sh._call("status", "(((")
-    assert "Syntax error" in v
+    v = sh.process_line("status(((")
+    assert v == "Invalid command: status((("
 
-    v = qtile.sh._call("status", "(1)")
-    assert "Command exception" in v
+    v = sh.process_line("status(1)")
+    assert v.startswith("Command exception")
 
 
 @sh_config
 def test_complete(qtile):
-    qtile.sh = libqtile.sh.QSh(qtile.c)
-    assert qtile.sh._complete("c", "c") == [
+    client = ipc.Client(qtile.sockfile)
+    command = IPCCommandInterface(client)
+    sh = QSh(command)
+    assert sh._complete("c", "c") == [
         "cd",
         "commands",
         "critical",
     ]
 
-    assert qtile.sh._complete("cd l", "l") == ["layout/"]
-    assert qtile.sh._complete("cd layout/", "layout/") == [
+    assert sh._complete("cd l", "l") == ["layout/"]
+    assert sh._complete("cd layout/", "layout/") == [
         "layout/" + x for x in ["group", "window", "screen", "0"]
     ]
-    assert qtile.sh._complete("cd layout/", "layout/g") == ["layout/group/"]
+    assert sh._complete("cd layout/", "layout/g") == ["layout/group/"]
 
 
 @sh_config
 def test_help(qtile):
-    qtile.sh = libqtile.sh.QSh(qtile.c)
-    assert qtile.sh.do_help("nonexistent").startswith("No such command")
-    assert qtile.sh.do_help("help")
+    client = ipc.Client(qtile.sockfile)
+    command = IPCCommandInterface(client)
+    sh = QSh(command)
+    assert sh.do_help("nonexistent").startswith("No such command")
+    assert sh.do_help("help")

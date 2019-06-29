@@ -100,7 +100,7 @@ class Volume(base._TextBox):
     def button_press(self, x, y, button):
         if button == BUTTON_DOWN:
             if self.volume_down_command is not None:
-                subprocess.call(self.volume_down_command)
+                subprocess.call(self.volume_down_command, shell=True)
             else:
                 subprocess.call(self.create_amixer_command('-q',
                                                            'sset',
@@ -108,7 +108,7 @@ class Volume(base._TextBox):
                                                            '%d%%-' % self.step))
         elif button == BUTTON_UP:
             if self.volume_up_command is not None:
-                subprocess.call(self.volume_up_command)
+                subprocess.call(self.volume_up_command, shell=True)
             else:
                 subprocess.call(self.create_amixer_command('-q',
                                                            'sset',
@@ -116,7 +116,7 @@ class Volume(base._TextBox):
                                                            '%d%%+' % self.step))
         elif button == BUTTON_MUTE:
             if self.mute_command is not None:
-                subprocess.call(self.mute_command)
+                subprocess.call(self.mute_command, shell=True)
             else:
                 subprocess.call(self.create_amixer_command('-q',
                                                            'sset',
@@ -124,7 +124,7 @@ class Volume(base._TextBox):
                                                            'toggle'))
         elif button == BUTTON_RIGHT:
             if self.volume_app is not None:
-                subprocess.Popen(self.volume_app)
+                subprocess.Popen(self.volume_app, shell=True)
 
         self.draw()
 

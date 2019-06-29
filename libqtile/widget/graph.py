@@ -331,7 +331,9 @@ class NetGraph(_Graph):
 
     def update_graph(self):
         val = self._get_values()
-        self.push(val)
+        change = val - self.bytes
+        self.bytes = val
+        self.push(change)
 
     @staticmethod
     def get_main_iface():

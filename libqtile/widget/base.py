@@ -29,13 +29,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.log_utils import logger
-from .. import command, bar, configurable, drawer, confreader
 import subprocess
 import threading
 import warnings
-
 from typing import Any, List, Tuple  # noqa: F401
+
+from libqtile.log_utils import logger
+from libqtile.command_object import CommandObject, CommandError
+from .. import bar, configurable, drawer, confreader
 
 
 # Each widget class must define which bar orientation(s) it supports by setting
@@ -78,7 +79,7 @@ ORIENTATION_VERTICAL = _Orientations(2, 'vertical only')
 ORIENTATION_BOTH = _Orientations(3, 'horizontal and vertical')
 
 
-class _Widget(command.CommandObject, configurable.Configurable):
+class _Widget(CommandObject, configurable.Configurable):
     """Base Widget class
 
     If length is set to the special value `bar.STRETCH`, the bar itself will
@@ -101,7 +102,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
         """
             length: bar.STRETCH, bar.CALCULATED, or a specified length.
         """
-        command.CommandObject.__init__(self)
+        CommandObject.__init__(self)
         self.name = self.__class__.__name__.lower()
         if "name" in config:
             self.name = config["name"]
@@ -214,7 +215,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
         """
         w = q.widgets_map.get(name)
         if not w:
-            raise command.CommandError("No such widget: %s" % name)
+            raise CommandError("No such widget: %s" % name)
         return w
 
     def _items(self, name):

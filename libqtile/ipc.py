@@ -33,9 +33,21 @@ import socket
 import struct
 from typing import cast, Any, Callable, Optional, Tuple
 
-from .log_utils import logger
+from libqtile.log_utils import logger
+from libqtile.utils import get_cache_dir
 
 HDRLEN = 4
+
+SOCKBASE = "qtilesocket.%s"
+
+
+def find_sockfile(display: str = None):
+    """Finds the appropriate socket file for the given display"""
+    display = display or os.environ.get('DISPLAY') or ':0.0'
+    if '.' not in display:
+        display += '.0'
+    cache_directory = get_cache_dir()
+    return os.path.join(cache_directory, SOCKBASE % display)
 
 
 class IPCError(Exception):
@@ -86,15 +98,14 @@ class _IPC:
 
     @staticmethod
     def pack(msg: Any) -> bytes:
-        # mashal seems incorrectly annotated to take and return str
-        msg_bytes = cast(bytes, marshal.dumps(msg))
+        msg_bytes = marshal.dumps(msg)
         size = struct.pack("!L", len(msg_bytes))
         return size + msg_bytes
 
     @staticmethod
     def _unpack_body(body: bytes) -> Any:
         # mashal seems incorrectly annotated to take and return str
-        return marshal.loads(cast(str, body))
+        return marshal.loads(body)
 
 
 class _ClientProtocol(asyncio.Protocol):
@@ -303,8 +314,7 @@ class Server:
 
     def start(self) -> None:
         assert self.server is None
-        serverprotocol = _ServerProtocol(self.handler)
-        server_coroutine = self.loop.create_unix_server(lambda: serverprotocol, sock=self.sock, backlog=5)
+        server_coroutine = self.loop.create_unix_server(lambda: _ServerProtocol(self.handler), sock=self.sock)
 
         logger.debug('Starting server')
         self.server = self.loop.run_until_complete(server_coroutine)
