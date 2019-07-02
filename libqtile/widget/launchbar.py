@@ -182,7 +182,7 @@ class LaunchBar(base._Widget):
             if icon is not None:
                 cmd = self.progs[icon]['cmd']
                 if cmd.startswith('qshell:'):
-                    exec(cmd[4:].lstrip())
+                    exec(cmd[7:].lstrip())
                 else:
                     self.qtile.cmd_spawn(cmd)
             self.draw()
