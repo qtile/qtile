@@ -18,9 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import sh, command
-
 from ipykernel.kernelbase import Kernel
+
+from libqtile import command_interface, ipc, sh
 
 
 class QshKernel(Kernel):
@@ -31,10 +31,12 @@ class QshKernel(Kernel):
     language_info = {'mimetype': 'text/plain'}
     banner = "Qsh Kernel"
 
-    def __init__(self, **kwargs):
-        Kernel.__init__(self, **kwargs)
-        self.client = command.Client()
-        self.qsh = sh.QSh(self.client)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        socket_path = ipc.find_sockfile()
+        ipc_client = ipc.Client(socket_path)
+        cmd_object = command_interface.IPCCommandInterface(ipc_client)
+        self.qsh = sh.QSh(cmd_object)
 
     def do_execute(self, code, silent, store_history=True, user_expressions=None, allow_stdin=False):
         # if no command sent, just return
@@ -50,7 +52,7 @@ class QshKernel(Kernel):
             return self.do_inspect(code, len(code) - 1)
 
         try:
-            output = self.qsh.process_command(code)
+            output = self.qsh.process_line(code)
         except KeyboardInterrupt:
             return {
                 'status': 'abort',

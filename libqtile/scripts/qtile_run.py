@@ -26,26 +26,39 @@ import atexit
 import argparse
 import subprocess
 
-from libqtile import command
+from libqtile import ipc, command_graph
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Run a command applying rules"
-                                     " to the new windows")
-    parser.add_argument('-s', '--socket', type=str, dest="socket",
-                        help='Use specified communication socket.')
-    parser.add_argument('-i', '--intrusive',
-                        dest="intrusive", action='store_true',
-                        help='If the new window should be intrusive.')
-    parser.add_argument('-f', '--float', dest="floating", action='store_true',
-                        help='If the new window should be float.')
-    parser.add_argument('-b', '--dont-break', dest="dont_break",
-                        action='store_true',
-                        help='Don\'t break on match(keep applying rules).')
-    parser.add_argument('-g', '--group', dest="group", type=str,
-                        help='Set the window group.')
-    parser.add_argument('cmd', nargs=argparse.REMAINDER,
-                        help='Command to execute')
+    parser = argparse.ArgumentParser(
+        description="Run a command applying rules to the new windows")
+    parser.add_argument(
+        '-s',
+        '--socket',
+        help='Use specified communication socket.')
+    parser.add_argument(
+        '-i',
+        '--intrusive',
+        action='store_true',
+        help='If the new window should be intrusive.')
+    parser.add_argument(
+        '-f',
+        '--float',
+        action='store_true',
+        help='If the new window should be float.')
+    parser.add_argument(
+        '-b',
+        '--dont-break',
+        action='store_true',
+        help='Do not break on match (keep applying rules).')
+    parser.add_argument(
+        '-g',
+        '--group',
+        help='Set the window group.')
+    parser.add_argument(
+        'cmd',
+        nargs=argparse.REMAINDER,
+        help='Command to execute')
 
     opts = parser.parse_args()
     if not opts.cmd:
@@ -54,17 +67,30 @@ def parse_args():
     return opts
 
 
-def main():
+def main() -> None:
     opts = parse_args()
-    client = command.Client(opts.socket)
+    if opts.socket is None:
+        socket = ipc.find_sockfile()
+    else:
+        socket = opts.socket
+    client = ipc.Client(socket)
+    root = command_graph.CommandGraphRoot()
 
     proc = subprocess.Popen(opts.cmd)
     match_args = {"net_wm_pid": [proc.pid]}
-    rule_args = {"float": opts.floating, "intrusive": opts.intrusive,
+    rule_args = {"float": opts.float, "intrusive": opts.intrusive,
                  "group": opts.group, "break_on_match": not opts.dont_break}
-    rule_id = client.add_rule(match_args, rule_args)
 
-    atexit.register(lambda: client.remove_rule(rule_id))
+    cmd = root.navigate("add_rule", None)
+    assert isinstance(cmd, command_graph.CommandGraphCall)
+    _, rule_id = client.send((root.selectors, cmd.name, (match_args, rule_args), {}))
+
+    def remove_rule():
+        cmd = root.navigate("remove_rule", None)
+        assert isinstance(cmd, command_graph.CommandGraphCall)
+        client.send((root.selectors, cmd.name, (rule_id,), {}))
+
+    atexit.register(remove_rule)
 
     proc.wait()
 

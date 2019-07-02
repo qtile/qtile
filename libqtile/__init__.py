@@ -18,7 +18,3 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-# Keep supporting the deprecated misspelled subpackage "extention"
-# TODO: Remove in the future
-from . import extension as extention  # noqa

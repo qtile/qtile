@@ -18,11 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Dict
+from typing import Dict  # noqa: F401
 
 
 class Configurable:
-    global_defaults: Dict = {}
+    global_defaults = {}  # type: Dict
 
     def __init__(self, **config):
         self._variable_defaults = {}

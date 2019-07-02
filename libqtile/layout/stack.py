@@ -265,22 +265,22 @@ class Stack(Layout):
 
     def cmd_down(self):
         """Switch to the next window in this stack"""
-        self.current_stack.current_index -= 1
+        self.current_stack.current_index += 1
         self.group.focus(self.current_stack.cw, False)
 
     def cmd_up(self):
         """Switch to the previous window in this stack"""
-        self.current_stack.current_index += 1
+        self.current_stack.current_index -= 1
         self.group.focus(self.current_stack.cw, False)
 
     def cmd_shuffle_up(self):
         """Shuffle the order of this stack up"""
-        self.current_stack.rotate_up()
+        self.current_stack.shuffle_up()
         self.group.layout_all()
 
     def cmd_shuffle_down(self):
         """Shuffle the order of this stack down"""
-        self.current_stack.rotate_down()
+        self.current_stack.shuffle_down()
         self.group.layout_all()
 
     def cmd_delete(self):

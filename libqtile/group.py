@@ -30,14 +30,14 @@ import contextlib
 import xcffib
 import xcffib.xproto
 
-from . import command
+from libqtile.command_object import CommandObject
 from . import hook
 from . import window
 from . import utils
 from .log_utils import logger
 
 
-class _Group(command.CommandObject):
+class _Group(CommandObject):
     """A container for a bunch of windows
 
     Analogous to workspaces in other window managers. Each client window
@@ -147,7 +147,7 @@ class _Group(command.CommandObject):
         If we have have a current_window give it focus, optionally moving warp
         to it.
         """
-        if self.screen and len(self.windows):
+        if self.screen and self.windows:
             with self.disable_mask(xcffib.xproto.EventMask.EnterWindow):
                 normal = [x for x in self.windows if not x.floating]
                 floating = [
@@ -158,7 +158,7 @@ class _Group(command.CommandObject):
                 if normal:
                     try:
                         self.layout.layout(normal, screen)
-                    except:  # noqa: E722
+                    except Exception:
                         logger.exception("Exception in layout %s",
                                          self.layout.name)
                 if floating:
@@ -175,7 +175,7 @@ class _Group(command.CommandObject):
         if self.screen:
             # move all floating guys offset to new screen
             self.floating_layout.to_screen(self, self.screen)
-            self.layout_all()
+            self.layout_all(warp=self.qtile.config.cursor_warp)
             rect = self.screen.get_rect()
             self.floating_layout.show(rect)
             self.layout.show(rect)
@@ -225,13 +225,13 @@ class _Group(command.CommandObject):
                 return
             self.current_window = win
             if win.floating:
-                for l in self.layouts:
-                    l.blur()
+                for layout in self.layouts:
+                    layout.blur()
                 self.floating_layout.focus(win)
             else:
                 self.floating_layout.blur()
-                for l in self.layouts:
-                    l.focus(win)
+                for layout in self.layouts:
+                    layout.focus(win)
             hook.fire("focus_change")
             self.layout_all(warp)
 
@@ -329,26 +329,26 @@ class _Group(command.CommandObject):
     def _items(self, name):
         if name == "layout":
             return (True, list(range(len(self.layouts))))
-        elif name == "window":
-            return (True, [i.window.wid for i in self.windows])
-        elif name == "screen":
+        if name == "screen":
             return (True, None)
+        if name == "window":
+            return (True, [i.window.wid for i in self.windows])
+        raise RuntimeError("Invalid item: {}".format(name))
 
     def _select(self, name, sel):
         if name == "layout":
             if sel is None:
                 return self.layout
-            else:
-                return utils.lget(self.layouts, sel)
-        elif name == "window":
+            return utils.lget(self.layouts, sel)
+        if name == "screen":
+            return self.screen
+        if name == "window":
             if sel is None:
                 return self.current_window
-            else:
-                for i in self.windows:
-                    if i.window.wid == sel:
-                        return i
-        elif name == "screen":
-            return self.screen
+            for i in self.windows:
+                if i.window.wid == sel:
+                    return i
+        raise RuntimeError("Invalid selection: {}".format(name))
 
     def cmd_setlayout(self, layout):
         self.layout = layout
@@ -393,11 +393,15 @@ class _Group(command.CommandObject):
         """
 
         def match(group):
+            from . import scratchpad
+
             if group is self:
                 return True
             if skip_empty and not group.windows:
                 return False
             if skip_managed and group.screen:
+                return False
+            if isinstance(group, scratchpad.ScratchPad):
                 return False
             return True
 
@@ -413,8 +417,8 @@ class _Group(command.CommandObject):
 
     def cmd_unminimize_all(self):
         """Unminimise all windows in this group"""
-        for w in self.windows:
-            w.minimized = False
+        for win in self.windows:
+            win.minimized = False
         self.layout_all()
 
     def cmd_next_window(self):

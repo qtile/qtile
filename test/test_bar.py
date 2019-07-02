@@ -239,7 +239,7 @@ def test_resize(qtile):
     def offy(l):
         return [i.offsety for i in l]
 
-    for DBar, off in ((DBarH, offx), (DBarV, offy)):
+    for DBar, off in ((DBarH, offx), (DBarV, offy)):  # noqa: N806
         b = DBar([], 100)
 
         dwidget_list = [

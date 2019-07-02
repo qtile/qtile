@@ -17,14 +17,15 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from . import command
+
 from . import confreader
 from . import drawer
 from . import configurable
 from . import window
+from libqtile.command_object import CommandObject
 
 
-class Gap(command.CommandObject):
+class Gap(CommandObject):
     """A gap placed along one of the edges of the screen
 
     If a gap has been defined, Qtile will avoid covering it with windows. The

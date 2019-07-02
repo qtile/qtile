@@ -1,0 +1,19 @@
+[MASTER]
+
+# files that cause recursion depth exceeded errors
+ignore=graph.py,manager.py
+
+# also ignore cffi generated modules
+ignore-patterns=_ffi.*.py
+
+jobs=0
+
+[BASIC]
+
+max-line-length = 120
+
+good-names=i,
+           j,
+           k,
+           x,
+           y,

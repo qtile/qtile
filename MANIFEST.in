@@ -5,13 +5,14 @@ include MANIFEST.in
 include CONTRIBUTING.md
 
 exclude .coveragerc
+exclude .pylintrc
 exclude tox.ini
-exclude requirements.in
 exclude requirements.txt
 exclude requirements-dev.txt
 exclude libqtile/_ffi*.py
 exclude Makefile
 exclude dev.sh
+exclude logo.png
 
 graft libqtile/resources
 graft resources

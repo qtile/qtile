@@ -27,6 +27,7 @@ MOCK_MODULES = [
     'libqtile._ffi_pango',
     'libqtile.core._ffi_xcursors',
     'cairocffi',
+    'cairocffi.pixbuf',
     'cffi',
     'dateutil',
     'dateutil.parser',
@@ -86,14 +87,14 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Qtile'
-copyright = u'2008-2018, Aldo Cortesi and contributers'
+copyright = u'2008-2019, Aldo Cortesi and contributers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '0.13.0'
+version = '0.14.2'
 # The full version, including alpha/beta/rc tags.
 release = version
 

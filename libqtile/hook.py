@@ -33,11 +33,11 @@
 from .log_utils import logger
 from . import utils
 
-from typing import Dict, Set
+from typing import Dict, Set  # noqa: F401
 
 
-subscriptions: Dict = {}
-SKIPLOG: Set = set()
+subscriptions = {}  # type: Dict
+SKIPLOG = set()  # type: Set
 qtile = None
 
 

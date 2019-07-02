@@ -22,9 +22,10 @@
 # SOFTWARE.
 
 import os
+import shlex
 from . import base
 
-from typing import Dict
+from typing import Dict  # noqa: F401
 
 BACKLIGHT_DIR = '/sys/class/backlight'
 
@@ -32,7 +33,7 @@ BACKLIGHT_DIR = '/sys/class/backlight'
 class Backlight(base.InLoopPollText):
     """A simple widget to show the current brightness of a monitor"""
 
-    filenames: Dict = {}
+    filenames = {}  # type: Dict
 
     orientations = base.ORIENTATION_HORIZONTAL
 
@@ -52,7 +53,8 @@ class Backlight(base.InLoopPollText):
         ),
         ('update_interval', .2, 'The delay in seconds between updates'),
         ('step', 10, 'Percent of backlight every scroll changed'),
-        ('format', '{percent: 2.0%}', 'Display format')
+        ('format', '{percent: 2.0%}', 'Display format'),
+        ('change_command', 'xbacklight -set {0}', 'Execute command to change value')
     ]
 
     def __init__(self, **config):
@@ -81,7 +83,7 @@ class Backlight(base.InLoopPollText):
         return self.format.format(percent=percent)
 
     def change_backlight(self, value):
-        self.call_process(["xbacklight", "-set", str(value)])
+        self.call_process(shlex.split(self.change_command.format(value)))
 
     def button_press(self, x, y, button):
         if self.future and not self.future.done():

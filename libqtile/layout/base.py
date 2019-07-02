@@ -21,24 +21,24 @@
 
 import copy
 from abc import ABCMeta, abstractmethod
+from typing import Any, List, Tuple  # noqa: F401
 
-from .. import command, configurable
+from .. import configurable
+from libqtile.command_object import CommandObject
 
-from typing import Any, List, Tuple
 
-
-class Layout(command.CommandObject, configurable.Configurable, metaclass=ABCMeta):
+class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
     """This class defines the API that should be exposed by all layouts"""
     @classmethod
     def _name(cls):
         return cls.__class__.__name__.lower()
 
-    defaults: List[Tuple[str, Any, str]] = [(
+    defaults = [(
         "name",
         None,
         "The name of this layout"
         " (usually the class' name in lowercase, e.g. 'max')"
-    )]
+    )]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, **config):
         # name is a little odd; we can't resolve it until the class is defined
@@ -47,7 +47,7 @@ class Layout(command.CommandObject, configurable.Configurable, metaclass=ABCMeta
         if "name" not in config:
             config["name"] = self.__class__.__name__.lower()
 
-        command.CommandObject.__init__(self)
+        CommandObject.__init__(self)
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(Layout.defaults)
 
@@ -343,6 +343,10 @@ class Delegate(Layout):
         if name.startswith('cmd_'):
             return getattr(self._get_active_layout(), name)
         return super().__getattr__(name)
+
+    @property
+    def commands(self):
+        return self._get_active_layout().commands
 
     def info(self):
         d = Layout.info(self)

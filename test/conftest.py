@@ -20,11 +20,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import libqtile
-import libqtile.ipc
-from libqtile.core.manager import Qtile as QtileManager
-from libqtile.core import xcore
-from libqtile.log_utils import init_log
 
 import functools
 import logging
@@ -38,8 +33,16 @@ import time
 import traceback
 
 import xcffib
+import xcffib.testing
 import xcffib.xproto
-from xvfbwrapper import Xvfb
+
+import libqtile.config
+from libqtile.core.manager import Qtile as QtileManager
+from libqtile.core import xcore
+from libqtile.log_utils import init_log
+from libqtile.resources import default_config
+from libqtile import command_client, command_interface, ipc
+from libqtile.lazy import lazy
 
 # the default sizes for the Xephyr windows
 WIDTH = 800
@@ -94,19 +97,15 @@ def can_connect_x11(disp=':0'):
     return True
 
 
-@Retry(ignore_exceptions=(libqtile.ipc.IPCError,), return_on_fail=True)
+@Retry(ignore_exceptions=(ipc.IPCError,), return_on_fail=True)
 def can_connect_qtile(socket_path):
-    client = libqtile.command.Client(socket_path)
+    ipc_client = ipc.Client(socket_path)
+    ipc_command = command_interface.IPCCommandInterface(ipc_client)
+    client = command_client.InteractiveCommandClient(ipc_command)
     val = client.status()
     if val == 'OK':
         return True
     return False
-
-
-def _find_display():
-    """Returns the next available display"""
-    xvfb = Xvfb()
-    return xvfb._get_next_unused_display()
 
 
 def whereis(program):
@@ -135,12 +134,12 @@ class BareConfig:
         libqtile.config.Key(
             ["control"],
             "k",
-            libqtile.command._Call([("layout", None)], "up")
+            lazy.layout.up(),
         ),
         libqtile.config.Key(
             ["control"],
             "j",
-            libqtile.command._Call([("layout", None)], "down")
+            lazy.layout.down(),
         ),
     ]
     mouse = []
@@ -191,7 +190,7 @@ class Xephyr:
         which is used to setup the instance.
         """
         # get a new display
-        self.display = ":{}".format(_find_display())
+        self.display = ":{}".format(xcffib.testing.find_display())
 
         # build up arguments
         args = [
@@ -236,6 +235,12 @@ class Xephyr:
 
         self.proc = None
 
+        # clean up the lock file for the display we allocated
+        try:
+            os.remove(xcffib.testing.lock_path(int(self.display[1:])))
+        except OSError:
+            pass
+
 
 class Qtile:
     """Spawn a Qtile instance
@@ -271,7 +276,9 @@ class Qtile:
 
         # First, wait for socket to appear
         if can_connect_qtile(self.sockfile):
-            self.c = libqtile.command.Client(self.sockfile)
+            ipc_client = ipc.Client(self.sockfile)
+            ipc_command = command_interface.IPCCommandInterface(ipc_client)
+            self.c = command_client.InteractiveCommandClient(ipc_command)
             return
         if rpipe.poll(sleep_time):
             error = rpipe.recv()
@@ -288,7 +295,12 @@ class Qtile:
         llvl = logging.DEBUG if pytest.config.getoption("--debuglog") else logging.INFO
         init_log(llvl, log_path=None, log_color=False)
         kore = xcore.XCore()
-        return QtileManager(kore, config_class(), self.display, self.sockfile)
+        config = config_class()
+        for attr in dir(default_config):
+            if not hasattr(config, attr):
+                setattr(config, attr, getattr(default_config, attr))
+
+        return QtileManager(kore, config, self.display, self.sockfile)
 
     def terminate(self):
         if self.proc is None:
@@ -427,7 +439,7 @@ class Qtile:
 
 @pytest.fixture(scope="session")
 def xvfb():
-    with Xvfb():
+    with xcffib.testing.XvfbTest():
         display = os.environ["DISPLAY"]
         if not can_connect_x11(display):
             raise OSError("Xvfb did not come up")
@@ -446,6 +458,10 @@ def xephyr(request, xvfb):
 @pytest.fixture(scope="function")
 def qtile(request, xephyr):
     config = getattr(request, "param", BareConfig)
+
+    for attr in dir(default_config):
+        if not hasattr(config, attr):
+            setattr(config, attr, getattr(default_config, attr))
 
     with tempfile.NamedTemporaryFile() as f:
         sockfile = f.name

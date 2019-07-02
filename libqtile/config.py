@@ -25,13 +25,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from . import command
+import sys
+import warnings
+
 from . import configurable
 from . import hook
 from . import utils
-import sys
-
-import warnings
+from libqtile.command_object import CommandObject
 
 
 class Key:
@@ -62,11 +62,13 @@ class Key:
 
 class Mouse:
     def __init__(self, modifiers, button, *commands, **kwargs):
-        self.focus = kwargs.get("focus", "before")
+        self.focus = kwargs.pop("focus", "before")
         self.modifiers = modifiers
         self.button = button
         self.commands = commands
         self.button_code = int(self.button.replace('Button', ''))
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
 
 class Drag(Mouse):
@@ -203,7 +205,7 @@ class ScreenRect:
         )
 
 
-class Screen(command.CommandObject):
+class Screen(CommandObject):
     """A physical screen, and its associated paraphernalia.
 
     Define a screen with a given set of Bars of a specific geometry.  Note that

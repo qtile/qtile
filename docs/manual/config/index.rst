@@ -21,7 +21,7 @@ Default Configuration
 =====================
 
 The `default configuration
-<https://github.com/qtile/qtile/blob/develop/libqtile/resources/default_config.py>`_
+<https://github.com/qtile/qtile/blob/master/libqtile/resources/default_config.py>`_
 is invoked when qtile cannot find a configuration file. In addition, if qtile
 is restarted via qshell, qtile will load the default configuration if the
 config file it finds has some kind of error in it. The documentation below
@@ -114,16 +114,25 @@ configuration variables that control specific aspects of Qtile's behavior:
         warping to the center of the focused window.
     * - dgroups_key_binder
       - None
-      - TODO
+      - A function which generates group binding hotkeys. It takes a single
+        argument, the DGroups object, and can use that to set up dynamic key
+        bindings.
+
+        A sample implementation is available in `libqtile/dgroups.py
+        <https://github.com/qtile/qtile/blob/master/libqtile/dgroups.py>`_
+        called simple_key_binder(), which will bind groups to mod+shift+0-10 by
+        default.
     * - dgroups_app_rules
       - []
-      - TODO
+      - A list of Rule objects which can send windows to various groups based
+        on matching criteria.
     * - extension_defaults
       - same as `widget_defaults`
       - Default settings for extensions.
     * - floating_layout
       - layout.Floating(float_rules=[...])
-      - TODO
+      - The default floating layout to use. This allows you to set
+        custom floating rules among other things if you wish.
 
         See the configuration file for the default `float_rules`.
     * - focus_on_window_activation
@@ -141,7 +150,12 @@ configuration variables that control specific aspects of Qtile's behavior:
         across windows in a layout.
     * - main
       - None
-      - TODO
+      - This is a function which takes one argument, the qtile object,
+        and is run after the qtile object has been initialized. This
+        allows people to monkey patch in any code they want to before
+        qtile actually starts. Note that we only consider the config
+        objects and hooks to be public APIs, and reserve the right to
+        refactor the internals at any time. Use at your own risk!
     * - widget_defaults
       - dict(font='sans',
              fontsize=12,
@@ -149,7 +163,15 @@ configuration variables that control specific aspects of Qtile's behavior:
       - Default settings for bar widgets.
     * - wmname
       - "LG3D"
-      - TODO
+      - Gasp! We're lying here. In fact, nobody really uses or cares
+        about this string besides java UI toolkits; you can see several
+        discussions on the mailing lists, GitHub issues, and other WM
+        documentation that suggest setting this string if your java app
+        doesn't work correctly. We may as well just lie and say that
+        we're a working one by default. We choose LG3D to maximize irony:
+        it is a 3D non-reparenting WM written in java that happens to be
+        on java's whitelist.
+
 
 Testing your configuration
 ==========================

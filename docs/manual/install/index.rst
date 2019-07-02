@@ -23,7 +23,8 @@ Installing From Source
 First, you need to install all of Qtile's dependencies (although some are
 optional/not needed depending on your Python version, as noted below).
 
-Note that Python 3 versions 3.4 and newer are currently supported and tested.
+Note that Python 3 versions 3.5 and newer are currently supported and tested,
+including corresponding PyPy3 versions.
 
 xcffib
 ------
@@ -62,39 +63,6 @@ You'll also need ``libpangocairo``, which on Ubuntu can be installed via ``sudo
 apt-get install libpangocairo-1.0-0``. Qtile uses this to provide text
 rendering (and binds directly to it via cffi with a small in-tree binding).
 
-asyncio/trollius
-----------------
-
-Qtile uses the asyncio module as introduced in `PEP 3156`_ for its event loop.
-Based on your Python version, there are different ways to install this:
-
-- Python >=3.4: The `asyncio module`_ comes as part of the standard library, so
-  there is nothing more to install.
-- Python 3.3: This has all the infrastructure needed to implement PEP 3156, but
-  the asyncio module must be installed from the `Tulip project`_.  This is done
-  by calling:
-
-  .. code-block:: bash
-
-      pip install asyncio
-
-  Alternatively, you can install trollius (see next point).  Note, however,
-  that `trollius is deprecated`_, and it is recommended that you use tulip, as
-  trollius will likely be dropped if (and when) Python 2 support is dropped.
-- Python 2 (and 3.3 without asyncio): You will need to install
-  trollius_, which backports the asyncio module functionality to work without
-  the infrastructure introduced in PEP 3156.  You can install this from PyPI:
-
-  .. code-block:: bash
-
-      pip install trollius
-
-.. _PEP 3156: http://python.org/dev/peps/pep-3156/
-.. _asyncio module: https://docs.python.org/3/library/asyncio.html
-.. _Tulip project: https://code.google.com/p/tulip/
-.. _trollius: http://trollius.readthedocs.io/
-.. _trollius is deprecated: http://trollius.readthedocs.io/deprecated.html#deprecated
-
 dbus/gobject
 ------------
 
@@ -113,13 +81,13 @@ With the dependencies in place, you can now install qtile:
 
     git clone git://github.com/qtile/qtile.git
     cd qtile
-    sudo python setup.py install
+    pip3 install .
 
 Stable versions of Qtile can be installed from PyPI:
 
 .. code-block:: bash
 
-    pip install qtile
+    pip3 install qtile
 
 As long as the necessary libraries are in place, this can be done at any point,
 however, it is recommended that you first install xcffib to ensure the

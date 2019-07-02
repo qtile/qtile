@@ -35,7 +35,6 @@ import xcffib.xinerama
 import xcffib.xproto
 import time
 import warnings
-import tracemalloc
 
 from ..config import Drag, Click, Screen, Match, Rule
 from ..config import ScratchPad as ScratchPadConfig
@@ -46,11 +45,16 @@ from ..state import QtileState
 from ..utils import QtileError, get_cache_dir
 from ..widget.base import _Widget
 from ..extension.base import _Extension
-from .. import command
 from .. import hook
 from .. import utils
 from .. import window
 from . import xcbq
+from libqtile import command_interface
+from libqtile.command_client import InteractiveCommandClient
+from libqtile.command_interface import QtileCommandInterface, IPCCommandServer
+from libqtile.command_object import CommandObject, CommandError, CommandException
+from libqtile.ipc import find_sockfile
+from libqtile.lazy import lazy
 
 
 def _import_module(module_name, dir_path):
@@ -65,7 +69,7 @@ def _import_module(module_name, dir_path):
     return module
 
 
-class Qtile(command.CommandObject):
+class Qtile(CommandObject):
     """This object is the `root` of the command graph"""
     def __init__(
         self,
@@ -81,6 +85,7 @@ class Qtile(command.CommandObject):
 
         self._eventloop = None
         self._finalize = False
+        self.mouse_position = (0, 0)
 
         if not display_name:
             display_name = os.environ.get("DISPLAY")
@@ -93,7 +98,7 @@ class Qtile(command.CommandObject):
             display_number = display_name.partition(":")[2]
             if "." not in display_number:
                 display_name += ".0"
-            fname = command.find_sockfile(display_name)
+            fname = find_sockfile(display_name)
 
         self.conn = xcbq.Connection(display_name)
         self.config = config
@@ -181,7 +186,7 @@ class Qtile(command.CommandObject):
                 self.groups_map[sp.name] = sp
 
         self.setup_eventloop()
-        self.server = command._Server(self.fname, self, config, self._eventloop)
+        self.server = IPCCommandServer(self.fname, self, self._eventloop)
 
         self.current_screen = None
         self.screens = []
@@ -212,7 +217,7 @@ class Qtile(command.CommandObject):
         # It fixes problems with focus when clicking windows of some specific clients like xterm
         def noop(qtile):
             pass
-        self.config.mouse += (Click([], "Button1", command.lazy.function(noop), focus="after"),)
+        self.config.mouse += (Click([], "Button1", lazy.function(noop), focus="after"),)
 
         self.mouse_map = {}
         for i in self.config.mouse:
@@ -951,7 +956,7 @@ class Qtile(command.CommandObject):
                 status, val = self.server.call(
                     (i.selectors, i.name, i.args, i.kwargs)
                 )
-                if status in (command.ERROR, command.EXCEPTION):
+                if status in (command_interface.ERROR, command_interface.EXCEPTION):
                     logger.error("KB command error %s: %s" % (i.name, val))
         else:
             return
@@ -984,6 +989,7 @@ class Qtile(command.CommandObject):
         self.conn.conn.flush()
 
     def handle_ButtonPress(self, e):  # noqa: N802
+        self.mouse_position = (e.event_x, e.event_y)
         button_code = e.detail
         state = e.state
         if self.numlock_mask:
@@ -1007,7 +1013,7 @@ class Qtile(command.CommandObject):
                             (i.selectors, i.name, i.args, i.kwargs))
                         if m.focus == "after":
                             self.cmd_focus_by_click(e)
-                        if status in (command.ERROR, command.EXCEPTION):
+                        if status in (command_interface.ERROR, command_interface.EXCEPTION):
                             logger.error(
                                 "Mouse command error %s: %s" % (i.name, val)
                             )
@@ -1020,7 +1026,7 @@ class Qtile(command.CommandObject):
                         self.cmd_focus_by_click(e)
                     status, val = self.server.call(
                         (i.selectors, i.name, i.args, i.kwargs))
-                    if status in (command.ERROR, command.EXCEPTION):
+                    if status in (command_interface.ERROR, command_interface.EXCEPTION):
                         logger.error(
                             "Mouse command error %s: %s" % (i.name, val)
                         )
@@ -1056,6 +1062,7 @@ class Qtile(command.CommandObject):
                 self.root.ungrab_pointer()
 
     def handle_MotionNotify(self, e):  # noqa: N802
+        self.mouse_position = (e.event_x, e.event_y)
         if self._drag is None:
             return
         ox, oy, rx, ry, cmd = self._drag
@@ -1070,7 +1077,7 @@ class Qtile(command.CommandObject):
                         i.args + (rx + dx, ry + dy, e.event_x, e.event_y),
                         i.kwargs
                     ))
-                    if status in (command.ERROR, command.EXCEPTION):
+                    if status in (command_interface.ERROR, command_interface.EXCEPTION):
                         logger.error(
                             "Mouse command error %s: %s" % (i.name, val)
                         )
@@ -1277,6 +1284,9 @@ class Qtile(command.CommandObject):
         warnings.warn("The `get_info` command is deprecated, use `groups`", DeprecationWarning)
         return self.cmd_groups()
 
+    def get_mouse_position(self):
+        return self.mouse_position
+
     def cmd_display_kb(self, *args):
         """Display table of key bindings"""
         class FormatTable:
@@ -1414,7 +1424,7 @@ class Qtile(command.CommandObject):
             modmasks = xcbq.translate_masks(modifiers)
             keysym = xcbq.keysyms.get(key)
         except xcbq.XCBQError as e:
-            raise command.CommandError(str(e))
+            raise CommandError(str(e))
 
         class DummyEv:
             pass
@@ -1699,8 +1709,8 @@ class Qtile(command.CommandObject):
             logger.error("No widget named '{0:s}' present.".format(widget))
 
     def cmd_qtilecmd(self, prompt="command",
-                     widget="prompt", messenger="xmessage"):
-        """ Execute a Qtile command using the client syntax
+                     widget="prompt", messenger="xmessage") -> None:
+        """Execute a Qtile command using the client syntax
 
         Tab completion aids navigation of the command tree
 
@@ -1717,7 +1727,8 @@ class Qtile(command.CommandObject):
         def f(cmd):
             if cmd:
                 # c here is used in eval() below
-                c = command.CommandRoot(self)  # noqa: F841
+                q = QtileCommandInterface(self)
+                c = InteractiveCommandClient(q)  # noqa: F841
                 try:
                     cmd_arg = str(cmd).split(' ')
                 except AttributeError:
@@ -1728,10 +1739,7 @@ class Qtile(command.CommandObject):
                     return
                 try:
                     result = eval(u'c.{0:s}'.format(cmd))
-                except (
-                        command.CommandError,
-                        command.CommandException,
-                        AttributeError) as err:
+                except (CommandError, CommandException, AttributeError) as err:
                     logger.error(err)
                     result = None
                 if result is not None:
@@ -1854,6 +1862,8 @@ class Qtile(command.CommandObject):
 
         Running tracemalloc is required for qtile-top
         """
+        import tracemalloc
+
         if not tracemalloc.is_tracing():
             tracemalloc.start()
         else:
@@ -1861,6 +1871,8 @@ class Qtile(command.CommandObject):
 
     def cmd_tracemalloc_dump(self):
         """Dump tracemalloc snapshot"""
+        import tracemalloc
+
         if not tracemalloc.is_tracing():
             return [False, "Trace not started"]
         cache_directory = get_cache_dir()
@@ -1874,17 +1886,6 @@ class Qtile(command.CommandObject):
         Useful in tests.
         """
         return self.test_data
-
-    def cmd_run_extention(self, cls):
-        """
-        Deprecated alias for cmd_run_extension()
-
-        Note that it was accepting an extension class, not an instance.
-        """
-        # TODO: Remove this method in the future
-        extension = cls()
-        extension._configure(self)
-        return self.cmd_run_extension(extension)
 
     def cmd_run_extension(self, extension):
         """Run extensions"""

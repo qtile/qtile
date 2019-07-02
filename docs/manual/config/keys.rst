@@ -68,7 +68,7 @@ Special keys
 ============
 
 These are most commonly used special keys. For complete list please see
-`the code <https://github.com/qtile/qtile/blob/develop/libqtile/xkeysyms.py>`_.
+`the code <https://github.com/qtile/qtile/blob/master/libqtile/xkeysyms.py>`_.
 You can create bindings on them just like for the regular keys. For example
 ``Key(["mod1"], "F4", lazy.window.kill())``.
 

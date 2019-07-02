@@ -18,10 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import sh, command
+from libqtile import command_interface, ipc, sh
 
 
-def main():
+def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser()
@@ -59,12 +59,17 @@ def main():
 
     args = parser.parse_args()
 
-    client = command.Client(args.socket, is_json=args.is_json)
+    if args.socket is None:
+        socket = ipc.find_sockfile()
+    else:
+        socket = args.socket
+    client = ipc.Client(socket, is_json=args.is_json)
+    cmd_object = command_interface.IPCCommandInterface(client)
+    qsh = sh.QSh(cmd_object)
     if args.pyfile is None:
-        qsh = sh.QSh(client)
         if args.command is not None:
-            qsh.process_command(args.command)
+            qsh.process_line(args.command)
         else:
             qsh.loop()
     else:
-        print(client.run_external(args.pyfile))
+        print(qsh.process_line("run_external({})".format(args.pyfile)))

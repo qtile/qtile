@@ -230,3 +230,17 @@ def test_floating_toggle(qtile):
     qtile.c.group["SCRATCHPAD"].dropdown_toggle('dd-a')
     is_spawned(qtile, 'dd-a')
     assert sorted(qtile.c.group["a"].info()['windows']) == ['dd-a', 'dd-a', 'one']
+
+
+@scratchpad_config
+def test_stepping_between_groups_should_skip_scratchpads(qtile):
+    # we are on a group
+    qtile.c.screen.next_group()
+    # we are on b group
+    qtile.c.screen.next_group()
+    # we should be on a group
+    assert qtile.c.group.info()["name"] == "a"
+
+    qtile.c.screen.prev_group()
+    # we should be on b group
+    assert qtile.c.group.info()["name"] == "b"

@@ -29,13 +29,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.log_utils import logger
-from .. import command, bar, configurable, drawer, confreader
 import subprocess
 import threading
 import warnings
+from typing import Any, List, Tuple  # noqa: F401
 
-from typing import Any, List, Tuple
+from libqtile.log_utils import logger
+from libqtile.command_object import CommandObject, CommandError
+from .. import bar, configurable, drawer, confreader
 
 
 # Each widget class must define which bar orientation(s) it supports by setting
@@ -78,7 +79,7 @@ ORIENTATION_VERTICAL = _Orientations(2, 'vertical only')
 ORIENTATION_BOTH = _Orientations(3, 'horizontal and vertical')
 
 
-class _Widget(command.CommandObject, configurable.Configurable):
+class _Widget(CommandObject, configurable.Configurable):
     """Base Widget class
 
     If length is set to the special value `bar.STRETCH`, the bar itself will
@@ -95,13 +96,13 @@ class _Widget(command.CommandObject, configurable.Configurable):
     orientations = ORIENTATION_BOTH
     offsetx = None
     offsety = None
-    defaults: List[Tuple[str, Any, str]] = [("background", None, "Widget background color")]
+    defaults = [("background", None, "Widget background color")]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, length, **config):
         """
             length: bar.STRETCH, bar.CALCULATED, or a specified length.
         """
-        command.CommandObject.__init__(self)
+        CommandObject.__init__(self)
         self.name = self.__class__.__name__.lower()
         if "name" in config:
             self.name = config["name"]
@@ -214,7 +215,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
         """
         w = q.widgets_map.get(name)
         if not w:
-            raise command.CommandError("No such widget: %s" % name)
+            raise CommandError("No such widget: %s" % name)
         return w
 
     def _items(self, name):
@@ -281,7 +282,7 @@ class _TextBox(_Widget):
         Base class for widgets that are just boxes containing text.
     """
     orientations = ORIENTATION_HORIZONTAL
-    defaults: List[Tuple[str, Any, str]] = [
+    defaults = [
         ("font", "sans", "Default font"),
         ("fontsize", None, "Font size. Calculated if None."),
         ("padding", None, "Padding. Calculated if None."),
@@ -292,7 +293,7 @@ class _TextBox(_Widget):
             "font shadow color, default is None(no shadow)"
         ),
         ("markup", False, "Whether or not to use pango markup"),
-    ]
+    ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
         self.layout = None
@@ -410,13 +411,13 @@ class InLoopPollText(_TextBox):
     ('fast' here means that this runs /in/ the event loop, so don't block! If
     you want to run something nontrivial, use ThreadedPollWidget.) """
 
-    defaults: List[Tuple[str, Any, str]] = [
+    defaults = [
         ("update_interval", 600, "Update interval in seconds, if none, the "
             "widget updates whenever the event loop is idle."),
-    ]
+    ]  # type: List[Tuple[str, Any, str]]
 
-    def __init__(self, **config):
-        _TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
+    def __init__(self, default_text="N/A", width=bar.CALCULATED, **config):
+        _TextBox.__init__(self, default_text, width, **config)
         self.add_defaults(InLoopPollText.defaults)
 
     def timer_setup(self):
@@ -463,9 +464,6 @@ class InLoopPollText(_TextBox):
 class ThreadedPollText(InLoopPollText):
     """ A common interface for polling some REST URL, munging the data, and
     rendering the result in a text box. """
-    def __init__(self, **config):
-        InLoopPollText.__init__(self, **config)
-
     def tick(self):
         def worker():
             try:
@@ -491,10 +489,10 @@ class ThreadPoolText(_TextBox):
 
     param: text - Initial text to display.
     """
-    defaults: List[Tuple[str, Any, str]] = [
+    defaults = [
         ("update_interval", None, "Update interval in seconds, if none, the "
             "widget updates whenever it's done'."),
-    ]
+    ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, text, **config):
         super().__init__(text, width=bar.CALCULATED, **config)
@@ -551,11 +549,11 @@ class PaddingMixin:
         self.add_defaults(base.PaddingMixin.defaults)
     """
 
-    defaults: List[Tuple[str, Any, str]] = [
+    defaults = [
         ("padding", 3, "Padding inside the box"),
         ("padding_x", None, "X Padding. Overrides 'padding' if set"),
         ("padding_y", None, "Y Padding. Overrides 'padding' if set"),
-    ]
+    ]  # type: List[Tuple[str, Any, str]]
 
     padding_x = configurable.ExtraFallback('padding_x', 'padding')
     padding_y = configurable.ExtraFallback('padding_y', 'padding')
@@ -569,11 +567,11 @@ class MarginMixin:
         self.add_defaults(base.MarginMixin.defaults)
     """
 
-    defaults: List[Tuple[str, Any, str]] = [
+    defaults = [
         ("margin", 3, "Margin inside the box"),
         ("margin_x", None, "X Margin. Overrides 'margin' if set"),
         ("margin_y", None, "Y Margin. Overrides 'margin' if set"),
-    ]
+    ]  # type: List[Tuple[str, Any, str]]
 
     margin_x = configurable.ExtraFallback('margin_x', 'margin')
     margin_y = configurable.ExtraFallback('margin_y', 'margin')

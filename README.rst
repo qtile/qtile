@@ -1,16 +1,8 @@
-=====
-Qtile
-=====
+|logo|
 
-|travis| |coveralls| |rtd|
+**A full-featured, hackable tiling window manager written and configured in Python**
 
-A full-featured, pure-Python tiling window manager
-==================================================
-
-:Website: http://www.qtile.org
-:Source: https://github.com/qtile/qtile
-:Documentation: https://qtile.readthedocs.io/en/latest/
-:License: MIT License
+|website| |pypi| |travis| |rtd| |coveralls| |license|
 
 Features
 ========
@@ -25,13 +17,6 @@ Features
 * Qtile's remote scriptability makes it one of the most thoroughly
   unit-tested window managers around.
 
-Current Release
-===============
-
-The current stable version of qtile is 0.13.0, released 2018-12-23. See the
-`documentation <http://docs.qtile.org/en/latest/manual/install/index.html>`_
-for installation instructions.
-
 Community
 =========
 
@@ -45,19 +30,31 @@ Contributing
 ============
 
 Please report any suggestions, feature requests, bug reports, or annoyances to
-the Github `issue tracker`_. There are also a few `tips & tricks`_,
+the GitHub `issue tracker`_. There are also a few `tips & tricks`_,
 and `guidelines`_ for contributing in the documentation.
 
 .. _`issue tracker`: https://github.com/qtile/qtile/issues
 .. _`tips & tricks`: http://docs.qtile.org/en/latest/manual/hacking.html
 .. _`guidelines`: http://docs.qtile.org/en/latest/manual/contributing.html
 
-.. |travis| image:: https://travis-ci.org/qtile/qtile.svg?branch=develop
-    :alt: Build Status
+.. |logo| image:: https://raw.githubusercontent.com/qtile/qtile/master/logo.png
+    :alt: Logo
+    :target: http://www.qtile.org
+.. |website| image:: https://img.shields.io/badge/website-qtile.org-blue.svg
+    :alt: Website
+    :target: http://www.qtile.org
+.. |pypi| image:: https://img.shields.io/pypi/v/qtile.svg
+    :alt: PyPI
+    :target: https://pypi.org/project/qtile/
+.. |travis| image:: https://img.shields.io/travis/qtile/qtile.svg
+    :alt: Travis
     :target: https://travis-ci.org/qtile/qtile
-.. |coveralls| image:: https://coveralls.io/repos/github/qtile/qtile/badge.svg?branch=develop
-    :alt: Build Coverage
-    :target: https://coveralls.io/github/qtile/qtile?branch=develop
-.. |rtd| image:: https://readthedocs.org/projects/qtile/badge/?version=latest
-    :alt: Documentation Status
-    :target: http://docs.qtile.org/en/latest/?badge=latest
+.. |rtd| image:: https://img.shields.io/readthedocs/qtile.svg
+    :alt: Read the Docs
+    :target: http://docs.qtile.org/en/latest/
+.. |coveralls| image:: https://img.shields.io/coveralls/github/qtile/qtile/master.svg
+    :alt: Coveralls
+    :target: https://coveralls.io/github/qtile/qtile?branch=master
+.. |license| image:: https://img.shields.io/github/license/qtile/qtile.svg
+    :alt: License
+    :target: https://github.com/qtile/qtile/blob/master/LICENSE

@@ -191,7 +191,6 @@ SUPPORTED_ATOMS = [
     '_NET_CLIENT_LIST_STACKING',
     '_NET_CURRENT_DESKTOP',
     '_NET_ACTIVE_WINDOW',
-    # '_NET_WORKAREA',
     '_NET_SUPPORTING_WM_CHECK',
     # From http://standards.freedesktop.org/wm-spec/latest/ar01s05.html
     '_NET_WM_NAME',
@@ -206,7 +205,6 @@ SUPPORTED_ATOMS = [
 ]
 SUPPORTED_ATOMS.extend(WindowTypes.keys())
 SUPPORTED_ATOMS.extend(net_wm_states)
-# SUPPORTED_ATOMS.extend(key for key in WindowStates.keys() if key)
 
 XCB_CONN_ERRORS = {
     1: 'XCB_CONN_ERROR',
@@ -741,7 +739,7 @@ class Window:
         self.conn.conn.core.MapWindow(self.wid)
 
     def unmap(self):
-        self.conn.conn.core.UnmapWindowChecked(self.wid).check()
+        self.conn.conn.core.UnmapWindowUnchecked(self.wid)
 
     def get_attributes(self):
         return self.conn.conn.core.GetWindowAttributes(self.wid).reply()

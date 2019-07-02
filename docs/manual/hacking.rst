@@ -10,20 +10,13 @@ install them from your package manager.
 
 * `pytest <http://pytest.org/latest/>`_
 * `Xephyr <http://www.freedesktop.org/wiki/Software/Xephyr>`_
-* `xvfbwrapper <https://github.com/cgoldberg/xvfbwrapper>`_
 * ``xrandr``, ``xcalc``, ``xeyes`` and ``xclock`` (``x11-apps`` on Ubuntu)
 
 On Ubuntu, if testing on Python 3, this can be done with:
 
 .. code-block:: bash
 
-    sudo apt-get install python3-pytest xserver-xephyr python3-xvfbwrapper x11-apps
-
-Or, on Python 2:
-
-.. code-block:: bash
-
-    sudo apt-get install python-pytest xserver-xephyr python-xvfbwrapper x11-apps
+    sudo apt-get install python3-pytest xserver-xephyr x11-apps
 
 Building cffi module
 ====================

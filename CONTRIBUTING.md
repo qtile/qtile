@@ -4,7 +4,7 @@ Reporting bugs
 --------------
 
 Perhaps the easiest way to contribute to Qtile is to report any bugs you
-run into on the [github issue tracker](https://github.com/qtile/qtile/issues).
+run into on the [GitHub issue tracker](https://github.com/qtile/qtile/issues).
 
 Useful bug reports are ones that get bugs fixed. A useful bug report normally
 has two qualities:
@@ -34,7 +34,7 @@ Submit a pull request
 
 You've done your hacking and are ready to submit your patch to Qtile. Great!
 Now it's time to submit a [pull request](https://help.github.com/articles/using-pull-requests)
-to our [issue tracker](https://github.com/qtile/qtile/issues) on Github.
+to our [issue tracker](https://github.com/qtile/qtile/issues) on GitHub.
 
 Pull requests are not considered complete until they include all of the
 following:

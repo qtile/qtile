@@ -18,25 +18,30 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import psutil
+
 from libqtile.widget import base
 
-
-def get_meminfo():
-    val = {}
-    with open('/proc/meminfo') as file:
-        for line in file:
-            key, tail = line.split(':')
-            uv = tail.split()
-            val[key] = int(uv[0]) // 1000
-    val['MemUsed'] = val['MemTotal'] - val['MemFree']
-    return val
+__all__ = ['Memory']
 
 
-class Memory(base.InLoopPollText):
-    """Displays memory usage"""
+class Memory(base.ThreadedPollText):
+    """Displays memory/swap usage
+
+    MemUsed: Returns memory in use
+    MemTotal: Returns total amount of memory
+    MemFree: Returns amount of memory free
+    Buffers: Returns buffer amount
+    Active: Returns active memory
+    Inactive: Returns inactive memory
+    Shmem: Returns shared memory
+    SwapTotal: Returns total amount of swap
+    SwapFree: Returns amount of swap free
+    SwapUsed: Returns amount of swap in use
+"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("fmt", "{MemUsed}M/{MemTotal}M", "see /proc/meminfo for field names")
+        ("fmt", "{MemUsed}M/{MemTotal}M", "Formatting for field names.")
     ]
 
     def __init__(self, **config):
@@ -44,4 +49,17 @@ class Memory(base.InLoopPollText):
         self.add_defaults(Memory.defaults)
 
     def poll(self):
-        return self.fmt.format(**get_meminfo())
+        mem = psutil.virtual_memory()
+        swap = psutil.swap_memory()
+        val = {}
+        val['MemUsed'] = mem.used // 1024 // 1024
+        val['MemTotal'] = mem.total // 1024 // 1024
+        val['MemFree'] = mem.free // 1024 // 1024
+        val['Buffers'] = mem.buffers // 1024 // 1024
+        val['Active'] = mem.active // 1024 // 1024
+        val['Inactive'] = mem.inactive // 1024 // 1024
+        val['Shmem'] = mem.shared // 1024 // 1024
+        val['SwapTotal'] = swap.total // 1024 // 1024
+        val['Swapfree'] = swap.free // 1024 // 1024
+        val['SwapUsed'] = swap.used // 1024 // 1024
+        return self.fmt.format(**val)

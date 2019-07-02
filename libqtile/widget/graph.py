@@ -37,7 +37,8 @@ from . import base
 from libqtile.log_utils import logger
 from os import statvfs
 import time
-import platform
+import psutil
+import operator
 
 __all__ = [
     'CPUGraph',
@@ -200,30 +201,20 @@ class CPUGraph(_Graph):
         self.oldvalues = self._getvalues()
 
     def _getvalues(self):
-        proc = '/proc/stat'
-        if platform.system() == "FreeBSD":
-            proc = '/compat/linux' + proc
 
-        with open(proc) as file:
-            lines = file.readlines()
+        if isinstance(self.core, int):
+            if self.core > psutil.cpu_count() - 1:
+                raise ValueError("No such core: {}".format(self.core))
+            cpu = psutil.cpu_times(percpu=True)[self.core]
+        else:
+            cpu = psutil.cpu_times()
 
-            # default to all cores (first line)
-            line = lines.pop(0)
+        user = cpu.user * 100
+        nice = cpu.nice * 100
+        sys = cpu.system * 100
+        idle = cpu.idle * 100
 
-            # core specified, grab the corresponding line
-            if isinstance(self.core, int):
-                # we already removed the first line from the list,
-                # so it's 0 indexed now :D
-                line = lines[self.core]
-
-                if not line.startswith("cpu%s" % self.core):
-                    raise ValueError("No such core: %s" % self.core)
-            if platform.system() == 'FreeBSD':
-                name, user, nice, sys, idle = line.split(None, 4)
-            else:
-                name, user, nice, sys, idle, iowait, tail = line.split(None, 6)
-
-            return (int(user), int(nice), int(sys), int(idle))
+        return (int(user), int(nice), int(sys), int(idle))
 
     def update_graph(self):
         nval = self._getvalues()
@@ -242,23 +233,6 @@ class CPUGraph(_Graph):
         self.oldvalues = nval
 
 
-def get_meminfo():
-    val = {}
-    proc = '/proc/meminfo'
-    if platform.system() == "FreeBSD":
-        proc = "/compat/linux" + proc
-    with open(proc) as file:
-        for line in file:
-            if line.lstrip().startswith("total"):
-                pass
-            else:
-                key, tail = line.strip().split(':')
-                uv = tail.split()
-                val[key] = int(uv[0])
-    val['MemUsed'] = val['MemTotal'] - val['MemFree']
-    return val
-
-
 class MemoryGraph(_Graph):
     """Displays a memory usage graph"""
     orientations = base.ORIENTATION_HORIZONTAL
@@ -273,7 +247,13 @@ class MemoryGraph(_Graph):
         self.fulfill(mem)
 
     def _getvalues(self):
-        return get_meminfo()
+        val = {}
+        mem = psutil.virtual_memory()
+        val['MemTotal'] = int(mem.total / 1024 / 1024)
+        val['MemFree'] = int(mem.free / 1024 / 1024)
+        val['Buffers'] = int(mem.buffers / 1024 / 1024)
+        val['Cached'] = int(mem.cached / 1024 / 1024)
+        return val
 
     def update_graph(self):
         val = self._getvalues()
@@ -291,16 +271,20 @@ class SwapGraph(_Graph):
         _Graph.__init__(self, **config)
         val = self._getvalues()
         self.maxvalue = val['SwapTotal']
-        swap = val['SwapTotal'] - val['SwapFree'] - val.get('SwapCached', 0)
+        swap = val['SwapTotal'] - val['SwapFree']
         self.fulfill(swap)
 
     def _getvalues(self):
-        return get_meminfo()
+        val = {}
+        swap = psutil.swap_memory()
+        val['SwapTotal'] = int(swap.total / 1024 / 1024)
+        val['SwapFree'] = int(swap.free / 1024 / 1024)
+        return val
 
     def update_graph(self):
         val = self._getvalues()
 
-        swap = val['SwapTotal'] - val['SwapFree'] - val.get('SwapCached', 0)
+        swap = val['SwapTotal'] - val['SwapFree']
 
         # can change, swapon/off
         if self.maxvalue != val['SwapTotal']:
@@ -333,41 +317,39 @@ class NetGraph(_Graph):
                     "falling back to 'eth0'"
                 )
                 self.interface = "eth0"
-        self.filename = '/sys/class/net/{interface}/statistics/{type}'.format(
-            interface=self.interface,
-            type=self.bandwidth_type == 'down' and 'rx_bytes' or 'tx_bytes'
-        )
+        if self.bandwidth_type != "down" and self.bandwidth_type != "up":
+            raise ValueError("bandwidth type {} not known!".format(self.bandwidth_type))
         self.bytes = 0
         self.bytes = self._get_values()
 
     def _get_values(self):
-        try:
-            with open(self.filename) as file:
-                val = int(file.read())
-                rval = val - self.bytes
-                self.bytes = val
-                return rval
-        except IOError:
-            return 0
+        net = psutil.net_io_counters(pernic=True)
+        if self.bandwidth_type == "up":
+            return net[self.interface].bytes_sent
+        if self.bandwidth_type == "down":
+            return net[self.interface].bytes_recv
 
     def update_graph(self):
         val = self._get_values()
-        self.push(val)
+        change = val - self.bytes
+        self.bytes = val
+        self.push(change)
 
     @staticmethod
     def get_main_iface():
-        def make_route(line):
-            return dict(zip(['iface', 'dest'], line.split()))
-        with open('/proc/net/route', 'r') as fp:
-            lines = fp.readlines()
-        routes = [make_route(line) for line in lines[1:]]
-        try:
-            return next(
-                (r for r in routes if not int(r['dest'], 16)),
-                routes[0]
-            )['iface']
-        except (KeyError, IndexError, ValueError):
-            raise RuntimeError('No valid interfaces available')
+
+        # XXX: psutil doesn't have the facility to get the main interface,
+        # so I'll just return the interface that has received the most traffic.
+        #
+        # I could do this with netifaces, but that's another dependency.
+        #
+        # Oh. and there is probably a better way to do this.
+
+        net = psutil.net_io_counters(pernic=True)
+        iface = {}
+        for entry in net:
+            iface[entry] = net[entry].bytes_recv
+        return sorted(iface.items(), key=operator.itemgetter(1))[-1][0]
 
 
 class HDDGraph(_Graph):
