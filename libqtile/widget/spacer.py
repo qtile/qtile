@@ -43,8 +43,11 @@ class Spacer(base._Widget):
         DEPRECATED, same as ``length``.
     """
     orientations = base.ORIENTATION_BOTH
+    defaults = [
+        ("background", None, "Widget background color")
+    ]
 
-    def __init__(self, length=bar.STRETCH, width=None):
+    def __init__(self, length=bar.STRETCH, width=None, **config):
         """
         """
         # 'width' was replaced by 'length' since the widget can be installed in
@@ -54,10 +57,11 @@ class Spacer(base._Widget):
                             'deprecated. Please use length.')
             length = width
 
-        base._Widget.__init__(self, length)
+        base._Widget.__init__(self, length, **config)
+        self.add_defaults(Spacer.defaults)
 
     def draw(self):
-        self.drawer.clear(self.bar.background)
+        self.drawer.clear(self.background or self.bar.background)
         if self.bar.horizontal:
             self.drawer.draw(offsetx=self.offset, width=self.length)
         else:
