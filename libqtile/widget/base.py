@@ -293,6 +293,7 @@ class _TextBox(_Widget):
             "font shadow color, default is None(no shadow)"
         ),
         ("markup", False, "Whether or not to use pango markup"),
+        ("fmt", "{}", "How to format the text")
     ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -300,17 +301,6 @@ class _TextBox(_Widget):
         _Widget.__init__(self, width, **config)
         self.text = text
         self.add_defaults(_TextBox.defaults)
-
-    @property
-    def text(self):
-        return self._text
-
-    @text.setter
-    def text(self, value):
-        assert value is None or isinstance(value, str)
-        self._text = value
-        if self.layout:
-            self.layout.text = value
 
     @property
     def foreground(self):
@@ -376,6 +366,7 @@ class _TextBox(_Widget):
         if self.offsetx is None:
             return
         self.drawer.clear(self.background or self.bar.background)
+        self.layout.text = self.fmt.format(self.text)
         self.layout.draw(
             self.actual_padding or 0,
             int(self.bar.height / 2.0 - self.layout.height / 2.0) + 1
