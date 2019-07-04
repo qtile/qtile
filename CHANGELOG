@@ -22,6 +22,7 @@ qtile 0.14.0, released 2019-06-19:
           to add an upstream API for what you want to do ;)
         - Maildir's subFolder and maildirPath changed to maildir_path and
           sub_folder.
+        - the graph widget requires the psutil library to be installed
     * features
         - add custom `change_command` to backlight widget
         - add CommandSet extension to list available commands
