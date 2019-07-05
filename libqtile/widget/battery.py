@@ -284,18 +284,18 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         else:
             percent = now / full
 
-        if power_unit == 'uA':
-            voltage = float(self._get_param('voltage_now_file')[0])
-            power = voltage * power / 1e12
-        elif power_unit == 'uW':
-            power = power / 1e6
-
         if power == 0:
             time = 0
         elif state == BatteryState.DISCHARGING:
             time = int(now / power)
         else:
             time = int((full - now) / power)
+
+        if power_unit == 'uA':
+            voltage = float(self._get_param('voltage_now_file')[0])
+            power = voltage * power / 1e12
+        elif power_unit == 'uW':
+            power = power / 1e6
 
         return BatteryStatus(state=state, percent=percent, power=power, time=time)
 
