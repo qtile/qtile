@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 import subprocess
+import logging
 
 from .volume import BUTTON_UP, BUTTON_DOWN, BUTTON_MUTE, BUTTON_RIGHT, Volume
 from ._pulse_audio import lib, ffi
+
+log = logging.getLogger(__name__)
 
 
 @ffi.def_extern()
@@ -47,13 +50,8 @@ class PulseVolume(Volume):
         self.default_sink_name = None
         self.default_sink = None
         self.handle = ffi.new_handle(self)
-
-        # create a loop and api entry point
-        self.loop = lib.pa_mainloop_new()
-        self.api = lib.pa_mainloop_get_api(self.loop)
-        # create context (e.g. connection)
         self.client_name = ffi.new('char[]', b'Qtile-pulse')
-        self.context = lib.pa_context_new(self.api, self.client_name)
+
         self.connect()
 
     def finalize(self):
@@ -63,15 +61,21 @@ class PulseVolume(Volume):
         lib.pa_mainloop_free(self.loop)
 
     def connect(self):
+        """
+        issue a connection to pulse audio server. result of a connection
+        would be passed to `on_connection_change` method
+        """
+        # create a loop and api entry point
+        self.loop = lib.pa_mainloop_new()
+        self.api = lib.pa_mainloop_get_api(self.loop)
+        # create context (e.g. connection)
+        self.context = lib.pa_context_new(self.api, self.client_name)
         lib.pa_context_connect(self.context, ffi.NULL, 0, ffi.NULL)
         lib.pa_context_set_state_callback(
             self.context,
             lib.qtile_pa_context_changed,
             self.handle
         )
-        while self.connected is None:
-            lib.pa_mainloop_iterate(self.loop, 1, ffi.NULL)
-        self.get_server_info()
 
     def on_connection_change(self, context):
         """a callback from pulse lib indicating connection status"""
@@ -79,38 +83,47 @@ class PulseVolume(Volume):
         if state == lib.PA_CONTEXT_READY:
             # ready
             self.connected = True
+            # once onnection is established we need to get server information
+            self.timeout_add(0.1, self.get_server_info)
         elif state == lib.PA_CONTEXT_FAILED:
             # failed to connect
             self.connected = False
+            self._subscribed = False
+            log.error('Failed to connect to pulseaudio')
+            self.timeout_add(10, self.connect)
         elif state == lib.PA_CONTEXT_TERMINATED:
             # done
             self.connected = False
+            self._subscribed = False
+            log.error('Connection to pulseaudio has been terminated')
+        elif state == lib.PA_CONTEXT_UNCONNECTED:
+            self.connected = False
+            self._subscribed = False
+            log.error("Disconnected from pulsedio")
 
     def get_server_info(self):
-        op = lib.pa_context_get_server_info(
+        lib.pa_context_get_server_info(
             self.context,
             lib.qtile_on_server_info,
             self.handle
         )
-        self.wait_for_operation(op)
-        self.get_sinks()
 
     def on_server_info(self, info):
         self.default_sink_name = ffi.string(info.default_sink_name) \
             .decode('utf-8')
+        self.timeout_add(0.1, self.get_sinks)
 
     def get_sinks(self):
-        op = lib.pa_context_get_sink_info_list(
+        lib.pa_context_get_sink_info_list(
             self.context,
             lib.qtile_on_sink_info,
             self.handle
         )
-        self.wait_for_operation(op)
-        if not self._subscribed:
-            self.subscribe_to_sink_events()
 
     def on_sink_info(self, sink, eol):
         if eol:  # dont operate on sink in case its an eol callback
+            if not self._subscribed:
+                self.timeout_add(0.1, self.subscribe_to_sink_events)
             return
         name = ffi.string(sink.name).decode('utf-8')
         if name == self.default_sink_name:
@@ -174,7 +187,8 @@ class PulseVolume(Volume):
             ffi.NULL,
             ffi.NULL
         )
-        self.wait_for_operation(op)
+        if op:
+            self.wait_for_operation(op)
 
     def increase_volume(self, value=2):
         base = self.default_sink['base_volume']
@@ -244,10 +258,8 @@ class PulseVolume(Volume):
         return -1
 
     def timer_setup(self):
-        if self.theme_path:
-            self.setup_images()
-        # in case volume gets changed outside of this widget we would like
-        # to get an updated level
         self.poll()
         if self.update_interval is not None:
             self.timeout_add(self.update_interval, self.timer_setup)
+        if self.theme_path:
+            self.setup_images()
