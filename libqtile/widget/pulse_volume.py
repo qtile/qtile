@@ -56,7 +56,7 @@ class PulseVolume(Volume):
         self.context = lib.pa_context_new(self.api, self.client_name)
         self.connect()
 
-    def __del__(self):
+    def finalize(self):
         lib.pa_context_disconnect(self.context)
         lib.pa_mainloop_quit(self.loop, 1)
         lib.pa_context_unref(self.context)
