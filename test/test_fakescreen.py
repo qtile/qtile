@@ -342,7 +342,7 @@ def test_float_outside_edges(qtile):
         'clients': [], 'current': 0, 'group': 'a', 'name': 'max'}
 
     # move left, but some still on screen 0
-    qtile.c.window.move_floating(-30, 20, 42, 42)
+    qtile.c.window.move_floating(-30, 20)
     assert qtile.c.window.info()['width'] == 164
     assert qtile.c.window.info()['height'] == 164
     assert qtile.c.window.info()['x'] == -14
@@ -350,7 +350,7 @@ def test_float_outside_edges(qtile):
     assert qtile.c.window.info()['group'] == 'a'
 
     # move up, but some still on screen 0
-    qtile.c.window.set_position_floating(-10, -20, 42, 42)
+    qtile.c.window.set_position_floating(-10, -20)
     assert qtile.c.window.info()['width'] == 164
     assert qtile.c.window.info()['height'] == 164
     assert qtile.c.window.info()['x'] == -10
@@ -358,7 +358,7 @@ def test_float_outside_edges(qtile):
     assert qtile.c.window.info()['group'] == 'a'
 
     # move above a
-    qtile.c.window.set_position_floating(50, -20, 42, 42)
+    qtile.c.window.set_position_floating(50, -20)
     assert qtile.c.window.info()['width'] == 164
     assert qtile.c.window.info()['height'] == 164
     assert qtile.c.window.info()['x'] == 50
@@ -366,14 +366,14 @@ def test_float_outside_edges(qtile):
     assert qtile.c.window.info()['group'] == 'a'
 
     # move down so still left, but next to screen c
-    qtile.c.window.set_position_floating(-10, 520, 42, 42)
+    qtile.c.window.set_position_floating(-10, 520)
     assert qtile.c.window.info()['height'] == 164
     assert qtile.c.window.info()['x'] == -10
     assert qtile.c.window.info()['y'] == 520
     assert qtile.c.window.info()['group'] == 'c'
 
     # move above b
-    qtile.c.window.set_position_floating(700, -10, 42, 42)
+    qtile.c.window.set_position_floating(700, -10)
     assert qtile.c.window.info()['width'] == 164
     assert qtile.c.window.info()['height'] == 164
     assert qtile.c.window.info()['x'] == 700
