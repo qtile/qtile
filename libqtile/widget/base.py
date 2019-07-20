@@ -299,8 +299,18 @@ class _TextBox(_Widget):
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
         self.layout = None
         _Widget.__init__(self, width, **config)
-        self.text = text
+        self._text = text
         self.add_defaults(_TextBox.defaults)
+
+    @property
+    def text(self):
+        return self.fmt.format(self._text)
+
+    @text.setter
+    def text(self, value):
+        self._text = value
+        if self.layout:
+            self.layout.text = self.text
 
     @property
     def foreground(self):
@@ -353,7 +363,7 @@ class _TextBox(_Widget):
         )
 
     def calculate_length(self):
-        if self.text:
+        if self._text:
             return min(
                 self.layout.width,
                 self.bar.width
@@ -366,7 +376,6 @@ class _TextBox(_Widget):
         if self.offsetx is None:
             return
         self.drawer.clear(self.background or self.bar.background)
-        self.layout.text = self.fmt.format(self.text)
         self.layout.draw(
             self.actual_padding or 0,
             int(self.bar.height / 2.0 - self.layout.height / 2.0) + 1
