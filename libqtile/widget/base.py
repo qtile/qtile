@@ -304,13 +304,17 @@ class _TextBox(_Widget):
 
     @property
     def text(self):
+        return self._text
+
+    @property
+    def formatted_text(self):
         return self.fmt.format(self._text)
 
     @text.setter
     def text(self, value):
         self._text = value
         if self.layout:
-            self.layout.text = self.text
+            self.layout.text = self.formatted_text
 
     @property
     def foreground(self):
@@ -354,7 +358,7 @@ class _TextBox(_Widget):
         if self.fontsize is None:
             self.fontsize = self.bar.height - self.bar.height / 5
         self.layout = self.drawer.textlayout(
-            self.text,
+            self.formatted_text,
             self.foreground,
             self.font,
             self.fontsize,
@@ -363,7 +367,7 @@ class _TextBox(_Widget):
         )
 
     def calculate_length(self):
-        if self._text:
+        if self.text:
             return min(
                 self.layout.width,
                 self.bar.width
@@ -399,7 +403,7 @@ class _TextBox(_Widget):
     def info(self):
         d = _Widget.info(self)
         d['foreground'] = self.foreground
-        d['text'] = self.text
+        d['text'] = self.formatted_text
         return d
 
 
