@@ -292,7 +292,7 @@ class _TextBox(_Widget):
             None,
             "font shadow color, default is None(no shadow)"
         ),
-        ("markup", False, "Whether or not to use pango markup"),
+        ("markup", True, "Whether or not to use pango markup"),
         ("fmt", "{}", "How to format the text")
     ]  # type: List[Tuple[str, Any, str]]
 
