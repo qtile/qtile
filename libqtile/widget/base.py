@@ -306,15 +306,15 @@ class _TextBox(_Widget):
     def text(self):
         return self._text
 
-    @property
-    def formatted_text(self):
-        return self.fmt.format(self._text)
-
     @text.setter
     def text(self, value):
         self._text = value
         if self.layout:
             self.layout.text = self.formatted_text
+
+    @property
+    def formatted_text(self):
+        return self.fmt.format(self._text)
 
     @property
     def foreground(self):
