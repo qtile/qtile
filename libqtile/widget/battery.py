@@ -324,7 +324,7 @@ class Battery(base.ThreadedPollText):
                           DeprecationWarning)
             config["update_interval"] = config.pop("update_delay")
 
-        base.ThreadedPollText.__init__(self, "BAT", bar.CALCULATED, **config)
+        base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(self.defaults)
 
         self._battery = self._load_battery(**config)
