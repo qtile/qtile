@@ -128,6 +128,8 @@ class Columns(Layout):
          "Wrap the screen when moving focus across columns."),
         ("wrap_focus_rows", True,
          "Wrap the screen when moving focus across rows."),
+        ("wrap_focus_stacks", True,
+         "Wrap the screen when moving focus across stacked."),
     ]
 
     def __init__(self, **config):
@@ -322,9 +324,14 @@ class Columns(Layout):
                 self.current = (self.current + 1)
         self.group.focus(self.cc.cw, True)
 
+    def want_wrap(self, col):
+        if col.split:
+            return self.wrap_focus_rows
+        return self.wrap_focus_stacks
+
     def cmd_up(self):
         col = self.cc
-        if self.wrap_focus_rows:
+        if self.want_wrap(col):
             if len(col) > 1:
                 col.current_index -= 1
         else:
@@ -334,7 +341,7 @@ class Columns(Layout):
 
     def cmd_down(self):
         col = self.cc
-        if self.wrap_focus_rows:
+        if self.want_wrap(col):
             if len(col) > 1:
                 col.current_index += 1
         else:
