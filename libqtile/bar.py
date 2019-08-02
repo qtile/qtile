@@ -63,27 +63,27 @@ class Gap(CommandObject):
         # given to the horizontal ones
         if self.position == "top":
             self.x = screen.x
-            self.y = screen.y
+            self.y = screen.y + self.offset
             self.length = screen.width
             self.width = self.length
             self.height = self.size
             self.horizontal = True
         elif self.position == "bottom":
             self.x = screen.x
-            self.y = screen.dy + screen.dheight
+            self.y = screen.dy + screen.dheight - self.offset
             self.length = screen.width
             self.width = self.length
             self.height = self.size
             self.horizontal = True
         elif self.position == "left":
-            self.x = screen.x
+            self.x = screen.x + self.offset
             self.y = screen.dy
             self.length = screen.dheight
             self.width = self.size
             self.height = self.length
             self.horizontal = False
         else:  # right
-            self.x = screen.dx + screen.dwidth
+            self.x = screen.dx + screen.dwidth - self.offset
             self.y = screen.dy
             self.length = screen.dheight
             self.width = self.size
@@ -112,6 +112,14 @@ class Gap(CommandObject):
         for i in ["top", "bottom", "left", "right"]:
             if self in getattr(self.screen, i):
                 return i
+
+    @property
+    def offset(self):
+        offset = 0
+        for gap in getattr(self.screen, self.position):
+            if gap is self:
+                return offset
+            offset += gap.size
 
     def info(self):
         return dict(position=self.position)
