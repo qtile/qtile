@@ -315,7 +315,7 @@ class MonadTall(_SimpleLayoutBase):
         else:  # right or down orientation
             if cidx == 0:
                 # main client
-                xpos = self.group.screen.dx + width_shared
+                xpos = self.group.screen.dx + width_shared - self.margin
             else:
                 # secondary client
                 xpos = self.group.screen.dx
@@ -872,7 +872,7 @@ class MonadWide(MonadTall):
         else:  # right or down orientation
             if cidx == 0:
                 # main client
-                ypos = self.group.screen.dy + height_shared
+                ypos = self.group.screen.dy + height_shared - self.margin
             else:
                 # secondary client
                 ypos = self.group.screen.dy
