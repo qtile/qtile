@@ -165,7 +165,7 @@ server_config = pytest.mark.parametrize("qtile", [ServerConfig], indirect=True)
 def test_cmd_commands(qtile):
     assert qtile.c.commands()
     assert qtile.c.layout.commands()
-    assert qtile.c.screen.bar["bottom"].commands()
+    assert qtile.c.screen.bar["bottom_0"].commands()
 
 
 @server_config
@@ -190,7 +190,7 @@ def test_items_qtile(qtile):
     assert not v[0]
     assert sorted(v[1]) == ['one', 'two']
 
-    assert qtile.c.items("bar") == (False, ["bottom"])
+    assert qtile.c.items("bar") == (False, ["bottom_0"])
     t, lst = qtile.c.items("window")
     assert t
     assert len(lst) == 2
@@ -215,7 +215,7 @@ def test_select_qtile(qtile):
     with pytest.raises(CommandError, match="No object widget"):
         qtile.c.widget.info()
 
-    assert qtile.c.bar["bottom"].info()["position"] == "bottom"
+    assert qtile.c.bar["bottom_0"].info()["position"] == "bottom"
 
     qtile.test_window("one")
     wid = qtile.c.window.info()["id"]
@@ -272,7 +272,7 @@ def test_items_screen(qtile):
     wid = qtile.c.window.info()["id"]
     assert s.items("window") == (True, [wid])
 
-    assert s.items("bar") == (False, ["bottom"])
+    assert s.items("bar") == (False, ["bottom_0"])
 
 
 @server_config
@@ -294,20 +294,19 @@ def test_select_screen(qtile):
         screen.bar.info()
     with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
         screen.bar["top"]
-
-    assert screen.bar["bottom"].info()["position"] == "bottom"
+    assert screen.bar["bottom_0"].info()["position"] == "bottom"
 
 
 @server_config
 def test_items_bar(qtile):
-    assert qtile.c.bar["bottom"].items("screen") == (True, None)
+    assert qtile.c.bar["bottom_0"].items("screen") == (True, None)
 
 
 @server_config
 def test_select_bar(qtile):
-    assert qtile.c.screen[1].bar["bottom"].screen.info()["index"] == 1
+    assert qtile.c.screen[1].bar["bottom_0"].screen.info()["index"] == 1
     b = qtile.c.bar
-    assert b["bottom"].screen.info()["index"] == 0
+    assert b["bottom_0"].screen.info()["index"] == 0
     with pytest.raises(CommandError):
         b.screen.info()
 
@@ -370,4 +369,4 @@ def test_select_widget(qtile):
     widget = qtile.c.widget["one"]
     assert widget.bar.info()["position"] == "bottom"
     with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
-        widget.bar["bottom"]
+        widget.bar["bottom_0"].info()
