@@ -111,6 +111,7 @@ screens = [
                 widget.TextBox("default config", name="default"),
                 widget.Systray(),
                 widget.Clock(format='%Y-%m-%d %a %I:%M %p'),
+                widget.QuickExit(),
             ],
             24,
         ),
