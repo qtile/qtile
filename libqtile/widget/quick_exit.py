@@ -22,8 +22,7 @@ from enum import Enum
 
 from . import base
 from .. import bar
-from ..command import lazy
-from ..log_utils import logger
+
 
 class State(Enum):
     Neutral = 0,
