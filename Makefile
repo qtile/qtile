@@ -18,8 +18,12 @@ check-cov:
 lint:
 	flake8 ./libqtile bin/q* ./test
 
+.PHONY: static_check
+static_check:
+	mypy -p libqtile
+
 .PHONY: ckpatch
-ckpatch: lint check
+ckpatch: lint check static_check
 
 .PHONY: clean
 clean:
