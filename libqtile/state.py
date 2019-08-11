@@ -46,10 +46,10 @@ class QtileState:
         QtileState.
         """
         for (group, layout, label) in self.groups:
-            try:
+            if group in qtile.groups_map:
                 qtile.groups_map[group].layout = layout
-            except KeyError:
-                qtile.add_group(group, layout, label=label)
+            else:
+                qtile.delete_group(group)
 
         for (screen, group) in self.screens.items():
             try:
