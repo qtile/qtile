@@ -29,6 +29,7 @@ from .clock import Clock  # noqa: F401
 from .currentlayout import CurrentLayout, CurrentLayoutIcon  # noqa: F401
 from .groupbox import AGroupBox, GroupBox  # noqa: F401
 from .prompt import Prompt  # noqa: F401
+from .quick_exit import QuickExit  # noqa: F401
 from .systray import Systray  # noqa: F401
 from .textbox import TextBox  # noqa: F401
 from .windowname import WindowName  # noqa: F401
