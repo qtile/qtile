@@ -49,28 +49,36 @@ class QuickExit(base._TextBox):
         self.state = State.Neutral
         self.text = self.default_text
         self.countdown = self.countdown_start
+        self.__call_later_funcs = []
+
+    def __reset(self):
+        self.state = State.Neutral
+        self.countdown = self.countdown_start
+        self.text = self.default_text
+        for f in self.__call_later_funcs:
+            f.cancel()
 
     def update(self):
         if self.state == State.Neutral:
             return
 
         self.countdown -= 1
-        if self.countdown < 0:
-            self.state = State.Neutral
-            self.countdown = self.countdown_start
-            self.text = self.default_text
-            self.draw()
-            return
-
         self.text = self.countdown_format.format(self.countdown)
-        self.timeout_add(self.timer_interval, self.update)
+        func = self.timeout_add(self.timer_interval, self.update)
+        self.__call_later_funcs.append(func)
         self.draw()
 
+        if self.countdown == 0:
+            self.qtile.stop()
+            return
+
     def button_press(self, x, y, button):
+
         if self.state == State.Neutral:
             self.state = State.Counting
             self.update()
             return
 
         if self.state == State.Counting:
-            self.qtile.stop()
+            self.__reset()
+            self.draw()
