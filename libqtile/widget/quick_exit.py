@@ -20,8 +20,8 @@
 
 from enum import Enum, auto
 
-from . import base
-from .. import bar
+from libqtile.widget import base
+from libqtile import bar
 
 
 class State(Enum):
