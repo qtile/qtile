@@ -18,15 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from enum import Enum
+from enum import Enum, auto
 
 from . import base
 from .. import bar
 
 
 class State(Enum):
-    Neutral = 0,
-    Counting = 1,
+    Neutral = auto()
+    Counting = auto()
 
 
 class QuickExit(base._TextBox):
