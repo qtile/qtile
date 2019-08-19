@@ -81,8 +81,9 @@ class Wallpaper(base._TextBox):
         else:
             self.text = self.label
         if self.wallpaper_command:
-            self.wallpaper_command.append(cur_image)
-            subprocess.call(self.wallpaper_command)
+            wallpaper_command = self.wallpaper_command.copy()
+            wallpaper_command.append(cur_image)
+            subprocess.call(wallpaper_command)
             self.wallpaper_command.pop()
             return
         command = [
@@ -96,6 +97,7 @@ class Wallpaper(base._TextBox):
 
     def button_press(self, x, y, button):
         if button == 1:
+            self.get_wallpapers()
             if self.random_selection:
                 self.index = random.randint(0, len(self.images) - 1)
             else:
