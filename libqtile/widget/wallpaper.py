@@ -63,7 +63,8 @@ class Wallpaper(base._TextBox):
             self.images = list(
                 filter(os.path.isfile,
                        map(self.get_path,
-                           os.listdir(self.directory))))
+                           os.listdir(
+                               os.path.expanduser(self.directory)))))
         except IOError as e:
             logger.exception("I/O error(%s): %s", e.errno, e.strerror)
 
