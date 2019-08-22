@@ -250,9 +250,10 @@ class Qtile:
     is done.  Windows can be spawned for the qtile instance to interact with
     with various `.test_*` methods.
     """
-    def __init__(self, sockfile, display):
+    def __init__(self, sockfile, display, debug_log):
         self.sockfile = sockfile
         self.display = display
+        self.log_level = logging.DEBUG if debug_log else logging.INFO
 
         self.proc = None
         self.c = None
@@ -262,10 +263,9 @@ class Qtile:
         rpipe, wpipe = multiprocessing.Pipe()
 
         def run_qtile():
-            llvl = logging.DEBUG if pytest.config.getoption("--debuglog") else logging.INFO
             kore = xcore.XCore()
             try:
-                init_log(llvl, log_path=None, log_color=False)
+                init_log(self.log_level, log_path=None, log_color=False)
                 q = QtileManager(kore, config_class(), self.display, self.sockfile)
                 q.loop()
             except Exception:
@@ -292,8 +292,7 @@ class Qtile:
         an error and the returned manager should not be started, otherwise this
         will likely block the thread.
         """
-        llvl = logging.DEBUG if pytest.config.getoption("--debuglog") else logging.INFO
-        init_log(llvl, log_path=None, log_color=False)
+        init_log(self.log_level, log_path=None, log_color=False)
         kore = xcore.XCore()
         config = config_class()
         for attr in dir(default_config):
@@ -465,7 +464,7 @@ def qtile(request, xephyr):
 
     with tempfile.NamedTemporaryFile() as f:
         sockfile = f.name
-        q = Qtile(sockfile, xephyr.display)
+        q = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
         try:
             q.start(config)
 
@@ -478,7 +477,7 @@ def qtile(request, xephyr):
 def qtile_nospawn(request, xephyr):
     with tempfile.NamedTemporaryFile() as f:
         sockfile = f.name
-        q = Qtile(sockfile, xephyr.display)
+        q = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
 
         try:
             yield q
