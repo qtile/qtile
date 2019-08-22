@@ -340,11 +340,17 @@ def test_delgroup(qtile):
     self = qtile
 
     self.test_window("one")
+    self.test_window("two")
+    assert qtile.c.group.info()["name"] == 'a'
     for i in ['a', 'd', 'c']:
         self.c.delgroup(i)
+    # There must be at lease one group
     with pytest.raises(CommandException):
         self.c.delgroup('b')
 
+    # The windows are moved to other existed group
+    assert "one" in self.c.groups()["b"]["windows"]
+    assert "two" in self.c.groups()["b"]["windows"]
 
 @manager_config
 @no_xinerama
