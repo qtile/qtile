@@ -352,6 +352,7 @@ def test_delgroup(qtile):
     assert "one" in self.c.groups()["b"]["windows"]
     assert "two" in self.c.groups()["b"]["windows"]
 
+
 @manager_config
 @no_xinerama
 def test_nextprevgroup(qtile):
