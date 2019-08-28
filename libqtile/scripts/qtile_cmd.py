@@ -154,7 +154,8 @@ def run_function(client: InteractiveCommandClient, funcname: str, args: List[str
 
 def print_base_objects() -> None:
     """Prints access objects of Client, use cmd for commands."""
-    actions = ["-o cmd", "-o window", "-o layout", "-o group", "-o bar"]
+    actions = ["-o cmd", "-o window", "-o layout", "-o group", "-o bar",
+               "-o screen"]
     print("Specify an object on which to execute command")
     print("\n".join(actions))
 
