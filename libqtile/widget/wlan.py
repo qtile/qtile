@@ -55,7 +55,14 @@ except ImportError:
 
 
 class Wlan(base.InLoopPollText):
-    """Displays Wifi ssid and quality"""
+    """
+    Displays Wifi SSID and quality.
+
+    Widget requirements: iwlib_.
+
+    .. _iwlib: https://pypi.org/project/iwlib/
+    """
+
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('interface', 'wlan0', 'The interface to monitor'),
