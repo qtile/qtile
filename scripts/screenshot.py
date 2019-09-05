@@ -76,16 +76,55 @@ def get_client():
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--comment", dest="comment", default="", help="Comment to add at the end of the screenshot filenames.")
-    parser.add_argument("-b", "--commands-before", dest="commands_before", default="", help="Commands to run before starting to take screenshots.")
-    parser.add_argument("-w", "--windows", dest="windows", type=int, default=3, help="Number of windows to spawn.")
-    parser.add_argument("-d", "--delay", dest="delay", default="1", help="Delay between each frame of the animated GIF in seconds.")
     parser.add_argument(
-        "-g", "--screenshot-group", dest="screenshot_group", default="s", help="Group to switch to to take screenshots."
+        "-c",
+        "--comment",
+        dest="comment",
+        default="",
+        help="Comment to add at the end of the screenshot filenames.",
     )
-    parser.add_argument("-G", "--geometry", dest="geometry", default="300x200", help="The size of the generated screenshots (WIDTHxHEIGHT).")
     parser.add_argument(
-        "-o", "--output-dir", dest="output_dir", default="screenshots/layout", help="Directory in which to write the screenshot files."
+        "-b",
+        "--commands-before",
+        dest="commands_before",
+        default="",
+        help="Commands to run before starting to take screenshots.",
+    )
+    parser.add_argument(
+        "-w",
+        "--windows",
+        dest="windows",
+        type=int,
+        default=3,
+        help="Number of windows to spawn.",
+    )
+    parser.add_argument(
+        "-d",
+        "--delay",
+        dest="delay",
+        default="1",
+        help="Delay between each frame of the animated GIF in seconds.",
+    )
+    parser.add_argument(
+        "-g",
+        "--screenshot-group",
+        dest="screenshot_group",
+        default="s",
+        help="Group to switch to to take screenshots.",
+    )
+    parser.add_argument(
+        "-G",
+        "--geometry",
+        dest="geometry",
+        default="300x200",
+        help="The size of the generated screenshots (WIDTHxHEIGHT).",
+    )
+    parser.add_argument(
+        "-o",
+        "--output-dir",
+        dest="output_dir",
+        default="screenshots/layout",
+        help="Directory in which to write the screenshot files.",
     )
     parser.add_argument(
         "layout",
@@ -103,9 +142,13 @@ def get_parser():
             "verticaltile",
             "zoomy",
         ],
-        help="Layout to use."
+        help="Layout to use.",
     )
-    parser.add_argument("commands", nargs=argparse.ONE_OR_MORE, help="Commands to run and take screenshots for.")
+    parser.add_argument(
+        "commands",
+        nargs=argparse.ONE_OR_MORE,
+        help="Commands to run and take screenshots for.",
+    )
     return parser
 
 
@@ -174,10 +217,7 @@ def main(args=None):
     # prepare layout
     try:
         client.prepare_layout(
-            args.screenshot_group,
-            args.layout,
-            args.windows,
-            args.commands_before,
+            args.screenshot_group, args.layout, args.windows, args.commands_before
         )
     except (SelectError, CommandError) as error:
         traceback.print_exc()
