@@ -7,11 +7,7 @@ import sys
 import time
 import traceback
 
-try:
-    from libqtile.ipc import find_sockfile
-except ImportError:
-    from libqtile.command import find_sockfile
-
+from libqtile.ipc import find_sockfile
 from libqtile.ipc import Client
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_interface import IPCCommandInterface
@@ -71,7 +67,7 @@ def get_client():
                 try:
                     self.client.window.kill()
                 except CommandError:
-                    time.sleep(0.05)
+                    pass
 
     return ClientWrapper(
         InteractiveCommandClient(IPCCommandInterface(Client(find_sockfile())))
@@ -80,16 +76,16 @@ def get_client():
 
 def get_parser():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--comment", dest="comment", default="")
-    parser.add_argument("-b", "--commands-before", dest="commands_before", default="")
-    parser.add_argument("-w", "--windows", dest="windows", type=int, default=3)
-    parser.add_argument("-d", "--delay", dest="delay", default="1")
+    parser.add_argument("-c", "--comment", dest="comment", default="", help="Comment to add at the end of the screenshot filenames.")
+    parser.add_argument("-b", "--commands-before", dest="commands_before", default="", help="Commands to run before starting to take screenshots.")
+    parser.add_argument("-w", "--windows", dest="windows", type=int, default=3, help="Number of windows to spawn.")
+    parser.add_argument("-d", "--delay", dest="delay", default="1", help="Delay between each frame of the animated GIF in seconds.")
     parser.add_argument(
-        "-g", "--screenshot-group", dest="screenshot_group", default="s"
+        "-g", "--screenshot-group", dest="screenshot_group", default="s", help="Group to switch to to take screenshots."
     )
-    parser.add_argument("-G", "--geometry", dest="geometry", default="300x200")
+    parser.add_argument("-G", "--geometry", dest="geometry", default="300x200", help="The size of the generated screenshots (WIDTHxHEIGHT).")
     parser.add_argument(
-        "-o", "--output-dir", dest="output_dir", default="screenshots/layout"
+        "-o", "--output-dir", dest="output_dir", default="screenshots/layout", help="Directory in which to write the screenshot files."
     )
     parser.add_argument(
         "layout",
@@ -107,12 +103,13 @@ def get_parser():
             "verticaltile",
             "zoomy",
         ],
+        help="Layout to use."
     )
-    parser.add_argument("commands", nargs=argparse.ONE_OR_MORE)
+    parser.add_argument("commands", nargs=argparse.ONE_OR_MORE, help="Commands to run and take screenshots for.")
     return parser
 
 
-class Screen:
+class Screenshooter:
     def __init__(self, output_prefix, geometry, animation_delay):
         self.output_prefix = output_prefix
         self.geometry = geometry
@@ -128,7 +125,7 @@ class Screen:
             "{}x1".format(animation_delay),
         ]
 
-    def shot(self):
+    def shoot(self):
         output_path = "{}.{}.png".format(self.output_prefix, self.number)
         thumbnail_path = output_path.replace(".png", "-thumb.png")
 
@@ -184,7 +181,6 @@ def main(args=None):
         )
     except (SelectError, CommandError) as error:
         traceback.print_exc()
-        # print(error, file=sys.stderr)
         return 1
 
     # wait a bit to make sure everything is in place
@@ -196,12 +192,12 @@ def main(args=None):
     output_prefix = os.path.join(output_dir, "_".join(args.commands))
 
     # run commands and take a screenshot between each, animate into a gif at the end
-    screen = Screen(output_prefix, args.geometry, args.delay)
-    screen.shot()
+    screen = Screenshooter(output_prefix, args.geometry, args.delay)
+    screen.shoot()
     for cmd in args.commands:
         client.run_layout_command(cmd)
         time.sleep(0.2)
-        screen.shot()
+        screen.shoot()
     screen.animate()
 
     # kill windows
