@@ -28,7 +28,7 @@ class Pomodoro(base.ThreadPoolText):
     """Pomodoro technique widget"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("fmt", "%s", "fmt"),
+        ("fmt", "{}", "fmt"),
         ("num_pomodori", 4, "Number of pomodori to do in a cycle"),
         ("length_pomodori", 25, "Length of one pomodori in minutes"),
         ("length_short_break", 5, "Length of a short break in minutes"),
@@ -166,7 +166,7 @@ class Pomodoro(base.ThreadPoolText):
         subprocess.Popen(['notify-send', "Pomodoro", message, '-u', urgent, '-t', '5000'])
 
     def poll(self):
-        return self.fmt % self._get_text()
+        return self.fmt.format(self._get_text())
 
     def button_press(self, x, y, button):
         """What to do when press a mouse button over the Pomodoro widget.
