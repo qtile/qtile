@@ -29,7 +29,7 @@ by calling:
 
 .. code-block:: bash
 
-    python libqtile/ffi_build.py
+    ./scripts/ffibuild
 
 Using Xephyr and the test suite
 ===============================
