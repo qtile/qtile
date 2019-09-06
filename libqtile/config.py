@@ -45,7 +45,7 @@ class Key:
     key:
         A key specification, e.g. "a", "Tab", "Return", "space".
     commands:
-        A list of lazy command objects generated with the command.lazy helper.
+        A list of lazy command objects generated with the lazy.lazy helper.
         If multiple Call objects are specified, they are run in sequence.
     kwds:
         A dictionary containing "desc", allowing a description to be added
