@@ -45,14 +45,14 @@ cairocffi
 ---------
 
 Qtile uses cairocffi_ with XCB support via xcffib. You'll need ``libcairo2``,
-the underlying library used by the binding.  You should be sure before you
-install cairocffi that xcffib has been installed, otherwise the needed
+the underlying library used by the binding.  You should **be sure before you
+install cairocffi that xcffib has been installed**, otherwise the needed
 cairo-xcb bindings will not be built.  Once you've got the dependencies
 installed, you can use the latest version on PyPI:
 
 .. code-block:: bash
 
-    pip install cairocffi
+    pip install --no-cache-dir cairocffi
 
 .. _cairocffi: https://pythonhosted.org/cairocffi/overview.html
 
@@ -92,3 +92,47 @@ Stable versions of Qtile can be installed from PyPI:
 As long as the necessary libraries are in place, this can be done at any point,
 however, it is recommended that you first install xcffib to ensure the
 cairo-xcb bindings are built (see above).
+
+The above steps are sufficient to run Qtile directly, but there are some extra
+works if you want to run it within a virtualenv. Here are the steps on a Fedora
+system for user ``foo``, it should work on other Linux systems too.
+
+#. Clone the repo as ``~/local/qtile/``.
+
+   .. code-block:: bash
+
+       mkdir -p ~/local/
+       cd ~/local/
+       git clone git://github.com/qtile/qtile.git
+
+#. Create a virtualenv ``~/local/qtile/venv/``, and install the dependencies
+   there (see above).
+
+#. Create a glue shell to take advantage of the virtualenv.
+
+   .. code-block:: bash
+
+       cat > /home/foo/local/qtile/qtile-venv-entry <<EOF
+       #!/bin/bash
+
+       source ~/local/qtile/venv/bin/activate
+       python ~/local/qtile/bin/qtile $*
+       EOF
+
+#. Create an xsession file.
+   Note that it can only be used to log in as user ``foo`` due to file system
+   permission restriction.
+
+   .. code-block:: bash
+
+       cat > /usr/share/xsessions/qtile-venv.desktop <<EOF
+       [Desktop Entry]
+       Name=Qtile(venv)
+       Comment=Qtile Session Within Venv
+       Exec=/home/foo/local/qtile/qtile-venv-entry
+       Type=Application
+       Keywords=wm;tiling
+       EOF
+
+#. Log out or reboot your system, then select "Qtile(venv)" as your window manager
+   by clicking the gear icon (⚙) when logging in again.
