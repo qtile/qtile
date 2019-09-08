@@ -41,10 +41,7 @@ def get_client():
             else:
                 group.toscreen()
 
-        def prepare_layout(self, group, layout, windows, commands=None):
-            # switch to group
-            self.switch_to_group(group)
-
+        def prepare_layout(self, layout, windows, commands=None):
             # set selected layout
             self.client.group.setlayout(layout)
 
@@ -53,10 +50,11 @@ def get_client():
                 self.client.spawn(
                     "xterm +ls -hold -e printf '\e]11;{}\007'".format(COLORS[i])
                 )
+                time.sleep(0.05)
 
             # prepare layout
             if commands:
-                for cmd in commands.split(" "):
+                for cmd in commands:
                     self.run_layout_command(cmd)
 
         def run_layout_command(self, cmd):
@@ -123,7 +121,7 @@ def get_parser():
         "-o",
         "--output-dir",
         dest="output_dir",
-        default="screenshots/layout",
+        default="docs/screenshots/layout",
         help="Directory in which to write the screenshot files.",
     )
     parser.add_argument(
@@ -215,9 +213,10 @@ def main(args=None):
     original_group = client.current_group()
 
     # prepare layout
+    client.switch_to_group(args.screenshot_group)
     try:
         client.prepare_layout(
-            args.screenshot_group, args.layout, args.windows, args.commands_before
+            args.layout, args.windows, args.commands_before.split(" ") if args.commands_before else []
         )
     except (SelectError, CommandError) as error:
         traceback.print_exc()
@@ -230,6 +229,8 @@ def main(args=None):
     output_dir = os.path.join(args.output_dir, args.layout)
     os.makedirs(output_dir, exist_ok=True)
     output_prefix = os.path.join(output_dir, "_".join(args.commands))
+    if args.comment:
+        output_prefix += "-{}".format(args.comment)
 
     # run commands and take a screenshot between each, animate into a gif at the end
     screen = Screenshooter(output_prefix, args.geometry, args.delay)
