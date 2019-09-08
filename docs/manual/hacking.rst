@@ -18,6 +18,13 @@ On Ubuntu, if testing on Python 3, this can be done with:
 
     sudo apt-get install python3-pytest xserver-xephyr x11-apps
 
+On ArchLinux, the X11 requirements are installed with:
+
+.. code-block:: bash
+
+    sudo pacman -S xorg-xrandr xorg-xcalc xorg-xeyes xorg-xclock
+
+
 Building cffi module
 ====================
 
@@ -105,6 +112,8 @@ and hit Mod4+Control+Q. Mod4 (or Mod) is usually the Super key (or Windows key).
 You can also close the Xephyr window by running ``qtile-cmd -o cmd -f shutdown``
 in a terminal (from inside the Xephyr window of course).
 
+You don't need to run the xephyr script in order to run the tests.
+
 Second X Session
 ================
 
@@ -153,3 +162,57 @@ Here are a number of resources that may come in handy:
 * `Inter-Client Conventions Manual <http://tronche.com/gui/x/icccm/>`_
 * `Extended Window Manager Hints <http://standards.freedesktop.org/wm-spec/wm-spec-latest.html>`_
 * `A reasonable basic Xlib Manual <http://tronche.com/gui/x/xlib/>`_
+
+
+Troubleshoot
+============
+
+Cairo errors
+------------
+
+When running the Xephyr script (``./scripts/xephyr``), you might see tracebacks
+with attribute error like the following or similar::
+
+    AttributeError: cffi library 'libcairo.so.2' has no function, constant or global variable named 'cairo_xcb_surface_create'
+
+If it happens, it might be because the `cairocffi` and `xcffib` dependencies
+were installed in the wrong order.
+
+To fix this:
+
+1. uninstall them from your environment: with ``pip uninstall cairocffi xcffib``
+   if using a virtualenv, or with your system package-manager if you installed
+   the development version of Qtile system-wide.
+#. re-install them sequentially (again, with pip or with your package-manager)::
+
+    pip install xcffib
+    pip install --no-cache-dir cairocffi
+
+See `this issue comment`_ for more information.
+
+.. _`this issue comment`: https://github.com/qtile/qtile/issues/994#issuecomment-497984551
+
+
+DBus/GObject errors
+-------------------
+
+When running the Xephyr script (``./scripts/xephyr``), you might see a line in
+the output like the following or similar::
+
+    libqtile manager.py:setup_python_dbus():L310  importing dbus/gobject failed, dbus will not work.
+
+If it happens, it might be because you are missing some dependencies on your
+system and/or in your Qtile virtualenv.
+
+To fix this:
+
+1. follow the installation instructions of ``PyGObject``
+   at https://pygobject.readthedocs.io/en/latest/getting_started.html.
+   There are methods for several Linux distributions: pick yours.
+#. there are instructions for system-wide installation and virtualenv
+   installation: pick the relevant one, depending on how you installed the
+   development version of QTile (usually in a virtualenv).
+#. Optionally re-install QTile's dependencies::
+
+    pip install -r requirements.txt
+    pip install -r requirements-dev.txt
