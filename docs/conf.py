@@ -36,6 +36,7 @@ MOCK_MODULES = [
     'iwlib',
     'keyring',
     'mpd',
+    'psutil',
     'trollius',
     'xcffib',
     'xcffib.randr',
