@@ -216,3 +216,35 @@ To fix this:
 
     pip install -r requirements.txt
     pip install -r requirements-dev.txt
+
+
+Fonts errors
+------------
+
+When running the test suite or the Xephyr script (``./scripts/xephyr``),
+you might see errors in the output like the following or similar:
+
+* Xephyr script::
+
+    xterm: cannot load font "-Misc-Fixed-medium-R-*-*-13-120-75-75-C-120-ISO10646-1"
+    xterm: cannot load font "-misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1"
+
+* ``pytest``::
+
+    ---------- Captured stderr call ----------
+    Warning: Cannot convert string "8x13" to type FontStruct
+    Warning: Unable to load any usable ISO8859 font
+    Warning: Unable to load any usable ISO8859 font
+    Error: Aborting: no font found
+
+    --------- Captured stderr teardown ----------
+    Qtile exited with exitcode: -9
+
+If it happens, it might be because you're missing fonts on your system.
+
+On ArchLinux, you can fix this by installing ``xorg-fonts-misc``::
+
+    sudo pacman -S xorg-fonts-misc
+
+Try to search for "xorg fonts misc" with your distribution name on the internet
+to find how to install them.
