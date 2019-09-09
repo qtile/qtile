@@ -216,10 +216,10 @@ class Screen(CommandObject):
 
     Parameters
     ==========
-    top: List of Gap/Bar objects, or None.
-    bottom: List of Gap/Bar objects, or None.
-    left: List of Gap/Bar objects, or None.
-    right: List of Gap/Bar objects, or None.
+    top: Gap/Bar object, or None.
+    bottom: Gap/Bar object, or None.
+    left: Gap/Bar object, or None.
+    right: Gap/Bar object, or None.
     x : int or None
     y : int or None
     width : int or None
