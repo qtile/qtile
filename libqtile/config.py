@@ -45,7 +45,7 @@ class Key:
     key:
         A key specification, e.g. "a", "Tab", "Return", "space".
     commands:
-        A list of lazy command objects generated with the command.lazy helper.
+        A list of lazy command objects generated with the lazy.lazy helper.
         If multiple Call objects are specified, they are run in sequence.
     kwds:
         A dictionary containing "desc", allowing a description to be added
@@ -216,10 +216,10 @@ class Screen(CommandObject):
 
     Parameters
     ==========
-    top: List of Gap/Bar objects, or None.
-    bottom: List of Gap/Bar objects, or None.
-    left: List of Gap/Bar objects, or None.
-    right: List of Gap/Bar objects, or None.
+    top: Gap/Bar object, or None.
+    bottom: Gap/Bar object, or None.
+    left: Gap/Bar object, or None.
+    right: Gap/Bar object, or None.
     x : int or None
     y : int or None
     width : int or None

@@ -26,36 +26,30 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import iwlib
+
 from . import base
 from libqtile.log_utils import logger
 
-try:
-    from pythonwifi.iwlibs import Wireless, Iwstats
 
-    def get_status(interface_name):
-        interface = Wireless(interface_name)
-        try:
-            stats = Iwstats(interface_name)
-        except IOError:
-            return None, None
-        quality = stats.qual.quality
-        essid = interface.getEssid()
-        return essid, quality
-
-except ImportError:
-    import iwlib
-
-    def get_status(interface_name):
-        interface = iwlib.get_iwconfig(interface_name)
-        if 'stats' not in interface:
-            return None, None
-        quality = interface['stats']['quality']
-        essid = bytes(interface['ESSID']).decode()
-        return essid, quality
+def get_status(interface_name):
+    interface = iwlib.get_iwconfig(interface_name)
+    if 'stats' not in interface:
+        return None, None
+    quality = interface['stats']['quality']
+    essid = bytes(interface['ESSID']).decode()
+    return essid, quality
 
 
 class Wlan(base.InLoopPollText):
-    """Displays Wifi ssid and quality"""
+    """
+    Displays Wifi SSID and quality.
+
+    Widget requirements: iwlib_.
+
+    .. _iwlib: https://pypi.org/project/iwlib/
+    """
+
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('interface', 'wlan0', 'The interface to monitor'),
