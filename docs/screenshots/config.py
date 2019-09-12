@@ -25,7 +25,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from libqtile.config import Key
+from libqtile.lazy import lazy
 from libqtile import layout
+
+mod = "mod4"
+
+keys = [
+    Key([mod, "control"], "q", lazy.shutdown()),
+    Key([mod], "Return", lazy.spawn("xterm")),
+    Key([mod], "Left", lazy.layout.left()),
+    Key([mod], "Right", lazy.layout.right()),
+    Key([mod], "Up", lazy.layout.up()),
+    Key([mod], "Down", lazy.layout.down()),
+    Key([mod], "Tab", lazy.next_layout()),
+    Key([mod, "shift"], "Tab", lazy.previous_layout()),
+]
 
 border_focus = "#ff0000"
 border_normal = "#000000"
@@ -51,4 +66,3 @@ layouts = [
     layout.VerticalTile(name="verticaltile", **border),
     layout.Zoomy(name="zoomy"),
 ]
-

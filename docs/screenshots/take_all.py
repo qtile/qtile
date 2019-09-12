@@ -48,10 +48,44 @@ original_group = client.current_group()
 # prepare layout
 client.switch_to_group("s")
 
+# ----------------------------------------------------------------------------
+# BSP LAYOUT -----------------------------------------------------------------
+# ----------------------------------------------------------------------------
+# layout screenshots
+take("bsp", [], comment="2-windows", windows=2)
+take("bsp", [], comment="3-windows", windows=3)
+take("bsp", [], comment="4-windows", windows=4)
+take("bsp", [], comment="5-windows", windows=5)
+take(
+    "bsp",
+    [],
+    comment="8-windows",
+    windows=8,
+    before=[
+        "up",
+        "grow_down",
+        "left",
+        "grow_left",
+        "down",
+        "right",
+        "grow_left",
+        "grow_left",
+        "toggle_split",
+        "left",
+        "left",
+        "grow_right",
+        "grow_right",
+        "grow_up",
+        "grow_up",
+        "up",
+        "toggle_split"
+    ]
+)
+# commands screenshots and GIF animations
 take("bsp", ["toggle_split"], comment="from-down-left")
 take("bsp", ["toggle_split"], comment="from-right", before=["right"])
-# take("bsp", ["next"])  # no effetcs?
-# take("bsp", ["previous"])  # no effetcs?
+# take("bsp", ["next"])  # no effects?
+# take("bsp", ["previous"])  # no effects?
 take("bsp", ["left"], before=["right"])
 take("bsp", ["right"])
 take("bsp", ["up"])
@@ -74,6 +108,9 @@ take("bsp", ["flip_down"], before=["up"])
 client.switch_to_group(original_group)
 sys.exit(0)
 
+# ----------------------------------------------------------------------------
+# COLUMNS LAYOUT -------------------------------------------------------------
+# ----------------------------------------------------------------------------
 take("columns", ["toggle_split"])
 take("columns", ["left"])
 take("columns", ["right"])
@@ -91,6 +128,9 @@ take("columns", ["grow_up"])
 take("columns", ["grow_down"])
 take("columns", ["normalize"])
 
+# ----------------------------------------------------------------------------
+# MATRIX LAYOUT --------------------------------------------------------------
+# ----------------------------------------------------------------------------
 take("matrix", ["left"])
 take("matrix", ["right"])
 take("matrix", ["up"])
@@ -98,6 +138,9 @@ take("matrix", ["down"])
 take("matrix", ["delete"])
 take("matrix", ["add"])
 
+# ----------------------------------------------------------------------------
+# MONAD TALL LAYOUT ----------------------------------------------------------
+# ----------------------------------------------------------------------------
 take("monadtall", ["normalize"])
 take("monadtall", ["reset"])
 take("monadtall", ["maximize"])
@@ -114,6 +157,9 @@ take("monadtall", ["swap_main"])
 take("monadtall", ["left"])
 take("monadtall", ["right"])
 
+# ----------------------------------------------------------------------------
+# MONAD WIDE LAYOUT ----------------------------------------------------------
+# ----------------------------------------------------------------------------
 take("monadwide", ["normalize"])
 take("monadwide", ["reset"])
 take("monadwide", ["maximize"])
@@ -130,15 +176,24 @@ take("monadwide", ["swap_main"])
 take("monadwide", ["left"])
 take("monadwide", ["right"])
 
+# ----------------------------------------------------------------------------
+# RATIO TILE LAYOUT ----------------------------------------------------------
+# ----------------------------------------------------------------------------
 take("ratiotile", ["shuffle_down"])
 take("ratiotile", ["shuffle_up"])
 take("ratiotile", ["decrease_ratio"])
 take("ratiotile", ["increase_ratio"])
 
+# ----------------------------------------------------------------------------
+# SLICE LAYOUT ---------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # Slice layout freezes the session
 # take("slice", ["next"])
 # take("slice", ["previous"])
 
+# ----------------------------------------------------------------------------
+# STACK LAYOUT ---------------------------------------------------------------
+# ----------------------------------------------------------------------------
 take("stack", ["toggle_split"])
 take("stack", ["down"])
 take("stack", ["up"])
@@ -153,6 +208,9 @@ take("stack", ["client_to_next"])
 take("stack", ["client_to_previous"])
 take("stack", ["client_to_stack"])
 
+# ----------------------------------------------------------------------------
+# TILE LAYOUT ----------------------------------------------------------------
+# ----------------------------------------------------------------------------
 take("tile", ["shuffle_down"])
 take("tile", ["shuffle_up"])
 take("tile", ["decrease_ratio"])
@@ -160,6 +218,9 @@ take("tile", ["increase_ratio"])
 take("tile", ["decrease_nmaster"])
 take("tile", ["increase_nmaster"])
 
+# ----------------------------------------------------------------------------
+# TREE TAB LAYOUT ------------------------------------------------------------
+# ----------------------------------------------------------------------------
 take("treetab", ["down"])
 take("treetab", ["up"])
 take("treetab", ["move_down"])
@@ -176,6 +237,9 @@ take("treetab", ["collapse_branch"])
 take("treetab", ["decrease_ratio"])
 take("treetab", ["increase_ratio"])
 
+# ----------------------------------------------------------------------------
+# VERTICAL TILE LAYOUT -------------------------------------------------------
+# ----------------------------------------------------------------------------
 take("verticaltile", ["shuffle_down"])
 take("verticaltile", ["shuffle_up"])
 take("verticaltile", ["maximize"])
@@ -183,6 +247,9 @@ take("verticaltile", ["normalize"])
 take("verticaltile", ["grow"])
 take("verticaltile", ["shrink"])
 
+# ----------------------------------------------------------------------------
+# ZOOMY LAYOUT ---------------------------------------------------------------
+# ----------------------------------------------------------------------------
 take("zoomy", ["next"])
 take("zoomy", ["previous"])
 take("zoomy", ["down"])
