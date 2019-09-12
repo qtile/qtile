@@ -21,9 +21,9 @@ COLORS = [
     "#cccc44",  # yellow
     "#44cccc",  # cyan
     "#cccccc",  # white
-    "#444444",  # gray
-    "#111111",  # black
-    "#cc4444",  # red
+    "#777777",  # gray
+    "#ffa500",  # orange
+    "#333333",  # black
 ]
 
 
@@ -41,21 +41,32 @@ def get_client():
             else:
                 group.toscreen()
 
+        def spawn_window(self, color):
+            if isinstance(color, int):
+                color = COLORS[color]
+            self.client.spawn(
+                "xterm +ls -hold -e printf '\e]11;{}\007'".format(color)
+            )
+
         def prepare_layout(self, layout, windows, commands=None):
             # set selected layout
             self.client.group.setlayout(layout)
 
             # spawn windows
             for i in range(windows):
-                self.client.spawn(
-                    "xterm +ls -hold -e printf '\e]11;{}\007'".format(COLORS[i])
-                )
+                self.spawn_window(i)
                 time.sleep(0.05)
 
             # prepare layout
             if commands:
+                color = windows
                 for cmd in commands:
-                    self.run_layout_command(cmd)
+                    if cmd == "spawn":
+                        self.spawn_window(color)
+                        color += 1
+                    else:
+                        self.run_layout_command(cmd)
+                    time.sleep(0.05)
 
         def run_layout_command(self, cmd):
             getattr(self.client.layout, cmd)()

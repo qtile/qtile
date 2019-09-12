@@ -15,9 +15,17 @@ XEPHYR_PID=$!
   QTILE_PID=$!
 
   sleep 1
-  env DISPLAY=${XDISPLAY} xterm -e "${PYTHON}" "${PROJECT_DIR}/docs/screenshots/take_all.py"
+  case $1 in
+    -i|--interactive)
+      env DISPLAY=${XDISPLAY} xterm
+    ;;
+    "")
+      env DISPLAY=${XDISPLAY} xterm -e "${PYTHON}" "${PROJECT_DIR}/docs/screenshots/take_all.py"
+      sleep 1
+      env DISPLAY=${XDISPLAY} xterm -e qtile-cmd -o cmd -f shutdown
+    ;;
+  esac
 
-  sleep 1
-  kill $QTILE_PID
+  wait $QTILE_PID
   kill $XEPHYR_PID
 )
