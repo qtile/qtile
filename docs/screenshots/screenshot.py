@@ -167,18 +167,13 @@ class Screenshooter:
         self.geometry = geometry
         self.number = 1
         self.animation_delay = animation_delay
-        self.animate_command = [
-            "convert",
-            "-loop",
-            "0",
-            "-colors",
-            "80",
-            "-delay",
-            "{}x1".format(animation_delay),
-        ]
+        self.output_paths = []
 
-    def shoot(self):
-        output_path = "{}.{}.png".format(self.output_prefix, self.number)
+    def shoot(self, numbered=True):
+        if numbered:
+            output_path = "{}.{}.png".format(self.output_prefix, self.number)
+        else:
+            output_path = "{}.png".format(self.output_prefix)
         thumbnail_path = output_path.replace(".png", "-thumb.png")
 
         # overwrite previous screenshot if any
@@ -194,24 +189,38 @@ class Screenshooter:
         os.rename(thumbnail_path, output_path)
 
         # add this path to the animation command
-        self.animate_command.append(output_path)
+        self.output_paths.append(output_path)
 
         self.number += 1
 
-    def animate(self, delays=None):
+    def animate(self, delays=None, clear=False):
         # TODO: use delays to build animation with custom delay between each frame
 
+        animate_command = [
+            "convert",
+            "-loop",
+            "0",
+            "-colors",
+            "80",
+            "-delay",
+            "{}x1".format(self.animation_delay),
+        ] + self.output_paths
+
         # last screenshot lasts one more second in the gif, to see when the loop ends
-        self.animate_command.extend(
+        animate_command.extend(
             [
                 "-delay",
                 "{}x1".format(int(self.animation_delay) + 1),
-                self.animate_command.pop(),
+                animate_command.pop(),
                 "{}.gif".format(self.output_prefix),
             ]
         )
 
-        subprocess.call(self.animate_command)
+        subprocess.call(animate_command)
+
+        if clear:
+            for output_path in self.output_paths:
+                os.remove(output_path)
 
 
 def main(args=None):
@@ -229,7 +238,7 @@ def main(args=None):
         client.prepare_layout(
             args.layout, args.windows, args.commands_before.split(" ") if args.commands_before else []
         )
-    except (SelectError, CommandError) as error:
+    except (SelectError, CommandError):
         traceback.print_exc()
         return 1
 
@@ -248,7 +257,7 @@ def main(args=None):
     screen.shoot()
     for cmd in args.commands:
         client.run_layout_command(cmd)
-        time.sleep(0.2)
+        time.sleep(0.05)
         screen.shoot()
     screen.animate()
 
