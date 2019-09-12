@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 import sys
 import time
+import traceback
 from pathlib import Path
 
 from screenshot import Screenshooter, get_client
+
+from libqtile.command_object import SelectError, CommandError
 
 
 def take(layout, commands, comment=None, before=None, geometry="300x200", delay=1, windows=3):
@@ -12,25 +15,25 @@ def take(layout, commands, comment=None, before=None, geometry="300x200", delay=
 
     try:
         client.prepare_layout(layout, windows, before)
-    except (SelectError, CommandError) as error:
+    except (SelectError, CommandError):
         traceback.print_exc()
         return False
 
-    name = "_".join(commands)
+    name = "_".join(commands) if commands else layout
     if comment:
-        name += "-{}".format(comment)
+        name += "-" + comment
     output_prefix = output_dir / layout / name
 
     time.sleep(0.5)
 
     screen = Screenshooter(output_prefix, geometry, delay)
-    screen.shoot()
+    screen.shoot(numbered=bool(commands))
     if commands:
         for cmd in commands:
             client.run_layout_command(cmd)
-            time.sleep(0.2)
+            time.sleep(0.05)
             screen.shoot()
-        screen.animate()
+        screen.animate(clear=True)
 
     # kill windows
     client.kill_group_windows()
