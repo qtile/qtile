@@ -18,15 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from enum import Enum, auto
-
 from libqtile.widget import base
 from libqtile import bar
-
-
-class State(Enum):
-    Neutral = auto()
-    Counting = auto()
 
 
 class QuickExit(base._TextBox):
@@ -46,20 +39,20 @@ class QuickExit(base._TextBox):
         base._TextBox.__init__(self, '', widget, **config)
         self.add_defaults(QuickExit.defaults)
 
-        self.state = State.Neutral
+        self.is_counting = False
         self.text = self.default_text
         self.countdown = self.countdown_start
         self.__call_later_funcs = []
 
     def __reset(self):
-        self.state = State.Neutral
+        self.is_counting = False
         self.countdown = self.countdown_start
         self.text = self.default_text
         for f in self.__call_later_funcs:
             f.cancel()
 
     def update(self):
-        if self.state == State.Neutral:
+        if not self.is_counting:
             return
 
         self.countdown -= 1
@@ -74,11 +67,10 @@ class QuickExit(base._TextBox):
 
     def button_press(self, x, y, button):
 
-        if self.state == State.Neutral:
-            self.state = State.Counting
+        if not self.is_counting:
+            self.is_counting = True
             self.update()
             return
-
-        if self.state == State.Counting:
+        else:
             self.__reset()
             self.draw()
