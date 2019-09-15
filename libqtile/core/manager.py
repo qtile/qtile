@@ -775,7 +775,11 @@ class Qtile(CommandObject):
             # managed and don't have any state.
             if not isinstance(win, window.Window):
                 return None
-            return win.window.get_net_wm_pid()
+            try:
+                return win.window.get_net_wm_pid()
+            except Exception:
+                # the X connection may be invalid due to server crash
+                return None
         pids = map(get_interesting_pid, self.windows_map.values())
         pids = list(filter(lambda x: x is not None, pids))
 
