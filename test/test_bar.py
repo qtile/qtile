@@ -22,6 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
+import glob
 import pytest
 
 import libqtile.layout
@@ -103,7 +105,18 @@ def test_completion():
     c.reset()
     assert c.complete("/bin") != "/bin/"
     c.reset()
-    assert c.complete("~") != "~"
+
+    home_dir = os.path.expanduser("~")
+    if glob.glob(os.path.join(home_dir, '*')):
+        assert c.complete("~") != "~"
+    else:
+        assert c.complete("~") == "~"
+
+        c.reset()
+        test_bin_dir = os.path.join(home_dir, "qtile-test-bin")
+        os.mkdir(test_bin_dir)
+        assert c.complete("~") == "~/qtile-test-bin/"
+        os.rmdir(test_bin_dir)
 
     c.reset()
     s = "thisisatotallynonexistantpathforsure"
