@@ -29,14 +29,8 @@ class Screenshooter:
             output_path = "{}.png".format(self.output_prefix)
         thumbnail_path = output_path.replace(".png", "-thumb.png")
 
-        # overwrite previous screenshot if any
-        try:
-            os.remove(output_path)
-        except FileNotFoundError:
-            pass
-
         # take screenshot with scrot
-        subprocess.call(["scrot", "-t", self.geometry, output_path])
+        subprocess.call(["scrot", "-o", "-t", self.geometry, output_path])
 
         # only keep the thumbnail
         os.rename(thumbnail_path, output_path)
