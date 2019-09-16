@@ -146,22 +146,22 @@ if __name__ == "__main__":
         "--commands-before",
         dest="commands_before",
         default="",
-        help="Commands to run before starting to take screenshots.",
+        help="Commands to run before starting to take screenshots. Space-separated string.",
     )
     parser.add_argument(
         "-c",
-        "--comment",
-        dest="comment",
-        default="",
-        help="Comment to add at the end of the screenshot filenames.",
-    )
-    parser.add_argument(
-        "-C",
         "--clear",
         dest="clear",
         action="store_true",
         default=False,
         help="Whether to delete the PNG files after animating them into GIFs.",
+    )
+    parser.add_argument(
+        "-C",
+        "--comment",
+        dest="comment",
+        default="",
+        help="Comment to appe,d at the end of the screenshot filenames.",
     )
     parser.add_argument(
         "-d",
@@ -189,7 +189,7 @@ if __name__ == "__main__":
         "--name",
         dest="name",
         default="",
-        help="The name of the generated screenshot files (don't append the extension)."
+        help="The name of the generated screenshot files . Don't append the extension."
     )
     parser.add_argument(
         "-o",
