@@ -10,9 +10,11 @@ from screenshot import Screenshooter, Client
 from libqtile.command_object import SelectError, CommandError
 
 
-def take(layout, commands, name="", comment="", before=None, geometry="300x200", delay=1, windows=3):
+def take(layout, commands, name="", comment="", before=None, after=None, geometry="300x200", delay="1x1", windows=3):
     if not before:
         before = []
+    if not after:
+        after = []
 
     try:
         client.prepare_layout(layout, windows, before)
@@ -34,10 +36,22 @@ def take(layout, commands, name="", comment="", before=None, geometry="300x200",
     screen.shoot(numbered=bool(commands))
     if commands:
         for cmd in commands:
-            client.run_layout_command(cmd)
+            try:
+                client.run_layout_command(cmd)
+            except Exception:
+                traceback.print_exc()
+                break
             time.sleep(0.05)
             screen.shoot()
         screen.animate(clear=True)
+
+    if after:
+        for cmd in after:
+            try:
+                client.run_layout_command(cmd)
+            except Exception:
+                traceback.print_exc()
+            time.sleep(0.05)
 
     # kill windows
     client.kill_group_windows()
@@ -163,21 +177,29 @@ if not args or "matrix" in args:
 # MONAD TALL LAYOUT ----------------------------------------------------------
 # ----------------------------------------------------------------------------
 if not args or "monadtall" in args:
-    take("monadtall", ["normalize"])
-    take("monadtall", ["reset"])
-    take("monadtall", ["maximize"])
-    take("monadtall", ["grow"])
-    take("monadtall", ["grow_main"])
-    take("monadtall", ["shrink_main"])
-    take("monadtall", ["shrink"])
+    # layout screenshots
+    take("monadtall", [], windows=2, comment="2-windows")
+    take("monadtall", [], windows=3, comment="3-windows")
+    take("monadtall", [], windows=4, comment="4-windows")
+    take("monadtall", [], windows=5, comment="5-windows")
+    # commands animations
+    take("monadtall", ["normalize"], windows=4, before=["maximize", "shrink_main", "shrink_main"], after=["reset"])
+    take("monadtall", ["normalize"], comment="from-main", windows=4, before=["maximize", "shrink_main", "shrink_main", "left"], after=["reset"])
+    take("monadtall", ["reset"], windows=4, before=["maximize", "shrink_main", "shrink_main"])
+    take("monadtall", ["maximize"], windows=4, after=["reset"])
+    take("monadtall", ["maximize"], windows=4, comment="main", before=["left"], after=["reset"])
+    take("monadtall", ["grow", "grow", "grow", "grow"], name="grow", delay="1x2")
+    take("monadtall", ["grow_main", "grow_main", "grow_main"], name="grow_main", after=["reset"], delay="1x2")
+    take("monadtall", ["shrink_main", "shrink_main", "shrink_main"], name="shrink_main", after=["reset"], delay="1x2")
+    take("monadtall", ["shrink", "shrink", "shrink", "shrink"], name="shrink", delay="1x2")
     take("monadtall", ["shuffle_up"])
-    take("monadtall", ["shuffle_down"])
-    take("monadtall", ["swap"])
+    take("monadtall", ["shuffle_down"], before=["up"])
+    # take("monadtall", ["swap"])  # requires 2 args: window1 and window2
     take("monadtall", ["swap_left"])
-    take("monadtall", ["swap_right"])
+    take("monadtall", ["swap_right"], before=["left"])
     take("monadtall", ["swap_main"])
     take("monadtall", ["left"])
-    take("monadtall", ["right"])
+    take("monadtall", ["right"], before=["left"])
 
 # ----------------------------------------------------------------------------
 # MONAD WIDE LAYOUT ----------------------------------------------------------
