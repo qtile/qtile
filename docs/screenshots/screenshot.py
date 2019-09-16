@@ -56,14 +56,14 @@ class Screenshooter:
             "-colors",
             "80",
             "-delay",
-            "{}x1".format(self.animation_delay),
+            self.animation_delay,
         ] + self.output_paths
 
-        # last screenshot lasts one more second in the gif, to see when the loop ends
+        # last screenshot lasts two seconds in the gif, to see when the loop ends
         animate_command.extend(
             [
                 "-delay",
-                "{}x1".format(int(self.animation_delay) + 1),
+                "2x1",
                 animate_command.pop(),
                 "{}.gif".format(self.output_prefix),
             ]
@@ -142,6 +142,13 @@ class Client:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "-a",
+        "--commands-after",
+        dest="commands_after",
+        default="",
+        help="Commands to run after finishing to take screenshots. Space-separated string.",
+    )
+    parser.add_argument(
         "-b",
         "--commands-before",
         dest="commands_before",
@@ -167,8 +174,8 @@ if __name__ == "__main__":
         "-d",
         "--delay",
         dest="delay",
-        default="1",
-        help="Delay between each frame of the animated GIF in seconds.",
+        default="1x1",
+        help="Delay between each frame of the animated GIF. Default: 1x1.",
     )
     parser.add_argument(
         "-g",
@@ -238,13 +245,9 @@ if __name__ == "__main__":
 
     # prepare layout
     client.switch_to_group(args.screenshot_group)
-    try:
-        client.prepare_layout(
-            args.layout, args.windows, args.commands_before.split(" ") if args.commands_before else []
-        )
-    except (SelectError, CommandError):
-        traceback.print_exc()
-        sys.exit(1)
+    client.prepare_layout(
+        args.layout, args.windows, args.commands_before.split(" ") if args.commands_before else []
+    )
 
     # wait a bit to make sure everything is in place
     time.sleep(0.5)
@@ -265,6 +268,11 @@ if __name__ == "__main__":
         time.sleep(0.05)
         screen.shoot()
     screen.animate(clear=args.clear)
+
+    if args.commands_after:
+        for cmd in args.commands_after.split(" "):
+            client.run_layout_command(cmd)
+            time.sleep(0.05)
 
     # kill windows
     client.kill_group_windows()
