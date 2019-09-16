@@ -23,7 +23,10 @@ def take(layout, commands, name="", comment="", before=None, geometry="300x200",
     name = name or "_".join(commands) or layout
     if comment:
         name += "-" + comment
-    output_prefix = output_dir / layout / name
+    layout_dir = output_dir / layout
+    output_prefix = layout_dir / name
+
+    layout_dir.mkdir(parents=True, exist_ok=True)
 
     time.sleep(0.5)
 
@@ -143,12 +146,18 @@ if not args or "columns" in args:
 # MATRIX LAYOUT --------------------------------------------------------------
 # ----------------------------------------------------------------------------
 if not args or "matrix" in args:
-    take("matrix", ["left"])
-    take("matrix", ["right"])
-    take("matrix", ["up"])
-    take("matrix", ["down"])
-    take("matrix", ["delete"])
-    take("matrix", ["add"])
+    # layout screenshots
+    take("matrix", [], windows=2, comment="2-windows")
+    take("matrix", [], windows=3, comment="3-windows")
+    take("matrix", [], windows=4, comment="4-windows")
+    take("matrix", [], windows=5, comment="5-windows")
+    take("matrix", [], windows=5, comment="5-windows", before=["add"])
+    # commands animations
+    take("matrix", ["left"], windows=4)
+    take("matrix", ["right"], windows=4)
+    take("matrix", ["up"], windows=4)
+    take("matrix", ["down"], windows=4)
+    take("matrix", ["add", "add", "delete", "delete", "delete", "add"], name="add-delete", windows=5)
 
 # ----------------------------------------------------------------------------
 # MONAD TALL LAYOUT ----------------------------------------------------------
