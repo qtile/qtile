@@ -310,12 +310,12 @@ class RatioTile(_SimpleLayoutBase):
     def cmd_shuffle_down(self):
         if self.clients:
             self.clients.rotate_up()
-            self.self.group.layout_all()
+            self.group.layout_all()
 
     def cmd_shuffle_up(self):
         if self.clients:
             self.clients.rotate_down()
-            self.self.group.layout_all()
+            self.group.layout_all()
 
     def cmd_decrease_ratio(self):
         new_ratio = self.ratio - self.ratio_increment
