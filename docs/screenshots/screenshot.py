@@ -84,7 +84,9 @@ class Client:
     ]
 
     def __init__(self):
-        self.client = InteractiveCommandClient(IPCCommandInterface(IPCClient(find_sockfile())))
+        self.client = InteractiveCommandClient(
+            IPCCommandInterface(IPCClient(find_sockfile()))
+        )
 
     def current_group(self):
         return self.client.group[self.client.group.info().get("name")]
@@ -98,9 +100,7 @@ class Client:
     def spawn_window(self, color):
         if isinstance(color, int):
             color = Client.COLORS[color]
-        self.client.spawn(
-            "xterm +ls -hold -e printf '\e]11;{}\007'".format(color)
-        )
+        self.client.spawn("xterm +ls -hold -e printf '\e]11;{}\007'".format(color))
 
     def prepare_layout(self, layout, windows, commands=None):
         # set selected layout
@@ -190,7 +190,7 @@ if __name__ == "__main__":
         "--name",
         dest="name",
         default="",
-        help="The name of the generated screenshot files . Don't append the extension."
+        help="The name of the generated screenshot files . Don't append the extension.",
     )
     parser.add_argument(
         "-o",
@@ -240,7 +240,9 @@ if __name__ == "__main__":
     # prepare layout
     client.switch_to_group(args.screenshot_group)
     client.prepare_layout(
-        args.layout, args.windows, args.commands_before.split(" ") if args.commands_before else []
+        args.layout,
+        args.windows,
+        args.commands_before.split(" ") if args.commands_before else [],
     )
 
     # wait a bit to make sure everything is in place
