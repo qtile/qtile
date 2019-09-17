@@ -113,7 +113,7 @@ class KeyboardLayout(base.InLoopPollText):
         command = ['setxkbmap']
         command.extend(keyboard.split(" "))
         if self.options:
-            command.extend(['-options', self.options])
+            command.extend(['-option', self.options])
         try:
             self.call_process(command)
         except CalledProcessError as e:
