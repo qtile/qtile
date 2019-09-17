@@ -1,6 +1,6 @@
-from libqtile.config import Key
+from libqtile.config import Key, Screen
 from libqtile.lazy import lazy
-from libqtile import layout
+from libqtile import layout, bar, widget
 
 mod = "mod4"
 
@@ -12,7 +12,7 @@ keys = [
     Key([mod], "Up", lazy.layout.up()),
     Key([mod], "Down", lazy.layout.down()),
     Key([mod], "Tab", lazy.next_layout()),
-    Key([mod, "shift"], "Tab", lazy.previous_layout()),
+    Key([mod, "shift"], "Tab", lazy.prev_layout()),
 ]
 
 border_focus = "#ff0000"
@@ -40,4 +40,19 @@ layouts = [
     layout.TreeTab(name="treetab", border_width=border_width),
     layout.VerticalTile(name="verticaltile", **style),
     layout.Zoomy(name="zoomy", margin=margin),
+]
+
+screens = [
+    Screen(
+        bottom=bar.Bar(
+            [
+                widget.GroupBox(),
+                widget.Prompt(),
+                widget.WindowName(),
+                widget.CurrentLayout(),
+                widget.Clock(format="%Y-%m-%d %a %I:%M %p"),
+            ],
+            24,
+        )
+    )
 ]
