@@ -42,3 +42,6 @@ debian/*debhelper
 .tags
 venv
 .coverage.*
+
+# intellij idea IDEs
+.idea/
