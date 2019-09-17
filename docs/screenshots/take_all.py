@@ -10,7 +10,17 @@ from screenshot import Screenshooter, Client
 from libqtile.command_object import SelectError, CommandError
 
 
-def take(layout, commands, name="", comment="", before=None, after=None, geometry="300x200", delay="1x1", windows=3):
+def take(
+    layout,
+    commands,
+    name="",
+    comment="",
+    before=None,
+    after=None,
+    geometry="300x200",
+    delay="1x1",
+    windows=3,
+):
     if not before:
         before = []
     if not after:
@@ -103,8 +113,8 @@ if not args or "bsp" in args:
             "grow_up",
             "grow_up",
             "up",
-            "toggle_split"
-        ]
+            "toggle_split",
+        ],
     )
     # commands animations
     take("bsp", ["toggle_split"], comment="from-down-left")
@@ -127,7 +137,9 @@ if not args or "bsp" in args:
     take("bsp", ["flip_right"])
     take("bsp", ["flip_up"])
     take("bsp", ["flip_down"], before=["up"])
-    take("bsp", ["normalize"], before=["grow_up", "grow_up", "grow_right", "grow_right"])
+    take(
+        "bsp", ["normalize"], before=["grow_up", "grow_up", "grow_right", "grow_right"]
+    )
 
 # ----------------------------------------------------------------------------
 # COLUMNS LAYOUT -------------------------------------------------------------
@@ -139,7 +151,12 @@ if not args or "columns" in args:
     take("columns", [], comment="4-windows", windows=4)
     take("columns", [], comment="5-windows", windows=4, before=["left", "spawn"])
     # commands animations
-    take("columns", ["toggle_split", "toggle_split", "down", "toggle_split", "toggle_split"], windows=4, name="toggle_split")
+    take(
+        "columns",
+        ["toggle_split", "toggle_split", "down", "toggle_split", "toggle_split"],
+        windows=4,
+        name="toggle_split",
+    )
     take("columns", ["left"])
     take("columns", ["right"], before=["left"])
     take("columns", ["up"], before=["down"])
@@ -154,7 +171,11 @@ if not args or "columns" in args:
     take("columns", ["grow_right"], before=["left"])
     take("columns", ["grow_up"], before=["down"])
     take("columns", ["grow_down"])
-    take("columns", ["normalize"], before=["grow_down", "grow_down", "grow_left", "grow_left"])
+    take(
+        "columns",
+        ["normalize"],
+        before=["grow_down", "grow_down", "grow_left", "grow_left"],
+    )
 
 # ----------------------------------------------------------------------------
 # MATRIX LAYOUT --------------------------------------------------------------
@@ -171,7 +192,12 @@ if not args or "matrix" in args:
     take("matrix", ["right"], windows=4)
     take("matrix", ["up"], windows=4)
     take("matrix", ["down"], windows=4)
-    take("matrix", ["add", "add", "delete", "delete", "delete", "add"], name="add-delete", windows=5)
+    take(
+        "matrix",
+        ["add", "add", "delete", "delete", "delete", "add"],
+        name="add-delete",
+        windows=5,
+    )
 
 # ----------------------------------------------------------------------------
 # MONAD TALL LAYOUT ----------------------------------------------------------
@@ -183,15 +209,57 @@ if not args or "monadtall" in args:
     take("monadtall", [], windows=4, comment="4-windows")
     take("monadtall", [], windows=5, comment="5-windows")
     # commands animations
-    take("monadtall", ["normalize"], windows=4, before=["maximize", "shrink_main", "shrink_main"], after=["reset"])
-    take("monadtall", ["normalize"], comment="from-main", windows=4, before=["maximize", "shrink_main", "shrink_main", "left"], after=["reset"])
-    take("monadtall", ["reset"], windows=4, before=["maximize", "shrink_main", "shrink_main"])
+    take(
+        "monadtall",
+        ["normalize"],
+        windows=4,
+        before=["maximize", "shrink_main", "shrink_main"],
+        after=["reset"],
+    )
+    take(
+        "monadtall",
+        ["normalize"],
+        comment="from-main",
+        windows=4,
+        before=["maximize", "shrink_main", "shrink_main", "left"],
+        after=["reset"],
+    )
+    take(
+        "monadtall",
+        ["reset"],
+        windows=4,
+        before=["maximize", "shrink_main", "shrink_main"],
+    )
     take("monadtall", ["maximize"], windows=4, after=["reset"])
-    take("monadtall", ["maximize"], windows=4, comment="main", before=["left"], after=["reset"])
+    take(
+        "monadtall",
+        ["maximize"],
+        windows=4,
+        comment="main",
+        before=["left"],
+        after=["reset"],
+    )
     take("monadtall", ["grow", "grow", "grow", "grow"], name="grow", delay="1x2")
-    take("monadtall", ["grow_main", "grow_main", "grow_main"], name="grow_main", after=["reset"], delay="1x2")
-    take("monadtall", ["shrink_main", "shrink_main", "shrink_main"], name="shrink_main", after=["reset"], delay="1x2")
-    take("monadtall", ["shrink", "shrink", "shrink", "shrink"], name="shrink", delay="1x2")
+    take(
+        "monadtall",
+        ["grow_main", "grow_main", "grow_main"],
+        name="grow_main",
+        after=["reset"],
+        delay="1x2",
+    )
+    take(
+        "monadtall",
+        ["shrink_main", "shrink_main", "shrink_main"],
+        name="shrink_main",
+        after=["reset"],
+        delay="1x2",
+    )
+    take(
+        "monadtall",
+        ["shrink", "shrink", "shrink", "shrink"],
+        name="shrink",
+        delay="1x2",
+    )
     take("monadtall", ["shuffle_up"])
     take("monadtall", ["shuffle_down"], before=["up"])
     # take("monadtall", ["swap"])  # requires 2 args: window1 and window2
