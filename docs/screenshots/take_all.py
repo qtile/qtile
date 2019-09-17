@@ -38,6 +38,8 @@ def take(
     layout_dir = output_dir / layout
     output_prefix = layout_dir / name
 
+    print("Taking screenshot {}/{}".format(layout, name))
+
     layout_dir.mkdir(parents=True, exist_ok=True)
 
     time.sleep(0.5)
@@ -272,31 +274,120 @@ if not args or "monadtall" in args:
 # ----------------------------------------------------------------------------
 # MONAD WIDE LAYOUT ----------------------------------------------------------
 # ----------------------------------------------------------------------------
+# There seems to be a problem with directions. Up cycles through windows
+# clock-wise, down cycles through windows counter-clock-wise, left and right
+# works normally in the secondary columns, while left from main does nothing
+# and right from main moves to the center of the second column. It's like
+# the directions are mixed between normal orientation
+# and a 90° rotation to the left, like monadtall. Up and down are reversed
+# compared to monadtall.
 if not args or "monadwide" in args:
-    take("monadwide", ["normalize"])
-    take("monadwide", ["reset"])
-    take("monadwide", ["maximize"])
-    take("monadwide", ["grow"])
-    take("monadwide", ["grow_main"])
-    take("monadwide", ["shrink_main"])
-    take("monadwide", ["shrink"])
+    # layout screenshots
+    take("monadwide", [], windows=2, comment="2-windows")
+    take("monadwide", [], windows=3, comment="3-windows")
+    take("monadwide", [], windows=4, comment="4-windows")
+    take("monadwide", [], windows=5, comment="5-windows")
+    # commands animations
+    take(
+        "monadwide",
+        ["normalize"],
+        windows=4,
+        before=["maximize", "shrink_main", "shrink_main"],
+        after=["reset"],
+    )
+    take(
+        "monadwide",
+        ["normalize"],
+        comment="from-main",
+        windows=4,
+        before=["maximize", "shrink_main", "shrink_main", "down"],
+        after=["reset"],
+    )
+    take(
+        "monadwide",
+        ["reset"],
+        windows=4,
+        before=["maximize", "shrink_main", "shrink_main"],
+    )
+    take("monadwide", ["maximize"], windows=4, after=["reset"])
+    take(
+        "monadwide",
+        ["maximize"],
+        windows=4,
+        comment="main",
+        before=["down"],
+        after=["reset"],
+    )
+    take("monadwide", ["grow", "grow", "grow", "grow"], name="grow", delay="1x2")
+    take(
+        "monadwide",
+        ["grow_main", "grow_main", "grow_main"],
+        name="grow_main",
+        after=["reset"],
+        delay="1x2",
+    )
+    take(
+        "monadwide",
+        ["shrink_main", "shrink_main", "shrink_main"],
+        name="shrink_main",
+        after=["reset"],
+        delay="1x2",
+    )
+    take(
+        "monadwide",
+        ["shrink", "shrink", "shrink", "shrink"],
+        name="shrink",
+        delay="1x2",
+    )
     take("monadwide", ["shuffle_up"])
-    take("monadwide", ["shuffle_down"])
-    take("monadwide", ["swap"])
+    take("monadwide", ["shuffle_down"], before=["down"])
+    # take("monadwide", ["swap"])  # requires 2 args: window1 and window2
     take("monadwide", ["swap_left"])
-    take("monadwide", ["swap_right"])
+    take("monadwide", ["swap_right"], before=["left"])
     take("monadwide", ["swap_main"])
     take("monadwide", ["left"])
-    take("monadwide", ["right"])
+    take("monadwide", ["right"], before=["left"])
 
 # ----------------------------------------------------------------------------
 # RATIO TILE LAYOUT ----------------------------------------------------------
 # ----------------------------------------------------------------------------
 if not args or "ratiotile" in args:
-    take("ratiotile", ["shuffle_down"])
-    take("ratiotile", ["shuffle_up"])
-    take("ratiotile", ["decrease_ratio"])
-    take("ratiotile", ["increase_ratio"])
+    # layout screenshots
+    take("ratiotile", [], windows=2, comment="2-windows")
+    take("ratiotile", [], windows=3, comment="3-windows")
+    take("ratiotile", [], windows=4, comment="4-windows")
+    take("ratiotile", [], windows=5, comment="5-windows")
+    take("ratiotile", [], windows=6, comment="6-windows")
+    take("ratiotile", [], windows=7, comment="7-windows")
+    # commands animations
+    take(
+        "ratiotile",
+        ["shuffle_down", "shuffle_down", "shuffle_down"],
+        name="shuffle_down",
+        windows=5,
+        delay="1x2",
+    )
+    take(
+        "ratiotile",
+        ["shuffle_up", "shuffle_up", "shuffle_up"],
+        name="shuffle_up",
+        windows=5,
+        delay="1x2",
+    )
+    take(
+        "ratiotile",
+        ["decrease_ratio", "decrease_ratio", "decrease_ratio", "decrease_ratio"],
+        name="decrease_ratio",
+        windows=5,
+        delay="1x2",
+    )
+    take(
+        "ratiotile",
+        ["increase_ratio", "increase_ratio", "increase_ratio", "increase_ratio"],
+        name="increase_ratio",
+        windows=5,
+        delay="1x2",
+    )
 
 # ----------------------------------------------------------------------------
 # SLICE LAYOUT ---------------------------------------------------------------
