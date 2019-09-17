@@ -2,6 +2,7 @@
 # Copyright (c) 2014 Shepilov Vladislav
 # Copyright (c) 2014-2015 Sean Vig
 # Copyright (c) 2014 Tycho Andersen
+# Copyright (c) 2019 zordsdavini
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +44,7 @@ class KeyboardLayout(base.InLoopPollText):
         ("configured_keyboards", ["us"], "A list of predefined keyboard layouts "
             "represented as strings. For example: "
             "['us', 'us colemak', 'es', 'fr']."),
+        ("options", None, "list of setxkbmap options. Ex., 'compose:menu,grp_led:scroll'"),
     ]
 
     def __init__(self, **config):
@@ -110,6 +112,8 @@ class KeyboardLayout(base.InLoopPollText):
     def keyboard(self, keyboard):
         command = ['setxkbmap']
         command.extend(keyboard.split(" "))
+        if self.options:
+            command.extend(['-options', self.options])
         try:
             self.call_process(command)
         except CalledProcessError as e:
