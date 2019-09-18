@@ -201,8 +201,6 @@ def main() -> None:
             ret = run_function(obj, args.function, args.args)
             if ret is not None:
                 pprint.pprint(ret)
-            else:
-                print_commands("-o " + " ".join(args.obj_spec), obj)
     else:
         print_base_objects()
         sys.exit(1)
