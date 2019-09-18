@@ -112,7 +112,8 @@ and hit Mod4+Control+Q. Mod4 (or Mod) is usually the Super key (or Windows key).
 You can also close the Xephyr window by running ``qtile-cmd -o cmd -f shutdown``
 in a terminal (from inside the Xephyr window of course).
 
-You don't need to run the xephyr script in order to run the tests.
+You don't need to run the Xephyr script in order to run the tests
+as the test runner will launch its own Xephyr instances.
 
 Second X Session
 ================
@@ -171,11 +172,11 @@ Cairo errors
 ------------
 
 When running the Xephyr script (``./scripts/xephyr``), you might see tracebacks
-with attribute error like the following or similar::
+with attribute errors like the following or similar::
 
     AttributeError: cffi library 'libcairo.so.2' has no function, constant or global variable named 'cairo_xcb_surface_create'
 
-If it happens, it might be because the `cairocffi` and `xcffib` dependencies
+If it happens, it might be because the ``cairocffi`` and ``xcffib`` dependencies
 were installed in the wrong order.
 
 To fix this:
@@ -192,6 +193,11 @@ See `this issue comment`_ for more information.
 
 .. _`this issue comment`: https://github.com/qtile/qtile/issues/994#issuecomment-497984551
 
+If you are using your system package-manager and the issue still happens,
+the packaging of ``cairocffi`` might be broken for your distribution.
+Try to contact the persons responsible for ``cairocffi``'s packaging
+on your distribution, or to install it from the sources with ``xcffib``
+available.
 
 DBus/GObject errors
 -------------------
@@ -237,7 +243,7 @@ you might see errors in the output like the following or similar:
     Warning: Unable to load any usable ISO8859 font
     Error: Aborting: no font found
 
-    --------- Captured stderr teardown ----------
+    -------- Captured stderr teardown --------
     Qtile exited with exitcode: -9
 
 If it happens, it might be because you're missing fonts on your system.
