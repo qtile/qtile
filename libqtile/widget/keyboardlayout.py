@@ -44,7 +44,7 @@ class KeyboardLayout(base.InLoopPollText):
         ("configured_keyboards", ["us"], "A list of predefined keyboard layouts "
             "represented as strings. For example: "
             "['us', 'us colemak', 'es', 'fr']."),
-        ("options", None, "list of setxkbmap options. Ex., 'compose:menu,grp_led:scroll'"),
+        ("option", None, "string of setxkbmap option. Ex., 'compose:menu,grp_led:scroll'"),
     ]
 
     def __init__(self, **config):
@@ -112,8 +112,8 @@ class KeyboardLayout(base.InLoopPollText):
     def keyboard(self, keyboard):
         command = ['setxkbmap']
         command.extend(keyboard.split(" "))
-        if self.options:
-            command.extend(['-option', self.options])
+        if self.option:
+            command.extend(['-option', self.option])
         try:
             self.call_process(command)
         except CalledProcessError as e:
