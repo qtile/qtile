@@ -349,9 +349,9 @@ if not args or "monadwide" in args:
     )
     take("monadwide", ["shuffle_up"])
     take("monadwide", ["shuffle_down"], before=["down"])
-    take("monadwide", ["flip"])
+    take("monadwide", ["flip"], after=["flip"])
     # take("monadwide", ["swap"])  # requires 2 args: window1 and window2
-    take("monadwide", ["swap_left"])
+    take("monadwide", ["swap_left"], before=["flip"], after=["flip"])
     take("monadwide", ["swap_right"], before=["left"])
     take("monadwide", ["swap_main"])
     take("monadwide", ["left"])
@@ -384,20 +384,22 @@ if not args or "ratiotile" in args:
         windows=5,
         delay="1x2",
     )
-    take(
-        "ratiotile",
-        ["decrease_ratio", "decrease_ratio", "decrease_ratio", "decrease_ratio"],
-        name="decrease_ratio",
-        windows=5,
-        delay="1x2",
-    )
-    take(
-        "ratiotile",
-        ["increase_ratio", "increase_ratio", "increase_ratio", "increase_ratio"],
-        name="increase_ratio",
-        windows=5,
-        delay="1x2",
-    )
+    # decrease_ratio does not seem to work
+    # take(
+    #     "ratiotile",
+    #     ["decrease_ratio", "decrease_ratio", "decrease_ratio", "decrease_ratio"],
+    #     name="decrease_ratio",
+    #     windows=5,
+    #     delay="1x2",
+    # )
+    # increase_ratio does not seem to work
+    # take(
+    #     "ratiotile",
+    #     ["increase_ratio", "increase_ratio", "increase_ratio", "increase_ratio"],
+    #     name="increase_ratio",
+    #     windows=5,
+    #     delay="1x2",
+    # )
 
 # ----------------------------------------------------------------------------
 # SLICE LAYOUT ---------------------------------------------------------------
