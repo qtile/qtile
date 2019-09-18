@@ -84,6 +84,7 @@ class Client:
     ]
 
     def __init__(self):
+        self.color = 0
         self.client = InteractiveCommandClient(
             IPCCommandInterface(IPCClient(find_sockfile()))
         )
@@ -97,7 +98,10 @@ class Client:
         else:
             group.toscreen()
 
-    def spawn_window(self, color):
+    def spawn_window(self, color=None):
+        if color is None:
+            color = self.color
+            self.color += 1
         if isinstance(color, int):
             color = Client.COLORS[color]
         self.client.spawn("xterm +ls -hold -e printf '\e]11;{}\007'".format(color))
@@ -108,16 +112,14 @@ class Client:
 
         # spawn windows
         for i in range(windows):
-            self.spawn_window(i)
+            self.spawn_window()
             time.sleep(0.05)
 
         # prepare layout
         if commands:
-            color = windows
             for cmd in commands:
                 if cmd == "spawn":
-                    self.spawn_window(color)
-                    color += 1
+                    self.spawn_window()
                 else:
                     self.run_layout_command(cmd)
                 time.sleep(0.05)
@@ -131,6 +133,7 @@ class Client:
                 self.client.window.kill()
             except CommandError:
                 pass
+        self.color = 0
 
 
 if __name__ == "__main__":
@@ -162,7 +165,7 @@ if __name__ == "__main__":
         "--comment",
         dest="comment",
         default="",
-        help="Comment to appe,d at the end of the screenshot filenames.",
+        help="Comment to append at the end of the screenshot filenames.",
     )
     parser.add_argument(
         "-d",

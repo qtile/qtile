@@ -48,11 +48,14 @@ def take(
     screen.shoot(numbered=bool(commands))
     if commands:
         for cmd in commands:
-            try:
-                client.run_layout_command(cmd)
-            except Exception:
-                traceback.print_exc()
-                break
+            if cmd == "spawn":
+                client.spawn_window()
+            else:
+                try:
+                    client.run_layout_command(cmd)
+                except Exception:
+                    traceback.print_exc()
+                    break
             time.sleep(0.05)
             screen.shoot()
         screen.animate(clear=True)
@@ -264,6 +267,7 @@ if not args or "monadtall" in args:
     )
     take("monadtall", ["shuffle_up"])
     take("monadtall", ["shuffle_down"], before=["up"])
+    take("monadtall", ["flip"])
     # take("monadtall", ["swap"])  # requires 2 args: window1 and window2
     take("monadtall", ["swap_left"])
     take("monadtall", ["swap_right"], before=["left"])
@@ -341,6 +345,7 @@ if not args or "monadwide" in args:
     )
     take("monadwide", ["shuffle_up"])
     take("monadwide", ["shuffle_down"], before=["down"])
+    take("monadwide", ["flip"])
     # take("monadwide", ["swap"])  # requires 2 args: window1 and window2
     take("monadwide", ["swap_left"])
     take("monadwide", ["swap_right"], before=["left"])
@@ -400,20 +405,42 @@ if not args or "ratiotile" in args:
 # ----------------------------------------------------------------------------
 # STACK LAYOUT ---------------------------------------------------------------
 # ----------------------------------------------------------------------------
+# There seems to be a confusion between Stack and Columns layouts.
+# The Columns layout says: "Extension of the Stack layout"
+# and "The screen is split into columns, which can be dynamically added
+# or removed", but there no commands available to add or remove columns.
+# Inversely, the Stack layout says: "Unlike the columns layout
+# the number of stacks is fixed", yet the two commands
+# "cmd_add" and "cmd_delete" allow for a dynamic number of stacks!
 if not args or "stack" in args:
-    take("stack", ["toggle_split"])
-    take("stack", ["down"])
-    take("stack", ["up"])
-    take("stack", ["suffle_down"])
-    take("stack", ["suffle_up"])
-    take("stack", ["delete"])
-    take("stack", ["add"])
+    # layout screenshots
+    take("stack", [], windows=2, comment="2-windows")
+    take("stack", [], windows=3, comment="3-windows")
+    take("stack", [], windows=4, comment="4-windows")
+    take("stack", [], windows=5, comment="5-windows")
+    # commands animations
+    take(
+        "stack",
+        ["toggle_split"],
+        windows=4,
+        before=["down", "down"],
+        after=["toggle_split"],
+    )
+    take("stack", ["down"], windows=4)
+    take("stack", ["up"], before=["down"], windows=4)
+    take("stack", ["shuffle_down"], windows=4)
+    take("stack", ["shuffle_up"], before=["down"], windows=4)
+    take(
+        "stack",
+        ["add", "add", "spawn", "spawn", "spawn", "delete", "delete"],
+        name="add-delete",
+    )
     take("stack", ["rotate"])
-    take("stack", ["next"])
-    take("stack", ["previous"])
-    take("stack", ["client_to_next"])
-    take("stack", ["client_to_previous"])
-    take("stack", ["client_to_stack"])
+    take("stack", ["next"], before=["add", "spawn"], after=["delete"])
+    take("stack", ["previous"], before=["add", "spawn"], after=["delete"])
+    take("stack", ["client_to_next"], before=["add", "spawn"], after=["delete"])
+    take("stack", ["client_to_previous"], before=["add", "spawn"], after=["delete"])
+    # take("stack", ["client_to_stack"])  # requires 1 argument
 
 # ----------------------------------------------------------------------------
 # TILE LAYOUT ----------------------------------------------------------------
