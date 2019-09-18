@@ -78,7 +78,7 @@ class Columns(Layout):
     """Extension of the Stack layout.
 
     The screen is split into columns, which can be dynamically added or
-    removed.  Each column can present is windows in 2 modes: split or
+    removed.  Each column can present its windows in 2 modes: split or
     stacked.  In split mode, all windows are presented simultaneously,
     spliting the column space.  In stacked mode, only a single window is
     presented from the stack of windows.  Columns and windows can be

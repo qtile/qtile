@@ -35,7 +35,7 @@ layouts = [
     layout.MonadWide(name="monadwide", **style),
     layout.RatioTile(name="ratiotile", **style),
     # layout.Slice(name="slice"),  # Makes the session freeze
-    layout.Stack(name="stack", **style),
+    layout.Stack(name="stack", autosplit=True, **style),
     layout.Tile(name="tile", **style),
     layout.TreeTab(name="treetab", border_width=border_width),
     layout.VerticalTile(name="verticaltile", **style),
