@@ -121,6 +121,7 @@ if not args or "bsp" in args:
             "toggle_split",
         ],
     )
+
     # commands animations
     take("bsp", ["toggle_split"], comment="from-down-left")
     take("bsp", ["toggle_split"], comment="from-right", before=["right"])
@@ -155,6 +156,7 @@ if not args or "columns" in args:
     take("columns", [], comment="3-windows", windows=3)
     take("columns", [], comment="4-windows", windows=4)
     take("columns", [], comment="5-windows", windows=4, before=["left", "spawn"])
+
     # commands animations
     take(
         "columns",
@@ -192,6 +194,7 @@ if not args or "matrix" in args:
     take("matrix", [], windows=4, comment="4-windows")
     take("matrix", [], windows=5, comment="5-windows")
     take("matrix", [], windows=5, comment="5-windows", before=["add"])
+
     # commands animations
     take("matrix", ["left"], windows=4)
     take("matrix", ["right"], windows=4)
@@ -213,6 +216,7 @@ if not args or "monadtall" in args:
     take("monadtall", [], windows=3, comment="3-windows")
     take("monadtall", [], windows=4, comment="4-windows")
     take("monadtall", [], windows=5, comment="5-windows")
+
     # commands animations
     take(
         "monadtall",
@@ -226,7 +230,7 @@ if not args or "monadtall" in args:
         ["normalize"],
         comment="from-main",
         windows=4,
-        before=["maximize", "shrink_main", "shrink_main", "left"],
+        before=["maximize", "shrink_main", "shrink_main"],
         after=["reset"],
     )
     take(
@@ -241,7 +245,6 @@ if not args or "monadtall" in args:
         ["maximize"],
         windows=4,
         comment="main",
-        before=["left"],
         after=["reset"],
     )
     take("monadtall", ["grow", "grow", "grow", "grow"], name="grow", delay="1x2")
@@ -269,11 +272,11 @@ if not args or "monadtall" in args:
     take("monadtall", ["shuffle_down"], before=["up"])
     take("monadtall", ["flip"])
     # take("monadtall", ["swap"])  # requires 2 args: window1 and window2
-    take("monadtall", ["swap_left"])
-    take("monadtall", ["swap_right"], before=["left"])
+    take("monadtall", ["swap_left"], before=["right"])
+    take("monadtall", ["swap_right"])
     take("monadtall", ["swap_main"])
-    take("monadtall", ["left"])
-    take("monadtall", ["right"], before=["left"])
+    take("monadtall", ["left"], before=["right"])
+    take("monadtall", ["right"])
 
 # ----------------------------------------------------------------------------
 # MONAD WIDE LAYOUT ----------------------------------------------------------
@@ -291,6 +294,7 @@ if not args or "monadwide" in args:
     take("monadwide", [], windows=3, comment="3-windows")
     take("monadwide", [], windows=4, comment="4-windows")
     take("monadwide", [], windows=5, comment="5-windows")
+
     # commands animations
     take(
         "monadwide",
@@ -364,6 +368,7 @@ if not args or "ratiotile" in args:
     take("ratiotile", [], windows=5, comment="5-windows")
     take("ratiotile", [], windows=6, comment="6-windows")
     take("ratiotile", [], windows=7, comment="7-windows")
+
     # commands animations
     take(
         "ratiotile",
@@ -418,6 +423,7 @@ if not args or "stack" in args:
     take("stack", [], windows=3, comment="3-windows")
     take("stack", [], windows=4, comment="4-windows")
     take("stack", [], windows=5, comment="5-windows")
+
     # commands animations
     take(
         "stack",
@@ -445,53 +451,134 @@ if not args or "stack" in args:
 # ----------------------------------------------------------------------------
 # TILE LAYOUT ----------------------------------------------------------------
 # ----------------------------------------------------------------------------
+# Note: no docstring at all in the code.
 if not args or "tile" in args:
-    take("tile", ["shuffle_down"])
-    take("tile", ["shuffle_up"])
-    take("tile", ["decrease_ratio"])
-    take("tile", ["increase_ratio"])
-    take("tile", ["decrease_nmaster"])
-    take("tile", ["increase_nmaster"])
+    # layout screenshots
+    take("tile", [], windows=2, comment="2-windows")
+    take("tile", [], windows=3, comment="3-windows")
+    take("tile", [], windows=4, comment="4-windows")
+    take("tile", [], windows=5, comment="5-windows")
+
+    # commands animations
+    take(
+        "tile",
+        ["shuffle_down", "shuffle_down", "shuffle_down"],
+        name="shuffle_down",
+        windows=4,
+    )
+    take(
+        "tile", ["shuffle_up", "shuffle_up", "shuffle_up"], name="shuffle_up", windows=4
+    )
+    take(
+        "tile",
+        [
+            "increase_ratio",
+            "increase_ratio",
+            "increase_ratio",
+            "decrease_ratio",
+            "decrease_ratio",
+            "decrease_ratio",
+        ],
+        name="increase_decrease_ratio",
+        before=["down"],
+        delay="1x3",
+    )
+    take(
+        "tile",
+        [
+            "increase_nmaster",
+            "increase_nmaster",
+            "increase_nmaster",
+            "decrease_nmaster",
+            "decrease_nmaster",
+            "decrease_nmaster",
+        ],
+        delay="1x2",
+        name="increase_decrease_nmaster",
+    )
 
 # ----------------------------------------------------------------------------
 # TREE TAB LAYOUT ------------------------------------------------------------
 # ----------------------------------------------------------------------------
-if not args or "treetab" in args:
-    take("treetab", ["down"])
-    take("treetab", ["up"])
-    take("treetab", ["move_down"])
-    take("treetab", ["move_up"])
-    take("treetab", ["move_left"])
-    take("treetab", ["move_right"])
-    take("treetab", ["add_section"])
-    take("treetab", ["del_section"])
-    take("treetab", ["section_up"])
-    take("treetab", ["section_down"])
-    take("treetab", ["sort_windows"])
-    take("treetab", ["expand_branch"])
-    take("treetab", ["collapse_branch"])
-    take("treetab", ["decrease_ratio"])
-    take("treetab", ["increase_ratio"])
+# TreeTab info clients lists clients from all groups,
+# breaking our "kill windows" method.
+# See https://github.com/qtile/qtile/issues/1459
+# if not args or "treetab" in args:
+#     # layout screenshots
+#     take("treetab", [], windows=1, comment="1-window")
+#     take("treetab", [], windows=2, comment="2-windows")
+#     take("treetab", [], windows=3, comment="3-windows")
+#     take("treetab", [], windows=4, comment="4-windows")
+#
+#     # commands animations
+#     take("treetab", ["down"])
+#     take("treetab", ["up"])
+#     take("treetab", ["move_down"])
+#     take("treetab", ["move_up"])
+#     take("treetab", ["move_left"])
+#     take("treetab", ["move_right"])
+#     take("treetab", ["add_section"])
+#     take("treetab", ["del_section"])
+#     take("treetab", ["section_up"])
+#     take("treetab", ["section_down"])
+#     take("treetab", ["sort_windows"])
+#     take("treetab", ["expand_branch"])
+#     take("treetab", ["collapse_branch"])
+#     take("treetab", ["decrease_ratio"])
+#     take("treetab", ["increase_ratio"])
 
 # ----------------------------------------------------------------------------
 # VERTICAL TILE LAYOUT -------------------------------------------------------
 # ----------------------------------------------------------------------------
 if not args or "verticaltile" in args:
-    take("verticaltile", ["shuffle_down"])
-    take("verticaltile", ["shuffle_up"])
+    # layout screenshots
+    take("verticaltile", [], windows=3, comment="3-windows")
+    take("verticaltile", [], before=["up", "maximize"], windows=4, comment="4-windows")
+
+    # commands animations
+    take(
+        "verticaltile",
+        ["shuffle_down", "shuffle_down"],
+        name="shuffle_down",
+        before=["up", "up"],
+    )
+    take("verticaltile", ["shuffle_up", "shuffle_up"], name="shuffle_up")
+    take(
+        "verticaltile",
+        ["shuffle_down", "shuffle_down"],
+        name="shuffle_down",
+        comment="maximize",
+        before=["up", "maximize", "up"],
+    )
+    take(
+        "verticaltile",
+        ["shuffle_up", "shuffle_up"],
+        name="shuffle_up",
+        comment="maximize",
+        before=["up", "maximize", "down"],
+    )
     take("verticaltile", ["maximize"])
-    take("verticaltile", ["normalize"])
-    take("verticaltile", ["grow"])
-    take("verticaltile", ["shrink"])
+    take("verticaltile", ["normalize"], before=["up", "maximize", "shrink", "shrink"])
+    take(
+        "verticaltile",
+        ["grow", "grow", "shrink", "shrink"],
+        name="grow_shrink",
+        before=["maximize", "shrink", "shrink"],
+        after=["normalize"],
+        delay="1x2",
+    )
 
 # ----------------------------------------------------------------------------
 # ZOOMY LAYOUT ---------------------------------------------------------------
 # ----------------------------------------------------------------------------
 if not args or "zoomy" in args:
-    take("zoomy", ["next"])
-    take("zoomy", ["previous"])
-    take("zoomy", ["down"])
-    take("zoomy", ["up"])
+    # layout screenshots
+    take("zoomy", [], windows=3, comment="3-windows")
+    take("zoomy", [], windows=4, comment="4-windows")
+
+    # commands animations
+    take("zoomy", ["next", "next"], name="next_or_down", windows=4)
+    take("zoomy", ["previous", "previous"], name="previous_or_up", windows=4)
 
 
 client.switch_to_group(original_group)
