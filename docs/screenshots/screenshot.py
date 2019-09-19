@@ -118,14 +118,14 @@ class Client:
         # prepare layout
         if commands:
             for cmd in commands:
-                if cmd == "spawn":
-                    self.spawn_window()
-                else:
-                    self.run_layout_command(cmd)
+                self.run_layout_command(cmd)
                 time.sleep(0.05)
 
     def run_layout_command(self, cmd):
-        getattr(self.client.layout, cmd)()
+        if cmd == "spawn":
+            self.spawn_window()
+        else:
+            getattr(self.client.layout, cmd)()
 
     def kill_group_windows(self):
         while len(self.client.layout.info().get("clients")) > 0:
