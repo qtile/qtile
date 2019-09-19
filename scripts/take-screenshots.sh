@@ -3,6 +3,7 @@
 PROJECT_DIR=$(dirname "$(dirname "$(readlink -f "$0")")")
 SCREEN_SIZE=${SCREEN_SIZE:-1920x1080}
 XDISPLAY=${XDISPLAY:-:1}
+LOG_PATH=${PROJECT_DIR}/docs/screenshots/screenshots.log
 if [[ -z "${PYTHON}" ]]; then
   if [[ -f "${PROJECT_DIR}/venv/bin/python" ]]; then
     PYTHON="${PROJECT_DIR}/venv/bin/python"
@@ -12,14 +13,17 @@ if [[ -z "${PYTHON}" ]]; then
 fi
 
 nested() {
-  env DISPLAY=${XDISPLAY} PYTHON="${PYTHON}" "$@"
+  env DISPLAY=${XDISPLAY} PYTHON="${PYTHON}" LOG_PATH="${LOG_PATH}" "$@"
 }
 
-Xephyr +extension RANDR -screen ${SCREEN_SIZE} ${XDISPLAY} -ac &
+rm "${LOG_PATH}" &>/dev/null
+touch "${LOG_PATH}"
+
+Xephyr +extension RANDR -screen ${SCREEN_SIZE} ${XDISPLAY} -ac &>/dev/null &
 XEPHYR_PID=$!
 (
   sleep 1
-  nested "${PYTHON}" "${PROJECT_DIR}/bin/qtile" -c "${PROJECT_DIR}/docs/screenshots/config.py" &
+  nested "${PYTHON}" "${PROJECT_DIR}/bin/qtile" -l CRITICAL -c "${PROJECT_DIR}/docs/screenshots/config.py" &
   QTILE_PID=$!
 
   sleep 1
@@ -28,7 +32,12 @@ XEPHYR_PID=$!
       nested xterm
     ;;
     *)
-      nested xterm -e "${PYTHON}" "${PROJECT_DIR}/docs/screenshots/take_all.py" "$@"
+      nested xterm -e "${PYTHON}" "${PROJECT_DIR}/docs/screenshots/take_all.py" "$@" &
+      XTERM_PID=$!
+
+      tail -f "${LOG_PATH}" &
+
+      wait $XTERM_PID
       sleep 1
       nested xterm -e qtile-cmd -o cmd -f shutdown
     ;;

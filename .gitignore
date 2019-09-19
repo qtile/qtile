@@ -45,3 +45,6 @@ venv
 
 # intellij idea IDEs
 .idea/
+
+# screenshots
+docs/screenshots/screenshots.log
