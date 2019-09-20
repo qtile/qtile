@@ -778,7 +778,7 @@ class Qtile(CommandObject):
             try:
                 return win.window.get_net_wm_pid()
             except Exception:
-                # the X connection may be invalid due to server crash
+                logger.exception("Got an exception in getting the window pid")
                 return None
         pids = map(get_interesting_pid, self.windows_map.values())
         pids = list(filter(lambda x: x is not None, pids))
