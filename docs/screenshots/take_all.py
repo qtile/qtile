@@ -152,6 +152,13 @@ specs = {
             before=["grow_down", "grow_down", "grow_left", "grow_left"],
         ),
     },
+    "floating": {
+        # Floating info clients lists clients from all groups,
+        # breaking our "kill windows" method.
+        # "2-windows": dict(windows=2),
+        # "3-windows": dict(windows=3),
+        # "4-windows": dict(windows=4),
+    },
     "matrix": {
         "2-windows": dict(windows=2),
         "3-windows": dict(windows=3),
@@ -165,6 +172,9 @@ specs = {
         "add-delete": dict(
             commands=["add", "add", "delete", "delete", "delete", "add"], windows=5
         ),
+    },
+    "max": {
+        "max": dict(windows=1),
     },
     "monadtall": {
         "2-windows": dict(windows=2),
