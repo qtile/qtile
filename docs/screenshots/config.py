@@ -19,17 +19,18 @@ border_focus = "#ff0000"
 border_normal = "#000000"
 border_width = 10
 margin = 20
-style = dict(
+borders = dict(
     border_focus=border_focus,
     border_normal=border_normal,
-    border_width=border_width,
-    margin=margin,
+    border_width=border_width
 )
+style = dict(margin=margin, **borders)
 
 layouts = [
     layout.Max(name="max"),
     layout.Bsp(name="bsp", **style),
     layout.Columns(name="columns", **style),
+    layout.Floating(name="floating", **borders),
     layout.Matrix(name="matrix", **style),
     layout.MonadTall(name="monadtall", **style),
     layout.MonadWide(name="monadwide", **style),
