@@ -36,11 +36,12 @@ cache:
 addons:
   apt:
     packages:
+    - graphviz # for docs
+    - imagemagick
     - x11-apps
     - xserver-xephyr
-    - xvfb
-    - graphviz # for docs
     - xterm
+    - xvfb
 
 
 install:

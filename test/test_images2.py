@@ -30,7 +30,7 @@ def get_imagemagick_version():
 
 def should_skip():
     "Check if tests should be skipped due to old imagemagick version."
-    min_version = (6, 9)        # minimum imagemagick version
+    min_version = (6, 8)        # minimum imagemagick version
     try:
         actual_version = get_imagemagick_version()
     except AssertionError:
@@ -44,7 +44,7 @@ pytestmark = pytest.mark.skipif(should_skip(), reason="recent version of imagema
 TEST_DIR = path.dirname(path.abspath(__file__))
 DATA_DIR = path.join(TEST_DIR, 'data')
 SVGS = glob(path.join(DATA_DIR, '*', '*.svg'))
-metrics = ('AE', 'FUZZ', 'MAE', 'MEPP', 'MSE', 'PAE', 'PHASH', 'PSNR', 'RMSE')
+metrics = ('AE', 'FUZZ', 'MAE', 'MEPP', 'MSE', 'PAE', 'PHASH', 'RMSE')
 ImgDistortion = namedtuple('ImgDistortion', metrics)
 
 
@@ -67,8 +67,8 @@ def compare_images(test_img, reference_img, metric='MAE'):
     ]
     p = sp.Popen(cmd, stdout=sp.PIPE, stderr=sp.PIPE)
     stdout, stderr = p.communicate()
-    print('stdout', stdout)
-    print('stderr', stderr)
+    print('stdout', stdout.decode())
+    print('stderr', stderr.decode())
     print('cmd', cmd)
     return float(stdout.decode().strip())
 
@@ -104,6 +104,7 @@ def comparison_images(svg_img):
 @pytest.fixture(scope='function')
 def distortion_bad(svg_img, comparison_images):
     path_bad, path_good = comparison_images
+    print("comparing:", path_bad, path_good)
     return compare_images_all_metrics(path_bad, path_good)
 
 
@@ -118,7 +119,7 @@ def test_svg_scaling(svg_img, distortion_bad, comparison_images, tmpdir):
 
     name = svg_img.name
     svg_img.scale(width_factor=20, lock_aspect_ratio=True)
-    surf = cairocffi.SVGSurface(str(dpath(name+'.svg')), svg_img.width, svg_img.height)
+    surf = cairocffi.SVGSurface(str(dpath(name + '.svg')), svg_img.width, svg_img.height)
     ctx = cairocffi.Context(surf)
 
     ctx.save()
@@ -126,7 +127,7 @@ def test_svg_scaling(svg_img, distortion_bad, comparison_images, tmpdir):
     ctx.paint()
     ctx.restore()
 
-    test_png_path = str(dpath(name+'.png'))
+    test_png_path = str(dpath(name + '.png'))
     surf.write_to_png(test_png_path)
     surf.finish()
     distortion = compare_images_all_metrics(test_png_path, path_good)
