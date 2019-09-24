@@ -36,6 +36,7 @@ cache:
 addons:
   apt:
     packages:
+    - gkrellm
     - graphviz # for docs
     - imagemagick
     - x11-apps
