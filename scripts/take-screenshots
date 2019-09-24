@@ -1,9 +1,15 @@
 #!/bin/sh
-
+# environment variables
 PROJECT_DIR=$(dirname "$(dirname "$(readlink -f "$0")")")
-SCREEN_SIZE=${SCREEN_SIZE:-1920x1080}
 XDISPLAY=${XDISPLAY:-:1}
+SCREEN_SIZE=${SCREEN_SIZE:-960x540}
 LOG_PATH=${PROJECT_DIR}/docs/screenshots/take_all.log
+GEOMETRY=${GEOMETRY:-240x135}
+DELAY=${DELAY:-1x1}
+BORDER_FOCUS=${BORDER_FOCUS:-#ff0000}
+BORDER_NORMAL=${BORDER_NORMAL:-#000000}
+BORDER_WIDTH=${BORDER_WIDTH:-8}
+MARGIN=${MARGIN:-10}
 if [[ -z "${PYTHON}" ]]; then
   if [[ -f "${PROJECT_DIR}/venv/bin/python" ]]; then
     PYTHON="${PROJECT_DIR}/venv/bin/python"
@@ -12,8 +18,19 @@ if [[ -z "${PYTHON}" ]]; then
   fi
 fi
 
+# run command in nested X window with specific env vars
 nested() {
-  env DISPLAY=${XDISPLAY} PYTHON="${PYTHON}" LOG_PATH="${LOG_PATH}" "$@"
+  env \
+    DISPLAY=${XDISPLAY} \
+    PYTHON="${PYTHON}" \
+    LOG_PATH="${LOG_PATH}" \
+    GEOMETRY="${GEOMETRY}" \
+    DELAY="${DELAY}" \
+    BORDER_FOCUS="${BORDER_FOCUS}" \
+    BORDER_NORMAL="${BORDER_NORMAL}" \
+    BORDER_WIDTH="${BORDER_WIDTH}" \
+    MARGIN="${MARGIN}" \
+    "$@"
 }
 
 rm "${LOG_PATH}" &>/dev/null

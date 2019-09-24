@@ -5,16 +5,20 @@ import os
 import sys
 import time
 import traceback
-from pathlib import Path
 from collections import namedtuple
+from pathlib import Path
 
 from screenshots import Client, Screenshooter
+
+
+def env(name, default):
+    return os.environ.get(name, default)
 
 
 Spec = namedtuple(
     "Spec",
     "commands before after geometry delay windows",
-    defaults=[None, None, None, "300x200", "1x1", 3]
+    defaults=[None, None, None, env("GEOMETRY", "240x135"), env("DELAY", "1x1"), 3],
 )
 
 
@@ -126,9 +130,7 @@ specs = {
             commands=["add", "add", "delete", "delete", "delete", "add"], windows=5
         ),
     },
-    "max": {
-        "max": Spec(windows=1),
-    },
+    "max": {"max": Spec(windows=1)},
     "monadtall": {
         "2-windows": Spec(windows=2),
         "3-windows": Spec(windows=3),
@@ -418,7 +420,11 @@ def take(name, layout, spec):
             try:
                 client.run_layout_command(command)
             except Exception:
-                errors.append("While running command {}:\n{}".format(command, traceback.format_exc()))
+                errors.append(
+                    "While running command {}:\n{}".format(
+                        command, traceback.format_exc()
+                    )
+                )
                 break
             time.sleep(0.05)
             screen.shoot()
@@ -438,7 +444,9 @@ def take(name, layout, spec):
 def get_selection(args):
     """Parse args of the form LAYOUT, LAYOUT:NAME or LAYOUT:NAME1,NAME2."""
     if not args:
-        return [(layout, sorted(specs[layout].keys())) for layout in sorted(specs.keys())]
+        return [
+            (layout, sorted(specs[layout].keys())) for layout in sorted(specs.keys())
+        ]
 
     errors = []
     selection = []
@@ -467,16 +475,16 @@ def get_selection(args):
 
 def main(args=None):
     logging.basicConfig(
-        filename=os.environ.get("LOG_PATH", "docs/screenshots/take_all.log"),
+        filename=env("LOG_PATH", "docs/screenshots/take_all.log"),
         format="%(asctime)s - %(levelname)s - %(message)s",
-        level=logging.INFO
+        level=logging.INFO,
     )
 
     # get selection of specs, exit if they don't exist
     try:
         selection = get_selection(args)
     except LookupError as error:
-        logging.error(str(error), file=sys.stderr)
+        logging.error("Wrong selection:\n" + str(error))
         return 1
 
     # switch to group
@@ -492,7 +500,9 @@ def main(args=None):
                 logging.info("Shooting {}:{} - OK!".format(layout, name))
             else:
                 success = False
-                logging.error("Shooting {}:{} - failed:\n{}".format(layout, name, errors))
+                logging.error(
+                    "Shooting {}:{} - failed:\n{}".format(layout, name, errors)
+                )
 
     # switch back to original group
     client.switch_to_group(original_group)
