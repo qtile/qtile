@@ -7,6 +7,10 @@ import time
 from screenshots import Client, Screenshooter
 
 
+def env(name, default):
+    return os.environ.get(name, default)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -42,7 +46,7 @@ if __name__ == "__main__":
         "-d",
         "--delay",
         dest="delay",
-        default="1x1",
+        default=env("DELAY", "1x1"),
         help="Delay between each frame of the animated GIF. Default: 1x1.",
     )
     parser.add_argument(
@@ -56,7 +60,7 @@ if __name__ == "__main__":
         "-G",
         "--geometry",
         dest="geometry",
-        default="300x200",
+        default=env("GEOMETRY", "240x135"),
         help="The size of the generated screenshots (WIDTHxHEIGHT).",
     )
     parser.add_argument(

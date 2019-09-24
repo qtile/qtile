@@ -2,10 +2,10 @@ import os
 import subprocess
 import time
 
-from libqtile.ipc import find_sockfile
-from libqtile.ipc import Client as IPCClient
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_interface import IPCCommandInterface
+from libqtile.ipc import Client as IPCClient
+from libqtile.ipc import find_sockfile
 
 
 class Client:

@@ -1,6 +1,13 @@
+import os
+
+from libqtile import bar, layout, widget
 from libqtile.config import Key, Screen
 from libqtile.lazy import lazy
-from libqtile import layout, bar, widget
+
+
+def env(name, default):
+    return os.environ.get(name, default)
+
 
 mod = "mod4"
 
@@ -15,14 +22,12 @@ keys = [
     Key([mod, "shift"], "Tab", lazy.prev_layout()),
 ]
 
-border_focus = "#ff0000"
-border_normal = "#000000"
-border_width = 10
-margin = 20
+border_focus = env("BORDER_FOCUS", "#ff0000")
+border_normal = env("BORDER_NORMAL", "#000000")
+border_width = int(env("BORDER_WIDTH", 8))
+margin = int(env("MARGIN", 10))
 borders = dict(
-    border_focus=border_focus,
-    border_normal=border_normal,
-    border_width=border_width
+    border_focus=border_focus, border_normal=border_normal, border_width=border_width
 )
 style = dict(margin=margin, **borders)
 
@@ -48,7 +53,6 @@ screens = [
         bottom=bar.Bar(
             [
                 widget.GroupBox(),
-                widget.Prompt(),
                 widget.WindowName(),
                 widget.CurrentLayout(),
                 widget.Clock(format="%Y-%m-%d %a %I:%M %p"),
