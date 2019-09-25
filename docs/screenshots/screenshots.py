@@ -89,7 +89,7 @@ class Screenshooter:
         self.animation_delay = animation_delay
         self.output_paths = []
 
-    def shoot(self, numbered=True):
+    def shoot(self, numbered=True, compress="lossless"):
         if numbered:
             output_path = "{}.{}.png".format(self.output_prefix, self.number)
         else:
@@ -102,10 +102,32 @@ class Screenshooter:
         # only keep the thumbnail
         os.rename(thumbnail_path, output_path)
 
+        # compress PNG (only if pngquant is available)
+        if compress:
+            self.compress(compress, output_path)
+
         # add this path to the animation command
         self.output_paths.append(output_path)
 
         self.number += 1
+
+    def compress(self, method, file_path):
+        compress_command = [
+            "pngquant",
+            {"lossless": "--speed=1", "lossy": "--quality=0-90"}.get(method),
+            "--strip",
+            "--skip-if-larger",
+            "--force",
+            "--output",
+            file_path,
+            file_path
+        ]
+
+        try:
+            subprocess.call(compress_command)
+        except FileNotFoundError:
+            pass
+
 
     def animate(self, delays=None, clear=False):
         # TODO: use delays to build animation with custom delay between each frame
