@@ -121,13 +121,15 @@ specs = {
         "3-windows": Spec(windows=3),
         "4-windows": Spec(windows=4),
         "5-windows": Spec(windows=5),
-        "5-windows": Spec(windows=5, before=["add"]),
+        "5-windows-add": Spec(windows=5, before=["add"]),
         "left": Spec(commands=["left"], windows=4),
-        "right": Spec(commands=["right"], windows=4),
+        "right": Spec(commands=["right"], before=["up", "left"], windows=4),
         "up": Spec(commands=["up"], windows=4),
-        "down": Spec(commands=["down"], windows=4),
+        "down": Spec(commands=["down"], before=["up"], windows=4),
         "add-delete": Spec(
-            commands=["add", "add", "delete", "delete", "delete", "add"], windows=5
+            commands=["add", "add", "delete", "delete", "delete", "add"],
+            after=["delete"],
+            windows=5
         ),
     },
     "max": {"max": Spec(windows=1)},
