@@ -20,7 +20,7 @@
 import psutil
 
 from libqtile.log_utils import logger
-from . import base
+from libqtile.widget import base
 
 from typing import List  # noqa: F401
 
@@ -29,43 +29,45 @@ class Net(base.ThreadedPollText):
     """Displays interface down and up speed"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('interface', 'wlan0', 'The interface to monitor'),
+        ('interface', None, 'List of interfaces to monitor or None to displays all active NICs combined'),
         ('update_interval', 1, 'The update interval.'),
     ]
 
     def __init__(self, **config):
         base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(Net.defaults)
-        self.interfaces = self.get_stats()
+        if type(self.interface) != list:
+            if self.interface == None:
+                self.interface = "all"
+            self.interface = [self.interface]
+        self.stats = self.get_stats()
 
     def convert_b(self, b):
-        # Here we round to 1000 instead of 1024
-        # because of round things
-        letter = 'B'
-        # b is a float, so don't use integer division
-        if int(b / 1000) > 0:
-            b /= 1000.0
-            letter = 'k'
-        if int(b / 1000) > 0:
-            b /= 1000.0
-            letter = 'M'
-        if int(b / 1000) > 0:
-            b /= 1000.0
-            letter = 'G'
-        # I hope no one have more than 999 GB/s
-        return b, letter
+
+        letters = ["b", "kb", "Mb", "Gb", "Tb", "Pb", "Eb", "Zb", "Yb"]
+        factor = 1000.0
+        i = 0
+
+        while int(b / 1000) > 0:
+            b /= factor
+            i = i + 1
+
+        return b, letters[i]
 
     def get_stats(self):
-
         interfaces = {}
-        net = psutil.net_io_counters(pernic=True)
-        for iface in net:
-            name = iface
-            down = net[iface].bytes_recv
-            up = net[iface].bytes_sent
-            interfaces[name] = {'down': down, 'up': up}
-
-        return interfaces
+        if self.interface == ["all"]:
+            net = psutil.net_io_counters(pernic=False)
+            interfaces["all"] = {'down': net[1], 'up': net[0]}
+            return interfaces
+        else:
+            net = psutil.net_io_counters(pernic=True)
+            for iface in net:
+                name = iface
+                down = net[iface].bytes_recv
+                up = net[iface].bytes_sent
+                interfaces[name] = {'down': down, 'up': up}
+            return interfaces
 
     def _format(self, down, up):
         down = "%0.2f" % down
@@ -81,23 +83,24 @@ class Net(base.ThreadedPollText):
 
     def poll(self):
         try:
-            new_int = self.get_stats()
-            down = new_int[self.interface]['down'] - \
-                self.interfaces[self.interface]['down']
-            up = new_int[self.interface]['up'] - \
-                self.interfaces[self.interface]['up']
+            ret_stat = ""
+            for intf in self.interface:
+                new_stats = self.get_stats()
+                down = new_stats[intf]['down'] - \
+                    self.stats[intf]['down']
+                up = new_stats[intf]['up'] - \
+                    self.stats[intf]['up']
 
-            down = down / self.update_interval
-            up = up / self.update_interval
-            down, down_letter = self.convert_b(down)
-            up, up_letter = self.convert_b(up)
+                down = down / self.update_interval
+                up = up / self.update_interval
+                down, down_letter = self.convert_b(down)
+                up, up_letter = self.convert_b(up)
+                down, up = self._format(down, up)
+                str_base = "%s: %s%s \u2193\u2191 %s%s "
+                self.stats[intf] = new_stats[intf]
+                ret_stat += str_base % (intf, down, down_letter, up, up_letter)
 
-            down, up = self._format(down, up)
-
-            str_base = "%s%s \u2193\u2191 %s%s"
-
-            self.interfaces = new_int
-            return str_base % (down, down_letter, up, up_letter)
-        except Exception:
-            logger.error('%s: Probably your wlan device is switched off or otherwise not present in your system.',
-                         self.__class__.__name__)
+            return ret_stat
+        except Exception as excp:
+            logger.error('%s: Caught Exception:\n%s',
+                         self.__class__.__name__, excp)
