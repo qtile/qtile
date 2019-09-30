@@ -62,8 +62,6 @@ class Volume(base._TextBox):
         ("theme_path", None, "Path of the icons"),
         ("emoji", False, "Use emoji to display volume states, only if ``theme_path`` is not set."
                          "The specified font needs to contain the correct unicode characters."),
-        ("text_format", "Vol: {}", "Text format to display volume values, only if ``theme_path``"
-                                   " and ``emoji`` are not set."),
         ("mute_command", None, "Mute command"),
         ("volume_app", None, "App to control volume"),
         ("volume_up_command", None, "Volume up command"),
@@ -165,10 +163,9 @@ class Volume(base._TextBox):
                 self.text = u'\U0001f50a'
         else:
             if self.volume == -1:
-                volume_text = 'M'
+                self.text = 'M'
             else:
-                volume_text = '{}%'.format(self.volume)
-            self.text = self.text_format.format(volume_text)
+                self.text = '{}%'.format(self.volume)
 
     def setup_images(self):
         from .. import images
