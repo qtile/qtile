@@ -28,3 +28,37 @@ def test_images_good(tmpdir, fake_bar, svg_img_as_pypath):
     assert len(vol.surfaces) == len(names)
     for name, surfpat in vol.surfaces.items():
         assert isinstance(surfpat, cairocffi.SurfacePattern)
+
+
+def test_emoji():
+    vol = Volume(emoji=True)
+    vol.volume = -1
+    vol._update_drawer()
+    assert vol.text == u'\U0001f507'
+
+    vol.volume = 29
+    vol._update_drawer()
+    assert vol.text == u'\U0001f508'
+
+    vol.volume = 79
+    vol._update_drawer()
+    assert vol.text == u'\U0001f509'
+
+    vol.volume = 80
+    vol._update_drawer()
+    assert vol.text == u'\U0001f50a'
+
+
+def test_text():
+    text_format = "Volume: {}"
+    vol = Volume(text_format=text_format)
+    vol.volume = -1
+    vol._update_drawer()
+    assert vol.text == text_format.format('M')
+
+    vol.volume = 50
+    vol._update_drawer()
+    assert vol.text == text_format.format('50%')
+
+
+
