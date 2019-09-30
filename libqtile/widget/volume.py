@@ -58,10 +58,12 @@ class Volume(base._TextBox):
         ("device", "default", "Device Name"),
         ("channel", "Master", "Channel"),
         ("padding", 3, "Padding left and right. Calculated if None."),
-        ("theme_path", None, "Path of the icons"),
         ("update_interval", 0.2, "Update time in seconds."),
+        ("theme_path", None, "Path of the icons"),
         ("emoji", False, "Use emoji to display volume states, only if ``theme_path`` is not set."
                          "The specified font needs to contain the correct unicode characters."),
+        ("text_format", "Vol: {}", "Text format to display volume values, only if ``theme_path``"
+                                   " and ``emoji`` are not set."),
         ("mute_command", None, "Mute command"),
         ("volume_app", None, "App to control volume"),
         ("volume_up_command", None, "Volume up command"),
@@ -105,7 +107,7 @@ class Volume(base._TextBox):
                 subprocess.call(self.create_amixer_command('-q',
                                                            'sset',
                                                            self.channel,
-                                                           '%d%%-' % self.step))
+                                                           '{}%-'.format(self.step)))
         elif button == BUTTON_UP:
             if self.volume_up_command is not None:
                 subprocess.call(self.volume_up_command, shell=True)
@@ -113,7 +115,7 @@ class Volume(base._TextBox):
                 subprocess.call(self.create_amixer_command('-q',
                                                            'sset',
                                                            self.channel,
-                                                           '%d%%+' % self.step))
+                                                           '{}%+'.format(self.step)))
         elif button == BUTTON_MUTE:
             if self.mute_command is not None:
                 subprocess.call(self.mute_command, shell=True)
@@ -163,9 +165,10 @@ class Volume(base._TextBox):
                 self.text = u'\U0001f50a'
         else:
             if self.volume == -1:
-                self.text = 'M'
+                volume_text = 'M'
             else:
-                self.text = '%s%%' % self.volume
+                volume_text = '{}%'.format(self.volume)
+            self.text = self.text_format.format(volume_text)
 
     def setup_images(self):
         from .. import images
