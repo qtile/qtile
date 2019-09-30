@@ -50,15 +50,13 @@ def test_emoji():
 
 
 def test_text():
-    text_format = "Volume: {}"
-    vol = Volume(text_format=text_format)
+    fmt = "Volume: {}"
+    vol = Volume(fmt=fmt)
     vol.volume = -1
     vol._update_drawer()
-    assert vol.text == text_format.format('M')
+    assert vol.text == 'M'
 
     vol.volume = 50
     vol._update_drawer()
-    assert vol.text == text_format.format('50%')
-
-
+    assert vol.text == '50%'
 
