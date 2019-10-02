@@ -36,8 +36,8 @@ class Net(base.ThreadedPollText):
     def __init__(self, **config):
         base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(Net.defaults)
-        if type(self.interface) != list:
-            if self.interface == None:
+        if not isinstance(self.interface, list):
+            if self.interface is None:
                 self.interface = "all"
             self.interface = [self.interface]
         self.stats = self.get_stats()
