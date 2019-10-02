@@ -34,19 +34,19 @@ def test_emoji():
     vol = Volume(emoji=True)
     vol.volume = -1
     vol._update_drawer()
-    assert vol.text == u'\U0001f507'
+    assert vol.text == '\U0001f507'
 
     vol.volume = 29
     vol._update_drawer()
-    assert vol.text == u'\U0001f508'
+    assert vol.text == '\U0001f508'
 
     vol.volume = 79
     vol._update_drawer()
-    assert vol.text == u'\U0001f509'
+    assert vol.text == '\U0001f509'
 
     vol.volume = 80
     vol._update_drawer()
-    assert vol.text == u'\U0001f50a'
+    assert vol.text == '\U0001f50a'
 
 
 def test_text():
@@ -59,4 +59,3 @@ def test_text():
     vol.volume = 50
     vol._update_drawer()
     assert vol.text == '50%'
-
