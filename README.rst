@@ -46,13 +46,13 @@ and `guidelines`_ for contributing in the documentation.
 .. |pypi| image:: https://img.shields.io/pypi/v/qtile.svg
     :alt: PyPI
     :target: https://pypi.org/project/qtile/
-.. |travis| image:: https://img.shields.io/travis/qtile/qtile.svg
+.. |travis| image:: https://travis-ci.org/qtile/qtile.svg?branch=master
     :alt: Travis
     :target: https://travis-ci.org/qtile/qtile
-.. |rtd| image:: https://img.shields.io/readthedocs/qtile.svg
+.. |rtd| image:: https://readthedocs.org/projects/qtile/badge/?version=latest
     :alt: Read the Docs
     :target: http://docs.qtile.org/en/latest/
-.. |coveralls| image:: https://img.shields.io/coveralls/github/qtile/qtile/master.svg
+.. |coveralls| image:: https://coveralls.io/repos/github/qtile/qtile/badge.svg?branch=master
     :alt: Coveralls
     :target: https://coveralls.io/github/qtile/qtile?branch=master
 .. |license| image:: https://img.shields.io/github/license/qtile/qtile.svg
