@@ -124,12 +124,12 @@ class _FreeBSDBattery(_Battery):
         except CalledProcessError:
             raise RuntimeError('acpiconf exited incorrectly')
 
-        stat = re.search(r'State:\t+([a-z]+)', info)
+        stat_match = re.search(r'State:\t+([a-z]+)', info)
 
-        if stat is None:
+        if stat_match is None:
             raise RuntimeError('Could not get battery state!')
 
-        stat = stat.group(1)
+        stat = stat_match.group(1)
         if stat == 'charging':
             state = BatteryState.CHARGING
         elif stat == 'discharging':

@@ -276,7 +276,9 @@ class QSh:
             return self._client.execute(call, (arg,), {})
         elif arg in self._builtins:
             c = getattr(self, "do_" + arg)
-            return inspect.getdoc(c)
+            ret = inspect.getdoc(c)
+            assert ret is not None
+            return ret
         else:
             return "No such command: %s" % arg
 
