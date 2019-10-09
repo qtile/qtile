@@ -164,11 +164,19 @@ def test_togroup(qtile):
     with pytest.raises(CommandError):
         self.c.window.togroup("nonexistent")
     assert self.c.groups()["a"]["focus"] == "one"
+
     self.c.window.togroup("a")
     assert self.c.groups()["a"]["focus"] == "one"
-    self.c.window.togroup("b")
+
+    self.c.window.togroup("b", switch_group=True)
     assert self.c.groups()["b"]["focus"] == "one"
     assert self.c.groups()["a"]["focus"] is None
+    assert self.c.group.info()["name"] == "b"
+
+    self.c.window.togroup("a")
+    assert self.c.groups()["a"]["focus"] == "one"
+    assert self.c.group.info()["name"] == "b"
+
     self.c.to_screen(1)
     self.c.window.togroup("c")
     assert self.c.groups()["c"]["focus"] == "one"

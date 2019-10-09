@@ -371,9 +371,7 @@ class Screen(CommandObject):
         self.qtile.call_soon(self.group.layout_all)
 
     def cmd_info(self):
-        """
-            Returns a dictionary of info for this screen.
-        """
+        """Returns a dictionary of info for this screen."""
         return dict(
             index=self.index,
             width=self.width,
