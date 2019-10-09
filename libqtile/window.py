@@ -1026,8 +1026,11 @@ class Window(_Window):
             self.height = h
         self._reconfigure_floating(new_float_state=new_float_state)
 
-    def togroup(self, group_name=None):
-        """Move window to a specified group"""
+    def togroup(self, group_name=None, switch_group=False):
+        """Move window to a specified group
+
+        Also switch to that group if switch_group is True.
+        """
         if group_name is None:
             group = self.qtile.current_group
         else:
@@ -1046,9 +1049,11 @@ class Window(_Window):
             if group.screen and self.x < group.screen.x:
                 self.x += group.screen.x
             group.add(self)
+            if switch_group:
+                group.cmd_toscreen()
 
     def toscreen(self, index=None):
-        """ Move window to a specified screen, or the current screen. """
+        """Move window to a specified screen, or the current screen."""
         if index is None:
             screen = self.qtile.current_screen
         else:
@@ -1288,10 +1293,11 @@ class Window(_Window):
         """
         self.kill()
 
-    def cmd_togroup(self, groupName=None):  # noqa: 803
+    def cmd_togroup(self, groupName=None, switch_group=False):  # noqa: 803
         """Move window to a specified group.
 
-        If groupName is not specified, we assume the current group
+        If groupName is not specified, we assume the current group.
+        If switch_group is True, also switch to that group.
 
         Examples
         ========
@@ -1303,8 +1309,12 @@ class Window(_Window):
         Move window to group "a"::
 
             togroup("a")
+
+        Move window to group "a", and switch to group "a"::
+
+            togroup("a", switch_group=True)
         """
-        self.togroup(groupName)
+        self.togroup(groupName, switch_group)
 
     def cmd_toscreen(self, index=None):
         """Move window to a specified screen.
