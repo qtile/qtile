@@ -4,17 +4,22 @@ set -x
 
 echo "Creating dev environment in ./venv..."
 
-python3.7 -m venv venv
+python=python3
+if [ "$#" -eq 1 ]; then
+    python=$1
+fi
+
+${python} -m venv venv
 . venv/bin/activate
-pip3.7 install -U pip setuptools
+pip install -U pip setuptools
 
 # https://github.com/qtile/qtile/issues/994#issuecomment-497984551
 echo "Installing xcffib then cairocffi..."
-pip3.7 install 'xcffib >= 0.5.0' && pip3.7 install --no-cache-dir 'cairocffi >= 0.9.0'
+pip install 'xcffib >= 0.5.0' && pip install --no-cache-dir 'cairocffi >= 0.9.0'
 
 echo "Installing other required packages..."
-pip3.7 install -r requirements.txt
-pip3.7 install -r requirements-dev.txt
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
 
 echo ""
 echo "  * Created virtualenv environment in ./venv."
