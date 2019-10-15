@@ -209,6 +209,8 @@ class _LinuxBattery(_Battery, configurable.Configurable):
 
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(_LinuxBattery.defaults)
+        if isinstance(self.battery, int):
+            self.battery = "BAT{}".format(self.battery)
 
     def _get_battery_name(self):
         if os.path.isdir(self.BAT_DIR):
@@ -315,7 +317,7 @@ class Battery(base.ThreadedPollText):
         ('low_percentage', 0.10, "Indicates when to use the low_foreground color 0 < x < 1"),
         ('low_foreground', 'FF0000', 'Font color on low battery'),
         ('update_interval', 60, 'Seconds between status updates'),
-        ('battery', 0, 'Which battery should be monitored'),
+        ('battery', 0, 'Which battery should be monitored (battery number or name)'),
     ]
 
     def __init__(self, **config) -> None:
