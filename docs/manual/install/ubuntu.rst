@@ -9,7 +9,7 @@ Qtile packages available via:
 
     sudo apt-get install qtile
 
-On older versions of Ubuntu (15.10 to 16.10) and Debian (9 or lower), the
+On older versions of Ubuntu (15.10 to 16.10) and Debian 9, the
 dependencies are available via:
 
 .. code-block:: bash
