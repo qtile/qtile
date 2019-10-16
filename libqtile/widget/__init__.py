@@ -23,7 +23,10 @@
 from ..utils import safe_import as safe_import_
 from .import_error import make_error
 
+# only directly import widgets that do not have any third party dependencies
+# other than those required by qtile, otherwise use the same import function
 from .clock import Clock  # noqa: F401
+from .currentlayout import CurrentLayout, CurrentLayoutIcon  # noqa: F401
 from .groupbox import AGroupBox, GroupBox  # noqa: F401
 from .prompt import Prompt  # noqa: F401
 from .systray import Systray  # noqa: F401
@@ -38,7 +41,6 @@ def safe_import(module_name, class_name):
 
 safe_import("backlight", "Backlight")
 safe_import("battery", ["Battery", "BatteryIcon"])
-safe_import("currentlayout", ["CurrentLayout", "CurrentLayoutIcon"])
 safe_import("currentscreen", "CurrentScreen")
 safe_import("debuginfo", "DebugInfo")
 safe_import("graph", ["CPUGraph", "MemoryGraph", "SwapGraph", "NetGraph",
