@@ -26,6 +26,8 @@ matrix:
           env: TOXENV=mypy
 
     allow_failures:
+        - python: pypy3
+          env: TOXENV=pypy3
         - python: nightly
           env: TOXENV=py-nightly
 
