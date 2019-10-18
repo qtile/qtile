@@ -265,7 +265,7 @@ specs = {
         # There seems to be a confusion between Stack and Columns layouts.
         # The Columns layout says: "Extension of the Stack layout"
         # and "The screen is split into columns, which can be dynamically added
-        # or removed", but there no commands available to add or remove columns.
+        # or removed", but there are no commands available to add or remove columns.
         # Inversely, the Stack layout says: "Unlike the columns layout
         # the number of stacks is fixed", yet the two commands
         # "cmd_add" and "cmd_delete" allow for a dynamic number of stacks!
@@ -494,14 +494,14 @@ def main(args=None):
     client.switch_to_group("s")
 
     # take screenshots/animations for each selected spec
-    success = True
+    ok = True
     for layout, names in selection:
         for name in names:
             success, errors = take(name, layout, specs[layout][name])
             if success:
                 logging.info("Shooting {}:{} - OK!".format(layout, name))
             else:
-                success = False
+                ok = False
                 logging.error(
                     "Shooting {}:{} - failed:\n{}".format(layout, name, errors)
                 )
@@ -509,7 +509,7 @@ def main(args=None):
     # switch back to original group
     client.switch_to_group(original_group)
 
-    return 0 if success else 1
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":
