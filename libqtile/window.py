@@ -1026,7 +1026,7 @@ class Window(_Window):
             self.height = h
         self._reconfigure_floating(new_float_state=new_float_state)
 
-    def togroup(self, group_name=None, switch_group=False):
+    def togroup(self, group_name=None, *, switch_group=False):
         """Move window to a specified group
 
         Also switch to that group if switch_group is True.
@@ -1293,7 +1293,7 @@ class Window(_Window):
         """
         self.kill()
 
-    def cmd_togroup(self, groupName=None, switch_group=False):  # noqa: 803
+    def cmd_togroup(self, groupName=None, *, switch_group=False):  # noqa: 803
         """Move window to a specified group.
 
         If groupName is not specified, we assume the current group.
@@ -1314,7 +1314,7 @@ class Window(_Window):
 
             togroup("a", switch_group=True)
         """
-        self.togroup(groupName, switch_group)
+        self.togroup(groupName, switch_group=switch_group)
 
     def cmd_toscreen(self, index=None):
         """Move window to a specified screen.
