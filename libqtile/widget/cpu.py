@@ -35,7 +35,7 @@ class CPU(base.ThreadedPollText):
     ]
 
     def __init__(self, **config):
-        base.ThreadedPollText.__init__(self, **config)
+        super().__init__(**config)
         self.add_defaults(CPU.defaults)
 
     def tick(self):
