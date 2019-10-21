@@ -29,24 +29,21 @@ class Net(base.ThreadedPollText):
     """Displays interface down and up speed"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('interface', None, 'List of interfaces or single NIC as string to monitor, None to displays all active NICs combined'),
+        ('interface', None, 'List of interfaces or single NIC as string to monitor, \
+            None to displays all active NICs combined'),
         ('update_interval', 1, 'The update interval.'),
     ]
 
     def __init__(self, **config):
         base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(Net.defaults)
-        #if not isinstance(self.interface, list):
-        #    if self.interface is None:
-        #        self.interface = "all"
-        #    self.interface = [self.interface]
         if not isinstance(self.interface, list):
             if self.interface is None:
                 self.interface = ["all"]
             elif isinstance(self.interface, str):
                 self.interface = [self.interface]
             else:
-                raise ArgumentError("Invalid Argument passed: %s\nAllowed Types: List, String, None" % self.interface)
+                raise AttributeError("Invalid Argument passed: %s\nAllowed Types: List, String, None" % self.interface)
         self.stats = self.get_stats()
 
     def convert_b(self, b):
