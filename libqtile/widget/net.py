@@ -29,30 +29,39 @@ class Net(base.ThreadedPollText):
     """Displays interface down and up speed"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('interface', None, 'List of interfaces to monitor or None to displays all active NICs combined'),
+        ('interface', None, 'List of interfaces or single NIC as string to monitor, None to displays all active NICs combined'),
         ('update_interval', 1, 'The update interval.'),
     ]
 
     def __init__(self, **config):
         base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(Net.defaults)
+        #if not isinstance(self.interface, list):
+        #    if self.interface is None:
+        #        self.interface = "all"
+        #    self.interface = [self.interface]
         if not isinstance(self.interface, list):
             if self.interface is None:
-                self.interface = "all"
-            self.interface = [self.interface]
+                self.interface = ["all"]
+            elif isinstance(self.interface, str):
+                self.interface = [self.interface]
+            else:
+                raise ArgumentError("Invalid Argument passed: %s\nAllowed Types: List, String, None" % self.interface)
         self.stats = self.get_stats()
 
     def convert_b(self, b):
 
-        letters = ["b", "kb", "Mb", "Gb", "Tb", "Pb", "Eb", "Zb", "Yb"]
+        letters = ["kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
         factor = 1000.0
-        i = 0
+        unit = "B"
 
-        while int(b / 1000) > 0:
-            b /= factor
-            i = i + 1
-
-        return b, letters[i]
+        for letter in letters:
+            if b > factor:
+                b /= factor
+                unit = letter
+            else:
+                break
+        return b, unit
 
     def get_stats(self):
         interfaces = {}
@@ -63,10 +72,9 @@ class Net(base.ThreadedPollText):
         else:
             net = psutil.net_io_counters(pernic=True)
             for iface in net:
-                name = iface
                 down = net[iface].bytes_recv
                 up = net[iface].bytes_sent
-                interfaces[name] = {'down': down, 'up': up}
+                interfaces[iface] = {'down': down, 'up': up}
             return interfaces
 
     def _format(self, down, up):
@@ -82,8 +90,8 @@ class Net(base.ThreadedPollText):
         return down, up
 
     def poll(self):
+        ret_stat = []
         try:
-            ret_stat = ""
             for intf in self.interface:
                 new_stats = self.get_stats()
                 down = new_stats[intf]['down'] - \
@@ -96,11 +104,11 @@ class Net(base.ThreadedPollText):
                 down, down_letter = self.convert_b(down)
                 up, up_letter = self.convert_b(up)
                 down, up = self._format(down, up)
-                str_base = "%s: %s%s \u2193\u2191 %s%s "
+                str_base = "%s: %s%s \u2193\u2191 %s%s"
                 self.stats[intf] = new_stats[intf]
-                ret_stat += str_base % (intf, down, down_letter, up, up_letter)
+                ret_stat.append(str_base % (intf, down, down_letter, up, up_letter))
 
-            return ret_stat
+            return " ".join(ret_stat)
         except Exception as excp:
             logger.error('%s: Caught Exception:\n%s',
                          self.__class__.__name__, excp)
