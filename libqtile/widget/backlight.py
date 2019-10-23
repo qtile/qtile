@@ -23,6 +23,8 @@
 
 import os
 import shlex
+
+from libqtile.log_utils import logger
 from . import base
 
 from typing import Dict  # noqa: F401
@@ -64,20 +66,28 @@ class Backlight(base.InLoopPollText):
 
     def _load_file(self, name):
         path = os.path.join(BACKLIGHT_DIR, self.backlight_name, name)
-        with open(path, 'r') as f:
-            return f.read().strip()
+        try:
+            with open(path, 'r') as f:
+                return f.read().strip()
+        except FileNotFoundError:
+            logger.debug('Failed to get %s' % path)
+            raise RuntimeError('Unable to read status for {}'.format(name))
 
     def _get_info(self):
+        brightness = self._load_file(self.brightness_file)
+        max_value = self._load_file(self.max_brightness_file)
+
         info = {
-            'brightness': float(self._load_file(self.brightness_file)),
-            'max': float(self._load_file(self.max_brightness_file)),
+            'brightness': float(brightness),
+            'max': float(max_value),
         }
         return info
 
     def poll(self):
-        info = self._get_info()
-        if not info:
-            return 'Error'
+        try:
+            info = self._get_info()
+        except RuntimeError as e:
+            return 'Error: {}'.format(e)
 
         percent = info['brightness'] / info['max']
         return self.format.format(percent=percent)
@@ -89,7 +99,7 @@ class Backlight(base.InLoopPollText):
         if self.future and not self.future.done():
             return
         info = self._get_info()
-        if info is False:
+        if not info:
             new = now = 100
         else:
             new = now = info["brightness"] / info["max"] * 100
