@@ -31,7 +31,7 @@
 # SOFTWARE.
 
 """
-    A minimal EWMH-aware OO layer over xpyb. This is NOT intended to be
+    A minimal EWMH-aware OO layer over xcffib. This is NOT intended to be
     complete - it only implements the subset of functionalty needed by qtile.
 """
 from collections import OrderedDict
@@ -68,7 +68,7 @@ def rdict(d):
 
 rkeysyms = rdict(xkeysyms.keysyms)
 
-# These should be in xpyb:
+# Keyboard modifiers bitmask values from X Protocol
 ModMasks = OrderedDict((
     ("shift", 1 << 0),
     ("lock", 1 << 1),
@@ -219,8 +219,8 @@ XCB_CONN_ERRORS = {
 
 class MaskMap:
     """
-        A general utility class that encapsulates the way the mask/value idiom
-        works in xpyb. It understands a special attribute _maskvalue on
+        A general utility class that encapsulates the way the bitmask/listofvalue idiom
+        works in X protocol. It understands a special attribute _maskvalue on
         objects, which will be used instead of the object value if present.
         This lets us pass in a Font object, rather than Font.fid, for example.
     """
