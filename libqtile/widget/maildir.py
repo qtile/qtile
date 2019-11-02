@@ -38,6 +38,8 @@ class Maildir(base.ThreadedPollText):
         ("sub_folders", [], 'The subfolders to scan (e.g. [{"path": "INBOX", '
             '"label": "Home mail"}, {"path": "spam", "label": "Home junk"}]'),
         ("separator", " ", "the string to put between the subfolder strings."),
+        ("total", False, "Whether or not to sum subfolders into a grand \
+            total. The first label will be used."),
     ]
 
     def __init__(self, **config):
@@ -89,6 +91,12 @@ class Maildir(base.ThreadedPollText):
         =======
         a string representation of the given state
         """
-        return self.separator.join(
-            "{0}: {1}".format(*item) for item in state.items()
-        )
+        if self.total:
+            return self.separator.join([
+                self.sub_folders[0]["label"],
+                str(sum(state.values()))
+            ])
+        else:
+            return self.separator.join(
+                "{0}: {1}".format(*item) for item in state.items()
+            )
