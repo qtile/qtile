@@ -17,6 +17,8 @@ Qtile looks in the following places for a configuration file, in order:
 * It reads the module ``libqtile.resources.default_config``, included by
   default with every Qtile installation.
 
+Qtile will try to create the configuration file as a copy of the default config, if it doesn't exist yet.
+
 Default Configuration
 =====================
 
