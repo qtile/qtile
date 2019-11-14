@@ -290,6 +290,7 @@ class Screen(CommandObject):
     def set_group(self, new_group, save_prev=True):
         """Put group on this screen"""
         if new_group.screen == self:
+            self.cmd_toggle_group()
             return
 
         if save_prev:
