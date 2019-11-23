@@ -290,10 +290,10 @@ class GroupBox(_GroupBase):
                 self.clicked = group
 
         if group:
-            if self.bar.screen.current_group == group:
-                self.bar.screen.toggle_group(group)
-            else:
+            if self.bar.screen.current_group != group or not self.disable_drag:
                 self.bar.screen.set_group(group)
+            else:
+                self.bar.screen.toggle_group(group)
 
     def button_release(self, x, y, button):
         if button not in (5, 4):
