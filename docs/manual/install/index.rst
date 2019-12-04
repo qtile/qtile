@@ -81,13 +81,13 @@ With the dependencies in place, you can now install qtile:
 
     git clone git://github.com/qtile/qtile.git
     cd qtile
-    pip3 install .
+    pip install .
 
 Stable versions of Qtile can be installed from PyPI:
 
 .. code-block:: bash
 
-    pip3 install qtile
+    pip install qtile
 
 As long as the necessary libraries are in place, this can be done at any point,
 however, it is recommended that you first install xcffib to ensure the
