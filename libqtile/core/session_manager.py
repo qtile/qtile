@@ -63,6 +63,5 @@ class SessionManager:
 
     def loop(self) -> None:
         """Run the event loop"""
-        self.server.start()
-        self.qtile.loop()
-        self.server.close()
+        with self.server:
+            self.qtile.loop()
