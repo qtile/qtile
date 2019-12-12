@@ -306,15 +306,26 @@ class Server:
         fcntl.fcntl(self.sock.fileno(), fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
         self.sock.bind(self.fname)
 
-    def close(self) -> None:
-        logger.debug('Stopping server on server close')
-        assert self.server is not None
-        self.server.close()
-        self.sock.close()
+    def __enter__(self) -> "Server":
+        """Start and return the server"""
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb) -> None:
+        """Close and shutdown the server"""
+        self.close()
 
     def start(self) -> None:
+        """Start the server"""
         assert self.server is None
         server_coroutine = self.loop.create_unix_server(lambda: _ServerProtocol(self.handler), sock=self.sock)
 
         logger.debug('Starting server')
         self.server = self.loop.run_until_complete(server_coroutine)
+
+    def close(self) -> None:
+        """Close and shutdown the server"""
+        logger.debug('Stopping server on server close')
+        assert self.server is not None
+        self.server.close()
+        self.sock.close()
