@@ -22,7 +22,6 @@
 The interface to execute commands on the command graph
 """
 
-import os
 import traceback
 from abc import abstractmethod, ABCMeta
 from typing import Any, Dict, List, Tuple
@@ -276,19 +275,15 @@ class IPCCommandInterface(CommandInterface):
         return items is not None and item in items
 
 
-class IPCCommandServer(ipc.Server):
+class IPCCommandServer:
     """Execute the object commands for the calls that are sent to it"""
 
-    def __init__(self, fname, qtile, eventloop) -> None:
+    def __init__(self, qtile) -> None:
         """Wrapper around the ipc server for communitacing with the IPCCommandInterface
 
         Sets up the IPC server such that it will receive and send messages to
         and from the IPCCommandInterface.
         """
-        if os.path.exists(fname):
-            os.unlink(fname)
-
-        super().__init__(fname, self.call, eventloop)
         self.qtile = qtile
 
     def call(self, data: Tuple[List[SelectorType], str, Tuple, Dict]) -> Tuple[int, Any]:

@@ -77,7 +77,6 @@ class Qtile(CommandObject):
         config,
         eventloop,
         display_name=None,
-        fname=None,
         no_spawn=False,
         state=None
     ):
@@ -87,22 +86,8 @@ class Qtile(CommandObject):
         self._finalize = False
         self.mouse_position = (0, 0)
 
-        if not display_name:
-            display_name = os.environ.get("DISPLAY")
-            if not display_name:
-                raise QtileError("No DISPLAY set.")
-
-        if not fname:
-            # Dots might appear in the host part of the display name
-            # during remote X sessions. Let's strip the host part first.
-            display_number = display_name.partition(":")[2]
-            if "." not in display_number:
-                display_name += ".0"
-            fname = find_sockfile(display_name)
-
         self.conn = xcbq.Connection(display_name)
         self.config = config
-        self.fname = fname
         hook.init(self)
 
         self.windows_map = {}
@@ -187,7 +172,7 @@ class Qtile(CommandObject):
 
         self._eventloop = eventloop
         self.setup_eventloop()
-        self.server = IPCCommandServer(self.fname, self, self._eventloop)
+        self.server = IPCCommandServer(self)
 
         self.current_screen = None
         self.screens = []
@@ -339,7 +324,6 @@ class Qtile(CommandObject):
             fd = self.conn.conn.get_file_descriptor()
             self._eventloop.remove_reader(fd)
             self.conn.finalize()
-            self.server.close()
         except:  # noqa: E722
             logger.exception('exception during finalize')
         finally:
@@ -814,7 +798,6 @@ class Qtile(CommandObject):
         self._eventloop.stop()
 
     def loop(self):
-        self.server.start()
         try:
             self._eventloop.run_forever()
         finally:
@@ -1579,7 +1562,7 @@ class Qtile(CommandObject):
 
     def cmd_qtile_info(self):
         """Returns a dictionary of info on the Qtile instance"""
-        return dict(socketname=self.fname)
+        return {}
 
     def cmd_shutdown(self):
         """Quit Qtile"""
