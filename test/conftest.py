@@ -263,10 +263,10 @@ class Qtile:
         rpipe, wpipe = multiprocessing.Pipe()
 
         def run_qtile():
-            kore = xcore.XCore()
             try:
+                kore = xcore.XCore(display_name=self.display)
                 init_log(self.log_level, log_path=None, log_color=False)
-                q = SessionManager(kore, config_class(), display_name=self.display, fname=self.sockfile)
+                q = SessionManager(kore, config_class(), fname=self.sockfile)
                 q.loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
@@ -293,13 +293,13 @@ class Qtile:
         will likely block the thread.
         """
         init_log(self.log_level, log_path=None, log_color=False)
-        kore = xcore.XCore()
+        kore = xcore.XCore(display_name=self.display)
         config = config_class()
         for attr in dir(default_config):
             if not hasattr(config, attr):
                 setattr(config, attr, getattr(default_config, attr))
 
-        return SessionManager(kore, config, display_name=self.display, fname=self.sockfile)
+        return SessionManager(kore, config, fname=self.sockfile)
 
     def terminate(self):
         if self.proc is None:
