@@ -37,7 +37,7 @@ import xcffib.testing
 import xcffib.xproto
 
 import libqtile.config
-from libqtile.core.manager import Qtile as QtileManager
+from libqtile.core.session_manager import SessionManager
 from libqtile.core import xcore
 from libqtile.log_utils import init_log
 from libqtile.resources import default_config
@@ -266,7 +266,7 @@ class Qtile:
             kore = xcore.XCore()
             try:
                 init_log(self.log_level, log_path=None, log_color=False)
-                q = QtileManager(kore, config_class(), self.display, self.sockfile)
+                q = SessionManager(kore, config_class(), display_name=self.display, fname=self.sockfile)
                 q.loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
@@ -299,7 +299,7 @@ class Qtile:
             if not hasattr(config, attr):
                 setattr(config, attr, getattr(default_config, attr))
 
-        return QtileManager(kore, config, self.display, self.sockfile)
+        return SessionManager(kore, config, display_name=self.display, fname=self.sockfile)
 
     def terminate(self):
         if self.proc is None:

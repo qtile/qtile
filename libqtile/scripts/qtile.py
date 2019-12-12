@@ -115,8 +115,8 @@ def make_qtile():
         widgets.insert(0, TextBox('Config Err!'))
     # XXX: the import is here because we need to call init_log
     # before start importing stuff
-    from libqtile.core import manager
-    return manager.Qtile(
+    from libqtile.core import session_manager
+    return session_manager.SessionManager(
         kore,
         config,
         fname=options.socket,

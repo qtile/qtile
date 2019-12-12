@@ -75,6 +75,7 @@ class Qtile(CommandObject):
         self,
         kore,
         config,
+        eventloop,
         display_name=None,
         fname=None,
         no_spawn=False,
@@ -83,7 +84,6 @@ class Qtile(CommandObject):
         self._restart = False
         self.no_spawn = no_spawn
 
-        self._eventloop = None
         self._finalize = False
         self.mouse_position = (0, 0)
 
@@ -185,6 +185,7 @@ class Qtile(CommandObject):
                 self.groups.append(sp)
                 self.groups_map[sp.name] = sp
 
+        self._eventloop = eventloop
         self.setup_eventloop()
         self.server = IPCCommandServer(self.fname, self, self._eventloop)
 
@@ -271,8 +272,7 @@ class Qtile(CommandObject):
         self.convert_selection(primary)
         self.convert_selection(clipboard)
 
-    def setup_eventloop(self):
-        self._eventloop = asyncio.new_event_loop()
+    def setup_eventloop(self) -> None:
         self._eventloop.add_signal_handler(signal.SIGINT, self.stop)
         self._eventloop.add_signal_handler(signal.SIGTERM, self.stop)
         self._eventloop.set_exception_handler(
@@ -283,9 +283,6 @@ class Qtile(CommandObject):
         fd = self.conn.conn.get_file_descriptor()
         self._eventloop.add_reader(fd, self._xpoll)
 
-        self.setup_python_dbus()
-
-    def setup_python_dbus(self):
         # This is a little strange. python-dbus internally depends on gobject,
         # so gobject's threads need to be running, and a gobject "main loop
         # thread" needs to be spawned, but we try to let it only interact with
