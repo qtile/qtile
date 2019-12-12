@@ -42,7 +42,7 @@ from ..group import _Group
 from ..scratchpad import ScratchPad
 from ..log_utils import logger
 from ..state import QtileState
-from ..utils import QtileError, get_cache_dir
+from ..utils import get_cache_dir
 from ..widget.base import _Widget
 from ..extension.base import _Extension
 from .. import hook
@@ -53,7 +53,6 @@ from libqtile import command_interface
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_interface import QtileCommandInterface, IPCCommandServer
 from libqtile.command_object import CommandObject, CommandError, CommandException
-from libqtile.ipc import find_sockfile
 from libqtile.lazy import lazy
 
 
@@ -76,7 +75,6 @@ class Qtile(CommandObject):
         kore,
         config,
         eventloop,
-        display_name=None,
         no_spawn=False,
         state=None
     ):
@@ -86,7 +84,7 @@ class Qtile(CommandObject):
         self._finalize = False
         self.mouse_position = (0, 0)
 
-        self.conn = xcbq.Connection(display_name)
+        self.core = kore
         self.config = config
         hook.init(self)
 
@@ -236,6 +234,10 @@ class Qtile(CommandObject):
         }
         self.setup_selection()
         hook.fire("startup_complete")
+
+    @property
+    def conn(self):
+        return self.core.conn
 
     def setup_selection(self):
         primary = self.conn.atoms["PRIMARY"]
