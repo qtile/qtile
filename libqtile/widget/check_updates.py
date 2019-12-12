@@ -46,6 +46,7 @@ class CheckUpdates(base.ThreadedPollText):
         self.cmd_dict = {"Arch": ("pacman -Qu", 0),
                          "Arch_checkupdates": ("checkupdates", 0),
                          "Arch_Sup": ("pacman -Sup", 1),
+                         "Arch_yay": ("yay -Qu", 0),
                          "Debian": ("apt-show-versions -u -b", 0),
                          "Ubuntu": ("aptitude search ~U", 0),
                          "Fedora": ("dnf list updates", 3),
