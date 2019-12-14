@@ -311,7 +311,6 @@ class _Group(CommandObject):
                 pass
             else:
                 for i in self.layouts:
-                    i.remove(win)
                     if win is self.current_window:
                         i.blur()
                 self.floating_layout.add(win)
@@ -321,7 +320,6 @@ class _Group(CommandObject):
             self.floating_layout.remove(win)
             self.floating_layout.blur()
             for i in self.layouts:
-                i.add(win)
                 if win is self.current_window:
                     i.focus(win)
         self.layout_all()
