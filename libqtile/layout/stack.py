@@ -35,7 +35,7 @@ class _WinStack(_ClientList):
 
     def __str__(self):
         return "_WinStack: %s, %s" % (
-            self.current, str([client.name for client in self.clients])
+            self.current, str([client.name for client in self.non_floating_clients])
         )
 
     def info(self):
@@ -86,7 +86,7 @@ class Stack(Layout):
     def clients(self):
         client_list = []
         for stack in self.stacks:
-            client_list.extend(stack.clients)
+            client_list.extend(stack.non_floating_clients)
         return client_list
 
     def clone(self, group):
