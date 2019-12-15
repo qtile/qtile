@@ -402,14 +402,11 @@ class _ClientList:
 
     @property
     def current_client(self):
-        non_floating_clients = self.non_floating_clients
-        if not non_floating_clients:
-            return None
-        return non_floating_clients[self._current_idx]
+        return self[self._current_idx]
 
     @current_client.setter
     def current_client(self, client):
-        self._current_idx = self.non_floating_clients.index(client)
+        self._current_idx = self.index(client)
 
     def focus(self, client):
         """
