@@ -957,7 +957,7 @@ class MonadWide(MonadTall):
         """Swap current window with closest window to the down"""
         win = self.clients.current_client
         x, y = win.x, win.y
-        candidates = [c for c in self.clients.clients if c.info()['y'] > y]
+        candidates = [c for c in self.clients.non_floating_clients if c.info()['y'] > y]
         target = self._get_closest(x, y, candidates)
         self.cmd_swap(win, target)
 

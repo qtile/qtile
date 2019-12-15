@@ -35,7 +35,7 @@ class _Column(_ClientList):
         info = _ClientList.info(self)
         info.update(
             dict(
-                heights=[self.heights[c] for c in self.clients],
+                heights=[self.heights[c] for c in self.non_floating_clients],
                 split=self.split,
             ))
         return info
@@ -70,7 +70,7 @@ class _Column(_ClientList):
         return "_Column: " + ", ".join([
             "[%s: %d]" % (c.name, self.heights[c])
             if c == cur else "%s: %d" % (c.name, self.heights[c])
-            for c in self.clients
+            for c in self.non_floating_clients
         ])
 
 
