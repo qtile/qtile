@@ -457,7 +457,9 @@ class _ClientList:
             self._clients.insert(pos, client)
         else:
             self._clients.append(client)
-        self.current_client = client
+
+        if not client.floating:
+            self.current_client = client
 
     def append_head(self, client):
         """
