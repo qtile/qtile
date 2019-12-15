@@ -240,6 +240,7 @@ class SingleWindow(Layout):
             win.hide()
 
     def remove(self, win):
+        # XXX self.clients is not initialized in the class hierarchy
         cli = self.clients.pop(0)
         if cli == win:
             return self.clients[0]
@@ -379,7 +380,7 @@ class _ClientList:
 
     @property
     def non_floating_clients(self):
-        '''A helper to get only non-floating clients'''
+        '''Get only non-floating clients'''
         return [i for i in self._clients if not i.floating]
 
     def _actual_index(self, non_floating_clients_index):
@@ -421,22 +422,19 @@ class _ClientList:
         """
         Returns the first client in collection.
         """
-        return self.non_floating_clients[0]
+        return self[0]
 
     def focus_next(self, win):
         """
         Returns the client next from win in collection.
         """
-        try:
-            return self.non_floating_clients[self.index(win) + 1]
-        except IndexError:
-            return None
+        return self[self.index(win) + 1]
 
     def focus_last(self):
         """
         Returns the last client in collection.
         """
-        return self.non_floating_clients[-1]
+        return self[-1]
 
     def focus_previous(self, win):
         """
@@ -448,7 +446,7 @@ class _ClientList:
             return None
         else:
             if idx > 0:
-                return self.non_floating_clients[idx - 1]
+                return self[idx - 1]
 
     def add(self, client, offset_to_current=0):
         """
