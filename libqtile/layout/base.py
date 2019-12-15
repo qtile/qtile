@@ -383,11 +383,6 @@ class _ClientList:
         '''Get only non-floating clients'''
         return [i for i in self._clients if not i.floating]
 
-    def _actual_index(self, non_floating_clients_index):
-        '''Find the actual index of the list based on non-floating clients' index'''
-        client = self.non_floating_clients[non_floating_clients_index]
-        return self._clients.index(client)
-
     @property
     def current_index(self):
         return self._current_idx
@@ -482,11 +477,12 @@ class _ClientList:
         """
         if client not in self._clients:
             return
+        floating = client.floating
         idx = self._clients.index(client)
         del self._clients[idx]
         if len(self) == 0:
             self._current_idx = 0
-        elif idx <= self._current_idx:
+        elif floating and idx <= self._current_idx:
             self._current_idx = max(0, self._current_idx - 1)
 
     def rotate_up(self, maintain_index=True):
@@ -567,6 +563,11 @@ class _ClientList:
                             self._clients[pos::])
         else:
             self._clients.extend(other._clients)
+
+    def _actual_index(self, non_floating_clients_index):
+        '''Find the actual index of the list based on non-floating clients' index'''
+        client = self.non_floating_clients[non_floating_clients_index]
+        return self._clients.index(client)
 
     def index(self, client):
         return self.non_floating_clients.index(client)
