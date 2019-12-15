@@ -559,7 +559,10 @@ class _ClientList:
         Add clients from 'other' _ClientList to self.
         'offset_to_current' works as described for add()
         """
-        pos = max(0, self._actual_index(self.current_index) + offset_to_current)
+        try:
+            pos = max(0, self._actual_index(self.current_index + offset_to_current))
+        except IndexError:
+            pos = 0
         if pos < len(self._clients):
             self._clients = (self._clients[:pos:] + other._clients +
                             self._clients[pos::])
