@@ -32,7 +32,7 @@ class WindowVisibilityToggler:
     invisble, or the current group on the current screen.
     With this functionality the window can be shown and hidden by a single
     keystroke (bound to command of ScratchPad group).
-    By default, the window is also hidden if it looses focus.
+    By default, the window is also hidden if it loses focus.
     """
 
     def __init__(self, scratchpad_name, window, on_focus_lost_hide, warp_pointer):
@@ -46,7 +46,7 @@ class WindowVisibilityToggler:
         window : window
             The window to toggle
         on_focus_lost_hide : bool
-            if True the associated window is hidden if it looses focus
+            if True the associated window is hidden if it loses focus
         warp_pointer : bool
             if True the mouse pointer is warped to center of associated window
             if shown. Only used if on_focus_lost_hide is True
