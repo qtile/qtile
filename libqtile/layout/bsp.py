@@ -15,6 +15,8 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
+import math
 from .base import Layout
 
 
@@ -30,31 +32,48 @@ class _BspNode():
         self.h = 9
 
     def __iter__(self):
-        yield self
+        if not self._is_floating():
+            yield self
         for child in self.children:
             for c in child:
-                yield c
+                if not c._is_floating():
+                    yield c
+
+    def _is_floating(self):
+        '''If this node contains a floating client'''
+        return self.client and self.client.floating
 
     def clients(self):
         if self.client:
-            yield self.client
+            if not self._is_floating():
+                yield self.client
         else:
             for child in self.children:
                 for c in child.clients():
                     yield c
 
     def _shortest(self, l):
+        # Never pick a floating node, unless the both children of root are floating.
         if len(self.children) == 0:
-            return self, l
+            if self._is_floating():
+                return self, math.inf
+            else:
+                return self, l
         else:
             c0, l0 = self.children[0]._shortest(l + 1)
             c1, l1 = self.children[1]._shortest(l + 1)
             return (c1, l1) if l1 < l0 else (c0, l0)
 
     def get_shortest(self):
+        '''Get shortest leaf node from self'''
         return self._shortest(0)[0]
 
     def insert(self, client, idx, ratio):
+        '''
+        Insert a new client at this node, or as its direct child node.
+
+        idx: 0 or 1, mean the left or right leaf to insert the client respectively.
+        '''
         if self.client is None:
             self.client = client
             return self
@@ -62,6 +81,7 @@ class _BspNode():
         self.children[1 - idx].client = self.client
         self.children[idx].client = client
         self.client = None
+        # The layout look like 'a|b' if split_horizontal is True, else 'a/b'
         self.split_horizontal = True if self.w > self.h * ratio else False
         return self.children[idx]
 
@@ -80,7 +100,11 @@ class _BspNode():
             return 1, 1
         h0, v0 = self.children[0].distribute()
         h1, v1 = self.children[1].distribute()
-        if self.split_horizontal:
+        if self.children[0]._is_floating():
+            self.split_ratio = 0
+        elif self.children[1]._is_floating():
+            self.split_ratio = 100
+        elif self.split_horizontal:
             h = h0 + h1
             v = max(v0, v1)
             self.split_ratio = 100 * h0 / h
@@ -91,12 +115,19 @@ class _BspNode():
         return h, v
 
     def calc_geom(self, x, y, w, h):
+        '''Calculate the position and size for this node and its children.'''
         self.x = x
         self.y = y
         self.w = w
         self.h = h
         if len(self.children) > 1:
-            if self.split_horizontal:
+            if self.children[0]._is_floating():
+                self.children[0].calc_geom(0, 0, 0, 0)
+                self.children[1].calc_geom(x, y, w, h)
+            elif self.children[1]._is_floating():
+                self.children[1].calc_geom(0, 0, 0, 0)
+                self.children[0].calc_geom(x, y, w, h)
+            elif self.split_horizontal:
                 w0 = int(self.split_ratio * w * 0.01 + 0.5)
                 self.children[0].calc_geom(x, y, w0, h)
                 self.children[1].calc_geom(x + w0, y, w - w0, h)
@@ -108,7 +139,7 @@ class _BspNode():
 
 class Bsp(Layout):
     """This layout is inspired by bspwm, but it does not try to copy its
-    features.
+    features. All clients are organized as a full binary tree.
 
     The first client occupies the entire srceen space.  When a new client
     is created, the selected space is partitioned in 2 and the new client
@@ -173,6 +204,7 @@ class Bsp(Layout):
             clients=[c.name for c in self.root.clients()])
 
     def get_node(self, client):
+        '''Get the node for the client'''
         for node in self.root:
             if client is node.client:
                 return node
