@@ -32,6 +32,7 @@ class Net(base.ThreadedPollText):
         ('interface', None, 'List of interfaces or single NIC as string to monitor, \
             None to displays all active NICs combined'),
         ('update_interval', 1, 'The update interval.'),
+        ('use_bits', False, 'Use bits instead of bytes per second?'),
     ]
 
     def __init__(self, **config):
@@ -48,9 +49,13 @@ class Net(base.ThreadedPollText):
 
     def convert_b(self, b):
 
-        letters = ["kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
         factor = 1000.0
+        letters = ["kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
         unit = "B"
+        if self.use_bits:
+            letters = ["kb", "Mb", "Gb", "Tb", "Pb", "Eb", "Zb", "Yb"]
+            unit = "b"
+            b = b * 8
 
         for letter in letters:
             if b > factor:
