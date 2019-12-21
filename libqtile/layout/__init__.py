@@ -26,7 +26,7 @@
 
 from .bsp import Bsp
 from .columns import Columns
-from .floating import Floating
+from .floating import Floating, FloatingTile
 from .matrix import Matrix
 from .max import Max
 from .ratiotile import RatioTile

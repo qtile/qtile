@@ -9,6 +9,7 @@
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 dequis
 # Copyright (c) 2018 Nazar Mokrynskyi
+# Copyright (c) 2019 Guangwang Huang
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -93,6 +94,7 @@ class Floating(Layout):
         self.group = None
         self.float_rules = float_rules or DEFAULT_FLOAT_RULES
         self.no_reposition_match = no_reposition_match
+        self._floating_clients_only = True  # If only floating clients are interested
         self.add_defaults(Floating.defaults)
 
     def match(self, win):
@@ -104,9 +106,21 @@ class Floating(Layout):
                 return True
         return False
 
+    def interested_in_client(self, client):
+        '''Test if a client is interested in.'''
+        floating = client.floating
+        if (self._floating_clients_only and floating) or \
+           (not self._floating_clients_only and not floating):
+            return True
+        return False
+
     def find_clients(self, group):
         """Find all clients belonging to a given group"""
-        return [c for c in self.clients if c.group is group]
+        clients = []
+        for c in self.clients:
+            if (group is None or c.group is group) and self.interested_in_client(c):
+                clients.append(c)
+        return clients
 
     def to_screen(self, group, new_screen):
         """Adjust offsets of clients within current screen"""
@@ -137,10 +151,7 @@ class Floating(Layout):
             win.group = new_screen.group
 
     def focus_first(self, group=None):
-        if group is None:
-            clients = self.clients
-        else:
-            clients = self.find_clients(group)
+        clients = self.find_clients(group)
 
         if clients:
             return clients[0]
@@ -155,10 +166,7 @@ class Floating(Layout):
             return clients[idx + 1]
 
     def focus_last(self, group=None):
-        if group is None:
-            clients = self.clients
-        else:
-            clients = self.find_clients(group)
+        clients = self.find_clients(group)
 
         if clients:
             return clients[-1]
@@ -173,7 +181,8 @@ class Floating(Layout):
             return clients[idx - 1]
 
     def focus(self, client):
-        self.focused = client
+        if self.interested_in_client(client):
+            self.focused = client
 
     def blur(self):
         self.focused = None
@@ -244,7 +253,8 @@ class Floating(Layout):
 
     def add(self, client):
         self.clients.append(client)
-        self.focused = client
+        if self.interested_in_client(client):
+            self.focused = client
 
     def remove(self, client):
         if client not in self.clients:
@@ -258,7 +268,7 @@ class Floating(Layout):
 
     def info(self):
         d = Layout.info(self)
-        d["clients"] = [c.name for c in self.clients]
+        d["clients"] = [c.name for c in self.find_clients(group=None)]
         return d
 
     def cmd_next(self):
@@ -268,3 +278,19 @@ class Floating(Layout):
     def cmd_previous(self):
         # This can't ever be called, but implement the abstract method
         pass
+
+
+class FloatingTile(Floating):
+    '''Floating layout for tile layouts config: the `layouts` symbol in config.py.
+
+    It is almost exact with Floating, except that it's intended to be use a tile layout.'''
+
+    defaults = [
+        ("name", "floatingtile", "Name of this layout.")
+    ]
+
+
+    def __init__(self, **config):
+        Floating.__init__(self, **config)
+        self._floating_clients_only = False
+        self.add_defaults(FloatingTile.defaults)
