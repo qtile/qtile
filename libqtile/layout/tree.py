@@ -89,7 +89,7 @@ class TreeNode:
         if not self.expanded and self.children:
             return "{:d}".format(
                 len(self.children)
-            ).translate(to_superscript).encode('utf-8') + title
+            ).translate(to_superscript) + title
         return title
 
     def get_first_window(self):
@@ -100,10 +100,11 @@ class TreeNode:
         """
         if isinstance(self, Window):
             return self
-        for i in self.children:
-            node = i.get_first_window()
-            if node:
-                return node
+        if self.expanded:
+            for i in self.children:
+                node = i.get_first_window()
+                if node:
+                    return node
 
     def get_last_window(self):
         """Find the last Window under this node
@@ -111,10 +112,11 @@ class TreeNode:
         Finds last `Window` by depth-first search, otherwise returns self if
         this is a `Window`.
         """
-        for i in reversed(self.children):
-            node = i.get_last_window()
-            if node:
-                return node
+        if self.expanded:
+            for i in reversed(self.children):
+                node = i.get_last_window()
+                if node:
+                    return node
         if isinstance(self, Window):
             return self
 
