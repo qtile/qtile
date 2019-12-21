@@ -463,9 +463,45 @@ class TreeTab(Layout):
             self._drawer.finalize()
 
     def info(self):
+
+        def show_section_tree(root):
+            '''Show a section tree in a nested list, whose every element has the form: `[root, [subtrees]]`.
+
+            For `[root, [subtrees]]`, The first element is the root node, and the second is its a list of its subtrees.
+            For example, a section with below windows hierarchy on the panel:
+            - a
+              - d
+                - e
+              - f
+            - b
+              - g
+              - h
+            - c
+
+            will return [
+                         [a,
+                           [d, [e]],
+                           [f]],
+                         [b, [g], [h]],
+                         [c],
+                        ]
+            '''
+            tree = []
+            if isinstance(root, Window):
+                tree.append(root.window.name)
+            if root.expanded and root.children:
+                for child in root.children:
+                    tree.append(show_section_tree(child))
+            return tree
+
         d = Layout.info(self)
-        d["clients"] = [x.name for x in self._nodes]
+        d["clients"] = [x.name for x in self._nodes]  # not in order
         d["sections"] = [x.title for x in self._tree.children]
+
+        trees = {}
+        for section in self._tree.children:
+            trees[section.title] = show_section_tree(section)
+        d["client_trees"] = trees
         return d
 
     def show(self, screen):
