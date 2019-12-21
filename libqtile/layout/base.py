@@ -113,6 +113,14 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         """Return a dictionary of info for this object"""
         return self.info()
 
+    def floating_on(self, client):
+        '''Called when `client` is floating on.'''
+        pass
+
+    def floating_off(self, client):
+        '''Called when `client` is floating off.'''
+        pass
+
     @abstractmethod
     def add(self, client):
         """Called whenever a window is added to the group
