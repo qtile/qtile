@@ -117,3 +117,34 @@ def test_window(qtile):
     qtile.c.layout.expand_branch()
     assert qtile.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two', ['three', ['four']], ['five']]]}
     assert_focus_path(qtile, 'four', 'five', 'float1', 'float2', 'one', 'two', 'three')
+
+
+@treetab_config
+def test_sort_windows(qtile):
+    def sorter(window):
+        try:
+            if int(window.name) % 2 == 0:
+                return 'Even'
+            else:
+                return 'Odd'
+        except ValueError:
+            return 'Bar'
+
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("101")
+    qtile.test_window("102")
+    qtile.test_window("103")
+    assert qtile.c.layout.info()['client_trees'] == {
+        'Foo': [['one'], ['two'], ['101'], ['102'], ['103']],
+        'Bar': []
+    }
+    return  # TODO how to serialize a function object? i.e. `sorter`
+    qtile.c.layout.sort_windows(sorter)
+    assert qtile.c.layout.info()['client_trees'] == {
+        'Foo': [],
+        'Bar': [['one'], ['two']],
+        'Even': [['102']],
+        'Odd': [['101'], ['103']]
+    }
+
