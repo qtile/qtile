@@ -89,7 +89,7 @@ class Floating(Layout):
         the screen.
         """
         Layout.__init__(self, **config)
-        self.clients = []
+        self._clients = []
         self.focused = None
         self.group = None
         self.float_rules = float_rules or DEFAULT_FLOAT_RULES
@@ -117,7 +117,7 @@ class Floating(Layout):
     def find_clients(self, group):
         """Find all clients belonging to a given group"""
         clients = []
-        for c in self.clients:
+        for c in self._clients:
             if (group is None or c.group is group) and self.interested_in_client(c):
                 clients.append(c)
         return clients
@@ -157,7 +157,7 @@ class Floating(Layout):
             return clients[0]
 
     def focus_next(self, win):
-        if win not in self.clients or win.group is None:
+        if win not in self._clients or win.group is None:
             return
 
         clients = self.find_clients(win.group)
@@ -172,7 +172,7 @@ class Floating(Layout):
             return clients[-1]
 
     def focus_previous(self, win):
-        if win not in self.clients or win.group is None:
+        if win not in self._clients or win.group is None:
             return
 
         clients = self.find_clients(win.group)
@@ -252,18 +252,18 @@ class Floating(Layout):
         client.unhide()
 
     def add(self, client):
-        self.clients.append(client)
+        self._clients.append(client)
         if self.interested_in_client(client):
             self.focused = client
 
     def remove(self, client):
-        if client not in self.clients:
+        if client not in self._clients:
             return
 
         next_focus = self.focus_next(client)
         if client is self.focused:
             self.blur()
-        self.clients.remove(client)
+        self._clients.remove(client)
         return next_focus
 
     def info(self):
