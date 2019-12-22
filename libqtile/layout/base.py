@@ -568,9 +568,9 @@ class _ClientList:
         'offset_to_current' works as described for add()
         """
         try:
-            pos = max(0, self._actual_index(self.current_index + offset_to_current))
+            pos = max(0, self._actual_index(self.current_index) + offset_to_current)
         except IndexError:
-            pos = 0
+            pos = len(self._clients)  # default is to append to self
         if pos < len(self._clients):
             self._clients = (self._clients[:pos:] + other._clients +
                             self._clients[pos::])
