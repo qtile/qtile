@@ -22,7 +22,8 @@ import psutil
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
-from typing import List  # noqa: F401
+from typing import Tuple
+from math import log
 
 
 class Net(base.ThreadedPollText):
@@ -47,23 +48,23 @@ class Net(base.ThreadedPollText):
                 raise AttributeError("Invalid Argument passed: %s\nAllowed Types: List, String, None" % self.interface)
         self.stats = self.get_stats()
 
-    def convert_b(self, b):
-
+    def convert_b(self, num_bytes: float) -> Tuple[float, str]:
+        """Converts the number of bytes to the correct unit"""
         factor = 1000.0
-        letters = ["kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
-        unit = "B"
-        if self.use_bits:
-            letters = ["kb", "Mb", "Gb", "Tb", "Pb", "Eb", "Zb", "Yb"]
-            unit = "b"
-            b = b * 8
 
-        for letter in letters:
-            if b > factor:
-                b /= factor
-                unit = letter
-            else:
-                break
-        return b, unit
+        if self.use_bits:
+            letters = ["b", "kb", "Mb", "Gb", "Tb", "Pb", "Eb", "Zb", "Yb"]
+            num_bytes *= 8
+        else:
+            letters = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+
+        power = int(log(num_bytes) / log(factor))
+        power = max(min(power, len(letters) - 1), 0)
+
+        converted_bytes = num_bytes / factor**power
+        unit = letters[power]
+
+        return converted_bytes, unit
 
     def get_stats(self):
         interfaces = {}
