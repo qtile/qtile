@@ -106,7 +106,7 @@ class Floating(Layout):
                 return True
         return False
 
-    def interested_in_client(self, client):
+    def _interested_in_client(self, client):
         '''Test if a client is interested in.'''
         floating = client.floating
         if (self._floating_clients_only and floating) or \
@@ -118,7 +118,7 @@ class Floating(Layout):
         """Find all clients belonging to a given group"""
         clients = []
         for c in self._clients:
-            if (group is None or c.group is group) and self.interested_in_client(c):
+            if (group is None or c.group is group) and self._interested_in_client(c):
                 clients.append(c)
         return clients
 
@@ -181,7 +181,7 @@ class Floating(Layout):
             return clients[idx - 1]
 
     def focus(self, client):
-        if self.interested_in_client(client):
+        if self._interested_in_client(client):
             self.focused = client
 
     def blur(self):
@@ -253,7 +253,7 @@ class Floating(Layout):
 
     def add(self, client):
         self._clients.append(client)
-        if self.interested_in_client(client):
+        if self._interested_in_client(client):
             self.focused = client
 
     def remove(self, client):
