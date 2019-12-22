@@ -33,7 +33,7 @@ class FloatingConfig:
         libqtile.config.Group("a"),
     ]
     layouts = [
-        layout.Floating()
+        layout.FloatingTile()
     ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = []

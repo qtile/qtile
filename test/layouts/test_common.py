@@ -53,7 +53,9 @@ class AllLayoutsConfig:
             else:
                 # Explicitly exclude the Slice layout, since it depends on
                 # other layouts (tested here) and has its own specific tests
-                if test and layout_name != 'Slice':
+                # Also exclude the Floating layout, as it's not suitable as
+                # a tiled layout, use FloatingTile instead.
+                if test and layout_name not in ('Slice', 'Floating'):
                     yield layout_name, layout_cls
 
     @classmethod
