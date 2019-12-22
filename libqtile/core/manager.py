@@ -20,7 +20,6 @@
 
 from libqtile.dgroups import DGroups
 from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
-import asyncio
 import functools
 import io
 import logging
@@ -280,7 +279,7 @@ class Qtile(CommandObject):
             # because of dbus, if dbus isn't around there's no need to run
             # this thread.
             import dbus  # noqa
-            from gi.repository import GLib
+            from gi.repository import GLib  # type: ignore
 
             def gobject_thread():
                 ctx = GLib.main_context_default()
