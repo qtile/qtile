@@ -20,6 +20,7 @@
 
 from libqtile.dgroups import DGroups
 from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
+import asyncio
 import functools
 import io
 import logging
@@ -80,7 +81,6 @@ class Qtile(CommandObject):
         self._restart = False
         self.no_spawn = no_spawn
 
-        self._finalize = False
         self.mouse_position = (0, 0)
 
         self.core = kore
@@ -269,6 +269,8 @@ class Qtile(CommandObject):
         fd = self.conn.conn.get_file_descriptor()
         self._eventloop.add_reader(fd, self._xpoll)
 
+        self._stopped_event = asyncio.Event(loop=self._eventloop)
+
         # This is a little strange. python-dbus internally depends on gobject,
         # so gobject's threads need to be running, and a gobject "main loop
         # thread" needs to be spawned, but we try to let it only interact with
@@ -283,7 +285,7 @@ class Qtile(CommandObject):
 
             def gobject_thread():
                 ctx = GLib.main_context_default()
-                while not self._finalize:
+                while not self._stopped_event.is_set():
                     try:
                         ctx.iteration(True)
                     except Exception:
@@ -293,9 +295,32 @@ class Qtile(CommandObject):
             logger.warning("importing dbus/gobject failed, dbus will not work.")
             self._glib_loop = None
 
-    def finalize(self):
-        self._finalize = True
+    async def async_loop(self):
+        try:
+            await self._stopped_event.wait()
+        finally:
+            await self.finalize()
 
+    def loop(self):
+        self._eventloop.run_until_complete(self.async_loop())
+
+        self._eventloop.close()
+        self._eventloop = None
+
+        if self._restart:
+            logger.warning('Restarting Qtile with os.execv(...)')
+            os.execv(*self._restart)
+
+    def stop(self):
+        # stop gets called in a variety of ways, including from restart().
+        # let's only do a real shutdown if we're not about to re-exec.
+        if not self._restart:
+            self.graceful_shutdown()
+
+        logger.debug('Stopping qtile')
+        self._stopped_event.set()
+
+    async def finalize(self):
         self._eventloop.remove_signal_handler(signal.SIGINT)
         self._eventloop.remove_signal_handler(signal.SIGTERM)
         self._eventloop.set_exception_handler(None)
@@ -304,7 +329,7 @@ class Qtile(CommandObject):
             try:
                 from gi.repository import GLib
                 GLib.idle_add(lambda: None)
-                self._eventloop.run_until_complete(self._glib_loop)
+                await self._glib_loop
             except ImportError:
                 pass
 
@@ -327,12 +352,6 @@ class Qtile(CommandObject):
             self.conn.finalize()
         except:  # noqa: E722
             logger.exception('exception during finalize')
-        finally:
-            self._eventloop.close()
-            self._eventloop = None
-        if self._restart:
-            logger.warning('Restarting Qtile with os.execv(...)')
-            os.execv(*self._restart)
 
     def _process_fake_screens(self):
         """
@@ -788,21 +807,6 @@ class Qtile(CommandObject):
             if len(pids) == 0:
                 break
             time.sleep(0.1)
-
-    def stop(self):
-        # stop gets called in a variety of ways, including from restart().
-        # let's only do a real shutdown if we're not about to re-exec.
-        if not self._restart:
-            self.graceful_shutdown()
-
-        logger.debug('Stopping eventloop')
-        self._eventloop.stop()
-
-    def loop(self):
-        try:
-            self._eventloop.run_forever()
-        finally:
-            self.finalize()
 
     def find_screen(self, x, y):
         """Find a screen based on the x and y offset"""
