@@ -831,7 +831,6 @@ class Connection:
     _extmap = {
         "xinerama": Xinerama,
         "randr": RandR,
-        "xfixes": XFixes,
     }
 
     def __init__(self, display):
@@ -842,6 +841,8 @@ class Connection:
         extensions = self.extensions()
         self.screens = [Screen(self, i) for i in self.setup.roots]
         self.default_screen = self.screens[self.conn.pref_screen]
+
+        self.xfixes = XFixes(self)
         for i in extensions:
             if i in self._extmap:
                 setattr(self, i, self._extmap[i](self))
