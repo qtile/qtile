@@ -290,7 +290,7 @@ class GroupBox(_GroupBase):
                 self.clicked = group
 
         if group:
-            if self.bar.screen.current_group != group or not self.disable_drag:
+            if self.bar.screen.group != group or not self.disable_drag:
                 self.bar.screen.set_group(group)
             else:
                 self.bar.screen.toggle_group(group)

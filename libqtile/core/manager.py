@@ -541,7 +541,7 @@ class Qtile(CommandObject):
 
     @property
     def current_group(self):
-        return self.current_screen.current_group
+        return self.current_screen.group
 
     @property
     def current_window(self):

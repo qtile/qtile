@@ -382,7 +382,7 @@ class _Group(CommandObject):
         else:
             screen = self.qtile.screens[screen]
 
-        if screen.current_group == self:
+        if screen.group == self:
             screen.toggle_group(self)
         else:
             screen.set_group(self)
