@@ -925,9 +925,15 @@ def test_setgroup(qtile):
     else:
         assert self.c.groups()["a"]["screen"] == 1
     assert self.c.groups()["b"]["screen"] == 0
+
     self.c.group["c"].toscreen()
     self.groupconsistency()
     assert self.c.groups()["c"]["screen"] == 0
+
+    # Setting the current group once again switches back to the previous group
+    self.c.group["c"].toscreen()
+    self.groupconsistency()
+    assert self.c.group.info()["name"] == "b"
 
 
 @pytest.mark.parametrize("qtile", [BareConfig, ManagerConfig], indirect=True)

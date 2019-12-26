@@ -360,6 +360,8 @@ class _Group(CommandObject):
     def cmd_toscreen(self, screen=None):
         """Pull a group to a specified screen.
 
+        If this group is already on the screen, then toggle group.
+
         Parameters
         ==========
         screen :
@@ -379,7 +381,11 @@ class _Group(CommandObject):
             screen = self.qtile.current_screen
         else:
             screen = self.qtile.screens[screen]
-        screen.set_group(self)
+
+        if screen.group == self:
+            screen.toggle_group(self)
+        else:
+            screen.set_group(self)
 
     def _get_group(self, direction, skip_empty=False, skip_managed=False):
         """Find a group walking the groups list in the specified direction

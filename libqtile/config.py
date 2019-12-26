@@ -289,14 +289,14 @@ class Screen(CommandObject):
 
     def set_group(self, new_group, save_prev=True):
         """Put group on this screen"""
+        if new_group is None:
+            return
+
         if new_group.screen == self:
             return
 
         if save_prev:
             self.previous_group = self.group
-
-        if new_group is None:
-            return
 
         if new_group.screen:
             # g1 <-> s1 (self)
@@ -330,6 +330,12 @@ class Screen(CommandObject):
             self.group.layouts[self.group.current_layout],
             self.group
         )
+
+    def toggle_group(self, group=None):
+        """Switch to the selected group or to the previously active one"""
+        if group in (self.group, None):
+            group = self.previous_group
+        self.set_group(group)
 
     def _items(self, name):
         if name == "layout":
@@ -399,9 +405,7 @@ class Screen(CommandObject):
     def cmd_toggle_group(self, group_name=None):
         """Switch to the selected group or to the previously active one"""
         group = self.qtile.groups_map.get(group_name)
-        if group in (self.group, None):
-            group = self.previous_group
-        self.set_group(group)
+        self.toggle_group(group)
 
     def cmd_togglegroup(self, groupName=None):  # noqa
         """Switch to the selected group or to the previously active one
