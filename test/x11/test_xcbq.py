@@ -2,7 +2,7 @@ import os
 import pytest
 import xcffib
 import xcffib.testing
-from libqtile.core import xcbq
+from libqtile.backend.x11 import xcbq
 
 
 @pytest.fixture(scope='function', autouse=True)

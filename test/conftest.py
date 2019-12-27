@@ -37,8 +37,8 @@ import xcffib.testing
 import xcffib.xproto
 
 import libqtile.config
+from libqtile.backend.x11 import xcore
 from libqtile.core.session_manager import SessionManager
-from libqtile.core import xcore
 from libqtile.log_utils import init_log
 from libqtile.resources import default_config
 from libqtile import command_client, command_interface, ipc
