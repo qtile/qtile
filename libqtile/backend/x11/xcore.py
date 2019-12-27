@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import Callable, Iterator, List, Optional, Tuple, TYPE_CHECKING
+from typing import Callable, Iterator, List, Optional, Tuple
 
 import xcffib
 import xcffib.xproto
