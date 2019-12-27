@@ -80,6 +80,10 @@ class Drag(Mouse):
     It focuses clicked window by default.  If you want to prevent it pass,
     `focus=None` as an argument
     """
+    def __init__(self, *args, start=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.start = start
+
     def __repr__(self):
         return "<Drag (%s, %s)>" % (self.modifiers, self.button)
 

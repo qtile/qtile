@@ -1,16 +1,20 @@
 import asyncio
 import os
-from typing import Callable, Iterator, List, Optional, Tuple
+from collections import OrderedDict
+from typing import Callable, Iterator, List, Optional, Tuple, TYPE_CHECKING
 
 import xcffib
 import xcffib.xproto
 
 from . import xcbq
-from libqtile import config, utils, window
+from libqtile import config, hook, utils, window
 from libqtile.backend import base
 from libqtile.core.manager import Qtile
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
+
+if TYPE_CHECKING:
+    from typing import Dict
 
 _IGNORED_EVENTS = {
     xcffib.xproto.CreateNotifyEvent,
@@ -100,6 +104,29 @@ class XCore(base.Core):
         numlock_code = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
         self._numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(numlock_code), 0)
         self._valid_mask = ~(self._numlock_mask | xcbq.ModMasks["lock"])
+
+    def get_screen_info(self) -> List[Tuple[int, int, int, int]]:
+        """Get the screen information for the current connection"""
+        # What's going on here is a little funny. What we really want is only
+        # screens that don't overlap here; overlapping screens should see the
+        # same parts of the root window (i.e. for people doing xrandr
+        # --same-as). However, the order that X gives us pseudo screens in is
+        # important, because it indicates what people have chosen via xrandr
+        # --primary or whatever. So we need to alias screens that should be
+        # aliased, but preserve order as well. See #383.
+        xywh = OrderedDict()  # type: Dict[Tuple[int, int], Tuple[int, int]]
+        for screen in self.conn.pseudoscreens:
+            pos = (screen.x, screen.y)
+            width, height = xywh.get(pos, (0, 0))
+            xywh[pos] = (max(width, screen.width), max(height, screen.height))
+
+        if len(xywh) == 0:
+            xywh[(0, 0)] = (
+                self.conn.default_screen.width_in_pixels,
+                self.conn.default_screen.height_in_pixels,
+            )
+
+        return [(x, y, w, h) for (x, y), (w, h) in xywh.items()]
 
     @property
     def masks(self) -> Tuple[int, int]:
@@ -246,8 +273,8 @@ class XCore(base.Core):
         if window is not None and hasattr(window, handler):
             chain.append(getattr(window, handler))
 
-        if hasattr(self.qtile, handler):
-            chain.append(getattr(self.qtile, handler))
+        if hasattr(self, handler):
+            chain.append(getattr(self, handler))
 
         if not chain:
             logger.info("Unhandled event: {event_type}".format(event_type=event_type))
@@ -280,7 +307,7 @@ class XCore(base.Core):
         self._root.set_property("_NET_DESKTOP_NAMES", "\0".join(i.name for i in groups))
         self._root.set_property("_NET_CURRENT_DESKTOP", index)
 
-    def lookup_key(self, key: config.Key) -> Tuple[int, int]:
+    def lookup_key(self, key: config.Key) -> Tuple[int, int, int]:
         """Find the keysym and the modifier mask for the given key"""
         try:
             keysym = xcbq.get_keysym(key.key)
@@ -288,7 +315,7 @@ class XCore(base.Core):
         except xcbq.XCBQError as err:
             raise utils.QtileError(err)
 
-        return keysym, modmask
+        return keysym, modmask, modmask & self._valid_mask
 
     def grab_key(self, keysym: int, modmask: int) -> None:
         """Map the key to receive events on it"""
@@ -365,3 +392,130 @@ class XCore(base.Core):
         if self._numlock_mask:
             yield self._numlock_mask
             yield self._numlock_mask | xcbq.ModMasks["lock"]
+
+    def handle_SelectionNotify(self, event) -> None:
+        if not getattr(event, "owner", None):
+            return
+
+        name = self.conn.atoms.get_name(event.selection)
+        self._selection[name]["owner"] = event.owner
+        self._selection[name]["selection"] = ""
+
+        self.convert_selection(event.selection)
+
+        hook.fire("selection_notify", name, self._selection[name])
+
+    def handle_PropertyNotify(self, event) -> None:
+        name = self.conn.atoms.get_name(event.atom)
+        # it's the selection property
+        if name in ("PRIMARY", "CLIPBOARD"):
+            assert event.window == self._selection_window.wid
+            prop = self._selection_window.get_property(event.atom, "UTF8_STRING")
+
+            # If the selection property is None, it is unset, which means the
+            # clipboard is empty.
+            value = prop and prop.value.to_utf8() or ""
+
+            self._selection[name]["selection"] = value
+            hook.fire("selection_change", name, self._selection[name])
+
+    def handle_EnterNotify(self, event) -> Optional[bool]:
+        assert self.qtile is not None
+
+        return self.qtile.enter_event(event)
+
+    def handle_ClientMessage(self, event) -> None:
+        assert self.qtile is not None
+
+        atoms = self.conn.atoms
+
+        opcode = event.type
+        data = event.data
+
+        # handle change of desktop
+        if atoms["_NET_CURRENT_DESKTOP"] == opcode:
+            index = data.data32[0]
+            try:
+                self.qtile.cmd_to_layout_index(index)
+            except IndexError:
+                logger.info("Invalid Desktop Index: %s" % index)
+
+    def handle_KeyPress(self, event) -> None:
+        assert self.qtile is not None
+
+        keysym = self.conn.code_to_syms[event.detail][0]
+        self.qtile.process_key_event(keysym, event.state & self._valid_mask)
+
+    def handle_ButtonPress(self, event) -> None:
+        assert self.qtile is not None
+
+        self.mouse_position = (event.event_x, event.event_y)
+        button_code = event.detail
+        state = event.state
+        state |= self._numlock_mask
+        state &= self._valid_mask
+        self.qtile.process_button_click(
+            button_code, state, event.event_x, event.event_y, event
+        )
+
+    def handle_ButtonRelease(self, event) -> None:
+        assert self.qtile is not None
+
+        button_code = event.detail
+        self.qtile.process_button_release(button_code)
+
+    def handle_MotionNotify(self, event) -> None:
+        assert self.qtile is not None
+
+        self.qtile.process_button_motion(event.event_x, event.event_y)
+
+    def handle_ConfigureNotify(self, event) -> None:
+        """Handle xrandr events"""
+        assert self.qtile is not None
+
+        if event.window == self._root.wid:
+            self.qtile.process_configure(event.width, event.height)
+
+    def handle_ConfigureRequest(self, event):
+        # It's not managed, or not mapped, so we just obey it.
+        cw = xcffib.xproto.ConfigWindow
+        args = {}
+        if event.value_mask & cw.X:
+            args["x"] = max(event.x, 0)
+        if event.value_mask & cw.Y:
+            args["y"] = max(event.y, 0)
+        if event.value_mask & cw.Height:
+            args["height"] = max(event.height, 0)
+        if event.value_mask & cw.Width:
+            args["width"] = max(event.width, 0)
+        if event.value_mask & cw.BorderWidth:
+            args["borderwidth"] = max(event.border_width, 0)
+        w = xcbq.Window(self.conn, event.window)
+        w.configure(**args)
+
+    def handle_MappingNotify(self, event):
+        assert self.qtile is not None
+
+        self.conn.refresh_keymap()
+        if event.request == xcffib.xproto.Mapping.Keyboard:
+            self.qtile.grab_keys()
+
+    def handle_MapRequest(self, event) -> None:
+        assert self.qtile is not None
+
+        window = xcbq.Window(self.conn, event.window)
+        self.qtile.map_window(window)
+
+    def handle_DestroyNotify(self, event) -> None:
+        assert self.qtile is not None
+
+        self.qtile.unmanage(event.window)
+
+    def handle_UnmapNotify(self, event) -> None:
+        assert self.qtile is not None
+
+        if event.event != self._root.wid:
+            self.qtile.unmap_window(event.window)
+
+    def handle_ScreenChangeNotify(self, event) -> None:
+        hook.fire("screen_change", self, event)
