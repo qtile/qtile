@@ -10,19 +10,21 @@ matrix:
           env: TOXENV=py36
         - python: 3.7
           env: TOXENV=py37
+        - python: 3.8
+          env: TOXENV=py38
         - python: pypy3
           env: TOXENV=pypy3
         - python: nightly
           env: TOXENV=py-nightly
-        - python: 3.7
+        - python: 3.8
           env: TOXENV=packaging
-        - python: 3.7
+        - python: 3.8
           env: TOXENV=docs
         - python: 3.5
           env: TOXENV=pep8
-        - python: 3.7
+        - python: 3.8
           env: TOXENV=pep8
-        - python: 3.7
+        - python: 3.8
           env: TOXENV=mypy
 
     allow_failures:
