@@ -72,16 +72,7 @@ class Config:
             except KeyError:
                 value = getattr(self, key, default[key])
             setattr(self, key, value)
-        self._init_deprecated(**settings)
         self._init_fake_screens(**settings)
-
-    def _init_deprecated(self, extensions=None, **settings):
-        "Initialize deprecated settings."
-        if extensions:          # Deprecated in v0.10.7
-            import warnings
-            warnings.warn("'extentions' is deprecated, use "
-                          "'extension_defaults'", DeprecationWarning)
-            self.extension_defaults.update(extensions.get('dmenu', {}))
 
     def _init_fake_screens(self, **settings):
         " Initiaize fake_screens if they are set."
