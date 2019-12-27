@@ -19,7 +19,6 @@
 # SOFTWARE.
 
 from libqtile.dgroups import DGroups
-from xcffib.xproto import EventMask, WindowError, AccessError, DrawableError
 import asyncio
 import functools
 import io
@@ -30,11 +29,12 @@ import shlex
 import signal
 import sys
 import traceback
+import time
+import warnings
+
 import xcffib
 import xcffib.xinerama
 import xcffib.xproto
-import time
-import warnings
 
 from ..config import Drag, Click, Screen, Match, Rule
 from ..config import ScratchPad as ScratchPadConfig
