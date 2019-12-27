@@ -5,9 +5,9 @@ from typing import Callable, Iterator, List, Optional, Tuple, TYPE_CHECKING
 import xcffib
 import xcffib.xproto
 
-from . import base
 from . import xcbq
 from libqtile import config, utils, window
+from libqtile.backend import base
 from libqtile.core.manager import Qtile
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
@@ -306,9 +306,7 @@ class XCore(base.Core):
         """Ungrab all of the key events"""
         self._root.ungrab_key(None, None)
 
-    def ungrab_key(
-        self, keysym: int, modmask: int
-    ) -> None:
+    def ungrab_key(self, keysym: int, modmask: int) -> None:
         """Ungrab the key corresponding to the given keysym and modifier mask"""
         code = self.conn.keysym_to_keycode(keysym)
 

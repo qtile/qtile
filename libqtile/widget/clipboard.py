@@ -22,8 +22,8 @@
 # SOFTWARE.
 
 from . import base
-from .. import bar, hook
-from ..core import xcbq
+from libqtile import bar, hook
+from libqtile.backend.x11 import xcbq
 
 
 class Clipboard(base._TextBox):

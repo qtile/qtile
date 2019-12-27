@@ -48,8 +48,8 @@ import xcffib.randr
 import xcffib.xinerama
 import xcffib.xproto
 
-from .. import xkeysyms
-from ..log_utils import logger
+from libqtile import xkeysyms
+from libqtile.log_utils import logger
 from .xcursors import Cursors
 
 keysyms = xkeysyms.keysyms

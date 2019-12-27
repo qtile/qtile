@@ -25,7 +25,7 @@ from cffi import FFI
 from xcffib.ffi_build import ffi as xcffib_ffi
 
 xcursors_ffi = FFI()
-xcursors_ffi.set_source("libqtile.core._ffi_xcursors", None)
+xcursors_ffi.set_source("libqtile.backend.x11._ffi_xcursors", None)
 
 xcursors_ffi.include(xcffib_ffi)
 

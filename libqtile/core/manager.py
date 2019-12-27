@@ -48,7 +48,7 @@ from ..extension.base import _Extension
 from .. import hook
 from .. import utils
 from .. import window
-from . import xcbq
+from libqtile.backend.x11 import xcbq
 from libqtile import command_interface
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_interface import QtileCommandInterface, IPCCommandServer
