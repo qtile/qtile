@@ -289,7 +289,6 @@ class FloatingTile(Floating):
         ("name", "floatingtile", "Name of this layout.")
     ]
 
-
     def __init__(self, **config):
         Floating.__init__(self, **config)
         self._floating_clients_only = False

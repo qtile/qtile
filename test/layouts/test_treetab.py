@@ -147,4 +147,3 @@ def test_sort_windows(qtile):
         'Even': [['102']],
         'Odd': [['101'], ['103']]
     }
-

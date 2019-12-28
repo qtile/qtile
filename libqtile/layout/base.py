@@ -573,7 +573,7 @@ class _ClientList:
             pos = len(self._clients)  # default is to append to self
         if pos < len(self._clients):
             self._clients = (self._clients[:pos:] + other._clients +
-                            self._clients[pos::])
+                             self._clients[pos::])
         else:
             self._clients.extend(other._clients)
 
