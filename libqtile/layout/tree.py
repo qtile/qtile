@@ -325,6 +325,10 @@ class Window(TreeNode):
             p = p.parent()
         return p
 
+    @parent.setter
+    def parent(self):
+        raise NotImplementedError  # No use case for now
+
     def draw(self, layout, top, level=0):
         '''Draw the window title on the panel of ``layout``.'''
         self._title_top = top
