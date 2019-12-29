@@ -58,8 +58,7 @@ def test_window(qtile):
     qtile.test_dialog("float2")
     qtile.test_window("three")
 
-    # test preconditions, columns adds clients at pos of current, in two stacks
-    assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
+    assert qtile.c.layout.info()['clients'] == ['one', 'three', 'two']
     assert qtile.c.layout.info()['sections'] == ['Foo', 'Bar']
     assert qtile.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two'], ['three']], 'Bar': []}
 
@@ -72,7 +71,7 @@ def test_window(qtile):
 
     # test command move_up/down
     qtile.c.layout.move_up()
-    assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
+    assert qtile.c.layout.info()['clients'] == ['one', 'three', 'two']
     assert qtile.c.layout.info()['client_trees'] == {'Foo': [['one'], ['three'], ['two']], 'Bar': []}
     qtile.c.layout.move_down()
     assert qtile.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two'], ['three']], 'Bar': []}

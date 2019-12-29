@@ -590,7 +590,8 @@ class TreeTab(Layout):
 
         children = self._tree.children
         d = Layout.info(self)
-        d["clients"] = [x.name for x in self._nodes if not x.floating]  # not in order
+        # Sort client names to workaround an internal difference between Python 3.5 and Python 3.6+
+        d["clients"] = sorted([x.name for x in self._nodes if not x.floating])
         d["sections"] = [x.title for x in children]
 
         trees = {}
