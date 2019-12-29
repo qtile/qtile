@@ -139,7 +139,7 @@ class _BspNode():
 
 class Bsp(Layout):
     """This layout is inspired by bspwm, but it does not try to copy its
-    features. All clients are organized as a full binary tree.
+    features.
 
     The first client occupies the entire srceen space.  When a new client
     is created, the selected space is partitioned in 2 and the new client
@@ -151,6 +151,8 @@ class Bsp(Layout):
     otherwise, they are created on top of each other.  The partition
     direction can be freely toggled.  All subspaces can be resized and
     clients can be shuffled around.
+
+    All clients are organized at the leaves of a full binary tree.
 
     An example key configuration is::
 

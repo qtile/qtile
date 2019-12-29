@@ -393,6 +393,44 @@ class TreeTab(Layout):
     left border of the screen, which allows you to overview all opened windows.
     It's designed to work with ``uzbl-browser`` but works with other windows
     too.
+
+    The panel at the left border contains sections, each of which contains
+    windows. Initially the panel looks like flat lists inside its
+    section, and looks like trees if some of the windows are "moved" left or
+    right.
+
+    For example, it looks like below with two sections initially:
+
+    ::
+
+        +------------+
+        |Section Foo |
+        +------------+
+        | Window A   |
+        +------------+
+        | Window B   |
+        +------------+
+        | Window C   |
+        +------------+
+        |Section Bar |
+        +------------+
+
+    And then it will look like below if "Window B" is moved right and "Window C"
+    is moved right too:
+
+    ::
+
+        +------------+
+        |Section Foo |
+        +------------+
+        | Window A   |
+        +------------+
+        |  Window B  |
+        +------------+
+        |   Window C |
+        +------------+
+        |Section Bar |
+        +------------+
     """
 
     defaults = [
