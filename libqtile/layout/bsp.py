@@ -121,6 +121,8 @@ class Bsp(Layout):
     direction can be freely toggled.  All subspaces can be resized and
     clients can be shuffled around.
 
+    All clients are organized at the leaves of a full binary tree.
+
     An example key configuration is::
 
         Key([mod], "j", lazy.layout.down()),
