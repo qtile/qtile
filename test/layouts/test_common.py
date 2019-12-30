@@ -145,6 +145,13 @@ def test_focus_cycle(qtile):
         return focus_path
 
     # Toggle the current window's fullscreen state, and the focus path should not change
+    assert_focused(qtile, "three")
+    focus_path = get_focus_path(qtile)
+    qtile.c.window.toggle_fullscreen()
+    qtile.c.window.toggle_fullscreen()
+    assert_focus_path(focus_path)
+    # Toggle another window
+    qtile.c.group.focus_by_name("one")
     focus_path = get_focus_path(qtile)
     qtile.c.window.toggle_fullscreen()
     qtile.c.window.toggle_fullscreen()
