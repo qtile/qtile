@@ -16,6 +16,7 @@ running something else, please see `Installing From Source`_.
     Funtoo <funtoo>
     Ubuntu/Debian <ubuntu>
     Slackware <slackware>
+    FreeBSD <freebsd>
 
 Installing From Source
 ======================
