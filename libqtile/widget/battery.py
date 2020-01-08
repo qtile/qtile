@@ -233,9 +233,14 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         try:
             with open(path, 'r') as f:
                 return f.read().strip(), value_type
-        except FileNotFoundError:
-            logger.debug("Failed to get %s" % name)
-        return None
+        except OSError as e:
+            logger.debug("Failed to read '{}': {}".format(path, e))
+            if isinstance(e, FileNotFoundError):
+                # Let's try another file if this one doesn't exist
+                return None
+            # Do not fail if the file exists but we can not read it this time
+            # See https://github.com/qtile/qtile/pull/1516 for rationale
+            return "-1", "N/A"
 
     def _get_param(self, name) -> Tuple[str, str]:
         if name in self.filenames and self.filenames[name]:
