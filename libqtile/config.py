@@ -152,9 +152,9 @@ class EzConfig:
 
 
 class EzKey(EzConfig, Key):
-    def __init__(self, keydef, *commands):
+    def __init__(self, keydef, *commands, **kwargs):
         modkeys, key = self.parse(keydef)
-        super().__init__(modkeys, key, *commands)
+        super().__init__(modkeys, key, *commands, **kwargs)
 
 
 class EzClick(EzConfig, Click):
