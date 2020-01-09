@@ -2,7 +2,7 @@
 Installing on Debian or Ubuntu
 ==============================
 
-On recent Ubuntu (17.04 or greater) and Debian (10 or greater) versions, there are
+On recent Ubuntu (17.04 or greater) and Debian unstable versions, there are
 Qtile packages available via:
 
 .. code-block:: bash
