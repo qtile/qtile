@@ -31,6 +31,7 @@ import warnings
 from . import configurable
 from . import hook
 from . import utils
+from .log_utils import logger
 from libqtile.command_object import CommandObject
 
 
@@ -218,19 +219,28 @@ class Screen(CommandObject):
     and ``height`` aren't specified usually unless you are using 'fake
     screens'.
 
+    The screen's wallpaper can be set by passing in a dict as the ``wallpaper``
+    kwarg, which must contain a 'path' key to specify the image to use, and can
+    optionally contain an 'option' key containing the string 'fill' or
+    'stretch' to specify how to fit the image onto the screen. 'fill' will
+    centre the image on the screen and fill it without warping it, 'stretch'
+    will warp the image to fit all of it into the screen. By default the image
+    will be placed at the screens origin and retain its own dimensions.
+
     Parameters
     ==========
     top: Gap/Bar object, or None.
     bottom: Gap/Bar object, or None.
     left: Gap/Bar object, or None.
     right: Gap/Bar object, or None.
+    wallpaper: Dict, or None.
     x : int or None
     y : int or None
     width : int or None
     height : int or None
     """
     def __init__(self, top=None, bottom=None, left=None, right=None,
-                 x=None, y=None, width=None, height=None):
+                 wallpaper=None, x=None, y=None, width=None, height=None):
         self.group = None
         self.previous_group = None
 
@@ -238,6 +248,7 @@ class Screen(CommandObject):
         self.bottom = bottom
         self.left = left
         self.right = right
+        self.wallpaper = wallpaper
         self.qtile = None
         self.index = None
         # x position of upper left corner can be > 0
@@ -257,6 +268,14 @@ class Screen(CommandObject):
         self.set_group(group)
         for i in self.gaps:
             i._configure(qtile, self)
+        if self.wallpaper:
+            try:
+                self.paint(**self.wallpaper)
+            except TypeError:
+                logger.exception("Error in wallpaper configuration.")
+
+    def paint(self, path, option=None):
+        self.qtile.paint_screen(self, path, option)
 
     @property
     def gaps(self):

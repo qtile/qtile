@@ -32,16 +32,13 @@ class Wallpaper(base._TextBox):
     defaults = [
         ("directory", "~/Pictures/wallpapers/", "Wallpaper Directory"),
         ("wallpaper", None, "Wallpaper"),
-        ("wallpaper_command", None, "Wallpaper command"),
+        ("wallpaper_command", ['feh', '--bg-fill'], "Wallpaper command. If None, the"
+            "wallpaper will be painted without the use of a helper."),
         ("random_selection", False, "If set, use random initial wallpaper and "
          "randomly cycle through the wallpapers."),
         ("label", None, "Use a fixed label instead of image name."),
-        (
-            "one_screen",
-            False,
-            "Treat the whole X display as one screen when setting wallpapers "
-            "(does not work if wallpaper_command is set)."
-        ),
+        ("option", "fill", "How to fit the wallpaper when wallpaper_command is"
+            "None. None, 'fill' or 'stretch'."),
     ]
 
     def __init__(self, **config):
@@ -52,7 +49,11 @@ class Wallpaper(base._TextBox):
         self.get_wallpapers()
         if self.random_selection:  # Random selection after reading all files
             self.index = random.randint(0, len(self.images) - 1)
-        self.set_wallpaper()
+
+    def _configure(self, qtile, bar):
+        base._TextBox._configure(self, qtile, bar)
+        if not self.bar.screen.wallpaper:
+            self.set_wallpaper()
 
     def get_path(self, file):
         return os.path.join(os.path.expanduser(self.directory), file)
@@ -84,15 +85,8 @@ class Wallpaper(base._TextBox):
             self.wallpaper_command.append(cur_image)
             subprocess.call(self.wallpaper_command)
             self.wallpaper_command.pop()
-            return
-        command = [
-            'feh',
-            '--bg-fill',
-            cur_image
-        ]
-        if self.one_screen:
-            command.append("--no-xinerama")
-        subprocess.call(command)
+        else:
+            self.qtile.paint_screen(self.bar.screen, cur_image, self.option)
 
     def button_press(self, x, y, button):
         if button == 1:
