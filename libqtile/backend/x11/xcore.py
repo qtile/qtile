@@ -26,6 +26,7 @@ from typing import Callable, Iterator, List, Optional, Tuple, TYPE_CHECKING
 
 import xcffib
 import xcffib.xproto
+import xcffib.render
 
 from . import xcbq
 from libqtile import config, hook, utils, window
@@ -123,6 +124,7 @@ class XCore(base.Core):
         self._root.set_cursor("left_ptr")
 
         self.qtile = None  # type: Optional[Qtile]
+        self._painter = None
 
         numlock_code = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
         self._numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(numlock_code), 0)
@@ -246,6 +248,9 @@ class XCore(base.Core):
                 xcffib.xproto.WindowError,
                 xcffib.xproto.AccessError,
                 xcffib.xproto.DrawableError,
+                xcffib.xproto.GContextError,
+                xcffib.xproto.PixmapError,
+                xcffib.render.PictureError,
             ):
                 pass
             except Exception:
@@ -551,3 +556,9 @@ class XCore(base.Core):
 
     def handle_ScreenChangeNotify(self, event) -> None:  # noqa: N802
         hook.fire("screen_change", self.qtile, event)
+
+    @property
+    def painter(self):
+        if self._painter is None:
+            self._painter = xcbq.Painter(self._display_name)
+        return self._painter
