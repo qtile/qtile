@@ -58,8 +58,11 @@ class Net(base.ThreadedPollText):
         else:
             letters = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
 
-        power = int(log(num_bytes) / log(factor))
-        power = max(min(power, len(letters) - 1), 0)
+        if num_bytes > 0:
+            power = int(log(num_bytes) / log(factor))
+            power = max(min(power, len(letters) - 1), 0)
+        else:
+            power = 0
 
         converted_bytes = num_bytes / factor**power
         unit = letters[power]
