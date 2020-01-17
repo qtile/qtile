@@ -30,285 +30,259 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# depends on python-mpd
-import re
-import time
-
-import mpd
-
-from .. import utils, pangocffi
 from . import base
+from .. import utils, pangocffi
 from libqtile.log_utils import logger
+
+from socket import error as socket_error
+try:
+    from musicpd import MPDClient, ConnectionError, CommandError, ProtocolError
+except ImportError:
+    from mpd import MPDClient, ConnectionError, CommandError, ProtocolError
+
+# Shortcuts
+# TODO: Volume inc/dec support
+keys = {
+    # Left mouse button
+    "toggle": 1,
+    # Right mouse button
+    "stop": 3,
+    # Scroll up
+    "previous": 4,
+    # Scroll down
+    "next": 5,
+    # User defined command
+    "command": None
+}
+
+# To display mpd state
+play_states = {
+    'play': '\u25b6',
+    'pause': '\u23F8',
+    'stop': '\u25a0',
+}
+
+
+def option(char):
+    def _convert(elements, key, space):
+        if key in elements and elements[key] != '0':
+            elements[key] = char
+        else:
+            elements[key] = space
+    return _convert
+
+
+prepare_status = {
+    'repeat': option('r'),
+    'random': option('z'),
+    'single': option('1'),
+    'consume': option('c'),
+    'updating_db': option('U')
+}
+
+default_format = '{play_status} {artist}/{title} ' +\
+                 '[{repeat}{random}{single}{consume}{updating_db}]'
 
 
 class Mpd(base.ThreadPoolText):
-    """A widget for the Music Player Daemon (MPD)"""
+    """A widget for Music Player Daemon (MPD)
+
+    This widget works with python-mpd, python-mpd2 and python-musicpd.
+
+    Parameters
+    ==========
+    status_format :
+        Format string to display status.
+
+        Full list of values see in ``status`` and ``currentsong`` commands
+
+        https://musicpd.org/doc/protocol/command_reference.html#command_status
+        https://musicpd.org/doc/protocol/tags.html
+
+        Default::
+
+        {play_status} {artist}/{title} [{repeat}{random}{single}{consume}{updating_db}]
+
+        ``play_status`` is string from ``play_states`` dict
+
+        Note that ``time`` property of song renamed to ``fulltime`` to prevent
+        conflicts with status information during formating.
+
+    status_format_stopped :
+        Format string to display status when playback is stopped, set as above.
+
+    prepare_status :
+        dict of functions to replace values in status or currentsong repies with custom
+        values.
+
+        ``f(status, key, space_element) => str``
+    """
+
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("host", "localhost", "Host to connect to, can be either an IP "
-                              "address or a UNIX socket path"),
-        ("port", 6600, "Port to connect to"),
-        ("password", None, "Password to use"),
-        ("fmt_playing", "%a - %t [%v%%]", "Format string to display when "
-                                          "playing/paused"),
-        ("fmt_stopped", "Stopped [%v%%]", "Format strings to display when "
-                                          "stopped"),
-        ("msg_nc", "Mpd off", "Which message to show when we're not "
-                              "connected"),
-        ("do_color_progress", True, "Whether to indicate progress in song by "
-                                    "altering message color"),
+        ('update_interval', 1, 'Update time in seconds'),
+        ('host', 'localhost', 'Host of mpd server'),
+        ('port', 6600, 'Port of mpd server'),
+        ('password', None, 'Password for auth on mpd server'),
+        ('keys', keys, 'Shortcut keys'),
+        ('play_states', play_states, 'Play state mapping'),
+        ('command', None, 'Executable command by "command" shortcut'),
+        ('timeout', 30, 'MPDClient timeout'),
+        ('idletimeout', 5, 'MPDClient idle command timeout'),
+        ('no_connection', 'No connection', 'Text when mpd is disconnected'),
+        ('space', '-', 'Space keeper'),
+        ("do_color_progress", False, "Whether to indicate progress in song by "
+                                     "altering message color"),
         ("foreground_progress", "ffffff", "Foreground progress colour"),
-        ("reconnect", False, "Attempt to reconnect if initial connection failed"),
-        ("reconnect_interval", 1, "Time to delay between connection attempts."),
-        ("update_interval", 0.5, "Update Time in seconds.")
+        ("reconnect", True, "Attempt to reconnect if initial connection failed"),
     ]
 
-    def __init__(self, **config):
-        super().__init__('MPD Widget', **config)
+    def __init__(self,
+        status_format=default_format,
+        status_format_stopped=default_format,
+        prepare_status=prepare_status,
+        **config
+    ):
+        super().__init__(None, **config)
         self.add_defaults(Mpd.defaults)
-        self.inc = 2
-        self.client = mpd.MPDClient()
-        self.connected = None
-        self.stop = False
+        self.status_format = str(status_format)
+        self.status_format_stopped = str(status_format_stopped)
+        self.prepare_status = prepare_status
+        self.client = MPDClient()
+        self.client.timeout = self.timeout
+        self.client.port = self.port
+        self.client.host = self.host
 
-    def finalize(self):
-        self.stop = True
-
-        if self.connected:
-            try:
-                # The volume settings is kind of a dirty trick.  There doesn't
-                # seem to be a decent way to set a timeout for the idle
-                # command.  Therefore we need to trigger some events such that
-                # if poll() is currently waiting on an idle event it will get
-                # something so that it can exit.  In practice, I can't tell the
-                # difference in volume and hopefully no one else can either.
-                self.client.volume(1)
-                self.client.volume(-1)
-                self.client.disconnect()
-            except Exception:
-                pass
-        base._Widget.finalize(self)
-
-    def connect(self, quiet=False):
-        if self.connected:
-            return True
-
+    @property
+    def connected(self):
         try:
-            self.client.connect(host=self.host, port=self.port)
-        except Exception:
-            if not quiet:
-                logger.exception('Failed to connect to mpd')
-            return False
-
-        if self.password:
+            self.client.ping()
+        except(socket_error, ConnectionError, CommandError):
             try:
-                self.client.password(self.password)
-            except Exception:
-                logger.warning('Authentication failed.  Disconnecting')
-                try:
-                    self.client.disconnect()
-                except Exception:
-                    pass
+                self.client.connect(self.host, self.port)
+            except(socket_error, ConnectionError):
+                logger.warning('Failed to connect to mpd.')
+                if not self.reconnect:
+                    self.__dict__['connected'] = False
                 return False
 
-        self.connected = True
+            if self.password:
+                try:
+                    self.client.password(self.password)
+                except CommandError:
+                    logger.warning('Failed to authenticate to mpd. Disconnecting')
+                    try:
+                        self.client.disconnect()
+                    except ConnectionError:
+                        pass
+                    return False
+
+        except ProtocolError:
+            self.client.disconnect()
+            return self.connected
+
         return True
 
-    def _configure(self, qtile, bar):
-        super()._configure(qtile, bar)
-        self.layout = self.drawer.textlayout(
-            self.text,
-            self.foreground,
-            self.font,
-            self.fontsize,
-            self.fontshadow,
-            markup=True
-        )
-
-    def to_minutes_seconds(self, stime):
-        """Takes an integer time in seconds, transforms it into
-        (HH:)?MM:SS. HH portion is only visible if total time is greater
-        than an hour.
-        """
-        if type(stime) != int:
-            stime = int(stime)
-        mm = stime // 60
-        ss = stime % 60
-        if mm >= 60:
-            hh = mm // 60
-            mm = mm % 60
-            rv = "{}:{:02}:{:02}".format(hh, mm, ss)
-        else:
-            rv = "{}:{:02}".format(mm, ss)
-        return rv
-
-    def get_artist(self):
-        return self.song['artist']
-
-    def get_album(self):
-        return self.song['album']
-
-    def get_elapsed(self):
-        elapsed = self.status['time'].split(':')[0]
-        return self.to_minutes_seconds(elapsed)
-
-    def get_file(self):
-        return self.song['file']
-
-    def get_length(self):
-        return self.to_minutes_seconds(self.song['time'])
-
-    def get_number(self):
-        return str(int(self.status['song']) + 1)
-
-    def get_playlistlength(self):
-        return self.status['playlistlength']
-
-    def get_status(self):
-        n = self.status['state']
-        if n == "play":
-            return "->"
-        elif n == "pause":
-            return "||"
-        elif n == "stop":
-            return "[]"
-
-    def get_longstatus(self):
-        n = self.status['state']
-        if n == "play":
-            return "Playing"
-        elif n == "pause":
-            return "Paused"
-        elif n == "stop":
-            return "Stopped"
-
-    def get_title(self):
-        return self.song['title']
-
-    def get_track(self):
-        # This occasionally has leading zeros we don't want.
-        return str(int(self.song['track'].split('/')[0]))
-
-    def get_volume(self):
-        return self.status['volume']
-
-    def get_single(self):
-        if self.status['single'] == '1':
-            return '1'
-        else:
-            return '_'
-
-    def get_repeat(self):
-        if self.status['repeat'] == '1':
-            return 'R'
-        else:
-            return '_'
-
-    def get_shuffle(self):
-        if self.status['random'] == '1':
-            return 'S'
-        else:
-            return '_'
-
-    formats = {
-        'a': get_artist, 'A': get_album, 'e': get_elapsed,
-        'f': get_file, 'l': get_length, 'n': get_number,
-        'p': get_playlistlength, 's': get_status, 'S': get_longstatus,
-        't': get_title, 'T': get_track, 'v': get_volume, '1': get_single,
-        'r': get_repeat, 'h': get_shuffle, '%': lambda x: '%',
-    }
-
-    def match_check(self, m):
-        try:
-            return self.formats[m.group(1)](self)
-        except KeyError:
-            return "(nil)"
-
-    def do_format(self, string):
-        return re.sub("%(.)", self.match_check, string)
-
-    def _get_status(self):
-        playing = self.msg_nc
-
-        try:
-            self.status = self.client.status()
-            self.song = self.client.currentsong()
-            if self.status['state'] != 'stop':
-                text = self.do_format(self.fmt_playing)
-
-                if self.do_color_progress and self.status.get('time'):
-                    try:
-                        elapsed, total = self.status['time'].split(':')
-                        percent = float(elapsed) / float(total)
-                        progress = int(percent * len(text))
-                    except (ZeroDivisionError, ValueError):
-                        playing = pangocffi.markup_escape_text(text)
-                    else:
-                        playing = '<span color="{0}">{1}</span>{2}'.format(
-                            utils.hex(self.foreground_progress),
-                            pangocffi.markup_escape_text(text[:progress]),
-                            pangocffi.markup_escape_text(text[progress:])
-                        )
-                else:
-                    playing = pangocffi.markup_escape_text(text)
-            else:
-                playing = self.do_format(self.fmt_stopped)
-
-        except Exception:
-            logger.exception('Mpd error on update')
-
-        return playing
-
     def poll(self):
-        was_connected = self.connected
-
-        if not self.connected:
-            if self.connected is None or self.reconnect:
-                while not self.stop and not self.connect(quiet=True):
-                    time.sleep(self.reconnect_interval)
-            else:
-                return
-
-        if self.stop:
-            return True
-
-        if was_connected:
-            try:
-                self.client.ping()
-            except mpd.ConnectionError:
-                self.client.disconnect()
-                self.connected = False
-                return self.msg_nc
-            except Exception:
-                logger.exception('Error communicating with mpd')
-                self.client.disconnect()
-                return
-
-        return self._get_status()
+        if self.connected:
+            return self.update_status()
+        else:
+            return self.no_connection
 
     def button_press(self, x, y, button):
-        if not self.connect():
-            return False
-        try:
+        if self.connected:
+            try:
+                self.handle_button_press(x, y, button)
+            except (CommandError, BrokenPipeError) as e:
+                logger.warning(f'mpd error: {e}')
+                logger.warning(f'mpd error: Trying again.')
+                if self.connected:
+                    try:
+                        self.handle_button_press(x, y, button)
+                    except (CommandError, BrokenPipeError) as e:
+                        logger.warning(f'mpd error: {e}')
+
+            self.update(self.update_status())
+        else:
+            self.update(self.no_connection)
+
+    def handle_button_press(self, x, y, button):
+        if button == self.keys["toggle"]:
             status = self.client.status()
-            if button == 3:
-                if not status or status.get('state', '') == 'stop':
-                    self.client.play()
-                else:
-                    self.client.pause()
-            elif button == 4:
-                self.client.previous()
-            elif button == 5:
-                self.client.next()
-            elif button == 8:
-                if status:
-                    self.client.setvol(
-                        max(int(status['volume']) - self.inc, 0)
-                    )
-            elif button == 9:
-                if status:
-                    self.client.setvol(
-                        min(int(status['volume']) + self.inc, 100)
-                    )
-        except Exception:
-            logger.exception('Mpd error on click')
+            play_status = status['state']
+
+            if play_status == 'play':
+                self.client.pause()
+            else:
+                self.client.play()
+
+        elif button == self.keys["stop"]:
+            self.client.stop()
+
+        elif button == self.keys["previous"]:
+            self.client.previous()
+
+        elif button == self.keys["next"]:
+            self.client.next()
+
+        elif button == self.keys['command']:
+            if self.command:
+                self.command(self.client)
+
+    def update_status(self):
+        self.client.command_list_ok_begin()
+        self.client.status()
+        self.client.currentsong()
+        status, current_song = self.client.command_list_end()
+
+        return self.formatter(status, current_song)
+
+    def formatter(self, status, currentsong):
+        play_status = self.play_states[status['state']]
+
+        if currentsong:
+            # Dirty hack to prevent keys conflict
+            currentsong['fulltime'] = currentsong.get('time', '0')
+            del currentsong['time']
+
+            status.update(currentsong)
+        self.prepare_formatting(status)
+
+        if status['state'] == 'stop':
+            fmt = self.status_format_stopped
+        else:
+            fmt = self.status_format
+
+        try:
+            text = fmt.format(play_status=play_status, **status)
+        except KeyError as e:
+            logger.exception(f"mpd client did not return status: {e.args[0]}")
+            return "ERROR"
+
+        if self.do_color_progress and status['state'] != 'stop':
+            try:
+                elapsed, total = status['time'].split(':')
+                percent = float(elapsed) / float(total)
+                progress = int(percent * len(text))
+                text = '<span color="{0}">{1}</span>{2}'.format(
+                    utils.hex(self.foreground_progress),
+                    pangocffi.markup_escape_text(text[:progress]),
+                    pangocffi.markup_escape_text(text[progress:]),
+                )
+            except (ZeroDivisionError, ValueError):
+                pass
+
+        return text
+
+    def prepare_formatting(self, status):
+        for key in self.prepare_status:
+            self.prepare_status[key](status, key, self.space)
+
+    def finalize(self):
+        super().finalize()
+
+        try:
+            self.client.close()
+            self.client.disconnect()
+        except ConnectionError:
+            pass
