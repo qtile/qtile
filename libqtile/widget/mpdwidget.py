@@ -36,9 +36,14 @@ from libqtile.log_utils import logger
 
 from socket import error as socket_error
 try:
-    from musicpd import MPDClient, ConnectionError, CommandError, ProtocolError
+    from musicpd import (
+        MPDClient, ConnectionError, CommandError, ProtocolError, CommandListError
+    )
 except ImportError:
-    from mpd import MPDClient, ConnectionError, CommandError, ProtocolError
+    from mpd import (
+        MPDClient, ConnectionError, CommandError, ProtocolError, CommandListError
+    )
+
 
 # Shortcuts
 # TODO: Volume inc/dec support
@@ -137,7 +142,8 @@ class Mpd(base.ThreadPoolText):
         ("reconnect", True, "Attempt to reconnect if initial connection failed"),
     ]
 
-    def __init__(self,
+    def __init__(
+        self,
         status_format=default_format,
         status_format_stopped=default_format,
         prepare_status=prepare_status,
@@ -153,8 +159,7 @@ class Mpd(base.ThreadPoolText):
         self.client.port = self.port
         self.client.host = self.host
 
-    @property
-    def connected(self):
+    def can_connect(self, is_retry=False):
         try:
             self.client.ping()
         except(socket_error, ConnectionError, CommandError):
@@ -163,7 +168,7 @@ class Mpd(base.ThreadPoolText):
             except(socket_error, ConnectionError):
                 logger.warning('Failed to connect to mpd.')
                 if not self.reconnect:
-                    self.__dict__['connected'] = False
+                    self.__dict__['can_connect'] = lambda **_: False
                 return False
 
             if self.password:
@@ -179,42 +184,43 @@ class Mpd(base.ThreadPoolText):
 
         except ProtocolError:
             self.client.disconnect()
-            return self.connected
+            if is_retry:
+                return False
+            else:
+                return self.can_connect(is_retry=True)
 
         return True
 
     def poll(self):
-        if self.connected:
+        if self.can_connect():
             return self.update_status()
         else:
             return self.no_connection
 
-    def button_press(self, x, y, button):
-        if self.connected:
+    def button_press(self, x, y, button, is_retry=False):
+        if self.can_connect(is_retry=is_retry):
             try:
                 self.handle_button_press(x, y, button)
-            except (CommandError, BrokenPipeError) as e:
+                self.update(self.update_status())
+            except (CommandError, BrokenPipeError, ProtocolError) as e:
                 logger.warning(f'mpd error: {e}')
-                logger.warning(f'mpd error: Trying again.')
-                if self.connected:
-                    try:
-                        self.handle_button_press(x, y, button)
-                    except (CommandError, BrokenPipeError) as e:
-                        logger.warning(f'mpd error: {e}')
-
-            self.update(self.update_status())
+                if is_retry:
+                    self.update(self.no_connection)
+                else:
+                    self.button_press(x, y, button, is_retry=True)
         else:
             self.update(self.no_connection)
 
     def handle_button_press(self, x, y, button):
         if button == self.keys["toggle"]:
             status = self.client.status()
-            play_status = status['state']
+            if status:
+                play_status = status['state']
 
-            if play_status == 'play':
-                self.client.pause()
-            else:
-                self.client.play()
+                if play_status == 'play':
+                    self.client.pause()
+                else:
+                    self.client.play()
 
         elif button == self.keys["stop"]:
             self.client.stop()
@@ -229,13 +235,18 @@ class Mpd(base.ThreadPoolText):
             if self.command:
                 self.command(self.client)
 
-    def update_status(self):
-        self.client.command_list_ok_begin()
-        self.client.status()
-        self.client.currentsong()
-        status, current_song = self.client.command_list_end()
-
-        return self.formatter(status, current_song)
+    def update_status(self, is_retry=False):
+        try:
+            self.client.command_list_ok_begin()
+            self.client.status()
+            self.client.currentsong()
+            status, current_song = self.client.command_list_end()
+            return self.formatter(status, current_song)
+        except (ProtocolError, CommandListError):
+            if is_retry:
+                return self.no_connection
+            else:
+                return self.update_status(is_retry=True)
 
     def formatter(self, status, currentsong):
         play_status = self.play_states[status['state']]
