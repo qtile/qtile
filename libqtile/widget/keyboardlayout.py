@@ -43,6 +43,9 @@ class KeyboardLayout(base.InLoopPollText):
         ("configured_keyboards", ["us"], "A list of predefined keyboard layouts "
             "represented as strings. For example: "
             "['us', 'us colemak', 'es', 'fr']."),
+        ("display_map", {}, "Custom display of layout. Key should be in format "
+            "'layout variant'. For example: "
+            "{'us': 'us ', 'lt sgs': 'sgs', 'ru phonetic': 'ru '}"),
         ("option", None, "string of setxkbmap option. Ex., 'compose:menu,grp_led:scroll'"),
     ]
 
@@ -76,6 +79,8 @@ class KeyboardLayout(base.InLoopPollText):
         self.tick()
 
     def poll(self):
+        if self.keyboard in self.display_map.keys():
+            return self.display_map[self.keyboard]
         return self.keyboard.upper()
 
     def get_keyboard_layout(self, setxkbmap_output):

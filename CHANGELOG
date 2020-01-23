@@ -2,6 +2,7 @@ qtile X.X.X, released XXXX-XX-XX:
     * features
         - added `guess_terminal` in utils
         - added keybinding cheet sheet image generator
+        - custom keyboardlayout display 
 
 qtile 0.15.0, released 2020-04-12:
     !!! Config breakage !!!
