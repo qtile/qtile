@@ -111,9 +111,9 @@ class Mpris2(base._TextBox):
             if self.stop_pause_text is not None:
                 self.is_playing = False
                 self.displaytext = self.stop_pause_text
-            elif olddisplaytext:
+            elif self.displaytext:
                 self.is_playing = False
-                self.displaytext = 'Paused: {}'.format(olddisplaytext)
+                self.displaytext = 'Paused: {}'.format(self.displaytext)
             else:
                 self.is_playing = False
                 self.displaytext = 'Paused'
