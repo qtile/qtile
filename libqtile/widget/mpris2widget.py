@@ -94,10 +94,7 @@ class Mpris2(base._TextBox):
         olddisplaytext = self.displaytext
         self.displaytext = ''
 
-        metadata = None
-        playbackstatus = None
         metadata = changed_properties.get('Metadata')
-        playbackstatus = changed_properties.get('PlaybackStatus')
         if metadata:
             self.is_playing = True
             self.displaytext = ' - '.join([
@@ -107,30 +104,31 @@ class Mpris2(base._TextBox):
                 for x in self.display_metadata if metadata.get(x)
             ])
             self.displaytext.replace('\n', '')
-        if playbackstatus:
-            if playbackstatus == 'Paused' and self.stop_pause_text is not None:
+
+        playbackstatus = changed_properties.get('PlaybackStatus')
+        if playbackstatus == 'Paused':
+            if self.stop_pause_text is not None:
                 self.is_playing = False
                 self.displaytext = self.stop_pause_text
-            elif playbackstatus == 'Paused' and olddisplaytext:
+            elif olddisplaytext:
                 self.is_playing = False
                 self.displaytext = 'Paused: {}'.format(olddisplaytext)
-            elif playbackstatus == 'Paused':
-                self.is_playing = False
-                self.displaytext = 'Paused'
-            elif playbackstatus == 'Playing' and not self.displaytext and \
-                    olddisplaytext:
-                self.is_playing = True
-                self.displaytext = olddisplaytext.replace('Paused: ', '')
-            elif playbackstatus == 'Playing' and not self.displaytext and \
-                    not olddisplaytext:
-                self.is_playing = True
-                self.displaytext = 'No metadata for current track'
-            elif playbackstatus == 'Playing' and self.displaytext:
-                # Players might send more than one "Playing" message.
-                pass
             else:
                 self.is_playing = False
-                self.displaytext = ''
+                self.displaytext = 'Paused'
+        elif playbackstatus == 'Playing':
+            if not self.displaytext and olddisplaytext:
+                self.is_playing = True
+                self.displaytext = olddisplaytext.replace('Paused: ', '')
+            elif not self.displaytext and not olddisplaytext:
+                self.is_playing = True
+                self.displaytext = 'No metadata for current track'
+            elif self.displaytext:
+                # Players might send more than one "Playing" message.
+                pass
+        elif playbackstatus:
+            self.is_playing = False
+            self.displaytext = ''
 
         if self.scroll_chars and self.scroll_interval:
             if(self.scroll_timer):
