@@ -155,6 +155,7 @@ class GroupBox(_GroupBase):
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
+        ("selected", "000000", "Active selected group font colour"),
         ("active", "FFFFFF", "Active group font colour"),
         ("inactive", "404040", "Inactive group font colour"),
         (
@@ -334,6 +335,7 @@ class GroupBox(_GroupBase):
                     border = self.bar.background
                     text_color = self.this_current_screen_border
                 else:
+                    text_color = self.selected
                     if self.bar.screen.group.name == g.name:
                         if self.qtile.current_screen == self.bar.screen:
                             border = self.this_current_screen_border
