@@ -155,7 +155,7 @@ class GroupBox(_GroupBase):
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("selected", "000000", "Active selected group font colour"),
+        ("selected", "000000", "Selected group font colour"),
         ("active", "FFFFFF", "Active group font colour"),
         ("inactive", "404040", "Inactive group font colour"),
         (
