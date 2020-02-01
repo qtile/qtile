@@ -237,9 +237,20 @@ class InteractiveCommandClient:
         if self._current_node.selector is not None:
             raise SelectError("Selection already made", name, self._current_node.selectors)
 
-        # check that the selection is valid in the server-side qtile manager
-        if not self._command.has_item(self._current_node.parent, self._current_node.object_type, name):
-            raise SelectError("Item not available in object", name, self._current_node.selectors)
+        def _check_item(item):
+            """check that the selection is valid in the server-side qtile manager"""
+            if not self._command.has_item(self._current_node.parent, self._current_node.object_type, item):
+                raise SelectError("Item not available in object", item, self._current_node.selectors)
+
+        if name.isdigit():
+            # Check the item as is, and check its int version once more if it fails
+            try:
+                _check_item(name)
+            except SelectError:
+                name = int(name)
+                _check_item(name)
+        else:
+            _check_item(name)
 
         next_node = self._current_node.parent.navigate(self._current_node.object_type, name)
         return self.__class__(self._command, current_node=next_node)
