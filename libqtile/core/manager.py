@@ -789,7 +789,8 @@ class Qtile(CommandObject):
             self.current_group.focus(self.current_window, warp)
 
     def move_to_group(self, group):
-        """Create a group if it doesn't exist and move a windows there"""
+        """Create a group if it doesn't exist and move
+        the current window there"""
         if self.current_window and group:
             self.add_group(group)
             self.current_window.togroup(group)

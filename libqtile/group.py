@@ -168,7 +168,7 @@ class _Group(CommandObject):
                     self.current_window.focus(warp)
 
     def _set_screen(self, screen):
-        """Set this group's screen to new_screen"""
+        """Set this group's screen to screen"""
         if screen == self.screen:
             return
         self.screen = screen

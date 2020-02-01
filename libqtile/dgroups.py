@@ -248,7 +248,7 @@ class DGroups:
             del self.timeout[client]
 
         # Wait the delay until really delete the group
-        logger.info('Add dgroup timer')
+        logger.info('Add dgroup timer with delay {}s'.format(self.delay))
         self.timeout[client] = self.qtile.call_later(
             self.delay, delete_client
         )

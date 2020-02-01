@@ -273,7 +273,6 @@ class XCore(base.Core):
         """
         assert self.qtile is not None
 
-        chain = []
         handler = "handle_{event_type}".format(event_type=event_type)
         # Certain events expose the affected window id as an "event" attribute.
         event_events = [
@@ -291,6 +290,7 @@ class XCore(base.Core):
         else:
             window = None
 
+        chain = []
         if window is not None and hasattr(window, handler):
             chain.append(getattr(window, handler))
 
