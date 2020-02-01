@@ -21,6 +21,7 @@ import array
 import contextlib
 import inspect
 import traceback
+import time
 import warnings
 from xcffib.xproto import EventMask, StackMode, SetMode
 import xcffib.xproto
@@ -63,8 +64,8 @@ UrgencyHint = (1 << 8)
 AllHints = (InputHint | StateHint | IconPixmapHint | IconWindowHint |
             IconPositionHint | IconMaskHint | WindowGroupHint | MessageHint |
             UrgencyHint)
-WithdrawnState = 0
 
+WithdrawnState = 0
 DontCareState = 0
 NormalState = 1
 ZoomState = 2
@@ -549,7 +550,15 @@ class _Window(CommandObject):
                     "WM_TAKE_FOCUS" in self.window.get_wm_protocols():
                 data = [
                     self.qtile.conn.atoms["WM_TAKE_FOCUS"],
-                    xcffib.xproto.Time.CurrentTime,
+                    # The timestamp here must be a valid timestamp, not CurrentTime.
+                    #
+                    # see https://tronche.com/gui/x/icccm/sec-4.html#s-4.1.7
+                    # > Windows with the atom WM_TAKE_FOCUS in their WM_PROTOCOLS
+                    # > property may receive a ClientMessage event from the
+                    # > window manager (as described in section 4.2.8) with
+                    # > WM_TAKE_FOCUS in its data[0] field and a valid timestamp
+                    # > (i.e. not *CurrentTime* ) in its data[1] field.
+                    int(time.time()),
                     0,
                     0,
                     0
