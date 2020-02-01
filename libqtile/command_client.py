@@ -158,7 +158,7 @@ class InteractiveCommandClient:
 
         Parameters
         ----------
-        command: InteractiveCommandInterface
+        command: CommandInterface
             The object that is used to resolve command graph calls, as well as
             navigate the command graph.
         current_node: CommandGraphNode
