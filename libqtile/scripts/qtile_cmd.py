@@ -119,7 +119,7 @@ def get_object(client: InteractiveCommandClient, argv: List[str]) -> Interactive
             pass
 
         try:
-            # check it it is an attr
+            # check if it is an attr
             client = getattr(client, arg)
             continue
         except AttributeError:
