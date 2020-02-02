@@ -27,7 +27,7 @@ that interacts with qtile objects, it should favor using the command graph
 clients to do this interaction.
 """
 
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 from libqtile.command_graph import (
     CommandGraphCall,
@@ -211,7 +211,7 @@ class InteractiveCommandClient:
         next_node = self._current_node.navigate(name, None)
         return self.__class__(self._command, current_node=next_node)
 
-    def __getitem__(self, name: str) -> "InteractiveCommandClient":
+    def __getitem__(self, name: Union[str, int]) -> "InteractiveCommandClient":
         """Get the selected element of the currently selected object
 
         From the current command graph object, select the instance with the
@@ -219,8 +219,8 @@ class InteractiveCommandClient:
 
         Parameters
         ----------
-        name : str
-            The name of the item to resolve
+        name : Union[str, int]
+            The name, or index if it's of int type, of the item to resolve
 
         Return
         ------
@@ -242,7 +242,7 @@ class InteractiveCommandClient:
             if not self._command.has_item(self._current_node.parent, self._current_node.object_type, item):
                 raise SelectError("Item not available in object", item, self._current_node.selectors)
 
-        if name.isdigit():
+        if isinstance(name, str) and name.isdigit():
             # Check the item as is, and check its int version once more if it fails
             try:
                 _check_item(name)
