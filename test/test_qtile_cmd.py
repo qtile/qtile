@@ -94,4 +94,3 @@ def test_qtile_cmd(qtile):
     assert _qtile_cmd(['group', 'a'], 'info', [])
     assert _qtile_cmd(['screen', 0], 'info', [])
     assert _qtile_cmd(['bar', 'bottom'], 'info', [])
-
