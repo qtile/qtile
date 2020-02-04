@@ -27,7 +27,7 @@ that interacts with qtile objects, it should favor using the command graph
 clients to do this interaction.
 """
 
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional
 
 from libqtile.command_graph import (
     CommandGraphCall,
@@ -211,7 +211,7 @@ class InteractiveCommandClient:
         next_node = self._current_node.navigate(name, None)
         return self.__class__(self._command, current_node=next_node)
 
-    def __getitem__(self, name: Union[str, int]) -> "InteractiveCommandClient":
+    def __getitem__(self, name: str) -> "InteractiveCommandClient":
         """Get the selected element of the currently selected object
 
         From the current command graph object, select the instance with the
@@ -219,7 +219,7 @@ class InteractiveCommandClient:
 
         Parameters
         ----------
-        name : Union[str, int]
+        name : str
             The name, or index if it's of int type, of the item to resolve
 
         Return
@@ -234,10 +234,10 @@ class InteractiveCommandClient:
 
         if not isinstance(self._current_node, CommandGraphObject):
             raise SelectError("Unable to make selection on current node",
-                              str(name), self._current_node.selectors)
+                              name, self._current_node.selectors)
 
         if self._current_node.selector is not None:
-            raise SelectError("Selection already made", str(name),
+            raise SelectError("Selection already made", name,
                               self._current_node.selectors)
 
         def _check_item(item):
@@ -257,5 +257,5 @@ class InteractiveCommandClient:
         else:
             _check_item(name)
 
-        next_node = self._current_node.parent.navigate(self._current_node.object_type, str(name))
+        next_node = self._current_node.parent.navigate(self._current_node.object_type, name)
         return self.__class__(self._command, current_node=next_node)
