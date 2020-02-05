@@ -357,15 +357,15 @@ class _Group(CommandObject):
         """Returns a dictionary of info for this group"""
         return self.info()
 
-    def cmd_toscreen(self, screen=None):
+    def cmd_toscreen(self, screen=None, toggle=True):
         """Pull a group to a specified screen.
-
-        If this group is already on the screen, then toggle group.
 
         Parameters
         ==========
         screen :
             Screen offset. If not specified, we assume the current screen.
+        toggle :
+            If this group is already on the screen, then toggle group.
 
         Examples
         ========
@@ -383,7 +383,8 @@ class _Group(CommandObject):
             screen = self.qtile.screens[screen]
 
         if screen.group == self:
-            screen.toggle_group(self)
+            if toggle:
+                screen.toggle_group(self)
         else:
             screen.set_group(self)
 
