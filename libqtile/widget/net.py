@@ -30,7 +30,7 @@ class Net(base.ThreadedPollText):
     """Displays interface down and up speed"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ('display_format', '{interface}: {down} \u2193\u2191 {up}',
+        ('format', '{interface}: {down} \u2193\u2191 {up}',
          'Display format of down-/upload speed of given interfaces'),
         ('interface', None, 'List of interfaces or single NIC as string to monitor, \
             None to displays all active NICs combined'),
@@ -109,7 +109,7 @@ class Net(base.ThreadedPollText):
                 down, up = self._format(down, down_letter, up, up_letter)
                 self.stats[intf] = new_stats[intf]
                 ret_stat.append(
-                    self.display_format.format(
+                    self.format.format(
                         **{
                             'interface': intf,
                             'down': down + down_letter,
