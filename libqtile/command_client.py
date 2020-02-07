@@ -240,16 +240,6 @@ class InteractiveCommandClient:
             raise SelectError("Selection already made", str(name),
                               self._current_node.selectors)
 
-        def _normalize_item(object_type: str, item: Union[str, int]) -> Union[str, int]:
-            "Normalize the item according to Qtile._items()."
-            if object_type in ["group", "widget", "bar"]:
-                return str(item)
-            elif object_type in ["layout", "window", "screen"]:
-                return int(item)
-            else:
-                return item
-
-        name = _normalize_item(self._current_node.object_type, name)
         # check the selection is valid in the server-side qtile manager
         if not self._command.has_item(self._current_node.parent,
                                       self._current_node.object_type, name):
@@ -258,3 +248,14 @@ class InteractiveCommandClient:
 
         next_node = self._current_node.parent.navigate(self._current_node.object_type, name)
         return self.__class__(self._command, current_node=next_node)
+
+    def normalize_item(self, item: Union[str, int]) -> Union[str, int]:
+        "Normalize the item according to Qtile._items()."
+        object_type = self._current_node.object_type \
+            if isinstance(self._current_node, CommandGraphObject) else None
+        if object_type in ["group", "widget", "bar"]:
+            return str(item)
+        elif object_type in ["layout", "window", "screen"]:
+            return int(item)
+        else:
+            return item
