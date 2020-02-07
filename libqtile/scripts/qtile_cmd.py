@@ -113,7 +113,7 @@ def get_object(client: InteractiveCommandClient, argv: List[str]) -> Interactive
     for arg in argv:
         try:
             # check if it is an item
-            client = client[arg]
+            client = client[client.normalize_item(arg)]
             continue
         except KeyError:
             pass

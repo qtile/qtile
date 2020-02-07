@@ -162,15 +162,6 @@ server_config = pytest.mark.parametrize("qtile", [ServerConfig], indirect=True)
 
 
 @server_config
-def test_item_types(qtile):
-    qtile.test_window("one")
-    wid = qtile.c.window.info()["id"]
-    assert type(wid) == int
-    assert qtile.c.window[wid].info()["id"] == wid
-    assert qtile.c.window[str(wid)].info()["id"] == wid
-
-
-@server_config
 def test_cmd_commands(qtile):
     assert qtile.c.commands()
     assert qtile.c.layout.commands()
