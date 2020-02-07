@@ -4,6 +4,7 @@ HERE=$(dirname $(readlink -f $0))
 SCREEN_SIZE=${SCREEN_SIZE:-800x600}
 XDISPLAY=${XDISPLAY:-:1}
 LOG_LEVEL=${LOG_LEVEL:-INFO}
+APP=${APP:-xterm}
 if [[ -z $PYTHON ]]; then
     PYTHON=python
 fi
@@ -14,7 +15,7 @@ XEPHYR_PID=$!
   sleep 1
   env DISPLAY=${XDISPLAY} ${PYTHON} "${HERE}"/../bin/qtile -l ${LOG_LEVEL} $@ &
   QTILE_PID=$!
-  env DISPLAY=${XDISPLAY} xterm &
+  env DISPLAY=${XDISPLAY} ${APP} &
   wait $QTILE_PID
   kill $XEPHYR_PID
 )
