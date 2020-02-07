@@ -24,7 +24,7 @@ The interface to execute commands on the command graph
 
 import traceback
 from abc import abstractmethod, ABCMeta
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 
 from libqtile import ipc
 from libqtile.command_graph import CommandGraphCall, CommandGraphNode, SelectorType
@@ -90,7 +90,7 @@ class CommandInterface(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def has_item(self, node: CommandGraphNode, object_type: str, item: str) -> bool:
+    def has_item(self, node: CommandGraphNode, object_type: str, item: Union[str, int]) -> bool:
         """Check if the given item exists
 
         Parameters
@@ -166,7 +166,7 @@ class QtileCommandInterface(CommandInterface):
         cmd = obj.command(command)
         return cmd is not None
 
-    def has_item(self, node: CommandGraphNode, object_type: str, item: str) -> bool:
+    def has_item(self, node: CommandGraphNode, object_type: str, item: Union[str, int]) -> bool:
         """Check if the given item exists
 
         Parameters
@@ -175,8 +175,8 @@ class QtileCommandInterface(CommandInterface):
             The node to check for items
         object_type : str
             The type of object to check for items.
-        command : str
-            The name of the item to check for
+        item : str
+            The name or index of the item to check for
 
         Returns
         -------
@@ -249,7 +249,7 @@ class IPCCommandInterface(CommandInterface):
         commands = self.execute(cmd_call, (), {})
         return command in commands
 
-    def has_item(self, node: CommandGraphNode, object_type: str, item: str) -> bool:
+    def has_item(self, node: CommandGraphNode, object_type: str, item: Union[str, int]) -> bool:
         """Check if the given item exists
 
         Resolves the available commands for the given command node of the given

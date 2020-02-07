@@ -25,7 +25,7 @@ The objects in the command graph and command resolution on the objects
 import abc
 import inspect
 import traceback
-from typing import Callable, List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple, Union
 
 from libqtile.command_graph import SelectorType
 from libqtile.log_utils import logger
@@ -111,7 +111,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def _select(self, name: str, sel: Optional[str]) -> "CommandObject":
+    def _select(self, name: str, sel: Optional[Union[str, int]]) -> "CommandObject":
         """Select the given item of the given item class
 
         This method is called with the following guarantees:
