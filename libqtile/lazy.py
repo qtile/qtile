@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Dict, List, Optional, Tuple  # noqa: F401
+from typing import Dict, List, Optional, Tuple, Union  # noqa: F401
 
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_interface import CommandInterface
@@ -96,7 +96,7 @@ class LazyCommandObject(CommandInterface):
         """Lazily resolve the given command"""
         return True
 
-    def has_item(self, node: CommandGraphNode, object_type: str, item: str) -> bool:
+    def has_item(self, node: CommandGraphNode, object_type: str, item: Union[str, int]) -> bool:
         """Lazily resolve the given item"""
         return True
 

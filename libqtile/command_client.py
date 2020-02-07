@@ -27,7 +27,7 @@ that interacts with qtile objects, it should favor using the command graph
 clients to do this interaction.
 """
 
-from typing import Any, List, Optional
+from typing import Any, List, Optional, Union
 
 from libqtile.command_graph import (
     CommandGraphCall,
@@ -211,7 +211,7 @@ class InteractiveCommandClient:
         next_node = self._current_node.navigate(name, None)
         return self.__class__(self._command, current_node=next_node)
 
-    def __getitem__(self, name: str) -> "InteractiveCommandClient":
+    def __getitem__(self, name: Union[str, int]) -> "InteractiveCommandClient":
         """Get the selected element of the currently selected object
 
         From the current command graph object, select the instance with the
@@ -234,10 +234,10 @@ class InteractiveCommandClient:
 
         if not isinstance(self._current_node, CommandGraphObject):
             raise SelectError("Unable to make selection on current node",
-                              name, self._current_node.selectors)
+                              str(name), self._current_node.selectors)
 
         if self._current_node.selector is not None:
-            raise SelectError("Selection already made", name,
+            raise SelectError("Selection already made", str(name),
                               self._current_node.selectors)
 
         def _normalize_item(object_type: str, item: Union[str, int]) -> Union[str, int]:
