@@ -240,22 +240,21 @@ class InteractiveCommandClient:
             raise SelectError("Selection already made", name,
                               self._current_node.selectors)
 
-        def _check_item(item):
-            """check that the selection is valid in the server-side qtile manager"""
-            if not self._command.has_item(self._current_node.parent,
-                                          self._current_node.object_type, item):
-                raise SelectError("Item not available in object",
-                                  str(item), self._current_node.selectors)
+        def _normalize_item(object_type: str, item: Union[str, int]) -> Union[str, int]:
+            "Normalize the item according to Qtile._items()."
+            if object_type in ["group", "widget", "bar"]:
+                return str(item)
+            elif object_type in ["layout", "window", "screen"]:
+                return int(item)
+            else:
+                return item
 
-        if isinstance(name, str) and name.isdigit():
-            # Check the item as is, and check its int version once more if it fails
-            try:
-                _check_item(name)
-            except SelectError:
-                name = int(name)
-                _check_item(name)
-        else:
-            _check_item(name)
+        name = _normalize_item(self._current_node.object_type, name)
+        # check the selection is valid in the server-side qtile manager
+        if not self._command.has_item(self._current_node.parent,
+                                      self._current_node.object_type, name):
+            raise SelectError("Item not available in object",
+                              str(name), self._current_node.selectors)
 
         next_node = self._current_node.parent.navigate(self._current_node.object_type, name)
         return self.__class__(self._command, current_node=next_node)
