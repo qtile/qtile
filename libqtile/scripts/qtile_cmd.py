@@ -184,10 +184,14 @@ def main() -> None:
                         help='Set arguments supplied to function.')
     parser.add_argument('--info', '-i', action='store_true',
                         help='With both --object and --function args prints documentation for function.')
+    parser.add_argument(
+        "--socket", "-s",
+        help='Path of the Qtile IPC socket.'
+    )
     args = parser.parse_args()
 
     if args.obj_spec:
-        sock_file = find_sockfile()
+        sock_file = args.socket or find_sockfile()
         ipc_client = Client(sock_file)
         cmd_object = IPCCommandInterface(ipc_client)
         cmd_client = InteractiveCommandClient(cmd_object)

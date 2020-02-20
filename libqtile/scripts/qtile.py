@@ -78,7 +78,7 @@ def make_qtile():
         action="store",
         default=None,
         dest="socket",
-        help='Path to Qtile comms socket.'
+        help='Path of the Qtile IPC socket.'
     )
     parser.add_argument(
         "-n", "--no-spawn",

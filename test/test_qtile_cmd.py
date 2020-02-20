@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
+import subprocess
 import pytest
 
 import libqtile.confreader
@@ -25,10 +27,6 @@ import libqtile.config
 import libqtile.layout
 import libqtile.bar
 import libqtile.widget
-from libqtile.ipc import Client
-from libqtile.command_client import InteractiveCommandClient
-from libqtile.command_interface import IPCCommandInterface
-from libqtile.scripts.qtile_cmd import get_object, run_function
 
 
 class ServerConfig:
@@ -70,27 +68,44 @@ class ServerConfig:
 server_config = pytest.mark.parametrize("qtile", [ServerConfig], indirect=True)
 
 
+def run_qtile_cmd(args):
+    cmd = os.path.join(os.path.dirname(__file__), '..', 'bin', 'qtile-cmd')
+    argv = [cmd]
+    argv.extend(args.split())
+    pipe = subprocess.Popen(argv, stdout=subprocess.PIPE)
+    output, _ = pipe.communicate()
+    return eval(output.decode())  # as returned by pprint.pprint
+
+
 @server_config
 def test_qtile_cmd(qtile):
-
-    def _qtile_cmd(obj_spec, function, args):
-        "Imitate the behavior of qtile_cmd"
-        ipc_client = Client(qtile.sockfile)
-        cmd_object = IPCCommandInterface(ipc_client)
-        cmd_client = InteractiveCommandClient(cmd_object)
-
-        obj = get_object(cmd_client, obj_spec)
-        return run_function(obj, function, args)
 
     qtile.test_window("foo")
     wid = qtile.c.window.info()["id"]
 
-    # e.g. qtile-cmd -o screen -f info
-    for obj in ["window", "layout", "group", "screen"]:
-        assert _qtile_cmd([obj], 'info', [])
+    for obj in ["window", "group", "screen"]:
+        assert run_qtile_cmd('-s {} -o {} -f info'.format(qtile.sockfile, obj))
 
-    # e.g. qtile-cmd -o group a -f info
-    assert _qtile_cmd(['window', wid], 'info', [])
-    assert _qtile_cmd(['group', 'a'], 'info', [])
-    assert _qtile_cmd(['screen', 0], 'info', [])
-    assert _qtile_cmd(['bar', 'bottom'], 'info', [])
+    layout = run_qtile_cmd('-s {} -o layout -f info'.format(qtile.sockfile, obj))
+    assert layout['name'] == 'stack'
+    assert layout['group'] == 'a'
+
+    window = run_qtile_cmd('-s {} -o window {} -f info'.format(qtile.sockfile, wid))
+    assert window['id'] == wid
+    assert window['name'] == 'foo'
+    assert window['group'] == 'a'
+
+    group = run_qtile_cmd('-s {} -o group {} -f info'.format(qtile.sockfile, 'a'))
+    assert group['name'] == 'a'
+    assert group['screen'] == 0
+    assert group['layouts'] == ['stack', 'stack', 'stack']
+    assert group['focus'] == 'foo'
+
+    assert run_qtile_cmd('-s {} -o screen {} -f info'.format(qtile.sockfile, 0)) == \
+        {'height': 600, 'index': 0, 'width': 800, 'x': 0, 'y': 0}
+
+    bar = run_qtile_cmd('-s {} -o bar {} -f info'.format(qtile.sockfile, 'bottom'))
+    assert bar['height'] == 20
+    assert bar['width'] == 800
+    assert bar['size'] == 20
+    assert bar['position'] == 'bottom'
