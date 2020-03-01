@@ -21,7 +21,6 @@ import array
 import contextlib
 import inspect
 import traceback
-import time
 import warnings
 from xcffib.xproto import EventMask, StackMode, SetMode
 import xcffib.xproto
@@ -558,7 +557,7 @@ class _Window(CommandObject):
                     # > window manager (as described in section 4.2.8) with
                     # > WM_TAKE_FOCUS in its data[0] field and a valid timestamp
                     # > (i.e. not *CurrentTime* ) in its data[1] field.
-                    int(time.time()),
+                    self.qtile.core.get_valid_timestamp(),
                     0,
                     0,
                     0
