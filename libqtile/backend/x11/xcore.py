@@ -84,6 +84,8 @@ class XCore(base.Core):
             "_NET_SUPPORTED", [self.conn.atoms[x] for x in xcbq.SUPPORTED_ATOMS]
         )
 
+        self._last_event_timestamp = xcffib.CurrentTime
+
         wmname = "qtile"
         self._supporting_wm_check_window = self.conn.create_window(-1, -1, 1, 1)
         self._supporting_wm_check_window.set_property("_NET_WM_NAME", wmname)
@@ -273,6 +275,9 @@ class XCore(base.Core):
         """
         assert self.qtile is not None
 
+        if hasattr(event, "time") and event.time > 0:
+            self._last_event_timestamp = event.time
+
         handler = "handle_{event_type}".format(event_type=event_type)
         # Certain events expose the affected window id as an "event" attribute.
         event_events = [
@@ -300,6 +305,12 @@ class XCore(base.Core):
         if not chain:
             logger.info("Unhandled event: {event_type}".format(event_type=event_type))
         return chain
+
+    def get_valid_timestamp(self):
+        """Get a valid timestamp, i.e. not CurrentTime, for X server.
+
+        It may be used in cases where CurrentTime is unacceptable for X server."""
+        return self._last_event_timestamp
 
     @property
     def display_name(self) -> str:
