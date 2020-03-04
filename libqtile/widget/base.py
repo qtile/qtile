@@ -545,7 +545,7 @@ class ThreadPoolText(_TextBox):
 # these two classes below look SUSPICIOUSLY similar
 
 
-class PaddingMixin:
+class PaddingMixin(configurable.Configurable):
     """Mixin that provides padding(_x|_y|)
 
     To use it, subclass and add this to __init__:
@@ -563,7 +563,7 @@ class PaddingMixin:
     padding_y = configurable.ExtraFallback('padding_y', 'padding')
 
 
-class MarginMixin:
+class MarginMixin(configurable.Configurable):
     """Mixin that provides margin(_x|_y|)
 
     To use it, subclass and add this to __init__:
