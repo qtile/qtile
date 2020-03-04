@@ -27,7 +27,6 @@ import sys
 from typing import List  # noqa: F401
 
 from libqtile.backend import base
-from . import config
 
 
 class ConfigError(Exception):
@@ -61,8 +60,6 @@ class Config:
         Only attributes found in Config.settings_keys will be added to object.
         config attribute precedence is 1.) **settings 2.) self 3.) default_config
         """
-        self.keys = []  # type: List[config.Key]
-        self.mouse = []  # type: List[config.Mouse]
 
         from .resources import default_config
         default = vars(default_config)
@@ -104,13 +101,16 @@ class Config:
         """
         valid_keys = kore.get_keys()
         valid_mods = kore.get_modifiers()
-        for k in self.keys:
+        # we explicitly do not want to set self.keys and self.mouse above,
+        # because they are dynamically resolved from the default_config. so we
+        # need to ignore the errors here about missing attributes.
+        for k in self.keys:  # type: ignore
             if k.key not in valid_keys:
                 raise ConfigError("No such key: %s" % k.key)
             for m in k.modifiers:
                 if m not in valid_mods:
                     raise ConfigError("No such modifier: %s" % m)
-        for ms in self.mouse:
+        for ms in self.mouse:  # type: ignore
             for m in ms.modifiers:
                 if m not in valid_mods:
                     raise ConfigError("No such modifier: %s" % m)
