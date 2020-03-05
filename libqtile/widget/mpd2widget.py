@@ -246,12 +246,12 @@ class Mpd2(base.ThreadPoolText):
         context = obj or self
         try:
             getattr(context, attr_name)()
-        except (AttributeError, TypeError) as E:
-            if isinstance(E, AttributeError):
+        except (AttributeError, TypeError) as e:
+            if isinstance(e, AttributeError):
                 err = err1.format(Class=type(context).__name__, attr=attr_name)
             else:
                 err = err2.format(Class=type(context).__name__, attr=attr_name)
-            logger.exception(err + " {}".format(E.args[0]))
+            logger.exception(err + " {}".format(e.args[0]))
 
     def toggle(self):
         """toggle play/pause."""
