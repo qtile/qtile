@@ -27,7 +27,14 @@ from math import log
 
 
 class Net(base.ThreadedPollText):
-    """Displays interface down and up speed"""
+    """
+    Displays interface down and up speed
+
+
+    Widget requirements: psutil_.
+
+    .. _psutil: https://pypi.org/project/psutil/
+    """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ('format', '{interface}: {down} \u2193\u2191 {up}',

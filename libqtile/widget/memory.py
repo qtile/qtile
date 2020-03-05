@@ -38,7 +38,12 @@ class Memory(base.ThreadedPollText):
     SwapTotal: Returns total amount of swap
     SwapFree: Returns amount of swap free
     SwapUsed: Returns amount of swap in use
-"""
+
+
+    Widget requirements: psutil_.
+
+    .. _psutil: https://pypi.org/project/psutil/
+    """
 
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
