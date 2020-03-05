@@ -33,6 +33,10 @@ class IdleRPG(GenPollUrl):
 
         # display idlerpg stats for the player 'pants' on freenode's #idlerpg
         widget.IdleRPG(url="http://xethron.lolhosting.net/xml.php?player=pants")
+
+    Widget requirements: xmltodict_.
+
+    .. _xmltodict: https://pypi.org/project/xmltodict/
     """
 
     orientations = base.ORIENTATION_HORIZONTAL
