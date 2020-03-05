@@ -58,6 +58,10 @@ class ImapWidget(base.ThreadedPollText):
     look at the mailbox at HomeMail/fred, the mbox setting would be:
     ``mbox="~/Maildir/HomeMail/fred"``.  Note the nested sets of quotes! Labels
     can be whatever you choose, of course.
+
+    Widget requirements: keyring_.
+
+    .. _keyring: https://pypi.org/project/keyring/
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
