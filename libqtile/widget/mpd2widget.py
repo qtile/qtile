@@ -3,7 +3,7 @@ A widget for Music Player Daemon (MPD) based on python-mpd2.
 
 This widget exists since python-mpd library is no longer supported.
 """
-from . import base
+from libqtile.widget import base
 from libqtile.log_utils import logger
 
 from socket import error as socket_error
@@ -48,7 +48,7 @@ def option(char):
     return _convert
 
 
-# Changes to formatter will still use this dicitionary.
+# Changes to formatter will still use this dicitionary as a fallback
 prepare_status = {
     'repeat': option('r'),
     'random': option('z'),
@@ -57,13 +57,19 @@ prepare_status = {
     'updating_db': option('U')
 }
 
+# dictionary for new formatting method.  This is now default.
+status_dict = {
+    'repeat': 'r',
+    'random': 'z',
+    'single': '1',
+    'consume': 'c',
+    'updating_db': 'U'
+}
 
 default_idle_message = "MPD IDLE"
 
-
 default_idle_format = '{play_status} {idle_message}' +\
                  '[{repeat}{random}{single}{consume}{updating_db}]'
-
 
 default_format = '{play_status} {artist}/{title} ' +\
                  '[{repeat}{random}{single}{consume}{updating_db}]'
@@ -158,7 +164,7 @@ class Mpd2(base.ThreadPoolText):
         ('format_fns', format_fns, 'Dictionary of format methods'),
         ('command', default_cmd,
             'command to be executed by mapped mouse button.'),
-        ('prepare_status', prepare_status,
+        ('prepare_status', status_dict,
             'characters to show the status of MPD'),
         ('status_format', default_format, 'format for displayed song info.'),
         ('idle_format', default_idle_format,
@@ -195,12 +201,12 @@ class Mpd2(base.ThreadPoolText):
         """Attempt connection to mpd server."""
         if not self.connected:
             try:
-                self.client.ping()
+                self.client.ping()  # pylint: disable=E1101
             except(socket_error, ConnectionError):
                 try:
                     self.client.connect(self.host, self.port)
                     if self.password:
-                        self.client.password(self.password)
+                        self.client.password(self.password)  # pylint: disable=E1101
                     self.connected = True
                 except(socket_error, ConnectionError, CommandError):
                     self.connected = False
@@ -221,8 +227,8 @@ class Mpd2(base.ThreadPoolText):
     def update_status(self):
         """get updated info from mpd server and call format."""
         self.client.command_list_ok_begin()
-        self.client.status()
-        self.client.currentsong()
+        self.client.status()  # pylint: disable=E1101
+        self.client.currentsong()  # pylint: disable=E1101
         status, current_song = self.client.command_list_end()
 
         return self.formatter(status, current_song)
@@ -255,13 +261,13 @@ class Mpd2(base.ThreadPoolText):
 
     def toggle(self):
         """toggle play/pause."""
-        status = self.client.status()
+        status = self.client.status()  # pylint: disable=E1101
         play_status = status['state']
 
         if play_status == 'play':
-            self.client.pause()
+            self.client.pause()  # pylint: disable=E1101
         else:
-            self.client.play()
+            self.client.play()  # pylint: disable=E1101
 
     def formatter(self, status, current_song):
         """format song info."""
@@ -344,7 +350,7 @@ class Mpd2(base.ThreadPoolText):
         super().finalize()
 
         try:
-            self.client.close()
+            self.client.close()  # pylint: disable=E1101
             self.client.disconnect()
         except ConnectionError:
             pass
