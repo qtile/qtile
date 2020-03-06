@@ -318,8 +318,8 @@ class Qtile(CommandObject):
             )
             self.screens.append(scr)
 
-    def paint_screen(self, screen, image_path, option=None):
-        self.core.painter.paint(screen, image_path, option)
+    def paint_screen(self, screen, image_path, mode=None):
+        self.core.painter.paint(screen, image_path, mode)
 
     def process_configure(self, width: int, height: int) -> None:
         screen = self.current_screen
