@@ -96,6 +96,7 @@ class Qtile(CommandObject):
 
         self.numlock_mask, self.valid_mask = self.core.masks
 
+        self.core.wmname = getattr(self.config, "wmname", "qtile")
         if config.main:
             config.main(self)
 

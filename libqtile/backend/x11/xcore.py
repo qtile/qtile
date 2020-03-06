@@ -87,9 +87,9 @@ class XCore(base.Core):
 
         self._last_event_timestamp = xcffib.CurrentTime
 
-        wmname = "qtile"
+        self._wmname = "qtile"
         self._supporting_wm_check_window = self.conn.create_window(-1, -1, 1, 1)
-        self._supporting_wm_check_window.set_property("_NET_WM_NAME", wmname)
+        self._supporting_wm_check_window.set_property("_NET_WM_NAME", self._wmname)
         self._supporting_wm_check_window.set_property(
             "_NET_SUPPORTING_WM_CHECK", self._supporting_wm_check_window.wid
         )
@@ -152,6 +152,15 @@ class XCore(base.Core):
             )
 
         return [(x, y, w, h) for (x, y), (w, h) in xywh.items()]
+
+    @property
+    def wmname(self):
+        return self._wmname
+
+    @wmname.setter
+    def wmname(self, wmname):
+        self._wmname = wmname
+        self._supporting_wm_check_window.set_property("_NET_WM_NAME", wmname)
 
     @property
     def masks(self) -> Tuple[int, int]:
