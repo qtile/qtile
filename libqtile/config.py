@@ -31,7 +31,6 @@ import warnings
 from . import configurable
 from . import hook
 from . import utils
-from .log_utils import logger
 from libqtile.command_object import CommandObject
 
 
@@ -219,13 +218,12 @@ class Screen(CommandObject):
     and ``height`` aren't specified usually unless you are using 'fake
     screens'.
 
-    The screen's wallpaper can be set by passing in a dict as the ``wallpaper``
-    kwarg, which must contain a 'path' key to specify the image to use, and can
-    optionally contain an 'option' key containing the string 'fill' or
-    'stretch' to specify how to fit the image onto the screen. 'fill' will
-    centre the image on the screen and fill it without warping it, 'stretch'
-    will warp the image to fit all of it into the screen. By default the image
-    will be placed at the screens origin and retain its own dimensions.
+    The ``wallpaper`` parameter, if given, should be a path to an image file. How this
+    image is painted to the screen is specified by the ``wallpaper_mode`` parameter. By
+    default, the image will be placed at the screens origin and retain its own
+    dimensions. If the mode is 'fill', the image will be centred on the screen and
+    resized to fill it. If the mode is 'stretch', the image is stretched to fit all of
+    it into the screen.
 
     Parameters
     ==========
@@ -239,8 +237,8 @@ class Screen(CommandObject):
     width : int or None
     height : int or None
     """
-    def __init__(self, top=None, bottom=None, left=None, right=None,
-                 wallpaper=None, x=None, y=None, width=None, height=None):
+    def __init__(self, top=None, bottom=None, left=None, right=None, wallpaper=None,
+                 wallpaper_mode=None, x=None, y=None, width=None, height=None):
         self.group = None
         self.previous_group = None
 
@@ -249,6 +247,7 @@ class Screen(CommandObject):
         self.left = left
         self.right = right
         self.wallpaper = wallpaper
+        self.wallpaper_mode = wallpaper_mode
         self.qtile = None
         self.index = None
         # x position of upper left corner can be > 0
@@ -269,13 +268,10 @@ class Screen(CommandObject):
         for i in self.gaps:
             i._configure(qtile, self)
         if self.wallpaper:
-            try:
-                self.paint(**self.wallpaper)
-            except TypeError:
-                logger.exception("Error in wallpaper configuration.")
+            self.paint(self.wallpaper, self.wallpaper_mode)
 
-    def paint(self, path, option=None):
-        self.qtile.paint_screen(self, path, option)
+    def paint(self, path, mode=None):
+        self.qtile.paint_screen(self, path, mode)
 
     @property
     def gaps(self):

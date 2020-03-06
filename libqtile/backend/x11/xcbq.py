@@ -986,7 +986,7 @@ class Painter:
         self.conn.core.SetCloseDownMode(xcffib.xproto.CloseDown.RetainPermanent)
         self.atoms = AtomCache(self)
 
-    def paint(self, screen, image_path, option=None):
+    def paint(self, screen, image_path, mode=None):
         try:
             with open(image_path, 'rb') as f:
                 image, _ = cairocffi.pixbuf.decode_to_image_surface(f.read())
@@ -1027,7 +1027,7 @@ class Painter:
         context = cairocffi.Context(surface)
         with context:
             context.translate(screen.x, screen.y)
-            if option == 'fill':
+            if mode == 'fill':
                 context.rectangle(0, 0, screen.width, screen.height)
                 context.clip()
                 image_w = image.get_width()
@@ -1041,7 +1041,7 @@ class Painter:
                         - (image_w * height_ratio - screen.width) // 2, 0
                     )
                     context.scale(height_ratio)
-            elif option == 'stretch':
+            elif mode == 'stretch':
                 context.scale(
                     sx=screen.width / image.get_width(),
                     sy=screen.height / image.get_height(),
