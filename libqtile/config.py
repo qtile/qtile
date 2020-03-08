@@ -25,6 +25,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os.path
 import sys
 import warnings
 
@@ -268,6 +269,7 @@ class Screen(CommandObject):
         for i in self.gaps:
             i._configure(qtile, self)
         if self.wallpaper:
+            self.wallpaper = os.path.expanduser(self.wallpaper)
             self.paint(self.wallpaper, self.wallpaper_mode)
 
     def paint(self, path, mode=None):
