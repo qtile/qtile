@@ -560,6 +560,9 @@ class _ClientList:
         except IndexError:
             return None
 
+    def __setitem__(self, i, value):
+        self.clients[i] = value
+
     def __iter__(self):
         return self.clients.__iter__()
 
