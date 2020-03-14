@@ -35,7 +35,7 @@ class _WinStack(_ClientList):
 
     def __str__(self):
         return "_WinStack: %s, %s" % (
-            self.current, str([client.name for client in self.clients])
+            self.cw, str([client.name for client in self.clients])
         )
 
     def info(self):
