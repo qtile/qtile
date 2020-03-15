@@ -68,7 +68,6 @@ def get_cffi_modules():
     cffi_modules = [
         'libqtile/pango_ffi_build.py:pango_ffi',
         'libqtile/backend/x11/xcursors_ffi_build.py:xcursors_ffi',
-        'libqtile/core/xcursors_ffi_build.py:xcursors_ffi',
     ]
     try:
         from cffi.error import PkgConfigError
