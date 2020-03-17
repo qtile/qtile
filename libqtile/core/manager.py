@@ -1128,6 +1128,14 @@ class Qtile(CommandObject):
             pid2 = os.fork()
             if pid2 == 0:
                 os.close(w)
+                try:
+                    # if qtile was installed in a virutal env, we don't
+                    # necessarily want to propagate that to children
+                    # applications, since it may change e.g. the behavior
+                    # of shells that spawn python applications
+                    del os.environ['VIRTUAL_ENV']
+                except KeyError:
+                    pass
 
                 # Open /dev/null as stdin, stdout, stderr
                 try:
