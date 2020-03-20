@@ -32,6 +32,7 @@ import traceback
 import time
 import warnings
 from typing import Optional
+from concurrent.futures import CancelledError
 
 import xcffib
 import xcffib.xinerama
@@ -236,7 +237,10 @@ class Qtile(CommandObject):
             await self.finalize()
 
     def loop(self):
-        self._eventloop.run_until_complete(self.async_loop())
+        try:
+            self._eventloop.run_until_complete(self.async_loop())
+        except CancelledError:
+            pass
 
         self._eventloop.close()
         self._eventloop = None
@@ -283,6 +287,9 @@ class Qtile(CommandObject):
             self.core.remove_listener(self._eventloop)
         except:  # noqa: E722
             logger.exception('exception during finalize')
+
+        for task in asyncio.all_tasks(self._eventloop):
+            task.cancel()
 
     def _process_fake_screens(self):
         """
