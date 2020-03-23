@@ -203,7 +203,7 @@ class Mpd(base.ThreadPoolText):
                 self.handle_button_press(x, y, button)
                 self.update(self.update_status())
             except (CommandError, BrokenPipeError, ProtocolError) as e:
-                logger.warning(f'mpd error: {e}')
+                logger.warning('mpd error: {0}'.format(e))
                 if is_retry:
                     self.update(self.no_connection)
                 else:
