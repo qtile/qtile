@@ -153,6 +153,7 @@ class Bar(Gap, configurable.Configurable):
     defaults = [
         ("background", "#000000", "Background colour."),
         ("opacity", 1, "Bar window opacity."),
+        ("margin", 0, "Space around bar as int or list of ints [N E S W]."),
     ]
 
     def __init__(self, widgets, size, **config):
@@ -166,6 +167,28 @@ class Bar(Gap, configurable.Configurable):
 
     def _configure(self, qtile, screen):
         Gap._configure(self, qtile, screen)
+
+        if self.margin:
+            if isinstance(self.margin, int):
+                self.margin = [self.margin] * 4
+            if self.horizontal:
+                self.x += self.margin[3]
+                self.width -= self.margin[1] + self.margin[3]
+                self.length = self.width
+                self.size += self.margin[0] + self.margin[2]
+                if self.screen.top is self:
+                    self.y += self.margin[0]
+                else:
+                    self.y -= self.margin[2]
+            else:
+                self.y += self.margin[0]
+                self.height -= self.margin[0] + self.margin[2]
+                self.length = self.height
+                self.size += self.margin[1] + self.margin[3]
+                if self.screen.left is self:
+                    self.x += self.margin[3]
+                else:
+                    self.x -= self.margin[1]
 
         stretches = 0
         for w in self.widgets:
