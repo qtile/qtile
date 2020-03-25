@@ -719,6 +719,9 @@ class MonadTall(_SimpleLayoutBase):
         self.clients.current_client = self._get_closest(x, y, candidates)
         self.group.focus(self.clients.current_client)
 
+    cmd_shuffle_left = cmd_swap_left
+    cmd_shuffle_right = cmd_swap_right
+
 
 class MonadWide(MonadTall):
     """Emulate the behavior of XMonad's horizontal tiling scheme.
@@ -968,9 +971,6 @@ class MonadWide(MonadTall):
         candidates = [c for c in self.clients if c.info()['y'] < y]
         target = self._get_closest(x, y, candidates)
         self.cmd_swap(win, target)
-
-    cmd_shuffle_left = cmd_swap_left
-    cmd_shuffle_right = cmd_swap_right
 
     def cmd_swap_main(self):
         """Swap current window to main pane"""
