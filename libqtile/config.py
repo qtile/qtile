@@ -63,7 +63,7 @@ class Key:
 
 
 class Mouse:
-    def __init__(self, modifiers, button, *commands, **kwargs):
+    def __init__(self, modifiers: List[str], button: str, *commands, **kwargs):
         self.focus = kwargs.pop("focus", "before")
         self.modifiers = modifiers
         self.button = button
