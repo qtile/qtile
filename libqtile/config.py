@@ -28,6 +28,7 @@
 import os.path
 import sys
 import warnings
+from typing import List
 
 from . import configurable
 from . import hook
@@ -51,7 +52,7 @@ class Key:
     kwargs:
         A dictionary containing "desc", allowing a description to be added
     """
-    def __init__(self, modifiers, key, *commands, **kwargs):
+    def __init__(self, modifiers: List[str], key: str, *commands, **kwargs):
         self.modifiers = modifiers
         self.key = key
         self.commands = commands
