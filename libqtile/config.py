@@ -96,9 +96,6 @@ class Click(Mouse):
     It focuses clicked window by default.  If you want to prevent it, pass
     `focus=None` as an argument
     """
-    def __init__(self, modifiers, button, *commands, **kwargs):
-        super().__init__(modifiers, button, *commands, **kwargs)
-
     def __repr__(self):
         return "<Click (%s, %s)>" % (self.modifiers, self.button)
 
