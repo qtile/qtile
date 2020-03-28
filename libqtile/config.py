@@ -49,14 +49,14 @@ class Key:
     commands:
         A list of lazy command objects generated with the lazy.lazy helper.
         If multiple Call objects are specified, they are run in sequence.
-    kwargs:
-        A dictionary containing "desc", allowing a description to be added
+    desc:
+        description to be added to the key binding
     """
-    def __init__(self, modifiers: List[str], key: str, *commands, **kwargs):
+    def __init__(self, modifiers: List[str], key: str, *commands, desc: str = ""):
         self.modifiers = modifiers
         self.key = key
         self.commands = commands
-        self.desc = kwargs.get("desc", "")
+        self.desc = desc
 
     def __repr__(self):
         return "<Key (%s, %s)>" % (self.modifiers, self.key)
