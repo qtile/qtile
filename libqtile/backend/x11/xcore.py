@@ -86,8 +86,6 @@ class XCore(base.Core):
             "_NET_SUPPORTED", [self.conn.atoms[x] for x in xcbq.SUPPORTED_ATOMS]
         )
 
-        self._last_event_timestamp = xcffib.CurrentTime
-
         self._wmname = "qtile"
         self._supporting_wm_check_window = self.conn.create_window(-1, -1, 1, 1)
         self._supporting_wm_check_window.set_property("_NET_WM_NAME", self._wmname)
@@ -293,9 +291,6 @@ class XCore(base.Core):
         """
         assert self.qtile is not None
 
-        if hasattr(event, "time") and event.time > 0:
-            self._last_event_timestamp = event.time
-
         handler = "handle_{event_type}".format(event_type=event_type)
         # Certain events expose the affected window id as an "event" attribute.
         event_events = [
@@ -328,7 +323,35 @@ class XCore(base.Core):
         """Get a valid timestamp, i.e. not CurrentTime, for X server.
 
         It may be used in cases where CurrentTime is unacceptable for X server."""
-        return self._last_event_timestamp
+        # do a zero length append to get the time offset as suggested by ICCCM
+        # https://tronche.com/gui/x/icccm/sec-2.html#s-2.1
+        # we do this on a separate connection since we can't receive events
+        # without returning control to the event loop, which we can't do
+        # because the event loop (via some window event) wants to know the
+        # current time.
+        conn = None
+        try:
+            conn = xcbq.Connection(self._display_name)
+            conn.default_screen.root.set_attribute(
+                eventmask=xcffib.xproto.EventMask.PropertyChange
+            )
+            conn.conn.core.ChangePropertyChecked(
+                xcffib.xproto.PropMode.Append,
+                self._root.wid,
+                self.conn.atoms["WM_CLASS"],
+                self.conn.atoms["STRING"],
+                8,
+                0,
+                "",
+            ).check()
+            while True:
+                event = conn.conn.wait_for_event()
+                if event.__class__ != xcffib.xproto.PropertyNotifyEvent:
+                    continue
+                return event.time
+        finally:
+            if conn is not None:
+                conn.finalize()
 
     @property
     def display_name(self) -> str:
