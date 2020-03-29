@@ -231,6 +231,9 @@ class XCore(base.Core):
                 if not event:
                     break
 
+                if hasattr(event, "time") and event.time > 0:
+                    self._last_event_timestamp = event.time
+
                 if event.__class__ in _IGNORED_EVENTS:
                     continue
 
@@ -288,9 +291,6 @@ class XCore(base.Core):
         reached.
         """
         assert self.qtile is not None
-
-        if hasattr(event, "time") and event.time > 0:
-            self._last_event_timestamp = event.time
 
         handler = "handle_{event_type}".format(event_type=event_type)
         # Certain events expose the affected window id as an "event" attribute.
