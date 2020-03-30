@@ -92,11 +92,19 @@ class _Widget(CommandObject, configurable.Configurable):
 
     The offsetx and offsety attributes are set by the Bar after all widgets
     have been configured.
+
+    Callback functions can be assigned to button presses by passing a dict to the
+    'callbacks' kwarg. For example: {'Button1': func} will execute func when the widget
+    receives a button 1 press. The Qtile instance of passed as the only argument to the
+    callback functions.
     """
     orientations = ORIENTATION_BOTH
     offsetx = None
     offsety = None
-    defaults = [("background", None, "Widget background color")]  # type: List[Tuple[str, Any, str]]
+    defaults = [
+        ("background", None, "Widget background color"),
+        ("mouse_callbacks", {}, "Dict of mouse button press callback functions."),
+    ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, length, **config):
         """
@@ -204,7 +212,9 @@ class _Widget(CommandObject, configurable.Configurable):
         )
 
     def button_press(self, x, y, button):
-        pass
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
 
     def button_release(self, x, y, button):
         pass
@@ -445,6 +455,7 @@ class InLoopPollText(_TextBox):
 
     def button_press(self, x, y, button):
         self.tick()
+        _TextBox.button_press(self, x, y, button)
 
     def poll(self):
         return 'N/A'
