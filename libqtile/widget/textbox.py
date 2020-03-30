@@ -30,14 +30,7 @@ from . import base
 
 
 class TextBox(base._TextBox):
-    """A flexible textbox that can be updated from bound keys, scripts, and qshell
-
-    Callback functions can be assigned to button presses by passing a dict to the
-    'callbacks' kwarg. For example: {'Button1': func} will execute func when the widget
-    receives a button 1 press. The Qtile instance of passed as the only argument to the
-    callback functions.
-
-    """
+    """A flexible textbox that can be updated from bound keys, scripts, and qshell."""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("font", "sans", "Text font"),
@@ -45,7 +38,6 @@ class TextBox(base._TextBox):
         ("fontshadow", None, "font shadow color, default is None(no shadow)"),
         ("padding", None, "Padding left and right. Calculated if None."),
         ("foreground", "#ffffff", "Foreground colour."),
-        ("mouse_callbacks", {}, "Dict of mouse button press callback functions."),
     ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
@@ -54,11 +46,6 @@ class TextBox(base._TextBox):
     def update(self, text):
         self.text = text
         self.bar.draw()
-
-    def button_press(self, x, y, button):
-        name = 'Button{0}'.format(button)
-        if name in self.mouse_callbacks:
-            self.mouse_callbacks[name](self.qtile)
 
     def cmd_update(self, text):
         """Update the text in a TextBox widget"""
