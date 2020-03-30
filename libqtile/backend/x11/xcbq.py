@@ -614,6 +614,19 @@ class Window:
         if r:
             return r[0]
 
+    def get_current_time(self):
+        # do a zero length append to get the time offset as suggested by ICCCM
+        # https://tronche.com/gui/x/icccm/sec-2.html#s-2.1
+        return self.conn.conn.core.ChangePropertyChecked(
+            xcffib.xproto.PropMode.Append,
+            self.wid,
+            self.conn.atoms["WM_CLASS"],
+            self.conn.atoms["STRING"],
+            8,
+            0,
+            "",
+        ).reply().time
+
     def configure(self, **kwargs):
         """
         Arguments can be: x, y, width, height, border, sibling, stackmode
