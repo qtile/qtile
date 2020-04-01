@@ -155,9 +155,9 @@ class GroupBox(_GroupBase):
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("selected", "000000", "Selected group font colour"),
-        ("active", "FFFFFF", "Active group font colour"),
-        ("inactive", "404040", "Inactive group font colour"),
+        ("block_highlight_text_color", "000000", "Selected group font colour"),
+        ("active_text_color", "FFFFFF", "Active group font colour"),
+        ("inactive_text_color", "404040", "Inactive group font colour"),
         (
             "highlight_method",
             "border",
@@ -326,16 +326,16 @@ class GroupBox(_GroupBase):
             if self.group_has_urgent(g) and self.urgent_alert_method == "text":
                 text_color = self.urgent_text
             elif g.windows:
-                text_color = self.active
+                text_color = self.active_text_color
             else:
-                text_color = self.inactive
+                text_color = self.inactive_text_color
 
             if g.screen:
                 if self.highlight_method == 'text':
                     border = self.bar.background
                     text_color = self.this_current_screen_border
                 else:
-                    text_color = self.selected
+                    text_color = self.block_highlight_text_color
                     if self.bar.screen.group.name == g.name:
                         if self.qtile.current_screen == self.bar.screen:
                             border = self.this_current_screen_border
