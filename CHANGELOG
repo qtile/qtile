@@ -1,3 +1,7 @@
+qtile x.y.z, released 2020-xx-xx:
+    !!! Config breakage !!!
+        - removed the mpd widget, which depended on python-mpd.
+
 qtile 0.14.2, released 2019-06-19:
     * bugfixes
         - previous release still exhibited same issues with package data,
