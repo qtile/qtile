@@ -29,7 +29,11 @@ from libqtile.log_utils import init_log, logger
 from libqtile import confreader
 from libqtile.backend.x11 import xcore
 
-locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())  # type: ignore
+try:
+    locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())  # type: ignore
+except locale.Error:
+    pass
+
 
 try:
     import pkg_resources
