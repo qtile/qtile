@@ -9,7 +9,7 @@ from libqtile.log_utils import logger
 from socket import error as socket_error
 from mpd import MPDClient, ConnectionError, CommandError
 from collections import defaultdict
-from cgi import escape
+from html import escape
 
 # Mouse Interaction
 # TODO: Volume inc/dec support
