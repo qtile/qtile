@@ -17,7 +17,8 @@ Qtile looks in the following places for a configuration file, in order:
 * It reads the module ``libqtile.resources.default_config``, included by
   default with every Qtile installation.
 
-Qtile will try to create the configuration file as a copy of the default config, if it doesn't exist yet.
+Qtile will try to create the configuration file as a copy of the default
+config, if it doesn't exist yet.
 
 Default Configuration
 =====================
@@ -205,10 +206,15 @@ create your own ``~/.xsession``. There are several examples of user defined
 ``xsession`` s in the `qtile-examples
 <https://github.com/qtile/qtile-examples>`_ repository.
 
+If there is no display manager such as SDDM, LightDM or other and there is need
+to start Qtile directly from `~/.xinitrc` suggestion would be to do that
+through a custom sessions cript to save running applications.
+
 Finally, if you're a gnome user, you can start integrate Qtile into Gnome's
-session manager and use gnome as usual:
+session manager and use gnome as usual.
 
 .. toctree::
     :maxdepth: 1
 
+    without-dm
     gnome
