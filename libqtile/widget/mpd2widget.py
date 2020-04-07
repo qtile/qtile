@@ -3,6 +3,8 @@ A widget for Music Player Daemon (MPD) based on python-mpd2.
 
 This widget exists since python-mpd library is no longer supported.
 """
+
+from libqtile import utils
 from libqtile.widget import base
 from libqtile.log_utils import logger
 
@@ -178,6 +180,7 @@ class Mpd2(base.ThreadPoolText):
         ('timeout', 30, 'MPDClient timeout'),
         ('idletimeout', 5, 'MPDClient idle command timeout'),
         ('no_connection', 'No connection', 'Text when mpd is disconnected'),
+        ('color_progress', None, 'Text color to indicate track progress.'),
         ('space', '-', 'Space keeper')
     ]
 
@@ -190,6 +193,8 @@ class Mpd2(base.ThreadPoolText):
         self.client = MPDClient()
         self.client.timeout = self.timeout
         self.client.idletimeout = self.idletimeout
+        if self.color_progress:
+            self.color_progress = utils.hex(self.color_progress)
 
         # remap self.keys as mouse_buttons for new button_press functionality.
         # so we don't break existing configurations.
@@ -307,7 +312,8 @@ class Mpd2(base.ThreadPoolText):
         # so we construct it from 'fulltime' and 'elapsed'.
         # 'elapsed' is always less than or equal to 'fulltime', if it exists.
         # Remaining should default to '00:00' if either or both are missing.
-        if 'remaining' in self.status_format:
+        # These values are also used for coloring text by progress, if wanted.
+        if 'remaining' in self.status_format or self.color_progress:
             total = float(song_info['fulltime'])\
                 if song_info['fulltime'] != default else 0.0
             elapsed = float(song_info['elapsed'])\
@@ -334,15 +340,18 @@ class Mpd2(base.ThreadPoolText):
         if not isinstance(fmt, str):
             fmt = str(fmt)
 
-        # not sure if the try/except is needed anymore...
-        try:
-            formatted = fmt.format(**song_info)
-            return formatted
-        except KeyError as e:
-            logger.exception(
-                "mpd client did not return status: {}".format(e.args[0])
+        formatted = fmt.format(**song_info)
+
+        if self.color_progress and status['state'] != 'stop':
+            try:
+                progress = int(len(formatted) * elapsed / total)
+                formatted = '<span color="{0}">{1}</span>{2}'.format(
+                    self.color_progress, formatted[:progress], formatted[progress:],
                 )
-            return "ERROR"
+            except (ZeroDivisionError, ValueError):
+                pass
+
+        return formatted
 
     def prepare_formatting(self, status):
         """old way of preparing status formatting."""
