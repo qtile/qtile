@@ -1,0 +1,5 @@
+#!/bin/sh
+
+while true; do
+    qtile >/dev/null 2>&1
+done
