@@ -62,3 +62,4 @@ And to start Qtile itself `.xinitrc` should be fixed:
 
 
     exec qtile-session
+
