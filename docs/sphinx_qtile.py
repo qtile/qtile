@@ -28,6 +28,7 @@ from sphinx.util.nodes import nested_parse_with_titles
 import functools
 import inspect
 import builtins
+import pprint
 
 
 qtile_module_template = Template('''
@@ -57,7 +58,7 @@ qtile_class_template = Template('''
           - description
         {% for key, default, description in defaults %}
         * - ``{{ key }}``
-          - ``{{ default|pprint }}``
+          - ``{{ default }}``
           - {{ description }}
         {% endfor %}
     {% endif %}
@@ -100,6 +101,10 @@ class SimpleDirectiveMixin:
         return node.children
 
 
+def sphinx_escape(s):
+    return pprint.pformat(s, compact=False, width=10000)
+
+
 class QtileClass(SimpleDirectiveMixin, Directive):
     optional_arguments = 2
 
@@ -124,7 +129,7 @@ class QtileClass(SimpleDirectiveMixin, Directive):
             })
         # turn the dict into a list of ("value", "default", "description") tuples
         defaults = [
-            (k, v[0], v[1]) for k, v in sorted(defaults.items())
+            (k, sphinx_escape(v[0]), sphinx_escape(v[1])) for k, v in sorted(defaults.items())
         ]
 
         context = {
