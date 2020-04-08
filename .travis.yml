@@ -1,8 +1,8 @@
-sudo: false
+os: linux
 dist: xenial
 language: python
 
-matrix:
+jobs:
     include:
         - python: 3.5
           env: TOXENV=py35
