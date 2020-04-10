@@ -60,5 +60,5 @@ And to start Qtile itself `.xinitrc` should be fixed:
     #   source ~/.xsession
 
     while true; do
-        exec qtile
+        qtile
     done
