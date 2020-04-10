@@ -23,6 +23,9 @@ On ArchLinux, the X11 requirements are installed with:
 .. code-block:: bash
 
     sudo pacman -S xorg-xrandr xorg-xcalc xorg-xeyes xorg-xclock
+    
+To build the documentation, you will also need to install `graphviz <https://www.graphviz.org/download/>`_.
+On ArchLinux, you can install it with ``sudo pacman -S graphviz``.
 
 
 Building cffi module
@@ -37,6 +40,26 @@ by calling:
 .. code-block:: bash
 
     ./scripts/ffibuild
+
+Setting up the environment
+==========================
+
+In the root of the project, run ``./dev.sh``.
+It will create a virtualenv called ``venv``.
+
+Activate this virtualenv with ``. venv/bin/activate``.
+Deactivate it with the ``deactivate`` command.
+
+Building the documentation
+==========================
+
+Activate your virtualenv, and install the ``graphviz`` Python package:
+
+    pip install graphviz
+    
+Go into the ``docs/`` directory and run ``make html``.
+
+Check the result by opening ``_build/html/index.html`` in your browser.
 
 Development and testing
 =======================
