@@ -28,8 +28,7 @@ Qtile session
 
 Starting Qtile directly will not preserve running applications on Qtile
 restarts by `qtile-cmd -o cmd -f restart` or other ways in Qtile itself. This
-can be solved by starting simple script loop. In this example `qtile-session`
-script is used.
+can be solved by starting simple script loop.
 
 Autostart X session
 -------------------
@@ -60,5 +59,6 @@ And to start Qtile itself `.xinitrc` should be fixed:
     #
     #   source ~/.xsession
 
-
-    exec qtile-session
+    while true; do
+        exec qtile
+    done
