@@ -105,8 +105,9 @@ class XCore(base.Core):
         self._selection_window.set_attribute(
             eventmask=xcffib.xproto.EventMask.PropertyChange
         )
-        self.conn.xfixes.select_selection_input(self._selection_window, "PRIMARY")
-        self.conn.xfixes.select_selection_input(self._selection_window, "CLIPBOARD")
+        if hasattr(self.conn, "xfixes"):
+            self.conn.xfixes.select_selection_input(self._selection_window, "PRIMARY") # type: ignore
+            self.conn.xfixes.select_selection_input(self._selection_window, "CLIPBOARD") # type: ignore
 
         primary_atom = self.conn.atoms["PRIMARY"]
         reply = self.conn.conn.core.GetSelectionOwner(primary_atom).reply()
