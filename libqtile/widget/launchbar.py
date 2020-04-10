@@ -177,6 +177,10 @@ class LaunchBar(base._Widget):
 
     def button_press(self, x, y, button):
         """ Launch the associated command to the clicked icon. """
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
+            return
         if button == 1:
             icon = self.get_icon_in_position(x, y)
             if icon is not None:

@@ -52,6 +52,10 @@ class KeyboardLayout(base.InLoopPollText):
         self.add_defaults(KeyboardLayout.defaults)
 
     def button_press(self, x, y, button):
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
+            return
         if button == 1:
             self.next_keyboard()
 

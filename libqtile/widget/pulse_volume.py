@@ -218,6 +218,10 @@ class PulseVolume(Volume):
         self.change_volume(volume)
 
     def button_press(self, x, y, button):
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
+            return
         if self.default_sink and button == BUTTON_DOWN:
             self.decrease_volume(self.step)
         elif self.default_sink and button == BUTTON_UP:

@@ -89,6 +89,10 @@ class Wallpaper(base._TextBox):
             self.qtile.paint_screen(self.bar.screen, cur_image, self.option)
 
     def button_press(self, x, y, button):
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
+            return
         if button == 1:
             if self.random_selection:
                 self.index = random.randint(0, len(self.images) - 1)

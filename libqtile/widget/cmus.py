@@ -123,6 +123,10 @@ class Cmus(base.ThreadPoolText):
             - skip forward in playlist on scroll up;
             - skip backward in playlist on scroll down.
         """
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
+            return
         if button == 1:
             if self.status in ('playing', 'paused'):
                 subprocess.Popen(['cmus-remote', '-u'])

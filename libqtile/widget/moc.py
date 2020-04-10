@@ -121,6 +121,10 @@ class Moc(base.ThreadPoolText):
             - skip forward in playlist on scroll up;
             - skip backward in playlist on scroll down.
         """
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
+            return
         if button == 1:
             if self.status in ('PLAY', 'PAUSE'):
                 subprocess.Popen(['mocp', '-G'])

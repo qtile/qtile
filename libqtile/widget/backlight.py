@@ -96,6 +96,10 @@ class Backlight(base.InLoopPollText):
         self.call_process(shlex.split(self.change_command.format(value)))
 
     def button_press(self, x, y, button):
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
+            return
         if self.future and not self.future.done():
             return
         info = self._get_info()

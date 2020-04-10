@@ -240,6 +240,11 @@ class Mpd2(base.ThreadPoolText):
     # TODO: Resolve timeouts on the method call.
     def button_press(self, x, y, button):
         """handle click event on widget."""
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
+            return
+
         self.try_reconnect()
         m_name = self.mouse_buttons[button]
         self_has_attr = hasattr(self, m_name)

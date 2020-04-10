@@ -97,6 +97,9 @@ class CheckUpdates(base.ThreadedPollText):
 
     def button_press(self, x, y, button):
         # type: (int, int, int) -> None
-        base.ThreadedPollText.button_press(self, x, y, button)
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
+            return
         if button == 1 and self.execute is not None:
             Popen(self.execute, shell=True)

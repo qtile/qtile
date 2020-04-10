@@ -363,6 +363,10 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         return None
 
     def button_press(self, x, y, button):
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
+            return
         window = None
         current_win = self.bar.screen.group.current_window
 

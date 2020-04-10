@@ -58,6 +58,10 @@ class CurrentLayout(base._TextBox):
         hook.subscribe.layout_change(hook_response)
 
     def button_press(self, x, y, button):
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
+            return
         if button == 1:
             self.qtile.cmd_next_layout()
         elif button == 2:

@@ -98,6 +98,11 @@ class Volume(base._TextBox):
         return cmd
 
     def button_press(self, x, y, button):
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
+            return
+
         if button == BUTTON_DOWN:
             if self.volume_down_command is not None:
                 subprocess.call(self.volume_down_command, shell=True)

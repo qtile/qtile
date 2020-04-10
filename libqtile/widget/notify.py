@@ -114,6 +114,10 @@ class Notify(base._TextBox):
             self.display()
 
     def button_press(self, x, y, button):
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
+            return
         if button == 1:
             self.clear()
         elif button == 4:

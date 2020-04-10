@@ -51,6 +51,10 @@ class WindowTabs(base._TextBox):
         hook.subscribe.float_change(self.update)
 
     def button_press(self, x, y, button):
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
+            return
         self.bar.screen.group.cmd_next_window()
 
     def update(self, *args):

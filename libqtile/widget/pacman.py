@@ -50,6 +50,9 @@ class Pacman(base.ThreadedPollText):
         return str(len(pacman.splitlines()))
 
     def button_press(self, x, y, button):
-        base.ThreadedPollText.button_press(self, x, y, button)
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
+            return
         if button == 1 and self.execute is not None:
             subprocess.Popen([self.execute], shell=True)

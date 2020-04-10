@@ -175,9 +175,11 @@ class Pomodoro(base.ThreadPoolText):
         RIGHT BUTTON: toggle activity
 
         """
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
+            return
         if button == 1:
             self._toggle_break()
         elif button == 3:
             self._toggle_active()
-
-        base.ThreadedPollText.button_press(self, x, y, button)
