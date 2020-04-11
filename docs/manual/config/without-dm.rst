@@ -3,8 +3,8 @@ Running from systemd
 ====================
 
 This case will cover automatic login to Qtile after booting the system without
-using display manager. It logins in virtual console and init X by running
-through session.
+using display manager directly from **systemd**. It logins in virtual console
+and init X by running through session.
 
 Automatic login to virtual console
 ----------------------------------
