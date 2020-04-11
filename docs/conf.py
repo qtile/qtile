@@ -27,6 +27,7 @@ MOCK_MODULES = [
     'libqtile._ffi_pango',
     'libqtile.backend.x11._ffi_xcursors',
     'cairocffi',
+    'cairocffi.xcb',
     'cairocffi.pixbuf',
     'cffi',
     'dateutil',
