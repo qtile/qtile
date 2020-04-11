@@ -57,7 +57,9 @@ Activate your virtualenv, and install the ``graphviz`` Python package:
 
     pip install graphviz
     
-Go into the ``docs/`` directory and run ``make html``.
+Go into the ``docs/`` directory and run ``pip install -r requirements.txt``.
+
+Build the documentation with ``make html``.
 
 Check the result by opening ``_build/html/index.html`` in your browser.
 
