@@ -52,6 +52,10 @@ from xdg.IconTheme import getIconPath
 class LaunchBar(base._Widget):
     """A widget that display icons to launch the associated command
 
+    Widget requirements: pyxdg_.
+
+    .. _pyxdg: https://freedesktop.org/wiki/Software/pyxdg/
+
     Parameters
     ==========
     progs :
