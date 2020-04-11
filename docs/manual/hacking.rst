@@ -182,6 +182,41 @@ demonstrate the bug, and paste the contents of this file into the bug report.
 
 Note that xtrace may be named ``x11trace`` on some platforms, for example, on Fedora.
 
+Debugging in PyCharm
+====================
+
+Make sure to have all the requirements installed and your development environment setup.
+
+PyCharm should automatically detect the ``venv`` virtualenv when opening the project.
+If you are using another viirtualenv, just instruct PyCharm to use it
+in ``Settings -> Project: qtile -> Project interpreter``.
+
+In the project tree, on the left, right-click on the ``libqtile`` folder,
+and click on ``Mark Directory as -> Sources Root``.
+
+Next, add a Configuration using a Python template with these fields:
+
+- Script path: ``bin/qtile``, or the absolute path to it
+- Parameters: ``-c libqtile/resources/default_config.py``,
+  or nothing if you want to use your own config file in ``~/.config/qtile/config.py``
+- Environment variables: ``PYTHONUNBUFFERED=1;DISPLAY=:1``
+- Working directory: the root of the project
+- Add contents root to PYTHONPATH: yes
+- Add source root to PYTHONPATH: yes
+
+Then, in a terminal, run:
+
+    Xephyr +extension RANDR -screen 1920x1040 :1 -ac &
+    
+Note that we used the same display, ``:1``, in both the terminal command
+and the PyCharm configuration environment variables.
+Feel free to change the screen size to fit your own screen.
+
+Finally, place your breakpoints in the code and click on ``Debug``!
+
+Once you finished debugging, you can close the Xephyr window with ``kill PID``
+(use the ``jobs`` builtin to get its PID).
+
 Resources
 =========
 
