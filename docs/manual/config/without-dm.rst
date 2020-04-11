@@ -10,10 +10,8 @@ Automatic login to virtual console
 ----------------------------------
 
 To get login into virtual console as an example edit `getty` service by running
-`systemctl edit getty@tty1` and add instructions:
-
-::
-    :caption: /etc/systemd/system/getty@tty1.service.d/override.conf
+`systemctl edit getty@tty1` and add instructions to
+`/etc/systemd/system/getty@tty1.service.d/override.conf`::
 
     [Service]
     ExecStart=
