@@ -54,14 +54,16 @@ class Config:
         "wmname",
     ]
 
-    def __init__(self, **settings):
+    def __init__(self, file_path=None, **settings):
         """Create a Config() object from settings
 
         Only attributes found in Config.settings_keys will be added to object.
         config attribute precedence is 1.) **settings 2.) self 3.) default_config
         """
-
         from .resources import default_config
+
+        self.file_path = file_path
+
         default = vars(default_config)
         for key in self.settings_keys:
             try:
@@ -91,7 +93,7 @@ class Config:
             logger.exception('Could not import config file %r', path)
             tb = traceback.format_exc()
             raise ConfigError(tb)
-        cnf = cls(**vars(config))
+        cnf = cls(file_path=path, **vars(config))
         cnf.validate(kore)
         return cnf
 
