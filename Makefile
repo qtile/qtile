@@ -36,5 +36,5 @@ clean:
 # used in the 'install' target.
 .PHONY: man
 man:
-	python setup.py build_sphinx -b man
+	python3 setup.py build_sphinx -b man
 	cp build/sphinx/man/* resources/

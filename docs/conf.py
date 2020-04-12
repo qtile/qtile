@@ -89,14 +89,14 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Qtile'
-copyright = u'2008-2019, Aldo Cortesi and contributers'
+copyright = u'2008-2020, Aldo Cortesi and contributers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '0.14.2'
+version = '0.15.0'
 # The full version, including alpha/beta/rc tags.
 release = version
 
