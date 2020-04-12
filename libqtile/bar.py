@@ -222,7 +222,10 @@ class Bar(Gap, configurable.Configurable):
         qtile.windows_map[self.window.window.wid] = self.window
         self.window.unhide()
 
-        for i in self.widgets:
+        for idx, i in enumerate(self.widgets):
+            if i.configured:
+                i = i.create_mirror()
+                self.widgets[idx] = i
             qtile.register_widget(i)
             i._configure(qtile, self)
         self._resize(self.length, self.widgets)
