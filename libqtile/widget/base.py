@@ -283,6 +283,9 @@ class _Widget(CommandObject, configurable.Configurable):
         except:  # noqa: E722
             logger.exception('got exception from widget timer')
 
+    def create_mirror(self):
+        return Mirror(self)
+
 
 UNSPECIFIED = bar.Obj("UNSPECIFIED")
 
@@ -590,6 +593,40 @@ class MarginMixin(configurable.Configurable):
 
     margin_x = configurable.ExtraFallback('margin_x', 'margin')
     margin_y = configurable.ExtraFallback('margin_y', 'margin')
+
+
+class Mirror(_Widget):
+    def __init__(self, reflection):
+        _Widget.__init__(self, reflection.length)
+        reflection.draw = self.hook(reflection.draw)
+        self.reflects = reflection
+        self._length = 0
+
+    @property
+    def length(self):
+        return self.reflects.length
+
+    @length.setter
+    def length(self, value):
+        self._length = value
+
+    def hook(self, draw):
+        def _():
+            draw()
+            self.draw()
+        return _
+
+    def draw(self):
+        if self._length != self.reflects.length:
+            self._length = self.length
+            self.bar.draw()
+        else:
+            self.drawer.ctx.set_source_surface(self.reflects.drawer.surface)
+            self.drawer.ctx.paint()
+            self.drawer.draw(offsetx=self.offset, width=self.width)
+
+    def button_press(self, x, y, button):
+        self.reflects.button_press(x, y, button)
 
 
 def deprecated(msg):

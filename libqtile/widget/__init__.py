@@ -25,6 +25,7 @@ from .import_error import make_error
 
 # only directly import widgets that do not have any third party dependencies
 # other than those required by qtile, otherwise use the same import function
+from .base import Mirror  # noqa: F401
 from .clock import Clock  # noqa: F401
 from .currentlayout import CurrentLayout, CurrentLayoutIcon  # noqa: F401
 from .groupbox import AGroupBox, GroupBox  # noqa: F401
