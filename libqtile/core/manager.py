@@ -21,6 +21,7 @@
 from libqtile.dgroups import DGroups
 import asyncio
 import functools
+import importlib
 import io
 import logging
 import os
@@ -50,12 +51,75 @@ from ..extension.base import _Extension
 from .. import hook
 from .. import utils
 from .. import window
-from libqtile.backend.x11 import xcbq
-from libqtile import command_interface
-from libqtile.command_client import InteractiveCommandClient
-from libqtile.command_interface import QtileCommandInterface, IPCCommandServer
-from libqtile.command_object import CommandObject, CommandError, CommandException
-from libqtile.lazy import lazy
+from ..backend.x11 import xcbq
+from .. import command_interface
+from ..command_client import InteractiveCommandClient
+from ..command_interface import QtileCommandInterface, IPCCommandServer
+from ..command_object import CommandObject, CommandError, CommandException
+from ..lazy import lazy
+from ..confreader import Config, ConfigError
+from ..xkeysyms import keysyms
+from ..backend.x11.xcore import XCore
+
+
+def find_similar_keys(key):
+    # Python package 'regex' is required,
+    # but the import error will be caught in validate_config
+    import regex
+
+    regexp = regex.compile(
+        r"({}{{e<{}}})".format(key, len(key)), regex.IGNORECASE
+    )
+    similar_keys = []
+    for qtile_key in keysyms.keys():
+        if regexp.match(qtile_key):
+            similar_keys.append(qtile_key)
+    if not similar_keys:
+        return "No key similar to '{}' could be found in libqtile.xkeysyms.keysyms :/".format(
+            key
+        )
+    if len(similar_keys) == 1:
+        return "Maybe you meant '{}'?".format(similar_keys[0])
+    return "Maybe you meant '{}', or '{}'?".format(
+        "', '".join(similar_keys[:-1]), similar_keys[-1]
+    )
+
+
+def validate_config(file_path):
+    output = [
+        "The configuration file '",
+        file_path,
+        "' generated the following error:\n\n",
+    ]
+
+    # Get the module name from the file path
+    name = os.path.splitext(os.path.basename(file_path))[0]
+
+    try:
+        # Mandatory: we must reload the module (the config file was modified)
+        importlib.reload(sys.modules[name])
+        Config.from_file(XCore(), file_path)
+
+    except ConfigError as error:
+        output.append(str(error))
+
+        # Handle the case when a key is erroneous
+        if str(error).startswith("No such key"):
+            output.append("\n\n")
+            key = str(error).replace("No such key: ", "")
+            try:
+                similar_keys = find_similar_keys(key)
+            except ImportError:
+                output.append("Install 'regex' if you want to see valid similar keys")
+            else:
+                output.append(similar_keys)
+
+        raise ConfigError("".join(output))
+
+    except Exception as error:
+        # Handle SyntaxError and the likes
+        output.append("{}: {}".format(sys.exc_info()[0].__name__, str(error)))
+        raise ConfigError("".join(output))
 
 
 def _import_module(module_name, dir_path):
@@ -1085,6 +1149,24 @@ class Qtile(CommandObject):
 
     def cmd_restart(self):
         """Restart qtile"""
+        try:
+            validate_config(self.config.file_path)
+        except ConfigError as error:
+            try:
+                # Send a notification
+                import gi
+                gi.require_version("Notify", "0.7")
+                from gi.repository import Notify
+                Notify.init("Qtile")
+                notifier = Notify.Notification.new("Configuration error", str(error))
+                notifier.set_timeout(10000)
+                notifier.show()
+            except ImportError:
+                pass
+
+            # There was an error, return early and don't restart
+            return
+
         argv = [sys.executable] + sys.argv
         if '--no-spawn' not in argv:
             argv.append('--no-spawn')
