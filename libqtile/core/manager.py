@@ -21,6 +21,7 @@
 from libqtile.dgroups import DGroups
 import asyncio
 import functools
+import importlib
 import io
 import logging
 import os
@@ -55,6 +56,55 @@ from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_interface import QtileCommandInterface, IPCCommandServer
 from libqtile.command_object import CommandObject, CommandError, CommandException
 from libqtile.lazy import lazy
+from libqtile.confreader import Config, ConfigError
+from libqtile.backend.x11.xcore import XCore
+
+
+def validate_config(file_path):
+    """
+    Validate a configuration file.
+
+    This function reloads and imports the given configuration file.
+    It re-raises a ConfigError with a detailed message for any caught exception.
+    """
+    output = [
+        "The configuration file '",
+        file_path,
+        "' generated the following error:\n\n",
+    ]
+
+    # Get the module name from the file path
+    name = os.path.splitext(os.path.basename(file_path))[0]
+
+    try:
+        # Mandatory: we must reload the module (the config file was modified)
+        importlib.reload(sys.modules[name])
+    except KeyError:
+        # The module name didn't match the file path basename. Abort.
+        return
+
+    try:
+        Config.from_file(XCore(), file_path)
+
+    except ConfigError as error:
+        output.append(str(error))
+        raise ConfigError("".join(output))
+
+    except Exception as error:
+        # Handle SyntaxError and the likes
+        output.append("{}: {}".format(sys.exc_info()[0].__name__, str(error)))
+        raise ConfigError("".join(output))
+
+
+def send_notification(title, message, timeout=10000):
+    """Send a notification."""
+    import gi
+    gi.require_version("Notify", "0.7")
+    from gi.repository import Notify
+    Notify.init("Qtile")
+    notifier = Notify.Notification.new(title, message)
+    notifier.set_timeout(timeout)
+    notifier.show()
 
 
 def _import_module(module_name, dir_path):
@@ -1078,6 +1128,19 @@ class Qtile(CommandObject):
 
     def cmd_restart(self):
         """Restart qtile"""
+        try:
+            validate_config(self.config.file_path)
+        except ConfigError as error:
+            logger.error("Preventing restart because of a configuration error: " + str(error))
+            try:
+                send_notification("Configuration error", str(error))
+            except Exception as exception:
+                # Catch everything to prevent a crash
+                logger.error("Error while sending a notification: " + str(exception))
+
+            # There was an error, return early and don't restart
+            return
+
         argv = [sys.executable] + sys.argv
         if '--no-spawn' not in argv:
             argv.append('--no-spawn')
