@@ -1164,6 +1164,8 @@ class Qtile(CommandObject):
             except ImportError:
                 pass
 
+            logger.error("Preventing restart because of a configuration error: " + str(error))
+
             # There was an error, return early and don't restart
             return
 
