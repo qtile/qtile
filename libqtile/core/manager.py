@@ -63,8 +63,8 @@ from ..backend.x11.xcore import XCore
 
 
 def find_similar_keys(key):
-    # Python package 'regex' is required,
-    # but the import error will be caught in validate_config
+    # Python package 'regex' is optional.
+    # The import error will be caught in validate_config
     import regex
 
     regexp = regex.compile(
