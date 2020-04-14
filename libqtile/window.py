@@ -1009,12 +1009,14 @@ class Window(_Window):
             if self.hints['base_width'] and self.hints['width_inc']:
                 width_adjustment = (width - self.hints['base_width']) % self.hints['width_inc']
                 width -= width_adjustment
-                self.x += int(width_adjustment / 2)
+                if new_float_state == FULLSCREEN:
+                    self.x += int(width_adjustment / 2)
 
             if self.hints['base_height'] and self.hints['height_inc']:
                 height_adjustment = (height - self.hints['base_height']) % self.hints['height_inc']
                 height -= height_adjustment
-                self.y += int(height_adjustment / 2)
+                if new_float_state == FULLSCREEN:
+                    self.y += int(height_adjustment / 2)
 
             self.place(
                 self.x, self.y,
