@@ -41,6 +41,7 @@ MOCK_MODULES = [
     'trollius',
     'xcffib',
     'xcffib.randr',
+    'xcffib.render',
     'xcffib.xfixes',
     'xcffib.xinerama',
     'xcffib.xproto',
