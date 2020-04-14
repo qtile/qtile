@@ -21,13 +21,6 @@ To get login into virtual console as an example edit `getty` service by running
 
 Check more for other `examples <https://wiki.archlinux.org/index.php/Getty#Automatic_login_to_virtual_console>`_.
 
-Qtile session
--------------
-
-Starting Qtile directly will not preserve running applications on Qtile
-restarts by `qtile-cmd -o cmd -f restart` or other ways in Qtile itself. This
-can be solved by starting simple script loop.
-
 Autostart X session
 -------------------
 
@@ -57,6 +50,4 @@ And to start Qtile itself `.xinitrc` should be fixed:
     #
     #   source ~/.xsession
 
-    while true; do
-        qtile
-    done
+    exec qtile
