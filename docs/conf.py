@@ -96,7 +96,7 @@ copyright = u'2008-2020, Aldo Cortesi and contributers'
 # built documents.
 #
 # The short X.Y version.
-version = '0.15.0'
+version = '0.15.1'
 # The full version, including alpha/beta/rc tags.
 release = version
 
