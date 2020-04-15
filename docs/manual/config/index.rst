@@ -208,7 +208,7 @@ create your own ``~/.xsession``. There are several examples of user defined
 
 If there is no display manager such as SDDM, LightDM or other and there is need
 to start Qtile directly from `~/.xinitrc` suggestion would be to do that
-through a custom sessions cript to save running applications.
+through a custom sessions script to save running applications.
 
 Finally, if you're a gnome user, you can start integrate Qtile into Gnome's
 session manager and use gnome as usual.
