@@ -51,15 +51,14 @@ from ..extension.base import _Extension
 from .. import hook
 from .. import utils
 from .. import window
-from ..backend.x11 import xcbq
-from .. import command_interface
-from ..command_client import InteractiveCommandClient
-from ..command_interface import QtileCommandInterface, IPCCommandServer
-from ..command_object import CommandObject, CommandError, CommandException
-from ..lazy import lazy
-from ..confreader import Config, ConfigError
-from ..xkeysyms import keysyms
-from ..backend.x11.xcore import XCore
+from libqtile.backend.x11 import xcbq
+from libqtile import command_interface
+from libqtile.command_client import InteractiveCommandClient
+from libqtile.command_interface import QtileCommandInterface, IPCCommandServer
+from libqtile.command_object import CommandObject, CommandError, CommandException
+from libqtile.lazy import lazy
+from libqtile.confreader import Config, ConfigError
+from libqtile.backend.x11.xcore import XCore
 
 
 def validate_config(file_path):
