@@ -10,10 +10,8 @@ Automatic login to virtual console
 ----------------------------------
 
 To get login into virtual console as an example edit `getty` service by running
-`systemctl edit getty@tty1` and add instructions:
-
-::
-    :caption: /etc/systemd/system/getty@tty1.service.d/override.conf
+`systemctl edit getty@tty1` and add instructions to
+`/etc/systemd/system/getty@tty1.service.d/override.conf`::
 
     [Service]
     ExecStart=
@@ -22,13 +20,6 @@ To get login into virtual console as an example edit `getty` service by running
 `username` should be changed to current user name.
 
 Check more for other `examples <https://wiki.archlinux.org/index.php/Getty#Automatic_login_to_virtual_console>`_.
-
-Qtile session
--------------
-
-Starting Qtile directly will not preserve running applications on Qtile
-restarts by `qtile-cmd -o cmd -f restart` or other ways in Qtile itself. This
-can be solved by starting simple script loop.
 
 Autostart X session
 -------------------
@@ -59,6 +50,4 @@ And to start Qtile itself `.xinitrc` should be fixed:
     #
     #   source ~/.xsession
 
-    while true; do
-        qtile
-    done
+    exec qtile
