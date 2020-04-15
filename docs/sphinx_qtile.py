@@ -21,12 +21,14 @@
 import importlib
 from docutils import nodes
 from docutils.statemachine import ViewList
+from docutils.parsers.rst import Directive
 from jinja2 import Template
-from libqtile import command, configurable, widget
-from six import class_types
-from six.moves import builtins, reduce
-from sphinx.util.compat import Directive
+from libqtile import command_object, configurable, widget
 from sphinx.util.nodes import nested_parse_with_titles
+import functools
+import inspect
+import builtins
+import pprint
 
 
 qtile_module_template = Template('''
@@ -42,7 +44,9 @@ qtile_class_template = Template('''
 .. autoclass:: {{ module }}.{{ class_name }}{% for arg in extra_arguments %}
     {{ arg }}{% endfor %}
     {% if is_widget %}
-    Supported bar orientations: {{ obj.orientations }}
+    .. compound::
+
+        Supported bar orientations: {{ obj.orientations }}
     {% endif %}
     {% if configurable %}
     .. list-table::
@@ -54,7 +58,7 @@ qtile_class_template = Template('''
           - description
         {% for key, default, description in defaults %}
         * - ``{{ key }}``
-          - ``{{ default|pprint }}``
+          - ``{{ default }}``
           - {{ description }}
         {% endfor %}
     {% endif %}
@@ -73,14 +77,14 @@ qtile_hooks_template = Template('''
 # Adapted from sphinxcontrib-httpdomain
 def import_object(module_name, expr):
     mod = __import__(module_name)
-    mod = reduce(getattr, module_name.split('.')[1:], mod)
+    mod = functools.reduce(getattr, module_name.split('.')[1:], mod)
     globals = builtins
     if not isinstance(globals, dict):
         globals = globals.__dict__
     return eval(expr, globals, mod.__dict__)
 
 
-class SimpleDirectiveMixin(object):
+class SimpleDirectiveMixin:
     has_content = True
     required_arguments = 1
 
@@ -95,6 +99,10 @@ class SimpleDirectiveMixin(object):
             result.append(line, '<{0}>'.format(self.__class__.__name__))
         nested_parse_with_titles(self.state, result, node)
         return node.children
+
+
+def sphinx_escape(s):
+    return pprint.pformat(s, compact=False, width=10000)
 
 
 class QtileClass(SimpleDirectiveMixin, Directive):
@@ -121,7 +129,7 @@ class QtileClass(SimpleDirectiveMixin, Directive):
             })
         # turn the dict into a list of ("value", "default", "description") tuples
         defaults = [
-            (k, v[0], v[1]) for k, v in sorted(defaults.items())
+            (k, sphinx_escape(v[0]), sphinx_escape(v[1])) for k, v in sorted(defaults.items())
         ]
 
         context = {
@@ -131,13 +139,14 @@ class QtileClass(SimpleDirectiveMixin, Directive):
             'obj': obj,
             'defaults': defaults,
             'configurable': is_configurable and issubclass(obj, configurable.Configurable),
-            'commandable': is_commandable and issubclass(obj, command.CommandObject),
+            'commandable': is_commandable and issubclass(obj, command_object.CommandObject),
             'is_widget': issubclass(obj, widget.base._Widget),
             'extra_arguments': arguments,
         }
         if context['commandable']:
-            context['commands'] = [attr for attr in dir(obj)
-                if attr.startswith('cmd_')]
+            context['commands'] = [
+                attr for attr in dir(obj) if attr.startswith('cmd_')
+            ]
 
         rst = qtile_class_template.render(**context)
         for line in rst.splitlines():
@@ -170,7 +179,7 @@ class QtileModule(SimpleDirectiveMixin, Directive):
 
         for item in dir(module):
             obj = import_object(self.arguments[0], item)
-            if not isinstance(obj, class_types) and (BaseClass and
+            if not inspect.isclass(obj) and (BaseClass and
                 not isinstance(obj, BaseClass)):
                 continue
 

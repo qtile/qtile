@@ -25,11 +25,13 @@
 # SOFTWARE.
 
 import re
-
-from six import PY2
+from subprocess import CalledProcessError
 
 from . import base
-from ..utils import UnixCommandNotFound, catch_exception_and_warn
+from ..utils import (
+    UnixCommandNotFound, UnixCommandRuntimeError, catch_exception_and_warn
+)
+from libqtile.log_utils import logger
 
 
 class ThermalSensor(base.InLoopPollText):
@@ -63,12 +65,12 @@ class ThermalSensor(base.InLoopPollText):
             (r"\n([\w ]+):"  # Sensor tag name
              r"\s+[+|-]"     # temp signed
              r"(\d+\.\d+)"   # temp value
-             u"({degrees}"   # degree symbol match
-             u"[C|F])"       # Celsius or Fahrenheit
-             ).format(degrees=u"\xc2\xb0" if PY2 else u"\xb0"),
+             "({degrees}"   # degree symbol match
+             "[C|F])"       # Celsius or Fahrenheit
+             ).format(degrees=u"\xb0"),
             re.UNICODE | re.VERBOSE
         )
-        self.value_temp = re.compile("\d+\.\d+")
+        self.value_temp = re.compile(r"\d+\.\d+")
         temp_values = self.get_temp_sensors()
         self.foreground_normal = self.foreground
 
@@ -82,6 +84,9 @@ class ThermalSensor(base.InLoopPollText):
                 break
 
     @catch_exception_and_warn(warning=UnixCommandNotFound, excepts=OSError)
+    @catch_exception_and_warn(warning=UnixCommandRuntimeError,
+                              excepts=CalledProcessError,
+                              return_on_exception="")
     def get_temp_sensors(self):
         """calls the unix `sensors` command with `-f` flag if user has specified that
         the output should be read in Fahrenheit.
@@ -90,6 +95,8 @@ class ThermalSensor(base.InLoopPollText):
         if not self.metric:
             command.append("-f")
         sensors_out = self.call_process(command)
+        if not sensors_out:
+            return None
         return self._format_sensors_output(sensors_out)
 
     def _format_sensors_output(self, sensors_out):
@@ -97,7 +104,7 @@ class ThermalSensor(base.InLoopPollText):
         {<sensor_name>: (<temperature>, <temperature symbol>), ..etc..}
         """
         temperature_values = {}
-        print(self.sensors_temp.findall(sensors_out))
+        logger.info(self.sensors_temp.findall(sensors_out))
         for name, temp, symbol in self.sensors_temp.findall(sensors_out):
             name = name.strip()
             temperature_values[name] = temp, symbol

@@ -2,8 +2,6 @@
 """
     Command-line interaction with Qtile TextBox widgets.
 """
-from __future__ import print_function
-
 import os, sys
 from argparse import ArgumentParser
 from libqtile import command

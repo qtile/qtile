@@ -25,16 +25,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from . import command
+import os.path
+import sys
+import warnings
+from typing import List
+
+from . import configurable
 from . import hook
 from . import utils
-from . import xcbq
-
-from six import MAXSIZE
-import warnings
+from libqtile.command_object import CommandObject
 
 
-class Key(object):
+class Key:
     """Defines a keybinding.
 
     Parameters
@@ -45,29 +47,33 @@ class Key(object):
     key:
         A key specification, e.g. "a", "Tab", "Return", "space".
     commands:
-        A list of lazy command objects generated with the command.lazy helper.
+        A list of lazy command objects generated with the lazy.lazy helper.
         If multiple Call objects are specified, they are run in sequence.
-    kwds:
-        A dictionary containing "desc", allowing a description to be added
+    desc:
+        description to be added to the key binding
     """
-    def __init__(self, modifiers, key, *commands, **kwds):
+    def __init__(self, modifiers: List[str], key: str, *commands, desc: str = ""):
         self.modifiers = modifiers
         self.key = key
         self.commands = commands
-        self.desc = kwds.get("desc", "")
-        if key not in xcbq.keysyms:
-            raise utils.QtileError("Unknown key: %s" % key)
-        self.keysym = xcbq.keysyms[key]
-        try:
-            self.modmask = utils.translate_masks(self.modifiers)
-        except KeyError as v:
-            raise utils.QtileError(v)
+        self.desc = desc
 
     def __repr__(self):
         return "<Key (%s, %s)>" % (self.modifiers, self.key)
 
 
-class Drag(object):
+class Mouse:
+    def __init__(self, modifiers: List[str], button: str, *commands, **kwargs):
+        self.focus = kwargs.pop("focus", "before")
+        self.modifiers = modifiers
+        self.button = button
+        self.commands = commands
+        self.button_code = int(self.button.replace('Button', ''))
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+
+class Drag(Mouse):
     """Defines binding of a mouse to some dragging action
 
     On each motion event command is executed with two extra parameters added x
@@ -76,44 +82,25 @@ class Drag(object):
     It focuses clicked window by default.  If you want to prevent it pass,
     `focus=None` as an argument
     """
-    def __init__(self, modifiers, button, *commands, **kwargs):
-        self.start = kwargs.get("start")
-        self.focus = kwargs.get("focus", "before")
-        self.modifiers = modifiers
-        self.button = button
-        self.commands = commands
-        try:
-            self.button_code = int(self.button.replace('Button', ''))
-            self.modmask = utils.translate_masks(self.modifiers)
-        except KeyError as v:
-            raise utils.QtileError(v)
+    def __init__(self, *args, start=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.start = start
 
     def __repr__(self):
         return "<Drag (%s, %s)>" % (self.modifiers, self.button)
 
 
-class Click(object):
+class Click(Mouse):
     """Defines binding of a mouse click
 
     It focuses clicked window by default.  If you want to prevent it, pass
     `focus=None` as an argument
     """
-    def __init__(self, modifiers, button, *commands, **kwargs):
-        self.focus = kwargs.get("focus", "before")
-        self.modifiers = modifiers
-        self.button = button
-        self.commands = commands
-        try:
-            self.button_code = int(self.button.replace('Button', ''))
-            self.modmask = utils.translate_masks(self.modifiers)
-        except KeyError as v:
-            raise utils.QtileError(v)
-
     def __repr__(self):
         return "<Click (%s, %s)>" % (self.modifiers, self.button)
 
 
-class EzConfig(object):
+class EzConfig:
     """
     Helper class for defining key and button bindings in an emacs-like format.
     Inspired by Xmonad's XMonad.Util.EZConfig.
@@ -162,25 +149,28 @@ class EzConfig(object):
 
         return mods, keys[0]
 
+
 class EzKey(EzConfig, Key):
-    def __init__(self, keydef, *commands):
+    def __init__(self, keydef, *commands, **kwargs):
         modkeys, key = self.parse(keydef)
-        super(EzKey, self).__init__(modkeys, key, *commands)
+        super().__init__(modkeys, key, *commands, **kwargs)
+
 
 class EzClick(EzConfig, Click):
     def __init__(self, btndef, *commands, **kwargs):
         modkeys, button = self.parse(btndef)
         button = 'Button%s' % button
-        super(EzClick, self).__init__(modkeys, button, *commands, **kwargs)
+        super().__init__(modkeys, button, *commands, **kwargs)
+
 
 class EzDrag(EzConfig, Drag):
     def __init__(self, btndef, *commands, **kwargs):
         modkeys, button = self.parse(btndef)
         button = 'Button%s' % button
-        super(EzDrag, self).__init__(modkeys, button, *commands, **kwargs)
+        super().__init__(modkeys, button, *commands, **kwargs)
 
 
-class ScreenRect(object):
+class ScreenRect:
 
     def __init__(self, x, y, width, height):
         self.x = x
@@ -218,7 +208,7 @@ class ScreenRect(object):
         )
 
 
-class Screen(command.CommandObject):
+class Screen(CommandObject):
     """A physical screen, and its associated paraphernalia.
 
     Define a screen with a given set of Bars of a specific geometry.  Note that
@@ -227,19 +217,27 @@ class Screen(command.CommandObject):
     and ``height`` aren't specified usually unless you are using 'fake
     screens'.
 
+    The ``wallpaper`` parameter, if given, should be a path to an image file. How this
+    image is painted to the screen is specified by the ``wallpaper_mode`` parameter. By
+    default, the image will be placed at the screens origin and retain its own
+    dimensions. If the mode is 'fill', the image will be centred on the screen and
+    resized to fill it. If the mode is 'stretch', the image is stretched to fit all of
+    it into the screen.
+
     Parameters
     ==========
-    top: List of Gap/Bar objects, or None.
-    bottom: List of Gap/Bar objects, or None.
-    left: List of Gap/Bar objects, or None.
-    right: List of Gap/Bar objects, or None.
+    top: Gap/Bar object, or None.
+    bottom: Gap/Bar object, or None.
+    left: Gap/Bar object, or None.
+    right: Gap/Bar object, or None.
+    wallpaper: Dict, or None.
     x : int or None
     y : int or None
     width : int or None
     height : int or None
     """
-    def __init__(self, top=None, bottom=None, left=None, right=None,
-                 x=None, y=None, width=None, height=None):
+    def __init__(self, top=None, bottom=None, left=None, right=None, wallpaper=None,
+                 wallpaper_mode=None, x=None, y=None, width=None, height=None):
         self.group = None
         self.previous_group = None
 
@@ -247,6 +245,8 @@ class Screen(command.CommandObject):
         self.bottom = bottom
         self.left = left
         self.right = right
+        self.wallpaper = wallpaper
+        self.wallpaper_mode = wallpaper_mode
         self.qtile = None
         self.index = None
         # x position of upper left corner can be > 0
@@ -263,9 +263,15 @@ class Screen(command.CommandObject):
         self.y = y
         self.width = width
         self.height = height
-        self.setGroup(group)
+        self.set_group(group)
         for i in self.gaps:
             i._configure(qtile, self)
+        if self.wallpaper:
+            self.wallpaper = os.path.expanduser(self.wallpaper)
+            self.paint(self.wallpaper, self.wallpaper_mode)
+
+    def paint(self, path, mode=None):
+        self.qtile.paint_screen(self, path, mode)
 
     @property
     def gaps(self):
@@ -300,16 +306,16 @@ class Screen(command.CommandObject):
     def get_rect(self):
         return ScreenRect(self.dx, self.dy, self.dwidth, self.dheight)
 
-    def setGroup(self, new_group, save_prev=True):
+    def set_group(self, new_group, save_prev=True):
         """Put group on this screen"""
+        if new_group is None:
+            return
+
         if new_group.screen == self:
             return
 
         if save_prev:
             self.previous_group = self.group
-
-        if new_group is None:
-            return
 
         if new_group.screen:
             # g1 <-> s1 (self)
@@ -322,27 +328,33 @@ class Screen(command.CommandObject):
             s2 = new_group.screen
 
             s2.group = g1
-            g1._setScreen(s2)
+            g1._set_screen(s2)
             s1.group = g2
-            g2._setScreen(s1)
+            g2._set_screen(s1)
         else:
             old_group = self.group
             self.group = new_group
 
             # display clients of the new group and then hide from old group
             # to remove the screen flickering
-            new_group._setScreen(self)
+            new_group._set_screen(self)
 
             if old_group is not None:
-                old_group._setScreen(None)
+                old_group._set_screen(None)
 
         hook.fire("setgroup")
         hook.fire("focus_change")
         hook.fire(
             "layout_change",
-            self.group.layouts[self.group.currentLayout],
+            self.group.layouts[self.group.current_layout],
             self.group
         )
+
+    def toggle_group(self, group=None):
+        """Switch to the selected group or to the previously active one"""
+        if group in (self.group, None):
+            group = self.previous_group
+        self.set_group(group)
 
     def _items(self, name):
         if name == "layout":
@@ -360,7 +372,7 @@ class Screen(command.CommandObject):
                 return utils.lget(self.group.layouts, sel)
         elif name == "window":
             if sel is None:
-                return self.group.currentWindow
+                return self.group.current_window
             else:
                 for i in self.group.windows:
                     if i.window.wid == sel:
@@ -369,20 +381,22 @@ class Screen(command.CommandObject):
             return getattr(self, sel)
 
     def resize(self, x=None, y=None, w=None, h=None):
-        x = x or self.x
-        y = y or self.y
-        w = w or self.width
-        h = h or self.height
+        if x is None:
+            x = self.x
+        if y is None:
+            y = self.y
+        if w is None:
+            w = self.width
+        if h is None:
+            h = self.height
         self._configure(self.qtile, self.index, x, y, w, h, self.group)
         for bar in [self.top, self.bottom, self.left, self.right]:
             if bar:
                 bar.draw()
-        self.qtile.call_soon(self.group.layoutAll())
+        self.qtile.call_soon(self.group.layout_all)
 
     def cmd_info(self):
-        """
-            Returns a dictionary of info for this screen.
-        """
+        """Returns a dictionary of info for this screen."""
         return dict(
             index=self.index,
             width=self.width,
@@ -397,24 +411,22 @@ class Screen(command.CommandObject):
 
     def cmd_next_group(self, skip_empty=False, skip_managed=False):
         """Switch to the next group"""
-        n = self.group.nextGroup(skip_empty, skip_managed)
-        self.setGroup(n)
+        n = self.group.get_next_group(skip_empty, skip_managed)
+        self.set_group(n)
         return n.name
 
     def cmd_prev_group(self, skip_empty=False, skip_managed=False):
         """Switch to the previous group"""
-        n = self.group.prevGroup(skip_empty, skip_managed)
-        self.setGroup(n)
+        n = self.group.get_previous_group(skip_empty, skip_managed)
+        self.set_group(n)
         return n.name
 
     def cmd_toggle_group(self, group_name=None):
         """Switch to the selected group or to the previously active one"""
-        group = self.qtile.groupMap.get(group_name)
-        if group in (self.group, None):
-            group = self.previous_group
-        self.setGroup(group)
+        group = self.qtile.groups_map.get(group_name)
+        self.toggle_group(group)
 
-    def cmd_togglegroup(self, groupName=None):
+    def cmd_togglegroup(self, groupName=None):  # noqa
         """Switch to the selected group or to the previously active one
 
         Deprecated: use toggle_group()"""
@@ -422,11 +434,12 @@ class Screen(command.CommandObject):
         self.cmd_toggle_group(groupName)
 
 
-class Group(object):
+class Group:
     """Represents a "dynamic" group
 
     These groups can spawn apps, only allow certain Matched windows to be on
     them, hide when they're not in use, etc.
+    Groups are identified by their name.
 
     Parameters
     ==========
@@ -440,20 +453,29 @@ class Group(object):
         this will be ``exec()`` d when the group is created, you can pass
         either a program name or a list of programs to ``exec()``
     layout : string
-        the default layout for this group (e.g. 'max' or 'stack')
+        the name of default layout for this group (e.g. 'max' or 'stack').
+        This is the name specified for a particular layout in config.py
+        or if not defined it defaults in general the class name in all lower case.
     layouts : list
-        the group layouts list overriding global layouts
+        the group layouts list overriding global layouts.
+        Use this to define a separate list of layouts for this particular group.
     persist : boolean
         should this group stay alive with no member windows?
     init : boolean
         is this group alive when qtile starts?
     position : int
         group position
+    label : string
+        the display name of the group.
+        Use this to define a display name other than name of the group.
+        If set to None, the display name is set to the name.
     """
     def __init__(self, name, matches=None, exclusive=False,
                  spawn=None, layout=None, layouts=None, persist=True, init=True,
-                 layout_opts=None, screen_affinity=None, position=MAXSIZE):
+                 layout_opts=None, screen_affinity=None, position=sys.maxsize,
+                 label=None):
         self.name = name
+        self.label = label
         self.exclusive = exclusive
         self.spawn = spawn
         self.layout = layout
@@ -467,13 +489,43 @@ class Group(object):
         self.position = position
 
     def __repr__(self):
-        attrs = utils.describe_attributes(self,
+        attrs = utils.describe_attributes(
+            self,
             ['exclusive', 'spawn', 'layout', 'layouts', 'persist', 'init',
-            'matches', 'layout_opts', 'screen_affinity'])
+             'matches', 'layout_opts', 'screen_affinity'])
         return '<config.Group %r (%s)>' % (self.name, attrs)
 
 
-class Match(object):
+class ScratchPad(Group):
+    """Represents a "ScratchPad" group
+
+    ScratchPad adds a (by default) invisible group to qtile.
+    That group is used as a place for currently not visible windows spawned by a
+    ``DropDown`` configuration.
+
+    Parameters
+    ==========
+    name : string
+        the name of this group
+    dropdowns : default ``None``
+        list of DropDown objects
+    position : int
+        group position
+    label : string
+        The display name of the ScratchPad group. Defaults to the empty string
+        such that the group is hidden in ``GroupList`` widget.
+    """
+    def __init__(self, name, dropdowns=None, position=sys.maxsize, label=''):
+        Group.__init__(self, name, layout='floating', layouts=['floating'],
+                       init=False, position=position, label=label)
+        self.dropdowns = dropdowns if dropdowns is not None else []
+
+    def __repr__(self):
+        return '<config.ScratchPad %r (%s)>' % (
+            self.name, ', '.join(dd.name for dd in self.dropdowns))
+
+
+class Match:
     """Match for dynamic groups
 
     It can match by title, class or role.
@@ -568,7 +620,7 @@ class Match(object):
         return '<Match %s>' % self._rules
 
 
-class Rule(object):
+class Rule:
     """How to act on a Match
 
     A Rule contains a Match object, and a specification about what to do when
@@ -597,6 +649,85 @@ class Rule(object):
         return self.match.compare(w)
 
     def __repr__(self):
-        actions = utils.describe_attributes(self, ['group', 'float',
-            'intrusive', 'break_on_match'])
+        actions = utils.describe_attributes(self, ['group', 'float', 'intrusive', 'break_on_match'])
         return '<Rule match=%r actions=(%s)>' % (self.match, actions)
+
+
+class DropDown(configurable.Configurable):
+    """
+    Configure a specified command and its associated window for the ScratchPad.
+    That window can be shown and hidden using a configurable keystroke
+    or any other scripted trigger.
+    """
+    defaults = (
+        (
+            'x',
+            0.1,
+            'X position of window as fraction of current screen width. '
+            '0 is the left most position.'
+        ),
+        (
+            'y',
+            0.0,
+            'Y position of window as fraction of current screen height. '
+            '0 is the top most position. To show the window at bottom, '
+            'you have to configure a value < 1 and an appropriate height.'
+        ),
+        (
+            'width',
+            0.8,
+            'Width of window as fraction of current screen width'
+        ),
+        (
+            'height',
+            0.35,
+            'Height of window as fraction of current screen.'
+        ),
+        (
+            'opacity',
+            0.9,
+            'Opacity of window as fraction. Zero is opaque.'
+        ),
+        (
+            'on_focus_lost_hide',
+            True,
+            'Shall the window be hidden if focus is lost? If so, the DropDown '
+            'is hidden if window focus or the group is changed.'
+        ),
+        (
+            'warp_pointer',
+            True,
+            'Shall pointer warp to center of window on activation? '
+            'This has only effect if any of the on_focus_lost_xxx '
+            'configurations is True'
+        ),
+    )
+
+    def __init__(self, name, cmd, **config):
+        """
+        Initialize DropDown window wrapper.
+        Define a command to spawn a process for the first time the DropDown
+        is shown.
+
+        Parameters
+        ==========
+        name : string
+            The name of the DropDown configuration.
+        cmd : string
+            Command to spawn a process.
+        """
+        configurable.Configurable.__init__(self, **config)
+        self.name = name
+        self.command = cmd
+        self.add_defaults(self.defaults)
+
+    def info(self):
+        return dict(name=self.name,
+                    command=self.command,
+                    x=self.x,
+                    y=self.y,
+                    width=self.width,
+                    height=self.height,
+                    opacity=self.opacity,
+                    on_focus_lost_hide=self.on_focus_lost_hide,
+                    warp_pointer=self.warp_pointer,)

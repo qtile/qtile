@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 
-class QtileState(object):
+class QtileState:
     """Represents the state of the qtile object
 
     Primarily used for restoring state across restarts; any additional state
@@ -34,10 +34,10 @@ class QtileState(object):
         self.current_screen = 0
 
         for group in qtile.groups:
-            self.groups.append((group.name, group.layout.name))
+            self.groups.append((group.name, group.layout.name, group.label))
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
-            if screen == qtile.currentScreen:
+            if screen == qtile.current_screen:
                 self.current_screen = index
 
     def apply(self, qtile):
@@ -45,17 +45,17 @@ class QtileState(object):
         Rearrange the windows in the specified Qtile object according to this
         QtileState.
         """
-        for (group, layout) in self.groups:
+        for (group, layout, label) in self.groups:
             try:
-                qtile.groupMap[group].layout = layout
+                qtile.groups_map[group].layout = layout
             except KeyError:
-                qtile.addGroup(group, layout)
+                qtile.add_group(group, layout, label=label)
 
         for (screen, group) in self.screens.items():
             try:
-                group = qtile.groupMap[group]
-                qtile.screens[screen].setGroup(group)
+                group = qtile.groups_map[group]
+                qtile.screens[screen].set_group(group)
             except (KeyError, IndexError):
                 pass  # group or screen missing
 
-        qtile.toScreen(self.current_screen)
+        qtile.focus_screen(self.current_screen)

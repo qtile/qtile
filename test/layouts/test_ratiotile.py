@@ -29,12 +29,12 @@ import pytest
 from time import sleep
 
 from libqtile import layout
-import libqtile.manager
 import libqtile.config
 from ..conftest import no_xinerama
+from .layout_utils import assert_focused, assert_focus_path
 
 
-class RatioTileConfig(object):
+class RatioTileConfig:
     auto_fullscreen = True
     main = None
     groups = [
@@ -54,14 +54,14 @@ class RatioTileConfig(object):
     follow_mouse_focus = False
 
 
-ratiotile_config = lambda x: \
-    no_xinerama(pytest.mark.parametrize("qtile", [RatioTileConfig], indirect=True)(x))
+def ratiotile_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [RatioTileConfig], indirect=True)(x))
 
 
 @ratiotile_config
 def test_ratiotile_add_windows(qtile):
     for i in range(12):
-        qtile.testWindow(str(i))
+        qtile.test_window(str(i))
         if i == 0:
             assert qtile.c.layout.info()['layout_info'] == [
                 (0, 0, 800, 600)]
@@ -128,7 +128,7 @@ def test_ratiotile_add_windows(qtile):
 def test_ratiotile_add_windows_golden_ratio(qtile):
     qtile.c.next_layout()
     for i in range(12):
-        qtile.testWindow(str(i))
+        qtile.test_window(str(i))
         if i == 0:
             assert qtile.c.layout.info()['layout_info'] == [
                 (0, 0, 800, 600)]
@@ -169,9 +169,9 @@ def test_ratiotile_add_windows_golden_ratio(qtile):
 
 @ratiotile_config
 def test_ratiotile_basic(qtile):
-    qtile.testWindow("one")
-    qtile.testWindow("two")
-    qtile.testWindow("three")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("three")
     sleep(0.1)
     assert qtile.c.window.info()['width'] == 264
     assert qtile.c.window.info()['height'] == 598
@@ -192,3 +192,23 @@ def test_ratiotile_basic(qtile):
     assert qtile.c.window.info()['x'] == 532
     assert qtile.c.window.info()['y'] == 0
     assert qtile.c.window.info()['name'] == 'one'
+
+
+@ratiotile_config
+def test_ratiotile_window_focus_cycle(qtile):
+    # setup 3 tiled and two floating clients
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("float1")
+    qtile.c.window.toggle_floating()
+    qtile.test_window("float2")
+    qtile.c.window.toggle_floating()
+    qtile.test_window("three")
+
+    # test preconditions, RatioTile adds clients to head
+    assert qtile.c.layout.info()['clients'] == ['three', 'two', 'one']
+    # last added window has focus
+    assert_focused(qtile, "three")
+
+    # assert window focus cycle, according to order in layout
+    assert_focus_path(qtile, 'two', 'one', 'float1', 'float2', 'three')

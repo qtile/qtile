@@ -1,3 +1,4 @@
+# noqa: E902
 # Copyright (c) 2008 Aldo Cortesi
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,4 +22,6 @@
 # It is really dumb that we need a giant copyright notice for this one line
 # file. Fucking lawyers :(
 
+# noqa: E305
 sdf [
+# noqa: E999

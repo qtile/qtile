@@ -25,22 +25,42 @@ import pytest
 
 from libqtile import confreader
 from libqtile import config, utils
+from libqtile.backend.x11 import xcore
 
 tests_dir = os.path.dirname(os.path.realpath(__file__))
 
 
-def test_syntaxerr():
+def test_validate():
+    xc = xcore.XCore()
+    f = confreader.Config.from_file(xc, os.path.join(tests_dir, "configs", "basic.py"))
+    f.validate(xc)
+    f.keys[0].key = "nonexistent"
     with pytest.raises(confreader.ConfigError):
-        confreader.File(os.path.join(tests_dir, "configs", "syntaxerr.py"))
+        f.validate(xc)
+
+    f.keys[0].key = "x"
+    f = confreader.Config.from_file(xc, os.path.join(tests_dir, "configs", "basic.py"))
+    f.keys[0].modifiers = ["nonexistent"]
+    with pytest.raises(confreader.ConfigError):
+        f.validate(xc)
+    f.keys[0].modifiers = ["shift"]
+
+
+def test_syntaxerr():
+    xc = xcore.XCore()
+    with pytest.raises(confreader.ConfigError):
+        confreader.Config.from_file(xc, os.path.join(tests_dir, "configs", "syntaxerr.py"))
 
 
 def test_basic():
-    f = confreader.File(os.path.join(tests_dir, "configs", "basic.py"))
+    xc = xcore.XCore()
+    f = confreader.Config.from_file(xc, os.path.join(tests_dir, "configs", "basic.py"))
     assert f.keys
 
 
 def test_falls_back():
-    f = confreader.File(os.path.join(tests_dir, "configs", "basic.py"))
+    xc = xcore.XCore()
+    f = confreader.Config.from_file(xc, os.path.join(tests_dir, "configs", "basic.py"))
 
     # We just care that it has a default, we don't actually care what the
     # default is; don't assert anything at all about the default in case
@@ -49,7 +69,9 @@ def test_falls_back():
 
 
 def test_ezkey():
-    cmd = lambda x: None
+
+    def cmd(x):
+        return None
 
     key = config.EzKey('M-A-S-a', cmd, cmd)
     modkey, altkey = (config.EzConfig.modifier_keys[i] for i in 'MA')
@@ -76,7 +98,9 @@ def test_ezkey():
 
 
 def test_ezclick_ezdrag():
-    cmd = lambda x: None
+
+    def cmd(x):
+        return None
 
     btn = config.EzClick('M-1', cmd)
     assert btn.button == 'Button1'

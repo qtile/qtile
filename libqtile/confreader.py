@@ -22,80 +22,97 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 import os
 import sys
-import traceback
+from typing import List  # noqa: F401
 
-from libqtile.log_utils import logger
+from libqtile.backend import base
 
 
 class ConfigError(Exception):
     pass
 
 
-class File(object):
-    def __init__(self, fname=None, is_restart=False):
-        if not fname:
-            config_directory = os.path.expandvars('$XDG_CONFIG_HOME')
-            if config_directory == '$XDG_CONFIG_HOME':
-                # if variable wasn't set
-                config_directory = os.path.expanduser("~/.config")
-            fname = os.path.join(config_directory, "qtile", "config.py")
+class Config:
+    settings_keys = [
+        "keys",
+        "mouse",
+        "groups",
+        "dgroups_key_binder",
+        "dgroups_app_rules",
+        "follow_mouse_focus",
+        "focus_on_window_activation",
+        "cursor_warp",
+        "layouts",
+        "floating_layout",
+        "screens",
+        "main",
+        "auto_fullscreen",
+        "widget_defaults",
+        "extension_defaults",
+        "bring_front_click",
+        "wmname",
+    ]
 
-        # We delay importing here to avoid a circular import issue when
-        # testing.
+    def __init__(self, file_path=None, **settings):
+        """Create a Config() object from settings
+
+        Only attributes found in Config.settings_keys will be added to object.
+        config attribute precedence is 1.) **settings 2.) self 3.) default_config
+        """
         from .resources import default_config
 
-        if fname == "default":
-            config = default_config
-        elif os.path.isfile(fname):
+        self.file_path = file_path
+
+        default = vars(default_config)
+        for key in self.settings_keys:
             try:
-                sys.path.insert(0, os.path.dirname(fname))
-                config = __import__(os.path.basename(fname)[:-3])
-            except Exception as v:
+                value = settings[key]
+            except KeyError:
+                value = getattr(self, key, default[key])
+            setattr(self, key, value)
+        self._init_fake_screens(**settings)
 
-                tb = traceback.format_exc()
+    def _init_fake_screens(self, **settings):
+        " Initiaize fake_screens if they are set."
+        try:
+            value = settings['fake_screens']
+            setattr(self, 'fake_screens', value)
+        except KeyError:
+            pass
 
-                # On restart, user potentially has some windows open, but they
-                # screwed up their config. So as not to lose their apps, we
-                # just load the default config here.
-                if is_restart:
-                    logger.warning(
-                        'Caught exception in configuration:\n\n'
-                        '%s\n\n'
-                        'Qtile restarted with default config', tb)
-                    config = None
-                else:
-                    raise ConfigError(tb)
-        else:
-            config = None
+    @classmethod
+    def from_file(cls, kore: base.Core, path: str):
+        "Create a Config() object from the python file located at path."
+        try:
+            sys.path.insert(0, os.path.dirname(path))
+            config = __import__(os.path.basename(path)[:-3])  # noqa: F811
+        except Exception:
+            import traceback
+            from .log_utils import logger
+            logger.exception('Could not import config file %r', path)
+            tb = traceback.format_exc()
+            raise ConfigError(tb)
+        cnf = cls(file_path=path, **vars(config))
+        cnf.validate(kore)
+        return cnf
 
-        # if you add something here, be sure to add a reasonable default value
-        # to resources/default_config.py
-        config_options = [
-            "keys",
-            "mouse",
-            "groups",
-            "dgroups_key_binder",
-            "dgroups_app_rules",
-            "follow_mouse_focus",
-            "focus_on_window_activation",
-            "cursor_warp",
-            "layouts",
-            "floating_layout",
-            "screens",
-            "main",
-            "auto_fullscreen",
-            "widget_defaults",
-            "bring_front_click",
-            "wmname",
-        ]
-
-        for option in config_options:
-            if hasattr(config, option):
-                v = getattr(config, option)
-            else:
-                v = getattr(default_config, option)
-            if not hasattr(self, option):
-                setattr(self, option, v)
+    def validate(self, kore: base.Core) -> None:
+        """
+            Validate the configuration against the core.
+        """
+        valid_keys = kore.get_keys()
+        valid_mods = kore.get_modifiers()
+        # we explicitly do not want to set self.keys and self.mouse above,
+        # because they are dynamically resolved from the default_config. so we
+        # need to ignore the errors here about missing attributes.
+        for k in self.keys:  # type: ignore
+            if k.key not in valid_keys:
+                raise ConfigError("No such key: %s" % k.key)
+            for m in k.modifiers:
+                if m not in valid_mods:
+                    raise ConfigError("No such modifier: %s" % m)
+        for ms in self.mouse:  # type: ignore
+            for m in ms.modifiers:
+                if m not in valid_mods:
+                    raise ConfigError("No such modifier: %s" % m)

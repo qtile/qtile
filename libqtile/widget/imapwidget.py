@@ -26,6 +26,7 @@ import imaplib
 import re
 import keyring
 
+
 class ImapWidget(base.ThreadedPollText):
     """Email IMAP widget
 
@@ -37,26 +38,30 @@ class ImapWidget(base.ThreadedPollText):
     out <userid> and <password> for your userid and password):
 
     1) create the file ~/.local/share/python_keyring/keyringrc.cfg with the
-       following contents:
+       following contents::
 
-       [backend]
-       default-keyring=keyring.backends.Gnome.Keyring
-       keyring-path=/home/<userid>/.local/share/keyring/
+           [backend]
+           default-keyring=keyring.backends.Gnome.Keyring
+           keyring-path=/home/<userid>/.local/share/keyring/
 
 
-    2) Execute the following python shell script once:
+    2) Execute the following python shell script once::
 
-       #!/usr/bin/env python3
-       import keyring
-       user = <userid>
-       password = <password>
-       keyring.set_password('imapwidget', user, password)
+           #!/usr/bin/env python3
+           import keyring
+           user = <userid>
+           password = <password>
+           keyring.set_password('imapwidget', user, password)
 
     mbox names must include the path to the mbox (except for the default
-    INBOX).  So, for example if your mailroot is ~/Maildir, and you want to
+    INBOX).  So, for example if your mailroot is ``~/Maildir``, and you want to
     look at the mailbox at HomeMail/fred, the mbox setting would be:
-    mbox='"~/Maildir/HomeMail/fred"'.  Note the nested sets of quotes! Labels
+    ``mbox="~/Maildir/HomeMail/fred"``.  Note the nested sets of quotes! Labels
     can be whatever you choose, of course.
+
+    Widget requirements: keyring_.
+
+    .. _keyring: https://pypi.org/project/keyring/
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [

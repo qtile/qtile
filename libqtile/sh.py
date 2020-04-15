@@ -20,7 +20,6 @@
 """
     A command shell for Qtile.
 """
-from __future__ import division, print_function
 
 import fcntl
 import inspect
@@ -29,16 +28,14 @@ import re
 import readline
 import sys
 import struct
-import six
 import termios
+from typing import List, Optional, Tuple
 
-from six.moves import input
-
-from . import command
-from . import ipc
+from libqtile import command_graph
+from libqtile.command_interface import format_selectors, CommandInterface, CommandError, CommandException
 
 
-def terminalWidth():
+def terminal_width():
     width = None
     try:
         cr = struct.unpack('hh', fcntl.ioctl(0, termios.TIOCGWINSZ, '1234'))
@@ -48,51 +45,55 @@ def terminalWidth():
     return width or 80
 
 
-class QSh(object):
+class QSh:
     """Qtile shell instance"""
-    def __init__(self, client, completekey="tab"):
-        self.clientroot = client
-        self.current = client
-        self.completekey = completekey
-        self.builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
-        self.termwidth = terminalWidth()
+    def __init__(self, client: CommandInterface, completekey="tab") -> None:
+        self._client = client
+        self._current_node = command_graph.CommandGraphRoot()  # type: command_graph.CommandGraphNode
+        self._completekey = completekey
+        self._builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
+        self._termwidth = terminal_width()
 
-    def _complete(self, buf, arg):
-        if not re.search(r" |\(", buf) or buf.startswith("help "):
-            options = self.builtins + self._commands
-            lst = [i for i in options if i.startswith(arg)]
-            return lst
-        elif buf.startswith("cd ") or buf.startswith("ls "):
-            path = [i for i in arg.split("/") if i]
-            if arg.endswith("/"):
-                last = ""
-            else:
-                last = path[-1]
-                path = path[:-1]
-            node = self._findNode(self.current, *path)
-            options = [str(i) for i in self._ls(node)]
-            lst = []
-            path = "/".join(path)
-            if path:
-                path += "/"
-            for i in options:
-                if i.startswith(last):
-                    lst.append(path + i)
-            return lst
-
-    def complete(self, arg, state):
+    def complete(self, arg, state) -> Optional[str]:
         buf = readline.get_line_buffer()
         completers = self._complete(buf, arg)
         if completers and state < len(completers):
             return completers[state]
+        return None
+
+    def _complete(self, buf, arg) -> List[str]:
+        if not re.search(r" |\(", buf) or buf.startswith("help "):
+            options = self._builtins + self._commands
+            lst = [i for i in options if i.startswith(arg)]
+            return lst
+        elif buf.startswith("cd ") or buf.startswith("ls "):
+            last_slash = arg.rfind("/") + 1
+            path, last = arg[:last_slash], arg[last_slash:]
+            node = self._find_path(path)
+            if node is None:
+                return []
+            options = [str(i) for i in self._ls(node)]
+            lst = []
+            if path and not path.endswith("/"):
+                path += "/"
+            for i in options:
+                if i.startswith(last):
+                    lst.append(path + i)
+
+            if len(lst) == 1:
+                # add a slash to continue completing the next part of the path
+                return [lst[0] + "/"]
+
+            return lst
+        return []
 
     @property
-    def prompt(self):
-        return "%s> " % self.current.path
+    def prompt(self) -> str:
+        return "{} > ".format(format_selectors(self._current_node.selectors))
 
-    def columnize(self, lst, update_termwidth=True):
+    def columnize(self, lst, update_termwidth=True) -> str:
         if update_termwidth:
-            self.termwidth = terminalWidth()
+            self.termwidth = terminal_width()
 
         ret = []
         if lst:
@@ -110,60 +111,83 @@ class QSh(object):
                 ret.append("  ".join(sl))
         return "\n".join(ret)
 
-    def _inspect(self, obj):
-        """Returns an (attrs, keys) tuple"""
-        if obj.parent and obj.myselector is None:
-            t, itms = obj.parent.items(obj.name)
-            attrs = obj._contains if t else None
-            return (attrs, itms)
-        else:
-            return (obj._contains, [])
-
-    def _ls(self, obj):
-        attrs, itms = self._inspect(obj)
-        all = []
-        if attrs:
-            all.extend(attrs)
-        if itms:
-            all.extend(itms)
-        return all
-
     @property
-    def _commands(self):
+    def _commands(self) -> List[str]:
         try:
-            # calling `.commands()` here triggers `CommandRoot.cmd_commands()`
-            return self.current.commands()
-        except command.CommandError:
+            commands_cmd = self._current_node.call("commands")
+            return self._client.execute(commands_cmd, (), {})
+        except CommandError:
             return []
 
-    def _findNode(self, src, *path):
-        """Returns a node, or None if no such node exists"""
-        if not path:
+    def _inspect(self, obj: command_graph.CommandGraphNode) -> Tuple[Optional[List[str]], Optional[List[str]]]:
+        """Returns an (attrs, keys) tuple"""
+        if isinstance(obj, command_graph.CommandGraphObject) and obj.selector is None:
+            items_call = obj.parent.call("items")
+            allow_root, items = self._client.execute(items_call, (obj.object_type,), {})
+            attrs = obj.children if allow_root else None
+            return attrs, items
+        else:
+            return obj.children, None
+
+    def _ls(self, obj: command_graph.CommandGraphNode) -> List[str]:
+        attrs, itms = self._inspect(obj)
+        all_items = []  # type: List[str]
+        if attrs:
+            all_items.extend(attrs)
+        if itms:
+            all_items.extend(itms)
+        return all_items
+
+    def _find_path(self, path: str) -> Optional[command_graph.CommandGraphNode]:
+        """Find an object relative to the current node
+
+        Finds and returns the command graph node that is defined relative to
+        the current node.
+        """
+        root = command_graph.CommandGraphRoot() if path.startswith("/") else self._current_node
+        parts = [i for i in path.split("/") if i]
+        return self._find_node(root, *parts)
+
+    def _find_node(self,
+                   src: command_graph.CommandGraphNode,
+                   *paths: str) -> Optional[command_graph.CommandGraphNode]:
+        """Find an object in the command graph
+
+        Return the object in the command graph at the specified path relative
+        to the given node.
+        """
+        if len(paths) == 0:
             return src
 
-        attrs, itms = self._inspect(src)
-        next = None
-        if path[0] == "..":
-            next = src.parent or src
+        path, *next_path = paths
+
+        next_node = None
+        if path == "..":
+            next_node = src.parent or src
         else:
-            for trans in [str, int]:
+            attrs, items = self._inspect(src)
+            for transformation in [str, int]:
                 try:
-                    tpath = trans(path[0])
+                    transformed_path = transformation(path)
                 except ValueError:
                     continue
-                if attrs and tpath in attrs:
-                    next = getattr(src, tpath)
-                elif itms and tpath in itms:
-                    next = src[tpath]
-        if next:
-            if path[1:]:
-                return self._findNode(next, *path[1:])
-            else:
-                return next
+
+                if attrs is not None and transformed_path in attrs:
+                    nav_node = src.navigate(transformed_path, None)
+                    next_node = nav_node
+                    break
+                elif items is not None and transformed_path in items:
+                    assert isinstance(src, command_graph.CommandGraphObject)
+                    nav_node = src.parent.navigate(src.object_type, transformed_path)
+                    next_node = nav_node
+                    break
+
+        if next_node:
+            return self._find_node(next_node, *next_path)
         else:
             return None
 
-    def do_cd(self, arg):
+    def do_cd(self, arg) -> str:
         """Change to another path.
 
         Examples
@@ -173,14 +197,14 @@ class QSh(object):
 
             cd ../layout
         """
-        next = self._findNode(self.current, *[i for i in arg.split("/") if i])
-        if next:
-            self.current = next
-            return self.current.path or '/'
+        next_node = self._find_path(arg)
+        if next_node is not None:
+            self._current_node = next_node
+            return format_selectors(self._current_node.selectors) or '/'
         else:
             return "No such path."
 
-    def do_ls(self, arg):
+    def do_ls(self, arg: str) -> str:
         """List contained items on a node.
 
         Examples
@@ -189,11 +213,18 @@ class QSh(object):
                 > ls
                 > ls ../layout
         """
-        l = self._ls(self.current)
-        l = ["%s/" % i for i in l]
-        return self.columnize(l)
+        if arg:
+            node = self._find_path(arg)
+            if not node:
+                return "No such path."
+        else:
+            node = self._current_node
 
-    def do_pwd(self, arg):
+        ls = self._ls(node)
+        formatted_ls = ["{}/".format(i) for i in ls]
+        return self.columnize(formatted_ls)
+
+    def do_pwd(self, arg) -> str:
         """Returns the current working location
 
         This is the same information as presented in the qshell prompt, but is
@@ -208,9 +239,9 @@ class QSh(object):
             bar['top']> pwd
             bar['top']
         """
-        return self.current.path or '/'
+        return format_selectors(self._current_node.selectors) or '/'
 
-    def do_help(self, arg):
+    def do_help(self, arg) -> str:
         """Give help on commands and builtins
 
         When invoked without arguments, provides an overview of all commands.
@@ -229,7 +260,7 @@ class QSh(object):
                 "",
                 "Builtins",
                 "========",
-                self.columnize(self.builtins),
+                self.columnize(self._builtins),
             ]
             cmds = self._commands
             if cmds:
@@ -241,70 +272,59 @@ class QSh(object):
                 ])
             return "\n".join(lst)
         elif arg in self._commands:
-            return self._call("doc", "(\"%s\")" % arg)
-        elif arg in self.builtins:
+            call = self._current_node.call("doc")
+            return self._client.execute(call, (arg,), {})
+        elif arg in self._builtins:
             c = getattr(self, "do_" + arg)
-            return inspect.getdoc(c)
+            ret = inspect.getdoc(c)
+            assert ret is not None
+            return ret
         else:
             return "No such command: %s" % arg
 
-    def do_exit(self, args):
+    def do_exit(self, args) -> None:
         """Exit qshell"""
         sys.exit(0)
 
     do_quit = do_exit
     do_q = do_exit
 
-    def _call(self, cmd_name, args):
-        cmds = self._commands
-        if cmd_name not in cmds:
-            return "No such command: %s" % cmd_name
-
-        cmd = getattr(self.current, cmd_name)
-        if args:
-            args = "".join(args)
-        else:
-            args = "()"
-        try:
-            val = eval(
-                "cmd%s" % args,
-                {},
-                dict(cmd=cmd)
-            )
-            return val
-        except SyntaxError as v:
-            return "Syntax error in expression: %s" % v.text
-        except command.CommandException as val:
-            return "Command exception: %s\n" % val
-        except ipc.IPCError:
-            # on restart, try to reconnect
-            if cmd_name == 'restart':
-                client = command.Client(self.clientroot.client.fname)
-                self.clientroot = client
-                self.current = client
+    def process_line(self, line: str) -> str:
+        builtin_match = re.fullmatch(r"(?P<cmd>\w+)(?:\s+(?P<arg>\S+))?", line)
+        if builtin_match:
+            cmd = builtin_match.group("cmd")
+            args = builtin_match.group("arg")
+            if cmd in self._builtins:
+                builtin = getattr(self, "do_" + cmd)
+                val = builtin(args)
+                return val
             else:
-                raise
+                return "Invalid builtin: {}".format(cmd)
 
-    def process_command(self, line):
-        match = re.search(r"\W", line)
-        if match:
-            cmd = line[:match.start()].strip()
-            args = line[match.start():].strip()
-        else:
-            cmd = line
-            args = ''
+        command_match = re.fullmatch(r"(?P<cmd>\w+)\((?P<args>[\w\s,]*)\)", line)
+        if command_match:
+            cmd = command_match.group("cmd")
+            args = command_match.group("args")
+            if args:
+                cmd_args = tuple(map(str.strip, args.split(",")))
+            else:
+                cmd_args = ()
 
-        builtin = getattr(self, "do_" + cmd, None)
-        if builtin:
-            val = builtin(args)
-        else:
-            val = self._call(cmd, args)
+            if not self._client.has_command(self._current_node, cmd):
+                return "Command does not exist: {}".format(cmd)
 
-        return val
+            cmd_call = self._current_node.call(cmd)
 
-    def loop(self):
+            try:
+                return self._client.execute(cmd_call, cmd_args, {})
+            except CommandException as e:
+                return "Command exception: {}\n".format(e)
+
+        return "Invalid command: {}".format(line)
+
+    def loop(self) -> None:
         readline.set_completer(self.complete)
-        readline.parse_and_bind(self.completekey + ": complete")
+        readline.parse_and_bind(self._completekey + ": complete")
         readline.set_completer_delims(" ()|")
 
         while True:
@@ -316,8 +336,8 @@ class QSh(object):
             if not line:
                 continue
 
-            val = self.process_command(line)
-            if isinstance(val, six.string_types):
+            val = self.process_line(line)
+            if isinstance(val, str):
                 print(val)
             elif val:
                 pprint.pprint(val)

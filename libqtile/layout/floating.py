@@ -8,6 +8,7 @@
 # Copyright (c) 2014 ramnes
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 dequis
+# Copyright (c) 2018 Nazar Mokrynskyi
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,6 +40,7 @@ DEFAULT_FLOAT_WM_TYPES = set([
 
 DEFAULT_FLOAT_RULES = [
     {"role": "About"},
+    {"wmclass": "file_progress"},
 ]
 
 
@@ -60,7 +62,7 @@ class Floating(Layout):
         ),
     ]
 
-    def __init__(self, float_rules=None, **config):
+    def __init__(self, float_rules=None, no_reposition_match=None, **config):
         """
         If you have certain apps that you always want to float you can provide
         ``float_rules`` to do so. ``float_rules`` is a list of
@@ -77,12 +79,20 @@ class Floating(Layout):
             float_rules=[dict(wmclass="skype"), dict(wmclass="gimp")]
 
         Specify these in the ``floating_layout`` in your config.
+
+        Floating layout will try to center most of floating windows by
+        default (until hints are properly implemented), but if you don't
+        want this to happen for certain windows that are centered by mistake,
+        you can use ``no_reposition_match`` option to specify them and layout
+        will rely on windows to position themselves in correct location on
+        the screen.
         """
         Layout.__init__(self, **config)
         self.clients = []
         self.focused = None
         self.group = None
         self.float_rules = float_rules or DEFAULT_FLOAT_RULES
+        self.no_reposition_match = no_reposition_match
         self.add_defaults(Floating.defaults)
 
     def match(self, win):
@@ -169,10 +179,17 @@ class Floating(Layout):
         self.focused = None
 
     def configure(self, client, screen):
-        if client is self.focused:
-            bc = client.group.qtile.colorPixel(self.border_focus)
+        # 'sun-awt-X11-XWindowPeer' is a dropdown used in Java application,
+        # don't reposition it anywhere, let Java app to control it
+        cls = client.window.get_wm_class() or ''
+        is_java_dropdown = 'sun-awt-X11-XWindowPeer' in cls
+        if is_java_dropdown:
+            return
+
+        if client.has_focus:
+            bc = client.group.qtile.color_pixel(self.border_focus)
         else:
-            bc = client.group.qtile.colorPixel(self.border_normal)
+            bc = client.group.qtile.color_pixel(self.border_normal)
         if client.maximized:
             bw = self.max_border_width
         elif client.fullscreen:
@@ -188,23 +205,31 @@ class Floating(Layout):
         except AttributeError:
             # this window hasn't been placed before, let's put it in a sensible spot
             transient_for = client.window.get_wm_transient_for()
-            win = client.group.qtile.windowMap.get(transient_for)
+            win = client.group.qtile.windows_map.get(transient_for)
             if win is not None:
-                x = win.x + (win.width - client.width) // 2
-                y = win.y + (win.height - client.height) // 2
-                above = True
+                # if transient for a window, place in the center of the window
+                center_x = win.x + win.width / 2
+                center_y = win.y + win.height / 2
             else:
-                x = screen.x + client.x % screen.width
-                # try to get right edge on screen (without moving the left edge off)
-                x = min(x, screen.x - client.width)
-                x = max(x, screen.x)
-                # then update it's position (`.place()` will take care of `.float_x`)
-                client.x = x
+                center_x = screen.x + screen.width / 2
+                center_y = screen.y + screen.height / 2
+                above = True
 
-                y = screen.y + client.y % screen.height
-                y = min(y, screen.y - client.height)
-                y = max(y, screen.y)
-                client.y = y
+            x = center_x - client.width / 2
+            y = center_y - client.height / 2
+
+            # don't go off the right...
+            x = min(x, screen.x + screen.width)
+            # or left...
+            x = max(x, screen.x)
+            # or bottom...
+            y = min(y, screen.y + screen.height)
+            # or top
+            y = max(y, screen.y)
+
+            if not (self.no_reposition_match and self.no_reposition_match.compare(client)):
+                client.x = int(round(x))
+                client.y = int(round(y))
 
         client.place(
             client.x,

@@ -68,6 +68,8 @@ class ColorFormatter(Formatter):
 
 def init_log(log_level=WARNING, log_path=True, log_truncate=False,
              log_size=10000000, log_numbackups=1, log_color=True):
+    for handler in logger.handlers:
+        logger.removeHandler(handler)
     formatter = Formatter(
         "%(asctime)s %(levelname)s %(name)s %(filename)s:%(funcName)s():L%(lineno)d %(message)s"
     )
@@ -115,5 +117,5 @@ def init_log(log_level=WARNING, log_path=True, log_truncate=False,
     # Capture everything from the warnings module.
     captureWarnings(True)
     warnings.simplefilter("always")
-    logger.warning('Starting logging for Qtile')
+    logger.debug('Starting logging for Qtile')
     return logger

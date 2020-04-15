@@ -27,7 +27,6 @@ The order in which you need to install is:
 
 - pycparser
 - cffi
-- six
 - futures
 - python-xcffib
 - trollius

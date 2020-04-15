@@ -17,16 +17,15 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from __future__ import division
 
-from . import command
 from . import confreader
 from . import drawer
 from . import configurable
 from . import window
+from libqtile.command_object import CommandObject
 
 
-class Gap(command.CommandObject):
+class Gap(CommandObject):
     """A gap placed along one of the edges of the screen
 
     If a gap has been defined, Qtile will avoid covering it with windows. The
@@ -124,7 +123,7 @@ class Gap(command.CommandObject):
         return self.info()
 
 
-class Obj(object):
+class Obj:
     def __init__(self, name):
         self.name = name
 
@@ -154,6 +153,7 @@ class Bar(Gap, configurable.Configurable):
     defaults = [
         ("background", "#000000", "Background colour."),
         ("opacity", 1, "Bar window opacity."),
+        ("margin", 0, "Space around bar as int or list of ints [N E S W]."),
     ]
 
     def __init__(self, widgets, size, **config):
@@ -167,6 +167,28 @@ class Bar(Gap, configurable.Configurable):
 
     def _configure(self, qtile, screen):
         Gap._configure(self, qtile, screen)
+
+        if self.margin:
+            if isinstance(self.margin, int):
+                self.margin = [self.margin] * 4
+            if self.horizontal:
+                self.x += self.margin[3]
+                self.width -= self.margin[1] + self.margin[3]
+                self.length = self.width
+                self.size += self.margin[0] + self.margin[2]
+                if self.screen.top is self:
+                    self.y += self.margin[0]
+                else:
+                    self.y -= self.margin[2]
+            else:
+                self.y += self.margin[0]
+                self.height -= self.margin[0] + self.margin[2]
+                self.length = self.height
+                self.size += self.margin[1] + self.margin[3]
+                if self.screen.left is self:
+                    self.x += self.margin[3]
+                else:
+                    self.x -= self.margin[1]
 
         stretches = 0
         for w in self.widgets:
@@ -197,11 +219,14 @@ class Bar(Gap, configurable.Configurable):
         self.window.handle_Expose = self.handle_Expose
         self.window.handle_ButtonPress = self.handle_ButtonPress
         self.window.handle_ButtonRelease = self.handle_ButtonRelease
-        qtile.windowMap[self.window.window.wid] = self.window
+        qtile.windows_map[self.window.window.wid] = self.window
         self.window.unhide()
 
-        for i in self.widgets:
-            qtile.registerWidget(i)
+        for idx, i in enumerate(self.widgets):
+            if i.configured:
+                i = i.create_mirror()
+                self.widgets[idx] = i
+            qtile.register_widget(i)
             i._configure(qtile, self)
         self._resize(self.length, self.widgets)
 
@@ -233,7 +258,7 @@ class Bar(Gap, configurable.Configurable):
                 i.offsety = offset
                 offset += i.length
 
-    def handle_Expose(self, e):
+    def handle_Expose(self, e):  # noqa: N802
         self.draw()
 
     def get_widget_in_position(self, e):
@@ -246,7 +271,7 @@ class Bar(Gap, configurable.Configurable):
                 if e.event_y < i.offsety + i.length:
                     return i
 
-    def handle_ButtonPress(self, e):
+    def handle_ButtonPress(self, e):  # noqa: N802
         widget = self.get_widget_in_position(e)
         if widget:
             widget.button_press(
@@ -255,7 +280,7 @@ class Bar(Gap, configurable.Configurable):
                 e.detail
             )
 
-    def handle_ButtonRelease(self, e):
+    def handle_ButtonRelease(self, e):  # noqa: N802
         widget = self.get_widget_in_position(e)
         if widget:
             widget.button_release(
@@ -271,7 +296,7 @@ class Bar(Gap, configurable.Configurable):
             widget_ungrab_keyboard() must be called.
         """
         self.window.handle_KeyPress = widget.handle_KeyPress
-        self.saved_focus = self.qtile.currentWindow
+        self.saved_focus = self.qtile.current_window
         self.window.window.set_input_focus()
 
     def widget_ungrab_keyboard(self):
@@ -331,7 +356,7 @@ class Bar(Gap, configurable.Configurable):
             :screen The integer screen offset
             :position One of "top", "bottom", "left", or "right"
         """
-        class _Fake(object):
+        class _Fake:
             pass
         fake = _Fake()
         fake.event_x = x

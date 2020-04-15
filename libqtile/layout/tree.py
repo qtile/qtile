@@ -35,7 +35,7 @@ from .. import drawer, hook, window
 to_superscript = dict(zip(map(ord, u'0123456789'), map(ord, u'⁰¹²³⁴⁵⁶⁷⁸⁹')))
 
 
-class TreeNode(object):
+class TreeNode:
     def __init__(self):
         self.children = []
         self.parent = None
@@ -87,7 +87,7 @@ class TreeNode(object):
     def add_superscript(self, title):
         """Prepend superscript denoting the number of hidden children"""
         if not self.expanded and self.children:
-            return u"{:d}".format(
+            return "{:d}".format(
                 len(self.children)
             ).translate(to_superscript).encode('utf-8') + title
         return title
@@ -147,7 +147,7 @@ class TreeNode(object):
 
 class Root(TreeNode):
     def __init__(self, sections, default_section=None):
-        super(Root, self).__init__()
+        super().__init__()
         self.sections = {}
         for section in sections:
             self.add_section(section)
@@ -214,7 +214,7 @@ class Root(TreeNode):
 
 class Section(TreeNode):
     def __init__(self, title):
-        super(Section, self).__init__()
+        super().__init__()
         self.title = title
 
     def draw(self, layout, top, level=0):
@@ -240,14 +240,14 @@ class Section(TreeNode):
             layout.section_padding
 
         # run the TreeNode draw to draw children (if expanded)
-        top = super(Section, self).draw(layout, top, level)
+        top = super().draw(layout, top, level)
 
         return top + layout.section_bottom
 
 
 class Window(TreeNode):
     def __init__(self, win):
-        super(Window, self).__init__()
+        super().__init__()
         self.window = win
         self._title_top = None
 
@@ -279,13 +279,13 @@ class Window(TreeNode):
         top += framed.height + layout.vspace + layout.border_width
 
         # run the TreeNode draw to draw children (if expanded)
-        return super(Window, self).draw(layout, top, level + 1)
+        return super().draw(layout, top, level + 1)
 
     def button_press(self, x, y):
         """Returns self if clicked on title else returns sibling"""
         if self._title_top <= y < self._children_top:
             return self
-        return super(Window, self).button_press(x, y)
+        return super().button_press(x, y)
 
     def remove(self):
         """Removes this Window
@@ -328,7 +328,7 @@ class TreeTab(Layout):
         ("border_width", 2, "Width of the border"),
         ("vspace", 2, "Space between tabs"),
         ("level_shift", 8, "Shift for children tabs"),
-        ("font", "Arial", "Font"),
+        ("font", "sans", "Font"),
         ("fontsize", 14, "Font pixel size."),
         ("fontshadow", None, "font shadow color, default is None (no shadow)"),
         ("section_fontsize", 11, "Font pixel size of section label"),
@@ -424,23 +424,23 @@ class TreeTab(Layout):
             100
         )
         self._create_drawer()
-        self._panel.handle_Expose = self._panel_Expose
-        self._panel.handle_ButtonPress = self._panel_ButtonPress
-        self.group.qtile.windowMap[self._panel.window.wid] = self._panel
-        hook.subscribe.window_name_change(self.draw_panel)
+        self._panel.handle_Expose = self._handle_Expose
+        self._panel.handle_ButtonPress = self._handle_ButtonPress
+        self.group.qtile.windows_map[self._panel.window.wid] = self._panel
+        hook.subscribe.client_name_updated(self.draw_panel)
         hook.subscribe.focus_change(self.draw_panel)
 
-    def _panel_Expose(self, e):
+    def _handle_Expose(self, e):  # noqa: N802
         self.draw_panel()
 
-    def draw_panel(self):
+    def draw_panel(self, *args):
         if not self._panel:
             return
         self._drawer.clear(self.bg_color)
         self._tree.draw(self, 0)
         self._drawer.draw(offsetx=0, width=self.panel_width)
 
-    def _panel_ButtonPress(self, event):
+    def _handle_ButtonPress(self, event):  # noqa: N802
         node = self._tree.button_press(event.event_x, event.event_y)
         if node:
             self.group.focus(node.window, False)
@@ -631,11 +631,11 @@ class TreeTab(Layout):
 
     def cmd_increase_ratio(self):
         self.panel_width += 10
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_decrease_ratio(self):
         self.panel_width -= 10
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def _create_drawer(self):
         if self._drawer is None:

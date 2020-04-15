@@ -31,6 +31,7 @@ from .. import bar, utils, pangocffi
 from libqtile.notify import notifier
 from os import path
 
+
 class Notify(base._TextBox):
     """A notify widget"""
     orientations = base.ORIENTATION_HORIZONTAL

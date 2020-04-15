@@ -23,7 +23,6 @@
     This program is carefully crafted to exercise a number of corner-cases in
     Qtile.
 """
-from __future__ import print_function
 import sys
 import time
 import xcffib
@@ -38,6 +37,7 @@ def configure(window):
         y=0,
         border_width=1,
     )
+
 
 for i in range(20):
     try:

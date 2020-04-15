@@ -46,14 +46,14 @@ class WindowTabs(base._TextBox):
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
-        hook.subscribe.window_name_change(self.update)
+        hook.subscribe.client_name_updated(self.update)
         hook.subscribe.focus_change(self.update)
         hook.subscribe.float_change(self.update)
 
     def button_press(self, x, y, button):
         self.bar.screen.group.cmd_next_window()
 
-    def update(self):
+    def update(self, *args):
         names = []
         for w in self.bar.screen.group.windows:
             state = ''
@@ -66,7 +66,7 @@ class WindowTabs(base._TextBox):
             elif w.floating:
                 state = 'V '
             task = "%s%s" % (state, w.name if w and w.name else " ")
-            if w is self.bar.screen.group.currentWindow:
+            if w is self.bar.screen.group.current_window:
                 task = task.join(self.selected)
             names.append(task)
         self.text = self.separator.join(names)

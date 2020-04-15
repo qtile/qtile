@@ -18,9 +18,9 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 import os
 from . import base
+
 
 class DF(base.ThreadedPollText):
     """Disk Free Widget
@@ -34,15 +34,16 @@ class DF(base.ThreadedPollText):
         ('warn_space', 2, 'Warning space in scale defined by the ``measure`` option.'),
         ('visible_on_warn', True, 'Only display if warning'),
         ('measure', "G", "Measurement (G, M, B)"),
-        ('format', '{p} ({uf}{m})',
+        ('format', '{p} ({uf}{m}|{r:.0f}%)',
             'String format (p: partition, s: size, '
-            'f: free space, uf: user free space, m: measure)'),
+            'f: free space, uf: user free space, m: measure, r: ratio (uf/s))'),
         ('update_interval', 60, 'The update interval.'),
     ]
 
     measures = {"G": 1024 * 1024 * 1024,
                 "M": 1024 * 1024,
                 "B": 1024}
+
     def __init__(self, **config):
         base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(DF.defaults)
@@ -67,7 +68,9 @@ class DF(base.ThreadedPollText):
         if self.visible_on_warn and self.user_free >= self.warn_space:
             text = ""
         else:
-            text = self.format.format(p=self.partition, s=size, f=free,
-                    uf=self.user_free, m=self.measure)
+            text = self.format.format(
+                p=self.partition, s=size, f=free,
+                uf=self.user_free, m=self.measure,
+                r=(size - self.user_free) / size * 100)
 
         return text

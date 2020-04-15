@@ -22,19 +22,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
 import pytest
-import time
-import six
+import tempfile
 
 import libqtile.layout
 import libqtile.bar
 import libqtile.widget
-import libqtile.manager
 import libqtile.config
 import libqtile.confreader
 
 
-class GBConfig(object):
+class GBConfig:
     auto_fullscreen = True
     keys = []
     mouse = []
@@ -106,7 +105,18 @@ def test_completion():
     c.reset()
     assert c.complete("/bin") != "/bin/"
     c.reset()
-    assert c.complete("~") != "~"
+
+    home_dir = os.path.expanduser("~")
+    with tempfile.TemporaryDirectory(prefix="qtile_test_",
+                                     dir=home_dir) as absolute_tmp_path:
+        tmp_dirname = absolute_tmp_path[len(home_dir + os.sep):]
+        user_input = os.path.join("~", tmp_dirname)
+        assert c.complete(user_input) == user_input
+
+        c.reset()
+        test_bin_dir = os.path.join(absolute_tmp_path, "qtile-test-bin")
+        os.mkdir(test_bin_dir)
+        assert c.complete(user_input) == os.path.join(user_input, "qtile-test-bin") + os.sep
 
     c.reset()
     s = "thisisatotallynonexistantpathforsure"
@@ -117,7 +127,7 @@ def test_completion():
 
 @gb_config
 def test_draw(qtile):
-    qtile.testWindow("one")
+    qtile.test_window("one")
     b = qtile.c.bar["bottom"].info()
     assert b["widgets"][0]["name"] == "groupbox"
 
@@ -150,7 +160,6 @@ def test_textbox(qtile):
     assert qtile.c.widget["text"].get() == s
     qtile.c.group["Pppy"].toscreen()
     qtile.c.widget["text"].set_font(fontsize=12)
-    time.sleep(3)
 
 
 @gb_config
@@ -158,7 +167,7 @@ def test_textbox_errors(qtile):
     qtile.c.widget["text"].update(None)
     qtile.c.widget["text"].update("".join(chr(i) for i in range(255)))
     qtile.c.widget["text"].update("V\xE2r\xE2na\xE7\xEE")
-    qtile.c.widget["text"].update(six.u("\ua000"))
+    qtile.c.widget["text"].update("\ua000")
 
 
 @gb_config
@@ -169,7 +178,7 @@ def test_groupbox_button_press(qtile):
     assert qtile.c.groups()["a"]["screen"] == 0
 
 
-class GeomConf(object):
+class GeomConf:
     auto_fullscreen = False
     main = None
     keys = []
@@ -207,14 +216,14 @@ class DBarV(libqtile.bar.Bar):
         self.horizontal = False
 
 
-class DWidget(object):
+class DWidget:
     def __init__(self, length, length_type):
         self.length, self.length_type = length, length_type
 
 
 @geom_config
 def test_geometry(qtile):
-    qtile.testXeyes()
+    qtile.test_xeyes()
     g = qtile.c.screens()[0]["gaps"]
     assert g["top"] == (0, 0, 800, 10)
     assert g["bottom"] == (0, 590, 800, 10)
@@ -243,54 +252,54 @@ def test_resize(qtile):
     def offy(l):
         return [i.offsety for i in l]
 
-    for DBar, off in ((DBarH, offx), (DBarV, offy)):
+    for DBar, off in ((DBarH, offx), (DBarV, offy)):  # noqa: N806
         b = DBar([], 100)
 
-        l = [
+        dwidget_list = [
             DWidget(10, libqtile.bar.CALCULATED),
             DWidget(None, libqtile.bar.STRETCH),
             DWidget(None, libqtile.bar.STRETCH),
             DWidget(10, libqtile.bar.CALCULATED),
         ]
-        b._resize(100, l)
-        assert wd(l) == [10, 40, 40, 10]
-        assert off(l) == [0, 10, 50, 90]
+        b._resize(100, dwidget_list)
+        assert wd(dwidget_list) == [10, 40, 40, 10]
+        assert off(dwidget_list) == [0, 10, 50, 90]
 
-        b._resize(101, l)
-        assert wd(l) == [10, 40, 41, 10]
-        assert off(l) == [0, 10, 50, 91]
+        b._resize(101, dwidget_list)
+        assert wd(dwidget_list) == [10, 40, 41, 10]
+        assert off(dwidget_list) == [0, 10, 50, 91]
 
-        l = [
+        dwidget_list = [
             DWidget(10, libqtile.bar.CALCULATED)
         ]
-        b._resize(100, l)
-        assert wd(l) == [10]
-        assert off(l) == [0]
+        b._resize(100, dwidget_list)
+        assert wd(dwidget_list) == [10]
+        assert off(dwidget_list) == [0]
 
-        l = [
+        dwidget_list = [
             DWidget(10, libqtile.bar.CALCULATED),
             DWidget(None, libqtile.bar.STRETCH)
         ]
-        b._resize(100, l)
-        assert wd(l) == [10, 90]
-        assert off(l) == [0, 10]
+        b._resize(100, dwidget_list)
+        assert wd(dwidget_list) == [10, 90]
+        assert off(dwidget_list) == [0, 10]
 
-        l = [
+        dwidget_list = [
             DWidget(None, libqtile.bar.STRETCH),
             DWidget(10, libqtile.bar.CALCULATED),
         ]
-        b._resize(100, l)
-        assert wd(l) == [90, 10]
-        assert off(l) == [0, 90]
+        b._resize(100, dwidget_list)
+        assert wd(dwidget_list) == [90, 10]
+        assert off(dwidget_list) == [0, 90]
 
-        l = [
+        dwidget_list = [
             DWidget(10, libqtile.bar.CALCULATED),
             DWidget(None, libqtile.bar.STRETCH),
             DWidget(10, libqtile.bar.CALCULATED),
         ]
-        b._resize(100, l)
-        assert wd(l) == [10, 80, 10]
-        assert off(l) == [0, 10, 90]
+        b._resize(100, dwidget_list)
+        assert wd(dwidget_list) == [10, 80, 10]
+        assert off(dwidget_list) == [0, 10, 90]
 
 
 class ExampleWidget(libqtile.widget.base._Widget):
@@ -303,7 +312,7 @@ class ExampleWidget(libqtile.widget.base._Widget):
         pass
 
 
-class IncompatibleWidgetConf(object):
+class IncompatibleWidgetConf:
     main = None
     keys = []
     mouse = []
@@ -332,7 +341,7 @@ def test_incompatible_widget(qtile_nospawn):
         qtile_nospawn.create_manager(config)
 
 
-class MultiStretchConf(object):
+class MultiStretchConf:
     main = None
     keys = []
     mouse = []

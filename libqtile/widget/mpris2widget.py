@@ -25,6 +25,7 @@ import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 from . import base
 
+
 class Mpris2(base._TextBox):
     """An MPRIS 2 widget
 
@@ -53,23 +54,38 @@ class Mpris2(base._TextBox):
         ('scroll_interval', 0.5, 'Scroll delay interval.'),
         ('scroll_wait_intervals', 8, 'Wait x scroll_interval before'
             'scrolling/removing text'),
+
+        ('stop_pause_text', None, "Optional text to display when in the stopped/paused state"),
     ]
 
     def __init__(self, **config):
         base._TextBox.__init__(self, '', **config)
-        self.add_defaults(self.__class__.defaults)
-
-        dbus_loop = DBusGMainLoop()
-        bus = dbus.SessionBus(mainloop=dbus_loop)
-        bus.add_signal_receiver(self.update, 'PropertiesChanged',
-            'org.freedesktop.DBus.Properties', self.objname,
-            '/org/mpris/MediaPlayer2')
+        self.add_defaults(Mpris2.defaults)
 
         self.scrolltext = None
         self.displaytext = ''
         self.is_playing = False
         self.scroll_timer = None
         self.scroll_counter = None
+        self.dbus_loop = None
+
+    def _configure(self, qtile, bar):
+        base._TextBox._configure(self, qtile, bar)
+
+        # we don't need to reconnect all the dbus stuff if we already
+        # connected it.
+        if self.dbus_loop is not None:
+            return
+
+        # we need a main loop to get event signals
+        # we just piggyback on qtile's main loop
+        self.dbus_loop = DBusGMainLoop()
+        self.bus = dbus.SessionBus(mainloop=self.dbus_loop)
+        self.bus.add_signal_receiver(
+            self.update, 'PropertiesChanged',
+            'org.freedesktop.DBus.Properties', self.objname,
+            '/org/mpris/MediaPlayer2'
+        )
 
     def update(self, interface_name, changed_properties, invalidated_properties):
         """http://specifications.freedesktop.org/mpris-spec/latest/Track_List_Interface.html#Mapping:Metadata_Map"""
@@ -84,14 +100,18 @@ class Mpris2(base._TextBox):
         playbackstatus = changed_properties.get('PlaybackStatus')
         if metadata:
             self.is_playing = True
-            self.displaytext = ' - '.join([metadata.get(x)
+            self.displaytext = ' - '.join([
+                metadata.get(x)
                 if isinstance(metadata.get(x), dbus.String)
-                else ' + '.join([y for y in metadata.get(x)
-                if isinstance(y, dbus.String)])
-                for x in self.display_metadata if metadata.get(x)])
+                else ' + '.join(y for y in metadata.get(x) if isinstance(y, dbus.String))
+                for x in self.display_metadata if metadata.get(x)
+            ])
             self.displaytext.replace('\n', '')
         if playbackstatus:
-            if playbackstatus == 'Paused' and olddisplaytext:
+            if playbackstatus == 'Paused' and self.stop_pause_text is not None:
+                self.is_playing = False
+                self.displaytext = self.stop_pause_text
+            elif playbackstatus == 'Paused' and olddisplaytext:
                 self.is_playing = False
                 self.displaytext = 'Paused: {}'.format(olddisplaytext)
             elif playbackstatus == 'Paused':
@@ -106,7 +126,8 @@ class Mpris2(base._TextBox):
                 self.is_playing = True
                 self.displaytext = 'No metadata for current track'
             elif playbackstatus == 'Playing' and self.displaytext:
-                self.playbackstatus = True
+                # Players might send more than one "Playing" message.
+                pass
             else:
                 self.is_playing = False
                 self.displaytext = ''
@@ -116,8 +137,7 @@ class Mpris2(base._TextBox):
                 self.scroll_timer.cancel()
             self.scrolltext = self.displaytext
             self.scroll_counter = self.scroll_wait_intervals
-            self.scroll_timer = self.timeout_add(self.scroll_interval,
-                    self.scroll_text)
+            self.scroll_timer = self.timeout_add(self.scroll_interval, self.scroll_text)
             return
         if self.text != self.displaytext:
             self.text = self.displaytext

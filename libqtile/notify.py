@@ -32,45 +32,47 @@ try:
     import dbus
     from dbus import service
     from dbus.mainloop.glib import DBusGMainLoop
+    DBusGMainLoop(set_as_default=True)
+    has_dbus = True
 except ImportError:
-    dbus = None
+    has_dbus = False
 
 BUS_NAME = 'org.freedesktop.Notifications'
 SERVICE_PATH = '/org/freedesktop/Notifications'
 
-if dbus:
+if has_dbus:
     class NotificationService(service.Object):
         def __init__(self, manager):
-            bus_name = service.BusName(BUS_NAME, bus=dbus.SessionBus())
+            bus = dbus.SessionBus()
+            bus.request_name(BUS_NAME)
+            bus_name = service.BusName(BUS_NAME, bus=bus)
             service.Object.__init__(self, bus_name, SERVICE_PATH)
             self.manager = manager
 
         @service.method(BUS_NAME, in_signature='', out_signature='as')
-        def GetCapabilities(self):
+        def GetCapabilities(self):  # noqa: N802
             return ('body')
 
-        @service.method(
-            BUS_NAME, in_signature='susssasa{sv}i', out_signature='u'
-        )
-        def Notify(self, app_name, replaces_id, app_icon, summary,
+        @service.method(BUS_NAME, in_signature='susssasa{sv}i', out_signature='u')
+        def Notify(self, app_name, replaces_id, app_icon, summary,  # noqa: N802
                    body, actions, hints, timeout):
             notif = Notification(summary, body, timeout, hints)
             return self.manager.add(notif)
 
         @service.method(BUS_NAME, in_signature='u', out_signature='')
-        def CloseNotification(self, id):
+        def CloseNotification(self, id):  # noqa: N802
             pass
 
         @service.signal(BUS_NAME, signature='uu')
-        def NotificationClosed(self, id_in, reason_in):
+        def NotificationClosed(self, id_in, reason_in):  # noqa: N802
             pass
 
         @service.method(BUS_NAME, in_signature='', out_signature='ssss')
-        def GetServerInformation(self):
+        def GetServerInformation(self):  # noqa: N802
             return ("qtile-notify-daemon", "qtile", "1.0", "1")
 
 
-class Notification(object):
+class Notification:
     def __init__(self, summary, body='', timeout=-1, hints=None):
         self.summary = summary
         self.hints = hints or {}
@@ -78,7 +80,7 @@ class Notification(object):
         self.timeout = timeout
 
 
-class NotificationManager(object):
+class NotificationManager:
     def __init__(self):
         self.notifications = []
         self.callbacks = []
@@ -86,9 +88,8 @@ class NotificationManager(object):
 
     @property
     def service(self):
-        if dbus and self._service is None:
+        if has_dbus and self._service is None:
             try:
-                DBusGMainLoop(set_as_default=True)
                 self._service = NotificationService(self)
             except Exception:
                 logger.exception('Dbus connection failed')

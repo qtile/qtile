@@ -33,8 +33,11 @@
 from .log_utils import logger
 from . import utils
 
-subscriptions = {}
-SKIPLOG = set()
+from typing import Dict, Set  # noqa: F401
+
+
+subscriptions = {}  # type: Dict
+SKIPLOG = set()  # type: Set
 qtile = None
 
 
@@ -47,7 +50,7 @@ def clear():
     subscriptions.clear()
 
 
-class Subscribe(object):
+class Subscribe:
     def __init__(self):
         hooks = set([])
         for i in dir(self):
@@ -59,6 +62,7 @@ class Subscribe(object):
         lst = subscriptions.setdefault(event, [])
         if func not in lst:
             lst.append(func)
+        return func
 
     def startup_once(self, func):
         """Called when Qtile has started on first start
@@ -158,10 +162,13 @@ class Subscribe(object):
     def window_name_change(self, func):
         """Called whenever a windows name changes
 
+        Deprecated: use client_name_updated
         **Arguments**
 
         None
         """
+        msg = 'window_name_change is deprecated, use client_name_updated instead'
+        logger.warning(msg, DeprecationWarning)
         return self._subscribe("window_name_change", func)
 
     def client_new(self, func):
@@ -244,7 +251,9 @@ class Subscribe(object):
     def client_name_updated(self, func):
         """Called when the client name changes
 
-        Never fires
+        **Arguments**
+
+            * ``window.Window`` of client with updated name
         """
         return self._subscribe("client_name_updated", func)
 
@@ -329,6 +338,7 @@ class Subscribe(object):
         """
         return self._subscribe("current_screen_change", func)
 
+
 subscribe = Subscribe()
 
 
@@ -347,6 +357,7 @@ class Unsubscribe(Subscribe):
                 " currently subscribed"
             )
 
+
 unsubscribe = Unsubscribe()
 
 
@@ -354,9 +365,15 @@ def fire(event, *args, **kwargs):
     if event not in subscribe.hooks:
         raise utils.QtileError("Unknown event: %s" % event)
     if event not in SKIPLOG:
-        logger.info("Internal event: %s(%s, %s)", event, args, kwargs)
+        logger.debug("Internal event: %s(%s, %s)", event, args, kwargs)
     for i in subscriptions.get(event, []):
         try:
             i(*args, **kwargs)
-        except:
+        except:  # noqa: E722
             logger.exception("Error in hook %s", event)
+
+
+@subscribe.client_name_updated
+def _fire_window_name_change(window):
+    "This should eventually be removed"
+    fire("window_name_change")

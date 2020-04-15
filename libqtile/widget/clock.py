@@ -21,22 +21,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from time import time
-from datetime import datetime, timedelta
-from contextlib import contextmanager
+import sys
+import time
+from datetime import datetime, timedelta, timezone
 from . import base
+from ..log_utils import logger
 
-import os
+try:
+    import pytz
+except ImportError:
+    pass
 
-@contextmanager
-def tz(the_tz):
-    orig = os.environ.get('TZ')
-    os.environ['TZ'] = the_tz
-    yield
-    if orig is not None:
-        os.environ['TZ'] = orig
-    else:
-        del os.environ['TZ']
 
 class Clock(base.InLoopPollText):
     """A simple but flexible text-based clock"""
@@ -44,31 +39,36 @@ class Clock(base.InLoopPollText):
     defaults = [
         ('format', '%H:%M', 'A Python datetime format string'),
         ('update_interval', 1., 'Update interval for the clock'),
-        ('timezone', None, 'The timezone to use for this clock, '
-            'e.g. "US/Central" (or anything in /usr/share/zoneinfo). None means '
-            'the default timezone.')
+        ('timezone', None, 'The timezone to use for this clock, either as'
+         ' string if pytz is installed (e.g. "US/Central" or anything in'
+         ' /usr/share/zoneinfo), or as tzinfo (e.g. datetime.timezone.utc).'
+         ' None means the system local timezone and is the default.')
     ]
     DELTA = timedelta(seconds=0.5)
 
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(Clock.defaults)
+        if isinstance(self.timezone, str):
+            if "pytz" in sys.modules:
+                self.timezone = pytz.timezone(self.timezone)
+            else:
+                logger.warning('Clock widget can not infer its timezone from a'
+                               ' string without the pytz library. Install pytz'
+                               ' or give it a datetime.tzinfo instance.')
+        if self.timezone is None:
+            logger.info('Defaulting to the system local timezone.')
 
     def tick(self):
         self.update(self.poll())
-        return self.update_interval - time() % self.update_interval
+        return self.update_interval - time.time() % self.update_interval
 
     # adding .5 to get a proper seconds value because glib could
     # theoreticaly call our method too early and we could get something
     # like (x-1).999 instead of x.000
-    def _get_time(self):
-        return (datetime.now() + self.DELTA).strftime(self.format)
-
     def poll(self):
-        # We use None as a sentinel here because C's strftime defaults to UTC
-        # if TZ=''.
-        if self.timezone is not None:
-            with tz(self.timezone):
-                return self._get_time()
+        if self.timezone:
+            now = datetime.now(timezone.utc).astimezone(self.timezone)
         else:
-            return self._get_time()
+            now = datetime.now(timezone.utc).astimezone()
+        return (now + self.DELTA).strftime(self.format)

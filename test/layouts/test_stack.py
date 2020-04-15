@@ -28,12 +28,12 @@
 import pytest
 
 from libqtile import layout
-import libqtile.manager
 import libqtile.config
 from ..conftest import no_xinerama
+from .layout_utils import assert_focused, assert_focus_path
 
 
-class StackConfig(object):
+class StackConfig:
     auto_fullscreen = True
     main = None
     groups = [
@@ -53,8 +53,8 @@ class StackConfig(object):
     follow_mouse_focus = False
 
 
-stack_config = lambda x: \
-    no_xinerama(pytest.mark.parametrize("qtile", [StackConfig], indirect=True)(x))
+def stack_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [StackConfig], indirect=True)(x))
 
 
 def _stacks(self):
@@ -69,13 +69,13 @@ def _stacks(self):
 @stack_config
 def test_stack_commands(qtile):
     assert qtile.c.layout.info()["current_stack"] == 0
-    qtile.testWindow("one")
+    qtile.test_window("one")
     assert _stacks(qtile) == [["one"], []]
     assert qtile.c.layout.info()["current_stack"] == 0
-    qtile.testWindow("two")
+    qtile.test_window("two")
     assert _stacks(qtile) == [["one"], ["two"]]
     assert qtile.c.layout.info()["current_stack"] == 1
-    qtile.testWindow("three")
+    qtile.test_window("three")
     assert _stacks(qtile) == [["one"], ["three", "two"]]
     assert qtile.c.layout.info()["current_stack"] == 1
 
@@ -100,10 +100,10 @@ def test_stack_cmd_down(qtile):
 
 @stack_config
 def test_stack_addremove(qtile):
-    one = qtile.testWindow("one")
+    one = qtile.test_window("one")
     qtile.c.layout.next()
-    two = qtile.testWindow("two")
-    three = qtile.testWindow("three")
+    two = qtile.test_window("two")
+    three = qtile.test_window("three")
     assert _stacks(qtile) == [['one'], ['three', 'two']]
     assert qtile.c.layout.info()["current_stack"] == 1
     qtile.kill_window(three)
@@ -111,7 +111,7 @@ def test_stack_addremove(qtile):
     qtile.kill_window(two)
     assert qtile.c.layout.info()["current_stack"] == 0
     qtile.c.layout.next()
-    two = qtile.testWindow("two")
+    two = qtile.test_window("two")
     qtile.c.layout.next()
     assert qtile.c.layout.info()["current_stack"] == 0
     qtile.kill_window(one)
@@ -121,25 +121,25 @@ def test_stack_addremove(qtile):
 @stack_config
 def test_stack_rotation(qtile):
     qtile.c.layout.delete()
-    qtile.testWindow("one")
-    qtile.testWindow("two")
-    qtile.testWindow("three")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("three")
     assert _stacks(qtile) == [["three", "two", "one"]]
     qtile.c.layout.down()
-    assert _stacks(qtile) == [["one", "three", "two"]]
+    assert _stacks(qtile) == [["two", "one", "three"]]
     qtile.c.layout.up()
     assert _stacks(qtile) == [["three", "two", "one"]]
     qtile.c.layout.down()
     qtile.c.layout.down()
-    assert _stacks(qtile) == [["two", "one", "three"]]
+    assert _stacks(qtile) == [["one", "three", "two"]]
 
 
 @stack_config
 def test_stack_nextprev(qtile):
     qtile.c.layout.add()
-    one = qtile.testWindow("one")
-    two = qtile.testWindow("two")
-    three = qtile.testWindow("three")
+    one = qtile.test_window("one")
+    two = qtile.test_window("two")
+    three = qtile.test_window("three")
 
     assert qtile.c.groups()["a"]["focus"] == "three"
     qtile.c.layout.next()
@@ -175,17 +175,17 @@ def test_stack_nextprev(qtile):
 @stack_config
 def test_stack_window_removal(qtile):
     qtile.c.layout.next()
-    one = qtile.testWindow("one")
-    two = qtile.testWindow("two")
+    qtile.test_window("one")
+    two = qtile.test_window("two")
     qtile.c.layout.down()
     qtile.kill_window(two)
 
 
 @stack_config
 def test_stack_split(qtile):
-    one = qtile.testWindow("one")
-    two = qtile.testWindow("two")
-    three = qtile.testWindow("three")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("three")
     stacks = qtile.c.layout.info()["stacks"]
     assert not stacks[1]["split"]
     qtile.c.layout.toggle_split()
@@ -196,9 +196,9 @@ def test_stack_split(qtile):
 @stack_config
 def test_stack_shuffle(qtile):
     qtile.c.next_layout()
-    one = qtile.testWindow("one")
-    two = qtile.testWindow("two")
-    three = qtile.testWindow("three")
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("three")
 
     stack = qtile.c.layout.info()["stacks"][0]
     assert stack["clients"][stack["current"]] == "three"
@@ -214,8 +214,8 @@ def test_stack_shuffle(qtile):
 
 @stack_config
 def test_stack_client_to(qtile):
-    one = qtile.testWindow("one")
-    two = qtile.testWindow("two")
+    qtile.test_window("one")
+    qtile.test_window("two")
     assert qtile.c.layout.info()["stacks"][0]["clients"] == ["one"]
     qtile.c.layout.client_to_previous()
     assert qtile.c.layout.info()["stacks"][0]["clients"] == ["two", "one"]
@@ -228,5 +228,25 @@ def test_stack_client_to(qtile):
 
 @stack_config
 def test_stack_info(qtile):
-    one = qtile.testWindow("one")
+    qtile.test_window("one")
     assert qtile.c.layout.info()["stacks"]
+
+
+@stack_config
+def test_stack_window_focus_cycle(qtile):
+    # setup 3 tiled and two floating clients
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("float1")
+    qtile.c.window.toggle_floating()
+    qtile.test_window("float2")
+    qtile.c.window.toggle_floating()
+    qtile.test_window("three")
+
+    # test preconditions, stack adds clients at pos of current
+    assert qtile.c.layout.info()['clients'] == ['three', 'one', 'two']
+    # last added window has focus
+    assert_focused(qtile, "three")
+
+    # assert window focus cycle, according to order in layout
+    assert_focus_path(qtile, 'one', 'two', 'float1', 'float2', 'three')

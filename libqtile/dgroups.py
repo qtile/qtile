@@ -26,7 +26,6 @@
 # SOFTWARE.
 
 import collections
-import six
 
 import libqtile.hook
 from libqtile.config import Key
@@ -42,7 +41,7 @@ def simple_key_binder(mod, keynames=None):
     def func(dgroup):
         # unbind all
         for key in dgroup.keys[:]:
-            dgroup.qtile.unmapKey(key)
+            dgroup.qtile.ungrab_key(key)
             dgroup.keys.remove(key)
 
         if keynames:
@@ -64,20 +63,20 @@ def simple_key_binder(mod, keynames=None):
             dgroup.keys.append(key)
             dgroup.keys.append(key_s)
             dgroup.keys.append(key_c)
-            dgroup.qtile.mapKey(key)
-            dgroup.qtile.mapKey(key_s)
-            dgroup.qtile.mapKey(key_c)
+            dgroup.qtile.grab_key(key)
+            dgroup.qtile.grab_key(key_s)
+            dgroup.qtile.grab_key(key_c)
 
     return func
 
 
-class DGroups(object):
+class DGroups:
     """Dynamic Groups"""
     def __init__(self, qtile, dgroups, key_binder=None, delay=1):
         self.qtile = qtile
 
         self.groups = dgroups
-        self.groupMap = {}
+        self.groups_map = {}
 
         self.rules = []
         self.rules_map = {}
@@ -116,18 +115,18 @@ class DGroups(object):
             logger.warn('Rule "%s" not found', rule_id)
 
     def add_dgroup(self, group, start=False):
-        self.groupMap[group.name] = group
+        self.groups_map[group.name] = group
         rules = [Rule(m, group=group.name) for m in group.matches]
         self.rules.extend(rules)
         if start:
-            self.qtile.addGroup(group.name, group.layout, group.layouts)
+            self.qtile.add_group(group.name, group.layout, group.layouts, group.label)
 
     def _setup_groups(self):
         for group in self.groups:
             self.add_dgroup(group, group.init)
 
             if group.spawn and not self.qtile.no_spawn:
-                if isinstance(group.spawn, six.string_types):
+                if isinstance(group.spawn, str):
                     spawns = [group.spawn]
                 else:
                     spawns = group.spawn
@@ -148,7 +147,7 @@ class DGroups(object):
             )
 
     def _addgroup(self, qtile, group_name):
-        if group_name not in self.groupMap:
+        if group_name not in self.groups_map:
             self.add_dgroup(Group(group_name, persist=False))
 
     def _add(self, client):
@@ -172,21 +171,21 @@ class DGroups(object):
             # Matching Rules
             if rule.matches(client):
                 if rule.group:
-                    try:
-                        layout = self.groupMap[rule.group].layout
-                    except KeyError:
+                    if rule.group in self.groups_map:
+                        layout = self.groups_map[rule.group].layout
+                        layouts = self.groups_map[rule.group].layouts
+                        label = self.groups_map[rule.group].label
+                    else:
                         layout = None
-                    try:
-                        layouts = self.groupMap[rule.group].layouts
-                    except KeyError:
                         layouts = None
-                    group_added = self.qtile.addGroup(rule.group, layout, layouts)
+                        label = None
+                    group_added = self.qtile.add_group(rule.group, layout, layouts, label)
                     client.togroup(rule.group)
 
                     group_set = True
 
-                    group_obj = self.qtile.groupMap[rule.group]
-                    group = self.groupMap.get(rule.group)
+                    group_obj = self.qtile.groups_map[rule.group]
+                    group = self.groups_map.get(rule.group)
                     if group and group_added:
                         for k, v in list(group.layout_opts.items()):
                             if isinstance(v, collections.Callable):
@@ -195,7 +194,7 @@ class DGroups(object):
                                 setattr(group_obj.layout, k, v)
                         affinity = group.screen_affinity
                         if affinity and len(self.qtile.screens) > affinity:
-                            self.qtile.screens[affinity].setGroup(group_obj)
+                            self.qtile.screens[affinity].set_group(group_obj)
 
                 if rule.float:
                     client.enablefloating()
@@ -208,9 +207,9 @@ class DGroups(object):
 
         # If app doesn't have a group
         if not group_set:
-            current_group = self.qtile.currentGroup.name
-            if current_group in self.groupMap and \
-                    self.groupMap[current_group].exclusive and \
+            current_group = self.qtile.current_group.name
+            if current_group in self.groups_map and \
+                    self.groups_map[current_group].exclusive and \
                     not intrusive:
 
                 wm_class = client.window.get_wm_class()
@@ -230,23 +229,26 @@ class DGroups(object):
         self.sort_groups()
 
     def sort_groups(self):
-        self.qtile.groups.sort(key=lambda g: self.groupMap[g.name].position)
-        libqtile.hook.fire("setgroup")
+        grps = self.qtile.groups
+        sorted_grps = sorted(grps, key=lambda g: self.groups_map[g.name].position)
+        if grps != sorted_grps:
+            self.qtile.groups = sorted_grps
+            libqtile.hook.fire("changegroup")
 
     def _del(self, client):
         group = client.group
 
         def delete_client():
             # Delete group if empty and don't persist
-            if group and group.name in self.groupMap and \
-                    not self.groupMap[group.name].persist and \
+            if group and group.name in self.groups_map and \
+                    not self.groups_map[group.name].persist and \
                     len(group.windows) <= 0:
-                self.qtile.delGroup(group.name)
+                self.qtile.delete_group(group.name)
                 self.sort_groups()
             del self.timeout[client]
 
         # Wait the delay until really delete the group
-        logger.info('Add dgroup timer')
+        logger.info('Add dgroup timer with delay {}s'.format(self.delay))
         self.timeout[client] = self.qtile.call_later(
             self.delay, delete_client
         )

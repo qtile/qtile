@@ -38,6 +38,96 @@ background="#000000")` will give you a black back ground (the default), while
 :code:`bar.Bar(..., background=["#000000", "#FFFFFF"])` will give you a
 background that fades from black to white.
 
+Fake Screens
+============
+
+instead of using the variable `screens` the variable `fake_screens` can be used to set split a physical monitor into multiple screens.
+They can be used like this:
+
+::
+
+    from libqtile.config import Screen
+    from libqtile import bar, widget
+
+    # screens look like this
+    #     600         300
+    #  |-------------|-----|
+    #  |          480|     |580
+    #  |   A         |  B  |
+    #  |----------|--|     |
+    #  |       400|--|-----|
+    #  |   C      |        |400
+    #  |----------|   D    |
+    #     500     |--------|
+    #                 400
+    #
+    # Notice there is a hole in the middle
+    # also D goes down below the others
+
+    fake_screens = [
+      Screen(
+          bottom=bar.Bar(
+              [
+                  widget.Prompt(),
+                  widget.Sep(),
+                  widget.WindowName(),
+                  widget.Sep(),
+                  widget.Systray(),
+                  widget.Sep(),
+                  widget.Clock(format='%H:%M:%S %d.%m.%Y')
+              ],
+              24,
+              background="#555555"
+          ),
+          x=0,
+          y=0,
+          width=600,
+          height=480
+      ),
+      Screen(
+          top=bar.Bar(
+              [
+                  widget.GroupBox(),
+                  widget.WindowName(),
+                  widget.Clock()
+              ],
+              30,
+          ),
+          x=600,
+          y=0,
+          width=300,
+          height=580
+      ),
+      Screen(
+          top=bar.Bar(
+              [
+                  widget.GroupBox(),
+                  widget.WindowName(),
+                  widget.Clock()
+              ],
+              30,
+          ),
+          x=0,
+          y=480,
+          width=500,
+          height=400
+      ),
+      Screen(
+          top=bar.Bar(
+              [
+                  widget.GroupBox(),
+                  widget.WindowName(),
+                  widget.Clock()
+              ],
+              30,
+          ),
+          x=500,
+          y=580,
+          width=400,
+          height=400
+      ),
+    ]
+
 Third-party bars
 ================
 

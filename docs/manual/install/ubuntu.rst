@@ -2,14 +2,14 @@
 Installing on Debian or Ubuntu
 ==============================
 
-On recent Ubuntu (Yakkety+) and Debian unstable (Sid) versions, there are Qtile
-packages available via:
+On recent Ubuntu (17.04 or greater) and Debian unstable versions, there are
+Qtile packages available via:
 
 .. code-block:: bash
 
     sudo apt-get install qtile
 
-On older versions of Ubuntu (Wily+) and Debian testing (Stretch), the
+On older versions of Ubuntu (15.10 to 16.10) and Debian 9, the
 dependencies are available via:
 
 .. code-block:: bash

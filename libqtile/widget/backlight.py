@@ -22,19 +22,29 @@
 # SOFTWARE.
 
 import os
-from . import base
+import shlex
 
 from libqtile.log_utils import logger
+from . import base
+
+from typing import Dict  # noqa: F401
 
 BACKLIGHT_DIR = '/sys/class/backlight'
 
-FORMAT = '{percent: 2.0%}'
-
 
 class Backlight(base.InLoopPollText):
-    """A simple widget to show the current brightness of a monitor"""
+    """A simple widget to show the current brightness of a monitor.
 
-    filenames = {}
+    If the change_command parameter is set to None, the widget will attempt to
+    use the interface at /sys/class to change brightness. Depending on the
+    setup, the user may need to be added to the video group to have permission
+    to write to this interface. This depends on having the correct udev rules
+    the brightness file; these are typically installed alongside brightness
+    tools such as brightnessctl (which changes the group to 'video') so
+    installing that is an easy way to get it working.
+    """
+
+    filenames = {}  # type: Dict
 
     orientations = base.ORIENTATION_HORIZONTAL
 
@@ -53,7 +63,9 @@ class Backlight(base.InLoopPollText):
             'maximum brightness in /sys/class/backlight/backlight_name'
         ),
         ('update_interval', .2, 'The delay in seconds between updates'),
-        ('step', 10, 'Percent of backlight every scroll changed')
+        ('step', 10, 'Percent of backlight every scroll changed'),
+        ('format', '{percent: 2.0%}', 'Display format'),
+        ('change_command', 'xbacklight -set {0}', 'Execute command to change value')
     ]
 
     def __init__(self, **config):
@@ -61,48 +73,66 @@ class Backlight(base.InLoopPollText):
         self.add_defaults(Backlight.defaults)
         self.future = None
 
-    def _load_file(self, name):
+        self.brightness_file = os.path.join(
+            BACKLIGHT_DIR, self.backlight_name, self.brightness_file,
+        )
+        self.max_brightness_file = os.path.join(
+            BACKLIGHT_DIR, self.backlight_name, self.max_brightness_file,
+        )
+        self.max_value = self._load_file(self.max_brightness_file)
+        self.step = self.max_value * self.step / 100
+
+    def _load_file(self, path):
         try:
-            path = os.path.join(BACKLIGHT_DIR, self.backlight_name, name)
             with open(path, 'r') as f:
-                return f.read().strip()
-        except:
-            logger.exception("Failed to read file: %s" % name)
-            raise
+                return float(f.read().strip())
+        except FileNotFoundError:
+            logger.debug('Failed to get %s' % path)
+            raise RuntimeError(
+                'Unable to read status for {}'.format(os.path.basename(path))
+            )
 
     def _get_info(self):
-        try:
-            info = {
-                'brightness': float(self._load_file(self.brightness_file)),
-                'max': float(self._load_file(self.max_brightness_file)),
-            }
-        except:
-            return
+        brightness = self._load_file(self.brightness_file)
+
+        info = {
+            'brightness': brightness,
+            'max': self.max_value,
+        }
         return info
 
     def poll(self):
-        info = self._get_info()
-        if not info:
-            return 'Error'
+        try:
+            info = self._get_info()
+        except RuntimeError as e:
+            return 'Error: {}'.format(e)
 
         percent = info['brightness'] / info['max']
-        return FORMAT.format(percent=percent)
+        return self.format.format(percent=percent)
 
     def change_backlight(self, value):
-        self.call_process(["xbacklight", "-set", str(value)])
+        if self.change_command is None:
+            try:
+                with open(self.brightness_file, 'w') as f:
+                    f.write(str(round(value)))
+            except PermissionError:
+                logger.warning("Cannot set brightness: no write permission for {0}"
+                               .format(self.brightness_file))
+        else:
+            self.call_process(shlex.split(self.change_command.format(value)))
 
     def button_press(self, x, y, button):
         if self.future and not self.future.done():
             return
         info = self._get_info()
-        if info is False:
-            new = now = 100
+        if not info:
+            new = now = self.max_value
         else:
-            new = now = info["brightness"] / info["max"] * 100
+            new = now = info["brightness"]
         if button == 5:  # down
             new = max(now - self.step, 0)
         elif button == 4:  # up
-            new = min(now + self.step, 100)
+            new = min(now + self.step, self.max_value)
         if new != now:
             self.future = self.qtile.run_in_executor(self.change_backlight,
                                                      new)

@@ -25,10 +25,11 @@ import pytest
 from multiprocessing import Value
 
 import libqtile.log_utils
-import libqtile.manager
+import libqtile.core
 import libqtile.utils
 import libqtile.hook
 import logging
+from libqtile.resources import default_config
 
 from .conftest import BareConfig
 
@@ -36,7 +37,7 @@ from .conftest import BareConfig
 # 1. Check all hooks that can be fired
 
 
-class Call(object):
+class Call:
     def __init__(self, val):
         self.val = val
 
@@ -46,11 +47,11 @@ class Call(object):
 
 @pytest.yield_fixture
 def hook_fixture():
-    class Dummy(object):
+    class Dummy:
         pass
 
     dummy = Dummy()
-    libqtile.log_utils.init_log(logging.CRITICAL)
+    libqtile.log_utils.init_log(logging.CRITICAL, log_path=None, log_color=False)
     libqtile.hook.init(dummy)
 
     yield
@@ -66,35 +67,38 @@ def test_cannot_fire_unknown_event():
 @pytest.mark.usefixtures("hook_fixture")
 def test_hook_calls_subscriber():
     test = Call(0)
-    libqtile.manager.hook.subscribe.group_window_add(test)
-    libqtile.manager.hook.fire("group_window_add", 8)
+    libqtile.core.manager.hook.subscribe.group_window_add(test)
+    libqtile.core.manager.hook.fire("group_window_add", 8)
     assert test.val == 8
 
 
 @pytest.mark.usefixtures("hook_fixture")
 def test_subscribers_can_be_added_removed():
     test = Call(0)
-    libqtile.manager.hook.subscribe.group_window_add(test)
-    assert libqtile.manager.hook.subscriptions
-    libqtile.manager.hook.clear()
-    assert not libqtile.manager.hook.subscriptions
+    libqtile.core.manager.hook.subscribe.group_window_add(test)
+    assert libqtile.core.manager.hook.subscriptions
+    libqtile.core.manager.hook.clear()
+    assert not libqtile.core.manager.hook.subscriptions
 
 
 @pytest.mark.usefixtures("hook_fixture")
 def test_can_unsubscribe_from_hook():
     test = Call(0)
 
-    libqtile.manager.hook.subscribe.group_window_add(test)
-    libqtile.manager.hook.fire("group_window_add", 3)
+    libqtile.core.manager.hook.subscribe.group_window_add(test)
+    libqtile.core.manager.hook.fire("group_window_add", 3)
     assert test.val == 3
 
-    libqtile.manager.hook.unsubscribe.group_window_add(test)
-    libqtile.manager.hook.fire("group_window_add", 4)
+    libqtile.core.manager.hook.unsubscribe.group_window_add(test)
+    libqtile.core.manager.hook.fire("group_window_add", 4)
     assert test.val == 3
 
 
 def test_can_subscribe_to_startup_hooks(qtile_nospawn):
     config = BareConfig
+    for attr in dir(default_config):
+        if not hasattr(config, attr):
+            setattr(config, attr, getattr(default_config, attr))
     self = qtile_nospawn
 
     self.startup_once_calls = Value('i', 0)
@@ -110,9 +114,9 @@ def test_can_subscribe_to_startup_hooks(qtile_nospawn):
     def inc_startup_complete_calls():
         self.startup_complete_calls.value += 1
 
-    libqtile.manager.hook.subscribe.startup_once(inc_startup_once_calls)
-    libqtile.manager.hook.subscribe.startup(inc_startup_calls)
-    libqtile.manager.hook.subscribe.startup_complete(inc_startup_complete_calls)
+    libqtile.core.manager.hook.subscribe.startup_once(inc_startup_once_calls)
+    libqtile.core.manager.hook.subscribe.startup(inc_startup_calls)
+    libqtile.core.manager.hook.subscribe.startup_complete(inc_startup_complete_calls)
 
     self.start(config)
     self.start_qtile = True
@@ -120,3 +124,19 @@ def test_can_subscribe_to_startup_hooks(qtile_nospawn):
     assert self.startup_calls.value == 1
     assert self.startup_complete_calls.value == 1
     # TODO Restart and check that startup_once doesn't fire again
+
+
+@pytest.mark.usefixtures('hook_fixture')
+def test_can_update_by_selection_change(qtile):
+    test = Call(0)
+    libqtile.core.manager.hook.subscribe.selection_change(test)
+    libqtile.core.manager.hook.fire('selection_change', 'hello')
+    assert test.val == 'hello'
+
+
+@pytest.mark.usefixtures('hook_fixture')
+def test_can_call_by_selection_notify(qtile):
+    test = Call(0)
+    libqtile.core.manager.hook.subscribe.selection_notify(test)
+    libqtile.core.manager.hook.fire('selection_notify', 'hello')
+    assert test.val == 'hello'

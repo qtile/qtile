@@ -2,7 +2,7 @@
 Lazy objects
 ============
 
-The ``command.lazy`` object is a special helper object to specify a command for
+The ``lazy.lazy`` object is a special helper object to specify a command for
 later execution. This object acts like the root of the object graph, which
 means that we can specify a key binding command with the same syntax used to
 call the command through a script or through :doc:`/manual/commands/qshell`.
@@ -98,3 +98,16 @@ Window functions
       - Put the focused window to/from floating mode
     * - ``lazy.window.toggle_fullscreen()``
       - Put the focused window to/from fullscreen mode
+
+ScratchPad DropDown functions
+-----------------------------
+
+.. list-table::
+    :widths: 20 80
+    :header-rows: 1
+
+    * - function
+      - description
+    * - ``lazy.group["group_name"].dropdown_toggle("name")``
+      - Toggles the visibility of the specified DropDown window.
+        On first use, the configured process is spawned.

@@ -26,7 +26,6 @@
 
 from . import base
 
-import six
 import os.path
 import mailbox
 
@@ -35,10 +34,12 @@ class Maildir(base.ThreadedPollText):
     """A simple widget showing the number of new mails in maildir mailboxes"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("maildirPath", "~/Mail", "path to the Maildir folder"),
-        ("subFolders", [], 'The subfolders to scan (e.g. [{"path": "INBOX", '
+        ("maildir_path", "~/Mail", "path to the Maildir folder"),
+        ("sub_folders", [], 'The subfolders to scan (e.g. [{"path": "INBOX", '
             '"label": "Home mail"}, {"path": "spam", "label": "Home junk"}]'),
         ("separator", " ", "the string to put between the subfolder strings."),
+        ("total", False, "Whether or not to sum subfolders into a grand \
+            total. The first label will be used."),
     ]
 
     def __init__(self, **config):
@@ -47,10 +48,10 @@ class Maildir(base.ThreadedPollText):
 
         # if it looks like a list of strings then we just convert them
         # and use the name as the label
-        if isinstance(self.subFolders[0], six.string_types):
-            self.subFolders = [
+        if isinstance(self.sub_folders[0], str):
+            self.sub_folders = [
                 {"path": folder, "label": folder}
-                for folder in self.subFolders
+                for folder in self.sub_folders
             ]
 
     def poll(self):
@@ -66,15 +67,15 @@ class Maildir(base.ThreadedPollText):
             for path in iter(paths):
                 yield path.rsplit(":")[0]
 
-        for subFolder in self.subFolders:
-            path = os.path.join(os.path.expanduser(self.maildirPath),
-                                subFolder["path"])
+        for sub_folder in self.sub_folders:
+            path = os.path.join(os.path.expanduser(self.maildir_path),
+                                sub_folder["path"])
             maildir = mailbox.Maildir(path)
-            state[subFolder["label"]] = 0
+            state[sub_folder["label"]] = 0
 
             for file in to_maildir_fmt(os.listdir(os.path.join(path, "new"))):
                 if file in maildir:
-                    state[subFolder["label"]] += 1
+                    state[sub_folder["label"]] += 1
 
         return self.format_text(state)
 
@@ -90,6 +91,12 @@ class Maildir(base.ThreadedPollText):
         =======
         a string representation of the given state
         """
-        return self.separator.join(
-            "{0}: {1}".format(*item) for item in state.items()
-        )
+        if self.total:
+            return self.separator.join([
+                self.sub_folders[0]["label"],
+                str(sum(state.values()))
+            ])
+        else:
+            return self.separator.join(
+                "{0}: {1}".format(*item) for item in state.items()
+            )

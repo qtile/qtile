@@ -21,13 +21,12 @@
 import pytest
 
 from libqtile import layout
-import libqtile.manager
 import libqtile.config
-from .layout_utils import assertFocused
+from .layout_utils import assert_focused
 from ..conftest import no_xinerama
 
 
-class FloatingConfig(object):
+class FloatingConfig:
     auto_fullscreen = True
     main = None
     groups = [
@@ -43,8 +42,8 @@ class FloatingConfig(object):
     follow_mouse_focus = False
 
 
-floating_config = lambda x: \
-    no_xinerama(pytest.mark.parametrize("qtile", [FloatingConfig], indirect=True)(x))
+def floating_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [FloatingConfig], indirect=True)(x))
 
 
 @floating_config
@@ -52,25 +51,25 @@ def test_float_next_prev_window(qtile):
     self = qtile
 
     # spawn three windows
-    self.testWindow("one")
-    self.testWindow("two")
-    self.testWindow("three")
+    self.test_window("one")
+    self.test_window("two")
+    self.test_window("three")
 
     # focus previous windows
-    assertFocused(self, "three")
+    assert_focused(self, "three")
     self.c.group.prev_window()
-    assertFocused(self, "two")
+    assert_focused(self, "two")
     self.c.group.prev_window()
-    assertFocused(self, "one")
+    assert_focused(self, "one")
     # checking that it loops around properly
     self.c.group.prev_window()
-    assertFocused(self, "three")
+    assert_focused(self, "three")
 
     # focus next windows
     # checking that it loops around properly
     self.c.group.next_window()
-    assertFocused(self, "one")
+    assert_focused(self, "one")
     self.c.group.next_window()
-    assertFocused(self, "two")
+    assert_focused(self, "two")
     self.c.group.next_window()
-    assertFocused(self, "three")
+    assert_focused(self, "three")

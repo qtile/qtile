@@ -28,7 +28,23 @@ from dbus.mainloop.glib import DBusGMainLoop
 
 from libqtile.log_utils import logger
 from . import base
-from .. import bar
+
+
+def ensure_connected(f):
+    """Tries to connect to the player
+
+    It *should* be successful if the player is alive
+    """
+    def wrapper(self, *args, **kwargs):
+        try:
+            self.iface.GetMetadata()
+        except (dbus.exceptions.DBusException, AttributeError):
+            # except AttributeError because
+            # self.iface won't exist if we haven't
+            # _connect()ed yet
+            self._connect()
+        return f(self, *args, **kwargs)
+    return wrapper
 
 
 class Mpris(base._TextBox):
@@ -40,15 +56,17 @@ class Mpris(base._TextBox):
     """
     orientations = base.ORIENTATION_HORIZONTAL
 
-    def __init__(self, name="clementine", width=bar.CALCULATED,
-                 objname='org.mpris.clementine', **config):
-        base._TextBox.__init__(self, " ", width, **config)
+    defaults = [
+        ('name', 'clementine', 'Name of the widget'),
+        ('objname', 'org.mpris.clementine', 'DBUS object to connect to'),
+        ('stop_pause_text', 'Stopped', "Optional text to display when in the stopped/paused state"),
+    ]
 
+    def __init__(self, **config):
+        base._TextBox.__init__(self, " ", **config)
+        self.add_defaults(Mpris.defaults)
         self.dbus_loop = None
-
-        self.objname = objname
         self.connected = False
-        self.name = name
 
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
@@ -115,23 +133,6 @@ class Mpris(base._TextBox):
                 self.connected = False
             self.update()
 
-    def ensure_connected(f):
-        """Tries to connect to the player
-
-        It *should* be successful if the player is alive
-        """
-        def wrapper(*args, **kwargs):
-            self = args[0]
-            try:
-                self.iface.GetMetadata()
-            except (dbus.exceptions.DBusException, AttributeError):
-                # except AttributeError because
-                # self.iface won't exist if we haven't
-                # _connect()ed yet
-                self._connect()
-            return f(*args, **kwargs)
-        return wrapper
-
     @ensure_connected
     def update(self):
         self.qtile.call_soon_threadsafe(self.real_update)
@@ -143,7 +144,7 @@ class Mpris(base._TextBox):
         if not self.connected:
             playing = 'Not Connected'
         elif not self.is_playing():
-            playing = 'Stopped'
+            playing = self.stop_pause_text
         else:
             try:
                 metadata = self.iface.GetMetadata()

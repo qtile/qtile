@@ -17,110 +17,31 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-from __future__ import division
-
-from .base import Layout
+from .base import Layout, _ClientList
 from .. import utils
 
 
-class _WinStack(object):
+class _WinStack(_ClientList):
+
+    # shortcuts for current client and index used in Columns layout
+    cw = _ClientList.current_client
+
     def __init__(self, autosplit=False):
+        _ClientList.__init__(self)
         self.split = autosplit
-        self._current = 0
-        self.lst = []
 
-    @property
-    def current(self):
-        return self._current
-
-    @current.setter
-    def current(self, x):
-        if len(self):
-            self._current = abs(x % len(self))
-        else:
-            self._current = 0
-
-    @property
-    def cw(self):
-        if not self.lst:
-            return None
-        return self.lst[self.current]
-
-    def toggleSplit(self):
+    def toggle_split(self):
         self.split = False if self.split else True
-
-    def join(self, ws):
-        # FIXME: This buggers up window order -
-        # windows should be injected BEFORE
-        # the current offset.
-        self.lst.extend(ws.lst)
-
-    def focus(self, client):
-        self.current = self.lst.index(client)
-
-    def focus_first(self):
-        if self.split:
-            return self[0]
-        else:
-            return self.cw
-
-    def focus_next(self, win):
-        if self.split:
-            idx = self.index(win)
-            if idx + 1 < len(self):
-                return self[idx + 1]
-
-    def focus_last(self):
-        if self.split:
-            return self[-1]
-        else:
-            return self.cw
-
-    def focus_previous(self, win):
-        if self.split:
-            idx = self.index(win)
-            if idx > 0:
-                return self[idx - 1]
-
-    def add(self, client):
-        self.lst.insert(self.current, client)
-
-    def remove(self, client):
-        if client not in self.lst:
-            return
-        idx = self.lst.index(client)
-        del self.lst[idx]
-        if idx > self.current:
-            self.current -= 1
-        else:
-            # This apparently nonsensical assignment caps the value using the
-            # property definition.
-            self.current = self.current
-
-    def index(self, client):
-        return self.lst.index(client)
-
-    def __len__(self):
-        return len(self.lst)
-
-    def __getitem__(self, i):
-        return self.lst[i]
-
-    def __contains__(self, client):
-        return client in self.lst
 
     def __str__(self):
         return "_WinStack: %s, %s" % (
-            self.current, str([i.name for i in self])
+            self.cw, str([client.name for client in self.clients])
         )
 
     def info(self):
-        return dict(
-            clients=[x.name for x in self],
-            split=self.split,
-            current=self.current,
-        )
+        info = _ClientList.info(self)
+        info['split'] = self.split
+        return info
 
 
 class Stack(Layout):
@@ -129,8 +50,9 @@ class Stack(Layout):
     The stack layout divides the screen horizontally into a set of stacks.
     Commands allow you to switch between stacks, to next and previous windows
     within a stack, and to split a stack to show all windows in the stack, or
-    unsplit it to show only the current window. At the moment, this is the most
-    mature and flexible layout in Qtile.
+    unsplit it to show only the current window.
+
+    Unlike the columns layout the number of stacks is fixed.
     """
     defaults = [
         ("border_focus", "#0000ff", "Border colour for the focused window."),
@@ -147,16 +69,16 @@ class Stack(Layout):
         Layout.__init__(self, **config)
         self.add_defaults(Stack.defaults)
         self.stacks = [_WinStack(autosplit=self.autosplit)
-                    for i in range(self.num_stacks)]
+                       for i in range(self.num_stacks)]
 
     @property
-    def currentStack(self):
-        return self.stacks[self.currentStackOffset]
+    def current_stack(self):
+        return self.stacks[self.current_stack_offset]
 
     @property
-    def currentStackOffset(self):
+    def current_stack_offset(self):
         for i, s in enumerate(self.stacks):
-            if self.group.currentWindow in s:
+            if self.group.current_window in s:
                 return i
         return 0
 
@@ -164,7 +86,7 @@ class Stack(Layout):
     def clients(self):
         client_list = []
         for stack in self.stacks:
-            client_list.extend(list(stack))
+            client_list.extend(stack.clients)
         return client_list
 
     def clone(self, group):
@@ -173,7 +95,7 @@ class Stack(Layout):
         c.stacks = [_WinStack(autosplit=self.autosplit) for i in self.stacks]
         return c
 
-    def _findNext(self, lst, offset):
+    def _find_next(self, lst, offset):
         for i in lst[offset + 1:]:
             if i:
                 return i
@@ -182,31 +104,31 @@ class Stack(Layout):
                 if i:
                     return i
 
-    def deleteCurrentStack(self):
+    def delete_current_stack(self):
         if len(self.stacks) > 1:
-            off = self.currentStackOffset or 0
+            off = self.current_stack_offset or 0
             s = self.stacks[off]
             self.stacks.remove(s)
             off = min(off, len(self.stacks) - 1)
-            self.stacks[off].join(s)
+            self.stacks[off].join(s, 1)
             if self.stacks[off]:
                 self.group.focus(
                     self.stacks[off].cw,
                     False
                 )
 
-    def nextStack(self):
-        n = self._findNext(
+    def next_stack(self):
+        n = self._find_next(
             self.stacks,
-            self.currentStackOffset
+            self.current_stack_offset
         )
         if n:
             self.group.focus(n.cw, True)
 
-    def previousStack(self):
-        n = self._findNext(
+    def previous_stack(self):
+        n = self._find_next(
             list(reversed(self.stacks)),
-            len(self.stacks) - self.currentStackOffset - 1
+            len(self.stacks) - self.current_stack_offset - 1
         )
         if n:
             self.group.focus(n.cw, True)
@@ -265,20 +187,20 @@ class Stack(Layout):
             target = min(self.stacks, key=len)
             target.add(client)
         else:
-            self.currentStack.add(client)
+            self.current_stack.add(client)
 
     def remove(self, client):
-        currentOffset = self.currentStackOffset
+        current_offset = self.current_stack_offset
         for i in self.stacks:
             if client in i:
                 i.remove(client)
                 break
-        if self.stacks[currentOffset].cw:
-            return self.stacks[currentOffset].cw
+        if self.stacks[current_offset].cw:
+            return self.stacks[current_offset].cw
         else:
-            n = self._findNext(
+            n = self._find_next(
                 list(reversed(self.stacks)),
-                len(self.stacks) - currentOffset - 1
+                len(self.stacks) - current_offset - 1
             )
             if n:
                 return n.cw
@@ -291,24 +213,24 @@ class Stack(Layout):
             client.hide()
             return
 
-        if client is self.group.currentWindow:
-            px = self.group.qtile.colorPixel(self.border_focus)
+        if client.has_focus:
+            px = self.group.qtile.color_pixel(self.border_focus)
         else:
-            px = self.group.qtile.colorPixel(self.border_normal)
+            px = self.group.qtile.color_pixel(self.border_normal)
 
-        columnWidth = int(screen.width / len(self.stacks))
-        xoffset = screen.x + i * columnWidth
-        winWidth = columnWidth - 2 * self.border_width
+        column_width = int(screen.width / len(self.stacks))
+        xoffset = screen.x + i * column_width
+        window_width = column_width - 2 * self.border_width
 
         if s.split:
-            columnHeight = int(screen.height / len(s))
-            winHeight = columnHeight - 2 * self.border_width
-            yoffset = screen.y + s.index(client) * columnHeight
+            column_height = int(screen.height / len(s))
+            window_height = column_height - 2 * self.border_width
+            yoffset = screen.y + s.index(client) * column_height
             client.place(
                 xoffset,
                 yoffset,
-                winWidth,
-                winHeight,
+                window_width,
+                window_height,
                 self.border_width,
                 px,
                 margin=self.margin,
@@ -319,7 +241,7 @@ class Stack(Layout):
                 client.place(
                     xoffset,
                     screen.y,
-                    winWidth,
+                    window_width,
                     screen.height - 2 * self.border_width,
                     self.border_width,
                     px,
@@ -332,40 +254,38 @@ class Stack(Layout):
     def info(self):
         d = Layout.info(self)
         d["stacks"] = [i.info() for i in self.stacks]
-        d["current_stack"] = self.currentStackOffset
+        d["current_stack"] = self.current_stack_offset
         d["clients"] = [c.name for c in self.clients]
         return d
 
     def cmd_toggle_split(self):
         """Toggle vertical split on the current stack"""
-        self.currentStack.toggleSplit()
-        self.group.layoutAll()
+        self.current_stack.toggle_split()
+        self.group.layout_all()
 
     def cmd_down(self):
         """Switch to the next window in this stack"""
-        self.currentStack.current -= 1
-        self.group.focus(self.currentStack.cw, False)
+        self.current_stack.current_index += 1
+        self.group.focus(self.current_stack.cw, False)
 
     def cmd_up(self):
         """Switch to the previous window in this stack"""
-        self.currentStack.current += 1
-        self.group.focus(self.currentStack.cw, False)
+        self.current_stack.current_index -= 1
+        self.group.focus(self.current_stack.cw, False)
 
     def cmd_shuffle_up(self):
         """Shuffle the order of this stack up"""
-        utils.shuffleUp(self.currentStack.lst)
-        self.currentStack.current += 1
-        self.group.layoutAll()
+        self.current_stack.shuffle_up()
+        self.group.layout_all()
 
     def cmd_shuffle_down(self):
         """Shuffle the order of this stack down"""
-        utils.shuffleDown(self.currentStack.lst)
-        self.currentStack.current -= 1
-        self.group.layoutAll()
+        self.current_stack.shuffle_down()
+        self.group.layout_all()
 
     def cmd_delete(self):
         """Delete the current stack from the layout"""
-        self.deleteCurrentStack()
+        self.delete_current_stack()
 
     def cmd_add(self):
         """Add another stack to the layout"""
@@ -373,42 +293,42 @@ class Stack(Layout):
         if self.autosplit:
             newstack.split = True
         self.stacks.append(newstack)
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_rotate(self):
         """Rotate order of the stacks"""
-        utils.shuffleUp(self.stacks)
-        self.group.layoutAll()
+        utils.shuffle_up(self.stacks)
+        self.group.layout_all()
 
     def cmd_next(self):
         """Focus next stack"""
-        return self.nextStack()
+        return self.next_stack()
 
     def cmd_previous(self):
         """Focus previous stack"""
-        return self.previousStack()
+        return self.previous_stack()
 
     def cmd_client_to_next(self):
         """Send the current client to the next stack"""
-        return self.cmd_client_to_stack(self.currentStackOffset + 1)
+        return self.cmd_client_to_stack(self.current_stack_offset + 1)
 
     def cmd_client_to_previous(self):
         """Send the current client to the previous stack"""
-        return self.cmd_client_to_stack(self.currentStackOffset - 1)
+        return self.cmd_client_to_stack(self.current_stack_offset - 1)
 
     def cmd_client_to_stack(self, n):
         """
         Send the current client to stack n, where n is an integer offset.  If
         is too large or less than 0, it is wrapped modulo the number of stacks.
         """
-        if not self.currentStack:
+        if not self.current_stack:
             return
         next = n % len(self.stacks)
-        win = self.currentStack.cw
-        self.currentStack.remove(win)
+        win = self.current_stack.cw
+        self.current_stack.remove(win)
         self.stacks[next].add(win)
         self.stacks[next].focus(win)
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_info(self):
         return self.info()

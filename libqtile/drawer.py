@@ -28,9 +28,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
-from __future__ import division
-
 import collections
 import math
 import cairocffi
@@ -40,7 +37,7 @@ from . import pangocffi
 from . import utils
 
 
-class TextLayout(object):
+class TextLayout:
     def __init__(self, drawer, text, colour, font_family, font_size,
                  font_shadow, wrap=True, markup=False):
         self.drawer, self.colour = drawer, colour
@@ -49,7 +46,7 @@ class TextLayout(object):
         if not wrap:  # pango wraps by default
             layout.set_ellipsize(pangocffi.ELLIPSIZE_END)
         desc = pangocffi.FontDescription.from_string(font_family)
-        desc.set_absolute_size(pangocffi.units_from_double(font_size))
+        desc.set_absolute_size(pangocffi.units_from_double(float(font_size)))
         layout.set_font_description(desc)
         self.font_shadow = font_shadow
         self.layout = layout
@@ -135,7 +132,7 @@ class TextLayout(object):
         return TextFrame(self, border_width, border_color, pad_x, pad_y, highlight_color=highlight_color)
 
 
-class TextFrame(object):
+class TextFrame:
     def __init__(self, layout, border_width, border_color, pad_x, pad_y, highlight_color=None):
         self.layout = layout
         self.border_width = border_width
@@ -205,7 +202,7 @@ class TextFrame(object):
         return self.layout.width + self.pad_left + self.pad_right
 
 
-class Drawer(object):
+class Drawer:
     """ A helper class for drawing and text layout.
 
     We have a drawer object for each widget in the bar. The underlying surface
@@ -322,7 +319,7 @@ class Drawer(object):
                     return v
 
     def new_ctx(self):
-        return pangocffi.CairoContext(cairocffi.Context(self.surface))
+        return pangocffi.patch_cairo_context(cairocffi.Context(self.surface))
 
     def set_source_rgb(self, colour):
         if type(colour) == list:

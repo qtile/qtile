@@ -29,12 +29,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.log_utils import logger
-from .. import command, bar, configurable, drawer, confreader
-import six
 import subprocess
 import threading
 import warnings
+from typing import Any, List, Tuple  # noqa: F401
+
+from libqtile.log_utils import logger
+from libqtile.command_object import CommandObject, CommandError
+from .. import bar, configurable, drawer, confreader
+
 
 # Each widget class must define which bar orientation(s) it supports by setting
 # these bits in an 'orientations' class attribute. Simply having the attribute
@@ -58,7 +61,7 @@ import warnings
 # +------------------------+--------------------+--------------------+
 class _Orientations(int):
     def __new__(cls, value, doc):
-        return super(_Orientations, cls).__new__(cls, value)
+        return super().__new__(cls, value)
 
     def __init__(self, value, doc):
         self.doc = doc
@@ -69,13 +72,14 @@ class _Orientations(int):
     def __repr__(self):
         return self.doc
 
+
 ORIENTATION_NONE = _Orientations(0, 'none')
 ORIENTATION_HORIZONTAL = _Orientations(1, 'horizontal only')
 ORIENTATION_VERTICAL = _Orientations(2, 'vertical only')
 ORIENTATION_BOTH = _Orientations(3, 'horizontal and vertical')
 
 
-class _Widget(command.CommandObject, configurable.Configurable):
+class _Widget(CommandObject, configurable.Configurable):
     """Base Widget class
 
     If length is set to the special value `bar.STRETCH`, the bar itself will
@@ -88,17 +92,25 @@ class _Widget(command.CommandObject, configurable.Configurable):
 
     The offsetx and offsety attributes are set by the Bar after all widgets
     have been configured.
+
+    Callback functions can be assigned to button presses by passing a dict to the
+    'callbacks' kwarg. For example: {'Button1': func} will execute func when the widget
+    receives a button 1 press. The Qtile instance of passed as the only argument to the
+    callback functions.
     """
     orientations = ORIENTATION_BOTH
     offsetx = None
     offsety = None
-    defaults = [("background", None, "Widget background color")]
+    defaults = [
+        ("background", None, "Widget background color"),
+        ("mouse_callbacks", {}, "Dict of mouse button press callback functions."),
+    ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, length, **config):
         """
             length: bar.STRETCH, bar.CALCULATED, or a specified length.
         """
-        command.CommandObject.__init__(self)
+        CommandObject.__init__(self)
         self.name = self.__class__.__name__.lower()
         if "name" in config:
             self.name = config["name"]
@@ -110,7 +122,7 @@ class _Widget(command.CommandObject, configurable.Configurable):
             self.length_type = length
             self.length = 0
         else:
-            assert isinstance(length, six.integer_types)
+            assert isinstance(length, int)
             self.length_type = bar.STATIC
             self.length = length
         self.configured = False
@@ -200,7 +212,9 @@ class _Widget(command.CommandObject, configurable.Configurable):
         )
 
     def button_press(self, x, y, button):
-        pass
+        name = 'Button{0}'.format(button)
+        if name in self.mouse_callbacks:
+            self.mouse_callbacks[name](self.qtile)
 
     def button_release(self, x, y, button):
         pass
@@ -209,9 +223,9 @@ class _Widget(command.CommandObject, configurable.Configurable):
         """
             Utility function for quick retrieval of a widget by name.
         """
-        w = q.widgetMap.get(name)
+        w = q.widgets_map.get(name)
         if not w:
-            raise command.CommandError("No such widget: %s" % name)
+            raise CommandError("No such widget: %s" % name)
         return w
 
     def _items(self, name):
@@ -260,15 +274,17 @@ class _Widget(command.CommandObject, configurable.Configurable):
             Python 3.
         """
         output = subprocess.check_output(command, **kwargs)
-        if six.PY3:
-            output = output.decode()
+        output = output.decode()
         return output
 
     def _wrapper(self, method, *method_args):
         try:
             method(*method_args)
-        except:
+        except:  # noqa: E722
             logger.exception('got exception from widget timer')
+
+    def create_mirror(self):
+        return Mirror(self)
 
 
 UNSPECIFIED = bar.Obj("UNSPECIFIED")
@@ -280,7 +296,7 @@ class _TextBox(_Widget):
     """
     orientations = ORIENTATION_HORIZONTAL
     defaults = [
-        ("font", "Arial", "Default font"),
+        ("font", "sans", "Default font"),
         ("fontsize", None, "Font size. Calculated if None."),
         ("padding", None, "Padding. Calculated if None."),
         ("foreground", "ffffff", "Foreground colour"),
@@ -289,13 +305,14 @@ class _TextBox(_Widget):
             None,
             "font shadow color, default is None(no shadow)"
         ),
-        ("markup", False, "Whether or not to use pango markup"),
-    ]
+        ("markup", True, "Whether or not to use pango markup"),
+        ("fmt", "{}", "How to format the text")
+    ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, text=" ", width=bar.CALCULATED, **config):
         self.layout = None
         _Widget.__init__(self, width, **config)
-        self.text = text
+        self._text = text
         self.add_defaults(_TextBox.defaults)
 
     @property
@@ -304,14 +321,13 @@ class _TextBox(_Widget):
 
     @text.setter
     def text(self, value):
-        assert value is None or isinstance(value, six.string_types)
         self._text = value
         if self.layout:
-            self.layout.text = value
+            self.layout.text = self.formatted_text
 
     @property
-    def font(self):
-        return self._font
+    def formatted_text(self):
+        return self.fmt.format(self._text)
 
     @property
     def foreground(self):
@@ -322,6 +338,10 @@ class _TextBox(_Widget):
         self._foreground = fg
         if self.layout:
             self.layout.colour = fg
+
+    @property
+    def font(self):
+        return self._font
 
     @font.setter
     def font(self, value):
@@ -351,7 +371,7 @@ class _TextBox(_Widget):
         if self.fontsize is None:
             self.fontsize = self.bar.height - self.bar.height / 5
         self.layout = self.drawer.textlayout(
-            self.text,
+            self.formatted_text,
             self.foreground,
             self.font,
             self.fontsize,
@@ -396,7 +416,7 @@ class _TextBox(_Widget):
     def info(self):
         d = _Widget.info(self)
         d['foreground'] = self.foreground
-        d['text'] = self.text
+        d['text'] = self.formatted_text
         return d
 
 
@@ -411,10 +431,10 @@ class InLoopPollText(_TextBox):
     defaults = [
         ("update_interval", 600, "Update interval in seconds, if none, the "
             "widget updates whenever the event loop is idle."),
-    ]
+    ]  # type: List[Tuple[str, Any, str]]
 
-    def __init__(self, **config):
-        _TextBox.__init__(self, 'N/A', width=bar.CALCULATED, **config)
+    def __init__(self, default_text="N/A", width=bar.CALCULATED, **config):
+        _TextBox.__init__(self, default_text, width, **config)
         self.add_defaults(InLoopPollText.defaults)
 
     def timer_setup(self):
@@ -438,6 +458,7 @@ class InLoopPollText(_TextBox):
 
     def button_press(self, x, y, button):
         self.tick()
+        _TextBox.button_press(self, x, y, button)
 
     def poll(self):
         return 'N/A'
@@ -461,16 +482,13 @@ class InLoopPollText(_TextBox):
 class ThreadedPollText(InLoopPollText):
     """ A common interface for polling some REST URL, munging the data, and
     rendering the result in a text box. """
-    def __init__(self, **config):
-        InLoopPollText.__init__(self, **config)
-
     def tick(self):
         def worker():
             try:
                 text = self.poll()
                 if self.qtile is not None:
                     self.qtile.call_soon_threadsafe(self.update, text)
-            except:
+            except:  # noqa: E722
                 logger.exception("problem polling to update widget %s", self.name)
         # TODO: There are nice asyncio constructs for this sort of thing, I
         # think...
@@ -492,11 +510,10 @@ class ThreadPoolText(_TextBox):
     defaults = [
         ("update_interval", None, "Update interval in seconds, if none, the "
             "widget updates whenever it's done'."),
-    ]
+    ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, text, **config):
-        super(ThreadPoolText, self).__init__(text, width=bar.CALCULATED,
-                                             **config)
+        super().__init__(text, width=bar.CALCULATED, **config)
         self.add_defaults(ThreadPoolText.defaults)
 
     def timer_setup(self):
@@ -542,7 +559,7 @@ class ThreadPoolText(_TextBox):
 # these two classes below look SUSPICIOUSLY similar
 
 
-class PaddingMixin(object):
+class PaddingMixin(configurable.Configurable):
     """Mixin that provides padding(_x|_y|)
 
     To use it, subclass and add this to __init__:
@@ -554,13 +571,13 @@ class PaddingMixin(object):
         ("padding", 3, "Padding inside the box"),
         ("padding_x", None, "X Padding. Overrides 'padding' if set"),
         ("padding_y", None, "Y Padding. Overrides 'padding' if set"),
-    ]
+    ]  # type: List[Tuple[str, Any, str]]
 
     padding_x = configurable.ExtraFallback('padding_x', 'padding')
     padding_y = configurable.ExtraFallback('padding_y', 'padding')
 
 
-class MarginMixin(object):
+class MarginMixin(configurable.Configurable):
     """Mixin that provides margin(_x|_y|)
 
     To use it, subclass and add this to __init__:
@@ -572,10 +589,44 @@ class MarginMixin(object):
         ("margin", 3, "Margin inside the box"),
         ("margin_x", None, "X Margin. Overrides 'margin' if set"),
         ("margin_y", None, "Y Margin. Overrides 'margin' if set"),
-    ]
+    ]  # type: List[Tuple[str, Any, str]]
 
     margin_x = configurable.ExtraFallback('margin_x', 'margin')
     margin_y = configurable.ExtraFallback('margin_y', 'margin')
+
+
+class Mirror(_Widget):
+    def __init__(self, reflection):
+        _Widget.__init__(self, reflection.length)
+        reflection.draw = self.hook(reflection.draw)
+        self.reflects = reflection
+        self._length = 0
+
+    @property
+    def length(self):
+        return self.reflects.length
+
+    @length.setter
+    def length(self, value):
+        self._length = value
+
+    def hook(self, draw):
+        def _():
+            draw()
+            self.draw()
+        return _
+
+    def draw(self):
+        if self._length != self.reflects.length:
+            self._length = self.length
+            self.bar.draw()
+        else:
+            self.drawer.ctx.set_source_surface(self.reflects.drawer.surface)
+            self.drawer.ctx.paint()
+            self.drawer.draw(offsetx=self.offset, width=self.width)
+
+    def button_press(self, x, y, button):
+        self.reflects.button_press(x, y, button)
 
 
 def deprecated(msg):

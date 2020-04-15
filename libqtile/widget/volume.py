@@ -30,24 +30,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
 import re
 import subprocess
 
-import cairocffi
-
 from . import base
 from .. import bar
-from libqtile.log_utils import logger
 
 __all__ = [
     'Volume',
 ]
 
-re_vol = re.compile('\[(\d?\d?\d?)%\]')
+re_vol = re.compile(r'\[(\d?\d?\d?)%\]')
 BUTTON_UP = 4
 BUTTON_DOWN = 5
 BUTTON_MUTE = 1
+BUTTON_RIGHT = 3
 
 
 class Volume(base._TextBox):
@@ -61,14 +58,17 @@ class Volume(base._TextBox):
         ("device", "default", "Device Name"),
         ("channel", "Master", "Channel"),
         ("padding", 3, "Padding left and right. Calculated if None."),
-        ("theme_path", None, "Path of the icons"),
         ("update_interval", 0.2, "Update time in seconds."),
+        ("theme_path", None, "Path of the icons"),
         ("emoji", False, "Use emoji to display volume states, only if ``theme_path`` is not set."
                          "The specified font needs to contain the correct unicode characters."),
         ("mute_command", None, "Mute command"),
+        ("volume_app", None, "App to control volume"),
         ("volume_up_command", None, "Volume up command"),
         ("volume_down_command", None, "Volume down command"),
         ("get_volume_command", None, "Command to get the current volume"),
+        ("step", 2, "Volume change for up an down commands in percentage."
+                    "Only used if ``volume_up_command`` and ``volume_down_command`` are not set.")
     ]
 
     def __init__(self, **config):
@@ -100,28 +100,32 @@ class Volume(base._TextBox):
     def button_press(self, x, y, button):
         if button == BUTTON_DOWN:
             if self.volume_down_command is not None:
-                subprocess.call(self.volume_down_command)
+                subprocess.call(self.volume_down_command, shell=True)
             else:
                 subprocess.call(self.create_amixer_command('-q',
                                                            'sset',
                                                            self.channel,
-                                                           '2%-'))
+                                                           '{}%-'.format(self.step)))
         elif button == BUTTON_UP:
             if self.volume_up_command is not None:
-                subprocess.call(self.volume_up_command)
+                subprocess.call(self.volume_up_command, shell=True)
             else:
                 subprocess.call(self.create_amixer_command('-q',
                                                            'sset',
                                                            self.channel,
-                                                           '2%+'))
+                                                           '{}%+'.format(self.step)))
         elif button == BUTTON_MUTE:
             if self.mute_command is not None:
-                subprocess.call(self.mute_command)
+                subprocess.call(self.mute_command, shell=True)
             else:
                 subprocess.call(self.create_amixer_command('-q',
                                                            'sset',
                                                            self.channel,
                                                            'toggle'))
+        elif button == BUTTON_RIGHT:
+            if self.volume_app is not None:
+                subprocess.Popen(self.volume_app, shell=True)
+
         self.draw()
 
     def update(self):
@@ -161,44 +165,23 @@ class Volume(base._TextBox):
             if self.volume == -1:
                 self.text = 'M'
             else:
-                self.text = '%s%%' % self.volume
+                self.text = '{}%'.format(self.volume)
 
     def setup_images(self):
-        for img_name in (
+        from .. import images
+        names = (
             'audio-volume-high',
             'audio-volume-low',
             'audio-volume-medium',
-            'audio-volume-muted'
-        ):
-
-            try:
-                img = cairocffi.ImageSurface.create_from_png(
-                    os.path.join(self.theme_path, '%s.png' % img_name)
-                )
-            except cairocffi.Error:
-                self.theme_path = None
-                self.length_type = bar.CALCULATED
-                logger.exception('Volume switching to text mode')
-                return
-            input_width = img.get_width()
-            input_height = img.get_height()
-
-            sp = input_height / float(self.bar.height - 1)
-
-            width = input_width / sp
-            if width > self.length:
-                self.length = int(width) + self.actual_padding * 2
-
-            imgpat = cairocffi.SurfacePattern(img)
-
-            scaler = cairocffi.Matrix()
-
-            scaler.scale(sp, sp)
-            scaler.translate(self.actual_padding * -1, 0)
-            imgpat.set_matrix(scaler)
-
-            imgpat.set_filter(cairocffi.FILTER_BEST)
-            self.surfaces[img_name] = imgpat
+            'audio-volume-muted',
+        )
+        d_images = images.Loader(self.theme_path)(*names)
+        for name, img in d_images.items():
+            new_height = self.bar.height - 1
+            img.resize(height=new_height)
+            if img.width > self.length:
+                self.length = img.width + self.actual_padding * 2
+            self.surfaces[name] = img.pattern
 
     def get_volume(self):
         try:
@@ -239,3 +222,7 @@ class Volume(base._TextBox):
     def cmd_mute(self):
         # Emulate button press.
         self.button_press(0, 0, BUTTON_MUTE)
+
+    def cmd_run_app(self):
+        # Emulate button press.
+        self.button_press(0, 0, BUTTON_RIGHT)

@@ -7,6 +7,7 @@
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 dmpayton
 # Copyright (c) 2014 dequis
+# Copyright (c) 2017 Dirk Hartmann
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,12 +27,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import division
-
 import math
 
-from .base import Layout
-from .. import utils
+from .base import _SimpleLayoutBase
 
 
 ROWCOL = 1  # do rows at a time left to right top down
@@ -40,7 +38,7 @@ COLROW = 2  # do cols top to bottom, left to right
 GOLDEN_RATIO = 1.618
 
 
-class GridInfo(object):
+class GridInfo:
     """
     Calculates sizes for grids
     >>> gi = GridInfo(.5, 5, 600, 480)
@@ -207,7 +205,7 @@ class GridInfo(object):
         return results
 
 
-class RatioTile(Layout):
+class RatioTile(_SimpleLayoutBase):
     """Tries to tile all windows in the width/height ratio passed in"""
     defaults = [
         ("border_focus", "#0000ff", "Border colour for the focused window."),
@@ -221,38 +219,23 @@ class RatioTile(Layout):
     ]
 
     def __init__(self, **config):
-        Layout.__init__(self, **config)
+        _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(RatioTile.defaults)
-        self.clients = []
-        self.focused = None
         self.dirty = True  # need to recalculate
         self.layout_info = []
         self.last_size = None
         self.last_screen = None
 
     def clone(self, group):
-        c = Layout.clone(self, group)
-        c.clients = []
-        return c
-
-    def focus(self, c):
-        self.focused = c
-
-    def blur(self):
-        self.focused = None
+        return _SimpleLayoutBase.clone(self, group)
 
     def add(self, w):
         self.dirty = True
-        self.clients.insert(0, w)
+        self.clients.append_head(w)
 
     def remove(self, w):
         self.dirty = True
-        if self.focused is w:
-            self.focused = None
-        self.clients.remove(w)
-        if self.clients:  # and w is self.focused:
-            self.focused = self.clients[0]
-        return self.focused
+        return _SimpleLayoutBase.remove(self, w)
 
     def configure(self, win, screen):
         # force recalc
@@ -290,10 +273,10 @@ class RatioTile(Layout):
             win.hide()
             return
         x, y, w, h = self.layout_info[idx]
-        if win is self.focused:
-            bc = self.group.qtile.colorPixel(self.border_focus)
+        if win.has_focus:
+            bc = self.group.qtile.color_pixel(self.border_focus)
         else:
-            bc = self.group.qtile.colorPixel(self.border_normal)
+            bc = self.group.qtile.color_pixel(self.border_normal)
         win.place(
             x,
             y,
@@ -306,99 +289,41 @@ class RatioTile(Layout):
         win.unhide()
 
     def info(self):
-        return {
-            'clients': [x.name for x in self.clients],
-            'ratio': self.ratio,
-            'focused': self.focused.name if self.focused else None,
-            'layout_info': self.layout_info
-        }
-
-    def shuffleUp(self):
-        if self.clients:
-            utils.shuffleUp(self.clients)
-            self.group.layoutAll()
-
-    def shuffleDown(self):
-        if self.clients:
-            utils.shuffleDown(self.clients)
-            self.group.layoutAll()
-
-    def focus_first(self):
-        if self.clients:
-            return self.clients[0]
-
-    def focus_next(self, win):
-        idx = self.clients.index(win)
-        if len(self.clients) > idx + 1:
-            return self.clients[idx + 1]
-
-    def focus_last(self):
-        if self.clients:
-            return self.clients[-1]
-
-    def focus_previous(self, win):
-        idx = self.clients.index(win)
-        if idx > 0:
-            return self.clients[idx - 1]
-
-    def getNextClient(self):
-        previndex = self.clients.index(self.focused) - 1
-        if previndex < 0:
-            previndex = len(self.clients) - 1
-        return self.clients[previndex]
-
-    def getPreviousClient(self):
-        nextindex = self.clients.index(self.focused) + 1
-        if nextindex >= len(self.clients):
-            nextindex = 0
-        return self.clients[nextindex]
-
-    def next(self):
-        n = self.getPreviousClient()
-        self.group.focus(n)
-
-    def previous(self):
-        n = self.getNextClient()
-        self.group.focus(n)
+        d = _SimpleLayoutBase.info(self)
+        focused = self.clients.current_client
+        d['ratio'] = self.ratio,
+        d['focused'] = focused.name if focused else None,
+        d['layout_info'] = self.layout_info
+        return d
 
     def shuffle(self, function):
         if self.clients:
             function(self.clients)
-            self.group.layoutAll()
+            self.group.layout_all()
 
-    def cmd_down(self):
-        self.previous()
+    cmd_down = _SimpleLayoutBase.previous
+    cmd_up = _SimpleLayoutBase.next
 
-    def cmd_up(self):
-        self.next()
-
-    def cmd_next(self):
-        self.next()
-
-    def cmd_previous(self):
-        self.previous()
+    cmd_previous = _SimpleLayoutBase.previous
+    cmd_next = _SimpleLayoutBase.next
 
     def cmd_shuffle_down(self):
-        self.shuffleDown()
+        if self.clients:
+            self.clients.rotate_up()
+            self.group.layout_all()
 
     def cmd_shuffle_up(self):
-        self.shuffleUp()
+        if self.clients:
+            self.clients.rotate_down()
+            self.group.layout_all()
 
     def cmd_decrease_ratio(self):
         new_ratio = self.ratio - self.ratio_increment
         if new_ratio < 0:
             return
         self.ratio = new_ratio
-        self.group.layoutAll()
+        self.group.layout_all()
 
     def cmd_increase_ratio(self):
         self.ratio += self.ratio_increment
-        self.group.layoutAll()
-
-    def cmd_info(self):
-        return self.info()
-
-
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
+        self.group.layout_all()

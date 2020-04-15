@@ -13,11 +13,7 @@
 
 import os
 import sys
-try:
-    # Python >=3.3
-    from unittest.mock import MagicMock
-except ImportError:
-    from mock import MagicMock
+from unittest.mock import MagicMock
 
 
 class Mock(MagicMock):
@@ -29,8 +25,10 @@ class Mock(MagicMock):
 
 MOCK_MODULES = [
     'libqtile._ffi_pango',
-    'libqtile._ffi_xcursors',
+    'libqtile.backend.x11._ffi_xcursors',
     'cairocffi',
+    'cairocffi.xcb',
+    'cairocffi.pixbuf',
     'cffi',
     'dateutil',
     'dateutil.parser',
@@ -39,6 +37,7 @@ MOCK_MODULES = [
     'iwlib',
     'keyring',
     'mpd',
+    'psutil',
     'trollius',
     'xcffib',
     'xcffib.randr',
@@ -90,14 +89,14 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Qtile'
-copyright = u'2008-2016, Aldo Cortesi and contributers'
+copyright = u'2008-2020, Aldo Cortesi and contributers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '0.10.6'
+version = '0.15.0'
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -306,4 +305,4 @@ graphviz_dot_args = ['-Lg']
 
 # A workaround for the responsive tables always having annoying scrollbars.
 def setup(app):
-    app.add_stylesheet("no_scrollbars.css")
+    app.add_css_file("no_scrollbars.css")

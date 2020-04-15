@@ -20,14 +20,10 @@
 
 import functools
 import os
-import operator
-import sys
 import warnings
+import traceback
+import importlib
 
-import six
-from six.moves import reduce
-
-from . import xcbq
 from .log_utils import logger
 
 
@@ -42,84 +38,18 @@ def lget(o, v):
         return None
 
 
-def translate_masks(modifiers):
-    """
-    Translate a modifier mask specified as a list of strings into an or-ed
-    bit representation.
-    """
-    masks = []
-    for i in modifiers:
-        try:
-            masks.append(xcbq.ModMasks[i])
-        except KeyError:
-            raise KeyError("Unknown modifier: %s" % i)
-    if masks:
-        return reduce(operator.or_, masks)
-    else:
-        return 0
-
-
-def translate_modifiers(mask):
-    r = []
-    for k, v in xcbq.ModMasks.items():
-        if mask & v:
-            r.append(k)
-    return r
-
-
-def shuffleUp(lst):
+def shuffle_up(lst):
     if len(lst) > 1:
         c = lst[-1]
         lst.remove(c)
         lst.insert(0, c)
 
 
-def shuffleDown(lst):
+def shuffle_down(lst):
     if len(lst) > 1:
         c = lst[0]
         lst.remove(c)
         lst.append(c)
-
-
-if sys.version_info < (3, 3):
-    class lru_cache(object):
-        """
-            A decorator that implements a self-expiring LRU cache for class
-            methods (not functions!).
-
-            Cache data is tracked as attributes on the object itself. There is
-            therefore a separate cache for each object instance.
-        """
-        def __init__(self, maxsize=128, typed=False):
-            self.size = maxsize
-
-        def __call__(self, f):
-            cache_name = "_cached_{0}".format(f.__name__)
-            cache_list_name = "_cachelist_{0}".format(f.__name__)
-            size = self.size
-
-            @functools.wraps(f)
-            def wrap(self, *args):
-                if not hasattr(self, cache_name):
-                    setattr(self, cache_name, {})
-                    setattr(self, cache_list_name, [])
-                cache = getattr(self, cache_name)
-                cache_list = getattr(self, cache_list_name)
-                if args in cache:
-                    cache_list.remove(args)
-                    cache_list.insert(0, args)
-                    return cache[args]
-                else:
-                    ret = f(self, *args)
-                    cache_list.insert(0, args)
-                    cache[args] = ret
-                    if len(cache_list) > size:
-                        d = cache_list.pop()
-                        cache.pop(d)
-                    return ret
-            return wrap
-else:
-    from functools import lru_cache
 
 
 def rgb(x):
@@ -139,7 +69,7 @@ def rgb(x):
         else:
             alpha = 1
         return (x[0] / 255.0, x[1] / 255.0, x[2] / 255.0, alpha)
-    elif isinstance(x, six.string_types):
+    elif isinstance(x, str):
         if x.startswith("#"):
             x = x[1:]
         if "." in x:
@@ -162,8 +92,8 @@ def hex(x):
 
 def scrub_to_utf8(text):
     if not text:
-        return u""
-    elif isinstance(text, six.text_type):
+        return ""
+    elif isinstance(text, str):
         return text
     else:
         return text.decode("utf-8", "ignore")
@@ -171,6 +101,10 @@ def scrub_to_utf8(text):
 
 # WARNINGS
 class UnixCommandNotFound(Warning):
+    pass
+
+
+class UnixCommandRuntimeError(Warning):
     pass
 
 
@@ -201,7 +135,7 @@ def catch_exception_and_warn(warning=Warning, return_on_exception=None,
             try:
                 return_value = func(*args, **kwargs)
             except excepts as err:
-                logger.warn(err.strerror)
+                logger.warning(err.strerror)
                 warnings.warn(err.strerror, warning)
             return return_value
         return wrapper
@@ -223,14 +157,11 @@ def get_cache_dir():
     return cache_directory
 
 
-def describe_attributes(obj, attrs, func=None):
+def describe_attributes(obj, attrs, func=lambda x: x):
     """
     Helper for __repr__ functions to list attributes with truthy values only
     (or values that return a truthy value by func)
     """
-
-    if not func:
-        func = lambda x: x  # flake8: noqa
 
     pairs = []
 
@@ -240,3 +171,25 @@ def describe_attributes(obj, attrs, func=None):
             pairs.append('%s=%s' % (attr, value))
 
     return ', '.join(pairs)
+
+
+def safe_import(module_names, class_name, globals_, fallback=None):
+    """
+    Try to import a module, and if it fails because an ImporError
+    it logs on WARNING, and logs the traceback on DEBUG level
+    """
+    module_path = '.'.join(module_names)
+    if type(class_name) is list:
+        for name in class_name:
+            safe_import(module_names, name, globals_)
+        return
+    package = __package__
+    try:
+        module = importlib.import_module(module_path, package)
+        globals_[class_name] = getattr(module, class_name)
+    except ImportError as error:
+        logger.warning("Unmet dependencies for optional Widget: '%s.%s', %s",
+                       module_path, class_name, error)
+        logger.debug("%s", traceback.format_exc())
+        if fallback:
+            globals_[class_name] = fallback(module_path, class_name, error)

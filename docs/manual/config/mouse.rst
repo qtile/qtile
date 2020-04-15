@@ -23,7 +23,7 @@ Example
 The above example can also be written more concisely with the help of
 the ``EzClick`` and ``EzDrag`` helpers::
 
-    from libqtile.config import EzClick as EzClick, EzDrag as Drag
+    from libqtile.config import EzClick as Click, EzDrag as Drag
 
     mouse = [
         Drag("M-1", lazy.window.set_position_floating(),

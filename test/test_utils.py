@@ -20,66 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import sys
-
-import six
-
 import libqtile.utils as utils
-
-
-class Foo(object):
-    ran = False
-
-    @utils.lru_cache(2)
-    def one(self, x):
-        self.ran = True
-        return x
-
-
-def test_translate_masks():
-    assert utils.translate_masks(["shift", "control"])
-    assert utils.translate_masks([]) == 0
-
-
-def test_lrucache_works_as_decorator():
-    f = Foo()
-    assert f.one(1) == 1
-    assert f.one('test') == 'test'
-
-
-def test_lrucache_caches():
-    f = Foo()
-    f.one(1)
-    f.one(2)
-    f.ran = False
-    f.one(1)
-    assert not f.ran
-    f.one(2)
-    assert not f.ran
-
-
-def test_lrucache_discards_lru_item():
-    f = Foo()
-    f.one(1)
-    assert f.ran
-    f.ran = False
-    f.one(1)
-    assert not f.ran
-    f.one(2)
-    f.one(3)
-    f.one(1)
-    assert f.ran
-
-
-def test_lrucache_maintains_size():
-    f = Foo()
-    f.one(1)
-    f.one(2)
-    f.one(3)
-    # we only need these checks for the homebuilt LRU cache
-    if sys.version_info < (3, 3):
-        assert len(f._cached_one) == 2
-        assert len(f._cachelist_one) == 2
 
 
 def test_rgb_from_hex_number():
@@ -107,12 +48,12 @@ def test_rgb_from_base10_tuple_with_alpha():
 
 
 def test_scrub_to_utf8():
-    assert utils.scrub_to_utf8(six.b("foo")) == six.u("foo")
+    assert utils.scrub_to_utf8(b"foo") == "foo"
 
 
 def test_shuffle():
-    l = list(range(3))
-    utils.shuffleUp(l)
-    assert l != list(range(3))
-    utils.shuffleDown(l)
-    assert l == list(range(3))
+    test_l = list(range(3))
+    utils.shuffle_up(test_l)
+    assert test_l != list(range(3))
+    utils.shuffle_down(test_l)
+    assert test_l == list(range(3))
