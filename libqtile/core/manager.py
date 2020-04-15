@@ -62,30 +62,13 @@ from ..xkeysyms import keysyms
 from ..backend.x11.xcore import XCore
 
 
-def find_similar_keys(key):
-    # Python package 'regex' is optional.
-    # The import error will be caught in validate_config
-    import regex
-
-    regexp = regex.compile(
-        r"({}{{e<{}}})".format(key, len(key)), regex.IGNORECASE
-    )
-    similar_keys = []
-    for qtile_key in keysyms.keys():
-        if regexp.match(qtile_key):
-            similar_keys.append(qtile_key)
-    if not similar_keys:
-        return "No key similar to '{}' could be found in libqtile.xkeysyms.keysyms :/".format(
-            key
-        )
-    if len(similar_keys) == 1:
-        return "Maybe you meant '{}'?".format(similar_keys[0])
-    return "Maybe you meant '{}', or '{}'?".format(
-        "', '".join(similar_keys[:-1]), similar_keys[-1]
-    )
-
-
 def validate_config(file_path):
+    """
+    Validate a configuration file.
+
+    This function reloads and imports the given configuration file.
+    It re-raises a ConfigError with a detailed message for any caught exception.
+    """
     output = [
         "The configuration file '",
         file_path,
@@ -98,28 +81,32 @@ def validate_config(file_path):
     try:
         # Mandatory: we must reload the module (the config file was modified)
         importlib.reload(sys.modules[name])
+    except KeyError:
+        # The module name didn't match the file path basename. Abort.
+        return
+
+    try:
         Config.from_file(XCore(), file_path)
 
     except ConfigError as error:
         output.append(str(error))
-
-        # Handle the case when a key is erroneous
-        if str(error).startswith("No such key"):
-            output.append("\n\n")
-            key = str(error).replace("No such key: ", "")
-            try:
-                similar_keys = find_similar_keys(key)
-            except ImportError:
-                output.append("Install 'regex' if you want to see valid similar keys")
-            else:
-                output.append(similar_keys)
-
         raise ConfigError("".join(output))
 
     except Exception as error:
         # Handle SyntaxError and the likes
         output.append("{}: {}".format(sys.exc_info()[0].__name__, str(error)))
         raise ConfigError("".join(output))
+
+
+def send_notification(title, message, timeout=10000):
+    """Send a notification."""
+    import gi
+    gi.require_version("Notify", "0.7")
+    from gi.repository import Notify
+    Notify.init("Qtile")
+    notifier = Notify.Notification.new(title, message)
+    notifier.set_timeout(timeout)
+    notifier.show()
 
 
 def _import_module(module_name, dir_path):
@@ -1152,19 +1139,12 @@ class Qtile(CommandObject):
         try:
             validate_config(self.config.file_path)
         except ConfigError as error:
-            try:
-                # Send a notification
-                import gi
-                gi.require_version("Notify", "0.7")
-                from gi.repository import Notify
-                Notify.init("Qtile")
-                notifier = Notify.Notification.new("Configuration error", str(error))
-                notifier.set_timeout(10000)
-                notifier.show()
-            except ImportError:
-                pass
-
             logger.error("Preventing restart because of a configuration error: " + str(error))
+            try:
+                send_notification("Configuration error", str(error))
+            except Exception as exception:
+                # Catch everything to prevent a crash
+                logger.error("Error while sending a notification: " + str(exception))
 
             # There was an error, return early and don't restart
             return
