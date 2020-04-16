@@ -26,6 +26,7 @@ Commands and scripting
     manual/commands/qtile-run
     manual/commands/qtile-cmd
     manual/commands/dqtile-cmd
+    manual/commands/keybindings
 
 Getting involved
 ================

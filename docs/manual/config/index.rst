@@ -62,6 +62,9 @@ a system tray, and a clock.
 The default configuration has several more advanced key combinations, but the
 above should be enough for basic usage of qtile.
 
+See :doc:`Keybindings in images </manual/commands/keybindings>` for visual
+keybindings in keyboard layout.
+
 Mouse Bindings
 --------------
 
