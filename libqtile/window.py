@@ -25,9 +25,9 @@ import warnings
 from xcffib.xproto import EventMask, StackMode, SetMode
 import xcffib.xproto
 
-from . import utils
-from . import hook
-from .log_utils import logger
+from libqtile import utils
+from libqtile import hook
+from libqtile.log_utils import logger
 from libqtile.command_object import CommandObject, CommandError
 
 

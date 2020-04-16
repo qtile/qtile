@@ -27,8 +27,8 @@
 import re
 from subprocess import CalledProcessError
 
-from . import base
-from ..utils import (
+from libqtile.widget import base
+from libqtile.utils import (
     UnixCommandNotFound, UnixCommandRuntimeError, catch_exception_and_warn
 )
 from libqtile.log_utils import logger

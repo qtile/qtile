@@ -27,9 +27,9 @@ import libqtile.config
 import libqtile.scratchpad
 
 # import .conftest
-from .conftest import Retry
-from .conftest import no_xinerama
-from .layouts.layout_utils import assert_focused, assert_focus_path
+from test.conftest import Retry
+from test.conftest import no_xinerama
+from test.layouts.layout_utils import assert_focused, assert_focus_path
 
 
 class ScratchPadBaseConfic:

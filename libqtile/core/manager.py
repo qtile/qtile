@@ -38,18 +38,18 @@ import xcffib
 import xcffib.xinerama
 import xcffib.xproto
 
-from ..config import Drag, Click, Screen, Match, Rule
-from ..config import ScratchPad as ScratchPadConfig
-from ..group import _Group
-from ..scratchpad import ScratchPad
-from ..log_utils import logger
-from ..state import QtileState
-from ..utils import get_cache_dir
-from ..widget.base import _Widget
-from ..extension.base import _Extension
-from .. import hook
-from .. import utils
-from .. import window
+from libqtile.config import Drag, Click, Screen, Match, Rule
+from libqtile.config import ScratchPad as ScratchPadConfig
+from libqtile.group import _Group
+from libqtile.scratchpad import ScratchPad
+from libqtile.log_utils import logger
+from libqtile.state import QtileState
+from libqtile.utils import get_cache_dir
+from libqtile.widget.base import _Widget
+from libqtile.extension.base import _Extension
+from libqtile import hook
+from libqtile import utils
+from libqtile import window
 from libqtile.backend.x11 import xcbq
 from libqtile import command_interface
 from libqtile.command_client import InteractiveCommandClient

@@ -31,10 +31,10 @@ import xcffib
 import xcffib.xproto
 
 from libqtile.command_object import CommandObject
-from . import hook
-from . import window
-from . import utils
-from .log_utils import logger
+from libqtile import hook
+from libqtile import window
+from libqtile import utils
+from libqtile.log_utils import logger
 
 
 class _Group(CommandObject):
@@ -400,7 +400,7 @@ class _Group(CommandObject):
         """
 
         def match(group):
-            from . import scratchpad
+            from libqtile import scratchpad
 
             if group is self:
                 return True

@@ -15,7 +15,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from .base import Layout, _ClientList
+from libqtile.layout.base import Layout, _ClientList
 
 
 class _Column(_ClientList):

@@ -23,7 +23,7 @@ import pytest
 from libqtile import layout
 import libqtile.config
 import libqtile.hook
-from .layout_utils import assert_focused, assert_focus_path_unordered
+from test.layouts.layout_utils import assert_focused, assert_focus_path_unordered
 
 
 class AllLayoutsConfig:

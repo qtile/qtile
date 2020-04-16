@@ -18,10 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from . import confreader
-from . import drawer
-from . import configurable
-from . import window
+from libqtile import confreader
+from libqtile import drawer
+from libqtile import configurable
+from libqtile import window
 from libqtile.command_object import CommandObject
 
 

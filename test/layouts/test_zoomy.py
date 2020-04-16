@@ -29,8 +29,8 @@ import pytest
 
 from libqtile import layout
 import libqtile.config
-from .layout_utils import assert_dimensions, assert_focused, assert_focus_path
-from ..conftest import no_xinerama
+from test.layouts.layout_utils import assert_dimensions, assert_focused, assert_focus_path
+from test.conftest import no_xinerama
 
 
 class ZoomyConfig:

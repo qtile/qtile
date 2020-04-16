@@ -24,8 +24,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .. import bar
-from . import base
+from libqtile import bar
+from libqtile.widget import base
 
 
 class Spacer(base._Widget):

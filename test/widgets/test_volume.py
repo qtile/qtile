@@ -2,7 +2,7 @@ import pytest
 from libqtile.widget import Volume
 from libqtile import images
 import cairocffi
-from .conftest import TEST_DIR
+from test.widgets.conftest import TEST_DIR
 
 
 def test_images_fail():

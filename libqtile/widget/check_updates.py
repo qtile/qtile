@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 import os
-from . import base
+from libqtile.widget import base
 from libqtile.log_utils import logger
 from subprocess import CalledProcessError, Popen
 

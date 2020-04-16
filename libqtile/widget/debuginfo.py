@@ -20,8 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .. import hook, bar, layout
-from . import base
+from libqtile import hook, bar, layout
+from libqtile.widget import base
 
 
 class DebugInfo(base._TextBox):

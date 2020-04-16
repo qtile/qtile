@@ -20,7 +20,7 @@
 
 import shlex
 from subprocess import Popen, PIPE
-from .. import configurable
+from libqtile import configurable
 
 from typing import Any, List, Tuple  # noqa: F401
 

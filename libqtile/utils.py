@@ -24,7 +24,7 @@ import warnings
 import traceback
 import importlib
 
-from .log_utils import logger
+from libqtile.log_utils import logger
 
 
 class QtileError(Exception):

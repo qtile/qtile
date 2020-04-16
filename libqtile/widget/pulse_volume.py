@@ -2,8 +2,8 @@
 import subprocess
 import logging
 
-from .volume import BUTTON_UP, BUTTON_DOWN, BUTTON_MUTE, BUTTON_RIGHT, Volume
-from ._pulse_audio import lib, ffi
+from libqtile.widget.volume import BUTTON_UP, BUTTON_DOWN, BUTTON_MUTE, BUTTON_RIGHT, Volume
+from libqtile.widget._pulse_audio import lib, ffi
 
 log = logging.getLogger(__name__)
 

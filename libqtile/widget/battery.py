@@ -43,8 +43,8 @@ from typing import Any, List, NamedTuple, Optional, Tuple  # noqa: F401
 from libqtile import bar
 from libqtile.log_utils import logger
 from libqtile.images import Img  # noqa: F401
-from . import base
-from .. import images, configurable
+from libqtile.widget import base
+from libqtile import images, configurable
 
 from typing import Dict  # noqa: F401
 

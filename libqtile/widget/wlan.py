@@ -28,7 +28,7 @@
 # SOFTWARE.
 import iwlib
 
-from . import base
+from libqtile.widget import base
 from libqtile.log_utils import logger
 
 

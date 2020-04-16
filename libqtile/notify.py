@@ -26,7 +26,7 @@
     If dbus is available, this module implements a
     org.freedesktop.Notifications service.
 """
-from .log_utils import logger
+from libqtile.log_utils import logger
 
 try:
     import dbus

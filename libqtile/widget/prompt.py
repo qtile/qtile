@@ -44,7 +44,7 @@ from libqtile.command_object import CommandObject, SelectError
 from libqtile.command_interface import CommandError, QtileCommandInterface
 from libqtile.log_utils import logger
 
-from . import base
+from libqtile.widget import base
 from libqtile import bar, hook, pangocffi, utils, xkeysyms
 from libqtile.backend.x11 import xcbq
 

@@ -19,8 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from . import base
-from .generic_poll_text import GenPollUrl
+from libqtile.widget import base
+from libqtile.widget.generic_poll_text import GenPollUrl
 
 import datetime
 

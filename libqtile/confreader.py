@@ -60,7 +60,7 @@ class Config:
         Only attributes found in Config.settings_keys will be added to object.
         config attribute precedence is 1.) **settings 2.) self 3.) default_config
         """
-        from .resources import default_config
+        from libqtile.resources import default_config
 
         self.file_path = file_path
 
@@ -89,7 +89,7 @@ class Config:
             config = __import__(os.path.basename(path)[:-3])  # noqa: F811
         except Exception:
             import traceback
-            from .log_utils import logger
+            from libqtile.log_utils import logger
             logger.exception('Could not import config file %r', path)
             tb = traceback.format_exc()
             raise ConfigError(tb)

@@ -53,7 +53,7 @@ import cairocffi.xcb
 
 from libqtile import xkeysyms
 from libqtile.log_utils import logger
-from .xcursors import Cursors
+from libqtile.backend.x11.xcursors import Cursors
 
 keysyms = xkeysyms.keysyms
 

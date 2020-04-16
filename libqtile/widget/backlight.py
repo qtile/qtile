@@ -25,7 +25,7 @@ import os
 import shlex
 
 from libqtile.log_utils import logger
-from . import base
+from libqtile.widget import base
 
 from typing import Dict  # noqa: F401
 

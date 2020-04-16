@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .base import _TextBox
+from libqtile.widget.base import _TextBox
 
 
 def make_error(module_path, class_name, error):

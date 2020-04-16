@@ -29,9 +29,9 @@ import pytest
 
 from libqtile import layout
 import libqtile.config
-from .layout_utils import assert_dimensions
-from ..conftest import no_xinerama
-from .layout_utils import assert_focused, assert_focus_path
+from test.layouts.layout_utils import assert_dimensions
+from test.conftest import no_xinerama
+from test.layouts.layout_utils import assert_focused, assert_focus_path
 
 
 class VerticalTileConfig:
