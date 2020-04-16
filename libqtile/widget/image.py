@@ -21,9 +21,9 @@
 # SOFTWARE.
 import os
 
-from . import base
-from .. import bar
-from ..images import Img
+from libqtile.widget import base
+from libqtile import bar
+from libqtile.images import Img
 
 
 class Image(base._Widget, base.MarginMixin):

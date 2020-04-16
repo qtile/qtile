@@ -24,8 +24,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .. import hook, bar
-from . import base
+from libqtile import hook, bar
+from libqtile.widget import base
 
 
 class WindowName(base._TextBox):

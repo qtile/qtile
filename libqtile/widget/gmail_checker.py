@@ -22,7 +22,7 @@
 # SOFTWARE.
 
 from libqtile.log_utils import logger
-from . import base
+from libqtile.widget import base
 import imaplib
 import re
 

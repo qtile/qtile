@@ -33,7 +33,7 @@
 
 import cairocffi
 
-from . import base
+from libqtile.widget import base
 from libqtile.log_utils import logger
 from os import statvfs
 import time

@@ -25,8 +25,8 @@
 
 from typing import Any, List, Tuple
 
-from .. import bar
-from . import base
+from libqtile import bar
+from libqtile.widget import base
 
 
 class TextBox(base._TextBox):

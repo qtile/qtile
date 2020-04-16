@@ -19,7 +19,7 @@
 # SOFTWARE.
 
 from os import system
-from .dmenu import Dmenu
+from libqtile.extension.dmenu import Dmenu
 
 
 class CommandSet(Dmenu):

@@ -33,8 +33,8 @@
 import re
 import subprocess
 
-from . import base
-from .. import bar
+from libqtile.widget import base
+from libqtile import bar
 
 __all__ = [
     'Volume',
@@ -168,7 +168,7 @@ class Volume(base._TextBox):
                 self.text = '{}%'.format(self.volume)
 
     def setup_images(self):
-        from .. import images
+        from libqtile import images
         names = (
             'audio-volume-high',
             'audio-volume-low',

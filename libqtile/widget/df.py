@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import os
-from . import base
+from libqtile.widget import base
 
 
 class DF(base.ThreadedPollText):

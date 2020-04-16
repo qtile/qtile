@@ -26,8 +26,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from . import base
-from .. import bar, utils, pangocffi
+from libqtile.widget import base
+from libqtile import bar, utils, pangocffi
 from libqtile.notify import notifier
 from os import path
 

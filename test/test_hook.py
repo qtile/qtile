@@ -31,7 +31,7 @@ import libqtile.hook
 import logging
 from libqtile.resources import default_config
 
-from .conftest import BareConfig
+from test.conftest import BareConfig
 
 # TODO: more tests required.
 # 1. Check all hooks that can be fired

@@ -20,20 +20,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from ..utils import safe_import as safe_import_
-from .import_error import make_error
+from libqtile.utils import safe_import as safe_import_
+from libqtile.widget.import_error import make_error
 
 # only directly import widgets that do not have any third party dependencies
 # other than those required by qtile, otherwise use the same import function
-from .base import Mirror  # noqa: F401
-from .clock import Clock  # noqa: F401
-from .currentlayout import CurrentLayout, CurrentLayoutIcon  # noqa: F401
-from .groupbox import AGroupBox, GroupBox  # noqa: F401
-from .prompt import Prompt  # noqa: F401
-from .quick_exit import QuickExit  # noqa: F401
-from .systray import Systray  # noqa: F401
-from .textbox import TextBox  # noqa: F401
-from .windowname import WindowName  # noqa: F401
+from libqtile.widget.base import Mirror  # noqa: F401
+from libqtile.widget.clock import Clock  # noqa: F401
+from libqtile.widget.currentlayout import CurrentLayout, CurrentLayoutIcon  # noqa: F401
+from libqtile.widget.groupbox import AGroupBox, GroupBox  # noqa: F401
+from libqtile.widget.prompt import Prompt  # noqa: F401
+from libqtile.widget.quick_exit import QuickExit  # noqa: F401
+from libqtile.widget.systray import Systray  # noqa: F401
+from libqtile.widget.textbox import TextBox  # noqa: F401
+from libqtile.widget.windowname import WindowName  # noqa: F401
 
 
 def safe_import(module_name, class_name):

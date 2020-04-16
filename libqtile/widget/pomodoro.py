@@ -21,7 +21,7 @@
 import subprocess
 from time import time
 from datetime import datetime, timedelta
-from . import base
+from libqtile.widget import base
 
 
 class Pomodoro(base.ThreadPoolText):

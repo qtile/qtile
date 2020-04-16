@@ -23,8 +23,8 @@
 import os
 import subprocess
 import random
-from . import base
-from .. import bar
+from libqtile.widget import base
+from libqtile import bar
 from libqtile.log_utils import logger
 
 

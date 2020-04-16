@@ -36,7 +36,7 @@ from typing import Any, List, Tuple  # noqa: F401
 
 from libqtile.log_utils import logger
 from libqtile.command_object import CommandObject, CommandError
-from .. import bar, configurable, drawer, confreader
+from libqtile import bar, configurable, drawer, confreader
 
 
 # Each widget class must define which bar orientation(s) it supports by setting

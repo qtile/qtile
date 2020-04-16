@@ -41,7 +41,7 @@ from libqtile.command_interface import CommandError, CommandException
 from libqtile.lazy import lazy
 
 
-from .conftest import whereis, BareConfig, no_xinerama, Retry
+from test.conftest import whereis, BareConfig, no_xinerama, Retry
 
 
 class ManagerConfig:

@@ -21,7 +21,7 @@
 from urllib.parse import urlencode
 import locale
 
-from .generic_poll_text import GenPollUrl
+from libqtile.widget.generic_poll_text import GenPollUrl
 
 
 class StockTicker(GenPollUrl):

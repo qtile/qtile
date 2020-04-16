@@ -38,7 +38,7 @@
 # SOFTWARE.
 ###################################################################
 
-from . import base
+from libqtile.widget import base
 import datetime
 import dateutil.parser
 import subprocess

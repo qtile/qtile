@@ -32,8 +32,8 @@
 
 import itertools
 
-from .. import bar, hook
-from . import base
+from libqtile import bar, hook
+from libqtile.widget import base
 
 from typing import Any, List, Tuple  # noqa: F401
 

@@ -25,7 +25,7 @@ import pytest
 from libqtile.config import Screen
 from libqtile.bar import Bar
 from libqtile.widget import TextBox, ThermalSensor
-from ..conftest import BareConfig
+from test.conftest import BareConfig
 
 
 class ColorChanger(TextBox):

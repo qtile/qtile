@@ -26,9 +26,9 @@
 import re
 
 import cairocffi
-from .. import pangocffi
-from .. import bar, hook
-from . import base
+from libqtile import pangocffi
+from libqtile import bar, hook
+from libqtile.widget import base
 
 
 class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):

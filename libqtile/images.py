@@ -35,7 +35,7 @@ def _decode_to_image_surface(bytes_img, width=None, height=None):
         surf, fmt = cairocffi.pixbuf.decode_to_image_surface(bytes_img, width, height)
         return _SurfaceInfo(surf, fmt)
     except TypeError:
-        from .log_utils import logger
+        from libqtile.log_utils import logger
         logger.exception(
             "Couldn't load cairo image at specified width and height. "
             "Falling back to image scaling using cairo. "

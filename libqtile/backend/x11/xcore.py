@@ -28,7 +28,7 @@ import xcffib
 import xcffib.xproto
 import xcffib.render
 
-from . import xcbq
+from libqtile.backend.x11 import xcbq
 from libqtile import config, hook, utils, window
 from libqtile.backend import base
 from libqtile.log_utils import logger

@@ -28,7 +28,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .base import Layout
+from libqtile.layout.base import Layout
 
 DEFAULT_FLOAT_WM_TYPES = set([
     'utility',

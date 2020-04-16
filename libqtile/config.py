@@ -30,9 +30,9 @@ import sys
 import warnings
 from typing import List
 
-from . import configurable
-from . import hook
-from . import utils
+from libqtile import configurable
+from libqtile import hook
+from libqtile import utils
 from libqtile.command_object import CommandObject
 
 
