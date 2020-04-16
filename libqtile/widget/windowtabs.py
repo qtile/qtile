@@ -35,7 +35,7 @@ class WindowTabs(base._TextBox):
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("separator", " | ", "Task separator text."),
-        ("selected", ("<", ">"), "Selected task indicator"),
+        ("selected", ("<b>", "</b>"), "Selected task indicator"),
     ]
 
     def __init__(self, **config):
