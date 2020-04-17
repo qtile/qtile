@@ -1,6 +1,7 @@
 flake8
+flake8-isort
 flake8-tidy-imports
+mypy
 pep8-naming
 psutil
 pytest-cov
-mypy
