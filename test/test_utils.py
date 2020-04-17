@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import libqtile.utils as utils
+from libqtile import utils
 
 
 def test_rgb_from_hex_number():

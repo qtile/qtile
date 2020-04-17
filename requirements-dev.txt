@@ -1,4 +1,5 @@
 flake8
+flake8-tidy-imports
 pep8-naming
 psutil
 pytest-cov
