@@ -1,8 +1,8 @@
 import asyncio
 import os
 
-import libqtile.backend.base as base
-import libqtile.ipc as ipc
+from libqtile.backend import base
+from libqtile import ipc
 from libqtile.core.manager import Qtile
 
 

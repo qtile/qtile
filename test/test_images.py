@@ -3,7 +3,7 @@ test_images.py contains unittests for libqtile.images.Img
 and its supporting code.
 """
 import pytest
-import libqtile.images as images
+from libqtile import images
 import cairocffi
 import os
 from os import path

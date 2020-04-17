@@ -7,7 +7,7 @@ Image similarity / distance is calculated using imagemagick's convert
 utility.
 """
 import pytest
-import libqtile.images as images
+from libqtile import images
 import cairocffi
 import subprocess as sp
 from collections import namedtuple
