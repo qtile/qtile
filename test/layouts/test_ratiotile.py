@@ -25,14 +25,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from test.conftest import no_xinerama
-from test.layouts.layout_utils import assert_focus_path, assert_focused
 from time import sleep
 
 import pytest
 
 import libqtile.config
 from libqtile import layout
+from test.conftest import no_xinerama
+from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
 class RatioTileConfig:

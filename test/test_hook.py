@@ -23,7 +23,6 @@
 
 import logging
 from multiprocessing import Value
-from test.conftest import BareConfig
 
 import pytest
 
@@ -32,6 +31,7 @@ import libqtile.hook
 import libqtile.log_utils
 import libqtile.utils
 from libqtile.resources import default_config
+from test.conftest import BareConfig
 
 # TODO: more tests required.
 # 1. Check all hooks that can be fired
