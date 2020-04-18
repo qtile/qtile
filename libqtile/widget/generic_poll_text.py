@@ -1,5 +1,5 @@
 import json
-from typing import Any, List, Tuple  # noqa: F401
+from typing import Any, List, Tuple
 from urllib.request import Request, urlopen
 
 from libqtile.log_utils import logger

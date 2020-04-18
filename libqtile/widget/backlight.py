@@ -23,7 +23,7 @@
 
 import os
 import shlex
-from typing import Dict  # noqa: F401
+from typing import Dict
 
 from libqtile.log_utils import logger
 from libqtile.widget import base

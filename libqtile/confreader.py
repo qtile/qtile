@@ -24,7 +24,6 @@
 # SOFTWARE.
 import os
 import sys
-from typing import List  # noqa: F401
 
 from libqtile.backend import base
 

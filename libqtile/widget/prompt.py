@@ -37,7 +37,7 @@ import os
 import pickle
 import string
 from collections import OrderedDict, deque
-from typing import List, Optional, Tuple  # noqa: F401
+from typing import List, Optional, Tuple
 
 from libqtile import bar, hook, pangocffi, utils, xkeysyms
 from libqtile.backend.x11 import xcbq
