@@ -121,6 +121,13 @@ def _import_module(module_name, dir_path):
     return module
 
 
+def handle_exception(loop, context):
+    if "exception" in context:
+        logger.error(context["exception"], exc_info=True)
+    else:
+        logger.error("exception in event loop: %s", context)
+
+
 class Qtile(CommandObject):
     """This object is the `root` of the command graph"""
     def __init__(
@@ -248,9 +255,7 @@ class Qtile(CommandObject):
     def setup_eventloop(self) -> None:
         self._eventloop.add_signal_handler(signal.SIGINT, self.stop)
         self._eventloop.add_signal_handler(signal.SIGTERM, self.stop)
-        self._eventloop.set_exception_handler(
-            lambda x, y: logger.exception("Got an exception in poll loop")
-        )
+        self._eventloop.set_exception_handler(handle_exception)
 
         logger.debug('Adding io watch')
         self.core.setup_listener(self, self._eventloop)
