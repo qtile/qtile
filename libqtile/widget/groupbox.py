@@ -31,7 +31,7 @@
 # SOFTWARE.
 
 import itertools
-from typing import Any, List, Tuple  # noqa: F401
+from typing import Any, List, Tuple
 
 from libqtile import bar, hook
 from libqtile.widget import base

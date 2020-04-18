@@ -40,7 +40,7 @@ from subprocess import CalledProcessError, check_output
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
 from libqtile import bar, configurable, images
-from libqtile.images import Img  # noqa: F401
+from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.widget import base
 

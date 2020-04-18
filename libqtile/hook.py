@@ -30,7 +30,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Dict, Set  # noqa: F401
+from typing import Dict, Set
 
 from libqtile import utils
 from libqtile.log_utils import logger
