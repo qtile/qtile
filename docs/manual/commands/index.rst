@@ -40,13 +40,13 @@ the bar they are attached to.
 
 Lets look at an example, starting at the root node. The following script runs
 the ``status`` command on the root node, which, in this case, is represented by
-the Client object:
+the ``CommandClient`` object:
 
 .. code-block:: python
 
-    from libqtile.command import Client
-    c = Client()
-    print c.status()
+    from libqtile.command_client import CommandClient
+    c = CommandClient()
+    print(c.status())
 
 From the graph, we can see that the root node holds a reference to
 ``group`` nodes. We can access the "info" command on the current group like
