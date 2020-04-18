@@ -24,10 +24,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.widget import base
-
-import os.path
 import mailbox
+import os.path
+
+from libqtile.widget import base
 
 
 class Maildir(base.ThreadedPollText):

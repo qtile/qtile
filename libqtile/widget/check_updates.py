@@ -19,9 +19,10 @@
 # SOFTWARE.
 
 import os
-from libqtile.widget import base
-from libqtile.log_utils import logger
 from subprocess import CalledProcessError, Popen
+
+from libqtile.log_utils import logger
+from libqtile.widget import base
 
 
 class CheckUpdates(base.ThreadedPollText):

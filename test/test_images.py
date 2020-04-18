@@ -2,13 +2,15 @@
 test_images.py contains unittests for libqtile.images.Img
 and its supporting code.
 """
-import pytest
-from libqtile import images
-import cairocffi
 import os
-from os import path
-from glob import glob
 from collections import OrderedDict
+from glob import glob
+from os import path
+
+import cairocffi
+import pytest
+
+from libqtile import images
 
 TEST_DIR = path.dirname(os.path.abspath(__file__))
 DATA_DIR = path.join(TEST_DIR, 'data')

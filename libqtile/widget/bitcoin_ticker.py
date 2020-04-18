@@ -23,9 +23,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import locale
+
 from libqtile.widget import base
 from libqtile.widget.generic_poll_text import GenPollUrl
-import locale
 
 _DEFAULT_CURRENCY = str(locale.localeconv()['int_curr_symbol'])
 

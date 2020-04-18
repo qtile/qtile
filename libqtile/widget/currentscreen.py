@@ -19,8 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.widget import base
 from libqtile import bar, hook
+from libqtile.widget import base
 
 
 class CurrentScreen(base._TextBox):

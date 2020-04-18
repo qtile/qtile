@@ -38,13 +38,14 @@
 # SOFTWARE.
 ###################################################################
 
-from libqtile.widget import base
 import datetime
-import dateutil.parser
-import subprocess
 import string
+import subprocess
+
+import dateutil.parser
 
 from libqtile import utils
+from libqtile.widget import base
 
 
 class KhalCalendar(base.ThreadedPollText):

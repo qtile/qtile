@@ -18,12 +18,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from test.layouts.layout_utils import (
+    assert_focus_path_unordered,
+    assert_focused,
+)
+
 import pytest
 
-from libqtile import layout
 import libqtile.config
 import libqtile.hook
-from test.layouts.layout_utils import assert_focused, assert_focus_path_unordered
+from libqtile import layout
 
 
 class AllLayoutsConfig:

@@ -26,7 +26,7 @@
 import pytest
 
 import libqtile.config
-from libqtile import layout, bar, widget
+from libqtile import bar, layout, widget
 from libqtile.config import Screen
 
 LEFT_ALT = 'mod1'

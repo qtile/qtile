@@ -21,11 +21,13 @@
 
 # Widget specific tests
 
-import pytest
-from libqtile.config import Screen
-from libqtile.bar import Bar
-from libqtile.widget import TextBox, ThermalSensor
 from test.conftest import BareConfig
+
+import pytest
+
+from libqtile.bar import Bar
+from libqtile.config import Screen
+from libqtile.widget import TextBox, ThermalSensor
 
 
 class ColorChanger(TextBox):

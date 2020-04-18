@@ -20,12 +20,13 @@
 
 import os
 import subprocess
+
 import pytest
 
-import libqtile.confreader
-import libqtile.config
-import libqtile.layout
 import libqtile.bar
+import libqtile.config
+import libqtile.confreader
+import libqtile.layout
 import libqtile.widget
 
 

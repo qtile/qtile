@@ -21,17 +21,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import pytest
-from multiprocessing import Value
-
-import libqtile.log_utils
-import libqtile.core
-import libqtile.utils
-import libqtile.hook
 import logging
-from libqtile.resources import default_config
-
+from multiprocessing import Value
 from test.conftest import BareConfig
+
+import pytest
+
+import libqtile.core
+import libqtile.hook
+import libqtile.log_utils
+import libqtile.utils
+from libqtile.resources import default_config
 
 # TODO: more tests required.
 # 1. Check all hooks that can be fired

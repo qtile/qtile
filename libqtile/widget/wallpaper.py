@@ -21,11 +21,12 @@
 # To use this widget, you will need to install feh wallpaper changer
 
 import os
-import subprocess
 import random
-from libqtile.widget import base
+import subprocess
+
 from libqtile import bar
 from libqtile.log_utils import logger
+from libqtile.widget import base
 
 
 class Wallpaper(base._TextBox):

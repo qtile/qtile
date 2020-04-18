@@ -25,11 +25,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.widget import base
-from libqtile.widget.generic_poll_text import GenPollUrl
+from urllib.parse import urlencode
 from xml.dom import minidom
 
-from urllib.parse import urlencode
+from libqtile.widget import base
+from libqtile.widget.generic_poll_text import GenPollUrl
 
 QUERY_URL = 'http://query.yahooapis.com/v1/public/yql?'
 WEATHER_URL = 'http://weather.yahooapis.com/forecastrss?'

@@ -4,14 +4,15 @@ A widget for Music Player Daemon (MPD) based on python-mpd2.
 This widget exists since python-mpd library is no longer supported.
 """
 
-from libqtile import utils
-from libqtile.widget import base
-from libqtile.log_utils import logger
-
-from socket import error as socket_error
-from mpd import MPDClient, ConnectionError, CommandError
 from collections import defaultdict
 from html import escape
+from socket import error as socket_error
+
+from mpd import CommandError, ConnectionError, MPDClient
+
+from libqtile import utils
+from libqtile.log_utils import logger
+from libqtile.widget import base
 
 # Mouse Interaction
 # TODO: Volume inc/dec support

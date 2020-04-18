@@ -23,14 +23,15 @@
 # SOFTWARE.
 
 import os
-import pytest
 import tempfile
 
-import libqtile.layout
+import pytest
+
 import libqtile.bar
-import libqtile.widget
 import libqtile.config
 import libqtile.confreader
+import libqtile.layout
+import libqtile.widget
 
 
 class GBConfig:

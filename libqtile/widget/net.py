@@ -17,13 +17,13 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+from math import log
+from typing import Tuple
+
 import psutil
 
 from libqtile.log_utils import logger
 from libqtile.widget import base
-
-from typing import Tuple
-from math import log
 
 
 class Net(base.ThreadedPollText):

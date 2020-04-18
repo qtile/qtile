@@ -1,9 +1,9 @@
 import json
+from typing import Any, List, Tuple  # noqa: F401
+from urllib.request import Request, urlopen
 
-from urllib.request import urlopen, Request
-
-from libqtile.widget import base
 from libqtile.log_utils import logger
+from libqtile.widget import base
 
 try:
     import xmltodict
@@ -15,8 +15,6 @@ except ImportError:
     # punt for now
     def xmlparse(body):
         raise Exception("no xmltodict library")
-
-from typing import Any, List, Tuple  # noqa: F401
 
 
 class GenPollText(base.ThreadedPollText):

@@ -19,6 +19,7 @@
 # SOFTWARE.
 
 from os import system
+
 from libqtile.extension.dmenu import Dmenu
 
 

@@ -19,10 +19,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import datetime
+
 from libqtile.widget import base
 from libqtile.widget.generic_poll_text import GenPollUrl
-
-import datetime
 
 
 class IdleRPG(GenPollUrl):

@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
-import subprocess
 import logging
+import subprocess
 
-from libqtile.widget.volume import BUTTON_UP, BUTTON_DOWN, BUTTON_MUTE, BUTTON_RIGHT, Volume
-from libqtile.widget._pulse_audio import lib, ffi
+from libqtile.widget._pulse_audio import ffi, lib
+from libqtile.widget.volume import (
+    BUTTON_DOWN,
+    BUTTON_MUTE,
+    BUTTON_RIGHT,
+    BUTTON_UP,
+    Volume,
+)
 
 log = logging.getLogger(__name__)
 

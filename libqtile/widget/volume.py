@@ -33,8 +33,8 @@
 import re
 import subprocess
 
-from libqtile.widget import base
 from libqtile import bar
+from libqtile.widget import base
 
 __all__ = [
     'Volume',

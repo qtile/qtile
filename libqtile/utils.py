@@ -19,10 +19,10 @@
 # SOFTWARE.
 
 import functools
-import os
-import warnings
-import traceback
 import importlib
+import os
+import traceback
+import warnings
 
 from libqtile.log_utils import logger
 

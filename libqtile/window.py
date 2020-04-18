@@ -22,14 +22,13 @@ import contextlib
 import inspect
 import traceback
 import warnings
-from xcffib.xproto import EventMask, StackMode, SetMode
+
 import xcffib.xproto
+from xcffib.xproto import EventMask, SetMode, StackMode
 
-from libqtile import utils
-from libqtile import hook
+from libqtile import hook, utils
+from libqtile.command_object import CommandError, CommandObject
 from libqtile.log_utils import logger
-from libqtile.command_object import CommandObject, CommandError
-
 
 # ICCM Constants
 NoValue = 0x0000

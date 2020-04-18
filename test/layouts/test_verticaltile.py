@@ -25,13 +25,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from test.conftest import no_xinerama
+from test.layouts.layout_utils import (
+    assert_dimensions,
+    assert_focus_path,
+    assert_focused,
+)
+
 import pytest
 
-from libqtile import layout
 import libqtile.config
-from test.layouts.layout_utils import assert_dimensions
-from test.conftest import no_xinerama
-from test.layouts.layout_utils import assert_focused, assert_focus_path
+from libqtile import layout
 
 
 class VerticalTileConfig:

@@ -19,10 +19,10 @@
 # SOFTWARE.
 
 import shlex
-from subprocess import Popen, PIPE
-from libqtile import configurable
-
+from subprocess import PIPE, Popen
 from typing import Any, List, Tuple  # noqa: F401
+
+from libqtile import configurable
 
 
 class _Extension(configurable.Configurable):

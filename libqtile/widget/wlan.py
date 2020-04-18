@@ -28,8 +28,8 @@
 # SOFTWARE.
 import iwlib
 
-from libqtile.widget import base
 from libqtile.log_utils import logger
+from libqtile.widget import base
 
 
 def get_status(interface_name):

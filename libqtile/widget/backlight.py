@@ -23,11 +23,10 @@
 
 import os
 import shlex
+from typing import Dict  # noqa: F401
 
 from libqtile.log_utils import logger
 from libqtile.widget import base
-
-from typing import Dict  # noqa: F401
 
 BACKLIGHT_DIR = '/sys/class/backlight'
 
