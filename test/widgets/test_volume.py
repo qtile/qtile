@@ -1,10 +1,9 @@
-from test.widgets.conftest import TEST_DIR
-
 import cairocffi
 import pytest
 
 from libqtile import images
 from libqtile.widget import Volume
+from test.widgets.conftest import TEST_DIR
 
 
 def test_images_fail():

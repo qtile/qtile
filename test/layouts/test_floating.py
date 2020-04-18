@@ -18,13 +18,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from test.conftest import no_xinerama
-from test.layouts.layout_utils import assert_focused
-
 import pytest
 
 import libqtile.config
 from libqtile import layout
+from test.conftest import no_xinerama
+from test.layouts.layout_utils import assert_focused
 
 
 class FloatingConfig:

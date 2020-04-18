@@ -18,10 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# import .conftest
-from test.conftest import Retry, no_xinerama
-from test.layouts.layout_utils import assert_focus_path, assert_focused
-
 import pytest
 
 import libqtile.bar
@@ -29,6 +25,8 @@ import libqtile.config
 import libqtile.layout
 import libqtile.scratchpad
 import libqtile.widget
+from test.conftest import Retry, no_xinerama
+from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
 class ScratchPadBaseConfic:
