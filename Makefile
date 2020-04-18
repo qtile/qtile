@@ -8,26 +8,15 @@ default:
 
 .PHONY: check
 check:
-	pytest --verbose
-
-.PHONY: check-cov
-check-cov:
-	pytest --verbose --with-cov libqtile --cov-report term-missing
+	TOXENV=py38 tox
 
 .PHONY: lint
 lint:
-	flake8 ./libqtile bin/q* ./test
-
-.PHONY: static_check
-static_check:
-	mypy -p libqtile
-
-.PHONY: ckpatch
-ckpatch: lint check static_check
+	TOXENV=pep8 tox
 
 .PHONY: clean
 clean:
-	-rm -rf dist qtile.egg-info docs/_build build/ .tox/ .mypy_cache/ .pytest_cache/ .eggs/
+	-rm -rf dist qtile.egg-info docs/_build build/ .tox/ .mypy_cache/ .pytest_cache/ .eggs/ .coverage*
 
 # This is a little ugly: we want to be able to have users just run
 # 'python setup.py install' to install qtile, but we would also like to install
