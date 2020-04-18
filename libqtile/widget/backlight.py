@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import enum
 import os
 import shlex
 from typing import Dict
@@ -29,6 +30,12 @@ from libqtile.log_utils import logger
 from libqtile.widget import base
 
 BACKLIGHT_DIR = '/sys/class/backlight'
+
+
+@enum.unique
+class ChangeDirection(enum.Enum):
+    UP = 0
+    DOWN = 1
 
 
 class Backlight(base.InLoopPollText):
@@ -41,6 +48,14 @@ class Backlight(base.InLoopPollText):
     the brightness file; these are typically installed alongside brightness
     tools such as brightnessctl (which changes the group to 'video') so
     installing that is an easy way to get it working.
+
+    You can also bind keyboard shortcuts to the backlight widget with:
+
+    .. code-block: python
+
+        from libqtile.widget import backlight
+        Key([], "XF86MonBrightnessUp", lazy.widget['backlight'].change_backlight(backlight.ChangeDirection.UP)),
+        Key([], "XF86MonBrightnessDown", lazy.widget['backlight'].change_backlight(backlight.ChangeDirection.DOWN)),
     """
 
     filenames = {}  # type: Dict
@@ -120,7 +135,7 @@ class Backlight(base.InLoopPollText):
         else:
             self.call_process(shlex.split(self.change_command.format(value)))
 
-    def button_press(self, x, y, button):
+    def cmd_change_backlight(self, direction):
         if self.future and not self.future.done():
             return
         info = self._get_info()
@@ -128,10 +143,16 @@ class Backlight(base.InLoopPollText):
             new = now = self.max_value
         else:
             new = now = info["brightness"]
-        if button == 5:  # down
+        if direction is ChangeDirection.DOWN:  # down
             new = max(now - self.step, 0)
-        elif button == 4:  # up
+        elif direction is ChangeDirection.UP:  # up
             new = min(now + self.step, self.max_value)
         if new != now:
             self.future = self.qtile.run_in_executor(self.change_backlight,
                                                      new)
+
+    def button_press(self, x, y, button):
+        if button == 5:
+            self.cmd_change_backlight(ChangeDirection.DOWN)
+        elif button == 4:
+            self.cmd_change_backlight(ChangeDirection.UP)
