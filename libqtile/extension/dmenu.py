@@ -19,6 +19,7 @@
 # SOFTWARE.
 
 import shlex
+
 from libqtile.extension import base
 
 

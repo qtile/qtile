@@ -27,13 +27,12 @@
 # SOFTWARE.
 
 import contextlib
+
 import xcffib
 import xcffib.xproto
 
+from libqtile import hook, utils, window
 from libqtile.command_object import CommandObject
-from libqtile import hook
-from libqtile import window
-from libqtile import utils
 from libqtile.log_utils import logger
 
 

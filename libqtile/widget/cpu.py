@@ -18,8 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.widget import base
 import psutil
+
+from libqtile.widget import base
 
 
 class CPU(base.ThreadedPollText):

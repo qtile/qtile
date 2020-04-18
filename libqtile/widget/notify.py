@@ -26,10 +26,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.widget import base
-from libqtile import bar, utils, pangocffi
-from libqtile.notify import notifier
 from os import path
+
+from libqtile import bar, pangocffi, utils
+from libqtile.notify import notifier
+from libqtile.widget import base
 
 
 class Notify(base._TextBox):

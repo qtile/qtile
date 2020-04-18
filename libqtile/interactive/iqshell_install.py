@@ -21,9 +21,9 @@
 import json
 import os
 import sys
+from tempfile import TemporaryDirectory
 
 from jupyter_client.kernelspec import install_kernel_spec
-from tempfile import TemporaryDirectory
 
 kernel_json = {
     "argv": [sys.executable, "-m", "libqtile.interactive.iqshell_kernel", "-f", "{connection_file}"],

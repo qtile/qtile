@@ -18,8 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.widget import base
 from libqtile import bar
+from libqtile.widget import base
 
 
 class QuickExit(base._TextBox):

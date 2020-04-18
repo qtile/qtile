@@ -26,13 +26,18 @@ import inspect
 import pprint
 import re
 import readline
-import sys
 import struct
+import sys
 import termios
 from typing import List, Optional, Tuple
 
 from libqtile import command_graph
-from libqtile.command_interface import format_selectors, CommandInterface, CommandError, CommandException
+from libqtile.command_interface import (
+    CommandError,
+    CommandException,
+    CommandInterface,
+    format_selectors,
+)
 
 
 def terminal_width():

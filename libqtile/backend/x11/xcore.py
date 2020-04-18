@@ -22,15 +22,15 @@
 import asyncio
 import os
 from collections import OrderedDict
-from typing import Callable, Iterator, List, Optional, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Iterator, List, Optional, Tuple
 
 import xcffib
-import xcffib.xproto
 import xcffib.render
+import xcffib.xproto
 
-from libqtile.backend.x11 import xcbq
 from libqtile import config, hook, utils, window
 from libqtile.backend import base
+from libqtile.backend.x11 import xcbq
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 

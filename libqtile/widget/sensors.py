@@ -27,11 +27,13 @@
 import re
 from subprocess import CalledProcessError
 
-from libqtile.widget import base
-from libqtile.utils import (
-    UnixCommandNotFound, UnixCommandRuntimeError, catch_exception_and_warn
-)
 from libqtile.log_utils import logger
+from libqtile.utils import (
+    UnixCommandNotFound,
+    UnixCommandRuntimeError,
+    catch_exception_and_warn,
+)
+from libqtile.widget import base
 
 
 class ThermalSensor(base.InLoopPollText):

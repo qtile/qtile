@@ -24,11 +24,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.config import Key, Screen, Group, Drag, Click
-from libqtile.lazy import lazy
-from libqtile import layout, bar, widget
-
 from typing import List  # noqa: F401
+
+from libqtile import bar, layout, widget
+from libqtile.config import Click, Drag, Group, Key, Screen
+from libqtile.lazy import lazy
 
 mod = "mod4"
 

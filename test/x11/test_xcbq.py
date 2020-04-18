@@ -1,7 +1,9 @@
 import os
+
 import pytest
 import xcffib
 import xcffib.testing
+
 from libqtile.backend.x11 import xcbq
 
 

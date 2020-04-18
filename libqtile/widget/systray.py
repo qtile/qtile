@@ -26,13 +26,17 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from libqtile.widget import base
+import xcffib
+from xcffib.xproto import (
+    ClientMessageData,
+    ClientMessageEvent,
+    EventMask,
+    SetMode,
+)
+
 from libqtile import bar, window
 from libqtile.backend.x11 import xcbq
-
-import xcffib
-from xcffib.xproto import (ClientMessageEvent, ClientMessageData, EventMask,
-                           SetMode)
+from libqtile.widget import base
 
 XEMBED_PROTOCOL_VERSION = 0
 

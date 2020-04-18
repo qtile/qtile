@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import hook, bar, layout
+from libqtile import bar, hook, layout
 from libqtile.widget import base
 
 

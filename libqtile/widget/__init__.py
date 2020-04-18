@@ -21,14 +21,16 @@
 # SOFTWARE.
 
 from libqtile.utils import safe_import as safe_import_
-from libqtile.widget.import_error import make_error
-
 # only directly import widgets that do not have any third party dependencies
 # other than those required by qtile, otherwise use the same import function
 from libqtile.widget.base import Mirror  # noqa: F401
 from libqtile.widget.clock import Clock  # noqa: F401
-from libqtile.widget.currentlayout import CurrentLayout, CurrentLayoutIcon  # noqa: F401
+from libqtile.widget.currentlayout import (  # noqa: F401
+    CurrentLayout,
+    CurrentLayoutIcon,
+)
 from libqtile.widget.groupbox import AGroupBox, GroupBox  # noqa: F401
+from libqtile.widget.import_error import make_error
 from libqtile.widget.prompt import Prompt  # noqa: F401
 from libqtile.widget.quick_exit import QuickExit  # noqa: F401
 from libqtile.widget.systray import Systray  # noqa: F401

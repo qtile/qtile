@@ -34,26 +34,24 @@
     A minimal EWMH-aware OO layer over xcffib. This is NOT intended to be
     complete - it only implements the subset of functionalty needed by qtile.
 """
-from collections import OrderedDict
-from itertools import repeat, chain
-import operator
 import functools
+import operator
 import typing
+from collections import OrderedDict
+from itertools import chain, repeat
 
-from xcffib.xproto import CW, WindowClass, EventMask
-from xcffib.xfixes import SelectionEventMask
-
+import cairocffi
+import cairocffi.xcb
 import xcffib
 import xcffib.randr
 import xcffib.xinerama
 import xcffib.xproto
-
-import cairocffi
-import cairocffi.xcb
+from xcffib.xfixes import SelectionEventMask
+from xcffib.xproto import CW, EventMask, WindowClass
 
 from libqtile import xkeysyms
-from libqtile.log_utils import logger
 from libqtile.backend.x11.xcursors import Cursors
+from libqtile.log_utils import logger
 
 keysyms = xkeysyms.keysyms
 

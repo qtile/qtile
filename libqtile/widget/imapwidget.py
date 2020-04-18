@@ -19,12 +19,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.widget import base
-from libqtile.log_utils import logger
-
 import imaplib
 import re
+
 import keyring
+
+from libqtile.log_utils import logger
+from libqtile.widget import base
 
 
 class ImapWidget(base.ThreadedPollText):

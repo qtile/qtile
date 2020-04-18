@@ -25,24 +25,24 @@ import functools
 import logging
 import multiprocessing
 import os
-import pytest
 import subprocess
 import sys
 import tempfile
 import time
 import traceback
 
+import pytest
 import xcffib
 import xcffib.testing
 import xcffib.xproto
 
 import libqtile.config
+from libqtile import command_client, command_interface, ipc
 from libqtile.backend.x11 import xcore
 from libqtile.core.session_manager import SessionManager
+from libqtile.lazy import lazy
 from libqtile.log_utils import init_log
 from libqtile.resources import default_config
-from libqtile import command_client, command_interface, ipc
-from libqtile.lazy import lazy
 
 # the default sizes for the Xephyr windows
 WIDTH = 800

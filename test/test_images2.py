@@ -6,13 +6,15 @@ Img().
 Image similarity / distance is calculated using imagemagick's convert
 utility.
 """
-import pytest
-from libqtile import images
-import cairocffi
 import subprocess as sp
 from collections import namedtuple
-from os import path
 from glob import glob
+from os import path
+
+import cairocffi
+import pytest
+
+from libqtile import images
 
 
 def get_imagemagick_version():

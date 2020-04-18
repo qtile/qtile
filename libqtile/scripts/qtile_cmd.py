@@ -31,9 +31,13 @@ import sys
 import textwrap
 from typing import List
 
-from libqtile.ipc import find_sockfile, Client
 from libqtile.command_client import InteractiveCommandClient
-from libqtile.command_interface import CommandError, CommandException, IPCCommandInterface
+from libqtile.command_interface import (
+    CommandError,
+    CommandException,
+    IPCCommandInterface,
+)
+from libqtile.ipc import Client, find_sockfile
 
 
 def get_formated_info(obj: InteractiveCommandClient, cmd: str, args=True, short=True) -> str:

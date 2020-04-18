@@ -27,7 +27,7 @@
 Slice layout. Serves as example of delegating layouts (or sublayouts)
 """
 
-from libqtile.layout.base import Layout, SingleWindow, Delegate
+from libqtile.layout.base import Delegate, Layout, SingleWindow
 from libqtile.layout.max import Max
 
 

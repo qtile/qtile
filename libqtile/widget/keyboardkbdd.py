@@ -19,11 +19,13 @@
 # SOFTWARE.
 
 
-from libqtile.widget import base
-from libqtile.log_utils import logger
-from dbus.mainloop.glib import DBusGMainLoop
 import re
+
 import dbus
+from dbus.mainloop.glib import DBusGMainLoop
+
+from libqtile.log_utils import logger
+from libqtile.widget import base
 
 
 class KeyboardKbdd(base.ThreadedPollText):

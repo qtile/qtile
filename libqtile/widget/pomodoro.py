@@ -19,8 +19,9 @@
 # SOFTWARE.
 
 import subprocess
-from time import time
 from datetime import datetime, timedelta
+from time import time
+
 from libqtile.widget import base
 
 

@@ -31,11 +31,10 @@
 # SOFTWARE.
 
 import itertools
+from typing import Any, List, Tuple  # noqa: F401
 
 from libqtile import bar, hook
 from libqtile.widget import base
-
-from typing import Any, List, Tuple  # noqa: F401
 
 
 class _GroupBase(base._TextBox, base.PaddingMixin, base.MarginMixin):

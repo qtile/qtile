@@ -23,6 +23,7 @@
 
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
+
 from libqtile.widget import base
 
 

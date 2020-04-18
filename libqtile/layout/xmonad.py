@@ -33,8 +33,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.layout.base import _SimpleLayoutBase
 import math
+
+from libqtile.layout.base import _SimpleLayoutBase
 
 
 class MonadTall(_SimpleLayoutBase):

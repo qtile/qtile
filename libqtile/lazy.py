@@ -21,8 +21,12 @@
 from typing import Dict, List, Optional, Tuple, Union  # noqa: F401
 
 from libqtile.command_client import InteractiveCommandClient
+from libqtile.command_graph import (
+    CommandGraphCall,
+    CommandGraphNode,
+    SelectorType,
+)
 from libqtile.command_interface import CommandInterface
-from libqtile.command_graph import CommandGraphCall, CommandGraphNode, SelectorType
 
 
 class LazyCall:

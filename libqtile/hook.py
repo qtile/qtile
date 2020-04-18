@@ -30,11 +30,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.log_utils import logger
-from libqtile import utils
-
 from typing import Dict, Set  # noqa: F401
 
+from libqtile import utils
+from libqtile.log_utils import logger
 
 subscriptions = {}  # type: Dict
 SKIPLOG = set()  # type: Set

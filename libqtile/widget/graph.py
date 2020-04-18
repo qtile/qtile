@@ -31,14 +31,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import cairocffi
-
-from libqtile.widget import base
-from libqtile.log_utils import logger
-from os import statvfs
-import time
-import psutil
 import operator
+import time
+from os import statvfs
+
+import cairocffi
+import psutil
+
+from libqtile.log_utils import logger
+from libqtile.widget import base
 
 __all__ = [
     'CPUGraph',

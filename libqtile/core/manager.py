@@ -18,7 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.dgroups import DGroups
 import asyncio
 import functools
 import importlib
@@ -29,8 +28,8 @@ import pickle
 import shlex
 import signal
 import sys
-import traceback
 import time
+import traceback
 import warnings
 from typing import Optional
 
@@ -38,26 +37,29 @@ import xcffib
 import xcffib.xinerama
 import xcffib.xproto
 
-from libqtile.config import Drag, Click, Screen, Match, Rule
+from libqtile import command_interface, hook, utils, window
+from libqtile.backend.x11 import xcbq
+from libqtile.backend.x11.xcore import XCore
+from libqtile.command_client import InteractiveCommandClient
+from libqtile.command_interface import IPCCommandServer, QtileCommandInterface
+from libqtile.command_object import (
+    CommandError,
+    CommandException,
+    CommandObject,
+)
+from libqtile.config import Click, Drag, Match, Rule
 from libqtile.config import ScratchPad as ScratchPadConfig
+from libqtile.config import Screen
+from libqtile.confreader import Config, ConfigError
+from libqtile.dgroups import DGroups
+from libqtile.extension.base import _Extension
 from libqtile.group import _Group
-from libqtile.scratchpad import ScratchPad
+from libqtile.lazy import lazy
 from libqtile.log_utils import logger
+from libqtile.scratchpad import ScratchPad
 from libqtile.state import QtileState
 from libqtile.utils import get_cache_dir
 from libqtile.widget.base import _Widget
-from libqtile.extension.base import _Extension
-from libqtile import hook
-from libqtile import utils
-from libqtile import window
-from libqtile.backend.x11 import xcbq
-from libqtile import command_interface
-from libqtile.command_client import InteractiveCommandClient
-from libqtile.command_interface import QtileCommandInterface, IPCCommandServer
-from libqtile.command_object import CommandObject, CommandError, CommandException
-from libqtile.lazy import lazy
-from libqtile.confreader import Config, ConfigError
-from libqtile.backend.x11.xcore import XCore
 
 
 def validate_config(file_path):

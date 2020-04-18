@@ -22,12 +22,11 @@
     Command-line top like for qtile
 """
 
-import os
-import time
 import argparse
-
 import curses
 import linecache
+import os
+import time
 import tracemalloc
 from tracemalloc import Snapshot
 

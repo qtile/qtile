@@ -24,8 +24,9 @@
 import sys
 import time
 from datetime import datetime, timedelta, timezone
-from libqtile.widget import base
+
 from libqtile.log_utils import logger
+from libqtile.widget import base
 
 try:
     import pytz

@@ -26,8 +26,8 @@
 import re
 
 import cairocffi
-from libqtile import pangocffi
-from libqtile import bar, hook
+
+from libqtile import bar, hook, pangocffi
 from libqtile.widget import base
 
 

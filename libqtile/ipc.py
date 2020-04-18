@@ -31,7 +31,7 @@ import marshal
 import os.path
 import socket
 import struct
-from typing import cast, Any, Callable, Optional, Tuple
+from typing import Any, Callable, Optional, Tuple, cast
 
 from libqtile.log_utils import logger
 from libqtile.utils import get_cache_dir

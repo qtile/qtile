@@ -22,11 +22,11 @@
     Command-line wrapper to run commands and add rules to new windows
 """
 
-import atexit
 import argparse
+import atexit
 import subprocess
 
-from libqtile import ipc, command_graph
+from libqtile import command_graph, ipc
 
 
 def parse_args():

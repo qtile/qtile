@@ -25,14 +25,16 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from libqtile.widget import base
-from libqtile import bar, hook
-from libqtile.log_utils import logger
-import os
-import cairocffi
 import inspect
-from libqtile.layout.base import Layout
+import os
+
+import cairocffi
+
+from libqtile import bar, hook
 from libqtile import layout as layout_module
+from libqtile.layout.base import Layout
+from libqtile.log_utils import logger
+from libqtile.widget import base
 
 
 class CurrentLayout(base._TextBox):

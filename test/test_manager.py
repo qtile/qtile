@@ -26,22 +26,21 @@
 # SOFTWARE.
 
 import logging
-import pytest
 import subprocess
 import time
+from test.conftest import BareConfig, Retry, no_xinerama, whereis
 
-import libqtile.layout
+import pytest
+
 import libqtile.bar
-import libqtile.widget
-import libqtile.core.manager
 import libqtile.config
-import libqtile.hook
 import libqtile.confreader
+import libqtile.core.manager
+import libqtile.hook
+import libqtile.layout
+import libqtile.widget
 from libqtile.command_interface import CommandError, CommandException
 from libqtile.lazy import lazy
-
-
-from test.conftest import whereis, BareConfig, no_xinerama, Retry
 
 
 class ManagerConfig:

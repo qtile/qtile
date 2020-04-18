@@ -23,7 +23,6 @@
 # SOFTWARE.
 
 import dbus
-
 from dbus.mainloop.glib import DBusGMainLoop
 
 from libqtile.log_utils import logger
