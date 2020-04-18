@@ -36,14 +36,15 @@ from libqtile.command_graph import (
     CommandGraphRoot,
     GraphType,
 )
-from libqtile.command_interface import CommandInterface
+from libqtile.command_interface import CommandInterface, IPCCommandInterface
 from libqtile.command_object import SelectError
+from libqtile.ipc import Client, find_sockfile
 
 
 class CommandClient:
     """The object that resolves the commands"""
 
-    def __init__(self, command: CommandInterface, *, current_node: GraphType = None) -> None:
+    def __init__(self, command: CommandInterface = None, *, current_node: GraphType = None) -> None:
         """A client that resolves calls through the command object interface
 
         Exposes a similar API to the command graph, but performs resolution of
@@ -60,6 +61,8 @@ class CommandClient:
             The current node that is pointed to in the command graph.  If not
             specified, the command graph root is used.
         """
+        if command is None:
+            command = IPCCommandInterface(Client(find_sockfile()))
         self._command = command
         if current_node is None:
             self._current_node = CommandGraphRoot()  # type: GraphType
@@ -149,7 +152,7 @@ class InteractiveCommandClient:
     A command graph client that can be used to easily resolve elements interactively
     """
 
-    def __init__(self, command: CommandInterface, *, current_node: GraphType = None) -> None:
+    def __init__(self, command: CommandInterface = None, *, current_node: GraphType = None) -> None:
         """An interactive client that resolves calls through the gives client
 
         Exposes the command graph API in such a way that it can be traversed
@@ -165,6 +168,8 @@ class InteractiveCommandClient:
             The current node that is pointed to in the command graph.  If not
             specified, the command graph root is used.
         """
+        if command is None:
+            command = IPCCommandInterface(Client(find_sockfile()))
         self._command = command
         if current_node is None:
             self._current_node = CommandGraphRoot()  # type: GraphType
