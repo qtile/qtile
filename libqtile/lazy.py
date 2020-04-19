@@ -72,6 +72,7 @@ class LazyCall:
     def when(self, layout=None, when_floating=True):
         self._layout = layout
         self._when_floating = when_floating
+        return self
 
     def check(self, q) -> bool:
         if self._layout is not None:
