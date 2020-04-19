@@ -74,7 +74,7 @@ class Image(base._Widget, base.MarginMixin):
             img.resize(width=new_width)
 
     def draw(self):
-        self.drawer.clear(self.bar.background)
+        self.drawer.clear(self.background or self.bar.background)
         self.drawer.ctx.save()
         self.drawer.ctx.translate(self.margin_x, self.margin_y)
         self.drawer.ctx.set_source(self.img.pattern)
