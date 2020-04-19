@@ -53,11 +53,7 @@ def get_cairo_surface(bytes_img, width=None, height=None):
         return _SurfaceInfo(surf, 'png')
     except (MemoryError, OSError):
         pass
-    try:
-        return _decode_to_image_surface(bytes_img, width, height)
-    except cairocffi.pixbuf.ImageLoadingError:
-        pass
-    raise LoadingError("Couldn't load image!")
+    return _decode_to_image_surface(bytes_img, width, height)
 
 
 def get_cairo_pattern(surface, width=None, height=None, theta=0.0):
