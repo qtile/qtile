@@ -25,6 +25,7 @@ class SessionManager:
             The state to restart the qtile instance with.
         """
         eventloop = asyncio.new_event_loop()
+        asyncio.set_event_loop(eventloop)
 
         self.qtile = Qtile(kore, config, eventloop, no_spawn=no_spawn, state=state)
 
