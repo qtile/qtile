@@ -69,7 +69,19 @@ class LazyCall:
         """The kwargs to the given call"""
         return self._kwargs
 
-    def when(self, layout=None, when_floating=True):
+    def when(self, layout: Optional[str] = None,
+             when_floating: bool = True) -> 'LazyCall':
+        """Filter call activation per layout or floating state
+
+        Parameters
+        ----------
+        layout : str or None
+            Restrict call to given layout name. If None, call for all layouts.
+            If 'floating', call if, and only if the current window is floating,
+            ``when_floating`` is ignored in this case.
+        when_floating : bool
+            Call if the current window is floating.
+        """
         self._layout = layout
         self._when_floating = when_floating
         return self
