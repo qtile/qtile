@@ -63,27 +63,27 @@ class Gap(CommandObject):
             self.y = screen.y
             self.length = screen.width
             self.width = self.length
-            self.height = self.size
+            self.height = self.initial_size
             self.horizontal = True
         elif screen.bottom is self:
             self.x = screen.x
             self.y = screen.dy + screen.dheight
             self.length = screen.width
             self.width = self.length
-            self.height = self.size
+            self.height = self.initial_size
             self.horizontal = True
         elif screen.left is self:
             self.x = screen.x
             self.y = screen.dy
             self.length = screen.dheight
-            self.width = self.size
+            self.width = self.initial_size
             self.height = self.length
             self.horizontal = False
         else:  # right
             self.x = screen.dx + screen.dwidth
             self.y = screen.dy
             self.length = screen.dheight
-            self.width = self.size
+            self.width = self.initial_size
             self.height = self.length
             self.horizontal = False
 
@@ -172,7 +172,8 @@ class Bar(Gap, configurable.Configurable):
                 self.x += self.margin[3]
                 self.width -= self.margin[1] + self.margin[3]
                 self.length = self.width
-                self.size += self.margin[0] + self.margin[2]
+                if self.size == self.initial_size:
+                    self.size += self.margin[0] + self.margin[2]
                 if self.screen.top is self:
                     self.y += self.margin[0]
                 else:
