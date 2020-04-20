@@ -75,14 +75,17 @@ class LazyCall:
         return self
 
     def check(self, q) -> bool:
-        if self._layout is not None:
-            if self._layout == 'floating':
-                if q.current_window.floating:
-                    return True
-                return False
-            if q.current_layout.name != self._layout:
-                if q.current_window and q.current_window.floating and not self._when_floating:
-                    return False
+        cur_win_floating = q.current_window and q.current_window.floating
+
+        if self._layout == 'floating':  # ignore _when_floating
+            return cur_win_floating
+
+        if cur_win_floating and not self._when_floating:
+            return False
+
+        if self._layout and q.current_layout.name != self._layout:
+            return False
+
         return True
 
 
