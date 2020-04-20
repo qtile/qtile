@@ -26,6 +26,7 @@
 
 import mailbox
 import os.path
+from typing import Dict
 
 from libqtile.widget import base
 
@@ -60,7 +61,7 @@ class Maildir(base.ThreadedPollText):
                 for folder in self.sub_folders
             ]
 
-    def poll(self):
+    def poll(self) -> str:
         """Scans the mailbox for new messages
 
         Returns
@@ -85,7 +86,7 @@ class Maildir(base.ThreadedPollText):
 
         return self.format_text(state)
 
-    def _format_one(self, label, value):
+    def _format_one(self, label: str, value: int) -> str:
         if value == 0 and self.hide_when_empty:
             return ""
 
@@ -98,7 +99,7 @@ class Maildir(base.ThreadedPollText):
         return s.join(('<span foreground="{}">'.format(color),
                        '</span>'))
 
-    def format_text(self, state):
+    def format_text(self, state: Dict[str, int]) -> str:
         """Converts the state of the subfolders to a string
 
         Parameters
