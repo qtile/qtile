@@ -84,7 +84,7 @@ class CommandObject(metaclass=abc.ABCMeta):
                 raise SelectError("", name, selectors)
         return obj
 
-    def items(self, name: str) -> Tuple[bool, List[str]]:
+    def items(self, name: str) -> Tuple[bool, List[Union[str, int]]]:
         """Build a list of contained items for the given item class
 
         Returns a tuple `(root, items)` for the specified item class, where:
@@ -103,7 +103,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         return ret
 
     @abc.abstractmethod
-    def _items(self, name) -> Tuple[bool, List[str]]:
+    def _items(self, name) -> Tuple[bool, List[Union[str, int]]]:
         """Generate the items for a given
 
         Same return as `.items()`. Return `None` if name is not a valid item
@@ -151,7 +151,7 @@ class CommandObject(metaclass=abc.ABCMeta):
         """
         return self.commands
 
-    def cmd_items(self, name) -> Tuple[bool, List[str]]:
+    def cmd_items(self, name) -> Tuple[bool, List[Union[str, int]]]:
         """Returns a list of contained items for the specified name
 
         Used by __qsh__ to allow navigation of the object graph.

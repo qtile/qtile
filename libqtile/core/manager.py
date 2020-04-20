@@ -22,15 +22,12 @@ import asyncio
 import functools
 import importlib
 import io
-import logging
 import os
 import pickle
 import shlex
 import signal
 import sys
 import time
-import traceback
-import warnings
 from typing import Optional
 
 import xcffib
@@ -40,25 +37,18 @@ import xcffib.xproto
 from libqtile import command_interface, hook, utils, window
 from libqtile.backend.x11 import xcbq
 from libqtile.backend.x11.xcore import XCore
-from libqtile.command_client import InteractiveCommandClient
-from libqtile.command_interface import IPCCommandServer, QtileCommandInterface
-from libqtile.command_object import (
-    CommandError,
-    CommandException,
-    CommandObject,
-)
-from libqtile.config import Click, Drag, Match, Rule
+from libqtile.command_interface import IPCCommandServer
+from libqtile.config import Click, Drag
 from libqtile.config import ScratchPad as ScratchPadConfig
 from libqtile.config import Screen
 from libqtile.confreader import Config, ConfigError
+from libqtile.core.command_root import CommandRoot
 from libqtile.dgroups import DGroups
 from libqtile.extension.base import _Extension
 from libqtile.group import _Group
 from libqtile.lazy import lazy
 from libqtile.log_utils import logger
 from libqtile.scratchpad import ScratchPad
-from libqtile.state import QtileState
-from libqtile.utils import get_cache_dir
 from libqtile.widget.base import _Widget
 
 
@@ -128,7 +118,7 @@ def handle_exception(loop, context):
         logger.error("exception in event loop: %s", context)
 
 
-class Qtile(CommandObject):
+class Qtile:
     """This object is the `root` of the command graph"""
     def __init__(
         self,
@@ -190,9 +180,10 @@ class Qtile(CommandObject):
                 self.groups.append(sp)
                 self.groups_map[sp.name] = sp
 
+        self.command_root = CommandRoot(self)
         self._eventloop = eventloop
         self.setup_eventloop()
-        self.server = IPCCommandServer(self)
+        self.server = IPCCommandServer(self.command_root)
 
         self.current_screen = None
         self.screens = []
@@ -440,6 +431,22 @@ class Qtile(CommandObject):
         """
         windows = [wid for wid, c in self.windows_map.items() if c.group]
         self.core.update_client_list(windows)
+
+    def to_layout_index(self, index, *, group=None) -> None:
+        """Switch to the layout with the given index in self.layouts
+
+        Parameters
+        ==========
+        index :
+            Index of the layout in the list of layouts.
+        group :
+            Group name. If not specified, the current group is assumed.
+        """
+        if group is None:
+            group = self.current_group
+        else:
+            group = self.groups_map.get(group)
+        group.use_layout(index)
 
     def add_group(self, name, layout=None, layouts=None, label=None):
         if name not in self.groups_map.keys():
@@ -734,7 +741,7 @@ class Qtile(CommandObject):
             self.focus_screen(screen.index, warp=False)
         return None
 
-    def cmd_focus_by_click(self, e):
+    def focus_by_click(self, e):
         """Bring a window to the front
 
         Parameters
@@ -776,11 +783,11 @@ class Qtile(CommandObject):
                 for i in m.commands:
                     if i.check(self):
                         if m.focus == "before":
-                            self.cmd_focus_by_click(event)
+                            self.focus_by_click(event)
                         status, val = self.server.call(
                             (i.selectors, i.name, i.args, i.kwargs))
                         if m.focus == "after":
-                            self.cmd_focus_by_click(event)
+                            self.focus_by_click(event)
                         if status in (command_interface.ERROR, command_interface.EXCEPTION):
                             logger.error(
                                 "Mouse command error %s: %s" % (i.name, val)
@@ -789,7 +796,7 @@ class Qtile(CommandObject):
                 if m.start:
                     i = m.start
                     if m.focus == "before":
-                        self.cmd_focus_by_click(event)
+                        self.focus_by_click(event)
                     status, val = self.server.call(
                         (i.selectors, i.name, i.args, i.kwargs))
                     if status in (command_interface.ERROR, command_interface.EXCEPTION):
@@ -800,7 +807,7 @@ class Qtile(CommandObject):
                 else:
                     val = (0, 0)
                 if m.focus == "after":
-                    self.cmd_focus_by_click(event)
+                    self.focus_by_click(event)
                 self._drag = (x, y, val[0], val[1], m.commands)
                 self.core.grab_pointer()
 
@@ -856,46 +863,6 @@ class Qtile(CommandObject):
             self.add_group(group)
             self.current_window.togroup(group)
 
-    def _items(self, name):
-        if name == "group":
-            return True, list(self.groups_map.keys())
-        elif name == "layout":
-            return True, list(range(len(self.current_group.layouts)))
-        elif name == "widget":
-            return False, list(self.widgets_map.keys())
-        elif name == "bar":
-            return False, [x.position for x in self.current_screen.gaps]
-        elif name == "window":
-            return True, self.list_wids()
-        elif name == "screen":
-            return True, list(range(len(self.screens)))
-
-    def _select(self, name, sel):
-        if name == "group":
-            if sel is None:
-                return self.current_group
-            else:
-                return self.groups_map.get(sel)
-        elif name == "layout":
-            if sel is None:
-                return self.current_group.layout
-            else:
-                return utils.lget(self.current_group.layouts, sel)
-        elif name == "widget":
-            return self.widgets_map.get(sel)
-        elif name == "bar":
-            return getattr(self.current_screen, sel)
-        elif name == "window":
-            if sel is None:
-                return self.current_window
-            else:
-                return self.client_from_wid(sel)
-        elif name == "screen":
-            if sel is None:
-                return self.current_screen
-            else:
-                return utils.lget(self.screens, sel)
-
     def list_wids(self):
         return [i.window.wid for i in self.windows_map.values()]
 
@@ -927,253 +894,7 @@ class Qtile(CommandObject):
             self.conn.flush()
         return self._eventloop.call_later(delay, f)
 
-    def run_in_executor(self, func, *args):
-        """ A wrapper for running a function in the event loop's default
-        executor. """
-        return self._eventloop.run_in_executor(None, func, *args)
-
-    def cmd_debug(self):
-        """Set log level to DEBUG"""
-        logger.setLevel(logging.DEBUG)
-        logger.debug('Switching to DEBUG threshold')
-
-    def cmd_info(self):
-        """Set log level to INFO"""
-        logger.setLevel(logging.INFO)
-        logger.info('Switching to INFO threshold')
-
-    def cmd_warning(self):
-        """Set log level to WARNING"""
-        logger.setLevel(logging.WARNING)
-        logger.warning('Switching to WARNING threshold')
-
-    def cmd_error(self):
-        """Set log level to ERROR"""
-        logger.setLevel(logging.ERROR)
-        logger.error('Switching to ERROR threshold')
-
-    def cmd_critical(self):
-        """Set log level to CRITICAL"""
-        logger.setLevel(logging.CRITICAL)
-        logger.critical('Switching to CRITICAL threshold')
-
-    def cmd_loglevel(self):
-        return logger.level
-
-    def cmd_loglevelname(self):
-        return logging.getLevelName(logger.level)
-
-    def cmd_pause(self):
-        """Drops into pdb"""
-        import pdb
-        pdb.set_trace()
-
-    def cmd_groups(self):
-        """Return a dictionary containing information for all groups
-
-        Examples
-        ========
-
-            groups()
-        """
-        return {i.name: i.info() for i in self.groups}
-
-    def cmd_get_info(self):
-        """Prints info for all groups"""
-        warnings.warn("The `get_info` command is deprecated, use `groups`", DeprecationWarning)
-        return self.cmd_groups()
-
-    def get_mouse_position(self):
-        return self.mouse_position
-
-    def cmd_display_kb(self, *args):
-        """Display table of key bindings"""
-        class FormatTable:
-            def __init__(self):
-                self.max_col_size = []
-                self.rows = []
-
-            def add(self, row):
-                n = len(row) - len(self.max_col_size)
-                if n > 0:
-                    self.max_col_size += [0] * n
-                for i, f in enumerate(row):
-                    if len(f) > self.max_col_size[i]:
-                        self.max_col_size[i] = len(f)
-                self.rows.append(row)
-
-            def getformat(self):
-                format_string = " ".join("%-{0:d}s".format(max_col_size + 2) for max_col_size in self.max_col_size)
-                return format_string + "\n", len(self.max_col_size)
-
-            def expandlist(self, list, n):
-                if not list:
-                    return ["-" * max_col_size for max_col_size in self.max_col_size]
-                n -= len(list)
-                if n > 0:
-                    list += [""] * n
-                return list
-
-            def __str__(self):
-                format, n = self.getformat()
-                return "".join([format % tuple(self.expandlist(row, n)) for row in self.rows])
-
-        result = FormatTable()
-        result.add(["KeySym", "Mod", "Command", "Desc"])
-        result.add([])
-        rows = []
-        for (ks, kmm), k in self.keys_map.items():
-            if not k.commands:
-                continue
-            name = ", ".join(xcbq.rkeysyms.get(ks, ("<unknown>", )))
-            modifiers = ", ".join(xcbq.translate_modifiers(kmm))
-            allargs = ", ".join(
-                [repr(value) for value in k.commands[0].args] +
-                ["%s = %s" % (keyword, repr(value)) for keyword, value in k.commands[0].kwargs.items()]
-            )
-            rows.append((name, str(modifiers), "{0:s}({1:s})".format(k.commands[0].name, allargs), k.desc))
-        rows.sort()
-        for row in rows:
-            result.add(row)
-        return str(result)
-
-    def cmd_list_widgets(self):
-        """List of all addressible widget names"""
-        return list(self.widgets_map.keys())
-
-    def cmd_to_layout_index(self, index, group=None):
-        """Switch to the layout with the given index in self.layouts.
-
-        Parameters
-        ==========
-        index :
-            Index of the layout in the list of layouts.
-        group :
-            Group name. If not specified, the current group is assumed.
-        """
-        if group:
-            group = self.groups_map.get(group)
-        else:
-            group = self.current_group
-        group.use_layout(index)
-
-    def cmd_next_layout(self, group=None):
-        """Switch to the next layout.
-
-        Parameters
-        ==========
-        group :
-            Group name. If not specified, the current group is assumed
-        """
-        if group:
-            group = self.groups_map.get(group)
-        else:
-            group = self.current_group
-        group.use_next_layout()
-
-    def cmd_prev_layout(self, group=None):
-        """Switch to the previous layout.
-
-        Parameters
-        ==========
-        group :
-            Group name. If not specified, the current group is assumed
-        """
-        if group:
-            group = self.groups_map.get(group)
-        else:
-            group = self.current_group
-        group.use_previous_layout()
-
-    def cmd_screens(self):
-        """Return a list of dictionaries providing information on all screens"""
-        lst = [dict(
-            index=i.index,
-            group=i.group.name if i.group is not None else None,
-            x=i.x,
-            y=i.y,
-            width=i.width,
-            height=i.height,
-            gaps=dict(
-                top=i.top.geometry() if i.top else None,
-                bottom=i.bottom.geometry() if i.bottom else None,
-                left=i.left.geometry() if i.left else None,
-                right=i.right.geometry() if i.right else None,
-            )
-        ) for i in self.screens]
-        return lst
-
-    def cmd_simulate_keypress(self, modifiers, key):
-        """Simulates a keypress on the focused window.
-
-        Parameters
-        ==========
-        modifiers :
-            A list of modifier specification strings. Modifiers can be one of
-            "shift", "lock", "control" and "mod1" - "mod5".
-        key :
-            Key specification.
-
-        Examples
-        ========
-            simulate_keypress(["control", "mod2"], "k")
-        """
-        # FIXME: This needs to be done with sendevent, once we have that fixed.
-        try:
-            modmasks = xcbq.translate_masks(modifiers)
-            keysym = xcbq.keysyms.get(key)
-        except xcbq.XCBQError as e:
-            raise CommandError(str(e))
-
-        class DummyEv:
-            pass
-
-        d = DummyEv()
-        d.detail = self.conn.first_sym_to_code[keysym]
-        d.state = modmasks
-        self.core.handle_KeyPress(d)
-
-    def cmd_restart(self):
-        """Restart qtile"""
-        try:
-            validate_config(self.config.file_path)
-        except ConfigError as error:
-            logger.error("Preventing restart because of a configuration error: " + str(error))
-            try:
-                send_notification("Configuration error", str(error))
-            except Exception as exception:
-                # Catch everything to prevent a crash
-                logger.error("Error while sending a notification: " + str(exception))
-
-            # There was an error, return early and don't restart
-            return
-
-        argv = [sys.executable] + sys.argv
-        if '--no-spawn' not in argv:
-            argv.append('--no-spawn')
-        buf = io.BytesIO()
-        try:
-            pickle.dump(QtileState(self), buf, protocol=0)
-        except:  # noqa: E722
-            logger.error("Unable to pickle qtile state")
-        argv = [s for s in argv if not s.startswith('--with-state')]
-        argv.append('--with-state=' + buf.getvalue().decode())
-        self._restart = (sys.executable, argv)
-        self.stop()
-
-    def cmd_spawn(self, cmd):
-        """Run cmd in a shell.
-
-        cmd may be a string, which is parsed by shlex.split, or a list (similar
-        to subprocess.Popen).
-
-        Examples
-        ========
-
-            spawn("firefox")
-
-            spawn(["xterm", "-T", "Temporary terminal"])
-        """
+    def spawn(self, cmd) -> int:
         if isinstance(cmd, str):
             args = shlex.split(cmd)
         else:
@@ -1214,11 +935,7 @@ class Qtile(CommandObject):
                     # This shouldn't happen, catch it just in case
                     pass
                 else:
-                    # For Python >=3.4, need to set file descriptor to inheritable
-                    try:
-                        os.set_inheritable(fd, True)
-                    except AttributeError:
-                        pass
+                    os.set_inheritable(fd, True)
 
                     # Again, this shouldn't happen, but we should just check
                     if fd > 0:
@@ -1248,78 +965,17 @@ class Qtile(CommandObject):
             os.waitpid(pid, 0)
 
             # 1024 bytes should be enough for any pid. :)
-            pid = os.read(r, 1024)
+            read_pid = os.read(r, 1024)
             os.close(r)
-            return int(pid)
+            return int(read_pid)
 
-    def cmd_status(self):
-        """Return "OK" if Qtile is running"""
-        return "OK"
+    def run_in_executor(self, func, *args):
+        """ A wrapper for running a function in the event loop's default
+        executor. """
+        return self._eventloop.run_in_executor(None, func, *args)
 
-    def cmd_sync(self):
-        """Sync the X display. Should only be used for development"""
-        self.conn.flush()
-
-    def cmd_to_screen(self, n):
-        """Warp focus to screen n, where n is a 0-based screen number
-
-        Examples
-        ========
-
-            to_screen(0)
-        """
-        return self.focus_screen(n)
-
-    def cmd_next_screen(self):
-        """Move to next screen"""
-        return self.focus_screen(
-            (self.screens.index(self.current_screen) + 1) % len(self.screens)
-        )
-
-    def cmd_prev_screen(self):
-        """Move to the previous screen"""
-        return self.focus_screen(
-            (self.screens.index(self.current_screen) - 1) % len(self.screens)
-        )
-
-    def cmd_windows(self):
-        """Return info for each client window"""
-        return [
-            i.info() for i in self.windows_map.values()
-            if not isinstance(i, window.Internal)
-        ]
-
-    def cmd_internal_windows(self):
-        """Return info for each internal window (bars, for example)"""
-        return [
-            i.info() for i in self.windows_map.values()
-            if isinstance(i, window.Internal)
-        ]
-
-    def cmd_qtile_info(self):
-        """Returns a dictionary of info on the Qtile instance"""
-        return {}
-
-    def cmd_shutdown(self):
-        """Quit Qtile"""
-        self.stop()
-
-    def cmd_switch_groups(self, groupa, groupb):
-        """Switch position of groupa to groupb"""
-        if groupa not in self.groups_map or groupb not in self.groups_map:
-            return
-
-        indexa = self.groups.index(self.groups_map[groupa])
-        indexb = self.groups.index(self.groups_map[groupb])
-
-        self.groups[indexa], self.groups[indexb] = \
-            self.groups[indexb], self.groups[indexa]
-        hook.fire("setgroup")
-
-        # update window _NET_WM_DESKTOP
-        for group in (self.groups[indexa], self.groups[indexb]):
-            for w in group.windows:
-                w.group = group
+    def get_mouse_position(self):
+        return self.mouse_position
 
     def find_window(self, wid):
         window = self.windows_map.get(wid)
@@ -1327,286 +983,3 @@ class Qtile(CommandObject):
             if not window.group.screen:
                 self.current_screen.set_group(window.group)
             window.group.focus(window, False)
-
-    def cmd_findwindow(self, prompt="window", widget="prompt"):
-        """Launch prompt widget to find a window of the given name
-
-        Parameters
-        ==========
-        prompt :
-            Text with which to prompt user (default: "window")
-        widget :
-            Name of the prompt widget (default: "prompt")
-        """
-        mb = self.widgets_map.get(widget)
-        if not mb:
-            logger.error("No widget named '{0:s}' present.".format(widget))
-            return
-
-        mb.start_input(
-            prompt,
-            self.find_window,
-            "window",
-            strict_completer=True
-        )
-
-    def cmd_next_urgent(self):
-        """Focus next window with urgent hint"""
-        try:
-            nxt = [w for w in self.windows_map.values() if w.urgent][0]
-            nxt.group.cmd_toscreen()
-            nxt.group.focus(nxt)
-        except IndexError:
-            pass  # no window had urgent set
-
-    def cmd_togroup(self, prompt="group", widget="prompt"):
-        """Launch prompt widget to move current window to a given group
-
-        Parameters
-        ==========
-        prompt :
-            Text with which to prompt user (default: "group")
-        widget :
-            Name of the prompt widget (default: "prompt")
-        """
-        if not self.current_window:
-            logger.warning("No window to move")
-            return
-
-        mb = self.widgets_map.get(widget)
-        if not mb:
-            logger.error("No widget named '{0:s}' present.".format(widget))
-            return
-
-        mb.start_input(prompt, self.move_to_group, "group", strict_completer=True)
-
-    def cmd_switchgroup(self, prompt="group", widget="prompt"):
-        """Launch prompt widget to switch to a given group to the current screen
-
-        Parameters
-        ==========
-        prompt :
-            Text with which to prompt user (default: "group")
-        widget :
-            Name of the prompt widget (default: "prompt")
-        """
-        def f(group):
-            if group:
-                try:
-                    self.groups_map[group].cmd_toscreen()
-                except KeyError:
-                    logger.info("No group named '{0:s}' present.".format(group))
-
-        mb = self.widgets_map.get(widget)
-        if not mb:
-            logger.warning("No widget named '{0:s}' present.".format(widget))
-            return
-
-        mb.start_input(prompt, f, "group", strict_completer=True)
-
-    def cmd_spawncmd(self, prompt="spawn", widget="prompt",
-                     command="%s", complete="cmd"):
-        """Spawn a command using a prompt widget, with tab-completion.
-
-        Parameters
-        ==========
-        prompt :
-            Text with which to prompt user (default: "spawn: ").
-        widget :
-            Name of the prompt widget (default: "prompt").
-        command :
-            command template (default: "%s").
-        complete :
-            Tab completion function (default: "cmd")
-        """
-        def f(args):
-            if args:
-                self.cmd_spawn(command % args)
-        try:
-            mb = self.widgets_map[widget]
-            mb.start_input(prompt, f, complete)
-        except KeyError:
-            logger.error("No widget named '{0:s}' present.".format(widget))
-
-    def cmd_qtilecmd(self, prompt="command",
-                     widget="prompt", messenger="xmessage") -> None:
-        """Execute a Qtile command using the client syntax
-
-        Tab completion aids navigation of the command tree
-
-        Parameters
-        ==========
-        prompt :
-            Text to display at the prompt (default: "command: ")
-        widget :
-            Name of the prompt widget (default: "prompt")
-        messenger :
-            Command to display output, set this to None to disable (default:
-            "xmessage")
-        """
-        def f(cmd):
-            if cmd:
-                # c here is used in eval() below
-                q = QtileCommandInterface(self)
-                c = InteractiveCommandClient(q)  # noqa: F841
-                try:
-                    cmd_arg = str(cmd).split(' ')
-                except AttributeError:
-                    return
-                cmd_len = len(cmd_arg)
-                if cmd_len == 0:
-                    logger.info('No command entered.')
-                    return
-                try:
-                    result = eval(u'c.{0:s}'.format(cmd))
-                except (CommandError, CommandException, AttributeError) as err:
-                    logger.error(err)
-                    result = None
-                if result is not None:
-                    from pprint import pformat
-                    message = pformat(result)
-                    if messenger:
-                        self.cmd_spawn('{0:s} "{1:s}"'.format(messenger, message))
-                    logger.debug(result)
-
-        mb = self.widgets_map[widget]
-        if not mb:
-            logger.error("No widget named {0:s} present.".format(widget))
-            return
-        mb.start_input(prompt, f, "qshell")
-
-    def cmd_addgroup(self, group, label=None, layout=None, layouts=None):
-        """Add a group with the given name"""
-        return self.add_group(name=group, layout=layout, layouts=layouts, label=label)
-
-    def cmd_delgroup(self, group):
-        """Delete a group with the given name"""
-        return self.delete_group(group)
-
-    def cmd_add_rule(self, match_args, rule_args, min_priorty=False):
-        """Add a dgroup rule, returns rule_id needed to remove it
-
-        Parameters
-        ==========
-        match_args :
-            config.Match arguments
-        rule_args :
-            config.Rule arguments
-        min_priorty :
-            If the rule is added with minimum prioriry (last) (default: False)
-        """
-        if not self.dgroups:
-            logger.warning('No dgroups created')
-            return
-
-        match = Match(**match_args)
-        rule = Rule(match, **rule_args)
-        return self.dgroups.add_rule(rule, min_priorty)
-
-    def cmd_remove_rule(self, rule_id):
-        """Remove a dgroup rule by rule_id"""
-        self.dgroups.remove_rule(rule_id)
-
-    def cmd_run_external(self, full_path):
-        """Run external Python script"""
-        def format_error(path, e):
-            s = """Can't call "main" from "{path}"\n\t{err_name}: {err}"""
-            return s.format(path=path, err_name=e.__class__.__name__, err=e)
-
-        module_name = os.path.splitext(os.path.basename(full_path))[0]
-        dir_path = os.path.dirname(full_path)
-        err_str = ""
-        local_stdout = io.BytesIO()
-        old_stdout = sys.stdout
-        sys.stdout = local_stdout
-        sys.exc_clear()
-
-        try:
-            module = _import_module(module_name, dir_path)
-            module.main(self)
-        except ImportError as e:
-            err_str += format_error(full_path, e)
-        except:  # noqa: E722
-            (exc_type, exc_value, exc_traceback) = sys.exc_info()
-            err_str += traceback.format_exc()
-            err_str += format_error(full_path, exc_type(exc_value))
-        finally:
-            sys.exc_clear()
-            sys.stdout = old_stdout
-            local_stdout.close()
-
-        return local_stdout.getvalue() + err_str
-
-    def cmd_hide_show_bar(self, position="all"):
-        """Toggle visibility of a given bar
-
-        Parameters
-        ==========
-        position :
-            one of: "top", "bottom", "left", "right", or "all" (default: "all")
-        """
-        if position in ["top", "bottom", "left", "right"]:
-            bar = getattr(self.current_screen, position)
-            if bar:
-                bar.show(not bar.is_show())
-                self.current_group.layout_all()
-            else:
-                logger.warning(
-                    "Not found bar in position '%s' for hide/show." % position)
-        elif position == "all":
-            screen = self.current_screen
-            is_show = None
-            for bar in [screen.left, screen.right, screen.top, screen.bottom]:
-                if bar:
-                    if is_show is None:
-                        is_show = not bar.is_show()
-                    bar.show(is_show)
-            if is_show is not None:
-                self.current_group.layout_all()
-            else:
-                logger.warning("Not found bar for hide/show.")
-        else:
-            logger.error("Invalid position value:{0:s}".format(position))
-
-    def cmd_get_state(self):
-        """Get pickled state for restarting qtile"""
-        buf = io.BytesIO()
-        pickle.dump(QtileState(self), buf, protocol=0)
-        state = buf.getvalue().decode()
-        logger.debug('State = ')
-        logger.debug(''.join(state.split('\n')))
-        return state
-
-    def cmd_tracemalloc_toggle(self):
-        """Toggle tracemalloc status
-
-        Running tracemalloc is required for qtile-top
-        """
-        import tracemalloc
-
-        if not tracemalloc.is_tracing():
-            tracemalloc.start()
-        else:
-            tracemalloc.stop()
-
-    def cmd_tracemalloc_dump(self):
-        """Dump tracemalloc snapshot"""
-        import tracemalloc
-
-        if not tracemalloc.is_tracing():
-            return [False, "Trace not started"]
-        cache_directory = get_cache_dir()
-        malloc_dump = os.path.join(cache_directory, "qtile_tracemalloc.dump")
-        tracemalloc.take_snapshot().dump(malloc_dump)
-        return [True, malloc_dump]
-
-    def cmd_get_test_data(self):
-        """
-        Returns any content arbitrarily set in the self.test_data attribute.
-        Useful in tests.
-        """
-        return self.test_data
-
-    def cmd_run_extension(self, extension):
-        """Run extensions"""
-        extension.run()

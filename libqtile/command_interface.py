@@ -23,7 +23,7 @@ The interface to execute commands on the command graph
 """
 
 import traceback
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Tuple, Union
 
 from libqtile import ipc
@@ -56,7 +56,7 @@ def format_selectors(selectors: List[SelectorType]) -> str:
     return ".".join(path_elements)
 
 
-class CommandInterface(metaclass=ABCMeta):
+class CommandInterface(ABC):
     """Defines an interface which can be used to evaluate a given call on a command graph.
 
     The implementations of this may use, for example, an IPC call to access the
@@ -287,19 +287,19 @@ class IPCCommandInterface(CommandInterface):
 class IPCCommandServer:
     """Execute the object commands for the calls that are sent to it"""
 
-    def __init__(self, qtile) -> None:
+    def __init__(self, command_root: CommandObject) -> None:
         """Wrapper around the ipc server for communitacing with the IPCCommandInterface
 
         Sets up the IPC server such that it will receive and send messages to
         and from the IPCCommandInterface.
         """
-        self.qtile = qtile
+        self._command_root = command_root
 
     def call(self, data: Tuple[List[SelectorType], str, Tuple, Dict]) -> Tuple[int, Any]:
         """Receive and parse the given data"""
         selectors, name, args, kwargs = data
         try:
-            obj = self.qtile.select(selectors)
+            obj = self._command_root.select(selectors)
             cmd = obj.command(name)
         except SelectError as err:
             sel_string = format_selectors(selectors)

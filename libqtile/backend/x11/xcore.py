@@ -483,7 +483,7 @@ class XCore(base.Core):
         if atoms["_NET_CURRENT_DESKTOP"] == opcode:
             index = data.data32[0]
             try:
-                self.qtile.cmd_to_layout_index(index)
+                self.qtile.to_layout_index(index)
             except IndexError:
                 logger.info("Invalid Desktop Index: %s" % index)
 

@@ -234,7 +234,7 @@ class ScratchPad(group._Group):
             if not self._spawned:
                 hook.subscribe.client_new(self.on_client_new)
             cmd = self._dropdownconfig[name].command
-            pid = self.qtile.cmd_spawn(cmd)
+            pid = self.qtile.spawn(cmd)
             self._spawned[pid] = name
 
     def on_client_new(self, client, *args, **kwargs):
