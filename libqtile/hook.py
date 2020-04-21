@@ -215,20 +215,6 @@ class Subscribe:
         """
         return self._subscribe("client_killed", func)
 
-    def client_state_changed(self, func):
-        """Called whenever client state changes
-
-        Never fires
-        """
-        return self._subscribe("client_state_changed", func)
-
-    def client_type_changed(self, func):
-        """Called whenever window type changes
-
-        Never fires
-        """
-        return self._subscribe("client_type_changed", func)
-
     def client_focus(self, func):
         """Called whenever focus changes
 
