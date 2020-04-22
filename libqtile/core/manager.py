@@ -78,12 +78,11 @@ def validate_config(file_path):
     # Get the module name from the file path
     name = os.path.splitext(os.path.basename(file_path))[0]
 
+    # Make sure we'll import the latest version of the config
     try:
-        # Mandatory: we must reload the module (the config file was modified)
-        importlib.reload(sys.modules[name])
+        del sys.modules[name]
     except KeyError:
-        # The module name didn't match the file path basename. Abort.
-        return
+        pass
 
     try:
         Config.from_file(XCore(), file_path)
