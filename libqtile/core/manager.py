@@ -57,7 +57,7 @@ from libqtile.lazy import lazy
 from libqtile.log_utils import logger
 from libqtile.scratchpad import ScratchPad
 from libqtile.state import QtileState
-from libqtile.utils import get_cache_dir
+from libqtile.utils import get_cache_dir, send_notification
 from libqtile.widget.base import _Widget
 
 
@@ -85,20 +85,6 @@ def validate_config(file_path):
         # Handle SyntaxError and the likes
         output.append("{}: {}".format(sys.exc_info()[0].__name__, str(error)))
         raise ConfigError("".join(output))
-
-
-def send_notification(title, message, timeout=10000):
-    """Send a notification."""
-    try:
-        import gi
-        gi.require_version("Notify", "0.7")
-        from gi.repository import Notify
-        Notify.init("Qtile")
-        notifier = Notify.Notification.new(title, message)
-        notifier.set_timeout(timeout)
-        notifier.show()
-    except Exception as exception:
-        logger.error(exception)
 
 
 def _import_module(module_name, dir_path):

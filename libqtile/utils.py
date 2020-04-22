@@ -193,3 +193,19 @@ def safe_import(module_names, class_name, globals_, fallback=None):
         logger.debug("%s", traceback.format_exc())
         if fallback:
             globals_[class_name] = fallback(module_path, class_name, error)
+
+
+def send_notification(title, message, urgent=False, timeout=10000):
+    """Send a notification."""
+    try:
+        import gi
+        gi.require_version("Notify", "0.7")
+        from gi.repository import Notify
+        Notify.init("Qtile")
+        notifier = Notify.Notification.new(title, message)
+        notifier.set_timeout(timeout)
+        if urgent:
+            notifier.set_urgency(Notify.Urgency.CRITICAL)
+        notifier.show()
+    except Exception as exception:
+        logger.error(exception)
