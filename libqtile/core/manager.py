@@ -20,7 +20,6 @@
 
 import asyncio
 import functools
-import importlib
 import io
 import logging
 import os
