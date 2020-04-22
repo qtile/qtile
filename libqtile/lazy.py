@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Dict, List, Optional, Tuple, Union  # noqa: F401
+from typing import Dict, Iterable, List, Optional, Set, Tuple, Union  # noqa: F401
 
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_graph import (
@@ -46,7 +46,7 @@ class LazyCall:
         self._args = args
         self._kwargs = kwargs
 
-        self._layout = None  # type: Optional[str]
+        self._layouts = set()  # type: Set[str]
         self._when_floating = True
 
     @property
@@ -69,33 +69,36 @@ class LazyCall:
         """The kwargs to the given call"""
         return self._kwargs
 
-    def when(self, layout: Optional[str] = None,
+    def when(self, layout: Optional[Union[Iterable[str], str]] = None,
              when_floating: bool = True) -> 'LazyCall':
-        """Filter call activation per layout or floating state
+        """Enable call only for given layout(s) and floating state
 
         Parameters
         ----------
-        layout : str or None
-            Restrict call to given layout name. If None, call for all layouts.
-            If 'floating', call if, and only if the current window is floating,
-            ``when_floating`` is ignored in this case.
+        layout : str, Iterable[str], or None
+            Restrict call to given layout names. If None, enable call
+            for all layouts.
+            Can be a single name, a string of comma-separated names, or any
+            iterable yielding layout names.
         when_floating : bool
-            Call if the current window is floating.
+            Enable call when the current window is floating.
         """
-        self._layout = layout
+        if layout is not None:
+            if isinstance(layout, str):
+                self._layouts = set(l.strip() for l in layout.split(","))
+            else:
+                self._layouts = set(layout)
+
         self._when_floating = when_floating
         return self
 
     def check(self, q) -> bool:
         cur_win_floating = q.current_window and q.current_window.floating
 
-        if self._layout == 'floating':  # ignore _when_floating
-            return cur_win_floating
-
         if cur_win_floating and not self._when_floating:
             return False
 
-        if self._layout and q.current_layout.name != self._layout:
+        if self._layouts and q.current_layout.name not in self._layouts:
             return False
 
         return True
