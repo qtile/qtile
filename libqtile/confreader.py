@@ -83,9 +83,17 @@ class Config:
     @classmethod
     def from_file(cls, kore: base.Core, path: str):
         "Create a Config() object from the python file located at path."
+        name = os.path.splitext(os.path.basename(path))[0]
+
+        # Make sure we'll import the latest version of the config
+        try:
+            del sys.modules[name]
+        except KeyError:
+            pass
+
         try:
             sys.path.insert(0, os.path.dirname(path))
-            config = __import__(os.path.basename(path)[:-3])  # noqa: F811
+            config = __import__(name)  # noqa: F811
         except Exception:
             import traceback
             from libqtile.log_utils import logger
