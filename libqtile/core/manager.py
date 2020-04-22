@@ -89,13 +89,16 @@ def validate_config(file_path):
 
 def send_notification(title, message, timeout=10000):
     """Send a notification."""
-    import gi
-    gi.require_version("Notify", "0.7")
-    from gi.repository import Notify
-    Notify.init("Qtile")
-    notifier = Notify.Notification.new(title, message)
-    notifier.set_timeout(timeout)
-    notifier.show()
+    try:
+        import gi
+        gi.require_version("Notify", "0.7")
+        from gi.repository import Notify
+        Notify.init("Qtile")
+        notifier = Notify.Notification.new(title, message)
+        notifier.set_timeout(timeout)
+        notifier.show()
+    except Exception as exception:
+        logger.error(exception)
 
 
 def _import_module(module_name, dir_path):
@@ -1128,13 +1131,7 @@ class Qtile(CommandObject):
             validate_config(self.config.file_path)
         except ConfigError as error:
             logger.error("Preventing restart because of a configuration error: " + str(error))
-            try:
-                send_notification("Configuration error", str(error))
-            except Exception as exception:
-                # Catch everything to prevent a crash
-                logger.error("Error while sending a notification: " + str(exception))
-
-            # There was an error, return early and don't restart
+            send_notification("Configuration error", str(error))
             return
 
         argv = [sys.executable] + sys.argv
