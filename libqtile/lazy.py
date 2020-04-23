@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import Dict, Iterable, List, Optional, Set, Tuple, Union  # noqa: F401
+from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_graph import (
