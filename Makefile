@@ -12,7 +12,7 @@ check:
 
 .PHONY: lint
 lint:
-	TOXENV=pep8 tox
+	TOXENV=format,pep8 tox
 
 .PHONY: clean
 clean:
