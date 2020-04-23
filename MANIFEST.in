@@ -24,6 +24,7 @@ prune test
 prune rpm
 include bin/dqtile-cmd
 include bin/iqshell
+include bin/qtile-terminal
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]

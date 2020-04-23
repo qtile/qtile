@@ -69,6 +69,7 @@ install -m 644 %{SOURCE1} %{buildroot}%{_datadir}/xsessions/
 %{_bindir}/iqshell
 %{_bindir}/qtile
 %{_bindir}/qtile-run
+%{_bindir}/qtile-terminal
 %{_bindir}/qtile-top
 %{_bindir}/dqtile-cmd
 %{_bindir}/qtile-cmd

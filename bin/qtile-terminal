@@ -1,0 +1,5 @@
+#!/bin/sh
+
+shift
+
+x-terminal-emulator $@ || xterm $@ || urxvt $@ || st $@
