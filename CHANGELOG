@@ -1,3 +1,8 @@
+qtile X.X.X, released XXXX-XX-XX:
+    * features
+        - added `guess_terminal` in utils
+        - added keybinding cheet sheet image generator
+
 qtile 0.15.0, released 2020-04-12:
     !!! Config breakage !!!
         - removed the mpd widget, which depended on python-mpd.
