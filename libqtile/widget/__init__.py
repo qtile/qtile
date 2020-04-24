@@ -20,6 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import logging
+import time
+
 from libqtile.utils import safe_import as safe_import_
 # only directly import widgets that do not have any third party dependencies
 # other than those required by qtile, otherwise use the same import function
@@ -39,9 +42,15 @@ from libqtile.widget.windowname import WindowName  # noqa: F401
 
 
 def safe_import(module_name, class_name):
+    s = time.time()
     safe_import_(
         (".widget", module_name), class_name, globals(), fallback=make_error
     )
+    e = time.time()
+    if any(x.startswith('libqtile') for x in logging.Logger.manager.loggerDict):
+        log = logging.getLogger(__name__)
+        log.info('Attempt to safely import .widget.%s as %s took %.3f seconds',
+                 module_name, class_name, e - s)
 
 
 safe_import("backlight", "Backlight")
