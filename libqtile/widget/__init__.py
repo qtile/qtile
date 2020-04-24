@@ -41,71 +41,92 @@ from libqtile.widget.textbox import TextBox  # noqa: F401
 from libqtile.widget.windowname import WindowName  # noqa: F401
 
 
-def safe_import(module_name, class_name):
-    s = time.time()
-    safe_import_(
-        (".widget", module_name), class_name, globals(), fallback=make_error
-    )
-    e = time.time()
+def safe_import(imports):
     if any(x.startswith('libqtile') for x in logging.Logger.manager.loggerDict):
         log = logging.getLogger(__name__)
-        log.info('Attempt to safely import .widget.%s as %s took %.3f seconds',
-                 module_name, class_name, e - s)
+        log.info('Importing widgets')
+    else:
+        log = None
+    for module_name, class_names in imports:
+        s = time.time()
+        safe_import_((".widget", module_name), class_names, globals(), fallback=make_error)
+        e = time.time()
+        duration = e - s
+        if log:
+            if duration < 0.01:
+                log.debug('Attempt to safely import %s from .widget.%s took %.3f milliseconds',
+                          class_names, module_name, duration * 1e3)
+            else:
+                m = (log.info if duration < 2
+                     else log.warn if duration < 60
+                     else log.error)
+                m('Attempt to safely import %s from .widget.%s took %.6f seconds',
+                  class_names, module_name, duration)
+    if log:
+        log.info('Done importing widgets')
 
 
-safe_import("backlight", "Backlight")
-safe_import("battery", ["Battery", "BatteryIcon"])
-safe_import("currentscreen", "CurrentScreen")
-safe_import("debuginfo", "DebugInfo")
-safe_import(
-    "graph",
-    [
+# always preserve the order
+IMPORTS = [
+    ("backlight", "Backlight"),
+    ("battery", [
+        "Battery",
+        "BatteryIcon",
+    ]),
+    ("currentscreen", "CurrentScreen"),
+    ("debuginfo", "DebugInfo"),
+    ("graph", [
         "CPUGraph",
         "MemoryGraph",
         "SwapGraph",
         "NetGraph",
         "HDDGraph",
         "HDDBusyGraph",
-    ],
-)
-safe_import("maildir", "Maildir")
-safe_import("notify", "Notify")
-safe_import("sensors", "ThermalSensor")
-safe_import("sep", "Sep")
-safe_import("she", "She")
-safe_import("spacer", "Spacer")
-safe_import("generic_poll_text", ["GenPollText", "GenPollUrl"])
-safe_import("volume", "Volume")
-safe_import("windowtabs", "WindowTabs")
-safe_import("keyboardlayout", "KeyboardLayout")
-safe_import("df", "DF")
-safe_import("image", "Image")
-safe_import("gmail_checker", "GmailChecker")
-safe_import("clipboard", "Clipboard")
-safe_import("countdown", "Countdown")
-safe_import("tasklist", "TaskList")
-safe_import("pacman", "Pacman")
-safe_import("launchbar", "LaunchBar")
-safe_import("canto", "Canto")
-safe_import("mpriswidget", "Mpris")
-safe_import("mpris2widget", "Mpris2")
-safe_import("mpd2widget", "Mpd2")
-safe_import("yahoo_weather", "YahooWeather")
-safe_import("bitcoin_ticker", "BitcoinTicker")
-safe_import("wlan", "Wlan")
-safe_import("khal_calendar", "KhalCalendar")
-safe_import("imapwidget", "ImapWidget")
-safe_import("net", "Net")
-safe_import("keyboardkbdd", "KeyboardKbdd")
-safe_import("cmus", "Cmus")
-safe_import("wallpaper", "Wallpaper")
-safe_import("check_updates", "CheckUpdates")
-safe_import("moc", "Moc")
-safe_import("memory", "Memory")
-safe_import("cpu", "CPU")
-safe_import("idlerpg", "IdleRPG")
-safe_import("pomodoro", "Pomodoro")
-safe_import("stock_ticker", "StockTicker")
-safe_import("caps_num_lock_indicator", "CapsNumLockIndicator")
-safe_import("quick_exit", "QuickExit")
-safe_import("pulse_volume", "PulseVolume")
+    ]),
+    ("maildir", "Maildir"),
+    ("notify", "Notify"),
+    ("sensors", "ThermalSensor"),
+    ("sep", "Sep"),
+    ("she", "She"),
+    ("spacer", "Spacer"),
+    ("generic_poll_text", [
+        "GenPollText",
+        "GenPollUrl",
+    ]),
+    ("volume", "Volume"),
+    ("windowtabs", "WindowTabs"),
+    ("keyboardlayout", "KeyboardLayout"),
+    ("df", "DF"),
+    ("image", "Image"),
+    ("gmail_checker", "GmailChecker"),
+    ("clipboard", "Clipboard"),
+    ("countdown", "Countdown"),
+    ("tasklist", "TaskList"),
+    ("pacman", "Pacman"),
+    ("launchbar", "LaunchBar"),
+    ("canto", "Canto"),
+    ("mpriswidget", "Mpris"),
+    ("mpris2widget", "Mpris2"),
+    ("mpd2widget", "Mpd2"),
+    ("yahoo_weather", "YahooWeather"),
+    ("bitcoin_ticker", "BitcoinTicker"),
+    ("wlan", "Wlan"),
+    ("khal_calendar", "KhalCalendar"),
+    ("imapwidget", "ImapWidget"),
+    ("net", "Net"),
+    ("keyboardkbdd", "KeyboardKbdd"),
+    ("cmus", "Cmus"),
+    ("wallpaper", "Wallpaper"),
+    ("check_updates", "CheckUpdates"),
+    ("moc", "Moc"),
+    ("memory", "Memory"),
+    ("cpu", "CPU"),
+    ("idlerpg", "IdleRPG"),
+    ("pomodoro", "Pomodoro"),
+    ("stock_ticker", "StockTicker"),
+    ("caps_num_lock_indicator", "CapsNumLockIndicator"),
+    ("quick_exit", "QuickExit"),
+    ("pulse_volume", "PulseVolume"),
+]
+
+safe_import(IMPORTS)
