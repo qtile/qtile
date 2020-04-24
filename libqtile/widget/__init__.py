@@ -21,7 +21,8 @@
 # SOFTWARE.
 
 from libqtile.log_utils import logger
-from libqtile.utils import safe_import as safe_import_, time_call
+from libqtile.utils import safe_import as safe_import_
+from libqtile.utils import time_call
 # only directly import widgets that do not have any third party dependencies
 # other than those required by qtile, otherwise use the same import function
 from libqtile.widget.base import Mirror  # noqa: F401
@@ -37,7 +38,6 @@ from libqtile.widget.quick_exit import QuickExit  # noqa: F401
 from libqtile.widget.systray import Systray  # noqa: F401
 from libqtile.widget.textbox import TextBox  # noqa: F401
 from libqtile.widget.windowname import WindowName  # noqa: F401
-
 
 LAZY_IMPORT_SPEC = {
     'backlight': ['Backlight'],
@@ -94,7 +94,7 @@ LAZY_IMPORT_SPEC = {
 }
 
 
-__all__ = list(set.union(*map(set, LAZY_IMPORT_SPEC.values())))
+__all__ = list(set.union(*(set(x) for x in LAZY_IMPORT_SPEC.values())))
 
 
 def safe_import(module_name, class_name):

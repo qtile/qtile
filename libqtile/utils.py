@@ -23,8 +23,8 @@ import importlib
 import os
 import time
 import traceback
-from typing import Any, Tuple, Union
 import warnings
+from typing import Any, Callable, Tuple, Union
 
 from libqtile.log_utils import logger
 
@@ -213,7 +213,7 @@ def send_notification(title, message, urgent=False, timeout=10000):
         logger.error(exception)
 
 
-def time_call(func: callable, warning_limit: Union[float, None],
+def time_call(func: Callable[..., Any], warning_limit: Union[float, None],
               *args, **kwargs) -> Tuple[Any, float]:
     """Time a function call."""
     s = time.time()
