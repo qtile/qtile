@@ -217,6 +217,43 @@ Finally, place your breakpoints in the code and click on ``Debug``!
 Once you finished debugging, you can close the Xephyr window with ``kill PID``
 (use the ``jobs`` builtin to get its PID).
 
+Debugging in VSCode
+===================
+
+Make sure to have all the requirements installed and your development 
+environment setup.
+
+Open the root of the repo in VSCode.  If you have created it, VSCode should 
+detect the ``venv`` virtualenv, if not, select it.
+
+Create a launch.json file with the following lines.
+
+.. code-block:: json
+
+  {
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Qtile",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/qtile",
+            "cwd": "${workspaceFolder}",
+            "args": ["-c", "libqtile/resources/default_config.py"],
+            "console": "integratedTerminal",
+            "env": {"PYTHONUNBUFFERED":"1", "DISPLAY":":1"}
+        }
+    ]
+  }
+
+Then, in a terminal, run:
+
+    Xephyr +extension RANDR -screen 1920x1040 :1 -ac &
+    
+Note that we used the same display, ``:1``, in both the terminal command
+and the VSCode configuration environment variables.  Then ``debug`` usually 
+in VSCode. Feel free to change the screen size to fit your own screen.
+
 Resources
 =========
 
