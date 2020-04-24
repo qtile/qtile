@@ -23,6 +23,7 @@ import importlib
 import os
 import traceback
 import warnings
+from shutil import which
 
 from libqtile.log_utils import logger
 
@@ -209,3 +210,39 @@ def send_notification(title, message, urgent=False, timeout=10000):
         notifier.show()
     except Exception as exception:
         logger.error(exception)
+
+
+def guess_terminal():
+    """Try to guess terminal."""
+    test_terminals = [
+            'x-terminal-emulator',
+            'roxterm',
+            'sakura',
+            'hyper',
+            'alacritty',
+            'terminator',
+            'termite',
+            'gnome-terminal',
+            'konsole',
+            'xfce4-terminal',
+            'lxterminal',
+            'mate-terminal',
+            'kitty',
+            'yakuake',
+            'tilda',
+            'guake',
+            'eterm',
+            'st',
+            'urxvt',
+            'xterm',
+            ]
+
+    for terminal in test_terminals:
+        logger.debug('Guessing terminal: {}'.format(terminal))
+        if not which(terminal, os.X_OK):
+            continue
+
+        logger.info('Terminal found: {}'.format(terminal))
+        return terminal
+
+    logger.error('Default terminal has not been found.')
