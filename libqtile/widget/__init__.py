@@ -20,7 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.utils import safe_import as safe_import_
+from libqtile.log_utils import logger
+from libqtile.utils import safe_import as safe_import_, time_call
 # only directly import widgets that do not have any third party dependencies
 # other than those required by qtile, otherwise use the same import function
 from libqtile.widget.base import Mirror  # noqa: F401
@@ -38,65 +39,91 @@ from libqtile.widget.textbox import TextBox  # noqa: F401
 from libqtile.widget.windowname import WindowName  # noqa: F401
 
 
+LAZY_IMPORT_SPEC = {
+    'backlight': ['Backlight'],
+    'battery': ['Battery', 'BatteryIcon'],
+    'currentscreen': ['CurrentScreen'],
+    'debuginfo': ['DebugInfo'],
+    'graph': ['CPUGraph',
+              'MemoryGraph',
+              'SwapGraph',
+              'NetGraph',
+              'HDDGraph',
+              'HDDBusyGraph'],
+    'maildir': ['Maildir'],
+    'notify': ['Notify'],
+    'sensors': ['ThermalSensor'],
+    'sep': ['Sep'],
+    'she': ['She'],
+    'spacer': ['Spacer'],
+    'generic_poll_text': ['GenPollText', 'GenPollUrl'],
+    'volume': ['Volume'],
+    'windowtabs': ['WindowTabs'],
+    'keyboardlayout': ['KeyboardLayout'],
+    'df': ['DF'],
+    'image': ['Image'],
+    'gmail_checker': ['GmailChecker'],
+    'clipboard': ['Clipboard'],
+    'countdown': ['Countdown'],
+    'tasklist': ['TaskList'],
+    'pacman': ['Pacman'],
+    'launchbar': ['LaunchBar'],
+    'canto': ['Canto'],
+    'mpriswidget': ['Mpris'],
+    'mpris2widget': ['Mpris2'],
+    'mpd2widget': ['Mpd2'],
+    'yahoo_weather': ['YahooWeather'],
+    'bitcoin_ticker': ['BitcoinTicker'],
+    'wlan': ['Wlan'],
+    'khal_calendar': ['KhalCalendar'],
+    'imapwidget': ['ImapWidget'],
+    'net': ['Net'],
+    'keyboardkbdd': ['KeyboardKbdd'],
+    'cmus': ['Cmus'],
+    'wallpaper': ['Wallpaper'],
+    'check_updates': ['CheckUpdates'],
+    'moc': ['Moc'],
+    'memory': ['Memory'],
+    'cpu': ['CPU'],
+    'idlerpg': ['IdleRPG'],
+    'pomodoro': ['Pomodoro'],
+    'stock_ticker': ['StockTicker'],
+    'caps_num_lock_indicator': ['CapsNumLockIndicator'],
+    'quick_exit': ['QuickExit'],
+    'pulse_volume': ['PulseVolume']
+}
+
+
+__all__ = list(set.union(*map(set, LAZY_IMPORT_SPEC.values())))
+
+
 def safe_import(module_name, class_name):
     safe_import_(
         (".widget", module_name), class_name, globals(), fallback=make_error
     )
 
 
-safe_import("backlight", "Backlight")
-safe_import("battery", ["Battery", "BatteryIcon"])
-safe_import("currentscreen", "CurrentScreen")
-safe_import("debuginfo", "DebugInfo")
-safe_import(
-    "graph",
-    [
-        "CPUGraph",
-        "MemoryGraph",
-        "SwapGraph",
-        "NetGraph",
-        "HDDGraph",
-        "HDDBusyGraph",
-    ],
-)
-safe_import("maildir", "Maildir")
-safe_import("notify", "Notify")
-safe_import("sensors", "ThermalSensor")
-safe_import("sep", "Sep")
-safe_import("she", "She")
-safe_import("spacer", "Spacer")
-safe_import("generic_poll_text", ["GenPollText", "GenPollUrl"])
-safe_import("volume", "Volume")
-safe_import("windowtabs", "WindowTabs")
-safe_import("keyboardlayout", "KeyboardLayout")
-safe_import("df", "DF")
-safe_import("image", "Image")
-safe_import("gmail_checker", "GmailChecker")
-safe_import("clipboard", "Clipboard")
-safe_import("countdown", "Countdown")
-safe_import("tasklist", "TaskList")
-safe_import("pacman", "Pacman")
-safe_import("launchbar", "LaunchBar")
-safe_import("canto", "Canto")
-safe_import("mpriswidget", "Mpris")
-safe_import("mpris2widget", "Mpris2")
-safe_import("mpd2widget", "Mpd2")
-safe_import("yahoo_weather", "YahooWeather")
-safe_import("bitcoin_ticker", "BitcoinTicker")
-safe_import("wlan", "Wlan")
-safe_import("khal_calendar", "KhalCalendar")
-safe_import("imapwidget", "ImapWidget")
-safe_import("net", "Net")
-safe_import("keyboardkbdd", "KeyboardKbdd")
-safe_import("cmus", "Cmus")
-safe_import("wallpaper", "Wallpaper")
-safe_import("check_updates", "CheckUpdates")
-safe_import("moc", "Moc")
-safe_import("memory", "Memory")
-safe_import("cpu", "CPU")
-safe_import("idlerpg", "IdleRPG")
-safe_import("pomodoro", "Pomodoro")
-safe_import("stock_ticker", "StockTicker")
-safe_import("caps_num_lock_indicator", "CapsNumLockIndicator")
-safe_import("quick_exit", "QuickExit")
-safe_import("pulse_volume", "PulseVolume")
+def __getattr__(name):
+    module_name, class_names = None, None
+    if name in __all__:
+        for mod, names in LAZY_IMPORT_SPEC.items():
+            if name in names:
+                module_name, class_names = mod, names
+                break
+    if (module_name, class_names) != (None, None):
+        # importing a single name does not improve performance
+        # pass None because we want to handle the duration stuff (readability)
+        _, duration = time_call(safe_import, None, module_name, class_names)
+        if duration < 0.01:
+            logger.debug('Attempt to safely import %s from .widget.%s took %.3f milliseconds',
+                         class_names, module_name, duration * 1e3)
+        else:
+            log = (logger.debug if duration < 0.5
+                   else logger.info if duration < 2
+                   else logger.warning if duration < 60
+                   else logger.error)
+            log('Attempt to safely import %s from .widget.%s took %.3f seconds',
+                class_names, module_name, duration)
+        if name in globals():
+            return globals()[name]
+    raise AttributeError('module {!r} has no attribute {!r}'.format(__name__, name)) from None
