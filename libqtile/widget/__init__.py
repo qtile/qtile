@@ -20,6 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import sys
+
 from libqtile.log_utils import logger
 from libqtile.utils import safe_import as safe_import_
 from libqtile.utils import time_call
@@ -127,3 +129,8 @@ def __getattr__(name):
         if name in globals():
             return globals()[name]
     raise AttributeError('module {!r} has no attribute {!r}'.format(__name__, name)) from None
+
+
+if sys.version_info < (3, 7):
+    from libqtile.pep562 import Pep562
+    Pep562(__name__)
