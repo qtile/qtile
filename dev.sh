@@ -11,7 +11,7 @@ fi
 
 ${python} -m venv venv
 . venv/bin/activate
-pip install -U pip setuptools
+pip install -U pip setuptools wheel
 
 # https://github.com/qtile/qtile/issues/994#issuecomment-497984551
 echo "Installing xcffib then cairocffi..."
