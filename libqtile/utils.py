@@ -174,26 +174,41 @@ def describe_attributes(obj, attrs, func=lambda x: x):
     return ', '.join(pairs)
 
 
-def safe_import(module_names, class_name, globals_, fallback=None):
-    """
-    Try to import a module, and if it fails because an ImporError
+def import_class(module_path, class_name, fallback=None):
+    """Import a class safely
+
+    Try to import the class module, and if it fails because of an ImporError
     it logs on WARNING, and logs the traceback on DEBUG level
+    """
+    try:
+        module = importlib.import_module(module_path, __package__)
+        return getattr(module, class_name)
+    except ImportError as error:
+        logger.warning("Unmet dependencies for '%s.%s': %s", module_path,
+                       class_name, error)
+        if fallback:
+            logger.debug("%s", traceback.format_exc())
+            return fallback(module_path, class_name, error)
+        raise
+
+
+def safe_import(module_names, class_name, globals_, fallback=None):
+    """Import a class into given globals, lazily and safely
+
+    The globals are filled with a proxy function so that the module is imported
+    only if the class is being instanciated.
     """
     module_path = '.'.join(module_names)
     if type(class_name) is list:
         for name in class_name:
             safe_import(module_names, name, globals_)
         return
-    package = __package__
-    try:
-        module = importlib.import_module(module_path, package)
-        globals_[class_name] = getattr(module, class_name)
-    except ImportError as error:
-        logger.warning("Unmet dependencies for '%s.%s': %s",
-                       module_path, class_name, error)
-        logger.debug("%s", traceback.format_exc())
-        if fallback:
-            globals_[class_name] = fallback(module_path, class_name, error)
+
+    def class_proxy(*args, **kwargs):
+        cls = import_class(module_path, class_name, fallback)
+        return cls(*args, **kwargs)
+
+    globals_[class_name] = class_proxy
 
 
 def send_notification(title, message, urgent=False, timeout=10000):
