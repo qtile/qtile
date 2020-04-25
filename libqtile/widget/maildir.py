@@ -61,7 +61,7 @@ class Maildir(base.ThreadedPollText):
                 for folder in self.sub_folders
             ]
 
-    def poll(self) -> str:
+    def poll(self):
         """Scans the mailbox for new messages
 
         Returns
