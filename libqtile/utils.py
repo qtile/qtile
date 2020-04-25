@@ -188,7 +188,7 @@ def safe_import(module_names, class_name, globals_, fallback=None):
         module = importlib.import_module(module_path, package)
         globals_[class_name] = getattr(module, class_name)
     except ImportError as error:
-        logger.warning("Unmet dependencies for optional Widget: '%s.%s', %s",
+        logger.warning("Unmet dependencies for '%s.%s': %s",
                        module_path, class_name, error)
         logger.debug("%s", traceback.format_exc())
         if fallback:
