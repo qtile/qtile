@@ -86,7 +86,7 @@ class LazyCall:
         return True
 
 
-class LazyCommandObject(CommandInterface):
+class LazyCommandInterface(CommandInterface):
     """A lazy loading command object
 
     Allows all commands and items to be resolved at run time, and returns
@@ -106,4 +106,4 @@ class LazyCommandObject(CommandInterface):
         return True
 
 
-lazy = InteractiveCommandClient(LazyCommandObject())
+lazy = InteractiveCommandClient(LazyCommandInterface())
