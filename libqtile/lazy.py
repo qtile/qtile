@@ -76,18 +76,13 @@ class LazyCall:
         Parameters
         ----------
         layout : str, Iterable[str], or None
-            Restrict call to given layout names. If None, enable call
-            for all layouts.
-            Can be a single name, a string of comma-separated names, or any
-            iterable yielding layout names.
+            Restrict call to one or more layouts.
+            If None, enable the call for all layouts.
         when_floating : bool
             Enable call when the current window is floating.
         """
         if layout is not None:
-            if isinstance(layout, str):
-                self._layouts = set(l.strip() for l in layout.split(","))
-            else:
-                self._layouts = set(layout)
+            self._layouts = {layout} if isinstance(layout, str) else set(layout)
 
         self._when_floating = when_floating
         return self
