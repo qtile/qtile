@@ -464,8 +464,8 @@ def qtile(request, xephyr):
 
     with tempfile.NamedTemporaryFile() as f:
         sockfile = f.name
-        q = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
         try:
+            q = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
             q.start(config)
 
             yield q
@@ -477,9 +477,8 @@ def qtile(request, xephyr):
 def qtile_nospawn(request, xephyr):
     with tempfile.NamedTemporaryFile() as f:
         sockfile = f.name
-        q = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
-
         try:
+            q = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
             yield q
         finally:
             q.terminate()
