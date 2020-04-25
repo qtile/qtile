@@ -167,9 +167,9 @@ Digging Deeper: Command Objects
 
 If you just want to script your Qtile window manager the above information, in
 addition to the documentation on the :doc:`various scripting
-commands<manual/ref/commands>` should be enough to get started.  To develop the
-Qtile manager itself, we can dig into how Qtile represents these objects, which
-will lead to the way the commands are dispatched.
+commands </manual/ref/commands>` should be enough to get started.  To develop
+the Qtile manager itself, we can dig into how Qtile represents these objects,
+which will lead to the way the commands are dispatched.
 
 All of the configured objects setup by Qtile are ``CommandObject`` subclasses.
 These objects are so named because we can issue commands against them using the
