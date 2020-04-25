@@ -74,6 +74,13 @@ ELLIPSIZE_END = pango.PANGO_ELLIPSIZE_END
 units_from_double = pango.pango_units_from_double
 
 
+ALIGNMENTS = {
+    'left': pango.PANGO_ALIGN_LEFT,
+    'center': pango.PANGO_ALIGN_CENTER,
+    'right': pango.PANGO_ALIGN_RIGHT,
+}
+
+
 class PangoLayout:
     def __init__(self, cairo_t):
         self._cairo_t = cairo_t
