@@ -59,23 +59,21 @@ class Floating(Layout):
     ]
 
     def __init__(self, float_rules={}, no_reposition_match=None, override_default_float_rules=False, **config):
-        # TODO: update docstring
         """
-        If you have certain apps that you always want to float you can provide
-        ``float_rules`` to do so. ``float_rules`` is a list of
-        dictionaries containing some or all of the keys::
+        There is a preset of rules for windows which most users want to float by
+        default. Additionally, you can set your own rules in your config when
+        specifying the `floating_layout` with the `float_rules` parameter. E.g.
+            float_rules = {
+                "wmclass": ["Wine", "vlc"],
+                "role": ["About"],
+            }
+        The follwing keys are possible. (With corresponding X property)
+            "wmname"    (WM_NAME)
+            "role"      (WM_WINDOW_ROLE)
+            "wmclass"   (WM_CLASS)
+            "wmtype"    (see here: https://specifications.freedesktop.org/wm-spec/wm-spec-latest.html#idm45408774024288)
 
-            {'wname': WM_NAME, 'wmclass': WM_CLASS, 'role': WM_WINDOW_ROLE}
-
-        The keys must be specified as above.  You only need one, but
-        you need to provide the value for it.  When a new window is
-        opened it's ``match`` method is called with each of these
-        rules.  If one matches, the window will float.  The following
-        will float gimp and skype::
-
-            float_rules=[dict(wmclass="skype"), dict(wmclass="gimp")]
-
-        Specify these in the ``floating_layout`` in your config.
+        If you don't want to use the preset rules, you can override them with `override_default_float_rules=True`.
 
         Floating layout will try to center most of floating windows by
         default (until hints are properly implemented), but if you don't
@@ -113,6 +111,7 @@ class Floating(Layout):
         """Compares a window's properties with the `float_rules`.
         Returns `True` if window should float.
         """
+        print(win.window.get_wm_type())
         if (win.name in self.float_rules['wmname'] or
                 win.window.get_wm_window_role() in self.float_rules['role'] or
                 set(win.window.get_wm_class()) & self.float_rules['wmclass'] or
