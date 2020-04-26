@@ -31,14 +31,16 @@
 from collections import defaultdict
 
 from libqtile.layout.base import Layout
+from libqtile.log_utils import logger
 
 # sensible floating defaults like in i3
 # https://github.com/i3/i3/blob/ae757c6848b49d7a0423973a39791ba6eca29308/src/manage.c#L449
 # except `A__NET_WM_STATE_MODAL` windows (couldn't figure this one out)
-DEFAULT_FLOAT_RULES  = defaultdict(set, {
-    "wmtype": {"dialog" ,"utility", "toolbar", "splash"},
+DEFAULT_FLOAT_RULES = defaultdict(set, {
+    "wmtype": {"dialog", "utility", "toolbar", "splash"},
     "wmhint": {"fixed_size"},
 })
+
 
 class Floating(Layout):
     """
@@ -95,11 +97,11 @@ class Floating(Layout):
             self.float_rules = DEFAULT_FLOAT_RULES
         # provide support for deprecated `auto_float_types` argument
         if self.auto_float_types:
-            # TODO: deprecated warning
+            logger.warning("`auto_float_types` is deprecated. Use `float_rules` for this.")
             self.float_rules["wmtype"].update(self.auto_float_types)
         # provide support for the deprecated list-structure of `float_rules`
         if isinstance(float_rules, list):
-            # TODO: deprecated warning
+            logger.warning("The list structure of `float_rules` is deprecated. Use a dictionary instead")
             for rule_dict in float_rules:
                 key, val = tuple(rule_dict.items())[0]
                 self.float_rules[key].add(val)
