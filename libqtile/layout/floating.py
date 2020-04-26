@@ -28,21 +28,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from collections import defaultdict
+
 from libqtile.layout.base import Layout
 
-DEFAULT_FLOAT_WM_TYPES = set([
-    'utility',
-    'notification',
-    'toolbar',
-    'splash',
-    'dialog',
-])
-
-DEFAULT_FLOAT_RULES = [
-    {"role": "About"},
-    {"wmclass": "file_progress"},
-]
-
+# sensible floating defaults like in i3
+# https://github.com/i3/i3/blob/ae757c6848b49d7a0423973a39791ba6eca29308/src/manage.c#L449
+# except `A__NET_WM_STATE_MODAL` windows (couldn't figure this one out)
+DEFAULT_FLOAT_RULES  = defaultdict(set, {
+    "wmtype": {"dialog" ,"utility", "toolbar", "splash"},
+    "wmhint": {"fixed_size"},
+})
 
 class Floating(Layout):
     """
@@ -57,12 +53,13 @@ class Floating(Layout):
         ("name", "floating", "Name of this layout."),
         (
             "auto_float_types",
-            DEFAULT_FLOAT_WM_TYPES,
-            "default wm types to automatically float"
+            [],
+            "DEPRECATED. This parameter is deprecated. Use `float_rules` for this."
         ),
     ]
 
-    def __init__(self, float_rules=None, no_reposition_match=None, **config):
+    def __init__(self, float_rules={}, no_reposition_match=None, override_default_float_rules=False, **config):
+        # TODO: update docstring
         """
         If you have certain apps that you always want to float you can provide
         ``float_rules`` to do so. ``float_rules`` is a list of
@@ -88,19 +85,41 @@ class Floating(Layout):
         the screen.
         """
         Layout.__init__(self, **config)
+        self.add_defaults(Floating.defaults)
         self.clients = []
         self.focused = None
         self.group = None
-        self.float_rules = float_rules or DEFAULT_FLOAT_RULES
         self.no_reposition_match = no_reposition_match
-        self.add_defaults(Floating.defaults)
+
+        if override_default_float_rules:
+            self.float_rules = defaultdict(set)
+        else:
+            self.float_rules = DEFAULT_FLOAT_RULES
+        # provide support for deprecated `auto_float_types` argument
+        if self.auto_float_types:
+            # TODO: deprecated warning
+            self.float_rules["wmtype"].update(self.auto_float_types)
+        # provide support for the deprecated list-structure of `float_rules`
+        if isinstance(float_rules, list):
+            # TODO: deprecated warning
+            for rule_dict in float_rules:
+                key, val = tuple(rule_dict.items())[0]
+                self.float_rules[key].add(val)
+        else:
+            for key, vals in float_rules.items():
+                self.float_rules[key].update(vals)
 
     def match(self, win):
-        """Used to default float some windows"""
-        if win.window.get_wm_type() in self.auto_float_types:
+        """Compares a window's properties with the `float_rules`.
+        Returns `True` if window should float.
+        """
+        if (win.name in self.float_rules['wmname'] or
+                win.window.get_wm_window_role() in self.float_rules['role'] or
+                set(win.window.get_wm_class()) & self.float_rules['wmclass'] or
+                win.window.get_wm_type() in self.float_rules['wmtype']):
             return True
-        for rule_dict in self.float_rules:
-            if win.match(**rule_dict):
+        if "fixed_size" in self.float_rules['wmhint']:
+            if win.hints['max_width'] == win.hints['min_width'] > 0:
                 return True
         return False
 
