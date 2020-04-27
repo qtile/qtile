@@ -113,7 +113,6 @@ class Floating(Layout):
         """Compares a window's properties with the `float_rules`.
         Returns `True` if window should float.
         """
-        print(win.window.get_wm_type())
         if (win.name in self.float_rules['wmname'] or
                 win.window.get_wm_window_role() in self.float_rules['role'] or
                 set(win.window.get_wm_class()) & self.float_rules['wmclass'] or
