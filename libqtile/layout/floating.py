@@ -68,6 +68,7 @@ class Floating(Layout):
             float_rules = {
                 "wmclass": ["Wine", "vlc"],
                 "role": ["About"],
+                "wmtype": ["notification", "toolbar"],
             }
         The follwing keys are possible. (With corresponding X property)
             "wmname"    (WM_NAME)
