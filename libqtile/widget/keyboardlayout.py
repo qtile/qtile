@@ -97,7 +97,7 @@ class KeyboardLayout(base.InLoopPollText):
         Examples: "us", "us dvorak".  In case of error returns "unknown".
         """
         try:
-            command = 'setxkbmap -verbose 10'
+            command = 'setxkbmap -verbose 10 -query'
             setxkbmap_output = self.call_process(command.split(' '))
             keyboard = self.get_keyboard_layout(setxkbmap_output)
             return str(keyboard)
