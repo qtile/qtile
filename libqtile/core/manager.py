@@ -1088,7 +1088,7 @@ class Qtile(CommandObject):
             self.config.load()
         except Exception as error:
             logger.error("Preventing restart because of a configuration error: {}".format(error))
-            send_notification("Configuration error", str(error))
+            send_notification("Configuration error", str(error.__context__))
             return
 
         argv = [sys.executable] + sys.argv
