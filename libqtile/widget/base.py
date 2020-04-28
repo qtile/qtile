@@ -31,7 +31,6 @@
 
 import subprocess
 import threading
-import warnings
 from typing import Any, List, Tuple
 
 from libqtile import bar, configurable, confreader, drawer
@@ -627,7 +626,3 @@ class Mirror(_Widget):
 
     def button_press(self, x, y, button):
         self.reflects.button_press(x, y, button)
-
-
-def deprecated(msg):
-    warnings.warn(msg, DeprecationWarning)
