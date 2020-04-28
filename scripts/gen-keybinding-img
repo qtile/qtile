@@ -356,12 +356,11 @@ class MInfo(KInfo):
 
 
 def get_kb_map(config_path=None):
-    from libqtile.backend.x11.xcore import XCore
     from libqtile.confreader import Config
 
-    c = Config()
-    if config_path is not None:
-        c = Config.from_file(XCore(), config_path)
+    c = Config(config_path)
+    if config_path:
+        c.load()
 
     kb_map = {}
     for key in c.keys:
