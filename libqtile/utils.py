@@ -215,7 +215,6 @@ def send_notification(title, message, urgent=False, timeout=10000):
 def guess_terminal():
     """Try to guess terminal."""
     test_terminals = [
-        'x-terminal-emulator',
         'roxterm',
         'sakura',
         'hyper',
@@ -235,6 +234,7 @@ def guess_terminal():
         'st',
         'urxvt',
         'xterm',
+        'x-terminal-emulator',
     ]
 
     for terminal in test_terminals:
