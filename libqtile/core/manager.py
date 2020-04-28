@@ -1082,6 +1082,14 @@ class Qtile(CommandObject):
         d.state = modmasks
         self.core.handle_KeyPress(d)
 
+    def cmd_validate_config(self):
+        try:
+            self.config.load()
+        except Exception as error:
+            send_notification("Configuration check", str(error.__context__))
+        else:
+            send_notification("Configuration check", "No error found!")
+
     def cmd_restart(self):
         """Restart qtile"""
         try:
