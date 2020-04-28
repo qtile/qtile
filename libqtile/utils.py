@@ -23,6 +23,7 @@ import importlib
 import os
 import traceback
 import warnings
+from shutil import which
 
 from libqtile.log_utils import logger
 
@@ -188,7 +189,7 @@ def safe_import(module_names, class_name, globals_, fallback=None):
         module = importlib.import_module(module_path, package)
         globals_[class_name] = getattr(module, class_name)
     except ImportError as error:
-        logger.warning("Unmet dependencies for optional Widget: '%s.%s', %s",
+        logger.warning("Unmet dependencies for '%s.%s': %s",
                        module_path, class_name, error)
         logger.debug("%s", traceback.format_exc())
         if fallback:
@@ -209,3 +210,39 @@ def send_notification(title, message, urgent=False, timeout=10000):
         notifier.show()
     except Exception as exception:
         logger.error(exception)
+
+
+def guess_terminal():
+    """Try to guess terminal."""
+    test_terminals = [
+        'roxterm',
+        'sakura',
+        'hyper',
+        'alacritty',
+        'terminator',
+        'termite',
+        'gnome-terminal',
+        'konsole',
+        'xfce4-terminal',
+        'lxterminal',
+        'mate-terminal',
+        'kitty',
+        'yakuake',
+        'tilda',
+        'guake',
+        'eterm',
+        'st',
+        'urxvt',
+        'xterm',
+        'x-terminal-emulator',
+    ]
+
+    for terminal in test_terminals:
+        logger.debug('Guessing terminal: {}'.format(terminal))
+        if not which(terminal, os.X_OK):
+            continue
+
+        logger.info('Terminal found: {}'.format(terminal))
+        return terminal
+
+    logger.error('Default terminal has not been found.')

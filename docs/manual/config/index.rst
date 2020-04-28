@@ -50,7 +50,7 @@ key. The basic operation is:
 * ``mod + <ctrl> + r``: restart qtile with new config
 * ``mod + <group name>``: switch to that group
 * ``mod + <shift> + <group name>``: send a window to that group
-* ``mod + <enter>``: start xterm
+* ``mod + <enter>``: start terminal guessed by ``libqtile.utils.guess_terminal``
 * ``mod + r``: start a little prompt in the bar so users can run arbitrary
   commands
 
@@ -61,6 +61,9 @@ a system tray, and a clock.
 
 The default configuration has several more advanced key combinations, but the
 above should be enough for basic usage of qtile.
+
+See :doc:`Keybindings in images </manual/commands/keybindings>` for visual
+keybindings in keyboard layout.
 
 Mouse Bindings
 --------------

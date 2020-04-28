@@ -2,8 +2,12 @@
 Installing on Debian or Ubuntu
 ==============================
 
-On recent Ubuntu (17.04 or greater) and Debian unstable versions, there are
-Qtile packages available via:
+Note: As of Ubuntu 20.04 (Focal Fossa), the package has been outdated
+and removed from the Ubuntu's official package list.
+Users are advised to follow the instructions of :ref:`installing-from-source`.
+
+On other recent Ubuntu (17.04 or greater) and Debian unstable versions,
+there are Qtile packages available via:
 
 .. code-block:: bash
 
