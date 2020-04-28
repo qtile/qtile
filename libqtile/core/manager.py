@@ -261,6 +261,20 @@ class Qtile(CommandObject):
         logger.debug('Stopping qtile')
         self._stopped_event.set()
 
+    def restart(self):
+        argv = [sys.executable] + sys.argv
+        if '--no-spawn' not in argv:
+            argv.append('--no-spawn')
+        buf = io.BytesIO()
+        try:
+            pickle.dump(QtileState(self), buf, protocol=0)
+        except:  # noqa: E722
+            logger.error("Unable to pickle qtile state")
+        argv = [s for s in argv if not s.startswith('--with-state')]
+        argv.append('--with-state=' + buf.getvalue().decode())
+        self._restart = (sys.executable, argv)
+        self.stop()
+
     async def finalize(self):
         self._eventloop.remove_signal_handler(signal.SIGINT)
         self._eventloop.remove_signal_handler(signal.SIGTERM)
@@ -1098,19 +1112,7 @@ class Qtile(CommandObject):
             logger.error("Preventing restart because of a configuration error: {}".format(error))
             send_notification("Configuration error", str(error.__context__))
             return
-
-        argv = [sys.executable] + sys.argv
-        if '--no-spawn' not in argv:
-            argv.append('--no-spawn')
-        buf = io.BytesIO()
-        try:
-            pickle.dump(QtileState(self), buf, protocol=0)
-        except:  # noqa: E722
-            logger.error("Unable to pickle qtile state")
-        argv = [s for s in argv if not s.startswith('--with-state')]
-        argv.append('--with-state=' + buf.getvalue().decode())
-        self._restart = (sys.executable, argv)
-        self.stop()
+        self.restart()
 
     def cmd_spawn(self, cmd):
         """Run cmd in a shell.
