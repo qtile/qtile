@@ -24,6 +24,7 @@
 # SOFTWARE.
 import os
 import sys
+from typing import Optional
 
 from libqtile.backend import base
 
@@ -78,7 +79,7 @@ class Config:
             setattr(self, key, value)
 
     @classmethod
-    def from_file(cls, kore: base.Core, path: str):
+    def from_file(cls, path: str, kore: Optional[base.Core] = None):
         "Create a Config() object from the python file located at path."
         cnf = cls(file_path=path, kore=kore)
         cnf.load()
@@ -104,7 +105,8 @@ class Config:
             raise ConfigError(tb)
 
         self.update(**vars(config))
-        self.validate()
+        if self.kore:
+            self.validate()
 
     def validate(self) -> None:
         """
