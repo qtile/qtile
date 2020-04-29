@@ -12,6 +12,7 @@
 # serve to show the default.
 
 import os
+import pkg_resources
 import sys
 from unittest.mock import MagicMock
 
@@ -97,7 +98,7 @@ copyright = u'2008-2020, Aldo Cortesi and contributers'
 # built documents.
 #
 # The short X.Y version.
-version = '0.15.0'
+version = pkg_resources.get_distribution("qtile").version
 # The full version, including alpha/beta/rc tags.
 release = version
 
