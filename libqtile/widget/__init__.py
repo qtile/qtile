@@ -22,9 +22,7 @@
 
 import sys
 
-from libqtile.log_utils import logger
 from libqtile.utils import safe_import as safe_import_
-from libqtile.utils import time_call
 # only directly import widgets that do not have any third party dependencies
 # other than those required by qtile, otherwise use the same import function
 from libqtile.widget.base import Mirror  # noqa: F401
@@ -113,24 +111,13 @@ def __getattr__(name):
                 module_name, class_names = mod, names
                 break
     if (module_name, class_names) != (None, None):
-        # importing a single name does not improve performance
-        # pass None because we want to handle the duration stuff (readability)
-        _, duration = time_call(safe_import, None, module_name, class_names)
-        if duration < 0.01:
-            logger.debug('Attempt to safely import %s from .widget.%s took %.3f milliseconds',
-                         class_names, module_name, duration * 1e3)
-        else:
-            log = (logger.debug if duration < 0.5
-                   else logger.info if duration < 2
-                   else logger.warning if duration < 60
-                   else logger.error)
-            log('Attempt to safely import %s from .widget.%s took %.3f seconds',
-                class_names, module_name, duration)
+        safe_import(module_name, class_names)
         if name in globals():
             return globals()[name]
     raise AttributeError('module {!r} has no attribute {!r}'.format(__name__, name)) from None
 
 
 if sys.version_info < (3, 7):
-    from libqtile.pep562 import Pep562
-    Pep562(__name__)
+    for mn, cn in LAZY_IMPORT_SPEC.items():
+        safe_import(mn, cn)
+    del mn, cn

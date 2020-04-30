@@ -21,10 +21,8 @@
 import functools
 import importlib
 import os
-import time
 import traceback
 import warnings
-from typing import Any, Callable, Tuple, Union
 
 from libqtile.log_utils import logger
 
@@ -211,16 +209,3 @@ def send_notification(title, message, urgent=False, timeout=10000):
         notifier.show()
     except Exception as exception:
         logger.error(exception)
-
-
-def time_call(func: Callable[..., Any], warning_limit: Union[float, None],
-              *args, **kwargs) -> Tuple[Any, float]:
-    """Time a function call."""
-    s = time.time()
-    r = func(*args, **kwargs)
-    d = time.time() - s
-    if warning_limit is not None and d > warning_limit > 0:
-        logger.warning("Calling %r took very long (%.1fx):\nfunction: %r\nargs: %r\nkwargs: %r",
-                       getattr(func, '__qualname__', func.__name__), d / warning_limit,
-                       func, args, kwargs)
-    return r, d
