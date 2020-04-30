@@ -5,6 +5,7 @@ default:
 	@echo "'make ckpatch'" to check a patch
 	@echo "'make clean'" to clean generated files
 	@echo "'make man'" to generate sphinx documentation
+	@echo "'make run-ffibuild'" to build ffi modules
 
 .PHONY: check
 check:
@@ -27,3 +28,7 @@ clean:
 man:
 	python3 setup.py build_sphinx -b man
 	cp build/sphinx/man/* resources/
+
+.PHONY: run-ffibuild
+run-ffibuild:
+	./scripts/ffibuild
