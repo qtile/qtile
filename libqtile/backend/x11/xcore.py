@@ -179,8 +179,8 @@ class XCore(base.Core):
         """
         logger.debug("Adding io watch")
         self.qtile = qtile
-        fd = self.conn.conn.get_file_descriptor()
-        eventloop.add_reader(fd, self._xpoll)
+        self.fd = self.conn.conn.get_file_descriptor()
+        eventloop.add_reader(self.fd, self._xpoll)
 
     def remove_listener(self, eventloop: asyncio.AbstractEventLoop) -> None:
         """Remove the listener from the given event loop
@@ -189,8 +189,7 @@ class XCore(base.Core):
             The eventloop that had been setup for listening.
         """
         logger.debug("Removing io watch")
-        fd = self.conn.conn.get_file_descriptor()
-        eventloop.remove_reader(fd)
+        eventloop.remove_reader(self.fd)
         self.qtile = None
         self.conn.finalize()
 

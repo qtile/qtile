@@ -944,7 +944,10 @@ class Connection:
         return Window(self, wid)
 
     def disconnect(self):
-        self.conn.disconnect()
+        try:
+            self.conn.disconnect()
+        except xcffib.ConnectionException:
+            logger.error("Failed to disconnect, connection already failed?")
         self._connected = False
 
     def flush(self):

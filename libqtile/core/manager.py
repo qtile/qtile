@@ -287,6 +287,7 @@ class Qtile(CommandObject):
             self.graceful_shutdown()
 
         logger.debug('Stopping qtile')
+        self.core.remove_listener(self._eventloop)
         self._stopped_event.set()
 
     async def finalize(self):
@@ -314,8 +315,6 @@ class Qtile(CommandObject):
                 for bar in [screen.top, screen.bottom, screen.left, screen.right]:
                     if bar is not None:
                         bar.finalize()
-
-            self.core.remove_listener(self._eventloop)
         except:  # noqa: E722
             logger.exception('exception during finalize')
 
