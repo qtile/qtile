@@ -201,8 +201,8 @@ class QtileModule(SimpleDirectiveMixin, Directive):
 
 def generate_keybinding_images():
     this_dir = os.path.dirname(__file__)
-    ffibuild_path = os.path.abspath(os.path.join(this_dir, "..", "scripts", "ffibuild"))
-    call([ffibuild_path])
+    base_dir = os.path.abspath(os.path.join(this_dir, ".."))
+    call(['make', '-C', base_dir, 'run-ffibuild'])
     call(['make', '-C', this_dir, 'genkeyimg'])
 
 
