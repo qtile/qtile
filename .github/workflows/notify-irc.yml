@@ -1,2 +1,41 @@
-- name: Notify IRC
-  uses: rectalogic/notify-irc@v1
+name: Notify IRC
+on: [push, pull_request, create]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: irc push
+        uses: rectalogic/notify-irc@v1
+        if: github.event_name == 'push'
+        with:
+          server: irc.oftc.net
+          port: 6697
+          tls: true
+          channel: "#qtile"
+          nickname: qtile-github-notifier
+          message: |
+            ${{ github.actor }} pushed ${{ github.event.ref }} ${{ github.event.compare }}
+            ${{ join(github.event.commits.*.message) }}
+      - name: irc pull request
+        uses: rectalogic/notify-irc@v1
+        if: github.event_name == 'pull_request'
+        with:
+          server: irc.oftc.net
+          port: 6697
+          tls: true
+          channel: "#qtile"
+          nickname: qtile-github-notifier
+          message: |
+            ${{ github.actor }} opened PR ${{ github.event.html_url }}
+      - name: irc tag created
+        uses: rectalogic/notify-irc@v1
+        if: github.event_name == 'create' && github.event.ref_type == 'tag'
+        with:
+          server: irc.oftc.net
+          port: 6697
+          tls: true
+          channel: "#qtile"
+          nickname: qtile-github-notifier
+          message: |
+            ${{ github.actor }} tagged ${{ github.repository }} ${{ github.event.ref }}
