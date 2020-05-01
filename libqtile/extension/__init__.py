@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from ..utils import safe_import as safe_import_
+from libqtile.utils import safe_import as safe_import_
 
 
 def safe_import(module_name, class_name):

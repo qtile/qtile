@@ -28,10 +28,9 @@
 import os.path
 import sys
 import warnings
+from typing import List
 
-from . import configurable
-from . import hook
-from . import utils
+from libqtile import configurable, hook, utils
 from libqtile.command_object import CommandObject
 
 
@@ -48,21 +47,21 @@ class Key:
     commands:
         A list of lazy command objects generated with the lazy.lazy helper.
         If multiple Call objects are specified, they are run in sequence.
-    kwargs:
-        A dictionary containing "desc", allowing a description to be added
+    desc:
+        description to be added to the key binding
     """
-    def __init__(self, modifiers, key, *commands, **kwargs):
+    def __init__(self, modifiers: List[str], key: str, *commands, desc: str = ""):
         self.modifiers = modifiers
         self.key = key
         self.commands = commands
-        self.desc = kwargs.get("desc", "")
+        self.desc = desc
 
     def __repr__(self):
         return "<Key (%s, %s)>" % (self.modifiers, self.key)
 
 
 class Mouse:
-    def __init__(self, modifiers, button, *commands, **kwargs):
+    def __init__(self, modifiers: List[str], button: str, *commands, **kwargs):
         self.focus = kwargs.pop("focus", "before")
         self.modifiers = modifiers
         self.button = button
@@ -95,9 +94,6 @@ class Click(Mouse):
     It focuses clicked window by default.  If you want to prevent it, pass
     `focus=None` as an argument
     """
-    def __init__(self, modifiers, button, *commands, **kwargs):
-        super().__init__(modifiers, button, *commands, **kwargs)
-
     def __repr__(self):
         return "<Click (%s, %s)>" % (self.modifiers, self.button)
 

@@ -24,7 +24,6 @@
 # SOFTWARE.
 import os
 import sys
-from typing import List  # noqa: F401
 
 from libqtile.backend import base
 
@@ -54,14 +53,16 @@ class Config:
         "wmname",
     ]
 
-    def __init__(self, **settings):
+    def __init__(self, file_path=None, **settings):
         """Create a Config() object from settings
 
         Only attributes found in Config.settings_keys will be added to object.
         config attribute precedence is 1.) **settings 2.) self 3.) default_config
         """
+        from libqtile.resources import default_config
 
-        from .resources import default_config
+        self.file_path = file_path
+
         default = vars(default_config)
         for key in self.settings_keys:
             try:
@@ -82,16 +83,24 @@ class Config:
     @classmethod
     def from_file(cls, kore: base.Core, path: str):
         "Create a Config() object from the python file located at path."
+        name = os.path.splitext(os.path.basename(path))[0]
+
+        # Make sure we'll import the latest version of the config
+        try:
+            del sys.modules[name]
+        except KeyError:
+            pass
+
         try:
             sys.path.insert(0, os.path.dirname(path))
-            config = __import__(os.path.basename(path)[:-3])  # noqa: F811
+            config = __import__(name)  # noqa: F811
         except Exception:
             import traceback
-            from .log_utils import logger
+            from libqtile.log_utils import logger
             logger.exception('Could not import config file %r', path)
             tb = traceback.format_exc()
             raise ConfigError(tb)
-        cnf = cls(**vars(config))
+        cnf = cls(file_path=path, **vars(config))
         cnf.validate(kore)
         return cnf
 

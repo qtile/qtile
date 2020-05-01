@@ -17,7 +17,8 @@ Qtile looks in the following places for a configuration file, in order:
 * It reads the module ``libqtile.resources.default_config``, included by
   default with every Qtile installation.
 
-Qtile will try to create the configuration file as a copy of the default config, if it doesn't exist yet.
+Qtile will try to create the configuration file as a copy of the default
+config, if it doesn't exist yet.
 
 Default Configuration
 =====================
@@ -49,7 +50,7 @@ key. The basic operation is:
 * ``mod + <ctrl> + r``: restart qtile with new config
 * ``mod + <group name>``: switch to that group
 * ``mod + <shift> + <group name>``: send a window to that group
-* ``mod + <enter>``: start xterm
+* ``mod + <enter>``: start terminal guessed by ``libqtile.utils.guess_terminal``
 * ``mod + r``: start a little prompt in the bar so users can run arbitrary
   commands
 
@@ -60,6 +61,9 @@ a system tray, and a clock.
 
 The default configuration has several more advanced key combinations, but the
 above should be enough for basic usage of qtile.
+
+See :doc:`Keybindings in images </manual/commands/keybindings>` for visual
+keybindings in keyboard layout.
 
 Mouse Bindings
 --------------
@@ -205,10 +209,22 @@ create your own ``~/.xsession``. There are several examples of user defined
 ``xsession`` s in the `qtile-examples
 <https://github.com/qtile/qtile-examples>`_ repository.
 
+If there is no display manager such as SDDM, LightDM or other and there is need
+to start Qtile directly from ``~/.xinitrc`` do that by adding ``exec qtile`` at
+the end.
+
+In very special cases, ex. Qtile crashing during session, then suggestion would
+be to start through a loop to save running applications::
+
+    while true; do
+        qtile
+    done
+
 Finally, if you're a gnome user, you can start integrate Qtile into Gnome's
-session manager and use gnome as usual:
+session manager and use gnome as usual.
 
 .. toctree::
     :maxdepth: 1
 
+    without-dm
     gnome

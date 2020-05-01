@@ -18,10 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from . import group
-from . import hook, window, utils
-
-from .log_utils import logger
+from libqtile import group, hook, utils, window
+from libqtile.log_utils import logger
 
 
 class WindowVisibilityToggler:

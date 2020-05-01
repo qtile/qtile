@@ -21,10 +21,10 @@
 # SOFTWARE.
 
 import os
+
 import pytest
 
-from libqtile import confreader
-from libqtile import config, utils
+from libqtile import config, confreader, utils
 from libqtile.backend.x11 import xcore
 
 tests_dir = os.path.dirname(os.path.realpath(__file__))

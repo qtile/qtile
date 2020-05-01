@@ -33,20 +33,16 @@ import os
 import platform
 import re
 import warnings
-
 from abc import ABC, abstractclassmethod
 from enum import Enum, unique
 from pathlib import Path
-from subprocess import check_output, CalledProcessError
-from typing import Any, List, NamedTuple, Optional, Tuple  # noqa: F401
+from subprocess import CalledProcessError, check_output
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
-from libqtile import bar
+from libqtile import bar, configurable, images
+from libqtile.images import Img
 from libqtile.log_utils import logger
-from libqtile.images import Img  # noqa: F401
-from . import base
-from .. import images, configurable
-
-from typing import Dict  # noqa: F401
+from libqtile.widget import base
 
 
 @unique

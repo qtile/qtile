@@ -29,8 +29,7 @@
 
 import math
 
-from .base import _SimpleLayoutBase
-
+from libqtile.layout.base import _SimpleLayoutBase
 
 ROWCOL = 1  # do rows at a time left to right top down
 COLROW = 2  # do cols top to bottom, left to right

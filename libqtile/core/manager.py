@@ -18,7 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.dgroups import DGroups
 import asyncio
 import functools
 import io
@@ -28,34 +27,64 @@ import pickle
 import shlex
 import signal
 import sys
-import traceback
 import time
+import traceback
 import warnings
 from typing import Optional
-from concurrent.futures import CancelledError
 
 import xcffib
 import xcffib.xinerama
 import xcffib.xproto
 
-from ..config import Drag, Click, Screen, Match, Rule
-from ..config import ScratchPad as ScratchPadConfig
-from ..group import _Group
-from ..scratchpad import ScratchPad
-from ..log_utils import logger
-from ..state import QtileState
-from ..utils import get_cache_dir
-from ..widget.base import _Widget
-from ..extension.base import _Extension
-from .. import hook
-from .. import utils
-from .. import window
+from libqtile import command_interface, hook, utils, window
 from libqtile.backend.x11 import xcbq
-from libqtile import command_interface
+from libqtile.backend.x11.xcore import XCore
 from libqtile.command_client import InteractiveCommandClient
-from libqtile.command_interface import QtileCommandInterface, IPCCommandServer
-from libqtile.command_object import CommandObject, CommandError, CommandException
+from libqtile.command_interface import IPCCommandServer, QtileCommandInterface
+from libqtile.command_object import (
+    CommandError,
+    CommandException,
+    CommandObject,
+)
+from libqtile.config import Click, Drag, Match, Rule
+from libqtile.config import ScratchPad as ScratchPadConfig
+from libqtile.config import Screen
+from libqtile.confreader import Config, ConfigError
+from libqtile.dgroups import DGroups
+from libqtile.extension.base import _Extension
+from libqtile.group import _Group
 from libqtile.lazy import lazy
+from libqtile.log_utils import logger
+from libqtile.scratchpad import ScratchPad
+from libqtile.state import QtileState
+from libqtile.utils import get_cache_dir, send_notification
+from libqtile.widget.base import _Widget
+
+
+def validate_config(file_path):
+    """
+    Validate a configuration file.
+
+    This function reloads and imports the given configuration file.
+    It re-raises a ConfigError with a detailed message for any caught exception.
+    """
+    output = [
+        "The configuration file '",
+        file_path,
+        "' generated the following error:\n\n",
+    ]
+
+    try:
+        Config.from_file(XCore(), file_path)
+
+    except ConfigError as error:
+        output.append(str(error))
+        raise ConfigError("".join(output))
+
+    except Exception as error:
+        # Handle SyntaxError and the likes
+        output.append("{}: {}".format(sys.exc_info()[0].__name__, str(error)))
+        raise ConfigError("".join(output))
 
 
 def _import_module(module_name, dir_path):
@@ -68,6 +97,13 @@ def _import_module(module_name, dir_path):
         if fp:
             fp.close()
     return module
+
+
+def handle_exception(loop, context):
+    if "exception" in context:
+        logger.error(context["exception"], exc_info=True)
+    else:
+        logger.error("exception in event loop: %s", context)
 
 
 class Qtile(CommandObject):
@@ -197,9 +233,7 @@ class Qtile(CommandObject):
     def setup_eventloop(self) -> None:
         self._eventloop.add_signal_handler(signal.SIGINT, self.stop)
         self._eventloop.add_signal_handler(signal.SIGTERM, self.stop)
-        self._eventloop.set_exception_handler(
-            lambda x, y: logger.exception("Got an exception in poll loop")
-        )
+        self._eventloop.set_exception_handler(handle_exception)
 
         logger.debug('Adding io watch')
         self.core.setup_listener(self, self._eventloop)
@@ -237,10 +271,7 @@ class Qtile(CommandObject):
             await self.finalize()
 
     def loop(self):
-        try:
-            self._eventloop.run_until_complete(self.async_loop())
-        except CancelledError:
-            pass
+        self._eventloop.run_until_complete(self.async_loop())
 
         self._eventloop.close()
         self._eventloop = None
@@ -287,9 +318,6 @@ class Qtile(CommandObject):
             self.core.remove_listener(self._eventloop)
         except:  # noqa: E722
             logger.exception('exception during finalize')
-
-        for task in asyncio.all_tasks(self._eventloop):
-            task.cancel()
 
     def _process_fake_screens(self):
         """
@@ -1085,6 +1113,13 @@ class Qtile(CommandObject):
 
     def cmd_restart(self):
         """Restart qtile"""
+        try:
+            validate_config(self.config.file_path)
+        except ConfigError as error:
+            logger.error("Preventing restart because of a configuration error: " + str(error))
+            send_notification("Configuration error", str(error))
+            return
+
         argv = [sys.executable] + sys.argv
         if '--no-spawn' not in argv:
             argv.append('--no-spawn')

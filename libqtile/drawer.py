@@ -30,11 +30,11 @@
 # SOFTWARE.
 import collections
 import math
+
 import cairocffi
 import xcffib.xproto
 
-from . import pangocffi
-from . import utils
+from libqtile import pangocffi, utils
 
 
 class TextLayout:

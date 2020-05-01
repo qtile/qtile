@@ -23,9 +23,9 @@
 import pytest
 
 from libqtile import config, ipc
-from libqtile.layout import floating, Max
-from libqtile.sh import QSh
 from libqtile.command_interface import IPCCommandInterface
+from libqtile.layout import Max, floating
+from libqtile.sh import QSh
 
 
 class ShConfig:

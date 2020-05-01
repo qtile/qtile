@@ -23,7 +23,8 @@
 
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
-from . import base
+
+from libqtile.widget import base
 
 
 class Mpris2(base._TextBox):

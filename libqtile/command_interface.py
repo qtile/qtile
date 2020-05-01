@@ -23,12 +23,21 @@ The interface to execute commands on the command graph
 """
 
 import traceback
-from abc import abstractmethod, ABCMeta
+from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, List, Tuple, Union
 
 from libqtile import ipc
-from libqtile.command_graph import CommandGraphCall, CommandGraphNode, SelectorType
-from libqtile.command_object import CommandObject, CommandError, CommandException, SelectError
+from libqtile.command_graph import (
+    CommandGraphCall,
+    CommandGraphNode,
+    SelectorType,
+)
+from libqtile.command_object import (
+    CommandError,
+    CommandException,
+    CommandObject,
+    SelectError,
+)
 from libqtile.log_utils import logger
 
 SUCCESS = 0

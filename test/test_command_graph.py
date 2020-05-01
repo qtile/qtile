@@ -1,6 +1,10 @@
 import pytest
 
-from libqtile.command_graph import CommandGraphCall, CommandGraphObject, CommandGraphRoot
+from libqtile.command_graph import (
+    CommandGraphCall,
+    CommandGraphObject,
+    CommandGraphRoot,
+)
 
 
 def test_root_path():

@@ -23,7 +23,7 @@ import copy
 from abc import ABCMeta, abstractmethod
 from typing import Any, List, Tuple  # noqa: F401
 
-from .. import configurable
+from libqtile import configurable
 from libqtile.command_object import CommandObject
 
 

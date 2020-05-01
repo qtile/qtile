@@ -1,4 +1,7 @@
+setuptools_scm
 sphinx
 sphinx_rtd_theme
 sphinxcontrib-seqdiag
 numpydoc
+
+-r ../requirements.txt

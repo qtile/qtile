@@ -16,7 +16,7 @@
 
 import subprocess
 
-from . import base
+from libqtile.widget import base
 
 
 class Cmus(base.ThreadPoolText):

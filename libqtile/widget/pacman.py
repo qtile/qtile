@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from . import base
-
 import subprocess
+
+from libqtile.log_utils import logger
+from libqtile.widget import base
 
 
 class Pacman(base.ThreadedPollText):
@@ -34,7 +35,7 @@ class Pacman(base.ThreadedPollText):
     ]
 
     def __init__(self, **config):
-        base.deprecated("Pacman is deprecated, please use CheckUpdates")
+        logger.warning("Pacman is deprecated, please use CheckUpdates")
         base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(Pacman.defaults)
 

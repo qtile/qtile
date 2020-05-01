@@ -21,8 +21,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from cffi import FFI
 from cairocffi.ffi_build import ffi as cairocffi_ffi
+from cffi import FFI
 
 pango_ffi = FFI()
 pango_ffi.set_source("libqtile._ffi_pango", None)

@@ -4,10 +4,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -15,12 +15,14 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import cairocffi
-import cairocffi.pixbuf
+
 import io
 import os
 import re
-from collections import namedtuple, defaultdict, OrderedDict
+from collections import OrderedDict, defaultdict, namedtuple
+
+import cairocffi
+import cairocffi.pixbuf
 
 
 class LoadingError(Exception):
@@ -35,7 +37,7 @@ def _decode_to_image_surface(bytes_img, width=None, height=None):
         surf, fmt = cairocffi.pixbuf.decode_to_image_surface(bytes_img, width, height)
         return _SurfaceInfo(surf, fmt)
     except TypeError:
-        from .log_utils import logger
+        from libqtile.log_utils import logger
         logger.exception(
             "Couldn't load cairo image at specified width and height. "
             "Falling back to image scaling using cairo. "
@@ -51,11 +53,7 @@ def get_cairo_surface(bytes_img, width=None, height=None):
         return _SurfaceInfo(surf, 'png')
     except (MemoryError, OSError):
         pass
-    try:
-        return _decode_to_image_surface(bytes_img, width, height)
-    except cairocffi.pixbuf.ImageLoadingError:
-        pass
-    raise LoadingError("Couldn't load image!")
+    return _decode_to_image_surface(bytes_img, width, height)
 
 
 def get_cairo_pattern(surface, width=None, height=None, theta=0.0):

@@ -24,11 +24,17 @@
 import sys
 import time
 from datetime import datetime, timedelta, timezone
-from . import base
-from ..log_utils import logger
+
+from libqtile.log_utils import logger
+from libqtile.widget import base
 
 try:
     import pytz
+except ImportError:
+    pass
+
+try:
+    import dateutil.tz
 except ImportError:
     pass
 
@@ -40,9 +46,10 @@ class Clock(base.InLoopPollText):
         ('format', '%H:%M', 'A Python datetime format string'),
         ('update_interval', 1., 'Update interval for the clock'),
         ('timezone', None, 'The timezone to use for this clock, either as'
-         ' string if pytz is installed (e.g. "US/Central" or anything in'
-         ' /usr/share/zoneinfo), or as tzinfo (e.g. datetime.timezone.utc).'
-         ' None means the system local timezone and is the default.')
+         ' string if pytz or dateutil is installed (e.g. "US/Central" or'
+         ' anything in /usr/share/zoneinfo), or as tzinfo (e.g.'
+         ' datetime.timezone.utc). None means the system local timezone and is'
+         ' the default.')
     ]
     DELTA = timedelta(seconds=0.5)
 
@@ -52,10 +59,13 @@ class Clock(base.InLoopPollText):
         if isinstance(self.timezone, str):
             if "pytz" in sys.modules:
                 self.timezone = pytz.timezone(self.timezone)
+            elif "dateutil" in sys.modules:
+                self.timezone = dateutil.tz.gettz(self.timezone)
             else:
                 logger.warning('Clock widget can not infer its timezone from a'
-                               ' string without the pytz library. Install pytz'
-                               ' or give it a datetime.tzinfo instance.')
+                               ' string without pytz or dateutil. Install one'
+                               ' of these libraries, or give it a'
+                               ' datetime.tzinfo instance.')
         if self.timezone is None:
             logger.info('Defaulting to the system local timezone.')
 

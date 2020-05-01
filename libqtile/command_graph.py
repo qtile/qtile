@@ -24,7 +24,7 @@ abstract command graph
 """
 
 import abc
-from typing import Dict, List, Optional, Tuple, Type, Union  # noqa: F401
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 SelectorType = Tuple[str, Optional[Union[str, int]]]
 GraphType = Union["CommandGraphNode", "CommandGraphCall"]

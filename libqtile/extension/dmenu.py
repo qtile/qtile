@@ -19,7 +19,8 @@
 # SOFTWARE.
 
 import shlex
-from . import base
+
+from libqtile.extension import base
 
 
 class Dmenu(base.RunCommand):

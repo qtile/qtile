@@ -18,10 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import subprocess
-from time import time
 from datetime import datetime, timedelta
-from . import base
+from time import time
+
+from libqtile.utils import send_notification
+from libqtile.widget import base
 
 
 class Pomodoro(base.ThreadPoolText):
@@ -163,7 +164,7 @@ class Pomodoro(base.ThreadPoolText):
             self.status = self.STATUS_START
 
     def _send_notification(self, urgent, message):
-        subprocess.Popen(['notify-send', "Pomodoro", message, '-u', urgent, '-t', '5000'])
+        send_notification("Pomodoro", message, urgent=urgent)
 
     def poll(self):
         return self.fmt.format(self._get_text())

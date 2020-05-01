@@ -1,8 +1,8 @@
 import asyncio
 import os
 
-import libqtile.backend.base as base
-import libqtile.ipc as ipc
+from libqtile import ipc
+from libqtile.backend import base
 from libqtile.core.manager import Qtile
 
 
@@ -25,6 +25,7 @@ class SessionManager:
             The state to restart the qtile instance with.
         """
         eventloop = asyncio.new_event_loop()
+        asyncio.set_event_loop(eventloop)
 
         self.qtile = Qtile(kore, config, eventloop, no_spawn=no_spawn, state=state)
 

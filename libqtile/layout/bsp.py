@@ -15,7 +15,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from .base import Layout
+from libqtile.layout.base import Layout
 
 
 class _BspNode():
@@ -110,7 +110,7 @@ class Bsp(Layout):
     """This layout is inspired by bspwm, but it does not try to copy its
     features.
 
-    The first client occupies the entire srceen space.  When a new client
+    The first client occupies the entire screen space.  When a new client
     is created, the selected space is partitioned in 2 and the new client
     occupies one of those subspaces, leaving the old client with the other.
 

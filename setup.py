@@ -90,6 +90,7 @@ def get_cffi_modules():
 
 setup(
     cmdclass={'install': CheckCairoXcb},
+    use_scm_version=True,
     cffi_modules=get_cffi_modules(),
     install_requires=["cffi>=1.0.0"],
 )

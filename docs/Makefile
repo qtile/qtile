@@ -14,7 +14,7 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 # the i18n builder cannot share the environment and doctrees with the others
 I18NSPHINXOPTS  = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 
-.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext coverage
+.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest gettext coverage genkeyimg
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
@@ -38,11 +38,12 @@ help:
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 	@echo "  coverage   to run coverage check of the documentation (if enabled)"
+	@echo "  genkeyimg  to generate keybindings images. Will save in _static/keybindings"
 
 clean:
 	-rm -rf $(BUILDDIR)/*
 
-html:
+html: genkeyimg
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
@@ -157,3 +158,12 @@ coverage:
 	$(SPHINXBUILD) -b coverage $(ALLSPHINXOPTS) $(BUILDDIR)/coverage
 	@echo "Testing of coverage in the sources finished, look at the " \
 	      "results in $(BUILDDIR)/coverage/python.txt."
+
+genkeyimg:
+	mkdir -p ./_static/keybindings
+	rm -f ./_static/keybindings/*.png
+	../scripts/gen-keybinding-img -o ./_static/keybindings
+	sed -i '/^\.\. LS_PNG/,/^\.\. END_LS_PNG/{/^\.\. image/d}' manual/commands/keybindings.rst
+	sed -i '/^\.\. END_LS_PNG/e find _static/keybindings/* | awk '"'"'{ print length, $$0 }'"'"' | sort -n | cut -d" " -f2- | awk '"'"'{print ".. image:: /" $$1}'"'"'' manual/commands/keybindings.rst
+	@echo
+	@echo "Keybinding images have been generated."

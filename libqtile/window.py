@@ -22,14 +22,13 @@ import contextlib
 import inspect
 import traceback
 import warnings
-from xcffib.xproto import EventMask, StackMode, SetMode
+
 import xcffib.xproto
+from xcffib.xproto import EventMask, SetMode, StackMode
 
-from . import utils
-from . import hook
-from .log_utils import logger
-from libqtile.command_object import CommandObject, CommandError
-
+from libqtile import hook, utils
+from libqtile.command_object import CommandError, CommandObject
+from libqtile.log_utils import logger
 
 # ICCM Constants
 NoValue = 0x0000
@@ -1007,10 +1006,16 @@ class Window(_Window):
             height = max(self.height, self.hints.get('min_height', 0))
 
             if self.hints['base_width'] and self.hints['width_inc']:
-                width -= (width - self.hints['base_width']) % self.hints['width_inc']
+                width_adjustment = (width - self.hints['base_width']) % self.hints['width_inc']
+                width -= width_adjustment
+                if new_float_state == FULLSCREEN:
+                    self.x += int(width_adjustment / 2)
 
             if self.hints['base_height'] and self.hints['height_inc']:
-                height -= (height - self.hints['base_height']) % self.hints['height_inc']
+                height_adjustment = (height - self.hints['base_height']) % self.hints['height_inc']
+                height -= height_adjustment
+                if new_float_state == FULLSCREEN:
+                    self.y += int(height_adjustment / 2)
 
             self.place(
                 self.x, self.y,

@@ -24,10 +24,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from . import base
-
-import os.path
 import mailbox
+import os.path
+from typing import Dict
+
+from libqtile.widget import base
 
 
 class Maildir(base.ThreadedPollText):
@@ -40,6 +41,12 @@ class Maildir(base.ThreadedPollText):
         ("separator", " ", "the string to put between the subfolder strings."),
         ("total", False, "Whether or not to sum subfolders into a grand \
             total. The first label will be used."),
+        ("hide_when_empty", False, "Whether not to display anything if "
+         "the subfolder has no new mail"),
+        ("empty_color", None, "Display color when no new mail is available"),
+        ("nonempty_color", None, "Display color when new mail is available"),
+        ("subfolder_fmt", "{label}: {value}",
+         "Display format for one subfolder"),
     ]
 
     def __init__(self, **config):
@@ -79,24 +86,35 @@ class Maildir(base.ThreadedPollText):
 
         return self.format_text(state)
 
-    def format_text(self, state):
+    def _format_one(self, label: str, value: int) -> str:
+        if value == 0 and self.hide_when_empty:
+            return ""
+
+        s = self.subfolder_fmt.format(label=label, value=value)
+        color = self.empty_color if value == 0 else self.nonempty_color
+
+        if color is None:  # default to self.foreground
+            return s
+
+        return s.join(('<span foreground="{}">'.format(color),
+                       '</span>'))
+
+    def format_text(self, state: Dict[str, int]) -> str:
         """Converts the state of the subfolders to a string
 
         Parameters
         ==========
-        state:
-            a dictionary as returned by mailbox_state
+        state: Dict[str, int]
+            a dictionary mapping subfolder labels to new mail values
 
         Returns
         =======
         a string representation of the given state
         """
         if self.total:
-            return self.separator.join([
-                self.sub_folders[0]["label"],
-                str(sum(state.values()))
-            ])
+            return self._format_one(self.sub_folders[0]["label"],
+                                    sum(state.values()))
         else:
             return self.separator.join(
-                "{0}: {1}".format(*item) for item in state.items()
+                self._format_one(*item) for item in state.items()
             )

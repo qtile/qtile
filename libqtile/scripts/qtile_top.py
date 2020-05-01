@@ -22,16 +22,15 @@
     Command-line top like for qtile
 """
 
-import os
-import time
 import argparse
-
 import curses
 import linecache
+import os
+import time
 import tracemalloc
 from tracemalloc import Snapshot
 
-from libqtile import ipc
+from libqtile import command_client, command_interface, ipc
 
 
 class TraceNotStarted(Exception):
@@ -159,6 +158,8 @@ def main():
     else:
         socket = opts.socket
     client = ipc.Client(socket)
+    client = command_interface.IPCCommandInterface(client)
+    client = command_client.InteractiveCommandClient(client)
 
     try:
         if not opts.raw:

@@ -23,10 +23,10 @@
 
 import pytest
 
-import libqtile.confreader
-import libqtile.config
-import libqtile.layout
 import libqtile.bar
+import libqtile.config
+import libqtile.confreader
+import libqtile.layout
 import libqtile.widget
 from libqtile.command_interface import CommandError
 from libqtile.command_object import CommandObject

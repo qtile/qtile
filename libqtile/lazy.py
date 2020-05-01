@@ -21,8 +21,12 @@
 from typing import Dict, List, Optional, Tuple, Union  # noqa: F401
 
 from libqtile.command_client import InteractiveCommandClient
+from libqtile.command_graph import (
+    CommandGraphCall,
+    CommandGraphNode,
+    SelectorType,
+)
 from libqtile.command_interface import CommandInterface
-from libqtile.command_graph import CommandGraphCall, CommandGraphNode, SelectorType
 
 
 class LazyCall:
@@ -68,6 +72,7 @@ class LazyCall:
     def when(self, layout=None, when_floating=True):
         self._layout = layout
         self._when_floating = when_floating
+        return self
 
     def check(self, q) -> bool:
         if self._layout is not None:
@@ -81,7 +86,7 @@ class LazyCall:
         return True
 
 
-class LazyCommandObject(CommandInterface):
+class LazyCommandInterface(CommandInterface):
     """A lazy loading command object
 
     Allows all commands and items to be resolved at run time, and returns
@@ -101,4 +106,4 @@ class LazyCommandObject(CommandInterface):
         return True
 
 
-lazy = InteractiveCommandClient(LazyCommandObject())
+lazy = InteractiveCommandClient(LazyCommandInterface())

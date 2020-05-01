@@ -24,8 +24,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .. import hook, bar
-from . import base
+from libqtile import bar, hook, pangocffi
+from libqtile.widget import base
 
 
 class WindowName(base._TextBox):
@@ -64,5 +64,6 @@ class WindowName(base._TextBox):
                 state = '_ '
             elif w.floating:
                 state = 'V '
-        self.text = "%s%s" % (state, w.name if w and w.name else " ")
+        unescaped = "%s%s" % (state, w.name if w and w.name else " ")
+        self.text = pangocffi.markup_escape_text(unescaped)
         self.bar.draw()

@@ -18,10 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from urllib.parse import urlencode
 import locale
+from urllib.parse import urlencode
 
-from .generic_poll_text import GenPollUrl
+from libqtile.widget.generic_poll_text import GenPollUrl
 
 
 class StockTicker(GenPollUrl):

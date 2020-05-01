@@ -25,7 +25,7 @@ The deprecated lazy command objects
 import warnings
 
 from libqtile.command_client import InteractiveCommandClient
-from libqtile.lazy import LazyCommandObject
+from libqtile.lazy import LazyCommandInterface
 
 
 class _LazyTree(InteractiveCommandClient):
@@ -35,4 +35,4 @@ class _LazyTree(InteractiveCommandClient):
         return super().__getattr__(name)
 
 
-lazy = _LazyTree(LazyCommandObject())
+lazy = _LazyTree(LazyCommandInterface())

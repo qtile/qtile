@@ -21,9 +21,10 @@
 # SOFTWARE.
 import os
 
-from . import base
-from .. import bar
-from ..images import Img
+from libqtile import bar
+from libqtile.images import Img
+from libqtile.log_utils import logger
+from libqtile.widget import base
 
 
 class Image(base._Widget, base.MarginMixin):
@@ -39,8 +40,8 @@ class Image(base._Widget, base.MarginMixin):
         # 'width' was replaced by 'length' since the widget can be installed in
         # vertical bars
         if width is not None:
-            base.deprecated('width kwarg or positional argument is '
-                            'deprecated. Please use length.')
+            logger.warning('width kwarg or positional argument is '
+                           'deprecated. Please use length.')
             length = width
 
         base._Widget.__init__(self, length, **config)
@@ -74,7 +75,7 @@ class Image(base._Widget, base.MarginMixin):
             img.resize(width=new_width)
 
     def draw(self):
-        self.drawer.clear(self.bar.background)
+        self.drawer.clear(self.background or self.bar.background)
         self.drawer.ctx.save()
         self.drawer.ctx.translate(self.margin_x, self.margin_y)
         self.drawer.ctx.set_source(self.img.pattern)

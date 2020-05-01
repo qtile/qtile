@@ -20,16 +20,11 @@
 
 import pytest
 
-import libqtile.layout
-import libqtile.bar
-import libqtile.widget
 import libqtile.config
-import libqtile.scratchpad
-
-# import .conftest
-from .conftest import Retry
-from .conftest import no_xinerama
-from .layouts.layout_utils import assert_focused, assert_focus_path
+import libqtile.layout
+import libqtile.widget
+from test.conftest import Retry, no_xinerama
+from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
 class ScratchPadBaseConfic:

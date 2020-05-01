@@ -20,6 +20,7 @@ qtile.egg-info/
 *.swo
 /doc
 /docs/_build
+/docs/_static/keybindings/
 .coverage
 # some people hack on macs? :-)
 .DS_Store
@@ -49,3 +50,6 @@ venv
 
 # screenshots
 docs/screenshots/take_all.log
+
+# ViM tags
+/tags

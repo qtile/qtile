@@ -26,7 +26,7 @@
     If dbus is available, this module implements a
     org.freedesktop.Notifications service.
 """
-from .log_utils import logger
+from libqtile.log_utils import logger
 
 try:
     import dbus
@@ -48,15 +48,24 @@ if has_dbus:
             bus_name = service.BusName(BUS_NAME, bus=bus)
             service.Object.__init__(self, bus_name, SERVICE_PATH)
             self.manager = manager
+            self._capabilities = {'body'}
 
         @service.method(BUS_NAME, in_signature='', out_signature='as')
         def GetCapabilities(self):  # noqa: N802
-            return ('body')
+            return list(self._capabilities)
+
+        def register_capabilities(self, capabilities):
+            if isinstance(capabilities, str):
+                self._capabilities.add(capabilities)
+            elif isinstance(capabilities, (tuple, list, set)):
+                self._capabilities.update(set(capabilities))
 
         @service.method(BUS_NAME, in_signature='susssasa{sv}i', out_signature='u')
         def Notify(self, app_name, replaces_id, app_icon, summary,  # noqa: N802
                    body, actions, hints, timeout):
-            notif = Notification(summary, body, timeout, hints)
+            notif = Notification(
+                summary, body, timeout, hints, app_name, replaces_id, app_icon, actions
+            )
             return self.manager.add(notif)
 
         @service.method(BUS_NAME, in_signature='u', out_signature='')
@@ -73,11 +82,16 @@ if has_dbus:
 
 
 class Notification:
-    def __init__(self, summary, body='', timeout=-1, hints=None):
+    def __init__(self, summary, body='', timeout=-1, hints=None, app_name='',
+                 replaces_id=None, app_icon=None, actions=None):
         self.summary = summary
-        self.hints = hints or {}
         self.body = body
         self.timeout = timeout
+        self.hints = hints or {}
+        self.app_name = app_name
+        self.replaces_id = replaces_id
+        self.app_icon = app_icon
+        self.actions = actions
 
 
 class NotificationManager:
@@ -96,13 +110,15 @@ class NotificationManager:
                 self._service = None
         return self._service
 
-    def register(self, callback):
+    def register(self, callback, capabilities=None):
         if not self.service:
             logger.warning(
                 'Registering %s without any dbus connection existing',
                 callback.__name__,
             )
         self.callbacks.append(callback)
+        if capabilities:
+            self._service.register_capabilities(capabilities)
 
     def add(self, notif):
         self.notifications.append(notif)

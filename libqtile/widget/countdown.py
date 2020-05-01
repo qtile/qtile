@@ -23,7 +23,7 @@
 
 from datetime import datetime
 
-from . import base
+from libqtile.widget import base
 
 
 class Countdown(base.InLoopPollText):

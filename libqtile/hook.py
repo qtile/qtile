@@ -30,11 +30,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .log_utils import logger
-from . import utils
+from typing import Dict, Set
 
-from typing import Dict, Set  # noqa: F401
-
+from libqtile import utils
+from libqtile.log_utils import logger
 
 subscriptions = {}  # type: Dict
 SKIPLOG = set()  # type: Set
@@ -215,20 +214,6 @@ class Subscribe:
             * ``window.Window`` object of the killed window.
         """
         return self._subscribe("client_killed", func)
-
-    def client_state_changed(self, func):
-        """Called whenever client state changes
-
-        Never fires
-        """
-        return self._subscribe("client_state_changed", func)
-
-    def client_type_changed(self, func):
-        """Called whenever window type changes
-
-        Never fires
-        """
-        return self._subscribe("client_type_changed", func)
 
     def client_focus(self, func):
         """Called whenever focus changes

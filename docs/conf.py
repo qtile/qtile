@@ -12,6 +12,7 @@
 # serve to show the default.
 
 import os
+import setuptools_scm
 import sys
 from unittest.mock import MagicMock
 
@@ -27,6 +28,7 @@ MOCK_MODULES = [
     'libqtile._ffi_pango',
     'libqtile.backend.x11._ffi_xcursors',
     'cairocffi',
+    'cairocffi.xcb',
     'cairocffi.pixbuf',
     'cffi',
     'dateutil',
@@ -40,6 +42,7 @@ MOCK_MODULES = [
     'trollius',
     'xcffib',
     'xcffib.randr',
+    'xcffib.render',
     'xcffib.xfixes',
     'xcffib.xinerama',
     'xcffib.xproto',
@@ -88,14 +91,14 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Qtile'
-copyright = u'2008-2019, Aldo Cortesi and contributers'
+copyright = u'2008-2020, Aldo Cortesi and contributers'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '0.14.2'
+version = setuptools_scm.get_version(root="..")
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -304,4 +307,4 @@ graphviz_dot_args = ['-Lg']
 
 # A workaround for the responsive tables always having annoying scrollbars.
 def setup(app):
-    app.add_stylesheet("no_scrollbars.css")
+    app.add_css_file("no_scrollbars.css")

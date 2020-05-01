@@ -5,29 +5,19 @@ default:
 	@echo "'make ckpatch'" to check a patch
 	@echo "'make clean'" to clean generated files
 	@echo "'make man'" to generate sphinx documentation
+	@echo "'make run-ffibuild'" to build ffi modules
 
 .PHONY: check
 check:
-	pytest --verbose
-
-.PHONY: check-cov
-check-cov:
-	pytest --verbose --with-cov libqtile --cov-report term-missing
+	TOXENV=py38 tox
 
 .PHONY: lint
 lint:
-	flake8 ./libqtile bin/q* ./test
-
-.PHONY: static_check
-static_check:
-	mypy -p libqtile
-
-.PHONY: ckpatch
-ckpatch: lint check static_check
+	TOXENV=format,pep8 tox
 
 .PHONY: clean
 clean:
-	-rm -rf dist qtile.egg-info docs/_build build/ .tox/ .mypy_cache/ .pytest_cache/ .eggs/
+	-rm -rf dist qtile.egg-info docs/_build build/ .tox/ .mypy_cache/ .pytest_cache/ .eggs/ .coverage*
 
 # This is a little ugly: we want to be able to have users just run
 # 'python setup.py install' to install qtile, but we would also like to install
@@ -36,5 +26,9 @@ clean:
 # used in the 'install' target.
 .PHONY: man
 man:
-	python setup.py build_sphinx -b man
+	python3 setup.py build_sphinx -b man
 	cp build/sphinx/man/* resources/
+
+.PHONY: run-ffibuild
+run-ffibuild:
+	./scripts/ffibuild

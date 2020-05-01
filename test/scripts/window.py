@@ -25,6 +25,7 @@
 """
 import sys
 import time
+
 import xcffib
 import xcffib.xproto
 

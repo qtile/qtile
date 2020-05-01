@@ -2,13 +2,16 @@
 test_images.py contains unittests for libqtile.images.Img
 and its supporting code.
 """
-import pytest
-import libqtile.images as images
-import cairocffi
 import os
-from os import path
-from glob import glob
 from collections import OrderedDict
+from glob import glob
+from os import path
+
+import cairocffi
+import cairocffi.pixbuf
+import pytest
+
+from libqtile import images
 
 TEST_DIR = path.dirname(os.path.abspath(__file__))
 DATA_DIR = path.join(TEST_DIR, 'data')
@@ -52,7 +55,7 @@ def test_get_cairo_surface(path_n_bytes_image):
 
 
 def test_get_cairo_surface_bad_input():
-    with pytest.raises(images.LoadingError):
+    with pytest.raises(cairocffi.pixbuf.ImageLoadingError):
         images.get_cairo_surface(b'asdfasfdi3')
 
 

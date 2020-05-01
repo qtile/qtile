@@ -22,15 +22,15 @@
 import asyncio
 import os
 from collections import OrderedDict
-from typing import Callable, Iterator, List, Optional, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Iterator, List, Optional, Tuple
 
 import xcffib
-import xcffib.xproto
 import xcffib.render
+import xcffib.xproto
 
-from . import xcbq
 from libqtile import config, hook, utils, window
 from libqtile.backend import base
+from libqtile.backend.x11 import xcbq
 from libqtile.log_utils import logger
 from libqtile.utils import QtileError
 
@@ -105,8 +105,9 @@ class XCore(base.Core):
         self._selection_window.set_attribute(
             eventmask=xcffib.xproto.EventMask.PropertyChange
         )
-        self.conn.xfixes.select_selection_input(self._selection_window, "PRIMARY")
-        self.conn.xfixes.select_selection_input(self._selection_window, "CLIPBOARD")
+        if hasattr(self.conn, "xfixes"):
+            self.conn.xfixes.select_selection_input(self._selection_window, "PRIMARY")  # type: ignore
+            self.conn.xfixes.select_selection_input(self._selection_window, "CLIPBOARD")  # type: ignore
 
         primary_atom = self.conn.atoms["PRIMARY"]
         reply = self.conn.conn.core.GetSelectionOwner(primary_atom).reply()

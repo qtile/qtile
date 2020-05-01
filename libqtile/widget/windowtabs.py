@@ -22,8 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .. import hook, bar
-from . import base
+from libqtile import bar, hook
+from libqtile.widget import base
 
 
 class WindowTabs(base._TextBox):
@@ -35,7 +35,7 @@ class WindowTabs(base._TextBox):
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("separator", " | ", "Task separator text."),
-        ("selected", ("<", ">"), "Selected task indicator"),
+        ("selected", ("<b>", "</b>"), "Selected task indicator"),
     ]
 
     def __init__(self, **config):

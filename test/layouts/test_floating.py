@@ -20,10 +20,10 @@
 
 import pytest
 
-from libqtile import layout
 import libqtile.config
-from .layout_utils import assert_focused
-from ..conftest import no_xinerama
+from libqtile import layout
+from test.conftest import no_xinerama
+from test.layouts.layout_utils import assert_focused
 
 
 class FloatingConfig:

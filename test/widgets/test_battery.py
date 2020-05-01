@@ -1,9 +1,10 @@
+import cairocffi
 import pytest
+
+from libqtile import images
 from libqtile.widget import Battery, BatteryIcon, battery
 from libqtile.widget.battery import BatteryState, BatteryStatus
-from libqtile import images
-import cairocffi
-from .conftest import TEST_DIR
+from test.widgets.conftest import TEST_DIR
 
 
 class DummyBattery:

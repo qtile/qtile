@@ -27,10 +27,10 @@
 
 import pytest
 
-from libqtile import layout
 import libqtile.config
-from ..conftest import no_xinerama
-from .layout_utils import assert_focused, assert_focus_path
+from libqtile import layout
+from test.conftest import no_xinerama
+from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
 class StackConfig:

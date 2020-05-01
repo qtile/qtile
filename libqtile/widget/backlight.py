@@ -21,19 +21,42 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import enum
 import os
 import shlex
+from typing import Dict
 
 from libqtile.log_utils import logger
-from . import base
-
-from typing import Dict  # noqa: F401
+from libqtile.widget import base
 
 BACKLIGHT_DIR = '/sys/class/backlight'
 
 
+@enum.unique
+class ChangeDirection(enum.Enum):
+    UP = 0
+    DOWN = 1
+
+
 class Backlight(base.InLoopPollText):
-    """A simple widget to show the current brightness of a monitor"""
+    """A simple widget to show the current brightness of a monitor.
+
+    If the change_command parameter is set to None, the widget will attempt to
+    use the interface at /sys/class to change brightness. Depending on the
+    setup, the user may need to be added to the video group to have permission
+    to write to this interface. This depends on having the correct udev rules
+    the brightness file; these are typically installed alongside brightness
+    tools such as brightnessctl (which changes the group to 'video') so
+    installing that is an easy way to get it working.
+
+    You can also bind keyboard shortcuts to the backlight widget with:
+
+    .. code-block: python
+
+        from libqtile.widget import backlight
+        Key([], "XF86MonBrightnessUp", lazy.widget['backlight'].change_backlight(backlight.ChangeDirection.UP)),
+        Key([], "XF86MonBrightnessDown", lazy.widget['backlight'].change_backlight(backlight.ChangeDirection.DOWN)),
+    """
 
     filenames = {}  # type: Dict
 
@@ -64,22 +87,31 @@ class Backlight(base.InLoopPollText):
         self.add_defaults(Backlight.defaults)
         self.future = None
 
-    def _load_file(self, name):
-        path = os.path.join(BACKLIGHT_DIR, self.backlight_name, name)
+        self.brightness_file = os.path.join(
+            BACKLIGHT_DIR, self.backlight_name, self.brightness_file,
+        )
+        self.max_brightness_file = os.path.join(
+            BACKLIGHT_DIR, self.backlight_name, self.max_brightness_file,
+        )
+        self.max_value = self._load_file(self.max_brightness_file)
+        self.step = self.max_value * self.step / 100
+
+    def _load_file(self, path):
         try:
             with open(path, 'r') as f:
-                return f.read().strip()
+                return float(f.read().strip())
         except FileNotFoundError:
             logger.debug('Failed to get %s' % path)
-            raise RuntimeError('Unable to read status for {}'.format(name))
+            raise RuntimeError(
+                'Unable to read status for {}'.format(os.path.basename(path))
+            )
 
     def _get_info(self):
         brightness = self._load_file(self.brightness_file)
-        max_value = self._load_file(self.max_brightness_file)
 
         info = {
-            'brightness': float(brightness),
-            'max': float(max_value),
+            'brightness': brightness,
+            'max': self.max_value,
         }
         return info
 
@@ -93,20 +125,34 @@ class Backlight(base.InLoopPollText):
         return self.format.format(percent=percent)
 
     def change_backlight(self, value):
-        self.call_process(shlex.split(self.change_command.format(value)))
+        if self.change_command is None:
+            try:
+                with open(self.brightness_file, 'w') as f:
+                    f.write(str(round(value)))
+            except PermissionError:
+                logger.warning("Cannot set brightness: no write permission for {0}"
+                               .format(self.brightness_file))
+        else:
+            self.call_process(shlex.split(self.change_command.format(value)))
 
-    def button_press(self, x, y, button):
+    def cmd_change_backlight(self, direction):
         if self.future and not self.future.done():
             return
         info = self._get_info()
         if not info:
-            new = now = 100
+            new = now = self.max_value
         else:
-            new = now = info["brightness"] / info["max"] * 100
-        if button == 5:  # down
+            new = now = info["brightness"]
+        if direction is ChangeDirection.DOWN:  # down
             new = max(now - self.step, 0)
-        elif button == 4:  # up
-            new = min(now + self.step, 100)
+        elif direction is ChangeDirection.UP:  # up
+            new = min(now + self.step, self.max_value)
         if new != now:
             self.future = self.qtile.run_in_executor(self.change_backlight,
                                                      new)
+
+    def button_press(self, x, y, button):
+        if button == 5:
+            self.cmd_change_backlight(ChangeDirection.DOWN)
+        elif button == 4:
+            self.cmd_change_backlight(ChangeDirection.UP)

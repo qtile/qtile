@@ -18,8 +18,11 @@ running something else, please see `Installing From Source`_.
     Slackware <slackware>
     FreeBSD <freebsd>
 
+.. _installing-from-source:
+
 Installing From Source
 ======================
+
 
 First, you need to install all of Qtile's dependencies (although some are
 optional/not needed depending on your Python version, as noted below).

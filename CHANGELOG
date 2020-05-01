@@ -1,6 +1,51 @@
-qtile x.y.z, released 2020-xx-xx:
+qtile X.X.X, released XXXX-XX-XX:
+    * features
+        - added `guess_terminal` in utils
+        - added keybinding cheet sheet image generator
+        - custom keyboardlayout display 
+
+qtile 0.15.1, released 2020-04-14
+    * bugfixes
+	- fix qtile reload (it was crashing)
+
+qtile 0.15.0, released 2020-04-12:
     !!! Config breakage !!!
         - removed the mpd widget, which depended on python-mpd.
+	- the Clock widget now requires pytz to handle timezones that are
+	  passed as string
+	- libqtile.command.Client does not exist anymore and has been
+	  replaced by libqtile.command_client.CommandClient
+    !!! deprecation warning !!!
+	- libqtile.command.lazy is deprecated in favor of libqtile.lazy.lazy
+    * features
+	- Python 3.8 support
+	- `wallpaper` and `wallpaper_mode` for screens
+	- bars can now have margins
+	- `lazy.toscreen` called twice will now toggle the groups
+	  (optional with the `toggle` parameter)
+	- `lazy.window.togroup` now has `switch_group` parameter to follow
+	  the window to the group it is sent to
+	- qtile now copies the default config if the config file does not exist
+	- all widgets now use Pango markup by default
+	- add an `fmt` option for all textbox widgets
+	- new PulseVolume widget for controlling PulseAudio
+	- new QuickExit widget, mainly for the default config
+	- new non-graph CPU widget
+	- KeyboardLayout widget: new `options` parameter
+	- CheckUpdates widget: support ArchLinux yay
+	- GroupBox widget: new `block_highlight_text_color` parameter
+	- Mpd2 widget: new `color_progress` parameter
+	- Maildir widget can now display the inbox grand total
+	- the Net widget can now use bits as unit
+	- Spacer widget: new `background_color` parameter
+	- More consistent resize behavior in Columns layout
+	- various improvements of the default config
+	- large documentation update and improvements (e.g. widget
+	  dependencies)
+    * bugfixes
+	- qtile binary: don't fail if we can't set the locale
+	- don't print help if qtile-cmd function returns nothing
+	- Monad layout: fix margins when flipped
 
 qtile 0.14.2, released 2019-06-19:
     * bugfixes
