@@ -186,7 +186,7 @@ class Xephyr:
     def __enter__(self):
         try:
             self.start_xephyr()
-        except:
+        except:  # noqa: E722
             self.stop_xephyr()
             raise
 
