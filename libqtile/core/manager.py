@@ -1219,6 +1219,16 @@ class Qtile(CommandObject):
             (self.screens.index(self.current_screen) - 1) % len(self.screens)
         )
 
+    def cmd_swap_screens(self):
+        """Switch groups between active screens"""
+        prev_group = None
+        for screen in self.screens:
+            if prev_group is None:
+                prev_group = screen.group
+                continue
+            screen.set_group(prev_group)
+            self.cmd_next_screen()
+
     def cmd_windows(self):
         """Return info for each client window"""
         return [
