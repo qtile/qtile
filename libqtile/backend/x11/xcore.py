@@ -66,6 +66,7 @@ class XCore(base.Core):
 
         self.conn = xcbq.Connection(display_name)
         self._display_name = display_name
+        self._fd = None  # type: Optional[int]
 
         # Because we only do Xinerama multi-screening,
         # we can assume that the first
@@ -182,16 +183,18 @@ class XCore(base.Core):
         self.fd = self.conn.conn.get_file_descriptor()
         eventloop.add_reader(self.fd, self._xpoll)
 
-    def remove_listener(self, eventloop: asyncio.AbstractEventLoop) -> None:
-        """Remove the listener from the given event loop
-
-        :param eventloop:
-            The eventloop that had been setup for listening.
-        """
-        logger.debug("Removing io watch")
-        eventloop.remove_reader(self.fd)
+    def remove_listener(self) -> None:
+        """Remove the listener from the given event loop"""
+        self._remove_listener()
         self.qtile = None
         self.conn.finalize()
+
+    def _remove_listener(self) -> None:
+        if self.fd is not None:
+            logger.debug("Removing io watch")
+            loop = asyncio.get_event_loop()
+            loop.remove_reader(self.fd)
+            self.fd = None
 
     def scan(self) -> None:
         """Scan for existing windows"""
@@ -271,6 +274,7 @@ class XCore(base.Core):
                             error_string=error_string, error_code=error_code
                         )
                     )
+                    self._remove_listener()
                     self.qtile.stop()
                     return
                 logger.exception("Got an exception in poll loop")

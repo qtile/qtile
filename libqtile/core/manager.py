@@ -287,7 +287,6 @@ class Qtile(CommandObject):
             self.graceful_shutdown()
 
         logger.debug('Stopping qtile')
-        self.core.remove_listener(self._eventloop)
         self._stopped_event.set()
 
     async def finalize(self):
@@ -304,7 +303,6 @@ class Qtile(CommandObject):
                 pass
 
         try:
-
             for w in self.widgets_map.values():
                 w.finalize()
 
@@ -317,6 +315,7 @@ class Qtile(CommandObject):
                         bar.finalize()
         except:  # noqa: E722
             logger.exception('exception during finalize')
+            self.core.remove_listener()
 
     def _process_fake_screens(self):
         """
