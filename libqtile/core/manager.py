@@ -1254,10 +1254,11 @@ class Qtile(CommandObject):
             (self.screens.index(self.current_screen) - 1) % len(self.screens)
         )
 
-    def cmd_swap_screens(self):
+    def cmd_swap_screens(self, reverse = False):
         """Switch groups between active screens"""
         prev_group = None
-        for screen in self.screens:
+        screens = self.screens[::-1] if reverse else self.screens
+        for screen in screens:
             if prev_group is None:
                 prev_group = screen.group
                 continue
