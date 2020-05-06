@@ -84,7 +84,19 @@ class ManagerConfig:
     follow_mouse_focus = True
 
 
+class MultiScreenManagerConfig(ManagerConfig):
+    screens = [
+        libqtile.config.Screen(
+            bottom=libqtile.bar.Bar(
+                [libqtile.widget.GroupBox()], 20
+            ),
+        )
+        for _ in range(3)
+    ]
+
+
 manager_config = pytest.mark.parametrize("qtile", [ManagerConfig], indirect=True)
+multi_screen_manager_config = pytest.mark.parametrize("qtile", [MultiScreenManagerConfig], indirect=True)
 
 
 @manager_config
@@ -152,6 +164,37 @@ def test_to_screen(qtile):
     self.c.next_screen()
     assert self.c.window.info()["name"] == "two"
     self.c.prev_screen()
+    assert self.c.window.info()["name"] == "one"
+
+
+@multi_screen_manager_config
+def test_swap_screens(qtile):
+    self = qtile
+
+    assert self.c.screen.info()["index"] == 0
+    self.c.to_screen(1)
+    assert self.c.screen.info()["index"] == 1
+    self.test_window("one")
+    self.c.to_screen(0)
+    self.test_window("two")
+
+    ga = self.c.groups()["a"]
+    assert ga["windows"] == ["two"]
+
+    gb = self.c.groups()["b"]
+    assert gb["windows"] == ["one"]
+
+    self.c.swap_screens()
+    print(self)
+    print(self.__dict__)
+    print(self.screens)
+    print(self.screens[0].__dict__)
+    assert ga["windows"] == ["one"]
+    assert gb["windows"] == ["two"]
+    assert self.c.window.info()["name"] == "one"
+    self.c.swap_screens()
+    assert ga["windows"] == ["one"]
+    assert gb["windows"] == ["two"]
     assert self.c.window.info()["name"] == "one"
 
 
