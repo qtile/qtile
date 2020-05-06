@@ -286,7 +286,6 @@ class _Window(CommandObject):
         # }
 
         if normh:
-            normh.pop('flags')
             normh['min_width'] = max(0, normh.get('min_width', 0))
             normh['min_height'] = max(0, normh.get('min_height', 0))
             if not normh['base_width'] and \
