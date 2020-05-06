@@ -248,6 +248,14 @@ class _Window(CommandObject):
     def has_focus(self):
         return self == self.qtile.current_window
 
+    def has_user_set_position(self):
+        try:
+            if 'USPosition' in self.hints['flags'] or 'PPosition' in self.hints['flags']:
+                return True
+        except KeyError:
+            pass
+        return False
+
     def update_name(self):
         try:
             self.name = self.window.get_name()
