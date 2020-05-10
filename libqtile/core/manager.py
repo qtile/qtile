@@ -238,7 +238,7 @@ class Qtile(CommandObject):
         logger.debug('Adding io watch')
         self.core.setup_listener(self, self._eventloop)
 
-        self._stopped_event = asyncio.Event(loop=self._eventloop)
+        self._stopped_event = asyncio.Event()
 
         # This is a little strange. python-dbus internally depends on gobject,
         # so gobject's threads need to be running, and a gobject "main loop
