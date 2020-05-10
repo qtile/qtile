@@ -215,6 +215,7 @@ class ScratchPad(group._Group):
         self._dropdownconfig = {dd.name: dd for dd in dropdowns}
         self.dropdowns = {}
         self._spawned = {}
+        self._to_hide = []
 
     def _check_unsubscribe(self):
         if not self.dropdowns:
@@ -250,6 +251,9 @@ class ScratchPad(group._Group):
                 hook.unsubscribe.client_new(self.on_client_new)
             self.dropdowns[name] = DropDownToggler(client, self.name,
                                                    self._dropdownconfig[name])
+            if name in self._to_hide:
+                self.dropdowns[name].hide()
+                self._to_hide.remove(name)
             if len(self.dropdowns) == 1:
                 hook.subscribe.client_killed(self.on_client_killed)
                 hook.subscribe.float_change(self.on_float_change)
@@ -318,3 +322,31 @@ class ScratchPad(group._Group):
             return self._dropdownconfig[name].info()
         else:
             raise ValueError('No DropDown named "%s".' % name)
+
+    def get_state(self):
+        """
+        Get the state of existing dropdown windows. Used for restoring state across
+        Qtile restarts.
+        """
+        state = []
+        for name, dd in self.dropdowns.items():
+            pid = dd.window.window.get_net_wm_pid()
+            state.append((name, pid, dd.visible))
+        return state
+
+    def restore_state(self, state):
+        """
+        Restore the state of existing dropdown windows. Used for restoring state across
+        Qtile restarts.
+        """
+        orphans = []
+        for name, pid, visible in state:
+            if name in self._dropdownconfig:
+                self._spawned[pid] = name
+                if not visible:
+                    self._to_hide.append(name)
+            else:
+                orphans.append(pid)
+        if self._spawned:
+            hook.subscribe.client_new(self.on_client_new)
+        return orphans

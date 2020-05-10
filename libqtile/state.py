@@ -19,6 +19,10 @@
 # SOFTWARE.
 
 
+from libqtile import hook
+from libqtile.scratchpad import ScratchPad
+
+
 class QtileState:
     """Represents the state of the qtile object
 
@@ -32,9 +36,17 @@ class QtileState:
         self.groups = []
         self.screens = {}
         self.current_screen = 0
+        self.scratchpads = {}
+        self.orphans = []
 
         for group in qtile.groups:
-            self.groups.append((group.name, group.layout.name, group.label))
+            if isinstance(group, ScratchPad):
+                self.scratchpads[group.name] = group.get_state()
+                for dd in group.dropdowns.values():
+                    dd.hide()
+            else:
+                self.groups.append((group.name, group.layout.name, group.label))
+
         for index, screen in enumerate(qtile.screens):
             self.screens[index] = screen.group.name
             if screen == qtile.current_screen:
@@ -58,4 +70,25 @@ class QtileState:
             except (KeyError, IndexError):
                 pass  # group or screen missing
 
+        for group in qtile.groups:
+            if isinstance(group, ScratchPad) and group.name in self.scratchpads:
+                orphans = group.restore_state(self.scratchpads.pop(group.name))
+                self.orphans.extend(orphans)
+        for sp_state in self.scratchpads.values():
+            for _, pid, _ in sp_state:
+                self.orphans.append(pid)
+        if self.orphans:
+            hook.subscribe.client_new(self.handle_orphan_dropdowns)
+
         qtile.focus_screen(self.current_screen)
+
+    def handle_orphan_dropdowns(self, client):
+        """
+        Remove any windows from now non-existent scratchpad groups.
+        """
+        client_pid = client.window.get_net_wm_pid()
+        if client_pid in self.orphans:
+            self.orphans.remove(client_pid)
+            client.group = None
+            if not self.orphans:
+                hook.unsubscribe.client_new(self.handle_orphan_dropdowns)
