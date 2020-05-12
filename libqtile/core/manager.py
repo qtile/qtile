@@ -359,9 +359,9 @@ class Qtile(CommandObject):
         screen.resize(0, 0, width, height)
 
     def process_key_event(self, keysym: int, mask: int) -> None:
-        key = self.keys_map[(keysym, mask)]
+        key = self.keys_map.get((keysym, mask), None)
         if key is None:
-            logger.info("Ignoring unknown keysym: {keysym}".format(keysym=keysym))
+            logger.info("Ignoring unknown keysym: {keysym}, mask: {mask}".format(keysym=keysym, mask=mask))
             return
 
         for cmd in key.commands:
