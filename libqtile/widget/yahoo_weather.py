@@ -6,6 +6,7 @@
 # Copyright (c) 2013 David R. Andersen
 # Copyright (c) 2013 Tao Sauvage
 # Copyright (c) 2014 Sean Vig
+# Copyright (c) 2020 Stephan Ehlers
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,53 +26,124 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import requests
+import json
+from requests_oauthlib import OAuth1
 from urllib.parse import urlencode
-from xml.dom import minidom
 
 from libqtile.widget import base
-from libqtile.widget.generic_poll_text import GenPollUrl
 
-QUERY_URL = 'http://query.yahooapis.com/v1/public/yql?'
-WEATHER_URL = 'http://weather.yahooapis.com/forecastrss?'
-WEATHER_NS = 'http://xml.weather.yahoo.com/ns/rss/1.0'
+# See documentation here: https://developer.yahoo.com/weather/documentation.html
+QUERY_URL = 'https://weather-ydn-yql.media.yahoo.com/forecastrss'
+APP_ID = 'xSqyTW54'
+CONSUMER_KEY = 'dj0yJmk9R0RwZ3dveWEwTHdWJmQ9WVdrOWVGTnhlVlJYTlRRbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTVi'
+CONSUMER_SECRET = '83ea8fbd202ea06cd57fc01268139601bf966b47'
+HEADER = { 'X-Yahoo-App-Id': APP_ID }
 
 
-class YahooWeather(GenPollUrl):
+class YahooWeather(base.ThreadedPollText):
     """A weather widget, data provided by the Yahoo! Weather API.
 
     Format options:
-
-        - astronomy_sunrise
-        - astronomy_sunset
-        - atmosphere_humidity
-        - atmosphere_visibility
-        - atmosphere_pressure
-        - atmosphere_rising
-        - condition_text
-        - condition_code
-        - condition_temp
-        - condition_date
         - location_city
         - location_region
+        - location_woeid
         - location_country
-        - units_temperature
-        - units_distance
-        - units_pressure
-        - units_speed
-        - wind_chill
+        - location_lat
+        - location_long
+        - location_timezone_id
+        - current_observation_wind_chill
+        - current_observation_wind_direction
+        - current_observation_wind_speed
+        - current_observation_atmosphere_humidity
+        - current_observation_atmosphere_visibility
+        - current_observation_atmosphere_pressure
+        - current_observation_atmosphere_rising
+        - current_observation_astronomy_sunrise
+        - current_observation_astronomy_sunset
+        - current_observation_condition_text
+        - current_observation_condition_symbol
+        - current_observation_condition_code
+        - current_observation_condition_temperature
+        - current_observation_pubDate
+        - forecasts_0_day
+        - forecasts_0_date
+        - forecasts_0_low
+        - forecasts_0_high
+        - forecasts_0_text
+        - forecasts_0_code
+        - forecasts_1_day
+        - forecasts_1_date
+        - forecasts_1_low
+        - forecasts_1_high
+        - forecasts_1_text
+        - forecasts_1_code
+        - forecasts_2_day
+        - forecasts_2_date
+        - forecasts_2_low
+        - forecasts_2_high
+        - forecasts_2_text
+        - forecasts_2_code
+        - forecasts_3_day
+        - forecasts_3_date
+        - forecasts_3_low
+        - forecasts_3_high
+        - forecasts_3_text
+        - forecasts_3_code
+        - forecasts_4_day
+        - forecasts_4_date
+        - forecasts_4_low
+        - forecasts_4_high
+        - forecasts_4_text
+        - forecasts_4_code
+        - forecasts_5_day
+        - forecasts_5_date
+        - forecasts_5_low
+        - forecasts_5_high
+        - forecasts_5_text
+        - forecasts_5_code
+        - forecasts_6_day
+        - forecasts_6_date
+        - forecasts_6_low
+        - forecasts_6_high
+        - forecasts_6_text
+        - forecasts_6_code
+        - forecasts_7_day
+        - forecasts_7_date
+        - forecasts_7_low
+        - forecasts_7_high
+        - forecasts_7_text
+        - forecasts_7_code
+        - forecasts_8_day
+        - forecasts_8_date
+        - forecasts_8_low
+        - forecasts_8_high
+        - forecasts_8_text
+        - forecasts_8_code
+        - forecasts_9_day
+        - forecasts_9_date
+        - forecasts_9_low
+        - forecasts_9_high
+        - forecasts_9_text
+        - forecasts_9_code
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        # One of (location, woeid) must be set.
+        # One of (woeid, location, coordinates) must be set.
+        (
+            'woeid',
+            None,
+            'Where On Earth ID.'
+        ),
         (
             'location',
             None,
             'Location to fetch weather for. Ignored if woeid is set.'
         ),
         (
-            'woeid',
+            'coordinates',
             None,
-            'Where On Earth ID. Auto-calculated if location is set.'
+            'Dictionary containing "latitude" and "longitude". Ignored if woeid or location are set.'
         ),
         (
             'format',
@@ -84,60 +156,78 @@ class YahooWeather(GenPollUrl):
         ('steady', 's', 'symbol for steady atmospheric pressure'),
     ]
 
-    json = False
-
     def __init__(self, **config):
-        GenPollUrl.__init__(self, **config)
+        base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(YahooWeather.defaults)
-        self._url = None
-
-    def fetch_woeid(self, location):
-        url = QUERY_URL + urlencode({
-            'q': 'select woeid from geo.places where text="%s"' % location,
-            'format': 'json'
-        })
-        data = self.fetch(url)
-        if data['query']['count'] > 1:
-            return data['query']['results']['place'][0]['woeid']
-        return data['query']['results']['place']['woeid']
+        self._params = None
+        self._headeroauth = OAuth1(CONSUMER_KEY, CONSUMER_SECRET, signature_type='auth_header')
 
     @property
-    def url(self):
-        if self._url:
-            return self._url
+    def params(self):
+        if self._params:
+            return self._params
+        if not self.woeid and not self.location and not self.coordinates:
+            return None
 
-        if not self.woeid:
-            if self.location:
-                self.woeid = self.fetch_woeid(self.location)
-            if not self.woeid:
-                return None
-        format = 'c' if self.metric else 'f'
-        self._url = WEATHER_URL + urlencode({'w': self.woeid, 'u': format})
-        return self._url
+        self._params = {
+            'format': 'json',
+            'u': 'c' if self.metric else 'f'
+        }
 
-    def parse(self, body):
-        dom = minidom.parseString(body)
+        if self.woeid:
+            self._params['woeid'] = self.woeid
+        elif self.location:
+            self._params['location'] = self.location
+        elif self.coordinates:
+            self._params['lat'] = self.coordinates['latitude']
+            self._params['lon'] = self.coordinates['longitude']
+        return self._params
 
-        structure = (
-            ('location', ('city', 'region', 'country')),
-            ('units', ('temperature', 'distance', 'pressure', 'speed')),
-            ('wind', ('chill', 'direction', 'speed')),
-            ('atmosphere', ('humidity', 'visibility', 'pressure', 'rising')),
-            ('astronomy', ('sunrise', 'sunset')),
-            ('condition', ('text', 'code', 'temp', 'date'))
+    def flatten_json(self, obj):
+        out = {}
+        def __inner(_json, name=''):
+            if type(_json) is dict:
+                for key, value in _json.items():
+                    __inner(value, name + key + '_')
+            elif type(_json) is list:
+                for i in range(len(_json)):
+                    __inner(_json[i], name + str(i) + '_')
+            else:
+                out[name[:-1]] = _json
+        __inner(obj)
+        return out
+
+    def poll(self):
+        result      = requests.get(QUERY_URL, auth=self._headeroauth, params=self.params, headers=HEADER)
+        weatherdata = json.loads(result.text)
+
+        data = self.flatten_json(weatherdata)
+        data['units_temperature'] = 'C' if self.metric else 'F'
+
+        # more symbols here: https://unicode-search.net/unicode-namesearch.pl?term=RAIN
+        # TODO: There are 47 different conditions (see 'Condition Codes' in Yahoos documentation page).
+        condition_mapping = {
+            'Clear': '🌞', # Sun
+            'Overcast clouds': '🌥', # Sun behind cloud
+            'Few clouds': '🌤', # Sun with small cloud
+            'Light rain': '🌧', # Cloud with rain
+
+            'Cloud with snow': '🌨',
+            'Cloud with lightning' : '🌩',
+            'Thundercloid and rain': '⛈',
+            'Sun behind cloud with rain': '🌦',
+            'Sun behind cloud': '🌥',
+        }
+        data['current_observation_condition_symbol'] = condition_mapping.get(
+            data['current_observation_condition_text'],
+            data['current_observation_condition_text']
         )
 
-        data = {}
-        for tag, attrs in structure:
-            element = dom.getElementsByTagNameNS(WEATHER_NS, tag)[0]
-            for attr in attrs:
-                data['%s_%s' % (tag, attr)] = element.getAttribute(attr)
-
-        if data['atmosphere_rising'] == '0':
-            data['atmosphere_rising'] = self.steady
-        elif data['atmosphere_rising'] == '1':
-            data['atmosphere_rising'] = self.up
-        elif data['atmosphere_rising'] == '2':
-            data['atmosphere_rising'] = self.down
+        if data['current_observation_atmosphere_rising'] == '0':
+            data['current_observation_atmosphere_rising'] = self.steady
+        elif data['current_observation_atmosphere_rising'] == '1':
+            data['current_observation_atmosphere_rising'] = self.up
+        elif data['current_observation_atmosphere_rising'] == '2':
+            data['current_observation_atmosphere_rising'] = self.down
 
         return self.format.format(**data)
