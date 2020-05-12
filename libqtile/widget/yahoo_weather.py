@@ -33,12 +33,13 @@ from urllib.parse import urlencode
 
 from libqtile.widget import base
 
-# See documentation here: https://developer.yahoo.com/weather/documentation.html
+# See documentation: https://developer.yahoo.com/weather/documentation.html
 QUERY_URL = 'https://weather-ydn-yql.media.yahoo.com/forecastrss'
 APP_ID = 'xSqyTW54'
-CONSUMER_KEY = 'dj0yJmk9R0RwZ3dveWEwTHdWJmQ9WVdrOWVGTnhlVlJYTlRRbWNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTVi'
+CONSUMER_KEY = ('dj0yJmk9R0RwZ3dveWEwTHdWJmQ9WVdrOWVGTnhlVlJYTlRRb'
+                'WNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTVi')
 CONSUMER_SECRET = '83ea8fbd202ea06cd57fc01268139601bf966b47'
-HEADER = { 'X-Yahoo-App-Id': APP_ID }
+HEADER = {'X-Yahoo-App-Id': APP_ID}
 
 
 class YahooWeather(base.ThreadedPollText):
@@ -133,17 +134,17 @@ class YahooWeather(base.ThreadedPollText):
         (
             'woeid',
             None,
-            'Where On Earth ID.'
+            'Where On Earth ID. Precedence over location and coordinates.'
         ),
         (
             'location',
             None,
-            'Location to fetch weather for. Ignored if woeid is set.'
+            'Location to fetch weather for. Precedence over coordinates.'
         ),
         (
             'coordinates',
             None,
-            'Dictionary containing "latitude" and "longitude". Ignored if woeid or location are set.'
+            'Dictionary containing "latitude" and "longitude".'
         ),
         (
             'format',
@@ -160,7 +161,9 @@ class YahooWeather(base.ThreadedPollText):
         base.ThreadedPollText.__init__(self, **config)
         self.add_defaults(YahooWeather.defaults)
         self._params = None
-        self._headeroauth = OAuth1(CONSUMER_KEY, CONSUMER_SECRET, signature_type='auth_header')
+        self._headeroauth = OAuth1(CONSUMER_KEY,
+                                   CONSUMER_SECRET,
+                                   signature_type='auth_header')
 
     @property
     def params(self):
@@ -185,6 +188,7 @@ class YahooWeather(base.ThreadedPollText):
 
     def flatten_json(self, obj):
         out = {}
+
         def __inner(_json, name=''):
             if type(_json) is dict:
                 for key, value in _json.items():
@@ -198,22 +202,23 @@ class YahooWeather(base.ThreadedPollText):
         return out
 
     def poll(self):
-        result      = requests.get(QUERY_URL, auth=self._headeroauth, params=self.params, headers=HEADER)
+        result = requests.get(QUERY_URL, auth=self._headeroauth,
+                              params=self.params, headers=HEADER)
         weatherdata = json.loads(result.text)
 
         data = self.flatten_json(weatherdata)
         data['units_temperature'] = 'C' if self.metric else 'F'
 
-        # more symbols here: https://unicode-search.net/unicode-namesearch.pl?term=RAIN
-        # TODO: There are 47 different conditions (see 'Condition Codes' in Yahoos documentation page).
+        # symbols: https://unicode-search.net/unicode-namesearch.pl?term=RAIN
+        # TODO: There are 47 different conditions (see Yahoos documentation).
         condition_mapping = {
-            'Clear': '🌞', # Sun
-            'Overcast clouds': '🌥', # Sun behind cloud
-            'Few clouds': '🌤', # Sun with small cloud
-            'Light rain': '🌧', # Cloud with rain
+            'Clear': '🌞',  # Sun
+            'Overcast clouds': '🌥',  # Sun behind cloud
+            'Few clouds': '🌤',  # Sun with small cloud
+            'Light rain': '🌧',  # Cloud with rain
 
             'Cloud with snow': '🌨',
-            'Cloud with lightning' : '🌩',
+            'Cloud with lightning': '🌩',
             'Thundercloid and rain': '⛈',
             'Sun behind cloud with rain': '🌦',
             'Sun behind cloud': '🌥',
