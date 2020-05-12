@@ -682,7 +682,7 @@ class Window:
                 value
             ).check()
         except xcffib.xproto.WindowError:
-            logger.warning(
+            logger.debug(
                 'X error in SetProperty (wid=%r, prop=%r), ignoring',
                 self.wid, name)
 
@@ -712,7 +712,7 @@ class Window:
                 0, (2 ** 32) - 1
             ).reply()
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
-            logger.warning(
+            logger.debug(
                 'X error in GetProperty (wid=%r, prop=%r), ignoring',
                 self.wid, prop)
             if unpack:
