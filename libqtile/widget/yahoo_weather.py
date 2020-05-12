@@ -26,10 +26,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import requests
 import json
-from requests_oauthlib import OAuth1
 from urllib.parse import urlencode
+
+import requests
+from requests_oauthlib import OAuth1
 
 from libqtile.widget import base
 
