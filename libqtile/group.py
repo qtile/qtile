@@ -242,13 +242,13 @@ class _Group(CommandObject):
             windows=[i.name for i in self.windows],
             focus_history=[i.name for i in self.focus_history],
             layout=self.layout.name,
-            layouts=[l.name for l in self.layouts],
+            layouts=[i.name for i in self.layouts],
             floating_info=self.floating_layout.info(),
             screen=self.screen.index if self.screen else None
         )
 
     def add(self, win, focus=True, force=False):
-        hook.fire("group_window_add")
+        hook.fire("group_window_add", self, win)
         self.windows.add(win)
         win.group = self
         try:

@@ -238,7 +238,7 @@ class Qtile(CommandObject):
         logger.debug('Adding io watch')
         self.core.setup_listener(self, self._eventloop)
 
-        self._stopped_event = asyncio.Event(loop=self._eventloop)
+        self._stopped_event = asyncio.Event()
 
         # This is a little strange. python-dbus internally depends on gobject,
         # so gobject's threads need to be running, and a gobject "main loop
@@ -303,21 +303,19 @@ class Qtile(CommandObject):
                 pass
 
         try:
+            for widget in self.widgets_map.values():
+                widget.finalize()
 
-            for w in self.widgets_map.values():
-                w.finalize()
-
-            for l in self.config.layouts:
-                l.finalize()
+            for layout in self.config.layouts:
+                layout.finalize()
 
             for screen in self.screens:
                 for bar in [screen.top, screen.bottom, screen.left, screen.right]:
                     if bar is not None:
                         bar.finalize()
-
-            self.core.remove_listener(self._eventloop)
         except:  # noqa: E722
             logger.exception('exception during finalize')
+            self.core.remove_listener()
 
     def _process_fake_screens(self):
         """
@@ -361,9 +359,9 @@ class Qtile(CommandObject):
         screen.resize(0, 0, width, height)
 
     def process_key_event(self, keysym: int, mask: int) -> None:
-        key = self.keys_map[(keysym, mask)]
+        key = self.keys_map.get((keysym, mask), None)
         if key is None:
-            logger.info("Ignoring unknown keysym: {keysym}".format(keysym=keysym))
+            logger.info("Ignoring unknown keysym: {keysym}, mask: {mask}".format(keysym=keysym, mask=mask))
             return
 
         for cmd in key.commands:
@@ -824,6 +822,7 @@ class Qtile(CommandObject):
         self.current_screen = self.screens[n]
         if old != self.current_screen:
             hook.fire("current_screen_change")
+            hook.fire("setgroup")
             old.group.layout_all()
             self.current_group.focus(self.current_window, warp)
 

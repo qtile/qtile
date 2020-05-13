@@ -12,6 +12,7 @@
 # serve to show the default.
 
 import os
+import setuptools_scm
 import sys
 from unittest.mock import MagicMock
 
@@ -97,7 +98,7 @@ copyright = u'2008-2020, Aldo Cortesi and contributers'
 # built documents.
 #
 # The short X.Y version.
-version = '0.15.0'
+version = setuptools_scm.get_version(root="..")
 # The full version, including alpha/beta/rc tags.
 release = version
 

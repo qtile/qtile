@@ -341,7 +341,7 @@ class Mpd2(base.ThreadPoolText):
         if not isinstance(fmt, str):
             fmt = str(fmt)
 
-        formatted = fmt.format(**song_info)
+        formatted = fmt.format_map(song_info)
 
         if self.color_progress and status['state'] != 'stop':
             try:

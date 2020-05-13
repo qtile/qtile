@@ -86,7 +86,7 @@ def test_qtile_cmd(qtile):
     for obj in ["window", "group", "screen"]:
         assert run_qtile_cmd('-s {} -o {} -f info'.format(qtile.sockfile, obj))
 
-    layout = run_qtile_cmd('-s {} -o layout -f info'.format(qtile.sockfile, obj))
+    layout = run_qtile_cmd('-s {} -o layout -f info'.format(qtile.sockfile))
     assert layout['name'] == 'stack'
     assert layout['group'] == 'a'
 

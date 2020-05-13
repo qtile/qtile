@@ -18,18 +18,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import importlib
-from docutils import nodes
-from docutils.statemachine import ViewList
-from docutils.parsers.rst import Directive
-from jinja2 import Template
-from libqtile import command_object, configurable, widget
-from sphinx.util.nodes import nested_parse_with_titles
-import functools
-import inspect
 import builtins
+import functools
+import importlib
+import inspect
+import os
 import pprint
+from subprocess import call
 
+from docutils import nodes
+from docutils.parsers.rst import Directive
+from docutils.statemachine import ViewList
+from jinja2 import Template
+from sphinx.util.nodes import nested_parse_with_titles
+
+from libqtile import command_object, configurable, widget
 
 qtile_module_template = Template('''
 .. qtile_class:: {{ module }}.{{ class_name }}
@@ -196,7 +199,15 @@ class QtileModule(SimpleDirectiveMixin, Directive):
                 yield line
 
 
+def generate_keybinding_images():
+    this_dir = os.path.dirname(__file__)
+    base_dir = os.path.abspath(os.path.join(this_dir, ".."))
+    call(['make', '-C', base_dir, 'run-ffibuild'])
+    call(['make', '-C', this_dir, 'genkeyimg'])
+
+
 def setup(app):
+    generate_keybinding_images()
     app.add_directive('qtile_class', QtileClass)
     app.add_directive('qtile_hooks', QtileHooks)
     app.add_directive('qtile_module', QtileModule)

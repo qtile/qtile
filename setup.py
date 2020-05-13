@@ -64,25 +64,6 @@ class CheckCairoXcb(install):
         install.finalize_options(self)
 
 
-cmdClass = {'install': CheckCairoXcb}
-
-try:
-    from sphinx.setup_command import BuildDoc
-    import subprocess
-
-    class BuildDocWrapper(BuildDoc):
-        def run(self):
-            subprocess.call(['scripts/ffibuild'])
-            subprocess.call(['make', '-C', 'docs', 'genkeyimg'])
-            super().run()
-
-    cmdClass['build_sphinx'] = BuildDocWrapper
-
-except ImportError as e:
-    print(e)
-    pass
-
-
 def get_cffi_modules():
     cffi_modules = [
         'libqtile/pango_ffi_build.py:pango_ffi',
@@ -108,7 +89,8 @@ def get_cffi_modules():
 
 
 setup(
-    cmdclass=cmdClass,
+    cmdclass={'install': CheckCairoXcb},
+    use_scm_version=True,
     cffi_modules=get_cffi_modules(),
     install_requires=["cffi>=1.0.0"],
 )

@@ -89,7 +89,7 @@ class TreeNode:
         if not self.expanded and self.children:
             return "{:d}".format(
                 len(self.children)
-            ).translate(to_superscript).encode('utf-8') + title
+            ).translate(to_superscript) + title
         return title
 
     def get_first_window(self):
@@ -100,10 +100,11 @@ class TreeNode:
         """
         if isinstance(self, Window):
             return self
-        for i in self.children:
-            node = i.get_first_window()
-            if node:
-                return node
+        if self.expanded:
+            for i in self.children:
+                node = i.get_first_window()
+                if node:
+                    return node
 
     def get_last_window(self):
         """Find the last Window under this node
@@ -111,10 +112,11 @@ class TreeNode:
         Finds last `Window` by depth-first search, otherwise returns self if
         this is a `Window`.
         """
-        for i in reversed(self.children):
-            node = i.get_last_window()
-            if node:
-                return node
+        if self.expanded:
+            for i in reversed(self.children):
+                node = i.get_last_window()
+                if node:
+                    return node
         if isinstance(self, Window):
             return self
 
@@ -312,6 +314,44 @@ class TreeTab(Layout):
     left border of the screen, which allows you to overview all opened windows.
     It's designed to work with ``uzbl-browser`` but works with other windows
     too.
+
+    The panel at the left border contains sections, each of which contains
+    windows. Initially the panel looks like flat lists inside its
+    section, and looks like trees if some of the windows are "moved" left or
+    right.
+
+    For example, it looks like below with two sections initially:
+
+    ::
+
+        +------------+
+        |Section Foo |
+        +------------+
+        | Window A   |
+        +------------+
+        | Window B   |
+        +------------+
+        | Window C   |
+        +------------+
+        |Section Bar |
+        +------------+
+
+    And then it will look like below if "Window B" is moved right and "Window C"
+    is moved right too:
+
+    ::
+
+        +------------+
+        |Section Foo |
+        +------------+
+        | Window A   |
+        +------------+
+        |  Window B  |
+        +------------+
+        |   Window C |
+        +------------+
+        |Section Bar |
+        +------------+
     """
 
     defaults = [
@@ -463,9 +503,46 @@ class TreeTab(Layout):
             self._drawer.finalize()
 
     def info(self):
+
+        def show_section_tree(root):
+            '''Show a section tree in a nested list, whose every element has the form: `[root, [subtrees]]`.
+
+            For `[root, [subtrees]]`, The first element is the root node, and the second is its a list of its subtrees.
+            For example, a section with below windows hierarchy on the panel:
+            - a
+              - d
+                - e
+              - f
+            - b
+              - g
+              - h
+            - c
+
+            will return [
+                         [a,
+                           [d, [e]],
+                           [f]],
+                         [b, [g], [h]],
+                         [c],
+                        ]
+            '''
+            tree = []
+            if isinstance(root, Window):
+                tree.append(root.window.name)
+            if root.expanded and root.children:
+                for child in root.children:
+                    tree.append(show_section_tree(child))
+            return tree
+
         d = Layout.info(self)
-        d["clients"] = [x.name for x in self._nodes]
+        # Sort client names to work around an internal difference betwen Python 3.5 and 3.6+
+        d["clients"] = sorted([x.name for x in self._nodes])
         d["sections"] = [x.title for x in self._tree.children]
+
+        trees = {}
+        for section in self._tree.children:
+            trees[section.title] = show_section_tree(section)
+        d["client_trees"] = trees
         return d
 
     def show(self, screen):
