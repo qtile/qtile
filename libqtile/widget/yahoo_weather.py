@@ -160,14 +160,10 @@ class YahooWeather(GenPollUrl):
     def __init__(self, **config):
         GenPollUrl.__init__(self, **config)
         self.add_defaults(YahooWeather.defaults)
-        self._url = None
         self.headers.update(HEADER)
 
     @property
     def url(self):
-        if self._url:
-            return self._url
-
         if not self.woeid and not self.location and not self.coordinates:
             return None
 
@@ -194,8 +190,7 @@ class YahooWeather(GenPollUrl):
         }
         params.update(oauth)
 
-        self._url = QUERY_URL + urlencode(params) + '%26'
-        return self._url
+        return QUERY_URL + urlencode(params) + '%26'
 
     def flatten_json(self, obj):
         out = {}
