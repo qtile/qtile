@@ -26,16 +26,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import json
+import time
+import uuid
 from urllib.parse import urlencode
 
-import requests
-from requests_oauthlib import OAuth1
-
 from libqtile.widget import base
+from libqtile.widget.generic_poll_text import GenPollUrl
 
 # See documentation: https://developer.yahoo.com/weather/documentation.html
-QUERY_URL = 'https://weather-ydn-yql.media.yahoo.com/forecastrss'
+QUERY_URL = 'https://weather-ydn-yql.media.yahoo.com/forecastrss?'
 APP_ID = 'xSqyTW54'
 CONSUMER_KEY = ('dj0yJmk9R0RwZ3dveWEwTHdWJmQ9WVdrOWVGTnhlVlJYTlRRb'
                 'WNHbzlNQS0tJnM9Y29uc3VtZXJzZWNyZXQmc3Y9MCZ4PTVi')
@@ -43,7 +42,7 @@ CONSUMER_SECRET = '83ea8fbd202ea06cd57fc01268139601bf966b47'
 HEADER = {'X-Yahoo-App-Id': APP_ID}
 
 
-class YahooWeather(base.ThreadedPollText):
+class YahooWeather(GenPollUrl):
     """A weather widget, data provided by the Yahoo! Weather API.
 
     Format options:
@@ -159,33 +158,44 @@ class YahooWeather(base.ThreadedPollText):
     ]
 
     def __init__(self, **config):
-        base.ThreadedPollText.__init__(self, **config)
+        GenPollUrl.__init__(self, **config)
         self.add_defaults(YahooWeather.defaults)
-        self._params = None
-        self._headeroauth = OAuth1(CONSUMER_KEY,
-                                   CONSUMER_SECRET,
-                                   signature_type='auth_header')
+        self._url = None
+        self.headers.update(HEADER)
 
     @property
-    def params(self):
-        if self._params:
-            return self._params
+    def url(self):
+        if self._url:
+            return self._url
+
         if not self.woeid and not self.location and not self.coordinates:
             return None
 
-        self._params = {
+        params = {
             'format': 'json',
             'u': 'c' if self.metric else 'f'
         }
 
         if self.woeid:
-            self._params['woeid'] = self.woeid
+            params['woeid'] = self.woeid
         elif self.location:
-            self._params['location'] = self.location
+            params['location'] = self.location
         elif self.coordinates:
-            self._params['lat'] = self.coordinates['latitude']
-            self._params['lon'] = self.coordinates['longitude']
-        return self._params
+            params['lat'] = self.coordinates['latitude']
+            params['lon'] = self.coordinates['longitude']
+
+        oauth = {
+            'oauth_consumer_key': CONSUMER_KEY,
+            'oauth_nonce': uuid.uuid4().hex,
+            'oauth_signature_method': 'PLAINTEXT',
+            'oauth_timestamp': str(int(time.time())),
+            'oauth_version': '1.0',
+            'oauth_signature': CONSUMER_SECRET
+        }
+        params.update(oauth)
+
+        self._url = QUERY_URL + urlencode(params) + '%26'
+        return self._url
 
     def flatten_json(self, obj):
         out = {}
@@ -202,12 +212,8 @@ class YahooWeather(base.ThreadedPollText):
         __inner(obj)
         return out
 
-    def poll(self):
-        result = requests.get(QUERY_URL, auth=self._headeroauth,
-                              params=self.params, headers=HEADER)
-        weatherdata = json.loads(result.text)
-
-        data = self.flatten_json(weatherdata)
+    def parse(self, body):
+        data = self.flatten_json(body)
         data['units_temperature'] = 'C' if self.metric else 'F'
 
         # symbols: https://unicode-search.net/unicode-namesearch.pl?term=RAIN
