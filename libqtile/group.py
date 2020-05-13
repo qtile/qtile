@@ -242,7 +242,7 @@ class _Group(CommandObject):
             windows=[i.name for i in self.windows],
             focus_history=[i.name for i in self.focus_history],
             layout=self.layout.name,
-            layouts=[l.name for l in self.layouts],
+            layouts=[i.name for i in self.layouts],
             floating_info=self.floating_layout.info(),
             screen=self.screen.index if self.screen else None
         )
