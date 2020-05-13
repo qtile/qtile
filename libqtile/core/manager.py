@@ -303,11 +303,11 @@ class Qtile(CommandObject):
                 pass
 
         try:
-            for w in self.widgets_map.values():
-                w.finalize()
+            for widget in self.widgets_map.values():
+                widget.finalize()
 
-            for l in self.config.layouts:
-                l.finalize()
+            for layout in self.config.layouts:
+                layout.finalize()
 
             for screen in self.screens:
                 for bar in [screen.top, screen.bottom, screen.left, screen.right]:
