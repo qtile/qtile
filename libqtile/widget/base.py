@@ -102,7 +102,7 @@ class _Widget(CommandObject, configurable.Configurable):
 
         clock = widget.Clock(mouse_callbacks={'Button1': open_calendar})
 
-    When the clock widget receives a click with button 1, the open_calendar function
+    When the clock widget receives a click with button 1, the ``open_calendar`` function
     will be executed. Callbacks can be assigned to other buttons by adding more entries
     to the passed dictionary.
 
