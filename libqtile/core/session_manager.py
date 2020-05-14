@@ -40,7 +40,7 @@ class SessionManager:
 
         if os.path.exists(fname):
             os.unlink(fname)
-        self.server = ipc.Server(fname, self.qtile.server.call)
+        self.server = ipc.Server(fname, self.qtile.server.call, eventloop)
 
     def loop(self) -> None:
         """Run the event loop"""
