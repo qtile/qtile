@@ -105,7 +105,6 @@ class _Widget(CommandObject, configurable.Configurable):
     When the clock widget receives a click with button 1, the ``open_calendar`` function
     will be executed. Callbacks can be assigned to other buttons by adding more entries
     to the passed dictionary.
-
     """
     orientations = ORIENTATION_BOTH
     offsetx = None
