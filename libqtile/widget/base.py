@@ -95,7 +95,9 @@ class _Widget(CommandObject, configurable.Configurable):
     Callback functions can be assigned to button presses by passing a dict to the
     'callbacks' kwarg.
 
-    For example::
+    For example:
+
+    .. code-block:: python
 
         def open_calendar(qtile):
             qtile.cmd_spawn('gsimplecal next_month')
