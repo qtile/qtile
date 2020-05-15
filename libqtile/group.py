@@ -364,7 +364,8 @@ class _Group(CommandObject):
         screen :
             Screen offset. If not specified, we assume the current screen.
         toggle :
-            If this group is already on the screen, then toggle group.
+            If this group is already on the screen, then the group is toggled
+            with last used
 
         Examples
         ========

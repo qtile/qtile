@@ -73,7 +73,10 @@ Group functions
     * - ``lazy.screen.toggle_group()``
       - Move to the last visited group
     * - ``lazy.group["group_name"].toscreen()``
-      - Move to the group called ``group_name``
+      - Move to the group called ``group_name``.
+        Takes an optional ``toggle`` parameter (defaults to True).
+        If this group is already on the screen, then the group is toggled 
+        with last used
     * - ``lazy.layout.increase_ratio()``
       - Increase the space for master window at the expense of slave windows
     * - ``lazy.layout.decrease_ratio()``
