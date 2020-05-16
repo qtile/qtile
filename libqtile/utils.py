@@ -21,6 +21,7 @@
 import functools
 import importlib
 import os
+import sys
 import traceback
 import warnings
 from shutil import which
@@ -197,6 +198,9 @@ def safe_import(module_names, class_name, globals_, fallback=None):
 
     The globals are filled with a proxy function so that the module is imported
     only if the class is being instanciated.
+
+    An exception is made when the documentation is being built with Sphinx, in
+    which case the class is eagerly imported, for inspection.
     """
     module_path = '.'.join(module_names)
     if type(class_name) is list:
@@ -208,7 +212,10 @@ def safe_import(module_names, class_name, globals_, fallback=None):
         cls = import_class(module_path, class_name, fallback)
         return cls(*args, **kwargs)
 
-    globals_[class_name] = class_proxy
+    if "sphinx" in sys.modules:
+        globals_[class_name] = import_class(module_path, class_name, fallback)
+    else:
+        globals_[class_name] = class_proxy
 
 
 def send_notification(title, message, urgent=False, timeout=10000):
