@@ -569,7 +569,7 @@ class _Window(CommandObject):
                 self.window.send_event(e)
 
             # Never send FocusIn to java windows
-            if not is_java and self.hints['input']:
+            elif not is_java and self.hints['input']:
                 self.window.set_input_focus()
             try:
                 if warp and self.qtile.config.cursor_warp:
