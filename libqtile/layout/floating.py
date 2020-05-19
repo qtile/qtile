@@ -209,6 +209,10 @@ class Floating(Layout):
         return above
 
     def configure(self, client, screen):
+        # After this, the client will be mapped. Either this will do it, or the
+        # client has already done it.
+        client.hidden = False
+
         # 'sun-awt-X11-XWindowPeer' is a dropdown used in Java application,
         # don't reposition it anywhere, let Java app to control it
         cls = client.window.get_wm_class() or ''
