@@ -574,6 +574,8 @@ class Qtile(CommandObject):
                 c.group.remove(c)
             del self.windows_map[win]
             self.update_client_list()
+        if self.current_window is None:
+            self.conn.fixup_focus()
 
     def graceful_shutdown(self):
         """
