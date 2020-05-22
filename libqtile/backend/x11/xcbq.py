@@ -977,6 +977,20 @@ class Connection:
             for i in self.conn.core.ListExtensions().reply().names
         )
 
+    def fixup_focus(self):
+        """
+        If the X11 focus is set to None, all keypress events are discarded,
+        which makes our hotkeys not work. This fixes up the focus so it is not
+        None.
+        """
+        window = self.conn.core.GetInputFocus().reply().focus
+        if window == xcffib.xproto.InputFocus._None:
+            self.conn.core.SetInputFocus(
+                xcffib.xproto.InputFocus.PointerRoot,
+                xcffib.xproto.InputFocus.PointerRoot,
+                xcffib.xproto.Time.CurrentTime,
+            )
+
 
 class Painter:
     def __init__(self, display):
