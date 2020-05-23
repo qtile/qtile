@@ -31,21 +31,23 @@ import marshal
 import os.path
 import socket
 import struct
-from typing import Any, Callable, Optional, Tuple, cast
+import sys
+from typing import Any, Optional, Tuple
 
 from libqtile.log_utils import logger
 from libqtile.utils import get_cache_dir
 
-HDRLEN = 4
+HDRFORMAT = "!L"
+HDRLEN = struct.calcsize(HDRFORMAT)
 
 SOCKBASE = "qtilesocket.%s"
 
 
 def find_sockfile(display: str = None):
     """Finds the appropriate socket file for the given display"""
-    display = display or os.environ.get('DISPLAY') or ':0.0'
-    if '.' not in display:
-        display += '.0'
+    display = display or os.environ.get("DISPLAY") or ":0.0"
+    if "." not in display:
+        display += ".0"
     cache_directory = get_cache_dir()
     return os.path.join(cache_directory, SOCKBASE % display)
 
@@ -57,14 +59,17 @@ class IPCError(Exception):
 class _IPC:
     """A helper class to handle properly packing and unpacking messages"""
 
-    @classmethod
-    def unpack(cls, data: Optional[bytes]) -> Tuple[Any, bool]:
+    @staticmethod
+    def unpack(data: bytes, *, is_json: Optional[bool] = None) -> Tuple[Any, bool]:
         """Unpack the incoming message
 
         Parameters
         ----------
-        data : Optional[bytes]
-            The incoming message to unpack, if None, an IPCError is raised.
+        data : bytes
+            The incoming message to unpack
+        is_json : Optional[bool]
+            If the message should be unpacked as json.  By default, try to
+            unpack json and fallback gracefully to marshalled bytes.
 
         Returns
         -------
@@ -73,106 +78,33 @@ class _IPC:
             message was deserialized using json.  If True, the return message
             should be packed as json.
         """
-        if data is None:
-            raise IPCError("received data is None")
-        try:
-            return json.loads(data.decode("utf-8")), True
-        except ValueError:
-            pass
+        if is_json is None or is_json:
+            try:
+                return json.loads(data.decode()), True
+            except ValueError as e:
+                if is_json:
+                    raise IPCError("Unable to decode json data") from e
 
         try:
             assert len(data) >= HDRLEN
-            size = struct.unpack("!L", data[:HDRLEN])[0]
+            size = struct.unpack(HDRFORMAT, data[:HDRLEN])[0]
             assert size >= len(data[HDRLEN:])
-            return cls._unpack_body(data[HDRLEN:HDRLEN + size]), False
-        except AssertionError:
+            return marshal.loads(data[HDRLEN:HDRLEN + size]), False
+        except AssertionError as e:
             raise IPCError(
-                "error reading reply!"
-                " (probably the socket was disconnected)"
-            )
+                "error reading reply! (probably the socket was disconnected)"
+            ) from e
 
     @staticmethod
-    def pack_json(msg: Any) -> bytes:
-        json_obj = json.dumps(msg)
-        return json_obj.encode('utf-8')
-
-    @staticmethod
-    def pack(msg: Any) -> bytes:
-        msg_bytes = marshal.dumps(msg)
-        size = struct.pack("!L", len(msg_bytes))
-        return size + msg_bytes
-
-    @staticmethod
-    def _unpack_body(body: bytes) -> Any:
-        # mashal seems incorrectly annotated to take and return str
-        return marshal.loads(body)
-
-
-class _ClientProtocol(asyncio.Protocol):
-    """IPC Client Protocol
-
-    1. Once the connection is made, the client initializes a Future self.reply,
-    which will hold the response from the server.
-
-    2. The message is sent to the server with .send(msg), which closes the
-    connection once the message is sent.
-
-    3. The client then receives data from the server until the server closes
-    the connection, signalling that all the data has been sent.
-
-    4. When the server sends on EOF, the data is unpacked and stored to the
-    reply future.
-    """
-    def __init__(self) -> None:
-        self.transport = None  # type: Optional[asyncio.WriteTransport]
-        self.recv = None  # type: Optional[bytes]
-        self.reply = None  # type: Optional[asyncio.Future]
-
-    def connection_made(self, transport: asyncio.BaseTransport) -> None:
-        assert isinstance(transport, asyncio.WriteTransport)
-        self.transport = transport
-        self.recv = b''
-        self.reply = asyncio.Future()
-
-    def send(self, msg: Any, is_json=False) -> None:
-        assert self.transport is not None
-
+    def pack(msg: Any, *, is_json: bool = False) -> bytes:
+        """Pack the object into a message to pass"""
         if is_json:
-            send_data = _IPC.pack_json(msg)
-        else:
-            send_data = _IPC.pack(msg)
+            json_obj = json.dumps(msg)
+            return json_obj.encode()
 
-        self.transport.write(send_data)
-
-        try:
-            self.transport.write_eof()
-        except AttributeError:
-            logger.exception('Swallowing AttributeError due to asyncio bug!')
-
-    def data_received(self, data: bytes) -> None:
-        assert self.recv is not None
-        self.recv += data
-
-    def eof_received(self) -> None:
-        assert self.reply is not None
-
-        # The server sends EOF when there is data ready to be processed
-        try:
-            data, _ = _IPC.unpack(self.recv)
-        except IPCError as e:
-            self.reply.set_exception(e)
-        else:
-            self.reply.set_result(data)
-
-    def connection_lost(self, exc) -> None:
-        assert self.reply is not None
-
-        # The client shouldn't just lose the connection without an EOF
-        if exc:
-            self.reply.set_exception(exc)
-
-        if not self.reply.done():
-            self.reply.set_exception(IPCError)
+        msg_bytes = marshal.dumps(msg)
+        size = struct.pack(HDRFORMAT, len(msg_bytes))
+        return size + msg_bytes
 
 
 class Client:
@@ -191,120 +123,106 @@ class Client:
         self.loop = asyncio.get_event_loop()
         self.is_json = is_json
 
+    def call(self, data: Any) -> Any:
+        return self.send(data)
+
     def send(self, msg: Any) -> Any:
         """Send the message and return the response from the server
 
         If any exception is raised by the server, that will propogate out of
         this call.
-
-        Parameters
-        ----------
         """
-        client_coroutine = self.loop.create_unix_connection(_ClientProtocol, path=self.fname)
+        return self.loop.run_until_complete(self.async_send(msg))
+
+    async def async_send(self, msg: Any) -> Any:
+        """Send the message to the server
+
+        Connect to the server, then pack and send the message to the server,
+        then wait for and return the response from the server.
+        """
+        try:
+            reader, writer = await asyncio.wait_for(
+                asyncio.open_unix_connection(path=self.fname), timeout=3
+            )
+        except (ConnectionRefusedError, FileNotFoundError):
+            raise IPCError("Could not open {}".format(self.fname))
 
         try:
-            _, client_proto = self.loop.run_until_complete(client_coroutine)
-        except OSError:
-            raise IPCError("Could not open %s" % self.fname)
+            send_data = _IPC.pack(msg, is_json=self.is_json)
+            writer.write(send_data)
+            writer.write_eof()
 
-        client_proto = cast(_ClientProtocol, client_proto)
-        client_proto.send(msg, is_json=self.is_json)
-        assert client_proto.reply is not None
-
-        try:
-            self.loop.run_until_complete(asyncio.wait_for(client_proto.reply, timeout=10))
+            read_data = await asyncio.wait_for(reader.read(), timeout=10)
         except asyncio.TimeoutError:
-            raise RuntimeError("Server not responding")
-
-        return client_proto.reply.result()
-
-    def call(self, data: Any) -> Any:
-        return self.send(data)
-
-
-class _ServerProtocol(asyncio.Protocol):
-    """IPC Server Protocol
-
-    1. The server is initialized with a handler callback function for evaluating
-    incoming queries.
-
-    2. Once the connection is made, the server initializes a data store for
-    incoming data.
-
-    3. The client sends all its data to the server, which is stored.
-
-    4. The client signals that all data is sent by sending an EOF, at which
-    point the server then unpacks the data and runs it through the handler.
-    The result is returned to the client and the connection is closed.
-    """
-    def __init__(self, handler: Callable) -> None:
-        super().__init__()
-
-        self.handler = handler
-        self.transport = None  # type: Optional[asyncio.WriteTransport]
-        self.data = None  # type: Optional[bytes]
-
-    def connection_made(self, transport: asyncio.BaseTransport) -> None:
-        assert isinstance(transport, asyncio.WriteTransport)
-        self.transport = transport
-        logger.debug('Connection made to server')
-        self.data = b''
-
-    def data_received(self, recv: bytes) -> None:
-        logger.debug('Data received by server')
-        assert self.data is not None
-        self.data += recv
-
-    def eof_received(self) -> None:
-        assert self.transport is not None
-        logger.debug('EOF received by server')
-        try:
-            req, is_json = _IPC.unpack(self.data)
-        except IPCError:
-            logger.warn('Invalid data received, closing connection')
-            self.transport.close()
-            return
+            raise IPCError("Server not responding")
         finally:
-            self.data = None
+            # see the note in Server._server_callback()
+            writer.close()
+            if sys.version_info >= (3, 7):
+                await writer.wait_closed()
+            else:
+                await asyncio.sleep(0)
 
-        if req[1] == 'restart':
-            logger.debug('Closing connection on restart')
-            self.transport.write_eof()
+        data, _ = _IPC.unpack(read_data, is_json=self.is_json)
 
-        rep = self.handler(req)
-
-        if is_json:
-            result = _IPC.pack_json(rep)
-        else:
-            result = _IPC.pack(rep)
-
-        logger.debug('Sending result on receive EOF')
-        self.transport.write(result)
-        logger.debug('Closing connection on receive EOF')
-        self.transport.write_eof()
-
-        self.data = None
-        self.transport = None
+        return data
 
 
 class Server:
-    def __init__(self, fname: str, handler, loop) -> None:
+    def __init__(self, fname: str, handler, loop: asyncio.AbstractEventLoop) -> None:
         self.fname = fname
         self.handler = handler
         self.loop = loop
-        self.server = None  # type: Optional[asyncio.BaseTransport]
+        self.server = None  # type: Optional[asyncio.AbstractServer]
 
         if os.path.exists(fname):
             os.unlink(fname)
 
-        self.sock = socket.socket(
-            socket.AF_UNIX,
-            socket.SOCK_STREAM,
-            0
-        )
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, 0)
         flags = fcntl.fcntl(self.sock.fileno(), fcntl.F_GETFD)
         fcntl.fcntl(self.sock.fileno(), fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
         self.sock.bind(self.fname)
+
+    async def _server_callback(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
+        """Callback when a connection is made to the server
+
+        Read the data sent from the client, execute the requested command, and
+        send the reply back to the client.
+        """
+        try:
+            logger.debug("Connection made to server")
+            data = await reader.read()
+            logger.debug("EOF received by server")
+
+            req, is_json = _IPC.unpack(data)
+        except IPCError:
+            logger.warn("Invalid data received, closing connection")
+        else:
+            if req[1] == "restart":
+                # if we are going to restart, close the connection first, as we won't be back
+                logger.debug("Closing connection on restart")
+                writer.write_eof()
+
+            rep = self.handler(req)
+
+            result = _IPC.pack(rep, is_json=is_json)
+
+            logger.debug("Sending result on receive EOF")
+            writer.write(result)
+            logger.debug("Closing connection on receive EOF")
+            writer.write_eof()
+        finally:
+            # the resoure isn't closed immediately on the close call, but is on
+            # the next loop iteration, this is exposed as the wait_closed
+            # method in 3.7, but requires a manual loop iteration in earlier
+            # versions
+            writer.close()
+            if sys.version_info >= (3, 7):
+                await writer.wait_closed()
+            else:
+                await asyncio.sleep(0)
 
     def __enter__(self) -> "Server":
         """Start and return the server"""
@@ -318,14 +236,19 @@ class Server:
     def start(self) -> None:
         """Start the server"""
         assert self.server is None
-        server_coroutine = self.loop.create_unix_server(lambda: _ServerProtocol(self.handler), sock=self.sock)
 
-        logger.debug('Starting server')
+        logger.debug("Starting server")
+        server_coroutine = asyncio.start_unix_server(
+            self._server_callback, sock=self.sock
+        )
         self.server = self.loop.run_until_complete(server_coroutine)
 
     def close(self) -> None:
         """Close and shutdown the server"""
-        logger.debug('Stopping server on server close')
         assert self.server is not None
+
+        logger.debug("Stopping server on close")
         self.server.close()
-        self.sock.close()
+        self.loop.run_until_complete(self.server.wait_closed())
+
+        self.server = None
