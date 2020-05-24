@@ -38,6 +38,7 @@ import libqtile.core.manager
 import libqtile.hook
 import libqtile.layout
 import libqtile.widget
+from libqtile.backend.x11 import xcbq
 from libqtile.command_interface import CommandError, CommandException
 from libqtile.lazy import lazy
 from test.conftest import BareConfig, Retry, no_xinerama, whereis
@@ -1091,3 +1092,31 @@ def test_change_loglevel(qtile):
     qtile.c.critical()
     assert qtile.c.loglevel() == logging.CRITICAL
     assert qtile.c.loglevelname() == 'CRITICAL'
+
+
+@manager_config
+def test_user_position(qtile):
+    w = None
+    conn = xcbq.Connection(qtile.display)
+
+    def user_position_window():
+        nonlocal w
+        w = conn.create_window(5, 5, 10, 10)
+        # manager config automatically floats xclock
+        w.set_property("WM_CLASS", "xclock", type="STRING", format=8)
+        # set the user specified position flag
+        hints = [0] * 18
+        hints[0] = xcbq.NormalHintsFlags["USPosition"]
+        w.set_property("WM_NORMAL_HINTS", hints, type="WM_SIZE_HINTS", format=32)
+        w.map()
+        conn.conn.flush()
+    try:
+        qtile.create_window(user_position_window)
+        assert qtile.c.window.info()['floating'] is True
+        assert qtile.c.window.info()['x'] == 5
+        assert qtile.c.window.info()['y'] == 5
+        assert qtile.c.window.info()['width'] == 10
+        assert qtile.c.window.info()['height'] == 10
+    finally:
+        w.kill_client()
+        conn.finalize()
