@@ -344,6 +344,24 @@ class Qtile:
 
             self.testwindows.remove(proc)
 
+    def create_window(self, create, failed=None):
+        """
+        Uses the fucntion f to create a window.
+
+        Waits until qtile actually maps the window and then returns.
+        """
+        client = self.c
+        start = len(client.windows())
+        create()
+
+        @Retry(ignore_exceptions=(RuntimeError,), fail_msg='Window never appeared...')
+        def success():
+            while failed is None or not failed():
+                if len(client.windows()) > start:
+                    return True
+            raise RuntimeError("not here yet")
+        return success()
+
     def _spawn_window(self, *args):
         """Starts a program which opens a window
 
@@ -353,22 +371,20 @@ class Qtile:
         """
         if not args:
             raise AssertionError("Trying to run nothing! (missing arguments)")
-        client = self.c
-        start = len(client.windows())
-        proc = subprocess.Popen(args, env={"DISPLAY": self.display})
 
-        @Retry(ignore_exceptions=(RuntimeError,))
-        def success():
-            while proc.poll() is None:
-                if len(client.windows()) > start:
-                    return True
+        proc = None
+
+        def spawn():
+            nonlocal proc
+            proc = subprocess.Popen(args, env={"DISPLAY": self.display})
+
+        def failed():
+            if proc.poll() is not None:
+                return True
             return False
-        if success():
-            self.testwindows.append(proc)
-        else:
-            proc.terminate()
-            proc.wait()
-            raise AssertionError("Window never appeared...")
+
+        self.create_window(spawn, failed=failed)
+        self.testwindows.append(proc)
         return proc
 
     def _spawn_script(self, script, *args):
