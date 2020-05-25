@@ -309,6 +309,9 @@ class _Window(CommandObject):
             self.hints['urgent'] = False
             hook.fire('client_urgent_hint_changed', self)
 
+        if h and 'input' in h:
+            self.hints['input'] = h['input']
+
         if getattr(self, 'group', None):
             self.group.layout_all()
 
