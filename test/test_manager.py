@@ -249,7 +249,6 @@ def assert_window_died(client, window_info):
 @no_xinerama
 def test_kill_window(qtile):
     qtile.test_window("one")
-    qtile.testwindows = []
     window_info = qtile.c.window.info()
     qtile.c.window[window_info["id"]].kill()
     assert_window_died(qtile.c, window_info)
