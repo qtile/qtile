@@ -315,8 +315,8 @@ To fix this:
    There are methods for several Linux distributions: pick yours.
 #. There are instructions for system-wide installation and virtualenv
    installation: pick the relevant one, depending on how you installed the
-   development version of QTile (usually in a virtualenv).
-#. Optionally re-install QTile's dependencies::
+   development version of Qtile (usually in a virtualenv).
+#. Optionally re-install Qtile's dependencies::
 
     pip install -r requirements.txt
     pip install -r requirements-dev.txt
