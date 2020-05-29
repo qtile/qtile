@@ -41,6 +41,7 @@ from collections import OrderedDict
 from itertools import chain, repeat
 
 import cairocffi
+import cairocffi.pixbuf
 import cairocffi.xcb
 import xcffib
 import xcffib.randr
