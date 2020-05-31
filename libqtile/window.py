@@ -523,62 +523,63 @@ class _Window(CommandObject):
     def can_steal_focus(self):
         return self.window.get_wm_type() != 'notification'
 
+    def _do_focus(self):
+        """
+        Focus the window if we can, and return whether or not it was successful.
+        """
+
+        # don't focus hidden windows, they should be mapped. this is generally
+        # a bug somewhere in the qtile code, but some of the tests do it, so we
+        # just have to let it slide for now.
+        if self.hidden:
+            return False
+
+        # if the window can be focused, just focus it.
+        if self.hints['input']:
+            self.window.set_input_focus()
+            return True
+
+        # does the window want us to ask it about focus?
+        if "WM_TAKE_FOCUS" in self.window.get_wm_protocols():
+            data = [
+                self.qtile.conn.atoms["WM_TAKE_FOCUS"],
+                # The timestamp here must be a valid timestamp, not CurrentTime.
+                #
+                # see https://tronche.com/gui/x/icccm/sec-4.html#s-4.1.7
+                # > Windows with the atom WM_TAKE_FOCUS in their WM_PROTOCOLS
+                # > property may receive a ClientMessage event from the
+                # > window manager (as described in section 4.2.8) with
+                # > WM_TAKE_FOCUS in its data[0] field and a valid timestamp
+                # > (i.e. not *CurrentTime* ) in its data[1] field.
+                self.qtile.core.get_valid_timestamp(),
+                0,
+                0,
+                0
+            ]
+
+            u = xcffib.xproto.ClientMessageData.synthetic(data, "I" * 5)
+            e = xcffib.xproto.ClientMessageEvent.synthetic(
+                format=32,
+                window=self.window.wid,
+                type=self.qtile.conn.atoms["WM_PROTOCOLS"],
+                data=u
+            )
+
+            self.window.send_event(e)
+
+        # we didn't focus this time. but now the window knows if it wants
+        # focus, it should SetFocus() itself; we'll get another notification
+        # about this.
+        return False
+
     def focus(self, warp):
+        did_focus = self._do_focus()
+        if not did_focus:
+            return False
 
-        # Workaround for misbehaving java applications (actually it might be
-        # qtile who misbehaves by not implementing some X11 protocol correctly)
-        #
-        # See this xmonad issue for more information on the problem:
-        # http://code.google.com/p/xmonad/issues/detail?id=177
-        #
-        # 'sun-awt-X11-XFramePeer' is a main window of a java application.
-        # Only send WM_TAKE_FOCUS not FocusIn
-        # 'sun-awt-X11-XDialogPeer' is a dialog of a java application. Do not
-        # send any event.
-
-        cls = self.window.get_wm_class() or ''
-        is_java_main = 'sun-awt-X11-XFramePeer' in cls
-        is_java_dialog = 'sun-awt-X11-XDialogPeer' in cls
-        is_java = is_java_main or is_java_dialog
-
-        if not self.hidden:
-            # Never send TAKE_FOCUS on java *dialogs*
-            if not is_java_dialog and \
-                    "WM_TAKE_FOCUS" in self.window.get_wm_protocols():
-                data = [
-                    self.qtile.conn.atoms["WM_TAKE_FOCUS"],
-                    # The timestamp here must be a valid timestamp, not CurrentTime.
-                    #
-                    # see https://tronche.com/gui/x/icccm/sec-4.html#s-4.1.7
-                    # > Windows with the atom WM_TAKE_FOCUS in their WM_PROTOCOLS
-                    # > property may receive a ClientMessage event from the
-                    # > window manager (as described in section 4.2.8) with
-                    # > WM_TAKE_FOCUS in its data[0] field and a valid timestamp
-                    # > (i.e. not *CurrentTime* ) in its data[1] field.
-                    self.qtile.core.get_valid_timestamp(),
-                    0,
-                    0,
-                    0
-                ]
-
-                u = xcffib.xproto.ClientMessageData.synthetic(data, "I" * 5)
-                e = xcffib.xproto.ClientMessageEvent.synthetic(
-                    format=32,
-                    window=self.window.wid,
-                    type=self.qtile.conn.atoms["WM_PROTOCOLS"],
-                    data=u
-                )
-
-                self.window.send_event(e)
-
-            # Never send FocusIn to java windows
-            elif not is_java and self.hints['input']:
-                self.window.set_input_focus()
-            try:
-                if warp and self.qtile.config.cursor_warp:
-                    self.window.warp_pointer(self.width // 2, self.height // 2)
-            except AttributeError:
-                pass
+        # now, do all the other WM stuff since the focus actually changed
+        if warp and self.qtile.config.cursor_warp:
+            self.window.warp_pointer(self.width // 2, self.height // 2)
 
         if self.urgent:
             self.urgent = False
@@ -592,6 +593,7 @@ class _Window(CommandObject):
 
         self.qtile.root.set_property("_NET_ACTIVE_WINDOW", self.window.wid)
         hook.fire("client_focus", self)
+        return True
 
     def _items(self, name):
         return None
