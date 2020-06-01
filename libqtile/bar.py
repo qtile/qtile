@@ -197,8 +197,6 @@ class Bar(Gap, configurable.Configurable):
             w._test_orientation_compatibility(self.horizontal)
             if w.length_type == STRETCH:
                 stretches += 1
-        if stretches > 1:
-            raise confreader.ConfigError("Only one STRETCH widget allowed!")
 
         self.window = window.Internal.create(
             self.qtile,
@@ -238,11 +236,30 @@ class Bar(Gap, configurable.Configurable):
                 [i.length for i in widgets if i.length_type != STRETCH]
             )
             stretchspace = max(stretchspace, 0)
-            astretch = stretchspace // len(stretches)
-            for i in stretches:
-                i.length = astretch
-            if astretch:
-                i.length += stretchspace % astretch
+            num_stretches = len(stretches)
+            if num_stretches == 1:
+                stretches[0].length = stretchspace
+            else:
+                block = 0
+                blocks = []
+                for i in widgets:
+                    if i.length_type != STRETCH:
+                        block += i.length
+                    else:
+                        blocks.append(block)
+                        block = 0
+                if block:
+                    blocks.append(block)
+                interval = length // num_stretches
+                for idx, i in enumerate(stretches):
+                    if idx == 0:
+                        i.length = interval - blocks[0] - blocks[1] // 2
+                    elif idx == num_stretches - 1:
+                        i.length = interval - blocks[-1] - blocks[-2] // 2
+                    else:
+                        i.length = int(interval - blocks[idx] / 2 - blocks[idx + 1] / 2)
+                    stretchspace -= i.length
+                i.length += stretchspace
 
         offset = 0
         if self.horizontal:
