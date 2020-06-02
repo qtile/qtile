@@ -1226,6 +1226,8 @@ class Window(_Window):
                     self.urgent = True
                 else:
                     logger.info("Ignoring focus request")
+        elif atoms["_NET_CLOSE_WINDOW"] == opcode:
+            self.kill()
 
     def handle_PropertyNotify(self, e):  # noqa: N802
         name = self.qtile.conn.atoms.get_name(e.atom)
