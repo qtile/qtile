@@ -1182,6 +1182,8 @@ class Window(_Window):
                     logger.info("Ignoring focus request")
                 else:
                     logger.warning("Invalid value for focus_on_window_activation: {}".format(focus_behavior))
+        elif atoms["_NET_CLOSE_WINDOW"] == opcode:
+            self.kill()
 
     def handle_PropertyNotify(self, e):  # noqa: N802
         name = self.qtile.conn.atoms.get_name(e.atom)

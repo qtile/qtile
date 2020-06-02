@@ -391,6 +391,24 @@ def test_kill_other(qtile):
 
 @manager_config
 @no_xinerama
+def test_kill_via_message(qtile):
+    self = qtile
+
+    self.test_window("one")
+    window_info = self.c.window.info()
+    conn = xcbq.Connection(self.display)
+    data = xcffib.xproto.ClientMessageData.synthetic([0, 0, 0, 0, 0], "IIIII")
+    ev = xcffib.xproto.ClientMessageEvent.synthetic(
+        32, window_info["id"], conn.atoms['_NET_CLOSE_WINDOW'], data
+    )
+    conn.default_screen.root.send_event(ev, mask=xcffib.xproto.EventMask.SubstructureRedirect)
+    conn.xsync()
+    conn.finalize()
+    assert_window_died(self.c, window_info)
+
+
+@manager_config
+@no_xinerama
 def test_regression_groupswitch(qtile):
     self = qtile
 
