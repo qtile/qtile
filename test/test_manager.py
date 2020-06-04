@@ -1266,6 +1266,7 @@ def test_no_focus(qtile):
         w.set_property("WM_CLASS", "xclock", type="STRING", format=8)
 
         hints = [0] * 14
+        hints[0] = xcbq.HintsFlags["InputHint"]
         w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
         w.map()
         conn.conn.flush()
