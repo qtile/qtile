@@ -1278,3 +1278,50 @@ def test_no_focus(qtile):
     finally:
         w.kill_client()
         conn.finalize()
+
+
+@manager_config
+def test_hints_setting_unsetting(qtile):
+    w = None
+    conn = xcbq.Connection(qtile.display)
+
+    def no_input_hint():
+        nonlocal w
+        w = conn.create_window(5, 5, 10, 10)
+        w.map()
+        conn.conn.flush()
+
+    try:
+        qtile.create_window(no_input_hint)
+        # We default the input hint to true since some non-trivial number of
+        # windows don't set it, and most of them want focus. The spec allows
+        # WMs to assume "convenient" values.
+        assert qtile.c.window.hints()['input']
+
+        # now try to "update" it, but don't really set an update (i.e. the
+        # InputHint bit is 0, so the WM should not derive a new hint from the
+        # content of the message at the input hint's offset)
+        hints = [0] * 14
+        w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
+        conn.flush()
+
+        # should still have the hint
+        assert qtile.c.window.hints()['input']
+
+        # now do an update: turn it off
+        hints[0] = xcbq.HintsFlags["InputHint"]
+        hints[1] = 0
+        w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
+        conn.flush()
+        assert not qtile.c.window.hints()['input']
+
+        # turn it back on
+        hints[0] = xcbq.HintsFlags["InputHint"]
+        hints[1] = 1
+        w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
+        conn.flush()
+        assert qtile.c.window.hints()['input']
+
+    finally:
+        w.kill_client()
+        conn.finalize()
