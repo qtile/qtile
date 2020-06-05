@@ -75,7 +75,11 @@ class CheckUpdates(base.ThreadedPollText):
                 self.subtr = 0
         except CalledProcessError:
             updates = ""
-        num_updates = str(len(updates.splitlines()) - self.subtr)
+        num_updates = len(updates.splitlines()) - self.subtr
+
+        if num_updates == 0:
+            return ""
+        num_updates = str(num_updates)
 
         if self.restart_indicator and os.path.exists('/var/run/reboot-required'):
             num_updates += self.restart_indicator
