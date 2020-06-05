@@ -309,7 +309,7 @@ class _Window(CommandObject):
             self.hints['urgent'] = False
             hook.fire('client_urgent_hint_changed', self)
 
-        if h and 'input' in h:
+        if h and 'InputHint' in h['flags']:
             self.hints['input'] = h['input']
 
         if getattr(self, 'group', None):
@@ -610,6 +610,10 @@ class _Window(CommandObject):
     def cmd_info(self):
         """Returns a dictionary of info for this object"""
         return self.info()
+
+    def cmd_hints(self):
+        """Returns the X11 hints (WM_HINTS and WM_SIZE_HINTS) for this window."""
+        return self.hints
 
     def cmd_inspect(self):
         """Tells you more than you ever wanted to know about a window"""
