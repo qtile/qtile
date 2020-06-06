@@ -1230,8 +1230,10 @@ class Window(_Window):
                 elif focus_behavior == "urgent" or (focus_behavior == "smart" and not self.group.screen):
                     logger.info("Setting urgent flag for window")
                     self.urgent = True
-                else:
+                elif focus_behavior == "never":
                     logger.info("Ignoring focus request")
+                else:
+                    logger.warning("Invalid value for focus_on_window_activation: {}".format(focus_behavior))
 
     def handle_PropertyNotify(self, e):  # noqa: N802
         name = self.qtile.conn.atoms.get_name(e.atom)

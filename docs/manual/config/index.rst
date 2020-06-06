@@ -150,6 +150,8 @@ configuration variables that control specific aspects of Qtile's behavior:
         - focus: automatically focus the window
 
         - smart: automatically focus if the window is in the current group
+
+        - never: never automatically focus any window that requests it
     * - follow_mouse_focus
       - True
       - Controls whether or not focus follows the mouse around as it moves
