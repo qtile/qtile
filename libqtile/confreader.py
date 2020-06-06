@@ -74,6 +74,10 @@ class Config:
         for key in self.settings_keys:
             try:
                 value = settings[key]
+                if not isinstance(value, type(default[key])):
+                    from libqtile.log_utils import logger
+                    logger.error("bad type for {}: got {}, expected {}".format(key,
+                                 type(value), type(default[key])))
             except KeyError:
                 value = getattr(self, key, default[key])
             setattr(self, key, value)
