@@ -1102,7 +1102,7 @@ class Qtile(CommandObject):
         try:
             self.config.load()
         except Exception as error:
-            send_notification("Configuration check", str(error.__context__))
+            send_notification("Configuration check", str(error))
         else:
             send_notification("Configuration check", "No error found!")
 
@@ -1112,7 +1112,7 @@ class Qtile(CommandObject):
             self.config.load()
         except Exception as error:
             logger.error("Preventing restart because of a configuration error: {}".format(error))
-            send_notification("Configuration error", str(error.__context__))
+            send_notification("Configuration error", str(error))
             return
         self.restart()
 

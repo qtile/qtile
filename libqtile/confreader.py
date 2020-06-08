@@ -97,12 +97,10 @@ class Config:
         try:
             sys.path.insert(0, os.path.dirname(self.file_path))
             config = __import__(name)  # noqa: F811
-        except Exception:
-            import traceback
+        except Exception as error:
             from libqtile.log_utils import logger
             logger.exception('Could not import config file %r', self.file_path)
-            tb = traceback.format_exc()
-            raise ConfigError(tb)
+            raise
 
         self.update(**vars(config))
         if self.kore:
