@@ -24,9 +24,12 @@
 # SOFTWARE.
 import os
 import sys
-from typing import Optional
+from typing import Callable, Optional
 
 from libqtile.backend import base
+from libqtile.layout.base import Layout
+
+NoneType = type(None)
 
 
 class ConfigError(Exception):
@@ -34,25 +37,25 @@ class ConfigError(Exception):
 
 
 class Config:
-    settings_keys = [
-        "keys",
-        "mouse",
-        "groups",
-        "dgroups_key_binder",
-        "dgroups_app_rules",
-        "follow_mouse_focus",
-        "focus_on_window_activation",
-        "cursor_warp",
-        "layouts",
-        "floating_layout",
-        "screens",
-        "main",
-        "auto_fullscreen",
-        "widget_defaults",
-        "extension_defaults",
-        "bring_front_click",
-        "wmname",
-    ]
+    settings_keys = {
+        "keys": list,
+        "mouse": list,
+        "groups": list,
+        "dgroups_key_binder": (Callable, NoneType),
+        "dgroups_app_rules": list,
+        "follow_mouse_focus": bool,
+        "focus_on_window_activation": str,
+        "cursor_warp": bool,
+        "layouts": list,
+        "floating_layout": Layout,
+        "screens": list,
+        "main": (Callable, NoneType),
+        "auto_fullscreen": bool,
+        "widget_defaults": dict,
+        "extension_defaults": dict,
+        "bring_front_click": bool,
+        "wmname": str
+    }
 
     def __init__(self, file_path=None, kore=None, **settings):
         """Create a Config() object from settings
@@ -108,8 +111,16 @@ class Config:
 
     def validate(self) -> None:
         """
-            Validate the configuration against the core.
+            Validate the configuration against the types and the core.
         """
+        for key, expected_type in self.settings_keys.items():
+            value = getattr(self, key)
+            if not isinstance(value, expected_type):
+                if isinstance(expected_type, tuple):
+                    expected_type = " or ".join(str(i) for i in expected_type)
+                raise ConfigError("{}: expected {} instance, got {}"
+                                  .format(key, expected_type, value))
+
         valid_keys = self.kore.get_keys()
         valid_mods = self.kore.get_modifiers()
         # we explicitly do not want to set self.keys and self.mouse above,
