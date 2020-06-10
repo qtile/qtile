@@ -256,7 +256,8 @@ class Bar(Gap, configurable.Configurable):
                     else:
                         i.length = int(interval - blocks[idx] / 2 - blocks[idx + 1] / 2)
                     stretchspace -= i.length
-                i.length += stretchspace
+                stretches[0].length += stretchspace // 2
+                stretches[-1].length += stretchspace - stretchspace // 2
 
         offset = 0
         if self.horizontal:
