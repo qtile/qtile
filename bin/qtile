@@ -28,6 +28,7 @@ this_dir = os.path.dirname(__file__)
 base_dir = os.path.abspath(os.path.join(this_dir, ".."))
 sys.path.insert(0, base_dir)
 
+from libqtile.scripts.main import main
+
 if __name__ == '__main__':
-    from libqtile.scripts import qtile
-    qtile.main()
+    main()
