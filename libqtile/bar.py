@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import configurable, confreader, drawer, window
+from libqtile import configurable, drawer, window
 from libqtile.command_object import CommandObject
 
 
