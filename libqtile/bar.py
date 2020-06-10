@@ -188,15 +188,12 @@ class Bar(Gap, configurable.Configurable):
                 else:
                     self.x -= self.margin[1]
 
-        stretches = 0
         for w in self.widgets:
             # Executing _test_orientation_compatibility later, for example in
             # the _configure() method of each widget, would still pass
             # test/test_bar.py but a segfault would be raised when nosetests is
             # about to exit
             w._test_orientation_compatibility(self.horizontal)
-            if w.length_type == STRETCH:
-                stretches += 1
 
         self.window = window.Internal.create(
             self.qtile,
