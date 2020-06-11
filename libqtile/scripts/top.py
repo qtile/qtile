@@ -22,7 +22,6 @@
     Command-line top like for qtile
 """
 
-import argparse
 import curses
 import linecache
 import os
@@ -39,24 +38,6 @@ class TraceNotStarted(Exception):
 
 class TraceCantStart(Exception):
     pass
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="Top like for qtile")
-    parser.add_argument('-l', '--lines', type=int, dest="lines", default=10,
-                        help='Number of lines.')
-    parser.add_argument('-r', '--raw', dest="raw", action="store_true",
-                        default=False, help='Output raw without curses')
-    parser.add_argument('-t', '--time', type=float, dest="seconds",
-                        default=1.5, help='Number of seconds to refresh')
-    parser.add_argument('--force-start', dest="force_start",
-                        action="store_true", default=False,
-                        help='Force start tracemalloc on qtile')
-    parser.add_argument('-s', '--socket', type=str, dest="socket",
-                        help='Use specified communication socket.')
-
-    opts = parser.parse_args()
-    return opts
 
 
 def get_trace(client, force_start):
@@ -148,8 +129,7 @@ def raw_stats(client, group_by='lineno', limit=10, force_start=False):
     print("Total allocated size: {0:.1f} KiB".format(total / 1024.0))
 
 
-def main():
-    opts = parse_args()
+def top(opts):
     lines = opts.lines
     seconds = opts.seconds
     force_start = opts.force_start
@@ -176,3 +156,19 @@ def main():
         print("Can't start tracemalloc on qtile, check the logs")
     except KeyboardInterrupt:
         exit(-1)
+
+
+def add_subcommand(subparsers):
+    parser = subparsers.add_parser("top", help="resource usage information")
+    parser.add_argument('-l', '--lines', type=int, dest="lines", default=10,
+                        help='Number of lines.')
+    parser.add_argument('-r', '--raw', dest="raw", action="store_true",
+                        default=False, help='Output raw without curses')
+    parser.add_argument('-t', '--time', type=float, dest="seconds",
+                        default=1.5, help='Number of seconds to refresh')
+    parser.add_argument('--force-start', dest="force_start",
+                        action="store_true", default=False,
+                        help='Force start tracemalloc on qtile')
+    parser.add_argument('-s', '--socket', type=str, dest="socket",
+                        help='Use specified communication socket.')
+    parser.set_defaults(func=top)
