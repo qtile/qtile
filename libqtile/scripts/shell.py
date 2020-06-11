@@ -21,15 +21,25 @@
 from libqtile import command_interface, ipc, sh
 
 
-def main() -> None:
-    import argparse
+def qshell(args) -> None:
+    if args.socket is None:
+        socket = ipc.find_sockfile()
+    else:
+        socket = args.socket
+    client = ipc.Client(socket, is_json=args.is_json)
+    cmd_object = command_interface.IPCCommandInterface(client)
+    qsh = sh.QSh(cmd_object)
+    if args.pyfile is None:
+        if args.command is not None:
+            qsh.process_line(args.command)
+        else:
+            qsh.loop()
+    else:
+        print(qsh.process_line("run_external({})".format(args.pyfile)))
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--version',
-        action='version',
-        version='%(prog)s 0.3',
-    )
+
+def add_subcommand(subparsers):
+    parser = subparsers.add_parser("shell", help="shell-like interface to qtile")
     parser.add_argument(
         "-s", "--socket",
         action="store", type=str,
@@ -56,20 +66,4 @@ def main() -> None:
         dest="is_json",
         help='Use json in order to communicate with qtile server.'
     )
-
-    args = parser.parse_args()
-
-    if args.socket is None:
-        socket = ipc.find_sockfile()
-    else:
-        socket = args.socket
-    client = ipc.Client(socket, is_json=args.is_json)
-    cmd_object = command_interface.IPCCommandInterface(client)
-    qsh = sh.QSh(cmd_object)
-    if args.pyfile is None:
-        if args.command is not None:
-            qsh.process_line(args.command)
-        else:
-            qsh.loop()
-    else:
-        print(qsh.process_line("run_external({})".format(args.pyfile)))
+    parser.set_defaults(func=qshell)
