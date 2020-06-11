@@ -29,9 +29,35 @@ import subprocess
 from libqtile import command_graph, ipc
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Run a command applying rules to the new windows")
+def run_cmd(opts) -> None:
+    if opts.socket is None:
+        socket = ipc.find_sockfile()
+    else:
+        socket = opts.socket
+    client = ipc.Client(socket)
+    root = command_graph.CommandGraphRoot()
+
+    proc = subprocess.Popen(opts.cmd)
+    match_args = {"net_wm_pid": proc.pid}
+    rule_args = {"float": opts.float, "intrusive": opts.intrusive,
+                 "group": opts.group, "break_on_match": not opts.dont_break}
+
+    cmd = root.navigate("add_rule", None)
+    assert isinstance(cmd, command_graph.CommandGraphCall)
+    _, rule_id = client.send((root.selectors, cmd.name, (match_args, rule_args), {}))
+
+    def remove_rule():
+        cmd = root.navigate("remove_rule", None)
+        assert isinstance(cmd, command_graph.CommandGraphCall)
+        client.send((root.selectors, cmd.name, (rule_id,), {}))
+
+    atexit.register(remove_rule)
+
+    proc.wait()
+
+
+def add_subcommand(subparsers):
+    parser = subparsers.add_parser("run-cmd", help="A wrapper around the command graph")
     parser.add_argument(
         '-s',
         '--socket',
@@ -59,44 +85,4 @@ def parse_args():
         'cmd',
         nargs=argparse.REMAINDER,
         help='Command to execute')
-
-    opts = parser.parse_args()
-    if not opts.cmd:
-        parser.print_help()
-        exit()
-    return opts
-
-
-def main() -> None:
-    opts = parse_args()
-    if opts.socket is None:
-        socket = ipc.find_sockfile()
-    else:
-        socket = opts.socket
-    client = ipc.Client(socket)
-    root = command_graph.CommandGraphRoot()
-
-    proc = subprocess.Popen(opts.cmd)
-    match_args = {"net_wm_pid": proc.pid}
-    rule_args = {"float": opts.float, "intrusive": opts.intrusive,
-                 "group": opts.group, "break_on_match": not opts.dont_break}
-
-    cmd = root.navigate("add_rule", None)
-    assert isinstance(cmd, command_graph.CommandGraphCall)
-    _, rule_id = client.send((root.selectors, cmd.name, (match_args, rule_args), {}))
-
-    def remove_rule():
-        cmd = root.navigate("remove_rule", None)
-        assert isinstance(cmd, command_graph.CommandGraphCall)
-        client.send((root.selectors, cmd.name, (rule_id,), {}))
-
-    atexit.register(remove_rule)
-
-    proc.wait()
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        pass
+    parser.set_defaults(func=run_cmd)

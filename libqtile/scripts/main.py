@@ -1,7 +1,7 @@
 import argparse
 import sys
 
-from libqtile.scripts import shell, start, top
+from libqtile.scripts import run_cmd, shell, start, top
 
 try:
     import pkg_resources
@@ -25,6 +25,7 @@ def main():
     start.add_subcommand(subparsers)
     shell.add_subcommand(subparsers)
     top.add_subcommand(subparsers)
+    run_cmd.add_subcommand(subparsers)
 
     # backward compat hack: `qtile` with no args (or non-subcommand args)
     # should default to `qtile start`. it seems impolite for commands to do
