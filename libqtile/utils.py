@@ -225,11 +225,13 @@ def send_notification(title, message, urgent=False, timeout=10000):
         gi.require_version("Notify", "0.7")
         from gi.repository import Notify
         Notify.init("Qtile")
-        notifier = Notify.Notification.new(title, message)
-        notifier.set_timeout(timeout)
-        if urgent:
-            notifier.set_urgency(Notify.Urgency.CRITICAL)
-        notifier.show()
+        info = Notify.get_server_info()
+        if info[0]:
+            notifier = Notify.Notification.new(title, message)
+            notifier.set_timeout(timeout)
+            if urgent:
+                notifier.set_urgency(Notify.Urgency.CRITICAL)
+            notifier.show()
     except Exception as exception:
         logger.error(exception)
 
