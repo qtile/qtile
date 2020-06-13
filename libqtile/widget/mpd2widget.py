@@ -190,7 +190,6 @@ class Mpd2(base.ThreadPoolText):
         super().__init__(None, **config)
 
         self.add_defaults(Mpd2.defaults)
-        self.connected = False
         self.client = MPDClient()
         self.client.timeout = self.timeout
         self.client.idletimeout = self.idletimeout
@@ -205,21 +204,19 @@ class Mpd2(base.ThreadPoolText):
                 if self.keys[k] is not None:
                     self.mouse_buttons[self.keys[k]] = k
 
-        self.try_reconnect()
-
-    def try_reconnect(self):
+    @property
+    def connected(self):
         """Attempt connection to mpd server."""
-        if not self.connected:
+        try:
+            self.client.ping()  # pylint: disable=E1101
+        except(socket_error, ConnectionError):
             try:
-                self.client.ping()  # pylint: disable=E1101
-            except(socket_error, ConnectionError):
-                try:
-                    self.client.connect(self.host, self.port)
-                    if self.password:
-                        self.client.password(self.password)  # pylint: disable=E1101
-                    self.connected = True
-                except(socket_error, ConnectionError, CommandError):
-                    self.connected = False
+                self.client.connect(self.host, self.port)
+                if self.password:
+                    self.client.password(self.password)  # pylint: disable=E1101
+            except(socket_error, ConnectionError, CommandError):
+                return False
+        return True
 
     def poll(self):
         """
@@ -227,8 +224,6 @@ class Mpd2(base.ThreadPoolText):
 
         poll the mpd server and update widget.
         """
-        self.try_reconnect()
-
         if self.connected:
             return self.update_status()
         else:
@@ -243,18 +238,15 @@ class Mpd2(base.ThreadPoolText):
 
         return self.formatter(status, current_song)
 
-    # TODO: Resolve timeouts on the method call.
     def button_press(self, x, y, button):
         """handle click event on widget."""
-        self.try_reconnect()
         m_name = self.mouse_buttons[button]
-        self_has_attr = hasattr(self, m_name)
-        client_has_attr = hasattr(self.client, m_name)
 
-        if self.connected and self_has_attr:
-            self.__try_call(m_name)
-        elif self.connected and client_has_attr:
-            self.__try_call(m_name, self.client)
+        if self.connected:
+            if hasattr(self, m_name):
+                self.__try_call(m_name)
+            elif hasattr(self.client, m_name):
+                self.__try_call(m_name, self.client)
 
     def __try_call(self, attr_name, obj=None):
         err1 = 'Class {Class} has no attribute {attr}.'
