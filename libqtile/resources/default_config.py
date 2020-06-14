@@ -27,7 +27,7 @@
 from typing import List  # noqa: F401
 
 from libqtile import bar, layout, widget
-from libqtile.config import Click, Drag, Group, Key, Screen
+from libqtile.config import Click, Drag, Group, Key, KeyChord, Screen
 from libqtile.lazy import lazy
 from libqtile.utils import guess_terminal
 
@@ -71,6 +71,12 @@ keys = [
     Key([mod, "control"], "q", lazy.shutdown(), desc="Shutdown qtile"),
     Key([mod], "r", lazy.spawncmd(),
         desc="Spawn a command using a prompt widget"),
+    KeyChord([mod], "q", [
+        Key([], "a", lazy.spawn("firefox")),
+    ]),
+    KeyChord([mod], "n", [
+        Key([], "a", lazy.spawn("firefox")),
+    ], "launch"),
 ]
 
 groups = [Group(i) for i in "asdfuiop"]
@@ -121,6 +127,12 @@ screens = [
                 widget.GroupBox(),
                 widget.Prompt(),
                 widget.WindowName(),
+                widget.Chord(
+                    chords_colors={
+                        'launch': ("#ff0000", "#ffffff"),
+                    },
+                    name_transform=lambda name: name.upper(),
+                ),
                 widget.TextBox("default config", name="default"),
                 widget.TextBox("Press &lt;M-r&gt; to spawn", foreground="#d75f5f"),
                 widget.Systray(),

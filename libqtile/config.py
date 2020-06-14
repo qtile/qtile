@@ -32,6 +32,7 @@ from typing import List
 
 from libqtile import configurable, hook, utils
 from libqtile.command_object import CommandObject
+from libqtile.lazy import lazy
 
 
 class Key:
@@ -58,6 +59,36 @@ class Key:
 
     def __repr__(self):
         return "<Key (%s, %s)>" % (self.modifiers, self.key)
+
+
+class KeyChord:
+    """Define a key chord aka vim like mode
+
+    Parameters
+    ==========
+    modifiers:
+        A list of modifier specifications. Modifier specifications are one of:
+        "shift", "lock", "control", "mod1", "mod2", "mod3", "mod4", "mod5".
+    key:
+        A key specification, e.g. "a", "Tab", "Return", "space".
+    submappings:
+        A list of Key declarations to bind in this chord
+    mode:
+        A string with vim like mode name if it's set chord not end
+        after use one of submapings or Esc key
+    """
+    def __init__(self, modifiers: List[str], key: str, submapings: List[Key], mode: str = ""):
+        self.modifiers = modifiers
+        self.key = key
+
+        def noop(qtile):
+            pass
+        submapings.append(Key([], "Escape", lazy.function(noop)))
+        self.submapings = submapings
+        self.mode = mode
+
+    def __repr__(self):
+        return "<KeyChord (%s, %s)>" % (self.modifiers, self.key)
 
 
 class Mouse:
