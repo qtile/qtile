@@ -225,6 +225,114 @@ def test_keypress(qtile):
     assert self.c.groups()["a"]["focus"] == "one"
 
 
+class _ChordsConfig:
+    groups = [
+        libqtile.config.Group("a")
+    ]
+    layouts = [
+        libqtile.layout.max.Max()
+    ]
+    floating_layout = libqtile.layout.floating.Floating()
+    keys = [
+        libqtile.config.Key(
+            [],
+            "k",
+            lazy.layout.up(),
+        ),
+        libqtile.config.KeyChord(["control"], "a", [
+            libqtile.config.Key(
+                [],
+                "j",
+                lazy.layout.down(),
+            )
+        ]),
+        libqtile.config.KeyChord(["control"], "b", [
+            libqtile.config.Key(
+                [],
+                "j",
+                lazy.layout.down(),
+            )
+        ], "test")
+    ]
+    mouse = []
+    screens = [libqtile.config.Screen(
+        bottom=libqtile.bar.Bar(
+            [
+                libqtile.widget.GroupBox(),
+            ],
+            20
+        ),
+    )]
+    auto_fullscreen = True
+
+
+chords_config = pytest.mark.parametrize("qtile", [_ChordsConfig], indirect=True)
+
+
+@chords_config
+@no_xinerama
+def test_immediate_chord(qtile):
+    self = qtile
+
+    self.test_window("three")
+    self.test_window("two")
+    self.test_window("one")
+    assert self.c.groups()["a"]["focus"] == "one"
+    # use normal bind to shift focus up
+    self.c.simulate_keypress([], "k")
+    assert self.c.groups()["a"]["focus"] == "two"
+    # enter into key chord and "k" bindin no longer working
+    self.c.simulate_keypress(["control"], "a")
+    self.c.simulate_keypress([], "k")
+    assert self.c.groups()["a"]["focus"] == "two"
+    # leave chord using "Escape", "k" bind work again
+    self.c.simulate_keypress([], "Escape")
+    self.c.simulate_keypress([], "k")
+    assert self.c.groups()["a"]["focus"] == "three"
+    # enter key chord and use it's "j" binding to shift focus down
+    self.c.simulate_keypress(["control"], "a")
+    self.c.simulate_keypress([], "j")
+    assert self.c.groups()["a"]["focus"] == "two"
+    # in immediate chord we leave it after use any
+    # bind from it, "j" bind no longer working
+    self.c.simulate_keypress([], "j")
+    assert self.c.groups()["a"]["focus"] == "two"
+
+
+@chords_config
+@no_xinerama
+def test_mode_chord(qtile):
+    self = qtile
+
+    self.test_window("three")
+    self.test_window("two")
+    self.test_window("one")
+    assert self.c.groups()["a"]["focus"] == "one"
+    # use normal bind to shift focus up
+    self.c.simulate_keypress([], "k")
+    assert self.c.groups()["a"]["focus"] == "two"
+    # enter into key chord and "k" bindin no longer working
+    self.c.simulate_keypress(["control"], "b")
+    self.c.simulate_keypress([], "k")
+    assert self.c.groups()["a"]["focus"] == "two"
+    # leave chord using "Escape", "k" bind work again
+    self.c.simulate_keypress([], "Escape")
+    self.c.simulate_keypress([], "k")
+    assert self.c.groups()["a"]["focus"] == "three"
+    # enter key chord and use it's "j" binding to shift focus down
+    self.c.simulate_keypress(["control"], "b")
+    self.c.simulate_keypress([], "j")
+    assert self.c.groups()["a"]["focus"] == "two"
+    # in mode chord we __not__ leave it after use any
+    # bind from it, "j" bind still working
+    self.c.simulate_keypress([], "j")
+    assert self.c.groups()["a"]["focus"] == "one"
+    # only way to exit mode chord is by hit "Escape"
+    self.c.simulate_keypress([], "Escape")
+    self.c.simulate_keypress([], "j")
+    assert self.c.groups()["a"]["focus"] == "one"
+
+
 @manager_config
 @no_xinerama
 def test_spawn(qtile):

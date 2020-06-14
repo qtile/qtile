@@ -45,7 +45,7 @@ from libqtile.command_object import (
     CommandException,
     CommandObject,
 )
-from libqtile.config import Click, Drag, Match, Rule
+from libqtile.config import Click, Drag, KeyChord, Match, Rule
 from libqtile.config import ScratchPad as ScratchPadConfig
 from libqtile.config import Screen
 from libqtile.dgroups import DGroups
@@ -102,6 +102,7 @@ class Qtile(CommandObject):
         self.groups_map = {}
         self.groups = []
         self.keys_map = {}
+        self.current_chord = False
 
         self.numlock_mask, self.valid_mask = self.core.masks
 
@@ -350,15 +351,20 @@ class Qtile(CommandObject):
             logger.info("Ignoring unknown keysym: {keysym}, mask: {mask}".format(keysym=keysym, mask=mask))
             return
 
-        for cmd in key.commands:
-            if cmd.check(self):
-                status, val = self.server.call(
-                    (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
-                )
-                if status in (command_interface.ERROR, command_interface.EXCEPTION):
-                    logger.error("KB command error %s: %s" % (cmd.name, val))
+        if isinstance(key, KeyChord):
+            self.grab_chord(key)
         else:
-            return
+            for cmd in key.commands:
+                if cmd.check(self):
+                    status, val = self.server.call(
+                        (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
+                    )
+                    if status in (command_interface.ERROR, command_interface.EXCEPTION):
+                        logger.error("KB command error %s: %s" % (cmd.name, val))
+            else:
+                if self.current_chord is True or (self.current_chord and key.key == "Escape"):
+                    self.ungrab_chord()
+                return
 
     def grab_keys(self) -> None:
         self.core.ungrab_keys()
@@ -375,6 +381,25 @@ class Qtile(CommandObject):
         key = self.keys_map.pop((keysym, mask_key))
         if key is not None:
             self.core.ungrab_key(keysym, modmask)
+
+    def clear_chords(self) -> None:
+        self.core.ungrab_keys()
+        self.keys_map.clear()
+
+    def grab_chord(self, chord) -> None:
+        self.current_chord = chord.mode if chord.mode != "" else True
+        if self.current_chord:
+            hook.fire("enter_chord", self.current_chord)
+        self.clear_chords()
+        for key in chord.submapings:
+            self.grab_key(key)
+
+    def ungrab_chord(self) -> None:
+        self.current_chord = False
+        hook.fire("leave_chord")
+        self.clear_chords()
+        for key in self.config.keys:
+            self.grab_key(key)
 
     def grab_mouse(self) -> None:
         self.core.ungrab_buttons()
