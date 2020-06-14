@@ -224,6 +224,7 @@ def test_keypress(qtile):
     self.c.simulate_keypress(["control"], "j")
     assert self.c.groups()["a"]["focus"] == "one"
 
+
 class _ChordsConfig:
     groups = [
         libqtile.config.Group("a")
@@ -264,6 +265,7 @@ class _ChordsConfig:
     )]
     auto_fullscreen = True
 
+
 chords_config = pytest.mark.parametrize("qtile", [_ChordsConfig], indirect=True)
 
 
@@ -295,6 +297,7 @@ def test_immediate_chord(qtile):
     # bind from it, "j" bind no longer working
     self.c.simulate_keypress([], "j")
     assert self.c.groups()["a"]["focus"] == "two"
+
 
 @chords_config
 @no_xinerama

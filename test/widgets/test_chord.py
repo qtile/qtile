@@ -1,8 +1,6 @@
-import cairocffi
-import pytest
-
 from libqtile import hook
 from libqtile.widget import Chord
+
 
 def test_chord_widget(fake_bar):
     chord = Chord()
