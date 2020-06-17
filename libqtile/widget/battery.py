@@ -43,6 +43,7 @@ from libqtile import bar, configurable, images
 from libqtile.images import Img
 from libqtile.log_utils import logger
 from libqtile.widget import base
+from libqtile.utils import send_notification
 
 
 @unique
@@ -319,6 +320,7 @@ class Battery(base.ThreadedPollText):
         ('low_foreground', 'FF0000', 'Font color on low battery'),
         ('update_interval', 60, 'Seconds between status updates'),
         ('battery', 0, 'Which battery should be monitored (battery number or name)'),
+        ('notify_below', None, 'Send a notification below this battery level.'),
     ]
 
     def __init__(self, **config) -> None:
@@ -352,6 +354,11 @@ class Battery(base.ThreadedPollText):
             status = self._battery.update_status()
         except RuntimeError as e:
             return 'Error: {}'.format(e)
+
+        if self.notify_below:
+            percent = int(status.percent * 100)
+            if percent < self.notify_below:
+                send_notification("Warning", f"Battery at {percent}%", urgent=True)
 
         return self.build_string(status)
 
