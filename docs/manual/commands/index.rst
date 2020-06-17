@@ -8,10 +8,10 @@ different places:
 
 * Commands can be :doc:`bound to keys </manual/config/keys>` in the Qtile
   configuration file.
-* Commands can be :doc:`called through qshell </manual/commands/qshell>`, the
+* Commands can be :doc:`called through qshell </manual/commands/shell/qshell>`, the
   Qtile shell.
 * The qsh can also be hooked into a Jupyter kernel :doc:`called iqshell
-  </manual/commands/iqshell>`.
+  </manual/commands/shell/iqshell>`.
 * Commands can be :doc:`called from a script </manual/commands/scripting>` to
   interact with Qtile from Python.
 
