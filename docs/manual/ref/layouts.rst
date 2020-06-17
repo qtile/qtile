@@ -1,4 +1,4 @@
-.. _ref_layouts:
+.. _ref-layouts:
 
 ================
 Built-in Layouts

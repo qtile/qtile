@@ -1,11 +1,13 @@
+.. _scripting-commands:
+
 ==================
 Scripting Commands
 ==================
 
 Here is documented some of the commands available on objects in the command
 tree when running qshell or scripting commands to qtile.  Note that this is an
-incomplete list, some objects, such as :ref:`layouts <ref_layouts>` and
-:ref:`widgets <ref_widgets>`, may implement their own set of commands beyond
+incomplete list, some objects, such as :ref:`layouts <ref-layouts>` and
+:ref:`widgets <ref-widgets>`, may implement their own set of commands beyond
 those given here.
 
 .. _qtile_commands:

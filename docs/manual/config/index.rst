@@ -62,7 +62,7 @@ a system tray, and a clock.
 The default configuration has several more advanced key combinations, but the
 above should be enough for basic usage of qtile.
 
-See :doc:`Keybindings in images </manual/commands/keybindings>` for visual
+See :ref:`Keybindings in images <keybinding-img>` for visual
 keybindings in keyboard layout.
 
 Mouse Bindings
@@ -189,7 +189,7 @@ script. This will run Qtile with your ``config.py`` inside a nested X server
 and prevent your running instance of Qtile from crashing if something goes
 wrong.
 
-See :doc:`Hacking Qtile </manual/hacking>` for more information on using
+See :ref:`Hacking Qtile <hacking>` for more information on using
 Xephyr.
 
 Starting Qtile
