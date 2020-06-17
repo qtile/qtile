@@ -13,10 +13,10 @@ Getting started
     manual/commands/shell/index
 
 
-- :doc:`manual/ref/extensions`
-- :doc:`manual/ref/hooks`
-- :doc:`manual/ref/layouts`
-- :doc:`manual/ref/widgets`
+- :ref:`ref-extensions`
+- :ref:`ref-hooks`
+- :ref:`ref-layouts`
+- :ref:`ref-widgets`
 
 .. toctree::
     :maxdepth: 2

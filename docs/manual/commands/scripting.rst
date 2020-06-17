@@ -1,3 +1,5 @@
+.. _scripting:
+
 =========
 Scripting
 =========
@@ -14,9 +16,9 @@ establishes a connection to the currently running instance of Qtile.  A
 ``libqtile.command_client.CommandClient`` can use this connection to dispatch
 commands to the running instance.  Commands then appear as methods with the
 appropriate signature on the ``CommandClient`` object.  The object hierarchy is
-described in the :doc:`/manual/commands/index` section of this manual. Full
-command documentation is available through the :doc:`Qtile Shell
-</manual/commands/shell/qshell>`.
+described in the :ref:`commands-api` section of this manual. Full
+command documentation is available through the :ref:`Qtile Shell
+<qshell>`.
 
 
 Example

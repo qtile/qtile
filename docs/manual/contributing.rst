@@ -24,7 +24,7 @@ has two qualities:
 Writing code
 ============
 
-To get started writing code for Qtile, check out our guide to :doc:`hacking`.
+To get started writing code for Qtile, check out our guide to :ref:`hacking`.
 
 Submit a pull request
 ---------------------
