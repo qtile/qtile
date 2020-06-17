@@ -388,7 +388,7 @@ class Qtile(CommandObject):
 
     def grab_chord(self, chord) -> None:
         self.current_chord = chord.mode if chord.mode != "" else True
-        if self.current_chord and self.current_chord is not True:
+        if self.current_chord:
             hook.fire("enter_chord", self.current_chord)
         self.clear_chords()
         for key in chord.submapings:
