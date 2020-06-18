@@ -42,8 +42,8 @@ from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 from libqtile import bar, configurable, images
 from libqtile.images import Img
 from libqtile.log_utils import logger
-from libqtile.widget import base
 from libqtile.utils import send_notification
+from libqtile.widget import base
 
 
 @unique
@@ -358,7 +358,7 @@ class Battery(base.ThreadedPollText):
         if self.notify_below:
             percent = int(status.percent * 100)
             if percent < self.notify_below:
-                send_notification("Warning", f"Battery at {percent}%", urgent=True)
+                send_notification("Warning", "Battery at {0}%".format(percent), urgent=True)
 
         return self.build_string(status)
 
