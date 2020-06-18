@@ -52,10 +52,7 @@ class Chord(base._TextBox):
 
             self.text = self.name_transform(chord_name)
             if chord_name in self.chords_colors:
-                colors = self.chords_colors.get(chord_name)
-                if type(colors) is tuple and len(colors) == 2:
-                    self.background = colors[0]
-                    self.foreground = colors[1]
+                (self.background, self.foreground) = self.chords_colors.get(chord_name)
 
             self.bar.draw()
 
