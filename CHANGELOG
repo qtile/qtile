@@ -3,6 +3,7 @@ qtile X.X.X, released XXXX-XX-XX:
         - added `guess_terminal` in utils
         - added keybinding cheet sheet image generator
         - custom keyboardlayout display 
+        - added option to warp cursor to bottom right of window before drag
 
 qtile 0.15.1, released 2020-04-14
     * bugfixes

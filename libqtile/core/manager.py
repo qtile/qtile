@@ -779,6 +779,14 @@ class Qtile(CommandObject):
                     i = m.start
                     if m.focus == "before":
                         self.cmd_focus_by_click(event)
+
+                    if hasattr(m, 'cursor_warp') and m.cursor_warp:
+                        # warp cursor to bottom right of window before dragging
+                        new_x = self.current_window.width + self.current_window.x
+                        new_y = self.current_window.height + self.current_window.y
+                        self.current_window.window.warp_pointer(self.current_window.width, self.current_window.height)
+                        self.mouse_position = (new_x, new_y)
+
                     status, val = self.server.call(
                         (i.selectors, i.name, i.args, i.kwargs))
                     if status in (command_interface.ERROR, command_interface.EXCEPTION):
@@ -790,7 +798,7 @@ class Qtile(CommandObject):
                     val = (0, 0)
                 if m.focus == "after":
                     self.cmd_focus_by_click(event)
-                self._drag = (x, y, val[0], val[1], m.commands)
+                self._drag = (self.mouse_position[0], self.mouse_position[1], val[0], val[1], m.commands)
                 self.core.grab_pointer()
 
     def process_button_release(self, button_code):

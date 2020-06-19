@@ -110,6 +110,9 @@ class Drag(Mouse):
 
     It focuses clicked window by default.  If you want to prevent it pass,
     `focus=None` as an argument
+
+    To position the mouse cursor at the bottom right of the window before
+    dragging, pass `cursor_warp=True` as argument
     """
     def __init__(self, *args, start=False, **kwargs):
         super().__init__(*args, **kwargs)
