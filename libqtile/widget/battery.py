@@ -333,6 +333,7 @@ class Battery(base.ThreadedPollText):
         self.add_defaults(self.defaults)
 
         self._battery = self._load_battery(**config)
+        self._has_notified = False
 
     @staticmethod
     def _load_battery(**config):
@@ -358,7 +359,11 @@ class Battery(base.ThreadedPollText):
         if self.notify_below:
             percent = int(status.percent * 100)
             if percent < self.notify_below:
-                send_notification("Warning", "Battery at {0}%".format(percent), urgent=True)
+                if not self._has_notified:
+                    send_notification("Warning", "Battery at {0}%".format(percent), urgent=True)
+                    self._has_notified = True
+            elif self._has_notified:
+                self._has_notified = False
 
         return self.build_string(status)
 
