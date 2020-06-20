@@ -114,9 +114,10 @@ class Drag(Mouse):
     To position the mouse cursor at the bottom right of the window before
     dragging, pass `cursor_warp=True` as argument
     """
-    def __init__(self, *args, start=False, **kwargs):
+    def __init__(self, *args, start=False, cursor_warp=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.start = start
+        self.cursor_warp = cursor_warp
 
     def __repr__(self):
         return "<Drag (%s, %s)>" % (self.modifiers, self.button)

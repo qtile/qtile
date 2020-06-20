@@ -780,7 +780,7 @@ class Qtile(CommandObject):
                     if m.focus == "before":
                         self.cmd_focus_by_click(event)
 
-                    if hasattr(m, 'cursor_warp') and m.cursor_warp:
+                    if m.cursor_warp:
                         # warp cursor to bottom right of window before dragging
                         new_x = self.current_window.width + self.current_window.x
                         new_y = self.current_window.height + self.current_window.y
