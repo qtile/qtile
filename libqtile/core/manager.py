@@ -179,11 +179,15 @@ class Qtile(CommandObject):
         hook.fire("startup")
 
         if state:
-            st = pickle.load(io.BytesIO(state.encode()))
             try:
-                st.apply(self)
+                st = pickle.load(io.BytesIO(state.encode()))
             except:  # noqa: E722
                 logger.exception("failed restoring state")
+            else:
+                try:
+                    st.apply(self)
+                except:  # noqa: E722
+                    logger.exception("failed applying state")
 
         self.core.scan()
         self.update_net_desktops()
