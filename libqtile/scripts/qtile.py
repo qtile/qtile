@@ -107,8 +107,8 @@ def make_qtile():
     options = parser.parse_args()
     log_level = getattr(logging, options.log_level)
     init_log(log_level=log_level)
-
     kore = xcore.XCore()
+
     try:
         if not path.isfile(options.configfile):
             try:
@@ -124,7 +124,7 @@ def make_qtile():
                 logger.exception('Failed to copy default_config.py to %s: (%s)',
                                  options.configfile, e)
 
-        config = confreader.Config.from_file(kore, options.configfile)
+        config = confreader.Config.from_file(options.configfile, kore=kore)
     except Exception as e:
         logger.exception('Error while reading config file (%s)', e)
         config = confreader.Config()

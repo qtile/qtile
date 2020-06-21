@@ -41,6 +41,7 @@ from collections import OrderedDict
 from itertools import chain, repeat
 
 import cairocffi
+import cairocffi.pixbuf
 import cairocffi.xcb
 import xcffib
 import xcffib.randr
@@ -682,7 +683,7 @@ class Window:
                 value
             ).check()
         except xcffib.xproto.WindowError:
-            logger.warning(
+            logger.debug(
                 'X error in SetProperty (wid=%r, prop=%r), ignoring',
                 self.wid, name)
 
@@ -712,7 +713,7 @@ class Window:
                 0, (2 ** 32) - 1
             ).reply()
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
-            logger.warning(
+            logger.debug(
                 'X error in GetProperty (wid=%r, prop=%r), ignoring',
                 self.wid, prop)
             if unpack:
@@ -944,7 +945,10 @@ class Connection:
         return Window(self, wid)
 
     def disconnect(self):
-        self.conn.disconnect()
+        try:
+            self.conn.disconnect()
+        except xcffib.ConnectionException:
+            logger.error("Failed to disconnect, connection already failed?")
         self._connected = False
 
     def flush(self):
@@ -973,6 +977,20 @@ class Connection:
             i.name.to_string().lower()
             for i in self.conn.core.ListExtensions().reply().names
         )
+
+    def fixup_focus(self):
+        """
+        If the X11 focus is set to None, all keypress events are discarded,
+        which makes our hotkeys not work. This fixes up the focus so it is not
+        None.
+        """
+        window = self.conn.core.GetInputFocus().reply().focus
+        if window == xcffib.xproto.InputFocus._None:
+            self.conn.core.SetInputFocus(
+                xcffib.xproto.InputFocus.PointerRoot,
+                xcffib.xproto.InputFocus.PointerRoot,
+                xcffib.xproto.Time.CurrentTime,
+            )
 
 
 class Painter:

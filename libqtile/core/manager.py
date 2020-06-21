@@ -38,7 +38,6 @@ import xcffib.xproto
 
 from libqtile import command_interface, hook, utils, window
 from libqtile.backend.x11 import xcbq
-from libqtile.backend.x11.xcore import XCore
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_interface import IPCCommandServer, QtileCommandInterface
 from libqtile.command_object import (
@@ -46,10 +45,9 @@ from libqtile.command_object import (
     CommandException,
     CommandObject,
 )
-from libqtile.config import Click, Drag, Match, Rule
+from libqtile.config import Click, Drag, KeyChord, Match, Rule
 from libqtile.config import ScratchPad as ScratchPadConfig
 from libqtile.config import Screen
-from libqtile.confreader import Config, ConfigError
 from libqtile.dgroups import DGroups
 from libqtile.extension.base import _Extension
 from libqtile.group import _Group
@@ -59,32 +57,6 @@ from libqtile.scratchpad import ScratchPad
 from libqtile.state import QtileState
 from libqtile.utils import get_cache_dir, send_notification
 from libqtile.widget.base import _Widget
-
-
-def validate_config(file_path):
-    """
-    Validate a configuration file.
-
-    This function reloads and imports the given configuration file.
-    It re-raises a ConfigError with a detailed message for any caught exception.
-    """
-    output = [
-        "The configuration file '",
-        file_path,
-        "' generated the following error:\n\n",
-    ]
-
-    try:
-        Config.from_file(XCore(), file_path)
-
-    except ConfigError as error:
-        output.append(str(error))
-        raise ConfigError("".join(output))
-
-    except Exception as error:
-        # Handle SyntaxError and the likes
-        output.append("{}: {}".format(sys.exc_info()[0].__name__, str(error)))
-        raise ConfigError("".join(output))
 
 
 def _import_module(module_name, dir_path):
@@ -130,6 +102,7 @@ class Qtile(CommandObject):
         self.groups_map = {}
         self.groups = []
         self.keys_map = {}
+        self.current_chord = False
 
         self.numlock_mask, self.valid_mask = self.core.masks
 
@@ -238,7 +211,7 @@ class Qtile(CommandObject):
         logger.debug('Adding io watch')
         self.core.setup_listener(self, self._eventloop)
 
-        self._stopped_event = asyncio.Event(loop=self._eventloop)
+        self._stopped_event = asyncio.Event()
 
         # This is a little strange. python-dbus internally depends on gobject,
         # so gobject's threads need to be running, and a gobject "main loop
@@ -264,18 +237,20 @@ class Qtile(CommandObject):
             logger.warning("importing dbus/gobject failed, dbus will not work.")
             self._glib_loop = None
 
-    async def async_loop(self):
+    async def async_loop(self) -> None:
+        """Run the event loop
+
+        Finalizes the Qtile instance on exit.
+        """
         try:
             await self._stopped_event.wait()
         finally:
             await self.finalize()
 
-    def loop(self):
-        self._eventloop.run_until_complete(self.async_loop())
+        self._eventloop.stop()
 
-        self._eventloop.close()
-        self._eventloop = None
-
+    def maybe_restart(self) -> None:
+        """If set, restart the qtile instance"""
         if self._restart:
             logger.warning('Restarting Qtile with os.execv(...)')
             os.execv(*self._restart)
@@ -288,6 +263,20 @@ class Qtile(CommandObject):
 
         logger.debug('Stopping qtile')
         self._stopped_event.set()
+
+    def restart(self):
+        argv = [sys.executable] + sys.argv
+        if '--no-spawn' not in argv:
+            argv.append('--no-spawn')
+        buf = io.BytesIO()
+        try:
+            pickle.dump(QtileState(self), buf, protocol=0)
+        except:  # noqa: E722
+            logger.error("Unable to pickle qtile state")
+        argv = [s for s in argv if not s.startswith('--with-state')]
+        argv.append('--with-state=' + buf.getvalue().decode())
+        self._restart = (sys.executable, argv)
+        self.stop()
 
     async def finalize(self):
         self._eventloop.remove_signal_handler(signal.SIGINT)
@@ -303,21 +292,19 @@ class Qtile(CommandObject):
                 pass
 
         try:
+            for widget in self.widgets_map.values():
+                widget.finalize()
 
-            for w in self.widgets_map.values():
-                w.finalize()
-
-            for l in self.config.layouts:
-                l.finalize()
+            for layout in self.config.layouts:
+                layout.finalize()
 
             for screen in self.screens:
                 for bar in [screen.top, screen.bottom, screen.left, screen.right]:
                     if bar is not None:
                         bar.finalize()
-
-            self.core.remove_listener(self._eventloop)
         except:  # noqa: E722
             logger.exception('exception during finalize')
+            self.core.remove_listener()
 
     def _process_fake_screens(self):
         """
@@ -361,20 +348,25 @@ class Qtile(CommandObject):
         screen.resize(0, 0, width, height)
 
     def process_key_event(self, keysym: int, mask: int) -> None:
-        key = self.keys_map[(keysym, mask)]
+        key = self.keys_map.get((keysym, mask), None)
         if key is None:
-            logger.info("Ignoring unknown keysym: {keysym}".format(keysym=keysym))
+            logger.info("Ignoring unknown keysym: {keysym}, mask: {mask}".format(keysym=keysym, mask=mask))
             return
 
-        for cmd in key.commands:
-            if cmd.check(self):
-                status, val = self.server.call(
-                    (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
-                )
-                if status in (command_interface.ERROR, command_interface.EXCEPTION):
-                    logger.error("KB command error %s: %s" % (cmd.name, val))
+        if isinstance(key, KeyChord):
+            self.grab_chord(key)
         else:
-            return
+            for cmd in key.commands:
+                if cmd.check(self):
+                    status, val = self.server.call(
+                        (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
+                    )
+                    if status in (command_interface.ERROR, command_interface.EXCEPTION):
+                        logger.error("KB command error %s: %s" % (cmd.name, val))
+            else:
+                if self.current_chord is True or (self.current_chord and key.key == "Escape"):
+                    self.ungrab_chord()
+                return
 
     def grab_keys(self) -> None:
         self.core.ungrab_keys()
@@ -391,6 +383,25 @@ class Qtile(CommandObject):
         key = self.keys_map.pop((keysym, mask_key))
         if key is not None:
             self.core.ungrab_key(keysym, modmask)
+
+    def clear_chords(self) -> None:
+        self.core.ungrab_keys()
+        self.keys_map.clear()
+
+    def grab_chord(self, chord) -> None:
+        self.current_chord = chord.mode if chord.mode != "" else True
+        if self.current_chord:
+            hook.fire("enter_chord", self.current_chord)
+        self.clear_chords()
+        for key in chord.submapings:
+            self.grab_key(key)
+
+    def ungrab_chord(self) -> None:
+        self.current_chord = False
+        hook.fire("leave_chord")
+        self.clear_chords()
+        for key in self.config.keys:
+            self.grab_key(key)
 
     def grab_mouse(self) -> None:
         self.core.ungrab_buttons()
@@ -590,6 +601,8 @@ class Qtile(CommandObject):
                 c.group.remove(c)
             del self.windows_map[win]
             self.update_client_list()
+        if self.current_window is None:
+            self.conn.fixup_focus()
 
     def graceful_shutdown(self):
         """
@@ -824,6 +837,7 @@ class Qtile(CommandObject):
         self.current_screen = self.screens[n]
         if old != self.current_screen:
             hook.fire("current_screen_change")
+            hook.fire("setgroup")
             old.group.layout_all()
             self.current_group.focus(self.current_window, warp)
 
@@ -1111,27 +1125,23 @@ class Qtile(CommandObject):
         d.state = modmasks
         self.core.handle_KeyPress(d)
 
+    def cmd_validate_config(self):
+        try:
+            self.config.load()
+        except Exception as error:
+            send_notification("Configuration check", str(error.__context__))
+        else:
+            send_notification("Configuration check", "No error found!")
+
     def cmd_restart(self):
         """Restart qtile"""
         try:
-            validate_config(self.config.file_path)
-        except ConfigError as error:
-            logger.error("Preventing restart because of a configuration error: " + str(error))
-            send_notification("Configuration error", str(error))
+            self.config.load()
+        except Exception as error:
+            logger.error("Preventing restart because of a configuration error: {}".format(error))
+            send_notification("Configuration error", str(error.__context__))
             return
-
-        argv = [sys.executable] + sys.argv
-        if '--no-spawn' not in argv:
-            argv.append('--no-spawn')
-        buf = io.BytesIO()
-        try:
-            pickle.dump(QtileState(self), buf, protocol=0)
-        except:  # noqa: E722
-            logger.error("Unable to pickle qtile state")
-        argv = [s for s in argv if not s.startswith('--with-state')]
-        argv.append('--with-state=' + buf.getvalue().decode())
-        self._restart = (sys.executable, argv)
-        self.stop()
+        self.restart()
 
     def cmd_spawn(self, cmd):
         """Run cmd in a shell.

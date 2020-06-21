@@ -1,3 +1,5 @@
+.. _lazy:
+
 ============
 Lazy objects
 ============
@@ -5,7 +7,7 @@ Lazy objects
 The ``lazy.lazy`` object is a special helper object to specify a command for
 later execution. This object acts like the root of the object graph, which
 means that we can specify a key binding command with the same syntax used to
-call the command through a script or through :doc:`/manual/commands/qshell`.
+call the command through a script or through :ref:`qshell`.
 
 Example
 -------
@@ -73,7 +75,10 @@ Group functions
     * - ``lazy.screen.toggle_group()``
       - Move to the last visited group
     * - ``lazy.group["group_name"].toscreen()``
-      - Move to the group called ``group_name``
+      - Move to the group called ``group_name``.
+        Takes an optional ``toggle`` parameter (defaults to True).
+        If this group is already on the screen, then the group is toggled 
+        with last used
     * - ``lazy.layout.increase_ratio()``
       - Increase the space for master window at the expense of slave windows
     * - ``lazy.layout.decrease_ratio()``

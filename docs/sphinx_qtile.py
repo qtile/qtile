@@ -182,8 +182,8 @@ class QtileModule(SimpleDirectiveMixin, Directive):
 
         for item in dir(module):
             obj = import_object(self.arguments[0], item)
-            if not inspect.isclass(obj) and (BaseClass and
-                not isinstance(obj, BaseClass)):
+            if not inspect.isclass(obj) or (BaseClass and
+                not issubclass(obj, BaseClass)):
                 continue
 
             context = {

@@ -93,9 +93,20 @@ class _Widget(CommandObject, configurable.Configurable):
     have been configured.
 
     Callback functions can be assigned to button presses by passing a dict to the
-    'callbacks' kwarg. For example: {'Button1': func} will execute func when the widget
-    receives a button 1 press. The Qtile instance of passed as the only argument to the
-    callback functions.
+    'callbacks' kwarg.
+
+    For example:
+
+    .. code-block:: python
+
+        def open_calendar(qtile):
+            qtile.cmd_spawn('gsimplecal next_month')
+
+        clock = widget.Clock(mouse_callbacks={'Button1': open_calendar})
+
+    When the clock widget receives a click with button 1, the ``open_calendar`` function
+    will be executed. Callbacks can be assigned to other buttons by adding more entries
+    to the passed dictionary.
     """
     orientations = ORIENTATION_BOTH
     offsetx = None

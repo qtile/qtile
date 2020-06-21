@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import configurable, confreader, drawer, window
+from libqtile import configurable, drawer, window
 from libqtile.command_object import CommandObject
 
 
@@ -188,17 +188,12 @@ class Bar(Gap, configurable.Configurable):
                 else:
                     self.x -= self.margin[1]
 
-        stretches = 0
         for w in self.widgets:
             # Executing _test_orientation_compatibility later, for example in
             # the _configure() method of each widget, would still pass
             # test/test_bar.py but a segfault would be raised when nosetests is
             # about to exit
             w._test_orientation_compatibility(self.horizontal)
-            if w.length_type == STRETCH:
-                stretches += 1
-        if stretches > 1:
-            raise confreader.ConfigError("Only one STRETCH widget allowed!")
 
         self.window = window.Internal.create(
             self.qtile,
@@ -238,11 +233,31 @@ class Bar(Gap, configurable.Configurable):
                 [i.length for i in widgets if i.length_type != STRETCH]
             )
             stretchspace = max(stretchspace, 0)
-            astretch = stretchspace // len(stretches)
-            for i in stretches:
-                i.length = astretch
-            if astretch:
-                i.length += stretchspace % astretch
+            num_stretches = len(stretches)
+            if num_stretches == 1:
+                stretches[0].length = stretchspace
+            else:
+                block = 0
+                blocks = []
+                for i in widgets:
+                    if i.length_type != STRETCH:
+                        block += i.length
+                    else:
+                        blocks.append(block)
+                        block = 0
+                if block:
+                    blocks.append(block)
+                interval = length // num_stretches
+                for idx, i in enumerate(stretches):
+                    if idx == 0:
+                        i.length = interval - blocks[0] - blocks[1] // 2
+                    elif idx == num_stretches - 1:
+                        i.length = interval - blocks[-1] - blocks[-2] // 2
+                    else:
+                        i.length = int(interval - blocks[idx] / 2 - blocks[idx + 1] / 2)
+                    stretchspace -= i.length
+                stretches[0].length += stretchspace // 2
+                stretches[-1].length += stretchspace - stretchspace // 2
 
         offset = 0
         if self.horizontal:

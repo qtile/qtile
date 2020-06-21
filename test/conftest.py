@@ -81,6 +81,8 @@ class Retry:
                     return fn(*args, **kwargs)
                 except ignore_exceptions:
                     pass
+                except AssertionError:
+                    break
                 time.sleep(dt)
                 dt *= 1.5
             if self.return_on_fail:
@@ -91,14 +93,20 @@ class Retry:
 
 
 @Retry(ignore_exceptions=(xcffib.ConnectionException,), return_on_fail=True)
-def can_connect_x11(disp=':0'):
+def can_connect_x11(disp=':0', *, ok=None):
+    if ok is not None and not ok():
+        raise AssertionError()
+
     conn = xcffib.connect(display=disp)
     conn.disconnect()
     return True
 
 
 @Retry(ignore_exceptions=(ipc.IPCError,), return_on_fail=True)
-def can_connect_qtile(socket_path):
+def can_connect_qtile(socket_path, *, ok=None):
+    if ok is not None and not ok():
+        raise AssertionError()
+
     ipc_client = ipc.Client(socket_path)
     ipc_command = command_interface.IPCCommandInterface(ipc_client)
     client = command_client.InteractiveCommandClient(ipc_command)
@@ -176,7 +184,11 @@ class Xephyr:
         self.display = None
 
     def __enter__(self):
-        self.start_xephyr()
+        try:
+            self.start_xephyr()
+        except:  # noqa: E722
+            self.stop_xephyr()
+            raise
 
         return self
 
@@ -212,11 +224,13 @@ class Xephyr:
 
         self.proc = subprocess.Popen(args)
 
-        if can_connect_x11(self.display):
+        if can_connect_x11(self.display, ok=lambda: self.proc.poll() is None):
             return
+
+        # we wern't able to get a display up
+        if self.proc.poll() is None:
+            raise AssertionError("Unable to conncet to running Xephyr")
         else:
-            # we wern't able to get a display up
-            self.display = None
             raise AssertionError("Unable to start Xephyr, quit with return code {:d}".format(
                 self.proc.returncode
             ))
@@ -275,7 +289,7 @@ class Qtile:
         self.proc.start()
 
         # First, wait for socket to appear
-        if can_connect_qtile(self.sockfile):
+        if can_connect_qtile(self.sockfile, ok=lambda: not rpipe.poll()):
             ipc_client = ipc.Client(self.sockfile)
             ipc_command = command_interface.IPCCommandInterface(ipc_client)
             self.c = command_client.InteractiveCommandClient(ipc_command)
@@ -310,6 +324,7 @@ class Qtile:
             self.proc.join(10)
 
             if self.proc.is_alive():
+                print("Killing qtile forcefully", file=sys.stderr)
                 # desperate times... this probably messes with multiprocessing...
                 try:
                     os.kill(self.proc.pid, 9)
@@ -329,6 +344,24 @@ class Qtile:
 
             self.testwindows.remove(proc)
 
+    def create_window(self, create, failed=None):
+        """
+        Uses the fucntion f to create a window.
+
+        Waits until qtile actually maps the window and then returns.
+        """
+        client = self.c
+        start = len(client.windows())
+        create()
+
+        @Retry(ignore_exceptions=(RuntimeError,), fail_msg='Window never appeared...')
+        def success():
+            while failed is None or not failed():
+                if len(client.windows()) > start:
+                    return True
+            raise RuntimeError("not here yet")
+        return success()
+
     def _spawn_window(self, *args):
         """Starts a program which opens a window
 
@@ -338,22 +371,20 @@ class Qtile:
         """
         if not args:
             raise AssertionError("Trying to run nothing! (missing arguments)")
-        client = self.c
-        start = len(client.windows())
-        proc = subprocess.Popen(args, env={"DISPLAY": self.display})
 
-        @Retry(ignore_exceptions=(RuntimeError,))
-        def success():
-            while proc.poll() is None:
-                if len(client.windows()) > start:
-                    return True
+        proc = None
+
+        def spawn():
+            nonlocal proc
+            proc = subprocess.Popen(args, env={"DISPLAY": self.display})
+
+        def failed():
+            if proc.poll() is not None:
+                return True
             return False
-        if success():
-            self.testwindows.append(proc)
-        else:
-            proc.terminate()
-            proc.wait()
-            raise AssertionError("Window never appeared...")
+
+        self.create_window(spawn, failed=failed)
+        self.testwindows.append(proc)
         return proc
 
     def _spawn_script(self, script, *args):
@@ -464,8 +495,8 @@ def qtile(request, xephyr):
 
     with tempfile.NamedTemporaryFile() as f:
         sockfile = f.name
-        q = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
         try:
+            q = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
             q.start(config)
 
             yield q
@@ -477,9 +508,8 @@ def qtile(request, xephyr):
 def qtile_nospawn(request, xephyr):
     with tempfile.NamedTemporaryFile() as f:
         sockfile = f.name
-        q = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
-
         try:
+            q = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
             yield q
         finally:
             q.terminate()

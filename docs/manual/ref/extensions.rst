@@ -1,4 +1,4 @@
-.. _ref_extensions:
+.. _ref-extensions:
 
 ===================
 Built-in Extensions

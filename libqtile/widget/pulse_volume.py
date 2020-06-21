@@ -185,7 +185,7 @@ class PulseVolume(Volume):
         if op:
             self.wait_for_operation(op)
 
-    def mute_volume(self):
+    def cmd_mute_volume(self):
         op = lib.pa_context_set_sink_mute_by_index(
             self.context,
             self.default_sink['index'],
@@ -196,7 +196,7 @@ class PulseVolume(Volume):
         if op:
             self.wait_for_operation(op)
 
-    def increase_volume(self, value=2):
+    def cmd_increase_volume(self, value=2):
         base = self.default_sink['base_volume']
         volume = ffi.new('pa_cvolume *', {
             'channels': self.default_sink['channels'],
@@ -211,7 +211,7 @@ class PulseVolume(Volume):
             volume.values = [(i if i <= base else base) for i in volume.values]
         self.change_volume(volume)
 
-    def decrease_volume(self, value=2):
+    def cmd_decrease_volume(self, value=2):
         volume_level = int(value * self.default_sink['base_volume'] / 100)
         if not volume_level and max(self.default_sink['values']) == 0:
             # can't be lower than zero
@@ -225,11 +225,11 @@ class PulseVolume(Volume):
 
     def button_press(self, x, y, button):
         if self.default_sink and button == BUTTON_DOWN:
-            self.decrease_volume(self.step)
+            self.cmd_decrease_volume(self.step)
         elif self.default_sink and button == BUTTON_UP:
-            self.increase_volume(self.step)
+            self.cmd_increase_volume(self.step)
         elif self.default_sink and button == BUTTON_MUTE:
-            self.mute_volume()
+            self.cmd_mute_volume()
         elif button == BUTTON_RIGHT:
             if self.volume_app is not None:
                 subprocess.Popen(self.volume_app)

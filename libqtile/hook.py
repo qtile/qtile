@@ -323,6 +323,24 @@ class Subscribe:
         """
         return self._subscribe("current_screen_change", func)
 
+    def enter_chord(self, func):
+        """Called when key chord begins
+
+        **Arguments**
+
+            * name of chord(mode)
+        """
+        return self._subscribe("enter_chord", func)
+
+    def leave_chord(self, func):
+        """Called when key chord ends
+
+        **Arguments**
+
+        None
+        """
+        return self._subscribe("leave_chord", func)
+
 
 subscribe = Subscribe()
 

@@ -21,6 +21,7 @@
 import functools
 import importlib
 import os
+import sys
 import traceback
 import warnings
 from shutil import which
@@ -174,26 +175,47 @@ def describe_attributes(obj, attrs, func=lambda x: x):
     return ', '.join(pairs)
 
 
-def safe_import(module_names, class_name, globals_, fallback=None):
-    """
-    Try to import a module, and if it fails because an ImporError
+def import_class(module_path, class_name, fallback=None):
+    """Import a class safely
+
+    Try to import the class module, and if it fails because of an ImporError
     it logs on WARNING, and logs the traceback on DEBUG level
+    """
+    try:
+        module = importlib.import_module(module_path, __package__)
+        return getattr(module, class_name)
+    except ImportError as error:
+        logger.warning("Unmet dependencies for '%s.%s': %s", module_path,
+                       class_name, error)
+        if fallback:
+            logger.debug("%s", traceback.format_exc())
+            return fallback(module_path, class_name, error)
+        raise
+
+
+def safe_import(module_names, class_name, globals_, fallback=None):
+    """Import a class into given globals, lazily and safely
+
+    The globals are filled with a proxy function so that the module is imported
+    only if the class is being instanciated.
+
+    An exception is made when the documentation is being built with Sphinx, in
+    which case the class is eagerly imported, for inspection.
     """
     module_path = '.'.join(module_names)
     if type(class_name) is list:
         for name in class_name:
             safe_import(module_names, name, globals_)
         return
-    package = __package__
-    try:
-        module = importlib.import_module(module_path, package)
-        globals_[class_name] = getattr(module, class_name)
-    except ImportError as error:
-        logger.warning("Unmet dependencies for '%s.%s': %s",
-                       module_path, class_name, error)
-        logger.debug("%s", traceback.format_exc())
-        if fallback:
-            globals_[class_name] = fallback(module_path, class_name, error)
+
+    def class_proxy(*args, **kwargs):
+        cls = import_class(module_path, class_name, fallback)
+        return cls(*args, **kwargs)
+
+    if "sphinx" in sys.modules:
+        globals_[class_name] = import_class(module_path, class_name, fallback)
+    else:
+        globals_[class_name] = class_proxy
 
 
 def send_notification(title, message, urgent=False, timeout=10000):
@@ -203,11 +225,13 @@ def send_notification(title, message, urgent=False, timeout=10000):
         gi.require_version("Notify", "0.7")
         from gi.repository import Notify
         Notify.init("Qtile")
-        notifier = Notify.Notification.new(title, message)
-        notifier.set_timeout(timeout)
-        if urgent:
-            notifier.set_urgency(Notify.Urgency.CRITICAL)
-        notifier.show()
+        info = Notify.get_server_info()
+        if info[0]:
+            notifier = Notify.Notification.new(title, message)
+            notifier.set_timeout(timeout)
+            if urgent:
+                notifier.set_urgency(Notify.Urgency.CRITICAL)
+            notifier.show()
     except Exception as exception:
         logger.error(exception)
 

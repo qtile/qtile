@@ -66,6 +66,7 @@ class XCore(base.Core):
 
         self.conn = xcbq.Connection(display_name)
         self._display_name = display_name
+        self._fd = None  # type: Optional[int]
 
         # Because we only do Xinerama multi-screening,
         # we can assume that the first
@@ -84,8 +85,6 @@ class XCore(base.Core):
         self._root.set_property(
             "_NET_SUPPORTED", [self.conn.atoms[x] for x in xcbq.SUPPORTED_ATOMS]
         )
-
-        self._last_event_timestamp = xcffib.CurrentTime
 
         self._wmname = "qtile"
         self._supporting_wm_check_window = self.conn.create_window(-1, -1, 1, 1)
@@ -179,20 +178,21 @@ class XCore(base.Core):
         """
         logger.debug("Adding io watch")
         self.qtile = qtile
-        fd = self.conn.conn.get_file_descriptor()
-        eventloop.add_reader(fd, self._xpoll)
+        self.fd = self.conn.conn.get_file_descriptor()
+        eventloop.add_reader(self.fd, self._xpoll)
 
-    def remove_listener(self, eventloop: asyncio.AbstractEventLoop) -> None:
-        """Remove the listener from the given event loop
-
-        :param eventloop:
-            The eventloop that had been setup for listening.
-        """
-        logger.debug("Removing io watch")
-        fd = self.conn.conn.get_file_descriptor()
-        eventloop.remove_reader(fd)
+    def remove_listener(self) -> None:
+        """Remove the listener from the given event loop"""
+        self._remove_listener()
         self.qtile = None
         self.conn.finalize()
+
+    def _remove_listener(self) -> None:
+        if self.fd is not None:
+            logger.debug("Removing io watch")
+            loop = asyncio.get_event_loop()
+            loop.remove_reader(self.fd)
+            self.fd = None
 
     def scan(self) -> None:
         """Scan for existing windows"""
@@ -272,6 +272,7 @@ class XCore(base.Core):
                             error_string=error_string, error_code=error_code
                         )
                     )
+                    self._remove_listener()
                     self.qtile.stop()
                     return
                 logger.exception("Got an exception in poll loop")
@@ -289,9 +290,6 @@ class XCore(base.Core):
         reached.
         """
         assert self.qtile is not None
-
-        if hasattr(event, "time") and event.time > 0:
-            self._last_event_timestamp = event.time
 
         handler = "handle_{event_type}".format(event_type=event_type)
         # Certain events expose the affected window id as an "event" attribute.
@@ -325,7 +323,35 @@ class XCore(base.Core):
         """Get a valid timestamp, i.e. not CurrentTime, for X server.
 
         It may be used in cases where CurrentTime is unacceptable for X server."""
-        return self._last_event_timestamp
+        # do a zero length append to get the time offset as suggested by ICCCM
+        # https://tronche.com/gui/x/icccm/sec-2.html#s-2.1
+        # we do this on a separate connection since we can't receive events
+        # without returning control to the event loop, which we can't do
+        # because the event loop (via some window event) wants to know the
+        # current time.
+        conn = None
+        try:
+            conn = xcbq.Connection(self._display_name)
+            conn.default_screen.root.set_attribute(
+                eventmask=xcffib.xproto.EventMask.PropertyChange
+            )
+            conn.conn.core.ChangePropertyChecked(
+                xcffib.xproto.PropMode.Append,
+                self._root.wid,
+                self.conn.atoms["WM_CLASS"],
+                self.conn.atoms["STRING"],
+                8,
+                0,
+                "",
+            ).check()
+            while True:
+                event = conn.conn.wait_for_event()
+                if event.__class__ != xcffib.xproto.PropertyNotifyEvent:
+                    continue
+                return event.time
+        finally:
+            if conn is not None:
+                conn.finalize()
 
     @property
     def display_name(self) -> str:

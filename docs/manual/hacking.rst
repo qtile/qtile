@@ -1,3 +1,5 @@
+.. _hacking:
+
 ================
 Hacking on Qtile
 ================
@@ -8,8 +10,8 @@ Requirements
 Any reasonably recent version of these should work, so you can probably just
 install them from your package manager.
 
-* `pytest <http://pytest.org/latest/>`_
-* `Xephyr <http://www.freedesktop.org/wiki/Software/Xephyr>`_
+* `pytest <https://docs.pytest.org>`_
+* `Xephyr <https://freedesktop.org/wiki/Software/Xephyr/>`_
 * ``xrandr``, ``xcalc``, ``xeyes`` and ``xclock`` (``x11-apps`` on Ubuntu)
 
 On Ubuntu, if testing on Python 3, this can be done with:
@@ -81,13 +83,13 @@ can see whether or not your contribution passes.
 Coding style
 ============
 
-While not all of our code follows `PEP8 <http://www.python.org/dev/peps/pep-0008/>`_,
+While not all of our code follows `PEP8 <https://www.python.org/dev/peps/pep-0008/>`_,
 we do try to adhere to it where possible. All new code should be PEP8 compliant.
 
 The ``make lint`` command will run a linter with our configuration over libqtile
 to ensure your patch complies with reasonable formatting constraints. We also
 request that git commit messages follow the
-`standard format <http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>`_.
+`standard format <https://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>`_.
 
 Deprecation policy
 ==================
@@ -259,9 +261,9 @@ Resources
 
 Here are a number of resources that may come in handy:
 
-* `Inter-Client Conventions Manual <http://tronche.com/gui/x/icccm/>`_
-* `Extended Window Manager Hints <http://standards.freedesktop.org/wm-spec/wm-spec-latest.html>`_
-* `A reasonable basic Xlib Manual <http://tronche.com/gui/x/xlib/>`_
+* `Inter-Client Conventions Manual <https://tronche.com/gui/x/icccm/>`_
+* `Extended Window Manager Hints <https://specifications.freedesktop.org/wm-spec/wm-spec-latest.html>`_
+* `A reasonable basic Xlib Manual <https://tronche.com/gui/x/xlib/>`_
 
 
 Troubleshoot
@@ -311,16 +313,17 @@ system and/or in your Qtile virtualenv.
 
 To fix this:
 
-1. follow the installation instructions of ``PyGObject``
-   at https://pygobject.readthedocs.io/en/latest/getting_started.html.
+1. Follow the `installation instructions`_ of ``PyGObject``.
    There are methods for several Linux distributions: pick yours.
-#. there are instructions for system-wide installation and virtualenv
+#. There are instructions for system-wide installation and virtualenv
    installation: pick the relevant one, depending on how you installed the
-   development version of QTile (usually in a virtualenv).
-#. Optionally re-install QTile's dependencies::
+   development version of Qtile (usually in a virtualenv).
+#. Optionally re-install Qtile's dependencies::
 
     pip install -r requirements.txt
     pip install -r requirements-dev.txt
+
+.. _`installation instructions`: https://pygobject.readthedocs.io/en/latest/getting_started.html
 
 
 Fonts errors

@@ -56,7 +56,7 @@ group which acts as a container for :class:`~libqtile.config.DropDown`
 configurations. A `DropDown` can be configured to spawn a defined process and
 bind thats process' window to it. The associated window can then be shown and
 hidden by the lazy command ``dropdown_toggle()``
-(see :doc:`/manual/config/lazy`) from the ScratchPad group.
+(see :ref:`lazy`) from the ScratchPad group.
 Thus - for example - your favorite terminal emulator turns into a quake-like
 terminal by the control of qtile.
 

@@ -1,3 +1,5 @@
+.. _commands-api:
+
 ============
 Commands API
 ============
@@ -6,13 +8,13 @@ Qtile's command API is based on a graph of objects, where each object has a set
 of associated commands. The graph and object commands are used in a number of
 different places:
 
-* Commands can be :doc:`bound to keys </manual/config/keys>` in the Qtile
+* Commands can be :ref:`bound to keys <config-keys>` in the Qtile
   configuration file.
-* Commands can be :doc:`called through qshell </manual/commands/qshell>`, the
+* Commands can be :ref:`called through qshell <qshell>`, the
   Qtile shell.
-* The qsh can also be hooked into a Jupyter kernel :doc:`called iqshell
-  </manual/commands/iqshell>`.
-* Commands can be :doc:`called from a script </manual/commands/scripting>` to
+* The qsh can also be hooked into a Jupyter kernel :ref:`called iqshell
+  <iqshell>`.
+* Commands can be :ref:`called from a script <scripting>` to
   interact with Qtile from Python.
 
 If the explanation below seems a bit complex, please take a moment to explore
@@ -166,8 +168,8 @@ Digging Deeper: Command Objects
 ===============================
 
 If you just want to script your Qtile window manager the above information, in
-addition to the documentation on the :doc:`various scripting
-commands </manual/ref/commands>` should be enough to get started.  To develop
+addition to the documentation on the :ref:`various scripting
+commands <scripting-commands>` should be enough to get started.  To develop
 the Qtile manager itself, we can dig into how Qtile represents these objects,
 which will lead to the way the commands are dispatched.
 

@@ -12,7 +12,7 @@ The first layout in the list is the default. If you define more than one
 layout, you will probably also want to define key bindings to let you switch to
 the next and previous layouts.
 
-See :doc:`/manual/ref/layouts` for a listing of available layouts.
+See :ref:`ref-layouts` for a listing of available layouts.
 
 
 Example

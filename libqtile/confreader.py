@@ -24,6 +24,7 @@
 # SOFTWARE.
 import os
 import sys
+from typing import Optional
 
 from libqtile.backend import base
 
@@ -53,15 +54,21 @@ class Config:
         "wmname",
     ]
 
-    def __init__(self, file_path=None, **settings):
+    def __init__(self, file_path=None, kore=None, **settings):
         """Create a Config() object from settings
 
         Only attributes found in Config.settings_keys will be added to object.
         config attribute precedence is 1.) **settings 2.) self 3.) default_config
         """
+        self.file_path = file_path
+        self.kore = kore
+        self.update(**settings)
+
+    def update(self, *, fake_screens=None, **settings):
         from libqtile.resources import default_config
 
-        self.file_path = file_path
+        if fake_screens:
+            self.fake_screens = fake_screens
 
         default = vars(default_config)
         for key in self.settings_keys:
@@ -70,20 +77,16 @@ class Config:
             except KeyError:
                 value = getattr(self, key, default[key])
             setattr(self, key, value)
-        self._init_fake_screens(**settings)
-
-    def _init_fake_screens(self, **settings):
-        " Initiaize fake_screens if they are set."
-        try:
-            value = settings['fake_screens']
-            setattr(self, 'fake_screens', value)
-        except KeyError:
-            pass
 
     @classmethod
-    def from_file(cls, kore: base.Core, path: str):
+    def from_file(cls, path: str, kore: Optional[base.Core] = None):
         "Create a Config() object from the python file located at path."
-        name = os.path.splitext(os.path.basename(path))[0]
+        cnf = cls(file_path=path, kore=kore)
+        cnf.load()
+        return cnf
+
+    def load(self):
+        name = os.path.splitext(os.path.basename(self.file_path))[0]
 
         # Make sure we'll import the latest version of the config
         try:
@@ -92,24 +95,25 @@ class Config:
             pass
 
         try:
-            sys.path.insert(0, os.path.dirname(path))
+            sys.path.insert(0, os.path.dirname(self.file_path))
             config = __import__(name)  # noqa: F811
         except Exception:
             import traceback
             from libqtile.log_utils import logger
-            logger.exception('Could not import config file %r', path)
+            logger.exception('Could not import config file %r', self.file_path)
             tb = traceback.format_exc()
             raise ConfigError(tb)
-        cnf = cls(file_path=path, **vars(config))
-        cnf.validate(kore)
-        return cnf
 
-    def validate(self, kore: base.Core) -> None:
+        self.update(**vars(config))
+        if self.kore:
+            self.validate()
+
+    def validate(self) -> None:
         """
             Validate the configuration against the core.
         """
-        valid_keys = kore.get_keys()
-        valid_mods = kore.get_modifiers()
+        valid_keys = self.kore.get_keys()
+        valid_mods = self.kore.get_modifiers()
         # we explicitly do not want to set self.keys and self.mouse above,
         # because they are dynamically resolved from the default_config. so we
         # need to ignore the errors here about missing attributes.

@@ -48,6 +48,9 @@ venv
 # intellij idea IDEs
 .idea/
 
+# vscode IDE
+.vscode/
+
 # screenshots
 docs/screenshots/take_all.log
 

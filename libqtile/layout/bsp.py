@@ -43,13 +43,16 @@ class _BspNode():
                 for c in child.clients():
                     yield c
 
-    def _shortest(self, l):
+    def _shortest(self, length):
         if len(self.children) == 0:
-            return self, l
-        else:
-            c0, l0 = self.children[0]._shortest(l + 1)
-            c1, l1 = self.children[1]._shortest(l + 1)
-            return (c1, l1) if l1 < l0 else (c0, l0)
+            return self, length
+
+        child0, length0 = self.children[0]._shortest(length + 1)
+        child1, length1 = self.children[1]._shortest(length + 1)
+
+        if length1 < length0:
+            return child1, length1
+        return child0, length0
 
     def get_shortest(self):
         return self._shortest(0)[0]
@@ -120,6 +123,8 @@ class Bsp(Layout):
     otherwise, they are created on top of each other.  The partition
     direction can be freely toggled.  All subspaces can be resized and
     clients can be shuffled around.
+
+    All clients are organized at the leaves of a full binary tree.
 
     An example key configuration is::
 

@@ -244,14 +244,14 @@ def test_geometry(qtile):
 
 @geom_config
 def test_resize(qtile):
-    def wd(l):
-        return [i.length for i in l]
+    def wd(dwidget_list):
+        return [i.length for i in dwidget_list]
 
-    def offx(l):
-        return [i.offsetx for i in l]
+    def offx(dwidget_list):
+        return [i.offsetx for i in dwidget_list]
 
-    def offy(l):
-        return [i.offsety for i in l]
+    def offy(dwidget_list):
+        return [i.offsety for i in dwidget_list]
 
     for DBar, off in ((DBarH, offx), (DBarV, offy)):  # noqa: N806
         b = DBar([], 100)
@@ -342,40 +342,16 @@ def test_incompatible_widget(qtile_nospawn):
         qtile_nospawn.create_manager(config)
 
 
-class MultiStretchConf:
-    main = None
-    keys = []
-    mouse = []
-    groups = [libqtile.config.Group("a")]
-    layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
-    floating_layout = libqtile.layout.floating.Floating()
-    screens = [
-        libqtile.config.Screen(
-            top=libqtile.bar.Bar(
-                [
-                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
-                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
-                ],
-                10
-            ),
-        )
-    ]
-
-
-def test_multiple_stretches(qtile_nospawn):
-    config = MultiStretchConf
-
-    # Ensure that adding two STRETCH widgets to the same bar raises ConfigError
-    with pytest.raises(libqtile.confreader.ConfigError):
-        qtile_nospawn.create_manager(config)
-
-
 def test_basic(qtile_nospawn):
     config = GeomConf
     config.screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
                 [
+                    ExampleWidget(),
+                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
+                    ExampleWidget(),
+                    libqtile.widget.Spacer(libqtile.bar.STRETCH),
                     ExampleWidget(),
                     libqtile.widget.Spacer(libqtile.bar.STRETCH),
                     ExampleWidget()
@@ -390,8 +366,14 @@ def test_basic(qtile_nospawn):
     i = qtile_nospawn.c.bar["bottom"].info()
     assert i["widgets"][0]["offset"] == 0
     assert i["widgets"][1]["offset"] == 10
-    assert i["widgets"][1]["width"] == 780
-    assert i["widgets"][2]["offset"] == 790
+    assert i["widgets"][1]["width"] == 252
+    assert i["widgets"][2]["offset"] == 262
+    assert i["widgets"][3]["offset"] == 272
+    assert i["widgets"][3]["width"] == 256
+    assert i["widgets"][4]["offset"] == 528
+    assert i["widgets"][5]["offset"] == 538
+    assert i["widgets"][5]["width"] == 252
+    assert i["widgets"][6]["offset"] == 790
     libqtile.hook.clear()
 
 

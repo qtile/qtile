@@ -24,6 +24,7 @@ from libqtile.utils import safe_import as safe_import_
 # only directly import widgets that do not have any third party dependencies
 # other than those required by qtile, otherwise use the same import function
 from libqtile.widget.base import Mirror  # noqa: F401
+from libqtile.widget.chord import Chord  # noqa: F401
 from libqtile.widget.clock import Clock  # noqa: F401
 from libqtile.widget.currentlayout import (  # noqa: F401
     CurrentLayout,
@@ -100,3 +101,4 @@ safe_import("stock_ticker", "StockTicker")
 safe_import("caps_num_lock_indicator", "CapsNumLockIndicator")
 safe_import("quick_exit", "QuickExit")
 safe_import("pulse_volume", "PulseVolume")
+safe_import("chord", "Chord")
