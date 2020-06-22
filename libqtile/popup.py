@@ -75,7 +75,6 @@ class Popup(configurable.Configurable):
         self.win.handle_Expose = self._handle_Expose
         self.win.handle_KeyPress = self._handle_KeyPress
         self.win.handle_ButtonPress = self._handle_ButtonPress
-        self.qtile.windows_map[self.win.window.wid] = self.win
 
         self.x = self.win.x
         self.y = self.win.y
