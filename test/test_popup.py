@@ -25,7 +25,6 @@ from libqtile.backend.x11 import xcbq
 from libqtile.popup import Popup
 from test.conftest import BareConfig
 
-
 popup_config = pytest.mark.parametrize("qtile", [BareConfig], indirect=True)
 
 
@@ -44,4 +43,3 @@ def test_focus(qtile):
     assert len(qtile.c.windows()) == 1
     popup.hide()
     popup.kill()
-
