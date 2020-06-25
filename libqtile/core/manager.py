@@ -237,18 +237,20 @@ class Qtile(CommandObject):
             logger.warning("importing dbus/gobject failed, dbus will not work.")
             self._glib_loop = None
 
-    async def async_loop(self):
+    async def async_loop(self) -> None:
+        """Run the event loop
+
+        Finalizes the Qtile instance on exit.
+        """
         try:
             await self._stopped_event.wait()
         finally:
             await self.finalize()
 
-    def loop(self):
-        self._eventloop.run_until_complete(self.async_loop())
+        self._eventloop.stop()
 
-        self._eventloop.close()
-        self._eventloop = None
-
+    def maybe_restart(self) -> None:
+        """If set, restart the qtile instance"""
         if self._restart:
             logger.warning('Restarting Qtile with os.execv(...)')
             os.execv(*self._restart)

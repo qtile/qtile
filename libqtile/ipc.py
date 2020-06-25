@@ -169,10 +169,9 @@ class Client:
 
 
 class Server:
-    def __init__(self, fname: str, handler, loop: asyncio.AbstractEventLoop) -> None:
+    def __init__(self, fname: str, handler) -> None:
         self.fname = fname
         self.handler = handler
-        self.loop = loop
         self.server = None  # type: Optional[asyncio.AbstractServer]
 
         if os.path.exists(fname):
@@ -224,16 +223,16 @@ class Server:
             else:
                 await asyncio.sleep(0)
 
-    def __enter__(self) -> "Server":
+    async def __aenter__(self) -> "Server":
         """Start and return the server"""
-        self.start()
+        await self.start()
         return self
 
-    def __exit__(self, exc_type, exc_value, tb) -> None:
+    async def __aexit__(self, exc_type, exc_value, tb) -> None:
         """Close and shutdown the server"""
-        self.close()
+        await self.close()
 
-    def start(self) -> None:
+    async def start(self) -> None:
         """Start the server"""
         assert self.server is None
 
@@ -241,14 +240,14 @@ class Server:
         server_coroutine = asyncio.start_unix_server(
             self._server_callback, sock=self.sock
         )
-        self.server = self.loop.run_until_complete(server_coroutine)
+        self.server = await server_coroutine
 
-    def close(self) -> None:
+    async def close(self) -> None:
         """Close and shutdown the server"""
         assert self.server is not None
 
         logger.debug("Stopping server on close")
         self.server.close()
-        self.loop.run_until_complete(self.server.wait_closed())
+        await self.server.wait_closed()
 
         self.server = None
