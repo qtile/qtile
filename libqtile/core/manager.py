@@ -45,7 +45,7 @@ from libqtile.command_object import (
     CommandException,
     CommandObject,
 )
-from libqtile.config import Click, Drag, KeyChord, Match, Rule
+from libqtile.config import Click, Drag, Key, KeyChord, Match, Rule
 from libqtile.config import ScratchPad as ScratchPadConfig
 from libqtile.config import Screen
 from libqtile.dgroups import DGroups
@@ -369,22 +369,26 @@ class Qtile(CommandObject):
                 return
 
     def grab_keys(self) -> None:
+        """Re-grab all of the keys configured in the key map
+
+        Useful when a keyboard mapping event is received.
+        """
         self.core.ungrab_keys()
         for key in self.keys_map.values():
             self.grab_key(key)
 
-    def grab_key(self, key) -> None:
-        keysym, modmask, mask_key = self.core.lookup_key(key)
-        self.core.grab_key(keysym, modmask)
+    def grab_key(self, key: Key) -> None:
+        """Grab the given key event"""
+        keysym, mask_key = self.core.grab_key(key)
         self.keys_map[(keysym, mask_key)] = key
 
-    def ungrab_key(self, key) -> None:
-        keysym, modmask, mask_key = self.core.lookup_key(key)
-        key = self.keys_map.pop((keysym, mask_key))
-        if key is not None:
-            self.core.ungrab_key(keysym, modmask)
+    def ungrab_key(self, key: Key) -> None:
+        """Ungrab a given key event"""
+        keysym, mask_key = self.core.ungrab_key(key)
+        self.keys_map.pop((keysym, mask_key))
 
-    def clear_chords(self) -> None:
+    def ungrab_keys(self) -> None:
+        """Ungrab all key events"""
         self.core.ungrab_keys()
         self.keys_map.clear()
 
@@ -392,14 +396,16 @@ class Qtile(CommandObject):
         self.current_chord = chord.mode if chord.mode != "" else True
         if self.current_chord:
             hook.fire("enter_chord", self.current_chord)
-        self.clear_chords()
+
+        self.ungrab_keys()
         for key in chord.submapings:
             self.grab_key(key)
 
     def ungrab_chord(self) -> None:
         self.current_chord = False
         hook.fire("leave_chord")
-        self.clear_chords()
+
+        self.ungrab_keys()
         for key in self.config.keys:
             self.grab_key(key)
 
