@@ -442,10 +442,8 @@ class _Window(CommandObject):
         )
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, force=False, margin=None):
+              above=False, margin=None):
         """Places the window at the specified location with the given size.
-
-        If force is false, than it tries to obey hints
         """
 
         # TODO: self.x/y/height/width are updated BEFORE
