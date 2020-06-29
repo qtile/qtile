@@ -500,6 +500,13 @@ class _Window(CommandObject):
         if bordercolor is not None:
             self.window.set_attribute(borderpixel=bordercolor)
 
+    def user_placed_window_setup(self, borderpixel, borderwidth):
+        self.borderwidth = borderwidth
+        self.bordercolor = borderpixel
+        self.window.set_attribute(borderpixel=borderpixel)
+        self.window.configure(borderwidth=borderwidth)
+        self.unhide()
+
     def send_configure_notify(self, x, y, width, height):
         """Send a synthetic ConfigureNotify"""
 

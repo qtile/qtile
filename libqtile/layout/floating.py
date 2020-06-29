@@ -209,36 +209,38 @@ class Floating(Layout):
         return above
 
     def configure(self, client, screen):
-        # 'sun-awt-X11-XWindowPeer' is a dropdown used in Java application,
-        # don't reposition it anywhere, let Java app to control it
-        cls = client.window.get_wm_class() or ''
-        is_java_dropdown = 'sun-awt-X11-XWindowPeer' in cls
-        if is_java_dropdown:
-            client.unhide()
-            return
-
-        # similar to above but the X11 version, the client may have already
-        # placed itself. let's respect that
-        if client.has_user_set_position():
-            client.unhide()
-            return
-
-        # ok, it's not java and the window itself didn't position it, but users
-        # may still have asked us not to mess with it
-        if self.no_reposition_match is not None and self.no_reposition_match.compare(client):
-            client.unhide()
-            return
-
         if client.has_focus:
             bc = client.group.qtile.color_pixel(self.border_focus)
         else:
             bc = client.group.qtile.color_pixel(self.border_normal)
+
         if client.maximized:
             bw = self.max_border_width
         elif client.fullscreen:
             bw = self.fullscreen_border_width
         else:
             bw = self.border_width
+
+        # 'sun-awt-X11-XWindowPeer' is a dropdown used in Java application,
+        # don't reposition it anywhere, let Java app to control it
+        cls = client.window.get_wm_class() or ''
+        is_java_dropdown = 'sun-awt-X11-XWindowPeer' in cls
+        if is_java_dropdown:
+            client.user_placed_window_setup(bc, bw)
+            return
+
+        # similar to above but the X11 version, the client may have already
+        # placed itself. let's respect that
+        if client.has_user_set_position():
+            client.user_placed_window_setup(bc, bw)
+            return
+
+        # ok, it's not java and the window itself didn't position it, but users
+        # may still have asked us not to mess with it
+        if self.no_reposition_match is not None and self.no_reposition_match.compare(client):
+            client.user_placed_window_setup(bc, bw)
+            return
+
         above = False
 
         # We definitely have a screen here, so let's be sure we'll float on screen
