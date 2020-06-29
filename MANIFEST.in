@@ -23,7 +23,6 @@ prune bin
 prune docs
 prune scripts
 prune rpm
-include bin/dqtile-cmd
 include bin/iqshell
 include scripts/ffibuild
 
