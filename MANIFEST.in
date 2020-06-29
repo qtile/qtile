@@ -23,7 +23,6 @@ prune bin
 prune docs
 prune scripts
 prune rpm
-include bin/iqshell
 include scripts/ffibuild
 
 recursive-exclude * __pycache__
