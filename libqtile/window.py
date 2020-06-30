@@ -321,7 +321,12 @@ class _Window(CommandObject):
         triggered = ['urgent']
 
         if self.qtile.config.auto_fullscreen:
-            triggered.append('fullscreen')
+            if self.qtile.config.no_auto_fullscreen_windows:
+                if not any(match.compare(self) \
+                        for match in self.qtile.config.no_auto_fullscreen_windows):
+                    triggered.append('fullscreen')
+            else:
+                triggered.append('fullscreen')
 
         state = self.window.get_net_wm_state()
 

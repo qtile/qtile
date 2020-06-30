@@ -48,6 +48,7 @@ class Config:
         "screens",
         "main",
         "auto_fullscreen",
+        "no_auto_fullscreen_windows",
         "widget_defaults",
         "extension_defaults",
         "bring_front_click",
