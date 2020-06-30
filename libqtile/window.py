@@ -865,7 +865,7 @@ class Window(_Window):
                 self.window.set_property('_NET_WM_STATE', list(new_state))
 
         if do_full:
-            screen = self.group.screen or \
+            screen = (self.group and self.group.screen) or \
                 self.qtile.find_closest_screen(self.x, self.y)
 
             self._enablefloating(
