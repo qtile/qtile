@@ -210,14 +210,15 @@ class Bsp(Layout):
         color = self.group.qtile.color_pixel(
             self.border_focus if client.has_focus else self.border_normal)
         border = 0 if node is self.root else self.border_width
-        client.place(
-            node.x,
-            node.y,
-            node.w - 2 * border,
-            node.h - 2 * border,
-            border,
-            color,
-            margin=self.margin)
+        if node is not None:
+            client.place(
+                node.x,
+                node.y,
+                node.w - 2 * border,
+                node.h - 2 * border,
+                border,
+                color,
+                margin=self.margin)
         client.unhide()
 
     def cmd_toggle_split(self):
