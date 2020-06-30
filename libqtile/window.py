@@ -323,7 +323,7 @@ class _Window(CommandObject):
         if self.qtile.config.auto_fullscreen:
             if self.qtile.config.no_auto_fullscreen_windows:
                 if not any(match.compare(self)
-                        for match in self.qtile.config.no_auto_fullscreen_windows):
+                           for match in self.qtile.config.no_auto_fullscreen_windows):
                     triggered.append('fullscreen')
             else:
                 triggered.append('fullscreen')
