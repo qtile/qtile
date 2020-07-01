@@ -171,7 +171,7 @@ floating_layout = layout.Floating(float_rules=[
     {'wmclass': 'ssh-askpass'},  # ssh-askpass
 ])
 auto_fullscreen = True
-no_auto_fullscreen_windows = False  # Set a list of windows ignored by auto fs
+auto_fullscreen_exceptions = None  # Set a list of Match to be ignored
 focus_on_window_activation = "smart"
 
 # XXX: Gasp! We're lying here. In fact, nobody really uses or cares about this
