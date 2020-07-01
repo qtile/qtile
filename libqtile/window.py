@@ -321,7 +321,7 @@ class _Window(CommandObject):
         triggered = ['urgent']
 
         is_exception = any(match.compare(self)
-                           for match in self.qtile.config.auto_fullscreen_exceptions or [])
+                           for match in self.qtile.config.auto_fullscreen_exceptions)
 
         if self.qtile.config.auto_fullscreen != is_exception:
             triggered.append('fullscreen')
