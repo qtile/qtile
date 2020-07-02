@@ -110,6 +110,10 @@ configuration variables that control specific aspects of Qtile's behavior:
       - If a window requests to be fullscreen, it is automatically
         fullscreened. Set this to false if you only want windows to be
         fullscreen if you ask them to be.
+    * - auto_fullscreen_exceptions
+      - []
+      - Changes the behavior of ``auto_fullscreen`` for windows corresponding
+        to one of the :class:`~libqtile.config.Match` object of this list.
     * - bring_front_click
       - False
       - When clicked, should the window be brought to the front or not. (This
