@@ -557,11 +557,11 @@ class ScratchPad(Group):
 class Match:
     """Match for dynamic groups
 
-    It can match by title, class or role.
+    It can match by title, wm_class, role, wm_type, wm_instance_class or net_wm_pid.
 
     ``Match`` supports both regular expression objects (i.e. the result of
-    ``re.compile()``) or strings (match as a "include" match). If a window
-    matches any of the things in any of the lists, it is considered a match.
+    ``re.compile()``) or strings (match as an "include"-match). If a window
+    matches any of the things in all of the lists, it is considered a match.
 
     Parameters
     ==========
@@ -581,63 +581,65 @@ class Match:
     """
     def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
                  wm_instance_class=None, net_wm_pid=None):
-        if not title:
-            title = []
-        if not wm_class:
-            wm_class = []
-        if not role:
-            role = []
-        if not wm_type:
-            wm_type = []
-        if not wm_instance_class:
-            wm_instance_class = []
-        if not net_wm_pid:
-            net_wm_pid = []
+        self._rules = {}
 
-        try:
-            net_wm_pid = list(map(int, net_wm_pid))
-        except ValueError:
-            error = 'Invalid rule for net_wm_pid: "%s" '\
-                    'only ints allowed' % str(net_wm_pid)
-            raise utils.QtileError(error)
+        if title:
+            self._rules['title'] = title
+        if wm_class:
+            self._rules['wm_class'] = wm_class
+        if role:
+            self._rules['role'] = role
+        if wm_type:
+            self._rules['wm_type'] = wm_type
+        if wm_instance_class:
+            self._rules['wm_instance_class'] = wm_instance_class
+        if net_wm_pid:
+            try:
+                net_wm_pid = list(map(int, net_wm_pid))
+            except ValueError:
+                error = 'Invalid rule for net_wm_pid: "%s" '\
+                        'only ints allowed' % str(net_wm_pid)
+                raise utils.QtileError(error)
+            self._rules['net_wm_pid'] = net_wm_pid
 
-        self._rules = [('title', t) for t in title]
-        self._rules += [('wm_class', w) for w in wm_class]
-        self._rules += [('role', r) for r in role]
-        self._rules += [('wm_type', r) for r in wm_type]
-        self._rules += [('wm_instance_class', w) for w in wm_instance_class]
-        self._rules += [('net_wm_pid', w) for w in net_wm_pid]
+    @staticmethod
+    def _get_property_predicate(property_, target):
+        if property_ == 'net_wm_pid':
+            return lambda candidate: candidate == target
+
+        def predicate(candidate):
+            # "[...] match as an "include"-match [...]"
+            matcher = getattr(candidate, 'match', lambda candidate: candidate in target)
+            return matcher(candidate)
+
+        return predicate
 
     def compare(self, client):
-        for _type, rule in self._rules:
-            if _type == "net_wm_pid":
-                def match_func(value):
-                    return rule == value
+        for property_, candidates in self._rules.items():
+            if property_ == 'title':
+                target = client.name
+            elif property_ == 'wm_class':
+                wm_class = client.window.get_wm_class()
+                if not wm_class and len(wm_class) > 1:
+                    return False
+                target = wm_class[1]
+            elif property_ == 'wm_instance_class':
+                wm_class = client.window.get_wm_class()
+                if not wm_class:
+                    return False
+                target = wm_class[0]
+            elif property_ == 'wm_type':
+                target = client.window.get_wm_type()
+            elif property_ == 'net_wm_pid':
+                target = client.window.get_net_wm_pid()
             else:
-                match_func = getattr(rule, 'match', None) or \
-                    getattr(rule, 'count')
+                target = client.window.get_wm_window_role()
 
-            if _type == 'title':
-                value = client.name
-            elif _type == 'wm_class':
-                value = None
-                _value = client.window.get_wm_class()
-                if _value and len(_value) > 1:
-                    value = _value[1]
-            elif _type == 'wm_instance_class':
-                value = client.window.get_wm_class()
-                if value:
-                    value = value[0]
-            elif _type == 'wm_type':
-                value = client.window.get_wm_type()
-            elif _type == 'net_wm_pid':
-                value = client.window.get_net_wm_pid()
-            else:
-                value = client.window.get_wm_window_role()
+            predicate = self._get_property_predicate(property_, target)
+            if not any(predicate(candidate) for candidate in candidates):
+                return False
 
-            if value and match_func(value):
-                return True
-        return False
+        return True
 
     def map(self, callback, clients):
         """Apply callback to each client that matches this Match"""

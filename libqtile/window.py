@@ -28,6 +28,7 @@ from xcffib.xproto import EventMask, SetMode, StackMode
 
 from libqtile import hook, utils
 from libqtile.command_object import CommandError, CommandObject
+from libqtile.config import Match
 from libqtile.log_utils import logger
 
 # ICCM Constants
@@ -1081,7 +1082,8 @@ class Window(_Window):
                 raise CommandError('No such screen: %d' % index)
         self.togroup(screen.group.name)
 
-    def match(self, wname=None, wmclass=None, role=None):
+    def match(self, wname=None, wmclass=None, role=None, wm_type=None,
+              wm_instance_class=None, net_wm_pid=None):
         """Match window against given attributes.
 
         Parameters
@@ -1093,26 +1095,35 @@ class Window(_Window):
             matches against any of the two values in the ``WM_CLASS`` property
         role :
             matches against the ``WM_WINDOW_ROLE`` property
+        wm_type:
+            matches against the WM_TYPE atom
+        wm_instance_class:
+            matches against the first string in WM_CLASS atom
+        net_wm_pid:
+            matches against the _NET_WM_PID atom (only int allowed in this rule)
         """
-        if not (wname or wmclass or role):
-            raise TypeError(
-                "Either a name, a wmclass or a role must be specified"
-            )
-        if wname and wname == self.name:
-            return True
+
+        # Match expects lists of things to match against, while this API expects single
+        # values, so wrap every not-None object inside a list
+        if wname is not None:
+            wname = [wname]
+        if wmclass is not None:
+            wmclass = [wmclass]
+        if role is not None:
+            role = [role]
+        if wm_type is not None:
+            wm_type = [wm_type]
+        if wm_instance_class is not None:
+            wm_instance_class = [wm_instance_class]
+        if net_wm_pid is not None:
+            net_wm_pid = [net_wm_pid]
+
+        match = Match(wname, wmclass, role, wm_type, wm_instance_class, net_wm_pid)
 
         try:
-            cliclass = self.window.get_wm_class()
-            if wmclass and cliclass and wmclass in cliclass:
-                return True
-
-            clirole = self.window.get_wm_window_role()
-            if role and clirole and role == clirole:
-                return True
+            return match.compare(self)
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             return False
-
-        return False
 
     def handle_EnterNotify(self, e):  # noqa: N802
         hook.fire("client_mouse_enter", self)
