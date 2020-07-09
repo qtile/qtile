@@ -186,6 +186,9 @@ class Qtile(CommandObject):
                 logger.exception("failed restoring state")
 
         self.core.scan()
+        if state:
+            for screen in self.screens:
+                screen.group.layout_all()
         self.update_net_desktops()
         hook.subscribe.setgroup(self.update_net_desktops)
 
