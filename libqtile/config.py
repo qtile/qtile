@@ -609,7 +609,7 @@ class Match:
 
         def predicate(other):
             # "[...] match as an "include"-match [...]"
-            match = getattr(other, "match", lambda candidate: candidate in value)
+            match = getattr(other, "match", lambda other: other in value)
             return match(other)
 
         return predicate
