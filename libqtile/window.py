@@ -1082,44 +1082,14 @@ class Window(_Window):
                 raise CommandError('No such screen: %d' % index)
         self.togroup(screen.group.name)
 
-    def match(self, wname=None, wmclass=None, role=None, wm_type=None,
-              wm_instance_class=None, net_wm_pid=None):
+    def match(self, match):
         """Match window against given attributes.
 
         Parameters
         ==========
-        wname :
-            matches against the window name or title, that is, either
-            ``_NET_WM_VISIBLE_NAME``, ``_NET_WM_NAME``, ``WM_NAME``.
-        wmclass :
-            matches against any of the two values in the ``WM_CLASS`` property
-        role :
-            matches against the ``WM_WINDOW_ROLE`` property
-        wm_type:
-            matches against the WM_TYPE atom
-        wm_instance_class:
-            matches against the first string in WM_CLASS atom
-        net_wm_pid:
-            matches against the _NET_WM_PID atom (only int allowed in this rule)
+        match:
+            a config.Match object
         """
-
-        # Match expects lists of things to match against, while this API expects single
-        # values, so wrap every not-None object inside a list
-        if wname is not None:
-            wname = [wname]
-        if wmclass is not None:
-            wmclass = [wmclass]
-        if role is not None:
-            role = [role]
-        if wm_type is not None:
-            wm_type = [wm_type]
-        if wm_instance_class is not None:
-            wm_instance_class = [wm_instance_class]
-        if net_wm_pid is not None:
-            net_wm_pid = [net_wm_pid]
-
-        match = Match(wname, wmclass, role, wm_type, wm_instance_class, net_wm_pid)
-
         try:
             return match.compare(self)
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):

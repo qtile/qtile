@@ -42,6 +42,7 @@ import libqtile.widget
 from libqtile.backend.x11 import xcbq
 from libqtile.command_interface import CommandError, CommandException
 from libqtile.lazy import lazy
+from libqtile.config import Match
 from test.conftest import BareConfig, Retry, no_xinerama, whereis
 
 
@@ -524,8 +525,8 @@ def test_match(qtile):
     self = qtile
 
     self.test_xeyes()
-    assert self.c.window.match(wname="xeyes")
-    assert not self.c.window.match(wname="nonexistent")
+    assert self.c.window.match(Match(title="xeyes"))
+    assert not self.c.window.match(Match(title="nonexistent"))
 
 
 @manager_config
