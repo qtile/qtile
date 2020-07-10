@@ -26,7 +26,6 @@
 """
 Slice layout. Serves as example of delegating layouts (or sublayouts)
 """
-
 from libqtile.layout.base import Delegate, Layout, SingleWindow
 from libqtile.layout.max import Max
 
@@ -98,20 +97,13 @@ class Slice(Delegate):
         ("width", 256, "Slice width"),
         ("side", "left", "Side of the slice (left, right, top, bottom)"),
         ("name", "max", "Name of this layout."),
-        ("wname", None, "WM_NAME to match"),
-        ("wmclass", None, "WM_CLASS to match"),
-        ("role", None, "WM_WINDOW_ROLE to match"),
         ("fallback", Max(), "Fallback layout"),
     ]
 
-    def __init__(self, **config):
+    def __init__(self, match, **config):
         Delegate.__init__(self, **config)
         self.add_defaults(Slice.defaults)
-        self.match = {
-            'wname': self.wname,
-            'wmclass': self.wmclass,
-            'role': self.role,
-        }
+        self.match = match
         self._slice = Single()
 
     def clone(self, group):
@@ -144,13 +136,13 @@ class Slice(Delegate):
         raise NotImplementedError("Should not be called")
 
     def _get_layouts(self):
-        return (self._slice, self.fallback)
+        return self._slice, self.fallback
 
     def _get_active_layout(self):
         return self.fallback  # always
 
     def add(self, win):
-        if self._slice.empty() and win.match(**self.match):
+        if self._slice.empty() and win.match(self.match):
             self._slice.add(win)
             self.layouts[win] = self._slice
         else:
