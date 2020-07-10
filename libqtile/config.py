@@ -622,17 +622,17 @@ class Match:
                 wm_class = client.window.get_wm_class()
                 if not wm_class or len(wm_class) < 2:
                     return False
+
                 value = wm_class[1]
             elif property_name == "role":
                 value = client.window.get_wm_window_role()
-                if value is None:
-                    continue
             elif property_name == "wm_type":
                 value = client.window.get_wm_type()
             elif property_name == "wm_instance_class":
                 wm_class = client.window.get_wm_class()
                 if not wm_class:
                     return False
+
                 value = wm_class[0]
             else:
                 value = client.window.get_net_wm_pid()
