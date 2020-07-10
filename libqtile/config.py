@@ -620,7 +620,7 @@ class Match:
                 value = client.name
             elif property_name == "wmclass":
                 wm_class = client.window.get_wm_class()
-                if not wm_class and len(wm_class) > 1:
+                if not wm_class or len(wm_class) < 2:
                     return False
                 value = wm_class[1]
             elif property_name == "role":
