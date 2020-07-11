@@ -568,7 +568,7 @@ class Match:
     ==========
     title:
         matches against the title (WM_NAME)
-    wmclass:
+    wm_class:
         matches against the second string in WM_CLASS atom
     role:
         matches against the WM_ROLE atom
@@ -580,14 +580,14 @@ class Match:
         matches against the _NET_WM_PID atom (only int allowed for this
         rule)
     """
-    def __init__(self, title=None, wmclass=None, role=None, wm_type=None,
+    def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
                  wm_instance_class=None, net_wm_pid=None):
         self._rules = {}
 
         if title is not None:
             self._rules["title"] = title
-        if wmclass is not None:
-            self._rules["wmclass"] = wmclass
+        if wm_class is not None:
+            self._rules["wm_class"] = wm_class
         if role is not None:
             self._rules["role"] = role
         if wm_type is not None:
@@ -618,7 +618,7 @@ class Match:
         for property_name, rule_value in self._rules.items():
             if property_name == "title":
                 value = client.name
-            elif property_name == "wmclass":
+            elif property_name == "wm_class":
                 wm_class = client.window.get_wm_class()
                 if not wm_class or len(wm_class) < 2:
                     return False

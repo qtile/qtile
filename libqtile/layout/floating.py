@@ -89,7 +89,7 @@ class Floating(Layout):
                 warned = True
 
             match = Match(
-                title=rule.get("wname"), wmclass=rule.get("wmclass"),
+                title=rule.get("wname"), wm_class=rule.get("wmclass"),
                 role=rule.get("role"), wm_type=rule.get("wm_type"),
                 wm_instance_class=rule.get("wm_instance_class"),
                 net_wm_pid=rule.get("net_wm_pid"))
