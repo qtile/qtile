@@ -43,14 +43,16 @@ class SliceConfig:
     groups = [
         libqtile.config.Group("a"),
     ]
+
+    match = libqtile.config.Match(title='slice')
     layouts = [
-        layout.Slice(side='left', width=200, wname='slice',
+        layout.Slice(match, side='left', width=200,
                      fallback=layout.Stack(num_stacks=1, border_width=0)),
-        layout.Slice(side='right', width=200, wname='slice',
+        layout.Slice(match, side='right', width=200,
                      fallback=layout.Stack(num_stacks=1, border_width=0)),
-        layout.Slice(side='top', width=200, wname='slice',
+        layout.Slice(match, side='top', width=200,
                      fallback=layout.Stack(num_stacks=1, border_width=0)),
-        layout.Slice(side='bottom', width=200, wname='slice',
+        layout.Slice(match, side='bottom', width=200,
                      fallback=layout.Stack(num_stacks=1, border_width=0)),
     ]
     floating_layout = libqtile.layout.floating.Floating()
