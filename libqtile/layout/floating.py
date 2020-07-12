@@ -32,6 +32,7 @@ import warnings
 
 from libqtile.layout.base import Layout
 from libqtile.config import Match
+from libqtile.log_utils import logger
 
 
 class Floating(Layout):
@@ -83,8 +84,10 @@ class Floating(Layout):
                 continue
 
             if not warned:
-                warnings.warn("Non-config.Match objects in float_rules are "
-                              "deprecated", DeprecationWarning)
+                message = "Non-config.Match objects in float_rules are " \
+                          "deprecated"
+                warnings.warn(message, DeprecationWarning)
+                logger.warning(message)
                 warned = True
 
             match = Match(
