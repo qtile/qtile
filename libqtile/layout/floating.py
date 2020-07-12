@@ -28,7 +28,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.log_utils import logger
+import warnings
+
 from libqtile.layout.base import Layout
 from libqtile.config import Match
 
@@ -58,7 +59,7 @@ class Floating(Layout):
         You only need one, but you need to provide the value for it.  When a new
         window is opened it's ``match`` method is called with each of these
         rules.  If one matches, the window will float.  The following
-        will float gimp and skype::
+        will float GIMP and Skype::
 
             from libqtile.config import Match
             float_rules=[Match(wmclass="skype"), Match(wmclass="gimp")]
@@ -77,15 +78,14 @@ class Floating(Layout):
         self.group = None
 
         self.float_rules = float_rules or []
-
         warned = False
         for index, rule in enumerate(self.float_rules):
             if isinstance(rule, Match):
                 continue
 
             if not warned:
-                logger.warning("Non-config.Match objects in float_rules are "
-                               "deprecated")
+                warnings.warn("Non-config.Match objects in float_rules are "
+                              "deprecated", DeprecationWarning)
                 warned = True
 
             match = Match(
