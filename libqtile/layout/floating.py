@@ -76,8 +76,8 @@ class Floating(Layout):
         self.clients = []
         self.focused = None
         self.group = None
-
         self.float_rules = float_rules or []
+
         warned = False
         for index, rule in enumerate(self.float_rules):
             if isinstance(rule, Match):
@@ -101,7 +101,7 @@ class Floating(Layout):
 
     def match(self, win):
         """Used to default float some windows"""
-        return any(win.match(match) for match in self.float_rules)
+        return any(win.match(rule) for rule in self.float_rules)
 
     def find_clients(self, group):
         """Find all clients belonging to a given group"""
