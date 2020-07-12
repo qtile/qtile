@@ -1,8 +1,18 @@
 qtile X.X.X, released XXXX-XX-XX:
+    !!! Config breakage !!!
+        - rules specified in `layout.Floating`'s `float_rules` are now evaluated with
+          AND-semantics instead of OR-semantics, i.e. if you specify 2 different
+          property rules, both have to match
+        - using `dict`s for `layout.Floating`'s `float_rules` is now deprecated, please
+          use `config.Match` objects instead
+        - `layout.slice.Slice` now requires a `config.Match` object instead of `wname`,
+          `wmclass` or `role` arguments
     * features
         - added `guess_terminal` in utils
         - added keybinding cheet sheet image generator
         - custom keyboardlayout display 
+        - rules specified in `layout.Floating`'s `float_rules` are now evaluated with
+          AND-semantics, allowing for more complex and specific rules
 
 qtile 0.15.1, released 2020-04-14
     * bugfixes
