@@ -50,15 +50,14 @@ class Floating(Layout):
     def __init__(self, float_rules=None, no_reposition_match=None, **config):
         """
         If you have certain apps that you always want to float you can provide
-        ``float_rules`` to do so. ``float_rules`` is a list of
+        ``float_rules`` to do so. ``float_rules`` are a list of
         Match objects::
 
             from libqtile.config import Match
             Match(title=WM_NAME, wmclass=WM_CLASS, role=WM_WINDOW_ROLE)
 
-        You only need one, but you need to provide the value for it.  When a new
-        window is opened it's ``match`` method is called with each of these
-        rules.  If one matches, the window will float.  The following
+        When a new window is opened its ``match`` method is called with each of
+        these rules.  If one matches, the window will float.  The following
         will float GIMP and Skype::
 
             from libqtile.config import Match
