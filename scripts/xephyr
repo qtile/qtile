@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 HERE=$(dirname $(readlink -f $0))
 SCREEN_SIZE=${SCREEN_SIZE:-800x600}
