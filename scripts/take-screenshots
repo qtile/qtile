@@ -11,10 +11,10 @@ BORDER_NORMAL=${BORDER_NORMAL:-#000000}
 BORDER_WIDTH=${BORDER_WIDTH:-8}
 MARGIN=${MARGIN:-10}
 if [[ -z "${PYTHON}" ]]; then
-  if [[ -f "${PROJECT_DIR}/venv/bin/python" ]]; then
-    PYTHON="${PROJECT_DIR}/venv/bin/python"
+  if [[ -f "${PROJECT_DIR}/venv/bin/python3" ]]; then
+    PYTHON="${PROJECT_DIR}/venv/bin/python3"
   else
-    PYTHON=python
+    PYTHON=python3
   fi
 fi
 
