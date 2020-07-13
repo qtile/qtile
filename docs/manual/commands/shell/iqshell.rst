@@ -33,7 +33,7 @@ running:
 
 .. code-block:: bash
 
-    $ python -m libqtile.interactive.iqshell_kernel
+    $ python3 -m libqtile.interactive.iqshell_kernel
 
 However, this will merely spawn a kernel instance, you will have to run a
 separate frontend that connects to this kernel.
@@ -43,7 +43,7 @@ Jupyter.  To register the kernel itself, run:
 
 .. code-block:: bash
 
-    $ python -m libqtile.interactive.iqshell_install
+    $ python3 -m libqtile.interactive.iqshell_install
 
 If you run this as a non-root user, or pass the ``--user`` flag, this will
 install to the user Jupyter kernel directory.  You can now invoke the kernel

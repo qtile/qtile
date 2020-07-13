@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright (c) 2017 Dario Giovannetti
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
