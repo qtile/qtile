@@ -341,6 +341,15 @@ class Subscribe:
         """
         return self._subscribe("leave_chord", func)
 
+    def window_state_changed(self, func):
+        """Called when window state changes
+
+        **Arguments**
+
+            * ``window.Window`` of window with the changed state
+        """
+        return self._subscribe("window_state_changed", func)
+
 
 subscribe = Subscribe()
 

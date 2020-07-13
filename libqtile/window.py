@@ -325,6 +325,8 @@ class _Window(CommandObject):
 
         state = self.window.get_net_wm_state()
 
+        hook.fire("window_state_changed", self)
+
         logger.debug('_NET_WM_STATE: %s', state)
         for s in triggered:
             setattr(self, s, (s in state))
