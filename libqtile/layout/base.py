@@ -51,10 +51,10 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(Layout.defaults)
 
-    def layout(self, windows, screen):
+    def layout(self, windows, screen_rect):
         assert windows, "let's eliminate unnecessary calls"
         for i in windows:
-            self.configure(i, screen)
+            self.configure(i, screen_rect)
 
     def finalize(self):
         pass
@@ -86,7 +86,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         elif name == "group":
             return self.group
 
-    def show(self, screen):
+    def show(self, screen_rect):
         """Called when layout is being shown"""
         pass
 
@@ -136,7 +136,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def configure(self, client, screen):
+    def configure(self, client, screen_rect):
         """Configure the layout
 
         This method should:
@@ -227,11 +227,11 @@ class SingleWindow(Layout):
         """Should return either visible window or None"""
         pass
 
-    def configure(self, win, screen):
+    def configure(self, win, screen_rect):
         if win is self._get_window():
             win.place(
-                screen.x, screen.y,
-                screen.width, screen.height,
+                screen_rect.x, screen_rect.y,
+                screen_rect.width, screen_rect.height,
                 0,
                 None,
             )
@@ -299,7 +299,7 @@ class Delegate(Layout):
         return focus
 
     @abstractmethod
-    def show(self, screen):
+    def show(self, screen_rect):
         """Tells the layout to show itself on the given ScreenRect"""
         pass
 

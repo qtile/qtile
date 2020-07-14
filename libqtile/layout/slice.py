@@ -90,8 +90,8 @@ class Single(SingleWindow):
 class Slice(Delegate):
     """Slice layout
 
-    This layout cuts piece of screen and places a single window on that piece,
-    and delegates other window placement to other layout
+    This layout cuts piece of screen_rect and places a single window on that
+    piece, and delegates other window placement to other layout
     """
 
     defaults = [
@@ -121,8 +121,8 @@ class Slice(Delegate):
         res._window = None
         return res
 
-    def layout(self, windows, screen):
-        win, sub = self._get_screens(screen)
+    def layout(self, windows, screen_rect):
+        win, sub = self._get_screen_rects(screen_rect)
         self.delegate_layout(
             windows,
             {
@@ -131,12 +131,12 @@ class Slice(Delegate):
             }
         )
 
-    def show(self, screen):
-        win, sub = self._get_screens(screen)
+    def show(self, screen_rect):
+        win, sub = self._get_screen_rects(screen_rect)
         self._slice.show(win)
         self.fallback.show(sub)
 
-    def configure(self, win, screen):
+    def configure(self, win, screen_rect):
         raise NotImplementedError("Should not be called")
 
     def _get_layouts(self):
@@ -145,7 +145,7 @@ class Slice(Delegate):
     def _get_active_layout(self):
         return self.fallback  # always
 
-    def _get_screens(self, screen):
+    def _get_screen_rects(self, screen):
         if self.side == 'left':
             win, sub = screen.hsplit(self.width)
         elif self.side == 'right':

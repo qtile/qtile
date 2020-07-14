@@ -44,8 +44,8 @@ class MonadTall(_SimpleLayoutBase):
     Main-Pane:
 
     A main pane that contains a single window takes up a vertical portion of
-    the screen based on the ratio setting. This ratio can be adjusted with the
-    ``cmd_grow_main`` and ``cmd_shrink_main`` or, while the main pane is in
+    the screen_rect based on the ratio setting. This ratio can be adjusted with
+    the ``cmd_grow_main`` and ``cmd_shrink_main`` or, while the main pane is in
     focus, ``cmd_grow`` and ``cmd_shrink``.
 
     ::
@@ -75,11 +75,11 @@ class MonadTall(_SimpleLayoutBase):
 
     Secondary-panes:
 
-    Occupying the rest of the screen are one or more secondary panes.  The
-    secondary panes will share the vertical space of the screen however they
-    can be resized at will with the ``cmd_grow`` and ``cmd_shrink`` methods.
-    The other secondary panes will adjust their sizes to smoothly fill all of
-    the space.
+    Occupying the rest of the screen_rect are one or more secondary panes.  The
+    secondary panes will share the vertical space of the screen_rect however
+    they can be resized at will with the ``cmd_grow`` and ``cmd_shrink``
+    methods.  The other secondary panes will adjust their sizes to smoothly fill
+    all of the space.
 
     ::
 
@@ -193,7 +193,7 @@ class MonadTall(_SimpleLayoutBase):
         c = _SimpleLayoutBase.clone(self, group)
         c.sizes = []
         c.relative_sizes = []
-        c.rect = group.screen.get_rect() if group.screen else None
+        c.screen_rect = group.screen.get_rect() if group.screen else None
         c.ratio = self.ratio
         c.align = self.align
         return c
@@ -267,9 +267,9 @@ class MonadTall(_SimpleLayoutBase):
             self._maximize_secondary()
         self.group.layout_all()
 
-    def configure(self, client, screen):
+    def configure(self, client, screen_rect):
         "Position client based on order and sizes"
-        self.screen_rect = screen
+        self.screen_rect = screen_rect
 
         # if no sizes or normalize flag is set, normalize
         if not self.relative_sizes or self.do_normalize:
@@ -300,12 +300,12 @@ class MonadTall(_SimpleLayoutBase):
             client.unhide()
             return
         cidx = self.clients.index(client)
-        self._configure_specific(client, screen, px, cidx)
+        self._configure_specific(client, screen_rect, px, cidx)
         client.unhide()
 
-    def _configure_specific(self, client, screen, px, cidx):
+    def _configure_specific(self, client, screen_rect, px, cidx):
         """Specific configuration for xmonad tall."""
-        self.screen_rect = screen
+        self.screen_rect = screen_rect
 
         # calculate main/secondary pane size
         width_main = int(self.screen_rect.width * self.ratio)
@@ -738,7 +738,7 @@ class MonadWide(MonadTall):
     Main-Pane:
 
     A main pane that contains a single window takes up a horizontal
-    portion of the screen based on the ratio setting. This ratio can be
+    portion of the screen_rect based on the ratio setting. This ratio can be
     adjusted with the ``cmd_grow_main`` and ``cmd_shrink_main`` or,
     while the main pane is in focus, ``cmd_grow`` and ``cmd_shrink``.
 
@@ -770,8 +770,8 @@ class MonadWide(MonadTall):
 
     Secondary-panes:
 
-    Occupying the rest of the screen are one or more secondary panes.
-    The secondary panes will share the horizontal space of the screen
+    Occupying the rest of the screen_rect are one or more secondary panes.
+    The secondary panes will share the horizontal space of the screen_rect
     however they can be resized at will with the ``cmd_grow`` and
     ``cmd_shrink`` methods. The other secondary panes will adjust their
     sizes to smoothly fill all of the space.
@@ -864,9 +864,9 @@ class MonadWide(MonadTall):
         else:
             self._grow_secondary(maxed_size)
 
-    def _configure_specific(self, client, screen, px, cidx):
+    def _configure_specific(self, client, screen_rect, px, cidx):
         """Specific configuration for xmonad wide."""
-        self.screen_rect = screen
+        self.screen_rect = screen_rect
 
         # calculate main/secondary column widths
         height_main = int(self.screen_rect.height * self.ratio)
