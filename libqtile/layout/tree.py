@@ -455,15 +455,15 @@ class TreeTab(Layout):
         del self._nodes[win]
         self.draw_panel()
 
-    def _create_panel(self):
+    def _create_panel(self, screen):
         self._panel = window.Internal.create(
             self.group.qtile,
-            0,
-            0,
+            screen.x,
+            screen.y,
             self.panel_width,
             100
         )
-        self._create_drawer()
+        self._create_drawer(screen)
         self._panel.handle_Expose = self._handle_Expose
         self._panel.handle_ButtonPress = self._handle_ButtonPress
         self.group.qtile.windows_map[self._panel.window.wid] = self._panel
@@ -547,7 +547,7 @@ class TreeTab(Layout):
 
     def show(self, screen):
         if not self._panel:
-            self._create_panel()
+            self._create_panel(screen)
         panel, body = screen.hsplit(self.panel_width)
         self._resize_panel(panel)
         self._panel.unhide()
@@ -714,13 +714,13 @@ class TreeTab(Layout):
         self.panel_width -= 10
         self.group.layout_all()
 
-    def _create_drawer(self):
+    def _create_drawer(self, rect):
         if self._drawer is None:
             self._drawer = drawer.Drawer(
                 self.group.qtile,
                 self._panel.window.wid,
                 self.panel_width,
-                self.group.screen.dheight
+                rect.height
             )
         self._drawer.clear(self.bg_color)
         self._layout = self._drawer.textlayout(
@@ -745,5 +745,5 @@ class TreeTab(Layout):
                 0,
                 None
             )
-            self._create_drawer()
+            self._create_drawer(rect)
             self.draw_panel()

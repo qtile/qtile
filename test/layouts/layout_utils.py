@@ -40,8 +40,19 @@ def assert_dimensions(self, x, y, w, h, win=None):
     info = win.info()
     assert info['x'] == x, info
     assert info['y'] == y, info
-    assert info['width'] == w, info  # why?
+    assert info['width'] == w, info
     assert info['height'] == h, info
+
+
+def assert_dimensions_fit(self, x, y, w, h, win=None):
+    """Asserts that window is within the given bounds"""
+    if win is None:
+        win = self.c.window
+    info = win.info()
+    assert info['x'] >= x, info
+    assert info['y'] >= y, info
+    assert info['width'] <= w, info
+    assert info['height'] <= h, info
 
 
 def assert_focus_path(self, *names):
