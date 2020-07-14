@@ -270,7 +270,7 @@ class Delegate(Layout):
     def delegate_layout(self, windows, mapping):
         """Delegates layouting actual windows
 
-        Parameterer
+        Parameters
         ===========
         windows:
             windows to layout
@@ -297,6 +297,22 @@ class Delegate(Layout):
                 idx += 1
                 focus = layouts[idx].focus_first()
         return focus
+
+    @abstractmethod
+    def show(self, screen):
+        """Tells the layout to show itself on the given ScreenRect"""
+        pass
+
+    def hide(self):
+        for lay in self._get_layouts():
+            lay.hide()
+
+    def focus(self, win):
+        self.layouts[win].focus(win)
+
+    def blur(self):
+        for lay in self._get_layouts():
+            lay.blur()
 
     def focus_first(self):
         layouts = self._get_layouts()

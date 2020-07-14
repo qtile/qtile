@@ -122,6 +122,30 @@ class Slice(Delegate):
         return res
 
     def layout(self, windows, screen):
+        win, sub = self._get_screens(screen)
+        self.delegate_layout(
+            windows,
+            {
+                self._slice: win,
+                self.fallback: sub,
+            }
+        )
+
+    def show(self, screen):
+        win, sub = self._get_screens(screen)
+        self._slice.show(win)
+        self.fallback.show(sub)
+
+    def configure(self, win, screen):
+        raise NotImplementedError("Should not be called")
+
+    def _get_layouts(self):
+        return (self._slice, self.fallback)
+
+    def _get_active_layout(self):
+        return self.fallback  # always
+
+    def _get_screens(self, screen):
         if self.side == 'left':
             win, sub = screen.hsplit(self.width)
         elif self.side == 'right':
@@ -132,22 +156,7 @@ class Slice(Delegate):
             sub, win = screen.vsplit(screen.height - self.width)
         else:
             raise NotImplementedError(self.side)
-        self.delegate_layout(
-            windows,
-            {
-                self._slice: win,
-                self.fallback: sub,
-            }
-        )
-
-    def configure(self, win, screen):
-        raise NotImplementedError("Should not be called")
-
-    def _get_layouts(self):
-        return (self._slice, self.fallback)
-
-    def _get_active_layout(self):
-        return self.fallback  # always
+        return (win, sub)
 
     def add(self, win):
         if self._slice.empty() and win.match(**self.match):
