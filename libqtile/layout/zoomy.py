@@ -48,8 +48,8 @@ class Zoomy(_SimpleLayoutBase):
     def add(self, client):
         self.clients.append_head(client)
 
-    def configure(self, client, screen):
-        left, right = screen.hsplit(screen.width - self.columnwidth)
+    def configure(self, client, screen_rect):
+        left, right = screen_rect.hsplit(screen_rect.width - self.columnwidth)
         if client is self.clients.current_client:
             client.place(
                 left.x,

@@ -131,8 +131,8 @@ class _Group(CommandObject):
         self.current_layout = index
         hook.fire("layout_change", self.layouts[self.current_layout], self)
         self.layout_all()
-        screen = self.screen.get_rect()
-        self.layout.show(screen)
+        screen_rect = self.screen.get_rect()
+        self.layout.show(screen_rect)
 
     def use_next_layout(self):
         self.use_layout((self.current_layout + 1) % (len(self.layouts)))
@@ -153,15 +153,15 @@ class _Group(CommandObject):
                     x for x in self.windows
                     if x.floating and not x.minimized
                 ]
-                screen = self.screen.get_rect()
+                screen_rect = self.screen.get_rect()
                 if normal:
                     try:
-                        self.layout.layout(normal, screen)
+                        self.layout.layout(normal, screen_rect)
                     except Exception:
                         logger.exception("Exception in layout %s",
                                          self.layout.name)
                 if floating:
-                    self.floating_layout.layout(floating, screen)
+                    self.floating_layout.layout(floating, screen_rect)
                 if self.current_window and \
                         self.screen == self.qtile.current_screen:
                     self.current_window.focus(warp)
@@ -175,9 +175,9 @@ class _Group(CommandObject):
             # move all floating guys offset to new screen
             self.floating_layout.to_screen(self, self.screen)
             self.layout_all(warp=self.qtile.config.cursor_warp)
-            rect = self.screen.get_rect()
-            self.floating_layout.show(rect)
-            self.layout.show(rect)
+            screen_rect = self.screen.get_rect()
+            self.floating_layout.show(screen_rect)
+            self.layout.show(screen_rect)
         else:
             self.hide()
 
