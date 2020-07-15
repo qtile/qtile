@@ -166,6 +166,7 @@ class MonadTall(_SimpleLayoutBase):
         ("change_size", 20, "Resize change in pixels"),
         ("new_at_current", False,
             "Place new windows at the position of the active window."),
+        ("corner_radius", 0, "Radius of rounded corners."),
     ]
 
     def __init__(self, **config):
@@ -296,6 +297,7 @@ class MonadTall(_SimpleLayoutBase):
                 self.single_border_width,
                 px,
                 margin=self.single_margin,
+                corner_radius=self.corner_radius,
             )
             client.unhide()
             return
@@ -353,6 +355,7 @@ class MonadTall(_SimpleLayoutBase):
                 self.border_width,
                 px,
                 margin=self.margin,
+                corner_radius=self.corner_radius,
             )
         else:
             # main client
@@ -364,6 +367,7 @@ class MonadTall(_SimpleLayoutBase):
                 (self.screen_rect.height - 2 * self.border_width - 2 * self.margin),
                 self.border_width,
                 px,
+                corner_radius=self.corner_radius,
             )
 
     def info(self):
@@ -914,6 +918,7 @@ class MonadWide(MonadTall):
                 self.border_width,
                 px,
                 margin=self.margin,
+                corner_radius=self.corner_radius,
             )
         else:
             # main client
@@ -925,6 +930,7 @@ class MonadWide(MonadTall):
                 height - self.margin,
                 self.border_width,
                 px,
+                corner_radius=self.corner_radius,
             )
 
     def _shrink_secondary(self, amt):

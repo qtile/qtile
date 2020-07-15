@@ -55,6 +55,7 @@ class Floating(Layout):
         ("max_border_width", 0, "Border width for maximize."),
         ("fullscreen_border_width", 0, "Border width for fullscreen."),
         ("name", "floating", "Name of this layout."),
+        ("corner_radius", 0, "Radius of rounded corners."),
         (
             "auto_float_types",
             DEFAULT_FLOAT_WM_TYPES,
@@ -259,6 +260,7 @@ class Floating(Layout):
             bw,
             bc,
             above,
+            corner_radius=self.corner_radius,
         )
         client.unhide()
 

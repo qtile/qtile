@@ -40,6 +40,7 @@ class Tile(_SimpleLayoutBase):
         ("border_width", 1, "Border width."),
         ("name", "tile", "Name of this layout."),
         ("margin", 0, "Margin of the layout"),
+        ("corner_radius", 0, "Radius of rounded corners."),
     ]
 
     def __init__(self, ratio=0.618, masterWindows=1, expand=True,  # noqa: N803
@@ -138,6 +139,7 @@ class Tile(_SimpleLayoutBase):
                 border_width,
                 bc,
                 margin=self.margin,
+                corner_radius=self.corner_radius,
             )
             client.unhide()
         else:

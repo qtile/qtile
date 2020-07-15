@@ -179,6 +179,7 @@ class _Window(CommandObject):
         self.window_type = "normal"
         self._float_state = NOT_FLOATING
         self._demands_attention = False
+        self.rounded = True
 
         self.hints = {
             'input': True,
@@ -442,7 +443,7 @@ class _Window(CommandObject):
         )
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, margin=None):
+              above=False, margin=None, corner_radius=None):
         """Places the window at the specified location with the given size.
         """
 
@@ -496,6 +497,15 @@ class _Window(CommandObject):
 
         if bordercolor is not None:
             self.window.set_attribute(borderpixel=bordercolor)
+
+        if corner_radius:
+            self.window.round_corners(
+                width, height, borderwidth, corner_radius
+            )
+            self.rounded = True
+        elif self.rounded:
+            self.window.unround_corners()
+            self.rounded = False
 
     def user_placed_window_setup(self, borderpixel, borderwidth):
         self.borderwidth = borderwidth

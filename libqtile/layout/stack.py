@@ -63,6 +63,7 @@ class Stack(Layout):
         ("num_stacks", 2, "Number of stacks."),
         ("fair", False, "Add new windows to the stacks in a round robin way."),
         ("margin", 0, "Margin of the layout"),
+        ("corner_radius", 0, "Radius of rounded corners."),
     ]
 
     def __init__(self, **config):
@@ -234,6 +235,7 @@ class Stack(Layout):
                 self.border_width,
                 px,
                 margin=self.margin,
+                corner_radius=self.corner_radius,
             )
             client.unhide()
         else:
@@ -246,6 +248,7 @@ class Stack(Layout):
                     self.border_width,
                     px,
                     margin=self.margin,
+                    corner_radius=self.corner_radius,
                 )
                 client.unhide()
             else:

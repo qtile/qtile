@@ -39,6 +39,7 @@ class Zoomy(_SimpleLayoutBase):
         ("property_big", "1.0", "Property value to set on normal window"),
         ("margin", 0, "Margin of the layout"),
         ("name", "zoomy", "Name of this layout."),
+        ("corner_radius", 0, "Radius of rounded corners."),
     ]
 
     def __init__(self, **config):
@@ -59,6 +60,7 @@ class Zoomy(_SimpleLayoutBase):
                 0,
                 None,
                 margin=self.margin,
+                corner_radius=self.corner_radius,
             )
         else:
             h = right.width * left.height // left.width
@@ -76,6 +78,7 @@ class Zoomy(_SimpleLayoutBase):
                     0,
                     None,
                     margin=self.margin,
+                    corner_radius=self.corner_radius,
                 )
             else:
                 hh = (right.height - h) // (len(self.clients) - 1)
@@ -87,6 +90,7 @@ class Zoomy(_SimpleLayoutBase):
                     0,
                     None,
                     margin=self.margin,
+                    corner_radius=self.corner_radius,
                 )
         client.unhide()
 

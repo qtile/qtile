@@ -158,6 +158,7 @@ class Bsp(Layout):
         ("grow_amount", 10, "Amount by which to grow a window/column."),
         ("lower_right", True, "New client occupies lower or right subspace."),
         ("fair", True, "New clients are inserted in the shortest branch."),
+        ("corner_radius", 0, "Radius of rounded corners."),
     ]
 
     def __init__(self, **config):

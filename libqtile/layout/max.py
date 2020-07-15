@@ -51,7 +51,8 @@ class Max(_SimpleLayoutBase):
                 screen_rect.width,
                 screen_rect.height,
                 0,
-                None
+                None,
+                corner_radius=None,
             )
             client.unhide()
         else:

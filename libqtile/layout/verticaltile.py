@@ -89,6 +89,7 @@ class VerticalTile(_SimpleLayoutBase):
         ('border_width', 1, 'Border width.'),
         ('margin', 0, 'Border margin.'),
         ('name', 'verticaltile', 'Name of this layout.'),
+        ("corner_radius", 0, "Radius of rounded corners."),
     ]
 
     ratio = 0.75
@@ -168,7 +169,8 @@ class VerticalTile(_SimpleLayoutBase):
                         y = y - sec_pane_height + main_pane_height
 
             window.place(screen_rect.x, y, width, height, border_width,
-                         border_color, margin=self.margin)
+                         border_color, margin=self.margin,
+                         corner_radius=self.corner_radius)
             window.unhide()
         else:
             window.hide()

@@ -42,6 +42,7 @@ class Matrix(_SimpleLayoutBase):
         ("border_width", 1, "Border width."),
         ("name", "matrix", "Name of this layout."),
         ("margin", 0, "Margin of the layout"),
+        ("corner_radius", 0, "Radius of rounded corners."),
     ]
 
     def __init__(self, columns=2, **config):
@@ -126,6 +127,7 @@ class Matrix(_SimpleLayoutBase):
             self.border_width,
             px,
             margin=self.margin,
+            corner_radius=self.corner_radius,
         )
         client.unhide()
 

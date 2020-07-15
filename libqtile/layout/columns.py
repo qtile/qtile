@@ -130,6 +130,7 @@ class Columns(Layout):
          "Wrap the screen when moving focus across rows."),
         ("wrap_focus_stacks", True,
          "Wrap the screen when moving focus across stacked."),
+        ("corner_radius", 0, "Radius of rounded corners."),
     ]
 
     def __init__(self, **config):
@@ -248,7 +249,8 @@ class Columns(Layout):
                 height - 2 * border,
                 border,
                 color,
-                margin=self.margin)
+                margin=self.margin,
+                corner_radius=self.corner_radius)
             client.unhide()
         elif client == col.cw:
             client.place(
@@ -258,7 +260,8 @@ class Columns(Layout):
                 screen_rect.height - 2 * border,
                 border,
                 color,
-                margin=self.margin)
+                margin=self.margin,
+                corner_radius=self.corner_radius)
             client.unhide()
         else:
             client.hide()

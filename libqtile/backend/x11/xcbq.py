@@ -756,6 +756,107 @@ class Window:
             parent = Window(self.conn, q.parent)
         return root, parent, [Window(self.conn, i) for i in q.children]
 
+    def round_corners(self, inner_w, inner_h, borderwidth, inner_rad):
+        outer_w = inner_w + borderwidth * 2
+        outer_h = inner_h + borderwidth * 2
+        outer_rad = inner_rad + borderwidth
+        inner_dia = inner_rad * 2
+        outer_dia = outer_rad * 2
+
+        if inner_w < inner_dia or inner_h < inner_dia:
+            logger.warning(
+                'Corner radius is too large for window size (wid=%r, radius=%r)',
+                self.wid, inner_rad
+            )
+            return
+
+        outer_pixmap = self.conn.conn.generate_id()
+        self.conn.conn.core.CreatePixmap(
+            1, outer_pixmap, self.wid, outer_w, outer_h,
+        )
+        inner_pixmap = self.conn.conn.generate_id()
+        self.conn.conn.core.CreatePixmap(
+            1, inner_pixmap, self.wid, inner_w, inner_h,
+        )
+
+        # clear pixmaps
+        pixel = self.conn.conn.generate_id()
+        self.conn.conn.core.CreateGC(
+            pixel,
+            outer_pixmap,
+            xcffib.xproto.GC.Foreground,
+            [self.conn.default_screen.black_pixel],
+        )
+        self.conn.conn.core.PolyFillRectangle(
+            outer_pixmap, pixel, 1,
+            [xcffib.xproto.RECTANGLE.synthetic(0, 0, outer_w, outer_h)]
+        )
+        self.conn.conn.core.PolyFillRectangle(
+            inner_pixmap, pixel, 1,
+            [xcffib.xproto.RECTANGLE.synthetic(0, 0, inner_w, inner_h)]
+        )
+
+        # fill main '+'-shaped area
+        pixel = self.conn.conn.generate_id()
+        self.conn.conn.core.CreateGC(
+            pixel,
+            outer_pixmap,
+            xcffib.xproto.GC.Foreground,
+            [self.conn.default_screen.white_pixel],
+        )
+        self.conn.conn.core.PolyFillRectangle(
+            outer_pixmap, pixel, 2,
+            rects(outer_rad, outer_w, outer_h),
+        )
+        self.conn.conn.core.PolyFillRectangle(
+            inner_pixmap, pixel, 2,
+            rects(inner_rad, inner_w, inner_h),
+        )
+
+        # fill corner arcs
+        self.conn.conn.core.PolyFillArc(
+            outer_pixmap, pixel, 4,
+            arcs(outer_dia, outer_w, outer_h)
+        )
+        self.conn.conn.core.PolyFillArc(
+            inner_pixmap, pixel, 4,
+            arcs(inner_dia, inner_w, inner_h)
+        )
+
+        self.conn.conn(xcffib.shape.key).Mask(
+            0, 0, self.wid, - borderwidth, - borderwidth, outer_pixmap
+        )
+        self.conn.conn(xcffib.shape.key).Mask(
+            0, 1, self.wid, 0, 0, inner_pixmap
+        )
+        self.conn.conn.core.FreeGC(pixel)
+        self.conn.conn.core.FreePixmap(outer_pixmap)
+        self.conn.conn.core.FreePixmap(inner_pixmap)
+
+    def unround_corners(self):
+        self.conn.conn(xcffib.shape.key).Mask(0, 0, self.wid, 0, 0, 0)
+        self.conn.conn(xcffib.shape.key).Mask(0, 1, self.wid, 0, 0, 0)
+
+
+@functools.lru_cache()
+def rects(rad, width, height):
+    rects = [
+        [rad, 0, width - rad * 2, height],
+        [0, rad, width, height - rad * 2],
+    ]
+    return [xcffib.xproto.RECTANGLE.synthetic(*i) for i in rects]
+
+
+@functools.lru_cache()
+def arcs(dia, width, height):
+    arcs = [
+        [-1, -1, dia, dia, 0, 360 << 6],
+        [-1, height-dia, dia, dia, 0, 360 << 6],
+        [width-dia, -1, dia, dia, 0, 360 << 6],
+        [width-dia, height-dia, dia, dia, 0, 360 << 6],
+    ]
+    return [xcffib.xproto.ARC.synthetic(*i) for i in arcs]
+
 
 class Font:
     def __init__(self, conn, fid):

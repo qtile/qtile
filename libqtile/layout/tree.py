@@ -381,6 +381,7 @@ class TreeTab(Layout):
         ("sections", ['Default'], "Foreground color of inactive tab"),
         ("name", "treetab", "Name of this layout."),
         ("previous_on_rm", False, "Focus previous window on close instead of first."),
+        ("corner_radius", 0, "Radius of rounded corners."),
     ]
 
     def __init__(self, **config):
@@ -491,7 +492,8 @@ class TreeTab(Layout):
                 screen_rect.x, screen_rect.y,
                 screen_rect.width, screen_rect.height,
                 0,
-                None
+                None,
+                corner_radius=self.corner_radius,
             )
             client.unhide()
         else:
@@ -743,7 +745,8 @@ class TreeTab(Layout):
                 screen_rect.x, screen_rect.y,
                 screen_rect.width, screen_rect.height,
                 0,
-                None
+                None,
+                corner_radius=None,
             )
             self._create_drawer(screen_rect)
             self.draw_panel()

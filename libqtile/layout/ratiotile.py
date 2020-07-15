@@ -215,6 +215,7 @@ class RatioTile(_SimpleLayoutBase):
         ("ratio", GOLDEN_RATIO, "Ratio of the tiles"),
         ("ratio_increment", 0.1, "Amount to increment per ratio increment"),
         ("fancy", False, "Use a different method to calculate window sizes."),
+        ("corner_radius", 0, "Radius of rounded corners."),
     ]
 
     def __init__(self, **config):
@@ -284,6 +285,7 @@ class RatioTile(_SimpleLayoutBase):
             self.border_width,
             bc,
             margin=self.margin,
+            corner_radius=self.corner_radius,
         )
         win.unhide()
 
