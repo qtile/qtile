@@ -167,8 +167,6 @@ class MonadTall(_SimpleLayoutBase):
         ("change_size", 20, "Resize change in pixels"),
         ("new_at_current", False,
             "Place new windows at the position of the active window."),
-        ("fullscreen_no_border", False,
-            "Remove borders when a window becomes fullscreen"),
     ]
 
     def __init__(self, **config):
@@ -285,8 +283,7 @@ class MonadTall(_SimpleLayoutBase):
         else:
             px = self.group.qtile.color_pixel(self.border_normal)
 
-        if self.fullscreen_no_border:
-            hook.subscribe.window_state_changed(self._fullscreen_no_border)
+        hook.subscribe.window_state_changed(self._fullscreen_no_border)
 
         # single client - fullscreen
         if len(self.clients) == 1:
@@ -304,19 +301,6 @@ class MonadTall(_SimpleLayoutBase):
         cidx = self.clients.index(client)
         self._configure_specific(client, screen, px, cidx)
         client.unhide()
-
-    def _fullscreen_no_border(self, *args):
-        client = self.clients[self.focused]
-        if client.window.get_net_wm_state() == ['fullscreen']:
-            client.place(
-                self.group.screen.dx,
-                self.group.screen.dy,
-                self.group.screen.dwidth,
-                self.group.screen.dheight,
-                0,
-                0,
-                margin=0,
-            )
 
     def _configure_specific(self, client, screen, px, cidx):
         """Specific configuration for xmonad tall."""
@@ -379,6 +363,11 @@ class MonadTall(_SimpleLayoutBase):
                 self.border_width,
                 px,
             )
+
+    @staticmethod
+    def _fullscreen_no_border(window, state):
+        if state == ['fullscreen']:
+            window.borderwidth = 0
 
     def info(self):
         d = _SimpleLayoutBase.info(self)
