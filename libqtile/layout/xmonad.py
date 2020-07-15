@@ -35,7 +35,6 @@
 
 import math
 
-from libqtile import hook
 from libqtile.layout.base import _SimpleLayoutBase
 
 
@@ -283,8 +282,6 @@ class MonadTall(_SimpleLayoutBase):
         else:
             px = self.group.qtile.color_pixel(self.border_normal)
 
-        hook.subscribe.window_state_changed(self._fullscreen_no_border)
-
         # single client - fullscreen
         if len(self.clients) == 1:
             client.place(
@@ -363,11 +360,6 @@ class MonadTall(_SimpleLayoutBase):
                 self.border_width,
                 px,
             )
-
-    @staticmethod
-    def _fullscreen_no_border(window, state):
-        if state == ['fullscreen']:
-            window.borderwidth = 0
 
     def info(self):
         d = _SimpleLayoutBase.info(self)

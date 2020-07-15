@@ -325,8 +325,6 @@ class _Window(CommandObject):
 
         state = self.window.get_net_wm_state()
 
-        hook.fire("window_state_changed", self, state)
-
         logger.debug('_NET_WM_STATE: %s', state)
         for s in triggered:
             setattr(self, s, (s in state))
@@ -482,6 +480,9 @@ class _Window(CommandObject):
         self.height = height
         self.borderwidth = borderwidth
         self.bordercolor = bordercolor
+
+        if self.window.get_net_wm_state() == ['fullscreen']:
+            borderwidth = 0
 
         kwarg = dict(
             x=x,
