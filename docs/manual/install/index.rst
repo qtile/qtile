@@ -120,7 +120,7 @@ system for user ``foo``, it should work on other Linux systems too.
        #!/bin/bash
 
        source ~/local/qtile/venv/bin/activate
-       python ~/local/qtile/bin/qtile $*
+       python3 ~/local/qtile/bin/qtile $*
        EOF
 
 #. Create an xsession file.
