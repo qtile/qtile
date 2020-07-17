@@ -519,34 +519,25 @@ class Qtile(CommandObject):
     def current_window(self):
         return self.current_screen.group.current_window
 
-    def reset_gaps(self, c):
-        if c.strut:
-            self.update_gaps((0, 0, 0, 0), c.strut)
+    def add_strut(self, strut):
+        from libqtile.bar import Bar, Gap
 
-    def update_gaps(self, strut, old_strut=None):
-        from libqtile.bar import Gap
+        for i, pos in enumerate(["left", "right", "top", "bottom"]):
+            if strut[i]:
+                bar = getattr(self.current_screen, pos)
+                if isinstance(bar, Bar):
+                    bar.adjust_for_strut(strut[i])
+                elif isinstance(bar, Gap):
+                    bar.size += strut[i]
+                    if bar.size <= 0:
+                        setattr(self.current_screen, pos, None)
+                else:
+                    setattr(self.current_screen, pos, Gap(strut[i]))
 
-        (left, right, top, bottom) = strut[:4]
-        if old_strut:
-            (old_left, old_right, old_top, old_bottom) = old_strut[:4]
-            if not left and old_left:
-                self.current_screen.left = None
-            elif not right and old_right:
-                self.current_screen.right = None
-            elif not top and old_top:
-                self.current_screen.top = None
-            elif not bottom and old_bottom:
-                self.current_screen.bottom = None
-
-        if top:
-            self.current_screen.top = Gap(top)
-        elif bottom:
-            self.current_screen.bottom = Gap(bottom)
-        elif left:
-            self.current_screen.left = Gap(left)
-        elif right:
-            self.current_screen.right = Gap(right)
         self.current_screen.resize()
+
+    def remove_strut(self, strut):
+        self.add_strut([-i for i in strut])
 
     def map_window(self, window: xcbq.Window) -> None:
         c = self.manage(window)
@@ -613,7 +604,8 @@ class Qtile(CommandObject):
         c = self.windows_map.get(win)
         if c:
             hook.fire("client_killed", c)
-            self.reset_gaps(c)
+            if c.strut:
+                self.remove_strut(c.strut)
             if getattr(c, "group", None):
                 c.group.remove(c)
             del self.windows_map[win]

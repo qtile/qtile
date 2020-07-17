@@ -1373,3 +1373,47 @@ def test_hints_setting_unsetting(qtile):
     finally:
         w.kill_client()
         conn.finalize()
+
+
+@manager_config
+def test_strut_handling(qtile):
+    w = None
+    conn = xcbq.Connection(qtile.display)
+
+    def has_struts():
+        nonlocal w
+        w = conn.create_window(0, 0, 10, 10)
+        w.set_property("_NET_WM_STRUT", [0, 0, 0, 10])
+        w.map()
+        conn.conn.flush()
+
+    def test_initial_state():
+        assert qtile.c.window.info()['width'] == 798
+        assert qtile.c.window.info()['height'] == 578
+        assert qtile.c.window.info()['x'] == 0
+        assert qtile.c.window.info()['y'] == 0
+        bar_id = qtile.c.bar["bottom"].info()["window"]
+        bar = qtile.c.window[bar_id].info()
+        assert bar["height"] == 20
+        assert bar["y"] == 580
+
+    qtile.test_xcalc()
+    test_initial_state()
+
+    try:
+        qtile.create_window(has_struts)
+        qtile.c.window.static(0, None, None, None, None)
+        assert qtile.c.window.info()['width'] == 798
+        assert qtile.c.window.info()['height'] == 568
+        assert qtile.c.window.info()['x'] == 0
+        assert qtile.c.window.info()['y'] == 0
+        bar_id = qtile.c.bar["bottom"].info()["window"]
+        bar = qtile.c.window[bar_id].info()
+        assert bar["height"] == 20
+        assert bar["y"] == 570
+
+    finally:
+        w.kill_client()
+        conn.finalize()
+
+    test_initial_state()

@@ -754,8 +754,8 @@ class Static(_Window):
             "_NET_WM_STRUT",
             unpack=int
         )
-        strut = strut or (0, 0, 0, 0)
-        self.qtile.update_gaps(strut, self.strut)
+        if strut:
+            self.qtile.add_strut(strut)
         self.strut = strut
 
     def handle_PropertyNotify(self, e):  # noqa: N802
