@@ -479,9 +479,6 @@ class _Window(CommandObject):
         self.borderwidth = borderwidth
         self.bordercolor = bordercolor
 
-        if self.window.get_net_wm_state() == ['fullscreen']:
-            borderwidth = 0
-
         kwarg = dict(
             x=x,
             y=y,
