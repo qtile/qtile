@@ -162,6 +162,7 @@ class Bar(Gap, configurable.Configurable):
         self.widgets = widgets
         self.saved_focus = None
         self.cursor_in = None
+        self.window = None
 
         self.queued_draws = 0
 
@@ -198,35 +199,42 @@ class Bar(Gap, configurable.Configurable):
             # about to exit
             w._test_orientation_compatibility(self.horizontal)
 
-        self.window = window.Internal.create(
-            self.qtile,
-            self.x, self.y, self.width, self.height,
-            self.opacity
-        )
+        if self.window:
+            self.window.place(self.x, self.y, self.width, self.height, 0, None)
+            for i in self.widgets:
+                i._configure(qtile, self)
 
-        self.drawer = drawer.Drawer(
-            self.qtile,
-            self.window.window.wid,
-            self.width,
-            self.height
-        )
-        self.drawer.clear(self.background)
+        else:
+            self.window = window.Internal.create(
+                self.qtile,
+                self.x, self.y, self.width, self.height,
+                self.opacity
+            )
 
-        self.window.handle_Expose = self.handle_Expose
-        self.window.handle_ButtonPress = self.handle_ButtonPress
-        self.window.handle_ButtonRelease = self.handle_ButtonRelease
-        self.window.handle_EnterNotify = self.handle_EnterNotify
-        self.window.handle_LeaveNotify = self.handle_LeaveNotify
-        self.window.handle_MotionNotify = self.handle_MotionNotify
-        qtile.windows_map[self.window.window.wid] = self.window
-        self.window.unhide()
+            self.drawer = drawer.Drawer(
+                self.qtile,
+                self.window.window.wid,
+                self.width,
+                self.height
+            )
+            self.drawer.clear(self.background)
 
-        for idx, i in enumerate(self.widgets):
-            if i.configured:
-                i = i.create_mirror()
-                self.widgets[idx] = i
-            qtile.register_widget(i)
-            i._configure(qtile, self)
+            self.window.handle_Expose = self.handle_Expose
+            self.window.handle_ButtonPress = self.handle_ButtonPress
+            self.window.handle_ButtonRelease = self.handle_ButtonRelease
+            self.window.handle_EnterNotify = self.handle_EnterNotify
+            self.window.handle_LeaveNotify = self.handle_LeaveNotify
+            self.window.handle_MotionNotify = self.handle_MotionNotify
+            qtile.windows_map[self.window.window.wid] = self.window
+            self.window.unhide()
+
+            for idx, i in enumerate(self.widgets):
+                if i.configured:
+                    i = i.create_mirror()
+                    self.widgets[idx] = i
+                qtile.register_widget(i)
+                i._configure(qtile, self)
+
         self._resize(self.length, self.widgets)
 
     def finalize(self):
@@ -392,6 +400,20 @@ class Bar(Gap, configurable.Configurable):
             else:
                 self.size = 0
                 self.window.hide()
+
+    def adjust_for_strut(self, size):
+        if self.size:
+            self.size = self.initial_size
+        if not self.margin:
+            self.margin = [0, 0, 0, 0]
+        if self.screen.top is self:
+            self.margin[0] += size
+        elif self.screen.bottom is self:
+            self.margin[2] += size
+        elif self.screen.left is self:
+            self.margin[3] += size
+        else:  # right
+            self.margin[1] += size
 
     def cmd_fake_button_press(self, screen, position, x, y, button=1):
         """
