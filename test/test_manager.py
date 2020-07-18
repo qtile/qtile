@@ -27,7 +27,6 @@
 
 import logging
 import subprocess
-import time
 
 import pytest
 import xcffib.xproto
@@ -42,7 +41,7 @@ import libqtile.widget
 from libqtile.backend.x11 import xcbq
 from libqtile.command_interface import CommandError, CommandException
 from libqtile.lazy import lazy
-from test.conftest import BareConfig, Retry, no_xinerama, whereis
+from test.conftest import BareConfig, Retry, no_xinerama
 
 
 class ManagerConfig:
@@ -1146,13 +1145,6 @@ def test_clientnew_config(qtile):
 
     a = self.test_window("one")
     self.kill_window(a)
-
-
-@pytest.mark.skipif(whereis("gkrellm") is None, reason="gkrellm not found")
-@clientnew_config
-def test_gkrellm(qtile):
-    qtile.test_gkrellm()
-    time.sleep(0.1)
 
 
 class ToGroupConfig(_Config):
