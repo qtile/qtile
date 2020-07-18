@@ -582,7 +582,7 @@ class Qtile(CommandObject):
                     return
 
                 if w.get_wm_type() == "dock" or c.strut:
-                    c.static(self.current_screen.index)
+                    c.cmd_static(self.current_screen.index)
                 else:
                     hook.fire("client_new", c)
 

@@ -1079,7 +1079,7 @@ class ClientNewStaticConfig(_Config):
     @staticmethod
     def main(c):
         def client_new(c):
-            c.static(0)
+            c.cmd_static(0)
         libqtile.hook.subscribe.client_new(client_new)
 
 
