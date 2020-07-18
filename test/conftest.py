@@ -443,10 +443,6 @@ class Qtile:
         path = whereis("xeyes")
         return self._spawn_window(path)
 
-    def test_gkrellm(self):
-        path = whereis("gkrellm")
-        return self._spawn_window(path)
-
     def test_xcalc(self):
         path = whereis("xcalc")
         return self._spawn_window(path)
