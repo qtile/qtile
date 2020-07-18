@@ -182,7 +182,7 @@ class Subscribe:
                 if c.name == "xterm":
                     c.togroup("a")
                 elif c.name == "dzen":
-                    c.static(0)
+                    c.cmd_static(0)
         """
         return self._subscribe("client_new", func)
 

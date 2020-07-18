@@ -955,7 +955,7 @@ class Window(_Window):
         warnings.warn("toggleminimize is deprecated, use toggle_minimize", DeprecationWarning)
         self.toggle_minimize()
 
-    def static(self, screen, x=None, y=None, width=None, height=None):
+    def cmd_static(self, screen, x=None, y=None, width=None, height=None):
         """Makes this window a static window, attached to a Screen
 
         If any of the arguments are left unspecified, the values given by the
@@ -1308,9 +1308,6 @@ class Window(_Window):
 
     def __repr__(self):
         return "Window(%r)" % self.name
-
-    def cmd_static(self, screen, x, y, width, height):
-        self.static(screen, x, y, width, height)
 
     def cmd_kill(self):
         """Kill this window
