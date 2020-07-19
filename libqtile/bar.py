@@ -18,6 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from typing import Union
+
 from libqtile import configurable, drawer, window
 from libqtile.command_object import CommandObject
 
@@ -376,3 +378,6 @@ class Bar(Gap, configurable.Configurable):
         fake.event_y = y
         fake.detail = button
         self.handle_ButtonPress(fake)
+
+
+BarType = Union[Bar, Gap]
