@@ -2,7 +2,31 @@ qtile X.X.X, released XXXX-XX-XX:
     * features
         - added `guess_terminal` in utils
         - added keybinding cheet sheet image generator
-        - custom keyboardlayout display 
+        - custom keyboardlayout display
+        - added native support for key chords
+        - validate config before restart and refuse to restart with a bad
+          config
+        - added a bunch of type annotations to config objects (more to come)
+    * bugfixes
+        - major focus rework; Java-based IDEs such as PyCharm, NetBrains, etc.
+          now focus correctly
+        - fix a bug where spotify (or any window with focus-to=parent) was
+          closed, nothing would be focused and no hotkeys would work
+        - support windows unsetting the input hint
+        - respects window's/user's location setting if present (WM_SIZE_HINTS)
+        - fixed YahooWeather widget for new API
+        - fix a bug where _NET_WM_DESKTOPS wasn't correctly updated when
+          switching screens in some cases
+        - fix a crash in the BSP layout
+        - fix a stacktrace when unknown keysyms are encounted
+        - make qtile --version output more sane
+        - fix a rendering issue with special characters in window names
+        - keyboard widget no longer re-sets the keyboard settings every second
+        - fix qtile-top with the new IPC model
+        - Image widget respects its background setting now
+        - correctly re-draw non-focused screens on qtile restart
+        - fix a crash when decoding images
+        - fix the .when() constraint for lazy objects
 
 qtile 0.15.1, released 2020-04-14
     * bugfixes
