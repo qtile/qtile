@@ -1073,7 +1073,7 @@ class Window(_Window):
                 self.x += group.screen.x
             group.add(self)
             if switch_group:
-                group.cmd_toscreen()
+                group.cmd_toscreen(toggle=False)
 
     def toscreen(self, index=None):
         """Move window to a specified screen, or the current screen."""
