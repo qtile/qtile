@@ -1,4 +1,4 @@
-qtile X.X.X, released XXXX-XX-XX:
+qtile 0.16.0, released 2020-07-20:
     * features
         - added `guess_terminal` in utils
         - added keybinding cheet sheet image generator
