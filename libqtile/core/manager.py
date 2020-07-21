@@ -497,7 +497,8 @@ class Qtile(CommandObject):
 
     @functools.lru_cache()
     def color_pixel(self, name):
-        return self.conn.screens[0].default_colormap.alloc_color(name).pixel
+        pixel = self.conn.screens[0].default_colormap.alloc_color(name).pixel
+        return pixel | 0xff << 24
 
     @property
     def current_layout(self):
