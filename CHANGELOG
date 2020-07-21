@@ -1,4 +1,10 @@
 qtile 0.16.0, released 2020-07-20:
+    !!! Config breakage !!!
+        - Imports from libqtile.widget are now made through a function
+          proxy to avoid the side effects of importing all widgets at
+          once. If you subclass a widget in your config, import it from
+          its own module.
+          e.g. from libqtile.widget.pomodoro import Pomodoro
     * features
         - added `guess_terminal` in utils
         - added keybinding cheet sheet image generator
