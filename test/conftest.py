@@ -182,6 +182,7 @@ class Xephyr:
 
         self.proc = None  # Handle to Xephyr instance, subprocess.Popen object
         self.display = None
+        self.display_file = None
 
     def __enter__(self):
         try:
@@ -202,7 +203,8 @@ class Xephyr:
         which is used to setup the instance.
         """
         # get a new display
-        self.display = ":{}".format(xcffib.testing.find_display())
+        display, self.display_file = xcffib.testing.find_display()
+        self.display = ":{}".format(display)
 
         # build up arguments
         args = [
@@ -251,6 +253,7 @@ class Xephyr:
 
         # clean up the lock file for the display we allocated
         try:
+            self.display_file.close()
             os.remove(xcffib.testing.lock_path(int(self.display[1:])))
         except OSError:
             pass
