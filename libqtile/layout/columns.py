@@ -231,7 +231,7 @@ class Columns(Layout):
             border = self.border_width
         width = int(
             0.5 + col.width * screen_rect.width * 0.01 / len(self.columns))
-        x = screen_rect.x + width
+        x = screen_rect.x + int(0.5 + pos * screen_rect.width * 0.01 / len(self.columns))
         if col.split:
             pos = 0
             for c in col:
@@ -240,7 +240,7 @@ class Columns(Layout):
                 pos += col.heights[c]
             height = int(
                 0.5 + col.heights[client] * screen_rect.height * 0.01 / len(col))
-            y = screen_rect.y + height
+            y = screen_rect.y + int(0.5 + pos * screen_rect.height * 0.01 / len(col))
             client.place(
                 x,
                 y,
