@@ -37,12 +37,6 @@ from libqtile.log_utils import logger
 
 subscriptions = {}  # type: Dict
 SKIPLOG = set()  # type: Set
-qtile = None
-
-
-def init(q):
-    global qtile
-    qtile = q
 
 
 def clear():
@@ -107,7 +101,6 @@ class Subscribe:
 
         **Arguments**
 
-            * qtile manager instance
             * name of new group
         """
         return self._subscribe("addgroup", func)
@@ -117,7 +110,6 @@ class Subscribe:
 
         **Arguments**
 
-            * qtile manager instance
             * name of deleted group
         """
         return self._subscribe("delgroup", func)
@@ -300,7 +292,6 @@ class Subscribe:
 
         **Arguments**
 
-            * qtile manager instance
             * ``xproto.randr.ScreenChangeNotify`` event
 
         Examples
@@ -309,8 +300,8 @@ class Subscribe:
         ::
 
             @libqtile.hook.subscribe.screen_change
-            def restart_on_randr(qtile, ev):
-                qtile.cmd_restart()
+            def restart_on_randr(ev):
+                libqtile.qtile.cmd_restart()
         """
         return self._subscribe("screen_change", func)
 

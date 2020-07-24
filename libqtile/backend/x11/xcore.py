@@ -606,7 +606,7 @@ class XCore(base.Core):
             self.qtile.unmap_window(event.window)
 
     def handle_ScreenChangeNotify(self, event) -> None:  # noqa: N802
-        hook.fire("screen_change", self.qtile, event)
+        hook.fire("screen_change", event)
 
     @property
     def painter(self):

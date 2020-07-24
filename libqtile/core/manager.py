@@ -36,6 +36,7 @@ import xcffib
 import xcffib.xinerama
 import xcffib.xproto
 
+import libqtile
 from libqtile import command_interface, hook, utils, window
 from libqtile.backend.x11 import xcbq
 from libqtile.command_client import InteractiveCommandClient
@@ -95,7 +96,7 @@ class Qtile(CommandObject):
 
         self.core = kore
         self.config = config
-        hook.init(self)
+        libqtile.init(self)
 
         self.windows_map = {}
         self.widgets_map = {}
@@ -447,7 +448,7 @@ class Qtile(CommandObject):
                 layouts = self.config.layouts
             g._configure(layouts, self.config.floating_layout, self)
             self.groups_map[name] = g
-            hook.fire("addgroup", self, name)
+            hook.fire("addgroup", name)
             hook.fire("changegroup")
             self.update_net_desktops()
 
@@ -475,7 +476,7 @@ class Qtile(CommandObject):
                 self.current_screen.set_group(target, save_prev=False)
             self.groups.remove(group)
             del(self.groups_map[name])
-            hook.fire("delgroup", self, name)
+            hook.fire("delgroup", name)
             hook.fire("changegroup")
             self.update_net_desktops()
 
