@@ -79,7 +79,6 @@ class GBConfig:
             # TODO: Add vertical bars and test widgets that support them
         )
     ]
-    main = None
 
 
 gb_config = pytest.mark.parametrize("qtile", [GBConfig], indirect=True)
@@ -181,7 +180,6 @@ def test_groupbox_button_press(qtile):
 
 class GeomConf:
     auto_fullscreen = False
-    main = None
     keys = []
     mouse = []
     groups = [
@@ -314,7 +312,6 @@ class ExampleWidget(libqtile.widget.base._Widget):
 
 
 class IncompatibleWidgetConf:
-    main = None
     keys = []
     mouse = []
     groups = [libqtile.config.Group("a")]

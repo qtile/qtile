@@ -62,7 +62,6 @@ class ServerConfig:
             ),
         )
     ]
-    main = None
 
 
 server_config = pytest.mark.parametrize("qtile", [ServerConfig], indirect=True)

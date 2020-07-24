@@ -39,7 +39,6 @@ from test.layouts.layout_utils import (
 
 class ZoomyConfig:
     auto_fullscreen = True
-    main = None
     groups = [
         libqtile.config.Group("a"),
     ]

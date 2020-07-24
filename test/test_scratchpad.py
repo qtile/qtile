@@ -29,7 +29,6 @@ from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 class ScratchPadBaseConfic:
     auto_fullscreen = True
-    main = None
     screens = []
     groups = [
         libqtile.config.ScratchPad('SCRATCHPAD', dropdowns=[

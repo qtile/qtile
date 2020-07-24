@@ -156,14 +156,6 @@ configuration variables that control specific aspects of Qtile's behavior:
       - True
       - Controls whether or not focus follows the mouse around as it moves
         across windows in a layout.
-    * - main
-      - None
-      - This is a function which takes one argument, the qtile object,
-        and is run after the qtile object has been initialized. This
-        allows people to monkey patch in any code they want to before
-        qtile actually starts. Note that we only consider the config
-        objects and hooks to be public APIs, and reserve the right to
-        refactor the internals at any time. Use at your own risk!
     * - widget_defaults
       - dict(font='sans',
              fontsize=12,

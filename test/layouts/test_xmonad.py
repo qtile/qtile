@@ -32,7 +32,6 @@ from test.layouts.layout_utils import (
 
 class MonadTallConfig:
     auto_fullscreen = True
-    main = None
     groups = [
         libqtile.config.Group("a")
     ]
@@ -52,7 +51,6 @@ def monadtall_config(x):
 
 class MonadTallMarginsConfig:
     auto_fullscreen = True
-    main = None
     groups = [
         libqtile.config.Group("a")
     ]
@@ -72,7 +70,6 @@ def monadtallmargins_config(x):
 
 class MonadWideConfig:
     auto_fullscreen = True
-    main = None
     groups = [
         libqtile.config.Group("a")
     ]
@@ -92,7 +89,6 @@ def monadwide_config(x):
 
 class MonadWideMarginsConfig:
     auto_fullscreen = True
-    main = None
     groups = [
         libqtile.config.Group("a")
     ]
