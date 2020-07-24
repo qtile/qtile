@@ -501,7 +501,7 @@ class _Window(CommandObject):
         self.borderwidth = borderwidth
         self.bordercolor = borderpixel
         self.window.set_attribute(borderpixel=borderpixel)
-        self.window.configure(borderwidth=borderwidth)
+        self.window.configure(borderwidth=borderwidth, stackmode=StackMode.Above)
         self.unhide()
 
     def send_configure_notify(self, x, y, width, height):
