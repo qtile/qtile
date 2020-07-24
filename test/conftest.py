@@ -152,7 +152,6 @@ class BareConfig:
     ]
     mouse = []
     screens = [libqtile.config.Screen()]
-    main = None
     follow_mouse_focus = False
 
 

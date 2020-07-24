@@ -3,6 +3,10 @@ qtile X.X.X, released XXXX-XX-XX:
 	- Hooks 'addgroup', 'delgroup' and 'screen_change' will no longer
 	  receive the qtile object as an argument. It can be accessed directly
 	  at libqtile.qtile.
+    !!! deprecation warning !!!
+	- defining a main function in your config is deprecated. You should use
+	  @hook.subscribe.startup_complete instead. If you need access to the
+	  qtile object, import it from libqtile directly.
 
 qtile 0.16.0, released 2020-07-20:
     !!! Config breakage !!!

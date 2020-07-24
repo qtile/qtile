@@ -42,7 +42,6 @@ class ShConfig:
     screens = [
         config.Screen()
     ]
-    main = None
 
 
 sh_config = pytest.mark.parametrize("qtile", [ShConfig], indirect=True)

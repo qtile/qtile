@@ -59,7 +59,6 @@ GRAPH_KW = dict(line_width=1,
 
 class FakeScreenConfig:
     auto_fullscreen = True
-    main = None
     groups = [
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),

@@ -28,7 +28,6 @@ from test.layouts.layout_utils import assert_focused
 
 class FloatingConfig:
     auto_fullscreen = True
-    main = None
     groups = [
         libqtile.config.Group("a"),
     ]

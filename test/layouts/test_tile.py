@@ -35,7 +35,6 @@ from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 class TileConfig:
     auto_fullscreen = True
-    main = None
     groups = [
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),

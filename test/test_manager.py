@@ -81,7 +81,6 @@ class ManagerConfig:
             20
         ),
     )]
-    main = None
     follow_mouse_focus = True
 
 

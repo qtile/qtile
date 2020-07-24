@@ -109,6 +109,7 @@ class Qtile(CommandObject):
 
         self.core.wmname = getattr(self.config, "wmname", "qtile")
         if config.main:
+            warnings.warn("Defining a main function is deprecated, use libqtile.qtile", DeprecationWarning)
             config.main(self)
 
         self.dgroups = None
