@@ -296,6 +296,12 @@ class _Widget(CommandObject, configurable.Configurable):
     def create_mirror(self):
         return Mirror(self)
 
+    def mouse_enter(self, x, y):
+        pass
+
+    def mouse_leave(self, x, y):
+        pass
+
 
 UNSPECIFIED = bar.Obj("UNSPECIFIED")
 
