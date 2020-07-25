@@ -672,6 +672,8 @@ class Internal(_Window):
     _window_mask = EventMask.StructureNotify | \
         EventMask.PropertyChange | \
         EventMask.EnterWindow | \
+        EventMask.LeaveWindow | \
+        EventMask.PointerMotion | \
         EventMask.FocusChange | \
         EventMask.Exposure | \
         EventMask.ButtonPress | \

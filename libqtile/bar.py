@@ -161,6 +161,7 @@ class Bar(Gap, configurable.Configurable):
         self.add_defaults(Bar.defaults)
         self.widgets = widgets
         self.saved_focus = None
+        self.cursor_in = None
 
         self.queued_draws = 0
 
@@ -214,6 +215,9 @@ class Bar(Gap, configurable.Configurable):
         self.window.handle_Expose = self.handle_Expose
         self.window.handle_ButtonPress = self.handle_ButtonPress
         self.window.handle_ButtonRelease = self.handle_ButtonRelease
+        self.window.handle_EnterNotify = self.handle_EnterNotify
+        self.window.handle_LeaveNotify = self.handle_LeaveNotify
+        self.window.handle_MotionNotify = self.handle_MotionNotify
         qtile.windows_map[self.window.window.wid] = self.window
         self.window.unhide()
 
@@ -303,6 +307,32 @@ class Bar(Gap, configurable.Configurable):
                 e.event_y - widget.offsety,
                 e.detail
             )
+
+    def handle_EnterNotify(self, e):  # noqa: N802
+        widget = self.get_widget_in_position(e)
+        if widget:
+            widget.mouse_enter(
+                e.event_x - widget.offsetx,
+                e.event_y - widget.offsety,
+            )
+        self.cursor_in = widget
+
+    def handle_LeaveNotify(self, e):  # noqa: N802
+        if self.cursor_in:
+            self.cursor_in.mouse_leave(
+                e.event_x - self.cursor_in.offsetx,
+                e.event_y - self.cursor_in.offsety,
+            )
+            self.cursor_in = None
+
+    def handle_MotionNotify(self, e):  # noqa: N802
+        widget = self.get_widget_in_position(e)
+        if widget and widget is not self.cursor_in:
+            widget.mouse_enter(
+                e.event_x - widget.offsetx,
+                e.event_y - widget.offsety,
+            )
+        self.cursor_in = widget
 
     def widget_grab_keyboard(self, widget):
         """

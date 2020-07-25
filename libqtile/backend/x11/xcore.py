@@ -43,7 +43,6 @@ _IGNORED_EVENTS = {
     xcffib.xproto.FocusInEvent,
     xcffib.xproto.FocusOutEvent,
     xcffib.xproto.KeyReleaseEvent,
-    xcffib.xproto.LeaveNotifyEvent,
     # DWM handles this to help "broken focusing windows".
     xcffib.xproto.MapNotifyEvent,
     xcffib.xproto.NoExposureEvent,
@@ -295,6 +294,8 @@ class XCore(base.Core):
         # Certain events expose the affected window id as an "event" attribute.
         event_events = [
             "EnterNotify",
+            "LeaveNotify",
+            "MotionNotify",
             "ButtonPress",
             "ButtonRelease",
             "KeyPress",
