@@ -357,10 +357,6 @@ class Qtile(CommandObject):
     def paint_screen(self, screen, image_path, mode=None):
         self.core.painter.paint(screen, image_path, mode)
 
-    def process_configure(self, width: int, height: int) -> None:
-        screen = self.current_screen
-        screen.resize(0, 0, width, height)
-
     def process_key_event(self, keysym: int, mask: int) -> None:
         key = self.keys_map.get((keysym, mask), None)
         if key is None:

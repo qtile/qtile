@@ -26,7 +26,6 @@
 # SOFTWARE.
 
 import logging
-import subprocess
 
 import pytest
 import xcffib.xproto
@@ -878,58 +877,6 @@ def test_screens(qtile):
     self = qtile
 
     assert len(self.c.screens())
-
-
-@manager_config
-@no_xinerama
-def test_rotate(qtile):
-    self = qtile
-
-    self.test_window("one")
-    s = self.c.screens()[0]
-    height, width = s["height"], s["width"]
-    subprocess.call(
-        [
-            "xrandr",
-            "--output", "default",
-            "-display", self.display,
-            "--rotate", "left"
-        ],
-        stderr=subprocess.PIPE,
-        stdout=subprocess.PIPE
-    )
-
-    @Retry(ignore_exceptions=(AssertionError,), fail_msg="Screen did not rotate")
-    def run():
-        s = self.c.screens()[0]
-        assert s['width'] == height
-        assert s['height'] == width
-        return True
-    run()
-
-
-# TODO: see note on test_resize
-@manager_config
-@no_xinerama
-def test_resize_(qtile):
-    self = qtile
-
-    self.test_window("one")
-    subprocess.call(
-        [
-            "xrandr",
-            "-s", "480x640",
-            "-display", self.display
-        ]
-    )
-
-    @Retry(ignore_exceptions=(AssertionError,), fail_msg="Screen did not resize")
-    def run():
-        d = self.c.screen.info()
-        assert d['width'] == 480
-        assert d['height'] == 640
-        return True
-    run()
 
 
 @manager_config
