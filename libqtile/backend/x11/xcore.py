@@ -558,13 +558,6 @@ class XCore(base.Core):
 
         self.qtile.process_button_motion(event.event_x, event.event_y)
 
-    def handle_ConfigureNotify(self, event) -> None:  # noqa: N802
-        """Handle xrandr events"""
-        assert self.qtile is not None
-
-        if event.window == self._root.wid:
-            self.qtile.process_configure(event.width, event.height)
-
     def handle_ConfigureRequest(self, event):  # noqa: N802
         # It's not managed, or not mapped, so we just obey it.
         cw = xcffib.xproto.ConfigWindow
