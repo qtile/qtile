@@ -602,26 +602,32 @@ class Match:
 
     def compare(self, client):
         for _type, rule in self._rules:
-            # get value
-            if _type == "title":
-                value = client.name
-            elif _type == "wm_instance_class":
-                value = client.window.get_wm_class() and client.window.get_wm_class()[0]
-            elif _type == "role":
-                value = client.window.get_wm_window_role()
-            else:
-                value = getattr(client.window, 'get_' + _type)()
-
-            # compare
             if _type == "net_wm_pid":
-                if rule == value:
-                    return True
-            match = getattr(rule, 'match', None) or getattr(rule, 'count')
+                def match_func(value):
+                    return rule == value
+            else:
+                match_func = getattr(rule, 'match', None) or \
+                    getattr(rule, 'count')
 
-            if _type == "wm_class":
-                if any(match(v) for v in value):
-                    return True
-            elif match(value):
+            if _type == 'title':
+                value = client.name
+            elif _type == 'wm_class':
+                value = None
+                _value = client.window.get_wm_class()
+                if _value and len(_value) > 1:
+                    value = _value[1]
+            elif _type == 'wm_instance_class':
+                value = client.window.get_wm_class()
+                if value:
+                    value = value[0]
+            elif _type == 'wm_type':
+                value = client.window.get_wm_type()
+            elif _type == 'net_wm_pid':
+                value = client.window.get_net_wm_pid()
+            else:
+                value = client.window.get_wm_window_role()
+
+            if value and match_func(value):
                 return True
         return False
 
