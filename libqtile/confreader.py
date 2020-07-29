@@ -24,9 +24,6 @@
 # SOFTWARE.
 import os
 import sys
-from typing import Optional
-
-from libqtile.backend import base
 
 
 class ConfigError(Exception):
@@ -77,11 +74,6 @@ class Config:
             except KeyError:
                 value = getattr(self, key, default[key])
             setattr(self, key, value)
-
-    @classmethod
-    def from_file(cls, path: str, kore: Optional[base.Core] = None):
-        "Create a Config() object from the python file located at path."
-        return cls(file_path=path, kore=kore)
 
     def load(self):
         name = os.path.splitext(os.path.basename(self.file_path))[0]
