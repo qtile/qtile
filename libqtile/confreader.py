@@ -81,9 +81,7 @@ class Config:
     @classmethod
     def from_file(cls, path: str, kore: Optional[base.Core] = None):
         "Create a Config() object from the python file located at path."
-        cnf = cls(file_path=path, kore=kore)
-        cnf.load()
-        return cnf
+        return cls(file_path=path, kore=kore)
 
     def load(self):
         name = os.path.splitext(os.path.basename(self.file_path))[0]

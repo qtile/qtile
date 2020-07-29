@@ -37,7 +37,7 @@ import xcffib.xinerama
 import xcffib.xproto
 
 import libqtile
-from libqtile import command_interface, hook, utils, window
+from libqtile import command_interface, confreader, hook, utils, window
 from libqtile.backend.x11 import xcbq
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_interface import IPCCommandServer, QtileCommandInterface
@@ -106,6 +106,16 @@ class Qtile(CommandObject):
         self.current_chord = False
 
         self.numlock_mask, self.valid_mask = self.core.masks
+
+        if hasattr(self.config, "load"):
+            try:
+                self.config.load()
+            except Exception as e:
+                logger.exception('Error while reading config file (%s)', e)
+                self.config = confreader.Config()
+                from libqtile.widget import TextBox
+                widgets = self.config.screens[0].bottom.widgets
+                widgets.insert(0, TextBox('Config Err!'))
 
         self.core.wmname = getattr(self.config, "wmname", "qtile")
         if config.main:
