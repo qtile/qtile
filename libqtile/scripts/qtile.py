@@ -123,7 +123,7 @@ def make_qtile():
             logger.exception('Failed to copy default_config.py to %s: (%s)',
                              options.configfile, e)
 
-    config = confreader.Config.from_file(options.configfile, kore=kore)
+    config = confreader.Config(options.configfile, kore=kore)
 
     # XXX: the import is here because we need to call init_log
     # before start importing stuff
