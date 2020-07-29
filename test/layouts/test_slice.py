@@ -29,6 +29,7 @@ import pytest
 
 import libqtile.config
 from libqtile import layout
+from libqtile.confreader import Config
 from test.conftest import no_xinerama
 from test.layouts.layout_utils import (
     assert_dimensions,
@@ -37,7 +38,7 @@ from test.layouts.layout_utils import (
 )
 
 
-class SliceConfig:
+class SliceConfig(Config):
     auto_fullscreen = True
     groups = [
         libqtile.config.Group("a"),

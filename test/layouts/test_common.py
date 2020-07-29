@@ -23,6 +23,7 @@ import pytest
 import libqtile.config
 import libqtile.hook
 from libqtile import layout
+from libqtile.confreader import Config
 from test.layouts.layout_utils import (
     assert_dimensions_fit,
     assert_focus_path_unordered,
@@ -30,7 +31,7 @@ from test.layouts.layout_utils import (
 )
 
 
-class AllLayoutsConfig:
+class AllLayoutsConfig(Config):
     """
     Ensure that all layouts behave consistently in some common scenarios.
     """

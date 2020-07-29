@@ -40,11 +40,12 @@ import libqtile.layout
 import libqtile.widget
 from libqtile.backend.x11 import xcbq
 from libqtile.command_interface import CommandError, CommandException
+from libqtile.confreader import Config
 from libqtile.lazy import lazy
 from test.conftest import BareConfig, Retry, no_xinerama
 
 
-class ManagerConfig:
+class ManagerConfig(Config):
     auto_fullscreen = True
     groups = [
         libqtile.config.Group("a"),
@@ -223,7 +224,7 @@ def test_keypress(qtile):
     assert self.c.groups()["a"]["focus"] == "one"
 
 
-class _ChordsConfig:
+class _ChordsConfig(Config):
     groups = [
         libqtile.config.Group("a")
     ]
@@ -1091,7 +1092,7 @@ def test_dheight():
     assert s.dheight == 80
 
 
-class _Config:
+class _Config(Config):
     groups = [
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),

@@ -24,11 +24,12 @@ import pytest
 
 from libqtile import config, ipc
 from libqtile.command_interface import IPCCommandInterface
+from libqtile.confreader import Config
 from libqtile.layout import Max, floating
 from libqtile.sh import QSh
 
 
-class ShConfig:
+class ShConfig(Config):
     keys = []
     mouse = []
     groups = [

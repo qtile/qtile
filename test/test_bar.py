@@ -34,7 +34,7 @@ import libqtile.layout
 import libqtile.widget
 
 
-class GBConfig:
+class GBConfig(libqtile.confreader.Config):
     auto_fullscreen = True
     keys = []
     mouse = []
@@ -178,7 +178,7 @@ def test_groupbox_button_press(qtile):
     assert qtile.c.groups()["a"]["screen"] == 0
 
 
-class GeomConf:
+class GeomConf(libqtile.confreader.Config):
     auto_fullscreen = False
     keys = []
     mouse = []
@@ -311,7 +311,7 @@ class ExampleWidget(libqtile.widget.base._Widget):
         pass
 
 
-class IncompatibleWidgetConf:
+class IncompatibleWidgetConf(libqtile.confreader.Config):
     keys = []
     mouse = []
     groups = [libqtile.config.Group("a")]
