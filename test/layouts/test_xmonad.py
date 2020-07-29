@@ -22,6 +22,7 @@ import pytest
 
 import libqtile.config
 from libqtile import layout
+from libqtile.confreader import Config
 from test.conftest import no_xinerama
 from test.layouts.layout_utils import (
     assert_dimensions,
@@ -30,7 +31,7 @@ from test.layouts.layout_utils import (
 )
 
 
-class MonadTallConfig:
+class MonadTallConfig(Config):
     auto_fullscreen = True
     groups = [
         libqtile.config.Group("a")
@@ -49,7 +50,7 @@ def monadtall_config(x):
     return no_xinerama(pytest.mark.parametrize("qtile", [MonadTallConfig], indirect=True)(x))
 
 
-class MonadTallMarginsConfig:
+class MonadTallMarginsConfig(Config):
     auto_fullscreen = True
     groups = [
         libqtile.config.Group("a")
@@ -68,7 +69,7 @@ def monadtallmargins_config(x):
     return no_xinerama(pytest.mark.parametrize("qtile", [MonadTallMarginsConfig], indirect=True)(x))
 
 
-class MonadWideConfig:
+class MonadWideConfig(Config):
     auto_fullscreen = True
     groups = [
         libqtile.config.Group("a")
@@ -87,7 +88,7 @@ def monadwide_config(x):
     return no_xinerama(pytest.mark.parametrize("qtile", [MonadWideConfig], indirect=True)(x))
 
 
-class MonadWideMarginsConfig:
+class MonadWideMarginsConfig(Config):
     auto_fullscreen = True
     groups = [
         libqtile.config.Group("a")

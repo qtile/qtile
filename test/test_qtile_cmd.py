@@ -27,9 +27,10 @@ import libqtile.bar
 import libqtile.config
 import libqtile.layout
 import libqtile.widget
+from libqtile.confreader import Config
 
 
-class ServerConfig:
+class ServerConfig(Config):
     auto_fullscreen = True
     keys = []
     mouse = []

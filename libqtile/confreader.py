@@ -76,6 +76,9 @@ class Config:
             setattr(self, key, value)
 
     def load(self):
+        if not self.file_path:
+            return
+
         name = os.path.splitext(os.path.basename(self.file_path))[0]
 
         # Make sure we'll import the latest version of the config

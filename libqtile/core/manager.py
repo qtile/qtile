@@ -107,15 +107,14 @@ class Qtile(CommandObject):
 
         self.numlock_mask, self.valid_mask = self.core.masks
 
-        if hasattr(self.config, "load"):
-            try:
-                self.config.load()
-            except Exception as e:
-                logger.exception('Error while reading config file (%s)', e)
-                self.config = confreader.Config()
-                from libqtile.widget import TextBox
-                widgets = self.config.screens[0].bottom.widgets
-                widgets.insert(0, TextBox('Config Err!'))
+        try:
+            self.config.load()
+        except Exception as e:
+            logger.exception('Error while reading config file (%s)', e)
+            self.config = confreader.Config()
+            from libqtile.widget import TextBox
+            widgets = self.config.screens[0].bottom.widgets
+            widgets.insert(0, TextBox('Config Err!'))
 
         self.core.wmname = getattr(self.config, "wmname", "qtile")
         if config.main:
