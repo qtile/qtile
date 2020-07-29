@@ -109,28 +109,21 @@ def make_qtile():
     init_log(log_level=log_level)
     kore = xcore.XCore()
 
-    try:
-        if not path.isfile(options.configfile):
-            try:
-                makedirs(path.dirname(options.configfile), exist_ok=True)
-                from shutil import copyfile
-                default_config_path = path.join(path.dirname(__file__),
-                                                "..",
-                                                "resources",
-                                                "default_config.py")
-                copyfile(default_config_path, options.configfile)
-                logger.info('Copied default_config.py to %s', options.configfile)
-            except Exception as e:
-                logger.exception('Failed to copy default_config.py to %s: (%s)',
-                                 options.configfile, e)
+    if not path.isfile(options.configfile):
+        try:
+            makedirs(path.dirname(options.configfile), exist_ok=True)
+            from shutil import copyfile
+            default_config_path = path.join(path.dirname(__file__),
+                                            "..",
+                                            "resources",
+                                            "default_config.py")
+            copyfile(default_config_path, options.configfile)
+            logger.info('Copied default_config.py to %s', options.configfile)
+        except Exception as e:
+            logger.exception('Failed to copy default_config.py to %s: (%s)',
+                             options.configfile, e)
 
-        config = confreader.Config.from_file(options.configfile, kore=kore)
-    except Exception as e:
-        logger.exception('Error while reading config file (%s)', e)
-        config = confreader.Config()
-        from libqtile.widget import TextBox
-        widgets = config.screens[0].bottom.widgets
-        widgets.insert(0, TextBox('Config Err!'))
+    config = confreader.Config.from_file(options.configfile, kore=kore)
 
     # XXX: the import is here because we need to call init_log
     # before start importing stuff
