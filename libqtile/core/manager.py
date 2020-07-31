@@ -25,6 +25,7 @@ import os
 import pickle
 import shlex
 import signal
+import subprocess
 import sys
 import tempfile
 import time
@@ -1157,11 +1158,10 @@ class Qtile(CommandObject):
             return
         self.restart()
 
-    def cmd_spawn(self, cmd):
-        """Run cmd in a shell.
+    def cmd_spawn(self, cmd, shell=True):
+        """Run cmd, in a shell (default) or not.
 
-        cmd may be a string, which is parsed by shlex.split, or a list (similar
-        to subprocess.Popen).
+        cmd may be a string or a list (similar to subprocess.Popen).
 
         Examples
         ========
@@ -1170,7 +1170,11 @@ class Qtile(CommandObject):
 
             spawn(["xterm", "-T", "Temporary terminal"])
         """
-        if isinstance(cmd, str):
+        if shell:
+            if not isinstance(cmd, str):
+                cmd = subprocess.list2cmdline(cmd)
+            args = ["/bin/sh", "-c", cmd]
+        elif isinstance(cmd, str):
             args = shlex.split(cmd)
         else:
             args = list(cmd)
