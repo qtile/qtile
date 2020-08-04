@@ -970,7 +970,6 @@ class Window(_Window):
         s = Static(self.window, self.qtile, screen, x, y, width, height)
         self.qtile.windows_map[self.window.wid] = s
         hook.fire("client_managed", s)
-        return s
 
     def tweak_float(self, x=None, y=None, dx=0, dy=0,
                     w=None, h=None, dw=0, dh=0):
