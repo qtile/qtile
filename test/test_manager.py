@@ -6,6 +6,7 @@
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 Adi Sieker
 # Copyright (c) 2014 Sebastien Blot
+# Copyright (c) 2020 Mikel Ward
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -38,6 +39,7 @@ import libqtile.hook
 import libqtile.layout
 import libqtile.widget
 from libqtile.backend.x11 import xcbq
+from libqtile.command_client import SelectError
 from libqtile.command_interface import CommandError, CommandException
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
@@ -420,6 +422,21 @@ def test_setlayout(qtile):
     assert not self.c.layout.info()["name"] == "max"
     self.c.group.setlayout("max")
     assert self.c.layout.info()["name"] == "max"
+
+
+@manager_config
+@no_xinerama
+def test_to_layout_index(qtile):
+    self = qtile
+
+    self.c.to_layout_index(-1)
+    assert self.c.layout.info()["name"] == "max"
+    self.c.to_layout_index(-4)
+    assert self.c.layout.info()["name"] == "stack"
+    with pytest.raises(SelectError):
+        self.c.to_layout.index(-5)
+    self.c.to_layout_index(-2)
+    assert self.c.layout.info()["name"] == "tile"
 
 
 @manager_config
