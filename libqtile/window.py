@@ -722,13 +722,14 @@ class Static(_Window):
         self.conf_y = y
         self.conf_width = width
         self.conf_height = height
-        self.x = x or 0
-        self.y = y or 0
+        x = x or 0
+        y = y or 0
+        self.x = x + screen.x
+        self.y = y + screen.y
         self.width = width or 0
         self.height = height or 0
         self.screen = screen
-        if None not in (x, y, width, height):
-            self.place(x, y, width, height, 0, 0)
+        self.place(self.x, self.y, self.width, self.height, 0, 0)
         self.update_strut()
 
     def handle_ConfigureRequest(self, e):  # noqa: N802
@@ -930,7 +931,7 @@ class Window(_Window):
     def toggle_minimize(self):
         self.minimized = not self.minimized
 
-    def cmd_static(self, screen, x=None, y=None, width=None, height=None):
+    def cmd_static(self, screen=None, x=None, y=None, width=None, height=None):
         """Makes this window a static window, attached to a Screen
 
         If any of the arguments are left unspecified, the values given by the
@@ -939,7 +940,10 @@ class Window(_Window):
         anything.
         """
         self.defunct = True
-        screen = self.qtile.screens[screen]
+        if screen is None:
+            screen = self.qtile.current_screen
+        else:
+            screen = self.qtile.screens[screen]
         if self.group:
             self.group.remove(self)
         s = Static(self.window, self.qtile, screen, x, y, width, height)
