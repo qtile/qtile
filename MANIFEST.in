@@ -24,6 +24,7 @@ prune scripts
 prune rpm
 include bin/dqtile-cmd
 include bin/iqshell
+include scripts/ffibuild
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]
