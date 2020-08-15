@@ -47,7 +47,7 @@ class _WinStack(_ClientList):
 class Stack(Layout):
     """A layout composed of stacks of windows
 
-    The stack layout divides the screen horizontally into a set of stacks.
+    The stack layout divides the screen_rect horizontally into a set of stacks.
     Commands allow you to switch between stacks, to next and previous windows
     within a stack, and to split a stack to show all windows in the stack, or
     unsplit it to show only the current window.
@@ -205,7 +205,7 @@ class Stack(Layout):
             if n:
                 return n.cw
 
-    def configure(self, client, screen):
+    def configure(self, client, screen_rect):
         for i, s in enumerate(self.stacks):
             if client in s:
                 break
@@ -218,14 +218,14 @@ class Stack(Layout):
         else:
             px = self.group.qtile.color_pixel(self.border_normal)
 
-        column_width = int(screen.width / len(self.stacks))
-        xoffset = screen.x + i * column_width
+        column_width = int(screen_rect.width / len(self.stacks))
+        xoffset = screen_rect.x + i * column_width
         window_width = column_width - 2 * self.border_width
 
         if s.split:
-            column_height = int(screen.height / len(s))
+            column_height = int(screen_rect.height / len(s))
             window_height = column_height - 2 * self.border_width
-            yoffset = screen.y + s.index(client) * column_height
+            yoffset = screen_rect.y + s.index(client) * column_height
             client.place(
                 xoffset,
                 yoffset,
@@ -240,9 +240,9 @@ class Stack(Layout):
             if client == s.cw:
                 client.place(
                     xoffset,
-                    screen.y,
+                    screen_rect.y,
                     window_width,
-                    screen.height - 2 * self.border_width,
+                    screen_rect.height - 2 * self.border_width,
                     self.border_width,
                     px,
                     margin=self.margin,

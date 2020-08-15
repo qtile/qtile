@@ -203,21 +203,22 @@ class Bsp(Layout):
             node.client = None
             self.current = self.root
 
-    def configure(self, client, screen):
-        self.root.calc_geom(screen.x, screen.y, screen.width,
-                            screen.height)
+    def configure(self, client, screen_rect):
+        self.root.calc_geom(screen_rect.x, screen_rect.y, screen_rect.width,
+                            screen_rect.height)
         node = self.get_node(client)
         color = self.group.qtile.color_pixel(
             self.border_focus if client.has_focus else self.border_normal)
         border = 0 if node is self.root else self.border_width
-        client.place(
-            node.x,
-            node.y,
-            node.w - 2 * border,
-            node.h - 2 * border,
-            border,
-            color,
-            margin=self.margin)
+        if node is not None:
+            client.place(
+                node.x,
+                node.y,
+                node.w - 2 * border,
+                node.h - 2 * border,
+                border,
+                color,
+                margin=self.margin)
         client.unhide()
 
     def cmd_toggle_split(self):

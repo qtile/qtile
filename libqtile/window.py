@@ -442,10 +442,8 @@ class _Window(CommandObject):
         )
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, force=False, margin=None):
+              above=False, margin=None):
         """Places the window at the specified location with the given size.
-
-        If force is false, than it tries to obey hints
         """
 
         # TODO: self.x/y/height/width are updated BEFORE
@@ -498,6 +496,13 @@ class _Window(CommandObject):
 
         if bordercolor is not None:
             self.window.set_attribute(borderpixel=bordercolor)
+
+    def user_placed_window_setup(self, borderpixel, borderwidth):
+        self.borderwidth = borderwidth
+        self.bordercolor = borderpixel
+        self.window.set_attribute(borderpixel=borderpixel)
+        self.window.configure(borderwidth=borderwidth, stackmode=StackMode.Above)
+        self.unhide()
 
     def send_configure_notify(self, x, y, width, height):
         """Send a synthetic ConfigureNotify"""
@@ -667,6 +672,8 @@ class Internal(_Window):
     _window_mask = EventMask.StructureNotify | \
         EventMask.PropertyChange | \
         EventMask.EnterWindow | \
+        EventMask.LeaveWindow | \
+        EventMask.PointerMotion | \
         EventMask.FocusChange | \
         EventMask.Exposure | \
         EventMask.ButtonPress | \
@@ -747,8 +754,8 @@ class Static(_Window):
             "_NET_WM_STRUT",
             unpack=int
         )
-        strut = strut or (0, 0, 0, 0)
-        self.qtile.update_gaps(strut, self.strut)
+        if strut:
+            self.qtile.add_strut(strut)
         self.strut = strut
 
     def handle_PropertyNotify(self, e):  # noqa: N802
@@ -948,7 +955,7 @@ class Window(_Window):
         warnings.warn("toggleminimize is deprecated, use toggle_minimize", DeprecationWarning)
         self.toggle_minimize()
 
-    def static(self, screen, x=None, y=None, width=None, height=None):
+    def cmd_static(self, screen, x=None, y=None, width=None, height=None):
         """Makes this window a static window, attached to a Screen
 
         If any of the arguments are left unspecified, the values given by the
@@ -963,7 +970,6 @@ class Window(_Window):
         s = Static(self.window, self.qtile, screen, x, y, width, height)
         self.qtile.windows_map[self.window.wid] = s
         hook.fire("client_managed", s)
-        return s
 
     def tweak_float(self, x=None, y=None, dx=0, dy=0,
                     w=None, h=None, dw=0, dh=0):
@@ -1068,7 +1074,7 @@ class Window(_Window):
                 self.x += group.screen.x
             group.add(self)
             if switch_group:
-                group.cmd_toscreen()
+                group.cmd_toscreen(toggle=False)
 
     def toscreen(self, index=None):
         """Move window to a specified screen, or the current screen."""
@@ -1301,9 +1307,6 @@ class Window(_Window):
 
     def __repr__(self):
         return "Window(%r)" % self.name
-
-    def cmd_static(self, screen, x, y, width, height):
-        self.static(screen, x, y, width, height)
 
     def cmd_kill(self):
         """Kill this window

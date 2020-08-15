@@ -177,7 +177,7 @@ class Floating(Layout):
     def blur(self):
         self.focused = None
 
-    def compute_client_position(self, client, screen):
+    def compute_client_position(self, client, screen_rect):
         """ recompute client.x and client.y, returning whether or not to place
         this client above other windows or not """
         above = False
@@ -188,57 +188,59 @@ class Floating(Layout):
             center_x = win.x + win.width / 2
             center_y = win.y + win.height / 2
         else:
-            center_x = screen.x + screen.width / 2
-            center_y = screen.y + screen.height / 2
+            center_x = screen_rect.x + screen_rect.width / 2
+            center_y = screen_rect.y + screen_rect.height / 2
             above = True
 
         x = center_x - client.width / 2
         y = center_y - client.height / 2
 
         # don't go off the right...
-        x = min(x, screen.x + screen.width)
+        x = min(x, screen_rect.x + screen_rect.width)
         # or left...
-        x = max(x, screen.x)
+        x = max(x, screen_rect.x)
         # or bottom...
-        y = min(y, screen.y + screen.height)
+        y = min(y, screen_rect.y + screen_rect.height)
         # or top
-        y = max(y, screen.y)
+        y = max(y, screen_rect.y)
 
         client.x = int(round(x))
         client.y = int(round(y))
         return above
 
-    def configure(self, client, screen):
-        # 'sun-awt-X11-XWindowPeer' is a dropdown used in Java application,
-        # don't reposition it anywhere, let Java app to control it
-        cls = client.window.get_wm_class() or ''
-        is_java_dropdown = 'sun-awt-X11-XWindowPeer' in cls
-        if is_java_dropdown:
-            client.unhide()
-            return
-
-        # similar to above but the X11 version, the client may have already
-        # placed itself. let's respect that
-        if client.has_user_set_position():
-            client.unhide()
-            return
-
-        # ok, it's not java and the window itself didn't position it, but users
-        # may still have asked us not to mess with it
-        if self.no_reposition_match is not None and self.no_reposition_match.compare(client):
-            client.unhide()
-            return
-
+    def configure(self, client, screen_rect):
         if client.has_focus:
             bc = client.group.qtile.color_pixel(self.border_focus)
         else:
             bc = client.group.qtile.color_pixel(self.border_normal)
+
         if client.maximized:
             bw = self.max_border_width
         elif client.fullscreen:
             bw = self.fullscreen_border_width
         else:
             bw = self.border_width
+
+        # 'sun-awt-X11-XWindowPeer' is a dropdown used in Java application,
+        # don't reposition it anywhere, let Java app to control it
+        cls = client.window.get_wm_class() or ''
+        is_java_dropdown = 'sun-awt-X11-XWindowPeer' in cls
+        if is_java_dropdown:
+            client.user_placed_window_setup(bc, bw)
+            return
+
+        # similar to above but the X11 version, the client may have already
+        # placed itself. let's respect that
+        if client.has_user_set_position():
+            client.user_placed_window_setup(bc, bw)
+            return
+
+        # ok, it's not java and the window itself didn't position it, but users
+        # may still have asked us not to mess with it
+        if self.no_reposition_match is not None and self.no_reposition_match.compare(client):
+            client.user_placed_window_setup(bc, bw)
+            return
+
         above = False
 
         # We definitely have a screen here, so let's be sure we'll float on screen
@@ -247,7 +249,7 @@ class Floating(Layout):
             client.float_y
         except AttributeError:
             # this window hasn't been placed before, let's put it in a sensible spot
-            above = self.compute_client_position(client, screen)
+            above = self.compute_client_position(client, screen_rect)
 
         client.place(
             client.x,

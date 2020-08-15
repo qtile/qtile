@@ -746,63 +746,6 @@ class Window:
     def get_attributes(self):
         return self.conn.conn.core.GetWindowAttributes(self.wid).reply()
 
-    def ungrab_key(self, key, modifiers):
-        """Passing None means any key, or any modifier"""
-        if key is None:
-            key = xcffib.xproto.Atom.Any
-        if modifiers is None:
-            modifiers = xcffib.xproto.ModMask.Any
-        self.conn.conn.core.UngrabKey(key, self.wid, modifiers)
-
-    def grab_key(self, key, modifiers, owner_events,
-                 pointer_mode, keyboard_mode):
-        self.conn.conn.core.GrabKey(
-            owner_events,
-            self.wid,
-            modifiers,
-            key,
-            pointer_mode,
-            keyboard_mode
-        )
-
-    def ungrab_button(self, button, modifiers):
-        """Passing None means any key, or any modifier"""
-        if button is None:
-            button = xcffib.xproto.Atom.Any
-        if modifiers is None:
-            modifiers = xcffib.xproto.ModMask.Any
-        self.conn.conn.core.UngrabButton(button, self.wid, modifiers)
-
-    def grab_button(self, button, modifiers, owner_events,
-                    event_mask, pointer_mode, keyboard_mode):
-        self.conn.conn.core.GrabButton(
-            owner_events,
-            self.wid,
-            event_mask,
-            pointer_mode,
-            keyboard_mode,
-            xcffib.xproto.Atom._None,
-            xcffib.xproto.Atom._None,
-            button,
-            modifiers,
-        )
-
-    def grab_pointer(self, owner_events, event_mask, pointer_mode,
-                     keyboard_mode, cursor=None):
-        self.conn.conn.core.GrabPointer(
-            owner_events,
-            self.wid,
-            event_mask,
-            pointer_mode,
-            keyboard_mode,
-            xcffib.xproto.Atom._None,
-            cursor or xcffib.xproto.Atom._None,
-            xcffib.xproto.Atom._None,
-        )
-
-    def ungrab_pointer(self):
-        self.conn.conn.core.UngrabPointer(xcffib.xproto.Atom._None)
-
     def query_tree(self):
         q = self.conn.conn.core.QueryTree(self.wid).reply()
         root = None

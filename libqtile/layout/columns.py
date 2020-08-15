@@ -210,7 +210,7 @@ class Columns(Layout):
             self.remove_column(c)
         return self.columns[self.current].cw
 
-    def configure(self, client, screen):
+    def configure(self, client, screen_rect):
         pos = 0
         for col in self.columns:
             if client in col:
@@ -229,8 +229,9 @@ class Columns(Layout):
             border = 0
         else:
             border = self.border_width
-        width = int(0.5 + col.width * screen.width * 0.01 / len(self.columns))
-        x = screen.x + int(0.5 + pos * screen.width * 0.01 / len(self.columns))
+        width = int(
+            0.5 + col.width * screen_rect.width * 0.01 / len(self.columns))
+        x = screen_rect.x + int(0.5 + pos * screen_rect.width * 0.01 / len(self.columns))
         if col.split:
             pos = 0
             for c in col:
@@ -238,8 +239,8 @@ class Columns(Layout):
                     break
                 pos += col.heights[c]
             height = int(
-                0.5 + col.heights[client] * screen.height * 0.01 / len(col))
-            y = screen.y + int(0.5 + pos * screen.height * 0.01 / len(col))
+                0.5 + col.heights[client] * screen_rect.height * 0.01 / len(col))
+            y = screen_rect.y + int(0.5 + pos * screen_rect.height * 0.01 / len(col))
             client.place(
                 x,
                 y,
@@ -252,9 +253,9 @@ class Columns(Layout):
         elif client == col.cw:
             client.place(
                 x,
-                screen.y,
+                screen_rect.y,
                 width - 2 * border,
-                screen.height - 2 * border,
+                screen_rect.height - 2 * border,
                 border,
                 color,
                 margin=self.margin)

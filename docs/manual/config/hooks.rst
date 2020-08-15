@@ -63,3 +63,13 @@ We can then subscribe to ``startup_once`` to run this script:
     def autostart():
         home = os.path.expanduser('~/.config/qtile/autostart.sh')
         subprocess.call([home])
+
+Accessing the qtile object
+--------------------------
+
+If you want to do something with the ``Qtile`` manager instance inside a hook,
+it can be imported into your config:
+
+.. code-block:: python
+
+    from libqtile import qtile

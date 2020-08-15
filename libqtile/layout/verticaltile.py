@@ -112,7 +112,7 @@ class VerticalTile(_SimpleLayoutBase):
         c.maximized = None
         return c
 
-    def configure(self, window, screen):
+    def configure(self, window, screen_rect):
         if self.clients and window in self.clients:
             n = len(self.clients)
             index = self.clients.index(window)
@@ -130,18 +130,18 @@ class VerticalTile(_SimpleLayoutBase):
 
             # width
             if n > 1:
-                width = screen.width - self.border_width * 2
+                width = screen_rect.width - self.border_width * 2
             else:
-                width = screen.width
+                width = screen_rect.width
 
             # height
             if n > 1:
-                main_area_height = int(screen.height * self.ratio)
-                sec_area_height = screen.height - main_area_height
+                main_area_height = int(screen_rect.height * self.ratio)
+                sec_area_height = screen_rect.height - main_area_height
 
                 main_pane_height = main_area_height - border_width * 2
                 sec_pane_height = sec_area_height // (n - 1) - border_width * 2
-                normal_pane_height = (screen.height // n) - (border_width * 2)
+                normal_pane_height = (screen_rect.height // n) - (border_width * 2)
 
                 if self.maximized:
                     if window is self.maximized:
@@ -151,10 +151,10 @@ class VerticalTile(_SimpleLayoutBase):
                 else:
                     height = normal_pane_height
             else:
-                height = screen.height
+                height = screen_rect.height
 
             # y
-            y = screen.y
+            y = screen_rect.y
 
             if n > 1:
                 if self.maximized:
@@ -167,7 +167,7 @@ class VerticalTile(_SimpleLayoutBase):
                     if index > self.clients.index(self.maximized):
                         y = y - sec_pane_height + main_pane_height
 
-            window.place(screen.x, y, width, height, border_width,
+            window.place(screen_rect.x, y, width, height, border_width,
                          border_color, margin=self.margin)
             window.unhide()
         else:

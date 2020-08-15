@@ -36,6 +36,7 @@ from libqtile.utils import QtileError
 
 if TYPE_CHECKING:
     from typing import Dict
+
     from libqtile.core.manager import Qtile
 
 _IGNORED_EVENTS = {
@@ -43,7 +44,6 @@ _IGNORED_EVENTS = {
     xcffib.xproto.FocusInEvent,
     xcffib.xproto.FocusOutEvent,
     xcffib.xproto.KeyReleaseEvent,
-    xcffib.xproto.LeaveNotifyEvent,
     # DWM handles this to help "broken focusing windows".
     xcffib.xproto.MapNotifyEvent,
     xcffib.xproto.NoExposureEvent,
@@ -295,6 +295,8 @@ class XCore(base.Core):
         # Certain events expose the affected window id as an "event" attribute.
         event_events = [
             "EnterNotify",
+            "LeaveNotify",
+            "MotionNotify",
             "ButtonPress",
             "ButtonRelease",
             "KeyPress",
@@ -380,7 +382,7 @@ class XCore(base.Core):
         self._root.set_property("_NET_DESKTOP_NAMES", "\0".join(i.name for i in groups))
         self._root.set_property("_NET_CURRENT_DESKTOP", index)
 
-    def lookup_key(self, key: config.Key) -> Tuple[int, int, int]:
+    def lookup_key(self, key: config.Key) -> Tuple[int, int]:
         """Find the keysym and the modifier mask for the given key"""
         try:
             keysym = xcbq.get_keysym(key.key)
@@ -388,43 +390,55 @@ class XCore(base.Core):
         except xcbq.XCBQError as err:
             raise utils.QtileError(err)
 
-        return keysym, modmask, modmask & self._valid_mask
+        return keysym, modmask
 
-    def grab_key(self, keysym: int, modmask: int) -> None:
+    def grab_key(self, key: config.Key) -> Tuple[int, int]:
         """Map the key to receive events on it"""
+        keysym, modmask = self.lookup_key(key)
         code = self.conn.keysym_to_keycode(keysym)
+
         for amask in self._auto_modmasks():
-            self._root.grab_key(
-                code,
-                modmask | amask,
+            self.conn.conn.core.GrabKey(
                 True,
+                self._root.wid,
+                modmask | amask,
+                code,
                 xcffib.xproto.GrabMode.Async,
                 xcffib.xproto.GrabMode.Async,
             )
 
-    def ungrab_keys(self) -> None:
-        """Ungrab all of the key events"""
-        self._root.ungrab_key(None, None)
+        return keysym, modmask & self._valid_mask
 
-    def ungrab_key(self, keysym: int, modmask: int) -> None:
+    def ungrab_key(self, key: config.Key) -> Tuple[int, int]:
         """Ungrab the key corresponding to the given keysym and modifier mask"""
+        keysym, modmask = self.lookup_key(key)
         code = self.conn.keysym_to_keycode(keysym)
 
         for amask in self._auto_modmasks():
-            self._root.ungrab_key(code, modmask | amask)
+            self.conn.conn.core.UngrabKey(code, self._root.wid, modmask | amask)
+
+        return keysym, modmask & self._valid_mask
+
+    def ungrab_keys(self) -> None:
+        """Ungrab all of the key events"""
+        self.conn.conn.core.UngrabKey(xcffib.xproto.Atom.Any, self._root.wid, xcffib.xproto.ModMask.Any)
 
     def grab_pointer(self) -> None:
         """Get the focus for pointer events"""
-        self._root.grab_pointer(
+        self.conn.conn.core.GrabPointer(
             True,
+            self._root.wid,
             xcbq.ButtonMotionMask | xcbq.AllButtonsMask | xcbq.ButtonReleaseMask,
             xcffib.xproto.GrabMode.Async,
             xcffib.xproto.GrabMode.Async,
+            xcffib.xproto.Atom._None,
+            xcffib.xproto.Atom._None,
+            xcffib.xproto.Atom._None,
         )
 
     def ungrab_pointer(self) -> None:
         """Ungrab the focus for pointer events"""
-        self._root.ungrab_pointer()
+        self.conn.conn.core.UngrabPointer(xcffib.xproto.Atom._None)
 
     def grab_button(self, mouse: config.Mouse) -> None:
         """Grab the given mouse button for events"""
@@ -445,18 +459,21 @@ class XCore(base.Core):
             eventmask |= xcffib.xproto.EventMask.ButtonRelease
 
         for amask in self._auto_modmasks():
-            self._root.grab_button(
-                mouse.button_code,
-                modmask | amask,
+            self.conn.conn.core.GrabButton(
                 True,
+                self._root.wid,
                 eventmask,
                 grabmode,
                 xcffib.xproto.GrabMode.Async,
+                xcffib.xproto.Atom._None,
+                xcffib.xproto.Atom._None,
+                mouse.button_code,
+                modmask | amask,
             )
 
     def ungrab_buttons(self) -> None:
         """Un-grab all mouse events"""
-        self._root.ungrab_button(None, None)
+        self.conn.conn.core.UngrabButton(xcffib.xproto.Atom.Any, self._root.wid, xcffib.xproto.ModMask.Any)
 
     def _auto_modmasks(self) -> Iterator[int]:
         """The modifier masks to add"""
@@ -542,13 +559,6 @@ class XCore(base.Core):
 
         self.qtile.process_button_motion(event.event_x, event.event_y)
 
-    def handle_ConfigureNotify(self, event) -> None:  # noqa: N802
-        """Handle xrandr events"""
-        assert self.qtile is not None
-
-        if event.window == self._root.wid:
-            self.qtile.process_configure(event.width, event.height)
-
     def handle_ConfigureRequest(self, event):  # noqa: N802
         # It's not managed, or not mapped, so we just obey it.
         cw = xcffib.xproto.ConfigWindow
@@ -591,7 +601,7 @@ class XCore(base.Core):
             self.qtile.unmap_window(event.window)
 
     def handle_ScreenChangeNotify(self, event) -> None:  # noqa: N802
-        hook.fire("screen_change", self.qtile, event)
+        hook.fire("screen_change", event)
 
     @property
     def painter(self):

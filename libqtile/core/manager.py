@@ -36,7 +36,8 @@ import xcffib
 import xcffib.xinerama
 import xcffib.xproto
 
-from libqtile import command_interface, hook, utils, window
+import libqtile
+from libqtile import command_interface, confreader, hook, utils, window
 from libqtile.backend.x11 import xcbq
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_interface import IPCCommandServer, QtileCommandInterface
@@ -45,7 +46,7 @@ from libqtile.command_object import (
     CommandException,
     CommandObject,
 )
-from libqtile.config import Click, Drag, KeyChord, Match, Rule
+from libqtile.config import Click, Drag, Key, KeyChord, Match, Rule
 from libqtile.config import ScratchPad as ScratchPadConfig
 from libqtile.config import Screen
 from libqtile.dgroups import DGroups
@@ -95,7 +96,7 @@ class Qtile(CommandObject):
 
         self.core = kore
         self.config = config
-        hook.init(self)
+        libqtile.init(self)
 
         self.windows_map = {}
         self.widgets_map = {}
@@ -106,8 +107,18 @@ class Qtile(CommandObject):
 
         self.numlock_mask, self.valid_mask = self.core.masks
 
+        try:
+            self.config.load()
+        except Exception as e:
+            logger.exception('Error while reading config file (%s)', e)
+            self.config = confreader.Config()
+            from libqtile.widget import TextBox
+            widgets = self.config.screens[0].bottom.widgets
+            widgets.insert(0, TextBox('Config Err!'))
+
         self.core.wmname = getattr(self.config, "wmname", "qtile")
         if config.main:
+            warnings.warn("Defining a main function is deprecated, use libqtile.qtile", DeprecationWarning)
             config.main(self)
 
         self.dgroups = None
@@ -186,6 +197,9 @@ class Qtile(CommandObject):
                 logger.exception("failed restoring state")
 
         self.core.scan()
+        if state:
+            for screen in self.screens:
+                screen.group.layout_all()
         self.update_net_desktops()
         hook.subscribe.setgroup(self.update_net_desktops)
 
@@ -343,10 +357,6 @@ class Qtile(CommandObject):
     def paint_screen(self, screen, image_path, mode=None):
         self.core.painter.paint(screen, image_path, mode)
 
-    def process_configure(self, width: int, height: int) -> None:
-        screen = self.current_screen
-        screen.resize(0, 0, width, height)
-
     def process_key_event(self, keysym: int, mask: int) -> None:
         key = self.keys_map.get((keysym, mask), None)
         if key is None:
@@ -369,22 +379,26 @@ class Qtile(CommandObject):
                 return
 
     def grab_keys(self) -> None:
+        """Re-grab all of the keys configured in the key map
+
+        Useful when a keyboard mapping event is received.
+        """
         self.core.ungrab_keys()
         for key in self.keys_map.values():
             self.grab_key(key)
 
-    def grab_key(self, key) -> None:
-        keysym, modmask, mask_key = self.core.lookup_key(key)
-        self.core.grab_key(keysym, modmask)
+    def grab_key(self, key: Key) -> None:
+        """Grab the given key event"""
+        keysym, mask_key = self.core.grab_key(key)
         self.keys_map[(keysym, mask_key)] = key
 
-    def ungrab_key(self, key) -> None:
-        keysym, modmask, mask_key = self.core.lookup_key(key)
-        key = self.keys_map.pop((keysym, mask_key))
-        if key is not None:
-            self.core.ungrab_key(keysym, modmask)
+    def ungrab_key(self, key: Key) -> None:
+        """Ungrab a given key event"""
+        keysym, mask_key = self.core.ungrab_key(key)
+        self.keys_map.pop((keysym, mask_key))
 
-    def clear_chords(self) -> None:
+    def ungrab_keys(self) -> None:
+        """Ungrab all key events"""
         self.core.ungrab_keys()
         self.keys_map.clear()
 
@@ -392,14 +406,16 @@ class Qtile(CommandObject):
         self.current_chord = chord.mode if chord.mode != "" else True
         if self.current_chord:
             hook.fire("enter_chord", self.current_chord)
-        self.clear_chords()
+
+        self.ungrab_keys()
         for key in chord.submapings:
             self.grab_key(key)
 
     def ungrab_chord(self) -> None:
         self.current_chord = False
         hook.fire("leave_chord")
-        self.clear_chords()
+
+        self.ungrab_keys()
         for key in self.config.keys:
             self.grab_key(key)
 
@@ -438,7 +454,7 @@ class Qtile(CommandObject):
                 layouts = self.config.layouts
             g._configure(layouts, self.config.floating_layout, self)
             self.groups_map[name] = g
-            hook.fire("addgroup", self, name)
+            hook.fire("addgroup", name)
             hook.fire("changegroup")
             self.update_net_desktops()
 
@@ -466,7 +482,7 @@ class Qtile(CommandObject):
                 self.current_screen.set_group(target, save_prev=False)
             self.groups.remove(group)
             del(self.groups_map[name])
-            hook.fire("delgroup", self, name)
+            hook.fire("delgroup", name)
             hook.fire("changegroup")
             self.update_net_desktops()
 
@@ -488,7 +504,8 @@ class Qtile(CommandObject):
 
     @functools.lru_cache()
     def color_pixel(self, name):
-        return self.conn.screens[0].default_colormap.alloc_color(name).pixel
+        pixel = self.conn.screens[0].default_colormap.alloc_color(name).pixel
+        return pixel | 0xff << 24
 
     @property
     def current_layout(self):
@@ -502,34 +519,25 @@ class Qtile(CommandObject):
     def current_window(self):
         return self.current_screen.group.current_window
 
-    def reset_gaps(self, c):
-        if c.strut:
-            self.update_gaps((0, 0, 0, 0), c.strut)
+    def add_strut(self, strut):
+        from libqtile.bar import Bar, Gap
 
-    def update_gaps(self, strut, old_strut=None):
-        from libqtile.bar import Gap
+        for i, pos in enumerate(["left", "right", "top", "bottom"]):
+            if strut[i]:
+                bar = getattr(self.current_screen, pos)
+                if isinstance(bar, Bar):
+                    bar.adjust_for_strut(strut[i])
+                elif isinstance(bar, Gap):
+                    bar.size += strut[i]
+                    if bar.size <= 0:
+                        setattr(self.current_screen, pos, None)
+                else:
+                    setattr(self.current_screen, pos, Gap(strut[i]))
 
-        (left, right, top, bottom) = strut[:4]
-        if old_strut:
-            (old_left, old_right, old_top, old_bottom) = old_strut[:4]
-            if not left and old_left:
-                self.current_screen.left = None
-            elif not right and old_right:
-                self.current_screen.right = None
-            elif not top and old_top:
-                self.current_screen.top = None
-            elif not bottom and old_bottom:
-                self.current_screen.bottom = None
-
-        if top:
-            self.current_screen.top = Gap(top)
-        elif bottom:
-            self.current_screen.bottom = Gap(bottom)
-        elif left:
-            self.current_screen.left = Gap(left)
-        elif right:
-            self.current_screen.right = Gap(right)
         self.current_screen.resize()
+
+    def remove_strut(self, strut):
+        self.add_strut([-i for i in strut])
 
     def map_window(self, window: xcbq.Window) -> None:
         c = self.manage(window)
@@ -574,7 +582,7 @@ class Qtile(CommandObject):
                     return
 
                 if w.get_wm_type() == "dock" or c.strut:
-                    c.static(self.current_screen.index)
+                    c.cmd_static(self.current_screen.index)
                 else:
                     hook.fire("client_new", c)
 
@@ -596,7 +604,8 @@ class Qtile(CommandObject):
         c = self.windows_map.get(win)
         if c:
             hook.fire("client_killed", c)
-            self.reset_gaps(c)
+            if c.strut:
+                self.remove_strut(c.strut)
             if getattr(c, "group", None):
                 c.group.remove(c)
             del self.windows_map[win]

@@ -16,14 +16,15 @@ exclude logo.png
 
 graft libqtile/resources
 graft resources
+graft test
 
 prune bin
 prune docs
 prune scripts
-prune test
 prune rpm
 include bin/dqtile-cmd
 include bin/iqshell
+include scripts/ffibuild
 
 recursive-exclude * __pycache__
 recursive-exclude * *.py[co]

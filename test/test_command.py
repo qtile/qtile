@@ -30,10 +30,11 @@ import libqtile.layout
 import libqtile.widget
 from libqtile.command_interface import CommandError
 from libqtile.command_object import CommandObject
+from libqtile.confreader import Config
 from libqtile.lazy import lazy
 
 
-class CallConfig:
+class CallConfig(Config):
     keys = [
         libqtile.config.Key(
             ["control"], "j",
@@ -64,7 +65,6 @@ class CallConfig:
             ),
         )
     ]
-    main = None
     auto_fullscreen = True
 
 
@@ -122,7 +122,7 @@ def test_command():
     assert not c.command("nonexistent")
 
 
-class ServerConfig:
+class ServerConfig(Config):
     auto_fullscreen = True
     keys = []
     mouse = []
@@ -155,7 +155,6 @@ class ServerConfig:
             ),
         )
     ]
-    main = None
 
 
 server_config = pytest.mark.parametrize("qtile", [ServerConfig], indirect=True)

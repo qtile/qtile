@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 HERE=$(dirname $(readlink -f $0))
 SCREEN_SIZE=${SCREEN_SIZE:-800x600}
@@ -6,14 +6,14 @@ XDISPLAY=${XDISPLAY:-:1}
 LOG_LEVEL=${LOG_LEVEL:-INFO}
 APP=${APP:-xterm}
 if [[ -z $PYTHON ]]; then
-    PYTHON=python
+    PYTHON=python3
 fi
 
 Xephyr +extension RANDR -screen ${SCREEN_SIZE} ${XDISPLAY} -ac &
 XEPHYR_PID=$!
 (
   sleep 1
-  env DISPLAY=${XDISPLAY} ${PYTHON} "${HERE}"/../bin/qtile -l ${LOG_LEVEL} $@ &
+  env DISPLAY=${XDISPLAY} QTILE_XEPHYR=1 ${PYTHON} "${HERE}"/../bin/qtile -l ${LOG_LEVEL} $@ &
   QTILE_PID=$!
   env DISPLAY=${XDISPLAY} ${APP} &
   wait $QTILE_PID

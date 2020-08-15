@@ -1,5 +1,5 @@
 os: linux
-dist: xenial
+dist: focal
 language: python
 
 jobs:
@@ -40,7 +40,6 @@ cache:
 addons:
   apt:
     packages:
-    - gkrellm
     - graphviz # for docs
     - imagemagick
     - x11-apps

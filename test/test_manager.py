@@ -6,6 +6,7 @@
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 Adi Sieker
 # Copyright (c) 2014 Sebastien Blot
+# Copyright (c) 2020 Mikel Ward
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +27,6 @@
 # SOFTWARE.
 
 import logging
-import subprocess
-import time
 
 import pytest
 import xcffib.xproto
@@ -40,12 +39,14 @@ import libqtile.hook
 import libqtile.layout
 import libqtile.widget
 from libqtile.backend.x11 import xcbq
+from libqtile.command_client import SelectError
 from libqtile.command_interface import CommandError, CommandException
+from libqtile.confreader import Config
 from libqtile.lazy import lazy
-from test.conftest import BareConfig, Retry, no_xinerama, whereis
+from test.conftest import BareConfig, Retry, no_xinerama
 
 
-class ManagerConfig:
+class ManagerConfig(Config):
     auto_fullscreen = True
     groups = [
         libqtile.config.Group("a"),
@@ -82,7 +83,6 @@ class ManagerConfig:
             20
         ),
     )]
-    main = None
     follow_mouse_focus = True
 
 
@@ -268,7 +268,7 @@ def test_keypress(qtile):
     assert self.c.groups()["a"]["focus"] == "one"
 
 
-class _ChordsConfig:
+class _ChordsConfig(Config):
     groups = [
         libqtile.config.Group("a")
     ]
@@ -465,6 +465,21 @@ def test_setlayout(qtile):
     assert not self.c.layout.info()["name"] == "max"
     self.c.group.setlayout("max")
     assert self.c.layout.info()["name"] == "max"
+
+
+@manager_config
+@no_xinerama
+def test_to_layout_index(qtile):
+    self = qtile
+
+    self.c.to_layout_index(-1)
+    assert self.c.layout.info()["name"] == "max"
+    self.c.to_layout_index(-4)
+    assert self.c.layout.info()["name"] == "stack"
+    with pytest.raises(SelectError):
+        self.c.to_layout.index(-5)
+    self.c.to_layout_index(-2)
+    assert self.c.layout.info()["name"] == "tile"
 
 
 @manager_config
@@ -926,58 +941,6 @@ def test_screens(qtile):
 
 @manager_config
 @no_xinerama
-def test_rotate(qtile):
-    self = qtile
-
-    self.test_window("one")
-    s = self.c.screens()[0]
-    height, width = s["height"], s["width"]
-    subprocess.call(
-        [
-            "xrandr",
-            "--output", "default",
-            "-display", self.display,
-            "--rotate", "left"
-        ],
-        stderr=subprocess.PIPE,
-        stdout=subprocess.PIPE
-    )
-
-    @Retry(ignore_exceptions=(AssertionError,), fail_msg="Screen did not rotate")
-    def run():
-        s = self.c.screens()[0]
-        assert s['width'] == height
-        assert s['height'] == width
-        return True
-    run()
-
-
-# TODO: see note on test_resize
-@manager_config
-@no_xinerama
-def test_resize_(qtile):
-    self = qtile
-
-    self.test_window("one")
-    subprocess.call(
-        [
-            "xrandr",
-            "-s", "480x640",
-            "-display", self.display
-        ]
-    )
-
-    @Retry(ignore_exceptions=(AssertionError,), fail_msg="Screen did not resize")
-    def run():
-        d = self.c.screen.info()
-        assert d['width'] == 480
-        assert d['height'] == 640
-        return True
-    run()
-
-
-@manager_config
-@no_xinerama
 def test_focus_stays_on_layout_switch(qtile):
     qtile.test_window("one")
     qtile.test_window("two")
@@ -1136,7 +1099,7 @@ def test_dheight():
     assert s.dheight == 80
 
 
-class _Config:
+class _Config(Config):
     groups = [
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
@@ -1176,7 +1139,7 @@ class ClientNewStaticConfig(_Config):
     @staticmethod
     def main(c):
         def client_new(c):
-            c.static(0)
+            c.cmd_static(0)
         libqtile.hook.subscribe.client_new(client_new)
 
 
@@ -1189,13 +1152,6 @@ def test_clientnew_config(qtile):
 
     a = self.test_window("one")
     self.kill_window(a)
-
-
-@pytest.mark.skipif(whereis("gkrellm") is None, reason="gkrellm not found")
-@clientnew_config
-def test_gkrellm(qtile):
-    qtile.test_gkrellm()
-    time.sleep(0.1)
 
 
 class ToGroupConfig(_Config):
@@ -1477,3 +1433,47 @@ def test_hints_setting_unsetting(qtile):
     finally:
         w.kill_client()
         conn.finalize()
+
+
+@manager_config
+def test_strut_handling(qtile):
+    w = None
+    conn = xcbq.Connection(qtile.display)
+
+    def has_struts():
+        nonlocal w
+        w = conn.create_window(0, 0, 10, 10)
+        w.set_property("_NET_WM_STRUT", [0, 0, 0, 10])
+        w.map()
+        conn.conn.flush()
+
+    def test_initial_state():
+        assert qtile.c.window.info()['width'] == 798
+        assert qtile.c.window.info()['height'] == 578
+        assert qtile.c.window.info()['x'] == 0
+        assert qtile.c.window.info()['y'] == 0
+        bar_id = qtile.c.bar["bottom"].info()["window"]
+        bar = qtile.c.window[bar_id].info()
+        assert bar["height"] == 20
+        assert bar["y"] == 580
+
+    qtile.test_xcalc()
+    test_initial_state()
+
+    try:
+        qtile.create_window(has_struts)
+        qtile.c.window.static(0, None, None, None, None)
+        assert qtile.c.window.info()['width'] == 798
+        assert qtile.c.window.info()['height'] == 568
+        assert qtile.c.window.info()['x'] == 0
+        assert qtile.c.window.info()['y'] == 0
+        bar_id = qtile.c.bar["bottom"].info()["window"]
+        bar = qtile.c.window[bar_id].info()
+        assert bar["height"] == 20
+        assert bar["y"] == 570
+
+    finally:
+        w.kill_client()
+        conn.finalize()
+
+    test_initial_state()

@@ -28,9 +28,10 @@
 import os.path
 import sys
 import warnings
-from typing import List
+from typing import List, Optional
 
 from libqtile import configurable, hook, utils
+from libqtile.bar import BarType
 from libqtile.command_object import CommandObject
 from libqtile.lazy import lazy
 
@@ -252,21 +253,12 @@ class Screen(CommandObject):
     dimensions. If the mode is 'fill', the image will be centred on the screen and
     resized to fill it. If the mode is 'stretch', the image is stretched to fit all of
     it into the screen.
-
-    Parameters
-    ==========
-    top: Gap/Bar object, or None.
-    bottom: Gap/Bar object, or None.
-    left: Gap/Bar object, or None.
-    right: Gap/Bar object, or None.
-    wallpaper: Dict, or None.
-    x : int or None
-    y : int or None
-    width : int or None
-    height : int or None
     """
-    def __init__(self, top=None, bottom=None, left=None, right=None, wallpaper=None,
-                 wallpaper_mode=None, x=None, y=None, width=None, height=None):
+    def __init__(self, top: Optional[BarType] = None, bottom: Optional[BarType] = None,
+                 left: Optional[BarType] = None, right: Optional[BarType] = None,
+                 wallpaper: Optional[str] = None, wallpaper_mode: Optional[str] = None,
+                 x: Optional[int] = None, y: Optional[int] = None, width: Optional[int] = None,
+                 height: Optional[int] = None):
         self.group = None
         self.previous_group = None
 
@@ -610,32 +602,28 @@ class Match:
 
     def compare(self, client):
         for _type, rule in self._rules:
-            if _type == "net_wm_pid":
-                def match_func(value):
-                    return rule == value
-            else:
-                match_func = getattr(rule, 'match', None) or \
-                    getattr(rule, 'count')
-
-            if _type == 'title':
+            # get value
+            if _type == "title":
                 value = client.name
-            elif _type == 'wm_class':
-                value = None
-                _value = client.window.get_wm_class()
-                if _value and len(_value) > 1:
-                    value = _value[1]
-            elif _type == 'wm_instance_class':
-                value = client.window.get_wm_class()
-                if value:
-                    value = value[0]
-            elif _type == 'wm_type':
-                value = client.window.get_wm_type()
-            elif _type == 'net_wm_pid':
-                value = client.window.get_net_wm_pid()
-            else:
+            elif _type == "wm_instance_class":
+                value = client.window.get_wm_class() and client.window.get_wm_class()[0]
+            elif _type == "role":
                 value = client.window.get_wm_window_role()
+            else:
+                value = getattr(client.window, 'get_' + _type)()
 
-            if value and match_func(value):
+            # compare
+            if _type == "net_wm_pid":
+                if rule == value:
+                    return True
+                else:
+                    continue
+            match = getattr(rule, 'match', None) or getattr(rule, 'count')
+
+            if _type == "wm_class":
+                if any(match(v) for v in value):
+                    return True
+            elif value is not None and match(value):
                 return True
         return False
 

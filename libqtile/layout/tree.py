@@ -311,7 +311,7 @@ class TreeTab(Layout):
     """Tree Tab Layout
 
     This layout works just like Max but displays tree of the windows at the
-    left border of the screen, which allows you to overview all opened windows.
+    left border of the screen_rect, which allows you to overview all opened windows.
     It's designed to work with ``uzbl-browser`` but works with other windows
     too.
 
@@ -455,15 +455,15 @@ class TreeTab(Layout):
         del self._nodes[win]
         self.draw_panel()
 
-    def _create_panel(self):
+    def _create_panel(self, screen_rect):
         self._panel = window.Internal.create(
             self.group.qtile,
-            0,
-            0,
+            screen_rect.x,
+            screen_rect.y,
             self.panel_width,
             100
         )
-        self._create_drawer()
+        self._create_drawer(screen_rect)
         self._panel.handle_Expose = self._handle_Expose
         self._panel.handle_ButtonPress = self._handle_ButtonPress
         self.group.qtile.windows_map[self._panel.window.wid] = self._panel
@@ -485,11 +485,11 @@ class TreeTab(Layout):
         if node:
             self.group.focus(node.window, False)
 
-    def configure(self, client, screen):
+    def configure(self, client, screen_rect):
         if self._nodes and client is self._focused:
             client.place(
-                screen.x, screen.y,
-                screen.width, screen.height,
+                screen_rect.x, screen_rect.y,
+                screen_rect.width, screen_rect.height,
                 0,
                 None
             )
@@ -545,10 +545,10 @@ class TreeTab(Layout):
         d["client_trees"] = trees
         return d
 
-    def show(self, screen):
+    def show(self, screen_rect):
         if not self._panel:
-            self._create_panel()
-        panel, body = screen.hsplit(self.panel_width)
+            self._create_panel(screen_rect)
+        panel, body = screen_rect.hsplit(self.panel_width)
         self._resize_panel(panel)
         self._panel.unhide()
 
@@ -714,13 +714,13 @@ class TreeTab(Layout):
         self.panel_width -= 10
         self.group.layout_all()
 
-    def _create_drawer(self):
+    def _create_drawer(self, screen_rect):
         if self._drawer is None:
             self._drawer = drawer.Drawer(
                 self.group.qtile,
                 self._panel.window.wid,
                 self.panel_width,
-                self.group.screen.dheight
+                screen_rect.height
             )
         self._drawer.clear(self.bg_color)
         self._layout = self._drawer.textlayout(
@@ -732,18 +732,18 @@ class TreeTab(Layout):
             wrap=False
         )
 
-    def layout(self, windows, screen):
-        panel, body = screen.hsplit(self.panel_width)
+    def layout(self, windows, screen_rect):
+        panel, body = screen_rect.hsplit(self.panel_width)
         self._resize_panel(panel)
         Layout.layout(self, windows, body)
 
-    def _resize_panel(self, rect):
+    def _resize_panel(self, screen_rect):
         if self._panel:
             self._panel.place(
-                rect.x, rect.y,
-                rect.width, rect.height,
+                screen_rect.x, screen_rect.y,
+                screen_rect.width, screen_rect.height,
                 0,
                 None
             )
-            self._create_drawer()
+            self._create_drawer(screen_rect)
             self.draw_panel()

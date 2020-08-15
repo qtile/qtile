@@ -34,7 +34,7 @@ import libqtile.layout
 import libqtile.widget
 
 
-class GBConfig:
+class GBConfig(libqtile.confreader.Config):
     auto_fullscreen = True
     keys = []
     mouse = []
@@ -79,7 +79,6 @@ class GBConfig:
             # TODO: Add vertical bars and test widgets that support them
         )
     ]
-    main = None
 
 
 gb_config = pytest.mark.parametrize("qtile", [GBConfig], indirect=True)
@@ -179,9 +178,8 @@ def test_groupbox_button_press(qtile):
     assert qtile.c.groups()["a"]["screen"] == 0
 
 
-class GeomConf:
+class GeomConf(libqtile.confreader.Config):
     auto_fullscreen = False
-    main = None
     keys = []
     mouse = []
     groups = [
@@ -313,8 +311,7 @@ class ExampleWidget(libqtile.widget.base._Widget):
         pass
 
 
-class IncompatibleWidgetConf:
-    main = None
+class IncompatibleWidgetConf(libqtile.confreader.Config):
     keys = []
     mouse = []
     groups = [libqtile.config.Group("a")]

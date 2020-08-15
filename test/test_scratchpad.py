@@ -23,13 +23,13 @@ import pytest
 import libqtile.config
 import libqtile.layout
 import libqtile.widget
+from libqtile.confreader import Config
 from test.conftest import Retry, no_xinerama
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
-class ScratchPadBaseConfic:
+class ScratchPadBaseConfic(Config):
     auto_fullscreen = True
-    main = None
     screens = []
     groups = [
         libqtile.config.ScratchPad('SCRATCHPAD', dropdowns=[

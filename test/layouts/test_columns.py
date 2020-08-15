@@ -21,13 +21,13 @@ import pytest
 
 import libqtile.config
 from libqtile import layout
+from libqtile.confreader import Config
 from test.conftest import no_xinerama
 from test.layouts.layout_utils import assert_focus_path, assert_focused
 
 
-class ColumnsConfig:
+class ColumnsConfig(Config):
     auto_fullscreen = True
-    main = None
     groups = [
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
