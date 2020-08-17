@@ -397,15 +397,18 @@ class XCore(base.Core):
         keysym, modmask = self.lookup_key(key)
         code = self.conn.keysym_to_keycode(keysym)
 
-        for amask in self._auto_modmasks():
-            self.conn.conn.core.GrabKey(
-                True,
-                self._root.wid,
-                modmask | amask,
-                code,
-                xcffib.xproto.GrabMode.Async,
-                xcffib.xproto.GrabMode.Async,
-            )
+        if code != 0:
+            for amask in self._auto_modmasks():
+                self.conn.conn.core.GrabKey(
+                    True,
+                    self._root.wid,
+                    modmask | amask,
+                    code,
+                    xcffib.xproto.GrabMode.Async,
+                    xcffib.xproto.GrabMode.Async,
+                )
+        else:
+            logger.warning("Keysym could not be mapped: {keysym}, mask: {modmask}".format(keysym=keysym, modmask=modmask))
 
         return keysym, modmask & self._valid_mask
 
