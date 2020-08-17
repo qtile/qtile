@@ -1158,8 +1158,8 @@ class Qtile(CommandObject):
             return
         self.restart()
 
-    def cmd_spawn(self, cmd, shell=True):
-        """Run cmd, in a shell (default) or not.
+    def cmd_spawn(self, cmd, shell=False):
+        """Run cmd, in a shell or not (default).
 
         cmd may be a string or a list (similar to subprocess.Popen).
 
@@ -1405,7 +1405,7 @@ class Qtile(CommandObject):
         mb.start_input(prompt, f, "group", strict_completer=True)
 
     def cmd_spawncmd(self, prompt="spawn", widget="prompt",
-                     command="%s", complete="cmd"):
+                     command="%s", complete="cmd", shell=True):
         """Spawn a command using a prompt widget, with tab-completion.
 
         Parameters
@@ -1421,7 +1421,7 @@ class Qtile(CommandObject):
         """
         def f(args):
             if args:
-                self.cmd_spawn(command % args)
+                self.cmd_spawn(command % args, shell=shell)
         try:
             mb = self.widgets_map[widget]
             mb.start_input(prompt, f, complete)
