@@ -408,7 +408,11 @@ class XCore(base.Core):
                     xcffib.xproto.GrabMode.Async,
                 )
         else:
-            logger.warning("Keysym could not be mapped: {keysym}, mask: {modmask}".format(keysym=keysym, modmask=modmask))
+            logger.warning(
+                "Keysym could not be mapped: {keysym}, mask: {modmask}".format(
+                    keysym=hex(keysym), modmask=modmask
+                )
+            )
 
         return keysym, modmask & self._valid_mask
 
