@@ -73,6 +73,6 @@ class Memory(base.ThreadedPollText):
         val["Inactive"] = mem.inactive // 1024 // 1024
         val["Shmem"] = mem.shared // 1024 // 1024
         val["SwapTotal"] = swap.total // 1024 // 1024
-        val["Swapfree"] = swap.free // 1024 // 1024
+        val["SwapFree"] = swap.free // 1024 // 1024
         val["SwapUsed"] = swap.used // 1024 // 1024
         return self.format.format(**val)
