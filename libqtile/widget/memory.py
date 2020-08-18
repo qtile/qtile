@@ -39,6 +39,7 @@ class Memory(base.ThreadedPollText):
     SwapTotal: Returns total amount of swap
     SwapFree: Returns amount of swap free
     SwapUsed: Returns amount of swap in use
+    SwapPercent: Returns swap in use as a percentage
 
 
     Widget requirements: psutil_.
@@ -75,4 +76,5 @@ class Memory(base.ThreadedPollText):
         val["SwapTotal"] = swap.total // 1024 // 1024
         val["SwapFree"] = swap.free // 1024 // 1024
         val["SwapUsed"] = swap.used // 1024 // 1024
+        val["SwapPercent"] = swap.percent
         return self.format.format(**val)
