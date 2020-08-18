@@ -114,16 +114,14 @@ class Backlight(base.InLoopPollText):
     def _get_info(self):
         brightness = self._load_file(self.brightness_file)
         max_value = self._load_file(self.max_brightness_file)
-        return 100 * brightness / max_value
+        return brightness / max_value
 
     def poll(self):
         try:
-            brightness = self._load_file(self.brightness_file)
-            maximum = self._load_file(self.max_brightness_file)
+            percent = self._get_info()
         except RuntimeError as e:
             return 'Error: {}'.format(e)
 
-        percent = brightness / maximum
         return self.format.format(percent=percent)
 
     def _change_backlight(self, value):
@@ -141,7 +139,7 @@ class Backlight(base.InLoopPollText):
     def cmd_change_backlight(self, direction):
         if self._future and not self._future.done():
             return
-        new = now = self._get_info()
+        new = now = self._get_info() * 100
         if direction is ChangeDirection.DOWN:
             new = max(now - self.step, 0)
         elif direction is ChangeDirection.UP:
