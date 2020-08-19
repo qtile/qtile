@@ -85,7 +85,7 @@ class Backlight(base.InLoopPollText):
     def __init__(self, **config):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(Backlight.defaults)
-        self.future = None
+        self._future = None
 
         self.brightness_file = os.path.join(
             BACKLIGHT_DIR, self.backlight_name, self.brightness_file,
@@ -93,8 +93,13 @@ class Backlight(base.InLoopPollText):
         self.max_brightness_file = os.path.join(
             BACKLIGHT_DIR, self.backlight_name, self.max_brightness_file,
         )
-        self.max_value = self._load_file(self.max_brightness_file)
-        self.step = self.max_value * self.step / 100
+
+        mouse_callbacks = {
+            'Button4': lambda q: self.cmd_change_backlight(ChangeDirection.UP),
+            'Button5': lambda q: self.cmd_change_backlight(ChangeDirection.DOWN),
+        }
+        mouse_callbacks.update(self.mouse_callbacks)
+        self.mouse_callbacks = mouse_callbacks
 
     def _load_file(self, path):
         try:
@@ -108,24 +113,20 @@ class Backlight(base.InLoopPollText):
 
     def _get_info(self):
         brightness = self._load_file(self.brightness_file)
-
-        info = {
-            'brightness': brightness,
-            'max': self.max_value,
-        }
-        return info
+        max_value = self._load_file(self.max_brightness_file)
+        return brightness / max_value
 
     def poll(self):
         try:
-            info = self._get_info()
+            percent = self._get_info()
         except RuntimeError as e:
             return 'Error: {}'.format(e)
 
-        percent = info['brightness'] / info['max']
         return self.format.format(percent=percent)
 
-    def change_backlight(self, value):
+    def _change_backlight(self, value):
         if self.change_command is None:
+            value = self._load_file(self.max_brightness_file) * value / 100
             try:
                 with open(self.brightness_file, 'w') as f:
                     f.write(str(round(value)))
@@ -136,23 +137,12 @@ class Backlight(base.InLoopPollText):
             self.call_process(shlex.split(self.change_command.format(value)))
 
     def cmd_change_backlight(self, direction):
-        if self.future and not self.future.done():
+        if self._future and not self._future.done():
             return
-        info = self._get_info()
-        if not info:
-            new = now = self.max_value
-        else:
-            new = now = info["brightness"]
-        if direction is ChangeDirection.DOWN:  # down
+        new = now = self._get_info() * 100
+        if direction is ChangeDirection.DOWN:
             new = max(now - self.step, 0)
-        elif direction is ChangeDirection.UP:  # up
-            new = min(now + self.step, self.max_value)
+        elif direction is ChangeDirection.UP:
+            new = min(now + self.step, 100)
         if new != now:
-            self.future = self.qtile.run_in_executor(self.change_backlight,
-                                                     new)
-
-    def button_press(self, x, y, button):
-        if button == 5:
-            self.cmd_change_backlight(ChangeDirection.DOWN)
-        elif button == 4:
-            self.cmd_change_backlight(ChangeDirection.UP)
+            self._future = self.qtile.run_in_executor(self._change_backlight, new)
