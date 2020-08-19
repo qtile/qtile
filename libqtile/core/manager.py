@@ -1474,6 +1474,74 @@ class Qtile(CommandObject):
         """Delete a group with the given name"""
         return self.delete_group(group)
 
+    def cmd_traverse_up(self):
+        """ Traverse focus to a window upward """
+        self.traverse(-1, 'y')
+
+    def cmd_traverse_down(self):
+        """ Traverse focus to a window downward """
+        self.traverse(1, 'y')
+
+    def cmd_traverse_left(self):
+        """ Traverse focus to a window leftward """
+        self.traverse(-1, 'x')
+
+    def cmd_traverse_right(self):
+        """ Traverse focus to a window rightward """
+        self.traverse(1, 'x')
+
+    def traverse(self, direction, axis):
+        """ Focus to a visible window in a given direction based on position. """
+        win = None
+        win_wide = None
+        dist = 10000
+        dist_wide = 10000
+        cur = self.current_window
+        if not cur:
+            cur = self.current_screen
+        if axis == 'x':
+            dim = 'width'
+            band_axis = 'y'
+            band_dim = 'height'
+            cur_pos = cur.x
+            band_min = cur.y
+            band_max = cur.y + cur.height
+        else:
+            dim = 'height'
+            band_axis = 'x'
+            band_dim = 'width'
+            band_min = cur.x
+            cur_pos = cur.y
+            band_max = cur.x + cur.width
+
+        cur_pos += getattr(cur, dim) / 2
+        windows = [w for g in self.groups if g.screen for w in g.windows]
+        windows.extend([s for s in self.screens if not s.group.windows])
+        if cur in windows:
+            windows.remove(cur)
+        for w in windows:
+            if isinstance(w, Screen) or not w.minimized:
+                pos = getattr(w, axis) + getattr(w, dim) / 2
+                gap = direction * (pos - cur_pos)
+                if gap > 5:
+                    band_pos = getattr(w, band_axis) + getattr(w, band_dim) / 2
+                    if band_min < band_pos < band_max:
+                        if gap < dist:
+                            dist = gap
+                            win = w
+                    else:
+                        if gap < dist_wide:
+                            dist_wide = gap
+                            win_wide = w
+
+        if not win:
+            win = win_wide
+        if win:
+            self.focus_screen(win.group.screen.index)
+            win.group.focus(win, True)
+            if not isinstance(win, Screen):
+                win.focus(False)
+
     def cmd_add_rule(self, match_args, rule_args, min_priorty=False):
         """Add a dgroup rule, returns rule_id needed to remove it
 
