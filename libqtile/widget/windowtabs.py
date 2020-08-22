@@ -44,13 +44,12 @@ class WindowTabs(base._TextBox):
         if not isinstance(self.selected, (tuple, list)):
             self.selected = (self.selected, self.selected)
 
-        self.add_callbacks({'Button1': self.bar.screen.group.cmd_next_window})
-
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         hook.subscribe.client_name_updated(self.update)
         hook.subscribe.focus_change(self.update)
         hook.subscribe.float_change(self.update)
+        self.add_callbacks({'Button1': self.bar.screen.group.cmd_next_window})
 
     def update(self, *args):
         names = []

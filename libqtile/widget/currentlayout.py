@@ -32,7 +32,6 @@ import cairocffi
 
 from libqtile import bar, hook
 from libqtile import layout as layout_module
-from libqtile import qtile
 from libqtile.layout.base import Layout
 from libqtile.log_utils import logger
 from libqtile.widget import base
@@ -112,11 +111,6 @@ class CurrentLayoutIcon(base._TextBox):
         self.length_type = bar.STATIC
         self.length = 0
 
-        self.add_callbacks({
-            'Button1': qtile.cmd_next_layout,
-            'Button2': qtile.cmd_prev_layout,
-        })
-
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         self.text = self.bar.screen.group.layouts[0].name
@@ -127,6 +121,11 @@ class CurrentLayoutIcon(base._TextBox):
         self._update_icon_paths()
         self._setup_images()
         self._setup_hooks()
+
+        self.add_callbacks({
+            'Button1': qtile.cmd_next_layout,
+            'Button2': qtile.cmd_prev_layout,
+        })
 
     def _setup_hooks(self):
         """
