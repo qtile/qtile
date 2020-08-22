@@ -53,9 +53,7 @@ class KeyboardLayout(base.InLoopPollText):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(KeyboardLayout.defaults)
 
-    def button_press(self, x, y, button):
-        if button == 1:
-            self.next_keyboard()
+        self.add_callbacks({'Button1': self.next_keyboard})
 
     def next_keyboard(self):
         """Set the next layout in the list of configured keyboard layouts as

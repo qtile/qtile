@@ -44,6 +44,8 @@ class QuickExit(base._TextBox):
         self.countdown = self.countdown_start
         self.__call_later_funcs = []
 
+        self.add_callbacks({'Button1': self.cmd_trigger})
+
     def __reset(self):
         self.is_counting = False
         self.countdown = self.countdown_start
@@ -65,12 +67,10 @@ class QuickExit(base._TextBox):
             self.qtile.stop()
             return
 
-    def button_press(self, x, y, button):
-
+    def cmd_trigger(self):
         if not self.is_counting:
             self.is_counting = True
             self.update()
-            return
         else:
             self.__reset()
             self.draw()

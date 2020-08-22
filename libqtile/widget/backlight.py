@@ -24,6 +24,7 @@
 import enum
 import os
 import shlex
+from functools import partial
 from typing import Dict
 
 from libqtile.log_utils import logger
@@ -94,12 +95,10 @@ class Backlight(base.InLoopPollText):
             BACKLIGHT_DIR, self.backlight_name, self.max_brightness_file,
         )
 
-        mouse_callbacks = {
-            'Button4': lambda q: self.cmd_change_backlight(ChangeDirection.UP),
-            'Button5': lambda q: self.cmd_change_backlight(ChangeDirection.DOWN),
-        }
-        mouse_callbacks.update(self.mouse_callbacks)
-        self.mouse_callbacks = mouse_callbacks
+        self.add_callbacks({
+            'Button4': partial(self.cmd_change_backlight, ChangeDirection.UP),
+            'Button5': partial(self.cmd_change_backlight, ChangeDirection.DOWN),
+        })
 
     def _load_file(self, path):
         try:

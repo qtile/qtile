@@ -221,10 +221,15 @@ class _Widget(CommandObject, configurable.Configurable):
             height=self.height,
         )
 
+    def add_callbacks(self, defaults):
+        """Add default callbacks with a lower priority than user-specified callbacks."""
+        defaults.update(self.mouse_callbacks)
+        self.mouse_callbacks = defaults
+
     def button_press(self, x, y, button):
         name = 'Button{0}'.format(button)
         if name in self.mouse_callbacks:
-            self.mouse_callbacks[name](self.qtile)
+            self.mouse_callbacks[name]()
 
     def button_release(self, x, y, button):
         pass

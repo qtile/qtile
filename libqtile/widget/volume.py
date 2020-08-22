@@ -41,10 +41,6 @@ __all__ = [
 ]
 
 re_vol = re.compile(r'\[(\d?\d?\d?)%\]')
-BUTTON_UP = 4
-BUTTON_DOWN = 5
-BUTTON_MUTE = 1
-BUTTON_RIGHT = 3
 
 
 class Volume(base._TextBox):
@@ -80,6 +76,13 @@ class Volume(base._TextBox):
         self.surfaces = {}
         self.volume = None
 
+        self.add_callbacks({
+            'Button1': self.cmd_mute,
+            'Button3': self.cmd_run_app,
+            'Button4': self.cmd_decrease_vol,
+            'Button5': self.cmd_increase_vol,
+        })
+
     def timer_setup(self):
         self.timeout_add(self.update_interval, self.update)
         if self.theme_path:
@@ -98,34 +101,7 @@ class Volume(base._TextBox):
         return cmd
 
     def button_press(self, x, y, button):
-        if button == BUTTON_DOWN:
-            if self.volume_down_command is not None:
-                subprocess.call(self.volume_down_command, shell=True)
-            else:
-                subprocess.call(self.create_amixer_command('-q',
-                                                           'sset',
-                                                           self.channel,
-                                                           '{}%-'.format(self.step)))
-        elif button == BUTTON_UP:
-            if self.volume_up_command is not None:
-                subprocess.call(self.volume_up_command, shell=True)
-            else:
-                subprocess.call(self.create_amixer_command('-q',
-                                                           'sset',
-                                                           self.channel,
-                                                           '{}%+'.format(self.step)))
-        elif button == BUTTON_MUTE:
-            if self.mute_command is not None:
-                subprocess.call(self.mute_command, shell=True)
-            else:
-                subprocess.call(self.create_amixer_command('-q',
-                                                           'sset',
-                                                           self.channel,
-                                                           'toggle'))
-        elif button == BUTTON_RIGHT:
-            if self.volume_app is not None:
-                subprocess.Popen(self.volume_app, shell=True)
-
+        base._TextBox.button_press(self, x, y, button)
         self.draw()
 
     def update(self):
@@ -212,17 +188,32 @@ class Volume(base._TextBox):
             base._TextBox.draw(self)
 
     def cmd_increase_vol(self):
-        # Emulate button press.
-        self.button_press(0, 0, BUTTON_UP)
+        if self.volume_up_command is not None:
+            subprocess.call(self.volume_up_command, shell=True)
+        else:
+            subprocess.call(self.create_amixer_command('-q',
+                                                       'sset',
+                                                       self.channel,
+                                                       '{}%+'.format(self.step)))
 
     def cmd_decrease_vol(self):
-        # Emulate button press.
-        self.button_press(0, 0, BUTTON_DOWN)
+        if self.volume_down_command is not None:
+            subprocess.call(self.volume_down_command, shell=True)
+        else:
+            subprocess.call(self.create_amixer_command('-q',
+                                                       'sset',
+                                                       self.channel,
+                                                       '{}%-'.format(self.step)))
 
     def cmd_mute(self):
-        # Emulate button press.
-        self.button_press(0, 0, BUTTON_MUTE)
+        if self.mute_command is not None:
+            subprocess.call(self.mute_command, shell=True)
+        else:
+            subprocess.call(self.create_amixer_command('-q',
+                                                       'sset',
+                                                       self.channel,
+                                                       'toggle'))
 
     def cmd_run_app(self):
-        # Emulate button press.
-        self.button_press(0, 0, BUTTON_RIGHT)
+        if self.volume_app is not None:
+            subprocess.Popen(self.volume_app, shell=True)
