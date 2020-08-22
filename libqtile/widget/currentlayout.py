@@ -32,6 +32,7 @@ import cairocffi
 
 from libqtile import bar, hook
 from libqtile import layout as layout_module
+from libqtile import qtile
 from libqtile.layout.base import Layout
 from libqtile.log_utils import logger
 from libqtile.widget import base
@@ -52,18 +53,17 @@ class CurrentLayout(base._TextBox):
         self.text = self.bar.screen.group.layouts[0].name
         self.setup_hooks()
 
+        self.add_callbacks({
+            'Button1': qtile.cmd_next_layout,
+            'Button2': qtile.cmd_prev_layout,
+        })
+
     def setup_hooks(self):
         def hook_response(layout, group):
             if group.screen is not None and group.screen == self.bar.screen:
                 self.text = layout.name
                 self.bar.draw()
         hook.subscribe.layout_change(hook_response)
-
-    def button_press(self, x, y, button):
-        if button == 1:
-            self.qtile.cmd_next_layout()
-        elif button == 2:
-            self.qtile.cmd_prev_layout()
 
 
 class CurrentLayoutIcon(base._TextBox):
@@ -112,6 +112,11 @@ class CurrentLayoutIcon(base._TextBox):
         self.length_type = bar.STATIC
         self.length = 0
 
+        self.add_callbacks({
+            'Button1': qtile.cmd_next_layout,
+            'Button2': qtile.cmd_prev_layout,
+        })
+
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         self.text = self.bar.screen.group.layouts[0].name
@@ -132,12 +137,6 @@ class CurrentLayoutIcon(base._TextBox):
                 self.current_layout = layout.name
                 self.bar.draw()
         hook.subscribe.layout_change(hook_response)
-
-    def button_press(self, x, y, button):
-        if button == 1:
-            self.qtile.cmd_next_layout()
-        elif button == 2:
-            self.qtile.cmd_prev_layout()
 
     def draw(self):
         if self.icons_loaded:
