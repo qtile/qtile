@@ -1133,8 +1133,9 @@ def test_togroup_config(qtile):
 
 @manager_config
 def test_color_pixel(qtile):
-    # test for #394
-    qtile.c.eval("self.color_pixel(\"ffffff\")")
+    a = qtile.test_window("one")
+    qtile.c.eval("self.current_window.window.color_pixel(\"ffffff\")")
+    qtile.kill_window(a)
 
 
 @manager_config
