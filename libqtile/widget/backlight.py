@@ -79,7 +79,7 @@ class Backlight(base.InLoopPollText):
         ),
         ('update_interval', .2, 'The delay in seconds between updates'),
         ('step', 10, 'Percent of backlight every scroll changed'),
-        ('format', '{percent: 2.0%}', 'Display format'),
+        ('format', '{percent:2.0%}', 'Display format'),
         ('change_command', 'xbacklight -set {0}', 'Execute command to change value')
     ]
 
