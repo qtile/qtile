@@ -1,3 +1,7 @@
+qtile X.X.X, released XXXX-XX-XX:
+    !!! Config breakage !!!
+	- Pacman widget has been removed. Use CheckUpdates instead.
+
 qtile 0.16.1, released 2020-08-11:
     !!! Config breakage !!!
 	- Hooks 'addgroup', 'delgroup' and 'screen_change' will no longer
