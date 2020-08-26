@@ -19,7 +19,6 @@
 # SOFTWARE.
 
 import asyncio
-import functools
 import io
 import logging
 import os
@@ -501,11 +500,6 @@ class Qtile(CommandObject):
             if w.name in self.widgets_map:
                 return
             self.widgets_map[w.name] = w
-
-    @functools.lru_cache()
-    def color_pixel(self, name):
-        pixel = self.conn.screens[0].default_colormap.alloc_color(name).pixel
-        return pixel | 0xff << 24
 
     @property
     def current_layout(self):

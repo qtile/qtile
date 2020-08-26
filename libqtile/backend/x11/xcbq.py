@@ -756,6 +756,10 @@ class Window:
             parent = Window(self.conn, q.parent)
         return root, parent, [Window(self.conn, i) for i in q.children]
 
+    def paint_borders(self, color):
+        if color:
+            self.set_attribute(borderpixel=self.conn.color_pixel(color))
+
 
 class Font:
     def __init__(self, conn, fid):
@@ -934,6 +938,11 @@ class Connection:
                 xcffib.xproto.InputFocus.PointerRoot,
                 xcffib.xproto.Time.CurrentTime,
             )
+
+    @functools.lru_cache()
+    def color_pixel(self, name):
+        pixel = self.screens[0].default_colormap.alloc_color(name).pixel
+        return pixel | 0xff << 24
 
 
 class Painter:

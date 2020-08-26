@@ -282,9 +282,9 @@ class MonadTall(_SimpleLayoutBase):
 
         # determine focus border-color
         if client.has_focus:
-            px = self.group.qtile.color_pixel(self.border_focus)
+            px = self.border_focus
         else:
-            px = self.group.qtile.color_pixel(self.border_normal)
+            px = self.border_normal
 
         # single client - fullscreen
         if len(self.clients) == 1:

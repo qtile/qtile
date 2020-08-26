@@ -1133,8 +1133,8 @@ def test_togroup_config(qtile):
 
 @manager_config
 def test_color_pixel(qtile):
-    # test for #394
-    qtile.c.eval("self.color_pixel(\"ffffff\")")
+    (success, e) = qtile.c.eval("self.conn.color_pixel(\"ffffff\")")
+    assert success, e
 
 
 @manager_config
