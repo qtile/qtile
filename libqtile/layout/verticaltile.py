@@ -124,9 +124,9 @@ class VerticalTile(_SimpleLayoutBase):
                 border_width = 0
 
             if window.has_focus:
-                border_color = self.border_focus
+                border_color = self.group.qtile.color_pixel(self.border_focus)
             else:
-                border_color = self.border_normal
+                border_color = self.group.qtile.color_pixel(self.border_normal)
 
             # width
             if n > 1:

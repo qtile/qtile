@@ -107,9 +107,9 @@ class Matrix(_SimpleLayoutBase):
         col = idx % self.columns
         column_size = int(math.ceil(len(self.clients) / self.columns))
         if client.has_focus:
-            px = self.border_focus
+            px = self.group.qtile.color_pixel(self.border_focus)
         else:
-            px = self.border_normal
+            px = self.group.qtile.color_pixel(self.border_normal)
         # calculate position and size
         column_width = int(screen_rect.width / float(self.columns))
         row_height = int(screen_rect.height / float(column_size))
