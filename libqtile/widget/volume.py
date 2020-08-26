@@ -79,8 +79,8 @@ class Volume(base._TextBox):
         self.add_callbacks({
             'Button1': self.cmd_mute,
             'Button3': self.cmd_run_app,
-            'Button4': self.cmd_decrease_vol,
-            'Button5': self.cmd_increase_vol,
+            'Button4': self.cmd_increase_vol,
+            'Button5': self.cmd_decrease_vol,
         })
 
     def timer_setup(self):
