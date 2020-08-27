@@ -207,8 +207,7 @@ class Bsp(Layout):
         self.root.calc_geom(screen_rect.x, screen_rect.y, screen_rect.width,
                             screen_rect.height)
         node = self.get_node(client)
-        color = self.group.qtile.color_pixel(
-            self.border_focus if client.has_focus else self.border_normal)
+        color = self.border_focus if client.has_focus else self.border_normal
         border = 0 if node is self.root else self.border_width
         if node is not None:
             client.place(

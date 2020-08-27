@@ -490,18 +490,16 @@ class _Window(CommandObject):
             kwarg['stackmode'] = StackMode.Above
 
         self.window.configure(**kwarg)
+        self.window.paint_borders(bordercolor)
 
         if send_notify:
             self.send_configure_notify(x, y, width, height)
 
-        if bordercolor is not None:
-            self.window.set_attribute(borderpixel=bordercolor)
-
     def user_placed_window_setup(self, borderpixel, borderwidth):
         self.borderwidth = borderwidth
         self.bordercolor = borderpixel
-        self.window.set_attribute(borderpixel=borderpixel)
         self.window.configure(borderwidth=borderwidth, stackmode=StackMode.Above)
+        self.window.paint_borders(borderpixel)
         self.unhide()
 
     def send_configure_notify(self, x, y, width, height):

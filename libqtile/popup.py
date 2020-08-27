@@ -128,7 +128,7 @@ class Popup(configurable.Configurable):
             self.layout.colour = value
 
     def set_border(self, color):
-        self.win.window.set_attribute(borderpixel=color)
+        self.win.window.paint_borders(color)
 
     def clear(self):
         self.drawer.clear(self.background)

@@ -210,9 +210,9 @@ class Floating(Layout):
 
     def configure(self, client, screen_rect):
         if client.has_focus:
-            bc = client.group.qtile.color_pixel(self.border_focus)
+            bc = self.border_focus
         else:
-            bc = client.group.qtile.color_pixel(self.border_normal)
+            bc = self.border_normal
 
         if client.maximized:
             bw = self.max_border_width
