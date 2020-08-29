@@ -21,7 +21,6 @@ import array
 import contextlib
 import inspect
 import traceback
-import warnings
 
 import xcffib.xproto
 from xcffib.xproto import EventMask, SetMode, StackMode
@@ -176,7 +175,6 @@ class _Window(CommandObject):
         self.name = "<no name>"
         self.strut = None
         self.state = NormalState
-        self.window_type = "normal"
         self._float_state = NOT_FLOATING
         self._demands_attention = False
 
@@ -844,18 +842,6 @@ class Window(_Window):
     def toggle_floating(self):
         self.floating = not self.floating
 
-    def togglefloating(self):
-        warnings.warn("togglefloating is deprecated, use toggle_floating", DeprecationWarning)
-        self.toggle_floating()
-
-    def enablefloating(self):
-        warnings.warn("enablefloating is deprecated, use floating=True", DeprecationWarning)
-        self.floating = True
-
-    def disablefloating(self):
-        warnings.warn("disablefloating is deprecated, use floating=False", DeprecationWarning)
-        self.floating = False
-
     @property
     def fullscreen(self):
         return self._float_state == FULLSCREEN
@@ -893,10 +879,6 @@ class Window(_Window):
     def toggle_fullscreen(self):
         self.fullscreen = not self.fullscreen
 
-    def togglefullscreen(self):
-        warnings.warn("togglefullscreen is deprecated, use toggle_fullscreen", DeprecationWarning)
-        self.toggle_fullscreen()
-
     @property
     def maximized(self):
         return self._float_state == MAXIMIZED
@@ -918,16 +900,8 @@ class Window(_Window):
             if self._float_state == MAXIMIZED:
                 self.floating = False
 
-    def enablemaximize(self, state=MAXIMIZED):
-        warnings.warn("enablemaximize is deprecated, use maximized=True", DeprecationWarning)
-        self.maximized = True
-
     def toggle_maximize(self, state=MAXIMIZED):
         self.maximized = not self.maximized
-
-    def togglemaximize(self):
-        warnings.warn("togglemaximize is deprecated, use toggle_maximize", DeprecationWarning)
-        self.toggle_maximize()
 
     @property
     def minimized(self):
@@ -942,16 +916,8 @@ class Window(_Window):
             if self._float_state == MINIMIZED:
                 self.floating = False
 
-    def enableminimize(self):
-        warnings.warn("enableminimized is deprecated, use minimized=True", DeprecationWarning)
-        self.minimized = True
-
     def toggle_minimize(self):
         self.minimized = not self.minimized
-
-    def toggleminimize(self):
-        warnings.warn("toggleminimize is deprecated, use toggle_minimize", DeprecationWarning)
-        self.toggle_minimize()
 
     def cmd_static(self, screen, x=None, y=None, width=None, height=None):
         """Makes this window a static window, attached to a Screen
@@ -1389,12 +1355,6 @@ class Window(_Window):
     def cmd_toggle_maximize(self):
         self.toggle_maximize()
 
-    def cmd_enable_maximize(self):
-        self.maximize = True
-
-    def cmd_disable_maximize(self):
-        self.maximize = False
-
     def cmd_toggle_fullscreen(self):
         self.toggle_fullscreen()
 
@@ -1406,12 +1366,6 @@ class Window(_Window):
 
     def cmd_toggle_minimize(self):
         self.toggle_minimize()
-
-    def cmd_enable_minimize(self):
-        self.minimize = True
-
-    def cmd_disable_minimize(self):
-        self.minimize = False
 
     def cmd_bring_to_front(self):
         if self.floating:
