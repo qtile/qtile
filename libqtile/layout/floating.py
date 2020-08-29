@@ -228,40 +228,41 @@ class Floating(Layout):
         cls = client.window.get_wm_class() or ''
         is_java_dropdown = 'sun-awt-X11-XWindowPeer' in cls
         if is_java_dropdown:
-            client.user_placed_window_setup(bc, bw)
-            return
+            client.paint_borders(bc, bw)
+            client.cmd_bring_to_front()
 
         # similar to above but the X11 version, the client may have already
         # placed itself. let's respect that
-        if client.has_user_set_position():
-            client.user_placed_window_setup(bc, bw)
-            return
+        elif client.has_user_set_position():
+            client.paint_borders(bc, bw)
+            client.cmd_bring_to_front()
 
         # ok, it's not java and the window itself didn't position it, but users
         # may still have asked us not to mess with it
-        if any(m.compare(client) for m in self.no_reposition_rules):
-            client.user_placed_window_setup(bc, bw)
-            return
+        elif any(m.compare(client) for m in self.no_reposition_rules):
+            client.paint_borders(bc, bw)
+            client.cmd_bring_to_front()
 
-        above = False
+        else:
+            above = False
 
-        # We definitely have a screen here, so let's be sure we'll float on screen
-        try:
-            client.float_x
-            client.float_y
-        except AttributeError:
-            # this window hasn't been placed before, let's put it in a sensible spot
-            above = self.compute_client_position(client, screen_rect)
+            # We definitely have a screen here, so let's be sure we'll float on screen
+            try:
+                client.float_x
+                client.float_y
+            except AttributeError:
+                # this window hasn't been placed before, let's put it in a sensible spot
+                above = self.compute_client_position(client, screen_rect)
 
-        client.place(
-            client.x,
-            client.y,
-            client.width,
-            client.height,
-            bw,
-            bc,
-            above,
-        )
+            client.place(
+                client.x,
+                client.y,
+                client.width,
+                client.height,
+                bw,
+                bc,
+                above,
+            )
         client.unhide()
 
     def add(self, client):

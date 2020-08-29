@@ -474,31 +474,27 @@ class _Window(CommandObject):
         self.y = y
         self.width = width
         self.height = height
-        self.borderwidth = borderwidth
-        self.bordercolor = bordercolor
 
         kwarg = dict(
             x=x,
             y=y,
             width=width,
             height=height,
-            borderwidth=borderwidth,
         )
         if above:
             kwarg['stackmode'] = StackMode.Above
 
         self.window.configure(**kwarg)
-        self.window.paint_borders(bordercolor)
+        self.paint_borders(bordercolor, borderwidth)
 
         if send_notify:
             self.send_configure_notify(x, y, width, height)
 
-    def user_placed_window_setup(self, borderpixel, borderwidth):
+    def paint_borders(self, borderpixel, borderwidth):
         self.borderwidth = borderwidth
         self.bordercolor = borderpixel
-        self.window.configure(borderwidth=borderwidth, stackmode=StackMode.Above)
+        self.window.configure(borderwidth=borderwidth)
         self.window.paint_borders(borderpixel)
-        self.unhide()
 
     def send_configure_notify(self, x, y, width, height):
         """Send a synthetic ConfigureNotify"""
