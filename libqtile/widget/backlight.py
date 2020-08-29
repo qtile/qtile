@@ -135,13 +135,15 @@ class Backlight(base.InLoopPollText):
         else:
             self.call_process(shlex.split(self.change_command.format(value)))
 
-    def cmd_change_backlight(self, direction):
+    def cmd_change_backlight(self, direction, step=None):
+        if not step:
+            step = self.step
         if self._future and not self._future.done():
             return
         new = now = self._get_info() * 100
         if direction is ChangeDirection.DOWN:
-            new = max(now - self.step, 0)
+            new = max(now - step, 0)
         elif direction is ChangeDirection.UP:
-            new = min(now + self.step, 100)
+            new = min(now + step, 100)
         if new != now:
             self._future = self.qtile.run_in_executor(self._change_backlight, new)
