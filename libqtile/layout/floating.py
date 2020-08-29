@@ -183,6 +183,10 @@ class Floating(Layout):
         above = False
         transient_for = client.window.get_wm_transient_for()
         win = client.group.qtile.windows_map.get(transient_for)
+        if client.user_positioned:
+            if win is None:
+                return True
+            return False
         if win is not None:
             # if transient for a window, place in the center of the window
             center_x = win.x + win.width / 2
@@ -226,20 +230,17 @@ class Floating(Layout):
         cls = client.window.get_wm_class() or ''
         is_java_dropdown = 'sun-awt-X11-XWindowPeer' in cls
         if is_java_dropdown:
-            client.user_placed_window_setup(bc, bw)
-            return
+            client.update_geometry()
 
         # similar to above but the X11 version, the client may have already
         # placed itself. let's respect that
-        if client.has_user_set_position():
-            client.user_placed_window_setup(bc, bw)
-            return
+        elif client.user_positioned:
+            client.update_geometry()
 
         # ok, it's not java and the window itself didn't position it, but users
         # may still have asked us not to mess with it
-        if self.no_reposition_match is not None and self.no_reposition_match.compare(client):
-            client.user_placed_window_setup(bc, bw)
-            return
+        elif self.no_reposition_match is not None and self.no_reposition_match.compare(client):
+            client.update_geometry()
 
         above = False
 

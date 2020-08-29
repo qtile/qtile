@@ -19,8 +19,6 @@
 # SOFTWARE.
 import array
 import contextlib
-import inspect
-import traceback
 import warnings
 
 import xcffib.xproto
@@ -95,31 +93,6 @@ _NET_WM_STATE_ADD = 1
 _NET_WM_STATE_TOGGLE = 2
 
 
-def _geometry_getter(attr):
-    def get_attr(self):
-        if getattr(self, "_" + attr) is None:
-            g = self.window.get_geometry()
-            # trigger the geometry setter on all these
-            self.x = g.x
-            self.y = g.y
-            self.width = g.width
-            self.height = g.height
-        return getattr(self, "_" + attr)
-    return get_attr
-
-
-def _geometry_setter(attr):
-    def f(self, value):
-        if not isinstance(value, int):
-            frame = inspect.currentframe()
-            stack_trace = traceback.format_stack(frame)
-            logger.error("!!!! setting %s to a non-int %s; please report this!", attr, value)
-            logger.error(''.join(stack_trace[:-1]))
-            value = int(value)
-        setattr(self, "_" + attr, value)
-    return f
-
-
 def _float_getter(attr):
     def getter(self):
         if self._float_info[attr] is not None:
@@ -156,13 +129,7 @@ class _Window(CommandObject):
             'height': None,
         }
         try:
-            g = self.window.get_geometry()
-            self._x = g.x
-            self._y = g.y
-            self._width = g.width
-            self._height = g.height
-            self._float_info['width'] = g.width
-            self._float_info['height'] = g.height
+            self.update_geometry()
         except xcffib.xproto.DrawableError:
             # Whoops, we were too early, so let's ignore it for now and get the
             # values on demand.
@@ -179,6 +146,7 @@ class _Window(CommandObject):
         self.window_type = "normal"
         self._float_state = NOT_FLOATING
         self._demands_attention = False
+        self.user_positioned = True
 
         self.hints = {
             'input': True,
@@ -197,24 +165,45 @@ class _Window(CommandObject):
         }
         self.update_hints()
 
-    x = property(fset=_geometry_setter("x"), fget=_geometry_getter("x"))
-    y = property(fset=_geometry_setter("y"), fget=_geometry_getter("y"))
+    @property
+    def x(self):
+        if not self._x:
+            self.update_geometry()
+        return self._x
+
+    @x.setter
+    def x(self, value):
+        self._x = value
+
+    @property
+    def y(self):
+        if not self._y:
+            self.update_geometry()
+        return self._y
+
+    @y.setter
+    def y(self, value):
+        self._y = value
 
     @property
     def width(self):
-        return _geometry_getter("width")(self)
+        if not self._width:
+            self.update_geometry()
+        return self._width
 
     @width.setter
     def width(self, value):
-        _geometry_setter("width")(self, value)
+        self._width = value
 
     @property
     def height(self):
-        return _geometry_getter("height")(self)
+        if not self._height:
+            self.update_geometry()
+        return self._height
 
     @height.setter
     def height(self, value):
-        _geometry_setter("height")(self, value)
+        self._height = value
 
     float_x = property(
         fset=_float_setter("x"),
@@ -233,17 +222,18 @@ class _Window(CommandObject):
         fget=_float_getter("height")
     )
 
+    def update_geometry(self):
+        g = self.window.get_geometry()
+        self._x = g.x
+        self._y = g.y
+        self._width = g.width
+        self._height = g.height
+        #self._float_info['width'] = g.width
+        #self._float_info['height'] = g.height
+
     @property
     def has_focus(self):
         return self == self.qtile.current_window
-
-    def has_user_set_position(self):
-        try:
-            if 'USPosition' in self.hints['flags'] or 'PPosition' in self.hints['flags']:
-                return True
-        except KeyError:
-            pass
-        return False
 
     def update_name(self):
         try:
@@ -300,6 +290,8 @@ class _Window(CommandObject):
                     normh['min_height'] % normh['height_inc']
                 )
             self.hints.update(normh)
+            if 'USPosition' in normh['flags'] or 'PPosition' in normh['flags']:
+                self.user_positioned = True
 
         if h and 'UrgencyHint' in h['flags']:
             if self.qtile.current_window != self:
