@@ -761,21 +761,6 @@ class Window:
             self.set_attribute(borderpixel=self.conn.color_pixel(color))
 
 
-class Font:
-    def __init__(self, conn, fid):
-        self.conn = conn
-        self.fid = fid
-
-    @property
-    def _maskvalue(self):
-        return self.fid
-
-    def text_extents(self, s):
-        s += "aaa"
-        x = self.conn.conn.core.QueryTextExtents(self.fid, len(s), s).reply()
-        return x
-
-
 class Connection:
     _extmap = {
         "xinerama": Xinerama,
@@ -908,16 +893,8 @@ class Connection:
         # serviced in order.
         self.conn.core.GetInputFocus().reply()
 
-    def grab_server(self):
-        return self.conn.core.GrabServer()
-
     def get_setup(self):
         return self.conn.get_setup()
-
-    def open_font(self, name):
-        fid = self.conn.generate_id()
-        self.conn.core.OpenFont(fid, len(name), name)
-        return Font(self, fid)
 
     def extensions(self):
         return set(
