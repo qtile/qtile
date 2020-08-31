@@ -1,8 +1,13 @@
+import os
+import subprocess
+import tempfile
+
 import pytest
 import xcffib.xproto
 import xcffib.xtest
 
 import libqtile.config
+from libqtile import layout, utils
 from libqtile.backend.x11 import window, xcbq
 from test.conftest import dualmonitor
 from test.helpers import (
@@ -12,6 +17,7 @@ from test.helpers import (
     BareConfig,
     assert_window_died,
 )
+from test.test_images2 import should_skip
 from test.test_manager import ManagerConfig
 
 bare_config = pytest.mark.parametrize("xmanager", [BareConfig], indirect=True)
@@ -668,3 +674,36 @@ def test_both_size_hints(xmanager):
 def test_inspect_window(xmanager):
     xmanager.test_window('one')
     assert xmanager.c.window.inspect()["wm_class"]
+
+
+class MultipleBordersConfig(BareConfig):
+    layouts = [
+        layout.Stack(
+            border_focus=['#000000', '#111111', '#222222', '#333333', '#444444'],
+            border_width=5,
+        )
+    ]
+
+
+@pytest.mark.skipif(should_skip(), reason="recent version of imagemagick not found")
+@pytest.mark.parametrize("xmanager", [MultipleBordersConfig], indirect=True)
+def test_multiple_borders(xmanager):
+    xmanager.test_window("one")
+    wid = xmanager.c.window.info()["id"]
+
+    name = os.path.join(tempfile.gettempdir(), 'test_multiple_borders.txt')
+    cmd = ["import", "-border", "-window", str(wid), "-crop", "5x1+0+4", '-depth', '8', name]
+    subprocess.run(cmd, env={"DISPLAY": xmanager.display})
+
+    with open(name, 'r') as f:
+        data = f.readlines()
+    os.unlink(name)
+
+    # just test that each of the 5 borders is lighter than the last as the screenshot is
+    # not pixel-perfect
+    avg = -1
+    for i in range(5):
+        color = utils.rgb(data[i + 1].split()[2])
+        next_avg = sum(color) / 3
+        assert avg < next_avg
+        avg = next_avg

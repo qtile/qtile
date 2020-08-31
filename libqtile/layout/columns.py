@@ -111,12 +111,12 @@ class Columns(Layout):
         Key([mod], "n", lazy.layout.normalize()),
     """
     defaults = [
-        ("border_focus", "#881111", "Border colour for the focused window."),
-        ("border_normal", "#220000", "Border colour for un-focused windows."),
+        ("border_focus", "#881111", "Border colour(s) for the focused window."),
+        ("border_normal", "#220000", "Border colour(s) for un-focused windows."),
         ("border_focus_stack", "#881111",
-         "Border colour for the focused window in stacked columns."),
+         "Border colour(s) for the focused window in stacked columns."),
         ("border_normal_stack", "#220000",
-         "Border colour for un-focused windows in stacked columns."),
+         "Border colour(s) for un-focused windows in stacked columns."),
         ("border_width", 2, "Border width."),
         ("border_on_single", False, "Draw a border when there is one only window."),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])."),

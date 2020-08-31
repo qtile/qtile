@@ -160,30 +160,36 @@ class Output(HasListeners):
         transform_matrix = self.transform_matrix
 
         if window.borderwidth:
-            bw = window.borderwidth * scale
+            bw = int(window.borderwidth * scale)
 
             if surface == window.surface.surface:
-                bc = window.bordercolor
-                border = Box(
-                    int(x),
-                    int(y),
-                    int(width + bw * 2),
-                    int(bw),
-                )
-                x += bw
-                y += bw
-                self.renderer.render_rect(border, bc, transform_matrix)  # Top border
-                border.y = int(y + height)
-                self.renderer.render_rect(border, bc, transform_matrix)  # Bottom border
-                border.y = int(y - bw)
-                border.width = int(bw)
-                border.height = int(height + bw * 2)
-                self.renderer.render_rect(border, bc, transform_matrix)  # Left border
-                border.x = int(x + width)
-                self.renderer.render_rect(border, bc, transform_matrix)  # Right border
-            else:
-                x += bw
-                y += bw
+                outer_w = width + bw * 2
+                outer_h = height + bw * 2
+                num = len(window.bordercolor)
+                bws = [bw // num] * num
+                for i in range(bw % num):
+                    bws[i] += 1
+                coord = 0
+                for i, bc in enumerate(window.bordercolor):
+                    border = Box(
+                        int(x + coord),
+                        int(y + coord),
+                        int(outer_w - coord * 2),
+                        int(bws[i]),
+                    )
+                    self.renderer.render_rect(border, bc, transform_matrix)  # Top border
+                    border.y = int(y + outer_h - bws[i] - coord)
+                    self.renderer.render_rect(border, bc, transform_matrix)  # Bottom border
+                    border.y = int(y + coord)
+                    border.width = int(bws[i])
+                    border.height = int(outer_h - coord * 2)
+                    self.renderer.render_rect(border, bc, transform_matrix)  # Left border
+                    border.x = int(x + outer_w - bws[i] - coord)
+                    self.renderer.render_rect(border, bc, transform_matrix)  # Right border
+                    coord += bws[i]
+
+            x += bw
+            y += bw
 
         box = Box(
             int(x),

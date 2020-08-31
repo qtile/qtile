@@ -55,8 +55,8 @@ class Stack(Layout):
     Unlike the columns layout the number of stacks is fixed.
     """
     defaults = [
-        ("border_focus", "#0000ff", "Border colour for the focused window."),
-        ("border_normal", "#000000", "Border colour for un-focused windows."),
+        ("border_focus", "#0000ff", "Border colour(s) for the focused window."),
+        ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
         ("border_width", 1, "Border width."),
         ("autosplit", False, "Auto split all new stacks."),
         ("num_stacks", 2, "Number of stacks."),

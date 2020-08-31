@@ -452,3 +452,25 @@ def test_cycle_layouts(manager):
         # Use manager.c.layout.info()['name'] in the assertion message, so we
         # know which layout is buggy
         assert manager.c.window.info()['name'] == "three", manager.c.layout.info()['name']
+
+
+class AllLayoutsMultipleBorders(AllLayoutsConfig):
+    """
+    Like AllLayouts, but all the layouts have border_focus set to a list of colors.
+    """
+    layouts = [
+        layout_cls(border_focus=['#000' '#111', '#222', '#333', '#444'])
+        for layout_name, layout_cls in AllLayoutsConfig.iter_layouts()
+    ]
+
+
+@pytest.mark.parametrize("manager", [AllLayoutsMultipleBorders], indirect=True)
+def test_multiple_borders(manager):
+    manager.test_window("one")
+    manager.test_window("two")
+
+    initial_layout_name = manager.c.layout.info()['name']
+    while True:
+        manager.c.next_layout()
+        if manager.c.layout.info()['name'] == initial_layout_name:
+            break

@@ -271,8 +271,8 @@ class Window(_Window, metaclass=ABCMeta):
     def get_pid(self) -> int:
         """Return the PID that owns the window."""
 
-    def paint_borders(self, color, width) -> None:
-        """Paint the window borders with the given color and width"""
+    def paint_borders(self, color: Union[ColorType, List[ColorType]], width: int) -> None:
+        """Paint the window borders with the given color(s) and width"""
 
     @abstractmethod
     def cmd_focus(self, warp: bool = True) -> None:
