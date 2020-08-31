@@ -45,6 +45,7 @@ MOCK_MODULES = [
     'xcffib',
     'xcffib.randr',
     'xcffib.render',
+    'xcffib.wrappers',
     'xcffib.xfixes',
     'xcffib.xinerama',
     'xcffib.xproto',

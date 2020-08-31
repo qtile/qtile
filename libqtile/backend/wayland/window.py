@@ -83,7 +83,7 @@ class Window(base.Window, HasListeners):
         self._mapped: bool = False
         self.x = 0
         self.y = 0
-        self.bordercolor: ffi.CData = _rgb((0, 0, 0, 1))
+        self.bordercolor: List[ffi.CData] = [_rgb((0, 0, 0, 1))]
         self.opacity: float = 1.0
         self._outputs: List[Output] = []
 
@@ -294,9 +294,14 @@ class Window(base.Window, HasListeners):
             if switch_group:
                 group.cmd_toscreen(toggle=False)
 
-    def paint_borders(self, color: ColorType, width) -> None:
+    def paint_borders(self, color: Union[ColorType, List[ColorType]], width) -> None:
         if color:
-            self.bordercolor = _rgb(color)
+            if isinstance(color, list):
+                if len(color) > width:
+                    color = color[:width]
+                self.bordercolor = [_rgb(c) for c in color]
+            else:
+                self.bordercolor = [_rgb(color)]
         self.borderwidth = width
 
     @property
@@ -720,7 +725,7 @@ class Static(base.Static, Window):
         self.x = 0
         self.y = 0
         self.borderwidth: int = 0
-        self.bordercolor: ffi.CData = _rgb((0, 0, 0, 1))
+        self.bordercolor: List[ffi.CData] = [_rgb((0, 0, 0, 1))]
         self.opacity: float = 1.0
         self._outputs: List[Output] = []
         self._float_state = FloatStates.FLOATING

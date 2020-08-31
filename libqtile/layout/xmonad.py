@@ -145,8 +145,8 @@ class MonadTall(_SimpleLayoutBase):
     _med_ratio = 0.5
 
     defaults = [
-        ("border_focus", "#ff0000", "Border colour for the focused window."),
-        ("border_normal", "#000000", "Border colour for un-focused windows."),
+        ("border_focus", "#ff0000", "Border colour(s) for the focused window."),
+        ("border_normal", "#000000", "Border colour(s) for un-focused windows."),
         ("border_width", 2, "Border width."),
         ("single_border_width", None, "Border width for single window"),
         ("single_margin", None, "Margin size for single window"),
