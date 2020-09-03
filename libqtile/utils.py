@@ -24,6 +24,7 @@ import os
 import sys
 import traceback
 import warnings
+from collections.abc import Sequence
 from shutil import which
 
 from libqtile.log_utils import logger
@@ -236,9 +237,14 @@ def send_notification(title, message, urgent=False, timeout=10000):
         logger.error(exception)
 
 
-def guess_terminal():
+def guess_terminal(preference=None):
     """Try to guess terminal."""
-    test_terminals = [
+    test_terminals = []
+    if isinstance(preference, str):
+        test_terminals += [preference]
+    elif isinstance(preference, Sequence):
+        test_terminals += list(preference)
+    test_terminals += [
         'roxterm',
         'sakura',
         'hyper',
