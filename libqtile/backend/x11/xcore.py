@@ -209,6 +209,7 @@ class XCore(base.Core):
             if attrs and attrs.map_state == xcffib.xproto.MapState.Unmapped:
                 continue
             if state and state[0] == window.WithdrawnState:
+                item.unmap()
                 continue
             self.qtile.manage(item)
 
