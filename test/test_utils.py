@@ -20,6 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+import pytest
+
 from libqtile import utils
 
 
@@ -57,3 +62,28 @@ def test_shuffle():
     assert test_l != list(range(3))
     utils.shuffle_down(test_l)
     assert test_l == list(range(3))
+
+
+def test_guess_terminal_accepts_a_preference(path):
+    term = 'shitty'
+    Path(path, term).touch(mode=0o777)
+    assert utils.guess_terminal(term) == term
+
+
+def test_guess_terminal_accepts_a_list_of_preferences(path):
+    term = 'shitty'
+    Path(path, term).touch(mode=0o777)
+    assert utils.guess_terminal(['nutty', term]) == term
+
+
+def test_guess_terminal_falls_back_to_defaults(path):
+    Path(path, 'kitty').touch(mode=0o777)
+    assert utils.guess_terminal(['nutty', 'witty', 'petty']) == 'kitty'
+
+
+@pytest.fixture
+def path(monkeypatch):
+    "Create a TemporaryDirectory as the PATH"
+    with TemporaryDirectory() as d:
+        monkeypatch.setenv('PATH', d)
+        yield d
