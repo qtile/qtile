@@ -34,6 +34,7 @@ import re
 import subprocess
 
 from libqtile import bar
+from libqtile.utils import send_notification
 from libqtile.widget import base
 
 __all__ = [
@@ -75,6 +76,7 @@ class Volume(base._TextBox):
             self.length = 0
         self.surfaces = {}
         self.volume = None
+        self._notify_id = None
 
         self.add_callbacks({
             'Button1': self.cmd_mute,
@@ -195,6 +197,9 @@ class Volume(base._TextBox):
                                                        'sset',
                                                        self.channel,
                                                        '{}%+'.format(self.step)))
+        self.update()
+        if self.notify:
+            self._notify()
 
     def cmd_decrease_vol(self):
         if self.volume_down_command is not None:
@@ -204,6 +209,9 @@ class Volume(base._TextBox):
                                                        'sset',
                                                        self.channel,
                                                        '{}%-'.format(self.step)))
+        self.update()
+        if self.notify:
+            self._notify()
 
     def cmd_mute(self):
         if self.mute_command is not None:
@@ -213,7 +221,18 @@ class Volume(base._TextBox):
                                                        'sset',
                                                        self.channel,
                                                        'toggle'))
+        self.update()
+        if self.notify:
+            self._notify()
 
     def cmd_run_app(self):
         if self.volume_app is not None:
             subprocess.Popen(self.volume_app, shell=True)
+
+    def _notify(self):
+        self._notify_id = send_notification(
+            "Volume",
+            "{:n}%".format(self.volume),
+            timeout=self.notify_timeout,
+            id=self._notify_id,
+        )

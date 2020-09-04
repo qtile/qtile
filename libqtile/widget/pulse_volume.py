@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
+from libqtile.utils import send_notification
 from libqtile.widget._pulse_audio import ffi, lib
 from libqtile.widget.volume import Volume
 
@@ -177,6 +178,8 @@ class PulseVolume(Volume):
         )
         if op:
             self.wait_for_operation(op)
+        if self.notify:
+            self._notify()
 
     def cmd_mute(self):
         op = lib.pa_context_set_sink_mute_by_index(
@@ -188,6 +191,8 @@ class PulseVolume(Volume):
         )
         if op:
             self.wait_for_operation(op)
+        if self.notify:
+            self._notify()
 
     def cmd_increase_vol(self, value=None):
         if value is None:
@@ -258,3 +263,8 @@ class PulseVolume(Volume):
             self.timeout_add(self.update_interval, self.timer_setup)
         if self.theme_path:
             self.setup_images()
+
+    def _notify(self):
+        volume = self.get_volume()
+        message = "Muted" if volume <= 0 else "{:n}%".format(volume)
+        send_notification("Volume", message, timeout=self.notify_timeout)

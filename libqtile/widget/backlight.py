@@ -28,6 +28,7 @@ from functools import partial
 from typing import Dict
 
 from libqtile.log_utils import logger
+from libqtile.utils import send_notification
 from libqtile.widget import base
 
 BACKLIGHT_DIR = '/sys/class/backlight'
@@ -87,6 +88,7 @@ class Backlight(base.InLoopPollText):
         base.InLoopPollText.__init__(self, **config)
         self.add_defaults(Backlight.defaults)
         self._future = None
+        self._notify_id = None
 
         self.brightness_file = os.path.join(
             BACKLIGHT_DIR, self.backlight_name, self.brightness_file,
@@ -145,5 +147,12 @@ class Backlight(base.InLoopPollText):
             new = max(now - step, 0)
         elif direction is ChangeDirection.UP:
             new = min(now + step, 100)
+        if self.notify:
+            self._notify_id = send_notification(
+                "Backlight",
+                "{:n}%".format(new),
+                timeout=self.notify_timeout,
+                id=self._notify_id,
+            )
         if new != now:
             self._future = self.qtile.run_in_executor(self._change_backlight, new)

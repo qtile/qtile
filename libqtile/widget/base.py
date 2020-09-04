@@ -114,6 +114,8 @@ class _Widget(CommandObject, configurable.Configurable):
     defaults = [
         ("background", None, "Widget background color"),
         ("mouse_callbacks", {}, "Dict of mouse button press callback functions."),
+        ("notify", False, "Enable notifications upon status change, if supported."),
+        ("notify_timeout", 10000, "Milliseconds before notifications disappear."),
     ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, length, **config):
