@@ -26,6 +26,7 @@ import pickle
 import shlex
 import signal
 import sys
+import tempfile
 import time
 import traceback
 import warnings
@@ -189,11 +190,14 @@ class Qtile(CommandObject):
         hook.fire("startup")
 
         if state:
-            st = pickle.load(io.BytesIO(state.encode()))
             try:
+                with open(state, 'rb') as f:
+                    st = pickle.load(f)
                 st.apply(self)
             except:  # noqa: E722
                 logger.exception("failed restoring state")
+            finally:
+                os.remove(state)
 
         self.core.scan()
         if state:
@@ -281,13 +285,14 @@ class Qtile(CommandObject):
         argv = [sys.executable] + sys.argv
         if '--no-spawn' not in argv:
             argv.append('--no-spawn')
-        buf = io.BytesIO()
+        state_file = os.path.join(tempfile.gettempdir(), "qtile-state")
         try:
-            pickle.dump(QtileState(self), buf, protocol=0)
+            with open(state_file, 'wb') as f:
+                pickle.dump(QtileState(self), f, protocol=0)
         except:  # noqa: E722
             logger.error("Unable to pickle qtile state")
         argv = [s for s in argv if not s.startswith('--with-state')]
-        argv.append('--with-state=' + buf.getvalue().decode())
+        argv.append('--with-state=' + state_file)
         self._restart = (sys.executable, argv)
         self.stop()
 
@@ -1557,7 +1562,7 @@ class Qtile(CommandObject):
         """Get pickled state for restarting qtile"""
         buf = io.BytesIO()
         pickle.dump(QtileState(self), buf, protocol=0)
-        state = buf.getvalue().decode()
+        state = buf.getvalue().decode(errors="backslashreplace")
         logger.debug('State = ')
         logger.debug(''.join(state.split('\n')))
         return state
