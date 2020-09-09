@@ -25,9 +25,20 @@ import sys
 import traceback
 import warnings
 from collections.abc import Sequence
+from random import randint
 from shutil import which
 
 from libqtile.log_utils import logger
+
+_can_notify = False
+try:
+    import gi
+    gi.require_version("Notify", "0.7")  # type: ignore
+    from gi.repository import Notify  # type: ignore
+    Notify.init("Qtile")
+    _can_notify = True
+except ImportError as e:
+    logger.warning("Failed to import dependencies for notifications: %s" % e)
 
 
 class QtileError(Exception):
@@ -222,22 +233,25 @@ def safe_import(module_names, class_name, globals_, fallback=None):
         globals_[class_name] = class_proxy
 
 
-def send_notification(title, message, urgent=False, timeout=10000):
-    """Send a notification."""
-    try:
-        import gi
-        gi.require_version("Notify", "0.7")
-        from gi.repository import Notify
-        Notify.init("Qtile")
-        info = Notify.get_server_info()
-        if info[0]:
-            notifier = Notify.Notification.new(title, message)
-            notifier.set_timeout(timeout)
-            if urgent:
-                notifier.set_urgency(Notify.Urgency.CRITICAL)
-            notifier.show()
-    except Exception as exception:
-        logger.error(exception)
+def send_notification(title, message, urgent=False, timeout=10000, id=None):
+    """
+    Send a notification.
+
+    The id argument, if passed, requests the notification server to replace a visible
+    notification with the same ID. An ID is returned for each call; this would then be
+    passed when calling this function again to replace that notification. See:
+    https://developer.gnome.org/notification-spec/
+    """
+    if _can_notify and Notify.get_server_info()[0]:
+        notifier = Notify.Notification.new(title, message)
+        if urgent:
+            notifier.set_urgency(Notify.Urgency.CRITICAL)
+        notifier.set_timeout(timeout)
+        if id is None:
+            id = randint(10, 1000)
+        notifier.set_property('id', id)
+        notifier.show()
+        return id
 
 
 def guess_terminal(preference=None):
