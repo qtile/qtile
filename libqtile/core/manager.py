@@ -726,9 +726,13 @@ class Qtile(CommandObject):
         return closest_screen
 
     def enter_event(self, event) -> Optional[bool]:
-        if event.event in self.windows_map:
-            return True
-        screen = self.find_screen(event.root_x, event.root_y)
+        win = self.windows_map.get(event.event, None)
+        if win is None:
+            screen = self.find_screen(event.root_x, event.root_y)
+        else:
+            if win.group.screen is self.current_screen:
+                return True
+            screen = win.group.screen
         if screen:
             self.focus_screen(screen.index, warp=False)
         return None
