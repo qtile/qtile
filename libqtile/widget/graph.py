@@ -77,7 +77,8 @@ class _Graph(base._Widget):
 
     def _configure(self, qtile, bar):
         super()._configure(qtile, bar)
-        self.drawer.ctx.set_antialias(cairocffi.ANTIALIAS_NONE)
+        if self.type == "box":
+            self.drawer.ctx.set_antialias(cairocffi.ANTIALIAS_NONE)
 
     def timer_setup(self):
         self.timeout_add(self.frequency, self.update)
