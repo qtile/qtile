@@ -159,12 +159,7 @@ class CurrentLayoutIcon(base._TextBox):
         """
         Returns the list of lowercased strings for each available layout name.
         """
-        return [
-            layout_class_name.lower()
-            for layout_class, layout_class_name
-            in map(lambda x: (getattr(layout_module, x), x), dir(layout_module))
-            if inspect.isclass(layout_class) and issubclass(layout_class, Layout)
-        ]
+        return [l.__class__.__name__.lower() for l in self.qtile.config.layouts]
 
     def _update_icon_paths(self):
         self.icon_paths = []
