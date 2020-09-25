@@ -118,7 +118,6 @@ class Slice(Delegate):
         res = Layout.clone(self, group)
         res._slice = self._slice.clone(group)
         res.fallback = self.fallback.clone(group)
-        res._window = None
         return res
 
     def layout(self, windows, screen_rect):
