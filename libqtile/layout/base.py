@@ -443,13 +443,10 @@ class _ClientList:
         """
         Returns the client previous to win in collection.
         """
-        try:
-            idx = self.index(win)
-        except IndexError:
-            return None
-        else:
-            if idx > 0:
-                return self[idx - 1]
+        idx = self.index(win)
+        if idx > 0:
+            return self[idx - 1]
+        return None
 
     def add(self, client, offset_to_current=0):
         """
