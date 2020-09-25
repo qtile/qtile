@@ -94,7 +94,7 @@ class Matrix(_SimpleLayoutBase):
         ]
 
     def add(self, client):
-        """Add clinet to Layout.Note t
+        """Add client to Layout.
         Note that for Matrix the clients are appended at end of list.
         If needed a new row in matrix is created"""
         return self.clients.append(client)
