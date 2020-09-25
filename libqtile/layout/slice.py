@@ -97,7 +97,7 @@ class Slice(Delegate):
     defaults = [
         ("width", 256, "Slice width"),
         ("side", "left", "Side of the slice (left, right, top, bottom)"),
-        ("name", "max", "Name of this layout."),
+        ("name", "slice", "Name of this layout."),
         ("wname", None, "WM_NAME to match"),
         ("wmclass", None, "WM_CLASS to match"),
         ("role", None, "WM_WINDOW_ROLE to match"),
