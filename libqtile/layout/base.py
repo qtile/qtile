@@ -239,11 +239,6 @@ class SingleWindow(Layout):
         else:
             win.hide()
 
-    def remove(self, win):
-        cli = self.clients.pop(0)
-        if cli == win:
-            return self.clients[0]
-
 
 class Delegate(Layout):
     """Base for all delegation layouts"""
