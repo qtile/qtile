@@ -44,7 +44,7 @@ class TileConfig(Config):
     ]
     layouts = [
         layout.Tile(),
-        layout.Tile(masterWindows=2)
+        layout.Tile(master_length=2)
     ]
     floating_layout = libqtile.layout.floating.Floating()
     keys = []
