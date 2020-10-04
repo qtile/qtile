@@ -2,6 +2,8 @@ qtile X.X.X, released XXXX-XX-XX:
     !!! Config breakage !!!
 	- Pacman widget has been removed. Use CheckUpdates instead.
 	- property "masterWindows" of Tile layout renamed to master_length
+	- properties wname, wmclass and role of Slice-layout replaced by Match-
+	  type property "match"
 
 qtile 0.16.1, released 2020-08-11:
     !!! Config breakage !!!
