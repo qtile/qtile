@@ -365,11 +365,9 @@ class Screen(CommandObject):
 
         hook.fire("setgroup")
         hook.fire("focus_change")
-        hook.fire(
-            "layout_change",
-            self.group.layouts[self.group.current_layout],
-            self.group
-        )
+        hook.fire("layout_change",
+                  self.group.layouts[self.group.current_layout],
+                  self.group)
 
     def toggle_group(self, group=None):
         """Switch to the selected group or to the previously active one"""
