@@ -400,6 +400,7 @@ class Bar(Gap, configurable.Configurable):
             else:
                 self.size = 0
                 self.window.hide()
+            self.screen.group.layout_all()
 
     def adjust_for_strut(self, size):
         if self.size:
