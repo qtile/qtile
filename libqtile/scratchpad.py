@@ -184,6 +184,7 @@ class DropDownToggler(WindowVisibilityToggler):
         its floating x, y, width and height is set.
         """
         if (not self.visible) or (not self.shown):
+            # SET GEOMETRY
             win = self.window
             screen = win.qtile.current_screen
             # calculate windows floating position and width/height
@@ -194,8 +195,9 @@ class DropDownToggler(WindowVisibilityToggler):
             win.float_y = win.y
             win.width = int(screen.dwidth * self.width)
             win.height = int(screen.dheight * self.height)
-
-            # SHOW
+            # Configure the new geometry
+            win._reconfigure_floating()
+            # Toggle the dropdown
             WindowVisibilityToggler.show(self)
 
 
