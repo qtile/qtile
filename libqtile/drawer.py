@@ -288,7 +288,7 @@ class Drawer:
         self.ctx.fill()
         self.ctx.stroke()
 
-    def draw(self, offsetx=0, offsety=0, width=None, height=None):
+    def draw(self, offsetx=0, offsety=0, width=None, height=None, srcx=0, srcy=0):
         """
         Parameters
         ==========
@@ -306,7 +306,7 @@ class Drawer:
             self.pixmap,
             self.wid,
             self.gc,
-            0, 0,  # srcx, srcy
+            srcx, srcy,
             offsetx, offsety,  # dstx, dsty
             self.width if width is None else width,
             self.height if height is None else height

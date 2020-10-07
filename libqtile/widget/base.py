@@ -443,6 +443,144 @@ class _TextBox(_Widget):
         return d
 
 
+class _ScrollText(_TextBox):
+    """A text widget which can scroll the text if needed
+    Whenever the text is changed, the start_scroll() method must be called
+    """
+
+    defaults = [
+        ('scroll_interval', 0.04, 'Duration of a scroll tick in seconds.'),
+        ('scroll_downtime', 2, 'Downtime before and after scroll in seconds.'),
+        ('scroll_step', 1, 'Number of pixels to scroll at each tick.'),
+        ('loop', True, 'Wether to loop the scrolling.'),
+        ('max_width', 200,
+            'The maximum width for the widget.'
+            'When the text does not fit in it, it will scroll.'),
+        ('minimize_width', True,
+            'Wether to resize the widget when the text is too small.'
+            'If set to False, the widget will permanently have the width given by max_width'),
+    ]
+
+    def __init__(self, **config):
+        _TextBox.__init__(self, **config)
+        self.add_defaults(_ScrollText.defaults)
+
+        # intern scrolling variables
+        self.is_scrolling = False
+        self.scroll_index = 0
+        self.scroll_id = 0
+
+        # width attributes
+        self.length_type = bar.STATIC
+        if not self.minimize_width:
+            # the widget always has the same length
+            self.length = self.max_width
+        else:
+            # the widget is not visible until prepare_scroll() is called
+            self.length = 0
+
+    def get_content_width(self):
+        sizelayout = self.drawer.textlayout(
+            self.text,
+            "ffffff",
+            self.font,
+            self.fontsize,
+            None,
+            markup=self.markup,
+        )
+        return sizelayout.width
+
+    def is_drawable(self):
+        return self.width - 2*self.actual_padding > 0
+
+    def can_scroll(self):
+        return self.scroll_index + self.max_width < self.content_width + 2*self.actual_padding
+
+    def draw(self, same_layout=False):
+        """Draw the widget, taking scrolling into account
+        """
+
+        # if the bar hasn't placed us yet
+        if self.offsetx is None:
+            return
+        if self.is_drawable():
+            # clear if needed
+            if not same_layout:
+                self.drawer.clear(self.background or self.bar.background)
+                self.layout.draw(
+                    0 or self.actual_padding,
+                    int(self.bar.height / 2.0 - self.layout.height / 2.0) + 1
+                )
+            # left padding
+            if not same_layout:
+                self.drawer.draw(
+                    offsetx=self.offsetx,
+                    width=self.actual_padding
+                )
+            # drawing text with scroll offset
+            self.drawer.draw(
+                offsetx=self.offsetx + self.actual_padding,
+                width=self.width - 2*self.actual_padding,
+                srcx=self.actual_padding + self.scroll_index,
+            )
+            # right padding
+            if not same_layout:
+                self.drawer.draw(
+                    offsetx=self.offsetx + self.width - self.actual_padding,
+                    width=self.actual_padding
+                )
+
+    def prepare_scroll(self):
+        """Prepare the layout for a new scrolling.
+        """
+
+        self.scroll_index = 0
+        self.content_width = self.get_content_width()
+        if self.can_scroll():
+            self.length_type = bar.STATIC
+            self.length = self.max_width
+        elif self.minimize_width:
+            self.length_type = bar.CALCULATED
+        self.bar.draw()
+
+    def start_scroll(self, _id=None):
+        """Start scrolling
+        This method must be called whenever the text of the widget is changed
+        """
+
+        if (_id is None or self.scroll_id == _id):
+            self.prepare_scroll()
+            if self.length_type == bar.STATIC:
+                _id = self.scroll_id
+                self.timeout_add(self.scroll_downtime,
+                                 lambda: self.scroll(_id, 0))
+                self.is_scrolling = True
+
+    def scroll(self, _id, index):
+        """Scroll tick action
+        """
+
+        if self.scroll_id != _id or index != self.scroll_index or not self.is_scrolling:
+            return
+        self.scroll_index += self.scroll_step
+        self.draw(same_layout=True)
+        if self.can_scroll():
+            index = self.scroll_index
+            self.timeout_add(self.scroll_interval,
+                             lambda: self.scroll(_id, index))
+        else:
+            if self.loop:
+                self.timeout_add(self.scroll_downtime,
+                                 lambda: self.start_scroll(_id))
+            else:
+                self.stop_scroll()
+
+    def stop_scroll(self):
+        if self.is_scrolling:
+            self.scroll_id += 1
+            self.is_scrolling = False
+
+
 class InLoopPollText(_TextBox):
     """ A common interface for polling some 'fast' information, munging it, and
     rendering the result in a text box. You probably want to use
@@ -505,6 +643,7 @@ class InLoopPollText(_TextBox):
 class ThreadedPollText(InLoopPollText):
     """ A common interface for polling some REST URL, munging the data, and
     rendering the result in a text box. """
+
     def tick(self):
         def worker():
             try:

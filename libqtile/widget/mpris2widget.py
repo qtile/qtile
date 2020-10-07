@@ -22,6 +22,7 @@
 # SOFTWARE.
 
 import dbus
+import markupsafe
 from dbus.mainloop.glib import DBusGMainLoop
 
 from libqtile.widget import base
@@ -166,3 +167,119 @@ class Mpris2(base._TextBox):
             displaytext=self.displaytext,
             isplaying=self.is_playing,
         )
+
+
+class ImprovedMpris2(Mpris2, base._ScrollText):
+    """An improvement of the above Mpris2 widget.
+    New features:
+    * support for custom formatting
+    * smoother pixel-wise scrolling instead of character-wise
+    * MPRIS2 interface support (to send commands to the player)
+    """
+
+    defaults = [
+        ('play_char', '', 'status_char to display a song is playing.'),
+        ('pause_char', '', 'status_char to display when a song is paused.'),
+        ('format', '{status_char}  <b>{title}</b> - {artist}',
+            'How to format the data.'
+            'Accepted keys are: status_char and MPRIS2 metadata tags.'),
+        ('txt_inactive', '', 'Text to display when the player is inactive'),
+        ('scrolling_enabled', True, 'Wether to scroll the text.'),
+    ]
+
+    def __init__(self, **config):
+        Mpris2.__init__(self, **config)
+        base._ScrollText.__init__(self, **config)
+        self.add_defaults(ImprovedMpris2.defaults)
+        self.interface = None
+        self.add_callbacks({
+            'Button1': lambda: self.send_cmd('PlayPause'),
+            'Button4': lambda: self.send_cmd('Next'),
+            'Button5': lambda: self.send_cmd('Previous'),
+        })
+        self.metadata = {}
+        self.status_char = ''
+        self.is_playing = None
+        self.text = self.txt_inactive
+
+    def _init_interface(self):
+        try:
+            obj = self.bus.get_object(self.objname, '/org/mpris/MediaPlayer2')
+            self.interface = dbus.Interface(obj, 'org.mpris.MediaPlayer2.Player')
+        except dbus.DBusException:
+            self.interface = None
+            self.is_playing = None
+            self.update_display()
+
+    def send_cmd(self, command):
+        """Send a command to the MPRIS2 interface
+        """
+
+        if self.interface is None:
+            self._init_interface()
+        try:
+            getattr(self.interface, command)()
+        except dbus.DBusException:
+            self._init_interface()
+            if self.interface is not None:
+                getattr(self.interface, command)()
+
+    def update(self, interface_name, changed_properties, invalidated_properties):
+        """http://specifications.freedesktop.org/mpris-spec/latest/Track_List_Interface.html#Mapping:Metadata_Map"""
+        if not self.configured:
+            return True
+
+        self.is_playing = None
+        # collecting and updating metadata
+        m = changed_properties.get('Metadata')
+        if m:
+            self.metadata = {
+                x.replace('xesam:', ''):
+                    str(m.get(x))
+                if isinstance(m.get(x), dbus.String)
+                    else ' + '.join(y for y in m.get(x) if isinstance(y, dbus.String))
+                for x in self.display_metadata if m.get(x)
+            }
+            if self.markup:
+                self.metadata = {
+                    key: str(markupsafe.escape(value))
+                    for key, value in self.metadata.items()
+                }
+
+        # collecting and updating playback status
+        playbackstatus = changed_properties.get('PlaybackStatus')
+        if playbackstatus == 'Paused':
+            self.is_playing = False
+            self.status_char = self.pause_char
+        elif playbackstatus == 'Playing':
+            self.is_playing = True
+            self.status_char = self.play_char
+
+        # updating display
+        self.update_display()
+
+    def update_display(self):
+
+        # creating new displaytext
+        if self.is_playing is not None:
+            try:
+                self.displaytext = self.format.format(
+                    status_char=self.status_char,
+                    **self.metadata
+                )
+            except KeyError:
+                self.is_playing = None
+                self.displaytext = self.txt_inactive
+        else:
+            self.displaytext = self.txt_inactive
+
+        # effectively displaying it
+        self.text = self.displaytext
+        if self.scrolling_enabled:
+            if self.is_playing:
+                self.start_scroll()
+            else:
+                self.stop_scroll()
+                self.prepare_scroll()
+        else:
+            self.bar.draw()
