@@ -67,6 +67,7 @@ widgets = {
     "Net": "net",
     "NetGraph": "graph",
     "Notify": "notify",
+    "OpenWeather": "openweather",
     "Pomodoro": "pomodoro",
     "Prompt": "prompt",
     "PulseVolume": "pulse_volume",
