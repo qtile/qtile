@@ -93,6 +93,13 @@ _NET_WM_STATE_REMOVE = 0
 _NET_WM_STATE_ADD = 1
 _NET_WM_STATE_TOGGLE = 2
 
+# z layers
+DESKTOP_LAYER = -1000000
+BELOW_LAYER = -1000
+NORMAL_LAYER = 0
+ABOVE_LAYER = 1000
+FULLSCREEN_LAYER = 1000000
+
 
 def _geometry_getter(attr):
     def get_attr(self):
@@ -138,6 +145,39 @@ def _float_setter(attr):
     return setter
 
 
+class _Z():
+    def __init__(self):
+        self.override = 0  # user level; can be used for user-defined overrides; won't be touched by anything
+        self.wm = NORMAL_LAYER  # wm level; for docks, above, below etc.
+        self.interactive = NORMAL_LAYER  # interactive level; should be one of BELOW_LAYER, NORMAL_LAYER or ABOVE_LAYER
+        self.group = 0  # group level; used to separate "normal" and floating layout
+        self.layout = 0  # layout level; usage optional, defaults to 0
+
+    def __lt__(self, other):
+        if self.override != other.override:
+            return self.override < other.override
+        if self.wm != other.wm:
+            return self.wm < other.wm
+        if self.interactive != other.interactive:
+            return self.interactive < other.interactive
+        if self.group != other.group:
+            return self.group < other.group
+        return self.layout < other.layout
+
+    def __eq__(self, other):
+        return self.override == other.override and \
+               self.wm == other.wm and \
+               self.interactive == other.interactive and \
+               self.group == other.group and \
+               self.layout == other.layout
+
+    def get(self):
+        return self.override, self.wm, self.interactive, self.group, self.layout
+
+    def __str__(self):
+        return str(self.get())
+
+
 class _Window(CommandObject):
     _window_mask = 0  # override in child class
 
@@ -158,6 +198,7 @@ class _Window(CommandObject):
             g = self.window.get_geometry()
             self._x = g.x
             self._y = g.y
+            self._z = _Z()
             self._width = g.width
             self._height = g.height
             self._float_info['width'] = g.width
@@ -167,6 +208,7 @@ class _Window(CommandObject):
             # values on demand.
             self._x = None
             self._y = None
+            self._z = _Z()
             self._width = None
             self._height = None
 
@@ -197,6 +239,7 @@ class _Window(CommandObject):
 
     x = property(fset=_geometry_setter("x"), fget=_geometry_getter("x"))
     y = property(fset=_geometry_setter("y"), fget=_geometry_getter("y"))
+    z = property(fget=_geometry_getter("z"))
 
     @property
     def width(self):
@@ -321,9 +364,22 @@ class _Window(CommandObject):
         if self.qtile.config.auto_fullscreen:
             triggered.append('fullscreen')
 
+        # https://specifications.freedesktop.org/wm-spec/1.3/ar01s07.html#STACKINGORDER
         state = self.window.get_net_wm_state()
+        _type = self.window.get_wm_type()
+        logger.debug('_NET_WM_STATE (%s): %s', self.name, state)
+        logger.debug('_NET_WM_WINDOW_TYPE (%s): %s', self.name, _type)
+        if _type == 'desktop':
+            self.z.wm = DESKTOP_LAYER
+        elif 'below' in state:
+            self.z.wm = BELOW_LAYER
+        elif 'above' in state or _type == 'dock':
+            self.z.wm = ABOVE_LAYER
+        elif 'fullscreen' in state:
+            self.z.wm = FULLSCREEN_LAYER
+        else:
+            self.z.wm = NORMAL_LAYER
 
-        logger.debug('_NET_WM_STATE: %s', state)
         for s in triggered:
             setattr(self, s, (s in state))
 
@@ -347,6 +403,7 @@ class _Window(CommandObject):
             name=self.name,
             x=self.x,
             y=self.y,
+            z=self.z.get(),
             width=self.width,
             height=self.height,
             group=group,
@@ -440,7 +497,7 @@ class _Window(CommandObject):
         )
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, margin=None):
+              above=False, margin=None, z=NORMAL_LAYER):
         """Places the window at the specified location with the given size.
         """
 
@@ -472,6 +529,8 @@ class _Window(CommandObject):
 
         self.x = x
         self.y = y
+        if z is not None:
+            self.z.layout = z
         self.width = width
         self.height = height
 
@@ -733,7 +792,8 @@ class Static(_Window):
             self.width,
             self.height,
             self.borderwidth,
-            self.bordercolor
+            self.bordercolor,
+            z=None
         )
         return False
 
@@ -817,6 +877,7 @@ class Window(_Window):
 
     @floating.setter
     def floating(self, do_float):
+        self.z.group = 1 if do_float else 0
         if do_float and self._float_state == NOT_FLOATING:
             if self.group and self.group.screen:
                 screen = self.group.screen
@@ -931,7 +992,7 @@ class Window(_Window):
         self.qtile.windows_map[self.window.wid] = s
         hook.fire("client_managed", s)
 
-    def tweak_float(self, x=None, y=None, dx=0, dy=0,
+    def tweak_float(self, x=None, y=None, z=None, dx=0, dy=0, dz=0,
                     w=None, h=None, dw=0, dh=0):
         if x is not None:
             self.x = x
@@ -940,6 +1001,10 @@ class Window(_Window):
         if y is not None:
             self.y = y
         self.y += dy
+
+        if z is not None:
+            self.z.interactive = z
+        self.z.interactive += dz
 
         if w is not None:
             self.width = w
@@ -968,7 +1033,7 @@ class Window(_Window):
         return (self.width, self.height)
 
     def getposition(self):
-        return (self.x, self.y)
+        return (self.x, self.y, self.z.get())
 
     def _reconfigure_floating(self, new_float_state=FLOATING):
         if new_float_state == MINIMIZED:
@@ -996,8 +1061,10 @@ class Window(_Window):
                 self.borderwidth,
                 self.bordercolor,
                 above=True,
+                z=None,
             )
         if self._float_state != new_float_state:
+            self.z.group = 1
             self._float_state = new_float_state
             if self.group:  # may be not, if it's called from hook
                 self.group.mark_floating(self, True)
@@ -1092,6 +1159,7 @@ class Window(_Window):
                 x, y,
                 width, height,
                 self.borderwidth, self.bordercolor,
+                z=None
             )
         self.update_state()
         return False
@@ -1299,17 +1367,17 @@ class Window(_Window):
         """
         self.toscreen(index)
 
-    def cmd_move_floating(self, dx, dy):
+    def cmd_move_floating(self, dx, dy, dz=0):
         """Move window by dx and dy"""
-        self.tweak_float(dx=dx, dy=dy)
+        self.tweak_float(dx=dx, dy=dy, dz=dz)
 
     def cmd_resize_floating(self, dw, dh):
         """Add dw and dh to size of window"""
         self.tweak_float(dw=dw, dh=dh)
 
-    def cmd_set_position_floating(self, x, y):
+    def cmd_set_position_floating(self, x, y, z=None):
         """Move window to x and y"""
-        self.tweak_float(x=x, y=y)
+        self.tweak_float(x=x, y=y, z=z)
 
     def cmd_set_size_floating(self, w, h):
         """Set window dimensions to w and h"""
@@ -1379,9 +1447,9 @@ class Window(_Window):
         return (window.edges[0] <= x <= window.edges[2] and
                 window.edges[1] <= y <= window.edges[3])
 
-    def cmd_set_position(self, dx, dy):
+    def cmd_set_position(self, x, y, z=None):
         if self.floating:
-            self.tweak_float(dx, dy)
+            self.tweak_float(x=x, y=y, z=z)
             return
         for window in self.group.windows:
             if window == self or window.floating:

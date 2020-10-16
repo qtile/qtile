@@ -150,7 +150,9 @@ net_wm_states = (
 WindowStates = {
     None: 'normal',
     '_NET_WM_STATE_FULLSCREEN': 'fullscreen',
-    '_NET_WM_STATE_DEMANDS_ATTENTION': 'urgent'
+    '_NET_WM_STATE_DEMANDS_ATTENTION': 'urgent',
+    '_NET_WM_STATE_BELOW': 'below',
+    '_NET_WM_STATE_ABOVE': 'above',
 }
 
 # Maps property names to types and formats.

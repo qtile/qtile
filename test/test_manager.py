@@ -678,6 +678,7 @@ def test_toggle_fullscreen(qtile):
         'y': 0, 'x': 400, 'width': 150, 'height': 100}
     assert self.c.window.info()['x'] == 400
     assert self.c.window.info()['y'] == 0
+    assert self.c.window.info()['z'] == (0, 0, 0, 0, 0)
 
     self.c.window.toggle_fullscreen()
     assert self.c.window.info()['floating'] is True
@@ -687,6 +688,7 @@ def test_toggle_fullscreen(qtile):
     assert self.c.window.info()['height'] == 600
     assert self.c.window.info()['x'] == 0
     assert self.c.window.info()['y'] == 0
+    assert self.c.window.info()['z'] == (0, 0, 0, 0, 0)
 
     self.c.window.toggle_fullscreen()
     assert self.c.window.info()['floating'] is False
@@ -696,6 +698,7 @@ def test_toggle_fullscreen(qtile):
     assert self.c.window.info()['height'] == 578
     assert self.c.window.info()['x'] == 400
     assert self.c.window.info()['y'] == 0
+    assert self.c.window.info()['z'] == (0, 0, 0, 0, 0)
 
 
 @manager_config
@@ -716,6 +719,7 @@ def test_toggle_max(qtile):
         'y': 0, 'x': 400, 'width': 150, 'height': 100}
     assert self.c.window.info()['x'] == 400
     assert self.c.window.info()['y'] == 0
+    assert self.c.window.info()['z'] == (0, 0, 0, 0, 0)
 
     self.c.window.toggle_maximize()
     assert self.c.window.info()['floating'] is True
@@ -724,6 +728,7 @@ def test_toggle_max(qtile):
     assert self.c.window.info()['height'] == 580
     assert self.c.window.info()['x'] == 0
     assert self.c.window.info()['y'] == 0
+    assert self.c.window.info()['z'] == (0, 0, 0, 0, 0)
 
     self.c.window.toggle_maximize()
     assert self.c.window.info()['floating'] is False
@@ -732,6 +737,7 @@ def test_toggle_max(qtile):
     assert self.c.window.info()['height'] == 578
     assert self.c.window.info()['x'] == 400
     assert self.c.window.info()['y'] == 0
+    assert self.c.window.info()['z'] == (0, 0, 0, 0, 0)
 
 
 @manager_config
@@ -752,6 +758,7 @@ def test_toggle_min(qtile):
         'y': 0, 'x': 400, 'width': 150, 'height': 100}
     assert self.c.window.info()['x'] == 400
     assert self.c.window.info()['y'] == 0
+    assert self.c.window.info()['z'] == (0, 0, 0, 0, 0)
 
     self.c.window.toggle_minimize()
     assert self.c.group.info()['focus'] == 'xeyes'
@@ -761,6 +768,7 @@ def test_toggle_min(qtile):
     assert self.c.window.info()['height'] == 578
     assert self.c.window.info()['x'] == 400
     assert self.c.window.info()['y'] == 0
+    assert self.c.window.info()['z'] == (0, 0, 0, 0, 0)
 
     self.c.window.toggle_minimize()
     assert self.c.group.info()['focus'] == 'xeyes'
@@ -770,6 +778,7 @@ def test_toggle_min(qtile):
     assert self.c.window.info()['height'] == 578
     assert self.c.window.info()['x'] == 400
     assert self.c.window.info()['y'] == 0
+    assert self.c.window.info()['z'] == (0, 0, 0, 0, 0)
 
 
 @manager_config
