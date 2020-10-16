@@ -44,6 +44,14 @@ def test_rgb_from_hex_string_with_alpha():
     assert utils.rgb("#ff0000.5") == (1, 0, 0, 0.5)
 
 
+def test_rgb_from_hex_number_with_hex_alpha():
+    assert utils.rgb("ff000000") == (1, 0, 0, 0.0)
+
+
+def test_rgb_from_hex_string_with_hex_alpha():
+    assert utils.rgb("#ff000000") == (1, 0, 0, 0.0)
+
+
 def test_rgb_from_base10_tuple():
     assert utils.rgb([255, 255, 0]) == (1, 1, 0, 1)
 

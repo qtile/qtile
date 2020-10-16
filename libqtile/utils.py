@@ -61,10 +61,11 @@ def rgb(x):
 
         Here are some valid specifcations:
             #ff0000
+            with alpha: #ff000080
             ff0000
             with alpha: ff0000.5
             (255, 0, 0)
-            (255, 0, 0, 0.5)
+            with alpha: (255, 0, 0, 0.5)
     """
     if isinstance(x, (tuple, list)):
         if len(x) == 4:
@@ -80,9 +81,11 @@ def rgb(x):
             alpha = float("0." + alpha)
         else:
             alpha = 1
-        if len(x) != 6:
-            raise ValueError("RGB specifier must be 6 characters long.")
+        if len(x) not in (6, 8):
+            raise ValueError("RGB specifier must be 6 or 8 characters long.")
         vals = [int(i, 16) for i in (x[0:2], x[2:4], x[4:6])]
+        if len(x) == 8:
+            alpha = int(x[6:8], 16) / 255.0
         vals.append(alpha)
         return rgb(vals)
     raise ValueError("Invalid RGB specifier.")
