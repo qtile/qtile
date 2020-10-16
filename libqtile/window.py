@@ -1420,6 +1420,20 @@ class Window(_Window):
         else:
             self.window.configure(stackmode=StackMode.Above)
 
+    def cmd_keep_above(self):
+        if self.z.interactive == ABOVE_LAYER:
+            self.z.interactive = NORMAL_LAYER
+        else:
+            self.z.interactive = ABOVE_LAYER
+        self.group.assure_correct_layer(self)
+
+    def cmd_keep_below(self):
+        if self.z.interactive == BELOW_LAYER:
+            self.z.interactive = NORMAL_LAYER
+        else:
+            self.z.interactive = BELOW_LAYER
+        self.group.assure_correct_layer(self)
+
     def cmd_match(self, *args, **kwargs):
         return self.match(*args, **kwargs)
 

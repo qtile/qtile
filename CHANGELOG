@@ -41,6 +41,9 @@ qtile X.X.X, released XXXX-XX-XX:
         - switch to Github Actions for CI
         - added `only_focused` setting to Max-layout, allowing to draw multiple
           clients on top of each other when set to False
+        - added `cmd_keep_above` and `cmd_keep_below` to Windows so they can be
+          kept above/below other windows permanently; calling the corresponding
+          function twice removes the flag
     !!! warning !!!
         - When (re)starting, Qtile passes its state to the new process in a
           file now, where previously it passed state directly as a string. This
