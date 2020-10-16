@@ -45,16 +45,20 @@ class Max(_SimpleLayoutBase):
 
     def configure(self, client, screen_rect):
         if self.clients and client is self.clients.current_client:
+            idx = self.clients.current_index
+            order = (self.clients[idx+1:] + self.clients[:idx+1])
             client.place(
                 screen_rect.x,
                 screen_rect.y,
                 screen_rect.width,
                 screen_rect.height,
                 0,
-                None
+                None,
+                z=order.index(client)
             )
             client.unhide()
         else:
+            client.z.layout = 0
             client.hide()
 
     cmd_previous = _SimpleLayoutBase.previous

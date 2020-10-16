@@ -57,19 +57,33 @@ def test_float_next_prev_window(qtile):
 
     # focus previous windows
     assert_focused(self, "three")
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == \
+           [('one', (0, 0, 0, 0, 0)), ('two', (0, 0, 0, 0, 1)), ('three', (0, 0, 0, 0, 2))]
     self.c.group.prev_window()
     assert_focused(self, "two")
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == \
+           [('one', (0, 0, 0, 0, 0)), ('two', (0, 0, 0, 0, 1)), ('three', (0, 0, 0, 0, 2))]
     self.c.group.prev_window()
     assert_focused(self, "one")
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == \
+           [('one', (0, 0, 0, 0, 0)), ('two', (0, 0, 0, 0, 1)), ('three', (0, 0, 0, 0, 2))]
     # checking that it loops around properly
     self.c.group.prev_window()
     assert_focused(self, "three")
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == \
+           [('one', (0, 0, 0, 0, 0)), ('two', (0, 0, 0, 0, 1)), ('three', (0, 0, 0, 0, 2))]
 
     # focus next windows
     # checking that it loops around properly
     self.c.group.next_window()
     assert_focused(self, "one")
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == \
+           [('one', (0, 0, 0, 0, 0)), ('two', (0, 0, 0, 0, 1)), ('three', (0, 0, 0, 0, 2))]
     self.c.group.next_window()
     assert_focused(self, "two")
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == \
+           [('one', (0, 0, 0, 0, 0)), ('two', (0, 0, 0, 0, 1)), ('three', (0, 0, 0, 0, 2))]
     self.c.group.next_window()
     assert_focused(self, "three")
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == \
+           [('one', (0, 0, 0, 0, 0)), ('two', (0, 0, 0, 0, 1)), ('three', (0, 0, 0, 0, 2))]

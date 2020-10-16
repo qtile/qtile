@@ -55,12 +55,44 @@ def max_config(x):
     return no_xinerama(pytest.mark.parametrize("qtile", [MaxConfig], indirect=True)(x))
 
 
+class MaxLayeredConfig(Config):
+    auto_fullscreen = True
+    groups = [
+        libqtile.config.Group("a"),
+        libqtile.config.Group("b"),
+        libqtile.config.Group("c"),
+        libqtile.config.Group("d")
+    ]
+    layouts = [
+        layout.Max(only_focused=False)
+    ]
+    floating_layout = libqtile.layout.floating.Floating()
+    keys = []
+    mouse = []
+    screens = []
+
+
+def maxlayered_config(x):
+    return no_xinerama(pytest.mark.parametrize("qtile", [MaxLayeredConfig], indirect=True)(x))
+
+
 @max_config
 def test_max_simple(qtile):
     qtile.test_window("one")
     assert qtile.c.layout.info()["clients"] == ["one"]
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == [("one", (0, 0, 0, 0, 0))]
+    qtile.test_window("two")
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == [("one", (0, 0, 0, 0, 0)), ("two", (0, 0, 0, 0, 1))]
+
+
+@maxlayered_config
+def test_layered_max_simple(qtile):
+    qtile.test_window("one")
+    assert qtile.c.layout.info()["clients"] == ["one"]
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == [("one", (0, 0, 0, 0, 0))]
     qtile.test_window("two")
     assert qtile.c.layout.info()["clients"] == ["one", "two"]
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == [("one", (0, 0, 0, 0, 0)), ("two", (0, 0, 0, 0, 1))]
 
 
 @max_config
@@ -69,19 +101,62 @@ def test_max_updown(qtile):
     qtile.test_window("two")
     qtile.test_window("three")
     assert qtile.c.layout.info()["clients"] == ["one", "two", "three"]
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == \
+           [("one", (0, 0, 0, 0, 0)), ("two", (0, 0, 0, 0, 0)), ("three", (0, 0, 0, 0, 2))]
     qtile.c.layout.up()
     assert qtile.c.groups()["a"]["focus"] == "two"
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == \
+           [("one", (0, 0, 0, 0, 0)), ("two", (0, 0, 0, 0, 2)), ("three", (0, 0, 0, 0, 0))]
     qtile.c.layout.down()
     assert qtile.c.groups()["a"]["focus"] == "three"
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == \
+           [("one", (0, 0, 0, 0, 0)), ("two", (0, 0, 0, 0, 0)), ("three", (0, 0, 0, 0, 2))]
+
+
+@maxlayered_config
+def test_layered_max_updown(qtile):
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("three")
+    assert qtile.c.layout.info()["clients"] == ["one", "two", "three"]
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == \
+           [("one", (0, 0, 0, 0, 0)), ("two", (0, 0, 0, 0, 1)), ("three", (0, 0, 0, 0, 2))]
+    qtile.c.layout.up()
+    assert qtile.c.groups()["a"]["focus"] == "two"
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == \
+           [("one", (0, 0, 0, 0, 1)), ("two", (0, 0, 0, 0, 2)), ("three", (0, 0, 0, 0, 0))]
+    qtile.c.layout.up()
+    assert qtile.c.groups()["a"]["focus"] == "one"
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == \
+           [("one", (0, 0, 0, 0, 2)), ("two", (0, 0, 0, 0, 0)), ("three", (0, 0, 0, 0, 1))]
+    qtile.c.layout.down()
+    assert qtile.c.groups()["a"]["focus"] == "two"
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == \
+           [("one", (0, 0, 0, 0, 1)), ("two", (0, 0, 0, 0, 2)), ("three", (0, 0, 0, 0, 0))]
+    qtile.c.layout.down()
+    assert qtile.c.groups()["a"]["focus"] == "three"
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == \
+           [("one", (0, 0, 0, 0, 0)), ("two", (0, 0, 0, 0, 1)), ("three", (0, 0, 0, 0, 2))]
+
+
+def max_remove(qtile):
+    qtile.test_window("one")
+    two = qtile.test_window("two")
+    assert qtile.c.layout.info()["clients"] == ["one", "two"]
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == [("one", (0, 0, 0, 0, 0)), ("two", (0, 0, 0, 0, 1))]
+    qtile.kill_window(two)
+    assert qtile.c.layout.info()["clients"] == ["one"]
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == [("one", (0, 0, 0, 0, 0))]
 
 
 @max_config
 def test_max_remove(qtile):
-    qtile.test_window("one")
-    two = qtile.test_window("two")
-    assert qtile.c.layout.info()["clients"] == ["one", "two"]
-    qtile.kill_window(two)
-    assert qtile.c.layout.info()["clients"] == ["one"]
+    max_remove(qtile)
+
+
+@maxlayered_config
+def test_layered_max_remove(qtile):
+    max_remove(qtile)
 
 
 @max_config
@@ -97,6 +172,32 @@ def test_max_window_focus_cycle(qtile):
 
     # test preconditions
     assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == \
+           [('one', (0, 0, 0, 0, 0)), ('two', (0, 0, 0, 0, 0)), ('float1', (0, 0, 0, 1, 0)),
+            ('float2', (0, 0, 0, 1, 1)), ('three', (0, 0, 0, 0, 2))]
+    # last added window has focus
+    assert_focused(qtile, "three")
+
+    # assert window focus cycle, according to order in layout
+    assert_focus_path(qtile, 'float1', 'float2', 'one', 'two', 'three')
+
+
+@maxlayered_config
+def test_layered_max_window_focus_cycle(qtile):
+    # setup 3 tiled and two floating clients
+    qtile.test_window("one")
+    qtile.test_window("two")
+    qtile.test_window("float1")
+    qtile.c.window.toggle_floating()
+    qtile.test_window("float2")
+    qtile.c.window.toggle_floating()
+    qtile.test_window("three")
+
+    # test preconditions
+    assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
+    assert [(w["name"], w["z"]) for w in qtile.c.windows()] == \
+           [('one', (0, 0, 0, 0, 0)), ('two', (0, 0, 0, 0, 1)), ('float1', (0, 0, 0, 1, 0)),
+            ('float2', (0, 0, 0, 1, 1)), ('three', (0, 0, 0, 0, 2))]
     # last added window has focus
     assert_focused(qtile, "three")
 

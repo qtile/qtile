@@ -191,18 +191,20 @@ class Floating(Layout):
         return True
 
     def compute_client_position(self, client, screen_rect):
-        """ recompute client.x and client.y, returning whether or not to place
-        this client above other windows or not """
+        """ recompute client.x, client.y and, if a parent window exists,
+        client.z """
         above = True
 
+        transient_for = client.window.get_wm_transient_for()
+        win = client.group.qtile.windows_map.get(transient_for)
+        if win is not None:
+            client.z.layout = win.z.layout + 1
         if client.has_user_set_position() and not self.on_screen(client, screen_rect):
             # move to screen
             client.x = screen_rect.x + client.x
             client.y = screen_rect.y + client.y
         if not client.has_user_set_position() or not self.on_screen(client, screen_rect):
             # client has not been properly placed before or it is off screen
-            transient_for = client.window.get_wm_transient_for()
-            win = client.group.qtile.windows_map.get(transient_for)
             if win is not None:
                 # if transient for a window, place in the center of the window
                 center_x = win.x + win.width / 2
@@ -273,10 +275,12 @@ class Floating(Layout):
                 bw,
                 bc,
                 above,
+                z=None
             )
         client.unhide()
 
     def add(self, client):
+        client.z.layout = max([c.z.layout + 1 for c in self.clients], default=0)
         self.clients.append(client)
         self.focused = client
 
