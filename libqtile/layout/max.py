@@ -31,7 +31,8 @@ class Max(_SimpleLayoutBase):
     commands to switch to next and previous windows in the stack.
     """
 
-    defaults = [("name", "max", "Name of this layout.")]
+    defaults = [("name", "max", "Name of this layout."),
+                ("only_focused", True, "Only draw the focused window")]
 
     def __init__(self, **config):
         super().__init__(**config)
@@ -44,7 +45,7 @@ class Max(_SimpleLayoutBase):
         return super().add(client, 1)
 
     def configure(self, client, screen_rect):
-        if self.clients and client is self.clients.current_client:
+        if not self.only_focused or (self.clients and client is self.clients.current_client):
             idx = self.clients.current_index
             order = (self.clients[idx+1:] + self.clients[:idx+1])
             client.place(
