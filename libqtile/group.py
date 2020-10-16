@@ -30,6 +30,7 @@ import contextlib
 
 import xcffib
 import xcffib.xproto
+from xcffib.xproto import StackMode
 
 from libqtile import hook, utils, window
 from libqtile.command_object import CommandObject
@@ -60,6 +61,7 @@ class _Group(CommandObject):
         self.focus_history = []
         self.screen = None
         self.current_layout = None
+        self._previous_layering = []
 
     def _configure(self, layouts, floating_layout, qtile):
         self.screen = None
@@ -90,16 +92,37 @@ class _Group(CommandObject):
             pass
         self.focus_history.append(win)
 
-    def _remove_from_focus_history(self, win):
-        try:
-            index = self.focus_history.index(win)
-        except ValueError:
-            # win has never received focus
-            return False
+    def _order_clients(self):
+        """
+        Orders our clients by their layouts z-value, then by the clients z-values.
+        If z-values are equal, the window ids are used for reproducibility.
+        The z-values themselves are managed by the layouts.
+        """
+        return sorted(
+            [w for w in self.windows if not w.minimized],
+            key=lambda c: (c.z, c.window.wid)
+        )
+
+    def assure_correct_layer(self, win):
+        """
+        Make sure that the window is in its designated z-position by moving other
+        windows around as necessary.
+        """
+        if win is None or win.minimized:
+            return
+
+        windows = self._order_clients()
+        if self._previous_layering and self._previous_layering == windows:
+            return
+        self._previous_layering = windows
+
+        index = windows.index(win)
+        if index > len(windows) // 2:
+            for w in windows[index:]:
+                w.window.configure(stackmode=StackMode.Above)
         else:
-            del self.focus_history[index]
-            # return True if win was the last item (i.e. it was current_window)
-            return index == len(self.focus_history)
+            for w in reversed(windows[:index+1]):
+                w.window.configure(stackmode=StackMode.Below)
 
     @property
     def layout(self):
@@ -141,19 +164,17 @@ class _Group(CommandObject):
         self.use_layout((self.current_layout - 1) % (len(self.layouts)))
 
     def layout_all(self, warp=False):
-        """Layout the floating layer, then the current layout.
+        """Layout the normal layer, then the floating layer on top.
 
         If we have have a current_window give it focus, optionally moving warp
         to it.
         """
         if self.screen and self.windows:
             with self.disable_mask(xcffib.xproto.EventMask.EnterWindow):
-                normal = [x for x in self.windows if not x.floating]
-                floating = [
-                    x for x in self.windows
-                    if x.floating and not x.minimized
-                ]
                 screen_rect = self.screen.get_rect()
+                windows = self._order_clients()
+                normal = [w for w in windows if not w.floating and not w.fullscreen]
+                floating = [w for w in windows if w.floating or w.fullscreen]
                 if normal:
                     try:
                         self.layout.layout(normal, screen_rect)
@@ -165,6 +186,7 @@ class _Group(CommandObject):
                 if self.current_window and \
                         self.screen == self.qtile.current_screen:
                     self.current_window.focus(warp)
+                self.assure_correct_layer(self.current_window)
 
     def _set_screen(self, screen):
         """Set this group's screen to screen"""
@@ -271,8 +293,10 @@ class _Group(CommandObject):
             self.focus(win, warp=True, force=force)
 
     def remove(self, win, force=False):
+        hadfocus = (len(self.focus_history) > 0 and self.focus_history[-1] == win)
+        if win in self.focus_history:
+            self.focus_history.remove(win)
         self.windows.remove(win)
-        hadfocus = self._remove_from_focus_history(win)
         win.group = None
 
         if win.floating:
