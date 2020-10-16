@@ -43,6 +43,11 @@ Qtile X.X.X, released XXXX-XX-XX:
           AND-semantics, allowing for more complex and specific rules
         - Python 3.9 support
         - switch to Github Actions for CI
+        - added `cmd_keep_above` and `cmd_keep_below` to Windows so they can be
+          kept above/below other windows permanently; calling the functions
+          twice removes the flag
+        - added `cmd_raise_client` and `cmd_lower_client` to Windows so they
+          can be shifted along z 
     !!! warning !!!
         - When (re)starting, Qtile passes its state to the new process in a
           file now, where previously it passed state directly as a string. This

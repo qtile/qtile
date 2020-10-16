@@ -1351,6 +1351,24 @@ class Window(_Window):
         else:
             self._reconfigure_floating()  # automatically above
 
+    def cmd_keep_above(self):
+        if self.window.net_wm_state_above:
+            self.qtile.unpin(self.window.wid)
+        else:
+            self.qtile.pin(self.window.wid)
+
+    def cmd_keep_below(self):
+        if self.window.net_wm_state_below:
+            self.qtile.unpin(self.window.wid)
+        else:
+            self.qtile.pin(self.window.wid, up=False)
+
+    def cmd_raise_client(self):
+        self.qtile.change_layer(self.window.wid)
+
+    def cmd_lower_client(self):
+        self.qtile.change_layer(self.window.wid, up=False)
+
     def cmd_match(self, *args, **kwargs):
         return self.match(*args, **kwargs)
 
