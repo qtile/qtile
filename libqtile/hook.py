@@ -87,6 +87,24 @@ class Subscribe:
         """
         return self._subscribe("startup_complete", func)
 
+    def shutdown(self, func):
+        """Called before qtile is shutdown
+
+        **Arguments**
+
+        None
+        """
+        return self._subscribe("shutdown", func)
+
+    def restart(self, func):
+        """Called before qtile is restarted
+
+        **Arguments**
+
+        None
+        """
+        return self._subscribe("restart", func)
+
     def setgroup(self, func):
         """Called when group is changed
 
