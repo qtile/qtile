@@ -28,20 +28,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import warnings
+
+from libqtile.config import Match
 from libqtile.layout.base import Layout
-
-DEFAULT_FLOAT_WM_TYPES = set([
-    'utility',
-    'notification',
-    'toolbar',
-    'splash',
-    'dialog',
-])
-
-DEFAULT_FLOAT_RULES = [
-    {"role": "About"},
-    {"wmclass": "file_progress"},
-]
+from libqtile.log_utils import logger
 
 
 class Floating(Layout):
@@ -55,28 +46,23 @@ class Floating(Layout):
         ("max_border_width", 0, "Border width for maximize."),
         ("fullscreen_border_width", 0, "Border width for fullscreen."),
         ("name", "floating", "Name of this layout."),
-        (
-            "auto_float_types",
-            DEFAULT_FLOAT_WM_TYPES,
-            "default wm types to automatically float"
-        ),
     ]
 
     def __init__(self, float_rules=None, no_reposition_match=None, **config):
         """
         If you have certain apps that you always want to float you can provide
-        ``float_rules`` to do so. ``float_rules`` is a list of
-        dictionaries containing some or all of the keys::
+        ``float_rules`` to do so. ``float_rules`` are a list of
+        Match objects::
 
-            {'wname': WM_NAME, 'wmclass': WM_CLASS, 'role': WM_WINDOW_ROLE}
+            from libqtile.config import Match
+            Match(title=WM_NAME, wm_class=WM_CLASS, role=WM_WINDOW_ROLE)
 
-        The keys must be specified as above.  You only need one, but
-        you need to provide the value for it.  When a new window is
-        opened it's ``match`` method is called with each of these
-        rules.  If one matches, the window will float.  The following
-        will float gimp and skype::
+        When a new window is opened its ``match`` method is called with each of
+        these rules.  If one matches, the window will float.  The following
+        will float GIMP and Skype::
 
-            float_rules=[dict(wmclass="skype"), dict(wmclass="gimp")]
+            from libqtile.config import Match
+            float_rules=[Match(wm_class="skype"), Match(wm_class="gimp")]
 
         Specify these in the ``floating_layout`` in your config.
 
@@ -90,18 +76,34 @@ class Floating(Layout):
         self.clients = []
         self.focused = None
         self.group = None
-        self.float_rules = float_rules or DEFAULT_FLOAT_RULES
         self.no_reposition_match = no_reposition_match
+        self.float_rules = float_rules or []
+
+        warned = False
+        for index, rule in enumerate(self.float_rules):
+            if isinstance(rule, Match):
+                continue
+
+            if not warned:
+                message = "Non-config.Match objects in float_rules are " \
+                          "deprecated"
+                warnings.warn(message, DeprecationWarning)
+                logger.warning(message)
+                warned = True
+
+            match = Match(
+                title=rule.get("wname"), wm_class=rule.get("wmclass"),
+                role=rule.get("role"), wm_type=rule.get("wm_type"),
+                wm_instance_class=rule.get("wm_instance_class"),
+                net_wm_pid=rule.get("net_wm_pid"))
+
+            self.float_rules[index] = match
+
         self.add_defaults(Floating.defaults)
 
     def match(self, win):
         """Used to default float some windows"""
-        if win.window.get_wm_type() in self.auto_float_types:
-            return True
-        for rule_dict in self.float_rules:
-            if win.match(**rule_dict):
-                return True
-        return False
+        return any(win.match(rule) for rule in self.float_rules)
 
     def find_clients(self, group):
         """Find all clients belonging to a given group"""

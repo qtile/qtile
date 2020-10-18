@@ -1053,38 +1053,18 @@ class Window(_Window):
                 raise CommandError('No such screen: %d' % index)
         self.togroup(screen.group.name)
 
-    def match(self, wname=None, wmclass=None, role=None):
+    def match(self, match):
         """Match window against given attributes.
 
         Parameters
         ==========
-        wname :
-            matches against the window name or title, that is, either
-            ``_NET_WM_VISIBLE_NAME``, ``_NET_WM_NAME``, ``WM_NAME``.
-        wmclass :
-            matches against any of the two values in the ``WM_CLASS`` property
-        role :
-            matches against the ``WM_WINDOW_ROLE`` property
+        match:
+            a config.Match object
         """
-        if not (wname or wmclass or role):
-            raise TypeError(
-                "Either a name, a wmclass or a role must be specified"
-            )
-        if wname and wname == self.name:
-            return True
-
         try:
-            cliclass = self.window.get_wm_class()
-            if wmclass and cliclass and wmclass in cliclass:
-                return True
-
-            clirole = self.window.get_wm_window_role()
-            if role and clirole and role == clirole:
-                return True
+            return match.compare(self)
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             return False
-
-        return False
 
     def handle_EnterNotify(self, e):  # noqa: N802
         hook.fire("client_mouse_enter", self)
