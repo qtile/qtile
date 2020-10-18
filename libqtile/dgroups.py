@@ -129,7 +129,7 @@ class DGroups:
                     spawns = group.spawn
                 for spawn in spawns:
                     pid = self.qtile.cmd_spawn(spawn)
-                    self.add_rule(Rule(Match(net_wm_pid=[pid]), group.name))
+                    self.add_rule(Rule(Match(net_wm_pid=pid), group.name))
 
     def _setup_hooks(self):
         libqtile.hook.subscribe.addgroup(self._addgroup)

@@ -42,7 +42,7 @@ class ScratchPadBaseConfic(Config):
         libqtile.config.Group("b"),
     ]
     layouts = [libqtile.layout.max.Max()]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
 

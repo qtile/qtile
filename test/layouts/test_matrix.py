@@ -45,7 +45,7 @@ class MatrixConfig(Config):
     layouts = [
         layout.Matrix(columns=2)
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []

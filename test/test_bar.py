@@ -46,7 +46,7 @@ class GBConfig(libqtile.confreader.Config):
         libqtile.config.Group("Pppy")
     ]
     layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     screens = [
         libqtile.config.Screen(
             top=libqtile.bar.Bar(
@@ -189,7 +189,7 @@ class GeomConf(libqtile.confreader.Config):
         libqtile.config.Group("d")
     ]
     layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     screens = [
         libqtile.config.Screen(
             top=libqtile.bar.Bar([], 10),
@@ -316,7 +316,7 @@ class IncompatibleWidgetConf(libqtile.confreader.Config):
     mouse = []
     groups = [libqtile.config.Group("a")]
     layouts = [libqtile.layout.stack.Stack(num_stacks=1)]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     screens = [
         libqtile.config.Screen(
             left=libqtile.bar.Bar(
