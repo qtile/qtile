@@ -48,7 +48,7 @@ class Floating(Layout):
         ("name", "floating", "Name of this layout."),
     ]
 
-    def __init__(self, float_rules=None, no_reposition_match=None, **config):
+    def __init__(self, float_rules=None, no_reposition_rules=None, **config):
         """
         If you have certain apps that you always want to float you can provide
         ``float_rules`` to do so. ``float_rules`` are a list of
@@ -68,7 +68,7 @@ class Floating(Layout):
 
         Floating layout will try to center most of floating windows by default,
         but if you don't want this to happen for certain windows that are
-        centered by mistake, you can use ``no_reposition_match`` option to
+        centered by mistake, you can use ``no_reposition_rules`` option to
         specify them and layout will rely on windows to position themselves in
         correct location on the screen.
         """
@@ -76,7 +76,6 @@ class Floating(Layout):
         self.clients = []
         self.focused = None
         self.group = None
-        self.no_reposition_match = no_reposition_match
         self.float_rules = float_rules or []
 
         warned = False
@@ -99,6 +98,7 @@ class Floating(Layout):
 
             self.float_rules[index] = match
 
+        self.no_reposition_rules = no_reposition_rules or []
         self.add_defaults(Floating.defaults)
 
     def match(self, win):
@@ -239,7 +239,7 @@ class Floating(Layout):
 
         # ok, it's not java and the window itself didn't position it, but users
         # may still have asked us not to mess with it
-        if self.no_reposition_match is not None and self.no_reposition_match.compare(client):
+        if any(m.compare(client) for m in self.no_reposition_rules):
             client.user_placed_window_setup(bc, bw)
             return
 
