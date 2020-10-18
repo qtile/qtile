@@ -22,10 +22,10 @@
 
 import pytest
 
-from libqtile import config, ipc
+from libqtile import config, ipc, resources
 from libqtile.command_interface import IPCCommandInterface
 from libqtile.confreader import Config
-from libqtile.layout import Max, floating
+from libqtile.layout import Max
 from libqtile.sh import QSh
 
 
@@ -39,7 +39,7 @@ class ShConfig(Config):
     layouts = [
         Max(),
     ]
-    floating_layout = floating.Floating()
+    floating_layout = resources.default_config.floating_layout
     screens = [
         config.Screen()
     ]

@@ -44,17 +44,18 @@ class SliceConfig(Config):
     groups = [
         libqtile.config.Group("a"),
     ]
+
     layouts = [
-        layout.Slice(side='left', width=200, match=Match(title=['slice']),
+        layout.Slice(side='left', width=200, match=Match(title='slice'),
                      fallback=layout.Stack(num_stacks=1, border_width=0)),
-        layout.Slice(side='right', width=200, match=Match(title=['slice']),
+        layout.Slice(side='right', width=200, match=Match(title='slice'),
                      fallback=layout.Stack(num_stacks=1, border_width=0)),
-        layout.Slice(side='top', width=200, match=Match(title=['slice']),
+        layout.Slice(side='top', width=200, match=Match(title='slice'),
                      fallback=layout.Stack(num_stacks=1, border_width=0)),
-        layout.Slice(side='bottom', width=200, match=Match(title=['slice']),
+        layout.Slice(side='bottom', width=200, match=Match(title='slice'),
                      fallback=layout.Stack(num_stacks=1, border_width=0)),
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []

@@ -41,6 +41,7 @@ import libqtile.widget
 from libqtile.backend.x11 import xcbq
 from libqtile.command_client import SelectError
 from libqtile.command_interface import CommandError, CommandException
+from libqtile.config import Match
 from libqtile.confreader import Config
 from libqtile.lazy import lazy
 from test.conftest import BareConfig, Retry, no_xinerama
@@ -61,7 +62,7 @@ class ManagerConfig(Config):
         libqtile.layout.max.Max()
     ]
     floating_layout = libqtile.layout.floating.Floating(
-        float_rules=[dict(wmclass="xclock")])
+        float_rules=[Match(wm_class='xclock')])
     keys = [
         libqtile.config.Key(
             ["control"],
@@ -232,7 +233,7 @@ class _ChordsConfig(Config):
     layouts = [
         libqtile.layout.max.Max()
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = [
         libqtile.config.Key(
             [],
@@ -539,8 +540,8 @@ def test_match(qtile):
     self = qtile
 
     self.test_xeyes()
-    assert self.c.window.match(wname="xeyes")
-    assert not self.c.window.match(wname="nonexistent")
+    assert self.c.window.info()['name'] == 'xeyes'
+    assert not self.c.window.info()['name'] == 'nonexistent'
 
 
 @manager_config
@@ -1067,7 +1068,7 @@ class _Config(Config):
         libqtile.layout.stack.Stack(num_stacks=1),
         libqtile.layout.stack.Stack(num_stacks=2)
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = [
         libqtile.config.Key(
             ["control"],

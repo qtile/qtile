@@ -42,7 +42,7 @@ class AllLayoutsConfig(Config):
         libqtile.config.Group("d"),
     ]
     follow_mouse_focus = False
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     screens = []
 
     @staticmethod

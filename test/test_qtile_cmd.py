@@ -44,7 +44,7 @@ class ServerConfig(Config):
         libqtile.layout.Stack(num_stacks=2),
         libqtile.layout.Stack(num_stacks=3),
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(

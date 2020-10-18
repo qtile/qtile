@@ -39,7 +39,7 @@ class MonadTallConfig(Config):
     layouts = [
         layout.MonadTall()
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
@@ -58,7 +58,7 @@ class MonadTallMarginsConfig(Config):
     layouts = [
         layout.MonadTall(margin=4)
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
@@ -77,7 +77,7 @@ class MonadWideConfig(Config):
     layouts = [
         layout.MonadWide()
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
@@ -96,7 +96,7 @@ class MonadWideMarginsConfig(Config):
     layouts = [
         layout.MonadWide(margin=4)
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []

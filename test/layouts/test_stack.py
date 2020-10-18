@@ -46,7 +46,7 @@ class StackConfig(Config):
         layout.Stack(num_stacks=2),
         layout.Stack(num_stacks=1),
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []

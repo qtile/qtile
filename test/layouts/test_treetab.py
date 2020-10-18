@@ -38,7 +38,7 @@ class TreeTabConfig(Config):
     layouts = [
         layout.TreeTab(sections=["Foo", "Bar"]),
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
