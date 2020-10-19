@@ -274,6 +274,8 @@ class Floating(Layout):
 
     def add(self, client):
         client.z.layout = max([c.z.layout + 1 for c in self.clients], default=0)
+        if client.group.floating_layout == self:
+            client.z.group = 1  # make sure we are no "manual" floating layout, since that shares its clients
         self.clients.append(client)
         self.focused = client
 
@@ -281,6 +283,7 @@ class Floating(Layout):
         if client not in self.clients:
             return
 
+        client.z.group = 0
         next_focus = self.focus_next(client)
         if client is self.focused:
             self.blur()

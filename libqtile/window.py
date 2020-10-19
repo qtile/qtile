@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 import array
+import collections.abc
 import contextlib
 import inspect
 import traceback
@@ -173,6 +174,25 @@ class _Z():
 
     def get(self):
         return self.override, self.wm, self.interactive, self.group, self.layout
+
+    def set(self, values):
+        if values is None:
+            return
+
+        # if we are given a short tuple (e.g. (1, 2)) we will start setting the lower priority values first
+        if isinstance(values, collections.abc.Iterable):
+            if len(values) > 0:
+                self.layout = values[-1]
+            if len(values) > 1:
+                self.group = values[-2]
+            if len(values) > 2:
+                self.interactive = values[-3]
+            if len(values) > 3:
+                self.wm = values[-4]
+            if len(values) > 4:
+                self.override = values[-5]
+        else:  # let's assume __lt__ and __eq__ are implemented
+            self.layout = values
 
     def __str__(self):
         return str(self.get())
@@ -529,8 +549,7 @@ class _Window(CommandObject):
 
         self.x = x
         self.y = y
-        if z is not None:
-            self.z.layout = z
+        self.z.set(z)
         self.width = width
         self.height = height
 
@@ -875,7 +894,6 @@ class Window(_Window):
 
     @floating.setter
     def floating(self, do_float):
-        self.z.group = 1 if do_float else 0
         if do_float and self._float_state == NOT_FLOATING:
             if self.group and self.group.screen:
                 screen = self.group.screen
@@ -1061,7 +1079,6 @@ class Window(_Window):
                 z=None,
             )
         if self._float_state != new_float_state:
-            self.z.group = 1
             self._float_state = new_float_state
             if self.group:  # may be not, if it's called from hook
                 self.group.mark_floating(self, True)
@@ -1414,21 +1431,21 @@ class Window(_Window):
         if not self.floating:
             self._reconfigure_floating()  # automatically above
         elif self.group:
-            self.z.layout = max([c.z.layout + 1 for c in self.group.floating_layout.clients], default=0)
+            self.z.layout = max([c.z.layout + 1 for c in self.group.floating_layout.clients])
         if self.group:
             self.group.assure_correct_layer(self)
         else:
             self.window.configure(stackmode=StackMode.Above)
 
     def cmd_keep_above(self):
-        if self.z.interactive == ABOVE_LAYER:
+        if self.z.interactive != NORMAL_LAYER:
             self.z.interactive = NORMAL_LAYER
         else:
             self.z.interactive = ABOVE_LAYER
         self.group.assure_correct_layer(self)
 
     def cmd_keep_below(self):
-        if self.z.interactive == BELOW_LAYER:
+        if self.z.interactive != NORMAL_LAYER:
             self.z.interactive = NORMAL_LAYER
         else:
             self.z.interactive = BELOW_LAYER
