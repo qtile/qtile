@@ -117,10 +117,10 @@ class _Group(CommandObject):
         self._previous_layering = windows
 
         index = windows.index(win)
-        if index > len(windows) // 2:
+        if True:  # index > len(windows) // 2:
             for w in windows[index:]:
                 w.window.configure(stackmode=StackMode.Above)
-        else:
+        else:  # right now this can't be used, since we wouldn't be able to draw over the bar etc.
             for w in reversed(windows[:index+1]):
                 w.window.configure(stackmode=StackMode.Below)
 

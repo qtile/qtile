@@ -249,6 +249,7 @@ class ScratchPad(group._Group):
         """
         client_pid = client.window.get_net_wm_pid()
         if client_pid in self._spawned:
+            client.z.override = window.ABOVE_LAYER
             name = self._spawned.pop(client_pid)
             if not self._spawned:
                 hook.unsubscribe.client_new(self.on_client_new)
@@ -285,6 +286,7 @@ class ScratchPad(group._Group):
         for name, dd in self.dropdowns.items():
             if not dd.window.floating:
                 if dd.window.group is not self:
+                    dd.window.z.override = 0
                     dd.unsubscribe()
                     del self.dropdowns[name]
                     break
