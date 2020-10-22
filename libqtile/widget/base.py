@@ -229,7 +229,7 @@ class _Widget(CommandObject, configurable.Configurable):
     def button_press(self, x, y, button):
         name = 'Button{0}'.format(button)
         if name in self.mouse_callbacks:
-            self.mouse_callbacks[name]()
+            self.mouse_callbacks[name](self.qtile)
 
     def button_release(self, x, y, button):
         pass
