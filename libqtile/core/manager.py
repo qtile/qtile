@@ -276,12 +276,14 @@ class Qtile(CommandObject):
         # stop gets called in a variety of ways, including from restart().
         # let's only do a real shutdown if we're not about to re-exec.
         if not self._restart:
+            hook.fire("shutdown")
             self.graceful_shutdown()
 
         logger.debug('Stopping qtile')
         self._stopped_event.set()
 
     def restart(self):
+        hook.fire("restart")
         argv = [sys.executable] + sys.argv
         if '--no-spawn' not in argv:
             argv.append('--no-spawn')
