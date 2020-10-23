@@ -4,6 +4,8 @@ qtile X.X.X, released XXXX-XX-XX:
 	- property "masterWindows" of Tile layout renamed to master_length
 	- properties wname, wmclass and role of Slice-layout replaced by Match-
 	  type property "match"
+    * features
+	- new restart and shutdown hooks
 
 qtile 0.16.1, released 2020-08-11:
     !!! Config breakage !!!
