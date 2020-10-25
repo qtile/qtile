@@ -216,11 +216,11 @@ class Floating(Layout):
             y = center_y - client.height / 2
 
             # don't go off the right...
-            x = min(x, screen_rect.x + screen_rect.width)
+            x = min(x, screen_rect.x + screen_rect.width - client.width)
             # or left...
             x = max(x, screen_rect.x)
             # or bottom...
-            y = min(y, screen_rect.y + screen_rect.height)
+            y = min(y, screen_rect.y + screen_rect.height - client.height)
             # or top
             y = max(y, screen_rect.y)
 
