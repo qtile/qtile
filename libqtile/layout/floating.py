@@ -179,35 +179,53 @@ class Floating(Layout):
     def blur(self):
         self.focused = None
 
+    def on_screen(self, client, screen_rect):
+        if client.x < screen_rect.x:  # client's left edge
+            return False
+        if screen_rect.x + screen_rect.width < client.x + client.width:  # right
+            return False
+        if client.y < screen_rect.y:  # top
+            return False
+        if screen_rect.y + screen_rect.width < client.y + client.height:  # bottom
+            return False
+        return True
+
     def compute_client_position(self, client, screen_rect):
         """ recompute client.x and client.y, returning whether or not to place
         this client above other windows or not """
-        above = False
-        transient_for = client.window.get_wm_transient_for()
-        win = client.group.qtile.windows_map.get(transient_for)
-        if win is not None:
-            # if transient for a window, place in the center of the window
-            center_x = win.x + win.width / 2
-            center_y = win.y + win.height / 2
-        else:
-            center_x = screen_rect.x + screen_rect.width / 2
-            center_y = screen_rect.y + screen_rect.height / 2
-            above = True
+        above = True
 
-        x = center_x - client.width / 2
-        y = center_y - client.height / 2
+        if client.has_user_set_position() and not self.on_screen(client, screen_rect):
+            # move to screen
+            client.x = screen_rect.x + client.x
+            client.y = screen_rect.y + client.y
+        if not client.has_user_set_position() or not self.on_screen(client, screen_rect):
+            # client has not been properly placed before or it is off screen
+            transient_for = client.window.get_wm_transient_for()
+            win = client.group.qtile.windows_map.get(transient_for)
+            if win is not None:
+                # if transient for a window, place in the center of the window
+                center_x = win.x + win.width / 2
+                center_y = win.y + win.height / 2
+                above = False
+            else:
+                center_x = screen_rect.x + screen_rect.width / 2
+                center_y = screen_rect.y + screen_rect.height / 2
 
-        # don't go off the right...
-        x = min(x, screen_rect.x + screen_rect.width)
-        # or left...
-        x = max(x, screen_rect.x)
-        # or bottom...
-        y = min(y, screen_rect.y + screen_rect.height)
-        # or top
-        y = max(y, screen_rect.y)
+            x = center_x - client.width / 2
+            y = center_y - client.height / 2
 
-        client.x = int(round(x))
-        client.y = int(round(y))
+            # don't go off the right...
+            x = min(x, screen_rect.x + screen_rect.width)
+            # or left...
+            x = max(x, screen_rect.x)
+            # or bottom...
+            y = min(y, screen_rect.y + screen_rect.height)
+            # or top
+            y = max(y, screen_rect.y)
+
+            client.x = int(round(x))
+            client.y = int(round(y))
         return above
 
     def configure(self, client, screen_rect):
@@ -231,14 +249,7 @@ class Floating(Layout):
             client.paint_borders(bc, bw)
             client.cmd_bring_to_front()
 
-        # similar to above but the X11 version, the client may have already
-        # placed itself. let's respect that
-        elif client.has_user_set_position():
-            client.paint_borders(bc, bw)
-            client.cmd_bring_to_front()
-
-        # ok, it's not java and the window itself didn't position it, but users
-        # may still have asked us not to mess with it
+        # alternatively, users may have asked us explicitly to leave the client alone
         elif any(m.compare(client) for m in self.no_reposition_rules):
             client.paint_borders(bc, bw)
             client.cmd_bring_to_front()
