@@ -4,20 +4,20 @@ qtile X.X.X, released XXXX-XX-XX:
 	- property "masterWindows" of Tile layout renamed to master_length
 	- properties wname, wmclass and role of Slice-layout replaced by Match-
 	  type property "match"
-        - rules specified in `layout.Floating`'s `float_rules` are now evaluated with
-          AND-semantics instead of OR-semantics, i.e. if you specify 2 different
-          property rules, both have to match
-        - check the new `float_rules` for `floating_layout` in the default config and
-          extend your own rules appropriately: some non-configurable auto-floating rules
-          were made explicit and added to the default config
-        - using `dict`s for `layout.Floating`'s `float_rules` is now deprecated, please
-          use `config.Match` objects instead
-        - `no_reposition_match` in `layout.Floating` has been removed; use the list of
-          `config.Match`-objects `no_reposition_rules` instead
+	- rules specified in `layout.Floating`'s `float_rules` are now evaluated with
+	  AND-semantics instead of OR-semantics, i.e. if you specify 2 different
+	  property rules, both have to match
+	- check the new `float_rules` for `floating_layout` in the default config and
+	  extend your own rules appropriately: some non-configurable auto-floating rules
+	  were made explicit and added to the default config
+	- using `dict`s for `layout.Floating`'s `float_rules` is now deprecated, please
+	  use `config.Match` objects instead
+	- `no_reposition_match` in `layout.Floating` has been removed; use the list of
+	  `config.Match`-objects `no_reposition_rules` instead
     * features
 	- new restart and shutdown hooks
-        - rules specified in `layout.Floating`'s `float_rules` are now evaluated with
-          AND-semantics, allowing for more complex and specific rules
+	- rules specified in `layout.Floating`'s `float_rules` are now evaluated with
+	  AND-semantics, allowing for more complex and specific rules
 
 qtile 0.16.1, released 2020-08-11:
     !!! Config breakage !!!
