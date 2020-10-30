@@ -2,8 +2,7 @@
 Installing on Funtoo
 ====================
 
-Latest versions of Qtile are available on Funtoo with Python 2.7, 3.4, and 3.5
-implementations. To install it, run:
+Latest versions of Qtile are available on Funtoo. To install it, run:
 
 .. code-block:: bash
 
