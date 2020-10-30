@@ -644,15 +644,15 @@ class Match:
 
 
 class Rule:
-    """How to act on a Match
+    """How to act on a match
 
-    A Rule contains a Match object, and a specification about what to do when
-    that object is matched.
+    A Rule contains a list of Match objects, and a specification about what to
+    do when any of them is matched.
 
     Parameters
     ==========
     match :
-        ``Match`` object associated with this ``Rule``
+        ``Match`` object or a list of such associated with this ``Rule``
     float :
         auto float this window?
     intrusive :
@@ -662,18 +662,21 @@ class Rule:
     """
     def __init__(self, match, group=None, float=False, intrusive=False,
                  break_on_match=True):
-        self.match = match
+        if isinstance(match, Match):
+            self.matches = [match]
+        else:
+            self.matches = match
         self.group = group
         self.float = float
         self.intrusive = intrusive
         self.break_on_match = break_on_match
 
     def matches(self, w):
-        return self.match.compare(w)
+        return any(w.match(m) for m in self.matches)
 
     def __repr__(self):
         actions = utils.describe_attributes(self, ['group', 'float', 'intrusive', 'break_on_match'])
-        return '<Rule match=%r actions=(%s)>' % (self.match, actions)
+        return '<Rule match=%r actions=(%s)>' % (self.matches, actions)
 
 
 class DropDown(configurable.Configurable):
