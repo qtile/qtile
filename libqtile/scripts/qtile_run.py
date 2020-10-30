@@ -77,7 +77,7 @@ def main() -> None:
     root = command_graph.CommandGraphRoot()
 
     proc = subprocess.Popen(opts.cmd)
-    match_args = {"net_wm_pid": [proc.pid]}
+    match_args = {"net_wm_pid": proc.pid}
     rule_args = {"float": opts.float, "intrusive": opts.intrusive,
                  "group": opts.group, "break_on_match": not opts.dont_break}
 

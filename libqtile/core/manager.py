@@ -1489,14 +1489,14 @@ class Qtile(CommandObject):
         rule_args :
             config.Rule arguments
         min_priorty :
-            If the rule is added with minimum prioriry (last) (default: False)
+            If the rule is added with minimum priority (last) (default: False)
         """
         if not self.dgroups:
             logger.warning('No dgroups created')
             return
 
         match = Match(**match_args)
-        rule = Rule(match, **rule_args)
+        rule = Rule([match], **rule_args)
         return self.dgroups.add_rule(rule, min_priorty)
 
     def cmd_remove_rule(self, rule_id):
