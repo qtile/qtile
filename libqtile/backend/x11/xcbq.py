@@ -809,7 +809,7 @@ class Connection:
         self.atoms = AtomCache(self)
 
         self.code_to_syms = {}
-        self.first_sym_to_code = None
+        self.sym_to_codes = None
         self.refresh_keymap()
 
         self.modmap = None
@@ -830,12 +830,17 @@ class Connection:
             self.code_to_syms[first + i] = \
                 q.keysyms[i * q.keysyms_per_keycode:(i + 1) * q.keysyms_per_keycode]
 
-        first_sym_to_code = {}
+        sym_to_codes = {}
         for k, s in self.code_to_syms.items():
-            if s[0] and not s[0] in first_sym_to_code:
-                first_sym_to_code[s[0]] = k
+            for sym in s:
+                if sym == 0:
+                    continue
+                if sym not in sym_to_codes:
+                    sym_to_codes[sym] = [k]
+                elif k not in sym_to_codes[sym]:
+                    sym_to_codes[sym].append(k)
 
-        self.first_sym_to_code = first_sym_to_code
+        self.sym_to_codes = sym_to_codes
 
     def refresh_modmap(self):
         reply = self.conn.core.GetModifierMapping().reply()
@@ -854,7 +859,7 @@ class Connection:
         return None
 
     def keysym_to_keycode(self, keysym):
-        return self.first_sym_to_code.get(keysym, 0)
+        return self.sym_to_codes.get(keysym, [0])
 
     def keycode_to_keysym(self, keycode, modifier):
         if keycode >= len(self.code_to_syms) or \

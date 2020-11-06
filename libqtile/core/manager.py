@@ -1135,7 +1135,7 @@ class Qtile(CommandObject):
             pass
 
         d = DummyEv()
-        d.detail = self.conn.first_sym_to_code[keysym]
+        d.detail = self.conn.keysym_to_keycode(keysym)[0]
         d.state = modmasks
         self.core.handle_KeyPress(d)
 

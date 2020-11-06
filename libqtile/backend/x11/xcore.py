@@ -126,7 +126,7 @@ class XCore(base.Core):
         self.qtile = None  # type: Optional[Qtile]
         self._painter = None
 
-        numlock_code = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
+        numlock_code = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])[0]
         self._numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(numlock_code), 0)
         self._valid_mask = ~(self._numlock_mask | xcbq.ModMasks["lock"])
 
@@ -396,9 +396,16 @@ class XCore(base.Core):
     def grab_key(self, key: config.Key) -> Tuple[int, int]:
         """Map the key to receive events on it"""
         keysym, modmask = self.lookup_key(key)
-        code = self.conn.keysym_to_keycode(keysym)
+        codes = self.conn.keysym_to_keycode(keysym)
 
-        if code != 0:
+        for code in codes:
+            if code == 0:
+                logger.warning(
+                    "Keysym could not be mapped: {keysym}, mask: {modmask}".format(
+                        keysym=hex(keysym), modmask=modmask
+                    )
+                )
+                continue
             for amask in self._auto_modmasks():
                 self.conn.conn.core.GrabKey(
                     True,
@@ -408,22 +415,16 @@ class XCore(base.Core):
                     xcffib.xproto.GrabMode.Async,
                     xcffib.xproto.GrabMode.Async,
                 )
-        else:
-            logger.warning(
-                "Keysym could not be mapped: {keysym}, mask: {modmask}".format(
-                    keysym=hex(keysym), modmask=modmask
-                )
-            )
-
         return keysym, modmask & self._valid_mask
 
     def ungrab_key(self, key: config.Key) -> Tuple[int, int]:
         """Ungrab the key corresponding to the given keysym and modifier mask"""
         keysym, modmask = self.lookup_key(key)
-        code = self.conn.keysym_to_keycode(keysym)
+        codes = self.conn.keysym_to_keycode(keysym)
 
-        for amask in self._auto_modmasks():
-            self.conn.conn.core.UngrabKey(code, self._root.wid, modmask | amask)
+        for code in codes:
+            for amask in self._auto_modmasks():
+                self.conn.conn.core.UngrabKey(code, self._root.wid, modmask | amask)
 
         return keysym, modmask & self._valid_mask
 
