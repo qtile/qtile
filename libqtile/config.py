@@ -663,20 +663,20 @@ class Rule:
     def __init__(self, match, group=None, float=False, intrusive=False,
                  break_on_match=True):
         if isinstance(match, Match):
-            self.matches = [match]
+            self.matchlist = [match]
         else:
-            self.matches = match
+            self.matchlist = match
         self.group = group
         self.float = float
         self.intrusive = intrusive
         self.break_on_match = break_on_match
 
     def matches(self, w):
-        return any(w.match(m) for m in self.matches)
+        return any(w.match(m) for m in self.matchlist)
 
     def __repr__(self):
         actions = utils.describe_attributes(self, ['group', 'float', 'intrusive', 'break_on_match'])
-        return '<Rule match=%r actions=(%s)>' % (self.matches, actions)
+        return '<Rule match=%r actions=(%s)>' % (self.matchlist, actions)
 
 
 class DropDown(configurable.Configurable):
