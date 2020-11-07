@@ -36,7 +36,8 @@ class CheckUpdates(base.ThreadedPollText):
         ("display_format", "Updates: {updates}", "Display format if updates available"),
         ("colour_no_updates", "ffffff", "Colour when there's no updates."),
         ("colour_have_updates", "ffffff", "Colour when there are updates."),
-        ("restart_indicator", "", "Indicator to represent reboot is required. (Ubuntu only)")
+        ("restart_indicator", "", "Indicator to represent reboot is required. (Ubuntu only)"),
+        ("refresh_after_execute", True, "Immediately refresh the widget after executing updates.")
     ]
 
     def __init__(self, **config):
@@ -104,4 +105,19 @@ class CheckUpdates(base.ThreadedPollText):
         # type: (int, int, int) -> None
         base.ThreadedPollText.button_press(self, x, y, button)
         if button == 1 and self.execute is not None:
-            Popen(self.execute, shell=True)
+            self.do_execute()
+
+    def do_execute(self):
+        self._process = Popen(self.execute, shell=True)
+
+        if self.refresh_after_execute:
+            self.timeout_add(1, self.check_updates)
+
+    def check_updates(self):
+        if self._process.poll() is None:
+            # Update process is still running
+            self.timeout_add(1, self.check_updates)
+
+        else:
+            # Update has completed, refresh the widget
+            self.tick()
