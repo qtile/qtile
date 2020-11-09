@@ -38,8 +38,7 @@ class CheckUpdates(base.ThreadedPollText):
         ("colour_no_updates", "ffffff", "Colour when there's no updates."),
         ("colour_have_updates", "ffffff", "Colour when there are updates."),
         ("restart_indicator", "", "Indicator to represent reboot is required. (Ubuntu only)"),
-        ("no_update_string", "", "String to display if no updates available"),
-        ("refresh_after_execute", True, "Refresh update count after execute")
+        ("no_update_string", "", "String to display if no updates available")
     ]
 
     def __init__(self, **config):
@@ -108,9 +107,7 @@ class CheckUpdates(base.ThreadedPollText):
 
     def do_execute(self):
         self._process = Popen(self.execute, shell=True)
-
-        if self.refresh_after_execute:
-            self.timeout_add(1, self._refresh_count)
+        self.timeout_add(1, self._refresh_count)
 
     def _refresh_count(self):
         if self._process.poll() is None:
