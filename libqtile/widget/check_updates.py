@@ -19,7 +19,6 @@
 # SOFTWARE.
 
 import os
-from functools import partial
 from subprocess import CalledProcessError, Popen
 
 from libqtile.log_utils import logger
@@ -68,7 +67,7 @@ class CheckUpdates(base.ThreadedPollText):
             self.cmd = None
 
         if self.execute:
-            self.add_callbacks({'Button1': partial(Popen, self.execute, shell=True)})
+            self.add_callbacks({'Button1': self.do_execute})
 
     def _check_updates(self):
         # type: () -> str
@@ -104,3 +103,14 @@ class CheckUpdates(base.ThreadedPollText):
         if not self.cmd:
             return "N/A"
         return self._check_updates()
+
+    def do_execute(self):
+        self._process = Popen(self.execute, shell=True)
+        self.timeout_add(1, self._refresh_count)
+
+    def _refresh_count(self):
+        if self._process.poll() is None:
+            self.timeout_add(1, self._refresh_count)
+
+        else:
+            self.tick()
