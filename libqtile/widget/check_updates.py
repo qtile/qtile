@@ -19,7 +19,6 @@
 # SOFTWARE.
 
 import os
-from functools import partial
 from subprocess import CalledProcessError, Popen
 
 from libqtile.log_utils import logger
