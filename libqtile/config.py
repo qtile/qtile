@@ -599,7 +599,11 @@ class Match:
         elif name == 'wm_class':
             def predicate(other):
                 # match as an "include"-match on any of the received classes
-                match = getattr(other, 'match', lambda v: other in v)
+                def try_match_values(v):
+                    if isinstance(other, list):
+                        return any([o_v in v for o_v in other])
+                    return other in v
+                match = getattr(other, 'match', try_match_values)
                 return value and any(match(v) for v in value)
             return predicate
         else:
