@@ -623,7 +623,7 @@ class Window:
         mask, values = ConfigureMasks(**kwargs)
         # older versions of xcb pack everything into unsigned ints "=I"
         # since 1.12, uses switches to pack things sensibly
-        if float(xcffib.__xcb_proto_version__) < 1.12:
+        if float(".".join(xcffib.__xcb_proto_version__.split(".")[0: 2])) < 1.12:
             values = [i & 0xffffffff for i in values]
         return self.conn.conn.core.ConfigureWindow(self.wid, mask, values)
 
