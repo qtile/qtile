@@ -32,6 +32,7 @@ popup_config = pytest.mark.parametrize("qtile", [BareConfig], indirect=True)
 def test_focus(qtile):
     qtile.conn = xcbq.Connection(qtile.display)
     qtile.test_xeyes()
+    qtile.windows_map = {}
 
     popup = Popup(qtile)
     popup.width = qtile.c.screen.info()["width"]

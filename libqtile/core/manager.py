@@ -730,12 +730,12 @@ class Qtile(CommandObject):
 
     def enter_event(self, event) -> Optional[bool]:
         win = self.windows_map.get(event.event, None)
-        if win is None:
-            screen = self.find_screen(event.root_x, event.root_y)
-        else:
+        try:
             if win.group.screen is self.current_screen:
                 return True
             screen = win.group.screen
+        except AttributeError:
+            screen = self.find_screen(event.root_x, event.root_y)
         if screen:
             self.focus_screen(screen.index, warp=False)
         return None
