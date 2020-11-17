@@ -147,12 +147,19 @@ def _float_setter(attr):
 
 
 class _Z():
+    '''A class keeping track of the z-level of a single window. There are multiple mechanisms that can influence the
+    z-level of a window, and thus there are multiple properties provided here to separate those concerns. Ultimately,
+    a list of windows will be ordered by their z-level, so eventually all the different properties will be combined
+    depending on their priority.
+    A window can be kept on top of another by setting `ontopwid`, which should be used for blocking child-windows.
+    '''
     def __init__(self):
-        self.override = 0  # user level; can be used for user-defined overrides; won't be touched by anything
+        self.override = 0  # user level; can be used for user-defined overrides; only touched by user and ScratchPad
         self.wm = NORMAL_LAYER  # wm level; for docks, above, below etc.
         self.interactive = NORMAL_LAYER  # interactive level; should be one of BELOW_LAYER, NORMAL_LAYER or ABOVE_LAYER
         self.group = 0  # group level; used to separate "normal" and floating layout
         self.layout = 0  # layout level; usage optional, defaults to 0
+        self.ontopwid = None  # used by floating layouts to keep child-windows on top of their parents
 
     def __lt__(self, other):
         if self.override != other.override:

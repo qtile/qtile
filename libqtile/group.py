@@ -98,10 +98,28 @@ class _Group(CommandObject):
         If z-values are equal, the window ids are used for reproducibility.
         The z-values themselves are managed by the layouts.
         """
-        return sorted(
+        clients = sorted(
             [w for w in self.windows if not w.minimized],
             key=lambda c: (c.z, c.window.wid)
         )
+        # check if there are child-windows that need to be moved above their parents
+        toplevel = [w for w in clients if not w.minimized and not w.z.ontopwid]
+        children = [w for w in clients if not w.minimized and w.z.ontopwid]
+        while len(children) > 0:
+            child = children[0]
+            parent = next((p for p in toplevel if p.window.wid == child.z.ontopwid), None)
+            if parent:
+                idx = clients.index(parent)
+                if idx > clients.index(child):
+                    clients.remove(child)
+                    clients.insert(idx, child)
+                toplevel.append(child)
+            else:
+                parent = next((p for p in children if p.window.wid == child.z.ontopwid), None)
+                if parent:
+                    children.append(child)
+            children.pop(0)
+        return clients
 
     def assure_correct_layer(self, win):
         """

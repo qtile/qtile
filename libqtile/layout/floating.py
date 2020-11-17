@@ -197,6 +197,7 @@ class Floating(Layout):
         win = client.group.qtile.windows_map.get(transient_for)
         if win is not None:
             client.z.layout = win.z.layout + 1
+            client.z.ontopwid = transient_for
         if client.has_user_set_position() and not self.on_screen(client, screen_rect):
             # move to screen
             client.x = screen_rect.x + client.x
@@ -274,8 +275,8 @@ class Floating(Layout):
 
     def add(self, client):
         client.z.layout = max([c.z.layout + 1 for c in self.clients], default=0)
-        if client.group.floating_layout == self:
-            client.z.group = 1  # make sure we are no "manual" floating layout, since that shares its clients
+        if client.group and client.group.floating_layout == self:  # "manual" floating layouts share their clients
+            client.z.group = 1
         self.clients.append(client)
         self.focused = client
 
@@ -283,7 +284,10 @@ class Floating(Layout):
         if client not in self.clients:
             return
 
-        client.z.group = 0
+        if client.group and client.group.floating_layout == self:  # "manual" floating layouts share their clients
+            client.z.group = 0
+        client.z.ontopwid = None
+
         next_focus = self.focus_next(client)
         if client is self.focused:
             self.blur()
