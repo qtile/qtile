@@ -10,6 +10,7 @@ exclude tox.ini
 exclude requirements.txt
 exclude requirements-dev.txt
 exclude libqtile/_ffi*.py
+exclude libqtile/backend/x11/_ffi*.py
 exclude Makefile
 exclude dev.sh
 exclude logo.png
