@@ -40,7 +40,7 @@ Pull requests are not considered complete until they include all of the
 following:
 
 1. Code: Should conform PEP8 and should pass `make lint`.
-2. Unit tests: Should pass on travis
+2. Unit tests: Should pass CI
 3. Documentation: Should get updated if it needed
 
 **Feel free to add your contribution (no matter how small) to the appropriate

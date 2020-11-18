@@ -77,7 +77,7 @@ In practice, the development cycle looks something like this:
 #. commit
 
 Of course, your patches should also pass the unit tests as well (i.e.
-``make check``). These will be run by travis-ci on every pull request so you
+``make check``). These will be run by ci on every pull request so you
 can see whether or not your contribution passes.
 
 Coding style

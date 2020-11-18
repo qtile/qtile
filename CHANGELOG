@@ -19,6 +19,7 @@ qtile X.X.X, released XXXX-XX-XX:
 	- rules specified in `layout.Floating`'s `float_rules` are now evaluated with
 	  AND-semantics, allowing for more complex and specific rules
 	- Python 3.9 support
+	- switch to Github Actions for CI
 
 qtile 0.16.1, released 2020-08-11:
     !!! Config breakage !!!
