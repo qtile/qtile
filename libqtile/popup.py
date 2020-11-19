@@ -146,7 +146,7 @@ class Popup(configurable.Configurable):
     def place(self):
         self.win.place(
             self.x, self.y, self.width, self.height,
-            self.border_width, self.border, above=True
+            self.border_width, self.border
         )
 
     def unhide(self):

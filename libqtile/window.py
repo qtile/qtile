@@ -497,7 +497,7 @@ class _Window(CommandObject):
         )
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
-              above=False, margin=None, z=NORMAL_LAYER):
+              margin=None, z=NORMAL_LAYER):
         """Places the window at the specified location with the given size.
         """
 
@@ -540,8 +540,6 @@ class _Window(CommandObject):
             width=width,
             height=height,
         )
-        if above:
-            kwarg['stackmode'] = StackMode.Above
 
         self.window.configure(**kwarg)
         self.paint_borders(bordercolor, borderwidth)
@@ -1060,7 +1058,6 @@ class Window(_Window):
                 width, height,
                 self.borderwidth,
                 self.bordercolor,
-                above=True,
                 z=None,
             )
         if self._float_state != new_float_state:
@@ -1414,10 +1411,14 @@ class Window(_Window):
         self.toggle_minimize()
 
     def cmd_bring_to_front(self):
-        if self.floating:
-            self.window.configure(stackmode=StackMode.Above)
+        if not self.floating:
+            self._reconfigure_floating()  # automatically above
+        elif self.group:
+            self.z.layout = max([c.z.layout + 1 for c in self.group.floating_layout.clients], default=0)
+        if self.group:
+            self.group.assure_correct_layer(self)
         else:
-            self._reconfigure_floating()  # atomatically above
+            self.window.configure(stackmode=StackMode.Above)
 
     def cmd_match(self, *args, **kwargs):
         return self.match(*args, **kwargs)

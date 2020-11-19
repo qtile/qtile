@@ -193,8 +193,6 @@ class Floating(Layout):
     def compute_client_position(self, client, screen_rect):
         """ recompute client.x, client.y and, if a parent window exists,
         client.z """
-        above = True
-
         transient_for = client.window.get_wm_transient_for()
         win = client.group.qtile.windows_map.get(transient_for)
         if win is not None:
@@ -209,7 +207,6 @@ class Floating(Layout):
                 # if transient for a window, place in the center of the window
                 center_x = win.x + win.width / 2
                 center_y = win.y + win.height / 2
-                above = False
             else:
                 center_x = screen_rect.x + screen_rect.width / 2
                 center_y = screen_rect.y + screen_rect.height / 2
@@ -228,7 +225,6 @@ class Floating(Layout):
 
             client.x = int(round(x))
             client.y = int(round(y))
-        return above
 
     def configure(self, client, screen_rect):
         if client.has_focus:
@@ -257,15 +253,13 @@ class Floating(Layout):
             client.cmd_bring_to_front()
 
         else:
-            above = False
-
             # We definitely have a screen here, so let's be sure we'll float on screen
             try:
                 client.float_x
                 client.float_y
             except AttributeError:
                 # this window hasn't been placed before, let's put it in a sensible spot
-                above = self.compute_client_position(client, screen_rect)
+                self.compute_client_position(client, screen_rect)
 
             client.place(
                 client.x,
@@ -274,7 +268,6 @@ class Floating(Layout):
                 client.height,
                 bw,
                 bc,
-                above,
                 z=None
             )
         client.unhide()
