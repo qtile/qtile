@@ -21,13 +21,13 @@ qtile X.X.X, released XXXX-XX-XX:
         - Python 3.9 support
         - switch to Github Actions for CI
     !!! warning !!!
-	- When (re)starting, Qtile passes its state to the new process in a
-	  file now, where previously it passed state directly as a string. This
-	  fixes a bug where some character encodings (i.e. in group names) were
-	  getting messed up in the conversion to/from said string. This change
-	  will cause issues if you update Qtile then restart it, causing the
-	  running old version to pass state in the previous format to the new
-	  process which recognises the new.
+        - When (re)starting, Qtile passes its state to the new process in a
+          file now, where previously it passed state directly as a string. This
+          fixes a bug where some character encodings (i.e. in group names) were
+          getting messed up in the conversion to/from said string. This change
+          will cause issues if you update Qtile then restart it, causing the
+          running old version to pass state in the previous format to the new
+          process which recognises the new.
 
 qtile 0.16.1, released 2020-08-11:
     !!! Config breakage !!!
