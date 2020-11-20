@@ -24,5 +24,8 @@ jobs:
                 sudo apt install graphviz imagemagick x11-apps xserver-xephyr xterm xvfb libpulse-dev
                 pip install tox tox-gh-actions
               name: install dependencies
-            - run: tox
+            - name: run tests
+              run: |
+                [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
+                tox
 
