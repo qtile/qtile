@@ -2,6 +2,11 @@ qtile X.X.X, released XXXX-XX-XX:
     !!! Config breakage !!!
         - Pacman widget has been removed. Use CheckUpdates instead.
         - property "masterWindows" of Tile layout renamed to master_length
+        - Match objects now only allow one string argument for their wm
+          name/class/etc. properties. to update your config, do e.g.
+                   Group('www', spawn='firefox', layout='xmonad',
+              -          matches=[Match(wm_class=['Firefox', 'google-chrome', 'Google-chrome'])]),
+              +          matches=[Match(wm_class='Firefox'), Match(wm_class='google-chrome'), Match(wm_class='Google-chrome')]),
         - properties wname, wmclass and role of Slice-layout replaced by Match-
           type property "match"
         - rules specified in `layout.Floating`'s `float_rules` are now evaluated with
