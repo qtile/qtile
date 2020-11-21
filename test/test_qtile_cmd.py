@@ -69,8 +69,8 @@ server_config = pytest.mark.parametrize("qtile", [ServerConfig], indirect=True)
 
 
 def run_qtile_cmd(args):
-    cmd = os.path.join(os.path.dirname(__file__), '..', 'bin', 'qtile-cmd')
-    argv = [cmd]
+    cmd = os.path.join(os.path.dirname(__file__), '..', 'bin', 'qtile')
+    argv = [cmd, "cmd-obj"]
     argv.extend(args.split())
     pipe = subprocess.Popen(argv, stdout=subprocess.PIPE)
     output, _ = pipe.communicate()
