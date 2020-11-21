@@ -19,6 +19,20 @@ qtile X.X.X, released XXXX-XX-XX:
           use `config.Match` objects instead
         - `no_reposition_match` in `layout.Floating` has been removed; use the list of
           `config.Match`-objects `no_reposition_rules` instead
+        - Command line has been modernized to a single entry point, the `qtile`
+          binary. Translations are below:
+                qtile     -> qtile start
+                qtile-cmd -> qtile cmd-obj
+                qtile-run -> qtile run-cmd
+                qtile-top -> qtile top
+                qshell    -> qtile shell
+          iqshell and dqtile-cmd are no longer distributed with the
+          package, as they were either user or developer scripts. Both are
+          still available in the qtile repo in /scripts.
+
+          Running `qtile` without arguments will continue to work for the
+          forseeable future, but will be eventually deprecated. qtile prints a
+          warning when run in this configuration.
     * features
         - new restart and shutdown hooks
         - rules specified in `layout.Floating`'s `float_rules` are now evaluated with
