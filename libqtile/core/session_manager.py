@@ -1,6 +1,5 @@
 import asyncio
 import os
-import sys
 
 from libqtile import ipc
 from libqtile.backend import base
@@ -49,8 +48,7 @@ class SessionManager:
             # replace with asyncio.run(...) on Python 3.7+
             self.eventloop.run_until_complete(self.async_loop())
         finally:
-            if sys.version_info >= (3, 6):
-                self.eventloop.run_until_complete(self.eventloop.shutdown_asyncgens())
+            self.eventloop.run_until_complete(self.eventloop.shutdown_asyncgens())
             self.eventloop.close()
 
         self.qtile.maybe_restart()
