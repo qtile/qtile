@@ -396,6 +396,7 @@ class _Window(CommandObject):
         _type = self.window.get_wm_type()
         logger.debug('_NET_WM_STATE (%s): %s', self.name, state)
         logger.debug('_NET_WM_WINDOW_TYPE (%s): %s', self.name, _type)
+        old = self.z.wm
         if _type == 'desktop':
             self.z.wm = DESKTOP_LAYER
         elif 'below' in state:
@@ -406,6 +407,8 @@ class _Window(CommandObject):
             self.z.wm = FULLSCREEN_LAYER
         else:
             self.z.wm = NORMAL_LAYER
+        if self.group and old != self.z.wm:
+            self.group.layout_all()
 
         for s in triggered:
             setattr(self, s, (s in state))
