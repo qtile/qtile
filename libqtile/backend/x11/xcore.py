@@ -51,6 +51,10 @@ _IGNORED_EVENTS = {
 }
 
 
+class ExistingWMException(Exception):
+    pass
+
+
 class XCore(base.Core):
     def __init__(self, display_name: str = None) -> None:
         """Setup the X11 core backend
@@ -72,6 +76,18 @@ class XCore(base.Core):
         # we can assume that the first
         # screen's root is _the_ root.
         self._root = self.conn.default_screen.root
+
+        supporting_wm_wid = self._root.get_property("_NET_SUPPORTING_WM_CHECK",
+                                                    "WINDOW", unpack=int)
+        if len(supporting_wm_wid) > 0:
+            supporting_wm_wid = supporting_wm_wid[0]
+
+            supporting_wm = xcbq.Window(self.conn, supporting_wm_wid)
+            existing_wmname = supporting_wm.get_property("_NET_WM_NAME", "UTF8_STRING", unpack=str)
+            if existing_wmname:
+                logger.error("not starting; existing window manager {}".format(existing_wmname))
+                raise ExistingWMException(existing_wmname)
+
         self._root.set_attribute(
             eventmask=(
                 xcffib.xproto.EventMask.StructureNotify
