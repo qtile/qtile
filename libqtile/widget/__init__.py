@@ -36,6 +36,7 @@ from libqtile.widget.prompt import Prompt  # noqa: F401
 from libqtile.widget.quick_exit import QuickExit  # noqa: F401
 from libqtile.widget.systray import Systray  # noqa: F401
 from libqtile.widget.textbox import TextBox  # noqa: F401
+from libqtile.widget.window_count import WindowCount  # noqa: F401
 from libqtile.widget.windowname import WindowName  # noqa: F401
 
 
@@ -101,3 +102,4 @@ safe_import("caps_num_lock_indicator", "CapsNumLockIndicator")
 safe_import("quick_exit", "QuickExit")
 safe_import("pulse_volume", "PulseVolume")
 safe_import("chord", "Chord")
+safe_import("window_count", "WindowCount")
