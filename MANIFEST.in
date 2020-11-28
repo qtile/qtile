@@ -18,6 +18,7 @@ exclude logo.png
 graft libqtile/resources
 graft resources
 graft test
+recursive-include libqtile *.typed
 
 prune bin
 prune docs
