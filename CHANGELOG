@@ -61,6 +61,7 @@ Qtile X.X.X, released XXXX-XX-XX:
         - new OpenWeather widget to replace YahooWeather
         - new format attribute for WindowName widget
         - new max_chars attribute for WindowName widget
+        - libqtile now exports type information
     !!! warning !!!
         - When (re)starting, Qtile passes its state to the new process in a
           file now, where previously it passed state directly as a string. This
