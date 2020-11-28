@@ -28,6 +28,12 @@ def main():
     run_cmd.add_subcommand(subparsers)
     cmd_obj.add_subcommand(subparsers)
 
+    # `qtile help` should print help
+    def print_help(options):
+        parser.print_help()
+    help_ = subparsers.add_parser("help", help="Print help information and exit")
+    help_.set_defaults(func=print_help)
+
     # backward compat hack: `qtile` with no args (or non-subcommand args)
     # should default to `qtile start`. it seems impolite for commands to do
     # nothing when run with no args, so let's warn about this being deprecated.
