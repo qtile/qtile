@@ -3,7 +3,7 @@ import logging
 import sys
 
 from libqtile.log_utils import init_log
-from libqtile.scripts import cmd_obj, run_cmd, shell, start, top
+from libqtile.scripts import check, cmd_obj, run_cmd, shell, start, top
 
 try:
     import pkg_resources
@@ -45,6 +45,7 @@ def main():
     top.add_subcommand(subparsers)
     run_cmd.add_subcommand(subparsers)
     cmd_obj.add_subcommand(subparsers)
+    check.add_subcommand(subparsers)
 
     # `qtile help` should print help
     def print_help(options):
