@@ -24,7 +24,7 @@
 import locale
 import logging
 from os import getenv, makedirs, path
-from sys import exit
+from sys import exit, stdout
 
 from libqtile import confreader
 from libqtile.backend.x11 import xcore
@@ -49,7 +49,7 @@ def rename_process():
 
 def make_qtile(options):
     log_level = getattr(logging, options.log_level)
-    init_log(log_level=log_level)
+    init_log(log_level=log_level, log_color=stdout.isatty())
     kore = xcore.XCore()
 
     if not path.isfile(options.configfile):
