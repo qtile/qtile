@@ -15,14 +15,6 @@ class Core(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def get_keys(self) -> typing.List[str]:
-        pass
-
-    @abstractmethod
-    def get_modifiers(self) -> typing.List[str]:
-        pass
-
-    @abstractmethod
     def grab_key(self, key: config.Key) -> typing.Tuple[int, int]:
         """Configure the backend to grab the key event"""
 

@@ -2,12 +2,8 @@ from libqtile.backend.x11 import core
 
 
 def test_keys(display):
-    xc = core.Core(display)
-    try:
-        assert "a" in xc.get_keys()
-        assert "shift" in xc.get_modifiers()
-    finally:
-        xc.finalize()
+    assert "a" in core.get_keys()
+    assert "shift" in core.get_modifiers()
 
 
 def test_no_two_qtiles(manager):

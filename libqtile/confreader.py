@@ -25,6 +25,8 @@
 import os
 import sys
 
+from libqtile.backend.x11 import core
+
 
 class ConfigError(Exception):
     pass
@@ -51,14 +53,13 @@ class Config:
         "wmname",
     ]
 
-    def __init__(self, file_path=None, kore=None, **settings):
+    def __init__(self, file_path=None, **settings):
         """Create a Config() object from settings
 
         Only attributes found in Config.settings_keys will be added to object.
         config attribute precedence is 1.) **settings 2.) self 3.) default_config
         """
         self.file_path = file_path
-        self.kore = kore
         self.update(**settings)
 
     def update(self, *, fake_screens=None, **settings):
@@ -99,15 +100,13 @@ class Config:
             raise ConfigError(tb)
 
         self.update(**vars(config))
-        if self.kore:
-            self.validate()
 
     def validate(self) -> None:
         """
             Validate the configuration against the core.
         """
-        valid_keys = self.kore.get_keys()
-        valid_mods = self.kore.get_modifiers()
+        valid_keys = core.get_keys()
+        valid_mods = core.get_modifiers()
         # we explicitly do not want to set self.keys and self.mouse above,
         # because they are dynamically resolved from the default_config. so we
         # need to ignore the errors here about missing attributes.
