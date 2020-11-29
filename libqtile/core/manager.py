@@ -752,17 +752,30 @@ class Qtile(CommandObject):
 
         # Additional option for config.py
         # Brings clicked window to front
+        client = self.windows_map.get(wnd)
         if self.config.bring_front_click:
-            self.conn.conn.core.ConfigureWindow(
-                wnd,
-                xcffib.xproto.ConfigWindow.StackMode,
-                [xcffib.xproto.StackMode.Above]
-            )
+            if not client or not client.group or not client.floating:
+                # TODO
+                # In the case of a non-floating client, we can't change any of the z-properties:
+                #   z.layout: Too volatile. Would be reset by the layout if it manages the z-layer (e.g. Max).
+                #   z.group: Too sticky. Would make it impossible to switch windows in Max-layout. The same goes for the
+                #            other z-properties.
+                # So we can't do this by incrementing a z-property. Maybe we should make the window floating instead?
+                # It needs to stick to the top of the groups window-list, but not so much that navigating
+                # through a Max-layout won't work anymore.
+                self.conn.conn.core.ConfigureWindow(
+                    wnd,
+                    xcffib.xproto.ConfigWindow.StackMode,
+                    [xcffib.xproto.StackMode.Above]
+                )
+            elif client.floating:
+                windows = list(client.group.windows)
+                windows.remove(client)
+                client.z.layout = max([c.z.layout + 1 for c in windows], default=0)
 
-        window = self.windows_map.get(wnd)
-        if window and not window.window.get_property('QTILE_INTERNAL'):
-            self.current_group.focus(self.windows_map.get(wnd), False)
-            self.windows_map.get(wnd).focus(False)
+        if client and not client.window.get_property('QTILE_INTERNAL'):
+            self.current_group.focus(client, False)
+            client.focus(False)
 
         self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
         self.conn.conn.flush()
