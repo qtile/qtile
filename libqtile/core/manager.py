@@ -102,6 +102,7 @@ class Qtile(CommandObject):
     def load_config(self):
         try:
             self.config.load()
+            self.config.validate()
         except Exception as e:
             logger.exception('Error while reading config file (%s)', e)
             self.config = confreader.Config()

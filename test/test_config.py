@@ -25,29 +25,24 @@ import os
 import pytest
 
 from libqtile import config, confreader, utils
-from libqtile.backend.x11.core import Core
 
 tests_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 def test_validate():
-    xc = Core()
-    try:
-        f = confreader.Config(os.path.join(tests_dir, "configs", "basic.py"), xc)
-        f.load()
-        f.keys[0].key = "nonexistent"
-        with pytest.raises(confreader.ConfigError):
-            f.validate()
+    f = confreader.Config(os.path.join(tests_dir, "configs", "basic.py"))
+    f.load()
+    f.keys[0].key = "nonexistent"
+    with pytest.raises(confreader.ConfigError):
+        f.validate()
 
-        f.keys[0].key = "x"
-        f = confreader.Config(os.path.join(tests_dir, "configs", "basic.py"), xc)
-        f.load()
-        f.keys[0].modifiers = ["nonexistent"]
-        with pytest.raises(confreader.ConfigError):
-            f.validate()
-        f.keys[0].modifiers = ["shift"]
-    finally:
-        xc.finalize()
+    f.keys[0].key = "x"
+    f = confreader.Config(os.path.join(tests_dir, "configs", "basic.py"))
+    f.load()
+    f.keys[0].modifiers = ["nonexistent"]
+    with pytest.raises(confreader.ConfigError):
+        f.validate()
+    f.keys[0].modifiers = ["shift"]
 
 
 def test_syntaxerr():
