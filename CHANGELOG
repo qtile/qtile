@@ -1,6 +1,7 @@
 Qtile x.x.x, released xxxx-xx-xx:
     * features
         - Add `place_right` option in the TreeTab layout to place the tab panel on the right side
+        - X11: Add support for _NET_DESKTOP_VIEWPORT. E.g. can be used by rofi to map on current output.
     * bugfixes
         - Remove non-commandable windows from IPC. Fixes bug where IPC would fail when trying to get info
           on all windows but Systray has icons (which are non-commandable `_Window`s.)

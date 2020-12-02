@@ -164,6 +164,7 @@ PropertyMap = {
     "_NET_NUMBER_OF_DESKTOPS": ("CARDINAL", 32),
     "_NET_CURRENT_DESKTOP": ("CARDINAL", 32),
     "_NET_DESKTOP_NAMES": ("UTF8_STRING", 8),
+    "_NET_DESKTOP_VIEWPORT": ("CARDINAL", 32),
     "_NET_WORKAREA": ("CARDINAL", 32),
     "_NET_ACTIVE_WINDOW": ("WINDOW", 32),
     "_NET_WM_DESKTOP": ("CARDINAL", 32),
@@ -192,6 +193,7 @@ SUPPORTED_ATOMS = [
     "_NET_CLIENT_LIST",
     "_NET_CLIENT_LIST_STACKING",
     "_NET_CURRENT_DESKTOP",
+    "_NET_DESKTOP_VIEWPORT",
     "_NET_ACTIVE_WINDOW",
     "_NET_SUPPORTING_WM_CHECK",
     # From http://standards.freedesktop.org/wm-spec/latest/ar01s05.html
