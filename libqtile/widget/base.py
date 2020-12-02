@@ -83,8 +83,7 @@ class _Widget(CommandObject, configurable.Configurable):
 
     If length is set to the special value `bar.STRETCH`, the bar itself will
     set the length to the maximum remaining space, after all other widgets have
-    been configured. Only ONE widget per bar can have the `bar.STRETCH` length
-    set.
+    been configured.
 
     In horizontal bars, 'length' corresponds to the width of the widget; in
     vertical bars, it corresponds to the widget's height.
