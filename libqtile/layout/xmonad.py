@@ -110,10 +110,13 @@ class MonadTall(_SimpleLayoutBase):
         ---------------------          ---------------------
 
 
-    Normalizing:
+    Normalizing/Resetting:
 
-    To restore all client windows to their default size ratios simply use the
-    ``cmd_normalize`` method.
+    To restore all secondary client windows to their default size ratios
+    use the ``cmd_normalize`` method.
+
+    To reset all client windows to their default sizes, including the primary
+    window, user the ``cmd_reset`` method.
 
     Maximizing:
 
@@ -804,10 +807,13 @@ class MonadWide(MonadTall):
         |  2  |   3   |  4  |          |                   |
         ---------------------          ---------------------
 
-    Normalizing:
+    Normalizing/Resetting:
 
-    To restore all client windows to their default size ratios simply
+    To restore all secondary client windows to their default size ratios
     use the ``cmd_normalize`` method.
+
+    To reset all client windows to their default sizes, including the primary
+    window, user the ``cmd_reset`` method.
 
 
     Maximizing:
