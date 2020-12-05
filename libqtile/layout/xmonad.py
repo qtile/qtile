@@ -116,7 +116,7 @@ class MonadTall(_SimpleLayoutBase):
     use the ``cmd_normalize`` method.
 
     To reset all client windows to their default sizes, including the primary
-    window, user the ``cmd_reset`` method.
+    window, use the ``cmd_reset`` method.
 
     Maximizing:
 
@@ -813,7 +813,7 @@ class MonadWide(MonadTall):
     use the ``cmd_normalize`` method.
 
     To reset all client windows to their default sizes, including the primary
-    window, user the ``cmd_reset`` method.
+    window, use the ``cmd_reset`` method.
 
 
     Maximizing:
