@@ -109,7 +109,7 @@ class Cursors(dict):
         try:
             xcursor = ffi.dlopen('libxcb-cursor.so.0')
         except OSError:
-            logger.warning("xcb-cursor not found, fallback to font pointer")
+            logger.info("xcb-cursor not found, fallback to font pointer")
             return False
 
         conn = self.conn.conn
