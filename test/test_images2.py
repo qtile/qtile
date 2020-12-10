@@ -19,15 +19,19 @@ from libqtile import images
 
 def get_imagemagick_version():
     "Get the installed imagemagick version from the convert utility"
-    p = sp.Popen(['convert', '-version'], stdout=sp.PIPE, stderr=sp.PIPE)
-    stdout, stderr = p.communicate()
-    lines = stdout.decode().splitlines()
-    ver_line = [x for x in lines if x.startswith('Version:')]
-    assert len(ver_line) == 1
-    version = ver_line[0].split()[2]
-    version = version.replace('-', '.')
-    vals = version.split('.')
-    return [int(x) for x in vals]
+    try:
+        p = sp.Popen(['convert', '-version'], stdout=sp.PIPE, stderr=sp.PIPE)
+        stdout, stderr = p.communicate()
+        lines = stdout.decode().splitlines()
+        ver_line = [x for x in lines if x.startswith('Version:')]
+        assert len(ver_line) == 1
+        version = ver_line[0].split()[2]
+        version = version.replace('-', '.')
+        vals = version.split('.')
+        return [int(x) for x in vals]
+    except FileNotFoundError:
+        # we don't have the `convert` binary
+        return (0, 0)
 
 
 def should_skip():
