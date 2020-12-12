@@ -34,6 +34,7 @@ qtile X.X.X, released XXXX-XX-XX:
           forseeable future, but will be eventually deprecated. qtile prints a
           warning when run in this configuration.
     * features
+        - new WidgetBox widget
         - new restart and shutdown hooks
         - rules specified in `layout.Floating`'s `float_rules` are now evaluated with
           AND-semantics, allowing for more complex and specific rules
