@@ -5,3 +5,4 @@ mypy
 pep8-naming
 psutil
 pytest-cov
+requests

@@ -80,6 +80,7 @@ widgets = {
     "TaskList": "tasklist",
     "TextBox": "textbox",
     "ThermalSensor": "sensors",
+    "TVHWidget": "tvheadend",
     "Volume": "volume",
     "Wallpaper": "wallpaper",
     "WidgetBox": "widgetbox",
