@@ -26,10 +26,19 @@ import curses
 import linecache
 import os
 import time
-import tracemalloc
-from tracemalloc import Snapshot
 
 from libqtile import command_client, command_interface, ipc
+
+""" These imports are here because they are not supported in pypy
+having them at the top of the file causes problems when running any
+of the other scripts.
+"""
+try:
+    import tracemalloc
+    from tracemalloc import Snapshot
+    ENABLED = True
+except ModuleNotFoundError:
+    ENABLED = False
 
 
 class TraceNotStarted(Exception):
@@ -130,6 +139,8 @@ def raw_stats(client, group_by='lineno', limit=10, force_start=False):
 
 
 def top(opts):
+    if not ENABLED:
+        raise Exception('Could not import tracemalloc')
     lines = opts.lines
     seconds = opts.seconds
     force_start = opts.force_start
