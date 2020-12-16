@@ -12,7 +12,7 @@ jobs:
             matrix:
                 # if you change one of these, be sure to update
                 # /tox.ini:[gh-actions] as well
-                python-version: [3.7, 3.8, 3.9]
+                python-version: [pypy-3.7, 3.7, 3.8, 3.9]
         steps:
             - uses: actions/checkout@v2
             - name: Set up python ${{ matrix.python-version}}
