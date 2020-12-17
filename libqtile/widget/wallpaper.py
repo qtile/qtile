@@ -23,13 +23,14 @@
 import os
 import random
 import subprocess
+import fnmatch
 
 from libqtile import bar
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
-class Wallpaper(base._TextBox):
+class Wallpaper(base.ThreadPoolText):
     defaults = [
         ("directory", "~/Pictures/wallpapers/", "Wallpaper Directory"),
         ("wallpaper", None, "Wallpaper"),
@@ -40,6 +41,7 @@ class Wallpaper(base._TextBox):
         ("label", None, "Use a fixed label instead of image name."),
         ("option", "fill", "How to fit the wallpaper when wallpaper_command is"
             "None. None, 'fill' or 'stretch'."),
+        ("update_interval", 5, "Update interval in seconds, if none, it won't update"),
     ]
 
     def __init__(self, **config):
@@ -53,10 +55,12 @@ class Wallpaper(base._TextBox):
 
         self.add_callbacks({'Button1': self.set_wallpaper})
 
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
-        if not self.bar.screen.wallpaper:
-            self.set_wallpaper()
+    def poll(self):
+        """
+        Return the current wallpaper
+        """
+        self.set_wallpaper()
+        return self.text
 
     def get_path(self, file):
         return os.path.join(os.path.expanduser(self.directory), file)
@@ -64,11 +68,13 @@ class Wallpaper(base._TextBox):
     def get_wallpapers(self):
         try:
             # get path of all files in the directory
-            self.images = list(
-                filter(os.path.isfile,
-                       map(self.get_path,
-                           os.listdir(
-                               os.path.expanduser(self.directory)))))
+            for root, dirnames, filenames in os.walk(os.path.expanduser(self.directory)):
+                for filename in fnmatch.filter(filenames, '*.jpg'):
+                    self.images.append(os.path.join(root, filename))
+                for filename in fnmatch.filter(filenames, '*.png'):
+                    self.images.append(os.path.join(root, filename))
+                for filename in fnmatch.filter(filenames, '*.jpeg'):
+                    self.images.append(os.path.join(root, filename))
         except IOError as e:
             logger.exception("I/O error(%s): %s", e.errno, e.strerror)
 

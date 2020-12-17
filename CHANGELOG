@@ -1,5 +1,7 @@
 qtile X.X.X, released XXXX-XX-XX:
     !!! Config breakage !!!
+        - Wallpaper widget added update_interval in second, and now can read files recursively.
+          Also wallpaper widget can now filter *.jpg, *.png and *.jpeg files and ignore other files.
         - Pacman widget has been removed. Use CheckUpdates instead.
         - property "masterWindows" of Tile layout renamed to master_length
         - Match objects now only allow one string argument for their wm
