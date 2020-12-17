@@ -116,6 +116,7 @@ class Columns(Layout):
         ("border_normal_stack", "#220000",
          "Border colour for un-focused windows in stacked columns."),
         ("border_width", 2, "Border width."),
+        ("border_on_single", False, "Draw a border when there is one only window."),
         ("margin", 0, "Margin of the layout."),
         ("split", True, "New columns presentation mode."),
         ("num_columns", 2, "Preferred number of columns."),
@@ -223,7 +224,7 @@ class Columns(Layout):
             color = self.border_focus if col.split else self.border_focus_stack
         else:
             color = self.border_normal if col.split else self.border_normal_stack
-        if len(self.columns) == 1 and (len(col) == 1 or not col.split):
+        if not self.border_on_single and len(self.columns) == 1 and (len(col) == 1 or not col.split):
             border = 0
         else:
             border = self.border_width
