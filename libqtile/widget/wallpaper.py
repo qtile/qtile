@@ -20,10 +20,10 @@
 #
 # To use this widget, you will need to install feh wallpaper changer
 
+import fnmatch
 import os
 import random
 import subprocess
-import fnmatch
 
 from libqtile import bar
 from libqtile.log_utils import logger
