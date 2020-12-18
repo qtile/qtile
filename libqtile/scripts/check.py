@@ -23,25 +23,102 @@
 import shutil
 import subprocess
 import sys
-from os import getenv, path
+import tempfile
+from os import environ, getenv, path
 
 from libqtile import confreader
+
+
+def type_check_config_vars(tempdir, config_name):
+    if shutil.which("stubtest") is None:
+        print("stubtest not found, can't type check config file\n"
+              "install it and try again")
+        return
+
+    # write a .pyi file to tempdir:
+    f = open(path.join(tempdir, config_name+".pyi"), "w")
+    f.write(confreader.config_pyi_header)
+    for (name, type_) in confreader.Config.settings_keys:
+        f.write(name)
+        f.write(": ")
+        f.write(type_)
+        f.write("\n")
+    f.close()
+
+    # need to tell python to look in pwd for modules
+    newenv = environ.copy()
+    newenv["PYTHONPATH"] = newenv.get("PYTHONPATH", "") + ":"
+
+    p = subprocess.Popen(
+        ["stubtest", "--concise", config_name],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        cwd=tempdir,
+        text=True,
+        env=newenv,
+    )
+    stdout, stderr = p.communicate()
+    missing_vars = []
+    for line in (stdout+stderr).split("\n"):
+        # filter out stuff that users didn't specify; they'll be imported from
+        # the default config
+        if "is not present at runtime" in line:
+            missing_vars.append(line.split()[0])
+
+    # write missing vars to a tempfile
+    whitelist = open(path.join(tempdir, "stubtest_whitelist"), "w")
+    for var in missing_vars:
+        whitelist.write(var)
+        whitelist.write("\n")
+    whitelist.close()
+
+    p = subprocess.Popen([
+            "stubtest",
+            # ignore variables that the user creates in their config that
+            # aren't in our default config list
+            "--ignore-missing-stub",
+            # use our whitelist to ignore stuff users didn't specify
+            "--whitelist", whitelist.name,
+            config_name,
+        ],
+        cwd=tempdir,
+        text=True,
+        env=newenv,
+    )
+    p.wait()
+    if p.returncode != 0:
+        sys.exit(1)
+
+
+def type_check_config_args(config_file):
+    if shutil.which("mypy") is None:
+        print("mypy not found, can't type check config file"
+              "install it and try again")
+        return
+    try:
+        # we want to use Literal, which is in 3.8. If people have a mypy that
+        # is too old, they can upgrade; this is an optional check anyways.
+        subprocess.check_call(["mypy", "--python-version=3.8", config_file])
+        print("config file type checking succeeded")
+    except subprocess.CalledProcessError as e:
+        print("config file type checking failed: {}".format(e))
+        sys.exit(1)
 
 
 def check_config(args):
     print("checking qtile config file {}".format(args.configfile))
 
-    # does the config type check?
-    if shutil.which("mypy") is None:
-        print("mypy not found, can't type check config file\n"
-              "install it and try again")
-    else:
-        try:
-            subprocess.check_call(["mypy", args.configfile])
-            print("config file type checking succeeded")
-        except subprocess.CalledProcessError as e:
-            print("config file type checking failed: {}".format(e))
-            sys.exit(1)
+    # need to do all the checking in a tempdir because we need to write stuff
+    # for stubtest
+    with tempfile.TemporaryDirectory() as tempdir:
+        tmp_path = path.join(tempdir, "config.py")
+        shutil.copy(args.configfile, tmp_path)
+
+        # are the top level config variables the right type?
+        type_check_config_vars(tempdir, "config")
+
+        # are arguments passed to qtile APIs correct?
+        type_check_config_args(tmp_path)
 
     # can we load the config?
     config = confreader.Config(args.configfile)
