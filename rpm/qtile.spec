@@ -3,9 +3,7 @@ Name: qtile
 Version: 0.12.0
 Release: 1%{?dist}
 Source0: https://github.com/qtile/qtile/archive/v%{version}.tar.gz
-License: MIT and GPLv3+
-# All MIT except for:
-# libqtile/widget/pacman.py:GPL (v3 or later)
+License: MIT
 BuildArch: noarch
 Url: http://qtile.org
 

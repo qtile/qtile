@@ -1,0 +1,31 @@
+name: ci
+
+on:
+    push:
+    pull_request:
+
+jobs:
+    build:
+        runs-on: ubuntu-20.04
+        name: "python ${{ matrix.python-version }}"
+        strategy:
+            matrix:
+                # if you change one of these, be sure to update
+                # /tox.ini:[gh-actions] as well
+                python-version: [3.7, 3.8, 3.9]
+        steps:
+            - uses: actions/checkout@v2
+            - name: Set up python ${{ matrix.python-version}}
+              uses: actions/setup-python@v2
+              with:
+                  python-version: ${{ matrix.python-version }}
+            - run: |
+                sudo apt update
+                sudo apt install graphviz imagemagick x11-apps xserver-xephyr xterm xvfb libpulse-dev lm-sensors
+                pip install tox tox-gh-actions
+              name: install dependencies
+            - name: run tests
+              run: |
+                [ "$(grep -c -P '\t' CHANGELOG)" = "0" ]
+                tox
+

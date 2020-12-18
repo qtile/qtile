@@ -26,30 +26,30 @@ class Max(_SimpleLayoutBase):
     """Maximized layout
 
     A simple layout that only displays one window at a time, filling the
-    screen. This is suitable for use on laptops and other devices with small
-    screens. Conceptually, the windows are managed as a stack, with commands to
-    switch to next and previous windows in the stack.
+    screen_rect. This is suitable for use on laptops and other devices with
+    small screens. Conceptually, the windows are managed as a stack, with
+    commands to switch to next and previous windows in the stack.
     """
 
     defaults = [("name", "max", "Name of this layout.")]
 
     def __init__(self, **config):
-        _SimpleLayoutBase.__init__(self, **config)
+        super().__init__(**config)
         self.add_defaults(Max.defaults)
 
     def clone(self, group):
-        return _SimpleLayoutBase.clone(self, group)
+        return super().clone(group)
 
     def add(self, client):
-        return self.clients.add(client, 1)
+        return super().add(client, 1)
 
-    def configure(self, client, screen):
+    def configure(self, client, screen_rect):
         if self.clients and client is self.clients.current_client:
             client.place(
-                screen.x,
-                screen.y,
-                screen.width,
-                screen.height,
+                screen_rect.x,
+                screen_rect.y,
+                screen_rect.width,
+                screen_rect.height,
                 0,
                 None
             )

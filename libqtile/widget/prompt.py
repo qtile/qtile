@@ -678,7 +678,7 @@ class Prompt(base._TextBox):
             pass
         d = Dummy()
         keysym = xcbq.keysyms[key]
-        d.detail = self.qtile.conn.keysym_to_keycode(keysym)
+        d.detail = self.qtile.conn.keysym_to_keycode(keysym)[0]
         d.state = 0
         self.handle_KeyPress(d)
 

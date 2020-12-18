@@ -16,6 +16,7 @@
 
 import os
 import subprocess
+from functools import partial
 
 from libqtile.widget import base
 
@@ -45,6 +46,12 @@ class Moc(base.ThreadPoolText):
         self.add_defaults(Moc.defaults)
         self.status = ""
         self.local = None
+
+        self.add_callbacks({
+            'Button1': self.play,
+            'Button4': partial(subprocess.Popen, ['mocp', '-f']),
+            'Button5': partial(subprocess.Popen, ['mocp', '-r']),
+        })
 
     def get_info(self):
         """Return a dictionary with info about the current MOC status."""
@@ -109,24 +116,13 @@ class Moc(base.ThreadPoolText):
         else:
             self.bar.draw()
 
+    def play(self):
+        """Play music if stopped, else toggle pause."""
+        if self.status in ('PLAY', 'PAUSE'):
+            subprocess.Popen(['mocp', '-G'])
+        elif self.status == 'STOP':
+            subprocess.Popen(['mocp', '-p'])
+
     def poll(self):
         """Poll content for the text box."""
         return self.now_playing()
-
-    def button_press(self, x, y, button):
-        """What to do when press a mouse button over the MOC widget.
-
-        Will:
-            - toggle pause (or play if stopped) on left click;
-            - skip forward in playlist on scroll up;
-            - skip backward in playlist on scroll down.
-        """
-        if button == 1:
-            if self.status in ('PLAY', 'PAUSE'):
-                subprocess.Popen(['mocp', '-G'])
-            elif self.status == 'STOP':
-                subprocess.Popen(['mocp', '-p'])
-        elif button == 4:
-            subprocess.Popen(['mocp', '-f'])
-        elif button == 5:
-            subprocess.Popen(['mocp', '-r'])

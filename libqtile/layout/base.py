@@ -51,10 +51,10 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         configurable.Configurable.__init__(self, **config)
         self.add_defaults(Layout.defaults)
 
-    def layout(self, windows, screen):
+    def layout(self, windows, screen_rect):
         assert windows, "let's eliminate unnecessary calls"
         for i in windows:
-            self.configure(i, screen)
+            self.configure(i, screen_rect)
 
     def finalize(self):
         pass
@@ -86,7 +86,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         elif name == "group":
             return self.group
 
-    def show(self, screen):
+    def show(self, screen_rect):
         """Called when layout is being shown"""
         pass
 
@@ -136,7 +136,7 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def configure(self, client, screen):
+    def configure(self, client, screen_rect):
         """Configure the layout
 
         This method should:
@@ -227,22 +227,17 @@ class SingleWindow(Layout):
         """Should return either visible window or None"""
         pass
 
-    def configure(self, win, screen):
+    def configure(self, win, screen_rect):
         if win is self._get_window():
             win.place(
-                screen.x, screen.y,
-                screen.width, screen.height,
+                screen_rect.x, screen_rect.y,
+                screen_rect.width, screen_rect.height,
                 0,
                 None,
             )
             win.unhide()
         else:
             win.hide()
-
-    def remove(self, win):
-        cli = self.clients.pop(0)
-        if cli == win:
-            return self.clients[0]
 
 
 class Delegate(Layout):
@@ -270,7 +265,7 @@ class Delegate(Layout):
     def delegate_layout(self, windows, mapping):
         """Delegates layouting actual windows
 
-        Parameterer
+        Parameters
         ===========
         windows:
             windows to layout
@@ -297,6 +292,22 @@ class Delegate(Layout):
                 idx += 1
                 focus = layouts[idx].focus_first()
         return focus
+
+    @abstractmethod
+    def show(self, screen_rect):
+        """Tells the layout to show itself on the given ScreenRect"""
+        pass
+
+    def hide(self):
+        for lay in self._get_layouts():
+            lay.hide()
+
+    def focus(self, win):
+        self.layouts[win].focus(win)
+
+    def blur(self):
+        for lay in self._get_layouts():
+            lay.blur()
 
     def focus_first(self):
         layouts = self._get_layouts()
@@ -427,13 +438,10 @@ class _ClientList:
         """
         Returns the client previous to win in collection.
         """
-        try:
-            idx = self.index(win)
-        except IndexError:
-            return None
-        else:
-            if idx > 0:
-                return self[idx - 1]
+        idx = self.index(win)
+        if idx > 0:
+            return self[idx - 1]
+        return None
 
     def add(self, client, offset_to_current=0):
         """

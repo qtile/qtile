@@ -27,9 +27,10 @@ import libqtile.bar
 import libqtile.config
 import libqtile.layout
 import libqtile.widget
+from libqtile.confreader import Config
 
 
-class ServerConfig:
+class ServerConfig(Config):
     auto_fullscreen = True
     keys = []
     mouse = []
@@ -43,7 +44,7 @@ class ServerConfig:
         libqtile.layout.Stack(num_stacks=2),
         libqtile.layout.Stack(num_stacks=3),
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
@@ -62,15 +63,14 @@ class ServerConfig:
             ),
         )
     ]
-    main = None
 
 
 server_config = pytest.mark.parametrize("qtile", [ServerConfig], indirect=True)
 
 
 def run_qtile_cmd(args):
-    cmd = os.path.join(os.path.dirname(__file__), '..', 'bin', 'qtile-cmd')
-    argv = [cmd]
+    cmd = os.path.join(os.path.dirname(__file__), '..', 'bin', 'qtile')
+    argv = [cmd, "cmd-obj"]
     argv.extend(args.split())
     pipe = subprocess.Popen(argv, stdout=subprocess.PIPE)
     output, _ = pipe.communicate()

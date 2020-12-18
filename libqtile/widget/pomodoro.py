@@ -72,6 +72,11 @@ class Pomodoro(base.ThreadPoolText):
             'paused': self.prefix_paused
         }
 
+        self.add_callbacks({
+            'Button1': self._toggle_break,
+            'Button3': self._toggle_active,
+        })
+
     def tick(self):
         self.update(self.poll())
         return self.update_interval - time() % self.update_interval
@@ -168,17 +173,3 @@ class Pomodoro(base.ThreadPoolText):
 
     def poll(self):
         return self.fmt.format(self._get_text())
-
-    def button_press(self, x, y, button):
-        """What to do when press a mouse button over the Pomodoro widget.
-
-        LEFT BUTTON: pause/resume current status or start
-        RIGHT BUTTON: toggle activity
-
-        """
-        if button == 1:
-            self._toggle_break()
-        elif button == 3:
-            self._toggle_active()
-
-        base.ThreadedPollText.button_press(self, x, y, button)

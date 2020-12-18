@@ -28,6 +28,7 @@ import pytest
 import libqtile.config
 from libqtile import bar, layout, widget
 from libqtile.config import Screen
+from libqtile.confreader import Config
 
 LEFT_ALT = 'mod1'
 WINDOWS = 'mod4'
@@ -57,9 +58,8 @@ GRAPH_KW = dict(line_width=1,
 # also D goes down below the others
 
 
-class FakeScreenConfig:
+class FakeScreenConfig(Config):
     auto_fullscreen = True
-    main = None
     groups = [
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
@@ -71,7 +71,7 @@ class FakeScreenConfig:
         layout.RatioTile(),
         layout.Tile(),
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     fake_screens = [

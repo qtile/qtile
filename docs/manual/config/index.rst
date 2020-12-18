@@ -62,7 +62,7 @@ a system tray, and a clock.
 The default configuration has several more advanced key combinations, but the
 above should be enough for basic usage of qtile.
 
-See :doc:`Keybindings in images </manual/commands/keybindings>` for visual
+See :ref:`Keybindings in images <keybinding-img>` for visual
 keybindings in keyboard layout.
 
 Mouse Bindings
@@ -150,18 +150,12 @@ configuration variables that control specific aspects of Qtile's behavior:
         - focus: automatically focus the window
 
         - smart: automatically focus if the window is in the current group
+
+        - never: never automatically focus any window that requests it
     * - follow_mouse_focus
       - True
       - Controls whether or not focus follows the mouse around as it moves
         across windows in a layout.
-    * - main
-      - None
-      - This is a function which takes one argument, the qtile object,
-        and is run after the qtile object has been initialized. This
-        allows people to monkey patch in any code they want to before
-        qtile actually starts. Note that we only consider the config
-        objects and hooks to be public APIs, and reserve the right to
-        refactor the internals at any time. Use at your own risk!
     * - widget_defaults
       - dict(font='sans',
              fontsize=12,
@@ -187,7 +181,7 @@ script. This will run Qtile with your ``config.py`` inside a nested X server
 and prevent your running instance of Qtile from crashing if something goes
 wrong.
 
-See :doc:`Hacking Qtile </manual/hacking>` for more information on using
+See :ref:`Hacking Qtile <hacking>` for more information on using
 Xephyr.
 
 Starting Qtile

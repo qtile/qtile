@@ -94,12 +94,12 @@ class Matrix(_SimpleLayoutBase):
         ]
 
     def add(self, client):
-        """Add clinet to Layout.Note t
+        """Add client to Layout.
         Note that for Matrix the clients are appended at end of list.
         If needed a new row in matrix is created"""
         return self.clients.append(client)
 
-    def configure(self, client, screen):
+    def configure(self, client, screen_rect):
         if client not in self.clients:
             return
         idx = self.clients.index(client)
@@ -107,14 +107,14 @@ class Matrix(_SimpleLayoutBase):
         col = idx % self.columns
         column_size = int(math.ceil(len(self.clients) / self.columns))
         if client.has_focus:
-            px = self.group.qtile.color_pixel(self.border_focus)
+            px = self.border_focus
         else:
-            px = self.group.qtile.color_pixel(self.border_normal)
+            px = self.border_normal
         # calculate position and size
-        column_width = int(screen.width / float(self.columns))
-        row_height = int(screen.height / float(column_size))
-        xoffset = screen.x + col * column_width
-        yoffset = screen.y + row * row_height
+        column_width = int(screen_rect.width / float(self.columns))
+        row_height = int(screen_rect.height / float(column_size))
+        xoffset = screen_rect.x + col * column_width
+        yoffset = screen_rect.y + row * row_height
         win_width = column_width - 2 * self.border_width
         win_height = row_height - 2 * self.border_width
         # place

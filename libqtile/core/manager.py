@@ -19,14 +19,15 @@
 # SOFTWARE.
 
 import asyncio
-import functools
 import io
 import logging
 import os
 import pickle
 import shlex
 import signal
+import subprocess
 import sys
+import tempfile
 import time
 import traceback
 import warnings
@@ -36,7 +37,8 @@ import xcffib
 import xcffib.xinerama
 import xcffib.xproto
 
-from libqtile import command_interface, hook, utils, window
+import libqtile
+from libqtile import command_interface, confreader, hook, utils, window
 from libqtile.backend.x11 import xcbq
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_interface import IPCCommandServer, QtileCommandInterface
@@ -45,7 +47,7 @@ from libqtile.command_object import (
     CommandException,
     CommandObject,
 )
-from libqtile.config import Click, Drag, Match, Rule
+from libqtile.config import Click, Drag, Key, KeyChord, Match, Rule
 from libqtile.config import ScratchPad as ScratchPadConfig
 from libqtile.config import Screen
 from libqtile.dgroups import DGroups
@@ -95,18 +97,29 @@ class Qtile(CommandObject):
 
         self.core = kore
         self.config = config
-        hook.init(self)
+        libqtile.init(self)
 
         self.windows_map = {}
         self.widgets_map = {}
         self.groups_map = {}
         self.groups = []
         self.keys_map = {}
+        self.current_chord = False
 
         self.numlock_mask, self.valid_mask = self.core.masks
 
+        try:
+            self.config.load()
+        except Exception as e:
+            logger.exception('Error while reading config file (%s)', e)
+            self.config = confreader.Config()
+            from libqtile.widget import TextBox
+            widgets = self.config.screens[0].bottom.widgets
+            widgets.insert(0, TextBox('Config Err!'))
+
         self.core.wmname = getattr(self.config, "wmname", "qtile")
         if config.main:
+            warnings.warn("Defining a main function is deprecated, use libqtile.qtile", DeprecationWarning)
             config.main(self)
 
         self.dgroups = None
@@ -178,13 +191,19 @@ class Qtile(CommandObject):
         hook.fire("startup")
 
         if state:
-            st = pickle.load(io.BytesIO(state.encode()))
             try:
+                with open(state, 'rb') as f:
+                    st = pickle.load(f)
                 st.apply(self)
             except:  # noqa: E722
                 logger.exception("failed restoring state")
+            finally:
+                os.remove(state)
 
         self.core.scan()
+        if state:
+            for screen in self.screens:
+                screen.group.layout_all()
         self.update_net_desktops()
         hook.subscribe.setgroup(self.update_net_desktops)
 
@@ -236,18 +255,20 @@ class Qtile(CommandObject):
             logger.warning("importing dbus/gobject failed, dbus will not work.")
             self._glib_loop = None
 
-    async def async_loop(self):
+    async def async_loop(self) -> None:
+        """Run the event loop
+
+        Finalizes the Qtile instance on exit.
+        """
         try:
             await self._stopped_event.wait()
         finally:
             await self.finalize()
 
-    def loop(self):
-        self._eventloop.run_until_complete(self.async_loop())
+        self._eventloop.stop()
 
-        self._eventloop.close()
-        self._eventloop = None
-
+    def maybe_restart(self) -> None:
+        """If set, restart the qtile instance"""
         if self._restart:
             logger.warning('Restarting Qtile with os.execv(...)')
             os.execv(*self._restart)
@@ -256,22 +277,25 @@ class Qtile(CommandObject):
         # stop gets called in a variety of ways, including from restart().
         # let's only do a real shutdown if we're not about to re-exec.
         if not self._restart:
+            hook.fire("shutdown")
             self.graceful_shutdown()
 
         logger.debug('Stopping qtile')
         self._stopped_event.set()
 
     def restart(self):
+        hook.fire("restart")
         argv = [sys.executable] + sys.argv
         if '--no-spawn' not in argv:
             argv.append('--no-spawn')
-        buf = io.BytesIO()
+        state_file = os.path.join(tempfile.gettempdir(), "qtile-state")
         try:
-            pickle.dump(QtileState(self), buf, protocol=0)
+            with open(state_file, 'wb') as f:
+                pickle.dump(QtileState(self), f, protocol=0)
         except:  # noqa: E722
             logger.error("Unable to pickle qtile state")
         argv = [s for s in argv if not s.startswith('--with-state')]
-        argv.append('--with-state=' + buf.getvalue().decode())
+        argv.append('--with-state=' + state_file)
         self._restart = (sys.executable, argv)
         self.stop()
 
@@ -340,41 +364,67 @@ class Qtile(CommandObject):
     def paint_screen(self, screen, image_path, mode=None):
         self.core.painter.paint(screen, image_path, mode)
 
-    def process_configure(self, width: int, height: int) -> None:
-        screen = self.current_screen
-        screen.resize(0, 0, width, height)
-
     def process_key_event(self, keysym: int, mask: int) -> None:
         key = self.keys_map.get((keysym, mask), None)
         if key is None:
             logger.info("Ignoring unknown keysym: {keysym}, mask: {mask}".format(keysym=keysym, mask=mask))
             return
 
-        for cmd in key.commands:
-            if cmd.check(self):
-                status, val = self.server.call(
-                    (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
-                )
-                if status in (command_interface.ERROR, command_interface.EXCEPTION):
-                    logger.error("KB command error %s: %s" % (cmd.name, val))
+        if isinstance(key, KeyChord):
+            self.grab_chord(key)
         else:
-            return
+            for cmd in key.commands:
+                if cmd.check(self):
+                    status, val = self.server.call(
+                        (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
+                    )
+                    if status in (command_interface.ERROR, command_interface.EXCEPTION):
+                        logger.error("KB command error %s: %s" % (cmd.name, val))
+            else:
+                if self.current_chord is True or (self.current_chord and key.key == "Escape"):
+                    self.ungrab_chord()
+                return
 
     def grab_keys(self) -> None:
+        """Re-grab all of the keys configured in the key map
+
+        Useful when a keyboard mapping event is received.
+        """
         self.core.ungrab_keys()
         for key in self.keys_map.values():
             self.grab_key(key)
 
-    def grab_key(self, key) -> None:
-        keysym, modmask, mask_key = self.core.lookup_key(key)
-        self.core.grab_key(keysym, modmask)
+    def grab_key(self, key: Key) -> None:
+        """Grab the given key event"""
+        keysym, mask_key = self.core.grab_key(key)
         self.keys_map[(keysym, mask_key)] = key
 
-    def ungrab_key(self, key) -> None:
-        keysym, modmask, mask_key = self.core.lookup_key(key)
-        key = self.keys_map.pop((keysym, mask_key))
-        if key is not None:
-            self.core.ungrab_key(keysym, modmask)
+    def ungrab_key(self, key: Key) -> None:
+        """Ungrab a given key event"""
+        keysym, mask_key = self.core.ungrab_key(key)
+        self.keys_map.pop((keysym, mask_key))
+
+    def ungrab_keys(self) -> None:
+        """Ungrab all key events"""
+        self.core.ungrab_keys()
+        self.keys_map.clear()
+
+    def grab_chord(self, chord) -> None:
+        self.current_chord = chord.mode if chord.mode != "" else True
+        if self.current_chord:
+            hook.fire("enter_chord", self.current_chord)
+
+        self.ungrab_keys()
+        for key in chord.submapings:
+            self.grab_key(key)
+
+    def ungrab_chord(self) -> None:
+        self.current_chord = False
+        hook.fire("leave_chord")
+
+        self.ungrab_keys()
+        for key in self.config.keys:
+            self.grab_key(key)
 
     def grab_mouse(self) -> None:
         self.core.ungrab_buttons()
@@ -411,7 +461,7 @@ class Qtile(CommandObject):
                 layouts = self.config.layouts
             g._configure(layouts, self.config.floating_layout, self)
             self.groups_map[name] = g
-            hook.fire("addgroup", self, name)
+            hook.fire("addgroup", name)
             hook.fire("changegroup")
             self.update_net_desktops()
 
@@ -439,7 +489,7 @@ class Qtile(CommandObject):
                 self.current_screen.set_group(target, save_prev=False)
             self.groups.remove(group)
             del(self.groups_map[name])
-            hook.fire("delgroup", self, name)
+            hook.fire("delgroup", name)
             hook.fire("changegroup")
             self.update_net_desktops()
 
@@ -459,10 +509,6 @@ class Qtile(CommandObject):
                 return
             self.widgets_map[w.name] = w
 
-    @functools.lru_cache()
-    def color_pixel(self, name):
-        return self.conn.screens[0].default_colormap.alloc_color(name).pixel
-
     @property
     def current_layout(self):
         return self.current_group.layout
@@ -475,34 +521,25 @@ class Qtile(CommandObject):
     def current_window(self):
         return self.current_screen.group.current_window
 
-    def reset_gaps(self, c):
-        if c.strut:
-            self.update_gaps((0, 0, 0, 0), c.strut)
+    def add_strut(self, strut):
+        from libqtile.bar import Bar, Gap
 
-    def update_gaps(self, strut, old_strut=None):
-        from libqtile.bar import Gap
+        for i, pos in enumerate(["left", "right", "top", "bottom"]):
+            if strut[i]:
+                bar = getattr(self.current_screen, pos)
+                if isinstance(bar, Bar):
+                    bar.adjust_for_strut(strut[i])
+                elif isinstance(bar, Gap):
+                    bar.size += strut[i]
+                    if bar.size <= 0:
+                        setattr(self.current_screen, pos, None)
+                else:
+                    setattr(self.current_screen, pos, Gap(strut[i]))
 
-        (left, right, top, bottom) = strut[:4]
-        if old_strut:
-            (old_left, old_right, old_top, old_bottom) = old_strut[:4]
-            if not left and old_left:
-                self.current_screen.left = None
-            elif not right and old_right:
-                self.current_screen.right = None
-            elif not top and old_top:
-                self.current_screen.top = None
-            elif not bottom and old_bottom:
-                self.current_screen.bottom = None
-
-        if top:
-            self.current_screen.top = Gap(top)
-        elif bottom:
-            self.current_screen.bottom = Gap(bottom)
-        elif left:
-            self.current_screen.left = Gap(left)
-        elif right:
-            self.current_screen.right = Gap(right)
         self.current_screen.resize()
+
+    def remove_strut(self, strut):
+        self.add_strut([-i for i in strut])
 
     def map_window(self, window: xcbq.Window) -> None:
         c = self.manage(window)
@@ -547,7 +584,7 @@ class Qtile(CommandObject):
                     return
 
                 if w.get_wm_type() == "dock" or c.strut:
-                    c.static(self.current_screen.index)
+                    c.cmd_static(self.current_screen.index)
                 else:
                     hook.fire("client_new", c)
 
@@ -569,7 +606,8 @@ class Qtile(CommandObject):
         c = self.windows_map.get(win)
         if c:
             hook.fire("client_killed", c)
-            self.reset_gaps(c)
+            if c.strut:
+                self.remove_strut(c.strut)
             if getattr(c, "group", None):
                 c.group.remove(c)
             del self.windows_map[win]
@@ -691,9 +729,13 @@ class Qtile(CommandObject):
         return closest_screen
 
     def enter_event(self, event) -> Optional[bool]:
-        if event.event in self.windows_map:
-            return True
-        screen = self.find_screen(event.root_x, event.root_y)
+        win = self.windows_map.get(event.event, None)
+        try:
+            if win.group.screen is self.current_screen:
+                return True
+            screen = win.group.screen
+        except AttributeError:
+            screen = self.find_screen(event.root_x, event.root_y)
         if screen:
             self.focus_screen(screen.index, warp=False)
         return None
@@ -1094,7 +1136,7 @@ class Qtile(CommandObject):
             pass
 
         d = DummyEv()
-        d.detail = self.conn.first_sym_to_code[keysym]
+        d.detail = self.conn.keysym_to_keycode(keysym)[0]
         d.state = modmasks
         self.core.handle_KeyPress(d)
 
@@ -1116,11 +1158,10 @@ class Qtile(CommandObject):
             return
         self.restart()
 
-    def cmd_spawn(self, cmd):
-        """Run cmd in a shell.
+    def cmd_spawn(self, cmd, shell=False):
+        """Run cmd, in a shell or not (default).
 
-        cmd may be a string, which is parsed by shlex.split, or a list (similar
-        to subprocess.Popen).
+        cmd may be a string or a list (similar to subprocess.Popen).
 
         Examples
         ========
@@ -1129,7 +1170,11 @@ class Qtile(CommandObject):
 
             spawn(["xterm", "-T", "Temporary terminal"])
         """
-        if isinstance(cmd, str):
+        if shell:
+            if not isinstance(cmd, str):
+                cmd = subprocess.list2cmdline(cmd)
+            args = ["/bin/sh", "-c", cmd]
+        elif isinstance(cmd, str):
             args = shlex.split(cmd)
         else:
             args = list(cmd)
@@ -1360,7 +1405,7 @@ class Qtile(CommandObject):
         mb.start_input(prompt, f, "group", strict_completer=True)
 
     def cmd_spawncmd(self, prompt="spawn", widget="prompt",
-                     command="%s", complete="cmd"):
+                     command="%s", complete="cmd", shell=True):
         """Spawn a command using a prompt widget, with tab-completion.
 
         Parameters
@@ -1376,7 +1421,7 @@ class Qtile(CommandObject):
         """
         def f(args):
             if args:
-                self.cmd_spawn(command % args)
+                self.cmd_spawn(command % args, shell=shell)
         try:
             mb = self.widgets_map[widget]
             mb.start_input(prompt, f, complete)
@@ -1448,14 +1493,14 @@ class Qtile(CommandObject):
         rule_args :
             config.Rule arguments
         min_priorty :
-            If the rule is added with minimum prioriry (last) (default: False)
+            If the rule is added with minimum priority (last) (default: False)
         """
         if not self.dgroups:
             logger.warning('No dgroups created')
             return
 
         match = Match(**match_args)
-        rule = Rule(match, **rule_args)
+        rule = Rule([match], **rule_args)
         return self.dgroups.add_rule(rule, min_priorty)
 
     def cmd_remove_rule(self, rule_id):
@@ -1527,7 +1572,7 @@ class Qtile(CommandObject):
         """Get pickled state for restarting qtile"""
         buf = io.BytesIO()
         pickle.dump(QtileState(self), buf, protocol=0)
-        state = buf.getvalue().decode()
+        state = buf.getvalue().decode(errors="backslashreplace")
         logger.debug('State = ')
         logger.debug(''.join(state.split('\n')))
         return state

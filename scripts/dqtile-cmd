@@ -7,7 +7,7 @@ usage() {
 
     "
 
-    qtile-cmd -h | sed "s/qtile-cmd/dqtile-cmd/"
+    qtile cmd-obj -h | sed "s/qtile cmd-obj/dqtile-cmd/"
 
 
     echo "
@@ -21,7 +21,7 @@ case $1 in
     --force-dmenu) FORCE_DMENU=1; shift;;
 esac
 
-action=$(qtile-cmd $@)
+action=$(qtile cmd-obj $@)
 
 # Path to menu application
 if [[ -n $(command -v rofi) ]]  && [[ -z "$FORCE_DMENU" ]]; then
@@ -45,7 +45,7 @@ action=$(echo "$action"| cut -f 1 |  sed -e 's/ *$//g')
 if [ "$action_info" -eq "10" ]; then
     # only run when -f is present (then -i makes sense)
     if [[ $action == *"-f"* ]]; then
-        info=$(qtile-cmd $action -i)
+        info=$(qtile cmd-obj $action -i)
         action=$($menu -mesg "$global_mesg<b>Help</b>$info" -filter "$action -a ")
     fi;
 fi;

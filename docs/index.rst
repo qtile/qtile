@@ -6,33 +6,41 @@ Getting started
 ===============
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
     manual/install/index
     manual/config/index
+    manual/commands/shell/index
 
 
-Commands and scripting
-======================
+- :ref:`ref-extensions`
+- :ref:`ref-hooks`
+- :ref:`ref-layouts`
+- :ref:`ref-widgets`
 
 .. toctree::
     :maxdepth: 2
+    :hidden:
 
-    manual/commands/index
+    manual/ref/index
+
+
+Advanced scripting
+==================
+
+.. toctree::
+    :maxdepth: 1
+
     manual/commands/scripting
-    manual/commands/qshell
-    manual/commands/iqshell
-    manual/commands/qtile-top
-    manual/commands/qtile-run
-    manual/commands/qtile-cmd
-    manual/commands/dqtile-cmd
+    manual/commands/index
+    manual/ref/commands
     manual/commands/keybindings
 
 Getting involved
 ================
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
     manual/contributing
     manual/hacking
@@ -41,9 +49,8 @@ Miscellaneous
 =============
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
-    manual/ref/index
     manual/faq
     manual/license
 

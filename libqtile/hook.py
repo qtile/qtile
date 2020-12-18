@@ -37,12 +37,6 @@ from libqtile.log_utils import logger
 
 subscriptions = {}  # type: Dict
 SKIPLOG = set()  # type: Set
-qtile = None
-
-
-def init(q):
-    global qtile
-    qtile = q
 
 
 def clear():
@@ -93,6 +87,24 @@ class Subscribe:
         """
         return self._subscribe("startup_complete", func)
 
+    def shutdown(self, func):
+        """Called before qtile is shutdown
+
+        **Arguments**
+
+        None
+        """
+        return self._subscribe("shutdown", func)
+
+    def restart(self, func):
+        """Called before qtile is restarted
+
+        **Arguments**
+
+        None
+        """
+        return self._subscribe("restart", func)
+
     def setgroup(self, func):
         """Called when group is changed
 
@@ -107,7 +119,6 @@ class Subscribe:
 
         **Arguments**
 
-            * qtile manager instance
             * name of new group
         """
         return self._subscribe("addgroup", func)
@@ -117,7 +128,6 @@ class Subscribe:
 
         **Arguments**
 
-            * qtile manager instance
             * name of deleted group
         """
         return self._subscribe("delgroup", func)
@@ -190,7 +200,7 @@ class Subscribe:
                 if c.name == "xterm":
                     c.togroup("a")
                 elif c.name == "dzen":
-                    c.static(0)
+                    c.cmd_static(0)
         """
         return self._subscribe("client_new", func)
 
@@ -300,7 +310,6 @@ class Subscribe:
 
         **Arguments**
 
-            * qtile manager instance
             * ``xproto.randr.ScreenChangeNotify`` event
 
         Examples
@@ -309,8 +318,8 @@ class Subscribe:
         ::
 
             @libqtile.hook.subscribe.screen_change
-            def restart_on_randr(qtile, ev):
-                qtile.cmd_restart()
+            def restart_on_randr(ev):
+                libqtile.qtile.cmd_restart()
         """
         return self._subscribe("screen_change", func)
 
@@ -322,6 +331,24 @@ class Subscribe:
         None
         """
         return self._subscribe("current_screen_change", func)
+
+    def enter_chord(self, func):
+        """Called when key chord begins
+
+        **Arguments**
+
+            * name of chord(mode)
+        """
+        return self._subscribe("enter_chord", func)
+
+    def leave_chord(self, func):
+        """Called when key chord ends
+
+        **Arguments**
+
+        None
+        """
+        return self._subscribe("leave_chord", func)
 
 
 subscribe = Subscribe()

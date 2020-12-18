@@ -36,7 +36,8 @@ class CheckUpdates(base.ThreadedPollText):
         ("display_format", "Updates: {updates}", "Display format if updates available"),
         ("colour_no_updates", "ffffff", "Colour when there's no updates."),
         ("colour_have_updates", "ffffff", "Colour when there are updates."),
-        ("restart_indicator", "", "Indicator to represent reboot is required. (Ubuntu only)")
+        ("restart_indicator", "", "Indicator to represent reboot is required. (Ubuntu only)"),
+        ("no_update_string", "", "String to display if no updates available")
     ]
 
     def __init__(self, **config):
@@ -65,6 +66,9 @@ class CheckUpdates(base.ThreadedPollText):
                          'Use one of the list: ' + str(distros) + '.')
             self.cmd = None
 
+        if self.execute:
+            self.add_callbacks({'Button1': self.do_execute})
+
     def _check_updates(self):
         # type: () -> str
         try:
@@ -75,7 +79,11 @@ class CheckUpdates(base.ThreadedPollText):
                 self.subtr = 0
         except CalledProcessError:
             updates = ""
-        num_updates = str(len(updates.splitlines()) - self.subtr)
+        num_updates = len(updates.splitlines()) - self.subtr
+
+        if num_updates == 0:
+            return self.no_update_string
+        num_updates = str(num_updates)
 
         if self.restart_indicator and os.path.exists('/var/run/reboot-required'):
             num_updates += self.restart_indicator
@@ -96,8 +104,13 @@ class CheckUpdates(base.ThreadedPollText):
             return "N/A"
         return self._check_updates()
 
-    def button_press(self, x, y, button):
-        # type: (int, int, int) -> None
-        base.ThreadedPollText.button_press(self, x, y, button)
-        if button == 1 and self.execute is not None:
-            Popen(self.execute, shell=True)
+    def do_execute(self):
+        self._process = Popen(self.execute, shell=True)
+        self.timeout_add(1, self._refresh_count)
+
+    def _refresh_count(self):
+        if self._process.poll() is None:
+            self.timeout_add(1, self._refresh_count)
+
+        else:
+            self.tick()

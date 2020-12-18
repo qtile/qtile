@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Copyright (c) 2012 dmpayton
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -18,11 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-#!/bin/sh
-
 rm -rf _build/*
 
-while [ true ]; do
+while true; do
     make html
     sleep 5
 done

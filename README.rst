@@ -2,7 +2,7 @@
 
 **A full-featured, hackable tiling window manager written and configured in Python**
 
-|website| |pypi| |travis| |rtd| |coveralls| |license|
+|website| |pypi| |ci| |rtd| |coveralls| |license|
 
 Features
 ========
@@ -46,9 +46,9 @@ and `guidelines`_ for contributing in the documentation.
 .. |pypi| image:: https://img.shields.io/pypi/v/qtile.svg
     :alt: PyPI
     :target: https://pypi.org/project/qtile/
-.. |travis| image:: https://travis-ci.org/qtile/qtile.svg?branch=master
-    :alt: Travis
-    :target: https://travis-ci.org/qtile/qtile
+.. |ci| image:: https://github.com/qtile/qtile/workflows/ci/badge.svg?branch=master
+    :alt: CI status
+    :target: https://github.com/qtile/qtile/actions
 .. |rtd| image:: https://readthedocs.org/projects/qtile/badge/?version=latest
     :alt: Read the Docs
     :target: http://docs.qtile.org/en/latest/

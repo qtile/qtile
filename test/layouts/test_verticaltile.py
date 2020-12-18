@@ -29,6 +29,7 @@ import pytest
 
 import libqtile.config
 from libqtile import layout
+from libqtile.confreader import Config
 from test.conftest import no_xinerama
 from test.layouts.layout_utils import (
     assert_dimensions,
@@ -37,9 +38,8 @@ from test.layouts.layout_utils import (
 )
 
 
-class VerticalTileConfig:
+class VerticalTileConfig(Config):
     auto_fullscreen = True
-    main = None
     groups = [
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
@@ -49,7 +49,7 @@ class VerticalTileConfig:
     layouts = [
         layout.VerticalTile(columns=2)
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []

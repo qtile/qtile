@@ -6,6 +6,7 @@
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 Adi Sieker
 # Copyright (c) 2014 Sebastien Blot
+# Copyright (c) 2020 Mikel Ward
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,10 +27,9 @@
 # SOFTWARE.
 
 import logging
-import subprocess
-import time
 
 import pytest
+import xcffib.xproto
 
 import libqtile.bar
 import libqtile.config
@@ -39,12 +39,15 @@ import libqtile.hook
 import libqtile.layout
 import libqtile.widget
 from libqtile.backend.x11 import xcbq
+from libqtile.command_client import SelectError
 from libqtile.command_interface import CommandError, CommandException
+from libqtile.config import Match
+from libqtile.confreader import Config
 from libqtile.lazy import lazy
-from test.conftest import BareConfig, Retry, no_xinerama, whereis
+from test.conftest import BareConfig, Retry, no_xinerama
 
 
-class ManagerConfig:
+class ManagerConfig(Config):
     auto_fullscreen = True
     groups = [
         libqtile.config.Group("a"),
@@ -59,7 +62,7 @@ class ManagerConfig:
         libqtile.layout.max.Max()
     ]
     floating_layout = libqtile.layout.floating.Floating(
-        float_rules=[dict(wmclass="xclock")])
+        float_rules=[Match(wm_class='xclock')])
     keys = [
         libqtile.config.Key(
             ["control"],
@@ -81,7 +84,6 @@ class ManagerConfig:
             20
         ),
     )]
-    main = None
     follow_mouse_focus = True
 
 
@@ -224,6 +226,114 @@ def test_keypress(qtile):
     assert self.c.groups()["a"]["focus"] == "one"
 
 
+class _ChordsConfig(Config):
+    groups = [
+        libqtile.config.Group("a")
+    ]
+    layouts = [
+        libqtile.layout.max.Max()
+    ]
+    floating_layout = libqtile.resources.default_config.floating_layout
+    keys = [
+        libqtile.config.Key(
+            [],
+            "k",
+            lazy.layout.up(),
+        ),
+        libqtile.config.KeyChord(["control"], "a", [
+            libqtile.config.Key(
+                [],
+                "j",
+                lazy.layout.down(),
+            )
+        ]),
+        libqtile.config.KeyChord(["control"], "b", [
+            libqtile.config.Key(
+                [],
+                "j",
+                lazy.layout.down(),
+            )
+        ], "test")
+    ]
+    mouse = []
+    screens = [libqtile.config.Screen(
+        bottom=libqtile.bar.Bar(
+            [
+                libqtile.widget.GroupBox(),
+            ],
+            20
+        ),
+    )]
+    auto_fullscreen = True
+
+
+chords_config = pytest.mark.parametrize("qtile", [_ChordsConfig], indirect=True)
+
+
+@chords_config
+@no_xinerama
+def test_immediate_chord(qtile):
+    self = qtile
+
+    self.test_window("three")
+    self.test_window("two")
+    self.test_window("one")
+    assert self.c.groups()["a"]["focus"] == "one"
+    # use normal bind to shift focus up
+    self.c.simulate_keypress([], "k")
+    assert self.c.groups()["a"]["focus"] == "two"
+    # enter into key chord and "k" bindin no longer working
+    self.c.simulate_keypress(["control"], "a")
+    self.c.simulate_keypress([], "k")
+    assert self.c.groups()["a"]["focus"] == "two"
+    # leave chord using "Escape", "k" bind work again
+    self.c.simulate_keypress([], "Escape")
+    self.c.simulate_keypress([], "k")
+    assert self.c.groups()["a"]["focus"] == "three"
+    # enter key chord and use it's "j" binding to shift focus down
+    self.c.simulate_keypress(["control"], "a")
+    self.c.simulate_keypress([], "j")
+    assert self.c.groups()["a"]["focus"] == "two"
+    # in immediate chord we leave it after use any
+    # bind from it, "j" bind no longer working
+    self.c.simulate_keypress([], "j")
+    assert self.c.groups()["a"]["focus"] == "two"
+
+
+@chords_config
+@no_xinerama
+def test_mode_chord(qtile):
+    self = qtile
+
+    self.test_window("three")
+    self.test_window("two")
+    self.test_window("one")
+    assert self.c.groups()["a"]["focus"] == "one"
+    # use normal bind to shift focus up
+    self.c.simulate_keypress([], "k")
+    assert self.c.groups()["a"]["focus"] == "two"
+    # enter into key chord and "k" bindin no longer working
+    self.c.simulate_keypress(["control"], "b")
+    self.c.simulate_keypress([], "k")
+    assert self.c.groups()["a"]["focus"] == "two"
+    # leave chord using "Escape", "k" bind work again
+    self.c.simulate_keypress([], "Escape")
+    self.c.simulate_keypress([], "k")
+    assert self.c.groups()["a"]["focus"] == "three"
+    # enter key chord and use it's "j" binding to shift focus down
+    self.c.simulate_keypress(["control"], "b")
+    self.c.simulate_keypress([], "j")
+    assert self.c.groups()["a"]["focus"] == "two"
+    # in mode chord we __not__ leave it after use any
+    # bind from it, "j" bind still working
+    self.c.simulate_keypress([], "j")
+    assert self.c.groups()["a"]["focus"] == "one"
+    # only way to exit mode chord is by hit "Escape"
+    self.c.simulate_keypress([], "Escape")
+    self.c.simulate_keypress([], "j")
+    assert self.c.groups()["a"]["focus"] == "one"
+
+
 @manager_config
 @no_xinerama
 def test_spawn(qtile):
@@ -313,6 +423,21 @@ def test_setlayout(qtile):
     assert not self.c.layout.info()["name"] == "max"
     self.c.group.setlayout("max")
     assert self.c.layout.info()["name"] == "max"
+
+
+@manager_config
+@no_xinerama
+def test_to_layout_index(qtile):
+    self = qtile
+
+    self.c.to_layout_index(-1)
+    assert self.c.layout.info()["name"] == "max"
+    self.c.to_layout_index(-4)
+    assert self.c.layout.info()["name"] == "stack"
+    with pytest.raises(SelectError):
+        self.c.to_layout.index(-5)
+    self.c.to_layout_index(-2)
+    assert self.c.layout.info()["name"] == "tile"
 
 
 @manager_config
@@ -415,8 +540,8 @@ def test_match(qtile):
     self = qtile
 
     self.test_xeyes()
-    assert self.c.window.match(wname="xeyes")
-    assert not self.c.window.match(wname="nonexistent")
+    assert self.c.window.info()['name'] == 'xeyes'
+    assert not self.c.window.info()['name'] == 'nonexistent'
 
 
 @manager_config
@@ -774,58 +899,6 @@ def test_screens(qtile):
 
 @manager_config
 @no_xinerama
-def test_rotate(qtile):
-    self = qtile
-
-    self.test_window("one")
-    s = self.c.screens()[0]
-    height, width = s["height"], s["width"]
-    subprocess.call(
-        [
-            "xrandr",
-            "--output", "default",
-            "-display", self.display,
-            "--rotate", "left"
-        ],
-        stderr=subprocess.PIPE,
-        stdout=subprocess.PIPE
-    )
-
-    @Retry(ignore_exceptions=(AssertionError,), fail_msg="Screen did not rotate")
-    def run():
-        s = self.c.screens()[0]
-        assert s['width'] == height
-        assert s['height'] == width
-        return True
-    run()
-
-
-# TODO: see note on test_resize
-@manager_config
-@no_xinerama
-def test_resize_(qtile):
-    self = qtile
-
-    self.test_window("one")
-    subprocess.call(
-        [
-            "xrandr",
-            "-s", "480x640",
-            "-display", self.display
-        ]
-    )
-
-    @Retry(ignore_exceptions=(AssertionError,), fail_msg="Screen did not resize")
-    def run():
-        d = self.c.screen.info()
-        assert d['width'] == 480
-        assert d['height'] == 640
-        return True
-    run()
-
-
-@manager_config
-@no_xinerama
 def test_focus_stays_on_layout_switch(qtile):
     qtile.test_window("one")
     qtile.test_window("two")
@@ -984,7 +1057,7 @@ def test_dheight():
     assert s.dheight == 80
 
 
-class _Config:
+class _Config(Config):
     groups = [
         libqtile.config.Group("a"),
         libqtile.config.Group("b"),
@@ -995,7 +1068,7 @@ class _Config:
         libqtile.layout.stack.Stack(num_stacks=1),
         libqtile.layout.stack.Stack(num_stacks=2)
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = [
         libqtile.config.Key(
             ["control"],
@@ -1024,7 +1097,7 @@ class ClientNewStaticConfig(_Config):
     @staticmethod
     def main(c):
         def client_new(c):
-            c.static(0)
+            c.cmd_static(0)
         libqtile.hook.subscribe.client_new(client_new)
 
 
@@ -1037,13 +1110,6 @@ def test_clientnew_config(qtile):
 
     a = self.test_window("one")
     self.kill_window(a)
-
-
-@pytest.mark.skipif(whereis("gkrellm") is None, reason="gkrellm not found")
-@clientnew_config
-def test_gkrellm(qtile):
-    qtile.test_gkrellm()
-    time.sleep(0.1)
 
 
 class ToGroupConfig(_Config):
@@ -1068,8 +1134,8 @@ def test_togroup_config(qtile):
 
 @manager_config
 def test_color_pixel(qtile):
-    # test for #394
-    qtile.c.eval("self.color_pixel(\"ffffff\")")
+    (success, e) = qtile.c.eval("self.conn.color_pixel(\"ffffff\")")
+    assert success, e
 
 
 @manager_config
@@ -1119,3 +1185,253 @@ def test_user_position(qtile):
     finally:
         w.kill_client()
         conn.finalize()
+
+
+def wait_for_focus_events(conn):
+    got_take_focus = False
+    got_focus_in = False
+    while True:
+        event = conn.conn.poll_for_event()
+        if not event:
+            break
+
+        if (isinstance(event, xcffib.xproto.ClientMessageEvent) and
+                event.type != conn.atoms["WM_TAKE_FOCUS"]):
+            got_take_focus = True
+
+        if isinstance(event, xcffib.xproto.FocusInEvent):
+            got_focus_in = True
+    return got_take_focus, got_focus_in
+
+
+@manager_config
+def test_only_one_focus(qtile):
+    w = None
+    conn = xcbq.Connection(qtile.display)
+
+    def both_wm_take_focus_and_input_hint():
+        nonlocal w
+        w = conn.create_window(5, 5, 10, 10)
+        w.set_attribute(eventmask=xcffib.xproto.EventMask.FocusChange)
+        # manager config automatically floats xclock
+        w.set_property("WM_CLASS", "xclock", type="STRING", format=8)
+
+        # set both the input hit
+        hints = [0] * 14
+        hints[0] = xcbq.HintsFlags["InputHint"]
+        hints[1] = 1  # set hints to 1, i.e. we want them
+        w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
+
+        # and add the WM_PROTOCOLS protocol WM_TAKE_FOCUS
+        conn.conn.core.ChangePropertyChecked(
+            xcffib.xproto.PropMode.Append,
+            w.wid,
+            conn.atoms["WM_PROTOCOLS"],
+            conn.atoms["ATOM"],
+            32,
+            1,
+            [conn.atoms["WM_TAKE_FOCUS"]],
+        ).check()
+
+        w.map()
+        conn.conn.flush()
+    try:
+        qtile.create_window(both_wm_take_focus_and_input_hint)
+        assert qtile.c.window.info()['floating'] is True
+        got_take_focus, got_focus_in = wait_for_focus_events(conn)
+        assert not got_take_focus
+        assert got_focus_in
+    finally:
+        w.kill_client()
+        conn.finalize()
+
+
+@manager_config
+def test_only_wm_protocols_focus(qtile):
+    w = None
+    conn = xcbq.Connection(qtile.display)
+
+    def only_wm_protocols_focus():
+        nonlocal w
+        w = conn.create_window(5, 5, 10, 10)
+        w.set_attribute(eventmask=xcffib.xproto.EventMask.FocusChange)
+        # manager config automatically floats xclock
+        w.set_property("WM_CLASS", "xclock", type="STRING", format=8)
+
+        hints = [0] * 14
+        hints[0] = xcbq.HintsFlags["InputHint"]
+        hints[1] = 0  # set hints to 0, i.e. we don't want them
+        w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
+
+        # add the WM_PROTOCOLS protocol WM_TAKE_FOCUS
+        conn.conn.core.ChangePropertyChecked(
+            xcffib.xproto.PropMode.Append,
+            w.wid,
+            conn.atoms["WM_PROTOCOLS"],
+            conn.atoms["ATOM"],
+            32,
+            1,
+            [conn.atoms["WM_TAKE_FOCUS"]],
+        ).check()
+
+        w.map()
+        conn.conn.flush()
+    try:
+        qtile.create_window(only_wm_protocols_focus)
+        assert qtile.c.window.info()['floating'] is True
+        got_take_focus, got_focus_in = wait_for_focus_events(conn)
+        assert got_take_focus
+        assert not got_focus_in
+    finally:
+        w.kill_client()
+        conn.finalize()
+
+
+@manager_config
+def test_only_input_hint_focus(qtile):
+    w = None
+    conn = xcbq.Connection(qtile.display)
+
+    def only_input_hint():
+        nonlocal w
+        w = conn.create_window(5, 5, 10, 10)
+        w.set_attribute(eventmask=xcffib.xproto.EventMask.FocusChange)
+        # manager config automatically floats xclock
+        w.set_property("WM_CLASS", "xclock", type="STRING", format=8)
+
+        # set the input hint
+        hints = [0] * 14
+        hints[0] = xcbq.HintsFlags["InputHint"]
+        hints[1] = 1  # set hints to 1, i.e. we want them
+        w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
+
+        w.map()
+        conn.conn.flush()
+    try:
+        qtile.create_window(only_input_hint)
+        assert qtile.c.window.info()['floating'] is True
+        got_take_focus, got_focus_in = wait_for_focus_events(conn)
+        assert not got_take_focus
+        assert got_focus_in
+    finally:
+        w.kill_client()
+        conn.finalize()
+
+
+@manager_config
+def test_no_focus(qtile):
+    w = None
+    conn = xcbq.Connection(qtile.display)
+
+    def no_focus():
+        nonlocal w
+        w = conn.create_window(5, 5, 10, 10)
+        w.set_attribute(eventmask=xcffib.xproto.EventMask.FocusChange)
+        # manager config automatically floats xclock
+        w.set_property("WM_CLASS", "xclock", type="STRING", format=8)
+
+        hints = [0] * 14
+        hints[0] = xcbq.HintsFlags["InputHint"]
+        w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
+        w.map()
+        conn.conn.flush()
+    try:
+        qtile.create_window(no_focus)
+        assert qtile.c.window.info()['floating'] is True
+        got_take_focus, got_focus_in = wait_for_focus_events(conn)
+        assert not got_take_focus
+        assert not got_focus_in
+    finally:
+        w.kill_client()
+        conn.finalize()
+
+
+@manager_config
+def test_hints_setting_unsetting(qtile):
+    w = None
+    conn = xcbq.Connection(qtile.display)
+
+    def no_input_hint():
+        nonlocal w
+        w = conn.create_window(5, 5, 10, 10)
+        w.map()
+        conn.conn.flush()
+
+    try:
+        qtile.create_window(no_input_hint)
+        # We default the input hint to true since some non-trivial number of
+        # windows don't set it, and most of them want focus. The spec allows
+        # WMs to assume "convenient" values.
+        assert qtile.c.window.hints()['input']
+
+        # now try to "update" it, but don't really set an update (i.e. the
+        # InputHint bit is 0, so the WM should not derive a new hint from the
+        # content of the message at the input hint's offset)
+        hints = [0] * 14
+        w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
+        conn.flush()
+
+        # should still have the hint
+        assert qtile.c.window.hints()['input']
+
+        # now do an update: turn it off
+        hints[0] = xcbq.HintsFlags["InputHint"]
+        hints[1] = 0
+        w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
+        conn.flush()
+        assert not qtile.c.window.hints()['input']
+
+        # turn it back on
+        hints[0] = xcbq.HintsFlags["InputHint"]
+        hints[1] = 1
+        w.set_property("WM_HINTS", hints, type="WM_HINTS", format=32)
+        conn.flush()
+        assert qtile.c.window.hints()['input']
+
+    finally:
+        w.kill_client()
+        conn.finalize()
+
+
+@manager_config
+def test_strut_handling(qtile):
+    w = None
+    conn = xcbq.Connection(qtile.display)
+
+    def has_struts():
+        nonlocal w
+        w = conn.create_window(0, 0, 10, 10)
+        w.set_property("_NET_WM_STRUT", [0, 0, 0, 10])
+        w.map()
+        conn.conn.flush()
+
+    def test_initial_state():
+        assert qtile.c.window.info()['width'] == 798
+        assert qtile.c.window.info()['height'] == 578
+        assert qtile.c.window.info()['x'] == 0
+        assert qtile.c.window.info()['y'] == 0
+        bar_id = qtile.c.bar["bottom"].info()["window"]
+        bar = qtile.c.window[bar_id].info()
+        assert bar["height"] == 20
+        assert bar["y"] == 580
+
+    qtile.test_xcalc()
+    test_initial_state()
+
+    try:
+        qtile.create_window(has_struts)
+        qtile.c.window.static(0, None, None, None, None)
+        assert qtile.c.window.info()['width'] == 798
+        assert qtile.c.window.info()['height'] == 568
+        assert qtile.c.window.info()['x'] == 0
+        assert qtile.c.window.info()['y'] == 0
+        bar_id = qtile.c.bar["bottom"].info()["window"]
+        bar = qtile.c.window[bar_id].info()
+        assert bar["height"] == 20
+        assert bar["y"] == 570
+
+    finally:
+        w.kill_client()
+        conn.finalize()
+
+    test_initial_state()

@@ -28,10 +28,12 @@
 import os.path
 import sys
 import warnings
-from typing import List
+from typing import List, Optional
 
 from libqtile import configurable, hook, utils
+from libqtile.bar import BarType
 from libqtile.command_object import CommandObject
+from libqtile.lazy import lazy
 
 
 class Key:
@@ -58,6 +60,36 @@ class Key:
 
     def __repr__(self):
         return "<Key (%s, %s)>" % (self.modifiers, self.key)
+
+
+class KeyChord:
+    """Define a key chord aka vim like mode
+
+    Parameters
+    ==========
+    modifiers:
+        A list of modifier specifications. Modifier specifications are one of:
+        "shift", "lock", "control", "mod1", "mod2", "mod3", "mod4", "mod5".
+    key:
+        A key specification, e.g. "a", "Tab", "Return", "space".
+    submappings:
+        A list of Key declarations to bind in this chord
+    mode:
+        A string with vim like mode name if it's set chord not end
+        after use one of submapings or Esc key
+    """
+    def __init__(self, modifiers: List[str], key: str, submapings: List[Key], mode: str = ""):
+        self.modifiers = modifiers
+        self.key = key
+
+        def noop(qtile):
+            pass
+        submapings.append(Key([], "Escape", lazy.function(noop)))
+        self.submapings = submapings
+        self.mode = mode
+
+    def __repr__(self):
+        return "<KeyChord (%s, %s)>" % (self.modifiers, self.key)
 
 
 class Mouse:
@@ -221,21 +253,12 @@ class Screen(CommandObject):
     dimensions. If the mode is 'fill', the image will be centred on the screen and
     resized to fill it. If the mode is 'stretch', the image is stretched to fit all of
     it into the screen.
-
-    Parameters
-    ==========
-    top: Gap/Bar object, or None.
-    bottom: Gap/Bar object, or None.
-    left: Gap/Bar object, or None.
-    right: Gap/Bar object, or None.
-    wallpaper: Dict, or None.
-    x : int or None
-    y : int or None
-    width : int or None
-    height : int or None
     """
-    def __init__(self, top=None, bottom=None, left=None, right=None, wallpaper=None,
-                 wallpaper_mode=None, x=None, y=None, width=None, height=None):
+    def __init__(self, top: Optional[BarType] = None, bottom: Optional[BarType] = None,
+                 left: Optional[BarType] = None, right: Optional[BarType] = None,
+                 wallpaper: Optional[str] = None, wallpaper_mode: Optional[str] = None,
+                 x: Optional[int] = None, y: Optional[int] = None, width: Optional[int] = None,
+                 height: Optional[int] = None):
         self.group = None
         self.previous_group = None
 
@@ -342,11 +365,9 @@ class Screen(CommandObject):
 
         hook.fire("setgroup")
         hook.fire("focus_change")
-        hook.fire(
-            "layout_change",
-            self.group.layouts[self.group.current_layout],
-            self.group
-        )
+        hook.fire("layout_change",
+                  self.group.layouts[self.group.current_layout],
+                  self.group)
 
     def toggle_group(self, group=None):
         """Switch to the selected group or to the previously active one"""
@@ -526,87 +547,91 @@ class ScratchPad(Group):
 class Match:
     """Match for dynamic groups
 
-    It can match by title, class or role.
+    It can match by title, wm_class, role, wm_type, wm_instance_class or
+    net_wm_pid.
 
     ``Match`` supports both regular expression objects (i.e. the result of
-    ``re.compile()``) or strings (match as a "include" match). If a window
-    matches any of the things in any of the lists, it is considered a match.
+    ``re.compile()``) or strings (match as an "include"-match). If a window
+    matches all specified values, it is considered a match.
 
     Parameters
     ==========
     title:
-        things to match against the title (WM_NAME)
+        matches against the title (WM_NAME)
     wm_class:
-        things to match against the second string in WM_CLASS atom
+        matches against the second string in WM_CLASS atom
     role:
-        things to match against the WM_ROLE atom
+        matches against the WM_ROLE atom
     wm_type:
-        things to match against the WM_TYPE atom
+        matches against the WM_TYPE atom
     wm_instance_class:
-        things to match against the first string in WM_CLASS atom
+        matches against the first string in WM_CLASS atom
     net_wm_pid:
-        things to match against the _NET_WM_PID atom (only int allowed in this
+        matches against the _NET_WM_PID atom (only int allowed for this
         rule)
     """
     def __init__(self, title=None, wm_class=None, role=None, wm_type=None,
                  wm_instance_class=None, net_wm_pid=None):
-        if not title:
-            title = []
-        if not wm_class:
-            wm_class = []
-        if not role:
-            role = []
-        if not wm_type:
-            wm_type = []
-        if not wm_instance_class:
-            wm_instance_class = []
-        if not net_wm_pid:
-            net_wm_pid = []
+        self._rules = {}
 
-        try:
-            net_wm_pid = list(map(int, net_wm_pid))
-        except ValueError:
-            error = 'Invalid rule for net_wm_pid: "%s" '\
-                    'only ints allowed' % str(net_wm_pid)
-            raise utils.QtileError(error)
+        if title is not None:
+            self._rules["title"] = title
+        if wm_class is not None:
+            self._rules["wm_class"] = wm_class
+        if role is not None:
+            self._rules["role"] = role
+        if wm_type is not None:
+            self._rules["wm_type"] = wm_type
+        if wm_instance_class is not None:
+            self._rules["wm_instance_class"] = wm_instance_class
+        if net_wm_pid is not None:
+            try:
+                self._rules["net_wm_pid"] = int(net_wm_pid)
+            except ValueError:
+                error = 'Invalid rule for net_wm_pid: "%s" only int allowed' % \
+                        str(net_wm_pid)
+                raise utils.QtileError(error)
 
-        self._rules = [('title', t) for t in title]
-        self._rules += [('wm_class', w) for w in wm_class]
-        self._rules += [('role', r) for r in role]
-        self._rules += [('wm_type', r) for r in wm_type]
-        self._rules += [('wm_instance_class', w) for w in wm_instance_class]
-        self._rules += [('net_wm_pid', w) for w in net_wm_pid]
+    @staticmethod
+    def _get_property_predicate(name, value):
+        if name == 'net_wm_pid':
+            return lambda other: other == value
+        elif name == 'wm_class':
+            def predicate(other):
+                # match as an "include"-match on any of the received classes
+                match = getattr(other, 'match', lambda v: other in v)
+                return value and any(match(v) for v in value)
+            return predicate
+        else:
+            def predicate(other):
+                # match as an "include"-match
+                match = getattr(other, 'match', lambda v: other in v)
+                return match(value)
+            return predicate
 
     def compare(self, client):
-        for _type, rule in self._rules:
-            if _type == "net_wm_pid":
-                def match_func(value):
-                    return rule == value
-            else:
-                match_func = getattr(rule, 'match', None) or \
-                    getattr(rule, 'count')
-
-            if _type == 'title':
+        for property_name, rule_value in self._rules.items():
+            if property_name == 'title':
                 value = client.name
-            elif _type == 'wm_class':
-                value = None
-                _value = client.window.get_wm_class()
-                if _value and len(_value) > 1:
-                    value = _value[1]
-            elif _type == 'wm_instance_class':
-                value = client.window.get_wm_class()
-                if value:
-                    value = value[0]
-            elif _type == 'wm_type':
-                value = client.window.get_wm_type()
-            elif _type == 'net_wm_pid':
-                value = client.window.get_net_wm_pid()
-            else:
+            elif property_name == "wm_instance_class":
+                wm_class = client.window.get_wm_class()
+                if not wm_class:
+                    return False
+                value = wm_class[0]
+            elif property_name == 'role':
                 value = client.window.get_wm_window_role()
+            else:
+                value = getattr(client.window, 'get_' + property_name)()
 
-            if value and match_func(value):
-                return True
-        return False
+            # Some of the window.get_...() functions can return None
+            if value is None:
+                return False
+
+            match = self._get_property_predicate(property_name, value)
+            if not match(rule_value):
+                return False
+
+        return True
 
     def map(self, callback, clients):
         """Apply callback to each client that matches this Match"""
@@ -619,15 +644,15 @@ class Match:
 
 
 class Rule:
-    """How to act on a Match
+    """How to act on a match
 
-    A Rule contains a Match object, and a specification about what to do when
-    that object is matched.
+    A Rule contains a list of Match objects, and a specification about what to
+    do when any of them is matched.
 
     Parameters
     ==========
     match :
-        ``Match`` object associated with this ``Rule``
+        ``Match`` object or a list of such associated with this ``Rule``
     float :
         auto float this window?
     intrusive :
@@ -637,18 +662,21 @@ class Rule:
     """
     def __init__(self, match, group=None, float=False, intrusive=False,
                  break_on_match=True):
-        self.match = match
+        if isinstance(match, Match):
+            self.matchlist = [match]
+        else:
+            self.matchlist = match
         self.group = group
         self.float = float
         self.intrusive = intrusive
         self.break_on_match = break_on_match
 
     def matches(self, w):
-        return self.match.compare(w)
+        return any(w.match(m) for m in self.matchlist)
 
     def __repr__(self):
         actions = utils.describe_attributes(self, ['group', 'float', 'intrusive', 'break_on_match'])
-        return '<Rule match=%r actions=(%s)>' % (self.match, actions)
+        return '<Rule match=%r actions=(%s)>' % (self.matchlist, actions)
 
 
 class DropDown(configurable.Configurable):

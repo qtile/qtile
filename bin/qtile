@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
 # Copyright (c) 2011, Florian Mounier
@@ -28,6 +28,7 @@ this_dir = os.path.dirname(__file__)
 base_dir = os.path.abspath(os.path.join(this_dir, ".."))
 sys.path.insert(0, base_dir)
 
+from libqtile.scripts.main import main
+
 if __name__ == '__main__':
-    from libqtile.scripts import qtile
-    qtile.main()
+    main()

@@ -19,6 +19,7 @@
 # SOFTWARE.
 
 from libqtile.extension.dmenu import Dmenu
+from libqtile.scratchpad import ScratchPad
 
 
 class WindowList(Dmenu):
@@ -49,7 +50,7 @@ class WindowList(Dmenu):
             windows = self.qtile.current_group.windows
 
         for win in windows:
-            if win.group:
+            if win.group and not isinstance(win.group, ScratchPad):
                 item = self.item_format.format(
                     group=win.group.label or win.group.name, id=id, window=win.name)
                 self.item_to_win[item] = win

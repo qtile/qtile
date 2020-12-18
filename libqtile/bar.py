@@ -18,7 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import configurable, confreader, drawer, window
+from typing import Union
+
+from libqtile import configurable, drawer, window
 from libqtile.command_object import CommandObject
 
 
@@ -159,6 +161,8 @@ class Bar(Gap, configurable.Configurable):
         self.add_defaults(Bar.defaults)
         self.widgets = widgets
         self.saved_focus = None
+        self.cursor_in = None
+        self.window = None
 
         self.queued_draws = 0
 
@@ -188,44 +192,49 @@ class Bar(Gap, configurable.Configurable):
                 else:
                     self.x -= self.margin[1]
 
-        stretches = 0
         for w in self.widgets:
             # Executing _test_orientation_compatibility later, for example in
             # the _configure() method of each widget, would still pass
             # test/test_bar.py but a segfault would be raised when nosetests is
             # about to exit
             w._test_orientation_compatibility(self.horizontal)
-            if w.length_type == STRETCH:
-                stretches += 1
-        if stretches > 1:
-            raise confreader.ConfigError("Only one STRETCH widget allowed!")
 
-        self.window = window.Internal.create(
-            self.qtile,
-            self.x, self.y, self.width, self.height,
-            self.opacity
-        )
+        if self.window:
+            self.window.place(self.x, self.y, self.width, self.height, 0, None)
+            for i in self.widgets:
+                i._configure(qtile, self)
 
-        self.drawer = drawer.Drawer(
-            self.qtile,
-            self.window.window.wid,
-            self.width,
-            self.height
-        )
-        self.drawer.clear(self.background)
+        else:
+            self.window = window.Internal.create(
+                self.qtile,
+                self.x, self.y, self.width, self.height,
+                self.opacity
+            )
 
-        self.window.handle_Expose = self.handle_Expose
-        self.window.handle_ButtonPress = self.handle_ButtonPress
-        self.window.handle_ButtonRelease = self.handle_ButtonRelease
-        qtile.windows_map[self.window.window.wid] = self.window
-        self.window.unhide()
+            self.drawer = drawer.Drawer(
+                self.qtile,
+                self.window.window.wid,
+                self.width,
+                self.height
+            )
+            self.drawer.clear(self.background)
 
-        for idx, i in enumerate(self.widgets):
-            if i.configured:
-                i = i.create_mirror()
-                self.widgets[idx] = i
-            qtile.register_widget(i)
-            i._configure(qtile, self)
+            self.window.handle_Expose = self.handle_Expose
+            self.window.handle_ButtonPress = self.handle_ButtonPress
+            self.window.handle_ButtonRelease = self.handle_ButtonRelease
+            self.window.handle_EnterNotify = self.handle_EnterNotify
+            self.window.handle_LeaveNotify = self.handle_LeaveNotify
+            self.window.handle_MotionNotify = self.handle_MotionNotify
+            qtile.windows_map[self.window.window.wid] = self.window
+            self.window.unhide()
+
+            for idx, i in enumerate(self.widgets):
+                if i.configured:
+                    i = i.create_mirror()
+                    self.widgets[idx] = i
+                qtile.register_widget(i)
+                i._configure(qtile, self)
+
         self._resize(self.length, self.widgets)
 
     def finalize(self):
@@ -238,11 +247,31 @@ class Bar(Gap, configurable.Configurable):
                 [i.length for i in widgets if i.length_type != STRETCH]
             )
             stretchspace = max(stretchspace, 0)
-            astretch = stretchspace // len(stretches)
-            for i in stretches:
-                i.length = astretch
-            if astretch:
-                i.length += stretchspace % astretch
+            num_stretches = len(stretches)
+            if num_stretches == 1:
+                stretches[0].length = stretchspace
+            else:
+                block = 0
+                blocks = []
+                for i in widgets:
+                    if i.length_type != STRETCH:
+                        block += i.length
+                    else:
+                        blocks.append(block)
+                        block = 0
+                if block:
+                    blocks.append(block)
+                interval = length // num_stretches
+                for idx, i in enumerate(stretches):
+                    if idx == 0:
+                        i.length = interval - blocks[0] - blocks[1] // 2
+                    elif idx == num_stretches - 1:
+                        i.length = interval - blocks[-1] - blocks[-2] // 2
+                    else:
+                        i.length = int(interval - blocks[idx] / 2 - blocks[idx + 1] / 2)
+                    stretchspace -= i.length
+                stretches[0].length += stretchspace // 2
+                stretches[-1].length += stretchspace - stretchspace // 2
 
         offset = 0
         if self.horizontal:
@@ -286,6 +315,36 @@ class Bar(Gap, configurable.Configurable):
                 e.event_y - widget.offsety,
                 e.detail
             )
+
+    def handle_EnterNotify(self, e):  # noqa: N802
+        widget = self.get_widget_in_position(e)
+        if widget:
+            widget.mouse_enter(
+                e.event_x - widget.offsetx,
+                e.event_y - widget.offsety,
+            )
+        self.cursor_in = widget
+
+    def handle_LeaveNotify(self, e):  # noqa: N802
+        if self.cursor_in:
+            self.cursor_in.mouse_leave(
+                e.event_x - self.cursor_in.offsetx,
+                e.event_y - self.cursor_in.offsety,
+            )
+            self.cursor_in = None
+
+    def handle_MotionNotify(self, e):  # noqa: N802
+        widget = self.get_widget_in_position(e)
+        if widget and widget is not self.cursor_in:
+            self.cursor_in.mouse_leave(
+                e.event_x - self.cursor_in.offsetx,
+                e.event_y - self.cursor_in.offsety,
+            )
+            widget.mouse_enter(
+                e.event_x - widget.offsetx,
+                e.event_y - widget.offsety,
+            )
+        self.cursor_in = widget
 
     def widget_grab_keyboard(self, widget):
         """
@@ -345,6 +404,21 @@ class Bar(Gap, configurable.Configurable):
             else:
                 self.size = 0
                 self.window.hide()
+            self.screen.group.layout_all()
+
+    def adjust_for_strut(self, size):
+        if self.size:
+            self.size = self.initial_size
+        if not self.margin:
+            self.margin = [0, 0, 0, 0]
+        if self.screen.top is self:
+            self.margin[0] += size
+        elif self.screen.bottom is self:
+            self.margin[2] += size
+        elif self.screen.left is self:
+            self.margin[3] += size
+        else:  # right
+            self.margin[1] += size
 
     def cmd_fake_button_press(self, screen, position, x, y, button=1):
         """
@@ -361,3 +435,6 @@ class Bar(Gap, configurable.Configurable):
         fake.event_y = y
         fake.detail = button
         self.handle_ButtonPress(fake)
+
+
+BarType = Union[Bar, Gap]

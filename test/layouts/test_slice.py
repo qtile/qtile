@@ -29,6 +29,8 @@ import pytest
 
 import libqtile.config
 from libqtile import layout
+from libqtile.config import Match
+from libqtile.confreader import Config
 from test.conftest import no_xinerama
 from test.layouts.layout_utils import (
     assert_dimensions,
@@ -37,23 +39,23 @@ from test.layouts.layout_utils import (
 )
 
 
-class SliceConfig:
+class SliceConfig(Config):
     auto_fullscreen = True
-    main = None
     groups = [
         libqtile.config.Group("a"),
     ]
+
     layouts = [
-        layout.Slice(side='left', width=200, wname='slice',
+        layout.Slice(side='left', width=200, match=Match(title='slice'),
                      fallback=layout.Stack(num_stacks=1, border_width=0)),
-        layout.Slice(side='right', width=200, wname='slice',
+        layout.Slice(side='right', width=200, match=Match(title='slice'),
                      fallback=layout.Stack(num_stacks=1, border_width=0)),
-        layout.Slice(side='top', width=200, wname='slice',
+        layout.Slice(side='top', width=200, match=Match(title='slice'),
                      fallback=layout.Stack(num_stacks=1, border_width=0)),
-        layout.Slice(side='bottom', width=200, wname='slice',
+        layout.Slice(side='bottom', width=200, match=Match(title='slice'),
                      fallback=layout.Stack(num_stacks=1, border_width=0)),
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []

@@ -28,20 +28,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import warnings
+
+from libqtile.config import Match
 from libqtile.layout.base import Layout
-
-DEFAULT_FLOAT_WM_TYPES = set([
-    'utility',
-    'notification',
-    'toolbar',
-    'splash',
-    'dialog',
-])
-
-DEFAULT_FLOAT_RULES = [
-    {"role": "About"},
-    {"wmclass": "file_progress"},
-]
+from libqtile.log_utils import logger
 
 
 class Floating(Layout):
@@ -55,34 +46,29 @@ class Floating(Layout):
         ("max_border_width", 0, "Border width for maximize."),
         ("fullscreen_border_width", 0, "Border width for fullscreen."),
         ("name", "floating", "Name of this layout."),
-        (
-            "auto_float_types",
-            DEFAULT_FLOAT_WM_TYPES,
-            "default wm types to automatically float"
-        ),
     ]
 
-    def __init__(self, float_rules=None, no_reposition_match=None, **config):
+    def __init__(self, float_rules=None, no_reposition_rules=None, **config):
         """
         If you have certain apps that you always want to float you can provide
-        ``float_rules`` to do so. ``float_rules`` is a list of
-        dictionaries containing some or all of the keys::
+        ``float_rules`` to do so. ``float_rules`` are a list of
+        Match objects::
 
-            {'wname': WM_NAME, 'wmclass': WM_CLASS, 'role': WM_WINDOW_ROLE}
+            from libqtile.config import Match
+            Match(title=WM_NAME, wm_class=WM_CLASS, role=WM_WINDOW_ROLE)
 
-        The keys must be specified as above.  You only need one, but
-        you need to provide the value for it.  When a new window is
-        opened it's ``match`` method is called with each of these
-        rules.  If one matches, the window will float.  The following
-        will float gimp and skype::
+        When a new window is opened its ``match`` method is called with each of
+        these rules.  If one matches, the window will float.  The following
+        will float GIMP and Skype::
 
-            float_rules=[dict(wmclass="skype"), dict(wmclass="gimp")]
+            from libqtile.config import Match
+            float_rules=[Match(wm_class="skype"), Match(wm_class="gimp")]
 
         Specify these in the ``floating_layout`` in your config.
 
         Floating layout will try to center most of floating windows by default,
         but if you don't want this to happen for certain windows that are
-        centered by mistake, you can use ``no_reposition_match`` option to
+        centered by mistake, you can use ``no_reposition_rules`` option to
         specify them and layout will rely on windows to position themselves in
         correct location on the screen.
         """
@@ -90,18 +76,34 @@ class Floating(Layout):
         self.clients = []
         self.focused = None
         self.group = None
-        self.float_rules = float_rules or DEFAULT_FLOAT_RULES
-        self.no_reposition_match = no_reposition_match
+        self.float_rules = float_rules or []
+
+        warned = False
+        for index, rule in enumerate(self.float_rules):
+            if isinstance(rule, Match):
+                continue
+
+            if not warned:
+                message = "Non-config.Match objects in float_rules are " \
+                          "deprecated"
+                warnings.warn(message, DeprecationWarning)
+                logger.warning(message)
+                warned = True
+
+            match = Match(
+                title=rule.get("wname"), wm_class=rule.get("wmclass"),
+                role=rule.get("role"), wm_type=rule.get("wm_type"),
+                wm_instance_class=rule.get("wm_instance_class"),
+                net_wm_pid=rule.get("net_wm_pid"))
+
+            self.float_rules[index] = match
+
+        self.no_reposition_rules = no_reposition_rules or []
         self.add_defaults(Floating.defaults)
 
     def match(self, win):
         """Used to default float some windows"""
-        if win.window.get_wm_type() in self.auto_float_types:
-            return True
-        for rule_dict in self.float_rules:
-            if win.match(**rule_dict):
-                return True
-        return False
+        return any(win.match(rule) for rule in self.float_rules)
 
     def find_clients(self, group):
         """Find all clients belonging to a given group"""
@@ -177,87 +179,101 @@ class Floating(Layout):
     def blur(self):
         self.focused = None
 
-    def compute_client_position(self, client, screen):
+    def on_screen(self, client, screen_rect):
+        if client.x < screen_rect.x:  # client's left edge
+            return False
+        if screen_rect.x + screen_rect.width < client.x + client.width:  # right
+            return False
+        if client.y < screen_rect.y:  # top
+            return False
+        if screen_rect.y + screen_rect.width < client.y + client.height:  # bottom
+            return False
+        return True
+
+    def compute_client_position(self, client, screen_rect):
         """ recompute client.x and client.y, returning whether or not to place
         this client above other windows or not """
-        above = False
-        transient_for = client.window.get_wm_transient_for()
-        win = client.group.qtile.windows_map.get(transient_for)
-        if win is not None:
-            # if transient for a window, place in the center of the window
-            center_x = win.x + win.width / 2
-            center_y = win.y + win.height / 2
-        else:
-            center_x = screen.x + screen.width / 2
-            center_y = screen.y + screen.height / 2
-            above = True
+        above = True
 
-        x = center_x - client.width / 2
-        y = center_y - client.height / 2
+        if client.has_user_set_position() and not self.on_screen(client, screen_rect):
+            # move to screen
+            client.x = screen_rect.x + client.x
+            client.y = screen_rect.y + client.y
+        if not client.has_user_set_position() or not self.on_screen(client, screen_rect):
+            # client has not been properly placed before or it is off screen
+            transient_for = client.window.get_wm_transient_for()
+            win = client.group.qtile.windows_map.get(transient_for)
+            if win is not None:
+                # if transient for a window, place in the center of the window
+                center_x = win.x + win.width / 2
+                center_y = win.y + win.height / 2
+                above = False
+            else:
+                center_x = screen_rect.x + screen_rect.width / 2
+                center_y = screen_rect.y + screen_rect.height / 2
 
-        # don't go off the right...
-        x = min(x, screen.x + screen.width)
-        # or left...
-        x = max(x, screen.x)
-        # or bottom...
-        y = min(y, screen.y + screen.height)
-        # or top
-        y = max(y, screen.y)
+            x = center_x - client.width / 2
+            y = center_y - client.height / 2
 
-        client.x = int(round(x))
-        client.y = int(round(y))
+            # don't go off the right...
+            x = min(x, screen_rect.x + screen_rect.width - client.width)
+            # or left...
+            x = max(x, screen_rect.x)
+            # or bottom...
+            y = min(y, screen_rect.y + screen_rect.height - client.height)
+            # or top
+            y = max(y, screen_rect.y)
+
+            client.x = int(round(x))
+            client.y = int(round(y))
         return above
 
-    def configure(self, client, screen):
-        # 'sun-awt-X11-XWindowPeer' is a dropdown used in Java application,
-        # don't reposition it anywhere, let Java app to control it
-        cls = client.window.get_wm_class() or ''
-        is_java_dropdown = 'sun-awt-X11-XWindowPeer' in cls
-        if is_java_dropdown:
-            client.unhide()
-            return
-
-        # similar to above but the X11 version, the client may have already
-        # placed itself. let's respect that
-        if client.has_user_set_position():
-            client.unhide()
-            return
-
-        # ok, it's not java and the window itself didn't position it, but users
-        # may still have asked us not to mess with it
-        if self.no_reposition_match is not None and self.no_reposition_match.compare(client):
-            client.unhide()
-            return
-
+    def configure(self, client, screen_rect):
         if client.has_focus:
-            bc = client.group.qtile.color_pixel(self.border_focus)
+            bc = self.border_focus
         else:
-            bc = client.group.qtile.color_pixel(self.border_normal)
+            bc = self.border_normal
+
         if client.maximized:
             bw = self.max_border_width
         elif client.fullscreen:
             bw = self.fullscreen_border_width
         else:
             bw = self.border_width
-        above = False
 
-        # We definitely have a screen here, so let's be sure we'll float on screen
-        try:
-            client.float_x
-            client.float_y
-        except AttributeError:
-            # this window hasn't been placed before, let's put it in a sensible spot
-            above = self.compute_client_position(client, screen)
+        # 'sun-awt-X11-XWindowPeer' is a dropdown used in Java application,
+        # don't reposition it anywhere, let Java app to control it
+        cls = client.window.get_wm_class() or ''
+        is_java_dropdown = 'sun-awt-X11-XWindowPeer' in cls
+        if is_java_dropdown:
+            client.paint_borders(bc, bw)
+            client.cmd_bring_to_front()
 
-        client.place(
-            client.x,
-            client.y,
-            client.width,
-            client.height,
-            bw,
-            bc,
-            above,
-        )
+        # alternatively, users may have asked us explicitly to leave the client alone
+        elif any(m.compare(client) for m in self.no_reposition_rules):
+            client.paint_borders(bc, bw)
+            client.cmd_bring_to_front()
+
+        else:
+            above = False
+
+            # We definitely have a screen here, so let's be sure we'll float on screen
+            try:
+                client.float_x
+                client.float_y
+            except AttributeError:
+                # this window hasn't been placed before, let's put it in a sensible spot
+                above = self.compute_client_position(client, screen_rect)
+
+            client.place(
+                client.x,
+                client.y,
+                client.width,
+                client.height,
+                bw,
+                bc,
+                above,
+            )
         client.unhide()
 
     def add(self, client):

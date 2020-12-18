@@ -1,15 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
-import subprocess
 
 from libqtile.widget._pulse_audio import ffi, lib
-from libqtile.widget.volume import (
-    BUTTON_DOWN,
-    BUTTON_MUTE,
-    BUTTON_RIGHT,
-    BUTTON_UP,
-    Volume,
-)
+from libqtile.widget.volume import Volume
 
 log = logging.getLogger(__name__)
 
@@ -185,7 +178,7 @@ class PulseVolume(Volume):
         if op:
             self.wait_for_operation(op)
 
-    def cmd_mute_volume(self):
+    def cmd_mute(self):
         op = lib.pa_context_set_sink_mute_by_index(
             self.context,
             self.default_sink['index'],
@@ -196,7 +189,9 @@ class PulseVolume(Volume):
         if op:
             self.wait_for_operation(op)
 
-    def cmd_increase_volume(self, value=2):
+    def cmd_increase_vol(self, value=None):
+        if value is None:
+            value = self.step
         base = self.default_sink['base_volume']
         volume = ffi.new('pa_cvolume *', {
             'channels': self.default_sink['channels'],
@@ -211,7 +206,9 @@ class PulseVolume(Volume):
             volume.values = [(i if i <= base else base) for i in volume.values]
         self.change_volume(volume)
 
-    def cmd_decrease_volume(self, value=2):
+    def cmd_decrease_vol(self, value=None):
+        if value is None:
+            value = self.step
         volume_level = int(value * self.default_sink['base_volume'] / 100)
         if not volume_level and max(self.default_sink['values']) == 0:
             # can't be lower than zero
@@ -224,15 +221,7 @@ class PulseVolume(Volume):
         self.change_volume(volume)
 
     def button_press(self, x, y, button):
-        if self.default_sink and button == BUTTON_DOWN:
-            self.cmd_decrease_volume(self.step)
-        elif self.default_sink and button == BUTTON_UP:
-            self.cmd_increase_volume(self.step)
-        elif self.default_sink and button == BUTTON_MUTE:
-            self.cmd_mute_volume()
-        elif button == BUTTON_RIGHT:
-            if self.volume_app is not None:
-                subprocess.Popen(self.volume_app)
+        Volume.button_press(self, x, y, button)
         self.poll()
 
     def poll(self):

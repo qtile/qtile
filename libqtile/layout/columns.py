@@ -116,6 +116,7 @@ class Columns(Layout):
         ("border_normal_stack", "#220000",
          "Border colour for un-focused windows in stacked columns."),
         ("border_width", 2, "Border width."),
+        ("border_on_single", False, "Draw a border when there is one only window."),
         ("margin", 0, "Margin of the layout."),
         ("split", True, "New columns presentation mode."),
         ("num_columns", 2, "Preferred number of columns."),
@@ -210,7 +211,7 @@ class Columns(Layout):
             self.remove_column(c)
         return self.columns[self.current].cw
 
-    def configure(self, client, screen):
+    def configure(self, client, screen_rect):
         pos = 0
         for col in self.columns:
             if client in col:
@@ -220,17 +221,16 @@ class Columns(Layout):
             client.hide()
             return
         if client.has_focus:
-            color = self.group.qtile.color_pixel(self.border_focus if col.split
-                                                 else self.border_focus_stack)
+            color = self.border_focus if col.split else self.border_focus_stack
         else:
-            color = self.group.qtile.color_pixel(self.border_normal if col.split
-                                                 else self.border_normal_stack)
-        if len(self.columns) == 1 and (len(col) == 1 or not col.split):
+            color = self.border_normal if col.split else self.border_normal_stack
+        if not self.border_on_single and len(self.columns) == 1 and (len(col) == 1 or not col.split):
             border = 0
         else:
             border = self.border_width
-        width = int(0.5 + col.width * screen.width * 0.01 / len(self.columns))
-        x = screen.x + int(0.5 + pos * screen.width * 0.01 / len(self.columns))
+        width = int(
+            0.5 + col.width * screen_rect.width * 0.01 / len(self.columns))
+        x = screen_rect.x + int(0.5 + pos * screen_rect.width * 0.01 / len(self.columns))
         if col.split:
             pos = 0
             for c in col:
@@ -238,8 +238,8 @@ class Columns(Layout):
                     break
                 pos += col.heights[c]
             height = int(
-                0.5 + col.heights[client] * screen.height * 0.01 / len(col))
-            y = screen.y + int(0.5 + pos * screen.height * 0.01 / len(col))
+                0.5 + col.heights[client] * screen_rect.height * 0.01 / len(col))
+            y = screen_rect.y + int(0.5 + pos * screen_rect.height * 0.01 / len(col))
             client.place(
                 x,
                 y,
@@ -252,9 +252,9 @@ class Columns(Layout):
         elif client == col.cw:
             client.place(
                 x,
-                screen.y,
+                screen_rect.y,
                 width - 2 * border,
-                screen.height - 2 * border,
+                screen_rect.height - 2 * border,
                 border,
                 color,
                 margin=self.margin)

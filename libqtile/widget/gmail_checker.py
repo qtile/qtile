@@ -29,14 +29,17 @@ from libqtile.widget import base
 
 
 class GmailChecker(base.ThreadedPollText):
-    """A simple gmail checker. If 'status_only_unseen' is True - set 'fmt' for one argument, ex. 'unseen: {0}'"""
+    """
+    A simple gmail checker. If 'status_only_unseen' is True - set 'display_fmt'
+    for one argument, ex. 'unseen: {0}'
+    """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("update_interval", 30, "Update time in seconds."),
         ("username", None, "username"),
         ("password", None, "password"),
         ("email_path", "INBOX", "email_path"),
-        ("fmt", "inbox[{0}],unseen[{1}]", "fmt"),
+        ("display_fmt", "inbox[{0}],unseen[{1}]", "Display format"),
         ("status_only_unseen", False, "Only show unseen messages"),
     ]
 
@@ -54,9 +57,9 @@ class GmailChecker(base.ThreadedPollText):
             messages = int(re.search(r'MESSAGES\s+(\d+)', dec).group(1))
             unseen = int(re.search(r'UNSEEN\s+(\d+)', dec).group(1))
             if(self.status_only_unseen):
-                return self.fmt.format(unseen)
+                return self.display_fmt.format(unseen)
             else:
-                return self.fmt.format(messages, unseen)
+                return self.display_fmt.format(messages, unseen)
         else:
             logger.exception(
                 'GmailChecker UNKNOWN error, answer: %s, raw_data: %s',

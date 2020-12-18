@@ -22,13 +22,14 @@
 
 import pytest
 
-from libqtile import config, ipc
+from libqtile import config, ipc, resources
 from libqtile.command_interface import IPCCommandInterface
-from libqtile.layout import Max, floating
+from libqtile.confreader import Config
+from libqtile.layout import Max
 from libqtile.sh import QSh
 
 
-class ShConfig:
+class ShConfig(Config):
     keys = []
     mouse = []
     groups = [
@@ -38,11 +39,10 @@ class ShConfig:
     layouts = [
         Max(),
     ]
-    floating_layout = floating.Floating()
+    floating_layout = resources.default_config.floating_layout
     screens = [
         config.Screen()
     ]
-    main = None
 
 
 sh_config = pytest.mark.parametrize("qtile", [ShConfig], indirect=True)

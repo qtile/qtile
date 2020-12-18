@@ -1,4 +1,4 @@
-.. _ref_widgets:
+.. _ref-widgets:
 
 ================
 Built-in Widgets

@@ -53,6 +53,7 @@ from xcffib.xproto import CW, EventMask, WindowClass
 from libqtile import xkeysyms
 from libqtile.backend.x11.xcursors import Cursors
 from libqtile.log_utils import logger
+from libqtile.utils import hex
 
 keysyms = xkeysyms.keysyms
 
@@ -341,6 +342,8 @@ class Colormap:
 
             def x8to16(i):
                 return 0xffff * (i & 0xff) // 0xff
+
+            color = hex(color)
             r = x8to16(int(color[-6] + color[-5], 16))
             g = x8to16(int(color[-4] + color[-3], 16))
             b = x8to16(int(color[-2] + color[-1], 16))
@@ -620,7 +623,7 @@ class Window:
         mask, values = ConfigureMasks(**kwargs)
         # older versions of xcb pack everything into unsigned ints "=I"
         # since 1.12, uses switches to pack things sensibly
-        if float(xcffib.__xcb_proto_version__) < 1.12:
+        if float(".".join(xcffib.__xcb_proto_version__.split(".")[0: 2])) < 1.12:
             values = [i & 0xffffffff for i in values]
         return self.conn.conn.core.ConfigureWindow(self.wid, mask, values)
 
@@ -746,63 +749,6 @@ class Window:
     def get_attributes(self):
         return self.conn.conn.core.GetWindowAttributes(self.wid).reply()
 
-    def ungrab_key(self, key, modifiers):
-        """Passing None means any key, or any modifier"""
-        if key is None:
-            key = xcffib.xproto.Atom.Any
-        if modifiers is None:
-            modifiers = xcffib.xproto.ModMask.Any
-        self.conn.conn.core.UngrabKey(key, self.wid, modifiers)
-
-    def grab_key(self, key, modifiers, owner_events,
-                 pointer_mode, keyboard_mode):
-        self.conn.conn.core.GrabKey(
-            owner_events,
-            self.wid,
-            modifiers,
-            key,
-            pointer_mode,
-            keyboard_mode
-        )
-
-    def ungrab_button(self, button, modifiers):
-        """Passing None means any key, or any modifier"""
-        if button is None:
-            button = xcffib.xproto.Atom.Any
-        if modifiers is None:
-            modifiers = xcffib.xproto.ModMask.Any
-        self.conn.conn.core.UngrabButton(button, self.wid, modifiers)
-
-    def grab_button(self, button, modifiers, owner_events,
-                    event_mask, pointer_mode, keyboard_mode):
-        self.conn.conn.core.GrabButton(
-            owner_events,
-            self.wid,
-            event_mask,
-            pointer_mode,
-            keyboard_mode,
-            xcffib.xproto.Atom._None,
-            xcffib.xproto.Atom._None,
-            button,
-            modifiers,
-        )
-
-    def grab_pointer(self, owner_events, event_mask, pointer_mode,
-                     keyboard_mode, cursor=None):
-        self.conn.conn.core.GrabPointer(
-            owner_events,
-            self.wid,
-            event_mask,
-            pointer_mode,
-            keyboard_mode,
-            xcffib.xproto.Atom._None,
-            cursor or xcffib.xproto.Atom._None,
-            xcffib.xproto.Atom._None,
-        )
-
-    def ungrab_pointer(self):
-        self.conn.conn.core.UngrabPointer(xcffib.xproto.Atom._None)
-
     def query_tree(self):
         q = self.conn.conn.core.QueryTree(self.wid).reply()
         root = None
@@ -813,20 +759,9 @@ class Window:
             parent = Window(self.conn, q.parent)
         return root, parent, [Window(self.conn, i) for i in q.children]
 
-
-class Font:
-    def __init__(self, conn, fid):
-        self.conn = conn
-        self.fid = fid
-
-    @property
-    def _maskvalue(self):
-        return self.fid
-
-    def text_extents(self, s):
-        s += "aaa"
-        x = self.conn.conn.core.QueryTextExtents(self.fid, len(s), s).reply()
-        return x
+    def paint_borders(self, color):
+        if color:
+            self.set_attribute(borderpixel=self.conn.color_pixel(color))
 
 
 class Connection:
@@ -874,7 +809,7 @@ class Connection:
         self.atoms = AtomCache(self)
 
         self.code_to_syms = {}
-        self.first_sym_to_code = None
+        self.sym_to_codes = None
         self.refresh_keymap()
 
         self.modmap = None
@@ -895,12 +830,17 @@ class Connection:
             self.code_to_syms[first + i] = \
                 q.keysyms[i * q.keysyms_per_keycode:(i + 1) * q.keysyms_per_keycode]
 
-        first_sym_to_code = {}
+        sym_to_codes = {}
         for k, s in self.code_to_syms.items():
-            if s[0] and not s[0] in first_sym_to_code:
-                first_sym_to_code[s[0]] = k
+            for sym in s:
+                if sym == 0:
+                    continue
+                if sym not in sym_to_codes:
+                    sym_to_codes[sym] = [k]
+                elif k not in sym_to_codes[sym]:
+                    sym_to_codes[sym].append(k)
 
-        self.first_sym_to_code = first_sym_to_code
+        self.sym_to_codes = sym_to_codes
 
     def refresh_modmap(self):
         reply = self.conn.core.GetModifierMapping().reply()
@@ -919,7 +859,7 @@ class Connection:
         return None
 
     def keysym_to_keycode(self, keysym):
-        return self.first_sym_to_code.get(keysym, 0)
+        return self.sym_to_codes.get(keysym, [0])
 
     def keycode_to_keysym(self, keycode, modifier):
         if keycode >= len(self.code_to_syms) or \
@@ -961,16 +901,8 @@ class Connection:
         # serviced in order.
         self.conn.core.GetInputFocus().reply()
 
-    def grab_server(self):
-        return self.conn.core.GrabServer()
-
     def get_setup(self):
         return self.conn.get_setup()
-
-    def open_font(self, name):
-        fid = self.conn.generate_id()
-        self.conn.core.OpenFont(fid, len(name), name)
-        return Font(self, fid)
 
     def extensions(self):
         return set(
@@ -991,6 +923,11 @@ class Connection:
                 xcffib.xproto.InputFocus.PointerRoot,
                 xcffib.xproto.Time.CurrentTime,
             )
+
+    @functools.lru_cache()
+    def color_pixel(self, name):
+        pixel = self.screens[0].default_colormap.alloc_color(name).pixel
+        return pixel | 0xff << 24
 
 
 class Painter:

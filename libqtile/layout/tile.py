@@ -34,35 +34,57 @@ from libqtile.layout.base import _SimpleLayoutBase
 
 
 class Tile(_SimpleLayoutBase):
+    """A layout with two stacks of windows dividing the screen
+
+    The Tile layout divides the screen_rect horizontally into two stacks. The
+    maximum amount of "master" windows can be configured; surplus windows will
+    be displayed in the slave stack on the right.
+    Within their stacks, the windows will be tiled vertically.
+    The windows can be rotated in their entirety by calling up() or down() or,
+    if shift_windows is set to True, individually.
+    """
+
     defaults = [
         ("border_focus", "#0000ff", "Border colour for the focused window."),
         ("border_normal", "#000000", "Border colour for un-focused windows."),
         ("border_width", 1, "Border width."),
         ("name", "tile", "Name of this layout."),
         ("margin", 0, "Margin of the layout"),
+        ("ratio", 0.618,
+            "Width-percentage of screen size reserved for master windows."),
+        ("master_length", 1,
+            "Amount of windows displayed in the master stack. Surplus windows "
+            "will be moved to the slave stack."),
+        ("expand", True,
+            "Expand the master windows to the full screen width if no slaves "
+            "are present."),
+        ("ratio_increment", 0.05,
+            "By which amount to change ratio when cmd_decrease_ratio or "
+            "cmd_increase_ratio are called."),
+        ("add_on_top", True,
+            "Add new clients before all the others, potentially pushing other "
+            "windows into slave stack."),
+        ("add_after_last", False,
+            "Add new clients after all the others. If this is True, it "
+            "overrides add_on_top."),
+        ("shift_windows", False,
+            "Allow to shift windows within the layout. If False, the layout "
+            "will be rotated instead."),
+        ("master_match", None,
+            "A Match object defining which window(s) should be kept masters."),
     ]
 
-    def __init__(self, ratio=0.618, masterWindows=1, expand=True,  # noqa: N803
-                 ratio_increment=0.05, add_on_top=True, add_after_last=False,
-                 shift_windows=False, master_match=None, **config):
+    def __init__(self, **config):
         _SimpleLayoutBase.__init__(self, **config)
         self.add_defaults(Tile.defaults)
-        self.ratio = ratio
-        self.master = masterWindows
-        self.expand = expand
-        self.ratio_increment = ratio_increment
-        self.add_on_top = add_on_top
-        self.add_after_last = add_after_last
-        self.shift_windows = shift_windows
-        self.master_match = master_match
 
     @property
     def master_windows(self):
-        return self.clients[:self.master]
+        return self.clients[:self.master_length]
 
     @property
     def slave_windows(self):
-        return self.clients[self.master:]
+        return self.clients[self.master_length:]
 
     def up(self):
         if self.shift_windows:
@@ -79,10 +101,9 @@ class Tile(_SimpleLayoutBase):
         self.group.layout_all()
 
     def reset_master(self, match=None):
-        if not match and self.master_match:
-            match = self.master_match
-        else:
+        if not match and not self.master_match:
             return
+        match = match or self.master_match
         if self.clients:
             masters = [c for c in self.clients if match.compare(c)]
             for client in reversed(masters):
@@ -105,12 +126,12 @@ class Tile(_SimpleLayoutBase):
         elif self.add_on_top:
             self.clients.append_head(client)
         else:
-            self.clients.add(client, offset_to_current)
+            super().add(client, offset_to_current)
         self.reset_master()
 
-    def configure(self, client, screen):
-        screen_width = screen.width
-        screen_height = screen.height
+    def configure(self, client, screen_rect):
+        screen_width = screen_rect.width
+        screen_height = screen_rect.height
         border_width = self.border_width
         if self.clients and client in self.clients:
             pos = self.clients.index(client)
@@ -118,18 +139,18 @@ class Tile(_SimpleLayoutBase):
                 w = int(screen_width * self.ratio) \
                     if len(self.slave_windows) or not self.expand \
                     else screen_width
-                h = screen_height // self.master
-                x = screen.x
-                y = screen.y + pos * h
+                h = screen_height // self.master_length
+                x = screen_rect.x
+                y = screen_rect.y + pos * h
             else:
                 w = screen_width - int(screen_width * self.ratio)
                 h = screen_height // (len(self.slave_windows))
-                x = screen.x + int(screen_width * self.ratio)
-                y = screen.y + self.clients[self.master:].index(client) * h
+                x = screen_rect.x + int(screen_width * self.ratio)
+                y = screen_rect.y + self.clients[self.master_length:].index(client) * h
             if client.has_focus:
-                bc = self.group.qtile.color_pixel(self.border_focus)
+                bc = self.border_focus
             else:
-                bc = self.group.qtile.color_pixel(self.border_normal)
+                bc = self.border_normal
             client.place(
                 x,
                 y,
@@ -176,11 +197,11 @@ class Tile(_SimpleLayoutBase):
         self.group.layout_all()
 
     def cmd_decrease_nmaster(self):
-        self.master -= 1
-        if self.master <= 0:
-            self.master = 1
+        self.master_length -= 1
+        if self.master_length <= 0:
+            self.master_length = 1
         self.group.layout_all()
 
     def cmd_increase_nmaster(self):
-        self.master += 1
+        self.master_length += 1
         self.group.layout_all()

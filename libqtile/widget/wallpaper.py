@@ -51,6 +51,8 @@ class Wallpaper(base._TextBox):
         if self.random_selection:  # Random selection after reading all files
             self.index = random.randint(0, len(self.images) - 1)
 
+        self.add_callbacks({'Button1': self.set_wallpaper})
+
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         if not self.bar.screen.wallpaper:
@@ -71,6 +73,11 @@ class Wallpaper(base._TextBox):
             logger.exception("I/O error(%s): %s", e.errno, e.strerror)
 
     def set_wallpaper(self):
+        if self.random_selection:
+            self.index = random.randint(0, len(self.images) - 1)
+        else:
+            self.index += 1
+            self.index %= len(self.images)
         if len(self.images) == 0:
             if self.wallpaper is None:
                 self.text = "empty"
@@ -88,13 +95,4 @@ class Wallpaper(base._TextBox):
             self.wallpaper_command.pop()
         else:
             self.qtile.paint_screen(self.bar.screen, cur_image, self.option)
-
-    def button_press(self, x, y, button):
-        if button == 1:
-            if self.random_selection:
-                self.index = random.randint(0, len(self.images) - 1)
-            else:
-                self.index += 1
-                self.index %= len(self.images)
-            self.set_wallpaper()
-            self.draw()
+        self.draw()

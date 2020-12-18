@@ -1,6 +1,4 @@
-#!/bin/sh
-
-# Copyright (c) 2008, Aldo Cortesi. All rights reserved.
+# Copyright (c) 2020 Matt Colligan
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,4 +18,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-jupyter console --kernel qshell
+
+import pytest
+
+from libqtile.backend.x11 import xcbq
+from libqtile.popup import Popup
+from test.conftest import BareConfig
+
+popup_config = pytest.mark.parametrize("qtile", [BareConfig], indirect=True)
+
+
+@popup_config
+def test_focus(qtile):
+    qtile.conn = xcbq.Connection(qtile.display)
+    qtile.test_xeyes()
+    qtile.windows_map = {}
+
+    popup = Popup(qtile)
+    popup.width = qtile.c.screen.info()["width"]
+    popup.height = qtile.c.screen.info()["height"]
+    popup.place()
+    popup.unhide()
+    assert qtile.c.group.info()['focus'] == 'xeyes'
+    assert qtile.c.group.info()['windows'] == ['xeyes']
+    assert len(qtile.c.windows()) == 1
+    popup.hide()
+    popup.kill()

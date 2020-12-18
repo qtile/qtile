@@ -36,6 +36,7 @@ from libqtile.utils import QtileError
 
 if TYPE_CHECKING:
     from typing import Dict
+
     from libqtile.core.manager import Qtile
 
 _IGNORED_EVENTS = {
@@ -43,12 +44,15 @@ _IGNORED_EVENTS = {
     xcffib.xproto.FocusInEvent,
     xcffib.xproto.FocusOutEvent,
     xcffib.xproto.KeyReleaseEvent,
-    xcffib.xproto.LeaveNotifyEvent,
     # DWM handles this to help "broken focusing windows".
     xcffib.xproto.MapNotifyEvent,
     xcffib.xproto.NoExposureEvent,
     xcffib.xproto.ReparentNotifyEvent,
 }
+
+
+class ExistingWMException(Exception):
+    pass
 
 
 class XCore(base.Core):
@@ -72,6 +76,18 @@ class XCore(base.Core):
         # we can assume that the first
         # screen's root is _the_ root.
         self._root = self.conn.default_screen.root
+
+        supporting_wm_wid = self._root.get_property("_NET_SUPPORTING_WM_CHECK",
+                                                    "WINDOW", unpack=int)
+        if len(supporting_wm_wid) > 0:
+            supporting_wm_wid = supporting_wm_wid[0]
+
+            supporting_wm = xcbq.Window(self.conn, supporting_wm_wid)
+            existing_wmname = supporting_wm.get_property("_NET_WM_NAME", "UTF8_STRING", unpack=str)
+            if existing_wmname:
+                logger.error("not starting; existing window manager {}".format(existing_wmname))
+                raise ExistingWMException(existing_wmname)
+
         self._root.set_attribute(
             eventmask=(
                 xcffib.xproto.EventMask.StructureNotify
@@ -126,7 +142,7 @@ class XCore(base.Core):
         self.qtile = None  # type: Optional[Qtile]
         self._painter = None
 
-        numlock_code = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
+        numlock_code = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])[0]
         self._numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(numlock_code), 0)
         self._valid_mask = ~(self._numlock_mask | xcbq.ModMasks["lock"])
 
@@ -209,6 +225,7 @@ class XCore(base.Core):
             if attrs and attrs.map_state == xcffib.xproto.MapState.Unmapped:
                 continue
             if state and state[0] == window.WithdrawnState:
+                item.unmap()
                 continue
             self.qtile.manage(item)
 
@@ -295,6 +312,8 @@ class XCore(base.Core):
         # Certain events expose the affected window id as an "event" attribute.
         event_events = [
             "EnterNotify",
+            "LeaveNotify",
+            "MotionNotify",
             "ButtonPress",
             "ButtonRelease",
             "KeyPress",
@@ -380,7 +399,7 @@ class XCore(base.Core):
         self._root.set_property("_NET_DESKTOP_NAMES", "\0".join(i.name for i in groups))
         self._root.set_property("_NET_CURRENT_DESKTOP", index)
 
-    def lookup_key(self, key: config.Key) -> Tuple[int, int, int]:
+    def lookup_key(self, key: config.Key) -> Tuple[int, int]:
         """Find the keysym and the modifier mask for the given key"""
         try:
             keysym = xcbq.get_keysym(key.key)
@@ -388,43 +407,63 @@ class XCore(base.Core):
         except xcbq.XCBQError as err:
             raise utils.QtileError(err)
 
-        return keysym, modmask, modmask & self._valid_mask
+        return keysym, modmask
 
-    def grab_key(self, keysym: int, modmask: int) -> None:
+    def grab_key(self, key: config.Key) -> Tuple[int, int]:
         """Map the key to receive events on it"""
-        code = self.conn.keysym_to_keycode(keysym)
-        for amask in self._auto_modmasks():
-            self._root.grab_key(
-                code,
-                modmask | amask,
-                True,
-                xcffib.xproto.GrabMode.Async,
-                xcffib.xproto.GrabMode.Async,
-            )
+        keysym, modmask = self.lookup_key(key)
+        codes = self.conn.keysym_to_keycode(keysym)
+
+        for code in codes:
+            if code == 0:
+                logger.warning(
+                    "Keysym could not be mapped: {keysym}, mask: {modmask}".format(
+                        keysym=hex(keysym), modmask=modmask
+                    )
+                )
+                continue
+            for amask in self._auto_modmasks():
+                self.conn.conn.core.GrabKey(
+                    True,
+                    self._root.wid,
+                    modmask | amask,
+                    code,
+                    xcffib.xproto.GrabMode.Async,
+                    xcffib.xproto.GrabMode.Async,
+                )
+        return keysym, modmask & self._valid_mask
+
+    def ungrab_key(self, key: config.Key) -> Tuple[int, int]:
+        """Ungrab the key corresponding to the given keysym and modifier mask"""
+        keysym, modmask = self.lookup_key(key)
+        codes = self.conn.keysym_to_keycode(keysym)
+
+        for code in codes:
+            for amask in self._auto_modmasks():
+                self.conn.conn.core.UngrabKey(code, self._root.wid, modmask | amask)
+
+        return keysym, modmask & self._valid_mask
 
     def ungrab_keys(self) -> None:
         """Ungrab all of the key events"""
-        self._root.ungrab_key(None, None)
-
-    def ungrab_key(self, keysym: int, modmask: int) -> None:
-        """Ungrab the key corresponding to the given keysym and modifier mask"""
-        code = self.conn.keysym_to_keycode(keysym)
-
-        for amask in self._auto_modmasks():
-            self._root.ungrab_key(code, modmask | amask)
+        self.conn.conn.core.UngrabKey(xcffib.xproto.Atom.Any, self._root.wid, xcffib.xproto.ModMask.Any)
 
     def grab_pointer(self) -> None:
         """Get the focus for pointer events"""
-        self._root.grab_pointer(
+        self.conn.conn.core.GrabPointer(
             True,
+            self._root.wid,
             xcbq.ButtonMotionMask | xcbq.AllButtonsMask | xcbq.ButtonReleaseMask,
             xcffib.xproto.GrabMode.Async,
             xcffib.xproto.GrabMode.Async,
+            xcffib.xproto.Atom._None,
+            xcffib.xproto.Atom._None,
+            xcffib.xproto.Atom._None,
         )
 
     def ungrab_pointer(self) -> None:
         """Ungrab the focus for pointer events"""
-        self._root.ungrab_pointer()
+        self.conn.conn.core.UngrabPointer(xcffib.xproto.Atom._None)
 
     def grab_button(self, mouse: config.Mouse) -> None:
         """Grab the given mouse button for events"""
@@ -445,18 +484,21 @@ class XCore(base.Core):
             eventmask |= xcffib.xproto.EventMask.ButtonRelease
 
         for amask in self._auto_modmasks():
-            self._root.grab_button(
-                mouse.button_code,
-                modmask | amask,
+            self.conn.conn.core.GrabButton(
                 True,
+                self._root.wid,
                 eventmask,
                 grabmode,
                 xcffib.xproto.GrabMode.Async,
+                xcffib.xproto.Atom._None,
+                xcffib.xproto.Atom._None,
+                mouse.button_code,
+                modmask | amask,
             )
 
     def ungrab_buttons(self) -> None:
         """Un-grab all mouse events"""
-        self._root.ungrab_button(None, None)
+        self.conn.conn.core.UngrabButton(xcffib.xproto.Atom.Any, self._root.wid, xcffib.xproto.ModMask.Any)
 
     def _auto_modmasks(self) -> Iterator[int]:
         """The modifier masks to add"""
@@ -509,7 +551,7 @@ class XCore(base.Core):
         if atoms["_NET_CURRENT_DESKTOP"] == opcode:
             index = data.data32[0]
             try:
-                self.qtile.cmd_to_layout_index(index)
+                self.qtile.groups[index].cmd_toscreen()
             except IndexError:
                 logger.info("Invalid Desktop Index: %s" % index)
 
@@ -541,13 +583,6 @@ class XCore(base.Core):
         assert self.qtile is not None
 
         self.qtile.process_button_motion(event.event_x, event.event_y)
-
-    def handle_ConfigureNotify(self, event) -> None:  # noqa: N802
-        """Handle xrandr events"""
-        assert self.qtile is not None
-
-        if event.window == self._root.wid:
-            self.qtile.process_configure(event.width, event.height)
 
     def handle_ConfigureRequest(self, event):  # noqa: N802
         # It's not managed, or not mapped, so we just obey it.
@@ -591,7 +626,7 @@ class XCore(base.Core):
             self.qtile.unmap_window(event.window)
 
     def handle_ScreenChangeNotify(self, event) -> None:  # noqa: N802
-        hook.fire("screen_change", self.qtile, event)
+        hook.fire("screen_change", event)
 
     @property
     def painter(self):

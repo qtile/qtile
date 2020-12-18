@@ -153,8 +153,11 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         self._icons_cache = {}
         self._box_end_positions = []
         self.markup = False
+        self.clicked = None
         if self.spacing is None:
             self.spacing = self.margin_x
+
+        self.add_callbacks({'Button1': self.select_window})
 
     def box_width(self, text):
         """
@@ -363,19 +366,19 @@ class TaskList(base._Widget, base.PaddingMixin, base.MarginMixin):
         return None
 
     def button_press(self, x, y, button):
-        window = None
-        current_win = self.bar.screen.group.current_window
+        self.clicked = self.get_clicked(x, y)
+        base._Widget.button_press(self, x, y, button)
 
-        # TODO: support scroll
-        if button == 1:
-            window = self.get_clicked(x, y)
-
-        if window and window is not current_win:
-            window.group.focus(window, False)
-            if window.floating:
-                window.cmd_bring_to_front()
-        elif window:
-            window.toggle_minimize()
+    def select_window(self):
+        if self.clicked:
+            current_win = self.bar.screen.group.current_window
+            window = self.clicked
+            if window is not current_win:
+                window.group.focus(window, False)
+                if window.floating:
+                    window.cmd_bring_to_front()
+            else:
+                window.toggle_minimize()
 
     def get_window_icon(self, window):
         if not window.icons:

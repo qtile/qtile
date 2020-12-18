@@ -6,7 +6,7 @@ Qtile provides a mechanism for subscribing to certain events in ``libqtile.hook`
 To subscribe to a hook in your configuration, simply decorate a function with
 the hook you wish to subscribe to.
 
-See :doc:`/manual/ref/hooks` for a listing of available hooks.
+See :ref:`ref-hooks` for a listing of available hooks.
 
 Examples
 ========
@@ -32,7 +32,7 @@ would look something like this:
             window.floating = True
 
 A list of available hooks can be found in the
-:doc:`Built-in Hooks </manual/ref/hooks>` reference.
+:ref:`Built-in Hooks <ref-hooks>` reference.
 
 Autostart
 ---------
@@ -63,3 +63,13 @@ We can then subscribe to ``startup_once`` to run this script:
     def autostart():
         home = os.path.expanduser('~/.config/qtile/autostart.sh')
         subprocess.call([home])
+
+Accessing the qtile object
+--------------------------
+
+If you want to do something with the ``Qtile`` manager instance inside a hook,
+it can be imported into your config:
+
+.. code-block:: python
+
+    from libqtile import qtile

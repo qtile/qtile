@@ -39,6 +39,7 @@ import xcffib.xproto
 import libqtile.config
 from libqtile import command_client, command_interface, ipc
 from libqtile.backend.x11 import xcore
+from libqtile.confreader import Config
 from libqtile.core.session_manager import SessionManager
 from libqtile.lazy import lazy
 from libqtile.log_utils import init_log
@@ -125,7 +126,7 @@ def whereis(program):
     return None
 
 
-class BareConfig:
+class BareConfig(Config):
     auto_fullscreen = True
     groups = [
         libqtile.config.Group("a"),
@@ -137,7 +138,7 @@ class BareConfig:
         libqtile.layout.stack.Stack(num_stacks=1),
         libqtile.layout.stack.Stack(num_stacks=2)
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = [
         libqtile.config.Key(
             ["control"],
@@ -152,7 +153,6 @@ class BareConfig:
     ]
     mouse = []
     screens = [libqtile.config.Screen()]
-    main = None
     follow_mouse_focus = False
 
 
@@ -182,6 +182,7 @@ class Xephyr:
 
         self.proc = None  # Handle to Xephyr instance, subprocess.Popen object
         self.display = None
+        self.display_file = None
 
     def __enter__(self):
         try:
@@ -202,7 +203,8 @@ class Xephyr:
         which is used to setup the instance.
         """
         # get a new display
-        self.display = ":{}".format(xcffib.testing.find_display())
+        display, self.display_file = xcffib.testing.find_display()
+        self.display = ":{}".format(display)
 
         # build up arguments
         args = [
@@ -251,6 +253,7 @@ class Xephyr:
 
         # clean up the lock file for the display we allocated
         try:
+            self.display_file.close()
             os.remove(xcffib.testing.lock_path(int(self.display[1:])))
         except OSError:
             pass
@@ -441,10 +444,6 @@ class Qtile:
 
     def test_xeyes(self):
         path = whereis("xeyes")
-        return self._spawn_window(path)
-
-    def test_gkrellm(self):
-        path = whereis("gkrellm")
         return self._spawn_window(path)
 
     def test_xcalc(self):

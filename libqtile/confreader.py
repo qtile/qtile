@@ -24,9 +24,6 @@
 # SOFTWARE.
 import os
 import sys
-from typing import Optional
-
-from libqtile.backend import base
 
 
 class ConfigError(Exception):
@@ -78,14 +75,10 @@ class Config:
                 value = getattr(self, key, default[key])
             setattr(self, key, value)
 
-    @classmethod
-    def from_file(cls, path: str, kore: Optional[base.Core] = None):
-        "Create a Config() object from the python file located at path."
-        cnf = cls(file_path=path, kore=kore)
-        cnf.load()
-        return cnf
-
     def load(self):
+        if not self.file_path:
+            return
+
         name = os.path.splitext(os.path.basename(self.file_path))[0]
 
         # Make sure we'll import the latest version of the config
@@ -99,6 +92,7 @@ class Config:
             config = __import__(name)  # noqa: F811
         except Exception:
             import traceback
+
             from libqtile.log_utils import logger
             logger.exception('Could not import config file %r', self.file_path)
             tb = traceback.format_exc()

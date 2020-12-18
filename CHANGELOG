@@ -1,51 +1,148 @@
 qtile X.X.X, released XXXX-XX-XX:
+    !!! Config breakage !!!
+        - Pacman widget has been removed. Use CheckUpdates instead.
+        - property "masterWindows" of Tile layout renamed to master_length
+        - Match objects now only allow one string argument for their wm
+          name/class/etc. properties. to update your config, do e.g.
+                   Group('www', spawn='firefox', layout='xmonad',
+              -          matches=[Match(wm_class=['Firefox', 'google-chrome', 'Google-chrome'])]),
+              +          matches=[Match(wm_class='Firefox'), Match(wm_class='google-chrome'), Match(wm_class='Google-chrome')]),
+        - properties wname, wmclass and role of Slice-layout replaced by Match-
+          type property "match"
+        - rules specified in `layout.Floating`'s `float_rules` are now evaluated with
+          AND-semantics instead of OR-semantics, i.e. if you specify 2 different
+          property rules, both have to match
+        - check the new `float_rules` for `floating_layout` in the default config and
+          extend your own rules appropriately: some non-configurable auto-floating rules
+          were made explicit and added to the default config
+        - using `dict`s for `layout.Floating`'s `float_rules` is now deprecated, please
+          use `config.Match` objects instead
+        - `no_reposition_match` in `layout.Floating` has been removed; use the list of
+          `config.Match`-objects `no_reposition_rules` instead
+        - Command line has been modernized to a single entry point, the `qtile`
+          binary. Translations are below:
+                qtile     -> qtile start
+                qtile-cmd -> qtile cmd-obj
+                qtile-run -> qtile run-cmd
+                qtile-top -> qtile top
+                qshell    -> qtile shell
+          iqshell and dqtile-cmd are no longer distributed with the
+          package, as they were either user or developer scripts. Both are
+          still available in the qtile repo in /scripts.
+
+          Running `qtile` without arguments will continue to work for the
+          forseeable future, but will be eventually deprecated. qtile prints a
+          warning when run in this configuration.
+    * features
+        - new restart and shutdown hooks
+        - rules specified in `layout.Floating`'s `float_rules` are now evaluated with
+          AND-semantics, allowing for more complex and specific rules
+        - Python 3.9 support
+        - switch to Github Actions for CI
+    !!! warning !!!
+        - When (re)starting, Qtile passes its state to the new process in a
+          file now, where previously it passed state directly as a string. This
+          fixes a bug where some character encodings (i.e. in group names) were
+          getting messed up in the conversion to/from said string. This change
+          will cause issues if you update Qtile then restart it, causing the
+          running old version to pass state in the previous format to the new
+          process which recognises the new.
+
+qtile 0.16.1, released 2020-08-11:
+    !!! Config breakage !!!
+        - Hooks 'addgroup', 'delgroup' and 'screen_change' will no longer
+          receive the qtile object as an argument. It can be accessed directly
+          at libqtile.qtile.
+    !!! deprecation warning !!!
+        - defining a main function in your config is deprecated. You should use
+          @hook.subscribe.startup_complete instead. If you need access to the
+          qtile object, import it from libqtile directly.
+    * bugfixes
+        - include tests in the release for distros to consume
+        - don't resize 0th screen incorrectly on root ConfigureNotify
+        - expose qtile object as libqtile.qtile (note that we still consider
+          anything not prefixed with cmd_ to be a private API)
+        - fix transparent borders
+        - MonadTall, MonadWide, and TreeTab now work with Slice
+
+qtile 0.16.0, released 2020-07-20:
+    !!! Config breakage !!!
+        - Imports from libqtile.widget are now made through a function
+          proxy to avoid the side effects of importing all widgets at
+          once. If you subclass a widget in your config, import it from
+          its own module.
+          e.g. from libqtile.widget.pomodoro import Pomodoro
     * features
         - added `guess_terminal` in utils
         - added keybinding cheet sheet image generator
-        - custom keyboardlayout display 
+        - custom keyboardlayout display
+        - added native support for key chords
+        - validate config before restart and refuse to restart with a bad
+          config
+        - added a bunch of type annotations to config objects (more to come)
+    * bugfixes
+        - major focus rework; Java-based IDEs such as PyCharm, NetBrains, etc.
+          now focus correctly
+        - fix a bug where spotify (or any window with focus-to=parent) was
+          closed, nothing would be focused and no hotkeys would work
+        - support windows unsetting the input hint
+        - respects window's/user's location setting if present (WM_SIZE_HINTS)
+        - fixed YahooWeather widget for new API
+        - fix a bug where _NET_WM_DESKTOPS wasn't correctly updated when
+          switching screens in some cases
+        - fix a crash in the BSP layout
+        - fix a stacktrace when unknown keysyms are encounted
+        - make qtile --version output more sane
+        - fix a rendering issue with special characters in window names
+        - keyboard widget no longer re-sets the keyboard settings every second
+        - fix qtile-top with the new IPC model
+        - Image widget respects its background setting now
+        - correctly re-draw non-focused screens on qtile restart
+        - fix a crash when decoding images
+        - fix the .when() constraint for lazy objects
 
 qtile 0.15.1, released 2020-04-14
     * bugfixes
-	- fix qtile reload (it was crashing)
+        - fix qtile reload (it was crashing)
 
 qtile 0.15.0, released 2020-04-12:
     !!! Config breakage !!!
         - removed the mpd widget, which depended on python-mpd.
-	- the Clock widget now requires pytz to handle timezones that are
-	  passed as string
-	- libqtile.command.Client does not exist anymore and has been
-	  replaced by libqtile.command_client.CommandClient
+        - the Clock widget now requires pytz to handle timezones that are
+          passed as string
+        - libqtile.command.Client does not exist anymore and has been
+          replaced by libqtile.command_client.CommandClient
     !!! deprecation warning !!!
-	- libqtile.command.lazy is deprecated in favor of libqtile.lazy.lazy
+        - libqtile.command.lazy is deprecated in favor of libqtile.lazy.lazy
     * features
-	- Python 3.8 support
-	- `wallpaper` and `wallpaper_mode` for screens
-	- bars can now have margins
-	- `lazy.toscreen` called twice will now toggle the groups
-	  (optional with the `toggle` parameter)
-	- `lazy.window.togroup` now has `switch_group` parameter to follow
-	  the window to the group it is sent to
-	- qtile now copies the default config if the config file does not exist
-	- all widgets now use Pango markup by default
-	- add an `fmt` option for all textbox widgets
-	- new PulseVolume widget for controlling PulseAudio
-	- new QuickExit widget, mainly for the default config
-	- new non-graph CPU widget
-	- KeyboardLayout widget: new `options` parameter
-	- CheckUpdates widget: support ArchLinux yay
-	- GroupBox widget: new `block_highlight_text_color` parameter
-	- Mpd2 widget: new `color_progress` parameter
-	- Maildir widget can now display the inbox grand total
-	- the Net widget can now use bits as unit
-	- Spacer widget: new `background_color` parameter
-	- More consistent resize behavior in Columns layout
-	- various improvements of the default config
-	- large documentation update and improvements (e.g. widget
-	  dependencies)
+        - Python 3.8 support
+        - `wallpaper` and `wallpaper_mode` for screens
+        - bars can now have margins
+        - `lazy.toscreen` called twice will now toggle the groups
+          (optional with the `toggle` parameter)
+        - `lazy.window.togroup` now has `switch_group` parameter to follow
+          the window to the group it is sent to
+        - qtile now copies the default config if the config file does not exist
+        - all widgets now use Pango markup by default
+        - add an `fmt` option for all textbox widgets
+        - new PulseVolume widget for controlling PulseAudio
+        - new QuickExit widget, mainly for the default config
+        - new non-graph CPU widget
+        - KeyboardLayout widget: new `options` parameter
+        - CheckUpdates widget: support ArchLinux yay
+        - GroupBox widget: new `block_highlight_text_color` parameter
+        - Mpd2 widget: new `color_progress` parameter
+        - Maildir widget can now display the inbox grand total
+        - the Net widget can now use bits as unit
+        - Spacer widget: new `background_color` parameter
+        - More consistent resize behavior in Columns layout
+        - various improvements of the default config
+        - large documentation update and improvements (e.g. widget
+          dependencies)
     * bugfixes
-	- qtile binary: don't fail if we can't set the locale
-	- don't print help if qtile-cmd function returns nothing
-	- Monad layout: fix margins when flipped
+        - qtile binary: don't fail if we can't set the locale
+        - don't print help if qtile-cmd function returns nothing
+        - Monad layout: fix margins when flipped
 
 qtile 0.14.2, released 2019-06-19:
     * bugfixes
@@ -520,3 +617,5 @@ qtile 0.5, released 2012-11-11:
         - Better error if two widgets have STRETCH length
         - Autofloat window classes can now be overridden
         - xkeysyms updated
+
+# vim :set ts=4 sw=4 sts=4 et :

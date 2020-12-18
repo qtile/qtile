@@ -30,10 +30,11 @@ import libqtile.layout
 import libqtile.widget
 from libqtile.command_interface import CommandError
 from libqtile.command_object import CommandObject
+from libqtile.confreader import Config
 from libqtile.lazy import lazy
 
 
-class CallConfig:
+class CallConfig(Config):
     keys = [
         libqtile.config.Key(
             ["control"], "j",
@@ -53,7 +54,7 @@ class CallConfig:
         libqtile.layout.Stack(num_stacks=1),
         libqtile.layout.Max(),
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
@@ -64,7 +65,6 @@ class CallConfig:
             ),
         )
     ]
-    main = None
     auto_fullscreen = True
 
 
@@ -122,7 +122,7 @@ def test_command():
     assert not c.command("nonexistent")
 
 
-class ServerConfig:
+class ServerConfig(Config):
     auto_fullscreen = True
     keys = []
     mouse = []
@@ -136,7 +136,7 @@ class ServerConfig:
         libqtile.layout.Stack(num_stacks=2),
         libqtile.layout.Stack(num_stacks=3),
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
@@ -155,7 +155,6 @@ class ServerConfig:
             ),
         )
     ]
-    main = None
 
 
 server_config = pytest.mark.parametrize("qtile", [ServerConfig], indirect=True)

@@ -23,13 +23,15 @@ import pytest
 import libqtile.config
 import libqtile.hook
 from libqtile import layout
+from libqtile.confreader import Config
 from test.layouts.layout_utils import (
+    assert_dimensions_fit,
     assert_focus_path_unordered,
     assert_focused,
 )
 
 
-class AllLayoutsConfig:
+class AllLayoutsConfig(Config):
     """
     Ensure that all layouts behave consistently in some common scenarios.
     """
@@ -40,7 +42,7 @@ class AllLayoutsConfig:
         libqtile.config.Group("d"),
     ]
     follow_mouse_focus = False
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     screens = []
 
     @staticmethod
@@ -68,6 +70,24 @@ class AllLayoutsConfig:
         """
         return [type(layout_name, (cls, ), {'layouts': [layout_cls()]})
                 for layout_name, layout_cls in cls.iter_layouts()]
+
+
+class AllDelegateLayoutsConfig(AllLayoutsConfig):
+
+    @classmethod
+    def generate(cls):
+        """
+        Generate a Slice configuration for each layout currently in the repo.
+        Each layout is made a delegate/fallback layout of the Slice layout.
+        Each configuration has only the tested layout (i.e. 1 item) in the
+        'layouts' variable.
+        """
+        return [
+            type(layout_name, (cls, ), {
+                'layouts': [
+                    layout.slice.Slice(
+                        wname='nevermatch', fallback=layout_cls())]})
+            for layout_name, layout_cls in cls.iter_layouts()]
 
 
 class AllLayouts(AllLayoutsConfig):
@@ -99,6 +119,7 @@ class AllLayoutsConfigEvents(AllLayoutsConfig):
 each_layout_config = pytest.mark.parametrize("qtile", AllLayoutsConfig.generate(), indirect=True)
 all_layouts_config = pytest.mark.parametrize("qtile", [AllLayouts], indirect=True)
 each_layout_config_events = pytest.mark.parametrize("qtile", AllLayoutsConfigEvents.generate(), indirect=True)
+each_delegate_layout_config = pytest.mark.parametrize("qtile", AllDelegateLayoutsConfig.generate(), indirect=True)
 
 
 @each_layout_config
@@ -399,6 +420,14 @@ def test_desktop_notifications(qtile):
     qtile.kill_window(notif7)
     qtile.kill_window(notif8)
     assert qtile.c.group.info()['focus_history'] == ["two", "dialog3", "three"]
+
+
+@each_delegate_layout_config
+def test_only_uses_delegated_screen_rect(qtile):
+    qtile.test_window("one")
+    qtile.c.group.focus_by_name("one")
+    assert_focused(qtile, "one")
+    assert_dimensions_fit(qtile, 256, 0, 800-256, 600)
 
 
 @all_layouts_config

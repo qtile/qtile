@@ -1,3 +1,5 @@
+.. _keybinding-img:
+
 =====================
 Keybindings in images
 =====================

@@ -22,6 +22,7 @@ import pytest
 
 import libqtile.config
 from libqtile import layout
+from libqtile.confreader import Config
 from test.conftest import no_xinerama
 from test.layouts.layout_utils import (
     assert_dimensions,
@@ -30,16 +31,15 @@ from test.layouts.layout_utils import (
 )
 
 
-class MonadTallConfig:
+class MonadTallConfig(Config):
     auto_fullscreen = True
-    main = None
     groups = [
         libqtile.config.Group("a")
     ]
     layouts = [
         layout.MonadTall()
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
@@ -50,16 +50,15 @@ def monadtall_config(x):
     return no_xinerama(pytest.mark.parametrize("qtile", [MonadTallConfig], indirect=True)(x))
 
 
-class MonadTallMarginsConfig:
+class MonadTallMarginsConfig(Config):
     auto_fullscreen = True
-    main = None
     groups = [
         libqtile.config.Group("a")
     ]
     layouts = [
         layout.MonadTall(margin=4)
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
@@ -70,16 +69,15 @@ def monadtallmargins_config(x):
     return no_xinerama(pytest.mark.parametrize("qtile", [MonadTallMarginsConfig], indirect=True)(x))
 
 
-class MonadWideConfig:
+class MonadWideConfig(Config):
     auto_fullscreen = True
-    main = None
     groups = [
         libqtile.config.Group("a")
     ]
     layouts = [
         layout.MonadWide()
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
@@ -90,16 +88,15 @@ def monadwide_config(x):
     return no_xinerama(pytest.mark.parametrize("qtile", [MonadWideConfig], indirect=True)(x))
 
 
-class MonadWideMarginsConfig:
+class MonadWideMarginsConfig(Config):
     auto_fullscreen = True
-    main = None
     groups = [
         libqtile.config.Group("a")
     ]
     layouts = [
         layout.MonadWide(margin=4)
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []

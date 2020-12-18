@@ -113,8 +113,8 @@ class DGroups:
 
     def add_dgroup(self, group, start=False):
         self.groups_map[group.name] = group
-        rules = [Rule(m, group=group.name) for m in group.matches]
-        self.rules.extend(rules)
+        rule = Rule(group.matches, group=group.name)
+        self.rules.append(rule)
         if start:
             self.qtile.add_group(group.name, group.layout, group.layouts, group.label)
 
@@ -129,7 +129,7 @@ class DGroups:
                     spawns = group.spawn
                 for spawn in spawns:
                     pid = self.qtile.cmd_spawn(spawn)
-                    self.add_rule(Rule(Match(net_wm_pid=[pid]), group.name))
+                    self.add_rule(Rule(Match(net_wm_pid=pid), group.name))
 
     def _setup_hooks(self):
         libqtile.hook.subscribe.addgroup(self._addgroup)
@@ -143,7 +143,7 @@ class DGroups:
                 lambda: self.key_binder(self)
             )
 
-    def _addgroup(self, qtile, group_name):
+    def _addgroup(self, group_name):
         if group_name not in self.groups_map:
             self.add_dgroup(Group(group_name, persist=False))
 

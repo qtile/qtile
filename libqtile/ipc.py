@@ -31,7 +31,6 @@ import marshal
 import os.path
 import socket
 import struct
-import sys
 from typing import Any, Optional, Tuple
 
 from libqtile.log_utils import logger
@@ -158,10 +157,7 @@ class Client:
         finally:
             # see the note in Server._server_callback()
             writer.close()
-            if sys.version_info >= (3, 7):
-                await writer.wait_closed()
-            else:
-                await asyncio.sleep(0)
+            await writer.wait_closed()
 
         data, _ = _IPC.unpack(read_data, is_json=self.is_json)
 
@@ -169,10 +165,9 @@ class Client:
 
 
 class Server:
-    def __init__(self, fname: str, handler, loop: asyncio.AbstractEventLoop) -> None:
+    def __init__(self, fname: str, handler) -> None:
         self.fname = fname
         self.handler = handler
-        self.loop = loop
         self.server = None  # type: Optional[asyncio.AbstractServer]
 
         if os.path.exists(fname):
@@ -214,26 +209,19 @@ class Server:
             logger.debug("Closing connection on receive EOF")
             writer.write_eof()
         finally:
-            # the resoure isn't closed immediately on the close call, but is on
-            # the next loop iteration, this is exposed as the wait_closed
-            # method in 3.7, but requires a manual loop iteration in earlier
-            # versions
             writer.close()
-            if sys.version_info >= (3, 7):
-                await writer.wait_closed()
-            else:
-                await asyncio.sleep(0)
+            await writer.wait_closed()
 
-    def __enter__(self) -> "Server":
+    async def __aenter__(self) -> "Server":
         """Start and return the server"""
-        self.start()
+        await self.start()
         return self
 
-    def __exit__(self, exc_type, exc_value, tb) -> None:
+    async def __aexit__(self, exc_type, exc_value, tb) -> None:
         """Close and shutdown the server"""
-        self.close()
+        await self.close()
 
-    def start(self) -> None:
+    async def start(self) -> None:
         """Start the server"""
         assert self.server is None
 
@@ -241,14 +229,14 @@ class Server:
         server_coroutine = asyncio.start_unix_server(
             self._server_callback, sock=self.sock
         )
-        self.server = self.loop.run_until_complete(server_coroutine)
+        self.server = await server_coroutine
 
-    def close(self) -> None:
+    async def close(self) -> None:
         """Close and shutdown the server"""
         assert self.server is not None
 
         logger.debug("Stopping server on close")
         self.server.close()
-        self.loop.run_until_complete(self.server.wait_closed())
+        await self.server.wait_closed()
 
         self.server = None

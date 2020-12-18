@@ -31,6 +31,7 @@ class Memory(base.ThreadedPollText):
     MemUsed: Returns memory in use
     MemTotal: Returns total amount of memory
     MemFree: Returns amount of memory free
+    MemPercent: Returns memory in use as a percentage
     Buffers: Returns buffer amount
     Active: Returns active memory
     Inactive: Returns inactive memory
@@ -38,6 +39,7 @@ class Memory(base.ThreadedPollText):
     SwapTotal: Returns total amount of swap
     SwapFree: Returns amount of swap free
     SwapUsed: Returns amount of swap in use
+    SwapPercent: Returns swap in use as a percentage
 
 
     Widget requirements: psutil_.
@@ -66,11 +68,13 @@ class Memory(base.ThreadedPollText):
         val["MemUsed"] = mem.used // 1024 // 1024
         val["MemTotal"] = mem.total // 1024 // 1024
         val["MemFree"] = mem.free // 1024 // 1024
+        val["MemPercent"] = mem.percent
         val["Buffers"] = mem.buffers // 1024 // 1024
         val["Active"] = mem.active // 1024 // 1024
         val["Inactive"] = mem.inactive // 1024 // 1024
         val["Shmem"] = mem.shared // 1024 // 1024
         val["SwapTotal"] = swap.total // 1024 // 1024
-        val["Swapfree"] = swap.free // 1024 // 1024
+        val["SwapFree"] = swap.free // 1024 // 1024
         val["SwapUsed"] = swap.used // 1024 // 1024
+        val["SwapPercent"] = swap.percent
         return self.format.format(**val)
