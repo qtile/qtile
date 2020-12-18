@@ -31,7 +31,10 @@ def run_qtile_check(config):
     cmd = os.path.join(os.path.dirname(__file__), '..', 'bin', 'qtile')
     argv = [cmd, "check", "-c", config]
     try:
-        subprocess.check_call(argv)
+        newenv = os.environ.copy()
+        old_pp = newenv.get("PYTHONPATH", "")
+        newenv["PYTHONPATH"] = os.path.join(os.path.dirname(__file__), "..") + old_pp
+        subprocess.check_call(argv, env=newenv)
     except subprocess.CalledProcessError:
         return False
     else:
@@ -69,4 +72,18 @@ def test_check_good_key_arg():
         from libqtile.command import lazy
 
         keys = [Key(["mod4"], "x", lazy.kill())]
+        cursor_warp = True
+    """)
+
+
+def test_check_bad_config_type():
+    assert not check_literal_config("""
+        keys = "i am not a List[Key]"
+        cursor_warp = "i am not a bool"
+    """)
+
+
+def test_extra_vars_are_ok():
+    assert check_literal_config("""
+        this_is_an_extra_config_var = "yes it is"
     """)

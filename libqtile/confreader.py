@@ -32,25 +32,33 @@ class ConfigError(Exception):
     pass
 
 
+config_pyi_header = """
+from typing import Any, Dict, List, Literal
+from libqtile.config import Group, Key, Mouse, Rule, Screen
+from libqtile.layout.base import Layout
+
+"""
+
+
 class Config:
     settings_keys = [
-        "keys",
-        "mouse",
-        "groups",
-        "dgroups_key_binder",
-        "dgroups_app_rules",
-        "follow_mouse_focus",
-        "focus_on_window_activation",
-        "cursor_warp",
-        "layouts",
-        "floating_layout",
-        "screens",
-        "main",
-        "auto_fullscreen",
-        "widget_defaults",
-        "extension_defaults",
-        "bring_front_click",
-        "wmname",
+        ("keys", "List[Key]"),
+        ("mouse", "List[Mouse]"),
+        ("groups", "List[Group]"),
+        ("dgroups_key_binder", "Any"),
+        ("dgroups_app_rules", "List[Rule]"),
+        ("follow_mouse_focus", "bool"),
+        ("focus_on_window_activation", 'Literal["focus", "smart", "urgent", "never"]'),
+        ("cursor_warp", "bool"),
+        ("layouts", "List[Layout]"),
+        ("floating_layout", "Layout"),
+        ("screens", "List[Screen]"),
+        ("main", "Any"),
+        ("auto_fullscreen", "bool"),
+        ("widget_defaults", "Dict[str, Any]"),
+        ("extension_defaults", "Dict[str, Any]"),
+        ("bring_front_click", "bool"),
+        ("wmname", "str"),
     ]
 
     def __init__(self, file_path=None, **settings):
@@ -69,7 +77,7 @@ class Config:
             self.fake_screens = fake_screens
 
         default = vars(default_config)
-        for key in self.settings_keys:
+        for (key, _) in self.settings_keys:
             try:
                 value = settings[key]
             except KeyError:
