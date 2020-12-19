@@ -1064,13 +1064,11 @@ class Window(_Window):
 
     def handle_EnterNotify(self, e):  # noqa: N802
         hook.fire("client_mouse_enter", self)
-        if self.qtile.config.follow_mouse_focus and \
-                self.group.current_window != self:
-            self.group.focus(self, False)
-        if self.group.screen and \
-                self.qtile.current_screen != self.group.screen and \
-                self.qtile.config.follow_mouse_focus:
-            self.qtile.focus_screen(self.group.screen.index, False)
+        if self.qtile.config.follow_mouse_focus:
+            if self.group.current_window != self:
+                self.group.focus(self, False)
+            if self.group.screen and self.qtile.current_screen != self.group.screen:
+                self.qtile.focus_screen(self.group.screen.index, False)
         return True
 
     def handle_ConfigureRequest(self, e):  # noqa: N802

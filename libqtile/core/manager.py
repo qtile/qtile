@@ -31,7 +31,6 @@ import tempfile
 import time
 import traceback
 import warnings
-from typing import Optional
 
 import xcffib
 import xcffib.xinerama
@@ -728,19 +727,7 @@ class Qtile(CommandObject):
                 closest_screen = s
         return closest_screen
 
-    def enter_event(self, event) -> Optional[bool]:
-        win = self.windows_map.get(event.event, None)
-        try:
-            if win.group.screen is self.current_screen:
-                return True
-            screen = win.group.screen
-        except AttributeError:
-            screen = self.find_screen(event.root_x, event.root_y)
-        if screen:
-            self.focus_screen(screen.index, warp=False)
-        return None
-
-    def cmd_focus_by_click(self, e):
+    def _focus_by_click(self, e):
         """Bring a window to the front
 
         Parameters
@@ -748,21 +735,33 @@ class Qtile(CommandObject):
         e : xcb event
             Click event used to determine window to focus
         """
-        wnd = e.child or e.root
+        if e.child:
+            wid = e.child
 
-        # Additional option for config.py
-        # Brings clicked window to front
-        if self.config.bring_front_click:
-            self.conn.conn.core.ConfigureWindow(
-                wnd,
-                xcffib.xproto.ConfigWindow.StackMode,
-                [xcffib.xproto.StackMode.Above]
-            )
+            if self.config.bring_front_click:
+                self.conn.conn.core.ConfigureWindow(
+                    wid,
+                    xcffib.xproto.ConfigWindow.StackMode,
+                    [xcffib.xproto.StackMode.Above]
+                )
 
-        window = self.windows_map.get(wnd)
-        if window and not window.window.get_property('QTILE_INTERNAL'):
-            self.current_group.focus(self.windows_map.get(wnd), False)
-            self.windows_map.get(wnd).focus(False)
+            window = self.windows_map.get(wid)
+            try:
+                if window.group.screen is not self.current_screen:
+                    self.focus_screen(window.group.screen.index, warp=False)
+                    self.current_group.focus(window, False)
+                    window.focus(False)
+            except AttributeError:
+                # probably clicked an internal window
+                screen = self.find_screen(e.root_x, e.root_y)
+                if screen:
+                    self.focus_screen(screen.index, warp=False)
+
+        else:
+            # clicked on root window
+            screen = self.find_screen(e.root_x, e.root_y)
+            if screen:
+                self.focus_screen(screen.index, warp=False)
 
         self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
         self.conn.conn.flush()
@@ -782,11 +781,11 @@ class Qtile(CommandObject):
                 for i in m.commands:
                     if i.check(self):
                         if m.focus == "before":
-                            self.cmd_focus_by_click(event)
+                            self._focus_by_click(event)
                         status, val = self.server.call(
                             (i.selectors, i.name, i.args, i.kwargs))
                         if m.focus == "after":
-                            self.cmd_focus_by_click(event)
+                            self._focus_by_click(event)
                         if status in (command_interface.ERROR, command_interface.EXCEPTION):
                             logger.error(
                                 "Mouse command error %s: %s" % (i.name, val)
@@ -795,7 +794,7 @@ class Qtile(CommandObject):
                 if m.start:
                     i = m.start
                     if m.focus == "before":
-                        self.cmd_focus_by_click(event)
+                        self._focus_by_click(event)
                     status, val = self.server.call(
                         (i.selectors, i.name, i.args, i.kwargs))
                     if status in (command_interface.ERROR, command_interface.EXCEPTION):
@@ -806,7 +805,7 @@ class Qtile(CommandObject):
                 else:
                     val = (0, 0)
                 if m.focus == "after":
-                    self.cmd_focus_by_click(event)
+                    self._focus_by_click(event)
                 self._drag = (x, y, val[0], val[1], m.commands)
                 self.core.grab_pointer()
 

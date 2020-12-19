@@ -534,11 +534,6 @@ class XCore(base.Core):
             self._selection[name]["selection"] = value
             hook.fire("selection_change", name, self._selection[name])
 
-    def handle_EnterNotify(self, event) -> Optional[bool]:  # noqa: N802
-        assert self.qtile is not None
-
-        return self.qtile.enter_event(event)
-
     def handle_ClientMessage(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
