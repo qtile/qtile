@@ -45,7 +45,7 @@ class Call:
         self.val = val
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def hook_fixture():
     class Dummy:
         pass
