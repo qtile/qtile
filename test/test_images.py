@@ -3,7 +3,6 @@ test_images.py contains unittests for libqtile.images.Img
 and its supporting code.
 """
 import os
-from collections import OrderedDict
 from glob import glob
 from os import path
 
@@ -206,42 +205,6 @@ class TestImgResize:
         assert (png_img.width / png_img.height) == pytest.approx(ratio)
 
 
-class TestGetMatchingFiles:
-    def test_audio_volume_muted(self):
-        name = 'audio-volume-muted'
-        dfiles = images.get_matching_files(
-            DATA_DIR,
-            False,
-            name,
-        )
-        result = dfiles[name]
-        assert len(result) == 2
-        png = path.join(DATA_DIR, 'png', 'audio-volume-muted.png')
-        assert png in result
-        svg = path.join(DATA_DIR, 'svg', 'audio-volume-muted.svg')
-        assert svg in result
-
-    def test_only_svg(self):
-        name = 'audio-volume-muted.svg'
-        dfiles = images.get_matching_files(
-            DATA_DIR,
-            True,
-            name,
-        )
-        result = dfiles[name]
-        assert len(result) == 1
-        svg = path.join(DATA_DIR, 'svg', 'audio-volume-muted.svg')
-        assert svg in result
-
-    def test_multiple(self):
-        names = OrderedDict()
-        names['audio-volume-muted'] = 2
-        names['battery-caution-charging'] = 1
-        dfiles = images.get_matching_files(DATA_DIR, False, *names)
-        for name, length in names.items():
-            assert len(dfiles[name]) == length
-
-
 class TestLoader:
     @pytest.fixture(scope='function')
     def loader(self):
@@ -257,7 +220,6 @@ class TestLoader:
 
     def test_audio_volume_muted_png(self, loader):
         name = 'audio-volume-muted.png'
-        loader.explicit_filetype = True
         result = loader(name)
         assert isinstance(result[name], images.Img)
         assert result[name].path.endswith('.png')

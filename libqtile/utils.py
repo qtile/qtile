@@ -1,4 +1,5 @@
 # Copyright (c) 2008, Aldo Cortesi. All rights reserved.
+# Copyright (c) 2020, Matt Colligan. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,11 +20,13 @@
 # SOFTWARE.
 
 import functools
+import glob
 import importlib
 import os
 import sys
 import traceback
 import warnings
+from collections import defaultdict
 from collections.abc import Sequence
 from random import randint
 from shutil import which
@@ -293,3 +296,23 @@ def guess_terminal(preference=None):
         return terminal
 
     logger.error('Default terminal has not been found.')
+
+
+def scan_files(dirpath, *names):
+    """
+    Search a folder recursively for files matching those passed as arguments, with
+    globbing. Returns a dict with keys equal to entries in names, and values a list of
+    matching paths. E.g.:
+
+    >>> scan_files('/wallpapers', '*.png', '*.jpg')
+    defaultdict(<class 'list'>, {'*.png': ['/wallpapers/w1.png'], '*.jpg':
+    ['/wallpapers/w2.jpg', '/wallpapers/w3.jpg']})
+
+    """
+    files = defaultdict(list)
+
+    for name in names:
+        found = glob.glob(os.path.join(dirpath, '**', name), recursive=True)
+        files[name].extend(found)
+
+    return files

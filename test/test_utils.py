@@ -1,6 +1,7 @@
 # Copyright (c) 2008, 2010 Aldo Cortesi
 # Copyright (c) 2011 Florian Mounier
 # Copyright (c) 2011 Anshuman Bhaduri
+# Copyright (c) 2020 Matt Colligan
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +21,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
+from collections import OrderedDict
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -95,3 +98,35 @@ def path(monkeypatch):
     with TemporaryDirectory() as d:
         monkeypatch.setenv('PATH', d)
         yield d
+
+
+TEST_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(TEST_DIR, 'data')
+
+
+class TestScanFiles:
+    def test_audio_volume_muted(self):
+        name = 'audio-volume-muted.*'
+        dfiles = utils.scan_files(DATA_DIR, name)
+        result = dfiles[name]
+        assert len(result) == 2
+        png = os.path.join(DATA_DIR, 'png', 'audio-volume-muted.png')
+        assert png in result
+        svg = os.path.join(DATA_DIR, 'svg', 'audio-volume-muted.svg')
+        assert svg in result
+
+    def test_only_svg(self):
+        name = 'audio-volume-muted.svg'
+        dfiles = utils.scan_files(DATA_DIR, name)
+        result = dfiles[name]
+        assert len(result) == 1
+        svg = os.path.join(DATA_DIR, 'svg', 'audio-volume-muted.svg')
+        assert svg in result
+
+    def test_multiple(self):
+        names = OrderedDict()
+        names['audio-volume-muted.*'] = 2
+        names['battery-caution-charging.*'] = 1
+        dfiles = utils.scan_files(DATA_DIR, *names)
+        for name, length in names.items():
+            assert len(dfiles[name]) == length
