@@ -31,10 +31,12 @@ import tempfile
 import time
 import traceback
 import warnings
+from collections import OrderedDict
 
 import xcffib
 import xcffib.xinerama
 import xcffib.xproto
+from xcffib.xproto import StackMode
 
 import libqtile
 from libqtile import command_interface, confreader, hook, utils, window
@@ -98,7 +100,7 @@ class Qtile(CommandObject):
         self.config = config
         libqtile.init(self)
 
-        self.windows_map = {}
+        self.windows_map = OrderedDict()
         self.widgets_map = {}
         self.groups_map = {}
         self.groups = []
@@ -444,13 +446,103 @@ class Qtile(CommandObject):
         self.core.update_net_desktops(self.groups, index)
 
     def update_client_list(self) -> None:
-        """Updates the client stack list
+        """Update X11 client list
 
         This is needed for third party tasklists and drag and drop of tabs in
         chrome
         """
         windows = [wid for wid, c in self.windows_map.items() if c.group]
         self.core.update_client_list(windows)
+
+    def update_client_order(self) -> None:
+        """Update X11 client order
+
+        This is needed for third party tasklists and drag and drop of tabs in
+        chrome
+        """
+        windows = [wid for wid, c in self.windows_map.items() if c.group]
+        self.core.update_client_order(windows)
+
+    def change_layer(self, wid, up=True, force=False):
+        """Raise a window above its peers or move it below them, depending on 'up'.
+        Raising a normal window will not lift it above pinned windows etc.
+        """
+        client = self.windows_map.get(wid, None)
+        if client is None:
+            return
+        order = list(self.windows_map.keys())
+        self.windows_map.move_to_end(wid, last=up)
+
+        items = []
+        above = client.window.net_wm_state_above
+        below = client.window.net_wm_state_below
+        # we have three flags to check (up, above and below), so there are 8 combinations in total
+        if (up and above) or (not up and below):  # 2 out of 8
+            # if we're at the top, nobody needs to be raised above us; same in the other direction
+            pass
+        elif up and below:  # 2 out of 8 (ignore above)
+            # if we're at the bottom, almost everybody needs to be put above us
+            items = [
+                (i, w) for i, w in self.windows_map.items()
+                if not w.window.net_wm_state_below
+            ]
+        elif not up and above:  # 2 out of 8 (ignore below)
+            # if we're at the top, almost everybody needs to be put below us
+            items = [
+                (i, w) for i, w in self.windows_map.items()
+                if not w.window.net_wm_state_above
+            ]
+        elif not below and not above:  # 2 out of 8
+            # we're just a normal window; make sure we don't interfere with pinned windows
+            items = [
+                (i, w) for i, w in self.windows_map.items()
+                if (w.window.net_wm_state_above if up else w.window.net_wm_state_below)
+            ]
+
+        if not up:
+            items = reversed(items)
+
+        for i, w in items:
+            self.windows_map.move_to_end(i, last=up)
+        if force or order != list(self.windows_map.keys()):
+            client.window.configure(stackmode=StackMode.Above if up else StackMode.Below)
+            for i, w in items:
+                w.window.configure(stackmode=StackMode.Above if up else StackMode.Below)
+            self.update_client_order()
+
+    def pin(self, wid, up=True):
+        """Pin a window to the top or the bottom of the stack, depending on 'up'."""
+        client = self.windows_map.get(wid, None)
+        if client is None:
+            return
+        order = list(self.windows_map.keys())
+        self.windows_map.move_to_end(wid, last=up)
+        client.window.net_wm_state_above = up
+        client.window.net_wm_state_below = not up
+        if order != list(self.windows_map.keys()):
+            client.window.configure(stackmode=StackMode.Above if up else StackMode.Below)
+            self.update_client_order()
+
+    def unpin(self, wid):
+        client = self.windows_map[wid]
+        if client is None:
+            return
+        order = list(self.windows_map.keys())
+        items = []
+        if client.window.net_wm_state_above:
+            client.window.net_wm_state_above = False
+            items = [(i, w) for i, w in self.windows_map.items() if w.window.net_wm_state_above]
+            up = True
+        if client.window.net_wm_state_below:
+            client.window.net_wm_state_below = False
+            items = reversed([(i, w) for i, w in self.windows_map.items() if w.window.net_wm_state_below])
+            up = False
+        for i, w in items:
+            self.windows_map.move_to_end(i, last=up)
+        if order != list(self.windows_map.keys()):
+            for i, w in items:
+                w.window.configure(stackmode=StackMode.Above if up else StackMode.Below)
+            self.update_client_order()
 
     def add_group(self, name, layout=None, layouts=None, label=None):
         if name not in self.groups_map.keys():
@@ -595,7 +687,12 @@ class Qtile(CommandObject):
                 # Window may have been bound to a group in the hook.
                 if not c.group:
                     self.current_screen.group.add(c, focus=c.can_steal_focus())
+                parent = w.get_wm_transient_for()
+                if parent:
+                    c.window.net_wm_state_above = self.windows_map[parent].window.net_wm_state_above
+                    c.window.net_wm_state_below = self.windows_map[parent].window.net_wm_state_below
                 self.update_client_list()
+                self.change_layer(w.wid, force=True)
                 hook.fire("client_managed", c)
             return c
         else:
@@ -611,6 +708,7 @@ class Qtile(CommandObject):
                 c.group.remove(c)
             del self.windows_map[win]
             self.update_client_list()
+            self.update_client_order()
         if self.current_window is None:
             self.conn.fixup_focus()
 
@@ -739,11 +837,7 @@ class Qtile(CommandObject):
             wid = e.child
 
             if self.config.bring_front_click:
-                self.conn.conn.core.ConfigureWindow(
-                    wid,
-                    xcffib.xproto.ConfigWindow.StackMode,
-                    [xcffib.xproto.StackMode.Above]
-                )
+                self.change_layer(wid)
 
             window = self.windows_map.get(wid)
             try:

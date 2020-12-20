@@ -870,6 +870,66 @@ def test_focus_stays_on_layout_switch(manager):
     assert manager.c.window.info()['name'] == 'one'
 
 
+@manager_config
+@no_xinerama
+def test_window_stacking_order(manager):
+    def _wnd(name):
+        return manager.c.window[{w['name']: w['id'] for w in manager.c.windows()}[name]]
+
+    def _clients():
+        return [w['name'] for w in manager.c.windows()]
+
+    manager.test_window('one')
+    manager.test_window('two')
+    manager.test_window('three')
+    manager.test_window('four')
+    manager.test_window('five')
+    assert _clients() == ['one', 'two', 'three', 'four', 'five']
+
+    _wnd('one').raise_client()
+    assert _clients() == ['two', 'three', 'four', 'five', 'one']
+    _wnd('four').raise_client()
+    assert _clients() == ['two', 'three', 'five', 'one', 'four']
+    _wnd('one').lower_client()
+    assert _clients() == ['one', 'two', 'three', 'five', 'four']
+    _wnd('two').keep_above()
+    assert _clients() == ['one', 'three', 'five', 'four', 'two']
+    _wnd('five').raise_client()
+    assert _clients() == ['one', 'three', 'four', 'five', 'two']
+    _wnd('three').keep_below()
+    assert _clients() == ['three', 'one', 'four', 'five', 'two']
+    _wnd('four').lower_client()
+    assert _clients() == ['three', 'four', 'one', 'five', 'two']
+    _wnd('four').keep_below()
+    assert _clients() == ['four', 'three', 'one', 'five', 'two']
+    _wnd('one').keep_above()
+    assert _clients() == ['four', 'three', 'five', 'two', 'one']
+    _wnd('five').raise_client()
+    assert _clients() == ['four', 'three', 'five', 'two', 'one']
+    _wnd('five').lower_client()
+    assert _clients() == ['four', 'three', 'five', 'two', 'one']
+    _wnd('two').keep_below()
+    assert _clients() == ['two', 'four', 'three', 'five', 'one']
+    _wnd('four').keep_above()
+    assert _clients() == ['two', 'three', 'five', 'one', 'four']
+    _wnd('four').keep_above()
+    assert _clients() == ['two', 'three', 'five', 'four', 'one']
+    _wnd('five').raise_client()
+    assert _clients() == ['two', 'three', 'four', 'five', 'one']
+    _wnd('one').keep_above()
+    assert _clients() == ['two', 'three', 'four', 'five', 'one']
+    _wnd('one').lower_client()
+    assert _clients() == ['two', 'three', 'one', 'four', 'five']
+    _wnd('two').keep_below()
+    assert _clients() == ['three', 'two', 'one', 'four', 'five']
+    _wnd('three').keep_below()
+    assert _clients() == ['three', 'two', 'one', 'four', 'five']
+    _wnd('two').lower_client()
+    assert _clients() == ['two', 'three', 'one', 'four', 'five']
+    _wnd('one').lower_client()
+    assert _clients() == ['one', 'two', 'three', 'four', 'five']
+
+
 @pytest.mark.parametrize("manager", [BareConfig, ManagerConfig], indirect=True)
 @pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
 def test_xeyes(manager):

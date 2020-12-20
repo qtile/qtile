@@ -20,6 +20,7 @@
 
 
 import pytest
+from xcffib.xproto import StackMode
 
 from libqtile.backend.x11 import xcbq
 from libqtile.popup import Popup
@@ -29,13 +30,20 @@ from test.conftest import BareConfig
 @pytest.mark.parametrize("manager", [BareConfig], indirect=True)
 def test_popup_focus(manager):
     manager.test_xeyes()
-    manager.windows_map = {}
 
-    # we have to add .conn so that Popup thinks this is libqtile.qtile
-    manager.conn = xcbq.Connection(manager.display)
+    class FakeQtile:
+        def __init__(self):
+            self.conn = xcbq.Connection(manager.display)
+            self.windows_map = {}
+
+        def change_layer(self, wid):
+            mask, values = xcbq.ConfigureMasks(stackmode=StackMode.Above)
+            self.conn.conn.core.ConfigureWindow(wid, mask, values)
+
+    fake = FakeQtile()
 
     try:
-        popup = Popup(manager)
+        popup = Popup(fake)
         popup.width = manager.c.screen.info()["width"]
         popup.height = manager.c.screen.info()["height"]
         popup.place()
@@ -46,4 +54,4 @@ def test_popup_focus(manager):
         popup.hide()
     finally:
         popup.kill()
-        manager.conn.finalize()
+        fake.conn.finalize()

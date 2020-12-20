@@ -23,7 +23,7 @@ import inspect
 import traceback
 
 import xcffib.xproto
-from xcffib.xproto import EventMask, SetMode, StackMode
+from xcffib.xproto import EventMask, SetMode
 
 from libqtile import hook, utils
 from libqtile.command_object import CommandError, CommandObject
@@ -481,11 +481,11 @@ class _Window(CommandObject):
             width=width,
             height=height,
         )
-        if above:
-            kwarg['stackmode'] = StackMode.Above
 
         self.window.configure(**kwarg)
         self.paint_borders(bordercolor, borderwidth)
+        if above:
+            self.qtile.change_layer(self.window.wid)
 
         if send_notify:
             self.send_configure_notify(x, y, width, height)
@@ -962,7 +962,7 @@ class Window(_Window):
             screen.group.add(self, force=True)
             self.qtile.focus_screen(screen.index)
 
-        self._reconfigure_floating()
+        self._reconfigure_floating(above=False)
 
     def getsize(self):
         return (self.width, self.height)
@@ -970,7 +970,7 @@ class Window(_Window):
     def getposition(self):
         return (self.x, self.y)
 
-    def _reconfigure_floating(self, new_float_state=FLOATING):
+    def _reconfigure_floating(self, new_float_state=FLOATING, above=True):
         if new_float_state == MINIMIZED:
             self.state = IconicState
             self.hide()
@@ -995,7 +995,7 @@ class Window(_Window):
                 width, height,
                 self.borderwidth,
                 self.bordercolor,
-                above=True,
+                above=above,
             )
         if self._float_state != new_float_state:
             self._float_state = new_float_state
@@ -1347,9 +1347,9 @@ class Window(_Window):
 
     def cmd_bring_to_front(self):
         if self.floating:
-            self.window.configure(stackmode=StackMode.Above)
+            self.qtile.change_layer(self.window.wid)
         else:
-            self._reconfigure_floating()  # atomatically above
+            self._reconfigure_floating()  # automatically above
 
     def cmd_match(self, *args, **kwargs):
         return self.match(*args, **kwargs)

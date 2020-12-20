@@ -386,7 +386,8 @@ class XCore(base.Core):
     def update_client_list(self, windows) -> None:
         """Set the current clients to the given list of windows"""
         self._root.set_property("_NET_CLIENT_LIST", windows)
-        # TODO: check stack order
+
+    def update_client_order(self, windows) -> None:
         self._root.set_property("_NET_CLIENT_LIST_STACKING", windows)
 
     def update_net_desktops(self, groups, index: int) -> None:
