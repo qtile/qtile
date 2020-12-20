@@ -10,6 +10,7 @@ Getting started
 
     manual/install/index
     manual/config/index
+    manual/troubleshooting
     manual/commands/shell/index
 
 
