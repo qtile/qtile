@@ -22,8 +22,26 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
 import os
 import sys
+from pathlib import Path
+
+
+def load_config(configfile, kore):
+    conf = Path(configfile)
+
+    if not conf.is_file():
+        try:
+            conf.parent.mkdir(exist_ok=True)
+            from shutil import copyfile
+            default = Path(__file__).parent / "resources" / "default_config.py"
+            copyfile(default, configfile)
+            logger.info('Copied default_config.py to %s', configfile)
+        except Exception as e:
+            logger.exception(f'Failed to copy default_config.py to {configfile}: {e}')
+
+    return Config(configfile, kore)
 
 
 class ConfigError(Exception):

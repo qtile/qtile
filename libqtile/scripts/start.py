@@ -23,7 +23,7 @@
 # whose defaults depend on a reasonable locale sees something reasonable.
 import locale
 import logging
-from os import getenv, makedirs, path
+from os import getenv, path
 from sys import exit, stdout
 
 from libqtile import confreader
@@ -50,23 +50,9 @@ def rename_process():
 def make_qtile(options):
     log_level = getattr(logging, options.log_level)
     init_log(log_level=log_level, log_color=stdout.isatty())
+
     kore = xcore.XCore()
-
-    if not path.isfile(options.configfile):
-        try:
-            makedirs(path.dirname(options.configfile), exist_ok=True)
-            from shutil import copyfile
-            default_config_path = path.join(path.dirname(__file__),
-                                            "..",
-                                            "resources",
-                                            "default_config.py")
-            copyfile(default_config_path, options.configfile)
-            logger.info('Copied default_config.py to %s', options.configfile)
-        except Exception as e:
-            logger.exception('Failed to copy default_config.py to %s: (%s)',
-                             options.configfile, e)
-
-    config = confreader.Config(options.configfile, kore=kore)
+    config = confreader.load_config(options.configfile, kore)
 
     # XXX: the import is here because we need to call init_log
     # before start importing stuff
