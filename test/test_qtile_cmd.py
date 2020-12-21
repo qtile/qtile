@@ -65,7 +65,7 @@ class ServerConfig(Config):
     ]
 
 
-server_config = pytest.mark.parametrize("qtile", [ServerConfig], indirect=True)
+server_config = pytest.mark.parametrize("self", [ServerConfig], indirect=True)
 
 
 def run_qtile_cmd(args):
@@ -78,33 +78,33 @@ def run_qtile_cmd(args):
 
 
 @server_config
-def test_qtile_cmd(qtile):
+def test_qtile_cmd(self):
 
-    qtile.test_window("foo")
-    wid = qtile.c.window.info()["id"]
+    self.test_window("foo")
+    wid = self.c.window.info()["id"]
 
     for obj in ["window", "group", "screen"]:
-        assert run_qtile_cmd('-s {} -o {} -f info'.format(qtile.sockfile, obj))
+        assert run_qtile_cmd('-s {} -o {} -f info'.format(self.sockfile, obj))
 
-    layout = run_qtile_cmd('-s {} -o layout -f info'.format(qtile.sockfile))
+    layout = run_qtile_cmd('-s {} -o layout -f info'.format(self.sockfile))
     assert layout['name'] == 'stack'
     assert layout['group'] == 'a'
 
-    window = run_qtile_cmd('-s {} -o window {} -f info'.format(qtile.sockfile, wid))
+    window = run_qtile_cmd('-s {} -o window {} -f info'.format(self.sockfile, wid))
     assert window['id'] == wid
     assert window['name'] == 'foo'
     assert window['group'] == 'a'
 
-    group = run_qtile_cmd('-s {} -o group {} -f info'.format(qtile.sockfile, 'a'))
+    group = run_qtile_cmd('-s {} -o group {} -f info'.format(self.sockfile, 'a'))
     assert group['name'] == 'a'
     assert group['screen'] == 0
     assert group['layouts'] == ['stack', 'stack', 'stack']
     assert group['focus'] == 'foo'
 
-    assert run_qtile_cmd('-s {} -o screen {} -f info'.format(qtile.sockfile, 0)) == \
+    assert run_qtile_cmd('-s {} -o screen {} -f info'.format(self.sockfile, 0)) == \
         {'height': 600, 'index': 0, 'width': 800, 'x': 0, 'y': 0}
 
-    bar = run_qtile_cmd('-s {} -o bar {} -f info'.format(qtile.sockfile, 'bottom'))
+    bar = run_qtile_cmd('-s {} -o bar {} -f info'.format(self.sockfile, 'bottom'))
     assert bar['height'] == 20
     assert bar['width'] == 800
     assert bar['size'] == 20

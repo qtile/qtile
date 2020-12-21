@@ -19,10 +19,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from libqtile.manager import Qtile
 
-qtile = None
-
-
-def init(q):
-    global qtile
-    qtile = q
+qtile = Qtile()

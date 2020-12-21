@@ -17,17 +17,17 @@ class FakeWindow:
     window = _NestedWindow()
 
 
-widget_config = pytest.mark.parametrize("qtile", [BareConfig], indirect=True)
+widget_config = pytest.mark.parametrize("self", [BareConfig], indirect=True)
 
 
 @widget_config
-def test_widgetbox_widget(qtile):
-    qtile.conn = xcbq.Connection(qtile.display)
+def test_widgetbox_widget(self):
+    self.conn = xcbq.Connection(self.display)
 
     # We need to trick the widgets into thinking this is libqtile.qtile so
     # we add some methods that are called when the widgets are configured
-    qtile.call_soon = no_op
-    qtile.register_widget = no_op
+    self.call_soon = no_op
+    self.register_widget = no_op
 
     tb_one = TextBox(name="tb_one", text="TB ONE")
     tb_two = TextBox(name="tb_two", text="TB TWO")
@@ -45,7 +45,7 @@ def test_widgetbox_widget(qtile):
     fakebar.draw = no_op
 
     # Configure the widget box
-    widget_box._configure(qtile, fakebar)
+    widget_box._configure(self, fakebar)
 
     # Invalid value should be corrected to default
     assert widget_box.close_button_location == "left"

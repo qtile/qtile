@@ -46,82 +46,82 @@ class TreeTabConfig(Config):
 
 
 def treetab_config(x):
-    return no_xinerama(pytest.mark.parametrize("qtile", [TreeTabConfig], indirect=True)(x))
+    return no_xinerama(pytest.mark.parametrize("self", [TreeTabConfig], indirect=True)(x))
 
 
 @treetab_config
-def test_window(qtile):
+def test_window(self):
     pytest.importorskip("tkinter")
     # setup 3 tiled and two floating clients
-    qtile.test_window("one")
-    qtile.test_window("two")
-    qtile.test_dialog("float1")
-    qtile.test_dialog("float2")
-    qtile.test_window("three")
+    self.test_window("one")
+    self.test_window("two")
+    self.test_dialog("float1")
+    self.test_dialog("float2")
+    self.test_window("three")
 
     # test preconditions, columns adds clients at pos of current, in two stacks
-    assert qtile.c.layout.info()['clients'] == ['one', 'three', 'two']
-    assert qtile.c.layout.info()['sections'] == ['Foo', 'Bar']
-    assert qtile.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two'], ['three']], 'Bar': []}
+    assert self.c.layout.info()['clients'] == ['one', 'three', 'two']
+    assert self.c.layout.info()['sections'] == ['Foo', 'Bar']
+    assert self.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two'], ['three']], 'Bar': []}
 
     # last added window has focus
-    assert_focused(qtile, "three")
-    qtile.c.layout.up()
-    assert_focused(qtile, "two")
-    qtile.c.layout.down()
-    assert_focused(qtile, "three")
+    assert_focused(self, "three")
+    self.c.layout.up()
+    assert_focused(self, "two")
+    self.c.layout.down()
+    assert_focused(self, "three")
 
     # test command move_up/down
-    qtile.c.layout.move_up()
-    assert qtile.c.layout.info()['clients'] == ['one', 'three', 'two']
-    assert qtile.c.layout.info()['client_trees'] == {'Foo': [['one'], ['three'], ['two']], 'Bar': []}
-    qtile.c.layout.move_down()
-    assert qtile.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two'], ['three']], 'Bar': []}
+    self.c.layout.move_up()
+    assert self.c.layout.info()['clients'] == ['one', 'three', 'two']
+    assert self.c.layout.info()['client_trees'] == {'Foo': [['one'], ['three'], ['two']], 'Bar': []}
+    self.c.layout.move_down()
+    assert self.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two'], ['three']], 'Bar': []}
 
     # section_down/up
-    qtile.c.layout.up()  # focus two
-    qtile.c.layout.section_down()
-    assert qtile.c.layout.info()['client_trees'] == {'Foo': [['one'], ['three']], 'Bar': [['two']]}
-    qtile.c.layout.section_up()
-    assert qtile.c.layout.info()['client_trees'] == {'Foo': [['one'], ['three'], ['two']], 'Bar': []}
+    self.c.layout.up()  # focus two
+    self.c.layout.section_down()
+    assert self.c.layout.info()['client_trees'] == {'Foo': [['one'], ['three']], 'Bar': [['two']]}
+    self.c.layout.section_up()
+    assert self.c.layout.info()['client_trees'] == {'Foo': [['one'], ['three'], ['two']], 'Bar': []}
 
     # del_section
-    qtile.c.layout.up()  # focus three
-    qtile.c.layout.section_down()
-    qtile.c.layout.del_section("Bar")
-    assert qtile.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two'], ['three']]}
+    self.c.layout.up()  # focus three
+    self.c.layout.section_down()
+    self.c.layout.del_section("Bar")
+    assert self.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two'], ['three']]}
 
     # add_section
-    qtile.c.layout.add_section('Baz')
-    assert qtile.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two'], ['three']], 'Baz': []}
-    qtile.c.layout.del_section('Baz')
+    self.c.layout.add_section('Baz')
+    assert self.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two'], ['three']], 'Baz': []}
+    self.c.layout.del_section('Baz')
 
     # move_left/right
-    qtile.c.layout.move_left()  # no effect for top-level children
-    assert qtile.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two'], ['three']]}
-    qtile.c.layout.move_right()
-    assert qtile.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two', ['three']]]}
-    qtile.c.layout.move_right()  # no effect
-    assert qtile.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two', ['three']]]}
-    qtile.test_window("four")
-    qtile.c.layout.move_right()
-    qtile.c.layout.up()
-    qtile.test_window("five")
-    assert qtile.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two', ['three', ['four']], ['five']]]}
+    self.c.layout.move_left()  # no effect for top-level children
+    assert self.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two'], ['three']]}
+    self.c.layout.move_right()
+    assert self.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two', ['three']]]}
+    self.c.layout.move_right()  # no effect
+    assert self.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two', ['three']]]}
+    self.test_window("four")
+    self.c.layout.move_right()
+    self.c.layout.up()
+    self.test_window("five")
+    assert self.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two', ['three', ['four']], ['five']]]}
 
     # expand/collapse_branch, and check focus order
-    qtile.c.layout.up()
-    qtile.c.layout.up()  # focus three
-    qtile.c.layout.collapse_branch()
-    assert qtile.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two', ['three'], ['five']]]}
-    assert_focus_path(qtile, 'five', 'float1', 'float2', 'one', 'two', 'three')
-    qtile.c.layout.expand_branch()
-    assert qtile.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two', ['three', ['four']], ['five']]]}
-    assert_focus_path(qtile, 'four', 'five', 'float1', 'float2', 'one', 'two', 'three')
+    self.c.layout.up()
+    self.c.layout.up()  # focus three
+    self.c.layout.collapse_branch()
+    assert self.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two', ['three'], ['five']]]}
+    assert_focus_path(self, 'five', 'float1', 'float2', 'one', 'two', 'three')
+    self.c.layout.expand_branch()
+    assert self.c.layout.info()['client_trees'] == {'Foo': [['one'], ['two', ['three', ['four']], ['five']]]}
+    assert_focus_path(self, 'four', 'five', 'float1', 'float2', 'one', 'two', 'three')
 
 
 @treetab_config
-def test_sort_windows(qtile):
+def test_sort_windows(self):
     def sorter(window):
         try:
             if int(window.name) % 2 == 0:
@@ -131,18 +131,18 @@ def test_sort_windows(qtile):
         except ValueError:
             return 'Bar'
 
-    qtile.test_window("one")
-    qtile.test_window("two")
-    qtile.test_window("101")
-    qtile.test_window("102")
-    qtile.test_window("103")
-    assert qtile.c.layout.info()['client_trees'] == {
+    self.test_window("one")
+    self.test_window("two")
+    self.test_window("101")
+    self.test_window("102")
+    self.test_window("103")
+    assert self.c.layout.info()['client_trees'] == {
         'Foo': [['one'], ['two'], ['101'], ['102'], ['103']],
         'Bar': []
     }
     return  # TODO how to serialize a function object? i.e. `sorter`
-    qtile.c.layout.sort_windows(sorter)
-    assert qtile.c.layout.info()['client_trees'] == {
+    self.c.layout.sort_windows(sorter)
+    assert self.c.layout.info()['client_trees'] == {
         'Foo': [],
         'Bar': [['one'], ['two']],
         'Even': [['102']],

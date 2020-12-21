@@ -81,7 +81,7 @@ class GBConfig(libqtile.confreader.Config):
     ]
 
 
-gb_config = pytest.mark.parametrize("qtile", [GBConfig], indirect=True)
+gb_config = pytest.mark.parametrize("self", [GBConfig], indirect=True)
 
 
 def test_completion():
@@ -126,56 +126,56 @@ def test_completion():
 
 
 @gb_config
-def test_draw(qtile):
-    qtile.test_window("one")
-    b = qtile.c.bar["bottom"].info()
+def test_draw(self):
+    self.test_window("one")
+    b = self.c.bar["bottom"].info()
     assert b["widgets"][0]["name"] == "groupbox"
 
 
 @gb_config
-def test_prompt(qtile):
-    assert qtile.c.widget["prompt"].info()["width"] == 0
-    qtile.c.spawncmd(":")
-    qtile.c.widget["prompt"].fake_keypress("a")
-    qtile.c.widget["prompt"].fake_keypress("Tab")
+def test_prompt(self):
+    assert self.c.widget["prompt"].info()["width"] == 0
+    self.c.spawncmd(":")
+    self.c.widget["prompt"].fake_keypress("a")
+    self.c.widget["prompt"].fake_keypress("Tab")
 
-    qtile.c.spawncmd(":")
-    qtile.c.widget["prompt"].fake_keypress("slash")
-    qtile.c.widget["prompt"].fake_keypress("Tab")
-
-
-@gb_config
-def test_event(qtile):
-    qtile.c.group["bb"].toscreen()
+    self.c.spawncmd(":")
+    self.c.widget["prompt"].fake_keypress("slash")
+    self.c.widget["prompt"].fake_keypress("Tab")
 
 
 @gb_config
-def test_textbox(qtile):
-    assert "text" in qtile.c.list_widgets()
+def test_event(self):
+    self.c.group["bb"].toscreen()
+
+
+@gb_config
+def test_textbox(self):
+    assert "text" in self.c.list_widgets()
     s = "some text"
-    qtile.c.widget["text"].update(s)
-    assert qtile.c.widget["text"].get() == s
+    self.c.widget["text"].update(s)
+    assert self.c.widget["text"].get() == s
     s = "Aye, much longer string than the initial one"
-    qtile.c.widget["text"].update(s)
-    assert qtile.c.widget["text"].get() == s
-    qtile.c.group["Pppy"].toscreen()
-    qtile.c.widget["text"].set_font(fontsize=12)
+    self.c.widget["text"].update(s)
+    assert self.c.widget["text"].get() == s
+    self.c.group["Pppy"].toscreen()
+    self.c.widget["text"].set_font(fontsize=12)
 
 
 @gb_config
-def test_textbox_errors(qtile):
-    qtile.c.widget["text"].update(None)
-    qtile.c.widget["text"].update("".join(chr(i) for i in range(255)))
-    qtile.c.widget["text"].update("V\xE2r\xE2na\xE7\xEE")
-    qtile.c.widget["text"].update("\ua000")
+def test_textbox_errors(self):
+    self.c.widget["text"].update(None)
+    self.c.widget["text"].update("".join(chr(i) for i in range(255)))
+    self.c.widget["text"].update("V\xE2r\xE2na\xE7\xEE")
+    self.c.widget["text"].update("\ua000")
 
 
 @gb_config
-def test_groupbox_button_press(qtile):
-    qtile.c.group["ccc"].toscreen()
-    assert qtile.c.groups()["a"]["screen"] is None
-    qtile.c.bar["bottom"].fake_button_press(0, "bottom", 10, 10, 1)
-    assert qtile.c.groups()["a"]["screen"] == 0
+def test_groupbox_button_press(self):
+    self.c.group["ccc"].toscreen()
+    assert self.c.groups()["a"]["screen"] is None
+    self.c.bar["bottom"].fake_button_press(0, "bottom", 10, 10, 1)
+    assert self.c.groups()["a"]["screen"] == 0
 
 
 class GeomConf(libqtile.confreader.Config):
@@ -200,7 +200,7 @@ class GeomConf(libqtile.confreader.Config):
     ]
 
 
-geom_config = pytest.mark.parametrize("qtile", [GeomConf], indirect=True)
+geom_config = pytest.mark.parametrize("self", [GeomConf], indirect=True)
 
 
 class DBarH(libqtile.bar.Bar):
@@ -221,27 +221,27 @@ class DWidget:
 
 
 @geom_config
-def test_geometry(qtile):
-    qtile.test_xeyes()
-    g = qtile.c.screens()[0]["gaps"]
+def test_geometry(self):
+    self.test_xeyes()
+    g = self.c.screens()[0]["gaps"]
     assert g["top"] == (0, 0, 800, 10)
     assert g["bottom"] == (0, 590, 800, 10)
     assert g["left"] == (0, 10, 10, 580)
     assert g["right"] == (790, 10, 10, 580)
-    assert len(qtile.c.windows()) == 1
-    geom = qtile.c.windows()[0]
+    assert len(self.c.windows()) == 1
+    geom = self.c.windows()[0]
     assert geom["x"] == 10
     assert geom["y"] == 10
     assert geom["width"] == 778
     assert geom["height"] == 578
-    internal = qtile.c.internal_windows()
+    internal = self.c.internal_windows()
     assert len(internal) == 4
-    wid = qtile.c.bar["bottom"].info()["window"]
-    assert qtile.c.window[wid].inspect()
+    wid = self.c.bar["bottom"].info()["window"]
+    assert self.c.window[wid].inspect()
 
 
 @geom_config
-def test_resize(qtile):
+def test_resize(self):
     def wd(dwidget_list):
         return [i.length for i in dwidget_list]
 
@@ -330,16 +330,16 @@ class IncompatibleWidgetConf(libqtile.confreader.Config):
     ]
 
 
-def test_incompatible_widget(qtile_nospawn):
+def test_incompatible_widget(self_nospawn):
     config = IncompatibleWidgetConf
 
     # Ensure that adding a widget that doesn't support the orientation of the
     # bar raises ConfigError
     with pytest.raises(libqtile.confreader.ConfigError):
-        qtile_nospawn.create_manager(config)
+        self_nospawn.create_manager(config)
 
 
-def test_basic(qtile_nospawn):
+def test_basic(self_nospawn):
     config = GeomConf
     config.screens = [
         libqtile.config.Screen(
@@ -358,9 +358,9 @@ def test_basic(qtile_nospawn):
         )
     ]
 
-    qtile_nospawn.start(config)
+    self_nospawn.start(config)
 
-    i = qtile_nospawn.c.bar["bottom"].info()
+    i = self_nospawn.c.bar["bottom"].info()
     assert i["widgets"][0]["offset"] == 0
     assert i["widgets"][1]["offset"] == 10
     assert i["widgets"][1]["width"] == 252
@@ -374,7 +374,7 @@ def test_basic(qtile_nospawn):
     libqtile.hook.clear()
 
 
-def test_singlespacer(qtile_nospawn):
+def test_singlespacer(self_nospawn):
     config = GeomConf
     config.screens = [
         libqtile.config.Screen(
@@ -387,15 +387,15 @@ def test_singlespacer(qtile_nospawn):
         )
     ]
 
-    qtile_nospawn.start(config)
+    self_nospawn.start(config)
 
-    i = qtile_nospawn.c.bar["bottom"].info()
+    i = self_nospawn.c.bar["bottom"].info()
     assert i["widgets"][0]["offset"] == 0
     assert i["widgets"][0]["width"] == 800
     libqtile.hook.clear()
 
 
-def test_nospacer(qtile_nospawn):
+def test_nospacer(self_nospawn):
     config = GeomConf
     config.screens = [
         libqtile.config.Screen(
@@ -409,9 +409,9 @@ def test_nospacer(qtile_nospawn):
         )
     ]
 
-    qtile_nospawn.start(config)
+    self_nospawn.start(config)
 
-    i = qtile_nospawn.c.bar["bottom"].info()
+    i = self_nospawn.c.bar["bottom"].info()
     assert i["widgets"][0]["offset"] == 0
     assert i["widgets"][1]["offset"] == 10
     libqtile.hook.clear()

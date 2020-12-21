@@ -36,8 +36,7 @@ import xcffib
 import xcffib.xinerama
 import xcffib.xproto
 
-import libqtile
-from libqtile import command_interface, confreader, hook, utils, window
+from libqtile import command_interface, confreader, hook, ipc, utils, window
 from libqtile.backend.x11 import xcbq
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_interface import IPCCommandServer, QtileCommandInterface
@@ -81,22 +80,34 @@ def handle_exception(loop, context):
 
 class Qtile(CommandObject):
     """This object is the `root` of the command graph"""
-    def __init__(
+    def init(
         self,
         kore,
         config,
-        eventloop,
+        socket,
         no_spawn=False,
         state=None
     ):
+        """Initialise a qtile session
+
+        :param kore:
+            The core backend to use for the session.
+        :param config:
+            The configuration to use for the qtile instance.
+        :param socket:
+            The file name to use as the qtile socket file.
+        :param no_spawn:
+            If the instance has already been started, then don't re-run the
+            startup once hook.
+        :param state:
+            The state to restart the qtile instance with.
+        """
         self._restart = False
-        self.no_spawn = no_spawn
 
         self.mouse_position = (0, 0)
 
         self.core = kore
         self.config = config
-        libqtile.init(self)
 
         self.windows_map = {}
         self.widgets_map = {}
@@ -144,6 +155,13 @@ class Qtile(CommandObject):
         for i in self.groups:
             self.groups_map[i.name] = i
 
+        self.setup_eventloop()
+
+        if socket is None:
+            socket = ipc.find_sockfile(kore.display_name)
+        self.server = IPCCommandServer(self)
+        self._ipc_server = ipc.Server(socket, self.server.call)
+
         for grp in self.config.groups:
             if isinstance(grp, ScratchPadConfig):
                 sp = ScratchPad(grp.name, grp.dropdowns, grp.label)
@@ -151,10 +169,6 @@ class Qtile(CommandObject):
                               self.config.floating_layout, self)
                 self.groups.append(sp)
                 self.groups_map[sp.name] = sp
-
-        self._eventloop = eventloop
-        self.setup_eventloop()
-        self.server = IPCCommandServer(self)
 
         self.current_screen = None
         self.screens = []
@@ -220,13 +234,16 @@ class Qtile(CommandObject):
     def selection(self):
         return self.core._selection
 
-    def setup_eventloop(self) -> None:
-        self._eventloop.add_signal_handler(signal.SIGINT, self.stop)
-        self._eventloop.add_signal_handler(signal.SIGTERM, self.stop)
-        self._eventloop.set_exception_handler(handle_exception)
+    def setup_eventloop(self):
+        eventloop = asyncio.new_event_loop()
+        eventloop.add_signal_handler(signal.SIGINT, self.stop)
+        eventloop.add_signal_handler(signal.SIGTERM, self.stop)
+        eventloop.set_exception_handler(handle_exception)
+        asyncio.set_event_loop(eventloop)
+        self._eventloop = eventloop
 
         logger.debug('Adding io watch')
-        self.core.setup_listener(self, self._eventloop)
+        self.core.setup_listener(self, eventloop)
 
         self._stopped_event = asyncio.Event()
 
@@ -254,17 +271,29 @@ class Qtile(CommandObject):
             logger.warning("importing dbus/gobject failed, dbus will not work.")
             self._glib_loop = None
 
+    def start(self):
+        """Run the event loop"""
+        try:
+            # replace with asyncio.run(...) on Python 3.7+
+            self._eventloop.run_until_complete(self.async_loop())
+        finally:
+            self._eventloop.run_until_complete(self._eventloop.shutdown_asyncgens())
+            self._eventloop.close()
+
+        self.maybe_restart()
+
     async def async_loop(self) -> None:
         """Run the event loop
 
         Finalizes the Qtile instance on exit.
         """
-        try:
-            await self._stopped_event.wait()
-        finally:
-            await self.finalize()
+        async with self._ipc_server:
+            try:
+                await self._stopped_event.wait()
+            finally:
+                await self.finalize()
 
-        self._eventloop.stop()
+            self._eventloop.stop()
 
     def maybe_restart(self) -> None:
         """If set, restart the qtile instance"""

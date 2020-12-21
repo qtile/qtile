@@ -47,7 +47,14 @@ def rename_process():
         pass
 
 
-def make_qtile(options):
+def start(options):
+    try:
+        locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())  # type: ignore
+    except locale.Error:
+        pass
+
+    rename_process()
+
     log_level = getattr(logging, options.log_level)
     init_log(log_level=log_level, log_color=stdout.isatty())
 
@@ -56,28 +63,19 @@ def make_qtile(options):
 
     # XXX: the import is here because we need to call init_log
     # before start importing stuff
-    from libqtile.core import session_manager
-    return session_manager.SessionManager(
+    from libqtile import qtile
+    qtile.init(
         kore,
         config,
-        fname=options.socket,
+        socket=options.socket,
         no_spawn=options.no_spawn,
         state=options.state,
     )
 
-
-def start(options):
     try:
-        locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())  # type: ignore
-    except locale.Error:
-        pass
-
-    rename_process()
-    q = make_qtile(options)
-    try:
-        q.loop()
-    except Exception:
-        logger.exception('Qtile crashed')
+        qtile.start()
+    except Exception as e:
+        logger.exception(f'Qtile crashed: {e}')
         exit(1)
     logger.info('Exiting...')
 

@@ -44,9 +44,14 @@ SOCKBASE = "qtilesocket.%s"
 
 def find_sockfile(display: str = None):
     """Finds the appropriate socket file for the given display"""
-    display = display or os.environ.get("DISPLAY") or ":0.0"
-    if "." not in display:
-        display += ".0"
+    if display:
+        display_number = display.partition(":")[2]
+        if "." not in display_number:
+            display += ".0"
+    else:
+        display = os.environ.get("DISPLAY") or ":0.0"
+        if "." not in display:
+            display += ".0"
     cache_directory = get_cache_dir()
     return os.path.join(cache_directory, SOCKBASE % display)
 

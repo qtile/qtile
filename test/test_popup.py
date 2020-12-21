@@ -26,24 +26,24 @@ from libqtile.popup import Popup
 from test.conftest import BareConfig
 
 
-@pytest.mark.parametrize("qtile", [BareConfig], indirect=True)
-def test_popup_focus(qtile):
-    qtile.test_xeyes()
-    qtile.windows_map = {}
+@pytest.mark.parametrize("self", [BareConfig], indirect=True)
+def test_popup_focus(self):
+    self.test_xeyes()
+    self.windows_map = {}
 
-    # we have to add .conn so that Popup thinks this is libqtile.qtile
-    qtile.conn = xcbq.Connection(qtile.display)
+    # we have to add .conn so that Popup thinks this is libqtile.self
+    self.conn = xcbq.Connection(self.display)
 
     try:
-        popup = Popup(qtile)
-        popup.width = qtile.c.screen.info()["width"]
-        popup.height = qtile.c.screen.info()["height"]
+        popup = Popup(self)
+        popup.width = self.c.screen.info()["width"]
+        popup.height = self.c.screen.info()["height"]
         popup.place()
         popup.unhide()
-        assert qtile.c.group.info()['focus'] == 'xeyes'
-        assert qtile.c.group.info()['windows'] == ['xeyes']
-        assert len(qtile.c.windows()) == 1
+        assert self.c.group.info()['focus'] == 'xeyes'
+        assert self.c.group.info()['windows'] == ['xeyes']
+        assert len(self.c.windows()) == 1
         popup.hide()
     finally:
         popup.kill()
-        qtile.conn.finalize()
+        self.conn.finalize()

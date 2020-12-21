@@ -68,18 +68,18 @@ class CallConfig(Config):
     auto_fullscreen = True
 
 
-call_config = pytest.mark.parametrize("qtile", [CallConfig], indirect=True)
+call_config = pytest.mark.parametrize("self", [CallConfig], indirect=True)
 
 
 @call_config
-def test_layout_filter(qtile):
-    qtile.test_window("one")
-    qtile.test_window("two")
-    assert qtile.c.groups()["a"]["focus"] == "two"
-    qtile.c.simulate_keypress(["control"], "j")
-    assert qtile.c.groups()["a"]["focus"] == "one"
-    qtile.c.simulate_keypress(["control"], "k")
-    assert qtile.c.groups()["a"]["focus"] == "two"
+def test_layout_filter(self):
+    self.test_window("one")
+    self.test_window("two")
+    assert self.c.groups()["a"]["focus"] == "two"
+    self.c.simulate_keypress(["control"], "j")
+    assert self.c.groups()["a"]["focus"] == "one"
+    self.c.simulate_keypress(["control"], "k")
+    assert self.c.groups()["a"]["focus"] == "two"
 
 
 class TestCommands(CommandObject):
@@ -157,81 +157,81 @@ class ServerConfig(Config):
     ]
 
 
-server_config = pytest.mark.parametrize("qtile", [ServerConfig], indirect=True)
+server_config = pytest.mark.parametrize("self", [ServerConfig], indirect=True)
 
 
 @server_config
-def test_cmd_commands(qtile):
-    assert qtile.c.commands()
-    assert qtile.c.layout.commands()
-    assert qtile.c.screen.bar["bottom"].commands()
+def test_cmd_commands(self):
+    assert self.c.commands()
+    assert self.c.layout.commands()
+    assert self.c.screen.bar["bottom"].commands()
 
 
 @server_config
-def test_call_unknown(qtile):
+def test_call_unknown(self):
     with pytest.raises(libqtile.command_client.SelectError, match="Not valid child or command"):
-        qtile.c.nonexistent
+        self.c.nonexistent
 
-    qtile.c.layout
+    self.c.layout
     with pytest.raises(libqtile.command_client.SelectError, match="Not valid child or command"):
-        qtile.c.layout.nonexistent
+        self.c.layout.nonexistent
 
 
 @server_config
-def test_items_qtile(qtile):
-    v = qtile.c.items("group")
+def test_items_qtile(self):
+    v = self.c.items("group")
     assert v[0]
     assert sorted(v[1]) == ["a", "b", "c"]
 
-    assert qtile.c.items("layout") == (True, [0, 1, 2])
+    assert self.c.items("layout") == (True, [0, 1, 2])
 
-    v = qtile.c.items("widget")
+    v = self.c.items("widget")
     assert not v[0]
     assert sorted(v[1]) == ['one', 'two']
 
-    assert qtile.c.items("bar") == (False, ["bottom"])
-    t, lst = qtile.c.items("window")
+    assert self.c.items("bar") == (False, ["bottom"])
+    t, lst = self.c.items("window")
     assert t
     assert len(lst) == 2
-    assert qtile.c.window[lst[0]]
-    assert qtile.c.items("screen") == (True, [0, 1])
+    assert self.c.window[lst[0]]
+    assert self.c.items("screen") == (True, [0, 1])
 
 
 @server_config
-def test_select_qtile(qtile):
-    assert qtile.c.layout.info()["group"] == "a"
-    assert len(qtile.c.layout.info()["stacks"]) == 1
-    assert len(qtile.c.layout[2].info()["stacks"]) == 3
+def test_select_qtile(self):
+    assert self.c.layout.info()["group"] == "a"
+    assert len(self.c.layout.info()["stacks"]) == 1
+    assert len(self.c.layout[2].info()["stacks"]) == 3
     with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
-        qtile.c.layout[99]
+        self.c.layout[99]
 
-    assert qtile.c.group.info()["name"] == "a"
-    assert qtile.c.group["c"].info()["name"] == "c"
+    assert self.c.group.info()["name"] == "a"
+    assert self.c.group["c"].info()["name"] == "c"
     with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
-        qtile.c.group["nonexistent"]
+        self.c.group["nonexistent"]
 
-    assert qtile.c.widget["one"].info()["name"] == "one"
+    assert self.c.widget["one"].info()["name"] == "one"
     with pytest.raises(CommandError, match="No object widget"):
-        qtile.c.widget.info()
+        self.c.widget.info()
 
-    assert qtile.c.bar["bottom"].info()["position"] == "bottom"
+    assert self.c.bar["bottom"].info()["position"] == "bottom"
 
-    qtile.test_window("one")
-    wid = qtile.c.window.info()["id"]
-    assert qtile.c.window[wid].info()["id"] == wid
+    self.test_window("one")
+    wid = self.c.window.info()["id"]
+    assert self.c.window[wid].info()["id"] == wid
 
-    assert qtile.c.screen.info()["index"] == 0
-    assert qtile.c.screen[1].info()["index"] == 1
+    assert self.c.screen.info()["index"] == 0
+    assert self.c.screen[1].info()["index"] == 1
     with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
-        qtile.c.screen[22]
+        self.c.screen[22]
 
 
 @server_config
-def test_items_group(qtile):
-    group = qtile.c.group
+def test_items_group(self):
+    group = self.c.group
 
-    qtile.test_window("test")
-    wid = qtile.c.window.info()["id"]
+    self.test_window("test")
+    wid = self.c.window.info()["id"]
 
     assert group.items("window") == (True, [wid])
     assert group.items("layout") == (True, [0, 1, 2])
@@ -239,17 +239,17 @@ def test_items_group(qtile):
 
 
 @server_config
-def test_select_group(qtile):
-    group = qtile.c.group
+def test_select_group(self):
+    group = self.c.group
 
     assert group.layout.info()["group"] == "a"
     assert len(group.layout.info()["stacks"]) == 1
     assert len(group.layout[2].info()["stacks"]) == 3
 
     with pytest.raises(CommandError):
-        qtile.c.group.window.info()
-    qtile.test_window("test")
-    wid = qtile.c.window.info()["id"]
+        self.c.group.window.info()
+    self.test_window("test")
+    wid = self.c.window.info()["id"]
 
     assert group.window.info()["id"] == wid
     assert group.window[wid].info()["id"] == wid
@@ -263,29 +263,29 @@ def test_select_group(qtile):
 
 
 @server_config
-def test_items_screen(qtile):
-    s = qtile.c.screen
+def test_items_screen(self):
+    s = self.c.screen
     assert s.items("layout") == (True, [0, 1, 2])
 
-    qtile.test_window("test")
-    wid = qtile.c.window.info()["id"]
+    self.test_window("test")
+    wid = self.c.window.info()["id"]
     assert s.items("window") == (True, [wid])
 
     assert s.items("bar") == (False, ["bottom"])
 
 
 @server_config
-def test_select_screen(qtile):
-    screen = qtile.c.screen
+def test_select_screen(self):
+    screen = self.c.screen
     assert screen.layout.info()["group"] == "a"
     assert len(screen.layout.info()["stacks"]) == 1
     assert len(screen.layout[2].info()["stacks"]) == 3
 
     with pytest.raises(CommandError):
-        qtile.c.window.info()
+        self.c.window.info()
 
-    qtile.test_window("test")
-    wid = qtile.c.window.info()["id"]
+    self.test_window("test")
+    wid = self.c.window.info()["id"]
     assert screen.window.info()["id"] == wid
     assert screen.window[wid].info()["id"] == wid
 
@@ -298,28 +298,28 @@ def test_select_screen(qtile):
 
 
 @server_config
-def test_items_bar(qtile):
-    assert qtile.c.bar["bottom"].items("screen") == (True, None)
+def test_items_bar(self):
+    assert self.c.bar["bottom"].items("screen") == (True, None)
 
 
 @server_config
-def test_select_bar(qtile):
-    assert qtile.c.screen[1].bar["bottom"].screen.info()["index"] == 1
-    b = qtile.c.bar
+def test_select_bar(self):
+    assert self.c.screen[1].bar["bottom"].screen.info()["index"] == 1
+    b = self.c.bar
     assert b["bottom"].screen.info()["index"] == 0
     with pytest.raises(CommandError):
         b.screen.info()
 
 
 @server_config
-def test_items_layout(qtile):
-    assert qtile.c.layout.items("screen") == (True, None)
-    assert qtile.c.layout.items("group") == (True, None)
+def test_items_layout(self):
+    assert self.c.layout.items("screen") == (True, None)
+    assert self.c.layout.items("group") == (True, None)
 
 
 @server_config
-def test_select_layout(qtile):
-    layout = qtile.c.layout
+def test_select_layout(self):
+    layout = self.c.layout
 
     assert layout.screen.info()["index"] == 0
     with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
@@ -331,9 +331,9 @@ def test_select_layout(qtile):
 
 
 @server_config
-def test_items_window(qtile):
-    qtile.test_window("test")
-    window = qtile.c.window
+def test_items_window(self):
+    self.test_window("test")
+    window = self.c.window
     window.info()["id"]
 
     assert window.items("group") == (True, None)
@@ -342,9 +342,9 @@ def test_items_window(qtile):
 
 
 @server_config
-def test_select_window(qtile):
-    qtile.test_window("test")
-    window = qtile.c.window
+def test_select_window(self):
+    self.test_window("test")
+    window = self.c.window
     window.info()["id"]
 
     assert window.group.info()["name"] == "a"
@@ -360,13 +360,13 @@ def test_select_window(qtile):
 
 
 @server_config
-def test_items_widget(qtile):
-    assert qtile.c.widget["one"].items("bar") == (True, None)
+def test_items_widget(self):
+    assert self.c.widget["one"].items("bar") == (True, None)
 
 
 @server_config
-def test_select_widget(qtile):
-    widget = qtile.c.widget["one"]
+def test_select_widget(self):
+    widget = self.c.widget["one"]
     assert widget.bar.info()["position"] == "bottom"
     with pytest.raises(libqtile.command_client.SelectError, match="Item not available in object"):
         widget.bar["bottom"]

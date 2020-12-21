@@ -37,7 +37,7 @@ from libqtile.utils import QtileError
 if TYPE_CHECKING:
     from typing import Dict
 
-    from libqtile.core.manager import Qtile
+    from libqtile.manager import Qtile
 
 _IGNORED_EVENTS = {
     xcffib.xproto.CreateNotifyEvent,

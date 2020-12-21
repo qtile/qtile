@@ -45,12 +45,12 @@ class ShConfig(Config):
     ]
 
 
-sh_config = pytest.mark.parametrize("qtile", [ShConfig], indirect=True)
+sh_config = pytest.mark.parametrize("self", [ShConfig], indirect=True)
 
 
 @sh_config
-def test_columnize(qtile):
-    client = ipc.Client(qtile.sockfile)
+def test_columnize(self):
+    client = ipc.Client(self.sockfile)
     command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh.columnize(["one", "two"]) == "one  two"
@@ -64,8 +64,8 @@ def test_columnize(qtile):
 
 
 @sh_config
-def test_ls(qtile):
-    client = ipc.Client(qtile.sockfile)
+def test_ls(self):
+    client = ipc.Client(self.sockfile)
     command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh.do_ls("") == "bar/     group/   layout/  screen/  widget/  window/"
@@ -77,8 +77,8 @@ def test_ls(qtile):
 
 
 @sh_config
-def test_do_cd(qtile):
-    client = ipc.Client(qtile.sockfile)
+def test_do_cd(self):
+    client = ipc.Client(self.sockfile)
     command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh.do_cd("layout") == 'layout'
@@ -89,8 +89,8 @@ def test_do_cd(qtile):
 
 
 @sh_config
-def test_call(qtile):
-    client = ipc.Client(qtile.sockfile)
+def test_call(self):
+    client = ipc.Client(self.sockfile)
     command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh.process_line("status()") == "OK"
@@ -106,8 +106,8 @@ def test_call(qtile):
 
 
 @sh_config
-def test_complete(qtile):
-    client = ipc.Client(qtile.sockfile)
+def test_complete(self):
+    client = ipc.Client(self.sockfile)
     command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh._complete("c", "c") == [
@@ -124,8 +124,8 @@ def test_complete(qtile):
 
 
 @sh_config
-def test_help(qtile):
-    client = ipc.Client(qtile.sockfile)
+def test_help(self):
+    client = ipc.Client(self.sockfile)
     command = IPCCommandInterface(client)
     sh = QSh(command)
     assert sh.do_help("nonexistent").startswith("No such command")

@@ -43,13 +43,11 @@ class FloatingConfig(Config):
 
 
 def floating_config(x):
-    return no_xinerama(pytest.mark.parametrize("qtile", [FloatingConfig], indirect=True)(x))
+    return no_xinerama(pytest.mark.parametrize("self", [FloatingConfig], indirect=True)(x))
 
 
 @floating_config
-def test_float_next_prev_window(qtile):
-    self = qtile
-
+def test_float_next_prev_window(self):
     # spawn three windows
     self.test_window("one")
     self.test_window("two")

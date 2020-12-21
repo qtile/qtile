@@ -45,16 +45,16 @@ class WidgetTestConf(BareConfig):
     screens = [Screen(bottom=Bar([ColorChanger(name="colorchanger")], 20))]
 
 
-widget_conf = pytest.mark.parametrize("qtile", [WidgetTestConf], indirect=True)
+widget_conf = pytest.mark.parametrize("self", [WidgetTestConf], indirect=True)
 
 
 @widget_conf
-def test_textbox_color_change(qtile):
-    qtile.c.widget["colorchanger"].update('f')
-    assert qtile.c.widget["colorchanger"].info()["foreground"] == "0000ff"
+def test_textbox_color_change(self):
+    self.c.widget["colorchanger"].update('f')
+    assert self.c.widget["colorchanger"].info()["foreground"] == "0000ff"
 
-    qtile.c.widget["colorchanger"].update('f')
-    assert qtile.c.widget["colorchanger"].info()["foreground"] == "ff0000"
+    self.c.widget["colorchanger"].update('f')
+    assert self.c.widget["colorchanger"].info()["foreground"] == "ff0000"
 
 
 def test_thermalsensor_regex_compatibility():

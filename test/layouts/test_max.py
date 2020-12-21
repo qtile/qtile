@@ -52,53 +52,53 @@ class MaxConfig(Config):
 
 
 def max_config(x):
-    return no_xinerama(pytest.mark.parametrize("qtile", [MaxConfig], indirect=True)(x))
+    return no_xinerama(pytest.mark.parametrize("self", [MaxConfig], indirect=True)(x))
 
 
 @max_config
-def test_max_simple(qtile):
-    qtile.test_window("one")
-    assert qtile.c.layout.info()["clients"] == ["one"]
-    qtile.test_window("two")
-    assert qtile.c.layout.info()["clients"] == ["one", "two"]
+def test_max_simple(self):
+    self.test_window("one")
+    assert self.c.layout.info()["clients"] == ["one"]
+    self.test_window("two")
+    assert self.c.layout.info()["clients"] == ["one", "two"]
 
 
 @max_config
-def test_max_updown(qtile):
-    qtile.test_window("one")
-    qtile.test_window("two")
-    qtile.test_window("three")
-    assert qtile.c.layout.info()["clients"] == ["one", "two", "three"]
-    qtile.c.layout.up()
-    assert qtile.c.groups()["a"]["focus"] == "two"
-    qtile.c.layout.down()
-    assert qtile.c.groups()["a"]["focus"] == "three"
+def test_max_updown(self):
+    self.test_window("one")
+    self.test_window("two")
+    self.test_window("three")
+    assert self.c.layout.info()["clients"] == ["one", "two", "three"]
+    self.c.layout.up()
+    assert self.c.groups()["a"]["focus"] == "two"
+    self.c.layout.down()
+    assert self.c.groups()["a"]["focus"] == "three"
 
 
 @max_config
-def test_max_remove(qtile):
-    qtile.test_window("one")
-    two = qtile.test_window("two")
-    assert qtile.c.layout.info()["clients"] == ["one", "two"]
-    qtile.kill_window(two)
-    assert qtile.c.layout.info()["clients"] == ["one"]
+def test_max_remove(self):
+    self.test_window("one")
+    two = self.test_window("two")
+    assert self.c.layout.info()["clients"] == ["one", "two"]
+    self.kill_window(two)
+    assert self.c.layout.info()["clients"] == ["one"]
 
 
 @max_config
-def test_max_window_focus_cycle(qtile):
+def test_max_window_focus_cycle(self):
     # setup 3 tiled and two floating clients
-    qtile.test_window("one")
-    qtile.test_window("two")
-    qtile.test_window("float1")
-    qtile.c.window.toggle_floating()
-    qtile.test_window("float2")
-    qtile.c.window.toggle_floating()
-    qtile.test_window("three")
+    self.test_window("one")
+    self.test_window("two")
+    self.test_window("float1")
+    self.c.window.toggle_floating()
+    self.test_window("float2")
+    self.c.window.toggle_floating()
+    self.test_window("three")
 
     # test preconditions
-    assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
+    assert self.c.layout.info()['clients'] == ['one', 'two', 'three']
     # last added window has focus
-    assert_focused(qtile, "three")
+    assert_focused(self, "three")
 
     # assert window focus cycle, according to order in layout
-    assert_focus_path(qtile, 'float1', 'float2', 'one', 'two', 'three')
+    assert_focus_path(self, 'float1', 'float2', 'one', 'two', 'three')

@@ -63,80 +63,80 @@ class SliceConfig(Config):
 
 
 def slice_config(x):
-    return no_xinerama(pytest.mark.parametrize("qtile", [SliceConfig], indirect=True)(x))
+    return no_xinerama(pytest.mark.parametrize("self", [SliceConfig], indirect=True)(x))
 
 
 @slice_config
-def test_no_slice(qtile):
-    qtile.test_window('one')
-    assert_dimensions(qtile, 200, 0, 600, 600)
-    qtile.test_window('two')
-    assert_dimensions(qtile, 200, 0, 600, 600)
+def test_no_slice(self):
+    self.test_window('one')
+    assert_dimensions(self, 200, 0, 600, 600)
+    self.test_window('two')
+    assert_dimensions(self, 200, 0, 600, 600)
 
 
 @slice_config
-def test_slice_first(qtile):
-    qtile.test_window('slice')
-    assert_dimensions(qtile, 0, 0, 200, 600)
-    qtile.test_window('two')
-    assert_dimensions(qtile, 200, 0, 600, 600)
+def test_slice_first(self):
+    self.test_window('slice')
+    assert_dimensions(self, 0, 0, 200, 600)
+    self.test_window('two')
+    assert_dimensions(self, 200, 0, 600, 600)
 
 
 @slice_config
-def test_slice_last(qtile):
-    qtile.test_window('one')
-    assert_dimensions(qtile, 200, 0, 600, 600)
-    qtile.test_window('slice')
-    assert_dimensions(qtile, 0, 0, 200, 600)
+def test_slice_last(self):
+    self.test_window('one')
+    assert_dimensions(self, 200, 0, 600, 600)
+    self.test_window('slice')
+    assert_dimensions(self, 0, 0, 200, 600)
 
 
 @slice_config
-def test_slice_focus(qtile):
-    qtile.test_window('one')
-    assert_focused(qtile, 'one')
-    two = qtile.test_window('two')
-    assert_focused(qtile, 'two')
-    slice = qtile.test_window('slice')
-    assert_focused(qtile, 'slice')
-    assert_focus_path(qtile, 'slice')
-    qtile.test_window('three')
-    assert_focus_path(qtile, 'two', 'one', 'slice', 'three')
-    qtile.kill_window(two)
-    assert_focus_path(qtile, 'one', 'slice', 'three')
-    qtile.kill_window(slice)
-    assert_focus_path(qtile, 'one', 'three')
-    slice = qtile.test_window('slice')
-    assert_focus_path(qtile, 'three', 'one', 'slice')
+def test_slice_focus(self):
+    self.test_window('one')
+    assert_focused(self, 'one')
+    two = self.test_window('two')
+    assert_focused(self, 'two')
+    slice = self.test_window('slice')
+    assert_focused(self, 'slice')
+    assert_focus_path(self, 'slice')
+    self.test_window('three')
+    assert_focus_path(self, 'two', 'one', 'slice', 'three')
+    self.kill_window(two)
+    assert_focus_path(self, 'one', 'slice', 'three')
+    self.kill_window(slice)
+    assert_focus_path(self, 'one', 'three')
+    slice = self.test_window('slice')
+    assert_focus_path(self, 'three', 'one', 'slice')
 
 
 @slice_config
-def test_all_slices(qtile):
-    qtile.test_window('slice')  # left
-    assert_dimensions(qtile, 0, 0, 200, 600)
-    qtile.c.next_layout()  # right
-    assert_dimensions(qtile, 600, 0, 200, 600)
-    qtile.c.next_layout()  # top
-    assert_dimensions(qtile, 0, 0, 800, 200)
-    qtile.c.next_layout()  # bottom
-    assert_dimensions(qtile, 0, 400, 800, 200)
-    qtile.c.next_layout()  # left again
-    qtile.test_window('one')
-    assert_dimensions(qtile, 200, 0, 600, 600)
-    qtile.c.next_layout()  # right
-    assert_dimensions(qtile, 0, 0, 600, 600)
-    qtile.c.next_layout()  # top
-    assert_dimensions(qtile, 0, 200, 800, 400)
-    qtile.c.next_layout()  # bottom
-    assert_dimensions(qtile, 0, 0, 800, 400)
+def test_all_slices(self):
+    self.test_window('slice')  # left
+    assert_dimensions(self, 0, 0, 200, 600)
+    self.c.next_layout()  # right
+    assert_dimensions(self, 600, 0, 200, 600)
+    self.c.next_layout()  # top
+    assert_dimensions(self, 0, 0, 800, 200)
+    self.c.next_layout()  # bottom
+    assert_dimensions(self, 0, 400, 800, 200)
+    self.c.next_layout()  # left again
+    self.test_window('one')
+    assert_dimensions(self, 200, 0, 600, 600)
+    self.c.next_layout()  # right
+    assert_dimensions(self, 0, 0, 600, 600)
+    self.c.next_layout()  # top
+    assert_dimensions(self, 0, 200, 800, 400)
+    self.c.next_layout()  # bottom
+    assert_dimensions(self, 0, 0, 800, 400)
 
 
 @slice_config
-def test_command_propagation(qtile):
-    qtile.test_window('slice')
-    qtile.test_window('one')
-    qtile.test_window('two')
-    info = qtile.c.layout.info()
+def test_command_propagation(self):
+    self.test_window('slice')
+    self.test_window('one')
+    self.test_window('two')
+    info = self.c.layout.info()
     assert info['name'] == 'slice'
-    org_height = qtile.c.window.info()['height']
-    qtile.c.layout.toggle_split()
-    assert qtile.c.window.info()['height'] != org_height
+    org_height = self.c.window.info()['height']
+    self.c.layout.toggle_split()
+    assert self.c.window.info()['height'] != org_height

@@ -37,10 +37,9 @@ import xcffib.testing
 import xcffib.xproto
 
 import libqtile.config
-from libqtile import command_client, command_interface, ipc
+from libqtile import command_client, command_interface, ipc, qtile
 from libqtile.backend.x11 import xcore
 from libqtile.confreader import Config
-from libqtile.core.session_manager import SessionManager
 from libqtile.lazy import lazy
 from libqtile.log_utils import init_log
 from libqtile.resources import default_config
@@ -283,8 +282,8 @@ class Qtile:
             try:
                 kore = xcore.XCore(display_name=self.display)
                 init_log(self.log_level, log_path=None, log_color=False)
-                q = SessionManager(kore, config_class(), fname=self.sockfile)
-                q.loop()
+                qtile.init(kore, config_class(), socket=self.sockfile)
+                qtile.start()
             except Exception:
                 wpipe.send(traceback.format_exc())
 
@@ -316,7 +315,7 @@ class Qtile:
             if not hasattr(config, attr):
                 setattr(config, attr, getattr(default_config, attr))
 
-        return SessionManager(kore, config, fname=self.sockfile)
+        qtile.init(kore, config, socket=self.sockfile)
 
     def terminate(self):
         if self.proc is None:
@@ -485,7 +484,7 @@ def xephyr(request, xvfb):
 
 
 @pytest.fixture(scope="function")
-def qtile(request, xephyr):
+def self(request, xephyr):
     config = getattr(request, "param", BareConfig)
 
     for attr in dir(default_config):
@@ -495,23 +494,23 @@ def qtile(request, xephyr):
     with tempfile.NamedTemporaryFile() as f:
         sockfile = f.name
         try:
-            q = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
-            q.start(config)
+            s = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
+            s.start(config)
 
-            yield q
+            yield s
         finally:
-            q.terminate()
+            s.terminate()
 
 
 @pytest.fixture(scope="function")
-def qtile_nospawn(request, xephyr):
+def self_nospawn(request, xephyr):
     with tempfile.NamedTemporaryFile() as f:
         sockfile = f.name
         try:
-            q = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
-            yield q
+            s = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
+            yield s
         finally:
-            q.terminate()
+            s.terminate()
 
 
 no_xinerama = pytest.mark.parametrize("xephyr", [{"xinerama": False}], indirect=True)

@@ -27,6 +27,8 @@ import os
 import sys
 from pathlib import Path
 
+from libqtile.log_utils import logger
+
 
 def load_config(configfile, kore):
     conf = Path(configfile)
@@ -110,8 +112,6 @@ class Config:
             config = __import__(name)  # noqa: F811
         except Exception:
             import traceback
-
-            from libqtile.log_utils import logger
             logger.exception('Could not import config file %r', self.file_path)
             tb = traceback.format_exc()
             raise ConfigError(tb)
