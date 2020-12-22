@@ -10,6 +10,7 @@
 # Copyright (c) 2014 Nathan Hoad
 # Copyright (c) 2014 dequis
 # Copyright (c) 2014 Tycho Andersen
+# Copyright (c) 2020 Robert Andrew Ditthardt
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +34,10 @@ import math
 
 import cairocffi
 import xcffib.xproto
+from xcffib.wrappers import (
+    PixmapID,
+    GContextID,
+)
 
 from libqtile import pangocffi, utils
 
@@ -211,31 +216,23 @@ class Drawer:
     we copy the appropriate portion of the pixmap onto the window.
     """
     def __init__(self, qtile, wid, width, height):
+        # initialize these early so they are available for properties
+        self._pixmap, self.surface = None, None
         self.qtile = qtile
         self.wid, self.width, self.height = wid, width, height
-
-        self.pixmap = self.qtile.conn.conn.generate_id()
-        self.gc = self.qtile.conn.conn.generate_id()
-
-        self.qtile.conn.conn.core.CreatePixmap(
-            self.qtile.conn.default_screen.root_depth,
-            self.pixmap,
-            self.wid,
-            self.width,
-            self.height
-        )
-        self.qtile.conn.conn.core.CreateGC(
-            self.gc,
+        self.gc = GContextID(qtile.conn.conn)
+        qtile.conn.conn.core.CreateGC(
+            self.gc.id,
             self.wid,
             xcffib.xproto.GC.Foreground | xcffib.xproto.GC.Background,
             [
                 self.qtile.conn.default_screen.black_pixel,
-                self.qtile.conn.default_screen.white_pixel
-            ]
+                self.qtile.conn.default_screen.white_pixel,
+            ],
         )
         self.surface = cairocffi.XCBSurface(
             qtile.conn.conn,
-            self.pixmap,
+            self.pixmap.id,
             self.find_root_visual(),
             self.width,
             self.height,
@@ -244,10 +241,50 @@ class Drawer:
         self.clear((0, 0, 1))
 
     def finalize(self):
-        self.qtile.conn.conn.core.FreeGC(self.gc)
-        self.qtile.conn.conn.core.FreePixmap(self.pixmap)
+        self.gc = None
+        self._pixmap = None
         self.ctx = None
         self.surface = None
+
+    @property
+    def pixmap(self):
+        """
+        Lazy-load pixmap since geometry changes may happen multiple times
+        between draws. This way we don't create and destroy pixmaps without
+        using them.
+        """
+        if self._pixmap is None:
+            self._pixmap = PixmapID(self.qtile.conn.conn)
+            self.qtile.conn.conn.core.CreatePixmap(
+                self.qtile.conn.default_screen.root_depth,
+                self._pixmap.id,
+                self.wid,
+                self.width,
+                self.height,
+            )
+            # surface is not guaranteed to be available before pixmap is
+            if self.surface is not None:
+                self.surface.drawable = self._pixmap.id
+
+        return self._pixmap
+
+    @property
+    def width(self):
+        return self._width
+
+    @width.setter
+    def width(self, width):
+        self._width = width
+        self._pixmap = None
+
+    @property
+    def height(self):
+        return self._height
+
+    @height.setter
+    def height(self, height):
+        self._height = height
+        self._pixmap = None
 
     def _rounded_rect(self, x, y, width, height, linewidth):
         aspect = 1.0
@@ -303,9 +340,9 @@ class Drawer:
             the Y portion of the canvas to draw at the starting point.
         """
         self.qtile.conn.conn.core.CopyArea(
-            self.pixmap,
+            self.pixmap.id,
             self.wid,
-            self.gc,
+            self.gc.id,
             0, 0,  # srcx, srcy
             offsetx, offsety,  # dstx, dsty
             self.width if width is None else width,
