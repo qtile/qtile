@@ -195,11 +195,6 @@ class Server:
         except IPCError:
             logger.warn("Invalid data received, closing connection")
         else:
-            if req[1] == "restart":
-                # if we are going to restart, close the connection first, as we won't be back
-                logger.debug("Closing connection on restart")
-                writer.write_eof()
-
             rep = self.handler(req)
 
             result = _IPC.pack(rep, is_json=is_json)
