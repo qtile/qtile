@@ -10,6 +10,7 @@
 # Copyright (c) 2014 Nathan Hoad
 # Copyright (c) 2014 dequis
 # Copyright (c) 2014 Tycho Andersen
+# Copyright (c) 2020, 2021 Robert Andrew Ditthardt
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -205,49 +206,123 @@ class TextFrame:
 class Drawer:
     """ A helper class for drawing and text layout.
 
-    We have a drawer object for each widget in the bar. The underlying surface
-    is a pixmap with the same size as the bar itself. We draw to the pixmap
-    starting at offset 0, 0, and when the time comes to display to the window,
-    we copy the appropriate portion of the pixmap onto the window.
+    We have a drawer object for each widget in the bar. We stage drawing
+    operations locally in memory using a cairo RecordingSurface. The underlying
+    surface is an XCBSurface backed by a pixmap. We draw to the pixmap
+    starting at offset 0, 0, and when the time comes to display to the window
+    (on draw()), we copy the appropriate portion of the pixmap onto the window.
+    In the event that our drawing area is resized, we invalidate the underlying
+    surface and pixmap and recreate them when we need them again with the new
+    geometry.
     """
     def __init__(self, qtile, wid, width, height):
         self.qtile = qtile
-        self.wid, self.width, self.height = wid, width, height
+        self.wid, self._width, self._height = wid, width, height
+        self._surface = None
+        self._pixmap = None
+        self._gc = None
 
-        self.pixmap = self.qtile.conn.conn.generate_id()
-        self.gc = self.qtile.conn.conn.generate_id()
+        self.surface = None
+        self.ctx = None
 
-        self.qtile.conn.conn.core.CreatePixmap(
-            self.qtile.conn.default_screen.root_depth,
-            self.pixmap,
-            self.wid,
-            self.width,
-            self.height
-        )
+        self._reset_surface()
+        self.clear((0, 0, 1))
+
+    def finalize(self):
+        self.surface.finish()
+        self.surface = None
+        self._free_xcb_surface()
+        self._free_pixmap()
+        self._free_gc()
+        self.ctx = None
+
+    @property
+    def pixmap(self):
+        if self._pixmap is None:
+            # draw here since the only use case of this function is in the
+            # systray widget which expects a filled pixmap.
+            self.draw()
+        return self._pixmap
+
+    def _create_gc(self):
+        gc = self.qtile.conn.conn.generate_id()
         self.qtile.conn.conn.core.CreateGC(
-            self.gc,
+            gc,
             self.wid,
             xcffib.xproto.GC.Foreground | xcffib.xproto.GC.Background,
             [
                 self.qtile.conn.default_screen.black_pixel,
-                self.qtile.conn.default_screen.white_pixel
-            ]
+                self.qtile.conn.default_screen.white_pixel,
+            ],
         )
-        self.surface = cairocffi.XCBSurface(
-            qtile.conn.conn,
-            self.pixmap,
+        return gc
+
+    def _free_gc(self):
+        if self._gc is not None:
+            self.qtile.conn.conn.core.FreeGC(self._gc)
+            self._gc = None
+
+    def _create_xcb_surface(self):
+        surface = cairocffi.XCBSurface(
+            self.qtile.conn.conn,
+            self._pixmap,
             self.find_root_visual(),
             self.width,
             self.height,
         )
-        self.ctx = self.new_ctx()
-        self.clear((0, 0, 1))
+        return surface
 
-    def finalize(self):
-        self.qtile.conn.conn.core.FreeGC(self.gc)
-        self.qtile.conn.conn.core.FreePixmap(self.pixmap)
-        self.ctx = None
-        self.surface = None
+    def _free_xcb_surface(self):
+        if self._surface is not None:
+            self._surface.finish()
+            self._surface = None
+
+    def _reset_surface(self):
+        if self.surface is not None:
+            self.surface.finish()
+        self.surface = cairocffi.RecordingSurface(
+            cairocffi.CONTENT_COLOR_ALPHA,
+            None,
+        )
+        self.ctx = self.new_ctx()
+
+    def _create_pixmap(self):
+        pixmap = self.qtile.conn.conn.generate_id()
+        self.qtile.conn.conn.core.CreatePixmap(
+            self.qtile.conn.default_screen.root_depth,
+            pixmap,
+            self.wid,
+            self.width,
+            self.height,
+        )
+        return pixmap
+
+    def _free_pixmap(self):
+        if self._pixmap is not None:
+            self.qtile.conn.conn.core.FreePixmap(self._pixmap)
+            self._pixmap = None
+
+    @property
+    def width(self):
+        return self._width
+
+    @width.setter
+    def width(self, width):
+        if width > self._width:
+            self._free_xcb_surface()
+            self._free_pixmap()
+        self._width = width
+
+    @property
+    def height(self):
+        return self._height
+
+    @height.setter
+    def height(self, height):
+        if height > self._height:
+            self._free_xcb_surface()
+            self._free_pixmap()
+        self._height = height
 
     def _rounded_rect(self, x, y, width, height, linewidth):
         aspect = 1.0
@@ -288,6 +363,20 @@ class Drawer:
         self.ctx.fill()
         self.ctx.stroke()
 
+    def _paint(self):
+        # Only attempt to run RecordingSurface's operations if it actually has
+        # some. self.surface.ink_extents() computes the bounds of the current
+        # list of operations. If any of the bounds are not 0.0 then the surface
+        # has operations and we should paint them.
+        if any(not math.isclose(0.0, i) for i in self.surface.ink_extents()):
+            # Paint RecordingSurface operations to the XCBSurface
+            ctx = cairocffi.Context(self._surface)
+            ctx.set_source_surface(self.surface, 0, 0)
+            ctx.paint()
+
+            # Clear RecordingSurface of operations
+            self._reset_surface()
+
     def draw(self, offsetx=0, offsety=0, width=None, height=None):
         """
         Parameters
@@ -302,10 +391,23 @@ class Drawer:
         height :
             the Y portion of the canvas to draw at the starting point.
         """
+        # If this is our first draw, create the gc
+        if self._gc is None:
+            self._gc = self._create_gc()
+
+        # If the Drawer has been resized/invalidated we need to recreate these
+        if self._surface is None:
+            self._pixmap = self._create_pixmap()
+            self._surface = self._create_xcb_surface()
+
+        # paint stored operations(if any) to XCBSurface
+        self._paint()
+
+        # Finally, copy XCBSurface's underlying pixmap to the window.
         self.qtile.conn.conn.core.CopyArea(
-            self.pixmap,
+            self._pixmap,
             self.wid,
-            self.gc,
+            self._gc,
             0, 0,  # srcx, srcy
             offsetx, offsety,  # dstx, dsty
             self.width if width is None else width,
