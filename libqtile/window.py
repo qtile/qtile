@@ -1346,10 +1346,8 @@ class Window(_Window):
         self.toggle_minimize()
 
     def cmd_bring_to_front(self):
-        if self.floating:
-            self.qtile.change_layer(self.window.wid)
-        else:
-            self._reconfigure_floating()  # automatically above
+        self.qtile.change_layer(self.window.wid)
+        self.floating = True
 
     def cmd_keep_above(self):
         if self.window.net_wm_state_above:
