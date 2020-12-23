@@ -30,6 +30,7 @@ from libqtile.widget.generic_poll_text import GenPollUrl
 QUERY_URL = 'http://api.openweathermap.org/data/2.5/weather?'
 DEFAULT_APP_ID = '7834197c2338888258f8cb94ae14ef49'
 
+
 class OpenWeatherResponseError(Exception):
     def __init__(self, resp_code, err_str=None):
         self.resp_code = resp_code

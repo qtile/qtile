@@ -42,174 +42,28 @@ CONSUMER_SECRET = '83ea8fbd202ea06cd57fc01268139601bf966b47'
 HEADER = {'X-Yahoo-App-Id': APP_ID}
 
 
-class YahooWeather(GenPollUrl):
-    """A weather widget, data provided by the Yahoo! Weather API.
+class _YahooWeatherResponseParser(base._WeatherResponseParser):
+    def __init__(self, response, dateformat, timeformat):
+        self.dateformat = dateformat
+        self.timeformat = timeformat
+        base._WeatherResponseParser.__init__(self, response)
 
-    Format options:
-        - location_city
-        - location_region
-        - location_woeid
-        - location_country
-        - location_lat
-        - location_long
-        - location_timezone_id
-        - current_observation_wind_chill
-        - current_observation_wind_direction
-        - current_observation_wind_speed
-        - current_observation_atmosphere_humidity
-        - current_observation_atmosphere_visibility
-        - current_observation_atmosphere_pressure
-        - current_observation_atmosphere_rising
-        - current_observation_astronomy_sunrise
-        - current_observation_astronomy_sunset
-        - current_observation_condition_text
-        - current_observation_condition_symbol
-        - current_observation_condition_code
-        - current_observation_condition_temperature
-        - current_observation_pubDate
-        - forecasts_0_day
-        - forecasts_0_date
-        - forecasts_0_low
-        - forecasts_0_high
-        - forecasts_0_text
-        - forecasts_0_code
-        - forecasts_1_day
-        - forecasts_1_date
-        - forecasts_1_low
-        - forecasts_1_high
-        - forecasts_1_text
-        - forecasts_1_code
-        - forecasts_2_day
-        - forecasts_2_date
-        - forecasts_2_low
-        - forecasts_2_high
-        - forecasts_2_text
-        - forecasts_2_code
-        - forecasts_3_day
-        - forecasts_3_date
-        - forecasts_3_low
-        - forecasts_3_high
-        - forecasts_3_text
-        - forecasts_3_code
-        - forecasts_4_day
-        - forecasts_4_date
-        - forecasts_4_low
-        - forecasts_4_high
-        - forecasts_4_text
-        - forecasts_4_code
-        - forecasts_5_day
-        - forecasts_5_date
-        - forecasts_5_low
-        - forecasts_5_high
-        - forecasts_5_text
-        - forecasts_5_code
-        - forecasts_6_day
-        - forecasts_6_date
-        - forecasts_6_low
-        - forecasts_6_high
-        - forecasts_6_text
-        - forecasts_6_code
-        - forecasts_7_day
-        - forecasts_7_date
-        - forecasts_7_low
-        - forecasts_7_high
-        - forecasts_7_text
-        - forecasts_7_code
-        - forecasts_8_day
-        - forecasts_8_date
-        - forecasts_8_low
-        - forecasts_8_high
-        - forecasts_8_text
-        - forecasts_8_code
-        - forecasts_9_day
-        - forecasts_9_date
-        - forecasts_9_low
-        - forecasts_9_high
-        - forecasts_9_text
-        - forecasts_9_code
-    """
-    orientations = base.ORIENTATION_HORIZONTAL
-    defaults = [
-        # One of (woeid, location, coordinates) must be set.
-        (
-            'woeid',
-            None,
-            'Where On Earth ID. Precedence over location and coordinates.'
-        ),
-        (
-            'location',
-            None,
-            'Location to fetch weather for. Precedence over coordinates.'
-        ),
-        (
-            'coordinates',
-            None,
-            'Dictionary containing "latitude" and "longitude".'
-        ),
-        (
-            'format',
-            '{location_city}: {condition_temp} °{units_temperature}',
-            'Display format'
-        ),
-        ('metric', True, 'True to use metric/C, False to use imperial/F'),
-        ('up', '^', 'symbol for rising atmospheric pressure'),
-        ('down', 'v', 'symbol for falling atmospheric pressure'),
-        ('steady', 's', 'symbol for steady atmospheric pressure'),
-    ]
+    def _parse(self, response):
+        return base._WeatherResponseParser.flatten_json(response)
 
-    def __init__(self, **config):
-        GenPollUrl.__init__(self, **config)
-        self.add_defaults(YahooWeather.defaults)
-        self.headers.update(HEADER)
-
-    @property
-    def url(self):
-        if not self.woeid and not self.location and not self.coordinates:
-            return None
-
-        params = {
-            'format': 'json',
-            'u': 'c' if self.metric else 'f'
-        }
-
-        if self.woeid:
-            params['woeid'] = self.woeid
-        elif self.location:
-            params['location'] = self.location
-        elif self.coordinates:
-            params['lat'] = self.coordinates['latitude']
-            params['lon'] = self.coordinates['longitude']
-
-        oauth = {
-            'oauth_consumer_key': CONSUMER_KEY,
-            'oauth_nonce': uuid.uuid4().hex,
-            'oauth_signature_method': 'PLAINTEXT',
-            'oauth_timestamp': str(int(time.time())),
-            'oauth_version': '1.0',
-            'oauth_signature': CONSUMER_SECRET
-        }
-        params.update(oauth)
-
-        return QUERY_URL + urlencode(params) + '%26'
-
-    def flatten_json(self, obj):
-        out = {}
-
-        def __inner(_json, name=''):
-            if type(_json) is dict:
-                for key, value in _json.items():
-                    __inner(value, name + key + '_')
-            elif type(_json) is list:
-                for i in range(len(_json)):
-                    __inner(_json[i], name + str(i) + '_')
-            else:
-                out[name[:-1]] = _json
-        __inner(obj)
-        return out
-
-    def parse(self, body):
-        data = self.flatten_json(body)
-        data['units_temperature'] = 'C' if self.metric else 'F'
+    def _remap(self, data):
+        data['weather'] = data.get('current_observation_condition_text', None)
+        data['weather_details'] = data['weather']
+        data['wind_deg'] = data.get('current_observation_wind_direction', None)
+        data['wind_direction'] = self._get_wind_direction()
+        data['wind_speed'] = data.get('current_observation_wind_speed', None)
+        data['humidity'] = data.get('current_observation_atmosphere_humidity', None)
+        data['visibility'] = data.get('current_observation_atmosphere_visibility', None)
+        data['pressure'] = data.get('current_observation_atmosphere_pressure', None)
+        data['sunrise'] = self._get_sunrise_time()
+        data['sunset'] = self._get_sunset_time()
+        data['temp'] = data.get('current_observation_condition_temperature', None)
+        data['isotime'] = self._get_dt()
 
         # symbols: https://unicode-search.net/unicode-namesearch.pl?term=RAIN
         condition_mapping = {
@@ -262,16 +116,178 @@ class YahooWeather(GenPollUrl):
             # 46: '',  # scattered snow showers (night)
             47: '⛈',  # scattered thundershowers
         }
-        data['current_observation_condition_symbol'] = condition_mapping.get(
-            data['current_observation_condition_code'],
-            data['current_observation_condition_text']
+        data['symbol'] = condition_mapping.get(
+            data.get('current_observation_condition_code', None),
+            data.get('current_observation_condition_text', None)
         )
+        data['current_observation_condition_symbol'] = data['symbol']  # for compatibility only
 
-        if data['current_observation_atmosphere_rising'] == '0':
+    def _get_wind_direction(self):
+        wd = self.data.get('current_observation_wind_direction', None)
+        if wd is None:
+            return None
+        return base._WeatherResponseParser.degrees_to_direction(wd)
+
+    def _get_sunrise_time(self):
+        dt = self.data.get('current_observation_astronomy_sunrise', None)
+        if dt is None:
+            return None
+        return time.strftime(self.timeformat, time.strptime(dt, '%I:%M %p'))
+
+    def _get_sunset_time(self):
+        dt = self.data.get('current_observation_astronomy_sunset', None)
+        if dt is None:
+            return None
+        return time.strftime(self.timeformat, time.strptime(dt, '%I:%M %p'))
+
+    def _get_dt(self):
+        dt = self.data.get('current_observation_pubDate', None)
+        if dt is None:
+            return None
+        return time.strftime(self.dateformat + self.timeformat, time.localtime(dt))
+
+
+class YahooWeather(GenPollUrl):
+    """A weather widget, data provided by the Yahoo! Weather API.
+
+    Some format options:
+        - location_city
+        - location_region
+        - location_woeid
+        - location_country
+        - location_lat
+        - location_long
+        - location_timezone_id
+
+        - weather
+        - weather_details
+        - isotime
+        - units_temperature
+        - units_wind_speed
+        - humidity
+        - pressure
+        - sunrise
+        - sunset
+        - temp
+        - visibility
+        - wind_speed
+        - wind_deg
+        - wind_direction
+
+        - symbol
+
+        - current_observation_wind_chill
+        - current_observation_atmosphere_rising
+        - current_observation_condition_code
+        - forecasts_0_day
+        - forecasts_0_date
+        - forecasts_0_low
+        - forecasts_0_high
+        - forecasts_0_text
+        - forecasts_0_code
+        - forecasts_9_day
+        - forecasts_9_date
+        - forecasts_9_low
+        - forecasts_9_high
+        - forecasts_9_text
+        - forecasts_9_code
+    """
+    orientations = base.ORIENTATION_HORIZONTAL
+    defaults = [
+        # One of (woeid, location, coordinates) must be set.
+        (
+            'woeid',
+            None,
+            """Where On Earth ID. Can be looked up on e.g.:
+            https://www.findmecity.com
+            Takes precedence over location and coordinates."""
+        ),
+        (
+            'location',
+            None,
+            """Name of the city. Country name can be appended
+            like cambridge,NZ. Takes precedence over coordinates."""
+        ),
+        (
+            'coordinates',
+            None,
+            """Dictionary containing latitude and longitude
+               Example: coordinates={"longitude": "77.22",
+                                     "latitude": "28.67"}"""
+        ),
+        (
+            'format',
+            '{location_city}: {condition_temp} °{units_temperature}',
+            'Display format'
+        ),
+        ('metric', True, 'True to use metric/C, False to use imperial/F'),
+        (
+            'dateformat',
+            '%Y-%m-%d ',
+            """Format for dates, defaults to ISO.
+            For details see: https://docs.python.org/3/library/time.html#time.strftime"""
+        ),
+        (
+            'timeformat',
+            '%H:%M',
+            """Format for times, defaults to ISO.
+            For details see: https://docs.python.org/3/library/time.html#time.strftime"""
+        ),
+        ('up', '^', 'symbol for rising atmospheric pressure'),
+        ('down', 'v', 'symbol for falling atmospheric pressure'),
+        ('steady', 's', 'symbol for steady atmospheric pressure'),
+    ]
+
+    def __init__(self, **config):
+        GenPollUrl.__init__(self, **config)
+        self.add_defaults(YahooWeather.defaults)
+        self.headers.update(HEADER)
+
+    @property
+    def url(self):
+        if not self.woeid and not self.location and not self.coordinates:
+            return None
+
+        params = {
+            'format': 'json',
+            'u': 'c' if self.metric else 'f'
+        }
+
+        if self.woeid:
+            params['woeid'] = self.woeid
+        elif self.location:
+            params['location'] = self.location
+        elif self.coordinates:
+            params['lat'] = self.coordinates['latitude']
+            params['lon'] = self.coordinates['longitude']
+
+        oauth = {
+            'oauth_consumer_key': CONSUMER_KEY,
+            'oauth_nonce': uuid.uuid4().hex,
+            'oauth_signature_method': 'PLAINTEXT',
+            'oauth_timestamp': str(int(time.time())),
+            'oauth_version': '1.0',
+            'oauth_signature': CONSUMER_SECRET
+        }
+        params.update(oauth)
+
+        return QUERY_URL + urlencode(params) + '%26'
+
+    def parse(self, response):
+        try:
+            rp = _YahooWeatherResponseParser(response, self.dateformat, self.timeformat)
+        except Exception as e:
+            return 'Error {}'.format(e)
+
+        data = rp.data
+        data['units_temperature'] = 'C' if self.metric else 'F'
+        data['units_wind_speed'] = 'Km/h' if self.metric else 'm/h'
+
+        if data.get('current_observation_atmosphere_rising', None) == '0':
             data['current_observation_atmosphere_rising'] = self.steady
-        elif data['current_observation_atmosphere_rising'] == '1':
+        elif data.get('current_observation_atmosphere_rising', None) == '1':
             data['current_observation_atmosphere_rising'] = self.up
-        elif data['current_observation_atmosphere_rising'] == '2':
+        elif data.get('current_observation_atmosphere_rising', None) == '2':
             data['current_observation_atmosphere_rising'] = self.down
 
         return self.format.format(**data)
