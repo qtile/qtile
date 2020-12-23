@@ -45,27 +45,27 @@ class ColumnsConfig(Config):
 
 
 def columns_config(x):
-    return no_xinerama(pytest.mark.parametrize("qtile", [ColumnsConfig], indirect=True)(x))
+    return no_xinerama(pytest.mark.parametrize("manager", [ColumnsConfig], indirect=True)(x))
 
 # This currently only tests the window focus cycle
 
 
 @columns_config
-def test_columns_window_focus_cycle(qtile):
+def test_columns_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
-    qtile.test_window("one")
-    qtile.test_window("two")
-    qtile.test_window("float1")
-    qtile.c.window.toggle_floating()
-    qtile.test_window("float2")
-    qtile.c.window.toggle_floating()
-    qtile.test_window("three")
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("float1")
+    manager.c.window.toggle_floating()
+    manager.test_window("float2")
+    manager.c.window.toggle_floating()
+    manager.test_window("three")
 
     # test preconditions, columns adds clients at pos after current, in two stacks
-    assert qtile.c.layout.info()['columns'][0]['clients'] == ['one']
-    assert qtile.c.layout.info()['columns'][1]['clients'] == ['three', 'two']
+    assert manager.c.layout.info()['columns'][0]['clients'] == ['one']
+    assert manager.c.layout.info()['columns'][1]['clients'] == ['three', 'two']
     # last added window has focus
-    assert_focused(qtile, "three")
+    assert_focused(manager, "three")
 
     # assert window focus cycle, according to order in layout
-    assert_focus_path(qtile, 'two', 'float1', 'float2', 'one', 'three')
+    assert_focus_path(manager, 'two', 'float1', 'float2', 'one', 'three')

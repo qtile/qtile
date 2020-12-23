@@ -53,36 +53,36 @@ class ZoomyConfig(Config):
 
 
 def zoomy_config(x):
-    return no_xinerama(pytest.mark.parametrize("qtile", [ZoomyConfig], indirect=True)(x))
+    return no_xinerama(pytest.mark.parametrize("manager", [ZoomyConfig], indirect=True)(x))
 
 
 @zoomy_config
-def test_zoomy_one(qtile):
-    qtile.test_window('one')
-    assert_dimensions(qtile, 0, 0, 600, 600)
-    qtile.test_window('two')
-    assert_dimensions(qtile, 0, 0, 600, 600)
-    qtile.test_window('three')
-    assert_dimensions(qtile, 0, 0, 600, 600)
-    assert_focus_path(qtile, 'two', 'one', 'three')
+def test_zoomy_one(manager):
+    manager.test_window('one')
+    assert_dimensions(manager, 0, 0, 600, 600)
+    manager.test_window('two')
+    assert_dimensions(manager, 0, 0, 600, 600)
+    manager.test_window('three')
+    assert_dimensions(manager, 0, 0, 600, 600)
+    assert_focus_path(manager, 'two', 'one', 'three')
     # TODO(pc) find a way to check size of inactive windows
 
 
 @zoomy_config
-def test_zoomy_window_focus_cycle(qtile):
+def test_zoomy_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
-    qtile.test_window("one")
-    qtile.test_window("two")
-    qtile.test_window("float1")
-    qtile.c.window.toggle_floating()
-    qtile.test_window("float2")
-    qtile.c.window.toggle_floating()
-    qtile.test_window("three")
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("float1")
+    manager.c.window.toggle_floating()
+    manager.test_window("float2")
+    manager.c.window.toggle_floating()
+    manager.test_window("three")
 
     # test preconditions, Zoomy adds clients at head
-    assert qtile.c.layout.info()['clients'] == ['three', 'two', 'one']
+    assert manager.c.layout.info()['clients'] == ['three', 'two', 'one']
     # last added window has focus
-    assert_focused(qtile, "three")
+    assert_focused(manager, "three")
 
     # assert window focus cycle, according to order in layout
-    assert_focus_path(qtile, 'two', 'one', 'float1', 'float2', 'three')
+    assert_focus_path(manager, 'two', 'one', 'float1', 'float2', 'three')

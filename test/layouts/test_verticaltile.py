@@ -56,45 +56,45 @@ class VerticalTileConfig(Config):
 
 
 def verticaltile_config(x):
-    return no_xinerama(pytest.mark.parametrize("qtile", [VerticalTileConfig], indirect=True)(x))
+    return no_xinerama(pytest.mark.parametrize("manager", [VerticalTileConfig], indirect=True)(x))
 
 
 @verticaltile_config
-def test_verticaltile_simple(qtile):
-    qtile.test_window("one")
-    assert_dimensions(qtile, 0, 0, 800, 600)
-    qtile.test_window("two")
-    assert_dimensions(qtile, 0, 300, 798, 298)
-    qtile.test_window("three")
-    assert_dimensions(qtile, 0, 400, 798, 198)
+def test_verticaltile_simple(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 800, 600)
+    manager.test_window("two")
+    assert_dimensions(manager, 0, 300, 798, 298)
+    manager.test_window("three")
+    assert_dimensions(manager, 0, 400, 798, 198)
 
 
 @verticaltile_config
-def test_verticaltile_maximize(qtile):
-    qtile.test_window("one")
-    assert_dimensions(qtile, 0, 0, 800, 600)
-    qtile.test_window("two")
-    assert_dimensions(qtile, 0, 300, 798, 298)
+def test_verticaltile_maximize(manager):
+    manager.test_window("one")
+    assert_dimensions(manager, 0, 0, 800, 600)
+    manager.test_window("two")
+    assert_dimensions(manager, 0, 300, 798, 298)
     # Maximize the bottom layout, taking 75% of space
-    qtile.c.layout.maximize()
-    assert_dimensions(qtile, 0, 150, 798, 448)
+    manager.c.layout.maximize()
+    assert_dimensions(manager, 0, 150, 798, 448)
 
 
 @verticaltile_config
-def test_verticaltile_window_focus_cycle(qtile):
+def test_verticaltile_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
-    qtile.test_window("one")
-    qtile.test_window("two")
-    qtile.test_window("float1")
-    qtile.c.window.toggle_floating()
-    qtile.test_window("float2")
-    qtile.c.window.toggle_floating()
-    qtile.test_window("three")
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("float1")
+    manager.c.window.toggle_floating()
+    manager.test_window("float2")
+    manager.c.window.toggle_floating()
+    manager.test_window("three")
 
     # test preconditions
-    assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
+    assert manager.c.layout.info()['clients'] == ['one', 'two', 'three']
     # last added window has focus
-    assert_focused(qtile, "three")
+    assert_focused(manager, "three")
 
     # assert window focus cycle, according to order in layout
-    assert_focus_path(qtile, 'float1', 'float2', 'one', 'two', 'three')
+    assert_focus_path(manager, 'float1', 'float2', 'one', 'two', 'three')
