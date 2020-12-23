@@ -31,6 +31,7 @@
 
 import subprocess
 import threading
+from abc import ABCMeta, abstractmethod
 from typing import Any, List, Tuple
 
 from libqtile import bar, configurable, confreader, drawer
@@ -650,3 +651,61 @@ class Mirror(_Widget):
 
     def button_press(self, x, y, button):
         self.reflects.button_press(x, y, button)
+
+
+class _WeatherResponseParser(metaclass=ABCMeta):
+    def __init__(self, response):
+        self._response = response
+        self.data = self._parse(response)
+        self._remap(self.data)
+
+    @abstractmethod
+    def _parse(self, response) -> dict:
+        """Parse the response into a dictionary and return it."""
+        pass
+
+    @abstractmethod
+    def _remap(self, data):
+        """Add/change/remove elements of the dictionary at self.data.
+        The goal here is to keep the access-keys for the main attributes the same across
+        implementations. Also, human readable output should be generated from technical
+        output, where necessary.
+        The following keys should be provided:
+          weather: Short description.
+          weather_details: Slightly longer description.
+          isotime: Date the information was taken at.
+          humidity
+          pressure
+          sunrise
+          sunset
+          temp
+          visibility
+          wind_speed
+          wind_deg
+          wind_direction: Human-readable direction generated from wind_deg.
+        """
+        pass
+
+    @staticmethod
+    def flatten_json(obj):
+        out = {}
+
+        def __inner(_json, name=''):
+            if type(_json) is dict:
+                for key, value in _json.items():
+                    __inner(value, name + key + '_')
+            elif type(_json) is list:
+                for i in range(len(_json)):
+                    __inner(_json[i], name + str(i) + '_')
+            else:
+                out[name[:-1]] = _json
+        __inner(obj)
+        return out
+
+    @staticmethod
+    def degrees_to_direction(degrees):
+        val = int(degrees / 22.5 + .5)
+        arr = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE',
+               'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW',
+               'NNW']
+        return arr[(val % 16)]
