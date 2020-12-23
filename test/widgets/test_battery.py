@@ -43,8 +43,8 @@ def test_text_battery_charging(monkeypatch):
         time=1729,
     )
 
-    with monkeypatch.context() as m:
-        m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery()
 
     text = batt.poll()
@@ -59,8 +59,8 @@ def test_text_battery_discharging(monkeypatch):
         time=1729,
     )
 
-    with monkeypatch.context() as m:
-        m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery()
 
     text = batt.poll()
@@ -75,15 +75,15 @@ def test_text_battery_full(monkeypatch):
         time=1729,
     )
 
-    with monkeypatch.context() as m:
-        m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery()
 
     text = batt.poll()
     assert text == "Full"
 
-    with monkeypatch.context() as m:
-        m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery(show_short_text=False)
 
     text = batt.poll()
@@ -98,15 +98,15 @@ def test_text_battery_empty(monkeypatch):
         time=1729,
     )
 
-    with monkeypatch.context() as m:
-        m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery()
 
     text = batt.poll()
     assert text == "Empty"
 
-    with monkeypatch.context() as m:
-        m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery(show_short_text=False)
 
     text = batt.poll()
@@ -119,8 +119,8 @@ def test_text_battery_empty(monkeypatch):
         time=1729,
     )
 
-    with monkeypatch.context() as m:
-        m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery()
 
     text = batt.poll()
@@ -135,8 +135,8 @@ def test_text_battery_unknown(monkeypatch):
         time=1729,
     )
 
-    with monkeypatch.context() as m:
-        m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery()
 
     text = batt.poll()
@@ -151,15 +151,15 @@ def test_text_battery_hidden(monkeypatch):
         time=1729,
     )
 
-    with monkeypatch.context() as m:
-        m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery(hide_threshold=0.6)
 
     text = batt.poll()
     assert text != ""
 
-    with monkeypatch.context() as m:
-        m.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", dummy_load_battery(loaded_bat))
         batt = Battery(hide_threshold=0.4)
 
     text = batt.poll()
@@ -167,8 +167,8 @@ def test_text_battery_hidden(monkeypatch):
 
 
 def test_text_battery_error(monkeypatch):
-    with monkeypatch.context() as m:
-        m.setattr(battery, "load_battery", DummyErrorBattery)
+    with monkeypatch.context() as manager:
+        manager.setattr(battery, "load_battery", DummyErrorBattery)
         batt = Battery()
 
     text = batt.poll()

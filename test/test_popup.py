@@ -26,24 +26,24 @@ from libqtile.popup import Popup
 from test.conftest import BareConfig
 
 
-@pytest.mark.parametrize("qtile", [BareConfig], indirect=True)
-def test_popup_focus(qtile):
-    qtile.test_xeyes()
-    qtile.windows_map = {}
+@pytest.mark.parametrize("manager", [BareConfig], indirect=True)
+def test_popup_focus(manager):
+    manager.test_xeyes()
+    manager.windows_map = {}
 
     # we have to add .conn so that Popup thinks this is libqtile.qtile
-    qtile.conn = xcbq.Connection(qtile.display)
+    manager.conn = xcbq.Connection(manager.display)
 
     try:
-        popup = Popup(qtile)
-        popup.width = qtile.c.screen.info()["width"]
-        popup.height = qtile.c.screen.info()["height"]
+        popup = Popup(manager)
+        popup.width = manager.c.screen.info()["width"]
+        popup.height = manager.c.screen.info()["height"]
         popup.place()
         popup.unhide()
-        assert qtile.c.group.info()['focus'] == 'xeyes'
-        assert qtile.c.group.info()['windows'] == ['xeyes']
-        assert len(qtile.c.windows()) == 1
+        assert manager.c.group.info()['focus'] == 'xeyes'
+        assert manager.c.group.info()['windows'] == ['xeyes']
+        assert len(manager.c.windows()) == 1
         popup.hide()
     finally:
         popup.kill()
-        qtile.conn.finalize()
+        manager.conn.finalize()

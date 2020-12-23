@@ -259,7 +259,7 @@ class Xephyr:
             pass
 
 
-class Qtile:
+class TestManager:
     """Spawn a Qtile instance
 
     Setup a qtile server instance on the given display, with the given socket
@@ -485,7 +485,7 @@ def xephyr(request, xvfb):
 
 
 @pytest.fixture(scope="function")
-def qtile(request, xephyr):
+def manager(request, xephyr):
     config = getattr(request, "param", BareConfig)
 
     for attr in dir(default_config):
@@ -495,23 +495,23 @@ def qtile(request, xephyr):
     with tempfile.NamedTemporaryFile() as f:
         sockfile = f.name
         try:
-            q = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
-            q.start(config)
+            manager = TestManager(sockfile, xephyr.display, request.config.getoption("--debuglog"))
+            manager.start(config)
 
-            yield q
+            yield manager
         finally:
-            q.terminate()
+            manager.terminate()
 
 
 @pytest.fixture(scope="function")
-def qtile_nospawn(request, xephyr):
+def manager_nospawn(request, xephyr):
     with tempfile.NamedTemporaryFile() as f:
         sockfile = f.name
         try:
-            q = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
-            yield q
+            manager = TestManager(sockfile, xephyr.display, request.config.getoption("--debuglog"))
+            yield manager
         finally:
-            q.terminate()
+            manager.terminate()
 
 
 no_xinerama = pytest.mark.parametrize("xephyr", [{"xinerama": False}], indirect=True)
