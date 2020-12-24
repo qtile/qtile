@@ -9,6 +9,8 @@ Qtile 0.x.x, released xxxx-xx-xx:
         - memory widget can now be displayed with decimal values
         - new "qtile migrate" command, which will attempt to upgrade previous
           configs to the current version in the case of qtile API breaks.
+    * bugfixes
+        - fix KeyboardLayout widget (xkb-switch is new dependency)
 
 Qtile 0.17.0, released 2021-02-13:
     !!! Python version breakage !!!

@@ -22,116 +22,269 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import re
+import asyncio
 from subprocess import CalledProcessError
+from typing import NoReturn, Union
 
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
-kb_layout_regex = re.compile(r'layout:\s+(?P<layout>\w+)')
-kb_variant_regex = re.compile(r'variant:\s+(?P<variant>\w+)')
+
+class NoDependencyFoundError(Exception):
+    pass
 
 
 class KeyboardLayout(base.InLoopPollText):
-    """Widget for changing and displaying the current keyboard layout
-
-    To use this widget effectively you need to specify keyboard layouts you want to use (using "configured_keyboards")
-    and bind function "next_keyboard" to specific keys in order to change layouts.
-
-    For example:
-
-        Key([mod], "space", lazy.widget["keyboardlayout"].next_keyboard(), desc="Next keyboard layout."),
-
-    It requires setxkbmap to be available in the system.
     """
+    Widget for changing and displaying the current keyboard layout group
+
+    It requires xkb-switch to be available in the system.  setxkbmap is
+    optional dependency (to configure the keyboard locally).
+    """
+
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
-        ("update_interval", 1, "Update time in seconds."),
-        ("configured_keyboards", ["us"], "A list of predefined keyboard layouts "
-            "represented as strings. For example: "
-            "['us', 'us colemak', 'es', 'fr']."),
-        ("display_map", {}, "Custom display of layout. Key should be in format "
-            "'layout variant'. For example: "
-            "{'us': 'us ', 'lt sgs': 'sgs', 'ru phonetic': 'ru '}"),
-        ("option", None, "string of setxkbmap option. Ex., 'compose:menu,grp_led:scroll'"),
+        (
+            'compact',
+            None,
+            "Specifies the name of the compatibility map component used"
+            " to construct a keyboard layout.",
+        ),
+        (
+            'config_file',
+            None,
+            "Specifies the name of an XKB configuration file which"
+            " describes the keyboard to be used.",
+        ),
+        (
+            'device',
+            None,
+            "Specifies the numeric device id of the input device to be"
+            " updated with the new keyboard layout. If not specified,"
+            " the core keyboard device of the X server is updated.",
+        ),
+        (
+            'display',
+            None,
+            "Specifies the display to be updated with the new keyboard"
+            " layout.",
+        ),
+        (
+            'geometry',
+            None,
+            "Specifies the name of the geometry component used to"
+            " construct a keyboard layout.",
+        ),
+        (
+            'dirs',
+            None,
+            "Adds a directory to the list of directories to be used to"
+            " search for specified layout or rules files.",
+        ),
+        (
+            'keycodes',
+            None,
+            "Specifies the name of the keycodes component used to"
+            " construct a keyboard layout.",
+        ),
+        (
+            'keymap',
+            None,
+            "Specifies the name of the keymap description used to"
+            " construct a keyboard layout.",
+        ),
+        (
+            'layout_groups',
+            None,
+            "Specifies the name of the layout used to determine the"
+            " components which make up the keyboard description. For"
+            " example: ['us', 'ru', 'sk'], 'us,ru,sk'.",
+        ),
+        (
+            'model',
+            None,
+            "Specifies the name of the keyboard model used to determine"
+            " the components which make up the keyboard description."
+            " For example: 'pc101', 'pc105'.",
+        ),
+        (
+            'option',
+            None,
+            "Specifies the name of an option to determine the"
+            " components which make up the keyboard description. For"
+            " example: ['compose:menu', 'grp_led:scroll'],"
+            " 'compose:menu,grp_led:scroll'.",
+        ),
+        (
+            'rules',
+            None,
+            "Specifies the name of the rules file used to resolve the"
+            " requested layout and model to a set of component names.",
+        ),
+        (
+            'symbols',
+            None,
+            "Specifies the name of the symbols component used to"
+            " construct a keyboard layout.",
+        ),
+        (
+            'synch',
+            False,
+            "Force synchronization for X requests.",
+        ),
+        (
+            'types',
+            None,
+            "Specifies the name of the types component used to"
+            " construct a keyboard layout.",
+        ),
+        (
+            'variant',
+            None,
+            "Specifies which variant of the keyboard layout should be"
+            " used to determine the components which make up the"
+            " keyboard description.",
+        ),
     ]
 
-    def __init__(self, **config):
+    def __init__(self, **config) -> None:
+        # Instead of `base.InLoopPollText.__init__(self, **config)` to avoid
+        # adding 'update_interval' to default values.
         base.InLoopPollText.__init__(self, **config)
-        self.add_defaults(KeyboardLayout.defaults)
+        self.add_defaults(self.defaults)
+        self.raise_for_dependencies()
+        self.use_optional_dependencies_if_available()
 
-        self.keyboard = self.configured_keyboards[0]
+        asyncio.ensure_future(self.loop())
+        self.add_callbacks({'Button1': self.next_keyboard_layout_group})
 
-        self.add_callbacks({'Button1': self.next_keyboard})
-
-    def next_keyboard(self):
-        """Set the next layout in the list of configured keyboard layouts as
-        new current layout in use
-
-        If the current keyboard layout is not in the list, it will set as new
-        layout the first one in the list.
+    def raise_for_dependencies(self) -> None:
         """
+        Raises NoDependencyFoundError if at least one dependency was not
+        found
+        """
+        try:
+            self.call_process(['xkb-switch', '-v'])
+        except FileNotFoundError as e:
+            err_msg = "Please, check that xkb-switch is available (%s)"
+            logger.error(err_msg, e)
+            raise NoDependencyFoundError(err_msg % e) from None
 
-        current_keyboard = self.keyboard
-        if current_keyboard in self.configured_keyboards:
-            # iterate the list circularly
-            next_keyboard = self.configured_keyboards[
-                (self.configured_keyboards.index(current_keyboard) + 1) %
-                len(self.configured_keyboards)]
+    def use_optional_dependencies_if_available(self) -> None:
+        """
+        Checks for optional dependencies and uses them if any.  If they
+        aren't present and there is an attempt to use them then a
+        corresponding message is added to the logs.  If they aren't in
+        the system and there is no attempt to use them then nothing will
+        happen.
+        """
+        parameter_names = [i[0] for i in self.defaults]
+        parameter_values = [
+            getattr(self, name) for name in parameter_names
+        ]
+        parameters = {
+            name: value
+            for name, value in zip(parameter_names, parameter_values)
+            if value
+        }
+        try:
+            self.call_process(['setxkbmap', '-version'])
+        except FileNotFoundError:
+            if parameters:
+                logger.warning(
+                    "To use the %s parameter(s) you need setxkbmap to be"
+                    " available in the system.",
+                    ", ".join(parameters)
+                )
         else:
-            next_keyboard = self.configured_keyboards[0]
+            self._use_setxkbmap(parameters)
 
-        self.keyboard = next_keyboard
+    def _use_setxkbmap(self, parameters: dict) -> None:
+        self.dirs: Union[list, tuple, str]
+        self.layout_groups: Union[list, tuple, str]
+        exclude_parameters = ('config_file', 'dirs', 'layout_groups', 'synch')
+        for name, value in parameters.items():
+            if name not in exclude_parameters:
+                if isinstance(value, (list, tuple)):
+                    setattr(self, name, ','.join(value))
+                    value = getattr(self, name)
+                try:
+                    self.call_process(['setxkbmap', f'-{name}', value])
+                except CalledProcessError as e:
+                    logger.error(
+                        "Invalid arguments passed for %s (%s)", name, e
+                    )
+        if self.config_file:
+            try:
+                self.call_process(['setxkbmap', '-config', self.config_file])
+            except CalledProcessError as e:
+                logger.error(
+                    "Invalid arguments passed for config_file (%s)", e
+                )
+        if self.dirs:
+            if isinstance(self.dirs, (list, tuple)):
+                self.dirs = ' -I '.join(self.dirs)
+            if isinstance(self.dirs, str):
+                try:
+                    self.call_process(['setxkbmap', '-I ' + self.dirs])
+                except CalledProcessError as e:
+                    logger.error("Invalid arguments passed for dirs (%s)", e)
+            else:
+                logger.error(
+                    "dirs argument must be list, tuple or string, not %s",
+                    type(self.dirs),
+                )
+        if self.layout_groups:
+            if isinstance(self.layout_groups, (list, tuple)):
+                self.layout_groups = ','.join(self.layout_groups)
+            try:
+                self.call_process(['setxkbmap', '-layout', self.layout_groups])
+            except CalledProcessError as e:
+                logger.error(
+                    "Invalid arguments passed for layout_groups (%s)", e
+                )
+        if self.synch:
+            self.call_process(['setxkbmap', '-synch'])
 
+    async def loop(self) -> NoReturn:
+        """
+        An endless loop that updates the text when the group of the
+        current layout is updated
+        """
         self.tick()
-
-    def poll(self):
-        if self.keyboard in self.display_map.keys():
-            return self.display_map[self.keyboard]
-        return self.keyboard.upper()
-
-    def get_keyboard_layout(self, setxkbmap_output):
-        match_layout = kb_layout_regex.search(setxkbmap_output)
-        match_variant = kb_variant_regex.search(setxkbmap_output)
-
-        if match_layout is None:
-            return 'ERR'
-
-        kb = match_layout.group('layout')
-        if match_variant:
-            kb += " " + match_variant.group('variant')
-        return kb
+        while True:
+            event = await asyncio.create_subprocess_exec('xkb-switch', '-w')
+            await event.wait()
+            self.tick()
 
     @property
-    def keyboard(self):
-        """Return the currently used keyboard layout as a string
+    def current_keyboard_layout_group(self) -> str:
+        """Return the current keyboard layout group
 
-        Examples: "us", "us dvorak".  In case of error returns "unknown".
+        Examples: 'us', 'ru', 'sk'.  In case of error returns 'unknown'.
         """
         try:
-            command = 'setxkbmap -verbose 10 -query'
-            setxkbmap_output = self.call_process(command.split(' '))
-            keyboard = self.get_keyboard_layout(setxkbmap_output)
-            return str(keyboard)
+            return self.call_process(['xkb-switch', '-p']).rstrip()
         except CalledProcessError as e:
-            logger.error('Can not get the keyboard layout: {0}'.format(e))
-        except OSError as e:
-            logger.error('Please, check that xset is available: {0}'.format(e))
-        return "unknown"
+            logger.error("Can't get the keyboard layout (%s)", e)
+        return 'unknown'
 
-    @keyboard.setter
-    def keyboard(self, keyboard):
-        command = ['setxkbmap']
-        command.extend(keyboard.split(" "))
-        if self.option:
-            command.extend(['-option', self.option])
+    def next_keyboard_layout_group(self) -> None:
+        """Switch to the next keyboard layout group"""
         try:
-            self.call_process(command)
+            self.call_process(['xkb-switch', '-n'])
         except CalledProcessError as e:
-            logger.error('Can not change the keyboard layout: {0}'.format(e))
-        except OSError as e:
-            logger.error('Please, check that setxkbmap is available: {0}'.format(e))
+            logger.error("Can't set the keyboard layout (%s)", e)
 
-    def cmd_next_keyboard(self):
-        """Select next keyboard layout"""
-        self.next_keyboard()
+    def poll(self) -> str:
+        """Return the current keyboard layout group"""
+        return self.current_keyboard_layout_group
+
+    def timer_setup(self):
+        # Do not use interval update `base.InLoopPollText.timer_setup`, events
+        # are used instead.
+        pass
+
+    def button_press(self, x, y, button):
+        # To avoid unnecessary calling `self.tick`.
+        return base.InLoopPollText.button_press(self, x, y, button)
