@@ -441,7 +441,20 @@ class _Window(CommandObject):
 
     def place(self, x, y, width, height, borderwidth, bordercolor,
               above=False, margin=None):
-        """Places the window at the specified location with the given size.
+        """
+        Places the window at the specified location with the given size.
+
+        Parameters
+        ==========
+        x : int
+        y : int
+        width : int
+        height : int
+        borderwidth : int
+        bordercolor : string
+        above : bool, optional
+        margin : int or list, optional
+            space around window as int or list of ints [N E S W]
         """
 
         # TODO: self.x/y/height/width are updated BEFORE
@@ -460,10 +473,12 @@ class _Window(CommandObject):
 
         # Adjust the placement to account for layout margins, if there are any.
         if margin is not None:
-            x += margin
-            y += margin
-            width -= margin * 2
-            height -= margin * 2
+            if isinstance(margin, int):
+                margin = [margin] * 4
+            x += margin[3]
+            y += margin[0]
+            width -= margin[1] + margin[3]
+            height -= margin[0] + margin[2]
 
         # save x and y float offset
         if self.group is not None and self.group.screen is not None:
