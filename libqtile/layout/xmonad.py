@@ -359,14 +359,19 @@ class MonadTall(_SimpleLayoutBase):
             )
         else:
             # main client
-            width = width_main - 2 * self.border_width
             client.place(
-                xpos + self.margin,
-                self.screen_rect.y + self.margin,
-                width - self.margin,
-                (self.screen_rect.height - 2 * self.border_width - 2 * self.margin),
+                xpos,
+                self.screen_rect.y,
+                width_main,
+                self.screen_rect.height,
                 self.border_width,
                 px,
+                margin=[
+                    self.margin,
+                    2*self.border_width,
+                    self.margin + 2*self.border_width,
+                    self.margin
+                ],
             )
 
     def info(self):
@@ -923,14 +928,19 @@ class MonadWide(MonadTall):
             )
         else:
             # main client
-            height = height_main - 2 * self.border_width
             client.place(
-                self.screen_rect.x + self.margin,
-                ypos + self.margin,
-                (self.screen_rect.width - 2 * self.border_width - 2 * self.margin),
-                height - self.margin,
+                self.screen_rect.x,
+                ypos,
+                self.screen_rect.width,
+                height_main,
                 self.border_width,
                 px,
+                margin=[
+                    self.margin,
+                    self.margin + 2*self.border_width,
+                    2*self.border_width,
+                    self.margin,
+                ],
             )
 
     def _shrink_secondary(self, amt):
