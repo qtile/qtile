@@ -1330,6 +1330,11 @@ class Window(_Window):
         """Set window dimensions to w and h"""
         self.tweak_float(w=w, h=h)
 
+    def cmd_place(self, x, y, width, height, borderwidth, bordercolor,
+                  above=False, margin=None):
+        self.place(x, y, width, height, borderwidth, bordercolor, above,
+                   margin)
+
     def cmd_get_position(self):
         return self.getposition()
 
