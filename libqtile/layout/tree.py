@@ -540,7 +540,6 @@ class TreeTab(Layout):
             return tree
 
         d = Layout.info(self)
-        # Sort client names to work around an internal difference betwen Python 3.5 and 3.6+
         d["clients"] = sorted([x.name for x in self._nodes])
         d["sections"] = [x.title for x in self._tree.children]
 
