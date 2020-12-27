@@ -1,6 +1,6 @@
 import pytest
-from test.conftest import BareConfig
 
+from test.conftest import BareConfig
 
 bare_config = pytest.mark.parametrize("qtile", [BareConfig], indirect=True)
 
