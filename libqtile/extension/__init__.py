@@ -18,14 +18,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.utils import safe_import as safe_import_
+from libqtile.utils import make_module_getattr
 
+extensions = {
+    "CommandSet": "command_set",
+    "Dmenu": "dmenu",
+    "DmenuRun": "dmenu",
+    "J4DmenuDesktop": "dmenu",
+    "RunCommand": "base",
+    "WindowList": "window_list"
+}
 
-def safe_import(module_name, class_name):
-    safe_import_((".extension", module_name), class_name, globals())
-
-
-safe_import("base", "RunCommand")
-safe_import("dmenu", ["Dmenu", "DmenuRun", "J4DmenuDesktop"])
-safe_import("window_list", "WindowList")
-safe_import("command_set", "CommandSet")
+__all__ = tuple(extensions.keys())
+__getattr__ = make_module_getattr(extensions, __package__)
