@@ -23,7 +23,6 @@ import functools
 import glob
 import importlib
 import os
-import sys
 import traceback
 import warnings
 from collections import defaultdict
@@ -211,29 +210,19 @@ def import_class(module_path, class_name, fallback=None):
         raise
 
 
-def safe_import(module_names, class_name, globals_, fallback=None):
-    """Import a class into given globals, lazily and safely
+def make_module_getattr(registry, package, fallback=None):
+    """Leverage PEP 562 to make imports lazy in an __init__.py
 
-    The globals are filled with a proxy function so that the module is imported
-    only if the class is being instanciated.
-
-    An exception is made when the documentation is being built with Sphinx, in
-    which case the class is eagerly imported, for inspection.
+    The registry must be a dictionary with the items to import as keys and the
+    modules they belong to as a value.
     """
-    module_path = '.'.join(module_names)
-    if type(class_name) is list:
-        for name in class_name:
-            safe_import(module_names, name, globals_)
-        return
+    def __getattr__(name):
+        if name not in registry:
+            raise AttributeError
+        module_path = "{}.{}".format(package, registry[name])
+        return import_class(module_path, name, fallback=fallback)
 
-    def class_proxy(*args, **kwargs):
-        cls = import_class(module_path, class_name, fallback)
-        return cls(*args, **kwargs)
-
-    if "sphinx" in sys.modules:
-        globals_[class_name] = import_class(module_path, class_name, fallback)
-    else:
-        globals_[class_name] = class_proxy
+    return __getattr__
 
 
 def send_notification(title, message, urgent=False, timeout=10000, id=None):
