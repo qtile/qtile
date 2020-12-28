@@ -26,7 +26,6 @@
     If dbus is available, this module implements a
     org.freedesktop.Notifications service.
 """
-from collections import OrderedDict
 from enum import Enum
 from threading import RLock, Thread, current_thread, main_thread
 
@@ -115,15 +114,15 @@ class Notification:
 
 class NotificationManager:
     def __init__(self):
-        # Use OrderedDict to maintain order
-        self._notifications = OrderedDict()
+        # Use dict to be able to reference notifications easily and keep order
+        self._notifications = {}
         # Use a dict for indexing for quick finding prev/next notification
-        self._notifications_idx = dict()
+        self._notifications_idx = {}
         self._current_id = 0
         self.callbacks_add = []
         self.callbacks_delete = []
         self._service = None
-        # Use a lock to protect notification concurrency.
+        # Use a lock to protect notification concurrency
         self._lock = RLock()
 
     @property
@@ -213,8 +212,9 @@ class NotificationManager:
         with self._lock:
             # Find the id of the previous notification
             if self._notifications:
-                prev_id = next(reversed(self._notifications))
-                prev_id = self._notifications[prev_id].id
+                # Python 3.7 compatibility. For python 3.8 and later ommit
+                # the list since dict and dict_keys are reversible.
+                prev_id = next(reversed(list(self._notifications.keys())))
             else:
                 prev_id = None
 
@@ -222,10 +222,10 @@ class NotificationManager:
             notif.id = self._current_id
             self._notifications[notif.id] = notif
             # Assign prev_id to notifications indexing dict
-            self._notifications_idx[notif.id] = dict(
-                prev_id=prev_id,
-                next_id=None
-            )
+            self._notifications_idx[notif.id] = {
+                'prev_id': prev_id,
+                'next_id': None
+            }
 
             # Set next_id of previous notification to this notification's id.
             if prev_id is not None:
@@ -295,7 +295,7 @@ class NotificationManager:
     def delete_all(self):
         with self._lock:
             notifs_deleted = self._notifications.values()
-            self._notifications = OrderedDict()
+            self._notifications = {}
             self._notifications_idx = {}
 
         for callback in self.callbacks_delete:
