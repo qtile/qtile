@@ -207,7 +207,7 @@ def import_class(module_path, class_name, fallback=None):
                        class_name, error)
         if fallback:
             logger.debug("%s", traceback.format_exc())
-            return fallback(module_path, class_name, error)
+            return fallback(module_path, class_name)
         raise
 
 
