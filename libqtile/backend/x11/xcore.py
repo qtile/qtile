@@ -227,7 +227,7 @@ class XCore(base.Core):
             if state and state[0] == window.WithdrawnState:
                 item.unmap()
                 continue
-            self.qtile.manage(item)
+            self.qtile.manage(item, assume_correct_layering=True)
 
     def convert_selection(self, selection_atom, _type="UTF8_STRING") -> None:
         type_atom = self.conn.atoms[_type]

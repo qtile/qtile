@@ -652,7 +652,7 @@ class Qtile(CommandObject):
                 pass
         self.unmanage(window_id)
 
-    def manage(self, w):
+    def manage(self, w, assume_correct_layering=False):
         try:
             attrs = w.get_attributes()
             internal = w.get_property("QTILE_INTERNAL")
@@ -692,7 +692,10 @@ class Qtile(CommandObject):
                     c.window.net_wm_state_above = self.windows_map[parent].window.net_wm_state_above
                     c.window.net_wm_state_below = self.windows_map[parent].window.net_wm_state_below
                 self.update_client_list()
-                self.change_layer(w.wid, force=True)
+                if assume_correct_layering:
+                    self.update_client_order()
+                else:
+                    self.change_layer(w.wid, force=True)
                 hook.fire("client_managed", c)
             return c
         else:
