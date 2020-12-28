@@ -1,4 +1,6 @@
 qtile X.X.X, released XXXX-XX-XX:
+    !!! Python version breakage !!!
+        - Python 3.5 and 3.6 are no longer supported
     !!! Config breakage !!!
         - Pacman widget has been removed. Use CheckUpdates instead.
         - property "masterWindows" of Tile layout renamed to master_length
