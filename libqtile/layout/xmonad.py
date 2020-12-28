@@ -903,7 +903,7 @@ class MonadWide(MonadTall):
                 self._get_absolute_size_from_relative(
                     sum(self.relative_sizes[:cidx - 1])
                 )
-            # get width from precalculated witdh list
+            # get width from precalculated width list
             width = self._get_absolute_size_from_relative(
                 self.relative_sizes[cidx - 1]
             )
