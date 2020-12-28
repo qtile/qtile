@@ -29,7 +29,7 @@
 from os import path
 
 from libqtile import bar, pangocffi, utils
-from libqtile.notify import notifier
+from libqtile.notify import Notification, notifier
 from libqtile.widget import base
 
 
@@ -51,10 +51,12 @@ class Notify(base._TextBox):
         base._TextBox.__init__(self, "", width, **config)
         self.add_defaults(Notify.defaults)
         notifier.register(self.update)
-        self.current_id = 0
+        notifier.register_delete(self.delete)
+        self.current_notif = None
 
         self.add_callbacks({
             'Button1': self.clear,
+            'Button3': self.clear_all,
             'Button4': self.prev,
             'Button5': self.next,
         })
@@ -72,11 +74,12 @@ class Notify(base._TextBox):
 
     def set_notif_text(self, notif):
         self.text = pangocffi.markup_escape_text(notif.summary)
-        urgency = notif.hints.get('urgency', 1)
-        if urgency != 1:
+        urgency = Notification.Urgency(notif)
+        if urgency != Notification.Urgency.NORMAL:
             self.text = '<span color="%s">%s</span>' % (
                 utils.hex(
-                    self.foreground_urgent if urgency == 2
+                    self.foreground_urgent
+                    if urgency == Notification.Urgency.CRITICAL
                     else self.foreground_low
                 ),
                 self.text
@@ -93,31 +96,59 @@ class Notify(base._TextBox):
 
     def real_update(self, notif):
         self.set_notif_text(notif)
-        self.current_id = notif.id - 1
+        self.current_notif = notif
         if notif.timeout and notif.timeout > 0:
-            self.timeout_add(notif.timeout / 1000, self.clear)
+            self.timeout_add(notif.timeout / 1000, notifier.delete, (notif, ))
         elif self.default_timeout:
-            self.timeout_add(self.default_timeout, self.clear)
+            self.timeout_add(self.default_timeout, notifier.delete, (notif, ))
         self.bar.draw()
         return True
 
-    def display(self):
-        self.set_notif_text(notifier.notifications[self.current_id])
+    def delete(self, *notifs):
+        self.qtile.call_soon_threadsafe(self.real_delete, *notifs)
+
+    def real_delete(self, *notifs):
+        if not self.current_notif:
+            return False
+
+        notif_ids = set(notif.id for notif in notifs)
+        if self.current_notif.id not in notif_ids:
+            return False
+
+        # Show next notification on delete
+        # If there is no next show a previous one
+        next_notif = notifier.next(self.current_notif)
+        if not next_notif:
+            next_notif = notifier.prev(self.current_notif)
+
+        self.current_notif = next_notif
+        # If there is neither next or prev notif text should be empty
+        if not next_notif:
+            self.text = ''
+        else:
+            self.set_notif_text(next_notif)
         self.bar.draw()
+
+    def display(self):
+        self.set_notif_text(self.current_notif)
+        self.bar.draw()
+
+    def clear_all(self):
+        notifier.delete_all()
 
     def clear(self):
-        self.text = ''
-        self.current_id = len(notifier.notifications) - 1
-        self.bar.draw()
+        notifier.delete(self.current_notif)
 
     def prev(self):
-        if self.current_id > 0:
-            self.current_id -= 1
-        self.display()
+        prev_notif = notifier.prev(self.current_notif)
+        if prev_notif:
+            self.current_notif = prev_notif
+            self.display()
 
     def next(self):
-        if self.current_id < len(notifier.notifications) - 1:
-            self.current_id += 1
+        next_notif = notifier.next(self.current_notif)
+        if next_notif:
+            self.current_notif = next_notif
             self.display()
 
     def cmd_display(self):
