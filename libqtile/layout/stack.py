@@ -62,7 +62,7 @@ class Stack(Layout):
         ("autosplit", False, "Auto split all new stacks."),
         ("num_stacks", 2, "Number of stacks."),
         ("fair", False, "Add new windows to the stacks in a round robin way."),
-        ("margin", 0, "Margin of the layout"),
+        ("margin", 0, "Margin of the layout (int or list of ints [N E S W])"),
     ]
 
     def __init__(self, **config):

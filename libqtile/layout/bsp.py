@@ -152,7 +152,7 @@ class Bsp(Layout):
         ("border_focus", "#881111", "Border colour for the focused window."),
         ("border_normal", "#220000", "Border colour for un-focused windows."),
         ("border_width", 2, "Border width."),
-        ("margin", 0, "Margin of the layout."),
+        ("margin", 0, "Margin of the layout (int or list of ints [N E S W])."),
         ("ratio", 1.6,
          "Width/height ratio that defines the partition direction."),
         ("grow_amount", 10, "Amount by which to grow a window/column."),
