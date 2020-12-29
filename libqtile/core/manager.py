@@ -19,6 +19,7 @@
 # SOFTWARE.
 
 import asyncio
+import enum
 import io
 import logging
 import os
@@ -79,6 +80,12 @@ def handle_exception(loop, context):
         logger.error(context["exception"], exc_info=True)
     else:
         logger.error("exception in event loop: %s", context)
+
+
+class LayerChange(enum.Enum):
+    Deny = -1
+    Auto = 0
+    Force = 1
 
 
 class Qtile(CommandObject):
@@ -463,7 +470,7 @@ class Qtile(CommandObject):
         windows = [wid for wid, c in self.windows_map.items() if c.group]
         self.core.update_client_order(windows)
 
-    def change_layer(self, wid, up=True, force=False):
+    def change_layer(self, wid, up=True, do=LayerChange.Auto):
         """Raise a window above its peers or move it below them, depending on 'up'.
         Raising a normal window will not lift it above pinned windows etc.
         """
@@ -504,7 +511,8 @@ class Qtile(CommandObject):
 
         for i, w in items:
             self.windows_map.move_to_end(i, last=up)
-        if force or order != list(self.windows_map.keys()):
+        if do == LayerChange.Force or \
+                (do == LayerChange.Auto and order != list(self.windows_map.keys())):
             client.window.configure(stackmode=StackMode.Above if up else StackMode.Below)
             for i, w in items:
                 w.window.configure(stackmode=StackMode.Above if up else StackMode.Below)
@@ -692,10 +700,7 @@ class Qtile(CommandObject):
                     c.window.net_wm_state_above = self.windows_map[parent].window.net_wm_state_above
                     c.window.net_wm_state_below = self.windows_map[parent].window.net_wm_state_below
                 self.update_client_list()
-                if assume_correct_layering:
-                    self.update_client_order()
-                else:
-                    self.change_layer(w.wid, force=True)
+                self.change_layer(w.wid, do=LayerChange.Deny if assume_correct_layering else LayerChange.Force)
                 hook.fire("client_managed", c)
             return c
         else:
