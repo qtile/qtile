@@ -117,7 +117,7 @@ class Columns(Layout):
          "Border colour for un-focused windows in stacked columns."),
         ("border_width", 2, "Border width."),
         ("border_on_single", False, "Draw a border when there is one only window."),
-        ("margin", 0, "Margin of the layout."),
+        ("margin", 0, "Margin of the layout (int or list of ints [N E S W])."),
         ("split", True, "New columns presentation mode."),
         ("num_columns", 2, "Preferred number of columns."),
         ("grow_amount", 10, "Amount by which to grow a window/column."),

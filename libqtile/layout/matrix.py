@@ -41,7 +41,7 @@ class Matrix(_SimpleLayoutBase):
         ("border_normal", "#000000", "Border colour for un-focused windows."),
         ("border_width", 1, "Border width."),
         ("name", "matrix", "Name of this layout."),
-        ("margin", 0, "Margin of the layout"),
+        ("margin", 0, "Margin of the layout (int or list of ints [N E S W])"),
     ]
 
     def __init__(self, columns=2, **config):
