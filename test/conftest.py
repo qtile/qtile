@@ -262,9 +262,9 @@ class Xephyr:
 class TestManager:
     """Spawn a Qtile instance
 
-    Setup a qtile server instance on the given display, with the given socket
-    and log files.  The qtile server must be started, and then stopped when it
-    is done.  Windows can be spawned for the qtile instance to interact with
+    Setup a Qtile server instance on the given display, with the given socket
+    and log files.  The Qtile server must be started, and then stopped when it
+    is done.  Windows can be spawned for the Qtile instance to interact with
     with various `.test_*` methods.
     """
     def __init__(self, sockfile, display, debug_log):
@@ -299,8 +299,8 @@ class TestManager:
             return
         if rpipe.poll(sleep_time):
             error = rpipe.recv()
-            raise AssertionError("Error launching Qtile, traceback:\n%s" % error)
-        raise AssertionError("Error launching Qtile")
+            raise AssertionError("Error launching qtile, traceback:\n%s" % error)
+        raise AssertionError("Error launching qtile")
 
     def create_manager(self, config_class):
         """Create a Qtile manager instance in this thread
@@ -320,7 +320,7 @@ class TestManager:
 
     def terminate(self):
         if self.proc is None:
-            print("Qtile is not alive", file=sys.stderr)
+            print("qtile is not alive", file=sys.stderr)
         else:
             # try to send SIGTERM and wait up to 10 sec to quit
             self.proc.terminate()
@@ -337,7 +337,7 @@ class TestManager:
                     pass
 
             if self.proc.exitcode:
-                print("Qtile exited with exitcode: %d" % self.proc.exitcode, file=sys.stderr)
+                print("qtile exited with exitcode: %d" % self.proc.exitcode, file=sys.stderr)
 
             self.proc = None
 

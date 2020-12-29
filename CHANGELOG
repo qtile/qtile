@@ -1,4 +1,4 @@
-qtile X.X.X, released XXXX-XX-XX:
+Qtile X.X.X, released XXXX-XX-XX:
     !!! Python version breakage !!!
         - Python 3.5 and 3.6 are no longer supported
     !!! Config breakage !!!
@@ -52,7 +52,7 @@ qtile X.X.X, released XXXX-XX-XX:
           running old version to pass state in the previous format to the new
           process which recognises the new.
 
-qtile 0.16.1, released 2020-08-11:
+Qtile 0.16.1, released 2020-08-11:
     !!! Config breakage !!!
         - Hooks 'addgroup', 'delgroup' and 'screen_change' will no longer
           receive the qtile object as an argument. It can be accessed directly
@@ -69,7 +69,7 @@ qtile 0.16.1, released 2020-08-11:
         - fix transparent borders
         - MonadTall, MonadWide, and TreeTab now work with Slice
 
-qtile 0.16.0, released 2020-07-20:
+Qtile 0.16.0, released 2020-07-20:
     !!! Config breakage !!!
         - Imports from libqtile.widget are now made through a function
           proxy to avoid the side effects of importing all widgets at
@@ -105,11 +105,11 @@ qtile 0.16.0, released 2020-07-20:
         - fix a crash when decoding images
         - fix the .when() constraint for lazy objects
 
-qtile 0.15.1, released 2020-04-14
+Qtile 0.15.1, released 2020-04-14
     * bugfixes
         - fix qtile reload (it was crashing)
 
-qtile 0.15.0, released 2020-04-12:
+Qtile 0.15.0, released 2020-04-12:
     !!! Config breakage !!!
         - removed the mpd widget, which depended on python-mpd.
         - the Clock widget now requires pytz to handle timezones that are
@@ -148,17 +148,17 @@ qtile 0.15.0, released 2020-04-12:
         - don't print help if qtile-cmd function returns nothing
         - Monad layout: fix margins when flipped
 
-qtile 0.14.2, released 2019-06-19:
+Qtile 0.14.2, released 2019-06-19:
     * bugfixes
         - previous release still exhibited same issues with package data,
           really fix it this time
 
-qtile 0.14.1, released 2019-06-19:
+Qtile 0.14.1, released 2019-06-19:
     * bugfixes
         - properly include png files in the package data to install included
           icons
 
-qtile 0.14.0, released 2019-06-19:
+Qtile 0.14.0, released 2019-06-19:
     !!! Python version breakage !!!
         - Python 2 is no longer supported
         - Python 3.4 and older is no longer supported
@@ -186,7 +186,7 @@ qtile 0.14.0, released 2019-06-19:
         - fix stack layout to properly shuffle
         - silence errors when unmapping windows
 
-qtile 0.13.0, released 2018-12-23:
+Qtile 0.13.0, released 2018-12-23:
     !!! deprecation warning !!!
         - wmii layout is deprecated in terms of columns layout, which has the
           same behavior with different defaults, see the wmii definition for
@@ -205,7 +205,7 @@ qtile 0.13.0, released 2018-12-23:
         - various fixes to check_update widget
         - fix 0 case for resize screen
 
-qtile 0.12.0, released 2018-07-20:
+Qtile 0.12.0, released 2018-07-20:
     !!! Config breakage !!!
         - Tile layout commands up/down/shuffle_up/shuffle_down changed to be
           more consistent with other layouts
@@ -229,11 +229,11 @@ qtile 0.12.0, released 2018-07-20:
         - fix calling `focus_previous/next` with no windows
         - fix floating bug is BSP layout
 
-qtile 0.11.1, released 2018-03-01:
+Qtile 0.11.1, released 2018-03-01:
     * bug fix
         - fixed pip install of qtile
 
-qtile 0.11.0, released 2018-02-28:
+Qtile 0.11.0, released 2018-02-28:
     !!! Completely changed extension configuration, see the documentation !!!
     !!! `extention` subpackage renamed to `extension` !!!
     !!! `extentions` configuration variable changed to `extension_defaults` !!!
@@ -266,7 +266,7 @@ qtile 0.11.0, released 2018-02-28:
         - don't crash when using widget with unmet dependencies
         - fix floating window default location
 
-qtile 0.10.7, released 2017-02-14:
+Qtile 0.10.7, released 2017-02-14:
     * features
         - new MPD widget, widget.MPD2, based on `mpd2` library
         - add option to ignore duplicates in prompt widget
@@ -283,7 +283,7 @@ qtile 0.10.7, released 2017-02-14:
         - fix bug in Screen.resize
         - fix Qtile.display_kb command
 
-qtile 0.10.6, released 2016-05-24:
+Qtile 0.10.6, released 2016-05-24:
     !!! qsh renamed to qshell !!!
         This avoids name collision with other packages
     * features
@@ -300,7 +300,7 @@ qtile 0.10.6, released 2016-05-24:
         - the prompt widget's history file changed from ~/.qtile_history to
           ~/.cache/qtile/prompt_history
 
-qtile 0.10.5, released 2016-03-06:
+Qtile 0.10.5, released 2016-03-06:
     !!! Python 3.2 support dropped !!!
     !!! GoogleCalendar widget dropped for KhalCalendar widget !!!
     !!! qtile-session script removed in favor of qtile script !!!
@@ -318,7 +318,7 @@ qtile 0.10.5, released 2016-03-06:
         - fix KeyboardLayout widget cycling keyboard
         - properly guard against setting screen to too large screen index
 
-qtile 0.10.4, released 2016-01-19:
+Qtile 0.10.4, released 2016-01-19:
     !!! Config breakage !!!
         - positional arguments to Slice layout removed, now `side` and `width`
           must be passed in as keyword arguments
@@ -330,7 +330,7 @@ qtile 0.10.4, released 2016-01-19:
         - support empty or non-charging secondary battery in BatteryWidget
         - fix GoogleCalendar widget crash
 
-qtile 0.10.3, released 2015-12-25:
+Qtile 0.10.3, released 2015-12-25:
     * features
         - add wmii layout
         - add BSD support to graph widgets
@@ -343,7 +343,7 @@ qtile 0.10.3, released 2015-12-25:
         - remove duplicate assert code in test_verticaltile.py
         - allow padding_{x,y} and margin_{x,y} widget attrs to be set to 0
 
-qtile 0.10.2, released 2015-10-19:
+Qtile 0.10.2, released 2015-10-19:
     * features
         - add qtile-top memory monitoring
         - GroupBox can set visible groups
@@ -374,11 +374,11 @@ qtile 0.10.2, released 2015-10-19:
         - layouts.VerticalTile focus_next/focus_previous now take a single
           argument, similar to other layouts
 
-qtile 0.10.1, released 2015-07-08:
+Qtile 0.10.1, released 2015-07-08:
     This release fixes a problem that made the PyPI package uninstallable,
     qtile will work with a pip install now
 
-qtile 0.10.0, released 2015-07-07:
+Qtile 0.10.0, released 2015-07-07:
     !!! Config breakage !!!
         - various deprecated commands have been removed:
             Screen.cmd_nextgroup: use cmd_next_group
@@ -418,7 +418,7 @@ qtile 0.10.0, released 2015-07-07:
         - handle _NET_WM_STATE_DEMANDS_ATTENTION as setting urgency
         - fix get_wm_transient_for, request WINDOW, not ATOM
 
-qtile 0.9.1, released 2015-02-13:
+Qtile 0.9.1, released 2015-02-13:
     This is primarily a unicode bugfix release for 0.9.0; there were several
     nits related to the python2/3 unicode conversion that were simply wrong.
     This release also adds license headers to each file, which is necessary for
@@ -427,14 +427,14 @@ qtile 0.9.1, released 2015-02-13:
         - fix python2's importing of gobject
         - fix unicode handling in several places
 
-qtile 0.9.0, released 2015-01-20:
+Qtile 0.9.0, released 2015-01-20:
     * !!! Dependency Changes !!!
-      New dependencies will need to be installed for qtile to work
+      New dependencies will need to be installed for Qtile to work
         - drop xpyb for xcffib (XCB bindings)
         - drop py2cairo for cairocffi (Cairo bindings)
         - drop PyGTK for asyncio (event loop, pangocairo bindings managed
           internally)
-        - qtile still depends on gobject if you want to use anything that uses
+        - Qtile still depends on gobject if you want to use anything that uses
           dbus (e.g. the mpris widgets or the libnotify widget)
     * features
         - add Python 3 and pypy support (made possible by dependency changes)
@@ -464,10 +464,10 @@ qtile 0.9.0, released 2015-01-20:
         - windows with the "About" role float by default
         - got rid of a bunch of unnecessary bare except: clauses
 
-qtile 0.8.0, released 2014-08-18:
+Qtile 0.8.0, released 2014-08-18:
     * features
         - massive widget/layout documentation update
-        - new widget debuginfo for use in qtile development
+        - new widget debuginfo for use in Qtile development
         - stack has new autosplit, fair options
         - matrix, ratiotile, stack, xmonad, zoomy get 'margin' option
         - new launchbar widget
@@ -481,7 +481,7 @@ qtile 0.8.0, released 2014-08-18:
         - new Clipboard widget (very handy!)
     * bugfixes
         - bitcoin ticker widget switched from MtGox (dead) to btc-e
-        - all widgets now use qtile's defaults system, so their defaults are
+        - all widgets now use Qtile's defaults system, so their defaults are
           settable globally, etc.
         - fix behavior when screens are cloned
         - all widgets use a unified polling framework
@@ -495,7 +495,7 @@ qtile 0.8.0, released 2014-08-18:
     * config breakage
         - libqtile.layout.Stack's `stacks` parameter is now `num_stacks`
 
-qtile 0.7.0, released 2014-03-30:
+Qtile 0.7.0, released 2014-03-30:
     * features
         - new disk free percentage widget
         - new widget to display static image
@@ -521,7 +521,7 @@ qtile 0.7.0, released 2014-03-30:
     * config breakage
         - Tile's shuffleMatch is renamed to resetMaster
 
-qtile 0.6, released 2013-05-11:
+Qtile 0.6, released 2013-05-11:
     !!! Config breakage !!!
     This release breaks your config file in several ways:
         - The Textbox widget no longer takes a ``name'' positional parameter,
@@ -572,7 +572,7 @@ qtile 0.6, released 2013-05-11:
         - don't try to load config in qsh (not used)
         - fix font alignment across Textbox based widgets
 
-qtile 0.5, released 2012-11-11:
+Qtile 0.5, released 2012-11-11:
     (Note, this is not complete! Many, many changes have gone in to 0.5, by a
     large number of contributors. Thanks to everyone who reported a bug or
     fixed one!)

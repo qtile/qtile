@@ -242,18 +242,18 @@ group.
 The simplest form of the command interface is the ``QtileCommandInterface``,
 which can take an in-process ``Qtile`` instance as the root ``CommandObject``
 and execute requested commands.  This is typically how we run the unit tests
-for qtile.
+for Qtile.
 
 The other primary example of this is the ``IPCCommandInterface`` which is able
-to then route all calls through an IPC client connected to a running qtile
+to then route all calls through an IPC client connected to a running Qtile
 instance.  In this case, the command graph call can be constructed on the
-client side without having to dispatch to qtile and once the call is
+client side without having to dispatch to Qtile and once the call is
 constructed and deemed valid, the call can be executed.
 
 In both of these cases, executing a command on a command interface will return
-the result of executing the command on a running qtile instance.  To support
+the result of executing the command on a running Qtile instance.  To support
 lazy execution, the ``LazyCommandInterface`` instead returns a ``LazyCall``
-which is able to be resolved later by the running qtile instance when it is
+which is able to be resolved later by the running Qtile instance when it is
 configured to fire.
 
 Tying it together: Command Client
@@ -291,7 +291,7 @@ going on when we call:
     print(c.status())
 
 In both cases, the command clients are constructed with the default command
-interface, which sets up an IPC connection to the running qtile instance, and
+interface, which sets up an IPC connection to the running Qtile instance, and
 starts the client at the graph root.  When we call ``c.call("status")`` or
 ``c.status``, we navigate the command client to the ``status`` command on the
 root graph object.  When these are invoked, the commands graph calls are
@@ -303,4 +303,4 @@ of objects in the command graph from actually invoking or looking up any
 objects within the graph can be seen in the ``lazy`` module.  By creating a
 lazy evaluated command client, we can expose the graph traversal and object
 resolution functionality via the same ``InteractiveCommandClient`` that is used
-to perform live command execution in the qtile prompt.
+to perform live command execution in the Qtile prompt.
