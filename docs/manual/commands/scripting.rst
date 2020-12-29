@@ -24,7 +24,7 @@ command documentation is available through the :ref:`Qtile Shell
 Example
 =======
 
-Below is a very minimal example script that inspects the current qtile
+Below is a very minimal example script that inspects the current Qtile
 instance, and returns the integer offset of the current screen.
 
 .. code-block:: python
