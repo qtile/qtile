@@ -15,6 +15,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
+from functools import partial
 
 from libqtile.widget import base
 
@@ -44,6 +45,12 @@ class Cmus(base.ThreadPoolText):
         self.add_defaults(Cmus.defaults)
         self.status = ""
         self.local = None
+
+        self.add_callbacks({
+            'Button1': self.play,
+            'Button4': partial(subprocess.Popen, ['cmus-remote', '-n']),
+            'Button5': partial(subprocess.Popen, ['cmus-remote', '-r']),
+        })
 
     def get_info(self):
         """Return a dictionary with info about the current cmus status."""
@@ -111,24 +118,13 @@ class Cmus(base.ThreadPoolText):
         else:
             self.bar.draw()
 
+    def play(self):
+        """Play music if stopped, else toggle pause."""
+        if self.status in ('playing', 'paused'):
+            subprocess.Popen(['cmus-remote', '-u'])
+        elif self.status == 'stopped':
+            subprocess.Popen(['cmus-remote', '-p'])
+
     def poll(self):
         """Poll content for the text box."""
         return self.now_playing()
-
-    def button_press(self, x, y, button):
-        """What to do when press a mouse button over the cmus widget.
-
-        Will:
-            - toggle pause (or play if stopped) on left click;
-            - skip forward in playlist on scroll up;
-            - skip backward in playlist on scroll down.
-        """
-        if button == 1:
-            if self.status in ('playing', 'paused'):
-                subprocess.Popen(['cmus-remote', '-u'])
-            elif self.status == 'stopped':
-                subprocess.Popen(['cmus-remote', '-p'])
-        elif button == 4:
-            subprocess.Popen(['cmus-remote', '-n'])
-        elif button == 5:
-            subprocess.Popen(['cmus-remote', '-r'])

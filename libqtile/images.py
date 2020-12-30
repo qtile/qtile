@@ -1,3 +1,5 @@
+# Copyright (c) 2020, Matt Colligan. All rights reserved.
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -18,11 +20,12 @@
 
 import io
 import os
-import re
-from collections import OrderedDict, defaultdict, namedtuple
+from collections import OrderedDict, namedtuple
 
 import cairocffi
 import cairocffi.pixbuf
+
+from libqtile.utils import scan_files
 
 
 class LoadingError(Exception):
@@ -300,69 +303,38 @@ class Img:
         return s0 == s1
 
 
-def get_matching_files(dirpath='.', explicit_filetype=False, *names):
-    """Search dirpath recursively for files matching the names
-
-    Return a dict with keys equal to entries in names
-    and values a list of matching paths.
-    """
-    def match_files_in_dir(dirpath, regex_pattern):
-        for dpath, dnames, fnames in os.walk(dirpath):
-            matches = (regex_pattern.match(x) for x in fnames)
-            for match in (x for x in matches if x):
-                d = match.groupdict()
-                d['directory'] = dpath
-                yield d
-
-    pat_str = '(?P<name>' + '|'.join(map(re.escape, names)) + ')'
-    if explicit_filetype:
-        pat_str += '$'
-    else:
-        pat_str += r'\.(?P<suffix>\w+)$'
-    regex_pattern = re.compile(pat_str, flags=re.IGNORECASE)
-
-    d_total = defaultdict(list)
-    join_path = os.path.join
-    for d_match in match_files_in_dir(dirpath, regex_pattern):
-        name, directory = d_match['name'], d_match['directory']
-        try:
-            suffix = d_match['suffix']
-            filename = '.'.join((name, suffix))
-        except KeyError:
-            filename = name
-        d_total[name].append(join_path(directory, filename))
-    return d_total
-
-
 class Loader:
     """Loader - create Img() instances from image names
 
     load icons with Loader e.g.,
     >>> ldr = Loader('/usr/share/icons/Adwaita/24x24', '/usr/share/icons/Adwaita')
-    >>> d_loaded_images = ldr.icons('audio-volume-muted', 'audio-volume-low')
+    >>> d_loaded_images = ldr('audio-volume-muted', 'audio-volume-low')
     """
     def __init__(self, *directories, **kwargs):
-        self.explicit_filetype = False
         for k, v in kwargs.items():
             setattr(self, k, v)
         self.directories = list(directories)
 
     def __call__(self, *names):
-        d = dict(self._get_images(names))
-        return OrderedDict(((x, d[x]) for x in names))
-
-    def _get_images(self, names):
+        d = OrderedDict()
         seen = set()
-        set_names = set(names)
+        set_names = set()
+        for n in names:
+            root, ext = os.path.splitext(n)
+            if ext:
+                set_names.add(n)
+            else:
+                set_names.add(n + '.*')
 
-        explicit = self.explicit_filetype
-        matching = get_matching_files
-        from_path = Img.from_path
         for directory in self.directories:
-            d_matches = matching(directory, explicit, *(set_names - seen))
+            d_matches = scan_files(directory, *(set_names - seen))
             for name, paths in d_matches.items():
-                yield (name, from_path(paths[0]))
-                seen.add(name)
+                if paths:
+                    d[name if name in names else name[:-2]] = Img.from_path(paths[0])
+                    seen.add(name)
+
         if seen != set_names:
             msg = "Wasn't able to find images corresponding to the names: {}"
             raise LoadingError(msg.format(set_names - seen))
+
+        return d

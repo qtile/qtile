@@ -25,14 +25,11 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import inspect
 import os
 
 import cairocffi
 
 from libqtile import bar, hook
-from libqtile import layout as layout_module
-from libqtile.layout.base import Layout
 from libqtile.log_utils import logger
 from libqtile.widget import base
 
@@ -52,18 +49,17 @@ class CurrentLayout(base._TextBox):
         self.text = self.bar.screen.group.layouts[0].name
         self.setup_hooks()
 
+        self.add_callbacks({
+            'Button1': qtile.cmd_next_layout,
+            'Button2': qtile.cmd_prev_layout,
+        })
+
     def setup_hooks(self):
         def hook_response(layout, group):
             if group.screen is not None and group.screen == self.bar.screen:
                 self.text = layout.name
                 self.bar.draw()
         hook.subscribe.layout_change(hook_response)
-
-    def button_press(self, x, y, button):
-        if button == 1:
-            self.qtile.cmd_next_layout()
-        elif button == 2:
-            self.qtile.cmd_prev_layout()
 
 
 class CurrentLayoutIcon(base._TextBox):
@@ -123,6 +119,11 @@ class CurrentLayoutIcon(base._TextBox):
         self._setup_images()
         self._setup_hooks()
 
+        self.add_callbacks({
+            'Button1': qtile.cmd_next_layout,
+            'Button2': qtile.cmd_prev_layout,
+        })
+
     def _setup_hooks(self):
         """
         Listens for layout change and performs a redraw when it occurs.
@@ -132,12 +133,6 @@ class CurrentLayoutIcon(base._TextBox):
                 self.current_layout = layout.name
                 self.bar.draw()
         hook.subscribe.layout_change(hook_response)
-
-    def button_press(self, x, y, button):
-        if button == 1:
-            self.qtile.cmd_next_layout()
-        elif button == 2:
-            self.qtile.cmd_prev_layout()
 
     def draw(self):
         if self.icons_loaded:
@@ -161,12 +156,7 @@ class CurrentLayoutIcon(base._TextBox):
         """
         Returns the list of lowercased strings for each available layout name.
         """
-        return [
-            layout_class_name.lower()
-            for layout_class, layout_class_name
-            in map(lambda x: (getattr(layout_module, x), x), dir(layout_module))
-            if inspect.isclass(layout_class) and issubclass(layout_class, Layout)
-        ]
+        return [layout.__class__.__name__.lower() for layout in self.qtile.config.layouts]
 
     def _update_icon_paths(self):
         self.icon_paths = []

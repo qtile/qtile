@@ -34,14 +34,14 @@ class Max(_SimpleLayoutBase):
     defaults = [("name", "max", "Name of this layout.")]
 
     def __init__(self, **config):
-        _SimpleLayoutBase.__init__(self, **config)
+        super().__init__(**config)
         self.add_defaults(Max.defaults)
 
     def clone(self, group):
-        return _SimpleLayoutBase.clone(self, group)
+        return super().clone(group)
 
     def add(self, client):
-        return self.clients.add(client, 1)
+        return super().add(client, 1)
 
     def configure(self, client, screen_rect):
         if self.clients and client is self.clients.current_client:

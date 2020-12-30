@@ -24,22 +24,11 @@
 import locale
 import logging
 from os import getenv, makedirs, path
+from sys import exit, stdout
 
 from libqtile import confreader
 from libqtile.backend.x11 import xcore
 from libqtile.log_utils import init_log, logger
-
-try:
-    locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())  # type: ignore
-except locale.Error:
-    pass
-
-
-try:
-    import pkg_resources
-    VERSION = pkg_resources.require("qtile")[0].version
-except (pkg_resources.DistributionNotFound, ImportError):
-    VERSION = 'dev'
 
 
 def rename_process():
@@ -58,17 +47,57 @@ def rename_process():
         pass
 
 
-def make_qtile():
-    from argparse import ArgumentParser
-    parser = ArgumentParser(
-        description='A full-featured, pure-Python tiling window manager.',
-        prog='qtile',
+def make_qtile(options):
+    log_level = getattr(logging, options.log_level)
+    init_log(log_level=log_level, log_color=stdout.isatty())
+    kore = xcore.XCore()
+
+    if not path.isfile(options.configfile):
+        try:
+            makedirs(path.dirname(options.configfile), exist_ok=True)
+            from shutil import copyfile
+            default_config_path = path.join(path.dirname(__file__),
+                                            "..",
+                                            "resources",
+                                            "default_config.py")
+            copyfile(default_config_path, options.configfile)
+            logger.info('Copied default_config.py to %s', options.configfile)
+        except Exception as e:
+            logger.exception('Failed to copy default_config.py to %s: (%s)',
+                             options.configfile, e)
+
+    config = confreader.Config(options.configfile, kore=kore)
+
+    # XXX: the import is here because we need to call init_log
+    # before start importing stuff
+    from libqtile.core import session_manager
+    return session_manager.SessionManager(
+        kore,
+        config,
+        fname=options.socket,
+        no_spawn=options.no_spawn,
+        state=options.state,
     )
-    parser.add_argument(
-        '--version',
-        action='version',
-        version=VERSION,
-    )
+
+
+def start(options):
+    try:
+        locale.setlocale(locale.LC_ALL, locale.getdefaultlocale())  # type: ignore
+    except locale.Error:
+        pass
+
+    rename_process()
+    q = make_qtile(options)
+    try:
+        q.loop()
+    except Exception:
+        logger.exception('Qtile crashed')
+        exit(1)
+    logger.info('Exiting...')
+
+
+def add_subcommand(subparsers):
+    parser = subparsers.add_parser("start", help="Start the window manager")
     parser.add_argument(
         "-c", "--config",
         action="store",
@@ -104,44 +133,4 @@ def make_qtile():
         dest='state',
         help='Pickled QtileState object (typically used only internally)',
     )
-    options = parser.parse_args()
-    log_level = getattr(logging, options.log_level)
-    init_log(log_level=log_level)
-    kore = xcore.XCore()
-
-    if not path.isfile(options.configfile):
-        try:
-            makedirs(path.dirname(options.configfile), exist_ok=True)
-            from shutil import copyfile
-            default_config_path = path.join(path.dirname(__file__),
-                                            "..",
-                                            "resources",
-                                            "default_config.py")
-            copyfile(default_config_path, options.configfile)
-            logger.info('Copied default_config.py to %s', options.configfile)
-        except Exception as e:
-            logger.exception('Failed to copy default_config.py to %s: (%s)',
-                             options.configfile, e)
-
-    config = confreader.Config(options.configfile, kore=kore)
-
-    # XXX: the import is here because we need to call init_log
-    # before start importing stuff
-    from libqtile.core import session_manager
-    return session_manager.SessionManager(
-        kore,
-        config,
-        fname=options.socket,
-        no_spawn=options.no_spawn,
-        state=options.state,
-    )
-
-
-def main():
-    rename_process()
-    q = make_qtile()
-    try:
-        q.loop()
-    except Exception:
-        logger.exception('Qtile crashed')
-    logger.info('Exiting...')
+    parser.set_defaults(func=start)

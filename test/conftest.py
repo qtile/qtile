@@ -138,7 +138,7 @@ class BareConfig(Config):
         libqtile.layout.stack.Stack(num_stacks=1),
         libqtile.layout.stack.Stack(num_stacks=2)
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = [
         libqtile.config.Key(
             ["control"],
@@ -259,12 +259,12 @@ class Xephyr:
             pass
 
 
-class Qtile:
+class TestManager:
     """Spawn a Qtile instance
 
-    Setup a qtile server instance on the given display, with the given socket
-    and log files.  The qtile server must be started, and then stopped when it
-    is done.  Windows can be spawned for the qtile instance to interact with
+    Setup a Qtile server instance on the given display, with the given socket
+    and log files.  The Qtile server must be started, and then stopped when it
+    is done.  Windows can be spawned for the Qtile instance to interact with
     with various `.test_*` methods.
     """
     def __init__(self, sockfile, display, debug_log):
@@ -299,8 +299,8 @@ class Qtile:
             return
         if rpipe.poll(sleep_time):
             error = rpipe.recv()
-            raise AssertionError("Error launching Qtile, traceback:\n%s" % error)
-        raise AssertionError("Error launching Qtile")
+            raise AssertionError("Error launching qtile, traceback:\n%s" % error)
+        raise AssertionError("Error launching qtile")
 
     def create_manager(self, config_class):
         """Create a Qtile manager instance in this thread
@@ -320,7 +320,7 @@ class Qtile:
 
     def terminate(self):
         if self.proc is None:
-            print("Qtile is not alive", file=sys.stderr)
+            print("qtile is not alive", file=sys.stderr)
         else:
             # try to send SIGTERM and wait up to 10 sec to quit
             self.proc.terminate()
@@ -337,7 +337,7 @@ class Qtile:
                     pass
 
             if self.proc.exitcode:
-                print("Qtile exited with exitcode: %d" % self.proc.exitcode, file=sys.stderr)
+                print("qtile exited with exitcode: %d" % self.proc.exitcode, file=sys.stderr)
 
             self.proc = None
 
@@ -485,7 +485,7 @@ def xephyr(request, xvfb):
 
 
 @pytest.fixture(scope="function")
-def qtile(request, xephyr):
+def manager(request, xephyr):
     config = getattr(request, "param", BareConfig)
 
     for attr in dir(default_config):
@@ -495,23 +495,23 @@ def qtile(request, xephyr):
     with tempfile.NamedTemporaryFile() as f:
         sockfile = f.name
         try:
-            q = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
-            q.start(config)
+            manager = TestManager(sockfile, xephyr.display, request.config.getoption("--debuglog"))
+            manager.start(config)
 
-            yield q
+            yield manager
         finally:
-            q.terminate()
+            manager.terminate()
 
 
 @pytest.fixture(scope="function")
-def qtile_nospawn(request, xephyr):
+def manager_nospawn(request, xephyr):
     with tempfile.NamedTemporaryFile() as f:
         sockfile = f.name
         try:
-            q = Qtile(sockfile, xephyr.display, request.config.getoption("--debuglog"))
-            yield q
+            manager = TestManager(sockfile, xephyr.display, request.config.getoption("--debuglog"))
+            yield manager
         finally:
-            q.terminate()
+            manager.terminate()
 
 
 no_xinerama = pytest.mark.parametrize("xephyr", [{"xinerama": False}], indirect=True)

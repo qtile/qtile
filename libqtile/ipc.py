@@ -31,7 +31,6 @@ import marshal
 import os.path
 import socket
 import struct
-import sys
 from typing import Any, Optional, Tuple
 
 from libqtile.log_utils import logger
@@ -158,10 +157,7 @@ class Client:
         finally:
             # see the note in Server._server_callback()
             writer.close()
-            if sys.version_info >= (3, 7):
-                await writer.wait_closed()
-            else:
-                await asyncio.sleep(0)
+            await writer.wait_closed()
 
         data, _ = _IPC.unpack(read_data, is_json=self.is_json)
 
@@ -199,11 +195,6 @@ class Server:
         except IPCError:
             logger.warn("Invalid data received, closing connection")
         else:
-            if req[1] == "restart":
-                # if we are going to restart, close the connection first, as we won't be back
-                logger.debug("Closing connection on restart")
-                writer.write_eof()
-
             rep = self.handler(req)
 
             result = _IPC.pack(rep, is_json=is_json)
@@ -213,15 +204,8 @@ class Server:
             logger.debug("Closing connection on receive EOF")
             writer.write_eof()
         finally:
-            # the resoure isn't closed immediately on the close call, but is on
-            # the next loop iteration, this is exposed as the wait_closed
-            # method in 3.7, but requires a manual loop iteration in earlier
-            # versions
             writer.close()
-            if sys.version_info >= (3, 7):
-                await writer.wait_closed()
-            else:
-                await asyncio.sleep(0)
+            await writer.wait_closed()
 
     async def __aenter__(self) -> "Server":
         """Start and return the server"""

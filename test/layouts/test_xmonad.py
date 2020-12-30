@@ -39,7 +39,7 @@ class MonadTallConfig(Config):
     layouts = [
         layout.MonadTall()
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
@@ -47,7 +47,7 @@ class MonadTallConfig(Config):
 
 
 def monadtall_config(x):
-    return no_xinerama(pytest.mark.parametrize("qtile", [MonadTallConfig], indirect=True)(x))
+    return no_xinerama(pytest.mark.parametrize("manager", [MonadTallConfig], indirect=True)(x))
 
 
 class MonadTallMarginsConfig(Config):
@@ -58,7 +58,7 @@ class MonadTallMarginsConfig(Config):
     layouts = [
         layout.MonadTall(margin=4)
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
@@ -66,7 +66,7 @@ class MonadTallMarginsConfig(Config):
 
 
 def monadtallmargins_config(x):
-    return no_xinerama(pytest.mark.parametrize("qtile", [MonadTallMarginsConfig], indirect=True)(x))
+    return no_xinerama(pytest.mark.parametrize("manager", [MonadTallMarginsConfig], indirect=True)(x))
 
 
 class MonadWideConfig(Config):
@@ -77,7 +77,7 @@ class MonadWideConfig(Config):
     layouts = [
         layout.MonadWide()
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
@@ -85,7 +85,7 @@ class MonadWideConfig(Config):
 
 
 def monadwide_config(x):
-    return no_xinerama(pytest.mark.parametrize("qtile", [MonadWideConfig], indirect=True)(x))
+    return no_xinerama(pytest.mark.parametrize("manager", [MonadWideConfig], indirect=True)(x))
 
 
 class MonadWideMarginsConfig(Config):
@@ -96,7 +96,7 @@ class MonadWideMarginsConfig(Config):
     layouts = [
         layout.MonadWide(margin=4)
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
@@ -104,537 +104,537 @@ class MonadWideMarginsConfig(Config):
 
 
 def monadwidemargins_config(x):
-    return no_xinerama(pytest.mark.parametrize("qtile", [MonadWideMarginsConfig], indirect=True)(x))
+    return no_xinerama(pytest.mark.parametrize("manager", [MonadWideMarginsConfig], indirect=True)(x))
 
 
 @monadtall_config
-def test_tall_add_clients(qtile):
-    qtile.test_window('one')
-    qtile.test_window('two')
-    assert qtile.c.layout.info()["main"] == 'one'
-    assert qtile.c.layout.info()["secondary"] == ['two']
-    assert_focused(qtile, 'two')
+def test_tall_add_clients(manager):
+    manager.test_window('one')
+    manager.test_window('two')
+    assert manager.c.layout.info()["main"] == 'one'
+    assert manager.c.layout.info()["secondary"] == ['two']
+    assert_focused(manager, 'two')
 
-    qtile.test_window('three')
-    assert qtile.c.layout.info()["main"] == 'one'
-    assert qtile.c.layout.info()["secondary"] == ['two', 'three']
-    assert_focused(qtile, 'three')
+    manager.test_window('three')
+    assert manager.c.layout.info()["main"] == 'one'
+    assert manager.c.layout.info()["secondary"] == ['two', 'three']
+    assert_focused(manager, 'three')
 
-    qtile.c.layout.previous()
-    assert_focused(qtile, 'two')
+    manager.c.layout.previous()
+    assert_focused(manager, 'two')
 
-    qtile.test_window('four')
-    assert qtile.c.layout.info()["main"] == 'one'
-    assert qtile.c.layout.info()["secondary"] == ['two', 'four', 'three']
-    assert_focused(qtile, 'four')
+    manager.test_window('four')
+    assert manager.c.layout.info()["main"] == 'one'
+    assert manager.c.layout.info()["secondary"] == ['two', 'four', 'three']
+    assert_focused(manager, 'four')
 
 
 @monadwide_config
-def test_wide_add_clients(qtile):
-    qtile.test_window('one')
-    qtile.test_window('two')
-    assert qtile.c.layout.info()["main"] == 'one'
-    assert qtile.c.layout.info()["secondary"] == ['two']
-    assert_focused(qtile, 'two')
+def test_wide_add_clients(manager):
+    manager.test_window('one')
+    manager.test_window('two')
+    assert manager.c.layout.info()["main"] == 'one'
+    assert manager.c.layout.info()["secondary"] == ['two']
+    assert_focused(manager, 'two')
 
-    qtile.test_window('three')
-    assert qtile.c.layout.info()["main"] == 'one'
-    assert qtile.c.layout.info()["secondary"] == ['two', 'three']
-    assert_focused(qtile, 'three')
+    manager.test_window('three')
+    assert manager.c.layout.info()["main"] == 'one'
+    assert manager.c.layout.info()["secondary"] == ['two', 'three']
+    assert_focused(manager, 'three')
 
-    qtile.c.layout.previous()
-    assert_focused(qtile, 'two')
+    manager.c.layout.previous()
+    assert_focused(manager, 'two')
 
-    qtile.test_window('four')
-    assert qtile.c.layout.info()["main"] == 'one'
-    assert qtile.c.layout.info()["secondary"] == ['two', 'four', 'three']
-    assert_focused(qtile, 'four')
+    manager.test_window('four')
+    assert manager.c.layout.info()["main"] == 'one'
+    assert manager.c.layout.info()["secondary"] == ['two', 'four', 'three']
+    assert_focused(manager, 'four')
 
 
 @monadtallmargins_config
-def test_tall_margins(qtile):
-    qtile.test_window('one')
-    assert_dimensions(qtile, 4, 4, 788, 588)
+def test_tall_margins(manager):
+    manager.test_window('one')
+    assert_dimensions(manager, 4, 4, 788, 588)
 
-    qtile.test_window('two')
-    assert_focused(qtile, 'two')
-    assert_dimensions(qtile, 404, 4, 388, 588)
+    manager.test_window('two')
+    assert_focused(manager, 'two')
+    assert_dimensions(manager, 404, 4, 388, 588)
 
-    qtile.c.layout.previous()
-    assert_focused(qtile, 'one')
-    assert_dimensions(qtile, 4, 4, 392, 588)
+    manager.c.layout.previous()
+    assert_focused(manager, 'one')
+    assert_dimensions(manager, 4, 4, 392, 588)
 
 
 @monadwidemargins_config
-def test_wide_margins(qtile):
-    qtile.test_window('one')
-    assert_dimensions(qtile, 4, 4, 788, 588)
+def test_wide_margins(manager):
+    manager.test_window('one')
+    assert_dimensions(manager, 4, 4, 788, 588)
 
-    qtile.test_window('two')
-    assert_focused(qtile, 'two')
-    assert_dimensions(qtile, 4, 304, 788, 288)
+    manager.test_window('two')
+    assert_focused(manager, 'two')
+    assert_dimensions(manager, 4, 304, 788, 288)
 
-    qtile.c.layout.previous()
-    assert_focused(qtile, 'one')
-    assert_dimensions(qtile, 4, 4, 788, 292)
+    manager.c.layout.previous()
+    assert_focused(manager, 'one')
+    assert_dimensions(manager, 4, 4, 788, 292)
 
 
 @monadtall_config
-def test_tall_growmain_solosecondary(qtile):
-    qtile.test_window('one')
-    assert_dimensions(qtile, 0, 0, 796, 596)
+def test_tall_growmain_solosecondary(manager):
+    manager.test_window('one')
+    assert_dimensions(manager, 0, 0, 796, 596)
 
-    qtile.test_window('two')
-    qtile.c.layout.previous()
-    assert_focused(qtile, 'one')
+    manager.test_window('two')
+    manager.c.layout.previous()
+    assert_focused(manager, 'one')
 
-    assert_dimensions(qtile, 0, 0, 396, 596)
-    qtile.c.layout.grow()
+    assert_dimensions(manager, 0, 0, 396, 596)
+    manager.c.layout.grow()
     # Grows 5% of 800 = 40 pixels
-    assert_dimensions(qtile, 0, 0, 436, 596)
-    qtile.c.layout.shrink()
-    assert_dimensions(qtile, 0, 0, 396, 596)
+    assert_dimensions(manager, 0, 0, 436, 596)
+    manager.c.layout.shrink()
+    assert_dimensions(manager, 0, 0, 396, 596)
 
     # Max width is 75% of 800 = 600 pixels
     for _ in range(10):
-        qtile.c.layout.grow()
-    assert_dimensions(qtile, 0, 0, 596, 596)
+        manager.c.layout.grow()
+    assert_dimensions(manager, 0, 0, 596, 596)
 
     # Min width is 25% of 800 = 200 pixels
     for _ in range(10):
-        qtile.c.layout.shrink()
-    assert_dimensions(qtile, 0, 0, 196, 596)
+        manager.c.layout.shrink()
+    assert_dimensions(manager, 0, 0, 196, 596)
 
 
 @monadwide_config
-def test_wide_growmain_solosecondary(qtile):
-    qtile.test_window('one')
-    assert_dimensions(qtile, 0, 0, 796, 596)
+def test_wide_growmain_solosecondary(manager):
+    manager.test_window('one')
+    assert_dimensions(manager, 0, 0, 796, 596)
 
-    qtile.test_window('two')
-    qtile.c.layout.previous()
-    assert_focused(qtile, 'one')
+    manager.test_window('two')
+    manager.c.layout.previous()
+    assert_focused(manager, 'one')
 
-    assert_dimensions(qtile, 0, 0, 796, 296)
-    qtile.c.layout.grow()
+    assert_dimensions(manager, 0, 0, 796, 296)
+    manager.c.layout.grow()
     # Grows 5% of 800 = 30 pixels
-    assert_dimensions(qtile, 0, 0, 796, 326)
-    qtile.c.layout.shrink()
-    assert_dimensions(qtile, 0, 0, 796, 296)
+    assert_dimensions(manager, 0, 0, 796, 326)
+    manager.c.layout.shrink()
+    assert_dimensions(manager, 0, 0, 796, 296)
 
     # Max width is 75% of 600 = 450 pixels
     for _ in range(10):
-        qtile.c.layout.grow()
-    assert_dimensions(qtile, 0, 0, 796, 446)
+        manager.c.layout.grow()
+    assert_dimensions(manager, 0, 0, 796, 446)
 
     # Min width is 25% of 600 = 150 pixels
     for _ in range(10):
-        qtile.c.layout.shrink()
-    assert_dimensions(qtile, 0, 0, 796, 146)
+        manager.c.layout.shrink()
+    assert_dimensions(manager, 0, 0, 796, 146)
 
 
 @monadtall_config
-def test_tall_growmain_multiplesecondary(qtile):
-    qtile.test_window('one')
-    assert_dimensions(qtile, 0, 0, 796, 596)
+def test_tall_growmain_multiplesecondary(manager):
+    manager.test_window('one')
+    assert_dimensions(manager, 0, 0, 796, 596)
 
-    qtile.test_window('two')
-    qtile.test_window('three')
-    qtile.c.layout.previous()
-    qtile.c.layout.previous()
-    assert_focused(qtile, 'one')
+    manager.test_window('two')
+    manager.test_window('three')
+    manager.c.layout.previous()
+    manager.c.layout.previous()
+    assert_focused(manager, 'one')
 
-    assert_dimensions(qtile, 0, 0, 396, 596)
-    qtile.c.layout.grow()
+    assert_dimensions(manager, 0, 0, 396, 596)
+    manager.c.layout.grow()
     # Grows 5% of 800 = 40 pixels
-    assert_dimensions(qtile, 0, 0, 436, 596)
-    qtile.c.layout.shrink()
-    assert_dimensions(qtile, 0, 0, 396, 596)
+    assert_dimensions(manager, 0, 0, 436, 596)
+    manager.c.layout.shrink()
+    assert_dimensions(manager, 0, 0, 396, 596)
 
     # Max width is 75% of 800 = 600 pixels
     for _ in range(10):
-        qtile.c.layout.grow()
-    assert_dimensions(qtile, 0, 0, 596, 596)
+        manager.c.layout.grow()
+    assert_dimensions(manager, 0, 0, 596, 596)
 
     # Min width is 25% of 800 = 200 pixels
     for _ in range(10):
-        qtile.c.layout.shrink()
-    assert_dimensions(qtile, 0, 0, 196, 596)
+        manager.c.layout.shrink()
+    assert_dimensions(manager, 0, 0, 196, 596)
 
 
 @monadwide_config
-def test_wide_growmain_multiplesecondary(qtile):
-    qtile.test_window('one')
-    assert_dimensions(qtile, 0, 0, 796, 596)
+def test_wide_growmain_multiplesecondary(manager):
+    manager.test_window('one')
+    assert_dimensions(manager, 0, 0, 796, 596)
 
-    qtile.test_window('two')
-    qtile.test_window('three')
-    qtile.c.layout.previous()
-    qtile.c.layout.previous()
-    assert_focused(qtile, 'one')
+    manager.test_window('two')
+    manager.test_window('three')
+    manager.c.layout.previous()
+    manager.c.layout.previous()
+    assert_focused(manager, 'one')
 
-    assert_dimensions(qtile, 0, 0, 796, 296)
-    qtile.c.layout.grow()
+    assert_dimensions(manager, 0, 0, 796, 296)
+    manager.c.layout.grow()
     # Grows 5% of 600 = 30 pixels
-    assert_dimensions(qtile, 0, 0, 796, 326)
-    qtile.c.layout.shrink()
-    assert_dimensions(qtile, 0, 0, 796, 296)
+    assert_dimensions(manager, 0, 0, 796, 326)
+    manager.c.layout.shrink()
+    assert_dimensions(manager, 0, 0, 796, 296)
 
     # Max width is 75% of 600 = 450 pixels
     for _ in range(10):
-        qtile.c.layout.grow()
-    assert_dimensions(qtile, 0, 0, 796, 446)
+        manager.c.layout.grow()
+    assert_dimensions(manager, 0, 0, 796, 446)
 
     # Min width is 25% of 600 = 150 pixels
     for _ in range(10):
-        qtile.c.layout.shrink()
-    assert_dimensions(qtile, 0, 0, 796, 146)
+        manager.c.layout.shrink()
+    assert_dimensions(manager, 0, 0, 796, 146)
 
 
 @monadtall_config
-def test_tall_growsecondary_solosecondary(qtile):
-    qtile.test_window('one')
-    assert_dimensions(qtile, 0, 0, 796, 596)
+def test_tall_growsecondary_solosecondary(manager):
+    manager.test_window('one')
+    assert_dimensions(manager, 0, 0, 796, 596)
 
-    qtile.test_window('two')
-    assert_focused(qtile, 'two')
+    manager.test_window('two')
+    assert_focused(manager, 'two')
 
-    assert_dimensions(qtile, 400, 0, 396, 596)
-    qtile.c.layout.grow()
+    assert_dimensions(manager, 400, 0, 396, 596)
+    manager.c.layout.grow()
     # Grows 5% of 800 = 40 pixels
-    assert_dimensions(qtile, 360, 0, 436, 596)
-    qtile.c.layout.shrink()
-    assert_dimensions(qtile, 400, 0, 396, 596)
+    assert_dimensions(manager, 360, 0, 436, 596)
+    manager.c.layout.shrink()
+    assert_dimensions(manager, 400, 0, 396, 596)
 
     # Max width is 75% of 800 = 600 pixels
     for _ in range(10):
-        qtile.c.layout.grow()
-    assert_dimensions(qtile, 200, 0, 596, 596)
+        manager.c.layout.grow()
+    assert_dimensions(manager, 200, 0, 596, 596)
 
     # Min width is 25% of 800 = 200 pixels
     for _ in range(10):
-        qtile.c.layout.shrink()
-    assert_dimensions(qtile, 600, 0, 196, 596)
+        manager.c.layout.shrink()
+    assert_dimensions(manager, 600, 0, 196, 596)
 
 
 @monadwide_config
-def test_wide_growsecondary_solosecondary(qtile):
-    qtile.test_window('one')
-    assert_dimensions(qtile, 0, 0, 796, 596)
+def test_wide_growsecondary_solosecondary(manager):
+    manager.test_window('one')
+    assert_dimensions(manager, 0, 0, 796, 596)
 
-    qtile.test_window('two')
-    assert_focused(qtile, 'two')
+    manager.test_window('two')
+    assert_focused(manager, 'two')
 
-    assert_dimensions(qtile, 0, 300, 796, 296)
-    qtile.c.layout.grow()
+    assert_dimensions(manager, 0, 300, 796, 296)
+    manager.c.layout.grow()
     # Grows 5% of 600 = 30 pixels
-    assert_dimensions(qtile, 0, 270, 796, 326)
-    qtile.c.layout.shrink()
-    assert_dimensions(qtile, 0, 300, 796, 296)
+    assert_dimensions(manager, 0, 270, 796, 326)
+    manager.c.layout.shrink()
+    assert_dimensions(manager, 0, 300, 796, 296)
 
     # Max width is 75% of 600 = 450 pixels
     for _ in range(10):
-        qtile.c.layout.grow()
-    assert_dimensions(qtile, 0, 150, 796, 446)
+        manager.c.layout.grow()
+    assert_dimensions(manager, 0, 150, 796, 446)
 
     # Min width is 25% of 600 = 150 pixels
     for _ in range(10):
-        qtile.c.layout.shrink()
-    assert_dimensions(qtile, 0, 450, 796, 146)
+        manager.c.layout.shrink()
+    assert_dimensions(manager, 0, 450, 796, 146)
 
 
 @monadtall_config
-def test_tall_growsecondary_multiplesecondary(qtile):
-    qtile.test_window('one')
-    assert_dimensions(qtile, 0, 0, 796, 596)
+def test_tall_growsecondary_multiplesecondary(manager):
+    manager.test_window('one')
+    assert_dimensions(manager, 0, 0, 796, 596)
 
-    qtile.test_window('two')
-    qtile.test_window('three')
-    qtile.c.layout.previous()
-    assert_focused(qtile, 'two')
+    manager.test_window('two')
+    manager.test_window('three')
+    manager.c.layout.previous()
+    assert_focused(manager, 'two')
 
-    assert_dimensions(qtile, 400, 0, 396, 296)
+    assert_dimensions(manager, 400, 0, 396, 296)
     # Grow 20 pixels
-    qtile.c.layout.grow()
-    assert_dimensions(qtile, 400, 0, 396, 316)
-    qtile.c.layout.shrink()
-    assert_dimensions(qtile, 400, 0, 396, 296)
+    manager.c.layout.grow()
+    assert_dimensions(manager, 400, 0, 396, 316)
+    manager.c.layout.shrink()
+    assert_dimensions(manager, 400, 0, 396, 296)
 
     # Min height of other is 85 pixels, leaving 515
     for _ in range(20):
-        qtile.c.layout.grow()
-    assert_dimensions(qtile, 400, 0, 396, 511)
+        manager.c.layout.grow()
+    assert_dimensions(manager, 400, 0, 396, 511)
 
-    # Min height of qtile is 85 pixels
+    # Min height of manager is 85 pixels
     for _ in range(40):
-        qtile.c.layout.shrink()
-    assert_dimensions(qtile, 400, 0, 396, 85)
+        manager.c.layout.shrink()
+    assert_dimensions(manager, 400, 0, 396, 85)
 
 
 @monadwide_config
-def test_wide_growsecondary_multiplesecondary(qtile):
-    qtile.test_window('one')
-    assert_dimensions(qtile, 0, 0, 796, 596)
+def test_wide_growsecondary_multiplesecondary(manager):
+    manager.test_window('one')
+    assert_dimensions(manager, 0, 0, 796, 596)
 
-    qtile.test_window('two')
-    qtile.test_window('three')
-    qtile.c.layout.previous()
-    assert_focused(qtile, 'two')
+    manager.test_window('two')
+    manager.test_window('three')
+    manager.c.layout.previous()
+    assert_focused(manager, 'two')
 
-    assert_dimensions(qtile, 0, 300, 396, 296)
+    assert_dimensions(manager, 0, 300, 396, 296)
     # Grow 20 pixels
-    qtile.c.layout.grow()
-    assert_dimensions(qtile, 0, 300, 416, 296)
-    qtile.c.layout.shrink()
-    assert_dimensions(qtile, 0, 300, 396, 296)
+    manager.c.layout.grow()
+    assert_dimensions(manager, 0, 300, 416, 296)
+    manager.c.layout.shrink()
+    assert_dimensions(manager, 0, 300, 396, 296)
 
     # Min width of other is 85 pixels, leaving 715
     for _ in range(20):
-        qtile.c.layout.grow()
-    assert_dimensions(qtile, 0, 300, 710, 296)  # TODO why not 711 ?
+        manager.c.layout.grow()
+    assert_dimensions(manager, 0, 300, 710, 296)  # TODO why not 711 ?
 
-    # Min width of qtile is 85 pixels
+    # Min width of manager is 85 pixels
     for _ in range(40):
-        qtile.c.layout.shrink()
-    assert_dimensions(qtile, 0, 300, 85, 296)
+        manager.c.layout.shrink()
+    assert_dimensions(manager, 0, 300, 85, 296)
 
 
 @monadtall_config
-def test_tall_flip(qtile):
-    qtile.test_window('one')
-    qtile.test_window('two')
-    qtile.test_window('three')
+def test_tall_flip(manager):
+    manager.test_window('one')
+    manager.test_window('two')
+    manager.test_window('three')
 
     # Check all the dimensions
-    qtile.c.layout.next()
-    assert_focused(qtile, 'one')
-    assert_dimensions(qtile, 0, 0, 396, 596)
+    manager.c.layout.next()
+    assert_focused(manager, 'one')
+    assert_dimensions(manager, 0, 0, 396, 596)
 
-    qtile.c.layout.next()
-    assert_focused(qtile, 'two')
-    assert_dimensions(qtile, 400, 0, 396, 296)
+    manager.c.layout.next()
+    assert_focused(manager, 'two')
+    assert_dimensions(manager, 400, 0, 396, 296)
 
-    qtile.c.layout.next()
-    assert_focused(qtile, 'three')
-    assert_dimensions(qtile, 400, 300, 396, 296)
+    manager.c.layout.next()
+    assert_focused(manager, 'three')
+    assert_dimensions(manager, 400, 300, 396, 296)
 
     # Now flip it and do it again
-    qtile.c.layout.flip()
+    manager.c.layout.flip()
 
-    qtile.c.layout.next()
-    assert_focused(qtile, 'one')
-    assert_dimensions(qtile, 400, 0, 396, 596)
+    manager.c.layout.next()
+    assert_focused(manager, 'one')
+    assert_dimensions(manager, 400, 0, 396, 596)
 
-    qtile.c.layout.next()
-    assert_focused(qtile, 'two')
-    assert_dimensions(qtile, 0, 0, 396, 296)
+    manager.c.layout.next()
+    assert_focused(manager, 'two')
+    assert_dimensions(manager, 0, 0, 396, 296)
 
-    qtile.c.layout.next()
-    assert_focused(qtile, 'three')
-    assert_dimensions(qtile, 0, 300, 396, 296)
+    manager.c.layout.next()
+    assert_focused(manager, 'three')
+    assert_dimensions(manager, 0, 300, 396, 296)
 
 
 @monadwide_config
-def test_wide_flip(qtile):
-    qtile.test_window('one')
-    qtile.test_window('two')
-    qtile.test_window('three')
+def test_wide_flip(manager):
+    manager.test_window('one')
+    manager.test_window('two')
+    manager.test_window('three')
 
     # Check all the dimensions
-    qtile.c.layout.next()
-    assert_focused(qtile, 'one')
-    assert_dimensions(qtile, 0, 0, 796, 296)
+    manager.c.layout.next()
+    assert_focused(manager, 'one')
+    assert_dimensions(manager, 0, 0, 796, 296)
 
-    qtile.c.layout.next()
-    assert_focused(qtile, 'two')
-    assert_dimensions(qtile, 0, 300, 396, 296)
+    manager.c.layout.next()
+    assert_focused(manager, 'two')
+    assert_dimensions(manager, 0, 300, 396, 296)
 
-    qtile.c.layout.next()
-    assert_focused(qtile, 'three')
-    assert_dimensions(qtile, 400, 300, 396, 296)
+    manager.c.layout.next()
+    assert_focused(manager, 'three')
+    assert_dimensions(manager, 400, 300, 396, 296)
 
     # Now flip it and do it again
-    qtile.c.layout.flip()
+    manager.c.layout.flip()
 
-    qtile.c.layout.next()
-    assert_focused(qtile, 'one')
-    assert_dimensions(qtile, 0, 300, 796, 296)
+    manager.c.layout.next()
+    assert_focused(manager, 'one')
+    assert_dimensions(manager, 0, 300, 796, 296)
 
-    qtile.c.layout.next()
-    assert_focused(qtile, 'two')
-    assert_dimensions(qtile, 0, 0, 396, 296)
+    manager.c.layout.next()
+    assert_focused(manager, 'two')
+    assert_dimensions(manager, 0, 0, 396, 296)
 
-    qtile.c.layout.next()
-    assert_focused(qtile, 'three')
-    assert_dimensions(qtile, 400, 0, 396, 296)
+    manager.c.layout.next()
+    assert_focused(manager, 'three')
+    assert_dimensions(manager, 400, 0, 396, 296)
 
 
 @monadtall_config
-def test_tall_shuffle(qtile):
-    qtile.test_window('one')
-    qtile.test_window('two')
-    qtile.test_window('three')
-    qtile.test_window('four')
+def test_tall_shuffle(manager):
+    manager.test_window('one')
+    manager.test_window('two')
+    manager.test_window('three')
+    manager.test_window('four')
 
-    assert qtile.c.layout.info()['main'] == 'one'
-    assert qtile.c.layout.info()['secondary'] == ['two', 'three', 'four']
+    assert manager.c.layout.info()['main'] == 'one'
+    assert manager.c.layout.info()['secondary'] == ['two', 'three', 'four']
 
-    qtile.c.layout.shuffle_up()
-    assert qtile.c.layout.info()['main'] == 'one'
-    assert qtile.c.layout.info()['secondary'] == ['two', 'four', 'three']
+    manager.c.layout.shuffle_up()
+    assert manager.c.layout.info()['main'] == 'one'
+    assert manager.c.layout.info()['secondary'] == ['two', 'four', 'three']
 
-    qtile.c.layout.shuffle_up()
-    assert qtile.c.layout.info()['main'] == 'one'
-    assert qtile.c.layout.info()['secondary'] == ['four', 'two', 'three']
+    manager.c.layout.shuffle_up()
+    assert manager.c.layout.info()['main'] == 'one'
+    assert manager.c.layout.info()['secondary'] == ['four', 'two', 'three']
 
-    qtile.c.layout.shuffle_up()
-    assert qtile.c.layout.info()['main'] == 'four'
-    assert qtile.c.layout.info()['secondary'] == ['one', 'two', 'three']
+    manager.c.layout.shuffle_up()
+    assert manager.c.layout.info()['main'] == 'four'
+    assert manager.c.layout.info()['secondary'] == ['one', 'two', 'three']
 
 
 @monadwide_config
-def test_wide_shuffle(qtile):
-    qtile.test_window('one')
-    qtile.test_window('two')
-    qtile.test_window('three')
-    qtile.test_window('four')
+def test_wide_shuffle(manager):
+    manager.test_window('one')
+    manager.test_window('two')
+    manager.test_window('three')
+    manager.test_window('four')
 
-    assert qtile.c.layout.info()['main'] == 'one'
-    assert qtile.c.layout.info()['secondary'] == ['two', 'three', 'four']
+    assert manager.c.layout.info()['main'] == 'one'
+    assert manager.c.layout.info()['secondary'] == ['two', 'three', 'four']
 
-    qtile.c.layout.shuffle_up()
-    assert qtile.c.layout.info()['main'] == 'one'
-    assert qtile.c.layout.info()['secondary'] == ['two', 'four', 'three']
+    manager.c.layout.shuffle_up()
+    assert manager.c.layout.info()['main'] == 'one'
+    assert manager.c.layout.info()['secondary'] == ['two', 'four', 'three']
 
-    qtile.c.layout.shuffle_up()
-    assert qtile.c.layout.info()['main'] == 'one'
-    assert qtile.c.layout.info()['secondary'] == ['four', 'two', 'three']
+    manager.c.layout.shuffle_up()
+    assert manager.c.layout.info()['main'] == 'one'
+    assert manager.c.layout.info()['secondary'] == ['four', 'two', 'three']
 
-    qtile.c.layout.shuffle_up()
-    assert qtile.c.layout.info()['main'] == 'four'
-    assert qtile.c.layout.info()['secondary'] == ['one', 'two', 'three']
+    manager.c.layout.shuffle_up()
+    assert manager.c.layout.info()['main'] == 'four'
+    assert manager.c.layout.info()['secondary'] == ['one', 'two', 'three']
 
 
 @monadtall_config
-def test_tall_swap(qtile):
-    qtile.test_window('one')
-    qtile.test_window('two')
-    qtile.test_window('three')
-    qtile.test_window('focused')
+def test_tall_swap(manager):
+    manager.test_window('one')
+    manager.test_window('two')
+    manager.test_window('three')
+    manager.test_window('focused')
 
-    assert qtile.c.layout.info()['main'] == 'one'
-    assert qtile.c.layout.info()['secondary'] == ['two', 'three', 'focused']
+    assert manager.c.layout.info()['main'] == 'one'
+    assert manager.c.layout.info()['secondary'] == ['two', 'three', 'focused']
 
     # Swap a secondary left, left aligned
-    qtile.c.layout.swap_left()
-    assert qtile.c.layout.info()['main'] == 'focused'
-    assert qtile.c.layout.info()['secondary'] == ['two', 'three', 'one']
+    manager.c.layout.swap_left()
+    assert manager.c.layout.info()['main'] == 'focused'
+    assert manager.c.layout.info()['secondary'] == ['two', 'three', 'one']
 
     # Swap a main right, left aligned
-    qtile.c.layout.swap_right()
-    assert qtile.c.layout.info()['main'] == 'two'
-    assert qtile.c.layout.info()['secondary'] == ['focused', 'three', 'one']
+    manager.c.layout.swap_right()
+    assert manager.c.layout.info()['main'] == 'two'
+    assert manager.c.layout.info()['secondary'] == ['focused', 'three', 'one']
 
     # flip over
-    qtile.c.layout.flip()
-    qtile.c.layout.shuffle_down()
-    assert qtile.c.layout.info()['main'] == 'two'
-    assert qtile.c.layout.info()['secondary'] == ['three', 'focused', 'one']
+    manager.c.layout.flip()
+    manager.c.layout.shuffle_down()
+    assert manager.c.layout.info()['main'] == 'two'
+    assert manager.c.layout.info()['secondary'] == ['three', 'focused', 'one']
 
     # Swap secondary right, right aligned
-    qtile.c.layout.swap_right()
-    assert qtile.c.layout.info()['main'] == 'focused'
-    assert qtile.c.layout.info()['secondary'] == ['three', 'two', 'one']
+    manager.c.layout.swap_right()
+    assert manager.c.layout.info()['main'] == 'focused'
+    assert manager.c.layout.info()['secondary'] == ['three', 'two', 'one']
 
     # Swap main left, right aligned
-    qtile.c.layout.swap_left()
-    assert qtile.c.layout.info()['main'] == 'three'
-    assert qtile.c.layout.info()['secondary'] == ['focused', 'two', 'one']
+    manager.c.layout.swap_left()
+    assert manager.c.layout.info()['main'] == 'three'
+    assert manager.c.layout.info()['secondary'] == ['focused', 'two', 'one']
 
     # Do swap main
-    qtile.c.layout.swap_main()
-    assert qtile.c.layout.info()['main'] == 'focused'
-    assert qtile.c.layout.info()['secondary'] == ['three', 'two', 'one']
+    manager.c.layout.swap_main()
+    assert manager.c.layout.info()['main'] == 'focused'
+    assert manager.c.layout.info()['secondary'] == ['three', 'two', 'one']
 
 
 @monadwide_config
-def test_wide_swap(qtile):
-    qtile.test_window('one')
-    qtile.test_window('two')
-    qtile.test_window('three')
-    qtile.test_window('focused')
+def test_wide_swap(manager):
+    manager.test_window('one')
+    manager.test_window('two')
+    manager.test_window('three')
+    manager.test_window('focused')
 
-    assert qtile.c.layout.info()['main'] == 'one'
-    assert qtile.c.layout.info()['secondary'] == ['two', 'three', 'focused']
+    assert manager.c.layout.info()['main'] == 'one'
+    assert manager.c.layout.info()['secondary'] == ['two', 'three', 'focused']
 
     # Swap a secondary up
-    qtile.c.layout.swap_right()  # equivalent to swap_down
-    assert qtile.c.layout.info()['main'] == 'focused'
-    assert qtile.c.layout.info()['secondary'] == ['two', 'three', 'one']
+    manager.c.layout.swap_right()  # equivalent to swap_down
+    assert manager.c.layout.info()['main'] == 'focused'
+    assert manager.c.layout.info()['secondary'] == ['two', 'three', 'one']
 
     # Swap a main down
-    qtile.c.layout.swap_left()  # equivalent to swap up
-    assert qtile.c.layout.info()['main'] == 'two'
-    assert qtile.c.layout.info()['secondary'] == ['focused', 'three', 'one']
+    manager.c.layout.swap_left()  # equivalent to swap up
+    assert manager.c.layout.info()['main'] == 'two'
+    assert manager.c.layout.info()['secondary'] == ['focused', 'three', 'one']
 
     # flip over
-    qtile.c.layout.flip()
-    qtile.c.layout.shuffle_down()
-    assert qtile.c.layout.info()['main'] == 'two'
-    assert qtile.c.layout.info()['secondary'] == ['three', 'focused', 'one']
+    manager.c.layout.flip()
+    manager.c.layout.shuffle_down()
+    assert manager.c.layout.info()['main'] == 'two'
+    assert manager.c.layout.info()['secondary'] == ['three', 'focused', 'one']
 
     # Swap secondary down
-    qtile.c.layout.swap_left()
-    assert qtile.c.layout.info()['main'] == 'focused'
-    assert qtile.c.layout.info()['secondary'] == ['three', 'two', 'one']
+    manager.c.layout.swap_left()
+    assert manager.c.layout.info()['main'] == 'focused'
+    assert manager.c.layout.info()['secondary'] == ['three', 'two', 'one']
 
     # Swap main up
-    qtile.c.layout.swap_right()
-    assert qtile.c.layout.info()['main'] == 'three'
-    assert qtile.c.layout.info()['secondary'] == ['focused', 'two', 'one']
+    manager.c.layout.swap_right()
+    assert manager.c.layout.info()['main'] == 'three'
+    assert manager.c.layout.info()['secondary'] == ['focused', 'two', 'one']
 
     # Do swap main
-    qtile.c.layout.swap_main()
-    assert qtile.c.layout.info()['main'] == 'focused'
-    assert qtile.c.layout.info()['secondary'] == ['three', 'two', 'one']
+    manager.c.layout.swap_main()
+    assert manager.c.layout.info()['main'] == 'focused'
+    assert manager.c.layout.info()['secondary'] == ['three', 'two', 'one']
 
 
 @monadtall_config
-def test_tall_window_focus_cycle(qtile):
+def test_tall_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
-    qtile.test_window("one")
-    qtile.test_window("two")
-    qtile.test_window("float1")
-    qtile.c.window.toggle_floating()
-    qtile.test_window("float2")
-    qtile.c.window.toggle_floating()
-    qtile.test_window("three")
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("float1")
+    manager.c.window.toggle_floating()
+    manager.test_window("float2")
+    manager.c.window.toggle_floating()
+    manager.test_window("three")
 
     # test preconditions
-    assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
+    assert manager.c.layout.info()['clients'] == ['one', 'two', 'three']
     # last added window has focus
-    assert_focused(qtile, "three")
+    assert_focused(manager, "three")
 
     # starting from the last tiled client, we first cycle through floating ones,
     # and afterwards through the tiled
-    assert_focus_path(qtile, 'float1', 'float2', 'one', 'two', 'three')
+    assert_focus_path(manager, 'float1', 'float2', 'one', 'two', 'three')
 
 
 @monadwide_config
-def test_wide_window_focus_cycle(qtile):
+def test_wide_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
-    qtile.test_window("one")
-    qtile.test_window("two")
-    qtile.test_window("float1")
-    qtile.c.window.toggle_floating()
-    qtile.test_window("float2")
-    qtile.c.window.toggle_floating()
-    qtile.test_window("three")
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("float1")
+    manager.c.window.toggle_floating()
+    manager.test_window("float2")
+    manager.c.window.toggle_floating()
+    manager.test_window("three")
 
     # test preconditions
-    assert qtile.c.layout.info()['clients'] == ['one', 'two', 'three']
+    assert manager.c.layout.info()['clients'] == ['one', 'two', 'three']
     # last added window has focus
-    assert_focused(qtile, "three")
+    assert_focused(manager, "three")
 
     # assert window focus cycle, according to order in layout
-    assert_focus_path(qtile, 'float1', 'float2', 'one', 'two', 'three')
+    assert_focus_path(manager, 'float1', 'float2', 'one', 'two', 'three')

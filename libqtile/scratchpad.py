@@ -127,16 +127,17 @@ class WindowVisibilityToggler:
 
     def unsubscribe(self):
         """unsubscribe all hooks"""
-        try:
-            hook.unsubscribe.client_focus(self.on_focus_change)
-        except utils.QtileError as err:
-            logger.exception("Scratchpad failed to unsubscribe on_focus_change"
-                             ": %s" % err)
-        try:
-            hook.unsubscribe.setgroup(self.on_focus_change)
-        except utils.QtileError as err:
-            logger.exception("Scratchpad failed to unsubscribe on_focus_change"
-                             ": %s" % err)
+        if self.on_focus_lost_hide:
+            try:
+                hook.unsubscribe.client_focus(self.on_focus_change)
+            except utils.QtileError as err:
+                logger.exception("Scratchpad failed to unsubscribe on_focus_change"
+                                 ": %s" % err)
+            try:
+                hook.unsubscribe.setgroup(self.on_focus_change)
+            except utils.QtileError as err:
+                logger.exception("Scratchpad failed to unsubscribe on_focus_change"
+                                 ": %s" % err)
 
     def on_focus_change(self, *args, **kwargs):
         """
@@ -184,6 +185,7 @@ class DropDownToggler(WindowVisibilityToggler):
         its floating x, y, width and height is set.
         """
         if (not self.visible) or (not self.shown):
+            # SET GEOMETRY
             win = self.window
             screen = win.qtile.current_screen
             # calculate windows floating position and width/height
@@ -194,8 +196,9 @@ class DropDownToggler(WindowVisibilityToggler):
             win.float_y = win.y
             win.width = int(screen.dwidth * self.width)
             win.height = int(screen.dheight * self.height)
-
-            # SHOW
+            # Configure the new geometry
+            win._reconfigure_floating()
+            # Toggle the dropdown
             WindowVisibilityToggler.show(self)
 
 

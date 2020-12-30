@@ -53,6 +53,12 @@ class Notify(base._TextBox):
         notifier.register(self.update)
         self.current_id = 0
 
+        self.add_callbacks({
+            'Button1': self.clear,
+            'Button4': self.prev,
+            'Button5': self.next,
+        })
+
     def _configure(self, qtile, bar):
         base._TextBox._configure(self, qtile, bar)
         self.layout = self.drawer.textlayout(
@@ -113,14 +119,6 @@ class Notify(base._TextBox):
         if self.current_id < len(notifier.notifications) - 1:
             self.current_id += 1
             self.display()
-
-    def button_press(self, x, y, button):
-        if button == 1:
-            self.clear()
-        elif button == 4:
-            self.prev()
-        elif button == 5:
-            self.next()
 
     def cmd_display(self):
         """Display the notifcication"""

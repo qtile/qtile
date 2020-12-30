@@ -110,10 +110,13 @@ class MonadTall(_SimpleLayoutBase):
         ---------------------          ---------------------
 
 
-    Normalizing:
+    Normalizing/Resetting:
 
-    To restore all client windows to their default size ratios simply use the
-    ``cmd_normalize`` method.
+    To restore all secondary client windows to their default size ratios
+    use the ``cmd_normalize`` method.
+
+    To reset all client windows to their default sizes, including the primary
+    window, use the ``cmd_reset`` method.
 
     Maximizing:
 
@@ -282,9 +285,9 @@ class MonadTall(_SimpleLayoutBase):
 
         # determine focus border-color
         if client.has_focus:
-            px = self.group.qtile.color_pixel(self.border_focus)
+            px = self.border_focus
         else:
-            px = self.group.qtile.color_pixel(self.border_normal)
+            px = self.border_normal
 
         # single client - fullscreen
         if len(self.clients) == 1:
@@ -804,10 +807,13 @@ class MonadWide(MonadTall):
         |  2  |   3   |  4  |          |                   |
         ---------------------          ---------------------
 
-    Normalizing:
+    Normalizing/Resetting:
 
-    To restore all client windows to their default size ratios simply
+    To restore all secondary client windows to their default size ratios
     use the ``cmd_normalize`` method.
+
+    To reset all client windows to their default sizes, including the primary
+    window, use the ``cmd_reset`` method.
 
 
     Maximizing:
@@ -897,7 +903,7 @@ class MonadWide(MonadTall):
                 self._get_absolute_size_from_relative(
                     sum(self.relative_sizes[:cidx - 1])
                 )
-            # get width from precalculated witdh list
+            # get width from precalculated width list
             width = self._get_absolute_size_from_relative(
                 self.relative_sizes[cidx - 1]
             )

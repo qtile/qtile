@@ -77,7 +77,7 @@ In practice, the development cycle looks something like this:
 #. commit
 
 Of course, your patches should also pass the unit tests as well (i.e.
-``make check``). These will be run by travis-ci on every pull request so you
+``make check``). These will be run by ci on every pull request so you
 can see whether or not your contribution passes.
 
 Coding style
@@ -167,22 +167,6 @@ launching X with:
 
 Examples of custom X startup scripts are available in `qtile-examples
 <https://github.com/qtile/qtile-examples>`_.
-
-Capturing an ``xtrace``
-=======================
-
-Occasionally, a bug will be low level enough to require an ``xtrace`` of
-Qtile's conversations with the X server. To capture one of these, create an
-``xinitrc`` or similar file with:
-
-.. code-block:: bash
-
-  exec xtrace qtile >> ~/qtile.log
-
-This will put the xtrace output in Qtile's logfile as well. You can then
-demonstrate the bug, and paste the contents of this file into the bug report.
-
-Note that xtrace may be named ``x11trace`` on some platforms, for example, on Fedora.
 
 Debugging in PyCharm
 ====================

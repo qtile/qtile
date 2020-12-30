@@ -75,6 +75,11 @@ class _Graph(base._Widget):
         self.oldtime = time.time()
         self.lag_cycles = 0
 
+    def _configure(self, qtile, bar):
+        super()._configure(qtile, bar)
+        if self.type == "box":
+            self.drawer.ctx.set_antialias(cairocffi.ANTIALIAS_NONE)
+
     def timer_setup(self):
         self.timeout_add(self.frequency, self.update)
 

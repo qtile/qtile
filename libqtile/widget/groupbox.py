@@ -130,8 +130,9 @@ class AGroupBox(_GroupBase):
         _GroupBase.__init__(self, **config)
         self.add_defaults(AGroupBox.defaults)
 
-    def button_press(self, x, y, button):
-        self.bar.screen.cmd_next_group()
+    def _configure(self, qtile, bar):
+        _GroupBase._configure(self, qtile, bar)
+        self.add_callbacks({'Button1': self.bar.screen.cmd_next_group})
 
     def calculate_length(self):
         return self.box_width(self.qtile.groups) + self.margin_x * 2
@@ -229,6 +230,15 @@ class GroupBox(_GroupBase):
         if self.spacing is None:
             self.spacing = self.margin_x
         self.clicked = None
+        self.click = None
+
+        default_callbacks = {'Button1': self.select_group}
+        if self.use_mouse_wheel:
+            default_callbacks.update({
+                'Button5' if self.invert_mouse_wheel else 'Button4': self.prev_group,
+                'Button4' if self.invert_mouse_wheel else 'Button5': self.next_group,
+            })
+        self.add_callbacks(default_callbacks)
 
     @property
     def groups(self):
@@ -253,42 +263,50 @@ class GroupBox(_GroupBase):
             else:
                 return [g for g in self.qtile.groups if g.label]
 
-    def get_clicked_group(self, x, y):
+    def get_clicked_group(self):
         group = None
         new_width = self.margin_x - self.spacing / 2.0
         width = 0
         for g in self.groups:
             new_width += self.box_width([g]) + self.spacing
-            if width <= x <= new_width:
+            if width <= self.click <= new_width:
                 group = g
                 break
             width = new_width
         return group
 
     def button_press(self, x, y, button):
-        self.clicked = None
+        self.click = x
+        _GroupBase.button_press(self, x, y, button)
+
+    def next_group(self):
         group = None
         current_group = self.qtile.current_group
+        i = itertools.cycle(self.qtile.groups)
+        while next(i) != current_group:
+            pass
+        while group is None or group not in self.groups:
+            group = next(i)
+        self.go_to_group(group)
 
-        if button == (5 if not self.invert_mouse_wheel else 4):
-            if self.use_mouse_wheel:
-                i = itertools.cycle(self.qtile.groups)
-                while next(i) != current_group:
-                    pass
-                while group is None or group not in self.groups:
-                    group = next(i)
-        elif button == (4 if not self.invert_mouse_wheel else 5):
-            if self.use_mouse_wheel:
-                i = itertools.cycle(reversed(self.qtile.groups))
-                while next(i) != current_group:
-                    pass
-                while group is None or group not in self.groups:
-                    group = next(i)
-        else:
-            group = self.get_clicked_group(x, y)
-            if not self.disable_drag:
-                self.clicked = group
+    def prev_group(self):
+        group = None
+        current_group = self.qtile.current_group
+        i = itertools.cycle(reversed(self.qtile.groups))
+        while next(i) != current_group:
+            pass
+        while group is None or group not in self.groups:
+            group = next(i)
+        self.go_to_group(group)
 
+    def select_group(self):
+        self.clicked = None
+        group = self.get_clicked_group()
+        if not self.disable_drag:
+            self.clicked = group
+        self.go_to_group(group)
+
+    def go_to_group(self, group):
         if group:
             if self.bar.screen.group != group or not self.disable_drag:
                 self.bar.screen.set_group(group)
@@ -296,8 +314,9 @@ class GroupBox(_GroupBase):
                 self.bar.screen.toggle_group(group)
 
     def button_release(self, x, y, button):
+        self.click = x
         if button not in (5, 4):
-            group = self.get_clicked_group(x, y)
+            group = self.get_clicked_group()
             if group and self.clicked:
                 group.cmd_switch_groups(self.clicked.name)
                 self.clicked = None

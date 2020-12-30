@@ -51,6 +51,10 @@ _IGNORED_EVENTS = {
 }
 
 
+class ExistingWMException(Exception):
+    pass
+
+
 class XCore(base.Core):
     def __init__(self, display_name: str = None) -> None:
         """Setup the X11 core backend
@@ -72,6 +76,18 @@ class XCore(base.Core):
         # we can assume that the first
         # screen's root is _the_ root.
         self._root = self.conn.default_screen.root
+
+        supporting_wm_wid = self._root.get_property("_NET_SUPPORTING_WM_CHECK",
+                                                    "WINDOW", unpack=int)
+        if len(supporting_wm_wid) > 0:
+            supporting_wm_wid = supporting_wm_wid[0]
+
+            supporting_wm = xcbq.Window(self.conn, supporting_wm_wid)
+            existing_wmname = supporting_wm.get_property("_NET_WM_NAME", "UTF8_STRING", unpack=str)
+            if existing_wmname:
+                logger.error("not starting; existing window manager {}".format(existing_wmname))
+                raise ExistingWMException(existing_wmname)
+
         self._root.set_attribute(
             eventmask=(
                 xcffib.xproto.EventMask.StructureNotify
@@ -126,7 +142,7 @@ class XCore(base.Core):
         self.qtile = None  # type: Optional[Qtile]
         self._painter = None
 
-        numlock_code = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])
+        numlock_code = self.conn.keysym_to_keycode(xcbq.keysyms["Num_Lock"])[0]
         self._numlock_mask = xcbq.ModMasks.get(self.conn.get_modifier(numlock_code), 0)
         self._valid_mask = ~(self._numlock_mask | xcbq.ModMasks["lock"])
 
@@ -209,6 +225,7 @@ class XCore(base.Core):
             if attrs and attrs.map_state == xcffib.xproto.MapState.Unmapped:
                 continue
             if state and state[0] == window.WithdrawnState:
+                item.unmap()
                 continue
             self.qtile.manage(item)
 
@@ -395,27 +412,35 @@ class XCore(base.Core):
     def grab_key(self, key: config.Key) -> Tuple[int, int]:
         """Map the key to receive events on it"""
         keysym, modmask = self.lookup_key(key)
-        code = self.conn.keysym_to_keycode(keysym)
+        codes = self.conn.keysym_to_keycode(keysym)
 
-        for amask in self._auto_modmasks():
-            self.conn.conn.core.GrabKey(
-                True,
-                self._root.wid,
-                modmask | amask,
-                code,
-                xcffib.xproto.GrabMode.Async,
-                xcffib.xproto.GrabMode.Async,
-            )
-
+        for code in codes:
+            if code == 0:
+                logger.warning(
+                    "Keysym could not be mapped: {keysym}, mask: {modmask}".format(
+                        keysym=hex(keysym), modmask=modmask
+                    )
+                )
+                continue
+            for amask in self._auto_modmasks():
+                self.conn.conn.core.GrabKey(
+                    True,
+                    self._root.wid,
+                    modmask | amask,
+                    code,
+                    xcffib.xproto.GrabMode.Async,
+                    xcffib.xproto.GrabMode.Async,
+                )
         return keysym, modmask & self._valid_mask
 
     def ungrab_key(self, key: config.Key) -> Tuple[int, int]:
         """Ungrab the key corresponding to the given keysym and modifier mask"""
         keysym, modmask = self.lookup_key(key)
-        code = self.conn.keysym_to_keycode(keysym)
+        codes = self.conn.keysym_to_keycode(keysym)
 
-        for amask in self._auto_modmasks():
-            self.conn.conn.core.UngrabKey(code, self._root.wid, modmask | amask)
+        for code in codes:
+            for amask in self._auto_modmasks():
+                self.conn.conn.core.UngrabKey(code, self._root.wid, modmask | amask)
 
         return keysym, modmask & self._valid_mask
 
@@ -509,11 +534,6 @@ class XCore(base.Core):
             self._selection[name]["selection"] = value
             hook.fire("selection_change", name, self._selection[name])
 
-    def handle_EnterNotify(self, event) -> Optional[bool]:  # noqa: N802
-        assert self.qtile is not None
-
-        return self.qtile.enter_event(event)
-
     def handle_ClientMessage(self, event) -> None:  # noqa: N802
         assert self.qtile is not None
 
@@ -526,7 +546,7 @@ class XCore(base.Core):
         if atoms["_NET_CURRENT_DESKTOP"] == opcode:
             index = data.data32[0]
             try:
-                self.qtile.cmd_to_layout_index(index)
+                self.qtile.groups[index].cmd_toscreen()
             except IndexError:
                 logger.info("Invalid Desktop Index: %s" % index)
 

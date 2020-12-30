@@ -43,6 +43,7 @@ debian/*debhelper
 .mypy_cache/
 .tags
 venv
+.venv
 .coverage.*
 
 # intellij idea IDEs

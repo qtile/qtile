@@ -83,8 +83,7 @@ class _Widget(CommandObject, configurable.Configurable):
 
     If length is set to the special value `bar.STRETCH`, the bar itself will
     set the length to the maximum remaining space, after all other widgets have
-    been configured. Only ONE widget per bar can have the `bar.STRETCH` length
-    set.
+    been configured.
 
     In horizontal bars, 'length' corresponds to the width of the widget; in
     vertical bars, it corresponds to the widget's height.
@@ -93,13 +92,16 @@ class _Widget(CommandObject, configurable.Configurable):
     have been configured.
 
     Callback functions can be assigned to button presses by passing a dict to the
-    'callbacks' kwarg.
+    'callbacks' kwarg. No arguments are passed to the callback function so, if
+    you need access to the qtile object, it needs to be imported into your code.
 
     For example:
 
     .. code-block:: python
 
-        def open_calendar(qtile):
+        from libqtile import qtile
+
+        def open_calendar():
             qtile.cmd_spawn('gsimplecal next_month')
 
         clock = widget.Clock(mouse_callbacks={'Button1': open_calendar})
@@ -221,10 +223,15 @@ class _Widget(CommandObject, configurable.Configurable):
             height=self.height,
         )
 
+    def add_callbacks(self, defaults):
+        """Add default callbacks with a lower priority than user-specified callbacks."""
+        defaults.update(self.mouse_callbacks)
+        self.mouse_callbacks = defaults
+
     def button_press(self, x, y, button):
         name = 'Button{0}'.format(button)
         if name in self.mouse_callbacks:
-            self.mouse_callbacks[name](self.qtile)
+            self.mouse_callbacks[name]()
 
     def button_release(self, x, y, button):
         pass

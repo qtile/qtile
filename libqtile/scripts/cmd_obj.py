@@ -164,35 +164,8 @@ def print_base_objects() -> None:
     print("\n".join(actions))
 
 
-def main() -> None:
+def cmd_obj(args) -> None:
     "Runs tool according to specified arguments."
-    description = 'Simple tool to expose qtile.command functionality to shell.'
-    epilog = textwrap.dedent('''\
-    Examples:
-     qtile-cmd
-     qtile-cmd -o cmd
-     qtile-cmd -o cmd -f prev_layout -i
-     qtile-cmd -o cmd -f prev_layout -a 3 # prev_layout on group 3
-     qtile-cmd -o group 3 -f focus_back''')
-    fmt = argparse.RawDescriptionHelpFormatter
-
-    parser = argparse.ArgumentParser(description=description, epilog=epilog,
-                                     formatter_class=fmt)
-    parser.add_argument('--object', '-o', dest='obj_spec', nargs='+',
-                        help='Specify path to object (space separated).  '
-                             'If no --function flag display available commands.  '
-                             'Use `cmd` to specify root command.')
-    parser.add_argument('--function', '-f', default="help",
-                        help='Select function to execute.')
-    parser.add_argument('--args', '-a', nargs='+', default=[],
-                        help='Set arguments supplied to function.')
-    parser.add_argument('--info', '-i', action='store_true',
-                        help='With both --object and --function args prints documentation for function.')
-    parser.add_argument(
-        "--socket", "-s",
-        help='Path of the Qtile IPC socket.'
-    )
-    args = parser.parse_args()
 
     if args.obj_spec:
         sock_file = args.socket or find_sockfile()
@@ -214,5 +187,29 @@ def main() -> None:
         sys.exit(1)
 
 
-if __name__ == "__main__":
-    main()
+def add_subcommand(subparsers):
+    epilog = textwrap.dedent('''\
+    Examples:
+     qtile cmd-obj
+     qtile cmd-obj -o cmd
+     qtile cmd-obj -o cmd -f prev_layout -i
+     qtile cmd-obj -o cmd -f prev_layout -a 3 # prev_layout on group 3
+     qtile cmd-obj -o group 3 -f focus_back''')
+    description = 'qtile.command functionality exposed to the shell.'
+    parser = subparsers.add_parser("cmd-obj", help=description, epilog=epilog,
+                                   formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('--object', '-o', dest='obj_spec', nargs='+',
+                        help='Specify path to object (space separated).  '
+                             'If no --function flag display available commands.  '
+                             'Use `cmd` to specify root command.')
+    parser.add_argument('--function', '-f', default="help",
+                        help='Select function to execute.')
+    parser.add_argument('--args', '-a', nargs='+', default=[],
+                        help='Set arguments supplied to function.')
+    parser.add_argument('--info', '-i', action='store_true',
+                        help='With both --object and --function args prints documentation for function.')
+    parser.add_argument(
+        "--socket", "-s",
+        help='Path of the Qtile IPC socket.'
+    )
+    parser.set_defaults(func=cmd_obj)

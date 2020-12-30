@@ -240,6 +240,7 @@ class Mpd2(base.ThreadPoolText):
 
     def button_press(self, x, y, button):
         """handle click event on widget."""
+        base.ThreadPoolText.button_press(self, x, y, button)
         m_name = self.mouse_buttons[button]
 
         if self.connected:

@@ -21,7 +21,7 @@
 from libqtile.widget.base import _TextBox
 
 
-def make_error(module_path, class_name, error):
+def make_error(module_path, class_name):
     class ImportErrorWidget(_TextBox):
         def __init__(self, **config):
             _TextBox.__init__(self, **config)

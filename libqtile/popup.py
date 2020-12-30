@@ -52,6 +52,7 @@ class Popup(configurable.Configurable):
         win = qtile.conn.create_window(x, y, width, height)
         win.set_property("QTILE_INTERNAL", 1)
         self.win = window.Internal(win, qtile)
+        self.qtile.windows_map[self.win.window.wid] = self.win
         self.win.opacity = self.opacity
         self.drawer = drawer.Drawer(
             self.qtile, self.win.window.wid, width, height,
@@ -128,7 +129,7 @@ class Popup(configurable.Configurable):
             self.layout.colour = value
 
     def set_border(self, color):
-        self.win.window.set_attribute(borderpixel=color)
+        self.win.window.paint_borders(color)
 
     def clear(self):
         self.drawer.clear(self.background)

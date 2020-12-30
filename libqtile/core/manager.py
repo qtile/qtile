@@ -19,18 +19,18 @@
 # SOFTWARE.
 
 import asyncio
-import functools
 import io
 import logging
 import os
 import pickle
 import shlex
 import signal
+import subprocess
 import sys
+import tempfile
 import time
 import traceback
 import warnings
-from typing import Optional
 
 import xcffib
 import xcffib.xinerama
@@ -190,11 +190,14 @@ class Qtile(CommandObject):
         hook.fire("startup")
 
         if state:
-            st = pickle.load(io.BytesIO(state.encode()))
             try:
+                with open(state, 'rb') as f:
+                    st = pickle.load(f)
                 st.apply(self)
             except:  # noqa: E722
                 logger.exception("failed restoring state")
+            finally:
+                os.remove(state)
 
         self.core.scan()
         if state:
@@ -273,22 +276,25 @@ class Qtile(CommandObject):
         # stop gets called in a variety of ways, including from restart().
         # let's only do a real shutdown if we're not about to re-exec.
         if not self._restart:
+            hook.fire("shutdown")
             self.graceful_shutdown()
 
         logger.debug('Stopping qtile')
         self._stopped_event.set()
 
     def restart(self):
+        hook.fire("restart")
         argv = [sys.executable] + sys.argv
         if '--no-spawn' not in argv:
             argv.append('--no-spawn')
-        buf = io.BytesIO()
+        state_file = os.path.join(tempfile.gettempdir(), "qtile-state")
         try:
-            pickle.dump(QtileState(self), buf, protocol=0)
+            with open(state_file, 'wb') as f:
+                pickle.dump(QtileState(self), f, protocol=0)
         except:  # noqa: E722
             logger.error("Unable to pickle qtile state")
         argv = [s for s in argv if not s.startswith('--with-state')]
-        argv.append('--with-state=' + buf.getvalue().decode())
+        argv.append('--with-state=' + state_file)
         self._restart = (sys.executable, argv)
         self.stop()
 
@@ -501,11 +507,6 @@ class Qtile(CommandObject):
             if w.name in self.widgets_map:
                 return
             self.widgets_map[w.name] = w
-
-    @functools.lru_cache()
-    def color_pixel(self, name):
-        pixel = self.conn.screens[0].default_colormap.alloc_color(name).pixel
-        return pixel | 0xff << 24
 
     @property
     def current_layout(self):
@@ -726,15 +727,7 @@ class Qtile(CommandObject):
                 closest_screen = s
         return closest_screen
 
-    def enter_event(self, event) -> Optional[bool]:
-        if event.event in self.windows_map:
-            return True
-        screen = self.find_screen(event.root_x, event.root_y)
-        if screen:
-            self.focus_screen(screen.index, warp=False)
-        return None
-
-    def cmd_focus_by_click(self, e):
+    def _focus_by_click(self, e):
         """Bring a window to the front
 
         Parameters
@@ -742,21 +735,33 @@ class Qtile(CommandObject):
         e : xcb event
             Click event used to determine window to focus
         """
-        wnd = e.child or e.root
+        if e.child:
+            wid = e.child
 
-        # Additional option for config.py
-        # Brings clicked window to front
-        if self.config.bring_front_click:
-            self.conn.conn.core.ConfigureWindow(
-                wnd,
-                xcffib.xproto.ConfigWindow.StackMode,
-                [xcffib.xproto.StackMode.Above]
-            )
+            if self.config.bring_front_click:
+                self.conn.conn.core.ConfigureWindow(
+                    wid,
+                    xcffib.xproto.ConfigWindow.StackMode,
+                    [xcffib.xproto.StackMode.Above]
+                )
 
-        window = self.windows_map.get(wnd)
-        if window and not window.window.get_property('QTILE_INTERNAL'):
-            self.current_group.focus(self.windows_map.get(wnd), False)
-            self.windows_map.get(wnd).focus(False)
+            window = self.windows_map.get(wid)
+            try:
+                if window.group.screen is not self.current_screen:
+                    self.focus_screen(window.group.screen.index, warp=False)
+                self.current_group.focus(window, False)
+                window.focus(False)
+            except AttributeError:
+                # probably clicked an internal window
+                screen = self.find_screen(e.root_x, e.root_y)
+                if screen:
+                    self.focus_screen(screen.index, warp=False)
+
+        else:
+            # clicked on root window
+            screen = self.find_screen(e.root_x, e.root_y)
+            if screen:
+                self.focus_screen(screen.index, warp=False)
 
         self.conn.conn.core.AllowEvents(xcffib.xproto.Allow.ReplayPointer, e.time)
         self.conn.conn.flush()
@@ -776,11 +781,11 @@ class Qtile(CommandObject):
                 for i in m.commands:
                     if i.check(self):
                         if m.focus == "before":
-                            self.cmd_focus_by_click(event)
+                            self._focus_by_click(event)
                         status, val = self.server.call(
                             (i.selectors, i.name, i.args, i.kwargs))
                         if m.focus == "after":
-                            self.cmd_focus_by_click(event)
+                            self._focus_by_click(event)
                         if status in (command_interface.ERROR, command_interface.EXCEPTION):
                             logger.error(
                                 "Mouse command error %s: %s" % (i.name, val)
@@ -789,7 +794,7 @@ class Qtile(CommandObject):
                 if m.start:
                     i = m.start
                     if m.focus == "before":
-                        self.cmd_focus_by_click(event)
+                        self._focus_by_click(event)
                     status, val = self.server.call(
                         (i.selectors, i.name, i.args, i.kwargs))
                     if status in (command_interface.ERROR, command_interface.EXCEPTION):
@@ -800,7 +805,7 @@ class Qtile(CommandObject):
                 else:
                     val = (0, 0)
                 if m.focus == "after":
-                    self.cmd_focus_by_click(event)
+                    self._focus_by_click(event)
                 self._drag = (x, y, val[0], val[1], m.commands)
                 self.core.grab_pointer()
 
@@ -1130,7 +1135,7 @@ class Qtile(CommandObject):
             pass
 
         d = DummyEv()
-        d.detail = self.conn.first_sym_to_code[keysym]
+        d.detail = self.conn.keysym_to_keycode(keysym)[0]
         d.state = modmasks
         self.core.handle_KeyPress(d)
 
@@ -1152,11 +1157,10 @@ class Qtile(CommandObject):
             return
         self.restart()
 
-    def cmd_spawn(self, cmd):
-        """Run cmd in a shell.
+    def cmd_spawn(self, cmd, shell=False):
+        """Run cmd, in a shell or not (default).
 
-        cmd may be a string, which is parsed by shlex.split, or a list (similar
-        to subprocess.Popen).
+        cmd may be a string or a list (similar to subprocess.Popen).
 
         Examples
         ========
@@ -1165,7 +1169,11 @@ class Qtile(CommandObject):
 
             spawn(["xterm", "-T", "Temporary terminal"])
         """
-        if isinstance(cmd, str):
+        if shell:
+            if not isinstance(cmd, str):
+                cmd = subprocess.list2cmdline(cmd)
+            args = ["/bin/sh", "-c", cmd]
+        elif isinstance(cmd, str):
             args = shlex.split(cmd)
         else:
             args = list(cmd)
@@ -1407,7 +1415,7 @@ class Qtile(CommandObject):
         mb.start_input(prompt, f, "group", strict_completer=True)
 
     def cmd_spawncmd(self, prompt="spawn", widget="prompt",
-                     command="%s", complete="cmd"):
+                     command="%s", complete="cmd", shell=True):
         """Spawn a command using a prompt widget, with tab-completion.
 
         Parameters
@@ -1423,7 +1431,7 @@ class Qtile(CommandObject):
         """
         def f(args):
             if args:
-                self.cmd_spawn(command % args)
+                self.cmd_spawn(command % args, shell=shell)
         try:
             mb = self.widgets_map[widget]
             mb.start_input(prompt, f, complete)
@@ -1495,14 +1503,14 @@ class Qtile(CommandObject):
         rule_args :
             config.Rule arguments
         min_priorty :
-            If the rule is added with minimum prioriry (last) (default: False)
+            If the rule is added with minimum priority (last) (default: False)
         """
         if not self.dgroups:
             logger.warning('No dgroups created')
             return
 
         match = Match(**match_args)
-        rule = Rule(match, **rule_args)
+        rule = Rule([match], **rule_args)
         return self.dgroups.add_rule(rule, min_priorty)
 
     def cmd_remove_rule(self, rule_id):
@@ -1574,7 +1582,7 @@ class Qtile(CommandObject):
         """Get pickled state for restarting qtile"""
         buf = io.BytesIO()
         pickle.dump(QtileState(self), buf, protocol=0)
-        state = buf.getvalue().decode()
+        state = buf.getvalue().decode(errors="backslashreplace")
         logger.debug('State = ')
         logger.debug(''.join(state.split('\n')))
         return state

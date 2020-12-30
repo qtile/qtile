@@ -336,6 +336,10 @@ class Bar(Gap, configurable.Configurable):
     def handle_MotionNotify(self, e):  # noqa: N802
         widget = self.get_widget_in_position(e)
         if widget and widget is not self.cursor_in:
+            self.cursor_in.mouse_leave(
+                e.event_x - self.cursor_in.offsetx,
+                e.event_y - self.cursor_in.offsety,
+            )
             widget.mouse_enter(
                 e.event_x - widget.offsetx,
                 e.event_y - widget.offsety,
@@ -400,6 +404,7 @@ class Bar(Gap, configurable.Configurable):
             else:
                 self.size = 0
                 self.window.hide()
+            self.screen.group.layout_all()
 
     def adjust_for_strut(self, size):
         if self.size:

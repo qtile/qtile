@@ -95,30 +95,22 @@ class Slice(Delegate):
     """
 
     defaults = [
-        ("width", 256, "Slice width"),
-        ("side", "left", "Side of the slice (left, right, top, bottom)"),
-        ("name", "max", "Name of this layout."),
-        ("wname", None, "WM_NAME to match"),
-        ("wmclass", None, "WM_CLASS to match"),
-        ("role", None, "WM_WINDOW_ROLE to match"),
-        ("fallback", Max(), "Fallback layout"),
+        ("width", 256, "Slice width."),
+        ("side", "left", "Position of the slice (left, right, top, bottom)."),
+        ("name", "slice", "Name of this layout."),
+        ("match", None, "Match-object describing which window(s) to move to the slice."),
+        ("fallback", Max(), "Layout to be used for the non-slice area."),
     ]
 
     def __init__(self, **config):
         Delegate.__init__(self, **config)
         self.add_defaults(Slice.defaults)
-        self.match = {
-            'wname': self.wname,
-            'wmclass': self.wmclass,
-            'role': self.role,
-        }
         self._slice = Single()
 
     def clone(self, group):
         res = Layout.clone(self, group)
         res._slice = self._slice.clone(group)
         res.fallback = self.fallback.clone(group)
-        res._window = None
         return res
 
     def layout(self, windows, screen_rect):
@@ -159,7 +151,7 @@ class Slice(Delegate):
         return (win, sub)
 
     def add(self, win):
-        if self._slice.empty() and win.match(**self.match):
+        if self._slice.empty() and self.match and self.match.compare(win):
             self._slice.add(win)
             self.layouts[win] = self._slice
         else:

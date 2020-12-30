@@ -263,6 +263,9 @@ class Window(TreeNode):
         if self.window is layout._focused:
             fg = layout.active_fg
             bg = layout.active_bg
+        elif self.window.urgent:
+            fg = layout.urgent_fg
+            bg = layout.urgent_bg
         else:
             fg = layout.inactive_fg
             bg = layout.inactive_bg
@@ -358,6 +361,8 @@ class TreeTab(Layout):
         ("bg_color", "000000", "Background color of tabs"),
         ("active_bg", "000080", "Background color of active tab"),
         ("active_fg", "ffffff", "Foreground color of active tab"),
+        ("urgent_bg", "ff0000", "Background color of urgent tab"),
+        ("urgent_fg", "ffffff", "Foreground color of urgent tab"),
         ("inactive_bg", "606060", "Background color of inactive tab"),
         ("inactive_fg", "ffffff", "Foreground color of inactive tab"),
         ("margin_left", 6, "Left margin of tab panel"),
@@ -535,7 +540,6 @@ class TreeTab(Layout):
             return tree
 
         d = Layout.info(self)
-        # Sort client names to work around an internal difference betwen Python 3.5 and 3.6+
         d["clients"] = sorted([x.name for x in self._nodes])
         d["sections"] = [x.title for x in self._tree.children]
 

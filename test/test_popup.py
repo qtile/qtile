@@ -25,21 +25,25 @@ from libqtile.backend.x11 import xcbq
 from libqtile.popup import Popup
 from test.conftest import BareConfig
 
-popup_config = pytest.mark.parametrize("qtile", [BareConfig], indirect=True)
 
+@pytest.mark.parametrize("manager", [BareConfig], indirect=True)
+def test_popup_focus(manager):
+    manager.test_xeyes()
+    manager.windows_map = {}
 
-@popup_config
-def test_focus(qtile):
-    qtile.conn = xcbq.Connection(qtile.display)
-    qtile.test_xeyes()
+    # we have to add .conn so that Popup thinks this is libqtile.qtile
+    manager.conn = xcbq.Connection(manager.display)
 
-    popup = Popup(qtile)
-    popup.width = qtile.c.screen.info()["width"]
-    popup.height = qtile.c.screen.info()["height"]
-    popup.place()
-    popup.unhide()
-    assert qtile.c.group.info()['focus'] == 'xeyes'
-    assert qtile.c.group.info()['windows'] == ['xeyes']
-    assert len(qtile.c.windows()) == 1
-    popup.hide()
-    popup.kill()
+    try:
+        popup = Popup(manager)
+        popup.width = manager.c.screen.info()["width"]
+        popup.height = manager.c.screen.info()["height"]
+        popup.place()
+        popup.unhide()
+        assert manager.c.group.info()['focus'] == 'xeyes'
+        assert manager.c.group.info()['windows'] == ['xeyes']
+        assert len(manager.c.windows()) == 1
+        popup.hide()
+    finally:
+        popup.kill()
+        manager.conn.finalize()

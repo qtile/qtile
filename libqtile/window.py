@@ -21,7 +21,6 @@ import array
 import contextlib
 import inspect
 import traceback
-import warnings
 
 import xcffib.xproto
 from xcffib.xproto import EventMask, SetMode, StackMode
@@ -176,7 +175,6 @@ class _Window(CommandObject):
         self.name = "<no name>"
         self.strut = None
         self.state = NormalState
-        self.window_type = "normal"
         self._float_state = NOT_FLOATING
         self._demands_attention = False
 
@@ -476,33 +474,27 @@ class _Window(CommandObject):
         self.y = y
         self.width = width
         self.height = height
-        self.borderwidth = borderwidth
-        self.bordercolor = bordercolor
 
         kwarg = dict(
             x=x,
             y=y,
             width=width,
             height=height,
-            borderwidth=borderwidth,
         )
         if above:
             kwarg['stackmode'] = StackMode.Above
 
         self.window.configure(**kwarg)
+        self.paint_borders(bordercolor, borderwidth)
 
         if send_notify:
             self.send_configure_notify(x, y, width, height)
 
-        if bordercolor is not None:
-            self.window.set_attribute(borderpixel=bordercolor)
-
-    def user_placed_window_setup(self, borderpixel, borderwidth):
+    def paint_borders(self, borderpixel, borderwidth):
         self.borderwidth = borderwidth
         self.bordercolor = borderpixel
-        self.window.set_attribute(borderpixel=borderpixel)
-        self.window.configure(borderwidth=borderwidth, stackmode=StackMode.Above)
-        self.unhide()
+        self.window.configure(borderwidth=borderwidth)
+        self.window.paint_borders(borderpixel)
 
     def send_configure_notify(self, x, y, width, height):
         """Send a synthetic ConfigureNotify"""
@@ -846,18 +838,6 @@ class Window(_Window):
     def toggle_floating(self):
         self.floating = not self.floating
 
-    def togglefloating(self):
-        warnings.warn("togglefloating is deprecated, use toggle_floating", DeprecationWarning)
-        self.toggle_floating()
-
-    def enablefloating(self):
-        warnings.warn("enablefloating is deprecated, use floating=True", DeprecationWarning)
-        self.floating = True
-
-    def disablefloating(self):
-        warnings.warn("disablefloating is deprecated, use floating=False", DeprecationWarning)
-        self.floating = False
-
     @property
     def fullscreen(self):
         return self._float_state == FULLSCREEN
@@ -895,10 +875,6 @@ class Window(_Window):
     def toggle_fullscreen(self):
         self.fullscreen = not self.fullscreen
 
-    def togglefullscreen(self):
-        warnings.warn("togglefullscreen is deprecated, use toggle_fullscreen", DeprecationWarning)
-        self.toggle_fullscreen()
-
     @property
     def maximized(self):
         return self._float_state == MAXIMIZED
@@ -920,16 +896,8 @@ class Window(_Window):
             if self._float_state == MAXIMIZED:
                 self.floating = False
 
-    def enablemaximize(self, state=MAXIMIZED):
-        warnings.warn("enablemaximize is deprecated, use maximized=True", DeprecationWarning)
-        self.maximized = True
-
     def toggle_maximize(self, state=MAXIMIZED):
         self.maximized = not self.maximized
-
-    def togglemaximize(self):
-        warnings.warn("togglemaximize is deprecated, use toggle_maximize", DeprecationWarning)
-        self.toggle_maximize()
 
     @property
     def minimized(self):
@@ -944,16 +912,8 @@ class Window(_Window):
             if self._float_state == MINIMIZED:
                 self.floating = False
 
-    def enableminimize(self):
-        warnings.warn("enableminimized is deprecated, use minimized=True", DeprecationWarning)
-        self.minimized = True
-
     def toggle_minimize(self):
         self.minimized = not self.minimized
-
-    def toggleminimize(self):
-        warnings.warn("toggleminimize is deprecated, use toggle_minimize", DeprecationWarning)
-        self.toggle_minimize()
 
     def cmd_static(self, screen, x=None, y=None, width=None, height=None):
         """Makes this window a static window, attached to a Screen
@@ -994,7 +954,9 @@ class Window(_Window):
         if self.width < 0:
             self.width = 0
 
-        screen = self.qtile.find_closest_screen(self.x, self.y)
+        screen = self.qtile.find_closest_screen(
+            self.x + self.width // 2, self.y + self.height // 2
+        )
         if self.group and screen is not None and screen != self.group.screen:
             self.group.remove(self, force=True)
             screen.group.add(self, force=True)
@@ -1087,48 +1049,26 @@ class Window(_Window):
                 raise CommandError('No such screen: %d' % index)
         self.togroup(screen.group.name)
 
-    def match(self, wname=None, wmclass=None, role=None):
+    def match(self, match):
         """Match window against given attributes.
 
         Parameters
         ==========
-        wname :
-            matches against the window name or title, that is, either
-            ``_NET_WM_VISIBLE_NAME``, ``_NET_WM_NAME``, ``WM_NAME``.
-        wmclass :
-            matches against any of the two values in the ``WM_CLASS`` property
-        role :
-            matches against the ``WM_WINDOW_ROLE`` property
+        match:
+            a config.Match object
         """
-        if not (wname or wmclass or role):
-            raise TypeError(
-                "Either a name, a wmclass or a role must be specified"
-            )
-        if wname and wname == self.name:
-            return True
-
         try:
-            cliclass = self.window.get_wm_class()
-            if wmclass and cliclass and wmclass in cliclass:
-                return True
-
-            clirole = self.window.get_wm_window_role()
-            if role and clirole and role == clirole:
-                return True
+            return match.compare(self)
         except (xcffib.xproto.WindowError, xcffib.xproto.AccessError):
             return False
 
-        return False
-
     def handle_EnterNotify(self, e):  # noqa: N802
         hook.fire("client_mouse_enter", self)
-        if self.qtile.config.follow_mouse_focus and \
-                self.group.current_window != self:
-            self.group.focus(self, False)
-        if self.group.screen and \
-                self.qtile.current_screen != self.group.screen and \
-                self.qtile.config.follow_mouse_focus:
-            self.qtile.focus_screen(self.group.screen.index, False)
+        if self.qtile.config.follow_mouse_focus:
+            if self.group.current_window != self:
+                self.group.focus(self, False)
+            if self.group.screen and self.qtile.current_screen != self.group.screen:
+                self.qtile.focus_screen(self.group.screen.index, False)
         return True
 
     def handle_ConfigureRequest(self, e):  # noqa: N802
@@ -1240,6 +1180,8 @@ class Window(_Window):
                     logger.info("Ignoring focus request")
                 else:
                     logger.warning("Invalid value for focus_on_window_activation: {}".format(focus_behavior))
+        elif atoms["_NET_CLOSE_WINDOW"] == opcode:
+            self.kill()
 
     def handle_PropertyNotify(self, e):  # noqa: N802
         name = self.qtile.conn.atoms.get_name(e.atom)
@@ -1391,12 +1333,6 @@ class Window(_Window):
     def cmd_toggle_maximize(self):
         self.toggle_maximize()
 
-    def cmd_enable_maximize(self):
-        self.maximize = True
-
-    def cmd_disable_maximize(self):
-        self.maximize = False
-
     def cmd_toggle_fullscreen(self):
         self.toggle_fullscreen()
 
@@ -1408,12 +1344,6 @@ class Window(_Window):
 
     def cmd_toggle_minimize(self):
         self.toggle_minimize()
-
-    def cmd_enable_minimize(self):
-        self.minimize = True
-
-    def cmd_disable_minimize(self):
-        self.minimize = False
 
     def cmd_bring_to_front(self):
         if self.floating:

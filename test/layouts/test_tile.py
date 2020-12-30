@@ -44,9 +44,9 @@ class TileConfig(Config):
     ]
     layouts = [
         layout.Tile(),
-        layout.Tile(masterWindows=2)
+        layout.Tile(master_length=2)
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
@@ -54,87 +54,87 @@ class TileConfig(Config):
 
 
 def tile_config(x):
-    return no_xinerama(pytest.mark.parametrize("qtile", [TileConfig], indirect=True)(x))
+    return no_xinerama(pytest.mark.parametrize("manager", [TileConfig], indirect=True)(x))
 
 
 @tile_config
-def test_tile_updown(qtile):
-    qtile.test_window("one")
-    qtile.test_window("two")
-    qtile.test_window("three")
-    assert qtile.c.layout.info()["clients"] == ["three", "two", "one"]
-    qtile.c.layout.shuffle_down()
-    assert qtile.c.layout.info()["clients"] == ["two", "one", "three"]
-    qtile.c.layout.shuffle_up()
-    assert qtile.c.layout.info()["clients"] == ["three", "two", "one"]
+def test_tile_updown(manager):
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
+    assert manager.c.layout.info()["clients"] == ["three", "two", "one"]
+    manager.c.layout.shuffle_down()
+    assert manager.c.layout.info()["clients"] == ["two", "one", "three"]
+    manager.c.layout.shuffle_up()
+    assert manager.c.layout.info()["clients"] == ["three", "two", "one"]
 
 
 @tile_config
-def test_tile_nextprev(qtile):
-    qtile.test_window("one")
-    qtile.test_window("two")
-    qtile.test_window("three")
+def test_tile_nextprev(manager):
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
 
-    assert qtile.c.layout.info()["clients"] == ["three", "two", "one"]
-    assert qtile.c.groups()["a"]["focus"] == "three"
+    assert manager.c.layout.info()["clients"] == ["three", "two", "one"]
+    assert manager.c.groups()["a"]["focus"] == "three"
 
-    qtile.c.layout.next()
-    assert qtile.c.groups()["a"]["focus"] == "two"
+    manager.c.layout.next()
+    assert manager.c.groups()["a"]["focus"] == "two"
 
-    qtile.c.layout.previous()
-    assert qtile.c.groups()["a"]["focus"] == "three"
+    manager.c.layout.previous()
+    assert manager.c.groups()["a"]["focus"] == "three"
 
-    qtile.c.layout.previous()
-    assert qtile.c.groups()["a"]["focus"] == "one"
+    manager.c.layout.previous()
+    assert manager.c.groups()["a"]["focus"] == "one"
 
-    qtile.c.layout.next()
-    qtile.c.layout.next()
-    qtile.c.layout.next()
-    assert qtile.c.groups()["a"]["focus"] == "one"
-
-
-@tile_config
-def test_tile_master_and_slave(qtile):
-    qtile.test_window("one")
-    qtile.test_window("two")
-    qtile.test_window("three")
-
-    assert qtile.c.layout.info()["master"] == ["three"]
-    assert qtile.c.layout.info()["slave"] == ["two", "one"]
-
-    qtile.c.next_layout()
-    assert qtile.c.layout.info()["master"] == ["three", "two"]
-    assert qtile.c.layout.info()["slave"] == ["one"]
+    manager.c.layout.next()
+    manager.c.layout.next()
+    manager.c.layout.next()
+    assert manager.c.groups()["a"]["focus"] == "one"
 
 
 @tile_config
-def test_tile_remove(qtile):
-    one = qtile.test_window("one")
-    qtile.test_window("two")
-    three = qtile.test_window("three")
+def test_tile_master_and_slave(manager):
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
 
-    assert qtile.c.layout.info()["master"] == ["three"]
-    qtile.kill_window(one)
-    assert qtile.c.layout.info()["master"] == ["three"]
-    qtile.kill_window(three)
-    assert qtile.c.layout.info()["master"] == ["two"]
+    assert manager.c.layout.info()["master"] == ["three"]
+    assert manager.c.layout.info()["slave"] == ["two", "one"]
+
+    manager.c.next_layout()
+    assert manager.c.layout.info()["master"] == ["three", "two"]
+    assert manager.c.layout.info()["slave"] == ["one"]
 
 
 @tile_config
-def test_tile_window_focus_cycle(qtile):
+def test_tile_remove(manager):
+    one = manager.test_window("one")
+    manager.test_window("two")
+    three = manager.test_window("three")
+
+    assert manager.c.layout.info()["master"] == ["three"]
+    manager.kill_window(one)
+    assert manager.c.layout.info()["master"] == ["three"]
+    manager.kill_window(three)
+    assert manager.c.layout.info()["master"] == ["two"]
+
+
+@tile_config
+def test_tile_window_focus_cycle(manager):
     # setup 3 tiled and two floating clients
-    qtile.test_window("one")
-    qtile.test_window("two")
-    qtile.test_window("float1")
-    qtile.c.window.toggle_floating()
-    qtile.test_window("float2")
-    qtile.c.window.toggle_floating()
-    qtile.test_window("three")
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("float1")
+    manager.c.window.toggle_floating()
+    manager.test_window("float2")
+    manager.c.window.toggle_floating()
+    manager.test_window("three")
 
     # test preconditions, Tile adds (by default) clients at pos of current
-    assert qtile.c.layout.info()['clients'] == ['three', 'two', 'one']
+    assert manager.c.layout.info()['clients'] == ['three', 'two', 'one']
     # last added window has focus
-    assert_focused(qtile, "three")
+    assert_focused(manager, "three")
 
     # assert window focus cycle, according to order in layout
-    assert_focus_path(qtile, 'two', 'one', 'float1', 'float2', 'three')
+    assert_focus_path(manager, 'two', 'one', 'float1', 'float2', 'three')

@@ -214,9 +214,9 @@ class Stack(Layout):
             return
 
         if client.has_focus:
-            px = self.group.qtile.color_pixel(self.border_focus)
+            px = self.border_focus
         else:
-            px = self.group.qtile.color_pixel(self.border_normal)
+            px = self.border_normal
 
         column_width = int(screen_rect.width / len(self.stacks))
         xoffset = screen_rect.x + i * column_width

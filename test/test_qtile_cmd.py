@@ -44,7 +44,7 @@ class ServerConfig(Config):
         libqtile.layout.Stack(num_stacks=2),
         libqtile.layout.Stack(num_stacks=3),
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     screens = [
         libqtile.config.Screen(
             bottom=libqtile.bar.Bar(
@@ -65,12 +65,12 @@ class ServerConfig(Config):
     ]
 
 
-server_config = pytest.mark.parametrize("qtile", [ServerConfig], indirect=True)
+server_config = pytest.mark.parametrize("manager", [ServerConfig], indirect=True)
 
 
 def run_qtile_cmd(args):
-    cmd = os.path.join(os.path.dirname(__file__), '..', 'bin', 'qtile-cmd')
-    argv = [cmd]
+    cmd = os.path.join(os.path.dirname(__file__), '..', 'bin', 'qtile')
+    argv = [cmd, "cmd-obj"]
     argv.extend(args.split())
     pipe = subprocess.Popen(argv, stdout=subprocess.PIPE)
     output, _ = pipe.communicate()
@@ -78,33 +78,33 @@ def run_qtile_cmd(args):
 
 
 @server_config
-def test_qtile_cmd(qtile):
+def test_qtile_cmd(manager):
 
-    qtile.test_window("foo")
-    wid = qtile.c.window.info()["id"]
+    manager.test_window("foo")
+    wid = manager.c.window.info()["id"]
 
     for obj in ["window", "group", "screen"]:
-        assert run_qtile_cmd('-s {} -o {} -f info'.format(qtile.sockfile, obj))
+        assert run_qtile_cmd('-s {} -o {} -f info'.format(manager.sockfile, obj))
 
-    layout = run_qtile_cmd('-s {} -o layout -f info'.format(qtile.sockfile))
+    layout = run_qtile_cmd('-s {} -o layout -f info'.format(manager.sockfile))
     assert layout['name'] == 'stack'
     assert layout['group'] == 'a'
 
-    window = run_qtile_cmd('-s {} -o window {} -f info'.format(qtile.sockfile, wid))
+    window = run_qtile_cmd('-s {} -o window {} -f info'.format(manager.sockfile, wid))
     assert window['id'] == wid
     assert window['name'] == 'foo'
     assert window['group'] == 'a'
 
-    group = run_qtile_cmd('-s {} -o group {} -f info'.format(qtile.sockfile, 'a'))
+    group = run_qtile_cmd('-s {} -o group {} -f info'.format(manager.sockfile, 'a'))
     assert group['name'] == 'a'
     assert group['screen'] == 0
     assert group['layouts'] == ['stack', 'stack', 'stack']
     assert group['focus'] == 'foo'
 
-    assert run_qtile_cmd('-s {} -o screen {} -f info'.format(qtile.sockfile, 0)) == \
+    assert run_qtile_cmd('-s {} -o screen {} -f info'.format(manager.sockfile, 0)) == \
         {'height': 600, 'index': 0, 'width': 800, 'x': 0, 'y': 0}
 
-    bar = run_qtile_cmd('-s {} -o bar {} -f info'.format(qtile.sockfile, 'bottom'))
+    bar = run_qtile_cmd('-s {} -o bar {} -f info'.format(manager.sockfile, 'bottom'))
     assert bar['height'] == 20
     assert bar['width'] == 800
     assert bar['size'] == 20

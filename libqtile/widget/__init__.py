@@ -20,85 +20,76 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.utils import safe_import as safe_import_
-# only directly import widgets that do not have any third party dependencies
-# other than those required by qtile, otherwise use the same import function
-from libqtile.widget.base import Mirror  # noqa: F401
-from libqtile.widget.chord import Chord  # noqa: F401
-from libqtile.widget.clock import Clock  # noqa: F401
-from libqtile.widget.currentlayout import (  # noqa: F401
-    CurrentLayout,
-    CurrentLayoutIcon,
-)
-from libqtile.widget.groupbox import AGroupBox, GroupBox  # noqa: F401
+from libqtile.utils import make_module_getattr
 from libqtile.widget.import_error import make_error
-from libqtile.widget.prompt import Prompt  # noqa: F401
-from libqtile.widget.quick_exit import QuickExit  # noqa: F401
-from libqtile.widget.systray import Systray  # noqa: F401
-from libqtile.widget.textbox import TextBox  # noqa: F401
-from libqtile.widget.windowname import WindowName  # noqa: F401
 
+widgets = {
+    "AGroupBox": "groupbox",
+    "Backlight": "backlight",
+    "Battery": "battery",
+    "BatteryIcon": "battery",
+    "BitcoinTicker": "bitcoin_ticker",
+    "CPU": "cpu",
+    "CPUGraph": "graph",
+    "Canto": "canto",
+    "CapsNumLockIndicator": "caps_num_lock_indicator",
+    "CheckUpdates": "check_updates",
+    "Chord": "chord",
+    "Clipboard": "clipboard",
+    "Clock": "clock",
+    "Cmus": "cmus",
+    "Countdown": "countdown",
+    "CurrentLayout": "currentlayout",
+    "CurrentLayoutIcon": "currentlayout",
+    "CurrentScreen": "currentscreen",
+    "DF": "df",
+    "DebugInfo": "debuginfo",
+    "GenPollText": "generic_poll_text",
+    "GenPollUrl": "generic_poll_text",
+    "GmailChecker": "gmail_checker",
+    "GroupBox": "groupbox",
+    "HDDBusyGraph": "graph",
+    "HDDGraph": "graph",
+    "IdleRPG": "idlerpg",
+    "Image": "image",
+    "ImapWidget": "imapwidget",
+    "KeyboardKbdd": "keyboardkbdd",
+    "KeyboardLayout": "keyboardlayout",
+    "KhalCalendar": "khal_calendar",
+    "LaunchBar": "launchbar",
+    "Maildir": "maildir",
+    "Memory": "memory",
+    "MemoryGraph": "graph",
+    "Mirror": "base",
+    "Moc": "moc",
+    "Mpd2": "mpd2widget",
+    "Mpris": "mpriswidget",
+    "Mpris2": "mpris2widget",
+    "Net": "net",
+    "NetGraph": "graph",
+    "Notify": "notify",
+    "Pomodoro": "pomodoro",
+    "Prompt": "prompt",
+    "PulseVolume": "pulse_volume",
+    "QuickExit": "quick_exit",
+    "Sep": "sep",
+    "She": "she",
+    "Spacer": "spacer",
+    "StockTicker": "stock_ticker",
+    "SwapGraph": "graph",
+    "Systray": "systray",
+    "TaskList": "tasklist",
+    "TextBox": "textbox",
+    "ThermalSensor": "sensors",
+    "Volume": "volume",
+    "Wallpaper": "wallpaper",
+    "WidgetBox": "widgetbox",
+    "WindowCount": "window_count",
+    "WindowName": "windowname",
+    "WindowTabs": "windowtabs",
+    "Wlan": "wlan",
+    "YahooWeather": "yahoo_weather"
+}
 
-def safe_import(module_name, class_name):
-    safe_import_(
-        (".widget", module_name), class_name, globals(), fallback=make_error
-    )
-
-
-safe_import("backlight", "Backlight")
-safe_import("battery", ["Battery", "BatteryIcon"])
-safe_import("currentscreen", "CurrentScreen")
-safe_import("debuginfo", "DebugInfo")
-safe_import(
-    "graph",
-    [
-        "CPUGraph",
-        "MemoryGraph",
-        "SwapGraph",
-        "NetGraph",
-        "HDDGraph",
-        "HDDBusyGraph",
-    ],
-)
-safe_import("maildir", "Maildir")
-safe_import("notify", "Notify")
-safe_import("sensors", "ThermalSensor")
-safe_import("sep", "Sep")
-safe_import("she", "She")
-safe_import("spacer", "Spacer")
-safe_import("generic_poll_text", ["GenPollText", "GenPollUrl"])
-safe_import("volume", "Volume")
-safe_import("windowtabs", "WindowTabs")
-safe_import("keyboardlayout", "KeyboardLayout")
-safe_import("df", "DF")
-safe_import("image", "Image")
-safe_import("gmail_checker", "GmailChecker")
-safe_import("clipboard", "Clipboard")
-safe_import("countdown", "Countdown")
-safe_import("tasklist", "TaskList")
-safe_import("pacman", "Pacman")
-safe_import("launchbar", "LaunchBar")
-safe_import("canto", "Canto")
-safe_import("mpriswidget", "Mpris")
-safe_import("mpris2widget", "Mpris2")
-safe_import("mpd2widget", "Mpd2")
-safe_import("yahoo_weather", "YahooWeather")
-safe_import("bitcoin_ticker", "BitcoinTicker")
-safe_import("wlan", "Wlan")
-safe_import("khal_calendar", "KhalCalendar")
-safe_import("imapwidget", "ImapWidget")
-safe_import("net", "Net")
-safe_import("keyboardkbdd", "KeyboardKbdd")
-safe_import("cmus", "Cmus")
-safe_import("wallpaper", "Wallpaper")
-safe_import("check_updates", "CheckUpdates")
-safe_import("moc", "Moc")
-safe_import("memory", "Memory")
-safe_import("cpu", "CPU")
-safe_import("idlerpg", "IdleRPG")
-safe_import("pomodoro", "Pomodoro")
-safe_import("stock_ticker", "StockTicker")
-safe_import("caps_num_lock_indicator", "CapsNumLockIndicator")
-safe_import("quick_exit", "QuickExit")
-safe_import("pulse_volume", "PulseVolume")
-safe_import("chord", "Chord")
+__all__ = tuple(widgets.keys())
+__getattr__ = make_module_getattr(widgets, __package__, fallback=make_error)

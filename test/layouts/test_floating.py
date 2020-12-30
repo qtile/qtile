@@ -35,7 +35,7 @@ class FloatingConfig(Config):
     layouts = [
         layout.Floating()
     ]
-    floating_layout = libqtile.layout.floating.Floating()
+    floating_layout = libqtile.resources.default_config.floating_layout
     keys = []
     mouse = []
     screens = []
@@ -43,33 +43,31 @@ class FloatingConfig(Config):
 
 
 def floating_config(x):
-    return no_xinerama(pytest.mark.parametrize("qtile", [FloatingConfig], indirect=True)(x))
+    return no_xinerama(pytest.mark.parametrize("manager", [FloatingConfig], indirect=True)(x))
 
 
 @floating_config
-def test_float_next_prev_window(qtile):
-    self = qtile
-
+def test_float_next_prev_window(manager):
     # spawn three windows
-    self.test_window("one")
-    self.test_window("two")
-    self.test_window("three")
+    manager.test_window("one")
+    manager.test_window("two")
+    manager.test_window("three")
 
     # focus previous windows
-    assert_focused(self, "three")
-    self.c.group.prev_window()
-    assert_focused(self, "two")
-    self.c.group.prev_window()
-    assert_focused(self, "one")
+    assert_focused(manager, "three")
+    manager.c.group.prev_window()
+    assert_focused(manager, "two")
+    manager.c.group.prev_window()
+    assert_focused(manager, "one")
     # checking that it loops around properly
-    self.c.group.prev_window()
-    assert_focused(self, "three")
+    manager.c.group.prev_window()
+    assert_focused(manager, "three")
 
     # focus next windows
     # checking that it loops around properly
-    self.c.group.next_window()
-    assert_focused(self, "one")
-    self.c.group.next_window()
-    assert_focused(self, "two")
-    self.c.group.next_window()
-    assert_focused(self, "three")
+    manager.c.group.next_window()
+    assert_focused(manager, "one")
+    manager.c.group.next_window()
+    assert_focused(manager, "two")
+    manager.c.group.next_window()
+    assert_focused(manager, "three")

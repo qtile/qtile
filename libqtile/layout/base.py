@@ -239,11 +239,6 @@ class SingleWindow(Layout):
         else:
             win.hide()
 
-    def remove(self, win):
-        cli = self.clients.pop(0)
-        if cli == win:
-            return self.clients[0]
-
 
 class Delegate(Layout):
     """Base for all delegation layouts"""
@@ -443,13 +438,10 @@ class _ClientList:
         """
         Returns the client previous to win in collection.
         """
-        try:
-            idx = self.index(win)
-        except IndexError:
-            return None
-        else:
-            if idx > 0:
-                return self[idx - 1]
+        idx = self.index(win)
+        if idx > 0:
+            return self[idx - 1]
+        return None
 
     def add(self, client, offset_to_current=0):
         """
