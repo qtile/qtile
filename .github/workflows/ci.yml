@@ -21,7 +21,7 @@ jobs:
                   python-version: ${{ matrix.python-version }}
             - run: |
                 sudo apt update
-                sudo apt install graphviz imagemagick x11-apps xserver-xephyr xterm xvfb libpulse-dev lm-sensors
+                sudo apt install imagemagick x11-apps xserver-xephyr xterm xvfb libpulse-dev lm-sensors
                 pip install tox tox-gh-actions
               name: install dependencies
             - name: run tests
