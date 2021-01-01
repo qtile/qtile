@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.utils import make_module_getattr
+from libqtile.utils import lazify_imports
 from libqtile.widget.import_error import make_error
 
 widgets = {
@@ -91,5 +91,5 @@ widgets = {
     "YahooWeather": "yahoo_weather"
 }
 
-__all__ = tuple(widgets.keys())
-__getattr__ = make_module_getattr(widgets, __package__, fallback=make_error)
+__all__, __dir__, __getattr__ = lazify_imports(widgets, __package__,
+                                               fallback=make_error)

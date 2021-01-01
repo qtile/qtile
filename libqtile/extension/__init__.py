@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile.utils import make_module_getattr
+from libqtile.utils import lazify_imports
 
 extensions = {
     "CommandSet": "command_set",
@@ -29,5 +29,4 @@ extensions = {
     "WindowList": "window_list"
 }
 
-__all__ = tuple(extensions.keys())
-__getattr__ = make_module_getattr(extensions, __package__)
+__all__, __dir__, __getattr__ = lazify_imports(extensions, __package__)
