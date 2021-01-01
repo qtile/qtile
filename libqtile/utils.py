@@ -210,19 +210,24 @@ def import_class(module_path, class_name, fallback=None):
         raise
 
 
-def make_module_getattr(registry, package, fallback=None):
+def lazify_imports(registry, package, fallback=None):
     """Leverage PEP 562 to make imports lazy in an __init__.py
 
     The registry must be a dictionary with the items to import as keys and the
     modules they belong to as a value.
     """
+    __all__ = tuple(registry.keys())
+
+    def __dir__():
+        return __all__
+
     def __getattr__(name):
         if name not in registry:
             raise AttributeError
         module_path = "{}.{}".format(package, registry[name])
         return import_class(module_path, name, fallback=fallback)
 
-    return __getattr__
+    return __all__, __dir__, __getattr__
 
 
 def send_notification(title, message, urgent=False, timeout=10000, id=None):
