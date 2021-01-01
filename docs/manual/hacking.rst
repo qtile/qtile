@@ -54,10 +54,6 @@ Deactivate it with the ``deactivate`` command.
 
 Building the documentation
 ==========================
-
-Activate your virtualenv, and install the ``graphviz`` Python package:
-
-    pip install graphviz
     
 Go into the ``docs/`` directory and run ``pip install -r requirements.txt``.
 
