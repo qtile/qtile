@@ -29,13 +29,10 @@ def qshell(args) -> None:
     client = ipc.Client(socket, is_json=args.is_json)
     cmd_object = command_interface.IPCCommandInterface(client)
     qsh = sh.QSh(cmd_object)
-    if args.pyfile is None:
-        if args.command is not None:
-            qsh.process_line(args.command)
-        else:
-            qsh.loop()
+    if args.command is not None:
+        qsh.process_line(args.command)
     else:
-        print(qsh.process_line("run_external({})".format(args.pyfile)))
+        qsh.loop()
 
 
 def add_subcommand(subparsers):
@@ -45,13 +42,6 @@ def add_subcommand(subparsers):
         action="store", type=str,
         default=None,
         help='Use specified socket to connect to qtile.'
-    )
-    parser.add_argument(
-        "-r", "--run",
-        action="store", type=str,
-        default=None,
-        dest="pyfile",
-        help='The full path to python file with the \"main\" function to call.'
     )
     parser.add_argument(
         "-c", "--command",
