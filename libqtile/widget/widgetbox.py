@@ -43,15 +43,16 @@ class WidgetBox(base._Widget):
     Button clicks are passed to widgets when they are visible so callbacks will
     work.
 
-    Widgets in the box alsos remain accessible via command interfaces.
+    Widgets in the box also remain accessible via command interfaces.
 
     Widgets can only be added to the box via the configuration file. The widget
-    is conigured by adding widgets to the "widgets" parameter as follows:
+    is configured by adding widgets to the "widgets" parameter as follows::
 
         widget.WidgetBox(widgets=[
             widget.TextBox(text="This widget is in the box"),
-            widget.Memory(),
-            ]),
+            widget.Memory()
+            ]
+        ),
     """
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
