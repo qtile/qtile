@@ -25,13 +25,13 @@ import os
 import pytest
 
 from libqtile import config, confreader, utils
-from libqtile.backend.x11 import xcore
+from libqtile.backend.x11.core import Core
 
 tests_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 def test_validate():
-    xc = xcore.XCore()
+    xc = Core()
     f = confreader.Config(os.path.join(tests_dir, "configs", "basic.py"), xc)
     f.load()
     f.keys[0].key = "nonexistent"
