@@ -38,7 +38,7 @@ import xcffib.xproto
 
 import libqtile.config
 from libqtile import command_client, command_interface, ipc
-from libqtile.backend.x11 import xcore
+from libqtile.backend.x11.core import Core
 from libqtile.confreader import Config
 from libqtile.core.session_manager import SessionManager
 from libqtile.lazy import lazy
@@ -281,7 +281,7 @@ class TestManager:
 
         def run_qtile():
             try:
-                kore = xcore.XCore(display_name=self.display)
+                kore = Core(display_name=self.display)
                 init_log(self.log_level, log_path=None, log_color=False)
                 q = SessionManager(kore, config_class(), fname=self.sockfile)
                 q.loop()
@@ -310,7 +310,7 @@ class TestManager:
         will likely block the thread.
         """
         init_log(self.log_level, log_path=None, log_color=False)
-        kore = xcore.XCore(display_name=self.display)
+        kore = Core(display_name=self.display)
         config = config_class()
         for attr in dir(default_config):
             if not hasattr(config, attr):

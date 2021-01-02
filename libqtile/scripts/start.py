@@ -26,8 +26,8 @@ import logging
 from os import getenv, makedirs, path
 from sys import exit, stdout
 
+import libqtile.backend
 from libqtile import confreader
-from libqtile.backend.x11 import xcore
 from libqtile.log_utils import init_log, logger
 
 
@@ -50,7 +50,7 @@ def rename_process():
 def make_qtile(options):
     log_level = getattr(logging, options.log_level)
     init_log(log_level=log_level, log_color=stdout.isatty())
-    kore = xcore.XCore()
+    kore = libqtile.backend.get_core(options.backend)
 
     if not path.isfile(options.configfile):
         try:
@@ -132,5 +132,12 @@ def add_subcommand(subparsers):
         default=None,
         dest='state',
         help='Pickled QtileState object (typically used only internally)',
+    )
+    parser.add_argument(
+        '-b', '--backend',
+        default='x11',
+        dest='backend',
+        choices=libqtile.backend.CORES,
+        help='Use specified backend. Currently only x11 is implemented.',
     )
     parser.set_defaults(func=start)

@@ -55,7 +55,7 @@ class ExistingWMException(Exception):
     pass
 
 
-class XCore(base.Core):
+class Core(base.Core):
     def __init__(self, display_name: str = None) -> None:
         """Setup the X11 core backend
 
