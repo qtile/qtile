@@ -29,7 +29,6 @@ import subprocess
 import sys
 import tempfile
 import time
-import traceback
 import warnings
 
 import xcffib
@@ -58,18 +57,6 @@ from libqtile.scratchpad import ScratchPad
 from libqtile.state import QtileState
 from libqtile.utils import get_cache_dir, send_notification
 from libqtile.widget.base import _Widget
-
-
-def _import_module(module_name, dir_path):
-    import imp
-    fp = None
-    try:
-        fp, pathname, description = imp.find_module(module_name, [dir_path])
-        module = imp.load_module(module_name, fp, pathname, description)
-    finally:
-        if fp:
-            fp.close()
-    return module
 
 
 def handle_exception(loop, context):
@@ -1505,36 +1492,6 @@ class Qtile(CommandObject):
     def cmd_remove_rule(self, rule_id):
         """Remove a dgroup rule by rule_id"""
         self.dgroups.remove_rule(rule_id)
-
-    def cmd_run_external(self, full_path):
-        """Run external Python script"""
-        def format_error(path, e):
-            s = """Can't call "main" from "{path}"\n\t{err_name}: {err}"""
-            return s.format(path=path, err_name=e.__class__.__name__, err=e)
-
-        module_name = os.path.splitext(os.path.basename(full_path))[0]
-        dir_path = os.path.dirname(full_path)
-        err_str = ""
-        local_stdout = io.BytesIO()
-        old_stdout = sys.stdout
-        sys.stdout = local_stdout
-        sys.exc_clear()
-
-        try:
-            module = _import_module(module_name, dir_path)
-            module.main(self)
-        except ImportError as e:
-            err_str += format_error(full_path, e)
-        except:  # noqa: E722
-            (exc_type, exc_value, exc_traceback) = sys.exc_info()
-            err_str += traceback.format_exc()
-            err_str += format_error(full_path, exc_type(exc_value))
-        finally:
-            sys.exc_clear()
-            sys.stdout = old_stdout
-            local_stdout.close()
-
-        return local_stdout.getvalue() + err_str
 
     def cmd_hide_show_bar(self, position="all"):
         """Toggle visibility of a given bar
