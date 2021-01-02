@@ -30,6 +30,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import asyncio
+import contextlib
 from typing import Dict, Set
 
 from libqtile import utils
@@ -373,6 +375,17 @@ class Unsubscribe(Subscribe):
 unsubscribe = Unsubscribe()
 
 
+def _fire_async_event(co):
+    loop = None
+    with contextlib.suppress(RuntimeError):
+        loop = asyncio.get_running_loop()
+
+    if loop is None:
+        asyncio.run(co)
+    else:
+        asyncio.ensure_future(co)
+
+
 def fire(event, *args, **kwargs):
     if event not in subscribe.hooks:
         raise utils.QtileError("Unknown event: %s" % event)
@@ -380,7 +393,12 @@ def fire(event, *args, **kwargs):
         logger.debug("Internal event: %s(%s, %s)", event, args, kwargs)
     for i in subscriptions.get(event, []):
         try:
-            i(*args, **kwargs)
+            if asyncio.iscoroutinefunction(i):
+                _fire_async_event(i(*args, **kwargs))
+            elif asyncio.iscoroutine(i):
+                _fire_async_event(i)
+            else:
+                i(*args, **kwargs)
         except:  # noqa: E722
             logger.exception("Error in hook %s", event)
 
