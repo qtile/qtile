@@ -19,6 +19,7 @@
 # SOFTWARE.
 
 import asyncio
+import importlib.util
 import io
 import logging
 import os
@@ -60,15 +61,10 @@ from libqtile.utils import get_cache_dir, send_notification
 from libqtile.widget.base import _Widget
 
 
-def _import_module(module_name, dir_path):
-    import imp
-    fp = None
-    try:
-        fp, pathname, description = imp.find_module(module_name, [dir_path])
-        module = imp.load_module(module_name, fp, pathname, description)
-    finally:
-        if fp:
-            fp.close()
+def _import_module(module_name, path):
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
     return module
 
 
@@ -1513,7 +1509,6 @@ class Qtile(CommandObject):
             return s.format(path=path, err_name=e.__class__.__name__, err=e)
 
         module_name = os.path.splitext(os.path.basename(full_path))[0]
-        dir_path = os.path.dirname(full_path)
         err_str = ""
         local_stdout = io.BytesIO()
         old_stdout = sys.stdout
@@ -1521,7 +1516,7 @@ class Qtile(CommandObject):
         sys.exc_clear()
 
         try:
-            module = _import_module(module_name, dir_path)
+            module = _import_module(module_name, full_path)
             module.main(self)
         except ImportError as e:
             err_str += format_error(full_path, e)
