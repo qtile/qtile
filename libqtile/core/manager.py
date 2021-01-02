@@ -77,74 +77,38 @@ class Qtile(CommandObject):
         state=None
     ):
         self._restart = False
-        self.no_spawn = no_spawn
-
-        self.mouse_position = (0, 0)
-
         self.core = kore
-        self.config = config
-        libqtile.init(self)
+        self.no_spawn = no_spawn
+        self._state = state
+
+        self._stopped_event = None
+
+        self._drag = None
+        self.mouse_map = None
+        self.mouse_position = (0, 0)
 
         self.windows_map = {}
         self.widgets_map = {}
         self.groups_map = {}
         self.groups = []
+        self.dgroups = None
+
         self.keys_map = {}
         self.current_chord = False
-
         self.numlock_mask, self.valid_mask = self.core.masks
-
-        try:
-            self.config.load()
-        except Exception as e:
-            logger.exception('Error while reading config file (%s)', e)
-            self.config = confreader.Config()
-            from libqtile.widget import TextBox
-            widgets = self.config.screens[0].bottom.widgets
-            widgets.insert(0, TextBox('Config Err!'))
-
-        self.core.wmname = getattr(self.config, "wmname", "qtile")
-        if config.main:
-            warnings.warn("Defining a main function is deprecated, use libqtile.qtile", DeprecationWarning)
-            config.main(self)
-
-        self.dgroups = None
-        if self.config.groups:
-            key_binder = None
-            if hasattr(self.config, 'dgroups_key_binder'):
-                key_binder = self.config.dgroups_key_binder
-            self.dgroups = DGroups(self, self.config.groups, key_binder)
-
-        if hasattr(config, "widget_defaults") and config.widget_defaults:
-            _Widget.global_defaults = config.widget_defaults
-        else:
-            _Widget.global_defaults = {}
-
-        if hasattr(config, "extension_defaults") and config.extension_defaults:
-            _Extension.global_defaults = config.extension_defaults
-        else:
-            _Extension.global_defaults = {}
-
-        for installed_extension in _Extension.installed_extensions:
-            installed_extension._configure(self)
-
-        for i in self.groups:
-            self.groups_map[i.name] = i
-
-        for grp in self.config.groups:
-            if isinstance(grp, ScratchPadConfig):
-                sp = ScratchPad(grp.name, grp.dropdowns, grp.label)
-                sp._configure([self.config.floating_layout],
-                              self.config.floating_layout, self)
-                self.groups.append(sp)
-                self.groups_map[sp.name] = sp
-
-        self._eventloop = eventloop
-        self.setup_eventloop()
-        self.server = IPCCommandServer(self)
 
         self.current_screen = None
         self.screens = []
+
+        libqtile.init(self)
+
+        self.server = IPCCommandServer(self)
+        self.config = config
+        self.load_config()
+
+        self._eventloop = eventloop
+        self.setup_eventloop()
+
         self._process_screens()
         self.current_screen = self.screens[0]
         self._drag = None
@@ -156,11 +120,6 @@ class Qtile(CommandObject):
         # Map and Grab keys
         for key in self.config.keys:
             self.grab_key(key)
-
-        # It fixes problems with focus when clicking windows of some specific clients like xterm
-        def noop(qtile):
-            pass
-        self.config.mouse += (Click([], "Button1", lazy.function(noop), focus="after"),)
 
         self.mouse_map = {}
         for i in self.config.mouse:
@@ -194,6 +153,62 @@ class Qtile(CommandObject):
         hook.subscribe.setgroup(self.update_net_desktops)
 
         hook.fire("startup_complete")
+
+    def load_config(self):
+        try:
+            self.config.load()
+        except Exception as e:
+            logger.exception('Error while reading config file (%s)', e)
+            self.config = confreader.Config()
+            from libqtile.widget import TextBox
+            widgets = self.config.screens[0].bottom.widgets
+            widgets.insert(0, TextBox('Config Err!'))
+
+        self.core.wmname = getattr(self.config, "wmname", "qtile")
+        if self.config.main:
+            warnings.warn("Defining a main function is deprecated, use libqtile.qtile", DeprecationWarning)
+            self.config.main(self)
+
+        if self.config.groups:
+            key_binder = None
+            if hasattr(self.config, 'dgroups_key_binder'):
+                key_binder = self.config.dgroups_key_binder
+            self.dgroups = DGroups(self, self.config.groups, key_binder)
+
+        if (
+            hasattr(self.config, "widget_defaults")
+            and self.config.widget_defaults
+        ):
+            _Widget.global_defaults = self.config.widget_defaults
+        else:
+            _Widget.global_defaults = {}
+
+        if (
+            hasattr(self.config, "extension_defaults")
+            and self.config.extension_defaults
+        ):
+            _Extension.global_defaults = self.config.extension_defaults
+        else:
+            _Extension.global_defaults = {}
+
+        for installed_extension in _Extension.installed_extensions:
+            installed_extension._configure(self)
+
+        for i in self.groups:
+            self.groups_map[i.name] = i
+
+        for grp in self.config.groups:
+            if isinstance(grp, ScratchPadConfig):
+                sp = ScratchPad(grp.name, grp.dropdowns, grp.label)
+                sp._configure([self.config.floating_layout],
+                              self.config.floating_layout, self)
+                self.groups.append(sp)
+                self.groups_map[sp.name] = sp
+
+        # It fixes problems with focus when clicking windows of some specific clients like xterm
+        def noop(qtile):
+            pass
+        self.config.mouse += (Click([], "Button1", lazy.function(noop), focus="after"),)
 
     @property
     def root(self):
