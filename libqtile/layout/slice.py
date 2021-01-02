@@ -27,18 +27,18 @@
 Slice layout. Serves as example of delegating layouts (or sublayouts)
 """
 
-from libqtile.layout.base import Delegate, Layout, SingleWindow
+from libqtile.layout.base import Delegate, Layout
 from libqtile.layout.max import Max
 
 
-class Single(SingleWindow):
+class Single(Layout):
     """Layout with single window
 
     Just like Max but asserts that window is the one
     """
 
     def __init__(self):
-        SingleWindow.__init__(self)
+        Layout.__init__(self)
         self.window = None
         self.focused = False
 
@@ -50,8 +50,17 @@ class Single(SingleWindow):
         assert self.window is window
         self.window = None
 
-    def _get_window(self):
-        return self.window
+    def configure(self, window, screen_rect):
+        if window is self.window:
+            window.place(
+                screen_rect.x, screen_rect.y,
+                screen_rect.width, screen_rect.height,
+                0,
+                None,
+            )
+            window.unhide()
+        else:
+            window.hide()
 
     def empty(self):
         """Is the layout empty

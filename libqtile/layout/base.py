@@ -216,30 +216,6 @@ class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):
         pass
 
 
-class SingleWindow(Layout):
-    """Base for layouts with single visible window"""
-
-    def __init__(self, **config):
-        Layout.__init__(self, **config)
-
-    @abstractmethod
-    def _get_window(self):
-        """Should return either visible window or None"""
-        pass
-
-    def configure(self, win, screen_rect):
-        if win is self._get_window():
-            win.place(
-                screen_rect.x, screen_rect.y,
-                screen_rect.width, screen_rect.height,
-                0,
-                None,
-            )
-            win.unhide()
-        else:
-            win.hide()
-
-
 class Delegate(Layout):
     """Base for all delegation layouts"""
 
