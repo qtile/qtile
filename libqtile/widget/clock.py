@@ -67,7 +67,7 @@ class Clock(base.InLoopPollText):
                                ' of these libraries, or give it a'
                                ' datetime.tzinfo instance.')
         if self.timezone is None:
-            logger.info('Defaulting to the system local timezone.')
+            logger.debug('Defaulting to the system local timezone.')
 
     def tick(self):
         self.update(self.poll())

@@ -94,7 +94,7 @@ class PulseVolume(Volume):
             # done
             self.connected = False
             self._subscribed = False
-            log.error('Connection to pulseaudio has been terminated')
+            log.warning('Connection to pulseaudio has been terminated')
         elif state == lib.PA_CONTEXT_UNCONNECTED:
             self.connected = False
             self._subscribed = False
