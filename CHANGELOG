@@ -3,6 +3,7 @@ Qtile X.X.X, released XXXX-XX-XX:
         - Python 3.5 and 3.6 are no longer supported
     !!! Config breakage !!!
         - Pacman widget has been removed. Use CheckUpdates instead.
+        - Mpris widget has been removed. Use Mpris2 instead.
         - property "masterWindows" of Tile layout renamed to master_length
         - Match objects now only allow one string argument for their wm
           name/class/etc. properties. to update your config, do e.g.

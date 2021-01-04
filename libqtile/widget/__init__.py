@@ -63,7 +63,6 @@ widgets = {
     "Mirror": "base",
     "Moc": "moc",
     "Mpd2": "mpd2widget",
-    "Mpris": "mpriswidget",
     "Mpris2": "mpris2widget",
     "Net": "net",
     "NetGraph": "graph",
