@@ -183,7 +183,7 @@ class Core(base.Core):
         return self._numlock_mask, self._valid_mask
 
     def setup_listener(
-        self, qtile: "Qtile", eventloop: asyncio.AbstractEventLoop
+        self, qtile: "Qtile"
     ) -> None:
         """Setup a listener for the given qtile instance
 
@@ -195,7 +195,7 @@ class Core(base.Core):
         logger.debug("Adding io watch")
         self.qtile = qtile
         self.fd = self.conn.conn.get_file_descriptor()
-        eventloop.add_reader(self.fd, self._xpoll)
+        asyncio.get_running_loop().add_reader(self.fd, self._xpoll)
 
     def remove_listener(self) -> None:
         """Remove the listener from the given event loop"""
@@ -206,7 +206,7 @@ class Core(base.Core):
     def _remove_listener(self) -> None:
         if self.fd is not None:
             logger.debug("Removing io watch")
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             loop.remove_reader(self.fd)
             self.fd = None
 

@@ -119,7 +119,6 @@ class Client:
             Pack and unpack messages as json
         """
         self.fname = fname
-        self.loop = asyncio.get_event_loop()
         self.is_json = is_json
 
     def call(self, data: Any) -> Any:
@@ -131,7 +130,7 @@ class Client:
         If any exception is raised by the server, that will propogate out of
         this call.
         """
-        return self.loop.run_until_complete(self.async_send(msg))
+        return asyncio.run(self.async_send(msg))
 
     async def async_send(self, msg: Any) -> Any:
         """Send the message to the server

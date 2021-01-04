@@ -1,8 +1,12 @@
 import asyncio
 import os
+import tempfile
+from typing import Optional
 
 from libqtile import ipc
 from libqtile.backend import base
+from libqtile.core.lifecycle import lifecycle
+from libqtile.core.loop import QtileLoop
 from libqtile.core.manager import Qtile
 
 
@@ -24,15 +28,19 @@ class SessionManager:
         :param state:
             The state to restart the qtile instance with.
         """
-        self.eventloop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.eventloop)
+        lifecycle.behavior = lifecycle.behavior.TERMINATE
 
-        self.qtile = Qtile(kore, config, self.eventloop, no_spawn=no_spawn, state=state)
+        self.qtile = Qtile(kore, config, no_spawn=no_spawn, state=state)
+        self.server = ipc.Server(
+            self._prepare_socket(fname),
+            self.qtile.server.call,
+        )
 
+    def _prepare_socket(self, fname: Optional[str] = None) -> str:
         if fname is None:
             # Dots might appear in the host part of the display name
             # during remote X sessions. Let's strip the host part first
-            display_name = kore.display_name
+            display_name = self.qtile.core.display_name
             display_number = display_name.partition(":")[2]
             if "." not in display_number:
                 display_name += ".0"
@@ -40,19 +48,23 @@ class SessionManager:
 
         if os.path.exists(fname):
             os.unlink(fname)
-        self.server = ipc.Server(fname, self.qtile.server.call)
+
+        return fname
+
+    def _restart(self):
+        lifecycle.behavior = lifecycle.behavior.RESTART
+        state_file = os.path.join(tempfile.gettempdir(), 'qtile-state')
+        with open(state_file, 'wb') as f:
+            self.qtile.dump_state(f)
+        lifecycle.state_file = state_file
 
     def loop(self) -> None:
-        """Run the event loop"""
         try:
-            # replace with asyncio.run(...) on Python 3.7+
-            self.eventloop.run_until_complete(self.async_loop())
+            asyncio.run(self.async_loop())
         finally:
-            self.eventloop.run_until_complete(self.eventloop.shutdown_asyncgens())
-            self.eventloop.close()
-
-        self.qtile.maybe_restart()
+            if self.qtile.should_restart:
+                self._restart()
 
     async def async_loop(self) -> None:
-        async with self.server:
+        async with QtileLoop(self.qtile), self.server:
             await self.qtile.async_loop()
