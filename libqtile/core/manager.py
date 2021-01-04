@@ -26,8 +26,6 @@ import pickle
 import shlex
 import signal
 import subprocess
-import sys
-import tempfile
 import time
 import warnings
 
@@ -59,29 +57,21 @@ from libqtile.utils import get_cache_dir, send_notification
 from libqtile.widget.base import _Widget
 
 
-def handle_exception(loop, context):
-    if "exception" in context:
-        logger.error(context["exception"], exc_info=True)
-    else:
-        logger.error("exception in event loop: %s", context)
-
-
 class Qtile(CommandObject):
     """This object is the `root` of the command graph"""
     def __init__(
         self,
         kore,
         config,
-        eventloop,
         no_spawn=False,
         state=None
     ):
-        self._restart = False
         self.core = kore
         self.no_spawn = no_spawn
         self._state = state
 
         self._stopped_event = None
+        self.should_restart = False
 
         self._drag = None
         self.mouse_map = None
@@ -102,57 +92,10 @@ class Qtile(CommandObject):
 
         libqtile.init(self)
 
+        self._eventloop = None
         self.server = IPCCommandServer(self)
         self.config = config
         self.load_config()
-
-        self._eventloop = eventloop
-        self.setup_eventloop()
-
-        self._process_screens()
-        self.current_screen = self.screens[0]
-        self._drag = None
-
-        self.conn.flush()
-        self.conn.xsync()
-        self.core._xpoll()
-
-        # Map and Grab keys
-        for key in self.config.keys:
-            self.grab_key(key)
-
-        self.mouse_map = {}
-        for i in self.config.mouse:
-            if self.mouse_map.get(i.button_code) is None:
-                self.mouse_map[i.button_code] = []
-            self.mouse_map[i.button_code].append(i)
-
-        self.grab_mouse()
-
-        # no_spawn is set when we are restarting; we only want to run the
-        # startup hook once.
-        if not no_spawn:
-            hook.fire("startup_once")
-        hook.fire("startup")
-
-        if state:
-            try:
-                with open(state, 'rb') as f:
-                    st = pickle.load(f)
-                st.apply(self)
-            except:  # noqa: E722
-                logger.exception("failed restoring state")
-            finally:
-                os.remove(state)
-
-        self.core.scan()
-        if state:
-            for screen in self.screens:
-                screen.group.layout_all()
-        self.update_net_desktops()
-        hook.subscribe.setgroup(self.update_net_desktops)
-
-        hook.fire("startup_complete")
 
     def load_config(self):
         try:
@@ -210,6 +153,63 @@ class Qtile(CommandObject):
             pass
         self.config.mouse += (Click([], "Button1", lazy.function(noop), focus="after"),)
 
+    def dump_state(self, buf):
+        try:
+            pickle.dump(QtileState(self), buf, protocol=0)
+        except:  # noqa: E722
+            logger.exception('Unable to pickle qtile state')
+
+    def _configure(self):
+        """
+        This is the part of init that needs to happen after the event loop is
+        fully set up. asyncio is required to listen and respond to backend
+        events.
+        """
+        self._process_screens()
+        self.current_screen = self.screens[0]
+
+        self.conn.flush()
+        self.conn.xsync()
+        self.core._xpoll()
+
+        # Map and Grab keys
+        for key in self.config.keys:
+            self.grab_key(key)
+
+        self.mouse_map = {}
+        for i in self.config.mouse:
+            if self.mouse_map.get(i.button_code) is None:
+                self.mouse_map[i.button_code] = []
+            self.mouse_map[i.button_code].append(i)
+
+        self.grab_mouse()
+
+        # no_spawn is set when we are restarting; we only want to run the
+        # startup hook once.
+        if not self.no_spawn:
+            hook.fire("startup_once")
+        hook.fire("startup")
+
+        if self._state:
+            try:
+                with open(self._state, 'rb') as f:
+                    st = pickle.load(f)
+                st.apply(self)
+            except:  # noqa: E722
+                logger.exception("failed restoring state")
+            finally:
+                os.remove(self._state)
+
+        self.core.scan()
+        if self._state:
+            for screen in self.screens:
+                screen.group.layout_all()
+        self._state = None
+        self.update_net_desktops()
+        hook.subscribe.setgroup(self.update_net_desktops)
+
+        hook.fire("startup_complete")
+
     @property
     def root(self):
         return self.core._root
@@ -222,97 +222,42 @@ class Qtile(CommandObject):
     def selection(self):
         return self.core._selection
 
-    def setup_eventloop(self) -> None:
-        self._eventloop.add_signal_handler(signal.SIGINT, self.stop)
-        self._eventloop.add_signal_handler(signal.SIGTERM, self.stop)
-        self._eventloop.set_exception_handler(handle_exception)
-
-        logger.debug('Adding io watch')
-        self.core.setup_listener(self, self._eventloop)
-
-        self._stopped_event = asyncio.Event()
-
-        # This is a little strange. python-dbus internally depends on gobject,
-        # so gobject's threads need to be running, and a gobject "main loop
-        # thread" needs to be spawned, but we try to let it only interact with
-        # us via calls to asyncio's call_soon_threadsafe.
-        try:
-            # We import dbus here to thrown an ImportError if it isn't
-            # available. Since the only reason we're running this thread is
-            # because of dbus, if dbus isn't around there's no need to run
-            # this thread.
-            import dbus  # noqa
-            from gi.repository import GLib  # type: ignore
-
-            def gobject_thread():
-                ctx = GLib.main_context_default()
-                while not self._stopped_event.is_set():
-                    try:
-                        ctx.iteration(True)
-                    except Exception:
-                        logger.exception("got exception from gobject")
-            self._glib_loop = self.run_in_executor(gobject_thread)
-        except ImportError:
-            logger.warning("importing dbus/gobject failed, dbus will not work.")
-            self._glib_loop = None
-
     async def async_loop(self) -> None:
         """Run the event loop
 
         Finalizes the Qtile instance on exit.
         """
+        self._eventloop = asyncio.get_running_loop()
+        self._stopped_event = asyncio.Event()
+        self.core.setup_listener(self)
+        self._configure()
         try:
             await self._stopped_event.wait()
         finally:
-            await self.finalize()
-
-        self._eventloop.stop()
-
-    def maybe_restart(self) -> None:
-        """If set, restart the qtile instance"""
-        if self._restart:
-            logger.warning('Restarting Qtile with os.execv(...)')
-            os.execv(*self._restart)
+            self.finalize()
+            self.core.remove_listener()
 
     def stop(self):
-        # stop gets called in a variety of ways, including from restart().
-        # let's only do a real shutdown if we're not about to re-exec.
-        if not self._restart:
-            hook.fire("shutdown")
-            self.graceful_shutdown()
-
-        logger.debug('Stopping qtile')
-        self._stopped_event.set()
+        hook.fire("shutdown")
+        self.graceful_shutdown()
+        self._stop()
 
     def restart(self):
         hook.fire("restart")
-        argv = [sys.executable] + sys.argv
-        if '--no-spawn' not in argv:
-            argv.append('--no-spawn')
-        state_file = os.path.join(tempfile.gettempdir(), "qtile-state")
-        try:
-            with open(state_file, 'wb') as f:
-                pickle.dump(QtileState(self), f, protocol=0)
-        except:  # noqa: E722
-            logger.error("Unable to pickle qtile state")
-        argv = [s for s in argv if not s.startswith('--with-state')]
-        argv.append('--with-state=' + state_file)
-        self._restart = (sys.executable, argv)
-        self.stop()
+        self.should_restart = True
+        self._stop()
 
-    async def finalize(self):
-        self._eventloop.remove_signal_handler(signal.SIGINT)
-        self._eventloop.remove_signal_handler(signal.SIGTERM)
-        self._eventloop.set_exception_handler(None)
+    def _stop(self):
+        logger.debug('Stopping qtile')
+        if self._stopped_event is not None:
+            self._stopped_event.set()
 
-        if self._glib_loop:
-            try:
-                from gi.repository import GLib
-                GLib.idle_add(lambda: None)
-                await self._glib_loop
-            except ImportError:
-                pass
+    def is_stopped(self):
+        if self._stopped_event is not None:
+            return self._stopped_event.is_set()
+        return False
 
+    def finalize(self):
         try:
             for widget in self.widgets_map.values():
                 widget.finalize()
@@ -326,7 +271,6 @@ class Qtile(CommandObject):
                         bar.finalize()
         except:  # noqa: E722
             logger.exception('exception during finalize')
-            self.core.remove_listener()
 
     def _process_fake_screens(self):
         """
@@ -1542,7 +1486,7 @@ class Qtile(CommandObject):
     def cmd_get_state(self):
         """Get pickled state for restarting qtile"""
         buf = io.BytesIO()
-        pickle.dump(QtileState(self), buf, protocol=0)
+        self.dump_state(buf)
         state = buf.getvalue().decode(errors="backslashreplace")
         logger.debug('State = ')
         logger.debug(''.join(state.split('\n')))

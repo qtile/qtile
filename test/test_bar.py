@@ -22,6 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import asyncio
 import os
 import tempfile
 
@@ -336,7 +337,8 @@ def test_incompatible_widget(manager_nospawn):
     # Ensure that adding a widget that doesn't support the orientation of the
     # bar raises ConfigError
     with pytest.raises(libqtile.confreader.ConfigError):
-        manager_nospawn.create_manager(config)
+        m = manager_nospawn.create_manager(config)
+        asyncio.run(m.qtile._configure())
 
 
 def test_basic(manager_nospawn):
