@@ -113,26 +113,13 @@ class Qtile(CommandObject):
             self.config.main(self)
 
         if self.config.groups:
-            key_binder = None
-            if hasattr(self.config, 'dgroups_key_binder'):
-                key_binder = self.config.dgroups_key_binder
-            self.dgroups = DGroups(self, self.config.groups, key_binder)
+            self.dgroups = DGroups(self, self.config.groups,
+                                   self.config.dgroups_key_binder)
 
-        if (
-            hasattr(self.config, "widget_defaults")
-            and self.config.widget_defaults
-        ):
+        if self.config.widget_defaults:
             _Widget.global_defaults = self.config.widget_defaults
-        else:
-            _Widget.global_defaults = {}
-
-        if (
-            hasattr(self.config, "extension_defaults")
-            and self.config.extension_defaults
-        ):
+        if self.config.extension_defaults:
             _Extension.global_defaults = self.config.extension_defaults
-        else:
-            _Extension.global_defaults = {}
 
         for installed_extension in _Extension.installed_extensions:
             installed_extension._configure(self)
