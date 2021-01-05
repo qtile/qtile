@@ -44,6 +44,8 @@ Qtile X.X.X, released XXXX-XX-XX:
           AND-semantics, allowing for more complex and specific rules
         - Python 3.9 support
         - switch to Github Actions for CI
+        - Columns layout has new `margin_on_single` option to specify margin
+          size when there is only one window (default -1: use `margin` option).
     !!! warning !!!
         - When (re)starting, Qtile passes its state to the new process in a
           file now, where previously it passed state directly as a string. This

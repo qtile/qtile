@@ -118,7 +118,7 @@ class Columns(Layout):
         ("border_width", 2, "Border width."),
         ("border_on_single", False, "Draw a border when there is one only window."),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])."),
-        ("margin_on_single", False, "Add margin to the layout for only one window."),
+        ("margin_on_single", -1, "Margin when only one window. `-1` means use `margin`."),
         ("split", True, "New columns presentation mode."),
         ("num_columns", 2, "Preferred number of columns."),
         ("grow_amount", 10, "Amount by which to grow a window/column."),
@@ -225,17 +225,16 @@ class Columns(Layout):
             color = self.border_focus if col.split else self.border_focus_stack
         else:
             color = self.border_normal if col.split else self.border_normal_stack
-        if not self.border_on_single and len(self.columns) == 1 and (len(col) == 1 or not col.split):
-            border = 0
-        else:
-            border = self.border_width
+        border = self.border_width
+        margin_size = self.margin
+        if len(self.columns) == 1 and (len(col) == 1 or not col.split):
+            if not self.border_on_single:
+                border = 0
+            if self.margin_on_single > -1:
+                margin_size = self.margin_on_single
         width = int(
             0.5 + col.width * screen_rect.width * 0.01 / len(self.columns))
         x = screen_rect.x + int(0.5 + pos * screen_rect.width * 0.01 / len(self.columns))
-        if not self.margin_on_single and len(self.columns) == 1 and (len(col) == 1 or not col.split):
-            margin_size = 0
-        else:
-            margin_size = self.margin
         if col.split:
             pos = 0
             for c in col:
