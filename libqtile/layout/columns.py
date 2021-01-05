@@ -118,6 +118,7 @@ class Columns(Layout):
         ("border_width", 2, "Border width."),
         ("border_on_single", False, "Draw a border when there is one only window."),
         ("margin", 0, "Margin of the layout (int or list of ints [N E S W])."),
+        ("margin_on_single", False, "Add margin to the layout for only one window."),
         ("split", True, "New columns presentation mode."),
         ("num_columns", 2, "Preferred number of columns."),
         ("grow_amount", 10, "Amount by which to grow a window/column."),
@@ -231,6 +232,10 @@ class Columns(Layout):
         width = int(
             0.5 + col.width * screen_rect.width * 0.01 / len(self.columns))
         x = screen_rect.x + int(0.5 + pos * screen_rect.width * 0.01 / len(self.columns))
+        if not self.margin_on_single and len(self.columns) == 1 and (len(col) == 1 or not col.split):
+            margin_size = 0
+        else:
+            margin_size = self.margin
         if col.split:
             pos = 0
             for c in col:
@@ -247,7 +252,7 @@ class Columns(Layout):
                 height - 2 * border,
                 border,
                 color,
-                margin=self.margin)
+                margin=margin_size)
             client.unhide()
         elif client == col.cw:
             client.place(
@@ -257,7 +262,7 @@ class Columns(Layout):
                 screen_rect.height - 2 * border,
                 border,
                 color,
-                margin=self.margin)
+                margin=margin_size)
             client.unhide()
         else:
             client.hide()
