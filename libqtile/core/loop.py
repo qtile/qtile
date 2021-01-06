@@ -90,6 +90,6 @@ class QtileLoop(contextlib.AbstractAsyncContextManager):
             # CancelledErrors happen when we simply cancel the main task during
             # a normal restart procedure
             if not isinstance(exc, asyncio.CancelledError):
-                logger.exception(context['exception'])
+                logger.exception(exc)
         else:
             logger.error(f'unhandled error in event loop: {context["msg"]}')
