@@ -511,6 +511,12 @@ class ThreadedPollText(InLoopPollText):
                 text = self.poll()
                 if self.qtile is not None:
                     self.qtile.call_soon_threadsafe(self.update, text)
+            except RuntimeError:
+                logger.debug(
+                    'problem polling to update widget %s (ignoring, this is '
+                    'most likely because the event loop has finalize already)',
+                    exc_info=True,
+                )
             except:  # noqa: E722
                 logger.exception("problem polling to update widget %s", self.name)
         # TODO: There are nice asyncio constructs for this sort of thing, I
