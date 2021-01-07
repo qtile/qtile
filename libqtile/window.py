@@ -416,6 +416,7 @@ class _Window(CommandObject):
         # We don't want to get the UnmapNotify for this unmap
         with self.disable_mask(xcffib.xproto.EventMask.StructureNotify):
             self.window.unmap()
+        self.state = IconicState
         self.hidden = True
 
     def unhide(self):
@@ -991,7 +992,6 @@ class Window(_Window):
 
     def _reconfigure_floating(self, new_float_state=FLOATING):
         if new_float_state == MINIMIZED:
-            self.state = IconicState
             self.hide()
         else:
             width = max(self.width, self.hints.get('min_width', 0))
@@ -1201,6 +1201,14 @@ class Window(_Window):
                     logger.warning("Invalid value for focus_on_window_activation: {}".format(focus_behavior))
         elif atoms["_NET_CLOSE_WINDOW"] == opcode:
             self.kill()
+        elif atoms["WM_CHANGE_STATE"] == opcode:
+            state = data.data32[0]
+            if state == NormalState:
+                self.minimized = False
+            elif state == IconicState:
+                self.minimized = True
+        else:
+            logger.info("Unhandled client message: %s", atoms.get_name(opcode))
 
     def handle_PropertyNotify(self, e):  # noqa: N802
         name = self.qtile.conn.atoms.get_name(e.atom)
