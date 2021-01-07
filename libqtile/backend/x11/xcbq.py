@@ -958,13 +958,13 @@ class Painter:
             root_pixmap = root_pixmap[0]
         else:
             root_pixmap = self.conn.generate_id()
-            self.conn.core.CreatePixmap(
+            self.conn.core.CreatePixmapChecked(
                 self.default_screen.root_depth,
                 root_pixmap,
                 self.default_screen.root.wid,
                 self.default_screen.width_in_pixels,
                 self.default_screen.height_in_pixels,
-            )
+            ).check()
 
         for depth in self.default_screen.allowed_depths:
             for visual in depth.visuals:

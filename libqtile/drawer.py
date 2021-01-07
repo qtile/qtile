@@ -217,14 +217,14 @@ class Drawer:
         self.pixmap = self.qtile.conn.conn.generate_id()
         self.gc = self.qtile.conn.conn.generate_id()
 
-        self.qtile.conn.conn.core.CreatePixmap(
+        self.qtile.conn.conn.core.CreatePixmapChecked(
             self.qtile.conn.default_screen.root_depth,
             self.pixmap,
             self.wid,
             self.width,
             self.height
-        )
-        self.qtile.conn.conn.core.CreateGC(
+        ).check()
+        self.qtile.conn.conn.core.CreateGCChecked(
             self.gc,
             self.wid,
             xcffib.xproto.GC.Foreground | xcffib.xproto.GC.Background,
@@ -232,7 +232,7 @@ class Drawer:
                 self.qtile.conn.default_screen.black_pixel,
                 self.qtile.conn.default_screen.white_pixel
             ]
-        )
+        ).check()
         self.surface = cairocffi.XCBSurface(
             qtile.conn.conn,
             self.pixmap,
