@@ -26,6 +26,7 @@ import pickle
 import shlex
 import signal
 import subprocess
+import tempfile
 import time
 import warnings
 
@@ -43,6 +44,7 @@ from libqtile.command.interface import IPCCommandServer, QtileCommandInterface
 from libqtile.config import Click, Drag, Key, KeyChord, Match, Rule
 from libqtile.config import ScratchPad as ScratchPadConfig
 from libqtile.config import Screen
+from libqtile.core.lifecycle import lifecycle
 from libqtile.core.state import QtileState
 from libqtile.dgroups import DGroups
 from libqtile.extension.base import _Extension
@@ -68,7 +70,6 @@ class Qtile(CommandObject):
         self._state = state
 
         self._stopped_event = None
-        self.should_restart = False
 
         self._drag = None
         self.mouse_map = None
@@ -223,12 +224,17 @@ class Qtile(CommandObject):
 
     def stop(self):
         hook.fire("shutdown")
+        lifecycle.behavior = lifecycle.behavior.TERMINATE
         self.graceful_shutdown()
         self._stop()
 
     def restart(self):
         hook.fire("restart")
-        self.should_restart = True
+        lifecycle.behavior = lifecycle.behavior.RESTART
+        state_file = os.path.join(tempfile.gettempdir(), 'qtile-state')
+        with open(state_file, 'wb') as f:
+            self.dump_state(f)
+        lifecycle.state_file = state_file
         self._stop()
 
     def _stop(self):

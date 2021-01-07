@@ -1,10 +1,8 @@
 import asyncio
 import os
-import tempfile
 from typing import Optional
 
 from libqtile import ipc
-from libqtile.core.lifecycle import lifecycle
 from libqtile.core.loop import QtileLoop
 from libqtile.core.manager import Qtile
 
@@ -18,8 +16,6 @@ class SessionManager:
         :param socket_path:
             The file name to use as the qtile socket file.
         """
-        lifecycle.behavior = lifecycle.behavior.TERMINATE
-
         self.qtile = qtile
         self.server = ipc.Server(
             self._prepare_socket_path(socket_path),
@@ -41,19 +37,8 @@ class SessionManager:
 
         return socket_path
 
-    def _restart(self):
-        lifecycle.behavior = lifecycle.behavior.RESTART
-        state_file = os.path.join(tempfile.gettempdir(), 'qtile-state')
-        with open(state_file, 'wb') as f:
-            self.qtile.dump_state(f)
-        lifecycle.state_file = state_file
-
     def loop(self) -> None:
-        try:
-            asyncio.run(self.async_loop())
-        finally:
-            if self.qtile.should_restart:
-                self._restart()
+        asyncio.run(self.async_loop())
 
     async def async_loop(self) -> None:
         async with QtileLoop(self.qtile), self.server:
