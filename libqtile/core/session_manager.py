@@ -12,7 +12,12 @@ from libqtile.core.manager import Qtile
 
 class SessionManager:
     def __init__(
-        self, kore: base.Core, config, *, fname: str = None, no_spawn=False, state=None
+        self,
+        kore: base.Core,
+        config, *,
+        socket_path: str = None,
+        no_spawn=False,
+        state=None,
     ) -> None:
         """Manages a qtile session
 
@@ -20,7 +25,7 @@ class SessionManager:
             The core backend to use for the session.
         :param config:
             The configuration to use for the qtile instance.
-        :param fname:
+        :param socket_path:
             The file name to use as the qtile socket file.
         :param no_spawn:
             If the instance has already been started, then don't re-run the
@@ -32,24 +37,24 @@ class SessionManager:
 
         self.qtile = Qtile(kore, config, no_spawn=no_spawn, state=state)
         self.server = ipc.Server(
-            self._prepare_socket(fname),
+            self._prepare_socket_path(socket_path),
             self.qtile.server.call,
         )
 
-    def _prepare_socket(self, fname: Optional[str] = None) -> str:
-        if fname is None:
+    def _prepare_socket_path(self, socket_path: Optional[str] = None) -> str:
+        if socket_path is None:
             # Dots might appear in the host part of the display name
             # during remote X sessions. Let's strip the host part first
             display_name = self.qtile.core.display_name
             display_number = display_name.partition(":")[2]
             if "." not in display_number:
                 display_name += ".0"
-            fname = ipc.find_sockfile(display_name)
+            socket_path = ipc.find_sockfile(display_name)
 
-        if os.path.exists(fname):
-            os.unlink(fname)
+        if os.path.exists(socket_path):
+            os.unlink(socket_path)
 
-        return fname
+        return socket_path
 
     def _restart(self):
         lifecycle.behavior = lifecycle.behavior.RESTART

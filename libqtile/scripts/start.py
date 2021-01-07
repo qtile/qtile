@@ -74,7 +74,7 @@ def make_qtile(options):
     return session_manager.SessionManager(
         kore,
         config,
-        fname=options.socket,
+        socket_path=options.socket,
         no_spawn=options.no_spawn,
         state=options.state,
     )

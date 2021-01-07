@@ -283,7 +283,7 @@ class TestManager:
             try:
                 kore = Core(display_name=self.display)
                 init_log(self.log_level, log_path=None, log_color=False)
-                q = SessionManager(kore, config_class(), fname=self.sockfile)
+                q = SessionManager(kore, config_class(), socket_path=self.sockfile)
                 q.loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
@@ -316,7 +316,7 @@ class TestManager:
             if not hasattr(config, attr):
                 setattr(config, attr, getattr(default_config, attr))
 
-        return SessionManager(kore, config, fname=self.sockfile)
+        return SessionManager(kore, config, socket_path=self.sockfile)
 
     def terminate(self):
         if self.proc is None:
