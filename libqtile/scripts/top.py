@@ -167,6 +167,9 @@ def top(opts):
         print("Can't start tracemalloc on qtile, check the logs")
     except KeyboardInterrupt:
         exit(-1)
+    except curses.error:
+        print("Terminal too small for curses interface.")
+        raw_stats(client, limit=lines, force_start=force_start)
 
 
 def add_subcommand(subparsers):
