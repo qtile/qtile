@@ -107,18 +107,18 @@ class _IPC:
 
 
 class Client:
-    def __init__(self, fname: str, is_json=False) -> None:
+    def __init__(self, socket_path: str, is_json=False) -> None:
         """Create a new IPC client
 
         Parameters
         ----------
-        fname : str
+        socket_path : str
             The file path to the file that is used to open the connection to
             the running IPC server.
         is_json : bool
             Pack and unpack messages as json
         """
-        self.fname = fname
+        self.socket_path = socket_path
         self.is_json = is_json
 
     def call(self, data: Any) -> Any:
@@ -140,10 +140,10 @@ class Client:
         """
         try:
             reader, writer = await asyncio.wait_for(
-                asyncio.open_unix_connection(path=self.fname), timeout=3
+                asyncio.open_unix_connection(path=self.socket_path), timeout=3
             )
         except (ConnectionRefusedError, FileNotFoundError):
-            raise IPCError("Could not open {}".format(self.fname))
+            raise IPCError("Could not open {}".format(self.socket_path))
 
         try:
             send_data = _IPC.pack(msg, is_json=self.is_json)
@@ -164,18 +164,18 @@ class Client:
 
 
 class Server:
-    def __init__(self, fname: str, handler) -> None:
-        self.fname = fname
+    def __init__(self, socket_path: str, handler) -> None:
+        self.socket_path = socket_path
         self.handler = handler
         self.server = None  # type: Optional[asyncio.AbstractServer]
 
-        if os.path.exists(fname):
-            os.unlink(fname)
+        if os.path.exists(socket_path):
+            os.unlink(socket_path)
 
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, 0)
         flags = fcntl.fcntl(self.sock.fileno(), fcntl.F_GETFD)
         fcntl.fcntl(self.sock.fileno(), fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
-        self.sock.bind(self.fname)
+        self.sock.bind(self.socket_path)
 
     async def _server_callback(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
