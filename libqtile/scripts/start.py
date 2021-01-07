@@ -70,13 +70,15 @@ def make_qtile(options):
 
     # XXX: the import is here because we need to call init_log
     # before start importing stuff
-    from libqtile.core import session_manager
+    from libqtile.core import manager, session_manager
     return session_manager.SessionManager(
-        kore,
-        config,
+        manager.Qtile(
+            kore,
+            config,
+            no_spawn=options.no_spawn,
+            state=options.state,
+        ),
         socket_path=options.socket,
-        no_spawn=options.no_spawn,
-        state=options.state,
     )
 
 
