@@ -36,6 +36,7 @@ Qtile X.X.X, released XXXX-XX-XX:
           Running `qtile` without arguments will continue to work for the
           forseeable future, but will be eventually deprecated. qtile prints a
           warning when run in this configuration.
+        - lazy.window.get_size() will return (x, y, width, height) rather than just (width, height)
         - Qtile.cmd_focus_by_click is no longer an available command.
     * features
         - new WidgetBox widget
@@ -46,6 +47,8 @@ Qtile X.X.X, released XXXX-XX-XX:
         - switch to Github Actions for CI
         - Columns layout has new `margin_on_single` option to specify margin
           size when there is only one window (default -1: use `margin` option).
+        - Resizing with the default Drag configuration will resize from windows
+          from the corner closest to the corner.
     !!! warning !!!
         - When (re)starting, Qtile passes its state to the new process in a
           file now, where previously it passed state directly as a string. This

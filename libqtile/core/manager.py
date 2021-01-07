@@ -736,10 +736,10 @@ class Qtile(CommandObject):
                         )
                         continue
                 else:
-                    val = (0, 0)
+                    val = None
                 if m.focus == "after":
                     self._focus_by_click(event)
-                self._drag = (x, y, val[0], val[1], m.commands)
+                self._drag = (x, y, val, m.commands)
                 self.core.grab_pointer()
 
     def process_button_release(self, button_code):
@@ -759,18 +759,18 @@ class Qtile(CommandObject):
 
         if self._drag is None:
             return
-        ox, oy, rx, ry, cmd = self._drag
+        ox, oy, start, cmd = self._drag
         dx = x - ox
         dy = y - oy
         if dx or dy:
             for i in cmd:
                 if i.check(self):
-                    status, val = self.server.call((
-                        i.selectors,
-                        i.name,
-                        i.args + (rx + dx, ry + dy),
-                        i.kwargs
-                    ))
+                    i.kwargs.update(dx=dx, dy=dy)
+                    if start:
+                        i.kwargs.update(start=start)
+                    status, val = self.server.call(
+                        (i.selectors, i.name, i.args, i.kwargs)
+                    )
                     if status in (command_interface.ERROR, command_interface.EXCEPTION):
                         logger.error(
                             "Mouse command error %s: %s" % (i.name, val)

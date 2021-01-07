@@ -947,7 +947,8 @@ class Window(_Window):
         hook.fire("client_managed", s)
 
     def tweak_float(self, x=None, y=None, dx=0, dy=0,
-                    w=None, h=None, dw=0, dh=0):
+                    w=None, h=None, dw=0, dh=0,
+                    from_left=False, from_top=False):
         if x is not None:
             self.x = x
         self.x += dx
@@ -977,7 +978,7 @@ class Window(_Window):
             screen.group.add(self, force=True)
             self.qtile.focus_screen(screen.index)
 
-        self._reconfigure_floating()
+        self._reconfigure_floating(from_left=from_left, from_top=from_top)
 
     def getsize(self):
         return (self.width, self.height)
@@ -985,7 +986,8 @@ class Window(_Window):
     def getposition(self):
         return (self.x, self.y)
 
-    def _reconfigure_floating(self, new_float_state=FLOATING):
+    def _reconfigure_floating(self, new_float_state=FLOATING,
+                              from_left=False, from_top=False):
         if new_float_state == MINIMIZED:
             self.state = IconicState
             self.hide()
@@ -996,12 +998,16 @@ class Window(_Window):
             if self.hints['base_width'] and self.hints['width_inc']:
                 width_adjustment = (width - self.hints['base_width']) % self.hints['width_inc']
                 width -= width_adjustment
+                if from_left:
+                    self.x += width_adjustment
                 if new_float_state == FULLSCREEN:
                     self.x += int(width_adjustment / 2)
 
             if self.hints['base_height'] and self.hints['height_inc']:
                 height_adjustment = (height - self.hints['base_height']) % self.hints['height_inc']
                 height -= height_adjustment
+                if from_top:
+                    self.y += height_adjustment
                 if new_float_state == FULLSCREEN:
                     self.y += int(height_adjustment / 2)
 
@@ -1322,13 +1328,46 @@ class Window(_Window):
         """Add dw and dh to size of window"""
         self.tweak_float(dw=dw, dh=dh)
 
-    def cmd_set_position_floating(self, x, y):
+    def cmd_set_position_floating(self, x=None, y=None, dx=None, dy=None, start=None):
         """Move window to x and y"""
+        if x is None:
+            ox, oy = start
+            x = ox + dx
+            y = oy + dy
         self.tweak_float(x=x, y=y)
 
-    def cmd_set_size_floating(self, w, h):
-        """Set window dimensions to w and h"""
-        self.tweak_float(w=w, h=h)
+    def cmd_set_size_floating(self, w=None, h=None, dx=None, dy=None, start=None):
+        """
+        Set window dimensions to w and h.
+
+        This can either be passed `w` and `h`, or used in a `Drag` where it is passed
+        `dx`, `dy` and `start` and `cmd_get_size` is used as the `Drag`'s start
+        function.
+        """
+        if w is not None:
+            self.tweak_float(w=w, h=h)
+            return
+
+        x, y = self.qtile.mouse_position
+        ox, oy, ow, oh = start
+
+        if x - dx < ox + ow / 2:
+            w = ow - dx
+            x = ox + dx
+        else:
+            w = ow + dx
+            x = None
+        if y - dy < oy + oh / 2:
+            h = oh - dy
+            y = oy + dy
+        else:
+            h = oh + dy
+            y = None
+
+        self.tweak_float(
+            w=w, h=h, x=x, y=y,
+            from_left=x is not None, from_top=y is not None
+        )
 
     def cmd_place(self, x, y, width, height, borderwidth, bordercolor,
                   above=False, margin=None):
@@ -1339,7 +1378,7 @@ class Window(_Window):
         return self.getposition()
 
     def cmd_get_size(self):
-        return self.getsize()
+        return self.getposition() + self.getsize()
 
     def cmd_toggle_floating(self):
         self.toggle_floating()
