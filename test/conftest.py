@@ -40,6 +40,7 @@ import libqtile.config
 from libqtile import command, ipc
 from libqtile.backend.x11.core import Core
 from libqtile.confreader import Config
+from libqtile.core.manager import Qtile
 from libqtile.core.session_manager import SessionManager
 from libqtile.lazy import lazy
 from libqtile.log_utils import init_log
@@ -283,7 +284,7 @@ class TestManager:
             try:
                 kore = Core(display_name=self.display)
                 init_log(self.log_level, log_path=None, log_color=False)
-                q = SessionManager(kore, config_class(), socket_path=self.sockfile)
+                q = SessionManager(Qtile(kore, config_class()), socket_path=self.sockfile)
                 q.loop()
             except Exception:
                 wpipe.send(traceback.format_exc())
@@ -316,7 +317,7 @@ class TestManager:
             if not hasattr(config, attr):
                 setattr(config, attr, getattr(default_config, attr))
 
-        return SessionManager(kore, config, socket_path=self.sockfile)
+        return SessionManager(Qtile(kore, config), socket_path=self.sockfile)
 
     def terminate(self):
         if self.proc is None:

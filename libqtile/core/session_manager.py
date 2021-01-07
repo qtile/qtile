@@ -4,38 +4,23 @@ import tempfile
 from typing import Optional
 
 from libqtile import ipc
-from libqtile.backend import base
 from libqtile.core.lifecycle import lifecycle
 from libqtile.core.loop import QtileLoop
 from libqtile.core.manager import Qtile
 
 
 class SessionManager:
-    def __init__(
-        self,
-        kore: base.Core,
-        config, *,
-        socket_path: str = None,
-        no_spawn=False,
-        state=None,
-    ) -> None:
+    def __init__(self, qtile: Qtile, *, socket_path: str = None) -> None:
         """Manages a qtile session
 
-        :param kore:
-            The core backend to use for the session.
-        :param config:
-            The configuration to use for the qtile instance.
+        :param qtile:
+            The Qtile instance to manage
         :param socket_path:
             The file name to use as the qtile socket file.
-        :param no_spawn:
-            If the instance has already been started, then don't re-run the
-            startup once hook.
-        :param state:
-            The state to restart the qtile instance with.
         """
         lifecycle.behavior = lifecycle.behavior.TERMINATE
 
-        self.qtile = Qtile(kore, config, no_spawn=no_spawn, state=state)
+        self.qtile = qtile
         self.server = ipc.Server(
             self._prepare_socket_path(socket_path),
             self.qtile.server.call,
