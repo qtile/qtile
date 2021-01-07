@@ -503,11 +503,21 @@ def test_inspect_xclock(manager):
 
 
 @manager_config
-@no_xinerama
 def test_static(manager):
-    manager.test_xeyes()
     manager.test_window("one")
-    manager.c.window[manager.c.window.info()["id"]].static(0, 0, 0, 100, 100)
+    manager.test_window("two")
+    manager.c.window[manager.c.window.info()["id"]].static(
+        screen=0, x=10, y=10, width=10, height=10,
+    )
+    info = manager.c.window.info()
+    assert info["name"] == "one"
+    manager.c.window.kill()
+    assert_window_died(manager.c, info)
+    with pytest.raises(CommandError):
+        manager.c.window.info()
+    info = manager.c.windows()[0]
+    assert info["name"] == "two"
+    assert (info["x"], info["y"], info["width"], info["height"]) == (10, 10, 10, 10)
 
 
 @manager_config
