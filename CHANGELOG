@@ -37,6 +37,7 @@ Qtile X.X.X, released XXXX-XX-XX:
           forseeable future, but will be eventually deprecated. qtile prints a
           warning when run in this configuration.
         - Qtile.cmd_focus_by_click is no longer an available command.
+        - Qtile.cmd_get_info is no longer an available command.
     * features
         - new WidgetBox widget
         - new restart and shutdown hooks

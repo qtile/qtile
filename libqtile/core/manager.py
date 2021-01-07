@@ -917,11 +917,6 @@ class Qtile(CommandObject):
         """
         return {i.name: i.info() for i in self.groups}
 
-    def cmd_get_info(self):
-        """Prints info for all groups"""
-        warnings.warn("The `get_info` command is deprecated, use `groups`", DeprecationWarning)
-        return self.cmd_groups()
-
     def get_mouse_position(self):
         return self.mouse_position
 
