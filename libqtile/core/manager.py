@@ -34,7 +34,7 @@ import xcffib.xinerama
 import xcffib.xproto
 
 import libqtile
-from libqtile import command_interface, confreader, hook, utils, window
+from libqtile import command_interface, confreader, hook, ipc, utils, window
 from libqtile.backend.x11 import xcbq
 from libqtile.command_client import InteractiveCommandClient
 from libqtile.command_interface import IPCCommandServer, QtileCommandInterface
@@ -64,11 +64,13 @@ class Qtile(CommandObject):
         kore,
         config,
         no_spawn=False,
-        state=None
+        state=None,
+        socket_path=None,
     ):
         self.core = kore
         self.no_spawn = no_spawn
         self._state = state
+        self.socket_path = socket_path
 
         self._stopped_event = None
         self.should_restart = False
@@ -219,7 +221,11 @@ class Qtile(CommandObject):
         self.core.setup_listener(self)
         self._configure()
         try:
-            await self._stopped_event.wait()
+            async with ipc.Server(
+                self.socket_path,
+                self.server.call,
+            ):
+                await self._stopped_event.wait()
         finally:
             self.finalize()
             self.core.remove_listener()

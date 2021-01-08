@@ -35,15 +35,21 @@ class SessionManager:
         """
         self.socket_path = socket_path
         lifecycle.behavior = lifecycle.behavior.TERMINATE
+        self.kore = kore
 
-        self.qtile = Qtile(kore, config, no_spawn=no_spawn, state=state)
-        self.server = None
+        self.qtile = Qtile(
+            kore,
+            config,
+            no_spawn=no_spawn,
+            state=state,
+            socket_path=self._prepare_socket_path(socket_path),
+        )
 
     def _prepare_socket_path(self, socket_path: Optional[str] = None) -> str:
         if socket_path is None:
             # Dots might appear in the host part of the display name
             # during remote X sessions. Let's strip the host part first
-            display_name = self.qtile.core.display_name
+            display_name = self.kore.display_name
             display_number = display_name.partition(":")[2]
             if "." not in display_number:
                 display_name += ".0"
@@ -70,11 +76,4 @@ class SessionManager:
 
     async def async_loop(self) -> None:
         async with QtileLoop(self.qtile):
-            async def s():
-                nonlocal self
-                self.server = ipc.Server(
-                    self._prepare_socket_path(self.socket_path),
-                    self.qtile.server.call,
-                )
-            asyncio.create_task(s())
             await self.qtile.async_loop()
