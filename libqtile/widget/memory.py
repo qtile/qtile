@@ -25,7 +25,7 @@ from libqtile.widget import base
 __all__ = ["Memory"]
 
 
-class Memory(base.ThreadedPollText):
+class Memory(base.ThreadPoolText):
     """Displays memory/swap usage
 
     MemUsed: Returns memory in use
@@ -54,7 +54,7 @@ class Memory(base.ThreadedPollText):
     ]
 
     def __init__(self, **config):
-        super().__init__(**config)
+        super().__init__("", **config)
         self.add_defaults(Memory.defaults)
 
     def tick(self):

@@ -28,11 +28,8 @@ from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
-class GmailChecker(base.ThreadedPollText):
-    """
-    A simple gmail checker. If 'status_only_unseen' is True - set 'display_fmt'
-    for one argument, ex. 'unseen: {0}'
-    """
+class GmailChecker(base.ThreadPoolText):
+    """A simple gmail checker. If 'status_only_unseen' is True - set 'fmt' for one argument, ex. 'unseen: {0}'"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
         ("update_interval", 30, "Update time in seconds."),
@@ -44,7 +41,7 @@ class GmailChecker(base.ThreadedPollText):
     ]
 
     def __init__(self, **config):
-        base._TextBox.__init__(self, **config)
+        base._ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(GmailChecker.defaults)
 
     def poll(self):

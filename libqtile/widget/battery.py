@@ -304,7 +304,7 @@ class _LinuxBattery(_Battery, configurable.Configurable):
         return BatteryStatus(state=state, percent=percent, power=power, time=time)
 
 
-class Battery(base.ThreadedPollText):
+class Battery(base.ThreadPoolText):
     """A text-based battery monitoring widget currently supporting FreeBSD"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
@@ -329,7 +329,7 @@ class Battery(base.ThreadedPollText):
                           DeprecationWarning)
             config["update_interval"] = config.pop("update_delay")
 
-        base.ThreadedPollText.__init__(self, **config)
+        base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(self.defaults)
 
         self._battery = self._load_battery(**config)

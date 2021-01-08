@@ -30,7 +30,6 @@
 # SOFTWARE.
 
 import subprocess
-import threading
 from typing import Any, List, Tuple
 
 from libqtile import bar, configurable, confreader, drawer
@@ -502,26 +501,9 @@ class InLoopPollText(_TextBox):
                 self.bar.draw()
 
 
-class ThreadedPollText(InLoopPollText):
-    """ A common interface for polling some REST URL, munging the data, and
-    rendering the result in a text box. """
-    def tick(self):
-        def worker():
-            try:
-                text = self.poll()
-                if self.qtile is not None:
-                    self.qtile.call_soon_threadsafe(self.update, text)
-            except:  # noqa: E722
-                logger.exception("problem polling to update widget %s", self.name)
-        # TODO: There are nice asyncio constructs for this sort of thing, I
-        # think...
-        threading.Thread(target=worker).start()
-
-
 class ThreadPoolText(_TextBox):
     """ A common interface for wrapping blocking events which when triggered
-    will update a textbox.  This is an alternative to the ThreadedPollText
-    class which differs by being push based rather than pull.
+    will update a textbox.
 
     The poll method is intended to wrap a blocking function which may take
     quite a while to return anything.  It will be executed as a future and
