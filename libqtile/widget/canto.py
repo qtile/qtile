@@ -28,7 +28,7 @@ from subprocess import call
 from libqtile.widget import base
 
 
-class Canto(base.ThreadedPollText):
+class Canto(base.ThreadPoolText):
     """Display RSS feeds updates using the canto console reader"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
@@ -39,7 +39,7 @@ class Canto(base.ThreadedPollText):
     ]
 
     def __init__(self, **config):
-        base.ThreadedPollText.__init__(self, **config)
+        base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(Canto.defaults)
 
     def poll(self):

@@ -31,7 +31,7 @@ from typing import Dict
 from libqtile.widget import base
 
 
-class Maildir(base.ThreadedPollText):
+class Maildir(base.ThreadPoolText):
     """A simple widget showing the number of new mails in maildir mailboxes"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
@@ -50,7 +50,7 @@ class Maildir(base.ThreadedPollText):
     ]
 
     def __init__(self, **config):
-        base.ThreadedPollText.__init__(self, **config)
+        base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(Maildir.defaults)
 
         # if it looks like a list of strings then we just convert them

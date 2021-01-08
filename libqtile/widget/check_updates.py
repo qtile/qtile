@@ -25,7 +25,7 @@ from libqtile.log_utils import logger
 from libqtile.widget import base
 
 
-class CheckUpdates(base.ThreadedPollText):
+class CheckUpdates(base.ThreadPoolText):
     """Shows number of pending updates in different unix systems"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
@@ -41,7 +41,7 @@ class CheckUpdates(base.ThreadedPollText):
     ]
 
     def __init__(self, **config):
-        base.ThreadedPollText.__init__(self, **config)
+        base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(CheckUpdates.defaults)
 
         # format: "Distro": ("cmd", "number of lines to subtract from output")

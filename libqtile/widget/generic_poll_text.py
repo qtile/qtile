@@ -17,7 +17,7 @@ except ImportError:
         raise Exception("no xmltodict library")
 
 
-class GenPollText(base.ThreadedPollText):
+class GenPollText(base.ThreadPoolText):
     """A generic text widget that polls using poll function to get the text"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
@@ -25,7 +25,7 @@ class GenPollText(base.ThreadedPollText):
     ]
 
     def __init__(self, **config):
-        base.ThreadedPollText.__init__(self, **config)
+        base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(GenPollText.defaults)
 
     def poll(self):
@@ -34,7 +34,7 @@ class GenPollText(base.ThreadedPollText):
         return self.func()
 
 
-class GenPollUrl(base.ThreadedPollText):
+class GenPollUrl(base.ThreadPoolText):
     """A generic text widget that polls an url and parses it using parse function"""
     orientations = base.ORIENTATION_HORIZONTAL
     defaults = [
@@ -48,7 +48,7 @@ class GenPollUrl(base.ThreadedPollText):
     ]  # type: List[Tuple[str, Any, str]]
 
     def __init__(self, **config):
-        base.ThreadedPollText.__init__(self, **config)
+        base.ThreadPoolText.__init__(self, "", **config)
         self.add_defaults(GenPollUrl.defaults)
 
     def fetch(self, url, data=None, headers=None, is_json=True, is_xml=False):
