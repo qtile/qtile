@@ -3,6 +3,7 @@
 # Copyright (c) 2011 Mounier Florian
 # Copyright (c) 2013 Mickael FALCK
 # Copyright (c) 2013 Tao Sauvage
+# Copyright (c) 2020 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,63 +23,55 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-    If dbus is available, this module implements a
-    org.freedesktop.Notifications service.
-"""
-from libqtile.log_utils import logger
+# type: ignore
 
-try:
-    import dbus
-    from dbus import service
-    from dbus.mainloop.glib import DBusGMainLoop
-    DBusGMainLoop(set_as_default=True)
-    has_dbus = True
-except ImportError:
-    has_dbus = False
+from dbus_next.aio import MessageBus
+from dbus_next.service import ServiceInterface, method, signal
+
+from libqtile.log_utils import logger
 
 BUS_NAME = 'org.freedesktop.Notifications'
 SERVICE_PATH = '/org/freedesktop/Notifications'
 
-if has_dbus:
-    class NotificationService(service.Object):
-        def __init__(self, manager):
-            bus = dbus.SessionBus()
-            bus.request_name(BUS_NAME)
-            bus_name = service.BusName(BUS_NAME, bus=bus)
-            service.Object.__init__(self, bus_name, SERVICE_PATH)
-            self.manager = manager
-            self._capabilities = {'body'}
 
-        @service.method(BUS_NAME, in_signature='', out_signature='as')
-        def GetCapabilities(self):  # noqa: N802
-            return list(self._capabilities)
+class NotificationService(ServiceInterface):
+    def __init__(self, manager):
+        super().__init__(BUS_NAME)
+        self.manager = manager
+        self._capabilities = {'body'}
 
-        def register_capabilities(self, capabilities):
-            if isinstance(capabilities, str):
-                self._capabilities.add(capabilities)
-            elif isinstance(capabilities, (tuple, list, set)):
-                self._capabilities.update(set(capabilities))
+    @method()
+    def GetCapabilities(self) -> 'as':  # noqa: N802, F722
+        return list(self._capabilities)
 
-        @service.method(BUS_NAME, in_signature='susssasa{sv}i', out_signature='u')
-        def Notify(self, app_name, replaces_id, app_icon, summary,  # noqa: N802
-                   body, actions, hints, timeout):
-            notif = Notification(
-                summary, body, timeout, hints, app_name, replaces_id, app_icon, actions
-            )
-            return self.manager.add(notif)
+    def register_capabilities(self, capabilities):
+        if isinstance(capabilities, str):
+            self._capabilities.add(capabilities)
+        elif isinstance(capabilities, (tuple, list, set)):
+            self._capabilities.update(set(capabilities))
 
-        @service.method(BUS_NAME, in_signature='u', out_signature='')
-        def CloseNotification(self, id):  # noqa: N802
-            pass
+    @method()
+    def Notify(self,  # noqa: N802, F722
+               app_name: 's', replaces_id: 'u',  # noqa: F821
+               app_icon: 's', summary: 's',  # noqa: F821
+               body: 's', actions: 'as',  # noqa: F821
+               hints: 'a{sv}', timeout: 'i') -> 'u':  # noqa: F821
+        notif = Notification(
+            summary, body, timeout, hints, app_name, replaces_id, app_icon, actions
+        )
+        return self.manager.add(notif)
 
-        @service.signal(BUS_NAME, signature='uu')
-        def NotificationClosed(self, id_in, reason_in):  # noqa: N802
-            pass
+    @method()
+    def CloseNotification(self, id: 'u'):  # noqa: N802, F821
+        pass
 
-        @service.method(BUS_NAME, in_signature='', out_signature='ssss')
-        def GetServerInformation(self):  # noqa: N802
-            return ("qtile-notify-daemon", "qtile", "1.0", "1")
+    @signal()
+    def NotificationClosed(self, id_in, reason_in):  # noqa: N802
+        pass
+
+    @method()
+    def GetServerInformation(self) -> 'ssss':  # noqa: N802, F821
+        return ("qtile-notify-daemon", "qtile", "1.0", "1")
 
 
 class Notification:
@@ -100,18 +93,21 @@ class NotificationManager:
         self.callbacks = []
         self._service = None
 
-    @property
-    def service(self):
-        if has_dbus and self._service is None:
+    async def service(self):
+        if self._service is None:
             try:
+                bus = await MessageBus().connect()
                 self._service = NotificationService(self)
+                bus.export(SERVICE_PATH, self._service)
+                await bus.request_name(BUS_NAME)
             except Exception:
                 logger.exception('Dbus connection failed')
                 self._service = None
         return self._service
 
-    def register(self, callback, capabilities=None):
-        if not self.service:
+    async def register(self, callback, capabilities=None):
+        service = await self.service()
+        if not service:
             logger.warning(
                 'Registering %s without any dbus connection existing',
                 callback.__name__,

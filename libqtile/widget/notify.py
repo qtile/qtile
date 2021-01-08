@@ -7,6 +7,7 @@
 # Copyright (c) 2013 Tao Sauvage
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 Adi Sieker
+# Copyright (c) 2020 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +30,7 @@
 from os import path
 
 from libqtile import bar, pangocffi, utils
-from libqtile.notify import notifier
+from libqtile.notify import notifier  # type: ignore
 from libqtile.widget import base
 
 
@@ -50,7 +51,6 @@ class Notify(base._TextBox):
     def __init__(self, width=bar.CALCULATED, **config):
         base._TextBox.__init__(self, "", width, **config)
         self.add_defaults(Notify.defaults)
-        notifier.register(self.update)
         self.current_id = 0
 
         self.add_callbacks({
@@ -69,6 +69,9 @@ class Notify(base._TextBox):
             self.fontshadow,
             markup=True
         )
+
+    async def _config_async(self):
+        await notifier.register(self.update)
 
     def set_notif_text(self, notif):
         self.text = pangocffi.markup_escape_text(notif.summary)
