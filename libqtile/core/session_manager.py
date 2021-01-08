@@ -33,13 +33,11 @@ class SessionManager:
         :param state:
             The state to restart the qtile instance with.
         """
+        self.socket_path = socket_path
         lifecycle.behavior = lifecycle.behavior.TERMINATE
 
         self.qtile = Qtile(kore, config, no_spawn=no_spawn, state=state)
-        self.server = ipc.Server(
-            self._prepare_socket_path(socket_path),
-            self.qtile.server.call,
-        )
+        self.server = None
 
     def _prepare_socket_path(self, socket_path: Optional[str] = None) -> str:
         if socket_path is None:
@@ -71,5 +69,12 @@ class SessionManager:
                 self._restart()
 
     async def async_loop(self) -> None:
-        async with QtileLoop(self.qtile), self.server:
+        async with QtileLoop(self.qtile):
+            async def s():
+                nonlocal self
+                self.server = ipc.Server(
+                    self._prepare_socket_path(self.socket_path),
+                    self.qtile.server.call,
+                )
+            asyncio.create_task(s())
             await self.qtile.async_loop()
