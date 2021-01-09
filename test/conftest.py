@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import asyncio
 import functools
 import logging
 import multiprocessing
@@ -41,7 +42,6 @@ from libqtile import command, ipc
 from libqtile.backend.x11.core import Core
 from libqtile.confreader import Config
 from libqtile.core.manager import Qtile
-from libqtile.core.session_manager import SessionManager
 from libqtile.lazy import lazy
 from libqtile.log_utils import init_log
 from libqtile.resources import default_config
@@ -284,8 +284,8 @@ class TestManager:
             try:
                 kore = Core(display_name=self.display)
                 init_log(self.log_level, log_path=None, log_color=False)
-                q = SessionManager(Qtile(kore, config_class()), socket_path=self.sockfile)
-                q.loop()
+                q = Qtile(kore, config_class(), socket_path=self.sockfile)
+                asyncio.run(q.loop())
             except Exception:
                 wpipe.send(traceback.format_exc())
 
@@ -317,7 +317,7 @@ class TestManager:
             if not hasattr(config, attr):
                 setattr(config, attr, getattr(default_config, attr))
 
-        return SessionManager(Qtile(kore, config), socket_path=self.sockfile)
+        return Qtile(kore, config, socket_path=self.sockfile)
 
     def terminate(self):
         if self.proc is None:
