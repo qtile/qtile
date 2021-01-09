@@ -215,6 +215,17 @@ def test_keypress(manager):
     assert manager.c.groups()["a"]["focus"] == "one"
 
 
+class TooFewGroupsConfig(ManagerConfig):
+    groups = []
+
+
+@pytest.mark.parametrize("manager", [TooFewGroupsConfig], indirect=True)
+@pytest.mark.parametrize("xephyr", [{"xinerama": True}, {"xinerama": False}], indirect=True)
+def test_too_few_groups(manager):
+    assert manager.c.groups()
+    assert len(manager.c.groups()) == len(manager.c.screens())
+
+
 class _ChordsConfig(Config):
     groups = [
         libqtile.config.Group("a")
