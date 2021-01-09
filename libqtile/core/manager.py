@@ -114,9 +114,7 @@ class Qtile(CommandObject):
             warnings.warn("Defining a main function is deprecated, use libqtile.qtile", DeprecationWarning)
             self.config.main(self)
 
-        if self.config.groups:
-            self.dgroups = DGroups(self, self.config.groups,
-                                   self.config.dgroups_key_binder)
+        self.dgroups = DGroups(self, self.config.groups, self.config.dgroups_key_binder)
 
         if self.config.widget_defaults:
             _Widget.global_defaults = self.config.widget_defaults
@@ -311,9 +309,15 @@ class Qtile(CommandObject):
             if not self.current_screen:
                 self.current_screen = scr
 
-            scr._configure(
-                self, i, x, y, w, h, self.groups[i],
-            )
+            if len(self.groups) < i + 1:
+                name = f"autogen_{i + 1}"
+                self.add_group(name)
+                grp = self.groups[i]
+                logger.warning(f"Too few groups in config. Added group: {name}")
+            else:
+                grp = self.groups[i]
+
+            scr._configure(self, i, x, y, w, h, grp)
             self.screens.append(scr)
 
     def paint_screen(self, screen, image_path, mode=None):
