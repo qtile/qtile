@@ -338,7 +338,7 @@ def test_incompatible_widget(manager_nospawn):
     # bar raises ConfigError
     with pytest.raises(libqtile.confreader.ConfigError):
         m = manager_nospawn.create_manager(config)
-        asyncio.run(m.qtile._configure())
+        asyncio.run(m._configure())
 
 
 def test_basic(manager_nospawn):

@@ -28,6 +28,7 @@ import signal
 import subprocess
 import tempfile
 import time
+import typing
 import warnings
 
 import xcffib
@@ -35,7 +36,7 @@ import xcffib.xinerama
 import xcffib.xproto
 
 import libqtile
-from libqtile import confreader, hook, utils, window
+from libqtile import confreader, hook, ipc, utils, window
 from libqtile.backend.x11 import xcbq
 from libqtile.command import interface
 from libqtile.command.base import CommandError, CommandException, CommandObject
@@ -45,6 +46,7 @@ from libqtile.config import Click, Drag, Key, KeyChord, Match, Rule
 from libqtile.config import ScratchPad as ScratchPadConfig
 from libqtile.config import Screen
 from libqtile.core.lifecycle import lifecycle
+from libqtile.core.loop import QtileLoop
 from libqtile.core.state import QtileState
 from libqtile.dgroups import DGroups
 from libqtile.extension.base import _Extension
@@ -63,11 +65,13 @@ class Qtile(CommandObject):
         kore,
         config,
         no_spawn=False,
-        state=None
+        state=None,
+        socket_path: typing.Optional[str] = None,
     ):
         self.core = kore
         self.no_spawn = no_spawn
         self._state = state
+        self.socket_path = socket_path
 
         self._stopped_event = None
 
@@ -92,6 +96,7 @@ class Qtile(CommandObject):
 
         self._eventloop = None
         self.server = IPCCommandServer(self)
+        self._server = None
         self.config = config
         self.load_config()
 
@@ -195,6 +200,18 @@ class Qtile(CommandObject):
 
         hook.fire("startup_complete")
 
+    def _prepare_socket_path(
+        self,
+        socket_path: typing.Optional[str] = None,
+    ) -> str:
+        if socket_path is None:
+            socket_path = ipc.find_sockfile(self.core.display_name)
+
+        if os.path.exists(socket_path):
+            os.unlink(socket_path)
+
+        return socket_path 
+
     @property
     def root(self):
         return self.core._root
@@ -207,6 +224,9 @@ class Qtile(CommandObject):
     def selection(self):
         return self.core._selection
 
+    def loop(self) -> None:
+        asyncio.run(self.async_loop())
+
     async def async_loop(self) -> None:
         """Run the event loop
 
@@ -216,8 +236,14 @@ class Qtile(CommandObject):
         self._stopped_event = asyncio.Event()
         self.core.setup_listener(self)
         self._configure()
+        self._server = ipc.Server(
+            self._prepare_socket_path(self.socket_path),
+            self.server.call,
+        )
+        
         try:
-            await self._stopped_event.wait()
+            async with QtileLoop(self), self._server:
+                await self._stopped_event.wait()
         finally:
             self.finalize()
             self.core.remove_listener()
