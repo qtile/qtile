@@ -1,22 +1,27 @@
 import asyncio
 import contextlib
 import signal
-from typing import Awaitable, Optional
+from typing import Awaitable, Callable, Dict, Optional
 
 from libqtile.log_utils import logger
 
 
-class QtileLoop(contextlib.AbstractAsyncContextManager):
-    def __init__(self, qtile):
+class LoopContext(contextlib.AbstractAsyncContextManager):
+    def __init__(
+        self,
+        signals: Optional[Dict[signal.Signals, Callable]] = None,
+    ) -> None:
         super().__init__()
-        self.qtile = qtile
+        self._signals = signals or {}
+        self._stopped = False
         self._glib_loop: Optional[Awaitable] = None
 
-    async def __aenter__(self) -> 'QtileLoop':
+    async def __aenter__(self) -> 'LoopContext':
+        self._stopped = False
         loop = asyncio.get_running_loop()
-        loop.add_signal_handler(signal.SIGINT, self.qtile.stop)
-        loop.add_signal_handler(signal.SIGTERM, self.qtile.stop)
         loop.set_exception_handler(self._handle_exception)
+        for sig, handler in self._signals.items():
+            loop.add_signal_handler(sig, handler)
 
         with contextlib.suppress(ImportError):
             self._glib_loop = self._setup_glib_loop()
@@ -26,6 +31,7 @@ class QtileLoop(contextlib.AbstractAsyncContextManager):
         return self
 
     async def __aexit__(self, *args) -> None:
+        self._stopped = True
         if self._glib_loop is not None:
             await self._teardown_glib_loop(self._glib_loop)
             self._glib_loop = None
@@ -33,8 +39,7 @@ class QtileLoop(contextlib.AbstractAsyncContextManager):
         await self._cancel_all_tasks()
 
         loop = asyncio.get_running_loop()
-        loop.remove_signal_handler(signal.SIGINT)
-        loop.remove_signal_handler(signal.SIGTERM)
+        map(loop.remove_signal_handler, self._signals.keys())
         loop.set_exception_handler(None)
 
     async def _cancel_all_tasks(self):
@@ -63,7 +68,7 @@ class QtileLoop(contextlib.AbstractAsyncContextManager):
 
         def gobject_thread():
             ctx = GLib.main_context_default()
-            while not self.qtile.is_stopped():
+            while not self._stopped:
                 try:
                     ctx.iteration(True)
                 except Exception:
