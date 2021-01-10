@@ -267,11 +267,6 @@ class Qtile(CommandObject):
         if self._stopped_event is not None:
             self._stopped_event.set()
 
-    def is_stopped(self):
-        if self._stopped_event is not None:
-            return self._stopped_event.is_set()
-        return False
-
     def finalize(self):
         try:
             for widget in self.widgets_map.values():
