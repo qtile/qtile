@@ -28,8 +28,8 @@ import signal
 import subprocess
 import tempfile
 import time
-import typing
 import warnings
+from typing import Dict, List, Optional, Tuple
 
 import xcffib
 import xcffib.xinerama
@@ -66,35 +66,35 @@ class Qtile(CommandObject):
         config,
         no_spawn=False,
         state=None,
-        socket_path: typing.Optional[str] = None,
+        socket_path: Optional[str] = None,
     ):
         self.core = kore
         self.no_spawn = no_spawn
         self._state = state
         self.socket_path = socket_path
 
-        self._stopped_event = None
-
-        self._drag = None
-        self.mouse_map = None
+        self._drag: Optional[Drag] = None
+        self.mouse_map: Dict[int, List[Click]] = {}
         self.mouse_position = (0, 0)
 
-        self.windows_map = {}
-        self.widgets_map = {}
-        self.groups_map = {}
-        self.groups = []
-        self.dgroups = None
+        self.windows_map: Dict[int, window._Window] = {}
+        self.widgets_map: Dict[str, _Widget] = {}
+        self.groups_map: Dict[str, _Group] = {}
+        self.groups: List[_Group] = []
+        self.dgroups: Optional[DGroups] = None
 
-        self.keys_map = {}
+        self.keys_map: Dict[Tuple[int, int], Key] = {}
         self.current_chord = False
         self.numlock_mask, self.valid_mask = self.core.masks
 
-        self.current_screen = None
-        self.screens = []
+        self.current_screen: Optional[Screen] = None
+        self.screens: List[Screen] = []
 
         libqtile.init(self)
 
-        self._eventloop = None
+        self._eventloop: Optional[asyncio.AbstractEventLoop] = None
+        self._stopped_event: Optional[asyncio.Event] = None
+
         self.server = IPCCommandServer(self)
         self.config = config
         self.load_config()
@@ -165,7 +165,6 @@ class Qtile(CommandObject):
         for key in self.config.keys:
             self.grab_key(key)
 
-        self.mouse_map = {}
         for i in self.config.mouse:
             if self.mouse_map.get(i.button_code) is None:
                 self.mouse_map[i.button_code] = []
@@ -201,7 +200,7 @@ class Qtile(CommandObject):
 
     def _prepare_socket_path(
         self,
-        socket_path: typing.Optional[str] = None,
+        socket_path: Optional[str] = None,
     ) -> str:
         if socket_path is None:
             socket_path = ipc.find_sockfile(self.core.display_name)
@@ -727,8 +726,7 @@ class Qtile(CommandObject):
 
     def process_button_click(self, button_code, state, x, y, event) -> None:
         self.mouse_position = (x, y)
-        k = self.mouse_map.get(button_code)
-        for m in k:
+        for m in self.mouse_map.get(button_code, []):
             try:
                 modmask = xcbq.translate_masks(m.modifiers)
             except xcbq.XCBQError as e:

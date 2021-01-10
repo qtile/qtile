@@ -22,7 +22,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import asyncio
 import os
 import tempfile
 
@@ -338,7 +337,7 @@ def test_incompatible_widget(manager_nospawn):
     # bar raises ConfigError
     with pytest.raises(libqtile.confreader.ConfigError):
         m = manager_nospawn.create_manager(config)
-        asyncio.run(m._configure())
+        m._configure()
 
 
 def test_basic(manager_nospawn):
