@@ -46,7 +46,7 @@ from libqtile.config import Click, Drag, Key, KeyChord, Match, Rule
 from libqtile.config import ScratchPad as ScratchPadConfig
 from libqtile.config import Screen
 from libqtile.core.lifecycle import lifecycle
-from libqtile.core.loop import QtileLoop
+from libqtile.core.loop import LoopContext
 from libqtile.core.state import QtileState
 from libqtile.dgroups import DGroups
 from libqtile.extension.base import _Extension
@@ -234,7 +234,10 @@ class Qtile(CommandObject):
         self._stopped_event = asyncio.Event()
         self.core.setup_listener(self)
         try:
-            async with QtileLoop(self), ipc.Server(
+            async with LoopContext({
+                signal.SIGTERM: self.stop,
+                signal.SIGINT: self.stop,
+            }), ipc.Server(
                 self._prepare_socket_path(self.socket_path),
                 self.server.call,
             ):
