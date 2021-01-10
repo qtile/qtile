@@ -96,7 +96,6 @@ class Qtile(CommandObject):
 
         self._eventloop = None
         self.server = IPCCommandServer(self)
-        self._server = None
         self.config = config
         self.load_config()
 
@@ -210,7 +209,7 @@ class Qtile(CommandObject):
         if os.path.exists(socket_path):
             os.unlink(socket_path)
 
-        return socket_path 
+        return socket_path
 
     @property
     def root(self):
@@ -235,14 +234,12 @@ class Qtile(CommandObject):
         self._eventloop = asyncio.get_running_loop()
         self._stopped_event = asyncio.Event()
         self.core.setup_listener(self)
-        self._configure()
-        self._server = ipc.Server(
-            self._prepare_socket_path(self.socket_path),
-            self.server.call,
-        )
-        
         try:
-            async with QtileLoop(self), self._server:
+            async with QtileLoop(self), ipc.Server(
+                self._prepare_socket_path(self.socket_path),
+                self.server.call,
+            ):
+                self._configure()
                 await self._stopped_event.wait()
         finally:
             self.finalize()
