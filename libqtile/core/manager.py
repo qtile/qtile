@@ -46,13 +46,13 @@ from libqtile.command_object import (
 from libqtile.config import Click, Drag, Key, KeyChord, Match, Rule
 from libqtile.config import ScratchPad as ScratchPadConfig
 from libqtile.config import Screen
+from libqtile.core.state import QtileState
 from libqtile.dgroups import DGroups
 from libqtile.extension.base import _Extension
 from libqtile.group import _Group
 from libqtile.lazy import lazy
 from libqtile.log_utils import logger
 from libqtile.scratchpad import ScratchPad
-from libqtile.state import QtileState
 from libqtile.utils import get_cache_dir, send_notification
 from libqtile.widget.base import _Widget
 
