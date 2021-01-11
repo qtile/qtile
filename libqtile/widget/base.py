@@ -34,7 +34,7 @@ import threading
 from typing import Any, List, Tuple
 
 from libqtile import bar, configurable, confreader, drawer
-from libqtile.command_object import CommandError, CommandObject
+from libqtile.command.base import CommandError, CommandObject
 from libqtile.log_utils import logger
 
 

@@ -31,8 +31,8 @@ import sys
 import textwrap
 from typing import List
 
-from libqtile.command_client import InteractiveCommandClient
-from libqtile.command_interface import (
+from libqtile.command.client import InteractiveCommandClient
+from libqtile.command.interface import (
     CommandError,
     CommandException,
     IPCCommandInterface,

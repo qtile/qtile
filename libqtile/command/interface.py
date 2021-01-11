@@ -27,16 +27,16 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, Dict, List, Tuple, Union
 
 from libqtile import ipc
-from libqtile.command_graph import (
-    CommandGraphCall,
-    CommandGraphNode,
-    SelectorType,
-)
-from libqtile.command_object import (
+from libqtile.command.base import (
     CommandError,
     CommandException,
     CommandObject,
     SelectError,
+)
+from libqtile.command.graph import (
+    CommandGraphCall,
+    CommandGraphNode,
+    SelectorType,
 )
 from libqtile.log_utils import logger
 

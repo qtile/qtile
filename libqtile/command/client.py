@@ -29,15 +29,15 @@ clients to do this interaction.
 
 from typing import Any, List, Optional, Union
 
-from libqtile.command_graph import (
+from libqtile.command.base import SelectError
+from libqtile.command.graph import (
     CommandGraphCall,
     CommandGraphNode,
     CommandGraphObject,
     CommandGraphRoot,
     GraphType,
 )
-from libqtile.command_interface import CommandInterface, IPCCommandInterface
-from libqtile.command_object import SelectError
+from libqtile.command.interface import CommandInterface, IPCCommandInterface
 from libqtile.ipc import Client, find_sockfile
 
 

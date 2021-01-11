@@ -41,9 +41,9 @@ from typing import List, Optional, Tuple
 
 from libqtile import bar, hook, pangocffi, utils, xkeysyms
 from libqtile.backend.x11 import xcbq
-from libqtile.command_client import InteractiveCommandClient
-from libqtile.command_interface import CommandError, QtileCommandInterface
-from libqtile.command_object import CommandObject, SelectError
+from libqtile.command.base import CommandObject, SelectError
+from libqtile.command.client import InteractiveCommandClient
+from libqtile.command.interface import CommandError, QtileCommandInterface
 from libqtile.log_utils import logger
 from libqtile.widget import base
 

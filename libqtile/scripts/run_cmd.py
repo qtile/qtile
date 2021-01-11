@@ -26,7 +26,8 @@ import argparse
 import atexit
 import subprocess
 
-from libqtile import command_graph, ipc
+from libqtile import ipc
+from libqtile.command import graph
 
 
 def run_cmd(opts) -> None:
@@ -35,7 +36,7 @@ def run_cmd(opts) -> None:
     else:
         socket = opts.socket
     client = ipc.Client(socket)
-    root = command_graph.CommandGraphRoot()
+    root = graph.CommandGraphRoot()
 
     proc = subprocess.Popen(opts.cmd)
     match_args = {"net_wm_pid": proc.pid}
@@ -43,12 +44,12 @@ def run_cmd(opts) -> None:
                  "group": opts.group, "break_on_match": not opts.dont_break}
 
     cmd = root.navigate("add_rule", None)
-    assert isinstance(cmd, command_graph.CommandGraphCall)
+    assert isinstance(cmd, graph.CommandGraphCall)
     _, rule_id = client.send((root.selectors, cmd.name, (match_args, rule_args), {}))
 
     def remove_rule():
         cmd = root.navigate("remove_rule", None)
-        assert isinstance(cmd, command_graph.CommandGraphCall)
+        assert isinstance(cmd, graph.CommandGraphCall)
         client.send((root.selectors, cmd.name, (rule_id,), {}))
 
     atexit.register(remove_rule)

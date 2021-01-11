@@ -27,7 +27,7 @@ import inspect
 import traceback
 from typing import Callable, List, Optional, Tuple, Union
 
-from libqtile.command_graph import SelectorType
+from libqtile.command.graph import SelectorType
 from libqtile.log_utils import logger
 
 

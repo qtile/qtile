@@ -21,7 +21,7 @@
 from typing import Union
 
 from libqtile import configurable, drawer, window
-from libqtile.command_object import CommandObject
+from libqtile.command.base import CommandObject
 
 
 class Gap(CommandObject):
