@@ -605,7 +605,7 @@ class Match:
         elif name == 'wm_class':
             def predicate(other):
                 # match as an "include"-match on any of the received classes
-                match = getattr(other, 'match', lambda v: other in v)
+                match = getattr(other, 'match', lambda v: v in other)
                 return value and any(match(v) for v in value)
             return predicate
         else:
