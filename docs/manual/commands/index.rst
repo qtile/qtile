@@ -46,7 +46,7 @@ the ``InteractiveCommandClient`` object:
 
 .. code-block:: python
 
-    from libqtile.command_client import InteractiveCommandClient
+    from libqtile.command.client import InteractiveCommandClient
     c = InteractiveCommandClient()
     print(c.status())
 
@@ -63,7 +63,7 @@ REPL:
 
 .. code-block:: python
 
-    from libqtile.command_client import CommandClient
+    from libqtile.command.client import CommandClient
     c = CommandClient()
     print(c.call("status")())
 
@@ -283,10 +283,10 @@ going on when we call:
 
 .. code-block:: python
 
-    from libqtile.command_client import CommandClient
+    from libqtile.command.client import CommandClient
     c = CommandClient()
     print(c.call("status")())
-    from libqtile.command_client import InteractiveCommandClient
+    from libqtile.command.client import InteractiveCommandClient
     c = InteractiveCommandClient()
     print(c.status())
 
