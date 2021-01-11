@@ -37,7 +37,7 @@ import xcffib.testing
 import xcffib.xproto
 
 import libqtile.config
-from libqtile import command_client, command_interface, ipc
+from libqtile import command, ipc
 from libqtile.backend.x11.core import Core
 from libqtile.confreader import Config
 from libqtile.core.session_manager import SessionManager
@@ -109,8 +109,8 @@ def can_connect_qtile(socket_path, *, ok=None):
         raise AssertionError()
 
     ipc_client = ipc.Client(socket_path)
-    ipc_command = command_interface.IPCCommandInterface(ipc_client)
-    client = command_client.InteractiveCommandClient(ipc_command)
+    ipc_command = command.interface.IPCCommandInterface(ipc_client)
+    client = command.client.InteractiveCommandClient(ipc_command)
     val = client.status()
     if val == 'OK':
         return True
@@ -294,8 +294,8 @@ class TestManager:
         # First, wait for socket to appear
         if can_connect_qtile(self.sockfile, ok=lambda: not rpipe.poll()):
             ipc_client = ipc.Client(self.sockfile)
-            ipc_command = command_interface.IPCCommandInterface(ipc_client)
-            self.c = command_client.InteractiveCommandClient(ipc_command)
+            ipc_command = command.interface.IPCCommandInterface(ipc_client)
+            self.c = command.client.InteractiveCommandClient(ipc_command)
             return
         if rpipe.poll(sleep_time):
             error = rpipe.recv()

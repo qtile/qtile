@@ -23,7 +23,7 @@
 import pytest
 
 from libqtile import config, ipc, resources
-from libqtile.command_interface import IPCCommandInterface
+from libqtile.command.interface import IPCCommandInterface
 from libqtile.confreader import Config
 from libqtile.layout import Max
 from libqtile.sh import QSh

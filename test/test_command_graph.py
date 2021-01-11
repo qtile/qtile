@@ -1,6 +1,6 @@
 import pytest
 
-from libqtile.command_graph import (
+from libqtile.command.graph import (
     CommandGraphCall,
     CommandGraphObject,
     CommandGraphRoot,

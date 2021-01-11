@@ -32,7 +32,7 @@ from docutils.statemachine import ViewList
 from jinja2 import Template
 from sphinx.util.nodes import nested_parse_with_titles
 
-from libqtile import command_object, configurable, widget
+from libqtile import command, configurable, widget
 from libqtile.utils import import_class
 
 qtile_module_template = Template('''
@@ -133,7 +133,7 @@ class QtileClass(SimpleDirectiveMixin, Directive):
             'obj': obj,
             'defaults': defaults,
             'configurable': is_configurable and issubclass(obj, configurable.Configurable),
-            'commandable': is_commandable and issubclass(obj, command_object.CommandObject),
+            'commandable': is_commandable and issubclass(obj, command.base.CommandObject),
             'is_widget': issubclass(obj, widget.base._Widget),
             'extra_arguments': arguments,
         }

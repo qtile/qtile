@@ -32,7 +32,7 @@ import xcffib
 import xcffib.xproto
 
 from libqtile import hook, utils, window
-from libqtile.command_object import CommandObject
+from libqtile.command.base import CommandObject
 from libqtile.log_utils import logger
 
 

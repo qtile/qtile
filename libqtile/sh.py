@@ -31,8 +31,8 @@ import sys
 import termios
 from typing import List, Optional, Tuple
 
-from libqtile import command_graph
-from libqtile.command_interface import (
+from libqtile.command import graph
+from libqtile.command.interface import (
     CommandError,
     CommandException,
     CommandInterface,
@@ -54,7 +54,7 @@ class QSh:
     """Qtile shell instance"""
     def __init__(self, client: CommandInterface, completekey="tab") -> None:
         self._client = client
-        self._current_node = command_graph.CommandGraphRoot()  # type: command_graph.CommandGraphNode
+        self._current_node = graph.CommandGraphRoot()  # type: graph.CommandGraphNode
         self._completekey = completekey
         self._builtins = [i[3:] for i in dir(self) if i.startswith("do_")]
         self._termwidth = terminal_width()
@@ -124,9 +124,9 @@ class QSh:
         except CommandError:
             return []
 
-    def _inspect(self, obj: command_graph.CommandGraphNode) -> Tuple[Optional[List[str]], Optional[List[str]]]:
+    def _inspect(self, obj: graph.CommandGraphNode) -> Tuple[Optional[List[str]], Optional[List[str]]]:
         """Returns an (attrs, keys) tuple"""
-        if isinstance(obj, command_graph.CommandGraphObject) and obj.selector is None:
+        if isinstance(obj, graph.CommandGraphObject) and obj.selector is None:
             items_call = obj.parent.call("items")
             allow_root, items = self._client.execute(items_call, (obj.object_type,), {})
             attrs = obj.children if allow_root else None
@@ -134,7 +134,7 @@ class QSh:
         else:
             return obj.children, None
 
-    def _ls(self, obj: command_graph.CommandGraphNode) -> List[str]:
+    def _ls(self, obj: graph.CommandGraphNode) -> List[str]:
         attrs, itms = self._inspect(obj)
         all_items = []  # type: List[str]
         if attrs:
@@ -143,19 +143,19 @@ class QSh:
             all_items.extend(itms)
         return all_items
 
-    def _find_path(self, path: str) -> Optional[command_graph.CommandGraphNode]:
+    def _find_path(self, path: str) -> Optional[graph.CommandGraphNode]:
         """Find an object relative to the current node
 
         Finds and returns the command graph node that is defined relative to
         the current node.
         """
-        root = command_graph.CommandGraphRoot() if path.startswith("/") else self._current_node
+        root = graph.CommandGraphRoot() if path.startswith("/") else self._current_node
         parts = [i for i in path.split("/") if i]
         return self._find_node(root, *parts)
 
     def _find_node(self,
-                   src: command_graph.CommandGraphNode,
-                   *paths: str) -> Optional[command_graph.CommandGraphNode]:
+                   src: graph.CommandGraphNode,
+                   *paths: str) -> Optional[graph.CommandGraphNode]:
         """Find an object in the command graph
 
         Return the object in the command graph at the specified path relative
@@ -182,7 +182,7 @@ class QSh:
                     next_node = nav_node
                     break
                 elif items is not None and transformed_path in items:
-                    assert isinstance(src, command_graph.CommandGraphObject)
+                    assert isinstance(src, graph.CommandGraphObject)
                     nav_node = src.parent.navigate(src.object_type, transformed_path)
                     next_node = nav_node
                     break

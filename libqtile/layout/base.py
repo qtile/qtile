@@ -24,7 +24,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, List, Tuple  # noqa: F401
 
 from libqtile import configurable
-from libqtile.command_object import CommandObject
+from libqtile.command.base import CommandObject
 
 
 class Layout(CommandObject, configurable.Configurable, metaclass=ABCMeta):

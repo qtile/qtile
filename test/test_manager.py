@@ -39,8 +39,8 @@ import libqtile.layout
 import libqtile.widget
 import libqtile.window
 from libqtile.backend.x11 import xcbq
-from libqtile.command_client import SelectError
-from libqtile.command_interface import CommandError, CommandException
+from libqtile.command.client import SelectError
+from libqtile.command.interface import CommandError, CommandException
 from libqtile.config import Match
 from libqtile.confreader import Config
 from libqtile.lazy import lazy

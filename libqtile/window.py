@@ -26,7 +26,7 @@ import xcffib.xproto
 from xcffib.xproto import EventMask, SetMode, StackMode
 
 from libqtile import hook, utils
-from libqtile.command_object import CommandError, CommandObject
+from libqtile.command.base import CommandError, CommandObject
 from libqtile.log_utils import logger
 
 # ICCM Constants

@@ -34,15 +34,12 @@ import xcffib.xinerama
 import xcffib.xproto
 
 import libqtile
-from libqtile import command_interface, confreader, hook, utils, window
+from libqtile import confreader, hook, utils, window
 from libqtile.backend.x11 import xcbq
-from libqtile.command_client import InteractiveCommandClient
-from libqtile.command_interface import IPCCommandServer, QtileCommandInterface
-from libqtile.command_object import (
-    CommandError,
-    CommandException,
-    CommandObject,
-)
+from libqtile.command import interface
+from libqtile.command.base import CommandError, CommandException, CommandObject
+from libqtile.command.client import InteractiveCommandClient
+from libqtile.command.interface import IPCCommandServer, QtileCommandInterface
 from libqtile.config import Click, Drag, Key, KeyChord, Match, Rule
 from libqtile.config import ScratchPad as ScratchPadConfig
 from libqtile.config import Screen
@@ -310,7 +307,7 @@ class Qtile(CommandObject):
                     status, val = self.server.call(
                         (cmd.selectors, cmd.name, cmd.args, cmd.kwargs)
                     )
-                    if status in (command_interface.ERROR, command_interface.EXCEPTION):
+                    if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error("KB command error %s: %s" % (cmd.name, val))
             else:
                 if self.current_chord is True or (self.current_chord and key.key == "Escape"):
@@ -719,7 +716,7 @@ class Qtile(CommandObject):
                             (i.selectors, i.name, i.args, i.kwargs))
                         if m.focus == "after":
                             self._focus_by_click(event)
-                        if status in (command_interface.ERROR, command_interface.EXCEPTION):
+                        if status in (interface.ERROR, interface.EXCEPTION):
                             logger.error(
                                 "Mouse command error %s: %s" % (i.name, val)
                             )
@@ -730,7 +727,7 @@ class Qtile(CommandObject):
                         self._focus_by_click(event)
                     status, val = self.server.call(
                         (i.selectors, i.name, i.args, i.kwargs))
-                    if status in (command_interface.ERROR, command_interface.EXCEPTION):
+                    if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error(
                             "Mouse command error %s: %s" % (i.name, val)
                         )
@@ -771,7 +768,7 @@ class Qtile(CommandObject):
                         i.args + (rx + dx, ry + dy),
                         i.kwargs
                     ))
-                    if status in (command_interface.ERROR, command_interface.EXCEPTION):
+                    if status in (interface.ERROR, interface.EXCEPTION):
                         logger.error(
                             "Mouse command error %s: %s" % (i.name, val)
                         )

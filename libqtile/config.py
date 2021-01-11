@@ -32,7 +32,7 @@ from typing import List, Optional
 
 from libqtile import configurable, hook, utils
 from libqtile.bar import BarType
-from libqtile.command_object import CommandObject
+from libqtile.command.base import CommandObject
 from libqtile.lazy import lazy
 
 
