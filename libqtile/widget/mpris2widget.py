@@ -2,6 +2,7 @@
 # Copyright (c) 2014 Sean Vig
 # Copyright (c) 2014 Adi Sieker
 # Copyright (c) 2014 Tycho Andersen
+# Copyright (c) 2020 elParaguayo
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import dbus
-from dbus.mainloop.glib import DBusGMainLoop
+from dbus_next.constants import MessageType  # type: ignore
 
+from libqtile.log_utils import logger
+from libqtile.utils import add_signal_receiver
 from libqtile.widget import base
 
 
@@ -68,25 +70,27 @@ class Mpris2(base._TextBox):
         self.is_playing = False
         self.scroll_timer = None
         self.scroll_counter = None
-        self.dbus_loop = None
+        self.count = 0
+        self.connect_count = 0
 
-    def _configure(self, qtile, bar):
-        base._TextBox._configure(self, qtile, bar)
+    async def _config_async(self):
+        subscribe = await add_signal_receiver(
+                        self.message,
+                        session_bus=True,
+                        signal_name="PropertiesChanged",
+                        bus_name=self.objname,
+                        path="/org/mpris/MediaPlayer2",
+                        dbus_interface="org.freedesktop.DBus.Properties")
 
-        # we don't need to reconnect all the dbus stuff if we already
-        # connected it.
-        if self.dbus_loop is not None:
+        if not subscribe:
+            msg = "Unable to add signal receiver for {}.".format(self.objname)
+            logger.warning(msg)
+
+    def message(self, message):
+        if message.message_type != MessageType.SIGNAL:
             return
 
-        # we need a main loop to get event signals
-        # we just piggyback on qtile's main loop
-        self.dbus_loop = DBusGMainLoop()
-        self.bus = dbus.SessionBus(mainloop=self.dbus_loop)
-        self.bus.add_signal_receiver(
-            self.update, 'PropertiesChanged',
-            'org.freedesktop.DBus.Properties', self.objname,
-            '/org/mpris/MediaPlayer2'
-        )
+        self.update(*message.body)
 
     def update(self, interface_name, changed_properties, invalidated_properties):
         """http://specifications.freedesktop.org/mpris-spec/latest/Track_List_Interface.html#Mapping:Metadata_Map"""
@@ -97,16 +101,24 @@ class Mpris2(base._TextBox):
 
         metadata = changed_properties.get('Metadata')
         if metadata:
+            metadata = metadata.value
             self.is_playing = True
-            self.displaytext = ' - '.join([
-                metadata.get(x)
-                if isinstance(metadata.get(x), dbus.String)
-                else ' + '.join(y for y in metadata.get(x) if isinstance(y, dbus.String))
-                for x in self.display_metadata if metadata.get(x)
-            ])
+
+            meta_list = []
+            for key in self.display_metadata:
+                val = getattr(metadata.get(key), 'value', None)
+                if isinstance(val, str):
+                    meta_list.append(val)
+                elif isinstance(val, list):
+                    val = " - ".join((y for y in val if isinstance(y, str)))
+                    meta_list.append(val)
+
+            self.displaytext = ' - '.join(meta_list)
             self.displaytext.replace('\n', '')
 
-        playbackstatus = changed_properties.get('PlaybackStatus')
+        playbackstatus = getattr(changed_properties.get('PlaybackStatus'),
+                                 'value',
+                                 None)
         if playbackstatus == 'Paused':
             if self.stop_pause_text is not None:
                 self.is_playing = False
