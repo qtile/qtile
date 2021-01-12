@@ -47,7 +47,7 @@ class QtileLoop(contextlib.AbstractAsyncContextManager):
         for task in pending:
             task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
-                await task()
+                await task
 
     def _setup_glib_loop(self):
         # This is a little strange. python-dbus internally depends on gobject,
